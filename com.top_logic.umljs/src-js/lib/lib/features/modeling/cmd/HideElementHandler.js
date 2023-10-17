@@ -1,6 +1,6 @@
 import inherits from 'inherits';
 
-import { Label, Shape, Connection } from 'diagram-js/lib/model';
+import { isShape, isLabel } from '../../../../util/ModelUtil';
 
 HideElementHandler.$inject = [
   'graphicsFactory',
@@ -25,8 +25,8 @@ HideElementHandler.prototype.execute = function(context) {
 HideElementHandler.prototype.hide = function(element) {
   element.hidden = true;
 
-  if(element instanceof Shape) {
-    if(element instanceof Label) {
+  if(isShape(element)) {
+    if(isLabel(element)) {
       this.hideLabel(element);
     } else {
       this.hideShape(element);

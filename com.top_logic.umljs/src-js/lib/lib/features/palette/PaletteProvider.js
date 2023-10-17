@@ -32,8 +32,12 @@ PaletteProvider.prototype.getPaletteEntries = function() {
         height: 100,
         name: "Name"
       });
+      
+      var context = {
+		  type: type
+	  };
 
-      create.start(event, shape, type);
+      create.start(event, shape, context);
     };
 
     return {

@@ -5,30 +5,32 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2022-05-09
+ * Date: 2023-10-03
  */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.UmlJS = factory());
-}(this, (function () { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.UmlJS = factory());
+})(this, (function () { 'use strict';
 
   /**
    * Flatten array, one level deep.
    *
-   * @param {Array<?>} arr
+   * @template T
    *
-   * @return {Array<?>}
+   * @param {T[][]} arr
+   *
+   * @return {T[]}
    */
   function flatten(arr) {
     return Array.prototype.concat.apply([], arr);
   }
 
-  var nativeToString = Object.prototype.toString;
-  var nativeHasOwnProperty = Object.prototype.hasOwnProperty;
+  const nativeToString$1 = Object.prototype.toString;
+  const nativeHasOwnProperty$1 = Object.prototype.hasOwnProperty;
 
-  function isUndefined(obj) {
+  function isUndefined$1(obj) {
     return obj === undefined;
   }
 
@@ -36,25 +38,43 @@
     return obj !== undefined;
   }
 
-  function isArray(obj) {
-    return nativeToString.call(obj) === '[object Array]';
+  function isNil(obj) {
+    return obj == null;
+  }
+
+  function isArray$3(obj) {
+    return nativeToString$1.call(obj) === '[object Array]';
   }
 
   function isObject(obj) {
-    return nativeToString.call(obj) === '[object Object]';
+    return nativeToString$1.call(obj) === '[object Object]';
   }
 
   function isNumber(obj) {
-    return nativeToString.call(obj) === '[object Number]';
+    return nativeToString$1.call(obj) === '[object Number]';
   }
 
+  /**
+   * @param {any} obj
+   *
+   * @return {boolean}
+   */
   function isFunction(obj) {
-    return nativeToString.call(obj) === '[object Function]';
+    const tag = nativeToString$1.call(obj);
+
+    return (
+      tag === '[object Function]' ||
+      tag === '[object AsyncFunction]' ||
+      tag === '[object GeneratorFunction]' ||
+      tag === '[object AsyncGeneratorFunction]' ||
+      tag === '[object Proxy]'
+    );
   }
 
   function isString(obj) {
-    return nativeToString.call(obj) === '[object String]';
+    return nativeToString$1.call(obj) === '[object String]';
   }
+
 
   /**
    * Ensure collection is an array.
@@ -63,7 +83,7 @@
    */
   function ensureArray(obj) {
 
-    if (isArray(obj)) {
+    if (isArray$3(obj)) {
       return;
     }
 
@@ -78,26 +98,78 @@
    *
    * @return {Boolean}
    */
-  function has(target, key) {
-    return nativeHasOwnProperty.call(target, key);
+  function has$1(target, key) {
+    return nativeHasOwnProperty$1.call(target, key);
   }
+
+  /**
+   * @template T
+   * @typedef { (
+   *   ((e: T) => boolean) |
+   *   ((e: T, idx: number) => boolean) |
+   *   ((e: T, key: string) => boolean) |
+   *   string |
+   *   number
+   * ) } Matcher
+   */
+
+  /**
+   * @template T
+   * @template U
+   *
+   * @typedef { (
+   *   ((e: T) => U) | string | number
+   * ) } Extractor
+   */
+
+
+  /**
+   * @template T
+   * @typedef { (val: T, key: any) => boolean } MatchFn
+   */
+
+  /**
+   * @template T
+   * @typedef { T[] } ArrayCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { { [key: string]: T } } StringKeyValueCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { { [key: number]: T } } NumberKeyValueCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { StringKeyValueCollection<T> | NumberKeyValueCollection<T> } KeyValueCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { KeyValueCollection<T> | ArrayCollection<T> } Collection
+   */
 
   /**
    * Find element in collection.
    *
-   * @param  {Array|Object} collection
-   * @param  {Function|Object} matcher
+   * @template T
+   * @param {Collection<T>} collection
+   * @param {Matcher<T>} matcher
    *
    * @return {Object}
    */
   function find(collection, matcher) {
 
-    matcher = toMatcher(matcher);
+    const matchFn = toMatcher(matcher);
 
-    var match;
+    let match;
 
-    forEach(collection, function (val, key) {
-      if (matcher(val, key)) {
+    forEach$1(collection, function(val, key) {
+      if (matchFn(val, key)) {
         match = val;
 
         return false;
@@ -105,22 +177,27 @@
     });
 
     return match;
+
   }
 
+
   /**
-   * Find element in collection.
+   * Filter elements in collection.
    *
-   * @param  {Array|Object} collection
-   * @param  {Function} matcher
+   * @template T
+   * @param {Collection<T>} collection
+   * @param {Matcher<T>} matcher
    *
-   * @return {Array} result
+   * @return {T[]} result
    */
   function filter(collection, matcher) {
 
-    var result = [];
+    const matchFn = toMatcher(matcher);
 
-    forEach(collection, function (val, key) {
-      if (matcher(val, key)) {
+    let result = [];
+
+    forEach$1(collection, function(val, key) {
+      if (matchFn(val, key)) {
         result.push(val);
       }
     });
@@ -128,32 +205,37 @@
     return result;
   }
 
+
   /**
    * Iterate over collection; returning something
    * (non-undefined) will stop iteration.
    *
-   * @param  {Array|Object} collection
-   * @param  {Function} iterator
+   * @template T
+   * @param {Collection<T>} collection
+   * @param { ((item: T, idx: number) => (boolean|void)) | ((item: T, key: string) => (boolean|void)) } iterator
    *
-   * @return {Object} return result that stopped the iteration
+   * @return {T} return result that stopped the iteration
    */
-  function forEach(collection, iterator) {
+  function forEach$1(collection, iterator) {
 
-    if (isUndefined(collection)) {
+    let val,
+        result;
+
+    if (isUndefined$1(collection)) {
       return;
     }
 
-    var convertKey = isArray(collection) ? toNum : identity;
+    const convertKey = isArray$3(collection) ? toNum$1 : identity$1;
 
-    for (var key in collection) {
+    for (let key in collection) {
 
-      if (has(collection, key)) {
-        var val = collection[key];
+      if (has$1(collection, key)) {
+        val = collection[key];
 
-        var result = iterator(val, convertKey(key));
+        result = iterator(val, convertKey(key));
 
         if (result === false) {
-          return;
+          return val;
         }
       }
     }
@@ -162,43 +244,50 @@
   /**
    * Return collection without element.
    *
-   * @param  {Array} arr
-   * @param  {Function} matcher
+   * @template T
+   * @param {ArrayCollection<T>} arr
+   * @param {Matcher<T>} matcher
    *
-   * @return {Array}
+   * @return {T[]}
    */
   function without(arr, matcher) {
 
-    if (isUndefined(arr)) {
+    if (isUndefined$1(arr)) {
       return [];
     }
 
     ensureArray(arr);
 
-    matcher = toMatcher(matcher);
+    const matchFn = toMatcher(matcher);
 
-    return arr.filter(function (el, idx) {
-      return !matcher(el, idx);
+    return arr.filter(function(el, idx) {
+      return !matchFn(el, idx);
     });
+
   }
+
 
   /**
    * Reduce collection, returning a single result.
    *
-   * @param  {Object|Array} collection
-   * @param  {Function} iterator
-   * @param  {Any} result
+   * @template T
+   * @template V
    *
-   * @return {Any} result returned from last iterator
+   * @param {Collection<T>} collection
+   * @param {(result: V, entry: T, index: any) => V} iterator
+   * @param {V} result
+   *
+   * @return {V} result returned from last iterator
    */
   function reduce(collection, iterator, result) {
 
-    forEach(collection, function (value, idx) {
+    forEach$1(collection, function(value, idx) {
       result = iterator(result, value, idx);
     });
 
     return result;
   }
+
 
   /**
    * Return true if every element in the collection
@@ -211,10 +300,11 @@
    */
   function every(collection, matcher) {
 
-    return reduce(collection, function (matches, val, key) {
+    return !!reduce(collection, function(matches, val, key) {
       return matches && matcher(val, key);
     }, true);
   }
+
 
   /**
    * Return true if some elements in the collection
@@ -230,6 +320,7 @@
     return !!find(collection, matcher);
   }
 
+
   /**
    * Transform a collection into another collection
    * by piping each member through the given fn.
@@ -239,16 +330,17 @@
    *
    * @return {Array} transformed collection
    */
-  function map(collection, fn) {
+  function map$1(collection, fn) {
 
-    var result = [];
+    let result = [];
 
-    forEach(collection, function (val, key) {
+    forEach$1(collection, function(val, key) {
       result.push(fn(val, key));
     });
 
     return result;
   }
+
 
   /**
    * Get the collections keys.
@@ -261,6 +353,7 @@
     return collection && Object.keys(collection) || [];
   }
 
+
   /**
    * Shorthand for `keys(o).length`.
    *
@@ -272,6 +365,7 @@
     return keys(collection).length;
   }
 
+
   /**
    * Get the values in the collection.
    *
@@ -280,29 +374,26 @@
    * @return {Array}
    */
   function values(collection) {
-    return map(collection, function (val) {
-      return val;
-    });
+    return map$1(collection, (val) => val);
   }
+
 
   /**
    * Group collection members by attribute.
    *
-   * @param  {Object|Array} collection
-   * @param  {Function} extractor
+   * @param {Object|Array} collection
+   * @param {Extractor} extractor
    *
    * @return {Object} map with { attrValue => [ a, b, c ] }
    */
-  function groupBy(collection, extractor) {
-    var grouped = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
+  function groupBy(collection, extractor, grouped = {}) {
 
     extractor = toExtractor(extractor);
 
-    forEach(collection, function (val) {
-      var discriminator = extractor(val) || '_';
+    forEach$1(collection, function(val) {
+      let discriminator = extractor(val) || '_';
 
-      var group = grouped[discriminator];
+      let group = grouped[discriminator];
 
       if (!group) {
         group = grouped[discriminator] = [];
@@ -314,32 +405,31 @@
     return grouped;
   }
 
-  function uniqueBy(extractor) {
+
+  function uniqueBy(extractor, ...collections) {
 
     extractor = toExtractor(extractor);
 
-    var grouped = {};
+    let grouped = {};
 
-    for (var _len = arguments.length, collections = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      collections[_key - 1] = arguments[_key];
-    }
+    forEach$1(collections, (c) => groupBy(c, extractor, grouped));
 
-    forEach(collections, function (c) {
-      return groupBy(c, extractor, grouped);
-    });
-
-    var result = map(grouped, function (val, key) {
+    let result = map$1(grouped, function(val, key) {
       return val[0];
     });
 
     return result;
   }
 
+
+
   /**
    * Sort collection by criteria.
    *
-   * @param  {Object|Array} collection
-   * @param  {String|Function} extractor
+   * @template T
+   *
+   * @param {Collection<T>} collection
+   * @param {Extractor<T, number | string>} extractor
    *
    * @return {Array}
    */
@@ -347,19 +437,18 @@
 
     extractor = toExtractor(extractor);
 
-    var sorted = [];
+    let sorted = [];
 
-    forEach(collection, function (value, key) {
-      var disc = extractor(value, key);
+    forEach$1(collection, function(value, key) {
+      let disc = extractor(value, key);
 
-      var entry = {
+      let entry = {
         d: disc,
         v: value
       };
 
       for (var idx = 0; idx < sorted.length; idx++) {
-        var d = sorted[idx].d;
-
+        let { d } = sorted[idx];
 
         if (disc < d) {
           sorted.splice(idx, 0, entry);
@@ -371,77 +460,114 @@
       sorted.push(entry);
     });
 
-    return map(sorted, function (e) {
-      return e.v;
-    });
+    return map$1(sorted, (e) => e.v);
   }
+
 
   /**
    * Create an object pattern matcher.
    *
    * @example
    *
+   * ```javascript
    * const matcher = matchPattern({ id: 1 });
    *
-   * var element = find(elements, matcher);
+   * let element = find(elements, matcher);
+   * ```
    *
-   * @param  {Object} pattern
+   * @template T
    *
-   * @return {Function} matcherFn
+   * @param {T} pattern
+   *
+   * @return { (el: any) =>  boolean } matcherFn
    */
   function matchPattern(pattern) {
 
-    return function (el) {
+    return function(el) {
 
-      return every(pattern, function (val, key) {
+      return every(pattern, function(val, key) {
         return el[key] === val;
       });
+
     };
   }
 
+
+  /**
+   * @param {string | ((e: any) => any) } extractor
+   *
+   * @return { (e: any) => any }
+   */
   function toExtractor(extractor) {
-    return isFunction(extractor) ? extractor : function (e) {
+
+    /**
+     * @satisfies { (e: any) => any }
+     */
+    return isFunction(extractor) ? extractor : (e) => {
+
+      // @ts-ignore: just works
       return e[extractor];
     };
   }
 
+
+  /**
+   * @template T
+   * @param {Matcher<T>} matcher
+   *
+   * @return {MatchFn<T>}
+   */
   function toMatcher(matcher) {
-    return isFunction(matcher) ? matcher : function (e) {
+    return isFunction(matcher) ? matcher : (e) => {
       return e === matcher;
     };
   }
 
-  function identity(arg) {
+
+  function identity$1(arg) {
     return arg;
   }
 
-  function toNum(arg) {
+  function toNum$1(arg) {
     return Number(arg);
   }
 
+  /* global setTimeout clearTimeout */
+
   /**
-   * Debounce fn, calling it only once if
-   * the given time elapsed between calls.
+   * @typedef { {
+   *   (...args: any[]): any;
+   *   flush: () => void;
+   *   cancel: () => void;
+   * } } DebouncedFunction
+   */
+
+  /**
+   * Debounce fn, calling it only once if the given time
+   * elapsed between calls.
+   *
+   * Lodash-style the function exposes methods to `#clear`
+   * and `#flush` to control internal behavior.
    *
    * @param  {Function} fn
    * @param  {Number} timeout
    *
-   * @return {Function} debounced function
+   * @return {DebouncedFunction} debounced function
    */
   function debounce(fn, timeout) {
 
-    var timer;
+    let timer;
 
-    var lastArgs;
-    var lastThis;
+    let lastArgs;
+    let lastThis;
 
-    var lastNow;
+    let lastNow;
 
-    function fire() {
+    function fire(force) {
 
-      var now = Date.now();
+      let now = Date.now();
 
-      var scheduledDiff = lastNow + timeout - now;
+      let scheduledDiff = force ? 0 : (lastNow + timeout) - now;
 
       if (scheduledDiff > 0) {
         return schedule(scheduledDiff);
@@ -449,20 +575,34 @@
 
       fn.apply(lastThis, lastArgs);
 
-      timer = lastNow = lastArgs = lastThis = undefined;
+      clear();
     }
 
     function schedule(timeout) {
       timer = setTimeout(fire, timeout);
     }
 
-    return function () {
-
-      lastNow = Date.now();
-
-      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+    function clear() {
+      if (timer) {
+        clearTimeout(timer);
       }
+
+      timer = lastNow = lastArgs = lastThis = undefined;
+    }
+
+    function flush() {
+      if (timer) {
+        fire(true);
+      }
+
+      clear();
+    }
+
+    /**
+     * @type { DebouncedFunction }
+     */
+    function callback(...args) {
+      lastNow = Date.now();
 
       lastArgs = args;
       lastThis = this;
@@ -471,7 +611,12 @@
       if (!timer) {
         schedule(timeout);
       }
-    };
+    }
+
+    callback.flush = flush;
+    callback.cancel = clear;
+
+    return callback;
   }
 
   /**
@@ -482,11 +627,9 @@
    *
    * @return {Function} bound function
    */
-  function bind(fn, target) {
+  function bind$2(fn, target) {
     return fn.bind(target);
   }
-
-  var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
   /**
    * Convenience wrapper for `Object.assign`.
@@ -496,29 +639,28 @@
    *
    * @return {Object} the target
    */
-  function assign(target) {
-    for (var _len = arguments.length, others = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      others[_key - 1] = arguments[_key];
-    }
-
-    return _extends.apply(undefined, [target].concat(others));
+  function assign$1(target, ...others) {
+    return Object.assign(target, ...others);
   }
 
   /**
-   * Pick given properties from the target object.
+   * Pick properties from the given target.
    *
-   * @param {Object} target
-   * @param {Array} properties
+   * @template T
+   * @template {any[]} V
    *
-   * @return {Object} target
+   * @param {T} target
+   * @param {V} properties
+   *
+   * @return Pick<T, V>
    */
   function pick(target, properties) {
 
-    var result = {};
+    let result = {};
 
-    var obj = Object(target);
+    let obj = Object(target);
 
-    forEach(properties, function (prop) {
+    forEach$1(properties, function(prop) {
 
       if (prop in obj) {
         result[prop] = target[prop];
@@ -529,6 +671,147 @@
   }
 
   /**
+   * Pick all target properties, excluding the given ones.
+   *
+   * @template T
+   * @template {any[]} V
+   *
+   * @param {T} target
+   * @param {V} properties
+   *
+   * @return {Omit<T, V>} target
+   */
+  function omit(target, properties) {
+
+    let result = {};
+
+    let obj = Object(target);
+
+    forEach$1(obj, function(prop, key) {
+
+      if (properties.indexOf(key) === -1) {
+        result[key] = prop;
+      }
+    });
+
+    return result;
+  }
+
+  function _mergeNamespaces$1(n, m) {
+    m.forEach(function (e) {
+      e && typeof e !== 'string' && !Array.isArray(e) && Object.keys(e).forEach(function (k) {
+        if (k !== 'default' && !(k in n)) {
+          var d = Object.getOwnPropertyDescriptor(e, k);
+          Object.defineProperty(n, k, d.get ? d : {
+            enumerable: true,
+            get: function () { return e[k]; }
+          });
+        }
+      });
+    });
+    return Object.freeze(n);
+  }
+
+  /**
+   * Flatten array, one level deep.
+   *
+   * @param {Array<?>} arr
+   *
+   * @return {Array<?>}
+   */
+
+  const nativeToString = Object.prototype.toString;
+  const nativeHasOwnProperty = Object.prototype.hasOwnProperty;
+
+  function isUndefined(obj) {
+    return obj === undefined;
+  }
+
+  function isArray$2(obj) {
+    return nativeToString.call(obj) === '[object Array]';
+  }
+
+  /**
+   * Return true, if target owns a property with the given key.
+   *
+   * @param {Object} target
+   * @param {String} key
+   *
+   * @return {Boolean}
+   */
+  function has(target, key) {
+    return nativeHasOwnProperty.call(target, key);
+  }
+
+
+  /**
+   * Iterate over collection; returning something
+   * (non-undefined) will stop iteration.
+   *
+   * @param  {Array|Object} collection
+   * @param  {Function} iterator
+   *
+   * @return {Object} return result that stopped the iteration
+   */
+  function forEach(collection, iterator) {
+
+    let val,
+        result;
+
+    if (isUndefined(collection)) {
+      return;
+    }
+
+    const convertKey = isArray$2(collection) ? toNum : identity;
+
+    for (let key in collection) {
+
+      if (has(collection, key)) {
+        val = collection[key];
+
+        result = iterator(val, convertKey(key));
+
+        if (result === false) {
+          return val;
+        }
+      }
+    }
+  }
+
+
+  function identity(arg) {
+    return arg;
+  }
+
+  function toNum(arg) {
+    return Number(arg);
+  }
+
+  /**
+   * Assigns style attributes in a style-src compliant way.
+   *
+   * @param {Element} element
+   * @param {...Object} styleSources
+   *
+   * @return {Element} the element
+   */
+  function assign(element, ...styleSources) {
+    const target = element.style;
+
+    forEach(styleSources, function(style) {
+      if (!style) {
+        return;
+      }
+
+      forEach(style, function(value, key) {
+        target[key] = value;
+      });
+    });
+
+    return element;
+  }
+
+  /**
    * Set attribute `name` to `val`, or get attr `name`.
    *
    * @param {Element} el
@@ -536,7 +819,8 @@
    * @param {String} [val]
    * @api public
    */
-  function attr(el, name, val) {
+  function attr$1(el, name, val) {
+
     // get
     if (arguments.length == 2) {
       return el.getAttribute(name);
@@ -553,16 +837,6 @@
     return el;
   }
 
-  var indexOf = [].indexOf;
-
-  var indexof = function(arr, obj){
-    if (indexOf) return arr.indexOf(obj);
-    for (var i = 0; i < arr.length; ++i) {
-      if (arr[i] === obj) return i;
-    }
-    return -1;
-  };
-
   /**
    * Taken from https://github.com/component/classes
    *
@@ -570,16 +844,10 @@
    */
 
   /**
-   * Whitespace regexp.
-   */
-
-  var re = /\s+/;
-
-  /**
    * toString reference.
    */
 
-  var toString = Object.prototype.toString;
+  const toString$1 = Object.prototype.toString;
 
   /**
    * Wrap `el` in a `ClassList`.
@@ -589,8 +857,8 @@
    * @api public
    */
 
-  function classes(el) {
-    return new ClassList(el);
+  function classes$1(el) {
+    return new ClassList$1(el);
   }
 
   /**
@@ -600,7 +868,7 @@
    * @api private
    */
 
-  function ClassList(el) {
+  function ClassList$1(el) {
     if (!el || !el.nodeType) {
       throw new Error('A DOM element reference is required');
     }
@@ -616,18 +884,8 @@
    * @api public
    */
 
-  ClassList.prototype.add = function (name) {
-    // classList
-    if (this.list) {
-      this.list.add(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = indexof(arr, name);
-    if (!~i) arr.push(name);
-    this.el.className = arr.join(' ');
+  ClassList$1.prototype.add = function(name) {
+    this.list.add(name);
     return this;
   };
 
@@ -641,22 +899,12 @@
    * @api public
    */
 
-  ClassList.prototype.remove = function (name) {
-    if ('[object RegExp]' == toString.call(name)) {
+  ClassList$1.prototype.remove = function(name) {
+    if ('[object RegExp]' == toString$1.call(name)) {
       return this.removeMatching(name);
     }
 
-    // classList
-    if (this.list) {
-      this.list.remove(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = indexof(arr, name);
-    if (~i) arr.splice(i, 1);
-    this.el.className = arr.join(' ');
+    this.list.remove(name);
     return this;
   };
 
@@ -668,9 +916,9 @@
    * @api private
    */
 
-  ClassList.prototype.removeMatching = function (re) {
-    var arr = this.array();
-    for (var i = 0; i < arr.length; i++) {
+  ClassList$1.prototype.removeMatching = function(re) {
+    const arr = this.array();
+    for (let i = 0; i < arr.length; i++) {
       if (re.test(arr[i])) {
         this.remove(arr[i]);
       }
@@ -690,34 +938,14 @@
    * @api public
    */
 
-  ClassList.prototype.toggle = function (name, force) {
-    // classList
-    if (this.list) {
-      if ('undefined' !== typeof force) {
-        if (force !== this.list.toggle(name, force)) {
-          this.list.toggle(name); // toggle again to correct
-        }
-      } else {
-        this.list.toggle(name);
-      }
-      return this;
-    }
-
-    // fallback
+  ClassList$1.prototype.toggle = function(name, force) {
     if ('undefined' !== typeof force) {
-      if (!force) {
-        this.remove(name);
-      } else {
-        this.add(name);
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
       }
     } else {
-      if (this.has(name)) {
-        this.remove(name);
-      } else {
-        this.add(name);
-      }
+      this.list.toggle(name);
     }
-
     return this;
   };
 
@@ -728,12 +956,8 @@
    * @api public
    */
 
-  ClassList.prototype.array = function () {
-    var className = this.el.getAttribute('class') || '';
-    var str = className.replace(/^\s+|\s+$/g, '');
-    var arr = str.split(re);
-    if ('' === arr[0]) arr.shift();
-    return arr;
+  ClassList$1.prototype.array = function() {
+    return Array.from(this.list);
   };
 
   /**
@@ -744,14 +968,15 @@
    * @api public
    */
 
-  ClassList.prototype.has = ClassList.prototype.contains = function (name) {
-    return this.list ? this.list.contains(name) : !!~indexof(this.array(), name);
+  ClassList$1.prototype.has =
+  ClassList$1.prototype.contains = function(name) {
+    return this.list.contains(name);
   };
 
   /**
    * Remove all children from the given element.
    */
-  function clear(el) {
+  function clear$1(el) {
 
     var c;
 
@@ -764,57 +989,47 @@
   }
 
   /**
-   * Element prototype.
+   * @param { HTMLElement } element
+   * @param { String } selector
+   *
+   * @return { boolean }
    */
-
-  var proto = Element.prototype;
+  function matches(element, selector) {
+    return element && typeof element.matches === 'function' && element.matches(selector);
+  }
 
   /**
-   * Vendor function.
-   */
-
-  var vendor = proto.matchesSelector
-    || proto.webkitMatchesSelector
-    || proto.mozMatchesSelector
-    || proto.msMatchesSelector
-    || proto.oMatchesSelector;
-
-  /**
-   * Expose `match()`.
-   */
-
-  var matchesSelector = match;
-
-  /**
-   * Match `el` to `selector`.
+   * Closest
    *
    * @param {Element} el
    * @param {String} selector
-   * @return {Boolean}
-   * @api public
+   * @param {Boolean} checkYourSelf (optional)
    */
+  function closest(element, selector, checkYourSelf) {
+    var currentElem = checkYourSelf ? element : element.parentNode;
 
-  function match(el, selector) {
-    if (vendor) return vendor.call(el, selector);
-    var nodes = el.parentNode.querySelectorAll(selector);
-    for (var i = 0; i < nodes.length; ++i) {
-      if (nodes[i] == el) return true;
+    while (currentElem && currentElem.nodeType !== document.DOCUMENT_NODE &&
+        currentElem.nodeType !== document.DOCUMENT_FRAGMENT_NODE) {
+
+      if (matches(currentElem, selector)) {
+        return currentElem;
+      }
+
+      currentElem = currentElem.parentNode;
     }
-    return false;
+
+    return matches(currentElem, selector) ? currentElem : null;
   }
 
-  var closest = function (element, selector, checkYoSelf) {
-    var parent = checkYoSelf ? element : element.parentNode;
+  var componentEvent = {};
 
-    while (parent && parent !== document) {
-      if (matchesSelector(parent, selector)) return parent;
-      parent = parent.parentNode;
-    }
-  };
+  var bind$1, unbind$1, prefix;
 
-  var bind$1 = window.addEventListener ? 'addEventListener' : 'attachEvent',
-      unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
-      prefix = bind$1 !== 'addEventListener' ? 'on' : '';
+  function detect () {
+    bind$1 = window.addEventListener ? 'addEventListener' : 'attachEvent';
+    unbind$1 = window.removeEventListener ? 'removeEventListener' : 'detachEvent';
+    prefix = bind$1 !== 'addEventListener' ? 'on' : '';
+  }
 
   /**
    * Bind `el` event `type` to `fn`.
@@ -827,7 +1042,8 @@
    * @api public
    */
 
-  var bind_1 = function(el, type, fn, capture){
+  var bind_1 = componentEvent.bind = function(el, type, fn, capture){
+    if (!bind$1) detect();
     el[bind$1](prefix + type, fn, capture || false);
     return fn;
   };
@@ -843,21 +1059,22 @@
    * @api public
    */
 
-  var unbind_1 = function(el, type, fn, capture){
-    el[unbind](prefix + type, fn, capture || false);
+  var unbind_1 = componentEvent.unbind = function(el, type, fn, capture){
+    if (!unbind$1) detect();
+    el[unbind$1](prefix + type, fn, capture || false);
     return fn;
   };
 
-  var componentEvent = {
-  	bind: bind_1,
-  	unbind: unbind_1
-  };
+  var event = /*#__PURE__*/_mergeNamespaces$1({
+    __proto__: null,
+    bind: bind_1,
+    unbind: unbind_1,
+    'default': componentEvent
+  }, [componentEvent]);
 
   /**
    * Module dependencies.
    */
-
-
 
   /**
    * Delegate event `type` to `selector`
@@ -875,17 +1092,21 @@
 
   // Some events don't bubble, so we want to bind to the capture phase instead
   // when delegating.
-  var forceCaptureEvents = ['focus', 'blur'];
+  var forceCaptureEvents = [ 'focus', 'blur' ];
 
-  var bind$1$1 = function(el, selector, type, fn, capture){
-    if (forceCaptureEvents.indexOf(type) !== -1) capture = true;
+  function bind(el, selector, type, fn, capture) {
+    if (forceCaptureEvents.indexOf(type) !== -1) {
+      capture = true;
+    }
 
-    return componentEvent.bind(el, type, function(e){
+    return event.bind(el, type, function(e) {
       var target = e.target || e.srcElement;
-      e.delegateTarget = closest(target, selector, true, el);
-      if (e.delegateTarget) fn.call(el, e);
+      e.delegateTarget = closest(target, selector, true);
+      if (e.delegateTarget) {
+        fn.call(el, e);
+      }
     }, capture);
-  };
+  }
 
   /**
    * Unbind event `type`'s callback `fn`.
@@ -896,23 +1117,24 @@
    * @param {Boolean} capture
    * @api public
    */
+  function unbind(el, type, fn, capture) {
+    if (forceCaptureEvents.indexOf(type) !== -1) {
+      capture = true;
+    }
 
-  var unbind$1 = function(el, type, fn, capture){
-    if (forceCaptureEvents.indexOf(type) !== -1) capture = true;
+    return event.unbind(el, type, fn, capture);
+  }
 
-    componentEvent.unbind(el, type, fn, capture);
-  };
-
-  var delegateEvents = {
-  	bind: bind$1$1,
-  	unbind: unbind$1
+  var delegate = {
+    bind,
+    unbind
   };
 
   /**
    * Expose `parse`.
    */
 
-  var domify = parse;
+  var domify = parse$1;
 
   /**
    * Tests for browser support.
@@ -934,7 +1156,7 @@
    * Wrap map from jquery.
    */
 
-  var map$1 = {
+  var map = {
     legend: [1, '<fieldset>', '</fieldset>'],
     tr: [2, '<table><tbody>', '</tbody></table>'],
     col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
@@ -943,27 +1165,27 @@
     _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
   };
 
-  map$1.td =
-  map$1.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
+  map.td =
+  map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
 
-  map$1.option =
-  map$1.optgroup = [1, '<select multiple="multiple">', '</select>'];
+  map.option =
+  map.optgroup = [1, '<select multiple="multiple">', '</select>'];
 
-  map$1.thead =
-  map$1.tbody =
-  map$1.colgroup =
-  map$1.caption =
-  map$1.tfoot = [1, '<table>', '</table>'];
+  map.thead =
+  map.tbody =
+  map.colgroup =
+  map.caption =
+  map.tfoot = [1, '<table>', '</table>'];
 
-  map$1.polyline =
-  map$1.ellipse =
-  map$1.polygon =
-  map$1.circle =
-  map$1.text =
-  map$1.line =
-  map$1.path =
-  map$1.rect =
-  map$1.g = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
+  map.polyline =
+  map.ellipse =
+  map.polygon =
+  map.circle =
+  map.text =
+  map.line =
+  map.path =
+  map.rect =
+  map.g = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
 
   /**
    * Parse `html` and return a DOM Node instance, which could be a TextNode,
@@ -976,7 +1198,7 @@
    * @api private
    */
 
-  function parse(html, doc) {
+  function parse$1(html, doc) {
     if ('string' != typeof html) throw new TypeError('String expected');
 
     // default to the global `document` object
@@ -998,7 +1220,7 @@
     }
 
     // wrap map
-    var wrap = map$1[tag] || map$1._default;
+    var wrap = Object.prototype.hasOwnProperty.call(map, tag) ? map[tag] : map._default;
     var depth = wrap[0];
     var prefix = wrap[1];
     var suffix = wrap[2];
@@ -1020,34 +1242,7 @@
     return fragment;
   }
 
-  var proto$1 = typeof Element !== 'undefined' ? Element.prototype : {};
-  var vendor$1 = proto$1.matches
-    || proto$1.matchesSelector
-    || proto$1.webkitMatchesSelector
-    || proto$1.mozMatchesSelector
-    || proto$1.msMatchesSelector
-    || proto$1.oMatchesSelector;
-
-  var matchesSelector$1 = match$1;
-
-  /**
-   * Match `el` to `selector`.
-   *
-   * @param {Element} el
-   * @param {String} selector
-   * @return {Boolean}
-   * @api public
-   */
-
-  function match$1(el, selector) {
-    if (!el || el.nodeType !== 1) return false;
-    if (vendor$1) return vendor$1.call(el, selector);
-    var nodes = el.parentNode.querySelectorAll(selector);
-    for (var i = 0; i < nodes.length; i++) {
-      if (nodes[i] == el) return true;
-    }
-    return false;
-  }
+  var domify$1 = domify;
 
   function query(selector, el) {
     el = el || document;
@@ -1061,9 +1256,13 @@
     return el.querySelectorAll(selector);
   }
 
-  function remove(el) {
+  function remove$2(el) {
     el.parentNode && el.parentNode.removeChild(el);
   }
+
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   */
 
   function __stopPropagation(event) {
     if (!event || typeof event.stopPropagation !== 'function') {
@@ -1073,18 +1272,28 @@
     event.stopPropagation();
   }
 
-
-  function getOriginal(event) {
+  /**
+   * @param {import('../core/EventBus').Event} event
+   *
+   * @return {Event}
+   */
+  function getOriginal$1(event) {
     return event.originalEvent || event.srcEvent;
   }
 
-
-  function stopPropagation(event, immediate) {
-    __stopPropagation(event, immediate);
-    __stopPropagation(getOriginal(event), immediate);
+  /**
+   * @param {Event|import('../core/EventBus').Event} event
+   */
+  function stopPropagation$1(event) {
+    __stopPropagation(event);
+    __stopPropagation(getOriginal$1(event));
   }
 
-
+  /**
+   * @param {Event} event
+   *
+   * @return {Point|null}
+   */
   function toPoint(event) {
 
     if (event.pointers && event.pointers.length) {
@@ -1105,19 +1314,51 @@
     return (/mac/i).test(navigator.platform);
   }
 
-  function isPrimaryButton(event) {
-    // button === 0 -> left áka primary mouse button
-    return !(getOriginal(event) || event).button;
+  /**
+   * @param {MouseEvent} event
+   * @param {string} button
+   *
+   * @return {boolean}
+   */
+  function isButton(event, button) {
+    return (getOriginal$1(event) || event).button === button;
   }
 
+  /**
+   * @param {MouseEvent} event
+   *
+   * @return {boolean}
+   */
+  function isPrimaryButton(event) {
+
+    // button === 0 -> left áka primary mouse button
+    return isButton(event, 0);
+  }
+
+  /**
+   * @param {MouseEvent} event
+   *
+   * @return {boolean}
+   */
+  function isAuxiliaryButton(event) {
+
+    // button === 1 -> auxiliary áka wheel button
+    return isButton(event, 1);
+  }
+
+  /**
+   * @param {MouseEvent} event
+   *
+   * @return {boolean}
+   */
   function hasPrimaryModifier(event) {
-    var originalEvent = getOriginal(event) || event;
+    var originalEvent = getOriginal$1(event) || event;
 
     if (!isPrimaryButton(event)) {
       return false;
     }
 
-    // Use alt as primary modifier key for mac OS
+    // Use cmd as primary modifier key for mac OS
     if (isMac()) {
       return originalEvent.metaKey;
     } else {
@@ -1125,9 +1366,13 @@
     }
   }
 
-
+  /**
+   * @param {MouseEvent} event
+   *
+   * @return {boolean}
+   */
   function hasSecondaryModifier(event) {
-    var originalEvent = getOriginal(event) || event;
+    var originalEvent = getOriginal$1(event) || event;
 
     return isPrimaryButton(event) && originalEvent.shiftKey;
   }
@@ -1136,9 +1381,11 @@
 
     if (element.ownerDocument !== target.ownerDocument) {
       try {
+
         // may fail on webkit
         return target.ownerDocument.importNode(element, true);
       } catch (e) {
+
         // ignore
       }
     }
@@ -1264,6 +1511,7 @@
     var type = CSS_PROPERTIES[hyphenated];
 
     if (type) {
+
       // append pixel unit, unless present
       if (type === LENGTH_ATTR && typeof value === 'number') {
         value = String(value) + 'px';
@@ -1294,7 +1542,7 @@
    *
    * @return {String}
    */
-  function attr$1(node, name, value) {
+  function attr(node, name, value) {
     if (typeof name === 'string') {
       if (value !== undefined) {
         setAttribute(node, name, value);
@@ -1309,44 +1557,30 @@
   }
 
   /**
-   * Clear utility
+   * Taken from https://github.com/component/classes
+   *
+   * Without the component bits.
    */
-  function index(arr, obj) {
-    if (arr.indexOf) {
-      return arr.indexOf(obj);
-    }
-
-
-    for (var i = 0; i < arr.length; ++i) {
-      if (arr[i] === obj) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  var re$1 = /\s+/;
-
-  var toString$1 = Object.prototype.toString;
-
-  function defined(o) {
-    return typeof o !== 'undefined';
-  }
 
   /**
-   * Wrap `el` in a `ClassList`.
-   *
-   * @param {Element} el
-   * @return {ClassList}
-   * @api public
+   * toString reference.
    */
 
-  function classes$1(el) {
-    return new ClassList$1(el);
+  const toString = Object.prototype.toString;
+
+  /**
+    * Wrap `el` in a `ClassList`.
+    *
+    * @param {Element} el
+    * @return {ClassList}
+    * @api public
+    */
+
+  function classes(el) {
+    return new ClassList(el);
   }
 
-  function ClassList$1(el) {
+  function ClassList(el) {
     if (!el || !el.nodeType) {
       throw new Error('A DOM element reference is required');
     }
@@ -1355,79 +1589,48 @@
   }
 
   /**
-   * Add class `name` if not already present.
-   *
-   * @param {String} name
-   * @return {ClassList}
-   * @api public
-   */
+    * Add class `name` if not already present.
+    *
+    * @param {String} name
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.add = function(name) {
-
-    // classList
-    if (this.list) {
-      this.list.add(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = index(arr, name);
-    if (!~i) {
-      arr.push(name);
-    }
-
-    if (defined(this.el.className.baseVal)) {
-      this.el.className.baseVal = arr.join(' ');
-    } else {
-      this.el.className = arr.join(' ');
-    }
-
+  ClassList.prototype.add = function(name) {
+    this.list.add(name);
     return this;
   };
 
   /**
-   * Remove class `name` when present, or
-   * pass a regular expression to remove
-   * any which match.
-   *
-   * @param {String|RegExp} name
-   * @return {ClassList}
-   * @api public
-   */
+    * Remove class `name` when present, or
+    * pass a regular expression to remove
+    * any which match.
+    *
+    * @param {String|RegExp} name
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.remove = function(name) {
-    if ('[object RegExp]' === toString$1.call(name)) {
+  ClassList.prototype.remove = function(name) {
+    if ('[object RegExp]' == toString.call(name)) {
       return this.removeMatching(name);
     }
 
-    // classList
-    if (this.list) {
-      this.list.remove(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = index(arr, name);
-    if (~i) {
-      arr.splice(i, 1);
-    }
-    this.el.className.baseVal = arr.join(' ');
+    this.list.remove(name);
     return this;
   };
 
   /**
-   * Remove all classes matching `re`.
-   *
-   * @param {RegExp} re
-   * @return {ClassList}
-   * @api private
-   */
+    * Remove all classes matching `re`.
+    *
+    * @param {RegExp} re
+    * @return {ClassList}
+    * @api private
+    */
 
-  ClassList$1.prototype.removeMatching = function(re) {
-    var arr = this.array();
-    for (var i = 0; i < arr.length; i++) {
+  ClassList.prototype.removeMatching = function(re) {
+    const arr = this.array();
+    for (let i = 0; i < arr.length; i++) {
       if (re.test(arr[i])) {
         this.remove(arr[i]);
       }
@@ -1436,81 +1639,51 @@
   };
 
   /**
-   * Toggle class `name`, can force state via `force`.
-   *
-   * For browsers that support classList, but do not support `force` yet,
-   * the mistake will be detected and corrected.
-   *
-   * @param {String} name
-   * @param {Boolean} force
-   * @return {ClassList}
-   * @api public
-   */
+    * Toggle class `name`, can force state via `force`.
+    *
+    * For browsers that support classList, but do not support `force` yet,
+    * the mistake will be detected and corrected.
+    *
+    * @param {String} name
+    * @param {Boolean} force
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.toggle = function(name, force) {
-    // classList
-    if (this.list) {
-      if (defined(force)) {
-        if (force !== this.list.toggle(name, force)) {
-          this.list.toggle(name); // toggle again to correct
-        }
-      } else {
-        this.list.toggle(name);
-      }
-      return this;
-    }
-
-    // fallback
-    if (defined(force)) {
-      if (!force) {
-        this.remove(name);
-      } else {
-        this.add(name);
+  ClassList.prototype.toggle = function(name, force) {
+    if ('undefined' !== typeof force) {
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
       }
     } else {
-      if (this.has(name)) {
-        this.remove(name);
-      } else {
-        this.add(name);
-      }
+      this.list.toggle(name);
     }
-
     return this;
   };
 
   /**
-   * Return an array of classes.
-   *
-   * @return {Array}
-   * @api public
-   */
+    * Return an array of classes.
+    *
+    * @return {Array}
+    * @api public
+    */
 
-  ClassList$1.prototype.array = function() {
-    var className = this.el.getAttribute('class') || '';
-    var str = className.replace(/^\s+|\s+$/g, '');
-    var arr = str.split(re$1);
-    if ('' === arr[0]) {
-      arr.shift();
-    }
-    return arr;
+  ClassList.prototype.array = function() {
+    return Array.from(this.list);
   };
 
   /**
-   * Check if class `name` is present.
-   *
-   * @param {String} name
-   * @return {ClassList}
-   * @api public
-   */
+    * Check if class `name` is present.
+    *
+    * @param {String} name
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.has =
-  ClassList$1.prototype.contains = function(name) {
-    return (
-      this.list ?
-        this.list.contains(name) :
-        !! ~index(this.array(), name)
-    );
-  };
+  ClassList.prototype.has =
+   ClassList.prototype.contains = function(name) {
+     return this.list.contains(name);
+   };
 
   function remove$1(element) {
     var parent = element.parentNode;
@@ -1532,7 +1705,7 @@
    * @param  {DOMElement} element
    * @return {DOMElement} the element (for chaining)
    */
-  function clear$1(element) {
+  function clear(element) {
     var child;
 
     while ((child = element.firstChild)) {
@@ -1542,7 +1715,7 @@
     return element;
   }
 
-  function clone(element) {
+  function clone$1(element) {
     return element.cloneNode(true);
   }
 
@@ -1556,7 +1729,7 @@
 
   var SVG_START = '<svg xmlns="' + ns.svg + '"';
 
-  function parse$1(svg) {
+  function parse(svg) {
 
     var unwrap = false;
 
@@ -1566,6 +1739,7 @@
         svg = SVG_START + svg.substring(4);
       }
     } else {
+
       // namespace svg
       svg = SVG_START + '>' + svg + '</svg>';
       unwrap = true;
@@ -1612,18 +1786,18 @@
    *
    * @returns {SVGElement}
    */
-  function create(name, attrs) {
+  function create$1(name, attrs) {
     var element;
 
     if (name.charAt(0) === '<') {
-      element = parse$1(name).firstChild;
+      element = parse(name).firstChild;
       element = document.importNode(element, true);
     } else {
       element = document.createElementNS(ns.svg, name);
     }
 
     if (attrs) {
-      attr$1(element, attrs);
+      attr(element, attrs);
     }
 
     return element;
@@ -1634,9 +1808,17 @@
    */
 
   // fake node used to instantiate svg geometry elements
-  var node = create('svg');
+  var node = null;
 
-  function extend(object, props) {
+  function getNode() {
+    if (node === null) {
+      node = create$1('svg');
+    }
+
+    return node;
+  }
+
+  function extend$1(object, props) {
     var i, k, keys = Object.keys(props);
 
     for (i = 0; (k = keys[i]); i++) {
@@ -1658,15 +1840,15 @@
    * @return {SVGMatrix}
    */
   function createMatrix(a, b, c, d, e, f) {
-    var matrix = node.createSVGMatrix();
+    var matrix = getNode().createSVGMatrix();
 
     switch (arguments.length) {
     case 0:
       return matrix;
     case 1:
-      return extend(matrix, a);
+      return extend$1(matrix, a);
     case 6:
-      return extend(matrix, {
+      return extend$1(matrix, {
         a: a,
         b: b,
         c: c,
@@ -1679,9 +1861,9 @@
 
   function createTransform(matrix) {
     if (matrix) {
-      return node.createSVGTransformFromMatrix(matrix);
+      return getNode().createSVGTransformFromMatrix(matrix);
     } else {
-      return node.createSVGTransform();
+      return getNode().createSVGTransform();
     }
   }
 
@@ -1713,8 +1895,10 @@
     var i, len, attrMap, attrNode, childNodes;
 
     switch (node.nodeType) {
+
     // TEXT
     case 3:
+
       // replace special XML characters
       output.push(escape(node.textContent, TEXT_ENTITIES));
       break;
@@ -1766,23 +1950,24 @@
    */
 
 
-  function set(element, svg) {
+  function set$1(element, svg) {
 
-    var parsed = parse$1(svg);
+    var parsed = parse(svg);
 
     // clear element contents
-    clear$1(element);
+    clear(element);
 
     if (!svg) {
       return;
     }
 
     if (!isFragment(parsed)) {
+
       // extract <svg> from parsed document
       parsed = parsed.documentElement;
     }
 
-    var nodes = slice(parsed.childNodes);
+    var nodes = slice$1(parsed.childNodes);
 
     // import + append each node
     for (var i = 0; i < nodes.length; i++) {
@@ -1812,7 +1997,7 @@
     if (svg !== undefined) {
 
       try {
-        set(element, svg);
+        set$1(element, svg);
       } catch (e) {
         throw new Error('error parsing SVG: ' + e.message);
       }
@@ -1824,7 +2009,7 @@
   }
 
 
-  function slice(arr) {
+  function slice$1(arr) {
     return Array.prototype.slice.call(arr);
   }
 
@@ -1859,7 +2044,7 @@
    *
    * @return {SVGTransform} the consolidated transform
    */
-  function transform(node, transforms) {
+  function transform$1(node, transforms) {
     var transformList = node.transform.baseVal;
 
     if (transforms) {
@@ -1874,53 +2059,192 @@
     return transformList.consolidate();
   }
 
+  /**
+   * @typedef {(string|number)[]} Component
+   *
+   * @typedef {import('../util/Types').Point} Point
+   */
+
+  /**
+   * @param {Component[] | Component[][]} elements
+   *
+   * @return {string}
+   */
   function componentsToPath(elements) {
-    return elements.join(',').replace(/,?([A-z]),?/g, '$1');
+    return elements.flat().join(',').replace(/,?([A-z]),?/g, '$1');
   }
 
-  function toSVGPoints(points) {
-    var result = '';
+  /**
+   * @param {Point} point
+   *
+   * @return {Component[]}
+   */
+  function move(point) {
+    return [ 'M', point.x, point.y ];
+  }
 
-    for (var i = 0, p; (p = points[i]); i++) {
-      result += p.x + ',' + p.y + ' ';
+  /**
+   * @param {Point} point
+   *
+   * @return {Component[]}
+   */
+  function lineTo(point) {
+    return [ 'L', point.x, point.y ];
+  }
+
+  /**
+   * @param {Point} p1
+   * @param {Point} p2
+   * @param {Point} p3
+   *
+   * @return {Component[]}
+   */
+  function curveTo(p1, p2, p3) {
+    return [ 'C', p1.x, p1.y, p2.x, p2.y, p3.x, p3.y ];
+  }
+
+  /**
+   * @param {Point[]} waypoints
+   * @param {number} [cornerRadius]
+   * @return {Component[][]}
+   */
+  function drawPath$1(waypoints, cornerRadius) {
+    const pointCount = waypoints.length;
+
+    const path = [ move(waypoints[0]) ];
+
+    for (let i = 1; i < pointCount; i++) {
+
+      const pointBefore = waypoints[i - 1];
+      const point = waypoints[i];
+      const pointAfter = waypoints[i + 1];
+
+      if (!pointAfter || !cornerRadius) {
+        path.push(lineTo(point));
+
+        continue;
+      }
+
+      const effectiveRadius = Math.min(
+        cornerRadius,
+        vectorLength$1(point.x - pointBefore.x, point.y - pointBefore.y),
+        vectorLength$1(pointAfter.x - point.x, pointAfter.y - point.y)
+      );
+
+      if (!effectiveRadius) {
+        path.push(lineTo(point));
+
+        continue;
+      }
+
+      const beforePoint = getPointAtLength(point, pointBefore, effectiveRadius);
+      const beforePoint2 = getPointAtLength(point, pointBefore, effectiveRadius * .5);
+
+      const afterPoint = getPointAtLength(point, pointAfter, effectiveRadius);
+      const afterPoint2 = getPointAtLength(point, pointAfter, effectiveRadius * .5);
+
+      path.push(lineTo(beforePoint));
+      path.push(curveTo(beforePoint2, afterPoint2, afterPoint));
     }
 
-    return result;
+    return path;
   }
 
-  function createLine(points, attrs) {
+  function getPointAtLength(start, end, length) {
 
-    var line = create('polyline');
-    attr$1(line, { points: toSVGPoints(points) });
+    const deltaX = end.x - start.x;
+    const deltaY = end.y - start.y;
 
-    if (attrs) {
-      attr$1(line, attrs);
+    const totalLength = vectorLength$1(deltaX, deltaY);
+
+    const percent = length / totalLength;
+
+    return {
+      x: start.x + deltaX * percent,
+      y: start.y + deltaY * percent
+    };
+  }
+
+  function vectorLength$1(x, y) {
+    return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+  }
+
+  /**
+   * @param {Point[]} points
+   * @param {number|Object} [attrs]
+   * @param {number} [radius]
+   *
+   * @return {SVGElement}
+   */
+  function createLine(points, attrs, radius) {
+
+    if (isNumber(attrs)) {
+      radius = attrs;
+      attrs = null;
     }
 
-    return line;
+    if (!attrs) {
+      attrs = {};
+    }
+
+    const line = create$1('path', attrs);
+
+    if (isNumber(radius)) {
+      line.dataset.cornerRadius = String(radius);
+    }
+
+    return updateLine(line, points);
   }
 
+  /**
+   * @param {SVGElement} gfx
+   * @param {Point[]} points
+   *
+   * @return {SVGElement}
+   */
   function updateLine(gfx, points) {
-    attr$1(gfx, { points: toSVGPoints(points) });
+
+    const cornerRadius = parseInt(gfx.dataset.cornerRadius, 10) || 0;
+
+    attr(gfx, {
+      d: componentsToPath(drawPath$1(points, cornerRadius))
+    });
 
     return gfx;
   }
 
-  function allowAll(e) { return true; }
+  /**
+   * @typedef {import('../../model/Types').Element} Element
+   *
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../../draw/Styles').default} Styles
+   *
+   * @typedef {import('../../util/Types').Point} Point
+   */
 
-  var LOW_PRIORITY = 500;
+  function allowAll(event) { return true; }
+
+  function allowPrimaryAndAuxiliary(event) {
+    return isPrimaryButton(event) || isAuxiliaryButton(event);
+  }
+
+  var LOW_PRIORITY$8 = 500;
+
 
   /**
    * A plugin that provides interaction events for diagram elements.
    *
    * It emits the following events:
    *
-   *   * element.hover
-   *   * element.out
    *   * element.click
-   *   * element.dblclick
-   *   * element.mousedown
    *   * element.contextmenu
+   *   * element.dblclick
+   *   * element.hover
+   *   * element.mousedown
+   *   * element.mousemove
+   *   * element.mouseup
+   *   * element.out
    *
    * Each event is a tuple { element, gfx, originalEvent }.
    *
@@ -1928,20 +2252,19 @@
    * prevents the original DOM operation.
    *
    * @param {EventBus} eventBus
+   * @param {ElementRegistry} elementRegistry
+   * @param {Styles} styles
    */
   function InteractionEvents(eventBus, elementRegistry, styles) {
 
-    var HIT_STYLE = styles.cls('djs-hit', [ 'no-fill', 'no-border' ], {
-      stroke: 'white',
-      strokeWidth: 15
-    });
+    var self = this;
 
     /**
      * Fire an interaction event.
      *
-     * @param {String} type local event name, e.g. element.click.
-     * @param {DOMEvent} event native event
-     * @param {djs.model.Base} [element] the diagram element to emit the event on;
+     * @param {string} type local event name, e.g. element.click.
+     * @param {MouseEvent|TouchEvent} event native event
+     * @param {Element} [element] the diagram element to emit the event on;
      *                                   defaults to the event target
      */
     function fire(type, event, element) {
@@ -1979,7 +2302,7 @@
       }
     }
 
-    // (nikku): document this
+    // TODO(nikku): document this
     var handlers = {};
 
     function mouseHandler(localEventName) {
@@ -1988,38 +2311,43 @@
 
     function isIgnored(localEventName, event) {
 
-      var filter$$1 = ignoredFilters[localEventName] || isPrimaryButton;
+      var filter = ignoredFilters[localEventName] || isPrimaryButton;
 
       // only react on left mouse button interactions
       // except for interaction events that are enabled
       // for secundary mouse button
-      return !filter$$1(event);
+      return !filter(event);
     }
 
     var bindings = {
-      mouseover: 'element.hover',
-      mouseout: 'element.out',
       click: 'element.click',
+      contextmenu: 'element.contextmenu',
       dblclick: 'element.dblclick',
       mousedown: 'element.mousedown',
+      mousemove: 'element.mousemove',
+      mouseover: 'element.hover',
+      mouseout: 'element.out',
       mouseup: 'element.mouseup',
-      contextmenu: 'element.contextmenu'
     };
 
     var ignoredFilters = {
-      'element.contextmenu': allowAll
+      'element.contextmenu': allowAll,
+      'element.mousedown': allowPrimaryAndAuxiliary,
+      'element.mouseup': allowPrimaryAndAuxiliary,
+      'element.click': allowPrimaryAndAuxiliary,
+      'element.dblclick': allowPrimaryAndAuxiliary
     };
 
 
-    // manual event trigger
+    // manual event trigger //////////
 
     /**
      * Trigger an interaction event (based on a native dom event)
      * on the target shape or connection.
      *
-     * @param {String} eventName the name of the triggered DOM event
-     * @param {MouseEvent} event
-     * @param {djs.model.Base} targetElement
+     * @param {string} eventName the name of the triggered DOM event
+     * @param {MouseEvent|TouchEvent} event
+     * @param {Element} targetElement
      */
     function triggerMouseEvent(eventName, event, targetElement) {
 
@@ -2034,9 +2362,9 @@
     }
 
 
-    var elementSelector = 'svg, .djs-element';
+    var ELEMENT_SELECTOR = 'svg, .djs-element';
 
-    // event registration
+    // event handling ///////
 
     function registerEvent(node, event, localEvent, ignoredFilter) {
 
@@ -2048,7 +2376,7 @@
         ignoredFilters[localEvent] = ignoredFilter;
       }
 
-      handler.$delegate = delegateEvents.bind(node, elementSelector, event, handler);
+      handler.$delegate = delegate.bind(node, ELEMENT_SELECTOR, event, handler);
     }
 
     function unregisterEvent(node, event, localEvent) {
@@ -2059,17 +2387,17 @@
         return;
       }
 
-      delegateEvents.unbind(node, event, handler.$delegate);
+      delegate.unbind(node, event, handler.$delegate);
     }
 
     function registerEvents(svg) {
-      forEach(bindings, function(val, key) {
+      forEach$1(bindings, function(val, key) {
         registerEvent(svg, key, val);
       });
     }
 
     function unregisterEvents(svg) {
-      forEach(bindings, function(val, key) {
+      forEach$1(bindings, function(val, key) {
         unregisterEvent(svg, key, val);
       });
     }
@@ -2083,54 +2411,204 @@
     });
 
 
+    // hit box updating ////////////////
+
     eventBus.on([ 'shape.added', 'connection.added' ], function(event) {
       var element = event.element,
-          gfx = event.gfx,
-          hit;
+          gfx = event.gfx;
 
-      if (element.waypoints) {
-        hit = createLine(element.waypoints);
-      } else {
-        hit = create('rect');
-        attr$1(hit, {
-          x: 0,
-          y: 0,
-          width: element.width,
-          height: element.height
-        });
-      }
-
-      attr$1(hit, HIT_STYLE);
-
-      append(gfx, hit);
+      eventBus.fire('interactionEvents.createHit', { element: element, gfx: gfx });
     });
 
     // Update djs-hit on change.
     // A low priortity is necessary, because djs-hit of labels has to be updated
     // after the label bounds have been updated in the renderer.
-    eventBus.on('shape.changed', LOW_PRIORITY, function(event) {
+    eventBus.on([
+      'shape.changed',
+      'connection.changed'
+    ], LOW_PRIORITY$8, function(event) {
 
       var element = event.element,
-          gfx = event.gfx,
-          hit = query('.djs-hit', gfx);
+          gfx = event.gfx;
 
-      attr$1(hit, {
-        width: element.width,
-        height: element.height
-      });
+      eventBus.fire('interactionEvents.updateHit', { element: element, gfx: gfx });
     });
 
-    eventBus.on('connection.changed', function(event) {
-
+    eventBus.on('interactionEvents.createHit', LOW_PRIORITY$8, function(event) {
       var element = event.element,
-          gfx = event.gfx,
-          hit = query('.djs-hit', gfx);
+          gfx = event.gfx;
 
-      updateLine(hit, element.waypoints);
+      self.createDefaultHit(element, gfx);
     });
+
+    eventBus.on('interactionEvents.updateHit', function(event) {
+      var element = event.element,
+          gfx = event.gfx;
+
+      self.updateDefaultHit(element, gfx);
+    });
+
+
+    // hit styles ////////////
+
+    var STROKE_HIT_STYLE = createHitStyle('djs-hit djs-hit-stroke');
+
+    var CLICK_STROKE_HIT_STYLE = createHitStyle('djs-hit djs-hit-click-stroke');
+
+    var ALL_HIT_STYLE = createHitStyle('djs-hit djs-hit-all');
+
+    var NO_MOVE_HIT_STYLE = createHitStyle('djs-hit djs-hit-no-move');
+
+    var HIT_TYPES = {
+      'all': ALL_HIT_STYLE,
+      'click-stroke': CLICK_STROKE_HIT_STYLE,
+      'stroke': STROKE_HIT_STYLE,
+      'no-move': NO_MOVE_HIT_STYLE
+    };
+
+    function createHitStyle(classNames, attrs) {
+
+      attrs = assign$1({
+        stroke: 'white',
+        strokeWidth: 15
+      }, attrs || {});
+
+      return styles.cls(classNames, [ 'no-fill', 'no-border' ], attrs);
+    }
+
+
+    // style helpers ///////////////
+
+    function applyStyle(hit, type) {
+
+      var attrs = HIT_TYPES[type];
+
+      if (!attrs) {
+        throw new Error('invalid hit type <' + type + '>');
+      }
+
+      attr(hit, attrs);
+
+      return hit;
+    }
+
+    function appendHit(gfx, hit) {
+      append(gfx, hit);
+    }
 
 
     // API
+
+    /**
+     * Remove hints on the given graphics.
+     *
+     * @param {SVGElement} gfx
+     */
+    this.removeHits = function(gfx) {
+      var hits = all('.djs-hit', gfx);
+
+      forEach$1(hits, remove$1);
+    };
+
+    /**
+     * Create default hit for the given element.
+     *
+     * @param {Element} element
+     * @param {SVGElement} gfx
+     *
+     * @return {SVGElement} created hit
+     */
+    this.createDefaultHit = function(element, gfx) {
+      var waypoints = element.waypoints,
+          isFrame = element.isFrame,
+          boxType;
+
+      if (waypoints) {
+        return this.createWaypointsHit(gfx, waypoints);
+      } else {
+
+        boxType = isFrame ? 'stroke' : 'all';
+
+        return this.createBoxHit(gfx, boxType, {
+          width: element.width,
+          height: element.height
+        });
+      }
+    };
+
+    /**
+     * Create hits for the given waypoints.
+     *
+     * @param {SVGElement} gfx
+     * @param {Point[]} waypoints
+     *
+     * @return {SVGElement}
+     */
+    this.createWaypointsHit = function(gfx, waypoints) {
+
+      var hit = createLine(waypoints);
+
+      applyStyle(hit, 'stroke');
+
+      appendHit(gfx, hit);
+
+      return hit;
+    };
+
+    /**
+     * Create hits for a box.
+     *
+     * @param {SVGElement} gfx
+     * @param {string} type
+     * @param {Object} attrs
+     *
+     * @return {SVGElement}
+     */
+    this.createBoxHit = function(gfx, type, attrs) {
+
+      attrs = assign$1({
+        x: 0,
+        y: 0
+      }, attrs);
+
+      var hit = create$1('rect');
+
+      applyStyle(hit, type);
+
+      attr(hit, attrs);
+
+      appendHit(gfx, hit);
+
+      return hit;
+    };
+
+    /**
+     * Update default hit of the element.
+     *
+     * @param {Element} element
+     * @param {SVGElement} gfx
+     *
+     * @return {SVGElement} updated hit
+     */
+    this.updateDefaultHit = function(element, gfx) {
+
+      var hit = query('.djs-hit', gfx);
+
+      if (!hit) {
+        return;
+      }
+
+      if (element.waypoints) {
+        updateLine(hit, element.waypoints);
+      } else {
+        attr(hit, {
+          width: element.width,
+          height: element.height
+        });
+      }
+
+      return hit;
+    };
 
     this.fire = fire;
 
@@ -2156,7 +2634,7 @@
    * @event element.hover
    *
    * @type {Object}
-   * @property {djs.model.Base} element
+   * @property {Element} element
    * @property {SVGElement} gfx
    * @property {Event} originalEvent
    */
@@ -2167,7 +2645,7 @@
    * @event element.out
    *
    * @type {Object}
-   * @property {djs.model.Base} element
+   * @property {Element} element
    * @property {SVGElement} gfx
    * @property {Event} originalEvent
    */
@@ -2178,7 +2656,7 @@
    * @event element.click
    *
    * @type {Object}
-   * @property {djs.model.Base} element
+   * @property {Element} element
    * @property {SVGElement} gfx
    * @property {Event} originalEvent
    */
@@ -2189,7 +2667,7 @@
    * @event element.dblclick
    *
    * @type {Object}
-   * @property {djs.model.Base} element
+   * @property {Element} element
    * @property {SVGElement} gfx
    * @property {Event} originalEvent
    */
@@ -2200,7 +2678,7 @@
    * @event element.mousedown
    *
    * @type {Object}
-   * @property {djs.model.Base} element
+   * @property {Element} element
    * @property {SVGElement} gfx
    * @property {Event} originalEvent
    */
@@ -2211,7 +2689,7 @@
    * @event element.mouseup
    *
    * @type {Object}
-   * @property {djs.model.Base} element
+   * @property {Element} element
    * @property {SVGElement} gfx
    * @property {Event} originalEvent
    */
@@ -2223,29 +2701,83 @@
    * @event element.contextmenu
    *
    * @type {Object}
-   * @property {djs.model.Base} element
+   * @property {Element} element
    * @property {SVGElement} gfx
    * @property {Event} originalEvent
    */
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var InteractionEventsModule = {
     __init__: [ 'interactionEvents' ],
     interactionEvents: [ 'type', InteractionEvents ]
   };
 
   /**
+   * @typedef {import('../model/Types').Connection} Connection
+   * @typedef {import('../model/Types').Element} Element
+   * @typedef {import('../model/Types').Shape} Shape
+   *
+   * @typedef {import('../../type/Types').Rect} Rect
+   *
+   * @typedef { {
+   *   allShapes: Record<string, Shape>,
+   *   allConnections: Record<string, Connection>,
+   *   topLevel: Record<string, Element>,
+   *   enclosedConnections: Record<string, Connection>,
+   *   enclosedElements: Record<string, Element>
+   * } } Closure
+   */
+
+  /**
+   * Get parent elements.
+   *
+   * @param {Element[]} elements
+   *
+   * @return {Element[]}
+   */
+  function getParents(elements) {
+
+    // find elements that are not children of any other elements
+    return filter(elements, function(element) {
+      return !find(elements, function(e) {
+        return e !== element && getParent(element, e);
+      });
+    });
+  }
+
+
+  function getParent(element, parent) {
+    if (!parent) {
+      return;
+    }
+
+    if (element === parent) {
+      return parent;
+    }
+
+    if (!element.parent) {
+      return;
+    }
+
+    return getParent(element.parent, parent);
+  }
+
+
+  /**
    * Adds an element to a collection and returns true if the
    * element was added.
    *
-   * @param {Array<Object>} elements
-   * @param {Object} e
-   * @param {Boolean} unique
+   * @param {Object[]} elements
+   * @param {Object} element
+   * @param {boolean} [unique]
    */
-  function add(elements, e, unique) {
-    var canAdd = !unique || elements.indexOf(e) === -1;
+  function add$1(elements, element, unique) {
+    var canAdd = !unique || elements.indexOf(element) === -1;
 
     if (canAdd) {
-      elements.push(e);
+      elements.push(element);
     }
 
     return canAdd;
@@ -2258,23 +2790,23 @@
    *
    * Recurse into all elements that are returned by `fn`.
    *
-   * @param  {Object|Array<Object>} elements
-   * @param  {Function} fn iterator function called with (element, index, recursionDepth)
-   * @param  {Number} [depth] maximum recursion depth
+   * @param {Element|Element[]} elements
+   * @param {(element: Element, index: number, depth: number) => Element[] | boolean | undefined} fn
+   * @param {number} [depth] maximum recursion depth
    */
   function eachElement(elements, fn, depth) {
 
     depth = depth || 0;
 
-    if (!isArray(elements)) {
+    if (!isArray$3(elements)) {
       elements = [ elements ];
     }
 
-    forEach(elements, function(s, i) {
-      var filter$$1 = fn(s, i, depth);
+    forEach$1(elements, function(s, i) {
+      var filter = fn(s, i, depth);
 
-      if (isArray(filter$$1) && filter$$1.length) {
-        eachElement(filter$$1, fn, depth + 1);
+      if (isArray$3(filter) && filter.length) {
+        eachElement(filter, fn, depth + 1);
       }
     });
   }
@@ -2283,18 +2815,18 @@
   /**
    * Collects self + child elements up to a given depth from a list of elements.
    *
-   * @param  {djs.model.Base|Array<djs.model.Base>} elements the elements to select the children from
-   * @param  {Boolean} unique whether to return a unique result set (no duplicates)
-   * @param  {Number} maxDepth the depth to search through or -1 for infinite
+   * @param {Element|Element[]} elements the elements to select the children from
+   * @param {boolean} unique whether to return a unique result set (no duplicates)
+   * @param {number} maxDepth the depth to search through or -1 for infinite
    *
-   * @return {Array<djs.model.Base>} found elements
+   * @return {Element[]} found elements
    */
   function selfAndChildren(elements, unique, maxDepth) {
     var result = [],
         processedChildren = [];
 
     eachElement(elements, function(element, i, depth) {
-      add(result, element, unique);
+      add$1(result, element, unique);
 
       var children = element.children;
 
@@ -2302,7 +2834,7 @@
       if (maxDepth === -1 || depth < maxDepth) {
 
         // children exist && children not yet processed
-        if (children && add(processedChildren, children, unique)) {
+        if (children && add$1(processedChildren, children, unique)) {
           return children;
         }
       }
@@ -2315,10 +2847,10 @@
   /**
    * Return self + ALL children for a number of elements
    *
-   * @param  {Array<djs.model.Base>} elements to query
-   * @param  {Boolean} allowDuplicates to allow duplicates in the result set
+   * @param {Element[]} elements to query
+   * @param {boolean} [allowDuplicates] to allow duplicates in the result set
    *
-   * @return {Array<djs.model.Base>} the collected elements
+   * @return {Element[]} the collected elements
    */
   function selfAndAllChildren(elements, allowDuplicates) {
     return selfAndChildren(elements, !allowDuplicates, -1);
@@ -2329,15 +2861,15 @@
    * Gets the the closure for all selected elements,
    * their enclosed children and connections.
    *
-   * @param {Array<djs.model.Base>} elements
-   * @param {Boolean} [isTopLevel=true]
-   * @param {Object} [existingClosure]
+   * @param {Element[]} elements
+   * @param {boolean} [isTopLevel=true]
+   * @param {Closure} [closure]
    *
-   * @return {Object} newClosure
+   * @return {Closure} newClosure
    */
   function getClosure(elements, isTopLevel, closure) {
 
-    if (isUndefined(isTopLevel)) {
+    if (isUndefined$1(isTopLevel)) {
       isTopLevel = true;
     }
 
@@ -2379,16 +2911,18 @@
       enclosedElements[element.id] = element;
 
       if (element.waypoints) {
+
         // remember connection
         enclosedConnections[element.id] = allConnections[element.id] = element;
       } else {
+
         // remember shape
         allShapes[element.id] = element;
 
         // remember all connections
-        forEach(element.incoming, handleConnection);
+        forEach$1(element.incoming, handleConnection);
 
-        forEach(element.outgoing, handleConnection);
+        forEach$1(element.outgoing, handleConnection);
 
         // recurse into children
         return element.children;
@@ -2410,14 +2944,16 @@
    * Returns the surrounding bbox for all elements in
    * the array or the element primitive.
    *
-   * @param {Array<djs.model.Shape>|djs.model.Shape} elements
-   * @param {Boolean} stopRecursion
+   * @param {Element|Element[]} elements
+   * @param {boolean} [stopRecursion=false]
+   *
+   * @return {Rect}
    */
   function getBBox(elements, stopRecursion) {
 
     stopRecursion = !!stopRecursion;
-    if (!isArray(elements)) {
-      elements = [elements];
+    if (!isArray$3(elements)) {
+      elements = [ elements ];
     }
 
     var minX,
@@ -2425,7 +2961,7 @@
         maxX,
         maxY;
 
-    forEach(elements, function(element) {
+    forEach$1(elements, function(element) {
 
       // If element is a connection the bbox must be computed first
       var bbox = element;
@@ -2470,16 +3006,16 @@
    *   * If only bbox.x or bbox.y is specified, method return all elements with
    *     e.x > bbox.x or e.y > bbox.y
    *
-   * @param {Array<djs.model.Shape>} elements List of Elements to search through
-   * @param {djs.model.Shape} bbox the enclosing bbox.
+   * @param {Element[]} elements List of Elements to search through
+   * @param {Rect} bbox the enclosing bbox.
    *
-   * @return {Array<djs.model.Shape>} enclosed elements
+   * @return {Element[]} enclosed elements
    */
   function getEnclosedElements(elements, bbox) {
 
     var filteredElements = {};
 
-    forEach(elements, function(element) {
+    forEach$1(elements, function(element) {
 
       var e = element;
 
@@ -2508,7 +3044,13 @@
     return filteredElements;
   }
 
-
+  /**
+   * Get the element's type
+   *
+   * @param {Element} element
+   *
+   * @return {'connection' | 'shape' | 'root'}
+   */
   function getType(element) {
 
     if ('waypoints' in element) {
@@ -2522,15 +3064,29 @@
     return 'root';
   }
 
+  /**
+   * @param {Element} element
+   *
+   * @return {boolean}
+   */
+  function isFrameElement(element) {
+    return !!(element && element.isFrame);
+  }
 
   // helpers ///////////////////////////////
 
   function copyObject(src1, src2) {
-    return assign({}, src1 || {}, src2 || {});
+    return assign$1({}, src1 || {}, src2 || {});
   }
 
-  var LOW_PRIORITY$1 = 500;
+  var LOW_PRIORITY$7 = 500;
 
+  /**
+   * @typedef {import('../../model/Types').Element} Element
+   *
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../../draw/Styles').default} Styles
+   */
 
   /**
    * @class
@@ -2540,9 +3096,8 @@
    *
    * @param {EventBus} eventBus
    * @param {Styles} styles
-   * @param {ElementRegistry} elementRegistry
    */
-  function Outline(eventBus, styles, elementRegistry) {
+  function Outline(eventBus, styles) {
 
     this.offset = 6;
 
@@ -2551,11 +3106,12 @@
     var self = this;
 
     function createOutline(gfx, bounds) {
-      var outline = create('rect');
+      var outline = create$1('rect');
 
-      attr$1(outline, assign({
+      attr(outline, assign$1({
         x: 10,
         y: 10,
+        rx: 4,
         width: 100,
         height: 100
       }, OUTLINE_STYLE));
@@ -2567,14 +3123,14 @@
 
     // A low priortity is necessary, because outlines of labels have to be updated
     // after the label bounds have been updated in the renderer.
-    eventBus.on([ 'shape.added', 'shape.changed' ], LOW_PRIORITY$1, function(event) {
+    eventBus.on([ 'shape.added', 'shape.changed' ], LOW_PRIORITY$7, function(event) {
       var element = event.element,
           gfx = event.gfx;
 
       var outline = query('.djs-outline', gfx);
 
       if (!outline) {
-        outline = createOutline(gfx, element);
+        outline = createOutline(gfx);
       }
 
       self.updateShapeOutline(outline, element);
@@ -2587,7 +3143,7 @@
       var outline = query('.djs-outline', gfx);
 
       if (!outline) {
-        outline = createOutline(gfx, element);
+        outline = createOutline(gfx);
       }
 
       self.updateConnectionOutline(outline, element);
@@ -2599,12 +3155,12 @@
    * Updates the outline of a shape respecting the dimension of the
    * element and an outline offset.
    *
-   * @param  {SVGElement} outline
-   * @param  {djs.model.Base} element
+   * @param {SVGElement} outline
+   * @param {Element} element
    */
   Outline.prototype.updateShapeOutline = function(outline, element) {
 
-    attr$1(outline, {
+    attr(outline, {
       x: -this.offset,
       y: -this.offset,
       width: element.width + this.offset * 2,
@@ -2618,14 +3174,14 @@
    * Updates the outline of a connection respecting the bounding box of
    * the connection and an outline offset.
    *
-   * @param  {SVGElement} outline
-   * @param  {djs.model.Base} element
+   * @param {SVGElement} outline
+   * @param {Element} connection
    */
   Outline.prototype.updateConnectionOutline = function(outline, connection) {
 
     var bbox = getBBox(connection);
 
-    attr$1(outline, {
+    attr(outline, {
       x: bbox.x - this.offset,
       y: bbox.y - this.offset,
       width: bbox.width + this.offset * 2,
@@ -2635,25 +3191,36 @@
   };
 
 
-  Outline.$inject = ['eventBus', 'styles', 'elementRegistry'];
+  Outline.$inject = [ 'eventBus', 'styles', 'elementRegistry' ];
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var OutlineModule = {
     __init__: [ 'outline' ],
     outline: [ 'type', Outline ]
   };
 
   /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
+
+  /**
    * A service that offers the current selection in a diagram.
    * Offers the api to control the selection, too.
    *
-   * @class
-   *
-   * @param {EventBus} eventBus the event bus
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
    */
-  function Selection(eventBus) {
+  function Selection(eventBus, canvas) {
 
     this._eventBus = eventBus;
+    this._canvas = canvas;
 
+    /**
+     * @type {Object[]}
+     */
     this._selectedElements = [];
 
     var self = this;
@@ -2663,14 +3230,18 @@
       self.deselect(element);
     });
 
-    eventBus.on([ 'diagram.clear' ], function(e) {
+    eventBus.on([ 'diagram.clear', 'root.set' ], function(e) {
       self.select(null);
     });
   }
 
-  Selection.$inject = [ 'eventBus' ];
+  Selection.$inject = [ 'eventBus', 'canvas' ];
 
-
+  /**
+   * Deselect an element.
+   *
+   * @param {Object} element The element to deselect.
+   */
   Selection.prototype.deselect = function(element) {
     var selectedElements = this._selectedElements;
 
@@ -2685,40 +3256,58 @@
     }
   };
 
-
+  /**
+   * Get the selected elements.
+   *
+   * @return {Object[]} The selected elements.
+   */
   Selection.prototype.get = function() {
     return this._selectedElements;
   };
 
+  /**
+   * Check whether an element is selected.
+   *
+   * @param {Object} element The element.
+   *
+   * @return {boolean} Whether the element is selected.
+   */
   Selection.prototype.isSelected = function(element) {
     return this._selectedElements.indexOf(element) !== -1;
   };
 
 
   /**
-   * This method selects one or more elements on the diagram.
+   * Select one or many elements.
    *
-   * By passing an additional add parameter you can decide whether or not the element(s)
-   * should be added to the already existing selection or not.
-   *
-   * @method Selection#select
-   *
-   * @param  {Object|Object[]} elements element or array of elements to be selected
-   * @param  {boolean} [add] whether the element(s) should be appended to the current selection, defaults to false
+   * @param {Object|Object[]} elements The element(s) to select.
+   * @param {boolean} [add] Whether to add the element(s) to the selected elements.
+   * Defaults to `false`.
    */
   Selection.prototype.select = function(elements, add) {
     var selectedElements = this._selectedElements,
         oldSelection = selectedElements.slice();
 
-    if (!isArray(elements)) {
+    if (!isArray$3(elements)) {
       elements = elements ? [ elements ] : [];
     }
+
+    var canvas = this._canvas;
+
+    var rootElement = canvas.getRootElement();
+
+    elements = elements.filter(function(element) {
+      var elementRoot = canvas.findRoot(element);
+
+      return rootElement === elementRoot;
+    });
 
     // selection may be cleared by passing an empty array or null
     // to the method
     if (add) {
-      forEach(elements, function(element) {
+      forEach$1(elements, function(element) {
         if (selectedElements.indexOf(element) !== -1) {
+
           // already selected
           return;
         } else {
@@ -2732,8 +3321,16 @@
     this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
   };
 
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('./Selection').default} Selection
+   */
+
   var MARKER_HOVER = 'hover',
       MARKER_SELECTED = 'selected';
+
+  var SELECTION_OUTLINE_PADDING = 6;
 
 
   /**
@@ -2744,11 +3341,14 @@
    *
    * Makes elements selectable, too.
    *
-   * @param {EventBus} events
-   * @param {SelectionService} selection
    * @param {Canvas} canvas
+   * @param {EventBus} eventBus
+   * @param {Selection} selection
    */
-  function SelectionVisuals(events, canvas, selection, styles) {
+  function SelectionVisuals(canvas, eventBus, selection) {
+    this._canvas = canvas;
+
+    var self = this;
 
     this._multiSelectionBox = null;
 
@@ -2760,15 +3360,15 @@
       canvas.removeMarker(e, cls);
     }
 
-    events.on('element.hover', function(event) {
+    eventBus.on('element.hover', function(event) {
       addMarker(event.element, MARKER_HOVER);
     });
 
-    events.on('element.out', function(event) {
+    eventBus.on('element.out', function(event) {
       removeMarker(event.element, MARKER_HOVER);
     });
 
-    events.on('selection.changed', function(event) {
+    eventBus.on('selection.changed', function(event) {
 
       function deselect(s) {
         removeMarker(s, MARKER_SELECTED);
@@ -2781,72 +3381,149 @@
       var oldSelection = event.oldSelection,
           newSelection = event.newSelection;
 
-      forEach(oldSelection, function(e) {
+      forEach$1(oldSelection, function(e) {
         if (newSelection.indexOf(e) === -1) {
           deselect(e);
         }
       });
 
-      forEach(newSelection, function(e) {
+      forEach$1(newSelection, function(e) {
         if (oldSelection.indexOf(e) === -1) {
           select(e);
         }
       });
+
+      self._updateSelectionOutline(newSelection);
+    });
+
+
+    eventBus.on('element.changed', function(event) {
+      if (selection.isSelected(event.element)) {
+        self._updateSelectionOutline(selection.get());
+      }
     });
   }
 
   SelectionVisuals.$inject = [
-    'eventBus',
     'canvas',
-    'selection',
-    'styles'
+    'eventBus',
+    'selection'
   ];
 
-  function SelectionBehavior(
-      eventBus, selection, canvas,
-      elementRegistry) {
+  SelectionVisuals.prototype._updateSelectionOutline = function(selection) {
+    var layer = this._canvas.getLayer('selectionOutline');
 
-    eventBus.on('create.end', 500, function(e) {
+    clear(layer);
 
-      // select the created shape after a
-      // successful create operation
-      if (e.context.canExecute) {
-        selection.select(e.context.shape);
+    var enabled = selection.length > 1;
+
+    var container = this._canvas.getContainer();
+
+    classes(container)[enabled ? 'add' : 'remove']('djs-multi-select');
+
+    if (!enabled) {
+      return;
+    }
+
+    var bBox = addSelectionOutlinePadding(getBBox(selection));
+
+    var rect = create$1('rect');
+
+    attr(rect, assign$1({
+      rx: 3
+    }, bBox));
+
+    classes(rect).add('djs-selection-outline');
+
+    append(layer, rect);
+  };
+
+  // helpers //////////
+
+  function addSelectionOutlinePadding(bBox) {
+    return {
+      x: bBox.x - SELECTION_OUTLINE_PADDING,
+      y: bBox.y - SELECTION_OUTLINE_PADDING,
+      width: bBox.width + SELECTION_OUTLINE_PADDING * 2,
+      height: bBox.height + SELECTION_OUTLINE_PADDING * 2
+    };
+  }
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('./Selection').default} Selection
+   */
+
+  /**
+   * @param {EventBus} eventBus
+   * @param {Selection} selection
+   * @param {Canvas} canvas
+   * @param {ElementRegistry} elementRegistry
+   */
+  function SelectionBehavior(eventBus, selection, canvas, elementRegistry) {
+
+    // Select elements on create
+    eventBus.on('create.end', 500, function(event) {
+      var context = event.context,
+          canExecute = context.canExecute,
+          elements = context.elements,
+          hints = context.hints || {},
+          autoSelect = hints.autoSelect;
+
+      if (canExecute) {
+        if (autoSelect === false) {
+
+          // Select no elements
+          return;
+        }
+
+        if (isArray$3(autoSelect)) {
+          selection.select(autoSelect);
+        } else {
+
+          // Select all elements by default
+          selection.select(elements.filter(isShown));
+        }
       }
     });
 
-    eventBus.on('connect.end', 500, function(e) {
+    // Select connection targets on connect
+    eventBus.on('connect.end', 500, function(event) {
+      var context = event.context,
+          connection = context.connection;
 
-      // select the connect end target
-      // after a connect operation
-      if (e.context.canExecute && e.context.target) {
-        selection.select(e.context.target);
+      if (connection) {
+        selection.select(connection);
       }
     });
 
-    eventBus.on('shape.move.end', 500, function(e) {
-      var previousSelection = e.previousSelection || [];
+    // Select shapes on move
+    eventBus.on('shape.move.end', 500, function(event) {
+      var previousSelection = event.previousSelection || [];
 
-      var shape = elementRegistry.get(e.context.shape.id);
+      var shape = elementRegistry.get(event.context.shape.id);
 
-      // make sure at least the main moved element is being
-      // selected after a move operation
-      var inSelection = find(previousSelection, function(selectedShape) {
+      // Always select main shape on move
+      var isSelected = find(previousSelection, function(selectedShape) {
         return shape.id === selectedShape.id;
       });
 
-      if (!inSelection) {
+      if (!isSelected) {
         selection.select(shape);
       }
     });
 
-    // Shift + click selection
+    // Select elements on click
     eventBus.on('element.click', function(event) {
+
+      if (!isPrimaryButton(event)) {
+        return;
+      }
 
       var element = event.element;
 
-      // do not select the root element
-      // or connections
       if (element === canvas.getRootElement()) {
         element = null;
       }
@@ -2854,20 +3531,26 @@
       var isSelected = selection.isSelected(element),
           isMultiSelect = selection.get().length > 1;
 
-      // mouse-event: SELECTION_KEY
-      var add = hasPrimaryModifier(event);
+      // Add to selection if CTRL or SHIFT pressed
+      var add = hasPrimaryModifier(event) || hasSecondaryModifier(event);
 
-      // select OR deselect element in multi selection
       if (isSelected && isMultiSelect) {
         if (add) {
+
+          // Deselect element
           return selection.deselect(element);
         } else {
+
+          // Select element only
           return selection.select(element);
         }
-      } else
-      if (!isSelected) {
+      } else if (!isSelected) {
+
+        // Select element
         selection.select(element, add);
       } else {
+
+        // Deselect element
         selection.deselect(element);
       }
     });
@@ -2880,6 +3563,14 @@
     'elementRegistry'
   ];
 
+
+  function isShown(element) {
+    return !element.hidden;
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var SelectionModule = {
     __init__: [ 'selectionVisuals', 'selectionBehavior' ],
     __depends__: [
@@ -2892,13 +3583,17 @@
   };
 
   /**
+   * @typedef {import('didi').Injector} Injector
+   */
+
+  /**
    * A service that provides rules for certain diagram actions.
    *
    * The default implementation will hook into the {@link CommandStack}
    * to perform the actual rule evaluation. Make sure to provide the
    * `commandStack` service with this module if you plan to use it.
    *
-   * Together with this implementation you may use the {@link RuleProvider}
+   * Together with this implementation you may use the {@link import('./RuleProvider').default}
    * to implement your own rule checkers.
    *
    * This module is ment to be easily replaced, thus the tiny foot print.
@@ -2919,11 +3614,11 @@
    * This implementation will respond with allow unless anyone
    * objects.
    *
-   * @param {String} action the action to be checked
-   * @param {Object} [context] the context to check the action in
+   * @param {string} action The action to be allowed or disallowed.
+   * @param {Object} [context] The context for allowing or disallowing the action.
    *
-   * @return {Boolean} returns true, false or null depending on whether the
-   *                   operation is allowed, not allowed or should be ignored.
+   * @return {boolean|null} Wether the action is allowed. Returns `null` if the action
+   * is to be ignored.
    */
   Rules.prototype.allowed = function(action, context) {
     var allowed = true;
@@ -2938,34 +3633,216 @@
     return allowed === undefined ? true : allowed;
   };
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var RulesModule = {
     __init__: [ 'rules' ],
     rules: [ 'type', Rules ]
   };
 
+  /**
+   * @typedef {import('didi').Injector} Injector
+   *
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
+
+  var HIGH_PRIORITY$5 = 1500;
+
+
+  /**
+   * Browsers may swallow certain events (hover, out ...) if users are to
+   * fast with the mouse.
+   *
+   * @see http://stackoverflow.com/questions/7448468/why-cant-i-reliably-capture-a-mouseout-event
+   *
+   * The fix implemented in this component ensure that we
+   *
+   * 1) have a hover state after a successful drag.move event
+   * 2) have an out event when dragging leaves an element
+   *
+   * @param {ElementRegistry} elementRegistry
+   * @param {EventBus} eventBus
+   * @param {Injector} injector
+   */
+  function HoverFix(elementRegistry, eventBus, injector) {
+
+    var self = this;
+
+    var dragging = injector.get('dragging', false);
+
+    /**
+     * Make sure we are god damn hovering!
+     *
+     * @param {Event} dragging event
+     */
+    function ensureHover(event) {
+
+      if (event.hover) {
+        return;
+      }
+
+      var originalEvent = event.originalEvent;
+
+      var gfx = self._findTargetGfx(originalEvent);
+
+      var element = gfx && elementRegistry.get(gfx);
+
+      if (gfx && element) {
+
+        // 1) cancel current mousemove
+        event.stopPropagation();
+
+        // 2) emit fake hover for new target
+        dragging.hover({ element: element, gfx: gfx });
+
+        // 3) re-trigger move event
+        dragging.move(originalEvent);
+      }
+    }
+
+
+    if (dragging) {
+
+      /**
+       * We wait for a specific sequence of events before
+       * emitting a fake drag.hover event.
+       *
+       * Event Sequence:
+       *
+       * drag.start
+       * drag.move >> ensure we are hovering
+       */
+      eventBus.on('drag.start', function(event) {
+
+        eventBus.once('drag.move', HIGH_PRIORITY$5, function(event) {
+
+          ensureHover(event);
+
+        });
+
+      });
+    }
+
+
+    /**
+     * We make sure that element.out is always fired, even if the
+     * browser swallows an element.out event.
+     *
+     * Event sequence:
+     *
+     * element.hover
+     * (element.out >> sometimes swallowed)
+     * element.hover >> ensure we fired element.out
+     */
+    (function() {
+      var hoverGfx;
+      var hover;
+
+      eventBus.on('element.hover', function(event) {
+
+        // (1) remember current hover element
+        hoverGfx = event.gfx;
+        hover = event.element;
+      });
+
+      eventBus.on('element.hover', HIGH_PRIORITY$5, function(event) {
+
+        // (3) am I on an element still?
+        if (hover) {
+
+          // (4) that is a problem, gotta "simulate the out"
+          eventBus.fire('element.out', {
+            element: hover,
+            gfx: hoverGfx
+          });
+        }
+
+      });
+
+      eventBus.on('element.out', function() {
+
+        // (2) unset hover state if we correctly outed us *GG*
+        hoverGfx = null;
+        hover = null;
+      });
+
+    })();
+
+    this._findTargetGfx = function(event) {
+      var position,
+          target;
+
+      if (!(event instanceof MouseEvent)) {
+        return;
+      }
+
+      position = toPoint(event);
+
+      // damn expensive operation, ouch!
+      target = document.elementFromPoint(position.x, position.y);
+
+      return getGfx(target);
+    };
+
+  }
+
+  HoverFix.$inject = [
+    'elementRegistry',
+    'eventBus',
+    'injector'
+  ];
+
+
+  // helpers /////////////////////
+
+  function getGfx(target) {
+    return closest(target, 'svg, .djs-element', true);
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var HoverFixModule = {
+    __init__: [
+      'hoverFix'
+    ],
+    hoverFix: [ 'type', HoverFix ],
+  };
+
   var CURSOR_CLS_PATTERN = /^djs-cursor-.*$/;
 
+  /**
+   * @param {string} mode
+   */
+  function set(mode) {
+    var classes = classes$1(document.body);
 
-  function set$1(mode) {
-    var classes$$1 = classes(document.body);
-
-    classes$$1.removeMatching(CURSOR_CLS_PATTERN);
+    classes.removeMatching(CURSOR_CLS_PATTERN);
 
     if (mode) {
-      classes$$1.add('djs-cursor-' + mode);
+      classes.add('djs-cursor-' + mode);
     }
   }
 
   function unset() {
-    set$1(null);
+    set(null);
   }
+
+  /**
+   * @typedef {import('../core/EventBus').EventBus} EventBus
+   */
 
   var TRAP_PRIORITY = 5000;
 
   /**
    * Installs a click trap that prevents a ghost click following a dragging operation.
    *
-   * @return {Function} a function to immediately remove the installed trap.
+   * @param {EventBus} eventBus
+   * @param {string} [eventName='element.click']
+   *
+   * @return {() => void} a function to immediately remove the installed trap.
    */
   function install(eventBus, eventName) {
 
@@ -2982,6 +3859,15 @@
     };
   }
 
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
+
+  /**
+   * @param {Rect} bounds
+   * @return {Point}
+   */
   function center(bounds) {
     return {
       x: bounds.x + (bounds.width / 2),
@@ -2990,6 +3876,11 @@
   }
 
 
+  /**
+   * @param {Point} a
+   * @param {Point} b
+   * @return {Point}
+   */
   function delta(a, b) {
     return {
       x: a.x - b.x,
@@ -2997,21 +3888,42 @@
     };
   }
 
-  /* global TouchEvent */
+  /**
+   * Checks if key pressed is one of provided keys.
+   *
+   * @param {string|string[]} keys
+   * @param {KeyboardEvent} event
+   * @return {boolean}
+   */
+  function isKey(keys, event) {
+    keys = isArray$3(keys) ? keys : [ keys ];
 
-  var round = Math.round;
+    return keys.indexOf(event.key) !== -1 || keys.indexOf(event.code) !== -1;
+  }
+
+  var round$8 = Math.round;
+
+  /**
+   * @typedef {import('../../util/Types').Point} Point
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../selection/Selection').default} Selection
+   */
 
   var DRAG_ACTIVE_CLS = 'djs-drag-active';
 
 
-  function preventDefault(event$$1) {
-    event$$1.preventDefault();
+  function preventDefault$1(event) {
+    event.preventDefault();
   }
 
-  function isTouchEvent(event$$1) {
+  function isTouchEvent(event) {
+
     // check for TouchEvent being available first
     // (i.e. not available on desktop Firefox)
-    return typeof TouchEvent !== 'undefined' && event$$1 instanceof TouchEvent;
+    return typeof TouchEvent !== 'undefined' && event instanceof TouchEvent;
   }
 
   function getLength(point) {
@@ -3029,7 +3941,7 @@
    *   * emits life cycle events, namespaced with a prefix assigned
    *     during dragging activation
    *   * sets and restores the cursor
-   *   * sets and restores the selection
+   *   * sets and restores the selection if elements still exist
    *   * ensures there can be only one drag operation active at a time
    *
    * Dragging may be canceled manually by calling {@link Dragging#cancel}
@@ -3068,6 +3980,7 @@
    *
    * @example
    *
+   * ```javascript
    * function MyDragComponent(eventBus, dragging) {
    *
    *   eventBus.on('mydrag.start', function(event) {
@@ -3095,8 +4008,14 @@
    *     });
    *   });
    * }
+   * ```
+   *
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
+   * @param {Selection} selection
+   * @param {ElementRegistry} elementRegistry
    */
-  function Dragging(eventBus, canvas, selection) {
+  function Dragging(eventBus, canvas, selection, elementRegistry) {
 
     var defaultOptions = {
       threshold: 5,
@@ -3127,8 +4046,8 @@
     function fire(type, dragContext) {
       dragContext = dragContext || context;
 
-      var event$$1 = eventBus.createEvent(
-        assign(
+      var event = eventBus.createEvent(
+        assign$1(
           {},
           dragContext.payload,
           dragContext.data,
@@ -3137,21 +4056,29 @@
       );
 
       // default integration
-      if (eventBus.fire('drag.' + type, event$$1) === false) {
+      if (eventBus.fire('drag.' + type, event) === false) {
         return false;
       }
 
-      return eventBus.fire(dragContext.prefix + '.' + type, event$$1);
+      return eventBus.fire(dragContext.prefix + '.' + type, event);
+    }
+
+    function restoreSelection(previousSelection) {
+      var existingSelection = previousSelection.filter(function(element) {
+        return elementRegistry.get(element.id);
+      });
+
+      existingSelection.length && selection.select(existingSelection);
     }
 
     // event listeners
 
-    function move(event$$1, activate) {
+    function move(event, activate) {
       var payload = context.payload,
           displacement = context.displacement;
 
       var globalStart = context.globalStart,
-          globalCurrent = toPoint(event$$1),
+          globalCurrent = toPoint(event),
           globalDelta = delta(globalCurrent, globalStart);
 
       var localStart = context.localStart,
@@ -3165,12 +4092,12 @@
         // fire start event with original
         // starting coordinates
 
-        assign(payload, {
-          x: round(localStart.x + displacement.x),
-          y: round(localStart.y + displacement.y),
+        assign$1(payload, {
+          x: round$8(localStart.x + displacement.x),
+          y: round$8(localStart.y + displacement.y),
           dx: 0,
           dy: 0
-        }, { originalEvent: event$$1 });
+        }, { originalEvent: event });
 
         if (false === fire('start')) {
           return cancel();
@@ -3188,42 +4115,42 @@
 
         // allow custom cursor
         if (context.cursor) {
-          set$1(context.cursor);
+          set(context.cursor);
         }
 
         // indicate dragging via marker on root element
         canvas.addMarker(canvas.getRootElement(), DRAG_ACTIVE_CLS);
       }
 
-      stopPropagation(event$$1);
+      stopPropagation$1(event);
 
       if (context.active) {
 
         // update payload with actual coordinates
-        assign(payload, {
-          x: round(localCurrent.x + displacement.x),
-          y: round(localCurrent.y + displacement.y),
-          dx: round(localDelta.x),
-          dy: round(localDelta.y)
-        }, { originalEvent: event$$1 });
+        assign$1(payload, {
+          x: round$8(localCurrent.x + displacement.x),
+          y: round$8(localCurrent.y + displacement.y),
+          dx: round$8(localDelta.x),
+          dy: round$8(localDelta.y)
+        }, { originalEvent: event });
 
         // emit move event
         fire('move');
       }
     }
 
-    function end(event$$1) {
+    function end(event) {
       var previousContext,
           returnValue = true;
 
       if (context.active) {
 
-        if (event$$1) {
-          context.payload.originalEvent = event$$1;
+        if (event) {
+          context.payload.originalEvent = event;
 
           // suppress original event (click, ...)
           // because we just ended a drag operation
-          stopPropagation(event$$1);
+          stopPropagation$1(event);
         }
 
         // implementations may stop restoring the
@@ -3247,10 +4174,10 @@
     // cancel active drag operation if the user presses
     // the ESC key on the keyboard
 
-    function checkCancel(event$$1) {
+    function checkCancel(event) {
 
-      if (event$$1.which === 27) {
-        preventDefault(event$$1);
+      if (isKey('Escape', event)) {
+        preventDefault$1(event);
 
         cancel();
       }
@@ -3260,7 +4187,7 @@
     // prevent ghost click that might occur after a finished
     // drag and drop session
 
-    function trapClickAndEnd(event$$1) {
+    function trapClickAndEnd(event) {
 
       var untrap;
 
@@ -3275,30 +4202,30 @@
         setTimeout(untrap, 400);
 
         // prevent default action (click)
-        preventDefault(event$$1);
+        preventDefault$1(event);
       }
 
-      end(event$$1);
+      end(event);
     }
 
-    function trapTouch(event$$1) {
-      move(event$$1);
+    function trapTouch(event) {
+      move(event);
     }
 
-    // update the drag events hover (djs.model.Base) and hoverGfx (Snap<SVGElement>)
+    // update the drag events model element (`hover`) and graphical element (`hoverGfx`)
     // properties during hover and out and fire {prefix}.hover and {prefix}.out properties
     // respectively
 
-    function hover(event$$1) {
+    function hover(event) {
       var payload = context.payload;
 
-      payload.hoverGfx = event$$1.gfx;
-      payload.hover = event$$1.element;
+      payload.hoverGfx = event.gfx;
+      payload.hover = event.element;
 
       fire('hover');
     }
 
-    function out(event$$1) {
+    function out(event) {
       fire('out');
 
       var payload = context.payload;
@@ -3326,6 +4253,7 @@
       previousContext = cleanup(restore);
 
       if (wasActive) {
+
         // last event to be fired when all drag operations are done
         // at this point in time no drag operation is in progress anymore
         fire('canceled', previousContext);
@@ -3348,20 +4276,20 @@
       }
 
       // reset dom listeners
-      componentEvent.unbind(document, 'mousemove', move);
+      event.unbind(document, 'mousemove', move);
 
-      componentEvent.unbind(document, 'dragstart', preventDefault);
-      componentEvent.unbind(document, 'selectstart', preventDefault);
+      event.unbind(document, 'dragstart', preventDefault$1);
+      event.unbind(document, 'selectstart', preventDefault$1);
 
-      componentEvent.unbind(document, 'mousedown', endDrag, true);
-      componentEvent.unbind(document, 'mouseup', endDrag, true);
+      event.unbind(document, 'mousedown', endDrag, true);
+      event.unbind(document, 'mouseup', endDrag, true);
 
-      componentEvent.unbind(document, 'keyup', checkCancel);
+      event.unbind(document, 'keyup', checkCancel);
 
-      componentEvent.unbind(document, 'touchstart', trapTouch, true);
-      componentEvent.unbind(document, 'touchcancel', cancel, true);
-      componentEvent.unbind(document, 'touchmove', move, true);
-      componentEvent.unbind(document, 'touchend', end, true);
+      event.unbind(document, 'touchstart', trapTouch, true);
+      event.unbind(document, 'touchcancel', cancel, true);
+      event.unbind(document, 'touchmove', move, true);
+      event.unbind(document, 'touchend', end, true);
 
       eventBus.off('element.hover', hover);
       eventBus.off('element.out', out);
@@ -3373,7 +4301,7 @@
       var previousSelection = context.payload.previousSelection;
 
       if (restore !== false && previousSelection && !selection.get().length) {
-        selection.select(previousSelection);
+        restoreSelection(previousSelection);
       }
 
       previousContext = context;
@@ -3390,11 +4318,11 @@
      * relative to it.
      *
      * @param {MouseEvent|TouchEvent} [event]
-     * @param {Point} [localPosition] actual diagram local position this drag operation should start at
-     * @param {String} prefix
+     * @param {Point} [relativeTo] actual diagram local position this drag operation should start at
+     * @param {string} prefix
      * @param {Object} [options]
      */
-    function init(event$$1, relativeTo, prefix, options) {
+    function init(event$1, relativeTo, prefix, options) {
 
       // only one drag operation may be active, at a time
       if (context) {
@@ -3407,7 +4335,7 @@
         relativeTo = null;
       }
 
-      options = assign({}, defaultOptions, options || {});
+      options = assign$1({}, defaultOptions, options || {});
 
       var data = options.data || {},
           originalEvent,
@@ -3422,15 +4350,15 @@
         endDrag = end;
       }
 
-      if (event$$1) {
-        originalEvent = getOriginal(event$$1) || event$$1;
-        globalStart = toPoint(event$$1);
+      if (event$1) {
+        originalEvent = getOriginal$1(event$1) || event$1;
+        globalStart = toPoint(event$1);
 
-        stopPropagation(event$$1);
+        stopPropagation$1(event$1);
 
         // prevent default browser dragging behavior
         if (originalEvent.type === 'dragstart') {
-          preventDefault(originalEvent);
+          preventDefault$1(originalEvent);
         }
       } else {
         originalEvent = null;
@@ -3445,7 +4373,7 @@
 
       isTouch = isTouchEvent(originalEvent);
 
-      context = assign({
+      context = assign$1({
         prefix: prefix,
         data: data,
         payload: {},
@@ -3462,23 +4390,24 @@
         // add dom listeners
 
         if (isTouch) {
-          componentEvent.bind(document, 'touchstart', trapTouch, true);
-          componentEvent.bind(document, 'touchcancel', cancel, true);
-          componentEvent.bind(document, 'touchmove', move, true);
-          componentEvent.bind(document, 'touchend', end, true);
+          event.bind(document, 'touchstart', trapTouch, true);
+          event.bind(document, 'touchcancel', cancel, true);
+          event.bind(document, 'touchmove', move, true);
+          event.bind(document, 'touchend', end, true);
         } else {
+
           // assume we use the mouse to interact per default
-          componentEvent.bind(document, 'mousemove', move);
+          event.bind(document, 'mousemove', move);
 
           // prevent default browser drag and text selection behavior
-          componentEvent.bind(document, 'dragstart', preventDefault);
-          componentEvent.bind(document, 'selectstart', preventDefault);
+          event.bind(document, 'dragstart', preventDefault$1);
+          event.bind(document, 'selectstart', preventDefault$1);
 
-          componentEvent.bind(document, 'mousedown', endDrag, true);
-          componentEvent.bind(document, 'mouseup', endDrag, true);
+          event.bind(document, 'mousedown', endDrag, true);
+          event.bind(document, 'mouseup', endDrag, true);
         }
 
-        componentEvent.bind(document, 'keyup', checkCancel);
+        event.bind(document, 'keyup', checkCancel);
 
         eventBus.on('element.hover', hover);
         eventBus.on('element.out', out);
@@ -3487,7 +4416,7 @@
       fire('init');
 
       if (options.autoActivate) {
-        move(event$$1, true);
+        move(event$1, true);
       }
     }
 
@@ -3512,124 +4441,113 @@
     };
 
     this.setOptions = function(options) {
-      assign(defaultOptions, options);
+      assign$1(defaultOptions, options);
     };
   }
 
   Dragging.$inject = [
     'eventBus',
     'canvas',
-    'selection'
-  ];
-
-  function getGfx(target) {
-    var node = closest(target, 'svg, .djs-element', true);
-    return node;
-  }
-
-
-  /**
-   * Browsers may swallow the hover event if users are to
-   * fast with the mouse.
-   *
-   * @see http://stackoverflow.com/questions/7448468/why-cant-i-reliably-capture-a-mouseout-event
-   *
-   * The fix implemented in this component ensure that we
-   * have a hover state after a successive drag.move event.
-   *
-   * @param {EventBus} eventBus
-   * @param {Dragging} dragging
-   * @param {ElementRegistry} elementRegistry
-   */
-  function HoverFix(eventBus, dragging, elementRegistry) {
-
-    var self = this;
-
-    // we wait for a specific sequence of events before
-    // emitting a fake drag.hover event.
-    //
-    // Event Sequence:
-    //
-    // drag.start
-    // drag.move
-    // drag.move >> ensure we are hovering
-    //
-    eventBus.on('drag.start', function(event) {
-
-      eventBus.once('drag.move', function() {
-
-        eventBus.once('drag.move', function(event) {
-
-          self.ensureHover(event);
-        });
-      });
-    });
-
-    /**
-     * Make sure we are god damn hovering!
-     *
-     * @param {Event} dragging event
-     */
-    this.ensureHover = function(event) {
-
-      if (event.hover) {
-        return;
-      }
-
-      var originalEvent = event.originalEvent,
-          position,
-          target,
-          element,
-          gfx;
-
-      if (!(originalEvent instanceof MouseEvent)) {
-        return;
-      }
-
-      position = toPoint(originalEvent);
-
-      // damn expensive operation, ouch!
-      target = document.elementFromPoint(position.x, position.y);
-
-      gfx = getGfx(target);
-
-      if (gfx) {
-        element = elementRegistry.get(gfx);
-
-        dragging.hover({ element: element, gfx: gfx });
-      }
-    };
-
-  }
-
-  HoverFix.$inject = [
-    'eventBus',
-    'dragging',
+    'selection',
     'elementRegistry'
   ];
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var DraggingModule = {
-    __init__: [
-      'hoverFix'
-    ],
     __depends__: [
-      SelectionModule
+      HoverFixModule,
+      SelectionModule,
     ],
     dragging: [ 'type', Dragging ],
-    hoverFix: [ 'type', HoverFix ]
   };
 
   /**
-   * Adds support for previews of moving/resizing elements.
+   * SVGs for elements are generated by the {@link GraphicsFactory}.
+   *
+   * This utility gives quick access to the important semantic
+   * parts of an element.
    */
-  function PreviewSupport(elementRegistry, canvas, styles) {
+
+  /**
+   * Returns the visual part of a diagram element.
+   *
+   * @param {SVGElement} gfx
+   *
+   * @return {SVGElement}
+   */
+  function getVisual(gfx) {
+    return gfx.childNodes[0];
+  }
+
+  /**
+   * Returns the children for a given diagram element.
+   *
+   * @param {SVGElement} gfx
+   * @return {SVGElement}
+   */
+  function getChildren(gfx) {
+    return gfx.parentNode.childNodes[1];
+  }
+
+  /**
+   * @typedef {import('../../core/Types').ElementLike} Element
+   * @typedef {import('../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../../draw/Styles').default} Styles
+   */
+
+  var MARKER_TYPES = [
+    'marker-start',
+    'marker-mid',
+    'marker-end'
+  ];
+
+  var NODES_CAN_HAVE_MARKER = [
+    'circle',
+    'ellipse',
+    'line',
+    'path',
+    'polygon',
+    'polyline',
+    'path',
+    'rect'
+  ];
+
+
+  /**
+   * Adds support for previews of moving/resizing elements.
+   *
+   * @param {ElementRegistry} elementRegistry
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
+   * @param {Styles} styles
+   */
+  function PreviewSupport(elementRegistry, eventBus, canvas, styles) {
     this._elementRegistry = elementRegistry;
     this._canvas = canvas;
     this._styles = styles;
+
+    this._clonedMarkers = {};
+
+    var self = this;
+
+    eventBus.on('drag.cleanup', function() {
+      forEach$1(self._clonedMarkers, function(clonedMarker) {
+        remove$1(clonedMarker);
+      });
+
+      self._clonedMarkers = {};
+    });
   }
 
   PreviewSupport.$inject = [
     'elementRegistry',
+    'eventBus',
     'canvas',
     'styles'
   ];
@@ -3638,7 +4556,7 @@
   /**
    * Returns graphics of an element.
    *
-   * @param {djs.model.Base} element
+   * @param {Element} element
    *
    * @return {SVGElement}
    */
@@ -3647,26 +4565,23 @@
   };
 
   /**
-   * Adds a move preview of a given shape to a given svg group.
+   * Adds a move preview of a given shape to a given SVG group.
    *
-   * @param {djs.model.Base} element
-   * @param {SVGElement} group
+   * @param {Element} element The element to be moved.
+   * @param {SVGElement} group The SVG group to add the preview to.
+   * @param {SVGElement} [gfx] The optional graphical element of the element.
    *
-   * @return {SVGElement} dragger
+   * @return {SVGElement} The preview.
    */
-  PreviewSupport.prototype.addDragger = function(shape, group) {
-    var gfx = this.getGfx(shape);
+  PreviewSupport.prototype.addDragger = function(element, group, gfx) {
+    gfx = gfx || this.getGfx(element);
 
-    // clone is not included in tsvg for some reason
-    var dragger = clone(gfx);
+    var dragger = clone$1(gfx);
     var bbox = gfx.getBoundingClientRect();
 
-    // remove markers from connections
-    if (isConnection(shape)) {
-      removeMarkers(dragger);
-    }
+    this._cloneMarkers(getVisual(dragger));
 
-    attr$1(dragger, this._styles.cls('djs-dragger', [], {
+    attr(dragger, this._styles.cls('djs-dragger', [], {
       x: bbox.top,
       y: bbox.left
     }));
@@ -3677,16 +4592,16 @@
   };
 
   /**
-   * Adds a resize preview of a given shape to a given svg group.
+   * Adds a resize preview of a given shape to a given SVG group.
    *
-   * @param {djs.model.Base} element
-   * @param {SVGElement} group
+   * @param {Shape} shape The element to be resized.
+   * @param {SVGElement} group The SVG group to add the preview to.
    *
-   * @return {SVGElement} frame
+   * @return {SVGElement} The preview.
    */
   PreviewSupport.prototype.addFrame = function(shape, group) {
 
-    var frame = create('rect', {
+    var frame = create$1('rect', {
       class: 'djs-resize-overlay',
       width:  shape.width,
       height: shape.height,
@@ -3699,54 +4614,158 @@
     return frame;
   };
 
-
-  // helpers //////////////////////
-
   /**
-   * Removes all svg marker references from an SVG.
+   * Clone all markers referenced by a node and its child nodes.
    *
    * @param {SVGElement} gfx
    */
-  function removeMarkers(gfx) {
+  PreviewSupport.prototype._cloneMarkers = function(gfx) {
+    var self = this;
 
-    if (gfx.children) {
+    if (gfx.childNodes) {
 
-      forEach(gfx.children, function(child) {
+      // TODO: use forEach once we drop PhantomJS
+      for (var i = 0; i < gfx.childNodes.length; i++) {
 
-        // recursion
-        removeMarkers(child);
-
-      });
-
+        // recursively clone markers of child nodes
+        self._cloneMarkers(gfx.childNodes[ i ]);
+      }
     }
 
-    gfx.style.markerStart = '';
-    gfx.style.markerEnd = '';
+    if (!canHaveMarker(gfx)) {
+      return;
+    }
 
+    MARKER_TYPES.forEach(function(markerType) {
+      if (attr(gfx, markerType)) {
+        var marker = getMarker(gfx, markerType, self._canvas.getContainer());
+
+        self._cloneMarker(gfx, marker, markerType);
+      }
+    });
+  };
+
+  /**
+   * Clone marker referenced by an element.
+   *
+   * @param {SVGElement} gfx
+   * @param {SVGElement} marker
+   * @param {string} markerType
+   */
+  PreviewSupport.prototype._cloneMarker = function(gfx, marker, markerType) {
+    var markerId = marker.id;
+
+    var clonedMarker = this._clonedMarkers[ markerId ];
+
+    if (!clonedMarker) {
+      clonedMarker = clone$1(marker);
+
+      var clonedMarkerId = markerId + '-clone';
+
+      clonedMarker.id = clonedMarkerId;
+
+      classes(clonedMarker)
+        .add('djs-dragger')
+        .add('djs-dragger-marker');
+
+      this._clonedMarkers[ markerId ] = clonedMarker;
+
+      var defs = query('defs', this._canvas._svg);
+
+      if (!defs) {
+        defs = create$1('defs');
+
+        append(this._canvas._svg, defs);
+      }
+
+      append(defs, clonedMarker);
+    }
+
+    var reference = idToReference(this._clonedMarkers[ markerId ].id);
+
+    attr(gfx, markerType, reference);
+  };
+
+  // helpers //////////
+
+  /**
+   * Get marker of given type referenced by node.
+   *
+   * @param {HTMLElement} node
+   * @param {string} markerType
+   * @param {HTMLElement} [parentNode]
+   *
+   * @param {HTMLElement}
+   */
+  function getMarker(node, markerType, parentNode) {
+    var id = referenceToId(attr(node, markerType));
+
+    return query('marker#' + id, parentNode || document);
   }
 
   /**
-   * Checks if an element is a connection.
+   * Get ID of fragment within current document from its functional IRI reference.
+   * References may use single or double quotes.
+   *
+   * @param {string} reference
+   *
+   * @return {string}
    */
-  function isConnection(element) {
-    return element.waypoints;
+  function referenceToId(reference) {
+    return reference.match(/url\(['"]?#([^'"]*)['"]?\)/)[1];
   }
 
+  /**
+   * Get functional IRI reference for given ID of fragment within current document.
+   *
+   * @param {string} id
+   *
+   * @return {string}
+   */
+  function idToReference(id) {
+    return 'url(#' + id + ')';
+  }
+
+  /**
+   * Check wether node type can have marker attributes.
+   *
+   * @param {HTMLElement} node
+   *
+   * @return {boolean}
+   */
+  function canHaveMarker(node) {
+    return NODES_CAN_HAVE_MARKER.indexOf(node.nodeName) !== -1;
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var PreviewSupportModule = {
     __init__: [ 'previewSupport' ],
     previewSupport: [ 'type', PreviewSupport ]
   };
 
-  var LOW_PRIORITY$2 = 500,
-      MEDIUM_PRIORITY = 1250,
-      HIGH_PRIORITY = 1500;
+  /**
+   * @typedef {import('../../core/Types').ElementLike} Element
+   * @typedef {import('../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../modeling/Modeling').default} Modeling
+   * @typedef {import('../rules/Rules').default} Rules
+   * @typedef {import('../selection/Selection').default} Selection
+   */
 
-  var round$1 = Math.round;
+  var LOW_PRIORITY$6 = 500,
+      MEDIUM_PRIORITY = 1250,
+      HIGH_PRIORITY$4 = 1500;
+
+  var round$7 = Math.round;
 
   function mid(element) {
     return {
-      x: element.x + round$1(element.width / 2),
-      y: element.y + round$1(element.height / 2)
+      x: element.x + round$7(element.width / 2),
+      y: element.y + round$7(element.height / 2)
     };
   }
 
@@ -3789,7 +4808,7 @@
     // * validatedShapes: a list of shapes that are being checked
     //                    against the rules before and during move
     //
-    eventBus.on('shape.move.start', HIGH_PRIORITY, function(event) {
+    eventBus.on('shape.move.start', HIGH_PRIORITY$4, function(event) {
 
       var context = event.context,
           shape = event.shape,
@@ -3806,7 +4825,7 @@
       shapes = removeNested(shapes);
 
       // attach shapes to drag context
-      assign(context, {
+      assign$1(context, {
         shapes: shapes,
         validatedShapes: shapes,
         shape: shape
@@ -3836,7 +4855,7 @@
     // to let others modify the move event before we update
     // the context
     //
-    eventBus.on('shape.move.move', LOW_PRIORITY$2, function(event) {
+    eventBus.on('shape.move.move', LOW_PRIORITY$6, function(event) {
 
       var context = event.context,
           validatedShapes = context.validatedShapes,
@@ -3870,14 +4889,20 @@
           isAttach = canExecute === 'attach',
           shapes = context.shapes;
 
-      if (!canExecute) {
+      if (canExecute === false) {
         return false;
       }
 
       // ensure we have actual pixel values deltas
       // (important when zoom level was > 1 during move)
-      delta.x = round$1(delta.x);
-      delta.y = round$1(delta.y);
+      delta.x = round$7(delta.x);
+      delta.y = round$7(delta.y);
+
+      if (delta.x === 0 && delta.y === 0) {
+
+        // didn't move
+        return;
+      }
 
       modeling.moveElements(shapes, delta, context.target, {
         primaryShape: context.shape,
@@ -3890,7 +4915,11 @@
 
     eventBus.on('element.mousedown', function(event) {
 
-      var originalEvent = getOriginal(event);
+      if (!isPrimaryButton(event)) {
+        return;
+      }
+
+      var originalEvent = getOriginal$1(event);
 
       if (!originalEvent) {
         throw new Error('must supply DOM mousedown event');
@@ -3899,11 +4928,27 @@
       return start(originalEvent, event.element);
     });
 
-
-    function start(event, element, activate) {
+    /**
+     * Start move.
+     *
+     * @param {MouseEvent|TouchEvent} event
+     * @param {Shape} element
+     * @param {boolean} [activate]
+     * @param {Object} [context]
+     */
+    function start(event, element, activate, context) {
+      if (isObject(activate)) {
+        context = activate;
+        activate = false;
+      }
 
       // do not move connections or the root element
       if (element.waypoints || !element.parent) {
+        return;
+      }
+
+      // ignore non-draggable hits
+      if (classes(event.target).has('djs-hit-no-move')) {
         return;
       }
 
@@ -3914,7 +4959,7 @@
         autoActivate: activate,
         data: {
           shape: element,
-          context: {}
+          context: context || {}
         }
       });
 
@@ -3940,9 +4985,9 @@
    * Return a filtered list of elements that do not contain
    * those nested into others.
    *
-   * @param  {Array<djs.model.Base>} elements
+   * @param {Element[]} elements
    *
-   * @return {Array<djs.model.Base>} filtered
+   * @return {Element[]} filtered
    */
   function removeNested(elements) {
 
@@ -3962,70 +5007,111 @@
   }
 
   /**
-   * @param {<SVGElement>} element
-   * @param {Number} x
-   * @param {Number} y
-   * @param {Number} angle
-   * @param {Number} amount
+   * @param {SVGElement} gfx
+   * @param {number} x
+   * @param {number} y
+   * @param {number} [angle]
+   * @param {number} [amount]
    */
-  function transform$1(gfx, x, y, angle, amount) {
+  function transform(gfx, x, y, angle, amount) {
     var translate = createTransform();
     translate.setTranslate(x, y);
 
     var rotate = createTransform();
-    rotate.setRotate(angle, 0, 0);
+    rotate.setRotate(angle || 0, 0, 0);
 
     var scale = createTransform();
     scale.setScale(amount || 1, amount || 1);
 
-    transform(gfx, [ translate, rotate, scale ]);
+    transform$1(gfx, [ translate, rotate, scale ]);
   }
 
 
   /**
-   * @param {SVGElement} element
-   * @param {Number} x
-   * @param {Number} y
+   * @param {SVGElement} gfx
+   * @param {number} x
+   * @param {number} y
    */
   function translate(gfx, x, y) {
     var translate = createTransform();
     translate.setTranslate(x, y);
 
-    transform(gfx, translate);
+    transform$1(gfx, translate);
   }
 
 
   /**
-   * @param {SVGElement} element
-   * @param {Number} angle
+   * @param {SVGElement} gfx
+   * @param {number} angle
    */
   function rotate(gfx, angle) {
     var rotate = createTransform();
     rotate.setRotate(angle, 0, 0);
 
-    transform(gfx, rotate);
+    transform$1(gfx, rotate);
   }
 
-  var LOW_PRIORITY$3 = 499;
+  /**
+   * Checks whether a value is an instance of Connection.
+   *
+   * @param {any} value
+   *
+   * @return {boolean}
+   */
+  function isConnection(value) {
+    return isObject(value) && has$1(value, 'waypoints');
+  }
+
+  /**
+   * Checks whether a value is an instance of Label.
+   *
+   * @param {any} value
+   *
+   * @return {boolean}
+   */
+  function isLabel(value) {
+    return isObject(value) && has$1(value, 'labelTarget');
+  }
+
+  /**
+   * Checks whether a value is an instance of Root.
+   *
+   * @param {any} value
+   *
+   * @return {boolean}
+   */
+  function isRoot(value) {
+    return isObject(value) && isNil(value.parent);
+  }
+
+  /**
+   * @typedef {import('../../model/Types').Element} Element
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../preview-support/PreviewSupport').default} PreviewSupport
+   * @typedef {import('../../draw/Styles').default} Styles
+   */
+
+  var LOW_PRIORITY$5 = 499;
 
   var MARKER_DRAGGING = 'djs-dragging',
-      MARKER_OK = 'drop-ok',
-      MARKER_NOT_OK = 'drop-not-ok',
-      MARKER_NEW_PARENT = 'new-parent',
-      MARKER_ATTACH = 'attach-ok';
+      MARKER_OK$4 = 'drop-ok',
+      MARKER_NOT_OK$4 = 'drop-not-ok',
+      MARKER_NEW_PARENT$2 = 'new-parent',
+      MARKER_ATTACH$2 = 'attach-ok';
 
 
   /**
    * Provides previews for moving shapes when moving.
    *
    * @param {EventBus} eventBus
-   * @param {ElementRegistry} elementRegistry
    * @param {Canvas} canvas
    * @param {Styles} styles
+   * @param {PreviewSupport} previewSupport
    */
   function MovePreview(
-      eventBus, elementRegistry, canvas,
-      styles, previewSupport) {
+      eventBus, canvas, styles, previewSupport) {
 
     function getVisualDragShapes(shapes) {
       var elements = getAllDraggedElements(shapes);
@@ -4038,7 +5124,7 @@
     function getAllDraggedElements(shapes) {
       var allShapes = selfAndAllChildren(shapes, true);
 
-      var allConnections = map(allShapes, function(shape) {
+      var allConnections = map$1(allShapes, function(shape) {
         return (shape.incoming || []).concat(shape.outgoing || []);
       });
 
@@ -4050,7 +5136,7 @@
      */
     function setMarker(element, marker) {
 
-      [ MARKER_ATTACH, MARKER_OK, MARKER_NOT_OK, MARKER_NEW_PARENT ].forEach(function(m) {
+      [ MARKER_ATTACH$2, MARKER_OK$4, MARKER_NOT_OK$4, MARKER_NEW_PARENT$2 ].forEach(function(m) {
 
         if (m === marker) {
           canvas.addMarker(element, m);
@@ -4064,8 +5150,8 @@
      * Make an element draggable.
      *
      * @param {Object} context
-     * @param {djs.model.Base} element
-     * @param {Boolean} addMarker
+     * @param {Element} element
+     * @param {boolean} addMarker
      */
     function makeDraggable(context, element, addMarker) {
 
@@ -4085,8 +5171,7 @@
     // assign a low priority to this handler
     // to let others modify the move context before
     // we draw things
-    eventBus.on('shape.move.start', LOW_PRIORITY$3, function(event) {
-
+    eventBus.on('shape.move.start', LOW_PRIORITY$5, function(event) {
       var context = event.context,
           dragShapes = context.shapes,
           allDraggedElements = context.allDraggedElements;
@@ -4094,12 +5179,13 @@
       var visuallyDraggedShapes = getVisualDragShapes(dragShapes);
 
       if (!context.dragGroup) {
-        var dragGroup = create('g');
-        attr$1(dragGroup, styles.cls('djs-drag-group', [ 'no-events' ]));
+        var dragGroup = create$1('g');
 
-        var defaultLayer = canvas.getDefaultLayer();
+        attr(dragGroup, styles.cls('djs-drag-group', [ 'no-events' ]));
 
-        append(defaultLayer, dragGroup);
+        var activeLayer = canvas.getActiveLayer();
+
+        append(activeLayer, dragGroup);
 
         context.dragGroup = dragGroup;
       }
@@ -4121,7 +5207,7 @@
       }
 
       // add dragging marker
-      forEach(allDraggedElements, function(e) {
+      forEach$1(allDraggedElements, function(e) {
         canvas.addMarker(e, MARKER_DRAGGING);
       });
 
@@ -4132,7 +5218,7 @@
     });
 
     // update previews
-    eventBus.on('shape.move.move', LOW_PRIORITY$3, function(event) {
+    eventBus.on('shape.move.move', LOW_PRIORITY$5, function(event) {
 
       var context = event.context,
           dragGroup = context.dragGroup,
@@ -4142,11 +5228,11 @@
 
       if (target) {
         if (canExecute === 'attach') {
-          setMarker(target, MARKER_ATTACH);
+          setMarker(target, MARKER_ATTACH$2);
         } else if (context.canExecute && target && target.id !== parent.id) {
-          setMarker(target, MARKER_NEW_PARENT);
+          setMarker(target, MARKER_NEW_PARENT$2);
         } else {
-          setMarker(target, context.canExecute ? MARKER_OK : MARKER_NOT_OK);
+          setMarker(target, context.canExecute ? MARKER_OK$4 : MARKER_NOT_OK$4);
         }
       }
 
@@ -4171,12 +5257,12 @@
 
 
       // remove dragging marker
-      forEach(allDraggedElements, function(e) {
+      forEach$1(allDraggedElements, function(e) {
         canvas.removeMarker(e, MARKER_DRAGGING);
       });
 
       if (dragGroup) {
-        clear$1(dragGroup);
+        remove$1(dragGroup);
       }
     });
 
@@ -4187,15 +5273,14 @@
      * Make an element draggable.
      *
      * @param {Object} context
-     * @param {djs.model.Base} element
-     * @param {Boolean} addMarker
+     * @param {Element} element
+     * @param {boolean} addMarker
      */
     this.makeDraggable = makeDraggable;
   }
 
   MovePreview.$inject = [
     'eventBus',
-    'elementRegistry',
     'canvas',
     'styles',
     'previewSupport'
@@ -4212,7 +5297,7 @@
 
     var filteredElements = filter(elements, function(element) {
 
-      if (!isConnection$1(element)) {
+      if (!isConnection(element)) {
         return true;
       } else {
 
@@ -4231,12 +5316,8 @@
   }
 
   /**
-   * Checks if an element is a connection.
+   * @type { import('didi').ModuleDeclaration }
    */
-  function isConnection$1(element) {
-    return element.waypoints;
-  }
-
   var MoveModule = {
     __depends__: [
       InteractionEventsModule,
@@ -4254,14 +5335,21 @@
     movePreview: [ 'type', MovePreview ]
   };
 
+  /**
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../../core/EventBus').default} EventBus
+   *
+   * @typedef {import('../../core/EventBus').Event} Event
+   */
+
   var LOW_PRIORITY$4 = 250;
 
   /**
    * The tool manager acts as middle-man between the available tool's and the Palette,
    * it takes care of making sure that the correct active state is set.
    *
-   * @param  {Object}    eventBus
-   * @param  {Object}    dragging
+   * @param {EventBus} eventBus
+   * @param {Dragging} dragging
    */
   function ToolManager(eventBus, dragging) {
     this._eventBus = eventBus;
@@ -4273,6 +5361,15 @@
 
   ToolManager.$inject = [ 'eventBus', 'dragging' ];
 
+  /**
+   * Register a tool.
+   *
+   * @param {string} name
+   * @param { {
+   *   dragging: string;
+   *   tool: string;
+   * } } events
+   */
   ToolManager.prototype.registerTool = function(name, events) {
     var tools = this._tools;
 
@@ -4324,14 +5421,13 @@
 
     }, this);
 
-    // [ricardo]: add test cases
-    forEach(events, function(event) {
+    // TODO: add test cases
+    forEach$1(events, function(event) {
       eventsToRegister.push(event + '.ended');
       eventsToRegister.push(event + '.canceled');
     });
 
     eventBus.on(eventsToRegister, LOW_PRIORITY$4, function(event) {
-      var originalEvent = event.originalEvent;
 
       // We defer the de-activation of the tool to the .activate phase,
       // so we're able to check if we want to toggle off the current
@@ -4340,14 +5436,34 @@
         return;
       }
 
-      if (originalEvent && closest(originalEvent.target, '.group[data-group="tools"]')) {
+      if (isPaletteClick(event)) {
         return;
       }
 
       this.setActive(null);
     }, this);
+
   };
 
+
+  // helpers ///////////////
+
+  /**
+   * Check if a given event is a palette click event.
+   *
+   * @param {Event} event
+   *
+   * @return {boolean}
+   */
+  function isPaletteClick(event) {
+    var target = event.originalEvent && event.originalEvent.target;
+
+    return target && closest(target, '.group[data-group="tools"]');
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var ToolManagerModule = {
     __depends__: [
       DraggingModule
@@ -4356,15 +5472,111 @@
     toolManager: [ 'type', ToolManager ]
   };
 
+  /**
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
+
+  /**
+   * @param {EventBus} eventBus
+   */
+  function Mouse(eventBus) {
+    var self = this;
+
+    this._lastMoveEvent = null;
+
+    function setLastMoveEvent(mousemoveEvent) {
+      self._lastMoveEvent = mousemoveEvent;
+    }
+
+    eventBus.on('canvas.init', function(context) {
+      var svg = self._svg = context.svg;
+
+      svg.addEventListener('mousemove', setLastMoveEvent);
+    });
+
+    eventBus.on('canvas.destroy', function() {
+      self._lastMouseEvent = null;
+
+      self._svg.removeEventListener('mousemove', setLastMoveEvent);
+    });
+  }
+
+  Mouse.$inject = [ 'eventBus' ];
+
+  Mouse.prototype.getLastMoveEvent = function() {
+    return this._lastMoveEvent || createMoveEvent(0, 0);
+  };
+
+  // helpers //////////
+
+  function createMoveEvent(x, y) {
+    var event = document.createEvent('MouseEvent');
+
+    var screenX = x,
+        screenY = y,
+        clientX = x,
+        clientY = y;
+
+    if (event.initMouseEvent) {
+      event.initMouseEvent(
+        'mousemove',
+        true,
+        true,
+        window,
+        0,
+        screenX,
+        screenY,
+        clientX,
+        clientY,
+        false,
+        false,
+        false,
+        false,
+        0,
+        null
+      );
+    }
+
+    return event;
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var MouseModule = {
+    __init__: [ 'mouse' ],
+    mouse: [ 'type', Mouse ]
+  };
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../mouse/Mouse').default} Mouse
+   * @typedef {import('../selection/Selection').default} Selection
+   * @typedef {import('../tool-manager/ToolManager').default} ToolManager
+   */
+
   var LASSO_TOOL_CURSOR = 'crosshair';
 
-
+  /**
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
+   * @param {Dragging} dragging
+   * @param {ElementRegistry} elementRegistry
+   * @param {Selection} selection
+   * @param {ToolManager} toolManager
+   * @param {Mouse} mouse
+   */
   function LassoTool(
       eventBus, canvas, dragging,
-      elementRegistry, selection, toolManager) {
+      elementRegistry, selection, toolManager,
+      mouse) {
 
     this._selection = selection;
     this._dragging = dragging;
+    this._mouse = mouse;
 
     var self = this;
 
@@ -4376,11 +5588,11 @@
     var visuals = {
 
       create: function(context) {
-        var container = canvas.getDefaultLayer(),
+        var container = canvas.getActiveLayer(),
             frame;
 
-        frame = context.frame = create('rect');
-        attr$1(frame, {
+        frame = context.frame = create$1('rect');
+        attr(frame, {
           class: 'djs-lasso-overlay',
           width:  1,
           height: 1,
@@ -4395,7 +5607,7 @@
         var frame = context.frame,
             bbox = context.bbox;
 
-        attr$1(frame, {
+        attr(frame, {
           x: bbox.x,
           y: bbox.y,
           width: bbox.width,
@@ -4471,12 +5683,14 @@
 
     eventBus.on('element.mousedown', 1500, function(event) {
 
-      if (hasSecondaryModifier(event)) {
-        self.activateLasso(event.originalEvent);
-
-        // we've handled the event
-        return true;
+      if (!hasSecondaryModifier(event)) {
+        return;
       }
+
+      self.activateLasso(event.originalEvent);
+
+      // we've handled the event
+      return true;
     });
   }
 
@@ -4486,7 +5700,8 @@
     'dragging',
     'elementRegistry',
     'selection',
-    'toolManager'
+    'toolManager',
+    'mouse'
   ];
 
 
@@ -4501,10 +5716,11 @@
     });
   };
 
-  LassoTool.prototype.activateSelection = function(event) {
+  LassoTool.prototype.activateSelection = function(event, autoActivate) {
 
     this._dragging.init(event, 'lasso.selection', {
       trapClick: false,
+      autoActivate: autoActivate,
       cursor: LASSO_TOOL_CURSOR,
       data: {
         context: {}
@@ -4520,10 +5736,12 @@
 
   LassoTool.prototype.toggle = function() {
     if (this.isActive()) {
-      this._dragging.cancel();
-    } else {
-      this.activateSelection();
+      return this._dragging.cancel();
     }
+
+    var mouseEvent = this._mouse.getLastMoveEvent();
+
+    this.activateSelection(mouseEvent, !!mouseEvent);
   };
 
   LassoTool.prototype.isActive = function() {
@@ -4597,36 +5815,62 @@
     return bbox;
   }
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var LassoToolModule = {
     __depends__: [
-      ToolManagerModule
+      ToolManagerModule,
+      MouseModule
     ],
     __init__: [ 'lassoTool' ],
     lassoTool: [ 'type', LassoTool ]
   };
 
+  /**
+   * @param {string} str
+   *
+   * @return {string}
+   */
+  function escapeCSS(str) {
+    return CSS.escape(str);
+  }
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   *
+   * @typedef {import('./PaletteProvider').PaletteEntries} PaletteEntries
+   * @typedef {import('./PaletteProvider').default} PaletteProvider
+   */
+
   var TOGGLE_SELECTOR = '.djs-palette-toggle',
       ENTRY_SELECTOR = '.entry',
       ELEMENT_SELECTOR = TOGGLE_SELECTOR + ', ' + ENTRY_SELECTOR;
 
-  var PALETTE_OPEN_CLS = 'open',
+  var PALETTE_PREFIX = 'djs-palette-',
+      PALETTE_SHOWN_CLS = 'shown',
+      PALETTE_OPEN_CLS = 'open',
       PALETTE_TWO_COLUMN_CLS = 'two-column';
+
+  var DEFAULT_PRIORITY$3 = 1000;
 
 
   /**
    * A palette containing modeling elements.
+   *
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
    */
   function Palette(eventBus, canvas) {
 
     this._eventBus = eventBus;
     this._canvas = canvas;
 
-    this._providers = [];
-
     var self = this;
 
-    eventBus.on('tool-manager.update', function(event$$1) {
-      var tool = event$$1.tool;
+    eventBus.on('tool-manager.update', function(event) {
+      var tool = event.tool;
 
       self.updateToolHighlight(tool);
     });
@@ -4639,28 +5883,62 @@
 
       self._diagramInitialized = true;
 
-      // initialize + update once diagram is ready
-      if (self._providers.length) {
-        self._init();
-
-        self._update();
-      }
+      self._rebuild();
     });
   }
 
   Palette.$inject = [ 'eventBus', 'canvas' ];
 
+  /**
+   * @overlord
+   *
+   * Register a palette provider with default priority. See
+   * {@link PaletteProvider} for examples.
+   *
+   * @param {PaletteProvider} provider
+   */
 
   /**
-   * Register a provider with the palette
+   * Register a palette provider with the given priority. See
+   * {@link PaletteProvider} for examples.
    *
-   * @param  {PaletteProvider} provider
+   * @param {number} priority
+   * @param {PaletteProvider} provider
    */
-  Palette.prototype.registerProvider = function(provider) {
-    this._providers.push(provider);
+  Palette.prototype.registerProvider = function(priority, provider) {
+    if (!provider) {
+      provider = priority;
+      priority = DEFAULT_PRIORITY$3;
+    }
 
-    // postpone init / update until diagram is initialized
+    this._eventBus.on('palette.getProviders', priority, function(event) {
+      event.providers.push(provider);
+    });
+
+    this._rebuild();
+  };
+
+
+  /**
+   * Returns the palette entries.
+   *
+   * @return {PaletteEntries}
+   */
+  Palette.prototype.getEntries = function() {
+    var providers = this._getProviders();
+
+    return providers.reduce(addPaletteEntries, {});
+  };
+
+  Palette.prototype._rebuild = function() {
+
     if (!this._diagramInitialized) {
+      return;
+    }
+
+    var providers = this._getProviders();
+
+    if (!providers.length) {
       return;
     }
 
@@ -4671,62 +5949,41 @@
     this._update();
   };
 
-
   /**
-   * Returns the palette entries for a given element
-   *
-   * @return {Array<PaletteEntryDescriptor>} list of entries
-   */
-  Palette.prototype.getEntries = function() {
-
-    var entries = {};
-
-    // loop through all providers and their entries.
-    // group entries by id so that overriding an entry is possible
-    forEach(this._providers, function(provider) {
-      var e = provider.getPaletteEntries();
-
-      forEach(e, function(entry, id) {
-        entries[id] = entry;
-      });
-    });
-
-    return entries;
-  };
-
-
-  /**
-   * Initialize
+   * Initialize palette.
    */
   Palette.prototype._init = function() {
-    var canvas = this._canvas,
-        eventBus = this._eventBus;
 
-    var parent = canvas.getContainer(),
-        container = this._container = domify(Palette.HTML_MARKUP),
-        self = this;
+    var self = this;
 
-    parent.appendChild(container);
+    var eventBus = this._eventBus;
 
-    delegateEvents.bind(container, ELEMENT_SELECTOR, 'click', function(event$$1) {
+    var parentContainer = this._getParentContainer();
 
-      var target = event$$1.delegateTarget;
+    var container = this._container = domify$1(Palette.HTML_MARKUP);
 
-      if (matchesSelector$1(target, TOGGLE_SELECTOR)) {
+    parentContainer.appendChild(container);
+    classes$1(parentContainer).add(PALETTE_PREFIX + PALETTE_SHOWN_CLS);
+
+    delegate.bind(container, ELEMENT_SELECTOR, 'click', function(event) {
+
+      var target = event.delegateTarget;
+
+      if (matches(target, TOGGLE_SELECTOR)) {
         return self.toggle();
       }
 
-      self.trigger('click', event$$1);
+      self.trigger('click', event);
     });
 
     // prevent drag propagation
-    componentEvent.bind(container, 'mousedown', function(event$$1) {
-      event$$1.stopPropagation();
+    event.bind(container, 'mousedown', function(event) {
+      event.stopPropagation();
     });
 
     // prevent drag propagation
-    delegateEvents.bind(container, ENTRY_SELECTOR, 'dragstart', function(event$$1) {
-      self.trigger('dragstart', event$$1);
+    delegate.bind(container, ENTRY_SELECTOR, 'dragstart', function(event) {
+      self.trigger('dragstart', event);
     });
 
     eventBus.on('canvas.resized', this._layoutChanged, this);
@@ -4736,10 +5993,25 @@
     });
   };
 
+  Palette.prototype._getProviders = function(id) {
+
+    var event = this._eventBus.createEvent({
+      type: 'palette.getProviders',
+      providers: []
+    });
+
+    this._eventBus.fire(event);
+
+    return event.providers;
+  };
+
   /**
    * Update palette state.
    *
-   * @param  {Object} [state] { open, twoColumn }
+   * @param { {
+   *   open?: boolean;
+   *   twoColumn?: boolean;
+   * } } [state]
    */
   Palette.prototype._toggleState = function(state) {
 
@@ -4752,7 +6024,8 @@
 
     var twoColumn;
 
-    var cls = classes(container);
+    var cls = classes$1(container),
+        parentCls = classes$1(parent);
 
     if ('twoColumn' in state) {
       twoColumn = state.twoColumn;
@@ -4762,9 +6035,11 @@
 
     // always update two column
     cls.toggle(PALETTE_TWO_COLUMN_CLS, twoColumn);
+    parentCls.toggle(PALETTE_PREFIX + PALETTE_TWO_COLUMN_CLS, twoColumn);
 
     if ('open' in state) {
       cls.toggle(PALETTE_OPEN_CLS, state.open);
+      parentCls.toggle(PALETTE_PREFIX + PALETTE_OPEN_CLS, state.open);
     }
 
     eventBus.fire('palette.changed', {
@@ -4778,15 +6053,17 @@
     var entriesContainer = query('.djs-palette-entries', this._container),
         entries = this._entries = this.getEntries();
 
-    clear(entriesContainer);
+    clear$1(entriesContainer);
 
-    forEach(entries, function(entry, id) {
+    forEach$1(entries, function(entry, id) {
 
       var grouping = entry.group || 'default';
 
-      var container = query('[data-group=' + grouping + ']', entriesContainer);
+      var container = query('[data-group=' + escapeCSS(grouping) + ']', entriesContainer);
       if (!container) {
-        container = domify('<div class="group" data-group="' + grouping + '"></div>');
+        container = domify$1('<div class="group"></div>');
+        attr$1(container, 'data-group', grouping);
+
         entriesContainer.appendChild(container);
       }
 
@@ -4796,22 +6073,25 @@
           '<div class="entry" draggable="true"></div>');
 
 
-      var control = domify(html);
+      var control = domify$1(html);
       container.appendChild(control);
 
       if (!entry.separator) {
-        attr(control, 'data-action', id);
+        attr$1(control, 'data-action', id);
 
         if (entry.title) {
-          attr(control, 'title', entry.title);
+          attr$1(control, 'title', entry.title);
         }
 
         if (entry.className) {
-          addClasses(control, entry.className);
+          addClasses$1(control, entry.className);
         }
 
         if (entry.imageUrl) {
-          control.appendChild(domify('<img src="' + entry.imageUrl + '">'));
+          var image = domify$1('<img>');
+          attr$1(image, 'src', entry.imageUrl);
+
+          control.appendChild(image);
         }
       }
     });
@@ -4824,21 +6104,37 @@
   /**
    * Trigger an action available on the palette
    *
-   * @param  {String} action
-   * @param  {Event} event
+   * @param {string} action
+   * @param {Event} event
+   * @param {boolean} [autoActivate=false]
    */
-  Palette.prototype.trigger = function(action, event$$1, autoActivate) {
-    var entries = this._entries,
-        entry,
-        handler,
+  Palette.prototype.trigger = function(action, event, autoActivate) {
+    var entry,
         originalEvent,
-        button = event$$1.delegateTarget || event$$1.target;
+        button = event.delegateTarget || event.target;
 
     if (!button) {
-      return event$$1.preventDefault();
+      return event.preventDefault();
     }
 
-    entry = entries[attr(button, 'data-action')];
+    entry = attr$1(button, 'data-action');
+    originalEvent = event.originalEvent || event;
+
+    return this.triggerEntry(entry, action, originalEvent, autoActivate);
+  };
+
+  /**
+   * @param {string} entryId
+   * @param {string} action
+   * @param {Event} event
+   * @param {boolean} [autoActivate=false]
+   */
+  Palette.prototype.triggerEntry = function(entryId, action, event, autoActivate) {
+    var entries = this._entries,
+        entry,
+        handler;
+
+    entry = entries[entryId];
 
     // when user clicks on the palette and not on an action
     if (!entry) {
@@ -4847,21 +6143,23 @@
 
     handler = entry.action;
 
-    originalEvent = event$$1.originalEvent || event$$1;
+    if (this._eventBus.fire('palette.trigger', { entry, event }) === false) {
+      return;
+    }
 
     // simple action (via callback function)
     if (isFunction(handler)) {
       if (action === 'click') {
-        handler(originalEvent, autoActivate);
+        return handler(event, autoActivate);
       }
     } else {
       if (handler[action]) {
-        handler[action](originalEvent, autoActivate);
+        return handler[action](event, autoActivate);
       }
     }
 
     // silence other actions
-    event$$1.preventDefault();
+    event.preventDefault();
   };
 
   Palette.prototype._layoutChanged = function() {
@@ -4871,10 +6169,10 @@
   /**
    * Do we need to collapse to two columns?
    *
-   * @param {Number} availableHeight
-   * @param {Object} entries
+   * @param {number} availableHeight
+   * @param {PaletteEntries} entries
    *
-   * @return {Boolean}
+   * @return {boolean}
    */
   Palette.prototype._needsCollapse = function(availableHeight, entries) {
 
@@ -4889,26 +6187,26 @@
   };
 
   /**
-   * Close the palette
+   * Close the palette.
    */
   Palette.prototype.close = function() {
-
     this._toggleState({
       open: false,
       twoColumn: false
     });
   };
 
-
   /**
-   * Open the palette
+   * Open the palette.
    */
   Palette.prototype.open = function() {
     this._toggleState({ open: true });
   };
 
-
-  Palette.prototype.toggle = function(open) {
+  /**
+   * Toggle the palette.
+   */
+  Palette.prototype.toggle = function() {
     if (this.isOpen()) {
       this.close();
     } else {
@@ -4916,10 +6214,18 @@
     }
   };
 
+  /**
+   * @param {string} tool
+   *
+   * @return {boolean}
+   */
   Palette.prototype.isActiveTool = function(tool) {
     return tool && this._activeTool === tool;
   };
 
+  /**
+   * @param {string} name
+   */
   Palette.prototype.updateToolHighlight = function(name) {
     var entriesContainer,
         toolsContainer;
@@ -4932,14 +6238,14 @@
 
     toolsContainer = this._toolsContainer;
 
-    forEach(toolsContainer.children, function(tool) {
+    forEach$1(toolsContainer.children, function(tool) {
       var actionName = tool.getAttribute('data-action');
 
       if (!actionName) {
         return;
       }
 
-      var toolClasses = classes(tool);
+      var toolClasses = classes$1(tool);
 
       actionName = actionName.replace('-tool', '');
 
@@ -4953,26 +6259,28 @@
 
 
   /**
-   * Return true if the palette is opened.
+   * Return `true` if the palette is opened.
    *
    * @example
    *
+   * ```javascript
    * palette.open();
    *
    * if (palette.isOpen()) {
    *   // yes, we are open
    * }
+   * ```
    *
-   * @return {boolean} true if palette is opened
+   * @return {boolean}
    */
   Palette.prototype.isOpen = function() {
-    return classes(this._container).has(PALETTE_OPEN_CLS);
+    return classes$1(this._container).has(PALETTE_OPEN_CLS);
   };
 
   /**
-   * Get container the palette lives in.
+   * Get parent element of palette.
    *
-   * @return {Element}
+   * @return {HTMLElement}
    */
   Palette.prototype._getParentContainer = function() {
     return this._canvas.getContainer();
@@ -4990,132 +6298,171 @@
 
   // helpers //////////////////////
 
-  function addClasses(element, classNames) {
+  function addClasses$1(element, classNames) {
 
-    var classes$$1 = classes(element);
+    var classes = classes$1(element);
 
-    var actualClassNames = isArray(classNames) ? classNames : classNames.split(/\s+/g);
+    var actualClassNames = isArray$3(classNames) ? classNames : classNames.split(/\s+/g);
     actualClassNames.forEach(function(cls) {
-      classes$$1.add(cls);
+      classes.add(cls);
     });
   }
 
+  function addPaletteEntries(entries, provider) {
+
+    var entriesOrUpdater = provider.getPaletteEntries();
+
+    if (isFunction(entriesOrUpdater)) {
+      return entriesOrUpdater(entries);
+    }
+
+    forEach$1(entriesOrUpdater, function(entry, id) {
+      entries[id] = entry;
+    });
+
+    return entries;
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var PaletteModule = {
     __init__: [ 'palette' ],
     palette: [ 'type', Palette ]
   };
 
-  var LOW_PRIORITY$5 = 750;
-
-  var MARKER_OK$1 = 'drop-ok',
-      MARKER_NOT_OK$1 = 'drop-not-ok',
+  var MARKER_OK$3 = 'drop-ok',
+      MARKER_NOT_OK$3 = 'drop-not-ok',
       MARKER_ATTACH$1 = 'attach-ok',
       MARKER_NEW_PARENT$1 = 'new-parent';
 
+  /**
+   * @typedef {import('../../core/Types').ElementLike} Element
+   * @typedef {import('../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../util/Types').Point} Point
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../modeling/Modeling').default} Modeling
+   * @typedef {import('../rules/Rules').default} Rules
+   */
+
+  var PREFIX$1 = 'create';
+
+  var HIGH_PRIORITY$3 = 2000;
+
 
   /**
-   * Adds the ability to create new shapes via drag and drop.
+   * Create new elements through drag and drop.
    *
-   * Create must be activated via {@link Create#start}. From that
-   * point on, create will invoke `shape.create` and `shape.attach`
-   * rules to query whether or not creation or attachment on a certain
-   * position is allowed.
-   *
-   * If create or attach is allowed and a source is given, Create it
-   * will invoke `connection.create` rules to query whether a connection
-   * can be drawn between source and new shape. During rule evaluation
-   * the target is not attached yet, however
-   *
-   *   hints = { targetParent, targetAttach }
-   *
-   * are passed to the evaluating rules.
-   *
-   *
-   * ## Rule Return Values
-   *
-   * Return values interpreted from  `shape.create`:
-   *
-   *   * `true`: create is allowed
-   *   * `false`: create is disallowed
-   *   * `null`: create is not allowed but should be ignored visually
-   *
-   * Return values interpreted from `shape.attach`:
-   *
-   *   * `true`: attach is allowed
-   *   * `Any`: attach is allowed with the constraints
-   *   * `false`: attach is disallowed
-   *
-   * Return values interpreted from `connection.create`:
-   *
-   *   * `true`: connection can be created
-   *   * `Any`: connection with the given attributes can be created
-   *   * `false`: connection can't be created
-   *
-   *
-   * @param {EventBus} eventBus
-   * @param {Dragging} dragging
-   * @param {Rules} rules
-   * @param {Modeling} modeling
    * @param {Canvas} canvas
-   * @param {Styles} styles
-   * @param {GraphicsFactory} graphicsFactory
+   * @param {Dragging} dragging
+   * @param {EventBus} eventBus
+   * @param {Modeling} modeling
+   * @param {Rules} rules
    */
-  function Create(
-      eventBus, dragging, rules, modeling,
-      canvas, styles, graphicsFactory) {
+  function Create$1(
+      canvas,
+      dragging,
+      eventBus,
+      modeling,
+      rules
+  ) {
 
-    // rules
+    // rules //////////
 
-    function canCreate(shape, target, source, position) {
-
+    /**
+     * Check wether elements can be created.
+     *
+     * @param {Element[]} elements
+     * @param {Shape} target
+     * @param {Point} position
+     * @param {Element} [source]
+     *
+     * @return {boolean|null|Object}
+     */
+    function canCreate(elements, target, position, source, hints) {
       if (!target) {
         return false;
       }
 
-      var ctx = {
-        source: source,
-        shape: shape,
-        target: target,
-        position: position
-      };
+      // ignore child elements and external labels
+      elements = filter(elements, function(element) {
+        var labelTarget = element.labelTarget;
 
-      var create$$1,
-          attach,
-          connect;
+        return !element.parent && !(isLabel(element) && elements.indexOf(labelTarget) !== -1);
+      });
 
-      attach = rules.allowed('shape.attach', ctx);
+      var shape = find(elements, function(element) {
+        return !isConnection(element);
+      });
 
-      if (!attach) {
-        create$$1 = rules.allowed('shape.create', ctx);
-      }
+      var attach = false,
+          connect = false,
+          create = false;
 
-      if (create$$1 || attach) {
-
-        connect = source && rules.allowed('connection.create', {
-          source: source,
-          target: shape,
-          hints: {
-            targetParent: target,
-            targetAttach: attach
-          }
+      // (1) attaching single shapes
+      if (isSingleShape(elements)) {
+        attach = rules.allowed('shape.attach', {
+          position: position,
+          shape: shape,
+          target: target
         });
       }
 
-      if (create$$1 || attach) {
+      if (!attach) {
+
+        // (2) creating elements
+        if (isSingleShape(elements)) {
+          create = rules.allowed('shape.create', {
+            position: position,
+            shape: shape,
+            source: source,
+            target: target
+          });
+        } else {
+          create = rules.allowed('elements.create', {
+            elements: elements,
+            position: position,
+            target: target
+          });
+        }
+
+      }
+
+      var connectionTarget = hints.connectionTarget;
+
+      // (3) appending single shapes
+      if (create || attach) {
+        if (shape && source) {
+          connect = rules.allowed('connection.create', {
+            source: connectionTarget === source ? shape : source,
+            target: connectionTarget === source ? source : shape,
+            hints: {
+              targetParent: target,
+              targetAttach: attach
+            }
+          });
+        }
+
         return {
           attach: attach,
           connect: connect
         };
       }
 
+      // ignore wether or not elements can be created
+      if (create === null || attach === null) {
+        return null;
+      }
+
       return false;
     }
 
-
-    /** set drop marker on an element */
     function setMarker(element, marker) {
-
-      [ MARKER_ATTACH$1, MARKER_OK$1, MARKER_NOT_OK$1, MARKER_NEW_PARENT$1 ].forEach(function(m) {
+      [ MARKER_ATTACH$1, MARKER_OK$3, MARKER_NOT_OK$3, MARKER_NEW_PARENT$1 ].forEach(function(m) {
 
         if (m === marker) {
           canvas.addMarker(element, m);
@@ -5125,89 +6472,47 @@
       });
     }
 
+    // event handling //////////
 
-    // visual helpers
-
-    function createVisual(shape) {
-      var group, preview, visual;
-
-      group = create('g');
-      attr$1(group, styles.cls('djs-drag-group', [ 'no-events' ]));
-
-      append(canvas.getDefaultLayer(), group);
-
-      preview = create('g');
-      classes$1(preview).add('djs-dragger');
-
-      append(group, preview);
-
-      translate(preview, shape.width / -2, shape.height / -2);
-
-      var visualGroup = create('g');
-      classes$1(visualGroup).add('djs-visual');
-
-      append(preview, visualGroup);
-
-      visual = visualGroup;
-
-      // hijack renderer to draw preview
-      graphicsFactory.drawShape(visual, shape);
-
-      return group;
-    }
-
-
-    // event handlers
-
-    eventBus.on('create.move', function(event) {
-
+    eventBus.on([ 'create.move', 'create.hover' ], function(event) {
       var context = event.context,
+          elements = context.elements,
           hover = event.hover,
-          shape = context.shape,
           source = context.source,
-          canExecute;
+          hints = context.hints || {};
+
+      if (!hover) {
+        context.canExecute = false;
+        context.target = null;
+
+        return;
+      }
+
+      ensureConstraints$2(event);
 
       var position = {
         x: event.x,
         y: event.y
       };
 
-      canExecute = context.canExecute = hover && canCreate(shape, hover, source, position);
+      var canExecute = context.canExecute = hover && canCreate(elements, hover, position, source, hints);
 
-      // ignore hover visually if canExecute is null
       if (hover && canExecute !== null) {
         context.target = hover;
 
         if (canExecute && canExecute.attach) {
           setMarker(hover, MARKER_ATTACH$1);
         } else {
-          setMarker(hover, canExecute ? MARKER_NEW_PARENT$1 : MARKER_NOT_OK$1);
+          setMarker(hover, canExecute ? MARKER_NEW_PARENT$1 : MARKER_NOT_OK$3);
         }
       }
     });
 
-    eventBus.on('create.move', LOW_PRIORITY$5, function(event) {
-
-      var context = event.context,
-          shape = context.shape,
-          visual = context.visual;
-
-      // lazy init drag visual once we received the first real
-      // drag move event (this allows us to get the proper canvas local coordinates)
-      if (!visual) {
-        visual = context.visual = createVisual(shape);
-      }
-
-      translate(visual, event.x, event.y);
-    });
-
-
     eventBus.on([ 'create.end', 'create.out', 'create.cleanup' ], function(event) {
-      var context = event.context,
-          target = context.target;
+      var hover = event.hover;
 
-      if (target) {
-        setMarker(target, null);
+      if (hover) {
+        setMarker(hover, null);
       }
     });
 
@@ -5215,95 +6520,309 @@
       var context = event.context,
           source = context.source,
           shape = context.shape,
+          elements = context.elements,
           target = context.target,
           canExecute = context.canExecute,
           attach = canExecute && canExecute.attach,
           connect = canExecute && canExecute.connect,
-          position = {
-            x: event.x,
-            y: event.y
-          };
+          hints = context.hints || {};
 
-      if (!canExecute) {
+      if (canExecute === false || !target) {
         return false;
       }
 
+      ensureConstraints$2(event);
+
+      var position = {
+        x: event.x,
+        y: event.y
+      };
+
       if (connect) {
-        // invoke append if connect is set via rules
         shape = modeling.appendShape(source, shape, position, target, {
           attach: attach,
-          connection: connect === true ? {} : connect
+          connection: connect === true ? {} : connect,
+          connectionTarget: hints.connectionTarget
         });
       } else {
-        // invoke create, if connect is not set
-        shape = modeling.createShape(shape, position, target, {
+        elements = modeling.createElements(elements, position, target, assign$1({}, hints, {
           attach: attach
+        }));
+
+        // update shape
+        shape = find(elements, function(element) {
+          return !isConnection(element);
         });
       }
 
-      // make sure we provide the actual attached
-      // shape with the context so that selection and
-      // other components can use it right after the create
-      // operation ends
-      context.shape = shape;
+      // update elements and shape
+      assign$1(context, {
+        elements: elements,
+        shape: shape
+      });
+
+      assign$1(event, {
+        elements: elements,
+        shape: shape
+      });
     });
 
+    function cancel() {
+      var context = dragging.context();
 
-    eventBus.on('create.cleanup', function(event) {
-      var context = event.context;
-
-      if (context.visual) {
-        remove$1(context.visual);
+      if (context && context.prefix === PREFIX$1) {
+        dragging.cancel();
       }
+    }
+
+    // cancel on <elements.changed> that is not result of <drag.end>
+    eventBus.on('create.init', function() {
+      eventBus.on('elements.changed', cancel);
+
+      eventBus.once([ 'create.cancel', 'create.end' ], HIGH_PRIORITY$3, function() {
+        eventBus.off('elements.changed', cancel);
+      });
     });
 
-    // API
+    // API //////////
 
-    this.start = function(event, shape, source) {
+    this.start = function(event, elements, context) {
+      if (!isArray$3(elements)) {
+        elements = [ elements ];
+      }
 
-      dragging.init(event, 'create', {
+      var shape = find(elements, function(element) {
+        return !isConnection(element);
+      });
+
+      if (!shape) {
+
+        // at least one shape is required
+        return;
+      }
+
+      context = assign$1({
+        elements: elements,
+        hints: {},
+        shape: shape
+      }, context || {});
+
+      // make sure each element has x and y
+      forEach$1(elements, function(element) {
+        if (!isNumber(element.x)) {
+          element.x = 0;
+        }
+
+        if (!isNumber(element.y)) {
+          element.y = 0;
+        }
+      });
+
+      var visibleElements = filter(elements, function(element) {
+        return !element.hidden;
+      });
+
+      var bbox = getBBox(visibleElements);
+
+      // center elements around cursor
+      forEach$1(elements, function(element) {
+        if (isConnection(element)) {
+          element.waypoints = map$1(element.waypoints, function(waypoint) {
+            return {
+              x: waypoint.x - bbox.x - bbox.width / 2,
+              y: waypoint.y - bbox.y - bbox.height / 2
+            };
+          });
+        }
+
+        assign$1(element, {
+          x: element.x - bbox.x - bbox.width / 2,
+          y: element.y - bbox.y - bbox.height / 2
+        });
+      });
+
+      dragging.init(event, PREFIX$1, {
         cursor: 'grabbing',
         autoActivate: true,
         data: {
           shape: shape,
-          context: {
-            shape: shape,
-            source: source
-          }
+          elements: elements,
+          context: context
         }
       });
     };
   }
 
-  Create.$inject = [
-    'eventBus',
-    'dragging',
-    'rules',
-    'modeling',
+  Create$1.$inject = [
     'canvas',
-    'styles',
-    'graphicsFactory'
+    'dragging',
+    'eventBus',
+    'modeling',
+    'rules'
   ];
 
-  var CreateModule = {
+  // helpers //////////
+
+  function ensureConstraints$2(event) {
+    var context = event.context,
+        createConstraints = context.createConstraints;
+
+    if (!createConstraints) {
+      return;
+    }
+
+    if (createConstraints.left) {
+      event.x = Math.max(event.x, createConstraints.left);
+    }
+
+    if (createConstraints.right) {
+      event.x = Math.min(event.x, createConstraints.right);
+    }
+
+    if (createConstraints.top) {
+      event.y = Math.max(event.y, createConstraints.top);
+    }
+
+    if (createConstraints.bottom) {
+      event.y = Math.min(event.y, createConstraints.bottom);
+    }
+  }
+
+  function isSingleShape(elements) {
+    return elements && elements.length === 1 && !isConnection(elements[ 0 ]);
+  }
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../../core/GraphicsFactory').default} GraphicsFactory
+   * @typedef {import('../preview-support/PreviewSupport').default} PreviewSupport
+   * @typedef {import('../../draw/Styles').default} Styles
+   */
+
+  var LOW_PRIORITY$3 = 750;
+
+  /**
+   * @param {Canvas} canvas
+   * @param {EventBus} eventBus
+   * @param {GraphicsFactory} graphicsFactory
+   * @param {PreviewSupport} previewSupport
+   * @param {Styles} styles
+   */
+  function CreatePreview(
+      canvas,
+      eventBus,
+      graphicsFactory,
+      previewSupport,
+      styles
+  ) {
+    function createDragGroup(elements) {
+      var dragGroup = create$1('g');
+
+      attr(dragGroup, styles.cls('djs-drag-group', [ 'no-events' ]));
+
+      var childrenGfx = create$1('g');
+
+      elements.forEach(function(element) {
+
+        // create graphics
+        var gfx;
+
+        if (element.hidden) {
+          return;
+        }
+
+        if (element.waypoints) {
+          gfx = graphicsFactory._createContainer('connection', childrenGfx);
+
+          graphicsFactory.drawConnection(getVisual(gfx), element);
+        } else {
+          gfx = graphicsFactory._createContainer('shape', childrenGfx);
+
+          graphicsFactory.drawShape(getVisual(gfx), element);
+
+          translate(gfx, element.x, element.y);
+        }
+
+        // add preview
+        previewSupport.addDragger(element, dragGroup, gfx);
+      });
+
+      return dragGroup;
+    }
+
+    eventBus.on('create.move', LOW_PRIORITY$3, function(event) {
+
+      var hover = event.hover,
+          context = event.context,
+          elements = context.elements,
+          dragGroup = context.dragGroup;
+
+      // lazily create previews
+      if (!dragGroup) {
+        dragGroup = context.dragGroup = createDragGroup(elements);
+      }
+
+      var activeLayer;
+
+      if (hover) {
+        if (!dragGroup.parentNode) {
+          activeLayer = canvas.getActiveLayer();
+
+          append(activeLayer, dragGroup);
+        }
+
+        translate(dragGroup, event.x, event.y);
+      } else {
+        remove$1(dragGroup);
+      }
+    });
+
+    eventBus.on('create.cleanup', function(event) {
+      var context = event.context,
+          dragGroup = context.dragGroup;
+
+      if (dragGroup) {
+        remove$1(dragGroup);
+      }
+    });
+  }
+
+  CreatePreview.$inject = [
+    'canvas',
+    'eventBus',
+    'graphicsFactory',
+    'previewSupport',
+    'styles'
+  ];
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var CreateModule$1 = {
     __depends__: [
       DraggingModule,
-      SelectionModule,
-      RulesModule
+      PreviewSupportModule,
+      RulesModule,
+      SelectionModule
     ],
-    create: [ 'type', Create ]
+    __init__: [
+      'create',
+      'createPreview'
+    ],
+    create: [ 'type', Create$1 ],
+    createPreview: [ 'type', CreatePreview ]
   };
 
   /**
    * Util that provides unique IDs.
    *
-   * @class djs.util.IdGenerator
+   * @class
    * @constructor
-   * @memberOf djs.util
    *
    * The ids can be customized via a given prefix and contain a random value to avoid collisions.
    *
-   * @param {String} prefix a prefix to prepend to generated ids (for better readability)
+   * @param {string} [prefix] a prefix to prepend to generated ids (for better readability)
    */
   function IdGenerator(prefix) {
 
@@ -5314,9 +6833,7 @@
   /**
    * Returns a next unique ID.
    *
-   * @method djs.util.IdGenerator#next
-   *
-   * @returns {String} the id
+   * @return {string} the id
    */
   IdGenerator.prototype.next = function() {
     return this._prefix + (++this._counter);
@@ -5325,8 +6842,62 @@
   // document wide unique overlay ids
   var ids = new IdGenerator('ov');
 
-  var LOW_PRIORITY$6 = 500;
+  var LOW_PRIORITY$2 = 500;
 
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   *
+   * @typedef {import('../../model/Types').Element} Element
+   *
+   * @typedef { {
+   *   minZoom?: number,
+   *   maxZoom?: number
+   * } } OverlaysConfigShow
+   *
+   * @typedef { {
+   *   min?: number,
+   *   max?: number
+   * } } OverlaysConfigScale
+   *
+   * @typedef { {
+  *   id: string,
+  *   type: string | null,
+  *   element: Element | string
+  * } & OverlayAttrs } Overlay
+  *
+   * @typedef { {
+   *   html: HTMLElement | string,
+   *   position: {
+   *     top?: number,
+   *     right?: number,
+   *     bottom?: number,
+   *     left?: number
+   *   }
+   * } & OverlaysConfigDefault } OverlayAttrs
+   *
+   * @typedef { {
+   *   html: HTMLElement,
+   *   element: Element,
+   *   overlays: Overlay[]
+   * } } OverlayContainer
+   *
+   * @typedef {{
+   *   defaults?: OverlaysConfigDefault
+   * }} OverlaysConfig
+   *
+   * @typedef { {
+   *  show?: OverlaysConfigShow,
+   *  scale?: OverlaysConfigScale | boolean
+   * } } OverlaysConfigDefault
+   *
+   * @typedef { {
+   *   id?: string;
+   *   element?: Element | string;
+   *   type?: string;
+   * } | string } OverlaysFilter
+   */
 
   /**
    * A service that allows users to attach overlays to diagram elements.
@@ -5335,7 +6906,9 @@
    *
    * @example
    *
+   * ```javascript
    * // add a pink badge on the top left of the shape
+   *
    * overlays.add(someShape, {
    *   position: {
    *     top: -5,
@@ -5363,8 +6936,9 @@
    *   }
    *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
    * });
+   * ```
    *
-   *
+   * ```javascript
    * // remove an overlay
    *
    * var id = overlays.add(...);
@@ -5386,21 +6960,25 @@
    *       }
    *     }
    * }
+   * ```
    *
-   * @param {Object} config
+   * @param {OverlaysConfig} config
    * @param {EventBus} eventBus
    * @param {Canvas} canvas
    * @param {ElementRegistry} elementRegistry
    */
   function Overlays(config, eventBus, canvas, elementRegistry) {
-
     this._eventBus = eventBus;
     this._canvas = canvas;
     this._elementRegistry = elementRegistry;
 
     this._ids = ids;
 
-    this._overlayDefaults = assign({
+    /**
+     * @type {OverlaysConfigDefault}
+     */
+    this._overlayDefaults = assign$1({
+
       // no show constraints
       show: null,
 
@@ -5409,16 +6987,18 @@
     }, config && config.defaults);
 
     /**
-     * Mapping overlayId -> overlay
+     * @type {Map<string, Overlay>}
      */
     this._overlays = {};
 
     /**
-     * Mapping elementId -> overlay container
+     * @type {OverlayContainer[]}
      */
     this._overlayContainers = [];
 
-    // root html element for all overlays
+    /**
+     * @type {HTMLElement}
+     */
     this._overlayRoot = createRoot(canvas.getContainer());
 
     this._init();
@@ -5434,12 +7014,13 @@
 
 
   /**
-   * Returns the overlay with the specified id or a list of overlays
+   * Returns the overlay with the specified ID or a list of overlays
    * for an element with a given type.
    *
    * @example
    *
-   * // return the single overlay with the given id
+   * ```javascript
+   * // return the single overlay with the given ID
    * overlays.get('some-id');
    *
    * // return all overlays for the shape
@@ -5448,16 +7029,13 @@
    * // return all overlays on shape with type 'badge'
    * overlays.get({ element: someShape, type: 'badge' });
    *
-   * // shape can also be specified as id
+   * // shape can also be specified as ID
    * overlays.get({ element: 'element-id', type: 'badge' });
+   * ```
    *
+   * @param {OverlaysFilter} search The filter to be used to find the overlay(s).
    *
-   * @param {Object} search
-   * @param {String} [search.id]
-   * @param {String|djs.model.Base} [search.element]
-   * @param {String} [search.type]
-   *
-   * @return {Object|Array<Object>} the overlay(s)
+   * @return {Overlay|Overlay[]} The overlay(s).
    */
   Overlays.prototype.get = function(search) {
 
@@ -5482,33 +7060,20 @@
     if (search.type) {
       return filter(this._overlays, matchPattern({ type: search.type }));
     } else {
+
       // return single element when searching by id
       return search.id ? this._overlays[search.id] : null;
     }
   };
 
   /**
-   * Adds a HTML overlay to an element.
+   * Adds an HTML overlay to an element.
    *
-   * @param {String|djs.model.Base}   element   attach overlay to this shape
-   * @param {String}                  [type]    optional type to assign to the overlay
-   * @param {Object}                  overlay   the overlay configuration
+   * @param {Element|string} element The element to add the overlay to.
+   * @param {string} [type] An optional type that can be used to filter.
+   * @param {OverlayAttrs} overlay The overlay.
    *
-   * @param {String|DOMElement}       overlay.html                 html element to use as an overlay
-   * @param {Object}                  [overlay.show]               show configuration
-   * @param {Number}                  [overlay.show.minZoom]       minimal zoom level to show the overlay
-   * @param {Number}                  [overlay.show.maxZoom]       maximum zoom level to show the overlay
-   * @param {Object}                  overlay.position             where to attach the overlay
-   * @param {Number}                  [overlay.position.left]      relative to element bbox left attachment
-   * @param {Number}                  [overlay.position.top]       relative to element bbox top attachment
-   * @param {Number}                  [overlay.position.bottom]    relative to element bbox bottom attachment
-   * @param {Number}                  [overlay.position.right]     relative to element bbox right attachment
-   * @param {Boolean|Object}          [overlay.scale=true]         false to preserve the same size regardless of
-   *                                                               diagram zoom
-   * @param {Number}                  [overlay.scale.min]
-   * @param {Number}                  [overlay.scale.max]
-   *
-   * @return {String}                 id that may be used to reference the overlay for update or removal
+   * @return {string} The overlay's ID that can be used to get or remove it.
    */
   Overlays.prototype.add = function(element, type, overlay) {
 
@@ -5535,7 +7100,7 @@
 
     var id = this._ids.next();
 
-    overlay = assign({}, this._overlayDefaults, overlay, {
+    overlay = assign$1({}, this._overlayDefaults, overlay, {
       id: id,
       type: type,
       element: element,
@@ -5549,30 +7114,29 @@
 
 
   /**
-   * Remove an overlay with the given id or all overlays matching the given filter.
+   * Remove an overlay with the given ID or all overlays matching the given filter.
    *
    * @see Overlays#get for filter options.
    *
-   * @param {String} [id]
-   * @param {Object} [filter]
+   * @param {OverlaysFilter} filter The filter to be used to find the overlay.
    */
-  Overlays.prototype.remove = function(filter$$1) {
+  Overlays.prototype.remove = function(filter) {
 
-    var overlays = this.get(filter$$1) || [];
+    var overlays = this.get(filter) || [];
 
-    if (!isArray(overlays)) {
+    if (!isArray$3(overlays)) {
       overlays = [ overlays ];
     }
 
     var self = this;
 
-    forEach(overlays, function(overlay) {
+    forEach$1(overlays, function(overlay) {
 
       var container = self._getOverlayContainer(overlay.element, true);
 
       if (overlay) {
-        remove(overlay.html);
-        remove(overlay.htmlContainer);
+        remove$2(overlay.html);
+        remove$2(overlay.htmlContainer);
 
         delete overlay.htmlContainer;
         delete overlay.element;
@@ -5590,22 +7154,38 @@
 
   };
 
+  /**
+   * Checks whether overlays are shown.
+   *
+   * @return {boolean} Whether overlays are shown.
+   */
+  Overlays.prototype.isShown = function() {
+    return this._overlayRoot.style.display !== 'none';
+  };
 
+  /**
+   * Show all overlays.
+   */
   Overlays.prototype.show = function() {
     setVisible(this._overlayRoot);
   };
 
-
+  /**
+   * Hide all overlays.
+   */
   Overlays.prototype.hide = function() {
     setVisible(this._overlayRoot, false);
   };
 
+  /**
+   * Remove all overlays and their container.
+   */
   Overlays.prototype.clear = function() {
     this._overlays = {};
 
     this._overlayContainers = [];
 
-    clear(this._overlayRoot);
+    clear$1(this._overlayRoot);
   };
 
   Overlays.prototype._updateOverlayContainer = function(container) {
@@ -5626,7 +7206,7 @@
 
     setPosition(html, x, y);
 
-    attr(container.html, 'data-container-id', element.id);
+    attr$1(container.html, 'data-container-id', element.id);
   };
 
 
@@ -5670,11 +7250,13 @@
     }
 
     setPosition(htmlContainer, left || 0, top || 0);
+    this._updateOverlayVisibilty(overlay, this._canvas.viewbox());
   };
 
 
   Overlays.prototype._createOverlayContainer = function(element) {
-    var html = domify('<div class="djs-overlays" style="position: absolute" />');
+    var html = domify$1('<div class="djs-overlays" />');
+    assign(html, { position: 'absolute' });
 
     this._overlayRoot.appendChild(html);
 
@@ -5740,18 +7322,24 @@
     // create proper html elements from
     // overlay HTML strings
     if (isString(html)) {
-      html = domify(html);
+      html = domify$1(html);
     }
 
     overlayContainer = this._getOverlayContainer(element);
 
-    htmlContainer = domify('<div class="djs-overlay" data-overlay-id="' + id + '" style="position: absolute">');
+    htmlContainer = domify$1('<div class="djs-overlay" data-overlay-id="' + id + '">');
+    assign(htmlContainer, { position: 'absolute' });
 
     htmlContainer.appendChild(html);
 
     if (overlay.type) {
-      classes(htmlContainer).add('djs-overlay-' + overlay.type);
+      classes$1(htmlContainer).add('djs-overlay-' + overlay.type);
     }
+
+    var elementRoot = this._canvas.findRoot(element);
+    var activeRoot = this._canvas.getRootElement();
+
+    setVisible(htmlContainer, elementRoot === activeRoot);
 
     overlay.htmlContainer = htmlContainer;
 
@@ -5767,21 +7355,25 @@
 
   Overlays.prototype._updateOverlayVisibilty = function(overlay, viewbox) {
     var show = overlay.show,
+        rootElement = this._canvas.findRoot(overlay.element),
         minZoom = show && show.minZoom,
         maxZoom = show && show.maxZoom,
         htmlContainer = overlay.htmlContainer,
+        activeRootElement = this._canvas.getRootElement(),
         visible = true;
 
-    if (show) {
+    if (rootElement !== activeRootElement) {
+      visible = false;
+    } else if (show) {
       if (
         (isDefined(minZoom) && minZoom > viewbox.scale) ||
         (isDefined(maxZoom) && maxZoom < viewbox.scale)
       ) {
         visible = false;
       }
-
-      setVisible(htmlContainer, visible);
     }
+
+    setVisible(htmlContainer, visible);
 
     this._updateOverlayScale(overlay, viewbox);
   };
@@ -5826,7 +7418,7 @@
 
     var self = this;
 
-    forEach(this._overlays, function(overlay) {
+    forEach$1(this._overlays, function(overlay) {
       self._updateOverlayVisibilty(overlay, viewbox);
     });
   };
@@ -5863,14 +7455,14 @@
       var element = e.element;
       var overlays = self.get({ element: element });
 
-      forEach(overlays, function(o) {
+      forEach$1(overlays, function(o) {
         self.remove(o.id);
       });
 
       var container = self._getOverlayContainer(element);
 
       if (container) {
-        remove(container.html);
+        remove$2(container.html);
         var i = self._overlayContainers.indexOf(container);
         if (i !== -1) {
           self._overlayContainers.splice(i, 1);
@@ -5881,13 +7473,13 @@
 
     // move integration
 
-    eventBus.on('element.changed', LOW_PRIORITY$6, function(e) {
+    eventBus.on('element.changed', LOW_PRIORITY$2, function(e) {
       var element = e.element;
 
       var container = self._getOverlayContainer(element, true);
 
       if (container) {
-        forEach(container.overlays, function(overlay) {
+        forEach$1(container.overlays, function(overlay) {
           self._updateOverlay(overlay);
         });
 
@@ -5901,10 +7493,14 @@
     eventBus.on('element.marker.update', function(e) {
       var container = self._getOverlayContainer(e.element, true);
       if (container) {
-        classes(container.html)[e.add ? 'add' : 'remove'](e.marker);
+        classes$1(container.html)[e.add ? 'add' : 'remove'](e.marker);
       }
     });
 
+
+    eventBus.on('root.set', function() {
+      self._updateOverlaysVisibilty(self._canvas.viewbox());
+    });
 
     // clear overlays with diagram
 
@@ -5916,9 +7512,15 @@
   // helpers /////////////////////////////
 
   function createRoot(parentNode) {
-    var root = domify(
-      '<div class="djs-overlay-container" style="position: absolute; width: 0; height: 0;" />'
+    var root = domify$1(
+      '<div class="djs-overlay-container" />'
     );
+
+    assign(root, {
+      position: 'absolute',
+      width: 0,
+      height: 0
+    });
 
     parentNode.insertBefore(root, parentNode.firstChild);
 
@@ -5926,9 +7528,15 @@
   }
 
   function setPosition(el, x, y) {
-    assign(el.style, { left: x + 'px', top: y + 'px' });
+    assign(el, { left: x + 'px', top: y + 'px' });
   }
 
+  /**
+   * Set element visible
+   *
+   * @param {DOMElement} el
+   * @param {boolean} [visible=true]
+   */
   function setVisible(el, visible) {
     el.style.display = visible === false ? 'none' : '';
   }
@@ -5942,29 +7550,59 @@
     });
   }
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var OverlaysModule = {
     __init__: [ 'overlays' ],
     overlays: [ 'type', Overlays ]
   };
 
+  /**
+   * @typedef {import('../../model/Types').Element} Element
+   *
+   * @typedef {import('../../util/Types').Rect} Rect
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../overlays/Overlays').default} Overlays
+   *
+   * @typedef {import('../overlays/Overlays').Overlay} Overlay
+   *
+   * @typedef {import('./ContextPadProvider').default} ContextPadProvider
+   * @typedef {import('./ContextPadProvider').ContextPadEntries} ContextPadEntries
+   *
+   * @typedef { {
+   *   scale?: {
+   *     min?: number;
+   *     max?: number;
+   *   };
+   * } } ContextPadConfig
+   */
+
+  /**
+   * @template {Element} [ElementType=Element]
+   *
+   * @typedef {ElementType|ElementType[]} ContextPadTarget
+   */
+
   var entrySelector = '.entry';
 
+  var DEFAULT_PRIORITY$2 = 1000;
+  var CONTEXT_PAD_PADDING = 12;
 
   /**
    * A context pad that displays element specific, contextual actions next
    * to a diagram element.
    *
-   * @param {Object} config
-   * @param {Boolean|Object} [config.scale={ min: 1.0, max: 1.5 }]
-   * @param {Number} [config.scale.min]
-   * @param {Number} [config.scale.max]
+   * @param {Canvas} canvas
+   * @param {ContextPadConfig} config
    * @param {EventBus} eventBus
    * @param {Overlays} overlays
    */
-  function ContextPad(config, eventBus, overlays) {
+  function ContextPad(canvas, config, eventBus, overlays) {
 
-    this._providers = [];
-
+    this._canvas = canvas;
     this._eventBus = eventBus;
     this._overlays = overlays;
 
@@ -5974,10 +7612,6 @@
     };
 
     this._overlaysConfig = {
-      position: {
-        right: -9,
-        top: -6
-      },
       scale: scale
     };
 
@@ -5987,6 +7621,7 @@
   }
 
   ContextPad.$inject = [
+    'canvas',
     'config.contextPad',
     'eventBus',
     'overlays'
@@ -5994,75 +7629,113 @@
 
 
   /**
-   * Registers events needed for interaction with other components
+   * Registers events needed for interaction with other components.
    */
   ContextPad.prototype._init = function() {
-
-    var eventBus = this._eventBus;
-
     var self = this;
 
-    eventBus.on('selection.changed', function(e) {
+    this._eventBus.on('selection.changed', function(event) {
 
-      var selection = e.newSelection;
+      var selection = event.newSelection;
 
-      if (selection.length === 1) {
-        self.open(selection[0]);
+      var target = selection.length
+        ? selection.length === 1
+          ? selection[0]
+          : selection
+        : null;
+
+      if (target) {
+        self.open(target, true);
       } else {
         self.close();
       }
     });
 
-    eventBus.on('elements.delete', function(event$$1) {
-      var elements = event$$1.elements;
-
-      forEach(elements, function(e) {
-        if (self.isOpen(e)) {
-          self.close();
-        }
-      });
-    });
-
-    eventBus.on('element.changed', function(event$$1) {
-      var element = event$$1.element,
+    this._eventBus.on('elements.changed', function(event) {
+      var elements = event.elements,
           current = self._current;
 
-      // force reopen if element for which we are currently opened changed
-      if (current && current.element === element) {
-        self.open(element, true);
+      if (!current) {
+        return;
+      }
+
+      var currentTarget = current.target;
+
+      var currentChanged = some(
+        isArray$3(currentTarget) ? currentTarget : [ currentTarget ],
+        function(element) {
+          return includes$2(elements, element);
+        }
+      );
+
+      // re-open if elements in current selection changed
+      if (currentChanged) {
+        self.open(currentTarget, true);
       }
     });
   };
 
+  /**
+   * @overlord
+   *
+   * Register a context pad provider with the default priority. See
+   * {@link ContextPadProvider} for examples.
+   *
+   * @param {ContextPadProvider} provider
+   */
 
   /**
-   * Register a provider with the context pad
+   * Register a context pad provider with the given priority. See
+   * {@link ContextPadProvider} for examples.
    *
-   * @param  {ContextPadProvider} provider
+   * @param {number} priority
+   * @param {ContextPadProvider} provider
    */
-  ContextPad.prototype.registerProvider = function(provider) {
-    this._providers.push(provider);
+  ContextPad.prototype.registerProvider = function(priority, provider) {
+    if (!provider) {
+      provider = priority;
+      priority = DEFAULT_PRIORITY$2;
+    }
+
+    this._eventBus.on('contextPad.getProviders', priority, function(event) {
+      event.providers.push(provider);
+    });
   };
 
 
   /**
-   * Returns the context pad entries for a given element
+   * Get context pad entries for given elements.
    *
-   * @param {djs.element.Base} element
+   * @param {ContextPadTarget} target
    *
-   * @return {Array<ContextPadEntryDescriptor>} list of entries
+   * @return {ContextPadEntries} list of entries
    */
-  ContextPad.prototype.getEntries = function(element) {
+  ContextPad.prototype.getEntries = function(target) {
+    var providers = this._getProviders();
+
+    var provideFn = isArray$3(target)
+      ? 'getMultiElementContextPadEntries'
+      : 'getContextPadEntries';
+
     var entries = {};
 
     // loop through all providers and their entries.
     // group entries by id so that overriding an entry is possible
-    forEach(this._providers, function(provider) {
-      var e = provider.getContextPadEntries(element);
+    forEach$1(providers, function(provider) {
 
-      forEach(e, function(entry, id) {
-        entries[id] = entry;
-      });
+      if (!isFunction(provider[provideFn])) {
+        return;
+      }
+
+      var entriesOrUpdater = provider[provideFn](target);
+
+      if (isFunction(entriesOrUpdater)) {
+        entries = entriesOrUpdater(entries);
+      } else {
+        forEach$1(entriesOrUpdater, function(entry, id) {
+          entries[id] = entry;
+        });
+      }
     });
 
     return entries;
@@ -6070,109 +7743,165 @@
 
 
   /**
-   * Trigger an action available on the opened context pad
+   * Trigger context pad via DOM event.
    *
-   * @param  {String} action
-   * @param  {Event} event
-   * @param  {Boolean} [autoActivate=false]
+   * The entry to trigger is determined by the target element.
+   *
+   * @param {string} action
+   * @param {Event} event
+   * @param {boolean} [autoActivate=false]
    */
-  ContextPad.prototype.trigger = function(action, event$$1, autoActivate) {
+  ContextPad.prototype.trigger = function(action, event, autoActivate) {
 
-    var element = this._current.element,
-        entries = this._current.entries,
-        entry,
-        handler,
+    var entry,
         originalEvent,
-        button = event$$1.delegateTarget || event$$1.target;
+        button = event.delegateTarget || event.target;
 
     if (!button) {
-      return event$$1.preventDefault();
+      return event.preventDefault();
     }
 
-    entry = entries[attr(button, 'data-action')];
-    handler = entry.action;
+    entry = attr$1(button, 'data-action');
+    originalEvent = event.originalEvent || event;
 
-    originalEvent = event$$1.originalEvent || event$$1;
+    return this.triggerEntry(entry, action, originalEvent, autoActivate);
+  };
+
+  /**
+   * Trigger context pad entry entry.
+   *
+   * @param {string} entryId
+   * @param {string} action
+   * @param {Event} event
+   * @param {boolean} [autoActivate=false]
+   */
+  ContextPad.prototype.triggerEntry = function(entryId, action, event, autoActivate) {
+
+    if (!this.isShown()) {
+      return;
+    }
+
+    var target = this._current.target,
+        entries = this._current.entries;
+
+    var entry = entries[entryId];
+
+    if (!entry) {
+      return;
+    }
+
+    var handler = entry.action;
+
+    if (this._eventBus.fire('contextPad.trigger', { entry, event }) === false) {
+      return;
+    }
 
     // simple action (via callback function)
     if (isFunction(handler)) {
       if (action === 'click') {
-        return handler(originalEvent, element, autoActivate);
+        return handler(event, target, autoActivate);
       }
     } else {
       if (handler[action]) {
-        return handler[action](originalEvent, element, autoActivate);
+        return handler[action](event, target, autoActivate);
       }
     }
 
     // silence other actions
-    event$$1.preventDefault();
+    event.preventDefault();
   };
 
 
   /**
-   * Open the context pad for the given element
+   * Open the context pad for given elements.
    *
-   * @param {djs.model.Base} element
-   * @param {Boolean} force if true, force reopening the context pad
+   * @param {ContextPadTarget} target
+   * @param {boolean} [force=false] - Force re-opening context pad.
    */
-  ContextPad.prototype.open = function(element, force) {
-    if (!force && this.isOpen(element)) {
+  ContextPad.prototype.open = function(target, force) {
+    if (!force && this.isOpen(target)) {
       return;
     }
 
     this.close();
-    this._updateAndOpen(element);
+
+    this._updateAndOpen(target);
+  };
+
+  ContextPad.prototype._getProviders = function() {
+
+    var event = this._eventBus.createEvent({
+      type: 'contextPad.getProviders',
+      providers: []
+    });
+
+    this._eventBus.fire(event);
+
+    return event.providers;
   };
 
 
-  ContextPad.prototype._updateAndOpen = function(element) {
+  /**
+   * @param {ContextPadTarget} target
+   */
+  ContextPad.prototype._updateAndOpen = function(target) {
+    var entries = this.getEntries(target),
+        pad = this.getPad(target),
+        html = pad.html,
+        image;
 
-    var entries = this.getEntries(element),
-        pad = this.getPad(element),
-        html = pad.html;
-
-    forEach(entries, function(entry, id) {
+    forEach$1(entries, function(entry, id) {
       var grouping = entry.group || 'default',
-          control = domify(entry.html || '<div class="entry" draggable="true"></div>'),
+          control = domify$1(entry.html || '<div class="entry" draggable="true"></div>'),
           container;
 
-      attr(control, 'data-action', id);
+      attr$1(control, 'data-action', id);
 
-      container = query('[data-group=' + grouping + ']', html);
+      container = query('[data-group=' + escapeCSS(grouping) + ']', html);
       if (!container) {
-        container = domify('<div class="group" data-group="' + grouping + '"></div>');
+        container = domify$1('<div class="group"></div>');
+        attr$1(container, 'data-group', grouping);
+
         html.appendChild(container);
       }
 
       container.appendChild(control);
 
       if (entry.className) {
-        addClasses$1(control, entry.className);
+        addClasses(control, entry.className);
       }
 
       if (entry.title) {
-        attr(control, 'title', entry.title);
+        attr$1(control, 'title', entry.title);
       }
 
       if (entry.imageUrl) {
-        control.appendChild(domify('<img src="' + entry.imageUrl + '">'));
+        image = domify$1('<img>');
+        attr$1(image, 'src', entry.imageUrl);
+        image.style.width = '100%';
+        image.style.height = '100%';
+
+        control.appendChild(image);
       }
     });
 
-    classes(html).add('open');
+    classes$1(html).add('open');
 
     this._current = {
-      element: element,
-      pad: pad,
-      entries: entries
+      target: target,
+      entries: entries,
+      pad: pad
     };
 
     this._eventBus.fire('contextPad.open', { current: this._current });
   };
 
-
-  ContextPad.prototype.getPad = function(element) {
+  /**
+   * @param {ContextPadTarget} target
+   *
+   * @return {Overlay}
+   */
+  ContextPad.prototype.getPad = function(target) {
     if (this.isOpen()) {
       return this._current.pad;
     }
@@ -6181,30 +7910,37 @@
 
     var overlays = this._overlays;
 
-    var html = domify('<div class="djs-context-pad"></div>');
+    var html = domify$1('<div class="djs-context-pad"></div>');
 
-    var overlaysConfig = assign({
+    var position = this._getPosition(target);
+
+    var overlaysConfig = assign$1({
       html: html
-    }, this._overlaysConfig);
+    }, this._overlaysConfig, position);
 
-    delegateEvents.bind(html, entrySelector, 'click', function(event$$1) {
-      self.trigger('click', event$$1);
+    delegate.bind(html, entrySelector, 'click', function(event) {
+      self.trigger('click', event);
     });
 
-    delegateEvents.bind(html, entrySelector, 'dragstart', function(event$$1) {
-      self.trigger('dragstart', event$$1);
+    delegate.bind(html, entrySelector, 'dragstart', function(event) {
+      self.trigger('dragstart', event);
     });
 
     // stop propagation of mouse events
-    componentEvent.bind(html, 'mousedown', function(event$$1) {
-      event$$1.stopPropagation();
+    event.bind(html, 'mousedown', function(event) {
+      event.stopPropagation();
     });
 
-    this._overlayId = overlays.add(element, 'context-pad', overlaysConfig);
+    var activeRootElement = this._canvas.getRootElement();
+
+    this._overlayId = overlays.add(activeRootElement, 'context-pad', overlaysConfig);
 
     var pad = overlays.get(this._overlayId);
 
-    this._eventBus.fire('contextPad.create', { element: element, pad: pad });
+    this._eventBus.fire('contextPad.create', {
+      target: target,
+      pad: pad
+    });
 
     return pad;
   };
@@ -6228,31 +7964,102 @@
   };
 
   /**
-   * Check if pad is open. If element is given, will check
-   * if pad is opened with given element.
+   * Check if pad is open.
    *
-   * @param {Element} element
-   * @return {Boolean}
+   * If target is provided, check if it is opened
+   * for the given target (single or multiple elements).
+   *
+   * @param {ContextPadTarget} [target]
+   * @return {boolean}
    */
-  ContextPad.prototype.isOpen = function(element) {
-    return !!this._current && (!element ? true : this._current.element === element);
+  ContextPad.prototype.isOpen = function(target) {
+    var current = this._current;
+
+    if (!current) {
+      return false;
+    }
+
+    // basic no-args is open check
+    if (!target) {
+      return true;
+    }
+
+    var currentTarget = current.target;
+
+    // strict handling of single vs. multi-selection
+    if (isArray$3(target) !== isArray$3(currentTarget)) {
+      return false;
+    }
+
+    if (isArray$3(target)) {
+      return (
+        target.length === currentTarget.length &&
+        every(target, function(element) {
+          return includes$2(currentTarget, element);
+        })
+      );
+    } else {
+      return currentTarget === target;
+    }
   };
 
 
+  /**
+   * Check if pad is open and not hidden.
+   *
+   * @return {boolean}
+   */
+  ContextPad.prototype.isShown = function() {
+    return this.isOpen() && this._overlays.isShown();
+  };
 
 
-  // helpers //////////////////////
+  /**
+   * Get contex pad position.
+   *
+   * @param {ContextPadTarget} target
+   *
+   * @return {Rect}
+   */
+  ContextPad.prototype._getPosition = function(target) {
 
-  function addClasses$1(element, classNames) {
+    var elements = isArray$3(target) ? target : [ target ];
+    var bBox = getBBox(elements);
 
-    var classes$$1 = classes(element);
+    return {
+      position: {
+        left: bBox.x + bBox.width + CONTEXT_PAD_PADDING,
+        top: bBox.y - CONTEXT_PAD_PADDING / 2
+      }
+    };
+  };
 
-    var actualClassNames = isArray(classNames) ? classNames : classNames.split(/\s+/g);
-    actualClassNames.forEach(function(cls) {
-      classes$$1.add(cls);
+
+  // helpers //////////
+
+  function addClasses(element, classNames) {
+    var classes = classes$1(element);
+
+    classNames = isArray$3(classNames) ? classNames : classNames.split(/\s+/g);
+
+    classNames.forEach(function(cls) {
+      classes.add(cls);
     });
   }
 
+  /**
+   * @param {any[]} array
+   * @param {any} item
+   *
+   * @return {boolean}
+   */
+  function includes$2(array, item) {
+    return array.indexOf(item) !== -1;
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var ContextPadModule = {
     __depends__: [
       InteractionEventsModule,
@@ -6262,12 +8069,18 @@
   };
 
   /**
-   * Computes the distance between two points
+   * @typedef {import('../util/Types').Axis} Axis
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
+
+  /**
+   * Computes the distance between two points.
    *
-   * @param  {Point}  p
-   * @param  {Point}  q
+   * @param {Point} a
+   * @param {Point} b
    *
-   * @return {Number}  distance
+   * @return {number} The distance between the two points.
    */
   function pointDistance(a, b) {
     if (!a || !b) {
@@ -6282,14 +8095,14 @@
 
 
   /**
-   * Returns true if the point r is on the line between p and q
+   * Returns true if the point r is on the line between p and q.
    *
-   * @param  {Point}  p
-   * @param  {Point}  q
-   * @param  {Point}  r
-   * @param  {Number} [accuracy=5] accuracy for points on line check (lower is better)
+   * @param {Point} p
+   * @param {Point} q
+   * @param {Point} r
+   * @param {number} [accuracy=5] The accuracy with which to check (lower is better).
    *
-   * @return {Boolean}
+   * @return {boolean}
    */
   function pointsOnLine(p, q, r, accuracy) {
 
@@ -6312,36 +8125,52 @@
   var ALIGNED_THRESHOLD = 2;
 
   /**
-   * Returns whether two points are in a horizontal or vertical line.
+   * Check whether two points are horizontally or vertically aligned.
    *
-   * @param {Point} a
-   * @param {Point} b
+   * @param {Point[]|Point} a
+   * @param {Point} [b]
    *
-   * @return {String|Boolean} returns false if the points are not
-   *                          aligned or 'h|v' if they are aligned
-   *                          horizontally / vertically.
+   * @return {string|boolean} If and how the two points are aligned ('h', 'v' or `false`).
    */
   function pointsAligned(a, b) {
-    if (Math.abs(a.x - b.x) <= ALIGNED_THRESHOLD) {
-      return 'h';
-    }
+    var points = Array.from(arguments).flat();
 
-    if (Math.abs(a.y - b.y) <= ALIGNED_THRESHOLD) {
-      return 'v';
+    const axisMap = {
+      'x': 'v',
+      'y': 'h'
+    };
+
+    for (const [ axis, orientation ] of Object.entries(axisMap)) {
+      if (pointsAlignedOnAxis(axis, points)) {
+        return orientation;
+      }
     }
 
     return false;
   }
 
+  /**
+   * @param {Axis} axis
+   * @param {Point[]} points
+   *
+   * @return {boolean}
+   */
+  function pointsAlignedOnAxis(axis, points) {
+    const referencePoint = points[0];
+
+    return every(points, function(point) {
+      return Math.abs(referencePoint[axis] - point[axis]) <= ALIGNED_THRESHOLD;
+    });
+  }
 
   /**
    * Returns true if the point p is inside the rectangle rect
    *
-   * @param  {Point}  p
-   * @param  {Rect}   rect
-   * @param  {Number} tolerance
+   * @param {Point} p
+   * @param {Rect} rect
+   * @param {number} tolerance
    *
-   * @return {Boolean}
+   * @return {boolean}
    */
   function pointInRect(p, rect, tolerance) {
     tolerance = tolerance || 0;
@@ -6355,10 +8184,10 @@
   /**
    * Returns a point in the middle of points p and q
    *
-   * @param  {Point}  p
-   * @param  {Point}  q
+   * @param {Point} p
+   * @param {Point} q
    *
-   * @return {Point} middle point
+   * @return {Point} The mid point between the two points.
    */
   function getMidPoint(p, q) {
     return {
@@ -6367,268 +8196,36 @@
     };
   }
 
-  var BENDPOINT_CLS = 'djs-bendpoint';
-  var SEGMENT_DRAGGER_CLS = 'djs-segment-dragger';
-
-  function toCanvasCoordinates(canvas, event) {
-
-    var position = toPoint(event),
-        clientRect = canvas._container.getBoundingClientRect(),
-        offset;
-
-    // canvas relative position
-
-    offset = {
-      x: clientRect.left,
-      y: clientRect.top
-    };
-
-    // update actual event payload with canvas relative measures
-
-    var viewbox = canvas.viewbox();
-
-    return {
-      x: viewbox.x + (position.x - offset.x) / viewbox.scale,
-      y: viewbox.y + (position.y - offset.y) / viewbox.scale
-    };
+  function getDefaultExportFromCjs (x) {
+  	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
   }
-
-  function addBendpoint(parentGfx, cls) {
-    var groupGfx = create('g');
-    classes$1(groupGfx).add(BENDPOINT_CLS);
-
-    append(parentGfx, groupGfx);
-
-    var visual = create('circle');
-    attr$1(visual, {
-      cx: 0,
-      cy: 0,
-      r: 4
-    });
-    classes$1(visual).add('djs-visual');
-
-    append(groupGfx, visual);
-
-    var hit = create('circle');
-    attr$1(hit, {
-      cx: 0,
-      cy: 0,
-      r: 10
-    });
-    classes$1(hit).add('djs-hit');
-
-    append(groupGfx, hit);
-
-    if (cls) {
-      classes$1(groupGfx).add(cls);
-    }
-
-    return groupGfx;
-  }
-
-  function createParallelDragger(parentGfx, position, alignment) {
-    var draggerGfx = create('g');
-
-    append(parentGfx, draggerGfx);
-
-    var width = 14,
-        height = 3,
-        padding = 6,
-        hitWidth = width + padding,
-        hitHeight = height + padding;
-
-    var visual = create('rect');
-    attr$1(visual, {
-      x: -width / 2,
-      y: -height / 2,
-      width: width,
-      height: height
-    });
-    classes$1(visual).add('djs-visual');
-
-    append(draggerGfx, visual);
-
-    var hit = create('rect');
-    attr$1(hit, {
-      x: -hitWidth / 2,
-      y: -hitHeight / 2,
-      width: hitWidth,
-      height: hitHeight
-    });
-    classes$1(hit).add('djs-hit');
-
-    append(draggerGfx, hit);
-
-    rotate(draggerGfx, alignment === 'h' ? 90 : 0, 0, 0);
-
-    return draggerGfx;
-  }
-
-
-  function addSegmentDragger(parentGfx, segmentStart, segmentEnd) {
-
-    var groupGfx = create('g'),
-        mid = getMidPoint(segmentStart, segmentEnd),
-        alignment = pointsAligned(segmentStart, segmentEnd);
-
-    append(parentGfx, groupGfx);
-
-    createParallelDragger(groupGfx, mid, alignment);
-
-    classes$1(groupGfx).add(SEGMENT_DRAGGER_CLS);
-    classes$1(groupGfx).add(alignment === 'h' ? 'vertical' : 'horizontal');
-
-    translate(groupGfx, mid.x, mid.y);
-
-    return groupGfx;
-  }
-
-  var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-
-  function createCommonjsModule(fn, module) {
-  	return module = { exports: {} }, fn(module, module.exports), module.exports;
-  }
-
-  var css_escape = createCommonjsModule(function (module, exports) {
-  (function(root, factory) {
-  	// https://github.com/umdjs/umd/blob/master/returnExports.js
-  	{
-  		// For Node.js.
-  		module.exports = factory(root);
-  	}
-  }(typeof commonjsGlobal != 'undefined' ? commonjsGlobal : commonjsGlobal, function(root) {
-
-  	if (root.CSS && root.CSS.escape) {
-  		return root.CSS.escape;
-  	}
-
-  	// https://drafts.csswg.org/cssom/#serialize-an-identifier
-  	var cssEscape = function(value) {
-  		if (arguments.length == 0) {
-  			throw new TypeError('`CSS.escape` requires an argument.');
-  		}
-  		var string = String(value);
-  		var length = string.length;
-  		var index = -1;
-  		var codeUnit;
-  		var result = '';
-  		var firstCodeUnit = string.charCodeAt(0);
-  		while (++index < length) {
-  			codeUnit = string.charCodeAt(index);
-  			// Note: there’s no need to special-case astral symbols, surrogate
-  			// pairs, or lone surrogates.
-
-  			// If the character is NULL (U+0000), then the REPLACEMENT CHARACTER
-  			// (U+FFFD).
-  			if (codeUnit == 0x0000) {
-  				result += '\uFFFD';
-  				continue;
-  			}
-
-  			if (
-  				// If the character is in the range [\1-\1F] (U+0001 to U+001F) or is
-  				// U+007F, […]
-  				(codeUnit >= 0x0001 && codeUnit <= 0x001F) || codeUnit == 0x007F ||
-  				// If the character is the first character and is in the range [0-9]
-  				// (U+0030 to U+0039), […]
-  				(index == 0 && codeUnit >= 0x0030 && codeUnit <= 0x0039) ||
-  				// If the character is the second character and is in the range [0-9]
-  				// (U+0030 to U+0039) and the first character is a `-` (U+002D), […]
-  				(
-  					index == 1 &&
-  					codeUnit >= 0x0030 && codeUnit <= 0x0039 &&
-  					firstCodeUnit == 0x002D
-  				)
-  			) {
-  				// https://drafts.csswg.org/cssom/#escape-a-character-as-code-point
-  				result += '\\' + codeUnit.toString(16) + ' ';
-  				continue;
-  			}
-
-  			if (
-  				// If the character is the first character and is a `-` (U+002D), and
-  				// there is no second character, […]
-  				index == 0 &&
-  				length == 1 &&
-  				codeUnit == 0x002D
-  			) {
-  				result += '\\' + string.charAt(index);
-  				continue;
-  			}
-
-  			// If the character is not handled by one of the above rules and is
-  			// greater than or equal to U+0080, is `-` (U+002D) or `_` (U+005F), or
-  			// is in one of the ranges [0-9] (U+0030 to U+0039), [A-Z] (U+0041 to
-  			// U+005A), or [a-z] (U+0061 to U+007A), […]
-  			if (
-  				codeUnit >= 0x0080 ||
-  				codeUnit == 0x002D ||
-  				codeUnit == 0x005F ||
-  				codeUnit >= 0x0030 && codeUnit <= 0x0039 ||
-  				codeUnit >= 0x0041 && codeUnit <= 0x005A ||
-  				codeUnit >= 0x0061 && codeUnit <= 0x007A
-  			) {
-  				// the character itself
-  				result += string.charAt(index);
-  				continue;
-  			}
-
-  			// Otherwise, the escaped character.
-  			// https://drafts.csswg.org/cssom/#escape-a-character
-  			result += '\\' + string.charAt(index);
-
-  		}
-  		return result;
-  	};
-
-  	if (!root.CSS) {
-  		root.CSS = {};
-  	}
-
-  	root.CSS.escape = cssEscape;
-  	return cssEscape;
-
-  }));
-  });
 
   /**
-   * This file contains portions that got extraced from Snap.svg (licensed Apache-2.0).
+   * This file contains source code adapted from Snap.svg (licensed Apache-2.0).
    *
    * @see https://github.com/adobe-webplatform/Snap.svg/blob/master/src/path.js
    */
 
   /* eslint no-fallthrough: "off" */
 
-  var has$2 = 'hasOwnProperty',
-      p2s = /,?([a-z]),?/gi,
+  var p2s = /,?([a-z]),?/gi,
       toFloat = parseFloat,
       math = Math,
       PI = math.PI,
       mmin = math.min,
       mmax = math.max,
       pow = math.pow,
-      abs = math.abs,
+      abs$1 = math.abs,
       pathCommand = /([a-z])[\s,]*((-?\d*\.?\d*(?:e[-+]?\d+)?[\s]*,?[\s]*)+)/ig,
-      pathValues = /(-?\d*\.?\d*(?:e[-+]?\\d+)?)[\s]*,?[\s]*/ig;
+      pathValues = /(-?\d*\.?\d*(?:e[-+]?\d+)?)[\s]*,?[\s]*/ig;
 
-  function is(o, type) {
-    type = String.prototype.toLowerCase.call(type);
+  var isArray$1 = Array.isArray || function(o) { return o instanceof Array; };
 
-    if (type == 'finite') {
-      return isFinite(o);
-    }
-
-    if (type == 'array' && (o instanceof Array || Array.isArray && Array.isArray(o))) {
-      return true;
-    }
-
-    return (type == 'null' && o === null) ||
-           (type == typeof o && o !== null) ||
-           (type == 'object' && o === Object(o)) ||
-           Object.prototype.toString.call(o).slice(8, -1).toLowerCase() == type;
+  function hasProperty(obj, property) {
+    return Object.prototype.hasOwnProperty.call(obj, property);
   }
 
-  function clone$1(obj) {
+  function clone(obj) {
 
     if (typeof obj == 'function' || Object(obj) !== obj) {
       return obj;
@@ -6636,8 +8233,10 @@
 
     var res = new obj.constructor;
 
-    for (var key in obj) if (obj[has$2](key)) {
-      res[key] = clone$1(obj[key]);
+    for (var key in obj) {
+      if (hasProperty(obj, key)) {
+        res[key] = clone(obj[key]);
+      }
     }
 
     return res;
@@ -6649,7 +8248,7 @@
     }
   }
 
-  function cacher(f, scope, postprocessor) {
+  function cacher(f) {
 
     function newf() {
 
@@ -6658,16 +8257,16 @@
           cache = newf.cache = newf.cache || {},
           count = newf.count = newf.count || [];
 
-      if (cache[has$2](args)) {
+      if (hasProperty(cache, args)) {
         repush(count, args);
-        return postprocessor ? postprocessor(cache[args]) : cache[args];
+        return cache[args];
       }
 
       count.length >= 1e3 && delete cache[count.shift()];
       count.push(args);
-      cache[args] = f.apply(scope, arg);
+      cache[args] = f.apply(0, arg);
 
-      return postprocessor ? postprocessor(cache[args]) : cache[args];
+      return cache[args];
     }
     return newf;
   }
@@ -6681,14 +8280,14 @@
     var pth = paths(pathString);
 
     if (pth.arr) {
-      return clone$1(pth.arr);
+      return clone(pth.arr);
     }
 
-    var paramCounts = { a: 7, c: 6, o: 2, h: 1, l: 2, m: 2, r: 4, q: 4, s: 4, t: 2, v: 1, u: 3, z: 0 },
+    var paramCounts = { a: 7, c: 6, h: 1, l: 2, m: 2, q: 4, s: 4, t: 2, v: 1, z: 0 },
         data = [];
 
-    if (is(pathString, 'array') && is(pathString[0], 'array')) { // rough assumption
-      data = clone$1(pathString);
+    if (isArray$1(pathString) && isArray$1(pathString[0])) { // rough assumption
+      data = clone(pathString);
     }
 
     if (!data.length) {
@@ -6707,13 +8306,7 @@
           b = b == 'm' ? 'l' : 'L';
         }
 
-        if (name == 'o' && params.length == 1) {
-          data.push([b, params[0]]);
-        }
-
-        if (name == 'r') {
-          data.push([b].concat(params));
-        } else while (params.length >= paramCounts[name]) {
+        while (params.length >= paramCounts[name]) {
           data.push([b].concat(params.splice(0, paramCounts[name])));
           if (!paramCounts[name]) {
             break;
@@ -6723,7 +8316,7 @@
     }
 
     data.toString = paths.toString;
-    pth.arr = clone$1(data);
+    pth.arr = clone(data);
 
     return data;
   }
@@ -6740,21 +8333,20 @@
     }
 
     setTimeout(function() {
-      for (var key in p) if (p[has$2](key) && key != ps) {
-        p[key].sleep--;
-        !p[key].sleep && delete p[key];
+      for (var key in p) {
+        if (hasProperty(p, key) && key != ps) {
+          p[key].sleep--;
+          !p[key].sleep && delete p[key];
+        }
       }
     });
 
     return p[ps];
   }
 
-  function box(x, y, width, height) {
-    if (x == null) {
-      x = y = width = height = 0;
-    }
+  function rectBBox(x, y, width, height) {
 
-    if (y == null) {
+    if (arguments.length === 1) {
       y = x.y;
       width = x.width;
       height = x.height;
@@ -6765,18 +8357,9 @@
       x: x,
       y: y,
       width: width,
-      w: width,
       height: height,
-      h: height,
       x2: x + width,
-      y2: y + height,
-      cx: x + width / 2,
-      cy: y + height / 2,
-      r1: math.min(width, height) / 2,
-      r2: math.max(width, height) / 2,
-      r0: math.sqrt(width * width + height * height) / 2,
-      path: rectPath(x, y, width, height),
-      vb: [x, y, width, height].join(' ')
+      y2: y + height
     };
   }
 
@@ -6785,7 +8368,7 @@
   }
 
   function pathClone(pathArray) {
-    var res = clone$1(pathArray);
+    var res = clone(pathArray);
     res.toString = pathToString;
     return res;
   }
@@ -6797,41 +8380,23 @@
         t2 = t * t,
         t3 = t2 * t,
         x = t13 * p1x + t12 * 3 * t * c1x + t1 * 3 * t * t * c2x + t3 * p2x,
-        y = t13 * p1y + t12 * 3 * t * c1y + t1 * 3 * t * t * c2y + t3 * p2y,
-        mx = p1x + 2 * t * (c1x - p1x) + t2 * (c2x - 2 * c1x + p1x),
-        my = p1y + 2 * t * (c1y - p1y) + t2 * (c2y - 2 * c1y + p1y),
-        nx = c1x + 2 * t * (c2x - c1x) + t2 * (p2x - 2 * c2x + c1x),
-        ny = c1y + 2 * t * (c2y - c1y) + t2 * (p2y - 2 * c2y + c1y),
-        ax = t1 * p1x + t * c1x,
-        ay = t1 * p1y + t * c1y,
-        cx = t1 * c2x + t * p2x,
-        cy = t1 * c2y + t * p2y,
-        alpha = (90 - math.atan2(mx - nx, my - ny) * 180 / PI);
+        y = t13 * p1y + t12 * 3 * t * c1y + t1 * 3 * t * t * c2y + t3 * p2y;
 
     return {
-      x: x,
-      y: y,
-      m: { x: mx, y: my },
-      n: { x: nx, y: ny },
-      start: { x: ax, y: ay },
-      end: { x: cx, y: cy },
-      alpha: alpha
+      x: fixError(x),
+      y: fixError(y)
     };
   }
 
-  function bezierBBox(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y) {
+  function bezierBBox(points) {
 
-    if (!is(p1x, 'array')) {
-      p1x = [p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y];
-    }
+    var bbox = curveBBox.apply(null, points);
 
-    var bbox = curveBBox.apply(null, p1x);
-
-    return box(
-      bbox.min.x,
-      bbox.min.y,
-      bbox.max.x - bbox.min.x,
-      bbox.max.y - bbox.min.y
+    return rectBBox(
+      bbox.x0,
+      bbox.y0,
+      bbox.x1 - bbox.x0,
+      bbox.y1 - bbox.y0
     );
   }
 
@@ -6843,8 +8408,8 @@
   }
 
   function isBBoxIntersect(bbox1, bbox2) {
-    bbox1 = box(bbox1);
-    bbox2 = box(bbox2);
+    bbox1 = rectBBox(bbox1);
+    bbox2 = rectBBox(bbox2);
     return isPointInsideBBox(bbox2, bbox1.x, bbox1.y)
       || isPointInsideBBox(bbox2, bbox1.x2, bbox1.y)
       || isPointInsideBBox(bbox2, bbox1.x, bbox1.y2)
@@ -6911,8 +8476,8 @@
       return;
     }
 
-    var px = nx / denominator,
-        py = ny / denominator,
+    var px = fixError(nx / denominator),
+        py = fixError(ny / denominator),
         px2 = +px.toFixed(2),
         py2 = +py.toFixed(2);
 
@@ -6932,6 +8497,10 @@
     return { x: px, y: py };
   }
 
+  function fixError(number) {
+    return Math.round(number * 100000000000) / 100000000000;
+  }
+
   function findBezierIntersections(bez1, bez2, justCount) {
     var bbox1 = bezierBBox(bez1),
         bbox2 = bezierBBox(bez2);
@@ -6940,10 +8509,12 @@
       return justCount ? 0 : [];
     }
 
+    // As an optimization, lines will have only 1 segment
+
     var l1 = bezlen.apply(0, bez1),
         l2 = bezlen.apply(0, bez2),
-        n1 = ~~(l1 / 5),
-        n2 = ~~(l2 / 5),
+        n1 = isLine(bez1) ? 1 : ~~(l1 / 5) || 1,
+        n2 = isLine(bez2) ? 1 : ~~(l2 / 5) || 1,
         dots1 = [],
         dots2 = [],
         xy = {},
@@ -6966,20 +8537,22 @@
             di1 = dots1[i + 1],
             dj = dots2[j],
             dj1 = dots2[j + 1],
-            ci = abs(di1.x - di.x) < .01 ? 'y' : 'x',
-            cj = abs(dj1.x - dj.x) < .01 ? 'y' : 'x',
-            is = intersectLines(di.x, di.y, di1.x, di1.y, dj.x, dj.y, dj1.x, dj1.y);
+            ci = abs$1(di1.x - di.x) < .01 ? 'y' : 'x',
+            cj = abs$1(dj1.x - dj.x) < .01 ? 'y' : 'x',
+            is = intersectLines(di.x, di.y, di1.x, di1.y, dj.x, dj.y, dj1.x, dj1.y),
+            key;
 
         if (is) {
+          key = is.x.toFixed(9) + '#' + is.y.toFixed(9);
 
-          if (xy[is.x.toFixed(0)] == is.y.toFixed(0)) {
+          if (xy[key]) {
             continue;
           }
 
-          xy[is.x.toFixed(0)] = is.y.toFixed(0);
+          xy[key] = true;
 
-          var t1 = di.t + abs((is[ci] - di[ci]) / (di1[ci] - di[ci])) * (di1.t - di.t),
-              t2 = dj.t + abs((is[cj] - dj[cj]) / (dj1[cj] - dj[cj])) * (dj1.t - dj.t);
+          var t1 = di.t + abs$1((is[ci] - di[ci]) / (di1[ci] - di[ci])) * (di1.t - di.t),
+              t2 = dj.t + abs$1((is[cj] - dj[cj]) / (dj1[cj] - dj[cj])) * (dj1.t - dj.t);
 
           if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
 
@@ -7024,7 +8597,7 @@
    *
    * // intersections = [
    * //   { x: 50, y: 50, segment1: 1, segment2: 1, t1: 0.5, t2: 0.5 }
-   * //
+   * // ]
    *
    * @param {String|Array<PathDef>} path1
    * @param {String|Array<PathDef>} path2
@@ -7099,61 +8672,6 @@
   }
 
 
-  function rectPath(x, y, w, h, r) {
-    if (r) {
-      return [
-        ['M', +x + (+r), y],
-        ['l', w - r * 2, 0],
-        ['a', r, r, 0, 0, 1, r, r],
-        ['l', 0, h - r * 2],
-        ['a', r, r, 0, 0, 1, -r, r],
-        ['l', r * 2 - w, 0],
-        ['a', r, r, 0, 0, 1, -r, -r],
-        ['l', 0, r * 2 - h],
-        ['a', r, r, 0, 0, 1, r, -r],
-        ['z']
-      ];
-    }
-
-    var res = [['M', x, y], ['l', w, 0], ['l', 0, h], ['l', -w, 0], ['z']];
-    res.toString = pathToString;
-
-    return res;
-  }
-
-  function ellipsePath(x, y, rx, ry, a) {
-    if (a == null && ry == null) {
-      ry = rx;
-    }
-
-    x = +x;
-    y = +y;
-    rx = +rx;
-    ry = +ry;
-
-    if (a != null) {
-      var rad = Math.PI / 180,
-          x1 = x + rx * Math.cos(-ry * rad),
-          x2 = x + rx * Math.cos(-a * rad),
-          y1 = y + rx * Math.sin(-ry * rad),
-          y2 = y + rx * Math.sin(-a * rad),
-          res = [['M', x1, y1], ['A', rx, rx, 0, +(a - ry > 180), 0, x2, y2]];
-    } else {
-      res = [
-        ['M', x, y],
-        ['m', 0, -ry],
-        ['a', rx, ry, 0, 1, 1, 0, 2 * ry],
-        ['a', rx, ry, 0, 1, 1, 0, -2 * ry],
-        ['z']
-      ];
-    }
-
-    res.toString = pathToString;
-
-    return res;
-  }
-
-
   function pathToAbsolute(pathArray) {
     var pth = paths(pathArray);
 
@@ -7161,7 +8679,7 @@
       return pathClone(pth.abs);
     }
 
-    if (!is(pathArray, 'array') || !is(pathArray && pathArray[0], 'array')) { // rough assumption
+    if (!isArray$1(pathArray) || !isArray$1(pathArray && pathArray[0])) { // rough assumption
       pathArray = parsePathString(pathArray);
     }
 
@@ -7185,11 +8703,6 @@
       start++;
       res[0] = ['M', x, y];
     }
-
-    var crz = pathArray.length == 3 &&
-        pathArray[0][0] == 'M' &&
-        pathArray[1][0].toUpperCase() == 'R' &&
-        pathArray[2][0].toUpperCase() == 'Z';
 
     for (var r, pa, i = start, ii = pathArray.length; i < ii; i++) {
       res.push(r = []);
@@ -7215,78 +8728,38 @@
         case 'H':
           r[1] = +pa[1] + x;
           break;
-        case 'R':
-          var dots = [x, y].concat(pa.slice(1));
-
-          for (var j = 2, jj = dots.length; j < jj; j++) {
-            dots[j] = +dots[j] + x;
-            dots[++j] = +dots[j] + y;
-          }
-
-          res.pop();
-          res = res.concat(catmulRomToBezier(dots, crz));
-          break;
-        case 'O':
-          res.pop();
-          dots = ellipsePath(x, y, pa[1], pa[2]);
-          dots.push(dots[0]);
-          res = res.concat(dots);
-          break;
-        case 'U':
-          res.pop();
-          res = res.concat(ellipsePath(x, y, pa[1], pa[2], pa[3]));
-          r = ['U'].concat(res[res.length - 1].slice(-2));
-          break;
         case 'M':
           mx = +pa[1] + x;
           my = +pa[2] + y;
         default:
-
-          for (j = 1, jj = pa.length; j < jj; j++) {
+          for (var j = 1, jj = pa.length; j < jj; j++) {
             r[j] = +pa[j] + ((j % 2) ? x : y);
           }
         }
-      } else if (pa0 == 'R') {
-        dots = [x, y].concat(pa.slice(1));
-        res.pop();
-        res = res.concat(catmulRomToBezier(dots, crz));
-        r = ['R'].concat(pa.slice(-2));
-      } else if (pa0 == 'O') {
-        res.pop();
-        dots = ellipsePath(x, y, pa[1], pa[2]);
-        dots.push(dots[0]);
-        res = res.concat(dots);
-      } else if (pa0 == 'U') {
-        res.pop();
-        res = res.concat(ellipsePath(x, y, pa[1], pa[2], pa[3]));
-        r = ['U'].concat(res[res.length - 1].slice(-2));
       } else {
-
         for (var k = 0, kk = pa.length; k < kk; k++) {
           r[k] = pa[k];
         }
       }
       pa0 = pa0.toUpperCase();
 
-      if (pa0 != 'O') {
-        switch (r[0]) {
-        case 'Z':
-          x = +mx;
-          y = +my;
-          break;
-        case 'H':
-          x = r[1];
-          break;
-        case 'V':
-          y = r[1];
-          break;
-        case 'M':
-          mx = r[r.length - 2];
-          my = r[r.length - 1];
-        default:
-          x = r[r.length - 2];
-          y = r[r.length - 1];
-        }
+      switch (r[0]) {
+      case 'Z':
+        x = +mx;
+        y = +my;
+        break;
+      case 'H':
+        x = r[1];
+        break;
+      case 'V':
+        y = r[1];
+        break;
+      case 'M':
+        mx = r[r.length - 2];
+        my = r[r.length - 1];
+      default:
+        x = r[r.length - 2];
+        y = r[r.length - 1];
       }
     }
 
@@ -7294,6 +8767,15 @@
     pth.abs = pathClone(res);
 
     return res;
+  }
+
+  function isLine(bez) {
+    return (
+      bez[0] === bez[2] &&
+      bez[1] === bez[3] &&
+      bez[4] === bez[6] &&
+      bez[5] === bez[7]
+    );
   }
 
   function lineToCurve(x1, y1, x2, y2) {
@@ -7354,7 +8836,7 @@
       var rx2 = rx * rx,
           ry2 = ry * ry,
           k = (large_arc_flag == sweep_flag ? -1 : 1) *
-              math.sqrt(abs((rx2 * ry2 - rx2 * y * y - ry2 * x * x) / (rx2 * y * y + ry2 * x * x))),
+              math.sqrt(abs$1((rx2 * ry2 - rx2 * y * y - ry2 * x * x) / (rx2 * y * y + ry2 * x * x))),
           cx = k * rx * y / ry + (x1 + x2) / 2,
           cy = k * -ry * x / rx + (y1 + y2) / 2,
           f1 = math.asin(((y1 - cy) / ry).toFixed(9)),
@@ -7380,7 +8862,7 @@
 
     var df = f2 - f1;
 
-    if (abs(df) > _120) {
+    if (abs$1(df) > _120) {
       var f2old = f2,
           x2old = x2,
           y2old = y2;
@@ -7422,52 +8904,6 @@
     }
   }
 
-  // http://schepers.cc/getting-to-the-point
-  function catmulRomToBezier(crp, z) {
-    var d = [];
-
-    for (var i = 0, iLen = crp.length; iLen - 2 * !z > i; i += 2) {
-      var p = [
-        { x: +crp[i - 2], y: +crp[i - 1] },
-        { x: +crp[i], y: +crp[i + 1] },
-        { x: +crp[i + 2], y: +crp[i + 3] },
-        { x: +crp[i + 4], y: +crp[i + 5] }
-      ];
-
-      if (z) {
-
-        if (!i) {
-          p[0] = { x: +crp[iLen - 2], y: +crp[iLen - 1] };
-        } else if (iLen - 4 == i) {
-          p[3] = { x: +crp[0], y: +crp[1] };
-        } else if (iLen - 2 == i) {
-          p[2] = { x: +crp[0], y: +crp[1] };
-          p[3] = { x: +crp[2], y: +crp[3] };
-        }
-
-      } else {
-
-        if (iLen - 4 == i) {
-          p[3] = p[2];
-        } else if (!i) {
-          p[0] = { x: +crp[i], y: +crp[i + 1] };
-        }
-
-      }
-
-      d.push(['C',
-        (-p[0].x + 6 * p[1].x + p[2].x) / 6,
-        (-p[0].y + 6 * p[1].y + p[2].y) / 6,
-        (p[1].x + 6 * p[2].x - p[3].x) / 6,
-        (p[1].y + 6*p[2].y - p[3].y) / 6,
-        p[2].x,
-        p[2].y
-      ]);
-    }
-
-    return d;
-  }
-
   // Returns bounding box of cubic bezier curve.
   // Source: http://blog.hackers-cafe.net/2009/06/how-to-calculate-bezier-curves-bounding.html
   // Original version: NISHIO Hirokazu
@@ -7489,9 +8925,9 @@
         c = 3 * y1 - 3 * y0;
       }
 
-      if (abs(a) < 1e-12) {
+      if (abs$1(a) < 1e-12) {
 
-        if (abs(b) < 1e-12) {
+        if (abs$1(b) < 1e-12) {
           continue;
         }
 
@@ -7542,23 +8978,25 @@
     bounds[0].length = bounds[1].length = jlen + 2;
 
     return {
-      min: { x: mmin.apply(0, bounds[0]), y: mmin.apply(0, bounds[1]) },
-      max: { x: mmax.apply(0, bounds[0]), y: mmax.apply(0, bounds[1]) }
+      x0: mmin.apply(0, bounds[0]),
+      y0: mmin.apply(0, bounds[1]),
+      x1: mmax.apply(0, bounds[0]),
+      y1: mmax.apply(0, bounds[1])
     };
   }
 
-  function pathToCurve(path, path2) {
-    var pth = !path2 && paths(path);
+  function pathToCurve(path) {
 
-    if (!path2 && pth.curve) {
+    var pth = paths(path);
+
+    // return cached curve, if existing
+    if (pth.curve) {
       return pathClone(pth.curve);
     }
 
-    var p = pathToAbsolute(path),
-        p2 = path2 && pathToAbsolute(path2),
+    var curvedPath = pathToAbsolute(path),
         attrs = { x: 0, y: 0, bx: 0, by: 0, X: 0, Y: 0, qx: null, qy: null },
-        attrs2 = { x: 0, y: 0, bx: 0, by: 0, X: 0, Y: 0, qx: null, qy: null },
-        processPath = function(path, d, pcom) {
+        processPath = function(path, d, pathCommand) {
           var nx, ny;
 
           if (!path) {
@@ -7576,14 +9014,18 @@
             path = ['C'].concat(arcToCurve.apply(0, [d.x, d.y].concat(path.slice(1))));
             break;
           case 'S':
-            if (pcom == 'C' || pcom == 'S') {
+            if (pathCommand == 'C' || pathCommand == 'S') {
+
               // In 'S' case we have to take into account, if the previous command is C/S.
               nx = d.x * 2 - d.bx;
+
               // And reflect the previous
               ny = d.y * 2 - d.by;
+
               // command's control point relative to the current point.
             }
             else {
+
               // or some else or nothing
               nx = d.x;
               ny = d.y;
@@ -7591,14 +9033,18 @@
             path = ['C', nx, ny].concat(path.slice(1));
             break;
           case 'T':
-            if (pcom == 'Q' || pcom == 'T') {
+            if (pathCommand == 'Q' || pathCommand == 'T') {
+
               // In 'T' case we have to take into account, if the previous command is Q/T.
               d.qx = d.x * 2 - d.qx;
+
               // And make a reflection similar
               d.qy = d.y * 2 - d.qy;
+
               // to case 'S'.
             }
             else {
+
               // or something else or nothing
               d.qx = d.x;
               d.qy = d.y;
@@ -7634,95 +9080,66 @@
             var pi = pp[i];
 
             while (pi.length) {
-              pcoms1[i] = 'A'; // if created multiple C:s, their original seg is saved
-              p2 && (pcoms2[i] = 'A'); // the same as above
+              pathCommands[i] = 'A'; // if created multiple C:s, their original seg is saved
               pp.splice(i++, 0, ['C'].concat(pi.splice(0, 6)));
             }
 
             pp.splice(i, 1);
-            ii = mmax(p.length, p2 && p2.length || 0);
+            ii = curvedPath.length;
           }
         },
 
-        fixM = function(path1, path2, a1, a2, i) {
-
-          if (path1 && path2 && path1[i][0] == 'M' && path2[i][0] != 'M') {
-            path2.splice(i, 0, ['M', a2.x, a2.y]);
-            a1.bx = 0;
-            a1.by = 0;
-            a1.x = path1[i][1];
-            a1.y = path1[i][2];
-            ii = mmax(p.length, p2 && p2.length || 0);
-          }
-        },
-
-        pcoms1 = [], // path commands of original path p
-        pcoms2 = [], // path commands of original path p2
+        pathCommands = [], // path commands of original path p
         pfirst = '', // temporary holder for original path command
-        pcom = ''; // holder for previous path command of original path
+        pathCommand = ''; // holder for previous path command of original path
 
-    for (var i = 0, ii = mmax(p.length, p2 && p2.length || 0); i < ii; i++) {
-      p[i] && (pfirst = p[i][0]); // save current path command
+    for (var i = 0, ii = curvedPath.length; i < ii; i++) {
+      curvedPath[i] && (pfirst = curvedPath[i][0]); // save current path command
 
       if (pfirst != 'C') // C is not saved yet, because it may be result of conversion
       {
-        pcoms1[i] = pfirst; // Save current path command
-        i && (pcom = pcoms1[i - 1]); // Get previous path command pcom
+        pathCommands[i] = pfirst; // Save current path command
+        i && (pathCommand = pathCommands[i - 1]); // Get previous path command pathCommand
       }
-      p[i] = processPath(p[i], attrs, pcom); // Previous path command is inputted to processPath
+      curvedPath[i] = processPath(curvedPath[i], attrs, pathCommand); // Previous path command is inputted to processPath
 
-      if (pcoms1[i] != 'A' && pfirst == 'C') pcoms1[i] = 'C'; // A is the only command
+      if (pathCommands[i] != 'A' && pfirst == 'C') pathCommands[i] = 'C'; // A is the only command
       // which may produce multiple C:s
       // so we have to make sure that C is also C in original path
 
-      fixArc(p, i); // fixArc adds also the right amount of A:s to pcoms1
+      fixArc(curvedPath, i); // fixArc adds also the right amount of A:s to pathCommands
 
-      if (p2) { // the same procedures is done to p2
-        p2[i] && (pfirst = p2[i][0]);
-
-        if (pfirst != 'C') {
-          pcoms2[i] = pfirst;
-          i && (pcom = pcoms2[i - 1]);
-        }
-
-        p2[i] = processPath(p2[i], attrs2, pcom);
-
-        if (pcoms2[i] != 'A' && pfirst == 'C') {
-          pcoms2[i] = 'C';
-        }
-
-        fixArc(p2, i);
-      }
-
-      fixM(p, p2, attrs, attrs2, i);
-      fixM(p2, p, attrs2, attrs, i);
-
-      var seg = p[i],
-          seg2 = p2 && p2[i],
-          seglen = seg.length,
-          seg2len = p2 && seg2.length;
+      var seg = curvedPath[i],
+          seglen = seg.length;
 
       attrs.x = seg[seglen - 2];
       attrs.y = seg[seglen - 1];
       attrs.bx = toFloat(seg[seglen - 4]) || attrs.x;
       attrs.by = toFloat(seg[seglen - 3]) || attrs.y;
-      attrs2.bx = p2 && (toFloat(seg2[seg2len - 4]) || attrs2.x);
-      attrs2.by = p2 && (toFloat(seg2[seg2len - 3]) || attrs2.y);
-      attrs2.x = p2 && seg2[seg2len - 2];
-      attrs2.y = p2 && seg2[seg2len - 1];
     }
 
-    if (!p2) {
-      pth.curve = pathClone(p);
-    }
+    // cache curve
+    pth.curve = pathClone(curvedPath);
 
-    return p2 ? [p, p2] : p;
+    return curvedPath;
   }
 
   var intersect = findPathIntersections;
 
-  var round$2 = Math.round,
-      max = Math.max;
+  var intersectPaths = /*@__PURE__*/getDefaultExportFromCjs(intersect);
+
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   *
+   * @typedef { {
+   *   bendpoint?: boolean;
+   *   index: number;
+   *   point: Point;
+   * } } Intersection
+   */
+
+  var round$6 = Math.round,
+      max$2 = Math.max;
 
 
   function circlePath(center, r) {
@@ -7730,11 +9147,11 @@
         y = center.y;
 
     return [
-      ['M', x, y],
-      ['m', 0, -r],
-      ['a', r, r, 0, 1, 1, 0, 2 * r],
-      ['a', r, r, 0, 1, 1, 0, -2 * r],
-      ['z']
+      [ 'M', x, y ],
+      [ 'm', 0, -r ],
+      [ 'a', r, r, 0, 1, 1, 0, 2 * r ],
+      [ 'a', r, r, 0, 1, 1, 0, -2 * r ],
+      [ 'z' ]
     ];
   }
 
@@ -7749,15 +9166,21 @@
   }
 
 
-  var INTERSECTION_THRESHOLD = 10;
+  var INTERSECTION_THRESHOLD$1 = 10;
 
+  /**
+   * @param {Point[]} waypoints
+   * @param {Point} reference
+   *
+   * @return {Intersection|null}
+   */
   function getBendpointIntersection(waypoints, reference) {
 
     var i, w;
 
     for (i = 0; (w = waypoints[i]); i++) {
 
-      if (pointDistance(w, reference) <= INTERSECTION_THRESHOLD) {
+      if (pointDistance(w, reference) <= INTERSECTION_THRESHOLD$1) {
         return {
           point: waypoints[i],
           bendpoint: true,
@@ -7769,15 +9192,22 @@
     return null;
   }
 
+  /**
+   * @param {Point[]} waypoints
+   * @param {Point} reference
+   *
+   * @return {Intersection|null}
+   */
   function getPathIntersection(waypoints, reference) {
 
-    var intersections = intersect(circlePath(reference, INTERSECTION_THRESHOLD), linePath(waypoints));
+    var intersections = intersectPaths(circlePath(reference, INTERSECTION_THRESHOLD$1), linePath(waypoints));
 
     var a = intersections[0],
         b = intersections[intersections.length - 1],
         idx;
 
     if (!a) {
+
       // no intersection
       return null;
     }
@@ -7785,10 +9215,11 @@
     if (a !== b) {
 
       if (a.segment2 !== b.segment2) {
+
         // we use the bendpoint in between both segments
         // as the intersection point
 
-        idx = max(a.segment2, b.segment2) - 1;
+        idx = max$2(a.segment2, b.segment2) - 1;
 
         return {
           point: waypoints[idx],
@@ -7799,8 +9230,8 @@
 
       return {
         point: {
-          x: (round$2(a.x + b.x) / 2),
-          y: (round$2(a.y + b.y) / 2)
+          x: (round$6(a.x + b.x) / 2),
+          y: (round$6(a.y + b.y) / 2)
         },
         index: a.segment2
       };
@@ -7808,8 +9239,8 @@
 
     return {
       point: {
-        x: round$2(a.x),
-        y: round$2(a.y)
+        x: round$6(a.x),
+        y: round$6(a.y)
       },
       index: a.segment2
     };
@@ -7818,29 +9249,310 @@
   /**
    * Returns the closest point on the connection towards a given reference point.
    *
-   * @param  {Array<Point>} waypoints
-   * @param  {Point} reference
+   * @param {Point[]} waypoints
+   * @param {Point} reference
    *
-   * @return {Object} intersection data (segment, point)
+   * @return {Intersection|null}
    */
   function getApproxIntersection(waypoints, reference) {
     return getBendpointIntersection(waypoints, reference) || getPathIntersection(waypoints, reference);
   }
 
   /**
+   * @typedef {import('../../util/Types').Point} Point
+   * @typedef {import('../../util/Types').Vector} Vector
+   */
+
+  /**
+   * Returns the length of a vector.
+   *
+   * @param {Vector} vector
+   *
+   * @return {number}
+   */
+  function vectorLength(vector) {
+    return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+  }
+
+
+  /**
+   * Solves a 2D equation system
+   * a + r*b = c, where a,b,c are 2D vectors
+   *
+   * @param {Vector} a
+   * @param {Vector} b
+   * @param {Vector} c
+   *
+   * @return {number}
+   */
+  function solveLambaSystem(a, b, c) {
+
+    // the 2d system
+    var system = [
+      { n: a[0] - c[0], lambda: b[0] },
+      { n: a[1] - c[1], lambda: b[1] }
+    ];
+
+    // solve
+    var n = system[0].n * b[0] + system[1].n * b[1],
+        l = system[0].lambda * b[0] + system[1].lambda * b[1];
+
+    return -n / l;
+  }
+
+
+  /**
+   * Calculates the position of the perpendicular foot.
+   *
+   * @param {Point} point
+   * @param {Point[]} line
+   *
+   * @return {Point}
+   */
+  function perpendicularFoot(point, line) {
+
+    var a = line[0], b = line[1];
+
+    // relative position of b from a
+    var bd = { x: b.x - a.x, y: b.y - a.y };
+
+    // solve equation system to the parametrized vectors param real value
+    var r = solveLambaSystem([ a.x, a.y ], [ bd.x, bd.y ], [ point.x, point.y ]);
+
+    return { x: a.x + r * bd.x, y: a.y + r * bd.y };
+  }
+
+
+  /**
+   * Calculates the distance between a point and a line.
+   *
+   * @param {Point} point
+   * @param {Point[]} line
+   *
+   * @return {number}
+   */
+  function getDistancePointLine(point, line) {
+
+    var pfPoint = perpendicularFoot(point, line);
+
+    // distance vector
+    var connectionVector = {
+      x: pfPoint.x - point.x,
+      y: pfPoint.y - point.y
+    };
+
+    return vectorLength(connectionVector);
+  }
+
+  /**
+   * @typedef {import('../../core/Types').ConnectionLike} Connection
+   *
+   * @typedef {import('../../util/Types').Point} Point
+   */
+
+  var BENDPOINT_CLS = 'djs-bendpoint';
+  var SEGMENT_DRAGGER_CLS = 'djs-segment-dragger';
+
+  function toCanvasCoordinates(canvas, event) {
+
+    var position = toPoint(event),
+        clientRect = canvas._container.getBoundingClientRect(),
+        offset;
+
+    // canvas relative position
+
+    offset = {
+      x: clientRect.left,
+      y: clientRect.top
+    };
+
+    // update actual event payload with canvas relative measures
+
+    var viewbox = canvas.viewbox();
+
+    return {
+      x: viewbox.x + (position.x - offset.x) / viewbox.scale,
+      y: viewbox.y + (position.y - offset.y) / viewbox.scale
+    };
+  }
+
+  function getConnectionIntersection(canvas, waypoints, event) {
+    var localPosition = toCanvasCoordinates(canvas, event),
+        intersection = getApproxIntersection(waypoints, localPosition);
+
+    return intersection;
+  }
+
+  function addBendpoint(parentGfx, cls) {
+    var groupGfx = create$1('g');
+    classes(groupGfx).add(BENDPOINT_CLS);
+
+    append(parentGfx, groupGfx);
+
+    var visual = create$1('circle');
+    attr(visual, {
+      cx: 0,
+      cy: 0,
+      r: 4
+    });
+    classes(visual).add('djs-visual');
+
+    append(groupGfx, visual);
+
+    var hit = create$1('circle');
+    attr(hit, {
+      cx: 0,
+      cy: 0,
+      r: 10
+    });
+    classes(hit).add('djs-hit');
+
+    append(groupGfx, hit);
+
+    if (cls) {
+      classes(groupGfx).add(cls);
+    }
+
+    return groupGfx;
+  }
+
+  function createParallelDragger(parentGfx, segmentStart, segmentEnd, alignment) {
+    var draggerGfx = create$1('g');
+
+    append(parentGfx, draggerGfx);
+
+    var width = 18,
+        height = 6,
+        padding = 11,
+        hitWidth = calculateHitWidth(segmentStart, segmentEnd, alignment),
+        hitHeight = height + padding;
+
+    var visual = create$1('rect');
+    attr(visual, {
+      x: -width / 2,
+      y: -height / 2,
+      width: width,
+      height: height
+    });
+    classes(visual).add('djs-visual');
+
+    append(draggerGfx, visual);
+
+    var hit = create$1('rect');
+    attr(hit, {
+      x: -hitWidth / 2,
+      y: -hitHeight / 2,
+      width: hitWidth,
+      height: hitHeight
+    });
+    classes(hit).add('djs-hit');
+
+    append(draggerGfx, hit);
+
+    rotate(draggerGfx, alignment === 'v' ? 90 : 0);
+
+    return draggerGfx;
+  }
+
+
+  function addSegmentDragger(parentGfx, segmentStart, segmentEnd) {
+
+    var groupGfx = create$1('g'),
+        mid = getMidPoint(segmentStart, segmentEnd),
+        alignment = pointsAligned(segmentStart, segmentEnd);
+
+    append(parentGfx, groupGfx);
+
+    createParallelDragger(groupGfx, segmentStart, segmentEnd, alignment);
+
+    classes(groupGfx).add(SEGMENT_DRAGGER_CLS);
+    classes(groupGfx).add(alignment === 'h' ? 'horizontal' : 'vertical');
+
+    translate(groupGfx, mid.x, mid.y);
+
+    return groupGfx;
+  }
+
+  /**
+   * Calculates region for segment move which is 2/3 of the full segment length
+   * @param {number} segmentLength
+   *
+   * @return {number}
+   */
+  function calculateSegmentMoveRegion(segmentLength) {
+    return Math.abs(Math.round(segmentLength * 2 / 3));
+  }
+
+  /**
+   * Returns the point with the closest distance that is on the connection path.
+   *
+   * @param {Point} position
+   * @param {Connection} connection
+   * @return {Point}
+   */
+  function getClosestPointOnConnection(position, connection) {
+    var segment = getClosestSegment(position, connection);
+
+    return perpendicularFoot(position, segment);
+  }
+
+
+  // helper //////////
+
+  function calculateHitWidth(segmentStart, segmentEnd, alignment) {
+    var segmentLengthXAxis = segmentEnd.x - segmentStart.x,
+        segmentLengthYAxis = segmentEnd.y - segmentStart.y;
+
+    return alignment === 'h' ?
+      calculateSegmentMoveRegion(segmentLengthXAxis) :
+      calculateSegmentMoveRegion(segmentLengthYAxis);
+  }
+
+  function getClosestSegment(position, connection) {
+    var waypoints = connection.waypoints;
+
+    var minDistance = Infinity,
+        segmentIndex;
+
+    for (var i = 0; i < waypoints.length - 1; i++) {
+      var start = waypoints[i],
+          end = waypoints[i + 1],
+          distance = getDistancePointLine(position, [ start, end ]);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        segmentIndex = i;
+      }
+    }
+
+    return [ waypoints[segmentIndex], waypoints[segmentIndex + 1] ];
+  }
+
+  /**
+   * @typedef {import('../bendpoints/BendpointMove').default} BendpointMove
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../bendpoints/ConnectionSegmentMove').default} ConnectionSegmentMove
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../interaction-events/InteractionEvents').default} InteractionEvents
+   */
+
+  /**
    * A service that adds editable bendpoints to connections.
+   *
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
+   * @param {InteractionEvents} interactionEvents
+   * @param {BendpointMove} bendpointMove
+   * @param {ConnectionSegmentMove} connectionSegmentMove
    */
   function Bendpoints(
       eventBus, canvas, interactionEvents,
       bendpointMove, connectionSegmentMove) {
 
-    function getConnectionIntersection(waypoints, event$$1) {
-      var localPosition = toCanvasCoordinates(canvas, event$$1),
-          intersection = getApproxIntersection(waypoints, localPosition);
-
-      return intersection;
-    }
-
+    /**
+     * Returns true if intersection point is inside middle region of segment, adjusted by
+     * optional threshold
+     */
     function isIntersectionMiddle(intersection, waypoints, treshold) {
       var idx = intersection.index,
           p = intersection.point,
@@ -7860,18 +9572,56 @@
       return aligned && xDelta <= treshold && yDelta <= treshold;
     }
 
-    function activateBendpointMove(event$$1, connection) {
+    /**
+     * Calculates the threshold from a connection's middle which fits the two-third-region
+     */
+    function calculateIntersectionThreshold(connection, intersection) {
       var waypoints = connection.waypoints,
-          intersection = getConnectionIntersection(waypoints, event$$1);
+          relevantSegment, alignment, segmentLength, threshold;
+
+      if (intersection.index <= 0 || intersection.bendpoint) {
+        return null;
+      }
+
+      // segment relative to connection intersection
+      relevantSegment = {
+        start: waypoints[intersection.index - 1],
+        end: waypoints[intersection.index]
+      };
+
+      alignment = pointsAligned(relevantSegment.start, relevantSegment.end);
+
+      if (!alignment) {
+        return null;
+      }
+
+      if (alignment === 'h') {
+        segmentLength = relevantSegment.end.x - relevantSegment.start.x;
+      } else {
+        segmentLength = relevantSegment.end.y - relevantSegment.start.y;
+      }
+
+      // calculate threshold relative to 2/3 of segment length
+      threshold = calculateSegmentMoveRegion(segmentLength) / 2;
+
+      return threshold;
+    }
+
+    function activateBendpointMove(event, connection) {
+      var waypoints = connection.waypoints,
+          intersection = getConnectionIntersection(canvas, waypoints, event),
+          threshold;
 
       if (!intersection) {
         return;
       }
 
-      if (isIntersectionMiddle(intersection, waypoints, 10)) {
-        connectionSegmentMove.start(event$$1, connection, intersection.index);
+      threshold = calculateIntersectionThreshold(connection, intersection);
+
+      if (isIntersectionMiddle(intersection, waypoints, threshold)) {
+        connectionSegmentMove.start(event, connection, intersection.index);
       } else {
-        bendpointMove.start(event$$1, connection, intersection.index, !intersection.bendpoint);
+        bendpointMove.start(event, connection, intersection.index, !intersection.bendpoint);
       }
 
       // we've handled the event
@@ -7880,21 +9630,21 @@
 
     function bindInteractionEvents(node, eventName, element) {
 
-      componentEvent.bind(node, eventName, function(event$$1) {
-        interactionEvents.triggerMouseEvent(eventName, event$$1, element);
-        event$$1.stopPropagation();
+      event.bind(node, eventName, function(event) {
+        interactionEvents.triggerMouseEvent(eventName, event, element);
+        event.stopPropagation();
       });
     }
 
-    function getBendpointsContainer(element, create$$1) {
+    function getBendpointsContainer(element, create) {
 
       var layer = canvas.getLayer('overlays'),
-          gfx = query('.djs-bendpoints[data-element-id="' + css_escape(element.id) + '"]', layer);
+          gfx = query('.djs-bendpoints[data-element-id="' + escapeCSS(element.id) + '"]', layer);
 
-      if (!gfx && create$$1) {
-        gfx = create('g');
-        attr$1(gfx, { 'data-element-id': element.id });
-        classes$1(gfx).add('djs-bendpoints');
+      if (!gfx && create) {
+        gfx = create$1('g');
+        attr(gfx, { 'data-element-id': element.id });
+        classes(gfx).add('djs-bendpoints');
 
         append(layer, gfx);
 
@@ -7904,6 +9654,13 @@
       }
 
       return gfx;
+    }
+
+    function getSegmentDragger(idx, parentGfx) {
+      return query(
+        '.djs-segment-dragger[data-segment-idx="' + idx + '"]',
+        parentGfx
+      );
     }
 
     function createBendpoints(gfx, connection) {
@@ -7924,7 +9681,8 @@
       var waypoints = connection.waypoints;
 
       var segmentStart,
-          segmentEnd;
+          segmentEnd,
+          segmentDraggerGfx;
 
       for (var i = 1; i < waypoints.length; i++) {
 
@@ -7932,19 +9690,23 @@
         segmentEnd = waypoints[i];
 
         if (pointsAligned(segmentStart, segmentEnd)) {
-          addSegmentDragger(gfx, segmentStart, segmentEnd);
+          segmentDraggerGfx = addSegmentDragger(gfx, segmentStart, segmentEnd);
+
+          attr(segmentDraggerGfx, { 'data-segment-idx': i });
+
+          bindInteractionEvents(segmentDraggerGfx, 'mousemove', connection);
         }
       }
     }
 
     function clearBendpoints(gfx) {
-      forEach(all('.' + BENDPOINT_CLS, gfx), function(node) {
+      forEach$1(all('.' + BENDPOINT_CLS, gfx), function(node) {
         remove$1(node);
       });
     }
 
     function clearSegmentDraggers(gfx) {
-      forEach(all('.' + SEGMENT_DRAGGER_CLS, gfx), function(node) {
+      forEach$1(all('.' + SEGMENT_DRAGGER_CLS, gfx), function(node) {
         remove$1(node);
       });
     }
@@ -7975,21 +9737,66 @@
       }
     }
 
-    eventBus.on('connection.changed', function(event$$1) {
-      updateHandles(event$$1.element);
+    function updateFloatingBendpointPosition(parentGfx, intersection) {
+      var floating = query('.floating', parentGfx),
+          point = intersection.point;
+
+      if (!floating) {
+        return;
+      }
+
+      translate(floating, point.x, point.y);
+
+    }
+
+    function updateSegmentDraggerPosition(parentGfx, intersection, waypoints) {
+
+      var draggerGfx = getSegmentDragger(intersection.index, parentGfx),
+          segmentStart = waypoints[intersection.index - 1],
+          segmentEnd = waypoints[intersection.index],
+          point = intersection.point,
+          mid = getMidPoint(segmentStart, segmentEnd),
+          alignment = pointsAligned(segmentStart, segmentEnd),
+          draggerVisual, relativePosition;
+
+      if (!draggerGfx) {
+        return;
+      }
+
+      draggerVisual = getDraggerVisual(draggerGfx);
+
+      relativePosition = {
+        x: point.x - mid.x,
+        y: point.y - mid.y
+      };
+
+      if (alignment === 'v') {
+
+        // rotate position
+        relativePosition = {
+          x: relativePosition.y,
+          y: relativePosition.x
+        };
+      }
+
+      translate(draggerVisual, relativePosition.x, relativePosition.y);
+    }
+
+    eventBus.on('connection.changed', function(event) {
+      updateHandles(event.element);
     });
 
-    eventBus.on('connection.remove', function(event$$1) {
-      var gfx = getBendpointsContainer(event$$1.element);
+    eventBus.on('connection.remove', function(event) {
+      var gfx = getBendpointsContainer(event.element);
 
       if (gfx) {
         remove$1(gfx);
       }
     });
 
-    eventBus.on('element.marker.update', function(event$$1) {
+    eventBus.on('element.marker.update', function(event) {
 
-      var element = event$$1.element,
+      var element = event.element,
           bendpointsGfx;
 
       if (!element.waypoints) {
@@ -7998,52 +9805,56 @@
 
       bendpointsGfx = addHandles(element);
 
-      if (event$$1.add) {
-        classes$1(bendpointsGfx).add(event$$1.marker);
+      if (event.add) {
+        classes(bendpointsGfx).add(event.marker);
       } else {
-        classes$1(bendpointsGfx).remove(event$$1.marker);
+        classes(bendpointsGfx).remove(event.marker);
       }
     });
 
-    eventBus.on('element.mousemove', function(event$$1) {
+    eventBus.on('element.mousemove', function(event) {
 
-      var element = event$$1.element,
+      var element = event.element,
           waypoints = element.waypoints,
           bendpointsGfx,
-          floating,
           intersection;
 
       if (waypoints) {
         bendpointsGfx = getBendpointsContainer(element, true);
-        floating = query('.floating', bendpointsGfx);
 
-        if (!floating) {
+        intersection = getConnectionIntersection(canvas, waypoints, event.originalEvent);
+
+        if (!intersection) {
           return;
         }
 
-        intersection = getConnectionIntersection(waypoints, event$$1.originalEvent);
+        updateFloatingBendpointPosition(bendpointsGfx, intersection);
 
-        if (intersection) {
-          translate(floating, intersection.point.x, intersection.point.y);
+        if (!intersection.bendpoint) {
+          updateSegmentDraggerPosition(bendpointsGfx, intersection, waypoints);
         }
+
       }
     });
 
-    eventBus.on('element.mousedown', function(event$$1) {
+    eventBus.on('element.mousedown', function(event) {
 
-      var originalEvent = event$$1.originalEvent,
-          element = event$$1.element,
-          waypoints = element.waypoints;
-
-      if (!waypoints) {
+      if (!isPrimaryButton(event)) {
         return;
       }
 
-      return activateBendpointMove(originalEvent, element, waypoints);
+      var originalEvent = event.originalEvent,
+          element = event.element;
+
+      if (!element.waypoints) {
+        return;
+      }
+
+      return activateBendpointMove(originalEvent, element);
     });
 
-    eventBus.on('selection.changed', function(event$$1) {
-      var newSelection = event$$1.newSelection,
+    eventBus.on('selection.changed', function(event) {
+      var newSelection = event.newSelection,
           primary = newSelection[0];
 
       if (primary && primary.waypoints) {
@@ -8051,17 +9862,17 @@
       }
     });
 
-    eventBus.on('element.hover', function(event$$1) {
-      var element = event$$1.element;
+    eventBus.on('element.hover', function(event) {
+      var element = event.element;
 
       if (element.waypoints) {
         addHandles(element);
-        interactionEvents.registerEvent(event$$1.gfx, 'mousemove', 'element.mousemove');
+        interactionEvents.registerEvent(event.gfx, 'mousemove', 'element.mousemove');
       }
     });
 
-    eventBus.on('element.out', function(event$$1) {
-      interactionEvents.unregisterEvent(event$$1.gfx, 'mousemove', 'element.mousemove');
+    eventBus.on('element.out', function(event) {
+      interactionEvents.unregisterEvent(event.gfx, 'mousemove', 'element.mousemove');
     });
 
     // update bendpoint container data attribute on element ID change
@@ -8073,7 +9884,7 @@
         var bendpointContainer = getBendpointsContainer(element);
 
         if (bendpointContainer) {
-          attr$1(bendpointContainer, { 'data-element-id': newId });
+          attr(bendpointContainer, { 'data-element-id': newId });
         }
       }
     });
@@ -8083,6 +9894,7 @@
     this.addHandles = addHandles;
     this.updateHandles = updateHandles;
     this.getBendpointsContainer = getBendpointsContainer;
+    this.getSegmentDragger = getSegmentDragger;
   }
 
   Bendpoints.$inject = [
@@ -8093,273 +9905,29 @@
     'connectionSegmentMove'
   ];
 
-  var MARKER_OK$2 = 'connect-ok',
-      MARKER_NOT_OK$2 = 'connect-not-ok',
-      MARKER_CONNECT_HOVER = 'connect-hover',
-      MARKER_CONNECT_UPDATING = 'djs-updating';
-
-  var COMMAND_BENDPOINT_UPDATE = 'connection.updateWaypoints',
-      COMMAND_RECONNECT_START = 'connection.reconnectStart',
-      COMMAND_RECONNECT_END = 'connection.reconnectEnd';
-
-  var round$3 = Math.round;
 
 
-  /**
-   * A component that implements moving of bendpoints
-   */
-  function BendpointMove(
-      injector, eventBus, canvas,
-      dragging, graphicsFactory, rules,
-      modeling) {
+  // helper /////////////
 
-
-    // optional connection docking integration
-    var connectionDocking = injector.get('connectionDocking', false);
-
-
-    // API
-
-    this.start = function(event, connection, bendpointIndex, insert) {
-
-      var type,
-          context,
-          waypoints = connection.waypoints,
-          gfx = canvas.getGraphics(connection);
-
-      if (!insert && bendpointIndex === 0) {
-        type = COMMAND_RECONNECT_START;
-      } else
-      if (!insert && bendpointIndex === waypoints.length - 1) {
-        type = COMMAND_RECONNECT_END;
-      } else {
-        type = COMMAND_BENDPOINT_UPDATE;
-      }
-
-      context = {
-        connection: connection,
-        bendpointIndex: bendpointIndex,
-        insert: insert,
-        type: type
-      };
-
-      dragging.init(event, 'bendpoint.move', {
-        data: {
-          connection: connection,
-          connectionGfx: gfx,
-          context: context
-        }
-      });
-    };
-
-
-    // DRAGGING IMPLEMENTATION
-
-
-    function redrawConnection(data) {
-      graphicsFactory.update('connection', data.connection, data.connectionGfx);
-    }
-
-    function filterRedundantWaypoints(waypoints) {
-
-      // alter copy of waypoints, not original
-      waypoints = waypoints.slice();
-
-      var idx = 0,
-          point,
-          previousPoint,
-          nextPoint;
-
-      while (waypoints[idx]) {
-        point = waypoints[idx];
-        previousPoint = waypoints[idx - 1];
-        nextPoint = waypoints[idx + 1];
-
-        if (pointDistance(point, nextPoint) === 0 ||
-            pointsOnLine(previousPoint, nextPoint, point)) {
-
-          // remove point, if overlapping with {nextPoint}
-          // or on line with {previousPoint} -> {point} -> {nextPoint}
-          waypoints.splice(idx, 1);
-        } else {
-          idx++;
-        }
-      }
-
-      return waypoints;
-    }
-
-    eventBus.on('bendpoint.move.start', function(e) {
-
-      var context = e.context,
-          connection = context.connection,
-          originalWaypoints = connection.waypoints,
-          waypoints = originalWaypoints.slice(),
-          insert = context.insert,
-          idx = context.bendpointIndex;
-
-      context.originalWaypoints = originalWaypoints;
-
-      if (insert) {
-        // insert placeholder for bendpoint to-be-added
-        waypoints.splice(idx, 0, null);
-      }
-
-      connection.waypoints = waypoints;
-
-      // add dragger gfx
-      context.draggerGfx = addBendpoint(canvas.getLayer('overlays'));
-      classes$1(context.draggerGfx).add('djs-dragging');
-
-      canvas.addMarker(connection, MARKER_CONNECT_UPDATING);
-    });
-
-    eventBus.on('bendpoint.move.hover', function(e) {
-      var context = e.context;
-
-      context.hover = e.hover;
-
-      if (e.hover) {
-        canvas.addMarker(e.hover, MARKER_CONNECT_HOVER);
-
-        // asks whether reconnect / bendpoint move / bendpoint add
-        // is allowed at the given position
-        var allowed = context.allowed = rules.allowed(context.type, context);
-
-        if (allowed) {
-          canvas.removeMarker(context.hover, MARKER_NOT_OK$2);
-          canvas.addMarker(context.hover, MARKER_OK$2);
-
-          context.target = context.hover;
-        } else if (allowed === false) {
-          canvas.removeMarker(context.hover, MARKER_OK$2);
-          canvas.addMarker(context.hover, MARKER_NOT_OK$2);
-
-          context.target = null;
-        }
-      }
-    });
-
-    eventBus.on([
-      'bendpoint.move.out',
-      'bendpoint.move.cleanup'
-    ], function(e) {
-
-      // remove connect marker
-      // if it was added
-      var hover = e.context.hover;
-
-      if (hover) {
-        canvas.removeMarker(hover, MARKER_CONNECT_HOVER);
-        canvas.removeMarker(hover, e.context.target ? MARKER_OK$2 : MARKER_NOT_OK$2);
-      }
-    });
-
-    eventBus.on('bendpoint.move.move', function(e) {
-
-      var context = e.context,
-          moveType = context.type,
-          connection = e.connection,
-          source, target;
-
-      connection.waypoints[context.bendpointIndex] = { x: e.x, y: e.y };
-
-      if (connectionDocking) {
-
-        if (context.hover) {
-          if (moveType === COMMAND_RECONNECT_START) {
-            source = context.hover;
-          }
-
-          if (moveType === COMMAND_RECONNECT_END) {
-            target = context.hover;
-          }
-        }
-
-        connection.waypoints = connectionDocking.getCroppedWaypoints(connection, source, target);
-      }
-
-      // add dragger gfx
-      translate(context.draggerGfx, e.x, e.y);
-
-      redrawConnection(e);
-    });
-
-    eventBus.on([
-      'bendpoint.move.end',
-      'bendpoint.move.cancel'
-    ], function(e) {
-
-      var context = e.context,
-          hover = context.hover,
-          connection = context.connection;
-
-      // remove dragger gfx
-      remove$1(context.draggerGfx);
-      context.newWaypoints = connection.waypoints.slice();
-      connection.waypoints = context.originalWaypoints;
-      canvas.removeMarker(connection, MARKER_CONNECT_UPDATING);
-
-      if (hover) {
-        canvas.removeMarker(hover, MARKER_OK$2);
-        canvas.removeMarker(hover, MARKER_NOT_OK$2);
-      }
-    });
-
-    eventBus.on('bendpoint.move.end', function(e) {
-
-      var context = e.context,
-          waypoints = context.newWaypoints,
-          bendpointIndex = context.bendpointIndex,
-          bendpoint = waypoints[bendpointIndex],
-          allowed = context.allowed,
-          hints;
-
-      // ensure we have actual pixel values bendpoint
-      // coordinates (important when zoom level was > 1 during move)
-      bendpoint.x = round$3(bendpoint.x);
-      bendpoint.y = round$3(bendpoint.y);
-
-      if (allowed && context.type === COMMAND_RECONNECT_START) {
-        modeling.reconnectStart(context.connection, context.target, bendpoint);
-      } else
-      if (allowed && context.type === COMMAND_RECONNECT_END) {
-        modeling.reconnectEnd(context.connection, context.target, bendpoint);
-      } else
-      if (allowed !== false && context.type === COMMAND_BENDPOINT_UPDATE) {
-
-        // pass hints on the actual moved bendpoint
-        // this is useful for connection and label layouting
-        hints = {
-          bendpointMove: {
-            insert: e.context.insert,
-            bendpointIndex: bendpointIndex
-          }
-        };
-
-        modeling.updateWaypoints(context.connection, filterRedundantWaypoints(waypoints), hints);
-      } else {
-        redrawConnection(e);
-
-        return false;
-      }
-    });
-
-    eventBus.on('bendpoint.move.cancel', function(e) {
-      redrawConnection(e);
-    });
+  function getDraggerVisual(draggerGfx) {
+    return query('.djs-visual', draggerGfx);
   }
 
-  BendpointMove.$inject = [
-    'injector',
-    'eventBus',
-    'canvas',
-    'dragging',
-    'graphicsFactory',
-    'rules',
-    'modeling'
-  ];
+  /**
+   * @typedef {import('../core/Types').ElementLike} Element
+   * @typedef {import('../core/Types').ConnectionLike} Connection
+   *
+   * @typedef {import('../util/Types').DirectionTRBL} DirectionTRBL
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   * @typedef {import('../util/Types').RectTRBL} RectTRBL
+   */
 
+  /**
+   * @param {Rect} bounds
+   *
+   * @returns {Rect}
+   */
   function roundBounds(bounds) {
     return {
       x: Math.round(bounds.x),
@@ -8369,7 +9937,11 @@
     };
   }
 
-
+  /**
+   * @param {Point} point
+   *
+   * @returns {Point}
+   */
   function roundPoint(point) {
 
     return {
@@ -8382,9 +9954,9 @@
   /**
    * Convert the given bounds to a { top, left, bottom, right } descriptor.
    *
-   * @param {Bounds|Point} bounds
+   * @param {Point|Rect} bounds
    *
-   * @return {Object}
+   * @return {RectTRBL}
    */
   function asTRBL(bounds) {
     return {
@@ -8399,9 +9971,9 @@
   /**
    * Convert a { top, left, bottom, right } to an objects bounds.
    *
-   * @param {Object} trbl
+   * @param {RectTRBL} trbl
    *
-   * @return {Bounds}
+   * @return {Rect}
    */
   function asBounds(trbl) {
     return {
@@ -8416,17 +9988,91 @@
   /**
    * Get the mid of the given bounds or point.
    *
-   * @param {Bounds|Point} bounds
+   * @param {Point|Rect} bounds
    *
    * @return {Point}
    */
-  function getMid(bounds) {
+  function getBoundsMid(bounds) {
     return roundPoint({
       x: bounds.x + (bounds.width || 0) / 2,
       y: bounds.y + (bounds.height || 0) / 2
     });
   }
 
+
+  /**
+   * Get the mid of the given Connection.
+   *
+   * @param {Connection} connection
+   *
+   * @return {Point}
+   */
+  function getConnectionMid(connection) {
+    var waypoints = connection.waypoints;
+
+    // calculate total length and length of each segment
+    var parts = waypoints.reduce(function(parts, point, index) {
+
+      var lastPoint = waypoints[index - 1];
+
+      if (lastPoint) {
+        var lastPart = parts[parts.length - 1];
+
+        var startLength = lastPart && lastPart.endLength || 0;
+        var length = distance(lastPoint, point);
+
+        parts.push({
+          start: lastPoint,
+          end: point,
+          startLength: startLength,
+          endLength: startLength + length,
+          length: length
+        });
+      }
+
+      return parts;
+    }, []);
+
+    var totalLength = parts.reduce(function(length, part) {
+      return length + part.length;
+    }, 0);
+
+    // find which segement contains middle point
+    var midLength = totalLength / 2;
+
+    var i = 0;
+    var midSegment = parts[i];
+
+    while (midSegment.endLength < midLength) {
+      midSegment = parts[++i];
+    }
+
+    // calculate relative position on mid segment
+    var segmentProgress = (midLength - midSegment.startLength) / midSegment.length;
+
+    var midPoint = {
+      x: midSegment.start.x + (midSegment.end.x - midSegment.start.x) * segmentProgress,
+      y: midSegment.start.y + (midSegment.end.y - midSegment.start.y) * segmentProgress
+    };
+
+    return midPoint;
+  }
+
+
+  /**
+   * Get the mid of the given Element.
+   *
+   * @param {Element} element
+   *
+   * @return {Point}
+   */
+  function getMid(element) {
+    if (isConnection(element)) {
+      return getConnectionMid(element);
+    }
+
+    return getBoundsMid(element);
+  }
 
   // orientation utils //////////////////////
 
@@ -8437,11 +10083,11 @@
    * A padding (positive or negative) may be passed to influence
    * horizontal / vertical orientation and intersection.
    *
-   * @param {Bounds} rect
-   * @param {Bounds} reference
-   * @param {Point|Number} padding
+   * @param {Rect} rect
+   * @param {Rect} reference
+   * @param {Point|number} padding
    *
-   * @return {String} the orientation; one of top, top-left, left, ..., bottom, right or intersect.
+   * @return {DirectionTRBL} the orientation; one of top, top-left, left, ..., bottom, right or intersect.
    */
   function getOrientation(rect, reference, padding) {
 
@@ -8478,9 +10124,9 @@
   /**
    * Get intersection between an element and a line path.
    *
-   * @param {PathDef} elementPath
-   * @param {PathDef} linePath
-   * @param {Boolean} cropStart crop from start or end
+   * @param {string} elementPath
+   * @param {string} linePath
+   * @param {boolean} cropStart Whether to crop start or end.
    *
    * @return {Point}
    */
@@ -8522,12 +10168,524 @@
 
 
   function getIntersections(a, b) {
-    return intersect(a, b);
+    return intersectPaths(a, b);
   }
 
-  var MARKER_CONNECT_HOVER$1 = 'connect-hover',
-      MARKER_CONNECT_UPDATING$1 = 'djs-updating';
 
+  function filterRedundantWaypoints(waypoints) {
+
+    // alter copy of waypoints, not original
+    waypoints = waypoints.slice();
+
+    var idx = 0,
+        point,
+        previousPoint,
+        nextPoint;
+
+    while (waypoints[idx]) {
+      point = waypoints[idx];
+      previousPoint = waypoints[idx - 1];
+      nextPoint = waypoints[idx + 1];
+
+      if (pointDistance(point, nextPoint) === 0 ||
+          pointsOnLine(previousPoint, nextPoint, point)) {
+
+        // remove point, if overlapping with {nextPoint}
+        // or on line with {previousPoint} -> {point} -> {nextPoint}
+        waypoints.splice(idx, 1);
+      } else {
+        idx++;
+      }
+    }
+
+    return waypoints;
+  }
+
+  // helpers //////////////////////
+
+  function distance(a, b) {
+    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+  }
+
+  /**
+   * @typedef {import('didi').Injector} Injector
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../modeling/Modeling').default} Modeling
+   * @typedef {import('../rules/Rules').default} Rules
+   */
+
+  var round$5 = Math.round;
+
+  var RECONNECT_START$1 = 'reconnectStart',
+      RECONNECT_END$1 = 'reconnectEnd',
+      UPDATE_WAYPOINTS$1 = 'updateWaypoints';
+
+
+  /**
+   * Move bendpoints through drag and drop to add/remove bendpoints or reconnect connection.
+   *
+   * @param {Injector} injector
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
+   * @param {Dragging} dragging
+   * @param {Rules} rules
+   * @param {Modeling} modeling
+   */
+  function BendpointMove(injector, eventBus, canvas, dragging, rules, modeling) {
+    this._injector = injector;
+
+    this.start = function(event, connection, bendpointIndex, insert) {
+      var gfx = canvas.getGraphics(connection),
+          source = connection.source,
+          target = connection.target,
+          waypoints = connection.waypoints,
+          type;
+
+      if (!insert && bendpointIndex === 0) {
+        type = RECONNECT_START$1;
+      } else
+      if (!insert && bendpointIndex === waypoints.length - 1) {
+        type = RECONNECT_END$1;
+      } else {
+        type = UPDATE_WAYPOINTS$1;
+      }
+
+      var command = type === UPDATE_WAYPOINTS$1 ? 'connection.updateWaypoints' : 'connection.reconnect';
+
+      var allowed = rules.allowed(command, {
+        connection: connection,
+        source: source,
+        target: target
+      });
+
+      if (allowed === false) {
+        allowed = rules.allowed(command, {
+          connection: connection,
+          source: target,
+          target: source
+        });
+      }
+
+      if (allowed === false) {
+        return;
+      }
+
+      dragging.init(event, 'bendpoint.move', {
+        data: {
+          connection: connection,
+          connectionGfx: gfx,
+          context: {
+            allowed: allowed,
+            bendpointIndex: bendpointIndex,
+            connection: connection,
+            source: source,
+            target: target,
+            insert: insert,
+            type: type
+          }
+        }
+      });
+    };
+
+    eventBus.on('bendpoint.move.hover', function(event) {
+      var context = event.context,
+          connection = context.connection,
+          source = connection.source,
+          target = connection.target,
+          hover = event.hover,
+          type = context.type;
+
+      // cache hover state
+      context.hover = hover;
+
+      var allowed;
+
+      if (!hover) {
+        return;
+      }
+
+      var command = type === UPDATE_WAYPOINTS$1 ? 'connection.updateWaypoints' : 'connection.reconnect';
+
+      allowed = context.allowed = rules.allowed(command, {
+        connection: connection,
+        source: type === RECONNECT_START$1 ? hover : source,
+        target: type === RECONNECT_END$1 ? hover : target
+      });
+
+      if (allowed) {
+        context.source = type === RECONNECT_START$1 ? hover : source;
+        context.target = type === RECONNECT_END$1 ? hover : target;
+
+        return;
+      }
+
+      if (allowed === false) {
+        allowed = context.allowed = rules.allowed(command, {
+          connection: connection,
+          source: type === RECONNECT_END$1 ? hover : target,
+          target: type === RECONNECT_START$1 ? hover : source
+        });
+      }
+
+      if (allowed) {
+        context.source = type === RECONNECT_END$1 ? hover : target;
+        context.target = type === RECONNECT_START$1 ? hover : source;
+      }
+    });
+
+    eventBus.on([ 'bendpoint.move.out', 'bendpoint.move.cleanup' ], function(event) {
+      var context = event.context,
+          type = context.type;
+
+      context.hover = null;
+      context.source = null;
+      context.target = null;
+
+      if (type !== UPDATE_WAYPOINTS$1) {
+        context.allowed = false;
+      }
+    });
+
+    eventBus.on('bendpoint.move.end', function(event) {
+      var context = event.context,
+          allowed = context.allowed,
+          bendpointIndex = context.bendpointIndex,
+          connection = context.connection,
+          insert = context.insert,
+          newWaypoints = connection.waypoints.slice(),
+          source = context.source,
+          target = context.target,
+          type = context.type,
+          hints = context.hints || {};
+
+      // ensure integer values (important if zoom level was > 1 during move)
+      var docking = {
+        x: round$5(event.x),
+        y: round$5(event.y)
+      };
+
+      if (!allowed) {
+        return false;
+      }
+
+      if (type === UPDATE_WAYPOINTS$1) {
+        if (insert) {
+
+          // insert new bendpoint
+          newWaypoints.splice(bendpointIndex, 0, docking);
+        } else {
+
+          // swap previous waypoint with moved one
+          newWaypoints[bendpointIndex] = docking;
+        }
+
+        // pass hints about actual moved bendpoint
+        // useful for connection/label layout
+        hints.bendpointMove = {
+          insert: insert,
+          bendpointIndex: bendpointIndex
+        };
+
+        newWaypoints = this.cropWaypoints(connection, newWaypoints);
+
+        modeling.updateWaypoints(connection, filterRedundantWaypoints(newWaypoints), hints);
+      } else {
+        if (type === RECONNECT_START$1) {
+          hints.docking = 'source';
+
+          if (isReverse(context)) {
+            hints.docking = 'target';
+
+            hints.newWaypoints = newWaypoints.reverse();
+          }
+        } else if (type === RECONNECT_END$1) {
+          hints.docking = 'target';
+
+          if (isReverse(context)) {
+            hints.docking = 'source';
+
+            hints.newWaypoints = newWaypoints.reverse();
+          }
+        }
+
+        modeling.reconnect(connection, source, target, docking, hints);
+      }
+    }, this);
+  }
+
+  BendpointMove.$inject = [
+    'injector',
+    'eventBus',
+    'canvas',
+    'dragging',
+    'rules',
+    'modeling'
+  ];
+
+  BendpointMove.prototype.cropWaypoints = function(connection, newWaypoints) {
+    var connectionDocking = this._injector.get('connectionDocking', false);
+
+    if (!connectionDocking) {
+      return newWaypoints;
+    }
+
+    var waypoints = connection.waypoints;
+
+    connection.waypoints = newWaypoints;
+
+    connection.waypoints = connectionDocking.getCroppedWaypoints(connection);
+
+    newWaypoints = connection.waypoints;
+
+    connection.waypoints = waypoints;
+
+    return newWaypoints;
+  };
+
+
+  // helpers //////////
+
+  function isReverse(context) {
+    var hover = context.hover,
+        source = context.source,
+        target = context.target,
+        type = context.type;
+
+    if (type === RECONNECT_START$1) {
+      return hover && target && hover === target && source !== target;
+    }
+
+    if (type === RECONNECT_END$1) {
+      return hover && source && hover === source && source !== target;
+    }
+  }
+
+  /**
+   * @typedef {import('didi').Injector} Injector
+   *
+   * @typedef {import('../bendpoints/BendpointMove').default} BendpointMove
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
+
+  var RECONNECT_START = 'reconnectStart',
+      RECONNECT_END = 'reconnectEnd',
+      UPDATE_WAYPOINTS = 'updateWaypoints';
+
+  var MARKER_OK$2 = 'connect-ok',
+      MARKER_NOT_OK$2 = 'connect-not-ok',
+      MARKER_CONNECT_HOVER$1 = 'connect-hover',
+      MARKER_CONNECT_UPDATING$1 = 'djs-updating',
+      MARKER_ELEMENT_HIDDEN = 'djs-element-hidden';
+
+  var HIGH_PRIORITY$2 = 1100;
+
+  /**
+   * Preview connection while moving bendpoints.
+   *
+   * @param {BendpointMove} bendpointMove
+   * @param {Injector} injector
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
+   */
+  function BendpointMovePreview(bendpointMove, injector, eventBus, canvas) {
+    this._injector = injector;
+
+    var connectionPreview = injector.get('connectionPreview', false);
+
+    eventBus.on('bendpoint.move.start', function(event) {
+      var context = event.context,
+          bendpointIndex = context.bendpointIndex,
+          connection = context.connection,
+          insert = context.insert,
+          waypoints = connection.waypoints,
+          newWaypoints = waypoints.slice();
+
+      context.waypoints = waypoints;
+
+      if (insert) {
+
+        // insert placeholder for new bendpoint
+        newWaypoints.splice(bendpointIndex, 0, { x: event.x, y: event.y });
+      }
+
+      connection.waypoints = newWaypoints;
+
+      // add dragger gfx
+      var draggerGfx = context.draggerGfx = addBendpoint(canvas.getLayer('overlays'));
+
+      classes(draggerGfx).add('djs-dragging');
+
+      canvas.addMarker(connection, MARKER_ELEMENT_HIDDEN);
+      canvas.addMarker(connection, MARKER_CONNECT_UPDATING$1);
+    });
+
+    eventBus.on('bendpoint.move.hover', function(event) {
+      var context = event.context,
+          allowed = context.allowed,
+          hover = context.hover,
+          type = context.type;
+
+      if (hover) {
+        canvas.addMarker(hover, MARKER_CONNECT_HOVER$1);
+
+        if (type === UPDATE_WAYPOINTS) {
+          return;
+        }
+
+        if (allowed) {
+          canvas.removeMarker(hover, MARKER_NOT_OK$2);
+          canvas.addMarker(hover, MARKER_OK$2);
+        } else if (allowed === false) {
+          canvas.removeMarker(hover, MARKER_OK$2);
+          canvas.addMarker(hover, MARKER_NOT_OK$2);
+        }
+      }
+    });
+
+    eventBus.on([
+      'bendpoint.move.out',
+      'bendpoint.move.cleanup'
+    ], HIGH_PRIORITY$2, function(event) {
+      var context = event.context,
+          hover = context.hover,
+          target = context.target;
+
+      if (hover) {
+        canvas.removeMarker(hover, MARKER_CONNECT_HOVER$1);
+        canvas.removeMarker(hover, target ? MARKER_OK$2 : MARKER_NOT_OK$2);
+      }
+    });
+
+    eventBus.on('bendpoint.move.move', function(event) {
+      var context = event.context,
+          allowed = context.allowed,
+          bendpointIndex = context.bendpointIndex,
+          draggerGfx = context.draggerGfx,
+          hover = context.hover,
+          type = context.type,
+          connection = context.connection,
+          source = connection.source,
+          target = connection.target,
+          newWaypoints = connection.waypoints.slice(),
+          bendpoint = { x: event.x, y: event.y },
+          hints = context.hints || {},
+          drawPreviewHints = {};
+
+      if (connectionPreview) {
+        if (hints.connectionStart) {
+          drawPreviewHints.connectionStart = hints.connectionStart;
+        }
+
+        if (hints.connectionEnd) {
+          drawPreviewHints.connectionEnd = hints.connectionEnd;
+        }
+
+
+        if (type === RECONNECT_START) {
+          if (isReverse(context)) {
+            drawPreviewHints.connectionEnd = drawPreviewHints.connectionEnd || bendpoint;
+
+            drawPreviewHints.source = target;
+            drawPreviewHints.target = hover || source;
+
+            newWaypoints = newWaypoints.reverse();
+          } else {
+            drawPreviewHints.connectionStart = drawPreviewHints.connectionStart || bendpoint;
+
+            drawPreviewHints.source = hover || source;
+            drawPreviewHints.target = target;
+          }
+        } else if (type === RECONNECT_END) {
+          if (isReverse(context)) {
+            drawPreviewHints.connectionStart = drawPreviewHints.connectionStart || bendpoint;
+
+            drawPreviewHints.source = hover || target;
+            drawPreviewHints.target = source;
+
+            newWaypoints = newWaypoints.reverse();
+          } else {
+            drawPreviewHints.connectionEnd = drawPreviewHints.connectionEnd || bendpoint;
+
+            drawPreviewHints.source = source;
+            drawPreviewHints.target = hover || target;
+          }
+
+        } else {
+          drawPreviewHints.noCropping = true;
+          drawPreviewHints.noLayout = true;
+          newWaypoints[ bendpointIndex ] = bendpoint;
+        }
+
+        if (type === UPDATE_WAYPOINTS) {
+          newWaypoints = bendpointMove.cropWaypoints(connection, newWaypoints);
+        }
+
+        drawPreviewHints.waypoints = newWaypoints;
+
+        connectionPreview.drawPreview(context, allowed, drawPreviewHints);
+      }
+
+      translate(draggerGfx, event.x, event.y);
+    }, this);
+
+    eventBus.on([
+      'bendpoint.move.end',
+      'bendpoint.move.cancel'
+    ], HIGH_PRIORITY$2, function(event) {
+      var context = event.context,
+          connection = context.connection,
+          draggerGfx = context.draggerGfx,
+          hover = context.hover,
+          target = context.target,
+          waypoints = context.waypoints;
+
+      connection.waypoints = waypoints;
+
+      // remove dragger gfx
+      remove$1(draggerGfx);
+
+      canvas.removeMarker(connection, MARKER_CONNECT_UPDATING$1);
+      canvas.removeMarker(connection, MARKER_ELEMENT_HIDDEN);
+
+      if (hover) {
+        canvas.removeMarker(hover, MARKER_OK$2);
+        canvas.removeMarker(hover, target ? MARKER_OK$2 : MARKER_NOT_OK$2);
+      }
+
+      if (connectionPreview) {
+        connectionPreview.cleanUp(context);
+      }
+    });
+  }
+
+  BendpointMovePreview.$inject = [
+    'bendpointMove',
+    'injector',
+    'eventBus',
+    'canvas'
+  ];
+
+  var MARKER_CONNECT_HOVER = 'connect-hover',
+      MARKER_CONNECT_UPDATING = 'djs-updating';
+
+  /**
+   * @typedef {import('../../model/Types').Shape} Shape
+   *
+   * @typedef {import('../../util/Types').Axis} Axis
+   * @typedef {import('../../util/Types').Point} Point
+   *
+   * @typedef {import('didi').Injector} Injector
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../../core/GraphicsFactory').default} GraphicsFactory
+   * @typedef {import('../modeling/Modeling').default} Modeling
+   */
 
   function axisAdd(point, axis, delta) {
     return axisSet(point, axis, point[axis] + delta);
@@ -8561,13 +10719,13 @@
    *
    * Compute a reasonable docking, if non exists.
    *
-   * @param  {Point} point
-   * @param  {djs.model.Shape} referenceElement
-   * @param  {String} moveAxis (x|y)
+   * @param {Point} point
+   * @param {Shape} referenceElement
+   * @param {Axis} moveAxis
    *
    * @return {Point}
    */
-  function getDocking(point, referenceElement, moveAxis) {
+  function getDocking$1(point, referenceElement, moveAxis) {
 
     var referenceMid,
         inverseAxis;
@@ -8583,12 +10741,18 @@
   }
 
   /**
-   * A component that implements moving of bendpoints
+   * A component that implements moving of bendpoints.
+   *
+   * @param {Injector} injector
+   * @param {EventBus} eventBus
+   * @param {Canvas} canvas
+   * @param {Canvas} dragging
+   * @param {GraphicsFactory} graphicsFactory
+   * @param {Modeling} modeling
    */
   function ConnectionSegmentMove(
       injector, eventBus, canvas,
-      dragging, graphicsFactory, rules,
-      modeling) {
+      dragging, graphicsFactory, modeling) {
 
     // optional connection docking integration
     var connectionDocking = injector.get('connectionDocking', false);
@@ -8605,8 +10769,8 @@
           waypoints = connection.waypoints,
           segmentStart = waypoints[segmentStartIndex],
           segmentEnd = waypoints[segmentEndIndex],
-          direction,
-          axis;
+          intersection = getConnectionIntersection(canvas, waypoints, event),
+          direction, axis, dragPosition;
 
       direction = pointsAligned(segmentStart, segmentEnd);
 
@@ -8616,14 +10780,25 @@
       }
 
       // the axis where we are going to move things
-      axis = direction === 'v' ? 'y' : 'x';
+      axis = direction === 'v' ? 'x' : 'y';
 
       if (segmentStartIndex === 0) {
-        segmentStart = getDocking(segmentStart, connection.source, axis);
+        segmentStart = getDocking$1(segmentStart, connection.source, axis);
       }
 
       if (segmentEndIndex === waypoints.length - 1) {
-        segmentEnd = getDocking(segmentEnd, connection.target, axis);
+        segmentEnd = getDocking$1(segmentEnd, connection.target, axis);
+      }
+
+      if (intersection) {
+        dragPosition = intersection.point;
+      } else {
+
+        // set to segment center as default
+        dragPosition = {
+          x: (segmentStart.x + segmentEnd.x) / 2,
+          y: (segmentStart.y + segmentEnd.y) / 2
+        };
       }
 
       context = {
@@ -8632,13 +10807,11 @@
         segmentEndIndex: segmentEndIndex,
         segmentStart: segmentStart,
         segmentEnd: segmentEnd,
-        axis: axis
+        axis: axis,
+        dragPosition: dragPosition
       };
 
-      dragging.init(event, {
-        x: (segmentStart.x + segmentEnd.x)/2,
-        y: (segmentStart.y + segmentEnd.y)/2
-      }, 'connectionSegment.move', {
+      dragging.init(event, dragPosition, 'connectionSegment.move', {
         cursor: axis === 'x' ? 'resize-ew' : 'resize-ns',
         data: {
           connection: connection,
@@ -8652,9 +10825,9 @@
      * Crop connection if connection cropping is provided.
      *
      * @param {Connection} connection
-     * @param {Array<Point>} newWaypoints
+     * @param {Point[]} newWaypoints
      *
-     * @return {Array<Point>} cropped connection waypoints
+     * @return {Point[]} cropped connection waypoints
      */
     function cropConnection(connection, newWaypoints) {
 
@@ -8704,7 +10877,7 @@
      * Filter waypoints for redundant ones (i.e. on the same axis).
      * Returns the filtered waypoints and the offset related to the segment move.
      *
-     * @param {Array<Point>} waypoints
+     * @param {Point[]} waypoints
      * @param {Integer} segmentStartIndex of moved segment start
      *
      * @return {Object} { filteredWaypoints, segmentOffset }
@@ -8731,24 +10904,24 @@
       };
     }
 
-    eventBus.on('connectionSegment.move.start', function(e) {
+    eventBus.on('connectionSegment.move.start', function(event) {
 
-      var context = e.context,
-          connection = e.connection,
+      var context = event.context,
+          connection = event.connection,
           layer = canvas.getLayer('overlays');
 
       context.originalWaypoints = connection.waypoints.slice();
 
       // add dragger gfx
       context.draggerGfx = addSegmentDragger(layer, context.segmentStart, context.segmentEnd);
-      classes$1(context.draggerGfx).add('djs-dragging');
+      classes(context.draggerGfx).add('djs-dragging');
 
-      canvas.addMarker(connection, MARKER_CONNECT_UPDATING$1);
+      canvas.addMarker(connection, MARKER_CONNECT_UPDATING);
     });
 
-    eventBus.on('connectionSegment.move.move', function(e) {
+    eventBus.on('connectionSegment.move.move', function(event) {
 
-      var context = e.context,
+      var context = event.context,
           connection = context.connection,
           segmentStartIndex = context.segmentStartIndex,
           segmentEndIndex = context.segmentEndIndex,
@@ -8757,8 +10930,8 @@
           axis = context.axis;
 
       var newWaypoints = context.originalWaypoints.slice(),
-          newSegmentStart = axisAdd(segmentStart, axis, e['d' + axis]),
-          newSegmentEnd = axisAdd(segmentEnd, axis, e['d' + axis]);
+          newSegmentStart = axisAdd(segmentStart, axis, event['d' + axis]),
+          newSegmentEnd = axisAdd(segmentEnd, axis, event['d' + axis]);
 
       // original waypoint count and added / removed
       // from start waypoint delta. We use the later
@@ -8821,38 +10994,38 @@
       context.newWaypoints = connection.waypoints = cropConnection(connection, newWaypoints);
 
       // update dragger position
-      updateDragger(context, segmentOffset, e);
+      updateDragger(context, segmentOffset, event);
 
       // save segmentOffset in context
       context.newSegmentStartIndex = segmentStartIndex + segmentOffset;
 
       // redraw connection
-      redrawConnection(e);
+      redrawConnection(event);
     });
 
-    eventBus.on('connectionSegment.move.hover', function(e) {
+    eventBus.on('connectionSegment.move.hover', function(event) {
 
-      e.context.hover = e.hover;
-      canvas.addMarker(e.hover, MARKER_CONNECT_HOVER$1);
+      event.context.hover = event.hover;
+      canvas.addMarker(event.hover, MARKER_CONNECT_HOVER);
     });
 
     eventBus.on([
       'connectionSegment.move.out',
       'connectionSegment.move.cleanup'
-    ], function(e) {
+    ], function(event) {
 
       // remove connect marker
       // if it was added
-      var hover = e.context.hover;
+      var hover = event.context.hover;
 
       if (hover) {
-        canvas.removeMarker(hover, MARKER_CONNECT_HOVER$1);
+        canvas.removeMarker(hover, MARKER_CONNECT_HOVER);
       }
     });
 
-    eventBus.on('connectionSegment.move.cleanup', function(e) {
+    eventBus.on('connectionSegment.move.cleanup', function(event) {
 
-      var context = e.context,
+      var context = event.context,
           connection = context.connection;
 
       // remove dragger gfx
@@ -8860,24 +11033,24 @@
         remove$1(context.draggerGfx);
       }
 
-      canvas.removeMarker(connection, MARKER_CONNECT_UPDATING$1);
+      canvas.removeMarker(connection, MARKER_CONNECT_UPDATING);
     });
 
     eventBus.on([
       'connectionSegment.move.cancel',
       'connectionSegment.move.end'
-    ], function(e) {
-      var context = e.context,
+    ], function(event) {
+      var context = event.context,
           connection = context.connection;
 
       connection.waypoints = context.originalWaypoints;
 
-      redrawConnection(e);
+      redrawConnection(event);
     });
 
-    eventBus.on('connectionSegment.move.end', function(e) {
+    eventBus.on('connectionSegment.move.end', function(event) {
 
-      var context = e.context,
+      var context = event.context,
           connection = context.connection,
           newWaypoints = context.newWaypoints,
           newSegmentStartIndex = context.newSegmentStartIndex;
@@ -8917,43 +11090,104 @@
     'canvas',
     'dragging',
     'graphicsFactory',
-    'rules',
     'modeling'
   ];
 
-  var abs$1= Math.abs,
+  /**
+   * @typedef {import('../../core/Types').ConnectionLike} Connection
+   * @typedef {import('../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../core/EventBus').Event} Event
+   *
+   * @typedef {import('../../util/Types').Axis} Axis
+   */
+
+
+
+  /**
+   * Set the given event as snapped.
+   *
+   * This method may change the x and/or y position of the shape
+   * from the given event!
+   *
+   * @param {Event} event
+   * @param {Axis} axis
+   * @param {number|boolean} value
+   *
+   * @return {number} old value
+   */
+  function setSnapped(event, axis, value) {
+    if (typeof axis !== 'string') {
+      throw new Error('axis must be in [x, y]');
+    }
+
+    if (typeof value !== 'number' && value !== false) {
+      throw new Error('value must be Number or false');
+    }
+
+    var delta,
+        previousValue = event[axis];
+
+    var snapped = event.snapped = (event.snapped || {});
+
+
+    if (value === false) {
+      snapped[axis] = false;
+    } else {
+      snapped[axis] = true;
+
+      delta = value - previousValue;
+
+      event[axis] += delta;
+      event['d' + axis] += delta;
+    }
+
+    return previousValue;
+  }
+
+  /**
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
+  var abs = Math.abs,
       round$4 = Math.round;
 
   var TOLERANCE = 10;
 
-
+  /**
+   * @param {EventBus} eventBus
+   */
   function BendpointSnapping(eventBus) {
 
-    function snapTo(values$$1, value) {
+    function snapTo(values, value) {
 
-      if (isArray(values$$1)) {
-        var i = values$$1.length;
+      if (isArray$3(values)) {
+        var i = values.length;
 
-        while (i--) if (abs$1(values$$1[i] - value) <= TOLERANCE) {
-          return values$$1[i];
+        while (i--) if (abs(values[i] - value) <= TOLERANCE) {
+          return values[i];
         }
       } else {
-        values$$1 = +values$$1;
-        var rem = value % values$$1;
+        values = +values;
+        var rem = value % values;
 
         if (rem < TOLERANCE) {
           return value - rem;
         }
 
-        if (rem > values$$1 - TOLERANCE) {
-          return value - rem + values$$1;
+        if (rem > values - TOLERANCE) {
+          return value - rem + values;
         }
       }
 
       return value;
     }
 
-    function mid(element) {
+    function getSnapPoint(element, event) {
+
+      if (element.waypoints) {
+        return getClosestPointOnConnection(event, element);
+      }
+
       if (element.width) {
         return {
           x: round$4(element.width / 2 + element.x),
@@ -8964,9 +11198,10 @@
 
     // connection segment snapping //////////////////////
 
-    function getConnectionSegmentSnaps(context) {
+    function getConnectionSegmentSnaps(event) {
 
-      var snapPoints = context.snapPoints,
+      var context = event.context,
+          snapPoints = context.snapPoints,
           connection = context.connection,
           waypoints = connection.waypoints,
           segmentStart = context.segmentStart,
@@ -8987,16 +11222,17 @@
       ];
 
       if (segmentStartIndex < 2) {
-        referenceWaypoints.unshift(mid(connection.source));
+        referenceWaypoints.unshift(getSnapPoint(connection.source, event));
       }
 
       if (segmentEndIndex > waypoints.length - 3) {
-        referenceWaypoints.unshift(mid(connection.target));
+        referenceWaypoints.unshift(getSnapPoint(connection.target, event));
       }
 
       context.snapPoints = snapPoints = { horizontal: [] , vertical: [] };
 
-      forEach(referenceWaypoints, function(p) {
+      forEach$1(referenceWaypoints, function(p) {
+
         // we snap on existing bendpoints only,
         // not placeholders that are inserted during add
         if (p) {
@@ -9016,8 +11252,7 @@
     }
 
     eventBus.on('connectionSegment.move.move', 1500, function(event) {
-      var context = event.context,
-          snapPoints = getConnectionSegmentSnaps(context),
+      var snapPoints = getConnectionSegmentSnaps(event),
           x = event.x,
           y = event.y,
           sx, sy;
@@ -9036,12 +11271,21 @@
           cy = (y - sy);
 
       // update delta
-      assign(event, {
+      assign$1(event, {
         dx: event.dx - cx,
         dy: event.dy - cy,
         x: sx,
         y: sy
       });
+
+      // only set snapped if actually snapped
+      if (cx || snapPoints.vertical.indexOf(x) !== -1) {
+        setSnapped(event, 'x', sx);
+      }
+
+      if (cy || snapPoints.horizontal.indexOf(y) !== -1) {
+        setSnapped(event, 'y', sy);
+      }
     });
 
 
@@ -9061,7 +11305,8 @@
 
       context.snapPoints = snapPoints = { horizontal: [] , vertical: [] };
 
-      forEach(referenceWaypoints, function(p) {
+      forEach$1(referenceWaypoints, function(p) {
+
         // we snap on existing bendpoints only,
         // not placeholders that are inserted during add
         if (p) {
@@ -9075,13 +11320,31 @@
       return snapPoints;
     }
 
+    // Snap Endpoint of new connection
+    eventBus.on([
+      'connect.hover',
+      'connect.move',
+      'connect.end'
+    ], 1500, function(event) {
+      var context = event.context,
+          hover = context.hover,
+          hoverMid = hover && getSnapPoint(hover, event);
 
-    eventBus.on('bendpoint.move.move', 1500, function(event) {
+      // only snap on connections, elements can have multiple connect endpoints
+      if (!isConnection(hover) || !hoverMid || !hoverMid.x || !hoverMid.y) {
+        return;
+      }
+
+      setSnapped(event, 'x', hoverMid.x);
+      setSnapped(event, 'y', hoverMid.y);
+    });
+
+    eventBus.on([ 'bendpoint.move.move', 'bendpoint.move.end' ], 1500, function(event) {
 
       var context = event.context,
           snapPoints = getBendpointSnaps(context),
-          target = context.target,
-          targetMid = target && mid(target),
+          hover = context.hover,
+          hoverMid = hover && getSnapPoint(hover, event),
           x = event.x,
           y = event.y,
           sx, sy;
@@ -9090,75 +11353,63 @@
         return;
       }
 
-      // snap
-      sx = snapTo(targetMid ? snapPoints.vertical.concat([ targetMid.x ]) : snapPoints.vertical, x);
-      sy = snapTo(targetMid ? snapPoints.horizontal.concat([ targetMid.y ]) : snapPoints.horizontal, y);
-
+      // snap to hover mid
+      sx = snapTo(hoverMid ? snapPoints.vertical.concat([ hoverMid.x ]) : snapPoints.vertical, x);
+      sy = snapTo(hoverMid ? snapPoints.horizontal.concat([ hoverMid.y ]) : snapPoints.horizontal, y);
 
       // correction x/y
       var cx = (x - sx),
           cy = (y - sy);
 
       // update delta
-      assign(event, {
+      assign$1(event, {
         dx: event.dx - cx,
         dy: event.dy - cy,
         x: event.x - cx,
         y: event.y - cy
       });
+
+      // only set snapped if actually snapped
+      if (cx || snapPoints.vertical.indexOf(x) !== -1) {
+        setSnapped(event, 'x', sx);
+      }
+
+      if (cy || snapPoints.horizontal.indexOf(y) !== -1) {
+        setSnapped(event, 'y', sy);
+      }
     });
   }
 
 
   BendpointSnapping.$inject = [ 'eventBus' ];
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var BendpointsModule = {
     __depends__: [
       DraggingModule,
       RulesModule
     ],
-    __init__: [ 'bendpoints', 'bendpointSnapping' ],
+    __init__: [ 'bendpoints', 'bendpointSnapping', 'bendpointMovePreview' ],
     bendpoints: [ 'type', Bendpoints ],
     bendpointMove: [ 'type', BendpointMove ],
+    bendpointMovePreview: [ 'type', BendpointMovePreview ],
     connectionSegmentMove: [ 'type', ConnectionSegmentMove ],
     bendpointSnapping: [ 'type', BendpointSnapping ]
   };
 
-  var inherits_browser = createCommonjsModule(function (module) {
-  if (typeof Object.create === 'function') {
-    // implementation from standard node.js 'util' module
-    module.exports = function inherits(ctor, superCtor) {
-      ctor.super_ = superCtor;
-      ctor.prototype = Object.create(superCtor.prototype, {
-        constructor: {
-          value: ctor,
-          enumerable: false,
-          writable: true,
-          configurable: true
-        }
-      });
-    };
-  } else {
-    // old school shim for old browsers
-    module.exports = function inherits(ctor, superCtor) {
-      ctor.super_ = superCtor;
-      var TempCtor = function () {};
-      TempCtor.prototype = superCtor.prototype;
-      ctor.prototype = new TempCtor();
-      ctor.prototype.constructor = ctor;
-    };
-  }
-  });
+  function e(e,t){t&&(e.super_=t,e.prototype=Object.create(t.prototype,{constructor:{value:e,enumerable:!1,writable:!0,configurable:!0}}));}
 
   /**
    * Failsafe remove an element from a collection
    *
-   * @param  {Array<Object>} [collection]
-   * @param  {Object} [element]
+   * @param {Array<Object>} [collection]
+   * @param {Object} [element]
    *
-   * @return {Number} the previous index of the element
+   * @return {number} the previous index of the element
    */
-  function remove$2(collection, element) {
+  function remove(collection, element) {
 
     if (!collection || !element) {
       return -1;
@@ -9179,9 +11430,9 @@
    *
    * @param {Array<Object>} collection
    * @param {Object} element
-   * @param {Number} idx
+   * @param {number} [idx]
    */
-  function add$1(collection, element, idx) {
+  function add(collection, element, idx) {
 
     if (!collection || !element) {
       return;
@@ -9196,14 +11447,17 @@
     if (currentIdx !== -1) {
 
       if (currentIdx === idx) {
+
         // nothing to do, position has not changed
         return;
       } else {
 
         if (idx !== -1) {
+
           // remove from current position
           collection.splice(currentIdx, 1);
         } else {
+
           // already exists in collection
           return;
         }
@@ -9211,9 +11465,11 @@
     }
 
     if (idx !== -1) {
+
       // insert at specified position
       collection.splice(idx, 0, element);
     } else {
+
       // push to end
       collection.push(element);
     }
@@ -9226,10 +11482,10 @@
    * @param {Array<Object>} collection
    * @param {Object} element
    *
-   * @return {Number} the index or -1 if collection or element do
+   * @return {number} the index or -1 if collection or element do
    *                  not exist or the element is not contained.
    */
-  function indexOf$1(collection, element) {
+  function indexOf(collection, element) {
 
     if (!collection || !element) {
       return -1;
@@ -9249,10 +11505,10 @@
    * may touch, i.e. remove multiple elements in the collection
    * at a time.
    *
-   * @param {Array<Object>} [collection]
-   * @param {Function} removeFn
+   * @param {Object[]} [collection]
+   * @param {(element: Object) => void} removeFn
    *
-   * @return {Array<Object>} the cleared collection
+   * @return {Object[]} the cleared collection
    */
   function saveClear(collection, removeFn) {
 
@@ -9273,32 +11529,47 @@
     return collection;
   }
 
-  var DEFAULT_PRIORITY = 1000;
+  /**
+   * @typedef {import('../core/Types').ElementLike} ElementLike
+   * @typedef {import('../core/EventBus').default} EventBus
+   * @typedef {import('./CommandStack').CommandContext} CommandContext
+   *
+   * @typedef {string|string[]} Events
+   * @typedef { (context: CommandContext) => ElementLike[] | void } HandlerFunction
+   * @typedef { (context: CommandContext) => void } ComposeHandlerFunction
+   */
+
+  var DEFAULT_PRIORITY$1 = 1000;
 
   /**
-   * A utility that can be used to plug-in into the command execution for
+   * A utility that can be used to plug into the command execution for
    * extension and/or validation.
    *
-   * @param {EventBus} eventBus
+   * @class
+   * @constructor
    *
    * @example
    *
-   * import inherits from 'inherits';
-   *
+   * ```javascript
    * import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
    *
-   * function CommandLogger(eventBus) {
-   *   CommandInterceptor.call(this, eventBus);
+   * class CommandLogger extends CommandInterceptor {
+   *   constructor(eventBus) {
+   *     super(eventBus);
    *
-   *   this.preExecute(function(event) {
-   *     console.log('command pre-execute', event);
+   *   this.preExecute('shape.create', (event) => {
+   *     console.log('commandStack.shape-create.preExecute', event);
    *   });
    * }
+   * ```
    *
-   * inherits(CommandLogger, CommandInterceptor);
-   *
+   * @param {EventBus} eventBus
    */
   function CommandInterceptor(eventBus) {
+
+    /**
+     * @type {EventBus}
+     */
     this._eventBus = eventBus;
   }
 
@@ -9310,16 +11581,16 @@
     };
   }
 
+
   /**
-   * Register an interceptor for a command execution
+   * Intercept a command during one of the phases.
    *
-   * @param {String|Array<String>} [events] list of commands to register on
-   * @param {String} [hook] command hook, i.e. preExecute, executed to listen on
-   * @param {Number} [priority] the priority on which to hook into the execution
-   * @param {Function} handlerFn interceptor to be invoked with (event)
-   * @param {Boolean} unwrap if true, unwrap the event and pass (context, command, event) to the
-   *                          listener instead
-   * @param {Object} [that] Pass context (`this`) to the handler function
+   * @param {Events} [events] command(s) to intercept
+   * @param {string} [hook] phase to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
    */
   CommandInterceptor.prototype.on = function(events, hook, priority, handlerFn, unwrap, that) {
 
@@ -9335,7 +11606,7 @@
       that = unwrap;
       unwrap = handlerFn;
       handlerFn = priority;
-      priority = DEFAULT_PRIORITY;
+      priority = DEFAULT_PRIORITY$1;
     }
 
     if (isObject(unwrap)) {
@@ -9347,13 +11618,14 @@
       throw new Error('handlerFn must be a function');
     }
 
-    if (!isArray(events)) {
+    if (!isArray$3(events)) {
       events = [ events ];
     }
 
     var eventBus = this._eventBus;
 
-    forEach(events, function(event) {
+    forEach$1(events, function(event) {
+
       // concat commandStack(.event)?(.hook)?
       var fullEvent = [ 'commandStack', event, hook ].filter(function(e) { return e; }).join('.');
 
@@ -9361,40 +11633,130 @@
     });
   };
 
+  /**
+   * Add a <canExecute> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.canExecute = createHook('canExecute');
 
-  var hooks = [
-    'canExecute',
-    'preExecute',
-    'preExecuted',
-    'execute',
-    'executed',
-    'postExecute',
-    'postExecuted',
-    'revert',
-    'reverted'
-  ];
+  /**
+   * Add a <preExecute> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.preExecute = createHook('preExecute');
+
+  /**
+   * Add a <preExecuted> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.preExecuted = createHook('preExecuted');
+
+  /**
+   * Add a <execute> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.execute = createHook('execute');
+
+  /**
+   * Add a <executed> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.executed = createHook('executed');
+
+  /**
+   * Add a <postExecute> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.postExecute = createHook('postExecute');
+
+  /**
+   * Add a <postExecuted> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.postExecuted = createHook('postExecuted');
+
+  /**
+   * Add a <revert> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.revert = createHook('revert');
+
+  /**
+   * Add a <reverted> phase of command interceptor.
+   *
+   * @param {Events} [events] command(s) to intercept
+   * @param {number} [priority]
+   * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+   * @param {boolean} [unwrap] whether the event should be unwrapped
+   * @param {any} [that]
+   */
+  CommandInterceptor.prototype.reverted = createHook('reverted');
 
   /*
-   * Install hook shortcuts
+   * Add prototype methods for each phase of command execution (e.g. execute,
+   * revert).
    *
-   * This will generate the CommandInterceptor#(preExecute|...|reverted) methods
-   * which will in term forward to CommandInterceptor#on.
+   * @param {string} hook
+   *
+   * @return { (
+   *   events?: Events,
+   *   priority?: number,
+   *   handlerFn: ComposeHandlerFunction|HandlerFunction,
+   *   unwrap?: boolean
+   * ) => any }
    */
-  forEach(hooks, function(hook) {
+  function createHook(hook) {
 
     /**
-     * {canExecute|preExecute|preExecuted|execute|executed|postExecute|postExecuted|revert|reverted}
+     * @this {CommandInterceptor}
      *
-     * A named hook for plugging into the command execution
-     *
-     * @param {String|Array<String>} [events] list of commands to register on
-     * @param {Number} [priority] the priority on which to hook into the execution
-     * @param {Function} handlerFn interceptor to be invoked with (event)
-     * @param {Boolean} [unwrap=false] if true, unwrap the event and pass (context, command, event) to the
-     *                          listener instead
-     * @param {Object} [that] Pass context (`this`) to the handler function
+     * @param {Events} [events]
+     * @param {number} [priority]
+     * @param {ComposeHandlerFunction|HandlerFunction} handlerFn
+     * @param {boolean} [unwrap]
+     * @param {any} [that]
      */
-    CommandInterceptor.prototype[hook] = function(events, priority, handlerFn, unwrap, that) {
+    const hookFn = function(events, priority, handlerFn, unwrap, that) {
 
       if (isFunction(events) || isNumber(events)) {
         that = unwrap;
@@ -9406,17 +11768,27 @@
 
       this.on(events, hook, priority, handlerFn, unwrap, that);
     };
-  });
 
-  var LOW_PRIORITY$7 = 250,
+    return hookFn;
+  }
+
+  var LOW_PRIORITY$1 = 250,
       HIGH_PRIORITY$1 = 1400;
 
+  /**
+   * @typedef {import('../../model/Types').Element} Element
+   *
+   * @typedef {import('didi').Injector} Injector
+   *
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../modeling/Modeling').default} Modeling
+   */
 
   /**
    * A handler that makes sure labels are properly moved with
    * their label targets.
    *
-   * @param {didi.Injector} injector
+   * @param {Injector} injector
    * @param {EventBus} eventBus
    * @param {Modeling} modeling
    */
@@ -9439,16 +11811,16 @@
     });
 
     // add labels to visual's group
-    movePreview && eventBus.on('shape.move.start', LOW_PRIORITY$7, function(e) {
+    movePreview && eventBus.on('shape.move.start', LOW_PRIORITY$1, function(e) {
 
       var context = e.context,
           shapes = context.shapes;
 
       var labels = [];
 
-      forEach(shapes, function(element) {
+      forEach$1(shapes, function(element) {
 
-        forEach(element.labels, function(label) {
+        forEach$1(element.labels, function(label) {
 
           if (!label.hidden && context.shapes.indexOf(label) === -1) {
             labels.push(label);
@@ -9460,7 +11832,7 @@
         });
       });
 
-      forEach(labels, function(label) {
+      forEach$1(labels, function(label) {
         movePreview.makeDraggable(context, label, true);
       });
 
@@ -9476,8 +11848,8 @@
 
       // find labels that are not part of
       // move closure yet and add them
-      forEach(enclosedElements, function(element) {
-        forEach(element.labels, function(label) {
+      forEach$1(enclosedElements, function(element) {
+        forEach$1(element.labels, function(label) {
 
           if (!enclosedElements[label.id]) {
             enclosedLabels.push(label);
@@ -9511,7 +11883,7 @@
 
       // unset labelTarget
       if (labelTarget) {
-        context.labelTargetIndex = indexOf$1(labelTarget.labels, shape);
+        context.labelTargetIndex = indexOf(labelTarget.labels, shape);
         context.labelTarget = labelTarget;
 
         shape.labelTarget = null;
@@ -9527,7 +11899,7 @@
 
       // restore labelTarget
       if (labelTarget) {
-        add$1(labelTarget.labels, shape, labelTargetIndex);
+        add(labelTarget.labels, shape, labelTargetIndex);
 
         shape.labelTarget = labelTarget;
       }
@@ -9535,7 +11907,7 @@
 
   }
 
-  inherits_browser(LabelSupport, CommandInterceptor);
+  e(LabelSupport, CommandInterceptor);
 
   LabelSupport.$inject = [
     'injector',
@@ -9549,9 +11921,9 @@
    * contain attached elements with hosts being part
    * of the selection.
    *
-   * @param  {Array<djs.model.Base>} elements
+   * @param {Element[]} elements
    *
-   * @return {Array<djs.model.Base>} filtered
+   * @return {Element[]} filtered
    */
   function removeLabels(elements) {
 
@@ -9563,10 +11935,20 @@
     });
   }
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var LabelSupportModule = {
-    __init__: [ 'labelSupport'],
+    __init__: [ 'labelSupport' ],
     labelSupport: [ 'type', LabelSupport ]
   };
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../../core/GraphicsFactory').default} GraphicsFactory
+   */
 
   /**
    * Adds change support to the diagram, including
@@ -9632,67 +12014,54 @@
     'graphicsFactory'
   ];
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var ChangeSupportModule = {
-    __init__: [ 'changeSupport'],
+    __init__: [ 'changeSupport' ],
     changeSupport: [ 'type', ChangeSupport ]
   };
 
   var max$1 = Math.max,
-      min = Math.min;
+      min$1 = Math.min;
 
   var DEFAULT_CHILD_BOX_PADDING = 20;
 
   /**
    * Resize the given bounds by the specified delta from a given anchor point.
    *
-   * @param {Bounds} bounds the bounding box that should be resized
-   * @param {String} direction in which the element is resized (nw, ne, se, sw)
+   * @param {Rect} bounds the bounding box that should be resized
+   * @param {Direction} direction in which the element is resized (nw, ne, se, sw)
    * @param {Point} delta of the resize operation
    *
-   * @return {Bounds} resized bounding box
+   * @return {Rect} resized bounding box
    */
-  function resizeBounds(bounds, direction, delta) {
-
+  function resizeBounds$1(bounds, direction, delta) {
     var dx = delta.x,
         dy = delta.y;
 
-    switch (direction) {
+    var newBounds = {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height
+    };
 
-    case 'nw':
-      return {
-        x: bounds.x + dx,
-        y: bounds.y + dy,
-        width: bounds.width - dx,
-        height: bounds.height - dy
-      };
-
-    case 'sw':
-      return {
-        x: bounds.x + dx,
-        y: bounds.y,
-        width: bounds.width - dx,
-        height: bounds.height + dy
-      };
-
-    case 'ne':
-      return {
-        x: bounds.x,
-        y: bounds.y + dy,
-        width: bounds.width + dx,
-        height: bounds.height - dy
-      };
-
-    case 'se':
-      return {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width + dx,
-        height: bounds.height + dy
-      };
-
-    default:
-      throw new Error('unrecognized direction: ' + direction);
+    if (direction.indexOf('n') !== -1) {
+      newBounds.y = bounds.y + dy;
+      newBounds.height = bounds.height - dy;
+    } else if (direction.indexOf('s') !== -1) {
+      newBounds.height = bounds.height + dy;
     }
+
+    if (direction.indexOf('e') !== -1) {
+      newBounds.width = bounds.width + dx;
+    } else if (direction.indexOf('w') !== -1) {
+      newBounds.x = bounds.x + dx;
+      newBounds.width = bounds.width - dx;
+    }
+
+    return newBounds;
   }
 
 
@@ -9703,17 +12072,17 @@
         maxValue = resizeConstraints.max && resizeConstraints.max[attr];
 
     if (isNumber(minValue)) {
-      value = (/top|left/.test(attr) ? min : max$1)(value, minValue);
+      value = (/top|left/.test(attr) ? min$1 : max$1)(value, minValue);
     }
 
     if (isNumber(maxValue)) {
-      value = (/top|left/.test(attr) ? max$1 : min)(value, maxValue);
+      value = (/top|left/.test(attr) ? max$1 : min$1)(value, maxValue);
     }
 
     return value;
   }
 
-  function ensureConstraints(currentBounds, resizeConstraints) {
+  function ensureConstraints$1(currentBounds, resizeConstraints) {
 
     if (!resizeConstraints) {
       return currentBounds;
@@ -9744,8 +12113,8 @@
     var childrenBox = childrenBounds ? asTRBL(childrenBounds) : minBox;
 
     var combinedBox = {
-      top: min(minBox.top, childrenBox.top),
-      left: min(minBox.left, childrenBox.left),
+      top: min$1(minBox.top, childrenBox.top),
+      left: min$1(minBox.left, childrenBox.left),
       bottom: max$1(minBox.bottom, childrenBox.bottom),
       right: max$1(minBox.right, childrenBox.right)
     };
@@ -9789,7 +12158,7 @@
    * This is the default implementation which excludes
    * connections and labels.
    *
-   * @param {djs.model.Base} element
+   * @param {Element} element
    */
   function isBBoxChild(element) {
 
@@ -9810,10 +12179,10 @@
    * Return children bounding computed from a shapes children
    * or a list of prefiltered children.
    *
-   * @param  {djs.model.Shape|Array<djs.model.Shape>} shapeOrChildren
-   * @param  {Number|Object} padding
+   * @param {Shape|Shape[]} shapeOrChildren
+   * @param {RectTRBL|number} padding
    *
-   * @return {Bounds}
+   * @return {Rect}
    */
   function computeChildrenBBox(shapeOrChildren, padding) {
 
@@ -9821,6 +12190,7 @@
 
     // compute based on shape
     if (shapeOrChildren.length === undefined) {
+
       // grab all the children that are part of the
       // parents children box
       elements = filter(shapeOrChildren.children, isBBoxChild);
@@ -9833,6 +12203,18 @@
       return addPadding(getBBox(elements), padding);
     }
   }
+
+  /**
+   * @typedef {import('../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../util/Types').Direction} Direction
+   * @typedef {import('../../util/Types').Point} Point
+   *
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../modeling/Modeling').default} Modeling
+   * @typedef {import('../rules/Rules').default} Rules
+   */
 
   var DEFAULT_MIN_WIDTH = 10;
 
@@ -9873,6 +12255,11 @@
    *  context.childrenBoxPadding.left = 20;
    * });
    * ```
+   *
+   * @param {EventBus} eventBus
+   * @param {Rules} rules
+   * @param {Modeling} modeling
+   * @param {Dragging} dragging
    */
   function Resize(eventBus, rules, modeling, dragging) {
 
@@ -9886,7 +12273,7 @@
      * Handle resize move by specified delta.
      *
      * @param {Object} context
-     * @param {Point delta
+     * @param {Point} delta
      */
     function handleMove(context, delta) {
 
@@ -9897,10 +12284,10 @@
 
       context.delta = delta;
 
-      newBounds = resizeBounds(shape, direction, delta);
+      newBounds = resizeBounds$1(shape, direction, delta);
 
       // ensure constraints during resize
-      context.newBounds = ensureConstraints(newBounds, resizeConstraints);
+      context.newBounds = ensureConstraints$1(newBounds, resizeConstraints);
 
       // update + cache executable state
       context.canExecute = self.canResize(context);
@@ -9909,11 +12296,12 @@
     /**
      * Handle resize start.
      *
-     * @param  {Object} context
+     * @param {Object} context
      */
     function handleStart(context) {
 
       var resizeConstraints = context.resizeConstraints,
+
           // evaluate minBounds for backwards compatibility
           minBounds = context.minBounds;
 
@@ -9933,7 +12321,7 @@
     /**
      * Handle resize end.
      *
-     * @param  {Object} context
+     * @param {Object} context
      */
     function handleEnd(context) {
       var shape = context.shape,
@@ -9941,9 +12329,16 @@
           newBounds = context.newBounds;
 
       if (canExecute) {
+
         // ensure we have actual pixel values for new bounds
         // (important when zoom level was > 1 during move)
         newBounds = roundBounds(newBounds);
+
+        if (!boundsChanged(shape, newBounds)) {
+
+          // no resize necessary
+          return;
+        }
 
         // perform the actual resize
         modeling.resizeShape(shape, newBounds);
@@ -9985,9 +12380,9 @@
    * You may specify additional contextual information and must specify a
    * resize direction during activation of the resize event.
    *
-   * @param {MouseEvent} event
-   * @param {djs.model.Shape} shape
-   * @param {Object|String} contextOrDirection
+   * @param {MouseEvent|TouchEvent} event
+   * @param {Shape} shape
+   * @param {Object|Direction} contextOrDirection
    */
   Resize.prototype.activate = function(event, shape, contextOrDirection) {
     var dragging = this._dragging,
@@ -10000,17 +12395,17 @@
       };
     }
 
-    context = assign({ shape: shape }, contextOrDirection);
+    context = assign$1({ shape: shape }, contextOrDirection);
 
     direction = context.direction;
 
     if (!direction) {
-      throw new Error('must provide a direction (nw|se|ne|sw)');
+      throw new Error('must provide a direction (n|w|s|e|nw|se|ne|sw)');
     }
 
-    dragging.init(event, 'resize', {
+    dragging.init(event, getReferencePoint(shape, direction), 'resize', {
       autoActivate: true,
-      cursor: 'resize-' + (/nw|se/.test(direction) ? 'nwse' : 'nesw'),
+      cursor: getCursor(direction),
       data: {
         shape: shape,
         context: context
@@ -10045,11 +12440,63 @@
     'dragging'
   ];
 
+  // helpers //////////
+
+  function boundsChanged(shape, newBounds) {
+    return shape.x !== newBounds.x ||
+      shape.y !== newBounds.y ||
+      shape.width !== newBounds.width ||
+      shape.height !== newBounds.height;
+  }
+
+  function getReferencePoint(shape, direction) {
+    var mid = getMid(shape),
+        trbl = asTRBL(shape);
+
+    var referencePoint = {
+      x: mid.x,
+      y: mid.y
+    };
+
+    if (direction.indexOf('n') !== -1) {
+      referencePoint.y = trbl.top;
+    } else if (direction.indexOf('s') !== -1) {
+      referencePoint.y = trbl.bottom;
+    }
+
+    if (direction.indexOf('e') !== -1) {
+      referencePoint.x = trbl.right;
+    } else if (direction.indexOf('w') !== -1) {
+      referencePoint.x = trbl.left;
+    }
+
+    return referencePoint;
+  }
+
+  function getCursor(direction) {
+    var prefix = 'resize-';
+
+    if (direction === 'n' || direction === 's') {
+      return prefix + 'ns';
+    } else if (direction === 'e' || direction === 'w') {
+      return prefix + 'ew';
+    } else if (direction === 'nw' || direction === 'se') {
+      return prefix + 'nwse';
+    } else {
+      return prefix + 'nesw';
+    }
+  }
+
   var MARKER_RESIZING = 'djs-resizing',
       MARKER_RESIZE_NOT_OK = 'resize-not-ok';
 
-  var LOW_PRIORITY$8 = 500;
+  var LOW_PRIORITY = 500;
 
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../preview-support/PreviewSupport').default} PreviewSupport
+   */
 
   /**
    * Provides previews for resizing shapes when resizing.
@@ -10072,23 +12519,23 @@
           frame = context.frame;
 
       if (!frame) {
-        frame = context.frame = previewSupport.addFrame(shape, canvas.getDefaultLayer());
+        frame = context.frame = previewSupport.addFrame(shape, canvas.getActiveLayer());
 
         canvas.addMarker(shape, MARKER_RESIZING);
       }
 
       if (bounds.width > 5) {
-        attr$1(frame, { x: bounds.x, width: bounds.width });
+        attr(frame, { x: bounds.x, width: bounds.width });
       }
 
       if (bounds.height > 5) {
-        attr$1(frame, { y: bounds.y, height: bounds.height });
+        attr(frame, { y: bounds.y, height: bounds.height });
       }
 
       if (context.canExecute) {
-        classes$1(frame).remove(MARKER_RESIZE_NOT_OK);
+        classes(frame).remove(MARKER_RESIZE_NOT_OK);
       } else {
-        classes$1(frame).add(MARKER_RESIZE_NOT_OK);
+        classes(frame).add(MARKER_RESIZE_NOT_OK);
       }
     }
 
@@ -10109,7 +12556,7 @@
     }
 
     // add and update previews
-    eventBus.on('resize.move', LOW_PRIORITY$8, function(event) {
+    eventBus.on('resize.move', LOW_PRIORITY, function(event) {
       updateFrame(event.context);
     });
 
@@ -10126,11 +12573,22 @@
     'previewSupport'
   ];
 
-  var HANDLE_OFFSET = -2,
-      HANDLE_SIZE = 5,
+  /**
+   * @typedef {import('../../model/Types').Element} Element
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../resize/Resize').default} Resize
+   * @typedef {import('../selection/Selection').default} Selection
+   */
+
+  var HANDLE_OFFSET = -6,
+      HANDLE_SIZE = 8,
       HANDLE_HIT_SIZE = 20;
 
   var CLS_RESIZER = 'djs-resizer';
+
+  var directions = [ 'n', 'w', 's', 'e', 'nw', 'ne', 'se', 'sw' ];
 
 
   /**
@@ -10156,7 +12614,7 @@
 
       // add new selection markers ONLY if single selection
       if (newSelection.length === 1) {
-        forEach(newSelection, bind(self.addResizer, self));
+        forEach$1(newSelection, bind$2(self.addResizer, self));
       }
     });
 
@@ -10175,72 +12633,67 @@
   ResizeHandles.prototype.makeDraggable = function(element, gfx, direction) {
     var resize = this._resize;
 
-    function startResize(event$$1) {
+    function startResize(event) {
+
       // only trigger on left mouse button
-      if (isPrimaryButton(event$$1)) {
-        resize.activate(event$$1, element, direction);
+      if (isPrimaryButton(event)) {
+        resize.activate(event, element, direction);
       }
     }
 
-    componentEvent.bind(gfx, 'mousedown', startResize);
-    componentEvent.bind(gfx, 'touchstart', startResize);
+    event.bind(gfx, 'mousedown', startResize);
+    event.bind(gfx, 'touchstart', startResize);
   };
 
 
-  ResizeHandles.prototype._createResizer = function(element, x, y, rotation, direction) {
+  ResizeHandles.prototype._createResizer = function(element, x, y, direction) {
     var resizersParent = this._getResizersParent();
 
-    var group = create('g');
-    classes$1(group).add(CLS_RESIZER);
-    classes$1(group).add(CLS_RESIZER + '-' + element.id);
-    classes$1(group).add(CLS_RESIZER + '-' + direction);
+    var offset = getHandleOffset(direction);
+
+    var group = create$1('g');
+
+    classes(group).add(CLS_RESIZER);
+    classes(group).add(CLS_RESIZER + '-' + element.id);
+    classes(group).add(CLS_RESIZER + '-' + direction);
 
     append(resizersParent, group);
 
-    var origin = -HANDLE_SIZE + HANDLE_OFFSET;
+    var visual = create$1('rect');
 
-    // Create four drag indicators on the outline
-    var visual = create('rect');
-    attr$1(visual, {
-      x: origin,
-      y: origin,
+    attr(visual, {
+      x: -HANDLE_SIZE / 2 + offset.x,
+      y: -HANDLE_SIZE / 2 + offset.y,
       width: HANDLE_SIZE,
       height: HANDLE_SIZE
     });
-    classes$1(visual).add(CLS_RESIZER + '-visual');
+
+    classes(visual).add(CLS_RESIZER + '-visual');
 
     append(group, visual);
 
-    var hit = create('rect');
-    attr$1(hit, {
-      x: origin,
-      y: origin,
+    var hit = create$1('rect');
+
+    attr(hit, {
+      x: -HANDLE_HIT_SIZE / 2 + offset.x,
+      y: -HANDLE_HIT_SIZE / 2 + offset.y,
       width: HANDLE_HIT_SIZE,
       height: HANDLE_HIT_SIZE
     });
-    classes$1(hit).add(CLS_RESIZER + '-hit');
+
+    classes(hit).add(CLS_RESIZER + '-hit');
 
     append(group, hit);
 
-    transform$1(group, x, y, rotation);
+    transform(group, x, y);
 
     return group;
   };
 
   ResizeHandles.prototype.createResizer = function(element, direction) {
-    var resizer;
+    var point = getReferencePoint(element, direction);
 
-    var trbl = asTRBL(element);
-
-    if (direction === 'nw') {
-      resizer = this._createResizer(element, trbl.left, trbl.top, 0, direction);
-    } else if (direction === 'ne') {
-      resizer = this._createResizer(element, trbl.right, trbl.top, 90, direction);
-    } else if (direction === 'se') {
-      resizer = this._createResizer(element, trbl.right, trbl.bottom, 180, direction);
-    } else {
-      resizer = this._createResizer(element, trbl.left, trbl.bottom, 270, direction);
-    }
+    var resizer = this._createResizer(element, point.x, point.y, direction);
 
     this.makeDraggable(element, resizer, direction);
   };
@@ -10250,19 +12703,18 @@
   /**
    * Add resizers for a given element.
    *
-   * @param {djs.model.Shape} shape
+   * @param {Element} element
    */
-  ResizeHandles.prototype.addResizer = function(shape) {
-    var resize = this._resize;
+  ResizeHandles.prototype.addResizer = function(element) {
+    var self = this;
 
-    if (!resize.canResize({ shape: shape })) {
+    if (isConnection(element) || !this._resize.canResize({ shape: element })) {
       return;
     }
 
-    this.createResizer(shape, 'nw');
-    this.createResizer(shape, 'ne');
-    this.createResizer(shape, 'se');
-    this.createResizer(shape, 'sw');
+    forEach$1(directions, function(direction) {
+      self.createResizer(element, direction);
+    });
   };
 
   /**
@@ -10271,7 +12723,7 @@
   ResizeHandles.prototype.removeResizers = function() {
     var resizersParent = this._getResizersParent();
 
-    clear$1(resizersParent);
+    clear(resizersParent);
   };
 
   ResizeHandles.prototype._getResizersParent = function() {
@@ -10285,6 +12737,32 @@
     'resize'
   ];
 
+  // helpers //////////
+
+  function getHandleOffset(direction) {
+    var offset = {
+      x: 0,
+      y: 0
+    };
+
+    if (direction.indexOf('e') !== -1) {
+      offset.x = -HANDLE_OFFSET;
+    } else if (direction.indexOf('w') !== -1) {
+      offset.x = HANDLE_OFFSET;
+    }
+
+    if (direction.indexOf('s') !== -1) {
+      offset.y = -HANDLE_OFFSET;
+    } else if (direction.indexOf('n') !== -1) {
+      offset.y = HANDLE_OFFSET;
+    }
+
+    return offset;
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var ResizeModule = {
     __depends__: [
       RulesModule,
@@ -10301,14 +12779,14 @@
     resizeHandles: [ 'type', ResizeHandles ]
   };
 
-  var min$1 = Math.min,
-      max$2 = Math.max;
+  var min = Math.min,
+      max = Math.max;
 
-  function preventDefault$1(e) {
+  function preventDefault(e) {
     e.preventDefault();
   }
 
-  function stopPropagation$1(e) {
+  function stopPropagation(e) {
     e.stopPropagation();
   }
 
@@ -10338,7 +12816,7 @@
   function TextBox(options) {
     this.container = options.container;
 
-    this.parent = domify(
+    this.parent = domify$1(
       '<div class="djs-direct-editing-parent">' +
         '<div class="djs-direct-editing-content" contenteditable="true"></div>' +
       '</div>'
@@ -10349,8 +12827,8 @@
     this.keyHandler = options.keyHandler || function() {};
     this.resizeHandler = options.resizeHandler || function() {};
 
-    this.autoResize = bind(this.autoResize, this);
-    this.handlePaste = bind(this.handlePaste, this);
+    this.autoResize = bind$2(this.autoResize, this);
+    this.handlePaste = bind$2(this.handlePaste, this);
   }
 
 
@@ -10401,7 +12879,7 @@
       'transform'
     ]);
 
-    assign(parent.style, {
+    assign$1(parent.style, {
       width: bounds.width + 'px',
       height: bounds.height + 'px',
       maxWidth: bounds.maxWidth + 'px',
@@ -10432,7 +12910,7 @@
       'paddingLeft'
     ]);
 
-    assign(content.style, {
+    assign$1(content.style, {
       boxSizing: 'border-box',
       width: '100%',
       outline: 'none',
@@ -10440,7 +12918,7 @@
     }, contentStyle);
 
     if (options.centerVertically) {
-      assign(content.style, {
+      assign$1(content.style, {
         position: 'absolute',
         top: '50%',
         transform: 'translate(0, -50%)'
@@ -10449,12 +12927,12 @@
 
     content.innerText = value;
 
-    componentEvent.bind(content, 'keydown', this.keyHandler);
-    componentEvent.bind(content, 'mousedown', stopPropagation$1);
-    componentEvent.bind(content, 'paste', self.handlePaste);
+    event.bind(content, 'keydown', this.keyHandler);
+    event.bind(content, 'mousedown', stopPropagation);
+    event.bind(content, 'paste', self.handlePaste);
 
     if (options.autoResize) {
-      componentEvent.bind(content, 'input', this.autoResize);
+      event.bind(content, 'input', this.autoResize);
     }
 
     if (options.resizable) {
@@ -10473,8 +12951,6 @@
    * Intercept paste events to remove formatting from pasted text.
    */
   TextBox.prototype.handlePaste = function(e) {
-    var self = this;
-
     var options = this.options,
         style = this.style;
 
@@ -10492,70 +12968,7 @@
       text = window.clipboardData.getData('Text');
     }
 
-    // insertHTML command not supported by Internet Explorer
-    var success = document.execCommand('insertHTML', false, text);
-
-    if (!success) {
-
-      // Internet Explorer
-      var range = this.getSelection(),
-          startContainer = range.startContainer,
-          endContainer = range.endContainer,
-          startOffset = range.startOffset,
-          endOffset = range.endOffset,
-          commonAncestorContainer = range.commonAncestorContainer;
-
-      var childNodesArray = toArray(commonAncestorContainer.childNodes);
-
-      var container,
-          offset;
-
-      if (isTextNode(commonAncestorContainer)) {
-        var containerTextContent = startContainer.textContent;
-
-        startContainer.textContent =
-          containerTextContent.substring(0, startOffset)
-          + text
-          + containerTextContent.substring(endOffset);
-
-        container = startContainer;
-        offset = startOffset + text.length;
-
-      } else if (startContainer === this.content && endContainer === this.content) {
-        var textNode = document.createTextNode(text);
-
-        this.content.insertBefore(textNode, childNodesArray[startOffset]);
-
-        container = textNode;
-        offset = textNode.textContent.length;
-      } else {
-        var startContainerChildIndex = childNodesArray.indexOf(startContainer),
-            endContainerChildIndex = childNodesArray.indexOf(endContainer);
-
-        childNodesArray.forEach(function(childNode, index) {
-
-          if (index === startContainerChildIndex) {
-            childNode.textContent =
-              startContainer.textContent.substring(0, startOffset) +
-              text +
-              endContainer.textContent.substring(endOffset);
-          } else if (index > startContainerChildIndex && index <= endContainerChildIndex) {
-            remove(childNode);
-          }
-        });
-
-        container = startContainer;
-        offset = startOffset + text.length;
-      }
-
-      if (container && offset !== undefined) {
-
-        // is necessary in Internet Explorer
-        setTimeout(function() {
-          self.setSelection(container, offset);
-        });
-      }
-    }
+    this.insertText(text);
 
     if (options.autoResize) {
       var hasResized = this.autoResize(style);
@@ -10563,6 +12976,81 @@
       if (hasResized) {
         this.resizeHandler(hasResized);
       }
+    }
+  };
+
+  TextBox.prototype.insertText = function(text) {
+    text = normalizeEndOfLineSequences(text);
+
+    // insertText command not supported by Internet Explorer
+    var success = document.execCommand('insertText', false, text);
+
+    if (success) {
+      return;
+    }
+
+    this._insertTextIE(text);
+  };
+
+  TextBox.prototype._insertTextIE = function(text) {
+
+    // Internet Explorer
+    var range = this.getSelection(),
+        startContainer = range.startContainer,
+        endContainer = range.endContainer,
+        startOffset = range.startOffset,
+        endOffset = range.endOffset,
+        commonAncestorContainer = range.commonAncestorContainer;
+
+    var childNodesArray = toArray(commonAncestorContainer.childNodes);
+
+    var container,
+        offset;
+
+    if (isTextNode(commonAncestorContainer)) {
+      var containerTextContent = startContainer.textContent;
+
+      startContainer.textContent =
+        containerTextContent.substring(0, startOffset)
+        + text
+        + containerTextContent.substring(endOffset);
+
+      container = startContainer;
+      offset = startOffset + text.length;
+
+    } else if (startContainer === this.content && endContainer === this.content) {
+      var textNode = document.createTextNode(text);
+
+      this.content.insertBefore(textNode, childNodesArray[startOffset]);
+
+      container = textNode;
+      offset = textNode.textContent.length;
+    } else {
+      var startContainerChildIndex = childNodesArray.indexOf(startContainer),
+          endContainerChildIndex = childNodesArray.indexOf(endContainer);
+
+      childNodesArray.forEach(function(childNode, index) {
+
+        if (index === startContainerChildIndex) {
+          childNode.textContent =
+            startContainer.textContent.substring(0, startOffset) +
+            text +
+            endContainer.textContent.substring(endOffset);
+        } else if (index > startContainerChildIndex && index <= endContainerChildIndex) {
+          remove$2(childNode);
+        }
+      });
+
+      container = startContainer;
+      offset = startOffset + text.length;
+    }
+
+    if (container && offset !== undefined) {
+
+      // is necessary in Internet Explorer
+      setTimeout(function() {
+        self.setSelection(container, offset);
+      });
     }
   };
 
@@ -10606,15 +13094,15 @@
         maxHeight = parseInt(this.style.maxHeight) || Infinity;
 
     if (!resizeHandle) {
-      resizeHandle = this.resizeHandle = domify(
+      resizeHandle = this.resizeHandle = domify$1(
         '<div class="djs-direct-editing-resize-handle"></div>'
       );
 
       var startX, startY, startWidth, startHeight;
 
       var onMouseDown = function(e) {
-        preventDefault$1(e);
-        stopPropagation$1(e);
+        preventDefault(e);
+        stopPropagation(e);
 
         startX = e.clientX;
         startY = e.clientY;
@@ -10624,16 +13112,16 @@
         startWidth = bounds.width;
         startHeight = bounds.height;
 
-        componentEvent.bind(document, 'mousemove', onMouseMove);
-        componentEvent.bind(document, 'mouseup', onMouseUp);
+        event.bind(document, 'mousemove', onMouseMove);
+        event.bind(document, 'mouseup', onMouseUp);
       };
 
       var onMouseMove = function(e) {
-        preventDefault$1(e);
-        stopPropagation$1(e);
+        preventDefault(e);
+        stopPropagation(e);
 
-        var newWidth = min$1(max$2(startWidth + e.clientX - startX, minWidth), maxWidth);
-        var newHeight = min$1(max$2(startHeight + e.clientY - startY, minHeight), maxHeight);
+        var newWidth = min(max(startWidth + e.clientX - startX, minWidth), maxWidth);
+        var newHeight = min(max(startHeight + e.clientY - startY, minHeight), maxHeight);
 
         parent.style.width = newWidth + 'px';
         parent.style.height = newHeight + 'px';
@@ -10647,17 +13135,17 @@
       };
 
       var onMouseUp = function(e) {
-        preventDefault$1(e);
-        stopPropagation$1(e);
+        preventDefault(e);
+        stopPropagation(e);
 
-        componentEvent.unbind(document,'mousemove', onMouseMove, false);
-        componentEvent.unbind(document, 'mouseup', onMouseUp, false);
+        event.unbind(document,'mousemove', onMouseMove, false);
+        event.unbind(document, 'mouseup', onMouseUp, false);
       };
 
-      componentEvent.bind(resizeHandle, 'mousedown', onMouseDown);
+      event.bind(resizeHandle, 'mousedown', onMouseDown);
     }
 
-    assign(resizeHandle.style, {
+    assign$1(resizeHandle.style, {
       position: 'absolute',
       bottom: '0px',
       right: '0px',
@@ -10690,23 +13178,23 @@
     parent.removeAttribute('style');
     content.removeAttribute('style');
 
-    componentEvent.unbind(content, 'keydown', this.keyHandler);
-    componentEvent.unbind(content, 'mousedown', stopPropagation$1);
-    componentEvent.unbind(content, 'input', this.autoResize);
-    componentEvent.unbind(content, 'paste', this.handlePaste);
+    event.unbind(content, 'keydown', this.keyHandler);
+    event.unbind(content, 'mousedown', stopPropagation);
+    event.unbind(content, 'input', this.autoResize);
+    event.unbind(content, 'paste', this.handlePaste);
 
     if (resizeHandle) {
       resizeHandle.removeAttribute('style');
 
-      remove(resizeHandle);
+      remove$2(resizeHandle);
     }
 
-    remove(parent);
+    remove$2(parent);
   };
 
 
   TextBox.prototype.getValue = function() {
-    return this.content.innerText;
+    return this.content.innerText.trim();
   };
 
 
@@ -10734,6 +13222,12 @@
     selection.addRange(range);
   };
 
+  // helpers //////////
+
+  function normalizeEndOfLineSequences(string) {
+    return string.replace(/\r\n|\r|\n/g, '\n');
+  }
+
   /**
    * A direct editing component that allows users
    * to edit an elements text directly in the diagram
@@ -10747,8 +13241,8 @@
     this._providers = [];
     this._textbox = new TextBox({
       container: canvas.getContainer(),
-      keyHandler: bind(this._handleKey, this),
-      resizeHandler: bind(this._handleResize, this)
+      keyHandler: bind$2(this._handleKey, this),
+      resizeHandler: bind$2(this._handleResize, this)
     });
   }
 
@@ -10772,10 +13266,12 @@
   /**
    * Returns true if direct editing is currently active
    *
-   * @return {Boolean}
+   * @param {djs.model.Base} [element]
+   *
+   * @return {boolean}
    */
-  DirectEditing.prototype.isActive = function() {
-    return !!this._active;
+  DirectEditing.prototype.isActive = function(element) {
+    return !!(this._active && (!element || this._active.element === element));
   };
 
 
@@ -10815,16 +13311,24 @@
       return;
     }
 
-    var text = this.getValue();
+    var containerBounds,
+        previousBounds = active.context.bounds,
+        newBounds = this.$textbox.getBoundingClientRect(),
+        newText = this.getValue(),
+        previousText = active.context.text;
 
-    var bounds = this.$textbox.getBoundingClientRect();
+    if (
+      newText !== previousText ||
+      newBounds.height !== previousBounds.height ||
+      newBounds.width !== previousBounds.width
+    ) {
+      containerBounds = this._textbox.container.getBoundingClientRect();
 
-    if (text !== active.context.text || this.resizable) {
-      active.provider.update(active.element, text, active.context.text, {
-        x: bounds.top,
-        y: bounds.left,
-        width: bounds.width,
-        height: bounds.height
+      active.provider.update(active.element, newText, active.context.text, {
+        x: newBounds.left - containerBounds.left,
+        y: newBounds.top - containerBounds.top,
+        width: newBounds.width,
+        height: newBounds.height
       });
     }
 
@@ -10880,7 +13384,7 @@
     var context;
 
     var provider = find(this._providers, function(p) {
-      return (context = p.activate(element)) ? p : null;
+      return ((context = p.activate(element))) ? p : null;
     });
 
     // check if activation took place
@@ -10916,8 +13420,8 @@
     directEditing: [ 'type', DirectEditing ]
   };
 
-  var MARKER_OK$3 = 'connect-ok',
-      MARKER_NOT_OK$3 = 'connect-not-ok';
+  var MARKER_OK$1 = 'connect-ok',
+      MARKER_NOT_OK$1 = 'connect-not-ok';
 
 
   function Connect(
@@ -10962,16 +13466,16 @@
 
       waypoints = crop(sourcePosition, endPosition, source, target);
 
-      attr$1(visual, { 'points': [ waypoints[0].x, waypoints[0].y, waypoints[1].x, waypoints[1].y ] });
+      attr(visual, { 'points': [ waypoints[0].x, waypoints[0].y, waypoints[1].x, waypoints[1].y ] });
     });
 
     eventBus.on('connect.hover', function(event) {
-      var context = event.context,
-          source = context.source,
-          hover = event.hover,
+      var context = event.context;
+          context.source;
+          var hover = event.hover,
           canExecute;
 
-      canExecute = context.canExecute = canConnect(source, hover);
+      canExecute = context.canExecute = canConnect();
 
       // simply ignore hover
       if (canExecute === null) {
@@ -10980,14 +13484,14 @@
 
       context.target = hover;
 
-      canvas.addMarker(hover, canExecute ? MARKER_OK$3 : MARKER_NOT_OK$3);
+      canvas.addMarker(hover, canExecute ? MARKER_OK$1 : MARKER_NOT_OK$1);
     });
 
     eventBus.on([ 'connect.out', 'connect.cleanup' ], function(event) {
       var context = event.context;
 
       if (context.target) {
-        canvas.removeMarker(context.target, context.canExecute ? MARKER_OK$3 : MARKER_NOT_OK$3);
+        canvas.removeMarker(context.target, context.canExecute ? MARKER_OK$1 : MARKER_NOT_OK$1);
       }
 
       context.target = null;
@@ -11006,8 +13510,8 @@
       var context = event.context,
           visual;
 
-      visual = create('polyline');
-      attr$1(visual, {
+      visual = create$1('polyline');
+      attr(visual, {
         'stroke': '#333',
         'strokeDasharray': [ 1 ],
         'strokeWidth': 2,
@@ -11021,16 +13525,16 @@
 
     eventBus.on('connect.end', function(event) {
 
-      var context = event.context,
-          source = context.source,
-          type = context.type,
-          sourcePosition = context.sourcePosition,
-          target = context.target,
-          targetPosition = {
+      var context = event.context;
+          context.source;
+          context.type;
+          context.sourcePosition;
+          context.target;
+          ({
             x: event.x,
             y: event.y
-          },
-          canExecute = context.canExecute || canConnect(source, target);
+          });
+          var canExecute = context.canExecute || canConnect();
 
       if (!canExecute) {
         return false;
@@ -11075,6 +13579,34 @@
     ],
     connect: [ 'type', Connect ]
   };
+
+  /**
+   * @typedef {import('didi').Injector} Injector
+   *
+   * @typedef {import('../core/Types').ElementLike} ElementLike
+   *
+   * @typedef {import('../core/EventBus').default} EventBus
+   * @typedef {import('./CommandHandler').default} CommandHandler
+   *
+   * @typedef { any } CommandContext
+   * @typedef { {
+   *   new (...args: any[]) : CommandHandler
+   * } } CommandHandlerConstructor
+   * @typedef { {
+   *   [key: string]: CommandHandler;
+   * } } CommandHandlerMap
+   * @typedef { {
+   *   command: string;
+   *   context: any;
+   *   id?: any;
+   * } } CommandStackAction
+   * @typedef { {
+   *   actions: CommandStackAction[];
+   *   dirty: ElementLike[];
+   *   trigger: 'execute' | 'undo' | 'redo' | 'clear' | null;
+   *   atomic?: boolean;
+   * } } CurrentExecution
+   */
 
   /**
    * A service that offers un- and redoable execution of commands.
@@ -11126,7 +13658,7 @@
    * got changed during the `execute` and `revert` operations.
    *
    * Command handlers may execute other modeling operations (and thus
-   * commands) in their `preExecute` and `postExecute` phases. The command
+   * commands) in their `preExecute(d)` and `postExecute(d)` phases. The command
    * stack will properly group all commands together into a logical unit
    * that may be re- and undone atomically.
    *
@@ -11157,38 +13689,48 @@
     /**
      * A map of all registered command handlers.
      *
-     * @type {Object}
+     * @type {CommandHandlerMap}
      */
     this._handlerMap = {};
 
     /**
      * A stack containing all re/undoable actions on the diagram
      *
-     * @type {Array<Object>}
+     * @type {CommandStackAction[]}
      */
     this._stack = [];
 
     /**
      * The current index on the stack
      *
-     * @type {Number}
+     * @type {number}
      */
     this._stackIdx = -1;
 
     /**
      * Current active commandStack execution
      *
-     * @type {Object}
+     * @type {CurrentExecution}
      */
     this._currentExecution = {
       actions: [],
-      dirty: []
+      dirty: [],
+      trigger: null
     };
 
-
+    /**
+     * @type {Injector}
+     */
     this._injector = injector;
+
+    /**
+     * @type EventBus
+     */
     this._eventBus = eventBus;
 
+    /**
+     * @type { number }
+     */
     this._uid = 1;
 
     eventBus.on([
@@ -11203,26 +13745,28 @@
 
 
   /**
-   * Execute a command
+   * Execute a command.
    *
-   * @param {String} command the command to execute
-   * @param {Object} context the environment to execute the command in
+   * @param {string} command The command to execute.
+   * @param {CommandContext} context The context with which to execute the command.
    */
   CommandStack.prototype.execute = function(command, context) {
     if (!command) {
       throw new Error('command required');
     }
 
-    var action = { command: command, context: context };
+    this._currentExecution.trigger = 'execute';
+
+    const action = { command: command, context: context };
 
     this._pushAction(action);
     this._internalExecute(action);
-    this._popAction(action);
+    this._popAction();
   };
 
 
   /**
-   * Ask whether a given command can be executed.
+   * Check whether a command can be executed.
    *
    * Implementors may hook into the mechanism on two ways:
    *
@@ -11236,18 +13780,18 @@
    *     If the method {@link CommandHandler#canExecute} is implemented in a handler
    *     it will be called to figure out whether the execution is allowed.
    *
-   * @param  {String} command the command to execute
-   * @param  {Object} context the environment to execute the command in
+   * @param {string} command The command to execute.
+   * @param {CommandContext} context The context with which to execute the command.
    *
-   * @return {Boolean} true if the command can be executed
+   * @return {boolean} Whether the command can be executed with the given context.
    */
   CommandStack.prototype.canExecute = function(command, context) {
 
-    var action = { command: command, context: context };
+    const action = { command: command, context: context };
 
-    var handler = this._getHandler(command);
+    const handler = this._getHandler(command);
 
-    var result = this._fire(command, 'canExecute', action);
+    let result = this._fire(command, 'canExecute', action);
 
     // handler#canExecute will only be called if no listener
     // decided on a result already
@@ -11266,14 +13810,16 @@
 
 
   /**
-   * Clear the command stack, erasing all undo / redo history
+   * Clear the command stack, erasing all undo / redo history.
+   *
+   * @param {boolean} [emit=true] Whether to fire an event. Defaults to `true`.
    */
   CommandStack.prototype.clear = function(emit) {
     this._stack.length = 0;
     this._stackIdx = -1;
 
     if (emit !== false) {
-      this._fire('changed');
+      this._fire('changed', { trigger: 'clear' });
     }
   };
 
@@ -11282,10 +13828,12 @@
    * Undo last command(s)
    */
   CommandStack.prototype.undo = function() {
-    var action = this._getUndoAction(),
+    let action = this._getUndoAction(),
         next;
 
     if (action) {
+      this._currentExecution.trigger = 'undo';
+
       this._pushAction(action);
 
       while (action) {
@@ -11308,10 +13856,12 @@
    * Redo last command(s)
    */
   CommandStack.prototype.redo = function() {
-    var action = this._getRedoAction(),
+    let action = this._getRedoAction(),
         next;
 
     if (action) {
+      this._currentExecution.trigger = 'redo';
+
       this._pushAction(action);
 
       while (action) {
@@ -11331,10 +13881,10 @@
 
 
   /**
-   * Register a handler instance with the command stack
+   * Register a handler instance with the command stack.
    *
-   * @param {String} command
-   * @param {CommandHandler} handler
+   * @param {string} command Command to be executed.
+   * @param {CommandHandler} handler Handler to execute the command.
    */
   CommandStack.prototype.register = function(command, handler) {
     this._setHandler(command, handler);
@@ -11342,11 +13892,11 @@
 
 
   /**
-   * Register a handler type with the command stack
-   * by instantiating it and injecting its dependencies.
+   * Register a handler type with the command stack  by instantiating it and
+   * injecting its dependencies.
    *
-   * @param {String} command
-   * @param {Function} a constructor for a {@link CommandHandler}
+   * @param {string} command Command to be executed.
+   * @param {CommandHandlerConstructor} handlerCls Constructor to instantiate a {@link CommandHandler}.
    */
   CommandStack.prototype.registerHandler = function(command, handlerCls) {
 
@@ -11354,14 +13904,20 @@
       throw new Error('command and handlerCls must be defined');
     }
 
-    var handler = this._injector.instantiate(handlerCls);
+    const handler = this._injector.instantiate(handlerCls);
     this.register(command, handler);
   };
 
+  /**
+   * @return {boolean}
+   */
   CommandStack.prototype.canUndo = function() {
     return !!this._getUndoAction();
   };
 
+  /**
+   * @return {boolean}
+   */
   CommandStack.prototype.canRedo = function() {
     return !!this._getRedoAction();
   };
@@ -11381,24 +13937,22 @@
   // internal functionality //////////////////////
 
   CommandStack.prototype._internalUndo = function(action) {
-    var self = this;
+    const command = action.command,
+          context = action.context;
 
-    var command = action.command,
-        context = action.context;
-
-    var handler = this._getHandler(command);
+    const handler = this._getHandler(command);
 
     // guard against illegal nested command stack invocations
-    this._atomicDo(function() {
-      self._fire(command, 'revert', action);
+    this._atomicDo(() => {
+      this._fire(command, 'revert', action);
 
       if (handler.revert) {
-        self._markDirty(handler.revert(context));
+        this._markDirty(handler.revert(context));
       }
 
-      self._revertedAction(action);
+      this._revertedAction(action);
 
-      self._fire(command, 'reverted', action);
+      this._fire(command, 'reverted', action);
     });
   };
 
@@ -11409,12 +13963,12 @@
       qualifier = null;
     }
 
-    var names = qualifier ? [ command + '.' + qualifier, qualifier ] : [ command ],
-        i, name, result;
+    const names = qualifier ? [ command + '.' + qualifier, qualifier ] : [ command ];
+    let result;
 
     event = this._eventBus.createEvent(event);
 
-    for (i = 0; (name = names[i]); i++) {
+    for (const name of names) {
       result = this._eventBus.fire('commandStack.' + name, event);
 
       if (event.cancelBubble) {
@@ -11431,7 +13985,7 @@
 
   CommandStack.prototype._atomicDo = function(fn) {
 
-    var execution = this._currentExecution;
+    const execution = this._currentExecution;
 
     execution.atomic = true;
 
@@ -11443,12 +13997,10 @@
   };
 
   CommandStack.prototype._internalExecute = function(action, redo) {
-    var self = this;
+    const command = action.command,
+          context = action.context;
 
-    var command = action.command,
-        context = action.context;
-
-    var handler = this._getHandler(command);
+    const handler = this._getHandler(command);
 
     if (!handler) {
       throw new Error('no command handler registered for <' + command + '>');
@@ -11467,19 +14019,20 @@
     }
 
     // guard against illegal nested command stack invocations
-    this._atomicDo(function() {
+    this._atomicDo(() => {
 
-      self._fire(command, 'execute', action);
+      this._fire(command, 'execute', action);
 
       if (handler.execute) {
+
         // actual execute + mark return results as dirty
-        self._markDirty(handler.execute(context));
+        this._markDirty(handler.execute(context));
       }
 
       // log to stack
-      self._executedAction(action, redo);
+      this._executedAction(action, redo);
 
-      self._fire(command, 'executed', action);
+      this._fire(command, 'executed', action);
     });
 
     if (!redo) {
@@ -11492,16 +14045,16 @@
       this._fire(command, 'postExecuted', action);
     }
 
-    this._popAction(action);
+    this._popAction();
   };
 
 
   CommandStack.prototype._pushAction = function(action) {
 
-    var execution = this._currentExecution,
-        actions = execution.actions;
+    const execution = this._currentExecution,
+          actions = execution.actions;
 
-    var baseAction = actions[0];
+    const baseAction = actions[0];
 
     if (execution.atomic) {
       throw new Error('illegal invocation in <execute> or <revert> phase (action: ' + action.command + ')');
@@ -11516,37 +14069,40 @@
 
 
   CommandStack.prototype._popAction = function() {
-    var execution = this._currentExecution,
-        actions = execution.actions,
-        dirty = execution.dirty;
+    const execution = this._currentExecution,
+          trigger = execution.trigger,
+          actions = execution.actions,
+          dirty = execution.dirty;
 
     actions.pop();
 
     if (!actions.length) {
-      this._eventBus.fire('elements.changed', { elements: uniqueBy('id', dirty) });
+      this._eventBus.fire('elements.changed', { elements: uniqueBy('id', dirty.reverse()) });
 
       dirty.length = 0;
 
-      this._fire('changed');
+      this._fire('changed', { trigger: trigger });
+
+      execution.trigger = null;
     }
   };
 
 
   CommandStack.prototype._markDirty = function(elements) {
-    var execution = this._currentExecution;
+    const execution = this._currentExecution;
 
     if (!elements) {
       return;
     }
 
-    elements = isArray(elements) ? elements : [ elements ];
+    elements = isArray$3(elements) ? elements : [ elements ];
 
     execution.dirty = execution.dirty.concat(elements);
   };
 
 
   CommandStack.prototype._executedAction = function(action, redo) {
-    var stackIdx = ++this._stackIdx;
+    const stackIdx = ++this._stackIdx;
 
     if (!redo) {
       this._stack.splice(stackIdx, this._stack.length, action);
@@ -11575,14 +14131,23 @@
     this._handlerMap[command] = handler;
   };
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var CommandModule = {
     commandStack: [ 'type', CommandStack ]
   };
 
+  /**
+   * @typedef {import('../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../core/GraphicsFactory').default} GraphicsFactory
+   */
+
   function dockingToPoint(docking) {
+
     // use the dockings actual point and
     // retain the original docking
-    return assign({ original: docking.point.original || docking.point }, docking.actual);
+    return assign$1({ original: docking.point.original || docking.point }, docking.actual);
   }
 
 
@@ -11590,7 +14155,8 @@
    * A {@link ConnectionDocking} that crops connection waypoints based on
    * the path(s) of the connection source and target.
    *
-   * @param {djs.core.ElementRegistry} elementRegistry
+   * @param {ElementRegistry} elementRegistry
+   * @param {GraphicsFactory} graphicsFactory
    */
   function CroppingConnectionDocking(elementRegistry, graphicsFactory) {
     this._elementRegistry = elementRegistry;
@@ -11666,6 +14232,10 @@
     return this._elementRegistry.getGraphics(element);
   };
 
+  var objectRefs = {exports: {}};
+
+  var collection = {};
+
   /**
    * An empty collection stub. Use {@link RefsCollection.extend} to extend a
    * collection with ref semantics.
@@ -11686,7 +14256,7 @@
    *
    * @return {RefsCollection<Object>} the extended array
    */
-  function extend$1(collection, refs, property, target) {
+  function extend(collection, refs, property, target) {
 
     var inverseProperty = property.inverse;
 
@@ -11781,14 +14351,11 @@
     return collection.__refs_collection === true;
   }
 
-  var extend_1 = extend$1;
+  collection.extend = extend;
 
-  var isExtended_1 = isExtended;
+  collection.isExtended = isExtended;
 
-  var collection = {
-  	extend: extend_1,
-  	isExtended: isExtended_1
-  };
+  var Collection = collection;
 
   function hasOwnProperty(e, property) {
     return Object.prototype.hasOwnProperty.call(e, property.name || property);
@@ -11796,16 +14363,16 @@
 
   function defineCollectionProperty(ref, property, target) {
 
-    var collection$$1 = collection.extend(target[property.name] || [], ref, property, target);
+    var collection = Collection.extend(target[property.name] || [], ref, property, target);
 
     Object.defineProperty(target, property.name, {
       enumerable: property.enumerable,
-      value: collection$$1
+      value: collection
     });
 
-    if (collection$$1.length) {
+    if (collection.length) {
 
-      collection$$1.forEach(function(o) {
+      collection.forEach(function(o) {
         ref.set(o, property.inverse, target);
       });
     }
@@ -11895,10 +14462,10 @@
    *
    * wheels[0].car // undefined
    */
-  function Refs(a, b) {
+  function Refs$1(a, b) {
 
-    if (!(this instanceof Refs)) {
-      return new Refs(a, b);
+    if (!(this instanceof Refs$1)) {
+      return new Refs$1(a, b);
     }
 
     // link
@@ -11919,7 +14486,7 @@
    * @param  {Object} target
    * @param  {String} property
    */
-  Refs.prototype.bind = function(target, property) {
+  Refs$1.prototype.bind = function(target, property) {
     if (typeof property === 'string') {
       if (!this.props[property]) {
         throw new Error('no property <' + property + '> in ref');
@@ -11934,24 +14501,24 @@
     }
   };
 
-  Refs.prototype.ensureRefsCollection = function(target, property) {
+  Refs$1.prototype.ensureRefsCollection = function(target, property) {
 
-    var collection$$1 = target[property.name];
+    var collection = target[property.name];
 
-    if (!collection.isExtended(collection$$1)) {
+    if (!Collection.isExtended(collection)) {
       defineCollectionProperty(this, property, target);
     }
 
-    return collection$$1;
+    return collection;
   };
 
-  Refs.prototype.ensureBound = function(target, property) {
+  Refs$1.prototype.ensureBound = function(target, property) {
     if (!hasOwnProperty(target, property)) {
       this.bind(target, property);
     }
   };
 
-  Refs.prototype.unset = function(target, property, value) {
+  Refs$1.prototype.unset = function(target, property, value) {
 
     if (target) {
       this.ensureBound(target, property);
@@ -11964,7 +14531,7 @@
     }
   };
 
-  Refs.prototype.set = function(target, property, value) {
+  Refs$1.prototype.set = function(target, property, value) {
 
     if (target) {
       this.ensureBound(target, property);
@@ -11977,40 +14544,41 @@
     }
   };
 
-  var refs = Refs;
+  var refs = Refs$1;
 
-  var objectRefs = refs;
+  objectRefs.exports = refs;
 
-  var Collection = collection;
-  objectRefs.Collection = Collection;
+  objectRefs.exports.Collection = collection;
 
-  var parentRefs = new objectRefs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
-      labelRefs = new objectRefs({ name: 'labels', enumerable: true, collection: true }, { name: 'labelTarget' }),
-      attacherRefs = new objectRefs({ name: 'attachers', collection: true }, { name: 'host' }),
-      outgoingRefs = new objectRefs({ name: 'outgoing', collection: true }, { name: 'source' }),
-      incomingRefs = new objectRefs({ name: 'incoming', collection: true }, { name: 'target' });
+  var objectRefsExports = objectRefs.exports;
+  var Refs = /*@__PURE__*/getDefaultExportFromCjs(objectRefsExports);
 
-  /**
-   * @namespace djs.model
-   */
+  var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
+      labelRefs = new Refs({ name: 'labels', enumerable: true, collection: true }, { name: 'labelTarget' }),
+      attacherRefs = new Refs({ name: 'attachers', collection: true }, { name: 'host' }),
+      outgoingRefs = new Refs({ name: 'outgoing', collection: true }, { name: 'source' }),
+      incomingRefs = new Refs({ name: 'incoming', collection: true }, { name: 'target' });
 
   /**
-   * @memberOf djs.model
+   * @typedef {import('./Types').Element} Element
+   * @typedef {import('./Types').Shape} Shape
+   * @typedef {import('./Types').Root} Root
+   * @typedef {import('./Types').Label} Label
+   * @typedef {import('./Types').Connection} Connection
    */
 
   /**
    * The basic graphical representation
    *
    * @class
-   *
-   * @abstract
+   * @constructor
    */
-  function Base() {
+  function ElementImpl() {
 
     /**
      * The object that backs up the shape
      *
-     * @name Base#businessObject
+     * @name Element#businessObject
      * @type Object
      */
     Object.defineProperty(this, 'businessObject', {
@@ -12021,7 +14589,7 @@
     /**
      * Single label support, will mapped to multi label array
      *
-     * @name Base#label
+     * @name Element#label
      * @type Object
      */
     Object.defineProperty(this, 'label', {
@@ -12044,7 +14612,7 @@
     /**
      * The parent shape
      *
-     * @name Base#parent
+     * @name Element#parent
      * @type Shape
      */
     parentRefs.bind(this, 'parent');
@@ -12052,7 +14620,7 @@
     /**
      * The list of labels
      *
-     * @name Base#labels
+     * @name Element#labels
      * @type Label
      */
     labelRefs.bind(this, 'labels');
@@ -12060,7 +14628,7 @@
     /**
      * The list of outgoing connections
      *
-     * @name Base#outgoing
+     * @name Element#outgoing
      * @type Array<Connection>
      */
     outgoingRefs.bind(this, 'outgoing');
@@ -12068,7 +14636,7 @@
     /**
      * The list of incoming connections
      *
-     * @name Base#incoming
+     * @name Element#incoming
      * @type Array<Connection>
      */
     incomingRefs.bind(this, 'incoming');
@@ -12081,33 +14649,40 @@
    * @class
    * @constructor
    *
-   * @extends Base
+   * @extends ElementImpl
    */
-  function Shape() {
-    Base.call(this);
+  function ShapeImpl() {
+    ElementImpl.call(this);
+
+    /**
+     * Indicates frame shapes
+     *
+     * @name ShapeImpl#isFrame
+     * @type boolean
+     */
 
     /**
      * The list of children
      *
-     * @name Shape#children
-     * @type Array<Base>
+     * @name ShapeImpl#children
+     * @type Element[]
      */
     parentRefs.bind(this, 'children');
 
     /**
-     * @name Shape#host
+     * @name ShapeImpl#host
      * @type Shape
      */
     attacherRefs.bind(this, 'host');
 
     /**
-     * @name Shape#attachers
+     * @name ShapeImpl#attachers
      * @type Shape
      */
     attacherRefs.bind(this, 'attachers');
   }
 
-  inherits_browser(Shape, Base);
+  e(ShapeImpl, ElementImpl);
 
 
   /**
@@ -12116,13 +14691,21 @@
    * @class
    * @constructor
    *
-   * @extends Shape
+   * @extends ElementImpl
    */
-  function Root() {
-    Shape.call(this);
+  function RootImpl() {
+    ElementImpl.call(this);
+
+    /**
+     * The list of children
+     *
+     * @name RootImpl#children
+     * @type Element[]
+     */
+    parentRefs.bind(this, 'children');
   }
 
-  inherits_browser(Root, Shape);
+  e(RootImpl, ShapeImpl);
 
 
   /**
@@ -12131,21 +14714,21 @@
    * @class
    * @constructor
    *
-   * @extends Shape
+   * @extends ShapeImpl
    */
-  function Label() {
-    Shape.call(this);
+  function LabelImpl() {
+    ShapeImpl.call(this);
 
     /**
      * The labeled element
      *
-     * @name Label#labelTarget
-     * @type Base
+     * @name LabelImpl#labelTarget
+     * @type Element
      */
     labelRefs.bind(this, 'labelTarget');
   }
 
-  inherits_browser(Label, Shape);
+  e(LabelImpl, ShapeImpl);
 
 
   /**
@@ -12154,203 +14737,422 @@
    * @class
    * @constructor
    *
-   * @extends Base
+   * @extends ElementImpl
    */
-  function Connection() {
-    Base.call(this);
+  function ConnectionImpl() {
+    ElementImpl.call(this);
 
     /**
      * The element this connection originates from
      *
-     * @name Connection#source
-     * @type Base
+     * @name ConnectionImpl#source
+     * @type Element
      */
     outgoingRefs.bind(this, 'source');
 
     /**
      * The element this connection points to
      *
-     * @name Connection#target
-     * @type Base
+     * @name ConnectionImpl#target
+     * @type Element
      */
     incomingRefs.bind(this, 'target');
   }
 
-  inherits_browser(Connection, Base);
+  e(ConnectionImpl, ElementImpl);
 
 
   var types = {
-    connection: Connection,
-    shape: Shape,
-    label: Label,
-    root: Root
+    connection: ConnectionImpl,
+    shape: ShapeImpl,
+    label: LabelImpl,
+    root: RootImpl
   };
 
   /**
-   * Creates a new model element of the specified type
+   * Creates a root element.
    *
-   * @method create
+   * @overlord
    *
    * @example
    *
-   * var shape1 = Model.create('shape', { x: 10, y: 10, width: 100, height: 100 });
-   * var shape2 = Model.create('shape', { x: 210, y: 210, width: 100, height: 100 });
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
    *
-   * var connection = Model.create('connection', { waypoints: [ { x: 110, y: 55 }, {x: 210, y: 55 } ] });
+   * const root = Model.create('root', {
+   *   x: 100,
+   *   y: 100,
+   *   width: 100,
+   *   height: 100
+   * });
+   * ```
    *
-   * @param  {String} type lower-cased model name
-   * @param  {Object} attrs attributes to initialize the new model instance with
+   * @param {'root'} type
+   * @param {any} [attrs]
    *
-   * @return {Base} the new model instance
+   * @return {Root}
    */
-  function create$1(type, attrs) {
+
+  /**
+   * Creates a connection.
+   *
+   * @overlord
+   *
+   * @example
+   *
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
+   *
+   * const connection = Model.create('connection', {
+   *   waypoints: [
+   *     { x: 100, y: 100 },
+   *     { x: 200, y: 100 }
+   *   ]
+   * });
+   * ```
+   *
+   * @param {'connection'} type
+   * @param {any} [attrs]
+   *
+   * @return {Connection}
+   */
+
+  /**
+   * Creates a shape.
+   *
+   * @overlord
+   *
+   * @example
+   *
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
+   *
+   * const shape = Model.create('shape', {
+   *   x: 100,
+   *   y: 100,
+   *   width: 100,
+   *   height: 100
+   * });
+   * ```
+   *
+   * @param {'shape'} type
+   * @param {any} [attrs]
+   *
+   * @return {Shape}
+   */
+
+  /**
+   * Creates a label.
+   *
+   * @example
+   *
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
+   *
+   * const label = Model.create('label', {
+   *   x: 100,
+   *   y: 100,
+   *   width: 100,
+   *   height: 100,
+   *   labelTarget: shape
+   * });
+   * ```
+   *
+   * @param {'label'} type
+   * @param {Object} [attrs]
+   *
+   * @return {Label}
+   */
+  function create(type, attrs) {
     var Type = types[type];
     if (!Type) {
       throw new Error('unknown type: <' + type + '>');
     }
-    return assign(new Type(), attrs);
+    return assign$1(new Type(), attrs);
   }
 
   /**
-   * A factory for diagram-js shapes
+   * Checks whether an object is a model instance.
+   *
+   * @param {any} obj
+   *
+   * @return {boolean}
    */
-  function ElementFactory() {
+  function isModelElement(obj) {
+    return obj instanceof ElementImpl;
+  }
+
+  /**
+   * @typedef {import('../model/Types').Element} Element
+   * @typedef {import('../model/Types').Connection} Connection
+   * @typedef {import('../model/Types').Label} Label
+   * @typedef {import('../model/Types').Root} Root
+   * @typedef {import('../model/Types').Shape} Shape
+   */
+
+  /**
+   * A factory for model elements.
+   *
+   * @template {Connection} [T=Connection]
+   * @template {Label} [U=Label]
+   * @template {Root} [V=Root]
+   * @template {Shape} [W=Shape]
+   */
+  function ElementFactory$1() {
     this._uid = 12;
   }
 
-
-  ElementFactory.prototype.createRoot = function(attrs) {
+  /**
+   * Create a root element.
+   *
+   * @param {Partial<Root>} [attrs]
+   *
+   * @return {V} The created root element.
+   */
+  ElementFactory$1.prototype.createRoot = function(attrs) {
     return this.create('root', attrs);
   };
 
-  ElementFactory.prototype.createLabel = function(attrs) {
+  /**
+   * Create a label.
+   *
+   * @param {Partial<Label>} [attrs]
+   *
+   * @return {U} The created label.
+   */
+  ElementFactory$1.prototype.createLabel = function(attrs) {
     return this.create('label', attrs);
   };
 
-  ElementFactory.prototype.createShape = function(attrs) {
+  /**
+   * Create a shape.
+   *
+   * @param {Partial<Shape>} [attrs]
+   *
+   * @return {W} The created shape.
+   */
+  ElementFactory$1.prototype.createShape = function(attrs) {
     return this.create('shape', attrs);
   };
 
-  ElementFactory.prototype.createConnection = function(attrs) {
+  /**
+   * Create a connection.
+   *
+   * @param {Partial<Connection>} [attrs]
+   *
+   * @return {T} The created connection.
+   */
+  ElementFactory$1.prototype.createConnection = function(attrs) {
     return this.create('connection', attrs);
   };
 
   /**
-   * Create a model element with the given type and
-   * a number of pre-set attributes.
+   * Create a root element.
    *
-   * @param  {String} type
-   * @param  {Object} attrs
-   * @return {djs.model.Base} the newly created model instance
+   * @overlord
+   * @param {'root'} type
+   * @param {Partial<Root>} [attrs]
+   * @return {V}
    */
-  ElementFactory.prototype.create = function(type, attrs) {
+  /**
+   * Create a shape.
+   *
+   * @overlord
+   * @param {'shape'} type
+   * @param {Partial<Shape>} [attrs]
+   * @return {W}
+   */
+  /**
+   * Create a connection.
+   *
+   * @overlord
+   * @param {'connection'} type
+   * @param {Partial<Connection>} [attrs]
+   * @return {T}
+   */
+  /**
+   * Create a label.
+   *
+   * @param {'label'} type
+   * @param {Partial<Label>} [attrs]
+   * @return {U}
+   */
+  ElementFactory$1.prototype.create = function(type, attrs) {
 
-    attrs = assign({}, attrs || {});
+    attrs = assign$1({}, attrs || {});
 
     if (!attrs.id) {
       attrs.id = type + '_' + (this._uid++);
     }
 
-    return create$1(type, attrs);
+    return create(type, attrs);
   };
 
-  inherits_browser(ElementFactory$1, ElementFactory);
+  var inherits$1 = {exports: {}};
 
-  function ElementFactory$1() {
-    ElementFactory.call(this);
+  var inherits_browser = {exports: {}};
+
+  var hasRequiredInherits_browser;
+
+  function requireInherits_browser () {
+  	if (hasRequiredInherits_browser) return inherits_browser.exports;
+  	hasRequiredInherits_browser = 1;
+  	if (typeof Object.create === 'function') {
+  	  // implementation from standard node.js 'util' module
+  	  inherits_browser.exports = function inherits(ctor, superCtor) {
+  	    if (superCtor) {
+  	      ctor.super_ = superCtor;
+  	      ctor.prototype = Object.create(superCtor.prototype, {
+  	        constructor: {
+  	          value: ctor,
+  	          enumerable: false,
+  	          writable: true,
+  	          configurable: true
+  	        }
+  	      });
+  	    }
+  	  };
+  	} else {
+  	  // old school shim for old browsers
+  	  inherits_browser.exports = function inherits(ctor, superCtor) {
+  	    if (superCtor) {
+  	      ctor.super_ = superCtor;
+  	      var TempCtor = function () {};
+  	      TempCtor.prototype = superCtor.prototype;
+  	      ctor.prototype = new TempCtor();
+  	      ctor.prototype.constructor = ctor;
+  	    }
+  	  };
+  	}
+  	return inherits_browser.exports;
   }
 
-  ElementFactory$1.prototype.createEnumeration = function(attrs) {
+  try {
+    var util = require('util');
+    /* istanbul ignore next */
+    if (typeof util.inherits !== 'function') throw '';
+    inherits$1.exports = util.inherits;
+  } catch (e) {
+    /* istanbul ignore next */
+    inherits$1.exports = requireInherits_browser();
+  }
+
+  var inheritsExports = inherits$1.exports;
+  var inherits = /*@__PURE__*/getDefaultExportFromCjs(inheritsExports);
+
+  inherits(ElementFactory, ElementFactory$1);
+
+  function ElementFactory() {
+    ElementFactory$1.call(this);
+  }
+
+  ElementFactory.prototype.createEnumeration = function(attrs) {
     var newAttrs = {
       shapeType: 'enumeration',
       businessObject: {}
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createShape(newAttrs);
   };
 
-  ElementFactory$1.prototype.createClass = function(attrs) {
+  ElementFactory.prototype.createClass = function(attrs) {
     var newAttrs = {
       shapeType: 'class',
       businessObject: {}
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createShape(newAttrs);
   };
 
-  ElementFactory$1.prototype.createUmlLabel = function(attrs) {
+  ElementFactory.prototype.createUmlLabel = function(attrs) {
     var newAttrs = {
       shapeType: 'label'
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createLabel(newAttrs);
   };
 
-  ElementFactory$1.prototype.createInheritance = function(attrs) {
+  ElementFactory.prototype.createInheritance = function(attrs) {
     var newAttrs = {
       connectionType: 'inheritance'
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createConnection(newAttrs);
   };
 
-  ElementFactory$1.prototype.createAssociation = function(attrs) {
+  ElementFactory.prototype.createAssociation = function(attrs) {
     var newAttrs = {
       connectionType: 'association'
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createConnection(newAttrs);
   };
 
-  ElementFactory$1.prototype.createAggregation = function(attrs) {
+  ElementFactory.prototype.createAggregation = function(attrs) {
     var newAttrs = {
       connectionType: 'aggregation'
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createConnection(newAttrs);
   };
 
-  ElementFactory$1.prototype.createComposition = function(attrs) {
+  ElementFactory.prototype.createComposition = function(attrs) {
     var newAttrs = {
       connectionType: 'composition'
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createConnection(newAttrs);
   };
 
-  ElementFactory$1.prototype.createDependency = function(attrs) {
+  ElementFactory.prototype.createDependency = function(attrs) {
     var newAttrs = {
       connectionType: 'dependency'
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createConnection(newAttrs);
   };
 
-  ElementFactory$1.prototype.createRealization = function(attrs) {
+  ElementFactory.prototype.createRealization = function(attrs) {
     var newAttrs = {
       connectionType: 'realization'
     };
 
-    assign(newAttrs, attrs);
+    assign$1(newAttrs, attrs);
 
     return this.createConnection(newAttrs);
   };
+
+  /**
+   * @typedef {import('../core/Types').ElementLike} Element
+   * @typedef {import('../core/Types').ConnectionLike} Connection
+   *
+   * @typedef {import('../util').Point} Point
+   *
+   * @typedef { {
+   *   connectionStart?: Point;
+   *   connectionEnd?: Point;
+   *   source?: Element;
+   *   target?: Element;
+   * } } LayoutConnectionHints
+   */
+
+
 
   /**
    * A base connection layouter implementation
@@ -12366,29 +15168,32 @@
    * The connection passed is still unchanged; you may figure out about
    * the new connection start / end via the layout hints provided.
    *
-   * @param {djs.model.Connection} connection
-   * @param {Object} [hints]
-   * @param {Point} [hints.connectionStart]
-   * @param {Point} [hints.connectionEnd]
+   * @param {Connection} connection
+   * @param {LayoutConnectionHints} [hints]
    *
-   * @return {Array<Point>} the layouted connection waypoints
+   * @return {Point[]} The waypoints of the laid out connection.
    */
   BaseLayouter.prototype.layoutConnection = function(connection, hints) {
 
     hints = hints || {};
 
     return [
-      hints.connectionStart || getMid(connection.source),
-      hints.connectionEnd || getMid(connection.target)
+      hints.connectionStart || getMid(hints.source || connection.source),
+      hints.connectionEnd || getMid(hints.target || connection.target)
     ];
   };
+
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
 
   var MIN_SEGMENT_LENGTH = 20,
       POINT_ORIENTATION_PADDING = 5;
 
-  var round$5 = Math.round;
+  var round$3 = Math.round;
 
-  var INTERSECTION_THRESHOLD$1 = 20,
+  var INTERSECTION_THRESHOLD = 20,
       ORIENTATION_THRESHOLD = {
         'h:h': 20,
         'v:v': 20,
@@ -12423,8 +15228,8 @@
 
     var startDirection = directions.split(':')[0];
 
-    var xmid = round$5((b.x - a.x) / 2 + a.x),
-        ymid = round$5((b.y - a.y) / 2 + a.y);
+    var xmid = round$3((b.x - a.x) / 2 + a.x),
+        ymid = round$3((b.y - a.y) / 2 + a.y);
 
     var segmentEnd, segmentDirections;
 
@@ -12526,8 +15331,8 @@
    */
   function getSimpleBendpoints(a, b, directions) {
 
-    var xmid = round$5((b.x - a.x) / 2 + a.x),
-        ymid = round$5((b.y - a.y) / 2 + a.y);
+    var xmid = round$3((b.x - a.x) / 2 + a.x),
+        ymid = round$3((b.y - a.y) / 2 + a.y);
 
     // one point, right or left from a
     if (directions === 'h:v') {
@@ -12580,11 +15385,11 @@
    *         |
    *    [b]-[x]
    *
-   * @param  {Point} a
-   * @param  {Point} b
-   * @param  {String} directions
+   * @param {Point} a
+   * @param {Point} b
+   * @param {string} directions
    *
-   * @return {Array<Point>}
+   * @return {Point[]}
    */
   function getBendpoints(a, b, directions) {
     directions = directions || 'h:h';
@@ -12621,11 +15426,11 @@
    *
    * @param {Point} a
    * @param {Point} b
+   * @param {string} [directions='h:h'] Specifies manhattan directions for each
+   * point as {direction}:{direction}. A direction for a point is either
+   * `h` (horizontal) or `v` (vertical).
    *
-   * @param {String} [directions='h:h'] specifies manhattan directions for each point as {adirection}:{bdirection}.
-                     A directionfor a point is either `h` (horizontal) or `v` (vertical)
-   *
-   * @return {Array<Point>}
+   * @return {Point[]}
    */
   function connectPoints(a, b, directions) {
 
@@ -12641,18 +15446,17 @@
   /**
    * Connect two rectangles using a manhattan layouted connection.
    *
-   * @param {Bounds} source source rectangle
-   * @param {Bounds} target target rectangle
+   * @param {Rect} source source rectangle
+   * @param {Rect} target target rectangle
    * @param {Point} [start] source docking
    * @param {Point} [end] target docking
-   *
    * @param {Object} [hints]
-   * @param {String} [hints.preserveDocking=source] preserve docking on selected side
-   * @param {Array<String>} [hints.preferredLayouts]
-   * @param {Point|Boolean} [hints.connectionStart] whether the start changed
-   * @param {Point|Boolean} [hints.connectionEnd] whether the end changed
+   * @param {string} [hints.preserveDocking=source] preserve docking on selected side
+   * @param {string[]} [hints.preferredLayouts]
+   * @param {Point|boolean} [hints.connectionStart] whether the start changed
+   * @param {Point|boolean} [hints.connectionEnd] whether the end changed
    *
-   * @return {Array<Point>} connection points
+   * @return {Point[]} connection points
    */
   function connectRectangles(source, target, start, end, hints) {
 
@@ -12684,21 +15488,21 @@
   /**
    * Repair the connection between two rectangles, of which one has been updated.
    *
-   * @param {Bounds} source
-   * @param {Bounds} target
+   * @param {Rect} source
+   * @param {Rect} target
    * @param {Point} [start]
    * @param {Point} [end]
-   * @param {Array<Point>} waypoints
+   * @param {Point[]} [waypoints]
    * @param {Object} [hints]
-   * @param {Array<String>} [hints.preferredLayouts] list of preferred layouts
-   * @param {Boolean} [hints.connectionStart]
-   * @param {Boolean} [hints.connectionEnd]
+   * @param {string[]} [hints.preferredLayouts] The list of preferred layouts.
+   * @param {boolean} [hints.connectionStart]
+   * @param {boolean} [hints.connectionEnd]
    *
-   * @return {Array<Point>} repaired waypoints
+   * @return {Point[]} The waypoints of the repaired connection.
    */
   function repairConnection(source, target, start, end, waypoints, hints) {
 
-    if (isArray(start)) {
+    if (isArray$3(start)) {
       waypoints = start;
       hints = end;
 
@@ -12706,7 +15510,7 @@
       end = getMid(target);
     }
 
-    hints = assign({ preferredLayouts: [] }, hints);
+    hints = assign$1({ preferredLayouts: [] }, hints);
     waypoints = waypoints || [];
 
     var preferredLayouts = hints.preferredLayouts,
@@ -12716,32 +15520,34 @@
     // just layout non-existing or simple connections
     // attempt to render straight lines, if required
 
-    if (preferStraight) {
-      // attempt to layout a straight line
-      repairedWaypoints = layoutStraight(source, target, start, end, hints);
+    // attempt to layout a straight line
+    repairedWaypoints = preferStraight && tryLayoutStraight(source, target, start, end, hints);
+
+    if (repairedWaypoints) {
+      return repairedWaypoints;
     }
 
-    if (!repairedWaypoints) {
-      // check if we layout from start or end
-      if (hints.connectionEnd) {
-        repairedWaypoints = _repairConnectionSide(target, source, end, waypoints.slice().reverse());
-        repairedWaypoints = repairedWaypoints && repairedWaypoints.reverse();
-      } else
-      if (hints.connectionStart) {
-        repairedWaypoints = _repairConnectionSide(source, target, start, waypoints);
-      } else
-      // or whether nothing seems to have changed
-      if (waypoints && waypoints.length) {
-        repairedWaypoints = waypoints;
-      }
+    // try to layout from end
+    repairedWaypoints = hints.connectionEnd && tryRepairConnectionEnd(target, source, end, waypoints);
+
+    if (repairedWaypoints) {
+      return repairedWaypoints;
+    }
+
+    // try to layout from start
+    repairedWaypoints = hints.connectionStart && tryRepairConnectionStart(source, target, start, waypoints);
+
+    if (repairedWaypoints) {
+      return repairedWaypoints;
+    }
+
+    // or whether nothing seems to have changed
+    if (!hints.connectionStart && !hints.connectionEnd && waypoints && waypoints.length) {
+      return waypoints;
     }
 
     // simply reconnect if nothing else worked
-    if (!repairedWaypoints) {
-      repairedWaypoints = connectRectangles(source, target, start, end, hints);
-    }
-
-    return repairedWaypoints;
+    return connectRectangles(source, target, start, end, hints);
   }
 
 
@@ -12750,26 +15556,27 @@
   }
 
   function isInRange(axis, a, b) {
-    var size$$1 = {
+    var size = {
       x: 'width',
       y: 'height'
     };
 
-    return inRange(a[axis], b[axis], b[axis] + b[size$$1[axis]]);
+    return inRange(a[axis], b[axis], b[axis] + b[size[axis]]);
   }
 
   /**
-   * Layout a straight connection
+   * Lay out a straight connection.
    *
-   * @param {Bounds} source
-   * @param {Bounds} target
+   * @param {Rect} source
+   * @param {Rect} target
    * @param {Point} start
    * @param {Point} end
    * @param {Object} [hints]
+   * @param {string} [hints.preserveDocking]
    *
-   * @return {Array<Point>} waypoints if straight layout worked
+   * @return {Point[]|null} The waypoints or null if layout isn't possible.
    */
-  function layoutStraight(source, target, start, end, hints) {
+  function tryLayoutStraight(source, target, start, end, hints) {
     var axis = {},
         primaryAxis,
         orientation;
@@ -12839,21 +15646,51 @@
 
   }
 
+  /**
+   * Repair a connection from start.
+   *
+   * @param {Rect} moved
+   * @param {Rect} other
+   * @param {Point} newDocking
+   * @param {Point[]} points originalPoints from moved to other
+   *
+   * @return {Point[]|null} The waypoints of the repaired connection.
+   */
+  function tryRepairConnectionStart(moved, other, newDocking, points) {
+    return _tryRepairConnectionSide(moved, other, newDocking, points);
+  }
+
+  /**
+   * Repair a connection from end.
+   *
+   * @param {Rect} moved
+   * @param {Rect} other
+   * @param {Point} newDocking
+   * @param {Point[]} points originalPoints from moved to other
+   *
+   * @return {Point[]|null} The waypoints of the repaired connection.
+   */
+  function tryRepairConnectionEnd(moved, other, newDocking, points) {
+    var waypoints = points.slice().reverse();
+
+    waypoints = _tryRepairConnectionSide(moved, other, newDocking, waypoints);
+
+    return waypoints ? waypoints.reverse() : null;
+  }
 
   /**
    * Repair a connection from one side that moved.
    *
-   * @param {Bounds} moved
-   * @param {Bounds} other
+   * @param {Rect} moved
+   * @param {Rect} other
    * @param {Point} newDocking
-   * @param {Array<Point>} points originalPoints from moved to other
+   * @param {Point[]} points originalPoints from moved to other
    *
-   * @return {Array<Point>} the repaired points between the two rectangles
+   * @return {Point[]} The waypoints of the repaired connection.
    */
-  function _repairConnectionSide(moved, other, newDocking, points) {
+  function _tryRepairConnectionSide(moved, other, newDocking, points) {
 
-    function needsRelayout(moved, other, points) {
-
+    function needsRelayout(points) {
       if (points.length < 3) {
         return true;
       }
@@ -12877,11 +15714,13 @@
 
       switch (alignment) {
       case 'v':
-        // repair vertical alignment
-        return { x: candidate.x, y: newPeer.y };
-      case 'h':
+
         // repair horizontal alignment
         return { x: newPeer.x, y: candidate.y };
+      case 'h':
+
+        // repair vertical alignment
+        return { x: candidate.x, y: newPeer.y };
       }
 
       return { x: candidate.x, y: candidate. y };
@@ -12893,8 +15732,8 @@
       for (i = points.length - 2; i !== 0; i--) {
 
         // intersects (?) break, remove all bendpoints up to this one and relayout
-        if (pointInRect(points[i], a, INTERSECTION_THRESHOLD$1) ||
-            pointInRect(points[i], b, INTERSECTION_THRESHOLD$1)) {
+        if (pointInRect(points[i], a, INTERSECTION_THRESHOLD) ||
+            pointInRect(points[i], b, INTERSECTION_THRESHOLD)) {
 
           // return sliced old connection
           return points.slice(i);
@@ -12904,13 +15743,12 @@
       return points;
     }
 
-
     // (0) only repair what has layoutable bendpoints
 
     // (1) if only one bendpoint and on shape moved onto other shapes axis
     //     (horizontally / vertically), relayout
 
-    if (needsRelayout(moved, other, points)) {
+    if (needsRelayout(points)) {
       return null;
     }
 
@@ -12926,11 +15764,15 @@
 
     // (3) if shape intersects with any bendpoint after repair,
     //     remove all segments up to this bendpoint and repair from there
-
     slicedPoints = removeOverlapping(newPoints, moved, other);
 
     if (slicedPoints !== newPoints) {
-      return _repairConnectionSide(moved, other, newDocking, slicedPoints);
+      newPoints = _tryRepairConnectionSide(moved, other, newDocking, slicedPoints);
+    }
+
+    // (4) do NOT repair if repaired bendpoints are aligned
+    if (newPoints && pointsAligned(newPoints)) {
+      return null;
     }
 
     return newPoints;
@@ -12946,17 +15788,18 @@
    *
    * @example
    *
+   * ```javascript
    * getDirections('top'); // -> 'v:v'
    * getDirections('intersect'); // -> 't:t'
    *
    * getDirections('top-right', 'v:h'); // -> 'v:h'
    * getDirections('top-right', 'h:h'); // -> 'h:h'
+   * ```
    *
+   * @param {string} orientation
+   * @param {string} defaultLayout
    *
-   * @param {String} orientation
-   * @param {String} defaultLayout
-   *
-   * @return {String}
+   * @return {string}
    */
   function getDirections(orientation, defaultLayout) {
 
@@ -13057,9 +15900,9 @@
    *                         |
    *                        [x] ----------- [x]
    *
-   * @param  {Array<Point>} waypoints
+   * @param {Point[]} waypoints
    *
-   * @return {Array<Point>}
+   * @return {Point[]}
    */
   function withoutRedundantPoints(waypoints) {
     return waypoints.reduce(function(points, p, idx) {
@@ -13075,7 +15918,7 @@
     }, []);
   }
 
-  inherits_browser(UmlLayouter, BaseLayouter);
+  inherits(UmlLayouter, BaseLayouter);
 
   function UmlLayouter() {
 
@@ -13092,7 +15935,7 @@
 
     var manhattanOptions = hints;
 
-    assign(manhattanOptions, {
+    assign$1(manhattanOptions, {
       preferredLayouts: ['v:v']
     });
 
@@ -13106,7 +15949,18 @@
     return updatedWaypoints;
   };
 
-  inherits_browser(UmlUpdater, CommandInterceptor);
+  /**
+   * Checks whether a value is an instance of Shape.
+   *
+   * @param {any} value
+   *
+   * @return {boolean}
+   */
+  function isShape(value) {
+    return isObject(value) && has$1(value, 'children');
+  }
+
+  inherits(UmlUpdater, CommandInterceptor);
 
   UmlUpdater.$inject = [
     'eventBus', 'connectionDocking', 'commandStack'
@@ -13148,7 +16002,7 @@
     });
 
     eventBus.on('element.hover', 1500, function(event) {
-      if(event.element instanceof Label && event.element.labelType === 'classifier') {
+      if(isLabel(event.element) && event.element.labelType === 'classifier') {
         return false;
       }
     });
@@ -13156,7 +16010,7 @@
     var delegatedClassifierEvents = ['element.click', 'element.mousedown', 'element.mouseup', 'element.contextmenu', 'element.dblclick' ];
 
     eventBus.on(delegatedClassifierEvents, 1500, function(event) {
-      if(event.element instanceof Label && event.element.labelType === 'classifier') {
+      if(isLabel(event.element) && event.element.labelType === 'classifier') {
         event.stopPropagation();
 
         eventBus.fire(event.type, {
@@ -13391,8 +16245,8 @@
   HideElementHandler.prototype.hide = function(element) {
     element.hidden = true;
 
-    if(element instanceof Shape) {
-      if(element instanceof Label) {
+    if(isShape(element)) {
+      if(isLabel(element)) {
         this.hideLabel(element);
       } else {
         this.hideShape(element);
@@ -13463,12 +16317,79 @@
   };
 
   /**
+   * @typedef {import('../../../core/Canvas').default} Canvas
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * A handler that align elements in a certain way.
+   *
+   * @param {Modeling} modeling
+   * @param {Canvas} canvas
+   */
+  function AlignElements(modeling, canvas) {
+    this._modeling = modeling;
+    this._canvas = canvas;
+  }
+
+  AlignElements.$inject = [ 'modeling', 'canvas' ];
+
+
+  AlignElements.prototype.preExecute = function(context) {
+    var modeling = this._modeling;
+
+    var elements = context.elements,
+        alignment = context.alignment;
+
+
+    forEach$1(elements, function(element) {
+      var delta = {
+        x: 0,
+        y: 0
+      };
+
+      if (isDefined(alignment.left)) {
+        delta.x = alignment.left - element.x;
+
+      } else if (isDefined(alignment.right)) {
+        delta.x = (alignment.right - element.width) - element.x;
+
+      } else if (isDefined(alignment.center)) {
+        delta.x = (alignment.center - Math.round(element.width / 2)) - element.x;
+
+      } else if (isDefined(alignment.top)) {
+        delta.y = alignment.top - element.y;
+
+      } else if (isDefined(alignment.bottom)) {
+        delta.y = (alignment.bottom - element.height) - element.y;
+
+      } else if (isDefined(alignment.middle)) {
+        delta.y = (alignment.middle - Math.round(element.height / 2)) - element.y;
+      }
+
+      modeling.moveElements([ element ], delta, element.parent);
+    });
+  };
+
+  AlignElements.prototype.postExecute = function(context) {
+
+  };
+
+  /**
+   * @typedef {import('../../../model/Types').Element} Element
+   * @typedef {import('../../../model/Types').Parent} Parent
+   * @typedef {import('../../../model/Types').Shape} Shape
+   *
+   * @typedef {import('../../../util/Types').Point} Point
+   *
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
    * A handler that implements reversible appending of shapes
    * to a source shape.
    *
-   * @param {canvas} Canvas
-   * @param {elementFactory} ElementFactory
-   * @param {modeling} Modeling
+   * @param {Modeling} modeling
    */
   function AppendShapeHandler(modeling) {
     this._modeling = modeling;
@@ -13481,13 +16402,13 @@
 
 
   /**
-   * Creates a new shape
+   * Creates a new shape.
    *
    * @param {Object} context
-   * @param {ElementDescriptor} context.shape the new shape
-   * @param {ElementDescriptor} context.source the source object
-   * @param {ElementDescriptor} context.parent the parent object
-   * @param {Point} context.position position of the new element
+   * @param {Partial<Shape>} context.shape The new shape.
+   * @param {Element} context.source The element to which to append the new shape to.
+   * @param {Parent} context.parent The parent.
+   * @param {Point} context.position The position at which to create the new shape.
    */
   AppendShapeHandler.prototype.preExecute = function(context) {
 
@@ -13498,24 +16419,29 @@
     }
 
     var target = context.target || source.parent,
-        shape = context.shape;
+        shape = context.shape,
+        hints = context.hints || {};
 
     shape = context.shape =
       this._modeling.createShape(
         shape,
         context.position,
-        target, { attach: context.attach });
+        target, { attach: hints.attach });
 
     context.shape = shape;
   };
 
   AppendShapeHandler.prototype.postExecute = function(context) {
-    var parent = context.connectionParent || context.shape.parent;
+    var hints = context.hints || {};
 
     if (!existsConnection(context.source, context.shape)) {
 
       // create connection
-      this._modeling.connect(context.source, context.shape, context.connection, parent);
+      if (hints.connectionTarget === context.source) {
+        this._modeling.connect(context.shape, context.source, context.connection);
+      } else {
+        this._modeling.connect(context.source, context.shape, context.connection);
+      }
     }
   };
 
@@ -13526,952 +16452,22 @@
     });
   }
 
-  var round$6 = Math.round;
-
-
   /**
-   * A handler that implements reversible addition of shapes.
+   * @typedef {import('../../../model/Types').Element} Element
+   * @typedef {import('../../../model/Types').Shape} Shape
    *
-   * @param {canvas} Canvas
-   */
-  function CreateShapeHandler(canvas) {
-    this._canvas = canvas;
-  }
-
-  CreateShapeHandler.$inject = [ 'canvas' ];
-
-
-  // api //////////////////////
-
-
-  /**
-   * Appends a shape to a target shape
+   * @typedef {import('../../../util/Types').Point} Point
    *
-   * @param {Object} context
-   * @param {djs.model.Base} context.parent the parent object
-   * @param {Point} context.position position of the new element
-   */
-  CreateShapeHandler.prototype.execute = function(context) {
-
-    var shape = context.shape,
-        positionOrBounds = context.position,
-        parent = context.parent,
-        parentIndex = context.parentIndex;
-
-    if (!parent) {
-      throw new Error('parent required');
-    }
-
-    if (!positionOrBounds) {
-      throw new Error('position required');
-    }
-
-    // (1) add at event center position _or_ at given bounds
-    if (positionOrBounds.width !== undefined) {
-      assign(shape, positionOrBounds);
-    } else {
-      assign(shape, {
-        x: positionOrBounds.x - round$6(shape.width / 2),
-        y: positionOrBounds.y - round$6(shape.height / 2)
-      });
-    }
-
-    // (2) add to canvas
-    this._canvas.addShape(shape, parent, parentIndex);
-
-    return shape;
-  };
-
-
-  /**
-   * Undo append by removing the shape
-   */
-  CreateShapeHandler.prototype.revert = function(context) {
-
-    // (3) remove form canvas
-    this._canvas.removeShape(context.shape);
-  };
-
-  /**
-   * A handler that implements reversible deletion of shapes.
+   * @typedef {import('../Modeling').ModelingHints} ModelingHints
    *
-   */
-  function DeleteShapeHandler(canvas, modeling) {
-    this._canvas = canvas;
-    this._modeling = modeling;
-  }
-
-  DeleteShapeHandler.$inject = [ 'canvas', 'modeling' ];
-
-
-  /**
-   * - Remove connections
-   * - Remove all direct children
-   */
-  DeleteShapeHandler.prototype.preExecute = function(context) {
-
-    var modeling = this._modeling;
-
-    var shape = context.shape;
-
-    // remove connections
-    saveClear(shape.incoming, function(connection) {
-      // To make sure that the connection isn't removed twice
-      // For example if a container is removed
-      modeling.removeConnection(connection, { nested: true });
-    });
-
-    saveClear(shape.outgoing, function(connection) {
-      modeling.removeConnection(connection, { nested: true });
-    });
-
-    // remove child shapes and connections
-    saveClear(shape.children, function(child) {
-      if (isConnection$2(child)) {
-        modeling.removeConnection(child, { nested: true });
-      } else {
-        modeling.removeShape(child, { nested: true });
-      }
-    });
-  };
-
-  /**
-   * Remove shape and remember the parent
-   */
-  DeleteShapeHandler.prototype.execute = function(context) {
-    var canvas = this._canvas;
-
-    var shape = context.shape,
-        oldParent = shape.parent;
-
-    context.oldParent = oldParent;
-
-    // remove containment
-    context.oldParentIndex = indexOf$1(oldParent.children, shape);
-
-    // remove shape
-    canvas.removeShape(shape);
-
-    return shape;
-  };
-
-
-  /**
-   * Command revert implementation
-   */
-  DeleteShapeHandler.prototype.revert = function(context) {
-
-    var canvas = this._canvas;
-
-    var shape = context.shape,
-        oldParent = context.oldParent,
-        oldParentIndex = context.oldParentIndex;
-
-    // restore containment
-    add$1(oldParent.children, shape, oldParentIndex);
-
-    canvas.addShape(shape, oldParent);
-
-    return shape;
-  };
-
-  function isConnection$2(element) {
-    return element.waypoints;
-  }
-
-  /**
-   * Calculates the absolute point relative to the new element's position
-   *
-   * @param {point} point [absolute]
-   * @param {bounds} oldBounds
-   * @param {bounds} newBounds
-   *
-   * @return {point} point [absolute]
-   */
-  function getNewAttachPoint(point, oldBounds, newBounds) {
-    var oldCenter = center(oldBounds),
-        newCenter = center(newBounds),
-        oldDelta = delta(point, oldCenter);
-
-    var newDelta = {
-      x: oldDelta.x * (newBounds.width / oldBounds.width),
-      y: oldDelta.y * (newBounds.height / oldBounds.height)
-    };
-
-    return roundPoint({
-      x: newCenter.x + newDelta.x,
-      y: newCenter.y + newDelta.y
-    });
-  }
-
-  function getResizedSourceAnchor(connection, shape, oldBounds) {
-
-    var waypoints = safeGetWaypoints(connection),
-        oldAnchor = waypoints[0];
-
-    return getNewAttachPoint(oldAnchor.original || oldAnchor, oldBounds, shape);
-  }
-
-
-  function getResizedTargetAnchor(connection, shape, oldBounds) {
-
-    var waypoints = safeGetWaypoints(connection),
-        oldAnchor = waypoints[waypoints.length - 1];
-
-    return getNewAttachPoint(oldAnchor.original || oldAnchor, oldBounds, shape);
-  }
-
-
-  function getMovedSourceAnchor(connection, source, moveDelta) {
-    return getResizedSourceAnchor(connection, source, substractPosition(source, moveDelta));
-  }
-
-
-  function getMovedTargetAnchor(connection, target, moveDelta) {
-    return getResizedTargetAnchor(connection, target, substractPosition(target, moveDelta));
-  }
-
-
-  // helpers //////////////////////
-
-  function substractPosition(bounds, delta) {
-    return {
-      x: bounds.x - delta.x,
-      y: bounds.y - delta.y,
-      width: bounds.width,
-      height: bounds.height
-    };
-  }
-
-
-  /**
-   * Return waypoints of given connection; throw if non exists (should not happen!!).
-   *
-   * @param {Connection} connection
-   *
-   * @return {Array<Point>}
-   */
-  function safeGetWaypoints(connection) {
-
-    var waypoints = connection.waypoints;
-
-    if (!waypoints.length) {
-      throw new Error('connection#' + connection.id + ': no waypoints');
-    }
-
-    return waypoints;
-  }
-
-  function MoveClosure() {
-
-    this.allShapes = {};
-    this.allConnections = {};
-
-    this.enclosedElements = {};
-    this.enclosedConnections = {};
-
-    this.topLevel = {};
-  }
-
-
-  MoveClosure.prototype.add = function(element, isTopLevel) {
-    return this.addAll([ element ], isTopLevel);
-  };
-
-
-  MoveClosure.prototype.addAll = function(elements, isTopLevel) {
-
-    var newClosure = getClosure(elements, !!isTopLevel, this);
-
-    assign(this, newClosure);
-
-    return this;
-  };
-
-  /**
-   * A helper that is able to carry out serialized move
-   * operations on multiple elements.
-   *
-   * @param {Modeling} modeling
-   */
-  function MoveHelper(modeling) {
-    this._modeling = modeling;
-  }
-
-  /**
-   * Move the specified elements and all children by the given delta.
-   *
-   * This moves all enclosed connections, too and layouts all affected
-   * external connections.
-   *
-   * @param  {Array<djs.model.Base>} elements
-   * @param  {Point} delta
-   * @param  {djs.model.Base} newParent applied to the first level of shapes
-   *
-   * @return {Array<djs.model.Base>} list of touched elements
-   */
-  MoveHelper.prototype.moveRecursive = function(elements, delta, newParent) {
-    if (!elements) {
-      return [];
-    } else {
-      return this.moveClosure(this.getClosure(elements), delta, newParent);
-    }
-  };
-
-  /**
-   * Move the given closure of elmements.
-   *
-   * @param {Object} closure
-   * @param {Point} delta
-   * @param {djs.model.Base} [newParent]
-   * @param {djs.model.Base} [newHost]
-   */
-  MoveHelper.prototype.moveClosure = function(closure, delta, newParent, newHost, primaryShape) {
-    var modeling = this._modeling;
-
-    var allShapes = closure.allShapes,
-        allConnections = closure.allConnections,
-        enclosedConnections = closure.enclosedConnections,
-        topLevel = closure.topLevel,
-        keepParent = false;
-
-    if (primaryShape && primaryShape.parent === newParent) {
-      keepParent = true;
-    }
-
-    // move all shapes
-    forEach(allShapes, function(shape) {
-
-      // move the element according to the given delta
-      modeling.moveShape(shape, delta, topLevel[shape.id] && !keepParent && newParent, {
-        recurse: false,
-        layout: false
-      });
-    });
-
-    // move all child connections / layout external connections
-    forEach(allConnections, function(c) {
-
-      var sourceMoved = !!allShapes[c.source.id],
-          targetMoved = !!allShapes[c.target.id];
-
-      if (enclosedConnections[c.id] && sourceMoved && targetMoved) {
-        modeling.moveConnection(c, delta, topLevel[c.id] && !keepParent && newParent);
-      } else {
-        modeling.layoutConnection(c, {
-          connectionStart: sourceMoved && getMovedSourceAnchor(c, c.source, delta),
-          connectionEnd: targetMoved && getMovedTargetAnchor(c, c.target, delta)
-        });
-      }
-    });
-  };
-
-  /**
-   * Returns the closure for the selected elements
-   *
-   * @param  {Array<djs.model.Base>} elements
-   * @return {MoveClosure} closure
-   */
-  MoveHelper.prototype.getClosure = function(elements) {
-    return new MoveClosure().addAll(elements, true);
-  };
-
-  /**
-   * A handler that implements reversible moving of shapes.
-   */
-  function MoveShapeHandler(modeling) {
-    this._modeling = modeling;
-
-    this._helper = new MoveHelper(modeling);
-  }
-
-  MoveShapeHandler.$inject = [ 'modeling' ];
-
-
-  MoveShapeHandler.prototype.execute = function(context) {
-
-    var shape = context.shape,
-        delta = context.delta,
-        newParent = context.newParent || shape.parent,
-        newParentIndex = context.newParentIndex,
-        oldParent = shape.parent;
-
-    context.oldBounds = pick(shape, [ 'x', 'y', 'width', 'height']);
-
-    // save old parent in context
-    context.oldParent = oldParent;
-    context.oldParentIndex = remove$2(oldParent.children, shape);
-
-    // add to new parent at position
-    add$1(newParent.children, shape, newParentIndex);
-
-    // update shape parent + position
-    assign(shape, {
-      parent: newParent,
-      x: shape.x + delta.x,
-      y: shape.y + delta.y
-    });
-
-    return shape;
-  };
-
-  MoveShapeHandler.prototype.postExecute = function(context) {
-
-    var shape = context.shape,
-        delta = context.delta,
-        hints = context.hints;
-
-    var modeling = this._modeling;
-
-    if (hints.layout !== false) {
-
-      forEach(shape.incoming, function(c) {
-        modeling.layoutConnection(c, {
-          connectionEnd: getMovedTargetAnchor(c, shape, delta)
-        });
-      });
-
-      forEach(shape.outgoing, function(c) {
-        modeling.layoutConnection(c, {
-          connectionStart: getMovedSourceAnchor(c, shape, delta)
-        });
-      });
-    }
-
-    if (hints.recurse !== false) {
-      this.moveChildren(context);
-    }
-  };
-
-  MoveShapeHandler.prototype.revert = function(context) {
-
-    var shape = context.shape,
-        oldParent = context.oldParent,
-        oldParentIndex = context.oldParentIndex,
-        delta = context.delta;
-
-    // restore previous location in old parent
-    add$1(oldParent.children, shape, oldParentIndex);
-
-    // revert to old position and parent
-    assign(shape, {
-      parent: oldParent,
-      x: shape.x - delta.x,
-      y: shape.y - delta.y
-    });
-
-    return shape;
-  };
-
-  MoveShapeHandler.prototype.moveChildren = function(context) {
-
-    var delta = context.delta,
-        shape = context.shape;
-
-    this._helper.moveRecursive(shape.children, delta, null);
-  };
-
-  MoveShapeHandler.prototype.getNewParent = function(context) {
-    return context.newParent || context.shape.parent;
-  };
-
-  /**
-   * A handler that implements reversible resizing of shapes.
-   *
-   * @param {Modeling} modeling
-   */
-  function ResizeShapeHandler(modeling) {
-    this._modeling = modeling;
-  }
-
-  ResizeShapeHandler.$inject = [ 'modeling' ];
-
-  /**
-   * {
-   *   shape: {....}
-   *   newBounds: {
-   *     width:  20,
-   *     height: 40,
-   *     x:       5,
-   *     y:      10
-   *   }
-   *
-   * }
-   */
-  ResizeShapeHandler.prototype.execute = function(context) {
-    var shape = context.shape,
-        newBounds = context.newBounds,
-        minBounds = context.minBounds;
-
-    if (newBounds.x === undefined || newBounds.y === undefined ||
-        newBounds.width === undefined || newBounds.height === undefined) {
-      throw new Error('newBounds must have {x, y, width, height} properties');
-    }
-
-    if (minBounds && (newBounds.width < minBounds.width
-      || newBounds.height < minBounds.height)) {
-      throw new Error('width and height cannot be less than minimum height and width');
-    } else if (!minBounds
-      && newBounds.width < 10 || newBounds.height < 10) {
-      throw new Error('width and height cannot be less than 10px');
-    }
-
-    // save old bbox in context
-    context.oldBounds = {
-      width:  shape.width,
-      height: shape.height,
-      x:      shape.x,
-      y:      shape.y
-    };
-
-    // update shape
-    assign(shape, {
-      width:  newBounds.width,
-      height: newBounds.height,
-      x:      newBounds.x,
-      y:      newBounds.y
-    });
-
-    return shape;
-  };
-
-  ResizeShapeHandler.prototype.postExecute = function(context) {
-
-    var shape = context.shape,
-        oldBounds = context.oldBounds;
-
-    var modeling = this._modeling;
-
-    forEach(shape.incoming, function(c) {
-      modeling.layoutConnection(c, {
-        connectionEnd: getResizedTargetAnchor(c, shape, oldBounds)
-      });
-    });
-
-    forEach(shape.outgoing, function(c) {
-      modeling.layoutConnection(c, {
-        connectionStart: getResizedSourceAnchor(c, shape, oldBounds)
-      });
-    });
-
-  };
-
-  ResizeShapeHandler.prototype.revert = function(context) {
-
-    var shape = context.shape,
-        oldBounds = context.oldBounds;
-
-    // restore previous bbox
-    assign(shape, {
-      width:  oldBounds.width,
-      height: oldBounds.height,
-      x:      oldBounds.x,
-      y:      oldBounds.y
-    });
-
-    return shape;
-  };
-
-  /**
-   * A handler that implements reversible replacing of shapes.
-   * Internally the old shape will be removed and the new shape will be added.
-   *
-   *
-   * @class
-   * @constructor
-   *
-   * @param {canvas} Canvas
-   */
-  function ReplaceShapeHandler(modeling, rules) {
-    this._modeling = modeling;
-    this._rules = rules;
-  }
-
-  ReplaceShapeHandler.$inject = [ 'modeling', 'rules' ];
-
-
-  // api //////////////////////
-
-
-  /**
-   * Replaces a shape with an replacement Element.
-   *
-   * The newData object should contain type, x, y.
-   *
-   * If possible also the incoming/outgoing connection
-   * will be restored.
-   *
-   * @param {Object} context
-   */
-  ReplaceShapeHandler.prototype.preExecute = function(context) {
-
-    var self = this,
-        modeling = this._modeling,
-        rules = this._rules;
-
-    var oldShape = context.oldShape,
-        newData = context.newData,
-        hints = context.hints,
-        newShape;
-
-    function canReconnect(type, source, target, connection) {
-      return rules.allowed(type, {
-        source: source,
-        target: target,
-        connection: connection
-      });
-    }
-
-
-    // (1) place a new shape at the given position
-
-    var position = {
-      x: newData.x,
-      y: newData.y
-    };
-
-    newShape = context.newShape =
-      context.newShape ||
-      self.createShape(newData, position, oldShape.parent, hints);
-
-
-    // (2) update the host
-
-    if (oldShape.host) {
-      modeling.updateAttachment(newShape, oldShape.host);
-    }
-
-
-    // (3) adopt all children from the old shape
-
-    var children;
-
-    if (hints.moveChildren !== false) {
-      children = oldShape.children.slice();
-
-      modeling.moveElements(children, { x: 0, y: 0 }, newShape);
-    }
-
-    // (4) reconnect connections to the new shape (where allowed)
-
-    var incoming = oldShape.incoming.slice(),
-        outgoing = oldShape.outgoing.slice();
-
-    forEach(incoming, function(connection) {
-      var waypoints = connection.waypoints,
-          docking = waypoints[waypoints.length - 1],
-          source = connection.source,
-          allowed = canReconnect('connection.reconnectEnd', source, newShape, connection);
-
-      if (allowed) {
-        self.reconnectEnd(connection, newShape, docking);
-      }
-    });
-
-    forEach(outgoing, function(connection) {
-      var waypoints = connection.waypoints,
-          docking = waypoints[0],
-          target = connection.target,
-          allowed = canReconnect('connection.reconnectStart', newShape, target, connection);
-
-      if (allowed) {
-        self.reconnectStart(connection, newShape, docking);
-      }
-
-    });
-  };
-
-
-  ReplaceShapeHandler.prototype.postExecute = function(context) {
-    var modeling = this._modeling;
-
-    var oldShape = context.oldShape,
-        newShape = context.newShape;
-
-    // if an element gets resized on replace, layout the connection again
-    forEach(newShape.incoming, function(c) {
-      modeling.layoutConnection(c, { endChanged: true });
-    });
-
-    forEach(newShape.outgoing, function(c) {
-      modeling.layoutConnection(c, { startChanged: true });
-    });
-
-    modeling.removeShape(oldShape);
-  };
-
-
-  ReplaceShapeHandler.prototype.execute = function(context) {};
-
-  ReplaceShapeHandler.prototype.revert = function(context) {};
-
-
-  ReplaceShapeHandler.prototype.createShape = function(shape, position, target, hints) {
-    var modeling = this._modeling;
-    return modeling.createShape(shape, position, target, hints);
-  };
-
-
-  ReplaceShapeHandler.prototype.reconnectStart = function(connection, newSource, dockingPoint) {
-    var modeling = this._modeling;
-    modeling.reconnectStart(connection, newSource, dockingPoint);
-  };
-
-
-  ReplaceShapeHandler.prototype.reconnectEnd = function(connection, newTarget, dockingPoint) {
-    var modeling = this._modeling;
-    modeling.reconnectEnd(connection, newTarget, dockingPoint);
-  };
-
-  /**
-   * A handler that toggles the collapsed state of an element
-   * and the visibility of all its children.
-   *
-   * @param {Modeling} modeling
-   */
-  function ToggleShapeCollapseHandler(modeling) {
-    this._modeling = modeling;
-  }
-
-  ToggleShapeCollapseHandler.$inject = [ 'modeling' ];
-
-
-  ToggleShapeCollapseHandler.prototype.execute = function(context) {
-
-    var shape = context.shape,
-        children = shape.children;
-
-    // remember previous visibility of children
-    context.oldChildrenVisibility = getElementsVisibility(children);
-
-    // toggle state
-    shape.collapsed = !shape.collapsed;
-
-    // hide/show children
-    setHidden(children, shape.collapsed);
-
-    return [shape].concat(children);
-  };
-
-
-  ToggleShapeCollapseHandler.prototype.revert = function(context) {
-
-    var shape = context.shape,
-        oldChildrenVisibility = context.oldChildrenVisibility;
-
-    var children = shape.children;
-
-    // set old visability of children
-    restoreVisibility(children, oldChildrenVisibility);
-
-    // retoggle state
-    shape.collapsed = !shape.collapsed;
-
-    return [shape].concat(children);
-  };
-
-
-  // helpers //////////////////////
-
-  /**
-   * Return a map { elementId -> hiddenState}.
-   *
-   * @param {Array<djs.model.Shape>} elements
-   *
-   * @return {Object}
-   */
-  function getElementsVisibility(elements) {
-
-    var result = {};
-
-    elements.forEach(function(e) {
-      result[e.id] = e.hidden;
-    });
-
-    return result;
-  }
-
-
-  function setHidden(elements, newHidden) {
-    elements.forEach(function(element) {
-      element.hidden = newHidden;
-    });
-  }
-
-  function restoreVisibility(elements, lastState) {
-    elements.forEach(function(e) {
-      e.hidden = lastState[e.id];
-    });
-  }
-
-  /**
-   * Get Resize direction given axis + offset
-   *
-   * @param {String} axis (x|y)
-   * @param {Number} offset
-   *
-   * @return {String} (e|w|n|s)
+   * @typedef {import('../../../core/Canvas').default} Canvas
+   * @typedef {import('../../../layout/BaseLayouter').default} Layouter
    */
 
-
   /**
-   * Resize the given bounds by the specified delta from a given anchor point.
-   *
-   * @param {Bounds} bounds the bounding box that should be resized
-   * @param {String} direction in which the element is resized (n, s, e, w)
-   * @param {Point} delta of the resize operation
-   *
-   * @return {Bounds} resized bounding box
-   */
-  function resizeBounds$1(bounds, direction, delta) {
-
-    var dx = delta.x,
-        dy = delta.y;
-
-    switch (direction) {
-
-    case 'n':
-      return {
-        x: bounds.x,
-        y: bounds.y + dy,
-        width: bounds.width,
-        height: bounds.height - dy
-      };
-
-    case 's':
-      return {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height + dy
-      };
-
-    case 'w':
-      return {
-        x: bounds.x + dx,
-        y: bounds.y,
-        width: bounds.width - dx,
-        height: bounds.height
-      };
-
-    case 'e':
-      return {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width + dx,
-        height: bounds.height
-      };
-
-    default:
-      throw new Error('unrecognized direction: ' + direction);
-    }
-  }
-
-  /**
-   * A handler that implements reversible creating and removing of space.
-   *
-   * It executes in two phases:
-   *
-   *  (1) resize all affected resizeShapes
-   *  (2) move all affected moveElements
-   */
-  function SpaceToolHandler(modeling) {
-    this._modeling = modeling;
-  }
-
-  SpaceToolHandler.$inject = [ 'modeling' ];
-
-
-  SpaceToolHandler.prototype.preExecute = function(context) {
-
-    // resize
-    var modeling = this._modeling,
-        resizingShapes = context.resizingShapes,
-        delta = context.delta,
-        direction = context.direction;
-
-    forEach(resizingShapes, function(shape) {
-      var newBounds = resizeBounds$1(shape, direction, delta);
-
-      modeling.resizeShape(shape, newBounds);
-    });
-  };
-
-  SpaceToolHandler.prototype.postExecute = function(context) {
-    // move
-    var modeling = this._modeling,
-        movingShapes = context.movingShapes,
-        delta = context.delta;
-
-    modeling.moveElements(movingShapes, delta, undefined, { autoResize: false, attach: false });
-  };
-
-  SpaceToolHandler.prototype.execute = function(context) {};
-  SpaceToolHandler.prototype.revert = function(context) {};
-
-  /**
-   * A handler that attaches a label to a given target shape.
-   *
    * @param {Canvas} canvas
+   * @param {Layouter} layouter
    */
-  function CreateLabelHandler(canvas) {
-    CreateShapeHandler.call(this, canvas);
-  }
-
-  inherits_browser(CreateLabelHandler, CreateShapeHandler);
-
-  CreateLabelHandler.$inject = [ 'canvas' ];
-
-
-  // api //////////////////////
-
-
-  var originalExecute = CreateShapeHandler.prototype.execute;
-
-  /**
-   * Appends a label to a target shape.
-   *
-   * @method CreateLabelHandler#execute
-   *
-   * @param {Object} context
-   * @param {ElementDescriptor} context.target the element the label is attached to
-   * @param {ElementDescriptor} context.parent the parent object
-   * @param {Point} context.position position of the new element
-   */
-  CreateLabelHandler.prototype.execute = function(context) {
-
-    var label = context.shape;
-
-    ensureValidDimensions(label);
-
-    label.labelTarget = context.labelTarget;
-
-    return originalExecute.call(this, context);
-  };
-
-  var originalRevert = CreateShapeHandler.prototype.revert;
-
-  /**
-   * Undo append by removing the shape
-   */
-  CreateLabelHandler.prototype.revert = function(context) {
-    context.shape.labelTarget = null;
-
-    return originalRevert.call(this, context);
-  };
-
-
-  // helpers //////////////////////
-
-  function ensureValidDimensions(label) {
-    // make sure a label has valid { width, height } dimensions
-    [ 'width', 'height' ].forEach(function(prop) {
-      if (typeof label[prop] === 'undefined') {
-        label[prop] = 0;
-      }
-    });
-  }
-
   function CreateConnectionHandler(canvas, layouter) {
     this._canvas = canvas;
     this._layouter = layouter;
@@ -14484,12 +16480,15 @@
 
 
   /**
-   * Appends a shape to a target shape
+   * Creates a new connection between two elements.
    *
    * @param {Object} context
-   * @param {djs.element.Base} context.source the source object
-   * @param {djs.element.Base} context.target the parent object
-   * @param {Point} context.position position of the new element
+   * @param {Element} context.source The source.
+   * @param {Element} context.target The target.
+   * @param {Shape} context.parent The parent.
+   * @param {number} [context.parentIndex] The optional index at which to add the
+   * connection to the parent's children.
+   * @param {ModelingHints} [context.hints] The optional hints.
    */
   CreateConnectionHandler.prototype.execute = function(context) {
 
@@ -14528,7 +16527,281 @@
 
     connection.source = null;
     connection.target = null;
+
+    return connection;
   };
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  var round$2 = Math.round;
+
+  /**
+   * @param {Modeling} modeling
+   */
+  function CreateElementsHandler(modeling) {
+    this._modeling = modeling;
+  }
+
+  CreateElementsHandler.$inject = [
+    'modeling'
+  ];
+
+  CreateElementsHandler.prototype.preExecute = function(context) {
+    var elements = context.elements,
+        parent = context.parent,
+        parentIndex = context.parentIndex,
+        position = context.position,
+        hints = context.hints;
+
+    var modeling = this._modeling;
+
+    // make sure each element has x and y
+    forEach$1(elements, function(element) {
+      if (!isNumber(element.x)) {
+        element.x = 0;
+      }
+
+      if (!isNumber(element.y)) {
+        element.y = 0;
+      }
+    });
+
+    var visibleElements = filter(elements, function(element) {
+      return !element.hidden;
+    });
+
+    var bbox = getBBox(visibleElements);
+
+    // center elements around position
+    forEach$1(elements, function(element) {
+      if (isConnection(element)) {
+        element.waypoints = map$1(element.waypoints, function(waypoint) {
+          return {
+            x: round$2(waypoint.x - bbox.x - bbox.width / 2 + position.x),
+            y: round$2(waypoint.y - bbox.y - bbox.height / 2 + position.y)
+          };
+        });
+      }
+
+      assign$1(element, {
+        x: round$2(element.x - bbox.x - bbox.width / 2 + position.x),
+        y: round$2(element.y - bbox.y - bbox.height / 2 + position.y)
+      });
+    });
+
+    var parents = getParents(elements);
+
+    var cache = {};
+
+    forEach$1(elements, function(element) {
+      if (isConnection(element)) {
+        cache[ element.id ] = isNumber(parentIndex) ?
+          modeling.createConnection(
+            cache[ element.source.id ],
+            cache[ element.target.id ],
+            parentIndex,
+            element,
+            element.parent || parent,
+            hints
+          ) :
+          modeling.createConnection(
+            cache[ element.source.id ],
+            cache[ element.target.id ],
+            element,
+            element.parent || parent,
+            hints
+          );
+
+        return;
+      }
+
+      var createShapeHints = assign$1({}, hints);
+
+      if (parents.indexOf(element) === -1) {
+        createShapeHints.autoResize = false;
+      }
+
+      if (isLabel(element)) {
+        createShapeHints = omit(createShapeHints, [ 'attach' ]);
+      }
+
+      cache[ element.id ] = isNumber(parentIndex) ?
+        modeling.createShape(
+          element,
+          pick(element, [ 'x', 'y', 'width', 'height' ]),
+          element.parent || parent,
+          parentIndex,
+          createShapeHints
+        ) :
+        modeling.createShape(
+          element,
+          pick(element, [ 'x', 'y', 'width', 'height' ]),
+          element.parent || parent,
+          createShapeHints
+        );
+    });
+
+    context.elements = values(cache);
+  };
+
+  /**
+   * @typedef {import('../../../model/Types').Element} Element
+   * @typedef {import('../../../util/Types').Point} Point
+   *
+   * @typedef {import('../../../core/Canvas').default} Canvas
+   */
+
+  var round$1 = Math.round;
+
+
+  /**
+   * A handler that implements reversible addition of shapes.
+   *
+   * @param {Canvas} canvas
+   */
+  function CreateShapeHandler(canvas) {
+    this._canvas = canvas;
+  }
+
+  CreateShapeHandler.$inject = [ 'canvas' ];
+
+
+  // api //////////////////////
+
+
+  /**
+   * Appends a shape to a target shape
+   *
+   * @param {Object} context
+   * @param {Element} context.parent The parent.
+   * @param {Point} context.position The position at which to create the new shape.
+   * @param {number} [context.parentIndex] The optional index at which to add the
+   * shape to the parent's children.
+   */
+  CreateShapeHandler.prototype.execute = function(context) {
+
+    var shape = context.shape,
+        positionOrBounds = context.position,
+        parent = context.parent,
+        parentIndex = context.parentIndex;
+
+    if (!parent) {
+      throw new Error('parent required');
+    }
+
+    if (!positionOrBounds) {
+      throw new Error('position required');
+    }
+
+    // (1) add at event center position _or_ at given bounds
+    if (positionOrBounds.width !== undefined) {
+      assign$1(shape, positionOrBounds);
+    } else {
+      assign$1(shape, {
+        x: positionOrBounds.x - round$1(shape.width / 2),
+        y: positionOrBounds.y - round$1(shape.height / 2)
+      });
+    }
+
+    // (2) add to canvas
+    this._canvas.addShape(shape, parent, parentIndex);
+
+    return shape;
+  };
+
+
+  /**
+   * Undo append by removing the shape
+   */
+  CreateShapeHandler.prototype.revert = function(context) {
+
+    var shape = context.shape;
+
+    // (3) remove form canvas
+    this._canvas.removeShape(shape);
+
+    return shape;
+  };
+
+  /**
+   * @typedef {import('../../../core/Canvas').default} Canvas
+   *
+   * @typedef {import('../../../model/Types').Element} Element
+   * @typedef {import('../../../model/Types').Parent} Parent
+   * @typedef {import('../../../model/Types').Shape} Shape
+   * @typedef {import('../../../util/Types').Point} Point
+   */
+
+  /**
+   * A handler that attaches a label to a given target shape.
+   *
+   * @param {Canvas} canvas
+   */
+  function CreateLabelHandler(canvas) {
+    CreateShapeHandler.call(this, canvas);
+  }
+
+  e(CreateLabelHandler, CreateShapeHandler);
+
+  CreateLabelHandler.$inject = [ 'canvas' ];
+
+
+  // api //////////////////////
+
+
+  var originalExecute = CreateShapeHandler.prototype.execute;
+
+  /**
+   * Append label to element.
+   *
+   * @param { {
+   *   parent: Parent;
+   *   position: Point;
+   *   shape: Shape;
+   *   target: Element;
+   * } } context
+   */
+  CreateLabelHandler.prototype.execute = function(context) {
+
+    var label = context.shape;
+
+    ensureValidDimensions(label);
+
+    label.labelTarget = context.labelTarget;
+
+    return originalExecute.call(this, context);
+  };
+
+  var originalRevert = CreateShapeHandler.prototype.revert;
+
+  /**
+   * Revert appending by removing label.
+   */
+  CreateLabelHandler.prototype.revert = function(context) {
+    context.shape.labelTarget = null;
+
+    return originalRevert.call(this, context);
+  };
+
+
+  // helpers //////////////////////
+
+  function ensureValidDimensions(label) {
+
+    // make sure a label has valid { width, height } dimensions
+    [ 'width', 'height' ].forEach(function(prop) {
+      if (typeof label[prop] === 'undefined') {
+        label[prop] = 0;
+      }
+    });
+  }
+
+  /**
+   * @typedef {import('../../../core/Canvas').default} Canvas
+   * @typedef {import('../Modeling').default} Modeling
+   */
 
   /**
    * A handler that implements reversible deletion of Connections.
@@ -14544,6 +16817,30 @@
   ];
 
 
+  /**
+   * - Remove connections
+   */
+  DeleteConnectionHandler.prototype.preExecute = function(context) {
+
+    var modeling = this._modeling;
+
+    var connection = context.connection;
+
+    // remove connections
+    saveClear(connection.incoming, function(connection) {
+
+      // To make sure that the connection isn't removed twice
+      // For example if a container is removed
+      modeling.removeConnection(connection, { nested: true });
+    });
+
+    saveClear(connection.outgoing, function(connection) {
+      modeling.removeConnection(connection, { nested: true });
+    });
+
+  };
+
+
   DeleteConnectionHandler.prototype.execute = function(context) {
 
     var connection = context.connection,
@@ -14552,7 +16849,7 @@
     context.parent = parent;
 
     // remember containment
-    context.parentIndex = indexOf$1(parent.children, connection);
+    context.parentIndex = indexOf(parent.children, connection);
 
     context.source = connection.source;
     context.target = connection.target;
@@ -14578,7 +16875,7 @@
     connection.target = context.target;
 
     // restore containment
-    add$1(parent.children, connection, parentIndex);
+    add(parent.children, connection, parentIndex);
 
     this._canvas.addConnection(connection, parent);
 
@@ -14586,236 +16883,14 @@
   };
 
   /**
-   * A handler that implements reversible moving of connections.
-   *
-   * The handler differs from the layout connection handler in a sense
-   * that it preserves the connection layout.
+   * @typedef {import('../../../core/ElementRegistry').default} ElementRegistry
+   * @typedef {import('../Modeling').default} Modeling
    */
-  function MoveConnectionHandler() { }
-
-
-  MoveConnectionHandler.prototype.execute = function(context) {
-
-    var connection = context.connection,
-        delta = context.delta;
-
-    var newParent = context.newParent || connection.parent,
-        newParentIndex = context.newParentIndex,
-        oldParent = connection.parent;
-
-    // save old parent in context
-    context.oldParent = oldParent;
-    context.oldParentIndex = remove$2(oldParent.children, connection);
-
-    // add to new parent at position
-    add$1(newParent.children, connection, newParentIndex);
-
-    // update parent
-    connection.parent = newParent;
-
-    // update waypoint positions
-    forEach(connection.waypoints, function(p) {
-      p.x += delta.x;
-      p.y += delta.y;
-
-      if (p.original) {
-        p.original.x += delta.x;
-        p.original.y += delta.y;
-      }
-    });
-
-    return connection;
-  };
-
-  MoveConnectionHandler.prototype.revert = function(context) {
-
-    var connection = context.connection,
-        newParent = connection.parent,
-        oldParent = context.oldParent,
-        oldParentIndex = context.oldParentIndex,
-        delta = context.delta;
-
-    // remove from newParent
-    remove$2(newParent.children, connection);
-
-    // restore previous location in old parent
-    add$1(oldParent.children, connection, oldParentIndex);
-
-    // restore parent
-    connection.parent = oldParent;
-
-    // revert to old waypoint positions
-    forEach(connection.waypoints, function(p) {
-      p.x -= delta.x;
-      p.y -= delta.y;
-
-      if (p.original) {
-        p.original.x -= delta.x;
-        p.original.y -= delta.y;
-      }
-    });
-
-    return connection;
-  };
 
   /**
-   * A handler that implements reversible moving of shapes.
+   * @param {Modeling} modeling
+   * @param {ElementRegistry} elementRegistry
    */
-  function LayoutConnectionHandler(layouter, canvas) {
-    this._layouter = layouter;
-    this._canvas = canvas;
-  }
-
-  LayoutConnectionHandler.$inject = [ 'layouter', 'canvas' ];
-
-  LayoutConnectionHandler.prototype.execute = function(context) {
-
-    var connection = context.connection;
-
-    var oldWaypoints = connection.waypoints;
-
-    assign(context, {
-      oldWaypoints: oldWaypoints
-    });
-
-    connection.waypoints = this._layouter.layoutConnection(connection, context.hints);
-
-    return connection;
-  };
-
-  LayoutConnectionHandler.prototype.revert = function(context) {
-
-    var connection = context.connection;
-
-    connection.waypoints = context.oldWaypoints;
-
-    return connection;
-  };
-
-  function UpdateWaypointsHandler() { }
-
-  UpdateWaypointsHandler.prototype.execute = function(context) {
-
-    var connection = context.connection,
-        newWaypoints = context.newWaypoints;
-
-    context.oldWaypoints = connection.waypoints;
-
-    connection.waypoints = newWaypoints;
-
-    return connection;
-  };
-
-  UpdateWaypointsHandler.prototype.revert = function(context) {
-
-    var connection = context.connection,
-        oldWaypoints = context.oldWaypoints;
-
-    connection.waypoints = oldWaypoints;
-
-    return connection;
-  };
-
-  /**
-   * Reconnect connection handler
-   */
-  function ReconnectConnectionHandler() { }
-
-  ReconnectConnectionHandler.$inject = [ ];
-
-  ReconnectConnectionHandler.prototype.execute = function(context) {
-
-    var newSource = context.newSource,
-        newTarget = context.newTarget,
-        connection = context.connection,
-        dockingOrPoints = context.dockingOrPoints,
-        oldWaypoints = connection.waypoints,
-        newWaypoints;
-
-    if (!newSource && !newTarget) {
-      throw new Error('newSource or newTarget are required');
-    }
-
-    if (newSource && newTarget) {
-      throw new Error('must specify either newSource or newTarget');
-    }
-
-    context.oldWaypoints = oldWaypoints;
-
-    if (isArray(dockingOrPoints)) {
-      newWaypoints = dockingOrPoints;
-    } else {
-      newWaypoints = oldWaypoints.slice();
-
-      newWaypoints.splice(newSource ? 0 : -1, 1, dockingOrPoints);
-    }
-
-    if (newSource) {
-      context.oldSource = connection.source;
-      connection.source = newSource;
-    }
-
-    if (newTarget) {
-      context.oldTarget = connection.target;
-      connection.target = newTarget;
-    }
-
-    connection.waypoints = newWaypoints;
-
-    return connection;
-  };
-
-  ReconnectConnectionHandler.prototype.revert = function(context) {
-
-    var newSource = context.newSource,
-        newTarget = context.newTarget,
-        connection = context.connection;
-
-    if (newSource) {
-      connection.source = context.oldSource;
-    }
-
-    if (newTarget) {
-      connection.target = context.oldTarget;
-    }
-
-    connection.waypoints = context.oldWaypoints;
-
-    return connection;
-  };
-
-  /**
-   * A handler that implements reversible moving of shapes.
-   */
-  function MoveElementsHandler(modeling) {
-    this._helper = new MoveHelper(modeling);
-  }
-
-  MoveElementsHandler.$inject = [ 'modeling' ];
-
-  MoveElementsHandler.prototype.preExecute = function(context) {
-    context.closure = this._helper.getClosure(context.shapes);
-  };
-
-  MoveElementsHandler.prototype.postExecute = function(context) {
-
-    var hints = context.hints,
-        primaryShape;
-
-    if (hints && hints.primaryShape) {
-      primaryShape = hints.primaryShape;
-      hints.oldParent = primaryShape.parent;
-    }
-
-    this._helper.moveClosure(
-      context.closure,
-      context.delta,
-      context.newParent,
-      context.newHost,
-      primaryShape
-    );
-  };
-
   function DeleteElementsHandler(modeling, elementRegistry) {
     this._modeling = modeling;
     this._elementRegistry = elementRegistry;
@@ -14833,7 +16908,7 @@
         elementRegistry = this._elementRegistry,
         elements = context.elements;
 
-    forEach(elements, function(element) {
+    forEach$1(elements, function(element) {
 
       // element may have been removed with previous
       // remove operations already (e.g. in case of nesting)
@@ -14850,7 +16925,104 @@
   };
 
   /**
+   * @typedef {import('../../../core/Canvas').default} Canvas
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * A handler that implements reversible deletion of shapes.
+   *
+   * @param {Canvas} canvas
+   * @param {Modeling} modeling
+   */
+  function DeleteShapeHandler(canvas, modeling) {
+    this._canvas = canvas;
+    this._modeling = modeling;
+  }
+
+  DeleteShapeHandler.$inject = [ 'canvas', 'modeling' ];
+
+
+  /**
+   * - Remove connections
+   * - Remove all direct children
+   */
+  DeleteShapeHandler.prototype.preExecute = function(context) {
+
+    var modeling = this._modeling;
+
+    var shape = context.shape;
+
+    // remove connections
+    saveClear(shape.incoming, function(connection) {
+
+      // To make sure that the connection isn't removed twice
+      // For example if a container is removed
+      modeling.removeConnection(connection, { nested: true });
+    });
+
+    saveClear(shape.outgoing, function(connection) {
+      modeling.removeConnection(connection, { nested: true });
+    });
+
+    // remove child shapes and connections
+    saveClear(shape.children, function(child) {
+      if (isConnection(child)) {
+        modeling.removeConnection(child, { nested: true });
+      } else {
+        modeling.removeShape(child, { nested: true });
+      }
+    });
+  };
+
+  /**
+   * Remove shape and remember the parent
+   */
+  DeleteShapeHandler.prototype.execute = function(context) {
+    var canvas = this._canvas;
+
+    var shape = context.shape,
+        oldParent = shape.parent;
+
+    context.oldParent = oldParent;
+
+    // remove containment
+    context.oldParentIndex = indexOf(oldParent.children, shape);
+
+    // remove shape
+    canvas.removeShape(shape);
+
+    return shape;
+  };
+
+
+  /**
+   * Command revert implementation
+   */
+  DeleteShapeHandler.prototype.revert = function(context) {
+
+    var canvas = this._canvas;
+
+    var shape = context.shape,
+        oldParent = context.oldParent,
+        oldParentIndex = context.oldParentIndex;
+
+    // restore containment
+    add(oldParent.children, shape, oldParentIndex);
+
+    canvas.addShape(shape, oldParent);
+
+    return shape;
+  };
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
    * A handler that distributes elements evenly.
+   *
+   * @param {Modeling} modeling
    */
   function DistributeElements(modeling) {
     this._modeling = modeling;
@@ -14908,7 +17080,7 @@
         spaceInBetween,
         groupsSize = 0; // the size of each range
 
-    forEach(groups, function(group, idx) {
+    forEach$1(groups, function(group, idx) {
       var sortedElements,
           refElem,
           refCenter;
@@ -14935,7 +17107,7 @@
       // wanna update the ranges after the shapes have been centered
       group.range = null;
 
-      forEach(sortedElements, function(element) {
+      forEach$1(sortedElements, function(element) {
 
         centerElement(refCenter, element);
 
@@ -14965,7 +17137,7 @@
       return;
     }
 
-    forEach(groups, function(group, groupIdx) {
+    forEach$1(groups, function(group, groupIdx) {
       var delta = {},
           prevGroup;
 
@@ -14977,7 +17149,7 @@
 
       group.range.max = 0;
 
-      forEach(group.elements, function(element, idx) {
+      forEach$1(group.elements, function(element, idx) {
         delta[OFF_AXIS[axis]] = 0;
         delta[axis] = (prevGroup.range.max - element[axis]) + margin;
 
@@ -14999,59 +17171,1349 @@
   };
 
   /**
-   * A handler that align elements in a certain way.
-   *
+   * @typedef {import('../../../core/Canvas').default} Canvas
+   * @typedef {import('../../../layout/BaseLayouter').default} Layouter
    */
-  function AlignElements(modeling, canvas) {
-    this._modeling = modeling;
+
+  /**
+   * A handler that implements reversible moving of shapes.
+   *
+   * @param {Layouter} layouter
+   * @param {Canvas} canvas
+   */
+  function LayoutConnectionHandler(layouter, canvas) {
+    this._layouter = layouter;
     this._canvas = canvas;
   }
 
-  AlignElements.$inject = [ 'modeling', 'canvas' ];
+  LayoutConnectionHandler.$inject = [ 'layouter', 'canvas' ];
 
+  LayoutConnectionHandler.prototype.execute = function(context) {
 
-  AlignElements.prototype.preExecute = function(context) {
-    var modeling = this._modeling;
+    var connection = context.connection;
 
-    var elements = context.elements,
-        alignment = context.alignment;
+    var oldWaypoints = connection.waypoints;
 
-
-    forEach(elements, function(element) {
-      var delta = {
-        x: 0,
-        y: 0
-      };
-
-      if (alignment.left) {
-        delta.x = alignment.left - element.x;
-
-      } else if (alignment.right) {
-        delta.x = (alignment.right - element.width) - element.x;
-
-      } else if (alignment.center) {
-        delta.x = (alignment.center - Math.round(element.width / 2)) - element.x;
-
-      } else if (alignment.top) {
-        delta.y = alignment.top - element.y;
-
-      } else if (alignment.bottom) {
-        delta.y = (alignment.bottom - element.height) - element.y;
-
-      } else if (alignment.middle) {
-        delta.y = (alignment.middle - Math.round(element.height / 2)) - element.y;
-      }
-
-      modeling.moveElements([ element ], delta, element.parent);
+    assign$1(context, {
+      oldWaypoints: oldWaypoints
     });
+
+    connection.waypoints = this._layouter.layoutConnection(connection, context.hints);
+
+    return connection;
   };
 
-  AlignElements.prototype.postExecute = function(context) {
+  LayoutConnectionHandler.prototype.revert = function(context) {
 
+    var connection = context.connection;
+
+    connection.waypoints = context.oldWaypoints;
+
+    return connection;
   };
 
   /**
+   * A handler that implements reversible moving of connections.
+   *
+   * The handler differs from the layout connection handler in a sense
+   * that it preserves the connection layout.
+   */
+  function MoveConnectionHandler() { }
+
+
+  MoveConnectionHandler.prototype.execute = function(context) {
+
+    var connection = context.connection,
+        delta = context.delta;
+
+    var newParent = context.newParent || connection.parent,
+        newParentIndex = context.newParentIndex,
+        oldParent = connection.parent;
+
+    // save old parent in context
+    context.oldParent = oldParent;
+    context.oldParentIndex = remove(oldParent.children, connection);
+
+    // add to new parent at position
+    add(newParent.children, connection, newParentIndex);
+
+    // update parent
+    connection.parent = newParent;
+
+    // update waypoint positions
+    forEach$1(connection.waypoints, function(p) {
+      p.x += delta.x;
+      p.y += delta.y;
+
+      if (p.original) {
+        p.original.x += delta.x;
+        p.original.y += delta.y;
+      }
+    });
+
+    return connection;
+  };
+
+  MoveConnectionHandler.prototype.revert = function(context) {
+
+    var connection = context.connection,
+        newParent = connection.parent,
+        oldParent = context.oldParent,
+        oldParentIndex = context.oldParentIndex,
+        delta = context.delta;
+
+    // remove from newParent
+    remove(newParent.children, connection);
+
+    // restore previous location in old parent
+    add(oldParent.children, connection, oldParentIndex);
+
+    // restore parent
+    connection.parent = oldParent;
+
+    // revert to old waypoint positions
+    forEach$1(connection.waypoints, function(p) {
+      p.x -= delta.x;
+      p.y -= delta.y;
+
+      if (p.original) {
+        p.original.x -= delta.x;
+        p.original.y -= delta.y;
+      }
+    });
+
+    return connection;
+  };
+
+  /**
+   * @typedef {import('../model/Types').Shape} Shape
+   *
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
+
+  /**
+   * Calculates the absolute point relative to the new element's position.
+   *
+   * @param {Point} point [absolute]
+   * @param {Rect} oldBounds
+   * @param {Rect} newBounds
+   *
+   * @return {Point} point [absolute]
+   */
+  function getNewAttachPoint(point, oldBounds, newBounds) {
+    var oldCenter = center(oldBounds),
+        newCenter = center(newBounds),
+        oldDelta = delta(point, oldCenter);
+
+    var newDelta = {
+      x: oldDelta.x * (newBounds.width / oldBounds.width),
+      y: oldDelta.y * (newBounds.height / oldBounds.height)
+    };
+
+    return roundPoint({
+      x: newCenter.x + newDelta.x,
+      y: newCenter.y + newDelta.y
+    });
+  }
+
+  /**
+   * @typedef {import('../../../../core/Types').ConnectionLike} Connection
+   * @typedef {import('../../../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../../../util/Types').Point} Point
+   * @typedef {import('../../../../util/Types').Rect} Rect
+   */
+
+  /**
+   * @param {Connection} connection
+   * @param {Shape} shape
+   * @param {Rect} oldBounds
+   * @return {Point}
+   */
+  function getResizedSourceAnchor(connection, shape, oldBounds) {
+
+    var waypoints = safeGetWaypoints(connection),
+        waypointsInsideNewBounds = getWaypointsInsideBounds(waypoints, shape),
+        oldAnchor = waypoints[0];
+
+    // new anchor is the last waypoint enclosed be resized source
+    if (waypointsInsideNewBounds.length) {
+      return waypointsInsideNewBounds[ waypointsInsideNewBounds.length - 1 ];
+    }
+
+    return getNewAttachPoint(oldAnchor.original || oldAnchor, oldBounds, shape);
+  }
+
+
+  function getResizedTargetAnchor(connection, shape, oldBounds) {
+
+    var waypoints = safeGetWaypoints(connection),
+        waypointsInsideNewBounds = getWaypointsInsideBounds(waypoints, shape),
+        oldAnchor = waypoints[waypoints.length - 1];
+
+    // new anchor is the first waypoint enclosed be resized target
+    if (waypointsInsideNewBounds.length) {
+      return waypointsInsideNewBounds[ 0 ];
+    }
+
+    return getNewAttachPoint(oldAnchor.original || oldAnchor, oldBounds, shape);
+  }
+
+
+  function getMovedSourceAnchor(connection, source, moveDelta) {
+
+    var waypoints = safeGetWaypoints(connection),
+        oldBounds = subtract(source, moveDelta),
+        oldAnchor = waypoints[ 0 ];
+
+    return getNewAttachPoint(oldAnchor.original || oldAnchor, oldBounds, source);
+  }
+
+
+  function getMovedTargetAnchor(connection, target, moveDelta) {
+
+    var waypoints = safeGetWaypoints(connection),
+        oldBounds = subtract(target, moveDelta),
+        oldAnchor = waypoints[ waypoints.length - 1 ];
+
+    return getNewAttachPoint(oldAnchor.original || oldAnchor, oldBounds, target);
+  }
+
+
+  // helpers //////////////////////
+
+  function subtract(bounds, delta) {
+    return {
+      x: bounds.x - delta.x,
+      y: bounds.y - delta.y,
+      width: bounds.width,
+      height: bounds.height
+    };
+  }
+
+
+  /**
+   * Return waypoints of given connection; throw if non exists (should not happen!!).
+   *
+   * @param {Connection} connection
+   *
+   * @return {Point[]}
+   */
+  function safeGetWaypoints(connection) {
+
+    var waypoints = connection.waypoints;
+
+    if (!waypoints.length) {
+      throw new Error('connection#' + connection.id + ': no waypoints');
+    }
+
+    return waypoints;
+  }
+
+  function getWaypointsInsideBounds(waypoints, bounds) {
+    var originalWaypoints = map$1(waypoints, getOriginal);
+
+    return filter(originalWaypoints, function(waypoint) {
+      return isInsideBounds(waypoint, bounds);
+    });
+  }
+
+  /**
+   * Checks if point is inside bounds, incl. edges.
+   *
+   * @param {Point} point
+   * @param {Rect} bounds
+   */
+  function isInsideBounds(point, bounds) {
+    return getOrientation(bounds, point, 1) === 'intersect';
+  }
+
+  function getOriginal(point) {
+    return point.original || point;
+  }
+
+  /**
+   * @typedef {import('../../../../model/Types').Connection} Connection
+   * @typedef {import('../../../../model/Types').Element} Element
+   * @typedef {import('../../../../model/Types').Shape} Shape
+   */
+
+  function MoveClosure() {
+
+    /**
+     * @type {Record<string, Shape>}
+     */
+    this.allShapes = {};
+
+    /**
+     * @type {Record<string, Connection>}
+     */
+    this.allConnections = {};
+
+    /**
+     * @type {Record<string, Element>}
+     */
+    this.enclosedElements = {};
+
+    /**
+     * @type {Record<string, Connection>}
+     */
+    this.enclosedConnections = {};
+
+    /**
+     * @type {Record<string, Element>}
+     */
+    this.topLevel = {};
+  }
+
+  /**
+   * @param {Element} element
+   * @param {boolean} [isTopLevel]
+   *
+   * @return {MoveClosure}
+   */
+  MoveClosure.prototype.add = function(element, isTopLevel) {
+    return this.addAll([ element ], isTopLevel);
+  };
+
+  /**
+   * @param {Element[]} elements
+   * @param {boolean} [isTopLevel]
+   *
+   * @return {MoveClosure}
+   */
+  MoveClosure.prototype.addAll = function(elements, isTopLevel) {
+
+    var newClosure = getClosure(elements, !!isTopLevel, this);
+
+    assign$1(this, newClosure);
+
+    return this;
+  };
+
+  /**
+   * @typedef {import('../../../../core/Types').ElementLike} Element
+   * @typedef {import('../../../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../../../util/Types').Point} Point
+   *
+   * @typedef {import('../../Modeling').default} Modeling
+   */
+
+  /**
+   * A helper that is able to carry out serialized move
+   * operations on multiple elements.
+   *
+   * @param {Modeling} modeling
+   */
+  function MoveHelper(modeling) {
+    this._modeling = modeling;
+  }
+
+  /**
+   * Move the specified elements and all children by the given delta.
+   *
+   * This moves all enclosed connections, too and layouts all affected
+   * external connections.
+   *
+   * @template {Element} T
+   *
+   * @param {T[]} elements
+   * @param {Point} delta
+   * @param {Shape} newParent The new parent of all elements that are not nested.
+   *
+   * @return {T[]}
+   */
+  MoveHelper.prototype.moveRecursive = function(elements, delta, newParent) {
+    if (!elements) {
+      return [];
+    } else {
+      return this.moveClosure(this.getClosure(elements), delta, newParent);
+    }
+  };
+
+  /**
+   * Move the given closure of elmements.
+   *
+   * @param {Object} closure
+   * @param {Point} delta
+   * @param {Shape} [newParent]
+   * @param {Shape} [newHost]
+   */
+  MoveHelper.prototype.moveClosure = function(closure, delta, newParent, newHost, primaryShape) {
+    var modeling = this._modeling;
+
+    var allShapes = closure.allShapes,
+        allConnections = closure.allConnections,
+        enclosedConnections = closure.enclosedConnections,
+        topLevel = closure.topLevel,
+        keepParent = false;
+
+    if (primaryShape && primaryShape.parent === newParent) {
+      keepParent = true;
+    }
+
+    // move all shapes
+    forEach$1(allShapes, function(shape) {
+
+      // move the element according to the given delta
+      modeling.moveShape(shape, delta, topLevel[shape.id] && !keepParent && newParent, {
+        recurse: false,
+        layout: false
+      });
+    });
+
+    // move all child connections / layout external connections
+    forEach$1(allConnections, function(c) {
+
+      var sourceMoved = !!allShapes[c.source.id],
+          targetMoved = !!allShapes[c.target.id];
+
+      if (enclosedConnections[c.id] && sourceMoved && targetMoved) {
+        modeling.moveConnection(c, delta, topLevel[c.id] && !keepParent && newParent);
+      } else {
+        modeling.layoutConnection(c, {
+          connectionStart: sourceMoved && getMovedSourceAnchor(c, c.source, delta),
+          connectionEnd: targetMoved && getMovedTargetAnchor(c, c.target, delta)
+        });
+      }
+    });
+  };
+
+  /**
+   * Returns the closure for the selected elements
+   *
+   * @param {Element[]} elements
+   *
+   * @return {MoveClosure}
+   */
+  MoveHelper.prototype.getClosure = function(elements) {
+    return new MoveClosure().addAll(elements, true);
+  };
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * A handler that implements reversible moving of shapes.
+   *
+   * @param {Modeling} modeling
+   */
+  function MoveElementsHandler(modeling) {
+    this._helper = new MoveHelper(modeling);
+  }
+
+  MoveElementsHandler.$inject = [ 'modeling' ];
+
+  MoveElementsHandler.prototype.preExecute = function(context) {
+    context.closure = this._helper.getClosure(context.shapes);
+  };
+
+  MoveElementsHandler.prototype.postExecute = function(context) {
+
+    var hints = context.hints,
+        primaryShape;
+
+    if (hints && hints.primaryShape) {
+      primaryShape = hints.primaryShape;
+      hints.oldParent = primaryShape.parent;
+    }
+
+    this._helper.moveClosure(
+      context.closure,
+      context.delta,
+      context.newParent,
+      context.newHost,
+      primaryShape
+    );
+  };
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * A handler that implements reversible moving of shapes.
+   *
+   * @param {Modeling} modeling
+   */
+  function MoveShapeHandler(modeling) {
+    this._modeling = modeling;
+
+    this._helper = new MoveHelper(modeling);
+  }
+
+  MoveShapeHandler.$inject = [ 'modeling' ];
+
+
+  MoveShapeHandler.prototype.execute = function(context) {
+
+    var shape = context.shape,
+        delta = context.delta,
+        newParent = context.newParent || shape.parent,
+        newParentIndex = context.newParentIndex,
+        oldParent = shape.parent;
+
+    context.oldBounds = pick(shape, [ 'x', 'y', 'width', 'height' ]);
+
+    // save old parent in context
+    context.oldParent = oldParent;
+    context.oldParentIndex = remove(oldParent.children, shape);
+
+    // add to new parent at position
+    add(newParent.children, shape, newParentIndex);
+
+    // update shape parent + position
+    assign$1(shape, {
+      parent: newParent,
+      x: shape.x + delta.x,
+      y: shape.y + delta.y
+    });
+
+    return shape;
+  };
+
+  MoveShapeHandler.prototype.postExecute = function(context) {
+
+    var shape = context.shape,
+        delta = context.delta,
+        hints = context.hints;
+
+    var modeling = this._modeling;
+
+    if (hints.layout !== false) {
+
+      forEach$1(shape.incoming, function(c) {
+        modeling.layoutConnection(c, {
+          connectionEnd: getMovedTargetAnchor(c, shape, delta)
+        });
+      });
+
+      forEach$1(shape.outgoing, function(c) {
+        modeling.layoutConnection(c, {
+          connectionStart: getMovedSourceAnchor(c, shape, delta)
+        });
+      });
+    }
+
+    if (hints.recurse !== false) {
+      this.moveChildren(context);
+    }
+  };
+
+  MoveShapeHandler.prototype.revert = function(context) {
+
+    var shape = context.shape,
+        oldParent = context.oldParent,
+        oldParentIndex = context.oldParentIndex,
+        delta = context.delta;
+
+    // restore previous location in old parent
+    add(oldParent.children, shape, oldParentIndex);
+
+    // revert to old position and parent
+    assign$1(shape, {
+      parent: oldParent,
+      x: shape.x - delta.x,
+      y: shape.y - delta.y
+    });
+
+    return shape;
+  };
+
+  MoveShapeHandler.prototype.moveChildren = function(context) {
+
+    var delta = context.delta,
+        shape = context.shape;
+
+    this._helper.moveRecursive(shape.children, delta, null);
+  };
+
+  MoveShapeHandler.prototype.getNewParent = function(context) {
+    return context.newParent || context.shape.parent;
+  };
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * Reconnect connection handler.
+   *
+   * @param {Modeling} modeling
+   */
+  function ReconnectConnectionHandler(modeling) {
+    this._modeling = modeling;
+  }
+
+  ReconnectConnectionHandler.$inject = [ 'modeling' ];
+
+  ReconnectConnectionHandler.prototype.execute = function(context) {
+    var newSource = context.newSource,
+        newTarget = context.newTarget,
+        connection = context.connection,
+        dockingOrPoints = context.dockingOrPoints;
+
+    if (!newSource && !newTarget) {
+      throw new Error('newSource or newTarget required');
+    }
+
+    if (isArray$3(dockingOrPoints)) {
+      context.oldWaypoints = connection.waypoints;
+      connection.waypoints = dockingOrPoints;
+    }
+
+    if (newSource) {
+      context.oldSource = connection.source;
+      connection.source = newSource;
+    }
+
+    if (newTarget) {
+      context.oldTarget = connection.target;
+      connection.target = newTarget;
+    }
+
+    return connection;
+  };
+
+  ReconnectConnectionHandler.prototype.postExecute = function(context) {
+    var connection = context.connection,
+        newSource = context.newSource,
+        newTarget = context.newTarget,
+        dockingOrPoints = context.dockingOrPoints,
+        hints = context.hints || {};
+
+    var layoutConnectionHints = {};
+
+    if (hints.connectionStart) {
+      layoutConnectionHints.connectionStart = hints.connectionStart;
+    }
+
+    if (hints.connectionEnd) {
+      layoutConnectionHints.connectionEnd = hints.connectionEnd;
+    }
+
+    if (hints.layoutConnection === false) {
+      return;
+    }
+
+    if (newSource && (!newTarget || hints.docking === 'source')) {
+      layoutConnectionHints.connectionStart = layoutConnectionHints.connectionStart
+        || getDocking(isArray$3(dockingOrPoints) ? dockingOrPoints[ 0 ] : dockingOrPoints);
+    }
+
+    if (newTarget && (!newSource || hints.docking === 'target')) {
+      layoutConnectionHints.connectionEnd = layoutConnectionHints.connectionEnd
+        || getDocking(isArray$3(dockingOrPoints) ? dockingOrPoints[ dockingOrPoints.length - 1 ] : dockingOrPoints);
+    }
+
+    if (hints.newWaypoints) {
+      layoutConnectionHints.waypoints = hints.newWaypoints;
+    }
+
+    this._modeling.layoutConnection(connection, layoutConnectionHints);
+  };
+
+  ReconnectConnectionHandler.prototype.revert = function(context) {
+    var oldSource = context.oldSource,
+        oldTarget = context.oldTarget,
+        oldWaypoints = context.oldWaypoints,
+        connection = context.connection;
+
+    if (oldSource) {
+      connection.source = oldSource;
+    }
+
+    if (oldTarget) {
+      connection.target = oldTarget;
+    }
+
+    if (oldWaypoints) {
+      connection.waypoints = oldWaypoints;
+    }
+
+    return connection;
+  };
+
+
+
+  // helpers //////////
+
+  function getDocking(point) {
+    return point.original || point;
+  }
+
+  /**
+   * @typedef {import('../../model/Types').Shape} Shape
+   *
+   * @typedef {import('../Modeling').default} Modeling
+   * @typedef {import('../../rules/Rules').default} Rules
+   */
+
+  /**
+   * Replace shape by adding new shape and removing old shape. Incoming and outgoing connections will
+   * be kept if possible.
+   *
+   * @class
+   * @constructor
+   *
+   * @param {Modeling} modeling
+   * @param {Rules} rules
+   */
+  function ReplaceShapeHandler(modeling, rules) {
+    this._modeling = modeling;
+    this._rules = rules;
+  }
+
+  ReplaceShapeHandler.$inject = [ 'modeling', 'rules' ];
+
+
+  /**
+   * Add new shape.
+   *
+   * @param {Object} context
+   * @param {Shape} context.oldShape
+   * @param {Object} context.newData
+   * @param {string} context.newData.type
+   * @param {number} context.newData.x
+   * @param {number} context.newData.y
+   * @param {Object} [context.hints]
+   */
+  ReplaceShapeHandler.prototype.preExecute = function(context) {
+    var self = this,
+        modeling = this._modeling,
+        rules = this._rules;
+
+    var oldShape = context.oldShape,
+        newData = context.newData,
+        hints = context.hints || {},
+        newShape;
+
+    function canReconnect(source, target, connection) {
+      return rules.allowed('connection.reconnect', {
+        connection: connection,
+        source: source,
+        target: target
+      });
+    }
+
+    // (1) add new shape at given position
+    var position = {
+      x: newData.x,
+      y: newData.y
+    };
+
+    var oldBounds = {
+      x: oldShape.x,
+      y: oldShape.y,
+      width: oldShape.width,
+      height: oldShape.height
+    };
+
+    newShape = context.newShape =
+      context.newShape ||
+      self.createShape(newData, position, oldShape.parent, hints);
+
+    // (2) update host
+    if (oldShape.host) {
+      modeling.updateAttachment(newShape, oldShape.host);
+    }
+
+    // (3) adopt all children from old shape
+    var children;
+
+    if (hints.moveChildren !== false) {
+      children = oldShape.children.slice();
+
+      modeling.moveElements(children, { x: 0, y: 0 }, newShape, hints);
+    }
+
+    // (4) reconnect connections to new shape if possible
+    var incoming = oldShape.incoming.slice(),
+        outgoing = oldShape.outgoing.slice();
+
+    forEach$1(incoming, function(connection) {
+      var source = connection.source,
+          allowed = canReconnect(source, newShape, connection);
+
+      if (allowed) {
+        self.reconnectEnd(
+          connection, newShape,
+          getResizedTargetAnchor(connection, newShape, oldBounds),
+          hints
+        );
+      }
+    });
+
+    forEach$1(outgoing, function(connection) {
+      var target = connection.target,
+          allowed = canReconnect(newShape, target, connection);
+
+      if (allowed) {
+        self.reconnectStart(
+          connection, newShape,
+          getResizedSourceAnchor(connection, newShape, oldBounds),
+          hints
+        );
+      }
+    });
+  };
+
+
+  /**
+   * Remove old shape.
+   */
+  ReplaceShapeHandler.prototype.postExecute = function(context) {
+    var oldShape = context.oldShape;
+
+    this._modeling.removeShape(oldShape);
+  };
+
+
+  ReplaceShapeHandler.prototype.execute = function(context) {};
+
+
+  ReplaceShapeHandler.prototype.revert = function(context) {};
+
+
+  ReplaceShapeHandler.prototype.createShape = function(shape, position, target, hints) {
+    return this._modeling.createShape(shape, position, target, hints);
+  };
+
+
+  ReplaceShapeHandler.prototype.reconnectStart = function(connection, newSource, dockingPoint, hints) {
+    this._modeling.reconnectStart(connection, newSource, dockingPoint, hints);
+  };
+
+
+  ReplaceShapeHandler.prototype.reconnectEnd = function(connection, newTarget, dockingPoint, hints) {
+    this._modeling.reconnectEnd(connection, newTarget, dockingPoint, hints);
+  };
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * A handler that implements reversible resizing of shapes.
+   *
+   * @param {Modeling} modeling
+   */
+  function ResizeShapeHandler(modeling) {
+    this._modeling = modeling;
+  }
+
+  ResizeShapeHandler.$inject = [ 'modeling' ];
+
+  /**
+   * {
+   *   shape: {....}
+   *   newBounds: {
+   *     width:  20,
+   *     height: 40,
+   *     x:       5,
+   *     y:      10
+   *   }
+   *
+   * }
+   */
+  ResizeShapeHandler.prototype.execute = function(context) {
+    var shape = context.shape,
+        newBounds = context.newBounds,
+        minBounds = context.minBounds;
+
+    if (newBounds.x === undefined || newBounds.y === undefined ||
+        newBounds.width === undefined || newBounds.height === undefined) {
+      throw new Error('newBounds must have {x, y, width, height} properties');
+    }
+
+    if (minBounds && (newBounds.width < minBounds.width
+      || newBounds.height < minBounds.height)) {
+      throw new Error('width and height cannot be less than minimum height and width');
+    } else if (!minBounds
+      && newBounds.width < 10 || newBounds.height < 10) {
+      throw new Error('width and height cannot be less than 10px');
+    }
+
+    // save old bbox in context
+    context.oldBounds = {
+      width:  shape.width,
+      height: shape.height,
+      x:      shape.x,
+      y:      shape.y
+    };
+
+    // update shape
+    assign$1(shape, {
+      width:  newBounds.width,
+      height: newBounds.height,
+      x:      newBounds.x,
+      y:      newBounds.y
+    });
+
+    return shape;
+  };
+
+  ResizeShapeHandler.prototype.postExecute = function(context) {
+    var modeling = this._modeling;
+
+    var shape = context.shape,
+        oldBounds = context.oldBounds,
+        hints = context.hints || {};
+
+    if (hints.layout === false) {
+      return;
+    }
+
+    forEach$1(shape.incoming, function(c) {
+      modeling.layoutConnection(c, {
+        connectionEnd: getResizedTargetAnchor(c, shape, oldBounds)
+      });
+    });
+
+    forEach$1(shape.outgoing, function(c) {
+      modeling.layoutConnection(c, {
+        connectionStart: getResizedSourceAnchor(c, shape, oldBounds)
+      });
+    });
+
+  };
+
+  ResizeShapeHandler.prototype.revert = function(context) {
+
+    var shape = context.shape,
+        oldBounds = context.oldBounds;
+
+    // restore previous bbox
+    assign$1(shape, {
+      width:  oldBounds.width,
+      height: oldBounds.height,
+      x:      oldBounds.x,
+      y:      oldBounds.y
+    });
+
+    return shape;
+  };
+
+  /**
+   * @typedef {import('../../core/Types').ConnectionLike} Connection
+   * @typedef {import('../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../util/Types').Axis} Axis
+   * @typedef {import('../../util/Types').Direction} Direction
+   * @typedef {import('../../util/Types').Point} Point
+   * @typedef {import('../../util/Types').Rect} Rect
+   */
+
+
+  /**
+   * Returns connections whose waypoints are to be updated. Waypoints are to be updated if start
+   * or end is to be moved or resized.
+   *
+   * @param {Array<Shape>} movingShapes
+   * @param {Array<Shape>} resizingShapes
+   *
+   * @return {Array<Connection>}
+   */
+  function getWaypointsUpdatingConnections(movingShapes, resizingShapes) {
+    var waypointsUpdatingConnections = [];
+
+    forEach$1(movingShapes.concat(resizingShapes), function(shape) {
+      var incoming = shape.incoming,
+          outgoing = shape.outgoing;
+
+      forEach$1(incoming.concat(outgoing), function(connection) {
+        var source = connection.source,
+            target = connection.target;
+
+        if (includes$1(movingShapes, source) ||
+          includes$1(movingShapes, target) ||
+          includes$1(resizingShapes, source) ||
+          includes$1(resizingShapes, target)) {
+
+          if (!includes$1(waypointsUpdatingConnections, connection)) {
+            waypointsUpdatingConnections.push(connection);
+          }
+        }
+      });
+    });
+
+    return waypointsUpdatingConnections;
+  }
+
+  function includes$1(array, item) {
+    return array.indexOf(item) !== -1;
+  }
+
+  /**
+   * Resize bounds.
+   *
+   * @param {Rect} bounds
+   * @param {Direction} direction
+   * @param {Point} delta
+   *
+   * @return {Rect}
+   */
+  function resizeBounds(bounds, direction, delta) {
+    var x = bounds.x,
+        y = bounds.y,
+        width = bounds.width,
+        height = bounds.height,
+        dx = delta.x,
+        dy = delta.y;
+
+    switch (direction) {
+    case 'n':
+      return {
+        x: x,
+        y: y + dy,
+        width: width,
+        height: height - dy
+      };
+    case 's':
+      return {
+        x: x,
+        y: y,
+        width: width,
+        height: height + dy
+      };
+    case 'w':
+      return {
+        x: x + dx,
+        y: y,
+        width: width - dx,
+        height: height
+      };
+    case 'e':
+      return {
+        x: x,
+        y: y,
+        width: width + dx,
+        height: height
+      };
+    default:
+      throw new Error('unknown direction: ' + direction);
+    }
+  }
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * Add or remove space by moving and resizing shapes and updating connection waypoints.
+   *
+   * @param {Modeling} modeling
+   */
+  function SpaceToolHandler(modeling) {
+    this._modeling = modeling;
+  }
+
+  SpaceToolHandler.$inject = [ 'modeling' ];
+
+  SpaceToolHandler.prototype.preExecute = function(context) {
+    var delta = context.delta,
+        direction = context.direction,
+        movingShapes = context.movingShapes,
+        resizingShapes = context.resizingShapes,
+        start = context.start,
+        oldBounds = {};
+
+    // (1) move shapes
+    this.moveShapes(movingShapes, delta);
+
+    // (2a) save old bounds of resized shapes
+    forEach$1(resizingShapes, function(shape) {
+      oldBounds[shape.id] = getBounds(shape);
+    });
+
+    // (2b) resize shapes
+    this.resizeShapes(resizingShapes, delta, direction);
+
+    // (3) update connection waypoints
+    this.updateConnectionWaypoints(
+      getWaypointsUpdatingConnections(movingShapes, resizingShapes),
+      delta,
+      direction,
+      start,
+      movingShapes,
+      resizingShapes,
+      oldBounds
+    );
+  };
+
+  SpaceToolHandler.prototype.execute = function() {};
+  SpaceToolHandler.prototype.revert = function() {};
+
+  SpaceToolHandler.prototype.moveShapes = function(shapes, delta) {
+    var self = this;
+
+    forEach$1(shapes, function(element) {
+      self._modeling.moveShape(element, delta, null, {
+        autoResize: false,
+        layout: false,
+        recurse: false
+      });
+    });
+  };
+
+  SpaceToolHandler.prototype.resizeShapes = function(shapes, delta, direction) {
+    var self = this;
+
+    forEach$1(shapes, function(shape) {
+      var newBounds = resizeBounds(shape, direction, delta);
+
+      self._modeling.resizeShape(shape, newBounds, null, {
+        attachSupport: false,
+        autoResize: false,
+        layout: false
+      });
+    });
+  };
+
+  /**
+   * Update connections waypoints according to the rules:
+   *   1. Both source and target are moved/resized => move waypoints by the delta
+   *   2. Only one of source and target is moved/resized => re-layout connection with moved start/end
+   */
+  SpaceToolHandler.prototype.updateConnectionWaypoints = function(
+      connections,
+      delta,
+      direction,
+      start,
+      movingShapes,
+      resizingShapes,
+      oldBounds
+  ) {
+    var self = this,
+        affectedShapes = movingShapes.concat(resizingShapes);
+
+    forEach$1(connections, function(connection) {
+      var source = connection.source,
+          target = connection.target,
+          waypoints = copyWaypoints(connection),
+          axis = getAxisFromDirection(direction),
+          layoutHints = {};
+
+      if (includes(affectedShapes, source) && includes(affectedShapes, target)) {
+
+        // move waypoints
+        waypoints = map$1(waypoints, function(waypoint) {
+          if (shouldMoveWaypoint(waypoint, start, direction)) {
+
+            // move waypoint
+            waypoint[ axis ] = waypoint[ axis ] + delta[ axis ];
+          }
+
+          if (waypoint.original && shouldMoveWaypoint(waypoint.original, start, direction)) {
+
+            // move waypoint original
+            waypoint.original[ axis ] = waypoint.original[ axis ] + delta[ axis ];
+          }
+
+          return waypoint;
+        });
+
+        self._modeling.updateWaypoints(connection, waypoints, {
+          labelBehavior: false
+        });
+      } else if (includes(affectedShapes, source) || includes(affectedShapes, target)) {
+
+        // re-layout connection with moved start/end
+        if (includes(movingShapes, source)) {
+          layoutHints.connectionStart = getMovedSourceAnchor(connection, source, delta);
+        } else if (includes(movingShapes, target)) {
+          layoutHints.connectionEnd = getMovedTargetAnchor(connection, target, delta);
+        } else if (includes(resizingShapes, source)) {
+          layoutHints.connectionStart = getResizedSourceAnchor(
+            connection, source, oldBounds[source.id]
+          );
+        } else if (includes(resizingShapes, target)) {
+          layoutHints.connectionEnd = getResizedTargetAnchor(
+            connection, target, oldBounds[target.id]
+          );
+        }
+
+        self._modeling.layoutConnection(connection, layoutHints);
+      }
+    });
+  };
+
+
+  // helpers //////////
+
+  function copyWaypoint(waypoint) {
+    return assign$1({}, waypoint);
+  }
+
+  function copyWaypoints(connection) {
+    return map$1(connection.waypoints, function(waypoint) {
+
+      waypoint = copyWaypoint(waypoint);
+
+      if (waypoint.original) {
+        waypoint.original = copyWaypoint(waypoint.original);
+      }
+
+      return waypoint;
+    });
+  }
+
+  function getAxisFromDirection(direction) {
+    switch (direction) {
+    case 'n':
+      return 'y';
+    case 'w':
+      return 'x';
+    case 's':
+      return 'y';
+    case 'e':
+      return 'x';
+    }
+  }
+
+  function shouldMoveWaypoint(waypoint, start, direction) {
+    var relevantAxis = getAxisFromDirection(direction);
+
+    if (/e|s/.test(direction)) {
+      return waypoint[ relevantAxis ] > start;
+    } else if (/n|w/.test(direction)) {
+      return waypoint[ relevantAxis ] < start;
+    }
+  }
+
+  function includes(array, item) {
+    return array.indexOf(item) !== -1;
+  }
+
+  function getBounds(shape) {
+    return {
+      x: shape.x,
+      y: shape.y,
+      height: shape.height,
+      width: shape.width
+    };
+  }
+
+  /**
+   * @typedef {import('../../model/Types').Shape} Shape
+   *
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
+   * A handler that toggles the collapsed state of an element
+   * and the visibility of all its children.
+   *
+   * @param {Modeling} modeling
+   */
+  function ToggleShapeCollapseHandler(modeling) {
+    this._modeling = modeling;
+  }
+
+  ToggleShapeCollapseHandler.$inject = [ 'modeling' ];
+
+
+  ToggleShapeCollapseHandler.prototype.execute = function(context) {
+
+    var shape = context.shape,
+        children = shape.children;
+
+    // recursively remember previous visibility of children
+    context.oldChildrenVisibility = getElementsVisibilityRecursive(children);
+
+    // toggle state
+    shape.collapsed = !shape.collapsed;
+
+    // recursively hide/show children
+    var result = setHiddenRecursive(children, shape.collapsed);
+
+    return [ shape ].concat(result);
+  };
+
+
+  ToggleShapeCollapseHandler.prototype.revert = function(context) {
+
+    var shape = context.shape,
+        oldChildrenVisibility = context.oldChildrenVisibility;
+
+    var children = shape.children;
+
+    // recursively set old visability of children
+    var result = restoreVisibilityRecursive(children, oldChildrenVisibility);
+
+    // retoggle state
+    shape.collapsed = !shape.collapsed;
+
+    return [ shape ].concat(result);
+  };
+
+
+  // helpers //////////////////////
+
+  /**
+   * Return a map { elementId -> hiddenState}.
+   *
+   * @param {Shape[]} elements
+   *
+   * @return {Object}
+   */
+  function getElementsVisibilityRecursive(elements) {
+
+    var result = {};
+
+    forEach$1(elements, function(element) {
+      result[element.id] = element.hidden;
+
+      if (element.children) {
+        result = assign$1({}, result, getElementsVisibilityRecursive(element.children));
+      }
+    });
+
+    return result;
+  }
+
+
+  function setHiddenRecursive(elements, newHidden) {
+    var result = [];
+    forEach$1(elements, function(element) {
+      element.hidden = newHidden;
+
+      result = result.concat(element);
+
+      if (element.children) {
+        result = result.concat(setHiddenRecursive(element.children, element.collapsed || newHidden));
+      }
+    });
+
+    return result;
+  }
+
+  function restoreVisibilityRecursive(elements, lastState) {
+    var result = [];
+    forEach$1(elements, function(element) {
+      element.hidden = lastState[element.id];
+
+      result = result.concat(element);
+
+      if (element.children) {
+        result = result.concat(restoreVisibilityRecursive(element.children, lastState));
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * @typedef {import('../Modeling').default} Modeling
+   */
+
+  /**
    * A handler that implements reversible attaching/detaching of shapes.
+   *
+   * @param {Modeling} modeling
    */
   function UpdateAttachmentHandler(modeling) {
     this._modeling = modeling;
@@ -15098,8 +18560,9 @@
 
 
   function removeAttacher(host, attacher) {
+
     // remove attacher from host
-    return remove$2(host && host.attachers, attacher);
+    return remove(host && host.attachers, attacher);
   }
 
   function addAttacher(host, attacher, idx) {
@@ -15114,308 +18577,103 @@
       host.attachers = attachers = [];
     }
 
-    add$1(attachers, attacher, idx);
+    add(attachers, attacher, idx);
   }
 
-  function removeProperties(element, properties) {
-    forEach(properties, function(prop) {
-      if (element[prop]) {
-        delete element[prop];
-      }
-    });
-  }
+  function UpdateWaypointsHandler() { }
 
-  /**
-   * A handler that implements pasting of elements onto the diagram.
-   *
-   * @param {eventBus} EventBus
-   * @param {canvas} Canvas
-   * @param {selection} Selection
-   * @param {elementFactory} ElementFactory
-   * @param {modeling} Modeling
-   * @param {rules} Rules
-   */
-  function PasteHandler(
-      eventBus, canvas, selection,
-      elementFactory, modeling, rules) {
+  UpdateWaypointsHandler.prototype.execute = function(context) {
 
-    this._eventBus = eventBus;
-    this._canvas = canvas;
-    this._selection = selection;
-    this._elementFactory = elementFactory;
-    this._modeling = modeling;
-    this._rules = rules;
-  }
+    var connection = context.connection,
+        newWaypoints = context.newWaypoints;
 
+    context.oldWaypoints = connection.waypoints;
 
-  PasteHandler.$inject = [
-    'eventBus',
-    'canvas',
-    'selection',
-    'elementFactory',
-    'modeling',
-    'rules'
-  ];
-
-
-  // api //////////////////////
-
-  /**
-   * Creates a new shape
-   *
-   * @param {Object} context
-   * @param {Object} context.tree the new shape
-   * @param {Element} context.topParent the paste target
-   */
-  PasteHandler.prototype.preExecute = function(context) {
-    var eventBus = this._eventBus,
-        self = this;
-
-    var tree = context.tree,
-        topParent = context.topParent,
-        position = context.position;
-
-    tree.createdElements = {};
-
-    tree.labels = [];
-
-    forEach(tree, function(elements, depthStr) {
-      var depth = parseInt(depthStr, 10);
-
-      if (isNaN(depth)) {
-        return;
-      }
-
-      // set the parent on the top level elements
-      if (!depth) {
-        elements = map(elements, function(descriptor) {
-          descriptor.parent = topParent;
-
-          return descriptor;
-        });
-      }
-
-      // Order by priority for element creation
-      elements = sortBy(elements, 'priority');
-
-      forEach(elements, function(descriptor) {
-        var id = descriptor.id,
-            parent = descriptor.parent,
-            hints = {},
-            newPosition;
-
-        var element = assign({}, descriptor);
-
-        if (depth) {
-          element.parent = self._getCreatedElement(parent, tree);
-        }
-
-        // this happens when shapes have not been created due to rules
-        if (!parent) {
-          return;
-        }
-
-        eventBus.fire('element.paste', {
-          createdElements: tree.createdElements,
-          descriptor: element
-        });
-
-        // in case the parent changed during 'element.paste'
-        parent = element.parent;
-
-        if (element.waypoints) {
-          element = self._createConnection(element, parent, position, tree);
-
-          if (element) {
-            tree.createdElements[id] = {
-              element: element,
-              descriptor: descriptor
-            };
-          }
-
-          return;
-        }
-
-
-        // supply not-root information as hint
-        if (element.parent !== topParent) {
-          hints.root = false;
-        }
-
-        // set host
-        if (element.host) {
-          hints.attach = true;
-
-          parent = self._getCreatedElement(element.host, tree);
-        }
-
-        // handle labels
-        if (element.labelTarget) {
-          return tree.labels.push(element);
-        }
-
-        newPosition = {
-          x: Math.round(position.x + element.delta.x + (element.width / 2)),
-          y: Math.round(position.y + element.delta.y + (element.height / 2))
-        };
-
-        removeProperties(element, [
-          'id',
-          'parent',
-          'delta',
-          'host',
-          'priority'
-        ]);
-
-        element = self._createShape(element, parent, newPosition, hints);
-
-        if (element) {
-          tree.createdElements[id] = {
-            element: element,
-            descriptor: descriptor
-          };
-        }
-      });
-    });
-  };
-
-  // move label's to their relative position
-  PasteHandler.prototype.postExecute = function(context) {
-    var modeling = this._modeling,
-        selection = this._selection,
-        self = this;
-
-    var tree = context.tree,
-        labels = tree.labels,
-        topLevelElements = [];
-
-    forEach(labels, function(labelDescriptor) {
-      var labelTarget = self._getCreatedElement(labelDescriptor.labelTarget, tree),
-          labels, labelTargetPos, newPosition;
-
-      if (!labelTarget) {
-        return;
-      }
-
-      labels = labelTarget.labels;
-
-      if (!labels || !labels.length) {
-        return;
-      }
-
-      labelTargetPos = {
-        x: labelTarget.x,
-        y: labelTarget.y
-      };
-
-      if (labelTarget.waypoints) {
-        labelTargetPos = labelTarget.waypoints[0];
-      }
-
-      forEach(labels, function(label) {
-        newPosition = {
-          x: Math.round((labelTargetPos.x - label.x) + labelDescriptor.delta.x),
-          y: Math.round((labelTargetPos.y - label.y) + labelDescriptor.delta.y)
-        };
-
-        modeling.moveShape(label, newPosition, labelTarget.parent);
-      });
-    });
-
-    forEach(tree[0], function(descriptor) {
-      var id = descriptor.id,
-          toplevel = tree.createdElements[id];
-
-      if (toplevel) {
-        topLevelElements.push(toplevel.element);
-      }
-    });
-
-    selection.select(topLevelElements);
-  };
-
-
-  PasteHandler.prototype._createConnection = function(element, parent, parentCenter, tree) {
-    var modeling = this._modeling,
-        rules = this._rules;
-
-    var connection, source, target, canPaste;
-
-    element.waypoints = map(element.waypoints, function(waypoint, idx) {
-      return {
-        x: Math.round(parentCenter.x + element.delta[idx].x),
-        y: Math.round(parentCenter.y + element.delta[idx].y)
-      };
-    });
-
-    source = this._getCreatedElement(element.source, tree);
-    target = this._getCreatedElement(element.target, tree);
-
-    if (!source || !target) {
-      return null;
-    }
-
-    canPaste = rules.allowed('element.paste', {
-      source: source,
-      target: target
-    });
-
-    if (!canPaste) {
-      return null;
-    }
-
-    removeProperties(element, [
-      'id',
-      'parent',
-      'delta',
-      'source',
-      'target',
-      'width',
-      'height',
-      'priority'
-    ]);
-
-    connection = modeling.createConnection(source, target, element, parent);
+    connection.waypoints = newWaypoints;
 
     return connection;
   };
 
+  UpdateWaypointsHandler.prototype.revert = function(context) {
 
-  PasteHandler.prototype._createShape = function(element, parent, position, isAttach, hints) {
-    var modeling = this._modeling,
-        elementFactory = this._elementFactory,
-        rules = this._rules;
+    var connection = context.connection,
+        oldWaypoints = context.oldWaypoints;
 
-    var canPaste = rules.allowed('element.paste', {
-      element: element,
-      position: position,
-      parent: parent
-    });
+    connection.waypoints = oldWaypoints;
 
-    if (!canPaste) {
-      return null;
-    }
-
-    var shape = elementFactory.createShape(element);
-
-    modeling.createShape(shape, position, parent, isAttach, hints);
-
-    return shape;
-  };
-
-
-  PasteHandler.prototype._getCreatedElement = function(id, tree) {
-    return tree.createdElements[id] && tree.createdElements[id].element;
+    return connection;
   };
 
   /**
+   * @typedef {import('../../model/Types').Element} Element
+   * @typedef {import('../../model/Types').Connection} Connection
+   * @typedef {import('../../model/Types').Parent} Parent
+   * @typedef {import('../../model/Types').Shape} Shape
+   * @typedef {import('../../model/Types').Label} Label
+   *
+   * @typedef {import('../../command/CommandStack').default} CommandStack
+   * @typedef {import('../../core/ElementFactory').default} ElementFactory
+   * @typedef {import('../../core/EventBus').default} EventBus
+   *
+   * @typedef {import('../../command/CommandStack').CommandHandlerConstructor} CommandHandlerConstructor
+   *
+   * @typedef {import('../../util/Types').Dimensions} Dimensions
+   * @typedef {import('../../util/Types').Direction} Direction
+   * @typedef {import('../../util/Types').Point} Point
+   * @typedef {import('../../util/Types').Rect} Rect
+   *
+   * @typedef { 'x' | 'y' } ModelingDistributeAxis
+   *
+   * @typedef { 'width' | 'height' } ModelingDistributeDimension
+   *
+   * @typedef { {
+   *   bottom?: number;
+   *   center?: number;
+   *   left?: number;
+   *   middle?: number;
+   *   right?: number;
+   *   top?: number;
+   * } } ModelingAlignAlignment
+   *
+   * @typedef { {
+   *   [key: string]: any;
+   * } } ModelingHints
+   *
+   * @typedef { {
+   *   attach?: boolean;
+   * } & ModelingHints } ModelingMoveElementsHints
+   *
+   * @typedef { {
+   *   attach?: boolean;
+   * } & ModelingHints } ModelingCreateShapeHints
+   */
+
+  /**
+   * @template {Element} U
+   *
+   * @typedef { {
+   *   elements: U[],
+   *   range: {
+   *     min: number;
+   *     max: number;
+   *   } }
+   * } ModelingDistributeGroup
+   */
+
+  /**
    * The basic modeling entry point.
+   *
+   * @template {Connection} [T=Connection]
+   * @template {Element} [U=Element]
+   * @template {Label} [V=Label]
+   * @template {Parent} [W=Parent]
+   * @template {Shape} [X=Shape]
    *
    * @param {EventBus} eventBus
    * @param {ElementFactory} elementFactory
    * @param {CommandStack} commandStack
    */
-  function Modeling(eventBus, elementFactory, commandStack) {
+  function Modeling$1(eventBus, elementFactory, commandStack) {
     this._eventBus = eventBus;
     this._elementFactory = elementFactory;
     this._commandStack = commandStack;
@@ -15423,15 +18681,20 @@
     var self = this;
 
     eventBus.on('diagram.init', function() {
+
       // register modeling handlers
       self.registerHandlers(commandStack);
     });
   }
 
-  Modeling.$inject = [ 'eventBus', 'elementFactory', 'commandStack' ];
+  Modeling$1.$inject = [ 'eventBus', 'elementFactory', 'commandStack' ];
 
-
-  Modeling.prototype.getHandlers = function() {
+  /**
+   * Get a map of all command handlers.
+   *
+   * @return {Map<string, CommandHandlerConstructor>}
+   */
+  Modeling$1.prototype.getHandlers = function() {
     return {
       'shape.append': AppendShapeHandler,
       'shape.create': CreateShapeHandler,
@@ -15452,18 +18715,16 @@
 
       'connection.updateWaypoints': UpdateWaypointsHandler,
 
-      'connection.reconnectStart': ReconnectConnectionHandler,
-      'connection.reconnectEnd': ReconnectConnectionHandler,
+      'connection.reconnect': ReconnectConnectionHandler,
 
+      'elements.create': CreateElementsHandler,
       'elements.move': MoveElementsHandler,
       'elements.delete': DeleteElementsHandler,
 
       'elements.distribute': DistributeElements,
       'elements.align': AlignElements,
 
-      'element.updateAttachment': UpdateAttachmentHandler,
-
-      'elements.paste': PasteHandler
+      'element.updateAttachment': UpdateAttachmentHandler
     };
   };
 
@@ -15472,16 +18733,23 @@
    *
    * @param {CommandStack} commandStack
    */
-  Modeling.prototype.registerHandlers = function(commandStack) {
-    forEach(this.getHandlers(), function(handler, id) {
+  Modeling$1.prototype.registerHandlers = function(commandStack) {
+    forEach$1(this.getHandlers(), function(handler, id) {
       commandStack.registerHandler(id, handler);
     });
   };
 
 
-  // modeling helpers //////////////////////
-
-  Modeling.prototype.moveShape = function(shape, delta, newParent, newParentIndex, hints) {
+  /**
+   * Move a shape by the given delta and optionally to a new parent.
+   *
+   * @param {X} shape
+   * @param {Point} delta
+   * @param {W} [newParent]
+   * @param {number} [newParentIndex]
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.moveShape = function(shape, delta, newParent, newParentIndex, hints) {
 
     if (typeof newParentIndex === 'object') {
       hints = newParentIndex;
@@ -15501,12 +18769,12 @@
 
 
   /**
-   * Update the attachment of the given shape.
+   * Update the attachment of a shape.
    *
-   * @param {djs.mode.Base} shape
-   * @param {djs.model.Base} [newHost]
+   * @param {X} shape
+   * @param {X} [newHost=undefined]
    */
-  Modeling.prototype.updateAttachment = function(shape, newHost) {
+  Modeling$1.prototype.updateAttachment = function(shape, newHost) {
     var context = {
       shape: shape,
       newHost: newHost
@@ -15517,16 +18785,14 @@
 
 
   /**
-   * Move a number of shapes to a new target, either setting it as
-   * the new parent or attaching it.
+   * Move elements by a given delta and optionally to a new parent.
    *
-   * @param {Array<djs.mode.Base>} shapes
+   * @param {U[]} shapes
    * @param {Point} delta
-   * @param {djs.model.Base} [target]
-   * @param {Object} [hints]
-   * @param {Boolean} [hints.attach=false]
+   * @param {W} [target]
+   * @param {ModelingMoveElementsHints} [hints]
    */
-  Modeling.prototype.moveElements = function(shapes, delta, target, hints) {
+  Modeling$1.prototype.moveElements = function(shapes, delta, target, hints) {
 
     hints = hints || {};
 
@@ -15555,8 +18821,16 @@
     this._commandStack.execute('elements.move', context);
   };
 
-
-  Modeling.prototype.moveConnection = function(connection, delta, newParent, newParentIndex, hints) {
+  /**
+   * Move a shape by the given delta and optionally to a new parent.
+   *
+   * @param {T} connection
+   * @param {Point} delta
+   * @param {W} [newParent]
+   * @param {number} [newParentIndex]
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.moveConnection = function(connection, delta, newParent, newParentIndex, hints) {
 
     if (typeof newParentIndex === 'object') {
       hints = newParentIndex;
@@ -15574,8 +18848,13 @@
     this._commandStack.execute('connection.move', context);
   };
 
-
-  Modeling.prototype.layoutConnection = function(connection, hints) {
+  /**
+   * Layout a connection.
+   *
+   * @param {T} connection
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.layoutConnection = function(connection, hints) {
     var context = {
       connection: connection,
       hints: hints || {}
@@ -15584,20 +18863,33 @@
     this._commandStack.execute('connection.layout', context);
   };
 
+  /**
+   * Create a connection.
+   *
+   * @overlord
+   *
+   * @param {U} source
+   * @param {U} target
+   * @param {Partial<T>} connection
+   * @param {W} parent
+   * @param {ModelingHints} [hints]
+   *
+   * @return {T}
+   */
 
   /**
-   * Create connection.
+   * Create a connection.
    *
-   * @param {djs.model.Base} source
-   * @param {djs.model.Base} target
-   * @param {Number} [targetIndex]
-   * @param {Object|djs.model.Connection} connection
-   * @param {djs.model.Base} parent
-   * @param {Object} hints
+   * @param {U} source
+   * @param {U} target
+   * @param {number} parentIndex
+   * @param {Partial<T>} connection
+   * @param {W} parent
+   * @param {ModelingHints} [hints]
    *
-   * @return {djs.model.Connection} the created connection.
+   * @return {T}
    */
-  Modeling.prototype.createConnection = function(source, target, parentIndex, connection, parent, hints) {
+  Modeling$1.prototype.createConnection = function(source, target, parentIndex, connection, parent, hints) {
 
     if (typeof parentIndex === 'object') {
       hints = parent;
@@ -15624,18 +18916,30 @@
 
 
   /**
-   * Create a shape at the specified position.
+   * Create a shape.
    *
-   * @param {djs.model.Shape|Object} shape
+   * @overlord
+   *
+   * @param {Partial<X>} shape
    * @param {Point} position
-   * @param {djs.model.Shape|djs.model.Root} target
-   * @param {Number} [parentIndex] position in parents children list
-   * @param {Object} [hints]
-   * @param {Boolean} [hints.attach] whether to attach to target or become a child
+   * @param {W} target
+   * @param {ModelingCreateShapeHints} [hints]
    *
-   * @return {djs.model.Shape} the created shape
+   * @return {X}
    */
-  Modeling.prototype.createShape = function(shape, position, target, parentIndex, hints) {
+
+  /**
+   * Create a shape.
+   *
+   * @param {Partial<X>} shape
+   * @param {Point} position
+   * @param {W} target
+   * @param {number} parentIndex
+   * @param {ModelingCreateShapeHints} [hints]
+   *
+   * @return {X}
+   */
+  Modeling$1.prototype.createShape = function(shape, position, target, parentIndex, hints) {
 
     if (typeof parentIndex !== 'number') {
       hints = parentIndex;
@@ -15671,8 +18975,53 @@
     return context.shape;
   };
 
+  /**
+   * Create elements.
+   *
+   * @param {Partial<U>[]} elements
+   * @param {Point} position
+   * @param {W} parent
+   * @param {number} [parentIndex]
+   * @param {ModelingHints} [hints]
+   *
+   * @return {U[]}
+   */
+  Modeling$1.prototype.createElements = function(elements, position, parent, parentIndex, hints) {
+    if (!isArray$3(elements)) {
+      elements = [ elements ];
+    }
 
-  Modeling.prototype.createLabel = function(labelTarget, position, label, parent) {
+    if (typeof parentIndex !== 'number') {
+      hints = parentIndex;
+      parentIndex = undefined;
+    }
+
+    hints = hints || {};
+
+    var context = {
+      position: position,
+      elements: elements,
+      parent: parent,
+      parentIndex: parentIndex,
+      hints: hints
+    };
+
+    this._commandStack.execute('elements.create', context);
+
+    return context.elements;
+  };
+
+  /**
+   * Create a label.
+   *
+   * @param {U} labelTarget
+   * @param {Point} position
+   * @param {Partial<V>} label
+   * @param {W} [parent]
+   *
+   * @return {V}
+   */
+  Modeling$1.prototype.createLabel = function(labelTarget, position, label, parent) {
 
     label = this._create('label', label);
 
@@ -15690,21 +19039,17 @@
 
 
   /**
-   * Append shape to given source, drawing a connection
-   * between source and the newly created shape.
+   * Create and connect a shape to a source.
    *
-   * @param {djs.model.Shape} source
-   * @param {djs.model.Shape|Object} shape
+   * @param {U} source
+   * @param {Partial<X>} shape
    * @param {Point} position
-   * @param {djs.model.Shape} target
-   * @param {Object} [hints]
-   * @param {Boolean} [hints.attach]
-   * @param {djs.model.Connection|Object} [hints.connection]
-   * @param {djs.model.Base} [hints.connectionParent]
+   * @param {W} target
+   * @param {ModelingHints} [hints]
    *
-   * @return {djs.model.Shape} the newly created shape
+   * @return {X}
    */
-  Modeling.prototype.appendShape = function(source, shape, position, target, hints) {
+  Modeling$1.prototype.appendShape = function(source, shape, position, target, hints) {
 
     hints = hints || {};
 
@@ -15717,7 +19062,7 @@
       shape: shape,
       connection: hints.connection,
       connectionParent: hints.connectionParent,
-      attach: hints.attach
+      hints: hints
     };
 
     this._commandStack.execute('shape.append', context);
@@ -15725,8 +19070,12 @@
     return context.shape;
   };
 
-
-  Modeling.prototype.removeElements = function(elements) {
+  /**
+   * Remove elements.
+   *
+   * @param {U[]} elements
+   */
+  Modeling$1.prototype.removeElements = function(elements) {
     var context = {
       elements: elements
     };
@@ -15734,8 +19083,14 @@
     this._commandStack.execute('elements.delete', context);
   };
 
-
-  Modeling.prototype.distributeElements = function(groups, axis, dimension) {
+  /**
+   * Distribute elements along a given axis.
+   *
+   * @param {ModelingDistributeGroup<U>[]} groups
+   * @param {ModelingDistributeAxis} axis
+   * @param {ModelingDistributeDimension} dimension
+   */
+  Modeling$1.prototype.distributeElements = function(groups, axis, dimension) {
     var context = {
       groups: groups,
       axis: axis,
@@ -15745,8 +19100,13 @@
     this._commandStack.execute('elements.distribute', context);
   };
 
-
-  Modeling.prototype.removeShape = function(shape, hints) {
+  /**
+   * Remove a shape.
+   *
+   * @param {X} shape
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.removeShape = function(shape, hints) {
     var context = {
       shape: shape,
       hints: hints || {}
@@ -15755,8 +19115,13 @@
     this._commandStack.execute('shape.delete', context);
   };
 
-
-  Modeling.prototype.removeConnection = function(connection, hints) {
+  /**
+   * Remove a connection.
+   *
+   * @param {T} connection
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.removeConnection = function(connection, hints) {
     var context = {
       connection: connection,
       hints: hints || {}
@@ -15765,7 +19130,16 @@
     this._commandStack.execute('connection.delete', context);
   };
 
-  Modeling.prototype.replaceShape = function(oldShape, newShape, hints) {
+  /**
+   * Replace a shape.
+   *
+   * @param {X} oldShape
+   * @param {Partial<X>} newShape
+   * @param {ModelingHints} [hints]
+   *
+   * @return {X}
+   */
+  Modeling$1.prototype.replaceShape = function(oldShape, newShape, hints) {
     var context = {
       oldShape: oldShape,
       newData: newShape,
@@ -15777,17 +19151,13 @@
     return context.newShape;
   };
 
-  Modeling.prototype.pasteElements = function(tree, topParent, position) {
-    var context = {
-      tree: tree,
-      topParent: topParent,
-      position: position
-    };
-
-    this._commandStack.execute('elements.paste', context);
-  };
-
-  Modeling.prototype.alignElements = function(elements, alignment) {
+  /**
+   * Align elements.
+   *
+   * @param {U[]} elements
+   * @param {ModelingAlignAlignment} alignment
+   */
+  Modeling$1.prototype.alignElements = function(elements, alignment) {
     var context = {
       elements: elements,
       alignment: alignment
@@ -15796,28 +19166,54 @@
     this._commandStack.execute('elements.align', context);
   };
 
-  Modeling.prototype.resizeShape = function(shape, newBounds, minBounds) {
+  /**
+   * Resize a shape.
+   *
+   * @param {X} shape
+   * @param {Rect} newBounds
+   * @param {Dimensions} [minBounds]
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.resizeShape = function(shape, newBounds, minBounds, hints) {
     var context = {
       shape: shape,
       newBounds: newBounds,
-      minBounds: minBounds
+      minBounds: minBounds,
+      hints: hints
     };
 
     this._commandStack.execute('shape.resize', context);
   };
 
-  Modeling.prototype.createSpace = function(movingShapes, resizingShapes, delta, direction) {
+  /**
+   * Create space along an horizontally or vertically.
+   *
+   * @param {X[]} movingShapes
+   * @param {X[]} resizingShapes
+   * @param {Point} delta
+   * @param {Direction} direction
+   * @param {number} start
+   */
+  Modeling$1.prototype.createSpace = function(movingShapes, resizingShapes, delta, direction, start) {
     var context = {
+      delta: delta,
+      direction: direction,
       movingShapes: movingShapes,
       resizingShapes: resizingShapes,
-      delta: delta,
-      direction: direction
+      start: start
     };
 
     this._commandStack.execute('spaceTool', context);
   };
 
-  Modeling.prototype.updateWaypoints = function(connection, newWaypoints, hints) {
+  /**
+   * Update a connetions waypoints.
+   *
+   * @param {T} connection
+   * @param {Point[]} newWaypoints
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.updateWaypoints = function(connection, newWaypoints, hints) {
     var context = {
       connection: connection,
       newWaypoints: newWaypoints,
@@ -15827,39 +19223,92 @@
     this._commandStack.execute('connection.updateWaypoints', context);
   };
 
-  Modeling.prototype.reconnectStart = function(connection, newSource, dockingOrPoints) {
+  /**
+   * Reconnect a connections source and/or target.
+   *
+   * @param {T} connection
+   * @param {U} source
+   * @param {U} target
+   * @param {Point|Point[]} dockingOrPoints
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.reconnect = function(connection, source, target, dockingOrPoints, hints) {
     var context = {
       connection: connection,
-      newSource: newSource,
-      dockingOrPoints: dockingOrPoints
+      newSource: source,
+      newTarget: target,
+      dockingOrPoints: dockingOrPoints,
+      hints: hints || {}
     };
 
-    this._commandStack.execute('connection.reconnectStart', context);
+    this._commandStack.execute('connection.reconnect', context);
   };
 
-  Modeling.prototype.reconnectEnd = function(connection, newTarget, dockingOrPoints) {
-    var context = {
-      connection: connection,
-      newTarget: newTarget,
-      dockingOrPoints: dockingOrPoints
-    };
+  /**
+   * Reconnect a connections source.
+   *
+   * @param {T} connection
+   * @param {U} newSource
+   * @param {Point|Point[]} dockingOrPoints
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.reconnectStart = function(connection, newSource, dockingOrPoints, hints) {
+    if (!hints) {
+      hints = {};
+    }
 
-    this._commandStack.execute('connection.reconnectEnd', context);
+    this.reconnect(connection, newSource, connection.target, dockingOrPoints, assign$1(hints, {
+      docking: 'source'
+    }));
   };
 
-  Modeling.prototype.connect = function(source, target, attrs, hints) {
+  /**
+   * Reconnect a connections target.
+   *
+   * @param {T} connection
+   * @param {U} newTarget
+   * @param {Point|Point[]} dockingOrPoints
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.reconnectEnd = function(connection, newTarget, dockingOrPoints, hints) {
+    if (!hints) {
+      hints = {};
+    }
+
+    this.reconnect(connection, connection.source, newTarget, dockingOrPoints, assign$1(hints, {
+      docking: 'target'
+    }));
+  };
+
+  /**
+   * Connect two elements.
+   *
+   * @param {U} source
+   * @param {U} target
+   * @param {Partial<T>} [attrs]
+   * @param {ModelingHints} [hints]
+   *
+   * @return {T}
+   */
+  Modeling$1.prototype.connect = function(source, target, attrs, hints) {
     return this.createConnection(source, target, attrs || {}, source.parent, hints);
   };
 
-  Modeling.prototype._create = function(type, attrs) {
-    if (attrs instanceof Base) {
+  Modeling$1.prototype._create = function(type, attrs) {
+    if (isModelElement(attrs)) {
       return attrs;
     } else {
       return this._elementFactory.create(type, attrs);
     }
   };
 
-  Modeling.prototype.toggleCollapse = function(shape, hints) {
+  /**
+   * Collapse or expand a shape.
+   *
+   * @param {X} shape
+   * @param {ModelingHints} [hints]
+   */
+  Modeling$1.prototype.toggleCollapse = function(shape, hints) {
     var context = {
       shape: shape,
       hints: hints || {}
@@ -15868,9 +19317,9 @@
     this._commandStack.execute('shape.toggleCollapse', context);
   };
 
-  inherits_browser(Modeling$1, Modeling);
+  inherits(Modeling, Modeling$1);
 
-  Modeling$1.$inject = [
+  Modeling.$inject = [
     'eventBus',
     'elementFactory',
     'commandStack',
@@ -15878,15 +19327,15 @@
     'canvas'
   ];
 
-  function Modeling$1(eventBus, elementFactory, commandStack, textRenderer, canvas) {
+  function Modeling(eventBus, elementFactory, commandStack, textRenderer, canvas) {
     this.canvas = canvas;
     this._textRenderer = textRenderer;
 
-    Modeling.call(this, eventBus, elementFactory, commandStack);
+    Modeling$1.call(this, eventBus, elementFactory, commandStack);
   }
 
-  Modeling$1.prototype.getHandlers = function() {
-    var handlers = Modeling.prototype.getHandlers.call(this);
+  Modeling.prototype.getHandlers = function() {
+    var handlers = Modeling$1.prototype.getHandlers.call(this);
 
     handlers['element.updateLabel'] = UpdateLabelHandler;
     handlers['layout.connection.labels'] = LayoutConnectionLabelsHandler;
@@ -15895,20 +19344,20 @@
     return handlers;
   };
 
-  Modeling$1.prototype.updateLabel = function(element, newLabel) {
+  Modeling.prototype.updateLabel = function(element, newLabel) {
     this._commandStack.execute('element.updateLabel', {
       element: element,
       newLabel: newLabel
     });
   };
 
-  Modeling$1.prototype.connect = function(source, target, connectionType, attrs, hints) {
-    return this.createConnection(source, target, assign({
+  Modeling.prototype.connect = function(source, target, connectionType, attrs, hints) {
+    return this.createConnection(source, target, assign$1({
       connectionType: connectionType
     }, attrs), source.parent);
   };
 
-  Modeling$1.prototype.hide = function(element) {
+  Modeling.prototype.hide = function(element) {
     var context = {
       element: element
     };
@@ -15925,27 +19374,53 @@
       CommandModule
     ],
     connectionDocking: [ 'type', CroppingConnectionDocking ],
-    elementFactory: [ 'type', ElementFactory$1 ],
-    modeling: [ 'type', Modeling$1 ],
+    elementFactory: [ 'type', ElementFactory ],
+    modeling: [ 'type', Modeling ],
     umlUpdater: [ 'type', UmlUpdater ],
     layouter: [ 'type', UmlLayouter ]
   };
 
-  var LOW_PRIORITY$9 = 750;
+  var MARKER_OK = 'drop-ok',
+      MARKER_NOT_OK = 'drop-not-ok',
+      MARKER_ATTACH = 'attach-ok',
+      MARKER_NEW_PARENT = 'new-parent';
 
-  var MARKER_OK$4 = 'drop-ok',
-      MARKER_NOT_OK$4 = 'drop-not-ok',
-      MARKER_ATTACH$2 = 'attach-ok',
-      MARKER_NEW_PARENT$2 = 'new-parent';
+  /**
+   * @typedef {import('../../core/Types').ElementLike} Element
+   * @typedef {import('../../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../../util/Types').Point} Point
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../dragging/Dragging').default} Dragging
+   * @typedef {import('../../core/EventBus').default} EventBus
+   * @typedef {import('../modeling/Modeling').default} Modeling
+   * @typedef {import('../rules/Rules').default} Rules
+   */
 
-  function Create$1(
-      eventBus, dragging, modeling,
-      canvas, styles, graphicsFactory) {
+  var PREFIX = 'create';
 
-    /** set drop marker on an element */
+  var HIGH_PRIORITY = 2000;
+
+
+  /**
+   * Create new elements through drag and drop.
+   *
+   * @param {Canvas} canvas
+   * @param {Dragging} dragging
+   * @param {EventBus} eventBus
+   * @param {Modeling} modeling
+   * @param {Rules} rules
+   */
+  function Create(
+      canvas,
+      dragging,
+      eventBus,
+      modeling,
+      rules
+  ) {
     function setMarker(element, marker) {
-
-      [ MARKER_ATTACH$2, MARKER_OK$4, MARKER_NOT_OK$4, MARKER_NEW_PARENT$2 ].forEach(function(m) {
+      [ MARKER_ATTACH, MARKER_OK, MARKER_NOT_OK, MARKER_NEW_PARENT ].forEach(function(m) {
 
         if (m === marker) {
           canvas.addMarker(element, m);
@@ -15955,85 +19430,50 @@
       });
     }
 
-    function createVisual(shape) {
-      var group, preview, visual;
+    // event handling //////////
 
-      group = create('g');
-      attr$1(group, styles.cls('djs-drag-group', [ 'no-events' ]));
+    eventBus.on([ 'create.move', 'create.hover' ], function(event) {
+      var context = event.context;
+          context.elements;
+          var hover = event.hover;
+          context.source;
+          context.hints || {};
 
-      append(canvas.getDefaultLayer(), group);
+      if (!hover) {
+        context.canExecute = false;
+        context.target = null;
 
-      preview = create('g');
-      classes$1(preview).add('djs-dragger');
+        return;
+      }
 
-      append(group, preview);
+      ensureConstraints(event);
 
-      translate(preview, shape.width / -2, shape.height / -2);
-
-      var visualGroup = create('g');
-      classes$1(visualGroup).add('djs-visual');
-
-      append(preview, visualGroup);
-
-      visual = visualGroup;
-
-      // hijack renderer to draw preview
-      graphicsFactory.drawShape(visual, shape);
-
-      return group;
-    }
-
-    eventBus.on('create.move', function(event) {
-
-      var context = event.context,
-          hover = event.hover,
-          shape = context.shape,
-          canExecute;
-
-      var position = {
+      ({
         x: event.x,
         y: event.y
-      };
+      });
 
-      canExecute = context.canExecute = hover;
+      var canExecute = context.canExecute = hover;
 
-      // ignore hover visually if canExecute is null
       if (hover && canExecute !== null) {
         context.target = hover;
 
         if (canExecute && canExecute.attach) {
-          setMarker(hover, MARKER_ATTACH$2);
+          setMarker(hover, MARKER_ATTACH);
         } else {
-          setMarker(hover, canExecute ? MARKER_NEW_PARENT$2 : MARKER_NOT_OK$4);
+          setMarker(hover, canExecute ? MARKER_NEW_PARENT : MARKER_NOT_OK);
         }
       }
     });
 
-    eventBus.on('create.move', LOW_PRIORITY$9, function(event) {
-
-      var context = event.context,
-          shape = context.shape,
-          visual = context.visual;
-
-      // lazy init drag visual once we received the first real
-      // drag move event (this allows us to get the proper canvas local coordinates)
-      if (!visual) {
-        visual = context.visual = createVisual(shape);
-      }
-
-      translate(visual, event.x, event.y);
-    });
-
-
     eventBus.on([ 'create.end', 'create.out', 'create.cleanup' ], function(event) {
-      var context = event.context,
-          target = context.target;
+      var hover = event.hover;
 
-      if (target) {
-        setMarker(target, null);
+      if (hover) {
+        setMarker(hover, null);
       }
     });
-
+    
     eventBus.on('create.ended', function(event) {
       eventBus.fire('create' + '.' + event.context.type, {
         context: {
@@ -16048,49 +19488,135 @@
     });
 
     eventBus.on('create.end', function(event) {
-      return true;
+  	return true;
     });
 
+    function cancel() {
+      var context = dragging.context();
 
-    eventBus.on('create.cleanup', function(event) {
-      var context = event.context;
-
-      if (context.visual) {
-        remove$1(context.visual);
+      if (context && context.prefix === PREFIX) {
+        dragging.cancel();
       }
+    }
+
+    // cancel on <elements.changed> that is not result of <drag.end>
+    eventBus.on('create.init', function() {
+      eventBus.on('elements.changed', cancel);
+
+      eventBus.once([ 'create.cancel', 'create.end' ], HIGH_PRIORITY, function() {
+        eventBus.off('elements.changed', cancel);
+      });
     });
 
-    // API
-    this.start = function(event, shape, type) {
+    // API //////////
 
-      dragging.init(event, 'create', {
+    this.start = function(event, elements, context) {
+      if (!isArray$3(elements)) {
+        elements = [ elements ];
+      }
+
+      var shape = find(elements, function(element) {
+        return !isConnection(element);
+      });
+
+      if (!shape) {
+
+        // at least one shape is required
+        return;
+      }
+
+      context = assign$1({
+        elements: elements,
+        hints: {},
+        shape: shape
+      }, context || {});
+
+      // make sure each element has x and y
+      forEach$1(elements, function(element) {
+        if (!isNumber(element.x)) {
+          element.x = 0;
+        }
+
+        if (!isNumber(element.y)) {
+          element.y = 0;
+        }
+      });
+
+      var visibleElements = filter(elements, function(element) {
+        return !element.hidden;
+      });
+
+      var bbox = getBBox(visibleElements);
+
+      // center elements around cursor
+      forEach$1(elements, function(element) {
+        if (isConnection(element)) {
+          element.waypoints = map$1(element.waypoints, function(waypoint) {
+            return {
+              x: waypoint.x - bbox.x - bbox.width / 2,
+              y: waypoint.y - bbox.y - bbox.height / 2
+            };
+          });
+        }
+
+        assign$1(element, {
+          x: element.x - bbox.x - bbox.width / 2,
+          y: element.y - bbox.y - bbox.height / 2
+        });
+      });
+
+      dragging.init(event, PREFIX, {
         cursor: 'grabbing',
         autoActivate: true,
         data: {
           shape: shape,
-          context: {
-            shape: shape,
-            type: type
-          }
+          elements: elements,
+          context: context
         }
       });
     };
   }
 
-  Create$1.$inject = [
-    'eventBus',
-    'dragging',
-    'modeling',
+  Create.$inject = [
     'canvas',
-    'styles',
-    'graphicsFactory'
+    'dragging',
+    'eventBus',
+    'modeling',
+    'rules'
   ];
 
-  var CreateModule$1 = {
+  // helpers //////////
+
+  function ensureConstraints(event) {
+    var context = event.context,
+        createConstraints = context.createConstraints;
+
+    if (!createConstraints) {
+      return;
+    }
+
+    if (createConstraints.left) {
+      event.x = Math.max(event.x, createConstraints.left);
+    }
+
+    if (createConstraints.right) {
+      event.x = Math.min(event.x, createConstraints.right);
+    }
+
+    if (createConstraints.top) {
+      event.y = Math.max(event.y, createConstraints.top);
+    }
+
+    if (createConstraints.bottom) {
+      event.y = Math.min(event.y, createConstraints.bottom);
+    }
+  }
+
+  var CreateModule = {
     __depends__: [
       DraggingModule
     ],
-    create: [ 'type', Create$1 ]
+    create: [ 'type', Create ]
   };
 
   PaletteProvider.$inject = [
@@ -16116,9 +19642,9 @@
   PaletteProvider.prototype.getPaletteEntries = function() {
     var create = this._create,
         elementFactory = this._elementFactory,
-        lassoTool = this._lassoTool,
-        textRenderer = this._textRenderer,
-        eventBus = this._eventBus;
+        lassoTool = this._lassoTool;
+        this._textRenderer;
+        this._eventBus;
 
     function createShapeAction(type, group, className, title) {
       function createListener(event) {
@@ -16127,8 +19653,12 @@
           height: 100,
           name: "Name"
         });
+        
+        var context = {
+  		  type: type
+  	  };
 
-        create.start(event, shape, type);
+        create.start(event, shape, context);
       }
       return {
         group: group,
@@ -16162,7 +19692,7 @@
 
   var PaletteProviderModule = {
     __depends__: [
-      CreateModule$1,
+      CreateModule,
       PaletteModule,
       LassoToolModule
     ],
@@ -16170,6 +19700,9 @@
     paletteProvider: [ 'type', PaletteProvider ]
   };
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var ModelingModule = {
     __depends__: [
       CommandModule,
@@ -16178,7 +19711,7 @@
       RulesModule
     ],
     __init__: [ 'modeling' ],
-    modeling: [ 'type', Modeling ],
+    modeling: [ 'type', Modeling$1 ],
     layouter: [ 'type', BaseLayouter ]
   };
 
@@ -16217,7 +19750,7 @@
     }
 
     function addProperty(event, element) {
-      assign(event, {
+      assign$1(event, {
         context: {
           shape: element
         }
@@ -16304,9 +19837,9 @@
       'hide': getHidePadEntry()
     };
 
-    if(element instanceof Shape && !(element instanceof Label)) {
+    if(isShape(element) && !isLabel(element)) {
       if(!('stereotypes' in element && element.stereotypes.indexOf('enumeration') != -1)) {
-        assign(contextPadEntries, {
+        assign$1(contextPadEntries, {
           'inheritance-connection': getConnectionPadEntry('inheritance', 'Inheritance Connection'),
           'composition-connection': getConnectionPadEntry('composition', 'Composition Connection'),
           'association-connection': getConnectionPadEntry('association', 'Association Connection'),
@@ -16315,7 +19848,7 @@
       }
 
       if(element.isImported) {
-        assign(contextPadEntries, {
+        assign$1(contextPadEntries, {
           'goto': getGoToPadEntry()
         });
       }
@@ -16335,10 +19868,16 @@
   };
 
   /**
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
+
+  /**
    * A basic provider that may be extended to implement modeling rules.
    *
    * Extensions should implement the init method to actually add their custom
    * modeling checks. Checks may be added via the #addRule(action, fn) method.
+   *
+   * @class
    *
    * @param {EventBus} eventBus
    */
@@ -16350,22 +19889,23 @@
 
   RuleProvider.$inject = [ 'eventBus' ];
 
-  inherits_browser(RuleProvider, CommandInterceptor);
+  e(RuleProvider, CommandInterceptor);
 
 
   /**
    * Adds a modeling rule for the given action, implemented through
    * a callback function.
    *
-   * The function will receive the modeling specific action context
+   * The callback receives a modeling specific action context
    * to perform its check. It must return `false` to disallow the
-   * action from happening or `true` to allow the action.
-   *
-   * A rule provider may pass over the evaluation to lower priority
-   * rules by returning return nothing (or <code>undefined</code>).
+   * action from happening or `true` to allow the action. Usually returing
+   * `null` denotes that a particular interaction shall be ignored.
+   * By returning nothing or `undefined` you pass evaluation to lower
+   * priority rules.
    *
    * @example
    *
+   * ```javascript
    * ResizableRules.prototype.init = function() {
    *
    *   \/**
@@ -16392,10 +19932,11 @@
    *     }
    *   });
    * };
+   * ```
    *
-   * @param {String|Array<String>} actions the identifier for the modeling action to check
-   * @param {Number} [priority] the priority at which this rule is being applied
-   * @param {Function} fn the callback function that performs the actual check
+   * @param {string|string[]} actions the identifier for the modeling action to check
+   * @param {number} [priority] the priority at which this rule is being applied
+   * @param {(any) => any} fn the callback function that performs the actual check
    */
   RuleProvider.prototype.addRule = function(actions, priority, fn) {
 
@@ -16418,7 +19959,7 @@
    */
   RuleProvider.prototype.init = function() {};
 
-  inherits_browser(UmlRulesProvider, RuleProvider);
+  inherits(UmlRulesProvider, RuleProvider);
 
   UmlRulesProvider.$inject = [ 'eventBus' ];
 
@@ -16430,19 +19971,19 @@
     this.addRule('shape.resize', function(context) {
       var shape = context.shape;
 
-      return (shape instanceof Shape && !(shape instanceof Label));
+      return (isShape(shape) && !isLabel(shape));
     });
 
     this.addRule('elements.move', function(context) {
       var shapes = context.shapes;
 
       if(shapes.some(function(shape) {
-        return shape instanceof Label;
+        return isLabel(shape);
       })) {
         return false;
       }
 
-      if(context.target instanceof Label || (context.target instanceof Shape && !(context.target instanceof Root))) {
+      if(isLabel(context.target) || isShape(context.target) && !isRoot(context.target)) {
         return false;
       }
 
@@ -16459,8 +20000,9 @@
   };
 
   /**
-   * Get the logarithm of x with base 10
-   * @param  {Integer} value
+   * Get the logarithm of x with base 10.
+   *
+   * @param {number} x
    */
   function log10(x) {
     return Math.log(x) / Math.log(10);
@@ -16469,9 +20011,10 @@
   /**
    * Get step size for given range and number of steps.
    *
-   * @param {Object} range - Range.
-   * @param {number} range.min - Range minimum.
-   * @param {number} range.max - Range maximum.
+   * @param {Object} range
+   * @param {number} range.min
+   * @param {number} range.max
+   * @param {number} steps
    */
   function getStepSize(range, steps) {
 
@@ -16483,9 +20026,22 @@
     return absoluteLinearRange / steps;
   }
 
+  /**
+   * @param {Object} range
+   * @param {number} range.min
+   * @param {number} range.max
+   * @param {number} scale
+   */
   function cap(range, scale) {
     return Math.max(range.min, Math.min(range.max, scale));
   }
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   *
+   * @typedef {import('../../util/Types').Point} Point
+   */
 
   var sign = Math.sign || function(n) {
     return n >= 0 ? 1 : -1;
@@ -16506,8 +20062,8 @@
    * the {@link toggle(enabled)} method.
    *
    * @param {Object} [config]
-   * @param {Boolean} [config.enabled=true] default enabled state
-   * @param {Number} [config.scale=.75] scroll sensivity
+   * @param {boolean} [config.enabled=true] default enabled state
+   * @param {number} [config.scale=.75] scroll sensivity
    * @param {EventBus} eventBus
    * @param {Canvas} canvas
    */
@@ -16520,7 +20076,7 @@
     this._canvas = canvas;
     this._container = canvas._container;
 
-    this._handleWheel = bind(this._handleWheel, this);
+    this._handleWheel = bind$2(this._handleWheel, this);
 
     this._totalDelta = 0;
     this._scale = config.scale || DEFAULT_SCALE;
@@ -16538,8 +20094,11 @@
     'canvas'
   ];
 
-  ZoomScroll.prototype.scroll = function scroll(delta$$1) {
-    this._canvas.scroll(delta$$1);
+  /**
+   * @param {Point} delta
+   */
+  ZoomScroll.prototype.scroll = function scroll(delta) {
+    this._canvas.scroll(delta);
   };
 
 
@@ -16550,19 +20109,19 @@
   /**
    * Zoom depending on delta.
    *
-   * @param {number} delta - Zoom delta.
-   * @param {Object} position - Zoom position.
+   * @param {number} delta
+   * @param {Point} position
    */
-  ZoomScroll.prototype.zoom = function zoom(delta$$1, position) {
+  ZoomScroll.prototype.zoom = function zoom(delta, position) {
 
     // zoom with half the step size of stepZoom
     var stepSize = getStepSize(RANGE, NUM_STEPS * 2);
 
     // add until threshold reached
-    this._totalDelta += delta$$1;
+    this._totalDelta += delta;
 
     if (Math.abs(this._totalDelta) > DELTA_THRESHOLD) {
-      this._zoom(delta$$1, position, stepSize);
+      this._zoom(delta, position, stepSize);
 
       // reset
       this._totalDelta = 0;
@@ -16570,92 +20129,93 @@
   };
 
 
-  ZoomScroll.prototype._handleWheel = function handleWheel(event$$1) {
+  ZoomScroll.prototype._handleWheel = function handleWheel(event) {
+
     // event is already handled by '.djs-scrollable'
-    if (closest(event$$1.target, '.djs-scrollable', true)) {
+    if (closest(event.target, '.djs-scrollable', true)) {
       return;
     }
 
     var element = this._container;
 
-    event$$1.preventDefault();
+    event.preventDefault();
 
     // pinch to zoom is mapped to wheel + ctrlKey = true
     // in modern browsers (!)
 
-    var isZoom = event$$1.ctrlKey;
+    var isZoom = event.ctrlKey;
 
-    var isHorizontalScroll = event$$1.shiftKey;
+    var isHorizontalScroll = event.shiftKey;
 
     var factor = -1 * this._scale,
-        delta$$1;
+        delta;
 
     if (isZoom) {
-      factor *= event$$1.deltaMode === 0 ? 0.020 : 0.32;
+      factor *= event.deltaMode === 0 ? 0.020 : 0.32;
     } else {
-      factor *= event$$1.deltaMode === 0 ? 1.0 : 16.0;
+      factor *= event.deltaMode === 0 ? 1.0 : 16.0;
     }
 
     if (isZoom) {
       var elementRect = element.getBoundingClientRect();
 
       var offset = {
-        x: event$$1.clientX - elementRect.left,
-        y: event$$1.clientY - elementRect.top
+        x: event.clientX - elementRect.left,
+        y: event.clientY - elementRect.top
       };
 
-      delta$$1 = (
+      delta = (
         Math.sqrt(
-          Math.pow(event$$1.deltaY, 2) +
-          Math.pow(event$$1.deltaX, 2)
-        ) * sign(event$$1.deltaY) * factor
+          Math.pow(event.deltaY, 2) +
+          Math.pow(event.deltaX, 2)
+        ) * sign(event.deltaY) * factor
       );
 
       // zoom in relative to diagram {x,y} coordinates
-      this.zoom(delta$$1, offset);
+      this.zoom(delta, offset);
     } else {
 
       if (isHorizontalScroll) {
-        delta$$1 = {
-          dx: factor * event$$1.deltaY,
+        delta = {
+          dx: factor * event.deltaY,
           dy: 0
         };
       } else {
-        delta$$1 = {
-          dx: factor * event$$1.deltaX,
-          dy: factor * event$$1.deltaY
+        delta = {
+          dx: factor * event.deltaX,
+          dy: factor * event.deltaY
         };
       }
 
-      this.scroll(delta$$1);
+      this.scroll(delta);
     }
   };
 
   /**
    * Zoom with fixed step size.
    *
-   * @param {number} delta - Zoom delta (1 for zooming in, -1 for out).
-   * @param {Object} position - Zoom position.
+   * @param {number} delta Zoom delta (1 for zooming in, -1 for zooming out).
+   * @param {Point} position
    */
-  ZoomScroll.prototype.stepZoom = function stepZoom(delta$$1, position) {
+  ZoomScroll.prototype.stepZoom = function stepZoom(delta, position) {
 
     var stepSize = getStepSize(RANGE, NUM_STEPS);
 
-    this._zoom(delta$$1, position, stepSize);
+    this._zoom(delta, position, stepSize);
   };
 
 
   /**
    * Zoom in/out given a step size.
    *
-   * @param {number} delta - Zoom delta. Can be positive or negative.
-   * @param {Object} position - Zoom position.
-   * @param {number} stepSize - Step size.
+   * @param {number} delta
+   * @param {Point} position
+   * @param {number} stepSize
    */
-  ZoomScroll.prototype._zoom = function(delta$$1, position, stepSize) {
+  ZoomScroll.prototype._zoom = function(delta, position, stepSize) {
     var canvas = this._canvas;
 
-    var direction = delta$$1 > 0 ? 1 : -1;
+    var direction = delta > 0 ? 1 : -1;
 
     var currentLinearZoomLevel = log10(canvas.zoom());
 
@@ -16676,7 +20236,7 @@
   /**
    * Toggle the zoom scroll ability via mouse wheel.
    *
-   * @param  {Boolean} [newEnabled] new enabled state
+   * @param {boolean} [newEnabled] new enabled state
    */
   ZoomScroll.prototype.toggle = function toggle(newEnabled) {
 
@@ -16694,7 +20254,7 @@
 
       // add or remove wheel listener based on
       // changed enabled state
-      componentEvent[newEnabled ? 'bind' : 'unbind'](element, 'wheel', handleWheel, false);
+      event[newEnabled ? 'bind' : 'unbind'](element, 'wheel', handleWheel, false);
     }
 
     this._enabled = newEnabled;
@@ -16707,10 +20267,18 @@
     this.toggle(newEnabled);
   };
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var ZoomScrollModule = {
     __init__: [ 'zoomScroll' ],
     zoomScroll: [ 'type', ZoomScroll ]
   };
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
 
   var THRESHOLD = 15;
 
@@ -16734,70 +20302,81 @@
     });
 
 
-    function handleMove(event$$1) {
+    function handleMove(event) {
 
       var start = context.start,
-          position = toPoint(event$$1),
-          delta$$1 = delta(position, start);
+          button = context.button,
+          position = toPoint(event),
+          delta$1 = delta(position, start);
 
-      if (!context.dragging && length(delta$$1) > THRESHOLD) {
+      if (!context.dragging && length(delta$1) > THRESHOLD) {
         context.dragging = true;
 
-        install(eventBus);
+        if (button === 0) {
+          install(eventBus);
+        }
 
-        set$1('grab');
+        set('grab');
       }
 
       if (context.dragging) {
 
         var lastPosition = context.last || context.start;
 
-        delta$$1 = delta(position, lastPosition);
+        delta$1 = delta(position, lastPosition);
 
         canvas.scroll({
-          dx: delta$$1.x,
-          dy: delta$$1.y
+          dx: delta$1.x,
+          dy: delta$1.y
         });
 
         context.last = position;
       }
 
       // prevent select
-      event$$1.preventDefault();
+      event.preventDefault();
     }
 
 
-    function handleEnd(event$$1) {
-      componentEvent.unbind(document, 'mousemove', handleMove);
-      componentEvent.unbind(document, 'mouseup', handleEnd);
+    function handleEnd(event$1) {
+      event.unbind(document, 'mousemove', handleMove);
+      event.unbind(document, 'mouseup', handleEnd);
 
       context = null;
 
       unset();
     }
 
-    function handleStart(event$$1) {
+    function handleStart(event$1) {
+
       // event is already handled by '.djs-draggable'
-      if (closest(event$$1.target, '.djs-draggable')) {
+      if (closest(event$1.target, '.djs-draggable')) {
         return;
       }
 
+      var button = event$1.button;
 
-      // reject non-left left mouse button or modifier key
-      if (event$$1.button || event$$1.ctrlKey || event$$1.shiftKey || event$$1.altKey) {
+      // reject right mouse button or modifier key
+      if (button >= 2 || event$1.ctrlKey || event$1.shiftKey || event$1.altKey) {
         return;
       }
 
       context = {
-        start: toPoint(event$$1)
+        button: button,
+        start: toPoint(event$1)
       };
 
-      componentEvent.bind(document, 'mousemove', handleMove);
-      componentEvent.bind(document, 'mouseup', handleEnd);
+      event.bind(document, 'mousemove', handleMove);
+      event.bind(document, 'mouseup', handleEnd);
 
       // we've handled the event
       return true;
     }
+
+    this.isActive = function() {
+      return !!context;
+    };
+
   }
 
 
@@ -16814,39 +20393,51 @@
     return Math.sqrt(Math.pow(point.x, 2) + Math.pow(point.y, 2));
   }
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var MoveCanvasModule = {
     __init__: [ 'moveCanvas' ],
     moveCanvas: [ 'type', MoveCanvas ]
   };
 
-  var DEFAULT_RENDER_PRIORITY = 1000;
+  var DEFAULT_RENDER_PRIORITY$1 = 1000;
+
+  /**
+   * @typedef {import('../core/Types').ElementLike} Element
+   * @typedef {import('../core/Types').ConnectionLike} Connection
+   * @typedef {import('../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../core/EventBus').default} EventBus
+   */
 
   /**
    * The base implementation of shape and connection renderers.
    *
    * @param {EventBus} eventBus
-   * @param {Number} [renderPriority=1000]
+   * @param {number} [renderPriority=1000]
    */
   function BaseRenderer(eventBus, renderPriority) {
     var self = this;
 
-    renderPriority = renderPriority || DEFAULT_RENDER_PRIORITY;
+    renderPriority = renderPriority || DEFAULT_RENDER_PRIORITY$1;
 
     eventBus.on([ 'render.shape', 'render.connection' ], renderPriority, function(evt, context) {
       var type = evt.type,
           element = context.element,
-          visuals = context.gfx;
+          visuals = context.gfx,
+          attrs = context.attrs;
 
       if (self.canRender(element)) {
         if (type === 'render.shape') {
-          return self.drawShape(visuals, element);
+          return self.drawShape(visuals, element, attrs);
         } else {
-          return self.drawConnection(visuals, element);
+          return self.drawConnection(visuals, element, attrs);
         }
       }
     });
 
-    eventBus.on([ 'render.getShapePath', 'render.getConnectionPath'], renderPriority, function(evt, element) {
+    eventBus.on([ 'render.getShapePath', 'render.getConnectionPath' ], renderPriority, function(evt, element) {
       if (self.canRender(element)) {
         if (evt.type === 'render.getShapePath') {
           return self.getShapePath(element);
@@ -16858,66 +20449,65 @@
   }
 
   /**
-   * Should check whether *this* renderer can render
-   * the element/connection.
+   * Checks whether an element can be rendered.
    *
-   * @param {element} element
+   * @param {Element} element The element to be rendered.
    *
-   * @returns {Boolean}
+   * @return {boolean} Whether the element can be rendered.
    */
-  BaseRenderer.prototype.canRender = function() {};
+  BaseRenderer.prototype.canRender = function(element) {};
 
   /**
-   * Provides the shape's snap svg element to be drawn on the `canvas`.
+   * Draws a shape.
    *
-   * @param {djs.Graphics} visuals
-   * @param {Shape} shape
+   * @param {SVGElement} visuals The SVG element to draw the shape into.
+   * @param {Shape} shape The shape to be drawn.
    *
-   * @returns {Snap.svg} [returns a Snap.svg paper element ]
+   * @return {SVGElement} The SVG element of the shape drawn.
    */
-  BaseRenderer.prototype.drawShape = function() {};
+  BaseRenderer.prototype.drawShape = function(visuals, shape) {};
 
   /**
-   * Provides the shape's snap svg element to be drawn on the `canvas`.
+   * Draws a connection.
    *
-   * @param {djs.Graphics} visuals
-   * @param {Connection} connection
+   * @param {SVGElement} visuals The SVG element to draw the connection into.
+   * @param {Connection} connection The connection to be drawn.
    *
-   * @returns {Snap.svg} [returns a Snap.svg paper element ]
+   * @return {SVGElement} The SVG element of the connection drawn.
    */
-  BaseRenderer.prototype.drawConnection = function() {};
+  BaseRenderer.prototype.drawConnection = function(visuals, connection) {};
 
   /**
-   * Gets the SVG path of a shape that represents it's visual bounds.
+   * Gets the SVG path of the graphical representation of a shape.
    *
-   * @param {Shape} shape
+   * @param {Shape} shape The shape.
    *
-   * @return {string} svg path
+   * @return {string} The SVG path of the shape.
    */
-  BaseRenderer.prototype.getShapePath = function() {};
+  BaseRenderer.prototype.getShapePath = function(shape) {};
 
   /**
-   * Gets the SVG path of a connection that represents it's visual bounds.
+   * Gets the SVG path of the graphical representation of a connection.
    *
-   * @param {Connection} connection
+   * @param {Connection} connection The connection.
    *
-   * @return {string} svg path
+   * @return {string} The SVG path of the connection.
    */
-  BaseRenderer.prototype.getConnectionPath = function() {};
+  BaseRenderer.prototype.getConnectionPath = function(connection) {};
 
   function drawText(parentGfx, text, options, textRenderer) {
     var svgText = textRenderer.createText(text, options);
 
-    classes$1(svgText).add('djs-label');
+    classes(svgText).add('djs-label');
     append(parentGfx, svgText);
 
     return svgText;
   }
 
   function drawLine(parentGfx, source, target) {
-    var line = create('line');
+    var line = create$1('line');
 
-    attr$1(line, {
+    attr(line, {
       x1: source.x,
       y1: source.y,
       x2: target.x,
@@ -16952,7 +20542,7 @@
   }
 
   function getPath(d, attributes) {
-    var path = create('path');
+    var path = create$1('path');
 
     addPath(path, d);
     addPathMarkers(path, attributes);
@@ -16987,7 +20577,7 @@
     return pathData;
   }
   function getGroup(elements) {
-      var group = create('g');
+      var group = create$1('g');
 
       elements.forEach(function(element) {
           append(group, element);
@@ -16996,41 +20586,41 @@
       return group;
   }
   function addPath(path, d) {
-    attr$1(path, { d: d });
+    attr(path, { d: d });
   }
   function addPathTransformation(path, attributes) {
     if('transform' in attributes) {
-      attr$1(path, { transform: attributes.transform });
+      attr(path, { transform: attributes.transform });
     }
   }
   function addStyles(svgElement, attributes) {
     if('stroke' in attributes) {
-      attr$1(svgElement, { stroke: attributes.stroke });
+      attr(svgElement, { stroke: attributes.stroke });
     }
 
     if('stroke-width' in attributes) {
-      attr$1(svgElement, { 'stroke-width': attributes['stroke-width'] });
+      attr(svgElement, { 'stroke-width': attributes['stroke-width'] });
     }
 
     if('fill' in attributes) {
-      attr$1(svgElement, { fill: attributes.fill });
+      attr(svgElement, { fill: attributes.fill });
     }
 
     if('stroke-dasharray' in attributes) {
-      attr$1(svgElement, { 'stroke-dasharray': attributes['stroke-dasharray'] });
+      attr(svgElement, { 'stroke-dasharray': attributes['stroke-dasharray'] });
     }
   }
   function addPathMarkers(path, attributes) {
     if('markerEnd' in attributes) {
-      attr$1(path, { 'marker-end': 'url(#' + attributes.markerEnd + ')' });
+      attr(path, { 'marker-end': 'url(#' + attributes.markerEnd + ')' });
     }
 
     if('markerStart' in attributes) {
-      attr$1(path, { 'marker-start': 'url(#' + attributes.markerStart + ')' });
+      attr(path, { 'marker-start': 'url(#' + attributes.markerStart + ')' });
     }
   }
   function getRectangle(width, height, attributes) {
-    var rectangle = create('rect');
+    var rectangle = create$1('rect');
 
     addSize(rectangle, width, height);
     addStyles(rectangle, attributes);
@@ -17038,7 +20628,7 @@
     return rectangle;
   }
   function addSize(shape, width, height) {
-    attr$1(shape, {
+    attr(shape, {
       width: width,
       height: height
     });
@@ -17061,7 +20651,7 @@
   }
 
   function drawClass(parentGfx, element, textRenderer) {
-    var businessObject = element.businessObject || {};
+    element.businessObject || {};
 
     var rectangle = drawRectangle(parentGfx, element.width, element.height, {
       fill: 'none',
@@ -17110,7 +20700,7 @@
     });
   }
   function getCenterLabelStyle(element) {
-    return assign(getGeneralLabelStyle(), {
+    return assign$1(getGeneralLabelStyle(), {
       x: element.width / 2,
       'text-anchor': 'middle',
     });
@@ -17225,7 +20815,7 @@
     var defs = query('defs', canvas._svg);
 
     if (!defs) {
-      defs = create('defs');
+      defs = create$1('defs');
 
       append(canvas._svg, defs);
     }
@@ -17239,11 +20829,11 @@
   }
 
   function addMarkerDefinition(definitions, id, markerElement, atStart) {
-    var svgMarker = create('marker');
+    var svgMarker = create$1('marker');
 
     append(svgMarker, markerElement);
 
-    attr$1(svgMarker, {
+    attr(svgMarker, {
       id: id,
       viewBox: '0 0 10 10',
       refX: getMarkerRefX(atStart),
@@ -17263,7 +20853,7 @@
     }
   }
 
-  inherits_browser(UmlRenderer, BaseRenderer);
+  inherits(UmlRenderer, BaseRenderer);
 
   UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer'];
 
@@ -17319,11 +20909,11 @@
   }
 
   TextRenderer.prototype.createText = function(text, options) {
-    var svgText = create('text');
+    var svgText = create$1('text');
 
-    var options = assign(options, this._style);
+    var options = assign$1(options, this._style);
 
-    attr$1(svgText, options);
+    attr(svgText, options);
 
     innerSVG(svgText, text);
 
@@ -17331,9 +20921,9 @@
   };
 
   TextRenderer.prototype.getDimensions  = function(text, options) {
-      var helperText = create('text');
+      var helperText = create$1('text');
 
-      attr$1(helperText, this._style);
+      attr(helperText, this._style);
 
       var helperSvg = getHelperSvg();
 
@@ -17365,9 +20955,9 @@
     return helperSvg;
   }
   function createHelperSvg() {
-    var helperSvg = create('svg');
+    var helperSvg = create$1('svg');
 
-    attr$1(helperSvg, getHelperSvgOptions());
+    attr(helperSvg, getHelperSvgOptions());
 
     document.body.appendChild(helperSvg);
 
@@ -17382,7 +20972,7 @@
     };
   }
 
-  var DrawModule = {
+  var DrawModule$1 = {
     __init__: [ 'umlRenderer'],
     umlRenderer: ['type', UmlRenderer],
     textRenderer: [ 'type', TextRenderer]
@@ -17404,7 +20994,7 @@
     var elementFactory = this.elementFactory;
     var canvas = this.canvas;
     var modeling = this.modeling;
-    var layouter = this.layouter;
+    this.layouter;
     var commandStack = this.commandStack;
 
     var root = elementFactory.createRoot();
@@ -17435,9 +21025,9 @@
         waypoints: getWaypoints(edge, nodeMap)
       };
 
-      assign(attrs, getEdgeLabels(edge));
+      assign$1(attrs, getEdgeLabels(edge));
 
-      var connection = modeling.createConnection(nodeMap.get(edge.source), nodeMap.get(edge.target), attrs, root);
+      modeling.createConnection(nodeMap.get(edge.source), nodeMap.get(edge.target), attrs, root);
     });
   }
   function addLabel(labelName, fromObject, toObject) {
@@ -17485,36 +21075,70 @@
     umlImporter: [ 'type', UmlImporter ]
   };
 
-  var CoreModule = {
+  var CoreModule$1 = {
     __depends__: [
-      DrawModule,
+      DrawModule$1,
       ImporterModule
     ]
   };
 
-  var CLASS_PATTERN = /^class /;
+  const CLASS_PATTERN = /^class[ {]/;
 
+
+  /**
+   * @param {function} fn
+   *
+   * @return {boolean}
+   */
   function isClass(fn) {
     return CLASS_PATTERN.test(fn.toString());
   }
 
-  function isArray$1(obj) {
-    return Object.prototype.toString.call(obj) === '[object Array]';
+  /**
+   * @param {any} obj
+   *
+   * @return {boolean}
+   */
+  function isArray(obj) {
+    return Array.isArray(obj);
   }
 
-  function annotate() {
-    var args = Array.prototype.slice.call(arguments);
+  /**
+   * @param {any} obj
+   * @param {string} prop
+   *
+   * @return {boolean}
+   */
+  function hasOwnProp(obj, prop) {
+    return Object.prototype.hasOwnProperty.call(obj, prop);
+  }
 
-    if (args.length === 1 && isArray$1(args[0])) {
+  /**
+   * @typedef {import('./index').InjectAnnotated } InjectAnnotated
+   */
+
+  /**
+   * @template T
+   *
+   * @params {[...string[], T] | ...string[], T} args
+   *
+   * @return {T & InjectAnnotated}
+   */
+  function annotate(...args) {
+
+    if (args.length === 1 && isArray(args[0])) {
       args = args[0];
     }
 
-    var fn = args.pop();
+    args = [ ...args ];
+
+    const fn = args.pop();
 
     fn.$inject = args;
 
     return fn;
   }
+
 
   // Current limitations:
   // - can't put into "function arg" comments
@@ -17529,93 +21153,85 @@
   // first constructor(...) pattern found which may be the one
   // of a nested class, too.
 
-  var CONSTRUCTOR_ARGS = /constructor\s*[^(]*\(\s*([^)]*)\)/m;
-  var FN_ARGS = /^function\s*[^(]*\(\s*([^)]*)\)/m;
-  var FN_ARG = /\/\*([^*]*)\*\//m;
+  const CONSTRUCTOR_ARGS = /constructor\s*[^(]*\(\s*([^)]*)\)/m;
+  const FN_ARGS = /^(?:async\s+)?(?:function\s*[^(]*)?(?:\(\s*([^)]*)\)|(\w+))/m;
+  const FN_ARG = /\/\*([^*]*)\*\//m;
 
-  function parse$2(fn) {
+  /**
+   * @param {unknown} fn
+   *
+   * @return {string[]}
+   */
+  function parseAnnotations(fn) {
 
     if (typeof fn !== 'function') {
-      throw new Error('Cannot annotate "' + fn + '". Expected a function!');
+      throw new Error(`Cannot annotate "${fn}". Expected a function!`);
     }
 
-    var match = fn.toString().match(isClass(fn) ? CONSTRUCTOR_ARGS : FN_ARGS);
+    const match = fn.toString().match(isClass(fn) ? CONSTRUCTOR_ARGS : FN_ARGS);
 
     // may parse class without constructor
     if (!match) {
       return [];
     }
 
-    return match[1] && match[1].split(',').map(function (arg) {
-      match = arg.match(FN_ARG);
-      return match ? match[1].trim() : arg.trim();
+    const args = match[1] || match[2];
+
+    return args && args.split(',').map(arg => {
+      const argMatch = arg.match(FN_ARG);
+      return (argMatch && argMatch[1] || arg).trim();
     }) || [];
   }
 
-  function Module() {
-    var providers = [];
+  /**
+   * @typedef { import('./index').ModuleDeclaration } ModuleDeclaration
+   * @typedef { import('./index').ModuleDefinition } ModuleDefinition
+   * @typedef { import('./index').InjectorContext } InjectorContext
+   */
 
-    this.factory = function (name, factory) {
-      providers.push([name, 'factory', factory]);
-      return this;
-    };
-
-    this.value = function (name, value) {
-      providers.push([name, 'value', value]);
-      return this;
-    };
-
-    this.type = function (name, type) {
-      providers.push([name, 'type', type]);
-      return this;
-    };
-
-    this.forEach = function (iterator) {
-      providers.forEach(iterator);
-    };
-  }
-
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-  function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
+  /**
+   * Create a new injector with the given modules.
+   *
+   * @param {ModuleDefinition[]} modules
+   * @param {InjectorContext} [parent]
+   */
   function Injector(modules, parent) {
     parent = parent || {
-      get: function get(name, strict) {
+      get: function(name, strict) {
         currentlyResolving.push(name);
 
         if (strict === false) {
           return null;
         } else {
-          throw error('No provider for "' + name + '"!');
+          throw error(`No provider for "${ name }"!`);
         }
       }
     };
 
-    var currentlyResolving = [];
-    var providers = this._providers = Object.create(parent._providers || null);
-    var instances = this._instances = Object.create(null);
+    const currentlyResolving = [];
+    const providers = this._providers = Object.create(parent._providers || null);
+    const instances = this._instances = Object.create(null);
 
-    var self = instances.injector = this;
+    const self = instances.injector = this;
 
-    var error = function error(msg) {
-      var stack = currentlyResolving.join(' -> ');
+    const error = function(msg) {
+      const stack = currentlyResolving.join(' -> ');
       currentlyResolving.length = 0;
-      return new Error(stack ? msg + ' (Resolving: ' + stack + ')' : msg);
+      return new Error(stack ? `${ msg } (Resolving: ${ stack })` : msg);
     };
 
     /**
      * Return a named service.
      *
-     * @param {String} name
-     * @param {Boolean} [strict=true] if false, resolve missing services to null
+     * @param {string} name
+     * @param {boolean} [strict=true] if false, resolve missing services to null
      *
-     * @return {Object}
+     * @return {any}
      */
-    var get = function get(name, strict) {
+    function get(name, strict) {
       if (!providers[name] && name.indexOf('.') !== -1) {
-        var parts = name.split('.');
-        var pivot = get(parts.shift());
+        const parts = name.split('.');
+        let pivot = get(parts.shift());
 
         while (parts.length) {
           pivot = pivot[parts.shift()];
@@ -17624,11 +21240,11 @@
         return pivot;
       }
 
-      if (hasProp(instances, name)) {
+      if (hasOwnProp(instances, name)) {
         return instances[name];
       }
 
-      if (hasProp(providers, name)) {
+      if (hasOwnProp(providers, name)) {
         if (currentlyResolving.indexOf(name) !== -1) {
           currentlyResolving.push(name);
           throw error('Cannot resolve circular dependency!');
@@ -17642,22 +21258,25 @@
       }
 
       return parent.get(name, strict);
-    };
+    }
 
-    var fnDef = function fnDef(fn) {
-      var locals = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    function fnDef(fn, locals) {
+
+      if (typeof locals === 'undefined') {
+        locals = {};
+      }
 
       if (typeof fn !== 'function') {
-        if (isArray$1(fn)) {
+        if (isArray(fn)) {
           fn = annotate(fn.slice());
         } else {
-          throw new Error('Cannot invoke "' + fn + '". Expected a function!');
+          throw error(`Cannot invoke "${ fn }". Expected a function!`);
         }
       }
 
-      var inject = fn.$inject || parse$2(fn);
-      var dependencies = inject.map(function (dep) {
-        if (hasProp(locals, dep)) {
+      const inject = fn.$inject || parseAnnotations(fn);
+      const dependencies = inject.map(dep => {
+        if (hasOwnProp(locals, dep)) {
           return locals[dep];
         } else {
           return get(dep);
@@ -17668,44 +21287,59 @@
         fn: fn,
         dependencies: dependencies
       };
-    };
+    }
 
-    var instantiate = function instantiate(Type) {
-      var _fnDef = fnDef(Type),
-          dependencies = _fnDef.dependencies,
-          fn = _fnDef.fn;
+    function instantiate(Type) {
+      const {
+        fn,
+        dependencies
+      } = fnDef(Type);
 
-      return new (Function.prototype.bind.apply(fn, [null].concat(_toConsumableArray(dependencies))))();
-    };
+      // instantiate var args constructor
+      const Constructor = Function.prototype.bind.apply(fn, [ null ].concat(dependencies));
 
-    var invoke = function invoke(func, context, locals) {
-      var _fnDef2 = fnDef(func, locals),
-          dependencies = _fnDef2.dependencies,
-          fn = _fnDef2.fn;
+      return new Constructor();
+    }
 
-      return fn.call.apply(fn, [context].concat(_toConsumableArray(dependencies)));
-    };
+    function invoke(func, context, locals) {
+      const {
+        fn,
+        dependencies
+      } = fnDef(func, locals);
 
-    var createPrivateInjectorFactory = function createPrivateInjectorFactory(privateChildInjector) {
-      return annotate(function (key) {
-        return privateChildInjector.get(key);
-      });
-    };
+      return fn.apply(context, dependencies);
+    }
 
-    var createChild = function createChild(modules, forceNewInstances) {
+    /**
+     * @param {Injector} childInjector
+     *
+     * @return {Function}
+     */
+    function createPrivateInjectorFactory(childInjector) {
+      return annotate(key => childInjector.get(key));
+    }
+
+    /**
+     * @param {ModuleDefinition[]} modules
+     * @param {string[]} [forceNewInstances]
+     *
+     * @return {Injector}
+     */
+    function createChild(modules, forceNewInstances) {
       if (forceNewInstances && forceNewInstances.length) {
-        var fromParentModule = Object.create(null);
-        var matchedScopes = Object.create(null);
+        const fromParentModule = Object.create(null);
+        const matchedScopes = Object.create(null);
 
-        var privateInjectorsCache = [];
-        var privateChildInjectors = [];
-        var privateChildFactories = [];
+        const privateInjectorsCache = [];
+        const privateChildInjectors = [];
+        const privateChildFactories = [];
 
-        var provider;
-        var cacheIdx;
-        var privateChildInjector;
-        var privateChildInjectorFactory;
-        for (var name in providers) {
+        let provider;
+        let cacheIdx;
+        let privateChildInjector;
+        let privateChildInjectorFactory;
+
+        for (let name in providers) {
           provider = providers[name];
 
           if (forceNewInstances.indexOf(name) !== -1) {
@@ -17717,28 +21351,28 @@
                 privateInjectorsCache.push(provider[3]);
                 privateChildInjectors.push(privateChildInjector);
                 privateChildFactories.push(privateChildInjectorFactory);
-                fromParentModule[name] = [privateChildInjectorFactory, name, 'private', privateChildInjector];
+                fromParentModule[name] = [ privateChildInjectorFactory, name, 'private', privateChildInjector ];
               } else {
-                fromParentModule[name] = [privateChildFactories[cacheIdx], name, 'private', privateChildInjectors[cacheIdx]];
+                fromParentModule[name] = [ privateChildFactories[cacheIdx], name, 'private', privateChildInjectors[cacheIdx] ];
               }
             } else {
-              fromParentModule[name] = [provider[2], provider[1]];
+              fromParentModule[name] = [ provider[2], provider[1] ];
             }
             matchedScopes[name] = true;
           }
 
           if ((provider[2] === 'factory' || provider[2] === 'type') && provider[1].$scope) {
             /* jshint -W083 */
-            forceNewInstances.forEach(function (scope) {
+            forceNewInstances.forEach(scope => {
               if (provider[1].$scope.indexOf(scope) !== -1) {
-                fromParentModule[name] = [provider[2], provider[1]];
+                fromParentModule[name] = [ provider[2], provider[1] ];
                 matchedScopes[scope] = true;
               }
             });
           }
         }
 
-        forceNewInstances.forEach(function (scope) {
+        forceNewInstances.forEach(scope => {
           if (!matchedScopes[scope]) {
             throw new Error('No provider for "' + scope + '". Cannot use provider from the parent!');
           }
@@ -17748,83 +21382,178 @@
       }
 
       return new Injector(modules, self);
-    };
+    }
 
-    var factoryMap = {
+    const factoryMap = {
       factory: invoke,
       type: instantiate,
-      value: function value(_value) {
-        return _value;
+      value: function(value) {
+        return value;
       }
     };
 
-    modules.forEach(function (module) {
+    /**
+     * @param {ModuleDefinition} moduleDefinition
+     * @param {Injector} injector
+     */
+    function createInitializer(moduleDefinition, injector) {
 
-      function arrayUnwrap(type, value) {
-        if (type !== 'value' && isArray$1(value)) {
-          value = annotate(value.slice());
-        }
+      const initializers = moduleDefinition.__init__ || [];
 
-        return value;
-      }
+      return function() {
+        initializers.forEach(initializer => {
 
-      // (vojta): handle wrong inputs (modules)
-      if (module instanceof Module) {
-        module.forEach(function (provider) {
-          var name = provider[0];
-          var type = provider[1];
-          var value = provider[2];
-
-          providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
+          // eagerly resolve component (fn or string)
+          if (typeof initializer === 'string') {
+            injector.get(initializer);
+          } else {
+            injector.invoke(initializer);
+          }
         });
-      } else if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object') {
-        if (module.__exports__) {
-          var clonedModule = Object.keys(module).reduce(function (m, key) {
-            if (key.substring(0, 2) !== '__') {
-              m[key] = module[key];
-            }
-            return m;
-          }, Object.create(null));
+      };
+    }
 
-          var privateInjector = new Injector((module.__modules__ || []).concat([clonedModule]), self);
-          var getFromPrivateInjector = annotate(function (key) {
-            return privateInjector.get(key);
-          });
-          module.__exports__.forEach(function (key) {
-            providers[key] = [getFromPrivateInjector, key, 'private', privateInjector];
-          });
-        } else {
-          Object.keys(module).forEach(function (name) {
-            if (module[name][2] === 'private') {
-              providers[name] = module[name];
-              return;
-            }
+    /**
+     * @param {ModuleDefinition} moduleDefinition
+     */
+    function loadModule(moduleDefinition) {
 
-            var type = module[name][0];
-            var value = module[name][1];
+      const moduleExports = moduleDefinition.__exports__;
 
-            providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
-          });
-        }
+      // private module
+      if (moduleExports) {
+        const nestedModules = moduleDefinition.__modules__;
+
+        const clonedModule = Object.keys(moduleDefinition).reduce((clonedModule, key) => {
+
+          if (key !== '__exports__' && key !== '__modules__' && key !== '__init__' && key !== '__depends__') {
+            clonedModule[key] = moduleDefinition[key];
+          }
+
+          return clonedModule;
+        }, Object.create(null));
+
+        const childModules = (nestedModules || []).concat(clonedModule);
+
+        const privateInjector = createChild(childModules);
+        const getFromPrivateInjector = annotate(function(key) {
+          return privateInjector.get(key);
+        });
+
+        moduleExports.forEach(function(key) {
+          providers[key] = [ getFromPrivateInjector, key, 'private', privateInjector ];
+        });
+
+        // ensure child injector initializes
+        const initializers = (moduleDefinition.__init__ || []).slice();
+
+        initializers.unshift(function() {
+          privateInjector.init();
+        });
+
+        moduleDefinition = Object.assign({}, moduleDefinition, {
+          __init__: initializers
+        });
+
+        return createInitializer(moduleDefinition, privateInjector);
       }
-    });
+
+      // normal module
+      Object.keys(moduleDefinition).forEach(function(key) {
+
+        if (key === '__init__' || key === '__depends__') {
+          return;
+        }
+
+        if (moduleDefinition[key][2] === 'private') {
+          providers[key] = moduleDefinition[key];
+          return;
+        }
+
+        const type = moduleDefinition[key][0];
+        const value = moduleDefinition[key][1];
+
+        providers[key] = [ factoryMap[type], arrayUnwrap(type, value), type ];
+      });
+
+      return createInitializer(moduleDefinition, self);
+    }
+
+    /**
+     * @param {ModuleDefinition[]} moduleDefinitions
+     * @param {ModuleDefinition} moduleDefinition
+     *
+     * @return {ModuleDefinition[]}
+     */
+    function resolveDependencies(moduleDefinitions, moduleDefinition) {
+
+      if (moduleDefinitions.indexOf(moduleDefinition) !== -1) {
+        return moduleDefinitions;
+      }
+
+      moduleDefinitions = (moduleDefinition.__depends__ || []).reduce(resolveDependencies, moduleDefinitions);
+
+      if (moduleDefinitions.indexOf(moduleDefinition) !== -1) {
+        return moduleDefinitions;
+      }
+
+      return moduleDefinitions.concat(moduleDefinition);
+    }
+
+    /**
+     * @param {ModuleDefinition[]} moduleDefinitions
+     *
+     * @return { () => void } initializerFn
+     */
+    function bootstrap(moduleDefinitions) {
+
+      const initializers = moduleDefinitions
+        .reduce(resolveDependencies, [])
+        .map(loadModule);
+
+      let initialized = false;
+
+      return function() {
+
+        if (initialized) {
+          return;
+        }
+
+        initialized = true;
+
+        initializers.forEach(initializer => initializer());
+      };
+    }
 
     // public API
     this.get = get;
     this.invoke = invoke;
     this.instantiate = instantiate;
     this.createChild = createChild;
+
+    // setup
+    this.init = bootstrap(modules);
   }
 
-  // helpers /////////////////
 
-  function hasProp(obj, prop) {
-    return Object.hasOwnProperty.call(obj, prop);
+  // helpers ///////////////
+
+  function arrayUnwrap(type, value) {
+    if (type !== 'value' && isArray(value)) {
+      value = annotate(value.slice());
+    }
+
+    return value;
   }
+
+  /**
+   * @typedef {import('../core/EventBus').default} EventBus
+   * @typedef {import('./Styles').default} Styles
+   */
 
   // apply default renderer with lowest possible priority
   // so that it only kicks in if noone else could render
-  var DEFAULT_RENDER_PRIORITY$1 = 1;
+  var DEFAULT_RENDER_PRIORITY = 1;
 
   /**
    * The default renderer used for shapes and connections.
@@ -17833,44 +21562,62 @@
    * @param {Styles} styles
    */
   function DefaultRenderer(eventBus, styles) {
-    //
-    BaseRenderer.call(this, eventBus, DEFAULT_RENDER_PRIORITY$1);
+
+    BaseRenderer.call(this, eventBus, DEFAULT_RENDER_PRIORITY);
 
     this.CONNECTION_STYLE = styles.style([ 'no-fill' ], { strokeWidth: 5, stroke: 'fuchsia' });
     this.SHAPE_STYLE = styles.style({ fill: 'white', stroke: 'fuchsia', strokeWidth: 2 });
+    this.FRAME_STYLE = styles.style([ 'no-fill' ], { stroke: 'fuchsia', strokeDasharray: 4, strokeWidth: 2 });
   }
 
-  inherits_browser(DefaultRenderer, BaseRenderer);
+  e(DefaultRenderer, BaseRenderer);
 
 
+  /**
+   * @private
+   */
   DefaultRenderer.prototype.canRender = function() {
     return true;
   };
 
-  DefaultRenderer.prototype.drawShape = function drawShape(visuals, element) {
+  /**
+   * @private
+   */
+  DefaultRenderer.prototype.drawShape = function drawShape(visuals, element, attrs) {
+    var rect = create$1('rect');
 
-    var rect = create('rect');
-    attr$1(rect, {
+    attr(rect, {
       x: 0,
       y: 0,
       width: element.width || 0,
       height: element.height || 0
     });
-    attr$1(rect, this.SHAPE_STYLE);
+
+    if (isFrameElement(element)) {
+      attr(rect, assign$1({}, this.FRAME_STYLE, attrs || {}));
+    } else {
+      attr(rect, assign$1({}, this.SHAPE_STYLE, attrs || {}));
+    }
 
     append(visuals, rect);
 
     return rect;
   };
 
-  DefaultRenderer.prototype.drawConnection = function drawConnection(visuals, connection) {
+  /**
+   * @private
+   */
+  DefaultRenderer.prototype.drawConnection = function drawConnection(visuals, connection, attrs) {
 
-    var line = createLine(connection.waypoints, this.CONNECTION_STYLE);
+    var line = createLine(connection.waypoints, assign$1({}, this.CONNECTION_STYLE, attrs || {}));
     append(visuals, line);
 
     return line;
   };
 
+  /**
+   * @private
+   */
   DefaultRenderer.prototype.getShapePath = function getShapePath(shape) {
 
     var x = shape.x,
@@ -17879,16 +21626,19 @@
         height = shape.height;
 
     var shapePath = [
-      ['M', x, y],
-      ['l', width, 0],
-      ['l', 0, height],
-      ['l', -width, 0],
-      ['z']
+      [ 'M', x, y ],
+      [ 'l', width, 0 ],
+      [ 'l', 0, height ],
+      [ 'l', -width, 0 ],
+      [ 'z' ]
     ];
 
     return componentsToPath(shapePath);
   };
 
+  /**
+   * @private
+   */
   DefaultRenderer.prototype.getConnectionPath = function getConnectionPath(connection) {
     var waypoints = connection.waypoints;
 
@@ -17905,7 +21655,6 @@
 
     return componentsToPath(connectionPath);
   };
-
 
   DefaultRenderer.$inject = [ 'eventBus', 'styles' ];
 
@@ -17930,59 +21679,115 @@
     var self = this;
 
     /**
-     * Builds a style definition from a className, a list of traits and an object of additional attributes.
+     * Builds a style definition from a className, a list of traits and an object
+     * of additional attributes.
      *
-     * @param  {String} className
-     * @param  {Array<String>} traits
-     * @param  {Object} additionalAttrs
+     * @param {string} className
+     * @param {string[]} [traits]
+     * @param {Object} [additionalAttrs]
      *
-     * @return {Object} the style defintion
+     * @return {Object} the style definition
      */
     this.cls = function(className, traits, additionalAttrs) {
       var attrs = this.style(traits, additionalAttrs);
 
-      return assign(attrs, { 'class': className });
+      return assign$1(attrs, { 'class': className });
     };
 
     /**
-     * Builds a style definition from a list of traits and an object of additional attributes.
+     * Builds a style definition from a list of traits and an object of additional
+     * attributes.
      *
-     * @param  {Array<String>} traits
-     * @param  {Object} additionalAttrs
+     * @param {string[]} [traits]
+     * @param {Object} additionalAttrs
      *
-     * @return {Object} the style defintion
+     * @return {Object} the style definition
      */
     this.style = function(traits, additionalAttrs) {
 
-      if (!isArray(traits) && !additionalAttrs) {
+      if (!isArray$3(traits) && !additionalAttrs) {
         additionalAttrs = traits;
         traits = [];
       }
 
       var attrs = reduce(traits, function(attrs, t) {
-        return assign(attrs, defaultTraits[t] || {});
+        return assign$1(attrs, defaultTraits[t] || {});
       }, {});
 
-      return additionalAttrs ? assign(attrs, additionalAttrs) : attrs;
+      return additionalAttrs ? assign$1(attrs, additionalAttrs) : attrs;
     };
 
+
+    /**
+     * Computes a style definition from a list of traits and an object of
+     * additional attributes, with custom style definition object.
+     *
+     * @param {Object} custom
+     * @param {string[]} [traits]
+     * @param {Object} defaultStyles
+     *
+     * @return {Object} the style definition
+     */
     this.computeStyle = function(custom, traits, defaultStyles) {
-      if (!isArray(traits)) {
+      if (!isArray$3(traits)) {
         defaultStyles = traits;
         traits = [];
       }
 
-      return self.style(traits || [], assign({}, defaultStyles, custom || {}));
+      return self.style(traits || [], assign$1({}, defaultStyles, custom || {}));
     };
   }
 
-  var DrawModule$1 = {
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var DrawModule = {
     __init__: [ 'defaultRenderer' ],
     defaultRenderer: [ 'type', DefaultRenderer ],
     styles: [ 'type', Styles ]
   };
 
-  function round$7(number, resolution) {
+  /**
+   * @typedef {import('./Types').ConnectionLike} ConnectionLike
+   * @typedef {import('./Types').RootLike} RootLike
+   * @typedef {import('./Types').ParentLike } ParentLike
+   * @typedef {import('./Types').ShapeLike} ShapeLike
+   *
+   * @typedef { {
+   *   container?: HTMLElement;
+   *   deferUpdate?: boolean;
+   *   width?: number;
+   *   height?: number;
+   * } } CanvasConfig
+   * @typedef { {
+   *   group: SVGElement;
+   *   index: number;
+   *   visible: boolean;
+   * } } CanvasLayer
+   * @typedef { {
+   *   [key: string]: CanvasLayer;
+   * } } CanvasLayers
+   * @typedef { {
+   *   rootElement: ShapeLike;
+   *   layer: CanvasLayer;
+   * } } CanvasPlane
+   * @typedef { {
+   *   scale: number;
+   *   inner: Rect;
+   *   outer: Dimensions;
+   * } & Rect } CanvasViewbox
+   *
+   * @typedef {import('./ElementRegistry').default} ElementRegistry
+   * @typedef {import('./EventBus').default} EventBus
+   * @typedef {import('./GraphicsFactory').default} GraphicsFactory
+   *
+   * @typedef {import('../util/Types').Dimensions} Dimensions
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   * @typedef {import('../util/Types').RectTRBL} RectTRBL
+   */
+
+  function round(number, resolution) {
     return Math.round(number * resolution) / resolution;
   }
 
@@ -17990,26 +21795,35 @@
     return isNumber(number) ? number + 'px' : number;
   }
 
+  function findRoot(element) {
+    while (element.parent) {
+      element = element.parent;
+    }
+
+    return element;
+  }
+
   /**
    * Creates a HTML container element for a SVG element with
    * the given configuration
    *
-   * @param  {Object} options
+   * @param {CanvasConfig} options
+   *
    * @return {HTMLElement} the container element
    */
   function createContainer(options) {
 
-    options = assign({}, { width: '100%', height: '100%' }, options);
+    options = assign$1({}, { width: '100%', height: '100%' }, options);
 
-    var container = options.container || document.body;
+    const container = options.container || document.body;
 
     // create a <div> around the svg element with the respective size
     // this way we can always get the correct container size
     // (this is impossible for <svg> elements at the moment)
-    var parent = document.createElement('div');
-    parent.setAttribute('class', 'djs-container');
+    const parent = document.createElement('div');
+    parent.setAttribute('class', 'djs-container djs-parent');
 
-    assign(parent.style, {
+    assign(parent, {
       position: 'relative',
       overflow: 'hidden',
       width: ensurePx(options.width),
@@ -18022,10 +21836,10 @@
   }
 
   function createGroup(parent, cls, childIndex) {
-    var group = create('g');
-    classes$1(group).add(cls);
+    const group = create$1('g');
+    classes(group).add(cls);
 
-    var index = childIndex !== undefined ? childIndex : parent.childNodes.length - 1;
+    const index = childIndex !== undefined ? childIndex : parent.childNodes.length - 1;
 
     // must ensure second argument is node or _null_
     // cf. https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore
@@ -18034,10 +21848,14 @@
     return group;
   }
 
-  var BASE_LAYER = 'base';
+  const BASE_LAYER = 'base';
+
+  // render plane contents behind utility layers
+  const PLANE_LAYER_INDEX = 0;
+  const UTILITY_LAYER_INDEX = 1;
 
 
-  var REQUIRED_MODEL_ATTRS = {
+  const REQUIRED_MODEL_ATTRS = {
     shape: [ 'x', 'y', 'width', 'height' ],
     connection: [ 'waypoints' ]
   };
@@ -18050,16 +21868,35 @@
    *
    * @emits Canvas#canvas.init
    *
-   * @param {Object} config
+   * @param {CanvasConfig|null} config
    * @param {EventBus} eventBus
    * @param {GraphicsFactory} graphicsFactory
    * @param {ElementRegistry} elementRegistry
    */
   function Canvas(config, eventBus, graphicsFactory, elementRegistry) {
-
     this._eventBus = eventBus;
     this._elementRegistry = elementRegistry;
     this._graphicsFactory = graphicsFactory;
+
+    /**
+     * @type {number}
+     */
+    this._rootsIdx = 0;
+
+    /**
+     * @type {CanvasLayers}
+     */
+    this._layers = {};
+
+    /**
+     * @type {CanvasPlane[]}
+     */
+    this._planes = [];
+
+    /**
+     * @type {RootLike|null}
+     */
+    this._rootElement = null;
 
     this._init(config || {});
   }
@@ -18071,42 +21908,42 @@
     'elementRegistry'
   ];
 
+  /**
+   * Creates a <svg> element that is wrapped into a <div>.
+   * This way we are always able to correctly figure out the size of the svg element
+   * by querying the parent node.
 
+   * (It is not possible to get the size of a svg element cross browser @ 2014-04-01)
+
+   * <div class="djs-container" style="width: {desired-width}, height: {desired-height}">
+   *   <svg width="100%" height="100%">
+   *    ...
+   *   </svg>
+   * </div>
+   *
+   * @param {CanvasConfig} config
+   */
   Canvas.prototype._init = function(config) {
 
-    var eventBus = this._eventBus;
-
-    // Creates a <svg> element that is wrapped into a <div>.
-    // This way we are always able to correctly figure out the size of the svg element
-    // by querying the parent node.
-    //
-    // (It is not possible to get the size of a svg element cross browser @ 2014-04-01)
-    //
-    // <div class="djs-container" style="width: {desired-width}, height: {desired-height}">
-    //   <svg width="100%" height="100%">
-    //    ...
-    //   </svg>
-    // </div>
+    const eventBus = this._eventBus;
 
     // html container
-    var container = this._container = createContainer(config);
+    const container = this._container = createContainer(config);
 
-    var svg = this._svg = create('svg');
-    attr$1(svg, { width: '100%', height: '100%' });
+    const svg = this._svg = create$1('svg');
+    attr(svg, { width: '100%', height: '100%' });
 
     append(container, svg);
 
-    var viewport = this._viewport = createGroup(svg, 'viewport');
+    const viewport = this._viewport = createGroup(svg, 'viewport');
 
-    this._layers = {};
-
-    // debounce canvas.viewbox.changed events
-    // for smoother diagram interaction
-    if (config.deferUpdate !== false) {
-      this._viewboxChanged = debounce(bind(this._viewboxChanged, this), 300);
+    // debounce canvas.viewbox.changed events when deferUpdate is set
+    // to help with potential performance issues
+    if (config.deferUpdate) {
+      this._viewboxChanged = debounce(bind$2(this._viewboxChanged, this), 300);
     }
 
-    eventBus.on('diagram.init', function() {
+    eventBus.on('diagram.init', () => {
 
       /**
        * An event indicating that the canvas is ready to be drawn on.
@@ -18124,7 +21961,7 @@
         viewport: viewport
       });
 
-    }, this);
+    });
 
     // reset viewbox on shape changes to
     // recompute the viewbox
@@ -18133,22 +21970,23 @@
       'connection.added',
       'shape.removed',
       'connection.removed',
-      'elements.changed'
-    ], function() {
+      'elements.changed',
+      'root.set'
+    ], () => {
       delete this._cachedViewbox;
-    }, this);
+    });
 
     eventBus.on('diagram.destroy', 500, this._destroy, this);
     eventBus.on('diagram.clear', 500, this._clear, this);
   };
 
-  Canvas.prototype._destroy = function(emit) {
+  Canvas.prototype._destroy = function() {
     this._eventBus.fire('canvas.destroy', {
       svg: this._svg,
       viewport: this._viewport
     });
 
-    var parent = this._container.parentNode;
+    const parent = this._container.parentNode;
 
     if (parent) {
       parent.removeChild(this._container);
@@ -18157,26 +21995,29 @@
     delete this._svg;
     delete this._container;
     delete this._layers;
+    delete this._planes;
     delete this._rootElement;
     delete this._viewport;
   };
 
   Canvas.prototype._clear = function() {
 
-    var self = this;
-
-    var allElements = this._elementRegistry.getAll();
+    const allElements = this._elementRegistry.getAll();
 
     // remove all elements
-    allElements.forEach(function(element) {
-      var type = getType(element);
+    allElements.forEach(element => {
+      const type = getType(element);
 
       if (type === 'root') {
-        self.setRootElement(null, true);
+        this.removeRootElement(element);
       } else {
-        self._removeElement(element, type);
+        this._removeElement(element, type);
       }
     });
+
+    // remove all planes
+    this._planes = [];
+    this._rootElement = null;
 
     // force recomputation of view box
     delete this._cachedViewbox;
@@ -18186,10 +22027,10 @@
    * Returns the default layer on which
    * all elements are drawn.
    *
-   * @returns {SVGElement}
+   * @return {SVGElement}  The SVG element of the layer.
    */
   Canvas.prototype.getDefaultLayer = function() {
-    return this.getLayer(BASE_LAYER, 0);
+    return this.getLayer(BASE_LAYER, PLANE_LAYER_INDEX);
   };
 
   /**
@@ -18202,10 +22043,10 @@
    * A layer with a certain index is always created above all
    * existing layers with the same index.
    *
-   * @param {String} name
-   * @param {Number} index
+   * @param {string} name The name of the layer.
+   * @param {number} [index] The index of the layer.
    *
-   * @returns {SVGElement}
+   * @return {SVGElement} The SVG element of the layer.
    */
   Canvas.prototype.getLayer = function(name, index) {
 
@@ -18213,7 +22054,7 @@
       throw new Error('must specify a name');
     }
 
-    var layer = this._layers[name];
+    let layer = this._layers[name];
 
     if (!layer) {
       layer = this._layers[name] = this._createLayer(name, index);
@@ -18229,39 +22070,191 @@
   };
 
   /**
-   * Creates a given layer and returns it.
+   * For a given index, return the number of layers that have a higher index and
+   * are visible.
    *
-   * @param {String} name
-   * @param {Number} [index=0]
+   * This is used to determine the node a layer should be inserted at.
    *
-   * @return {Object} layer descriptor with { index, group: SVGGroup }
+   * @param {number} index
+   *
+   * @return {number}
    */
-  Canvas.prototype._createLayer = function(name, index) {
-
-    if (!index) {
-      index = 0;
-    }
-
-    var childIndex = reduce(this._layers, function(childIndex, layer) {
-      if (index >= layer.index) {
+  Canvas.prototype._getChildIndex = function(index) {
+    return reduce(this._layers, function(childIndex, layer) {
+      if (layer.visible && index >= layer.index) {
         childIndex++;
       }
 
       return childIndex;
     }, 0);
+  };
+
+  /**
+   * Creates a given layer and returns it.
+   *
+   * @param {string} name
+   * @param {number} [index=0]
+   *
+   * @return {CanvasLayer}
+   */
+  Canvas.prototype._createLayer = function(name, index) {
+
+    if (typeof index === 'undefined') {
+      index = UTILITY_LAYER_INDEX;
+    }
+
+    const childIndex = this._getChildIndex(index);
 
     return {
       group: createGroup(this._viewport, 'layer-' + name, childIndex),
-      index: index
+      index: index,
+      visible: true
     };
-
   };
+
+
+  /**
+   * Shows a given layer.
+   *
+   * @param {string} name The name of the layer.
+   *
+   * @return {SVGElement} The SVG element of the layer.
+   */
+  Canvas.prototype.showLayer = function(name) {
+
+    if (!name) {
+      throw new Error('must specify a name');
+    }
+
+    const layer = this._layers[name];
+
+    if (!layer) {
+      throw new Error('layer <' + name + '> does not exist');
+    }
+
+    const viewport = this._viewport;
+    const group = layer.group;
+    const index = layer.index;
+
+    if (layer.visible) {
+      return group;
+    }
+
+    const childIndex = this._getChildIndex(index);
+
+    viewport.insertBefore(group, viewport.childNodes[childIndex] || null);
+
+    layer.visible = true;
+
+    return group;
+  };
+
+  /**
+   * Hides a given layer.
+   *
+   * @param {string} name The name of the layer.
+   *
+   * @return {SVGElement} The SVG element of the layer.
+   */
+  Canvas.prototype.hideLayer = function(name) {
+
+    if (!name) {
+      throw new Error('must specify a name');
+    }
+
+    const layer = this._layers[name];
+
+    if (!layer) {
+      throw new Error('layer <' + name + '> does not exist');
+    }
+
+    const group = layer.group;
+
+    if (!layer.visible) {
+      return group;
+    }
+
+    remove$1(group);
+
+    layer.visible = false;
+
+    return group;
+  };
+
+
+  Canvas.prototype._removeLayer = function(name) {
+
+    const layer = this._layers[name];
+
+    if (layer) {
+      delete this._layers[name];
+
+      remove$1(layer.group);
+    }
+  };
+
+  /**
+   * Returns the currently active layer. Can be null.
+   *
+   * @return {CanvasLayer|null} The active layer of `null`.
+   */
+  Canvas.prototype.getActiveLayer = function() {
+    const plane = this._findPlaneForRoot(this.getRootElement());
+
+    if (!plane) {
+      return null;
+    }
+
+    return plane.layer;
+  };
+
+
+  /**
+   * Returns the plane which contains the given element.
+   *
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   *
+   * @return {RootLike|undefined} The root of the element.
+   */
+  Canvas.prototype.findRoot = function(element) {
+    if (typeof element === 'string') {
+      element = this._elementRegistry.get(element);
+    }
+
+    if (!element) {
+      return;
+    }
+
+    const plane = this._findPlaneForRoot(
+      findRoot(element)
+    ) || {};
+
+    return plane.rootElement;
+  };
+
+  /**
+   * Return a list of all root elements on the diagram.
+   *
+   * @return {(RootLike)[]} The list of root elements.
+   */
+  Canvas.prototype.getRootElements = function() {
+    return this._planes.map(function(plane) {
+      return plane.rootElement;
+    });
+  };
+
+  Canvas.prototype._findPlaneForRoot = function(rootElement) {
+    return find(this._planes, function(plane) {
+      return plane.rootElement === rootElement;
+    });
+  };
+
 
   /**
    * Returns the html element that encloses the
    * drawing canvas.
    *
-   * @return {DOMNode}
+   * @return {HTMLElement} The HTML element of the container.
    */
   Canvas.prototype.getContainer = function() {
     return this._container;
@@ -18270,8 +22263,8 @@
 
   // markers //////////////////////
 
-  Canvas.prototype._updateMarker = function(element, marker, add$$1) {
-    var container;
+  Canvas.prototype._updateMarker = function(element, marker, add) {
+    let container;
 
     if (!element.id) {
       element = this._elementRegistry.get(element);
@@ -18284,13 +22277,14 @@
       return;
     }
 
-    forEach([ container.gfx, container.secondaryGfx ], function(gfx) {
+    forEach$1([ container.gfx, container.secondaryGfx ], function(gfx) {
       if (gfx) {
+
         // invoke either addClass or removeClass based on mode
-        if (add$$1) {
-          classes$1(gfx).add(marker);
+        if (add) {
+          classes(gfx).add(marker);
         } else {
-          classes$1(gfx).remove(marker);
+          classes(gfx).remove(marker);
         }
       }
     });
@@ -18300,12 +22294,12 @@
      *
      * @event element.marker.update
      * @type {Object}
-     * @property {djs.model.Element} element the shape
-     * @property {Object} gfx the graphical representation of the shape
-     * @property {String} marker
-     * @property {Boolean} add true if the marker was added, false if it got removed
+     * @property {Element} element the shape
+     * @property {SVGElement} gfx the graphical representation of the shape
+     * @property {string} marker
+     * @property {boolean} add true if the marker was added, false if it got removed
      */
-    this._eventBus.fire('element.marker.update', { element: element, gfx: container.gfx, marker: marker, add: !!add$$1 });
+    this._eventBus.fire('element.marker.update', { element: element, gfx: container.gfx, marker: marker, add: !!add });
   };
 
 
@@ -18316,14 +22310,17 @@
    * integrate extension into the marker life-cycle, too.
    *
    * @example
+   *
+   * ```javascript
    * canvas.addMarker('foo', 'some-marker');
    *
-   * var fooGfx = canvas.getGraphics('foo');
+   * const fooGfx = canvas.getGraphics('foo');
    *
    * fooGfx; // <g class="... some-marker"> ... </g>
+   * ```
    *
-   * @param {String|djs.model.Base} element
-   * @param {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.addMarker = function(element, marker) {
     this._updateMarker(element, marker, true);
@@ -18336,27 +22333,27 @@
    * Fires the element.marker.update event, making it possible to
    * integrate extension into the marker life-cycle, too.
    *
-   * @param  {String|djs.model.Base} element
-   * @param  {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.removeMarker = function(element, marker) {
     this._updateMarker(element, marker, false);
   };
 
   /**
-   * Check the existence of a marker on element.
+   * Check whether an element has a given marker.
    *
-   * @param  {String|djs.model.Base} element
-   * @param  {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.hasMarker = function(element, marker) {
     if (!element.id) {
       element = this._elementRegistry.get(element);
     }
 
-    var gfx = this.getGraphics(element);
+    const gfx = this.getGraphics(element);
 
-    return classes$1(gfx).has(marker);
+    return classes(gfx).has(marker);
   };
 
   /**
@@ -18365,8 +22362,8 @@
    * Fires the element.marker.update event, making it possible to
    * integrate extension into the marker life-cycle, too.
    *
-   * @param  {String|djs.model.Base} element
-   * @param  {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.toggleMarker = function(element, marker) {
     if (this.hasMarker(element, marker)) {
@@ -18376,68 +22373,195 @@
     }
   };
 
+  /**
+   * Returns the current root element.
+   *
+   * Supports two different modes for handling root elements:
+   *
+   * 1. if no root element has been added before, an implicit root will be added
+   * and returned. This is used in applications that don't require explicit
+   * root elements.
+   *
+   * 2. when root elements have been added before calling `getRootElement`,
+   * root elements can be null. This is used for applications that want to manage
+   * root elements themselves.
+   *
+   * @return {RootLike} The current root element.
+   */
   Canvas.prototype.getRootElement = function() {
-    if (!this._rootElement) {
-      this.setRootElement({ id: '__implicitroot', children: [] });
+    const rootElement = this._rootElement;
+
+    // can return null if root elements are present but none was set yet
+    if (rootElement || this._planes.length) {
+      return rootElement;
     }
 
-    return this._rootElement;
+    return this.setRootElement(this.addRootElement(null));
   };
 
+  /**
+   * Adds a given root element and returns it.
+   *
+   * @param {RootLike} [rootElement] The root element to be added.
+   *
+   * @return {RootLike} The added root element or an implicit root element.
+   */
+  Canvas.prototype.addRootElement = function(rootElement) {
+    const idx = this._rootsIdx++;
 
+    if (!rootElement) {
+      rootElement = {
+        id: '__implicitroot_' + idx,
+        children: [],
+        isImplicit: true
+      };
+    }
 
-  // root element handling //////////////////////
+    const layerName = rootElement.layer = 'root-' + idx;
+
+    this._ensureValid('root', rootElement);
+
+    const layer = this.getLayer(layerName, PLANE_LAYER_INDEX);
+
+    this.hideLayer(layerName);
+
+    this._addRoot(rootElement, layer);
+
+    this._planes.push({
+      rootElement: rootElement,
+      layer: layer
+    });
+
+    return rootElement;
+  };
+
+  /**
+   * Removes a given root element and returns it.
+   *
+   * @param {RootLike|string} rootElement element or element ID
+   *
+   * @return {RootLike|undefined} removed element
+   */
+  Canvas.prototype.removeRootElement = function(rootElement) {
+
+    if (typeof rootElement === 'string') {
+      rootElement = this._elementRegistry.get(rootElement);
+    }
+
+    const plane = this._findPlaneForRoot(rootElement);
+
+    if (!plane) {
+      return;
+    }
+
+    // hook up life-cycle events
+    this._removeRoot(rootElement);
+
+    // clean up layer
+    this._removeLayer(rootElement.layer);
+
+    // clean up plane
+    this._planes = this._planes.filter(function(plane) {
+      return plane.rootElement !== rootElement;
+    });
+
+    // clean up active root
+    if (this._rootElement === rootElement) {
+      this._rootElement = null;
+    }
+
+    return rootElement;
+  };
+
 
   /**
    * Sets a given element as the new root element for the canvas
    * and returns the new root element.
    *
-   * @param {Object|djs.model.Root} element
-   * @param {Boolean} [override] whether to override the current root element, if any
+   * @param {RootLike} rootElement The root element to be set.
    *
-   * @return {Object|djs.model.Root} new root element
+   * @return {RootLike} The set root element.
    */
-  Canvas.prototype.setRootElement = function(element, override) {
+  Canvas.prototype.setRootElement = function(rootElement) {
 
-    if (element) {
-      this._ensureValid('root', element);
+    if (rootElement === this._rootElement) {
+      return;
     }
 
-    var currentRoot = this._rootElement,
-        elementRegistry = this._elementRegistry,
-        eventBus = this._eventBus;
+    let plane;
 
-    if (currentRoot) {
-      if (!override) {
-        throw new Error('rootElement already set, need to specify override');
-      }
-
-      // simulate element remove event sequence
-      eventBus.fire('root.remove', { element: currentRoot });
-      eventBus.fire('root.removed', { element: currentRoot });
-
-      elementRegistry.remove(currentRoot);
+    if (!rootElement) {
+      throw new Error('rootElement required');
     }
 
-    if (element) {
-      var gfx = this.getDefaultLayer();
+    plane = this._findPlaneForRoot(rootElement);
 
-      // resemble element add event sequence
-      eventBus.fire('root.add', { element: element });
-
-      elementRegistry.add(element, gfx, this._svg);
-
-      eventBus.fire('root.added', { element: element, gfx: gfx });
+    // give set add semantics for backwards compatibility
+    if (!plane) {
+      rootElement = this.addRootElement(rootElement);
     }
 
-    this._rootElement = element;
+    this._setRoot(rootElement);
 
-    return element;
+    return rootElement;
   };
 
 
+  Canvas.prototype._removeRoot = function(element) {
+    const elementRegistry = this._elementRegistry,
+          eventBus = this._eventBus;
 
-  // add functionality //////////////////////
+    // simulate element remove event sequence
+    eventBus.fire('root.remove', { element: element });
+    eventBus.fire('root.removed', { element: element });
+
+    elementRegistry.remove(element);
+  };
+
+
+  Canvas.prototype._addRoot = function(element, gfx) {
+    const elementRegistry = this._elementRegistry,
+          eventBus = this._eventBus;
+
+    // resemble element add event sequence
+    eventBus.fire('root.add', { element: element });
+
+    elementRegistry.add(element, gfx);
+
+    eventBus.fire('root.added', { element: element, gfx: gfx });
+  };
+
+
+  Canvas.prototype._setRoot = function(rootElement, layer) {
+
+    const currentRoot = this._rootElement;
+
+    if (currentRoot) {
+
+      // un-associate previous root element <svg>
+      this._elementRegistry.updateGraphics(currentRoot, null, true);
+
+      // hide previous layer
+      this.hideLayer(currentRoot.layer);
+    }
+
+    if (rootElement) {
+
+      if (!layer) {
+        layer = this._findPlaneForRoot(rootElement).layer;
+      }
+
+      // associate element with <svg>
+      this._elementRegistry.updateGraphics(rootElement, this._svg, true);
+
+      // show root layer
+      this.showLayer(rootElement.layer);
+    }
+
+    this._rootElement = rootElement;
+
+    this._eventBus.fire('root.set', { element: rootElement });
+  };
 
   Canvas.prototype._ensureValid = function(type, element) {
     if (!element.id) {
@@ -18445,13 +22569,13 @@
     }
 
     if (this._elementRegistry.get(element.id)) {
-      throw new Error('element with id ' + element.id + ' already exists');
+      throw new Error('element <' + element.id + '> already exists');
     }
 
-    var requiredAttrs = REQUIRED_MODEL_ATTRS[type];
+    const requiredAttrs = REQUIRED_MODEL_ATTRS[type];
 
-    var valid = every(requiredAttrs, function(attr$$1) {
-      return typeof element[attr$$1] !== 'undefined';
+    const valid = every(requiredAttrs, function(attr) {
+      return typeof element[attr] !== 'undefined';
     });
 
     if (!valid) {
@@ -18461,7 +22585,7 @@
   };
 
   Canvas.prototype._setParent = function(element, parent, parentIndex) {
-    add$1(parent.children, element, parentIndex);
+    add(parent.children, element, parentIndex);
     element.parent = parent;
   };
 
@@ -18478,19 +22602,19 @@
    *
    * Extensions may hook into these events to perform their magic.
    *
-   * @param {String} type
-   * @param {Object|djs.model.Base} element
-   * @param {Object|djs.model.Base} [parent]
-   * @param {Number} [parentIndex]
+   * @param {string} type
+   * @param {ConnectionLike|ShapeLike} element
+   * @param {ShapeLike} [parent]
+   * @param {number} [parentIndex]
    *
-   * @return {Object|djs.model.Base} the added element
+   * @return {ConnectionLike|ShapeLike} The added element.
    */
   Canvas.prototype._addElement = function(type, element, parent, parentIndex) {
 
     parent = parent || this.getRootElement();
 
-    var eventBus = this._eventBus,
-        graphicsFactory = this._graphicsFactory;
+    const eventBus = this._eventBus,
+          graphicsFactory = this._graphicsFactory;
 
     this._ensureValid(type, element);
 
@@ -18499,7 +22623,7 @@
     this._setParent(element, parent, parentIndex);
 
     // create graphics
-    var gfx = graphicsFactory.create(type, element, parentIndex);
+    const gfx = graphicsFactory.create(type, element, parentIndex);
 
     this._elementRegistry.add(element, gfx);
 
@@ -18512,26 +22636,26 @@
   };
 
   /**
-   * Adds a shape to the canvas
+   * Adds a shape to the canvas.
    *
-   * @param {Object|djs.model.Shape} shape to add to the diagram
-   * @param {djs.model.Base} [parent]
-   * @param {Number} [parentIndex]
+   * @param {ShapeLike} shape The shape to be added
+   * @param {ParentLike} [parent] The shape's parent.
+   * @param {number} [parentIndex] The index at which to add the shape to the parent's children.
    *
-   * @return {djs.model.Shape} the added shape
+   * @return {ShapeLike} The added shape.
    */
   Canvas.prototype.addShape = function(shape, parent, parentIndex) {
     return this._addElement('shape', shape, parent, parentIndex);
   };
 
   /**
-   * Adds a connection to the canvas
+   * Adds a connection to the canvas.
    *
-   * @param {Object|djs.model.Connection} connection to add to the diagram
-   * @param {djs.model.Base} [parent]
-   * @param {Number} [parentIndex]
+   * @param {ConnectionLike} connection The connection to be added.
+   * @param {ParentLike} [parent] The connection's parent.
+   * @param {number} [parentIndex] The index at which to add the connection to the parent's children.
    *
-   * @return {djs.model.Connection} the added connection
+   * @return {ConnectionLike} The added connection.
    */
   Canvas.prototype.addConnection = function(connection, parent, parentIndex) {
     return this._addElement('connection', connection, parent, parentIndex);
@@ -18543,13 +22667,14 @@
    */
   Canvas.prototype._removeElement = function(element, type) {
 
-    var elementRegistry = this._elementRegistry,
-        graphicsFactory = this._graphicsFactory,
-        eventBus = this._eventBus;
+    const elementRegistry = this._elementRegistry,
+          graphicsFactory = this._graphicsFactory,
+          eventBus = this._eventBus;
 
     element = elementRegistry.get(element.id || element);
 
     if (!element) {
+
       // element was removed already
       return;
     }
@@ -18559,7 +22684,7 @@
     graphicsFactory.remove(element);
 
     // unset parent <-> child relationship
-    remove$2(element.parent && element.parent.children, element);
+    remove(element.parent && element.parent.children, element);
     element.parent = null;
 
     eventBus.fire(type + '.removed', { element: element });
@@ -18571,11 +22696,14 @@
 
 
   /**
-   * Removes a shape from the canvas
+   * Removes a shape from the canvas.
    *
-   * @param {String|djs.model.Shape} shape or shape id to be removed
+   * @fires ShapeRemoveEvent
+   * @fires ShapeRemovedEvent
    *
-   * @return {djs.model.Shape} the removed shape
+   * @param {ShapeLike|string} shape The shape or its ID.
+   *
+   * @return {ShapeLike} The removed shape.
    */
   Canvas.prototype.removeShape = function(shape) {
 
@@ -18584,10 +22712,10 @@
      *
      * @memberOf Canvas
      *
-     * @event shape.remove
+     * @event ShapeRemoveEvent
      * @type {Object}
-     * @property {djs.model.Shape} element the shape descriptor
-     * @property {Object} gfx the graphical representation of the shape
+     * @property {ShapeLike} element The shape.
+     * @property {SVGElement} gfx The graphical element.
      */
 
     /**
@@ -18595,21 +22723,24 @@
      *
      * @memberOf Canvas
      *
-     * @event shape.removed
+     * @event ShapeRemovedEvent
      * @type {Object}
-     * @property {djs.model.Shape} element the shape descriptor
-     * @property {Object} gfx the graphical representation of the shape
+     * @property {ShapeLike} element The shape.
+     * @property {SVGElement} gfx The graphical element.
      */
     return this._removeElement(shape, 'shape');
   };
 
 
   /**
-   * Removes a connection from the canvas
+   * Removes a connection from the canvas.
    *
-   * @param {String|djs.model.Connection} connection or connection id to be removed
+   * @fires ConnectionRemoveEvent
+   * @fires ConnectionRemovedEvent
    *
-   * @return {djs.model.Connection} the removed connection
+   * @param {ConnectionLike|string} connection The connection or its ID.
+   *
+   * @return {ConnectionLike} The removed connection.
    */
   Canvas.prototype.removeConnection = function(connection) {
 
@@ -18618,10 +22749,10 @@
      *
      * @memberOf Canvas
      *
-     * @event connection.remove
+     * @event ConnectionRemoveEvent
      * @type {Object}
-     * @property {djs.model.Connection} element the connection descriptor
-     * @property {Object} gfx the graphical representation of the connection
+     * @property {ConnectionLike} element The connection.
+     * @property {SVGElement} gfx The graphical element.
      */
 
     /**
@@ -18629,22 +22760,22 @@
      *
      * @memberOf Canvas
      *
-     * @event connection.removed
+     * @event ConnectionRemovedEvent
      * @type {Object}
-     * @property {djs.model.Connection} element the connection descriptor
-     * @property {Object} gfx the graphical representation of the connection
+     * @property {ConnectionLike} element The connection.
+     * @property {SVGElement} gfx The graphical element.
      */
     return this._removeElement(connection, 'connection');
   };
 
 
   /**
-   * Return the graphical object underlaying a certain diagram element
+   * Returns the graphical element of an element.
    *
-   * @param {String|djs.model.Base} element descriptor of the element
-   * @param {Boolean} [secondary=false] whether to return the secondary connected element
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {boolean} [secondary=false] Whether to return the secondary graphical element.
    *
-   * @return {SVGElement}
+   * @return {SVGElement} The graphical element.
    */
   Canvas.prototype.getGraphics = function(element, secondary) {
     return this._elementRegistry.getGraphics(element, secondary);
@@ -18688,12 +22819,13 @@
    *
    * @example
    *
+   * ```javascript
    * canvas.viewbox({ x: 100, y: 100, width: 500, height: 500 })
    *
    * // sets the visible area of the diagram to (100|100) -> (600|100)
    * // and and scales it according to the diagram width
    *
-   * var viewbox = canvas.viewbox(); // pass `false` to force recomputing the box.
+   * const viewbox = canvas.viewbox(); // pass `false` to force recomputing the box.
    *
    * console.log(viewbox);
    * // {
@@ -18707,7 +22839,7 @@
    * // if the current diagram is zoomed and scrolled, you may reset it to the
    * // default zoom via this method, too:
    *
-   * var zoomedAndScrolledViewbox = canvas.viewbox();
+   * const zoomedAndScrolledViewbox = canvas.viewbox();
    *
    * canvas.viewbox({
    *   x: 0,
@@ -18715,14 +22847,11 @@
    *   width: zoomedAndScrolledViewbox.outer.width,
    *   height: zoomedAndScrolledViewbox.outer.height
    * });
+   * ```
    *
-   * @param  {Object} [box] the new view box to set
-   * @param  {Number} box.x the top left X coordinate of the canvas visible in view box
-   * @param  {Number} box.y the top left Y coordinate of the canvas visible in view box
-   * @param  {Number} box.width the visible width
-   * @param  {Number} box.height
+   * @param {Rect} [box] The viewbox to be set.
    *
-   * @return {Object} the current view box
+   * @return {CanvasViewbox} The set viewbox.
    */
   Canvas.prototype.viewbox = function(box) {
 
@@ -18730,26 +22859,30 @@
       return this._cachedViewbox;
     }
 
-    var viewport = this._viewport,
-        innerBox,
-        outerBox = this.getSize(),
+    const viewport = this._viewport,
+          outerBox = this.getSize();
+    let innerBox,
         matrix,
-        transform$$1,
+        activeLayer,
+        transform,
         scale,
         x, y;
 
     if (!box) {
+
       // compute the inner box based on the
-      // diagrams default layer. This allows us to exclude
+      // diagrams active layer. This allows us to exclude
       // external components, such as overlays
-      innerBox = this.getDefaultLayer().getBBox();
 
-      transform$$1 = transform(viewport);
-      matrix = transform$$1 ? transform$$1.matrix : createMatrix();
-      scale = round$7(matrix.a, 1000);
+      activeLayer = this._rootElement ? this.getActiveLayer() : null;
+      innerBox = activeLayer && activeLayer.getBBox() || {};
 
-      x = round$7(-matrix.e || 0, 1000);
-      y = round$7(-matrix.f || 0, 1000);
+      transform = transform$1(viewport);
+      matrix = transform ? transform.matrix : createMatrix();
+      scale = round(matrix.a, 1000);
+
+      x = round(-matrix.e || 0, 1000);
+      y = round(-matrix.f || 0, 1000);
 
       box = this._cachedViewbox = {
         x: x ? x / scale : 0,
@@ -18758,10 +22891,10 @@
         height: outerBox.height / scale,
         scale: scale,
         inner: {
-          width: innerBox.width,
-          height: innerBox.height,
-          x: innerBox.x,
-          y: innerBox.y
+          width: innerBox.width || 0,
+          height: innerBox.height || 0,
+          x: innerBox.x || 0,
+          y: innerBox.y || 0
         },
         outer: outerBox
       };
@@ -18772,11 +22905,11 @@
       this._changeViewbox(function() {
         scale = Math.min(outerBox.width / box.width, outerBox.height / box.height);
 
-        var matrix = this._svg.createSVGMatrix()
+        const matrix = this._svg.createSVGMatrix()
           .scale(scale)
           .translate(-box.x, -box.y);
 
-        transform(viewport, matrix);
+        transform$1(viewport, matrix);
       });
     }
 
@@ -18787,19 +22920,18 @@
   /**
    * Gets or sets the scroll of the canvas.
    *
-   * @param {Object} [delta] the new scroll to apply.
+   * @param {Point} [delta] The scroll to be set.
    *
-   * @param {Number} [delta.dx]
-   * @param {Number} [delta.dy]
+   * @return {Point}
    */
   Canvas.prototype.scroll = function(delta) {
 
-    var node = this._viewport;
-    var matrix = node.getCTM();
+    const node = this._viewport;
+    let matrix = node.getCTM();
 
     if (delta) {
       this._changeViewbox(function() {
-        delta = assign({ dx: 0, dy: 0 }, delta || {});
+        delta = assign$1({ dx: 0, dy: 0 }, delta || {});
 
         matrix = this._svg.createSVGMatrix().translate(delta.dx, delta.dy).multiply(matrix);
 
@@ -18810,19 +22942,95 @@
     return { x: matrix.e, y: matrix.f };
   };
 
+  /**
+   * Scrolls the viewbox to contain the given element.
+   * Optionally specify a padding to be applied to the edges.
+   *
+   * @param {ShapeLike|ConnectionLike|string} element The element to scroll to or its ID.
+   * @param {RectTRBL|number} [padding=100] The padding to be applied. Can also specify top, bottom, left and right.
+   */
+  Canvas.prototype.scrollToElement = function(element, padding) {
+    let defaultPadding = 100;
+
+    if (typeof element === 'string') {
+      element = this._elementRegistry.get(element);
+    }
+
+    // set to correct rootElement
+    const rootElement = this.findRoot(element);
+
+    if (rootElement !== this.getRootElement()) {
+      this.setRootElement(rootElement);
+    }
+
+    // element is rootElement, do not change viewport
+    if (rootElement === element) {
+      return;
+    }
+
+    if (!padding) {
+      padding = {};
+    }
+    if (typeof padding === 'number') {
+      defaultPadding = padding;
+    }
+
+    padding = {
+      top: padding.top || defaultPadding,
+      right: padding.right || defaultPadding,
+      bottom: padding.bottom || defaultPadding,
+      left: padding.left || defaultPadding
+    };
+
+    const elementBounds = getBBox(element),
+          elementTrbl = asTRBL(elementBounds),
+          viewboxBounds = this.viewbox(),
+          zoom = this.zoom();
+    let dx, dy;
+
+    // shrink viewboxBounds with padding
+    viewboxBounds.y += padding.top / zoom;
+    viewboxBounds.x += padding.left / zoom;
+    viewboxBounds.width -= (padding.right + padding.left) / zoom;
+    viewboxBounds.height -= (padding.bottom + padding.top) / zoom;
+
+    const viewboxTrbl = asTRBL(viewboxBounds);
+
+    const canFit = elementBounds.width < viewboxBounds.width && elementBounds.height < viewboxBounds.height;
+
+    if (!canFit) {
+
+      // top-left when element can't fit
+      dx = elementBounds.x - viewboxBounds.x;
+      dy = elementBounds.y - viewboxBounds.y;
+
+    } else {
+
+      const dRight = Math.max(0, elementTrbl.right - viewboxTrbl.right),
+            dLeft = Math.min(0, elementTrbl.left - viewboxTrbl.left),
+            dBottom = Math.max(0, elementTrbl.bottom - viewboxTrbl.bottom),
+            dTop = Math.min(0, elementTrbl.top - viewboxTrbl.top);
+
+      dx = dRight || dLeft;
+      dy = dBottom || dTop;
+
+    }
+
+    this.scroll({ dx: -dx * zoom, dy: -dy * zoom });
+  };
 
   /**
-   * Gets or sets the current zoom of the canvas, optionally zooming
-   * to the specified position.
+   * Gets or sets the current zoom of the canvas, optionally zooming to the
+   * specified position.
    *
-   * The getter may return a cached zoom level. Call it with `false` as
-   * the first argument to force recomputation of the current level.
+   * The getter may return a cached zoom level. Call it with `false` as the first
+   * argument to force recomputation of the current level.
    *
-   * @param {String|Number} [newScale] the new zoom level, either a number, i.e. 0.9,
-   *                                   or `fit-viewport` to adjust the size to fit the current viewport
-   * @param {String|Point} [center] the reference point { x: .., y: ..} to zoom to, 'auto' to zoom into mid or null
+   * @param {number|'fit-viewport'} [newScale] The new zoom level, either a number,
+   * i.e. 0.9, or `fit-viewport` to adjust the size to fit the current viewport.
+   * @param {Point} [center] The reference point { x: ..., y: ...} to zoom to.
    *
-   * @return {Number} the current scale
+   * @return {number} The set zoom level.
    */
   Canvas.prototype.zoom = function(newScale, center) {
 
@@ -18834,7 +23042,7 @@
       return this._fitViewport(center);
     }
 
-    var outer,
+    let outer,
         matrix;
 
     this._changeViewbox(function() {
@@ -18851,20 +23059,20 @@
       matrix = this._setZoom(newScale, center);
     });
 
-    return round$7(matrix.a, 1000);
+    return round(matrix.a, 1000);
   };
 
   function setCTM(node, m) {
-    var mstr = 'matrix(' + m.a + ',' + m.b + ',' + m.c + ',' + m.d + ',' + m.e + ',' + m.f + ')';
+    const mstr = 'matrix(' + m.a + ',' + m.b + ',' + m.c + ',' + m.d + ',' + m.e + ',' + m.f + ')';
     node.setAttribute('transform', mstr);
   }
 
   Canvas.prototype._fitViewport = function(center) {
 
-    var vbox = this.viewbox(),
-        outer = vbox.outer,
-        inner = vbox.inner,
-        newScale,
+    const vbox = this.viewbox(),
+          outer = vbox.outer,
+          inner = vbox.inner;
+    let newScale,
         newViewbox;
 
     // display the complete diagram without zooming in.
@@ -18905,13 +23113,13 @@
 
   Canvas.prototype._setZoom = function(scale, center) {
 
-    var svg = this._svg,
-        viewport = this._viewport;
+    const svg = this._svg,
+          viewport = this._viewport;
 
-    var matrix = svg.createSVGMatrix();
-    var point = svg.createSVGPoint();
+    const matrix = svg.createSVGMatrix();
+    const point = svg.createSVGPoint();
 
-    var centerPoint,
+    let centerPoint,
         originalPoint,
         currentMatrix,
         scaleMatrix,
@@ -18919,10 +23127,10 @@
 
     currentMatrix = viewport.getCTM();
 
-    var currentScale = currentMatrix.a;
+    const currentScale = currentMatrix.a;
 
     if (center) {
-      centerPoint = assign(point, center);
+      centerPoint = assign$1(point, center);
 
       // revert applied viewport transformations
       originalPoint = centerPoint.matrixTransform(currentMatrix.inverse());
@@ -18945,9 +23153,9 @@
 
 
   /**
-   * Returns the size of the canvas
+   * Returns the size of the canvas.
    *
-   * @return {Dimensions}
+   * @return {Dimensions} The size of the canvas.
    */
   Canvas.prototype.getSize = function() {
     return {
@@ -18958,37 +23166,38 @@
 
 
   /**
-   * Return the absolute bounding box for the given element
+   * Returns the absolute bounding box of an element.
    *
-   * The absolute bounding box may be used to display overlays in the
-   * callers (browser) coordinate system rather than the zoomed in/out
-   * canvas coordinates.
+   * The absolute bounding box may be used to display overlays in the callers
+   * (browser) coordinate system rather than the zoomed in/out canvas coordinates.
    *
-   * @param  {ElementDescriptor} element
-   * @return {Bounds} the absolute bounding box
+   * @param {ShapeLike|ConnectionLike} element The element.
+   *
+   * @return {Rect} The element's absolute bounding box.
    */
   Canvas.prototype.getAbsoluteBBox = function(element) {
-    var vbox = this.viewbox();
-    var bbox;
+    const vbox = this.viewbox();
+    let bbox;
 
     // connection
     // use svg bbox
     if (element.waypoints) {
-      var gfx = this.getGraphics(element);
+      const gfx = this.getGraphics(element);
 
       bbox = gfx.getBBox();
     }
+
     // shapes
     // use data
     else {
       bbox = element;
     }
 
-    var x = bbox.x * vbox.scale - vbox.x * vbox.scale;
-    var y = bbox.y * vbox.scale - vbox.y * vbox.scale;
+    const x = bbox.x * vbox.scale - vbox.x * vbox.scale;
+    const y = bbox.y * vbox.scale - vbox.y * vbox.scale;
 
-    var width = bbox.width * vbox.scale;
-    var height = bbox.height * vbox.scale;
+    const width = bbox.width * vbox.scale;
+    const height = bbox.height * vbox.scale;
 
     return {
       x: x,
@@ -18999,8 +23208,7 @@
   };
 
   /**
-   * Fires an event in order other modules can react to the
-   * canvas resizing
+   * Fires an event so other modules can react to the canvas resizing.
    */
   Canvas.prototype.resized = function() {
 
@@ -19012,13 +23220,34 @@
 
   var ELEMENT_ID = 'data-element-id';
 
+  /**
+   * @typedef {import('./Types').ElementLike} ElementLike
+   *
+   * @typedef {import('./EventBus').default} EventBus
+   *
+   * @typedef { (element: ElementLike, gfx: SVGElement) => boolean|any } ElementRegistryFilterCallback
+   * @typedef { (element: ElementLike, gfx: SVGElement) => any } ElementRegistryForEachCallback
+   */
 
   /**
-   * @class
-   *
    * A registry that keeps track of all shapes in the diagram.
+   *
+   * @class
+   * @constructor
+   *
+   * @param {EventBus} eventBus
    */
   function ElementRegistry(eventBus) {
+
+    /**
+     * @type { {
+     *   [id: string]: {
+     *     element: ElementLike;
+     *     gfx?: SVGElement;
+     *     secondaryGfx?: SVGElement;
+     *   }
+     * } }
+     */
     this._elements = {};
 
     this._eventBus = eventBus;
@@ -19027,11 +23256,11 @@
   ElementRegistry.$inject = [ 'eventBus' ];
 
   /**
-   * Register a pair of (element, gfx, (secondaryGfx)).
+   * Add an element and its graphical representation(s) to the registry.
    *
-   * @param {djs.model.Base} element
-   * @param {SVGElement} gfx
-   * @param {SVGElement} [secondaryGfx] optional other element to register, too
+   * @param {ElementLike} element The element to be added.
+   * @param {SVGElement} gfx The primary graphical representation.
+   * @param {SVGElement} [secondaryGfx] The secondary graphical representation.
    */
   ElementRegistry.prototype.add = function(element, gfx, secondaryGfx) {
 
@@ -19040,19 +23269,19 @@
     this._validateId(id);
 
     // associate dom node with element
-    attr$1(gfx, ELEMENT_ID, id);
+    attr(gfx, ELEMENT_ID, id);
 
     if (secondaryGfx) {
-      attr$1(secondaryGfx, ELEMENT_ID, id);
+      attr(secondaryGfx, ELEMENT_ID, id);
     }
 
     this._elements[id] = { element: element, gfx: gfx, secondaryGfx: secondaryGfx };
   };
 
   /**
-   * Removes an element from the registry.
+   * Remove an element from the registry.
    *
-   * @param {djs.model.Base} element
+   * @param {ElementLike|string} element
    */
   ElementRegistry.prototype.remove = function(element) {
     var elements = this._elements,
@@ -19062,10 +23291,10 @@
     if (container) {
 
       // unset element id on gfx
-      attr$1(container.gfx, ELEMENT_ID, '');
+      attr(container.gfx, ELEMENT_ID, '');
 
       if (container.secondaryGfx) {
-        attr$1(container.secondaryGfx, ELEMENT_ID, '');
+        attr(container.secondaryGfx, ELEMENT_ID, '');
       }
 
       delete elements[id];
@@ -19073,10 +23302,10 @@
   };
 
   /**
-   * Update the id of an element
+   * Update an elements ID.
    *
-   * @param {djs.model.Base} element
-   * @param {String} newId
+   * @param {ElementLike|string} element The element or its ID.
+   * @param {string} newId The new ID.
    */
   ElementRegistry.prototype.updateId = function(element, newId) {
 
@@ -19102,17 +23331,44 @@
   };
 
   /**
-   * Return the model element for a given id or graphics.
+   * Update the graphical representation of an element.
+   *
+   * @param {ElementLike|string} filter The element or its ID.
+   * @param {SVGElement} gfx The new graphical representation.
+   * @param {boolean} [secondary=false] Whether to update the secondary graphical representation.
+   */
+  ElementRegistry.prototype.updateGraphics = function(filter, gfx, secondary) {
+    var id = filter.id || filter;
+
+    var container = this._elements[id];
+
+    if (secondary) {
+      container.secondaryGfx = gfx;
+    } else {
+      container.gfx = gfx;
+    }
+
+    if (gfx) {
+      attr(gfx, ELEMENT_ID, id);
+    }
+
+    return gfx;
+  };
+
+  /**
+   * Get the element with the given ID or graphical representation.
    *
    * @example
    *
+   * ```javascript
    * elementRegistry.get('SomeElementId_1');
+   *
    * elementRegistry.get(gfx);
+   * ```
    *
+   * @param {string|SVGElement} filter The elements ID or graphical representation.
    *
-   * @param {String|SVGElement} filter for selecting the element
-   *
-   * @return {djs.model.Base}
+   * @return {ElementLike|undefined} The element.
    */
   ElementRegistry.prototype.get = function(filter) {
     var id;
@@ -19120,7 +23376,7 @@
     if (typeof filter === 'string') {
       id = filter;
     } else {
-      id = filter && attr$1(filter, ELEMENT_ID);
+      id = filter && attr(filter, ELEMENT_ID);
     }
 
     var container = this._elements[id];
@@ -19130,9 +23386,9 @@
   /**
    * Return all elements that match a given filter function.
    *
-   * @param {Function} fn
+   * @param {ElementRegistryFilterCallback} fn The filter function.
    *
-   * @return {Array<djs.model.Base>}
+   * @return {ElementLike[]} The matching elements.
    */
   ElementRegistry.prototype.filter = function(fn) {
 
@@ -19148,18 +23404,41 @@
   };
 
   /**
-   * Return all rendered model elements.
+   * Return the first element that matches the given filter function.
    *
-   * @return {Array<djs.model.Base>}
+   * @param {ElementRegistryFilterCallback} fn The filter function.
+   *
+   * @return {ElementLike|undefined} The matching element.
+   */
+  ElementRegistry.prototype.find = function(fn) {
+    var map = this._elements,
+        keys = Object.keys(map);
+
+    for (var i = 0; i < keys.length; i++) {
+      var id = keys[i],
+          container = map[id],
+          element = container.element,
+          gfx = container.gfx;
+
+      if (fn(element, gfx)) {
+        return element;
+      }
+    }
+  };
+
+  /**
+   * Get all elements.
+   *
+   * @return {ElementLike[]} All elements.
    */
   ElementRegistry.prototype.getAll = function() {
     return this.filter(function(e) { return e; });
   };
 
   /**
-   * Iterate over all diagram elements.
+   * Execute a given function for each element.
    *
-   * @param {Function} fn
+   * @param {ElementRegistryForEachCallback} fn The function to execute.
    */
   ElementRegistry.prototype.forEach = function(fn) {
 
@@ -19175,19 +23454,22 @@
   };
 
   /**
-   * Return the graphical representation of an element or its id.
+   * Return the graphical representation of an element.
    *
    * @example
+   *
+   * ```javascript
    * elementRegistry.getGraphics('SomeElementId_1');
+   *
    * elementRegistry.getGraphics(rootElement); // <g ...>
    *
    * elementRegistry.getGraphics(rootElement, true); // <svg ...>
+   * ```
    *
+   * @param {ElementLike|string} filter The element or its ID.
+   * @param {boolean} [secondary=false] Whether to return the secondary graphical representation.
    *
-   * @param {String|djs.model.Base} filter
-   * @param {Boolean} [secondary=false] whether to return the secondary connected element
-   *
-   * @return {SVGElement}
+   * @return {SVGElement} The graphical representation.
    */
   ElementRegistry.prototype.getGraphics = function(filter, secondary) {
     var id = filter.id || filter;
@@ -19197,12 +23479,11 @@
   };
 
   /**
-   * Validate the suitability of the given id and signals a problem
-   * with an exception.
+   * Validate an ID and throw an error if invalid.
    *
-   * @param {String} id
+   * @param {string} id
    *
-   * @throws {Error} if id is empty or already assigned
+   * @throws {Error} Error indicating that the ID is invalid or already assigned.
    */
   ElementRegistry.prototype._validateId = function(id) {
     if (!id) {
@@ -19216,9 +23497,33 @@
 
   var FN_REF = '__fn';
 
-  var DEFAULT_PRIORITY$1 = 1000;
+  var DEFAULT_PRIORITY = 1000;
 
-  var slice$1 = Array.prototype.slice;
+  var slice = Array.prototype.slice;
+
+  /**
+   * @typedef { {
+   *   stopPropagation(): void;
+   *   preventDefault(): void;
+   *   cancelBubble: boolean;
+   *   defaultPrevented: boolean;
+   *   returnValue: any;
+   * } } Event
+   */
+
+  /**
+   * @template E
+   *
+   * @typedef { (event: E & Event, ...any) => any } EventBusEventCallback
+   */
+
+  /**
+   * @typedef { {
+   *  priority: number;
+   *  next: EventBusListener | null;
+   *  callback: EventBusEventCallback<any>;
+   * } } EventBusListener
+   */
 
   /**
    * A general purpose event bus.
@@ -19304,6 +23609,10 @@
    * ```
    */
   function EventBus() {
+
+    /**
+     * @type { Record<string, EventBusListener> }
+     */
     this._listeners = {};
 
     // cleanup on destroy on lowest priority to allow
@@ -19324,19 +23633,21 @@
    *
    * Returning anything but `undefined` from a listener will stop the listener propagation.
    *
-   * @param {String|Array<String>} events
-   * @param {Number} [priority=1000] the priority in which this listener is called, larger is higher
-   * @param {Function} callback
-   * @param {Object} [that] Pass context (`this`) to the callback
+   * @template T
+   *
+   * @param {string|string[]} events to subscribe to
+   * @param {number} [priority=1000] listen priority
+   * @param {EventBusEventCallback<T>} callback
+   * @param {any} [that] callback context
    */
   EventBus.prototype.on = function(events, priority, callback, that) {
 
-    events = isArray(events) ? events : [ events ];
+    events = isArray$3(events) ? events : [ events ];
 
     if (isFunction(priority)) {
       that = callback;
       callback = priority;
-      priority = DEFAULT_PRIORITY$1;
+      priority = DEFAULT_PRIORITY;
     }
 
     if (!isNumber(priority)) {
@@ -19346,7 +23657,7 @@
     var actualCallback = callback;
 
     if (that) {
-      actualCallback = bind(callback, that);
+      actualCallback = bind$2(callback, that);
 
       // make sure we remember and are able to remove
       // bound callbacks via {@link #off} using the original
@@ -19365,21 +23676,23 @@
     });
   };
 
-
   /**
-   * Register an event listener that is executed only once.
+   * Register an event listener that is called only once.
    *
-   * @param {String} event the event name to register for
-   * @param {Function} callback the callback to execute
-   * @param {Object} [that] Pass context (`this`) to the callback
+   * @template T
+   *
+   * @param {string|string[]} events to subscribe to
+   * @param {number} [priority=1000] the listen priority
+   * @param {EventBusEventCallback<T>} callback
+   * @param {any} [that] callback context
    */
-  EventBus.prototype.once = function(event, priority, callback, that) {
+  EventBus.prototype.once = function(events, priority, callback, that) {
     var self = this;
 
     if (isFunction(priority)) {
       that = callback;
       callback = priority;
-      priority = DEFAULT_PRIORITY$1;
+      priority = DEFAULT_PRIORITY;
     }
 
     if (!isNumber(priority)) {
@@ -19387,9 +23700,11 @@
     }
 
     function wrappedCallback() {
+      wrappedCallback.__isTomb = true;
+
       var result = callback.apply(that, arguments);
 
-      self.off(event, wrappedCallback);
+      self.off(events, wrappedCallback);
 
       return result;
     }
@@ -19399,7 +23714,7 @@
     // callback
     wrappedCallback[FN_REF] = callback;
 
-    this.on(event, priority, wrappedCallback);
+    this.on(events, priority, wrappedCallback);
   };
 
 
@@ -19408,12 +23723,12 @@
    *
    * If no callback is given, all listeners for a given event name are being removed.
    *
-   * @param {String|Array<String>} events
-   * @param {Function} [callback]
+   * @param {string|string[]} events
+   * @param {EventBusEventCallback} [callback]
    */
   EventBus.prototype.off = function(events, callback) {
 
-    events = isArray(events) ? events : [ events ];
+    events = isArray$3(events) ? events : [ events ];
 
     var self = this;
 
@@ -19425,11 +23740,11 @@
 
 
   /**
-   * Create an EventBus event.
+   * Create an event recognized be the event bus.
    *
-   * @param {Object} data
+   * @param {Object} data Event data.
    *
-   * @return {Object} event, recognized by the eventBus
+   * @return {Event} An event that will be recognized by the event bus.
    */
   EventBus.prototype.createEvent = function(data) {
     var event = new InternalEvent();
@@ -19441,10 +23756,11 @@
 
 
   /**
-   * Fires a named event.
+   * Fires an event.
    *
    * @example
    *
+   * ```javascript
    * // fire event by name
    * events.fire('foo');
    *
@@ -19462,26 +23778,25 @@
    * });
    *
    * events.fire({ type: 'foo' }, 'I am bar!');
+   * ```
    *
-   * @param {String} [name] the optional event name
-   * @param {Object} [event] the event object
-   * @param {...Object} additional arguments to be passed to the callback functions
+   * @param {string} [type] event type
+   * @param {Object} [data] event or event data
+   * @param {...any} [args] additional arguments the callback will be called with.
    *
-   * @return {Boolean} the events return value, if specified or false if the
-   *                   default action was prevented by listeners
+   * @return {any} The return value. Will be set to `false` if the default was prevented.
    */
   EventBus.prototype.fire = function(type, data) {
-
     var event,
         firstListener,
         returnValue,
         args;
 
-    args = slice$1.call(arguments);
+    args = slice.call(arguments);
 
     if (typeof type === 'object') {
-      event = type;
-      type = event.type;
+      data = type;
+      type = data.type;
     }
 
     if (!type) {
@@ -19497,6 +23812,7 @@
     // we make sure we fire instances of our home made
     // events here. We wrap them only once, though
     if (data instanceof InternalEvent) {
+
       // we are fine, we alread have an event
       event = data;
     } else {
@@ -19517,6 +23833,7 @@
     try {
       returnValue = this._invokeListeners(event, args, firstListener);
     } finally {
+
       // reset event type after delegation
       if (type !== originalType) {
         event.type = originalType;
@@ -19532,7 +23849,13 @@
     return returnValue;
   };
 
-
+  /**
+   * Handle an error by firing an event.
+   *
+   * @param {Error} error The error to be handled.
+   *
+   * @return {boolean} Whether the error was handled.
+   */
   EventBus.prototype.handleError = function(error) {
     return this.fire('error', { error: error }) === false;
   };
@@ -19542,6 +23865,13 @@
     this._listeners = {};
   };
 
+  /**
+   * @param {Event} event
+   * @param {any[]} args
+   * @param {EventBusListener} listener
+   *
+   * @return {any}
+   */
   EventBus.prototype._invokeListeners = function(event, args, listener) {
 
     var returnValue;
@@ -19561,11 +23891,23 @@
     return returnValue;
   };
 
+  /**
+   * @param {Event} event
+   * @param {any[]} args
+   * @param {EventBusListener} listener
+   *
+   * @return {any}
+   */
   EventBus.prototype._invokeListener = function(event, args, listener) {
 
     var returnValue;
 
+    if (listener.callback.__isTomb) {
+      return returnValue;
+    }
+
     try {
+
       // returning false prevents the default action
       returnValue = invokeFunction(listener.callback, args);
 
@@ -19579,19 +23921,18 @@
       if (returnValue === false) {
         event.preventDefault();
       }
-    } catch (e) {
-      if (!this.handleError(e)) {
-        console.error('unhandled error in event listener');
-        console.error(e.stack);
+    } catch (error) {
+      if (!this.handleError(error)) {
+        console.error('unhandled error in event listener', error);
 
-        throw e;
+        throw error;
       }
     }
 
     return returnValue;
   };
 
-  /*
+  /**
    * Add new listener with a certain priority to the list
    * of listeners (for the given event).
    *
@@ -19604,8 +23945,8 @@
    *    * before: [ 1500, 1500, 1000, 1000 ]
    *    * after: [ 1500, 1500, (new=1300), 1000, 1000, (new=1000) ]
    *
-   * @param {String} event
-   * @param {Object} listener { priority, callback }
+   * @param {string} event
+   * @param {EventBusListener} newListener
    */
   EventBus.prototype._addListener = function(event, newListener) {
 
@@ -19645,10 +23986,19 @@
   };
 
 
+  /**
+   * @param {string} name
+   *
+   * @return {EventBusListener}
+   */
   EventBus.prototype._getListeners = function(name) {
     return this._listeners[name];
   };
 
+  /**
+   * @param {string} name
+   * @param {EventBusListener} listener
+   */
   EventBus.prototype._setListeners = function(name, listener) {
     this._listeners[name] = listener;
   };
@@ -19661,6 +24011,7 @@
         listenerCallback;
 
     if (!callback) {
+
       // clear listeners
       this._setListeners(event, null);
 
@@ -19677,6 +24028,7 @@
         if (previousListener) {
           previousListener.next = nextListener;
         } else {
+
           // new first listener
           this._setListeners(event, nextListener);
         }
@@ -19701,7 +24053,7 @@
   };
 
   InternalEvent.prototype.init = function(data) {
-    assign(this, data || {});
+    assign$1(this, data || {});
   };
 
 
@@ -19709,44 +24061,25 @@
    * Invoke function. Be fast...
    *
    * @param {Function} fn
-   * @param {Array<Object>} args
+   * @param {any[]} args
    *
-   * @return {Any}
+   * @return {any}
    */
   function invokeFunction(fn, args) {
     return fn.apply(null, args);
   }
 
   /**
-   * SVGs for elements are generated by the {@link GraphicsFactory}.
+   * @typedef {import('./Types').ConnectionLike} ConnectionLike
+   * @typedef {import('./Types').ElementLike} ElementLike
+   * @typedef {import('./Types').ShapeLike} ShapeLike
    *
-   * This utility gives quick access to the important semantic
-   * parts of an element.
+   * @typedef {import('./ElementRegistry').default} ElementRegistry
+   * @typedef {import('./EventBus').default} EventBus
    */
 
   /**
-   * Returns the visual part of a diagram element
-   *
-   * @param {Snap<SVGElement>} gfx
-   *
-   * @return {Snap<SVGElement>}
-   */
-  function getVisual(gfx) {
-    return query('.djs-visual', gfx);
-  }
-
-  /**
-   * Returns the children for a given diagram element.
-   *
-   * @param {Snap<SVGElement>} gfx
-   * @return {Snap<SVGElement>}
-   */
-  function getChildren(gfx) {
-    return gfx.parentNode.childNodes[1];
-  }
-
-  /**
-   * A factory that creates graphical elements
+   * A factory that creates graphical elements.
    *
    * @param {EventBus} eventBus
    * @param {ElementRegistry} elementRegistry
@@ -19758,8 +24091,11 @@
 
   GraphicsFactory.$inject = [ 'eventBus' , 'elementRegistry' ];
 
-
-  GraphicsFactory.prototype._getChildren = function(element) {
+  /**
+   * @param { { parent?: any } } element
+   * @return {SVGElement}
+   */
+  GraphicsFactory.prototype._getChildrenContainer = function(element) {
 
     var gfx = this._elementRegistry.getGraphics(element);
 
@@ -19771,8 +24107,8 @@
     } else {
       childrenGfx = getChildren(gfx);
       if (!childrenGfx) {
-        childrenGfx = create('g');
-        classes$1(childrenGfx).add('djs-children');
+        childrenGfx = create$1('g');
+        classes(childrenGfx).add('djs-children');
 
         append(gfx.parentNode, childrenGfx);
       }
@@ -19788,7 +24124,7 @@
   GraphicsFactory.prototype._clear = function(gfx) {
     var visual = getVisual(gfx);
 
-    clear(visual);
+    clear$1(visual);
 
     return visual;
   };
@@ -19801,7 +24137,7 @@
    * <g class="djs-group">
    *
    *   <!-- the gfx -->
-   *   <g class="djs-element djs-(shape|connection)">
+   *   <g class="djs-element djs-(shape|connection|frame)">
    *     <g class="djs-visual">
    *       <!-- the renderer draws in here -->
    *     </g>
@@ -19813,59 +24149,82 @@
    *   <g class="djs-children"></g>
    * </g>
    *
-   * @param {Object} parent
-   * @param {String} type the type of the element, i.e. shape | connection
-   * @param {Number} [parentIndex] position to create container in parent
+   * @param {string} type the type of the element, i.e. shape | connection
+   * @param {SVGElement} childrenGfx
+   * @param {number} [parentIndex] position to create container in parent
+   * @param {boolean} [isFrame] is frame element
+   *
+   * @return {SVGElement}
    */
-  GraphicsFactory.prototype._createContainer = function(type, childrenGfx, parentIndex) {
-    var outerGfx = create('g');
-    classes$1(outerGfx).add('djs-group');
+  GraphicsFactory.prototype._createContainer = function(
+      type, childrenGfx, parentIndex, isFrame
+  ) {
+    var outerGfx = create$1('g');
+    classes(outerGfx).add('djs-group');
 
     // insert node at position
     if (typeof parentIndex !== 'undefined') {
-      prependTo$1(outerGfx, childrenGfx, childrenGfx.childNodes[parentIndex]);
+      prependTo(outerGfx, childrenGfx, childrenGfx.childNodes[parentIndex]);
     } else {
       append(childrenGfx, outerGfx);
     }
 
-    var gfx = create('g');
-    classes$1(gfx).add('djs-element');
-    classes$1(gfx).add('djs-' + type);
+    var gfx = create$1('g');
+    classes(gfx).add('djs-element');
+    classes(gfx).add('djs-' + type);
+
+    if (isFrame) {
+      classes(gfx).add('djs-frame');
+    }
 
     append(outerGfx, gfx);
 
     // create visual
-    var visual = create('g');
-    classes$1(visual).add('djs-visual');
+    var visual = create$1('g');
+    classes(visual).add('djs-visual');
 
     append(gfx, visual);
 
     return gfx;
   };
 
+  /**
+   * Create a graphical element.
+   *
+   * @param { 'shape' | 'connection' | 'label' | 'root' } type The type of the element.
+   * @param {ElementLike} element The element.
+   * @param {number} [parentIndex] The index at which to add the graphical element to its parent's children.
+   *
+   * @return {SVGElement} The graphical element.
+   */
   GraphicsFactory.prototype.create = function(type, element, parentIndex) {
-    var childrenGfx = this._getChildren(element.parent);
-    return this._createContainer(type, childrenGfx, parentIndex);
+    var childrenGfx = this._getChildrenContainer(element.parent);
+    return this._createContainer(type, childrenGfx, parentIndex, isFrameElement(element));
   };
 
+  /**
+   * Update the containments of the given elements.
+   *
+   * @param {ElementLike[]} elements The elements.
+   */
   GraphicsFactory.prototype.updateContainments = function(elements) {
 
     var self = this,
         elementRegistry = this._elementRegistry,
         parents;
 
-    parents = reduce(elements, function(map$$1, e) {
+    parents = reduce(elements, function(map, e) {
 
       if (e.parent) {
-        map$$1[e.parent.id] = e.parent;
+        map[e.parent.id] = e.parent;
       }
 
-      return map$$1;
+      return map;
     }, {});
 
     // update all parents of changed and reorganized their children
     // in the correct order (as indicated in our model)
-    forEach(parents, function(parent) {
+    forEach$1(parents, function(parent) {
 
       var children = parent.children;
 
@@ -19873,42 +24232,80 @@
         return;
       }
 
-      var childGfx = self._getChildren(parent);
+      var childrenGfx = self._getChildrenContainer(parent);
 
-      forEach(children.slice().reverse(), function(c) {
-        var gfx = elementRegistry.getGraphics(c);
+      forEach$1(children.slice().reverse(), function(child) {
+        var childGfx = elementRegistry.getGraphics(child);
 
-        prependTo$1(gfx.parentNode, childGfx);
+        prependTo(childGfx.parentNode, childrenGfx);
       });
     });
   };
 
+  /**
+   * Draw a shape.
+   *
+   * @param {SVGElement} visual The graphical element.
+   * @param {ShapeLike} element The shape.
+   *
+   * @return {SVGElement}
+   */
   GraphicsFactory.prototype.drawShape = function(visual, element) {
     var eventBus = this._eventBus;
 
     return eventBus.fire('render.shape', { gfx: visual, element: element });
   };
 
+  /**
+   * Get the path of a shape.
+   *
+   * @param {ShapeLike} element The shape.
+   *
+   * @return {string} The path of the shape.
+   */
   GraphicsFactory.prototype.getShapePath = function(element) {
     var eventBus = this._eventBus;
 
     return eventBus.fire('render.getShapePath', element);
   };
 
+  /**
+   * Draw a connection.
+   *
+   * @param {SVGElement} visual The graphical element.
+   * @param {ConnectionLike} element The connection.
+   *
+   * @return {SVGElement}
+   */
   GraphicsFactory.prototype.drawConnection = function(visual, element) {
     var eventBus = this._eventBus;
 
     return eventBus.fire('render.connection', { gfx: visual, element: element });
   };
 
-  GraphicsFactory.prototype.getConnectionPath = function(waypoints) {
+  /**
+   * Get the path of a connection.
+   *
+   * @param {ConnectionLike} connection The connection.
+   *
+   * @return {string} The path of the connection.
+   */
+  GraphicsFactory.prototype.getConnectionPath = function(connection) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.getConnectionPath', waypoints);
+    return eventBus.fire('render.getConnectionPath', connection);
   };
 
+  /**
+   * Update an elements graphical representation.
+   *
+   * @param {'shape'|'connection'} type
+   * @param {ElementLike} element
+   * @param {SVGElement} gfx
+   */
   GraphicsFactory.prototype.update = function(type, element, gfx) {
-    // Do not update root element
+
+    // do NOT update root element
     if (!element.parent) {
       return;
     }
@@ -19929,12 +24326,17 @@
     }
 
     if (element.hidden) {
-      attr$1(gfx, 'display', 'none');
+      attr(gfx, 'display', 'none');
     } else {
-      attr$1(gfx, 'display', 'block');
+      attr(gfx, 'display', 'block');
     }
   };
 
+  /**
+   * Remove a graphical element.
+   *
+   * @param {ElementLike} element The element.
+   */
   GraphicsFactory.prototype.remove = function(element) {
     var gfx = this._elementRegistry.getGraphics(element);
 
@@ -19943,77 +24345,54 @@
   };
 
 
-  // helpers //////////////////////
+  // helpers //////////
 
-  function prependTo$1(newNode, parentNode, siblingNode) {
-    parentNode.insertBefore(newNode, siblingNode || parentNode.firstChild);
+  function prependTo(newNode, parentNode, siblingNode) {
+    var node = siblingNode || parentNode.firstChild;
+
+    // do not prepend node to itself to prevent IE from crashing
+    // https://github.com/bpmn-io/bpmn-js/issues/746
+    if (newNode === node) {
+      return;
+    }
+
+    parentNode.insertBefore(newNode, node);
   }
 
-  var CoreModule$1 = {
-    __depends__: [ DrawModule$1 ],
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var CoreModule = {
+    __depends__: [ DrawModule ],
     __init__: [ 'canvas' ],
     canvas: [ 'type', Canvas ],
     elementRegistry: [ 'type', ElementRegistry ],
-    elementFactory: [ 'type', ElementFactory ],
+    elementFactory: [ 'type', ElementFactory$1 ],
     eventBus: [ 'type', EventBus ],
     graphicsFactory: [ 'type', GraphicsFactory ]
   };
 
   /**
+   * @typedef {import('didi').InjectionContext} InjectionContext
+   * @typedef {import('didi').LocalsMap} LocalsMap
+   * @typedef {import('didi').ModuleDeclaration} ModuleDeclaration
+   *
+   * @typedef { {
+   *   modules?: ModuleDeclaration[];
+   * } & Record<string, any> } DiagramOptions
+   */
+
+  /**
    * Bootstrap an injector from a list of modules, instantiating a number of default components
    *
-   * @ignore
-   * @param {Array<didi.Module>} bootstrapModules
+   * @param {ModuleDeclaration[]} modules
    *
-   * @return {didi.Injector} a injector to use to access the components
+   * @return {Injector} a injector to use to access the components
    */
-  function bootstrap(bootstrapModules) {
-
-    var modules = [],
-        components = [];
-
-    function hasModule(m) {
-      return modules.indexOf(m) >= 0;
-    }
-
-    function addModule(m) {
-      modules.push(m);
-    }
-
-    function visit(m) {
-      if (hasModule(m)) {
-        return;
-      }
-
-      (m.__depends__ || []).forEach(visit);
-
-      if (hasModule(m)) {
-        return;
-      }
-
-      addModule(m);
-
-      (m.__init__ || []).forEach(function(c) {
-        components.push(c);
-      });
-    }
-
-    bootstrapModules.forEach(visit);
-
+  function bootstrap(modules) {
     var injector = new Injector(modules);
 
-    components.forEach(function(c) {
-
-      try {
-        // eagerly resolve component (fn or string)
-        injector[typeof c === 'string' ? 'get' : 'invoke'](c);
-      } catch (e) {
-        console.error('Failed to instantiate component');
-        console.error(e.stack);
-
-        throw e;
-      }
-    });
+    injector.init();
 
     return injector;
   }
@@ -20021,19 +24400,22 @@
   /**
    * Creates an injector from passed options.
    *
-   * @ignore
-   * @param  {Object} options
-   * @return {didi.Injector}
+   * @param {DiagramOptions} [options]
+   *
+   * @return {Injector}
    */
   function createInjector(options) {
 
     options = options || {};
 
+    /**
+     * @type { ModuleDeclaration }
+     */
     var configModule = {
-      'config': ['value', options]
+      'config': [ 'value', options ]
     };
 
-    var modules = [ configModule, CoreModule$1 ].concat(options.modules || []);
+    var modules = [ configModule, CoreModule ].concat(options.modules || []);
 
     return bootstrap(modules);
   }
@@ -20043,17 +24425,15 @@
    * The main diagram-js entry point that bootstraps the diagram with the given
    * configuration.
    *
-   * To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
+   * To register extensions with the diagram, pass them as Array<Module> to the constructor.
    *
-   * @class djs.Diagram
-   * @memberOf djs
+   * @class
    * @constructor
    *
-   * @example
+   * @example Creating a plug-in that logs whenever a shape is added to the canvas.
    *
-   * <caption>Creating a plug-in that logs whenever a shape is added to the canvas.</caption>
-   *
-   * // plug-in implemenentation
+   * ```javascript
+   * // plug-in implementation
    * function MyLoggingPlugin(eventBus) {
    *   eventBus.on('shape.added', function(event) {
    *     console.log('shape ', event.shape, ' was added to the diagram');
@@ -20065,10 +24445,11 @@
    *   __init__: [ 'myLoggingPlugin' ],
    *     myLoggingPlugin: [ 'type', MyLoggingPlugin ]
    * };
+   * ```
    *
+   * Use the plug-in in a Diagram instance:
    *
-   * // instantiate the diagram with the new plug-in
-   *
+   * ```javascript
    * import MyLoggingModule from 'path-to-my-logging-plugin';
    *
    * var diagram = new Diagram({
@@ -20083,35 +24464,39 @@
    * });
    *
    * // 'shape ... was added to the diagram' logged to console
+   * ```
    *
-   * @param {Object} options
-   * @param {Array<didi.Module>} [options.modules] external modules to instantiate with the diagram
-   * @param {didi.Injector} [injector] an (optional) injector to bootstrap the diagram with
+   * @param {DiagramOptions} [options]
+   * @param {Injector} [injector] An (optional) injector to bootstrap the diagram with.
    */
   function Diagram(options, injector) {
 
-    // create injector unless explicitly specified
-    this.injector = injector = injector || createInjector(options);
+    this._injector = injector = injector || createInjector(options);
 
     // API
 
     /**
-     * Resolves a diagram service
+     * Resolves a diagram service.
      *
-     * @method Diagram#get
+     * @template T
      *
-     * @param {String} name the name of the diagram service to be retrieved
-     * @param {Boolean} [strict=true] if false, resolve missing services to null
+     * @param {string} name The name of the service to get.
+     * @param {boolean} [strict=true] If false, resolve missing services to null.
+     *
+     * @return {T|null}
      */
     this.get = injector.get;
 
     /**
-     * Executes a function into which diagram services are injected
+     * Executes a function with its dependencies injected.
      *
-     * @method Diagram#invoke
+     * @template T
      *
-     * @param {Function|Object[]} fn the function to resolve
-     * @param {Object} locals a number of locals to use to resolve certain dependencies
+     * @param {Function} func function to be invoked
+     * @param {InjectionContext} [context] context of the invocation
+     * @param {LocalsMap} [locals] locals provided
+     *
+     * @return {T|null}
      */
     this.invoke = injector.invoke;
 
@@ -20131,9 +24516,11 @@
      *
      * @example
      *
+     * ```javascript
      * eventBus.on('diagram.init', function() {
      *   eventBus.fire('my-custom-event', { foo: 'BAR' });
      * });
+     * ```
      *
      * @type {Object}
      */
@@ -20143,8 +24530,6 @@
 
   /**
    * Destroys the diagram
-   *
-   * @method  Diagram#destroy
    */
   Diagram.prototype.destroy = function() {
     this.get('eventBus').fire('diagram.destroy');
@@ -20157,7 +24542,7 @@
     this.get('eventBus').fire('diagram.clear');
   };
 
-  inherits_browser(Viewer, Diagram);
+  inherits(Viewer, Diagram);
 
   function Viewer(options) {
     this._container = this._createContainer(options);
@@ -20166,7 +24551,7 @@
   }
 
   Viewer.prototype._coreModules = [
-    CoreModule
+    CoreModule$1
   ];
 
   Viewer.prototype._viewModules = [
@@ -20187,12 +24572,12 @@
     var container;
 
     if('containerID' in options) {
-      container = domify('<div id="' + options.containerID + '"class="umljs-container"></div>');
+      container = domify$1('<div id="' + options.containerID + '"class="umljs-container"></div>');
     } else {
-      container = domify('<div class="umljs-container"></div>');
+      container = domify$1('<div class="umljs-container"></div>');
     }
 
-    assign(container.style, {
+    assign$1(container.style, {
       width: '100%',
       height: '100%',
       position: 'relative'
@@ -20256,7 +24641,7 @@
     return this.get('eventBus').fire(type, event);
   };
 
-  inherits_browser(Modeler, Viewer);
+  inherits(Modeler, Viewer);
 
   function Modeler(options) {
     Viewer.call(this, options);
@@ -20268,7 +24653,7 @@
     OutlineModule,
     LassoToolModule,
     PaletteModule,
-    CreateModule,
+    CreateModule$1,
     ContextPadModule,
     ConnectModule,
     RulesModule,
@@ -20290,4 +24675,4 @@
 
   return Modeler;
 
-})));
+}));

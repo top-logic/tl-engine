@@ -1,29 +1,60 @@
-var LOW_PRIORITY = 750;
-
 var MARKER_OK = 'drop-ok',
     MARKER_NOT_OK = 'drop-not-ok',
     MARKER_ATTACH = 'attach-ok',
     MARKER_NEW_PARENT = 'new-parent';
 
 import {
-  append as svgAppend,
-  attr as svgAttr,
-  classes as svgClasses,
-  create as svgCreate,
-  remove as svgRemove
-} from 'tiny-svg';
+  assign,
+  filter,
+  find,
+  forEach,
+  isArray,
+  isNumber,
+  map
+} from 'min-dash';
+
+import { getBBox } from 'diagram-js/lib/util/Elements';
 
 import {
-  translate
-} from 'diagram-js/lib/util/SvgTransformUtil';
+  isConnection,
+  isLabel
+} from 'diagram-js/lib/util/ModelUtil';
 
+/**
+ * @typedef {import('../../core/Types').ElementLike} Element
+ * @typedef {import('../../core/Types').ShapeLike} Shape
+ *
+ * @typedef {import('../../util/Types').Point} Point
+ *
+ * @typedef {import('../../core/Canvas').default} Canvas
+ * @typedef {import('../dragging/Dragging').default} Dragging
+ * @typedef {import('../../core/EventBus').default} EventBus
+ * @typedef {import('../modeling/Modeling').default} Modeling
+ * @typedef {import('../rules/Rules').default} Rules
+ */
+
+var PREFIX = 'create';
+
+var HIGH_PRIORITY = 2000;
+
+
+/**
+ * Create new elements through drag and drop.
+ *
+ * @param {Canvas} canvas
+ * @param {Dragging} dragging
+ * @param {EventBus} eventBus
+ * @param {Modeling} modeling
+ * @param {Rules} rules
+ */
 export default function Create(
-    eventBus, dragging, modeling,
-    canvas, styles, graphicsFactory) {
-
-  /** set drop marker on an element */
+    canvas,
+    dragging,
+    eventBus,
+    modeling,
+    rules
+) {
   function setMarker(element, marker) {
-
     [ MARKER_ATTACH, MARKER_OK, MARKER_NOT_OK, MARKER_NEW_PARENT ].forEach(function(m) {
 
       if (m === marker) {
@@ -34,49 +65,31 @@ export default function Create(
     });
   }
 
-  function createVisual(shape) {
-    var group, preview, visual;
+  // event handling //////////
 
-    group = svgCreate('g');
-    svgAttr(group, styles.cls('djs-drag-group', [ 'no-events' ]));
-
-    svgAppend(canvas.getDefaultLayer(), group);
-
-    preview = svgCreate('g');
-    svgClasses(preview).add('djs-dragger');
-
-    svgAppend(group, preview);
-
-    translate(preview, shape.width / -2, shape.height / -2);
-
-    var visualGroup = svgCreate('g');
-    svgClasses(visualGroup).add('djs-visual');
-
-    svgAppend(preview, visualGroup);
-
-    visual = visualGroup;
-
-    // hijack renderer to draw preview
-    graphicsFactory.drawShape(visual, shape);
-
-    return group;
-  }
-
-  eventBus.on('create.move', function(event) {
-
+  eventBus.on([ 'create.move', 'create.hover' ], function(event) {
     var context = event.context,
+        elements = context.elements,
         hover = event.hover,
-        shape = context.shape,
-        canExecute;
+        source = context.source,
+        hints = context.hints || {};
+
+    if (!hover) {
+      context.canExecute = false;
+      context.target = null;
+
+      return;
+    }
+
+    ensureConstraints(event);
 
     var position = {
       x: event.x,
       y: event.y
     };
 
-    canExecute = context.canExecute = hover;
+    var canExecute = context.canExecute = hover;
 
-    // ignore hover visually if canExecute is null
     if (hover && canExecute !== null) {
       context.target = hover;
 
@@ -88,31 +101,14 @@ export default function Create(
     }
   });
 
-  eventBus.on('create.move', LOW_PRIORITY, function(event) {
-
-    var context = event.context,
-        shape = context.shape,
-        visual = context.visual;
-
-    // lazy init drag visual once we received the first real
-    // drag move event (this allows us to get the proper canvas local coordinates)
-    if (!visual) {
-      visual = context.visual = createVisual(shape);
-    }
-
-    translate(visual, event.x, event.y);
-  });
-
-
   eventBus.on([ 'create.end', 'create.out', 'create.cleanup' ], function(event) {
-    var context = event.context,
-        target = context.target;
+    var hover = event.hover;
 
-    if (target) {
-      setMarker(target, null);
+    if (hover) {
+      setMarker(hover, null);
     }
   });
-
+  
   eventBus.on('create.ended', function(event) {
     eventBus.fire('create' + '.' + event.context.type, {
       context: {
@@ -127,40 +123,130 @@ export default function Create(
   });
 
   eventBus.on('create.end', function(event) {
-    return true;
+	return true;
   });
 
+  function cancel() {
+    var context = dragging.context();
 
-  eventBus.on('create.cleanup', function(event) {
-    var context = event.context;
-
-    if (context.visual) {
-      svgRemove(context.visual);
+    if (context && context.prefix === PREFIX) {
+      dragging.cancel();
     }
+  }
+
+  // cancel on <elements.changed> that is not result of <drag.end>
+  eventBus.on('create.init', function() {
+    eventBus.on('elements.changed', cancel);
+
+    eventBus.once([ 'create.cancel', 'create.end' ], HIGH_PRIORITY, function() {
+      eventBus.off('elements.changed', cancel);
+    });
   });
 
-  // API
-  this.start = function(event, shape, type) {
+  // API //////////
 
-    dragging.init(event, 'create', {
+  this.start = function(event, elements, context) {
+    if (!isArray(elements)) {
+      elements = [ elements ];
+    }
+
+    var shape = find(elements, function(element) {
+      return !isConnection(element);
+    });
+
+    if (!shape) {
+
+      // at least one shape is required
+      return;
+    }
+
+    context = assign({
+      elements: elements,
+      hints: {},
+      shape: shape
+    }, context || {});
+
+    // make sure each element has x and y
+    forEach(elements, function(element) {
+      if (!isNumber(element.x)) {
+        element.x = 0;
+      }
+
+      if (!isNumber(element.y)) {
+        element.y = 0;
+      }
+    });
+
+    var visibleElements = filter(elements, function(element) {
+      return !element.hidden;
+    });
+
+    var bbox = getBBox(visibleElements);
+
+    // center elements around cursor
+    forEach(elements, function(element) {
+      if (isConnection(element)) {
+        element.waypoints = map(element.waypoints, function(waypoint) {
+          return {
+            x: waypoint.x - bbox.x - bbox.width / 2,
+            y: waypoint.y - bbox.y - bbox.height / 2
+          };
+        });
+      }
+
+      assign(element, {
+        x: element.x - bbox.x - bbox.width / 2,
+        y: element.y - bbox.y - bbox.height / 2
+      });
+    });
+
+    dragging.init(event, PREFIX, {
       cursor: 'grabbing',
       autoActivate: true,
       data: {
         shape: shape,
-        context: {
-          shape: shape,
-          type: type
-        }
+        elements: elements,
+        context: context
       }
     });
   };
 }
 
 Create.$inject = [
-  'eventBus',
-  'dragging',
-  'modeling',
   'canvas',
-  'styles',
-  'graphicsFactory'
+  'dragging',
+  'eventBus',
+  'modeling',
+  'rules'
 ];
+
+// helpers //////////
+
+function ensureConstraints(event) {
+  var context = event.context,
+      createConstraints = context.createConstraints;
+
+  if (!createConstraints) {
+    return;
+  }
+
+  if (createConstraints.left) {
+    event.x = Math.max(event.x, createConstraints.left);
+  }
+
+  if (createConstraints.right) {
+    event.x = Math.min(event.x, createConstraints.right);
+  }
+
+  if (createConstraints.top) {
+    event.y = Math.max(event.y, createConstraints.top);
+  }
+
+  if (createConstraints.bottom) {
+    event.y = Math.min(event.y, createConstraints.bottom);
+  }
+}
+
+function isSingleShape(elements) {
+  return elements && elements.length === 1 && !isConnection(elements[ 0 ]);
+}

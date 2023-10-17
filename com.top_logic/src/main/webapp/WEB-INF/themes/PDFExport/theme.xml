@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<theme id="PDFExport"
+	config:interface="com.top_logic.layout.themeedit.browser.providers.theme.ThemeFormBuilder$EditModel"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	extends="dezentModern"
+	state="enabled"
+>
+	<styles>
+		<style name="/style/PDFExport/pdfExport.css"/>
+	</styles>
+</theme>

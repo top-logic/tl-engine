@@ -24,6 +24,7 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -67,6 +68,13 @@ public class AttributeUpdateContainer {
 	 */
 	public AttributeFormContext getFormContext() {
 		return _form;
+	}
+
+	/**
+	 * Where the form is written to.
+	 */
+	public Media getOutputMedia() {
+		return _form.getOutputMedia();
 	}
 
 	/**
@@ -654,4 +662,5 @@ public class AttributeUpdateContainer {
 	public void performUpdate() {
 		store();
 	}
+
 }

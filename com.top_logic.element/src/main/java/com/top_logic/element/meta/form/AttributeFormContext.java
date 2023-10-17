@@ -20,12 +20,12 @@ import com.top_logic.element.meta.form.overlay.ObjectConstructor;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.layout.ResPrefix;
-import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -43,24 +43,31 @@ public class AttributeFormContext extends FormContext {
 	/** Glue Object that ties FormContext back to the underlying object. */
 	private final AttributeUpdateContainer _updateContainer;
 
+	private final Media _media;
+
 	/**
 	 * Creates a {@link AttributeFormContext}.
 	 *
 	 * @see FormContext#FormContext(String, ResPrefix)
 	 */
 	public AttributeFormContext(String name, ResPrefix resPrefix) {
-		super(name, resPrefix);
-		_updateContainer = new AttributeUpdateContainer(this);
+		this(name, resPrefix, Media.BROWSER);
 	}
 	
 	/**
 	 * Creates a {@link AttributeFormContext}.
 	 *
-	 * @see FormContext#FormContext(String, ResourceView)
+	 * @param name
+	 *        See {@link #getName()}.
+	 * @param resPrefix
+	 *        See {@link #getResources()}
+	 * @param media
+	 *        See {@link #getOutputMedia()}
 	 */
-	public AttributeFormContext(String name, ResourceView resourceView) {
-		super(name, resourceView);
+	public AttributeFormContext(String name, ResPrefix resPrefix, Media media) {
+		super(name, resPrefix);
 		_updateContainer = new AttributeUpdateContainer(this);
+		_media = media;
 	}
 	
 	/**
@@ -70,7 +77,19 @@ public class AttributeFormContext extends FormContext {
 	 *        See {@link FormContext#FormContext(String, ResPrefix)}.
 	 */
 	public AttributeFormContext(ResPrefix resPrefix) {
-		this("attributeform", resPrefix);
+		this(resPrefix, Media.BROWSER);
+	}
+	
+	/**
+	 * Creates an {@link AttributeFormContext} with a default name.
+	 *
+	 * @param resPrefix
+	 *        See {@link FormContext#FormContext(String, ResPrefix)}.
+	 * @param media
+	 *        The output media.
+	 */
+	public AttributeFormContext(ResPrefix resPrefix, Media media) {
+		this("attributeform", resPrefix, media);
 	}
 
 	/**
@@ -79,6 +98,13 @@ public class AttributeFormContext extends FormContext {
 	 */
 	public final AttributeUpdateContainer getAttributeUpdateContainer() {
 		return _updateContainer;
+	}
+
+	/**
+	 * The current output media.
+	 */
+	public Media getOutputMedia() {
+		return _media;
 	}
 
 	/**

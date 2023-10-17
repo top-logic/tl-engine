@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_HEADER_CELL_CONTENT_TEMPLATE">
+		<value><![CDATA[<div class="tl-table__header-cell-content h-100">
+		{label}
+</div>]]></value>
+	</template>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_BODY_TEMPLATE">
+		<value><![CDATA[<tbody class="tl-table__body">
+	{body_rows}
+</tbody>]]></value>
+	</template>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_CONTAINER_TEMPLATE">
+		<value><![CDATA[<div id="{id}_table"
+	class="tl-line_height--normal"
+	data-complexwidget="true"
+>
+<table class="tl-table"
+	cellpadding="0"
+>
+	{colgroup}
+    <tr class="tl-table__title">
+        <th>{title}</th>
+    </tr>
+	{header}
+	{body}
+	<tr class="tl-table__footer">
+	    <th>{footer}</th>
+	</tr>
+</table>
+</div>]]></value>
+	</template>
+</settings>

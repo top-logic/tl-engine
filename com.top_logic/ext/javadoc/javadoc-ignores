@@ -5936,7 +5936,6 @@ com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider.ja
 com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider.java: Invalid camel case word 'getCurrentObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider.java: Missing documentation: com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider.MODEL_INSTANCE
-com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider.java: Invalid camel case word 'SecurityRootObjectProvider', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.simple.SimpleBoundObject.java: Invalid camel case word 'BoundObjects', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.simple.SimpleBoundObject.java: Invalid camel case word 'BoundRoles', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.simple.SimpleBoundObject.java: Invalid camel case word 'SimpleBoundObject', this may only be used within JavaDoc links or HTML code tags.

@@ -12,6 +12,7 @@ import java.util.Collection;
 
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.element.structured.StructuredElement;
@@ -38,6 +39,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @InApp(classifiers = { "tree" })
+@Label("Structure element drop")
 public class StructuredElementTreeDropTarget extends BusinessObjectTreeDrop {
 
 	/**

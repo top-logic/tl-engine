@@ -1012,6 +1012,8 @@ public class TLDoclet implements Doclet {
 						collectThemeConstantsDoc(type);
 					} else if (isWithPropertiesClass(typeMirror)) {
 						collectWithPropertiesDoc(type);
+					} else if (_wellKnown.hasInAppAnnotation(type)) {
+						collectType(type, type);
 					}
 				}
 			}

@@ -7,13 +7,18 @@ package com.top_logic.layout.formeditor.export.pdf;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
 
@@ -36,6 +41,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
@@ -43,6 +49,7 @@ import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.gui.config.ThemeSetting;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
@@ -50,7 +57,6 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.form.template.model.internal.TemplateControl;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -138,9 +144,30 @@ public class PDFExport {
 		}
 
 		String html = htmlBuffer.toString();
-		Logger.debug(html, PDFExport.class);
+		String expandedHtml = expandThemeVariables(html);
 
-		convertToPDF(context, out, html);
+		Logger.debug(expandedHtml, PDFExport.class);
+
+		convertToPDF(context, out, expandedHtml);
+	}
+
+	private String expandThemeVariables(String html) {
+		StringBuilder buffer = new StringBuilder();
+		Pattern varPattern = Pattern.compile("var\\(--([^\\)]+)\\)");
+		Matcher matcher = varPattern.matcher(html);
+		Theme theme = ThemeFactory.getTheme();
+		while (matcher.find()) {
+			ThemeSetting setting = theme.getSettings().get(matcher.group(1));
+			String replacement;
+			if (setting == null) {
+				replacement = "";
+			} else {
+				replacement = setting.getCssValue().replace("\\", "\\\\").replace("$", "\\$");
+			}
+			matcher.appendReplacement(buffer, replacement);
+		}
+		matcher.appendTail(buffer);
+		return buffer.toString();
 	}
 
 	private DisplayContext createDisplayContext() {
@@ -148,8 +175,12 @@ public class PDFExport {
 		// controls during export. The "current" display context is not available for
 		// control rendering, since the current session is not in rendering mode.
 		ServletContext servletContext = ServletContextService.getInstance().getServletContext();
+
 		DisplayContext context =
-			new DummyDisplayContext().initServletContext(servletContext).initOutputMedia(Media.PDF);
+			new DummyDisplayContext()
+				.initServletContext(servletContext)
+				.initOutputMedia(Media.PDF)
+				.initContextPath(servletContext.getContextPath());
 		context.initScope(new DummyControlScope());
 		context.installSubSessionContext(TLContext.getContext());
 		return context;
@@ -206,9 +237,30 @@ public class PDFExport {
 	protected void writePDFStyles(DisplayContext context, TagWriter out) throws IOException {
 		writePageStyles(context, out);
 
+		// Write styles inline to HTML to allow expanding CSS variables later on. The CSS engin of
+		// the PDF renderer does not support CSS variables.
+		out.beginBeginTag(HTMLConstants.STYLE_ATTR);
+		out.writeAttribute(HTMLConstants.TYPE_ATTR, "text/css");
+		out.endBeginTag();
+		{
+			String mergedCSS = getThemeCssResource();
+			try (InputStream css = FileManager.getInstance().getStream(mergedCSS)) {
+				try (InputStreamReader reader = new InputStreamReader(css, StandardCharsets.UTF_8)) {
+					StreamUtilities.copyReaderWriterContents(reader, out);
+				}
+			}
+		}
+		out.endTag(HTMLConstants.STYLE_ATTR);
+	}
+
+	private String getThemeCssResource() {
 		Theme exportTheme = getExportTheme();
 		String mergedCSS = exportTheme.getStyleSheet();
-		HTMLUtil.writeStylesheetRef(out, context.getContextPath(), mergedCSS);
+		int paramIndex = mergedCSS.lastIndexOf('?');
+		if (paramIndex >= 0) {
+			return mergedCSS.substring(0, paramIndex);
+		}
+		return mergedCSS;
 	}
 
 	/**
@@ -411,7 +463,10 @@ public class PDFExport {
 		 * @return The transformed uri
 		 */
 		private String getTLPath(String uri) {
-			if (uri.startsWith(contextPath)) {
+			if (uri.startsWith("../")) {
+				// A resource that is relative to the /servlet URI (e.g. a font).
+				uri = uri.substring(2);
+			} else if (uri.startsWith(contextPath)) {
 				uri = uri.substring(contextPath.length());
 			}
 			int parameter = uri.lastIndexOf("?");

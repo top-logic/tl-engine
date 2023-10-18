@@ -114,6 +114,71 @@
 				/>
 			</attributes>
 		</class>
+		<class name="WithTables">
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.pdfExport:A#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="composition"
+							fullQualifiedName="test.pdfExport:WithTables#composition"
+							type="test.pdfExport:RowObject"
+						/>
+						<field
+							attribute="selectionTable"
+							fullQualifiedName="test.pdfExport:WithTables#selectionTable"
+							type="test.pdfExport:RowObject"
+						/>
+						<field
+							attribute="multiSelection"
+							fullQualifiedName="test.pdfExport:WithTables#multiSelection"
+							type="test.pdfExport:RowObject"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="composition"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="RowObject"
+				/>
+				<reference name="multiSelection"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="RowObject"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="x -> $x.get(`test.pdfExport:WithTables#composition`)"/>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="selectionTable"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="RowObject"
+				>
+					<annotations>
+						<reference-display value="table"/>
+						<options>
+							<options-by-expression function="x -> $x.get(`test.pdfExport:WithTables#composition`)"/>
+						</options>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
 		<class name="PDFSnapshot">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -139,6 +204,23 @@
 				<property name="version"
 					mandatory="true"
 					type="tl.core:Integer"
+				/>
+			</attributes>
+		</class>
+		<class name="RowObject">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="date"
+					type="tl.core:DateTime"
+				/>
+				<property name="completed"
+					type="tl.core:Boolean"
 				/>
 			</attributes>
 		</class>

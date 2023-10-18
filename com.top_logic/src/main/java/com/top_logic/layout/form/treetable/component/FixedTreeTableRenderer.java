@@ -236,7 +236,7 @@ public class FixedTreeTableRenderer extends ThemeTreeTableRenderer {
 						out.beginTag(TR);
 						{
 							out.beginBeginTag(TH);
-							out.writeAttribute(CLASS_ATTR, DefaultTableRenderer.TABLE_TITLE_CSS_CLASS);
+							out.writeAttribute(CLASS_ATTR, "tl-table__title-label");
 							out.endBeginTag();
 							{
 								super.writeTitle(context, out, tree);

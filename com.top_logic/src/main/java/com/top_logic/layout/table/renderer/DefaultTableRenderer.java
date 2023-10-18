@@ -141,21 +141,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	public static final String TABLE_CELL_SELECTABLE_CSS_CLASS = "tl-table__cell--selectable";
 
 	/**
-	 * CSS class name to style a table title.
-	 */
-	public static final String TABLE_TITLE_CSS_CLASS = "tl-table__title";
-
-	/**
-	 * CSS class name to style a tables title toolbar.
-	 */
-	public static final String TABLE_TITLE_TOOLBAR_CSS_CLASS = "tl-table__title-toolbar";
-
-	/**
-	 * CSS class name to style a tables title label.
-	 */
-	public static final String TABLE_TITLE_LABEL_CSS_CLASS = "tl-table__title-label";
-
-	/**
 	 * CSS class name to style a tables paging footer.
 	 */
 	public static final String TABLE_FOOTER_PAGER_CSS_CLASS = "tl-table__footer-pager";
@@ -340,7 +325,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 		private final TableViewModel _model;
 
-		private final TableRenderer<?> _renderer;
+		private final DefaultTableRenderer _renderer;
 
 		private final String _trTitleClass;
 
@@ -370,7 +355,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		 * @param view
 		 *        See {@link #getView()}.
 		 */
-		public DefaultRenderState(TableRenderer<?> renderer, TableControl view) {
+		public DefaultRenderState(DefaultTableRenderer renderer, TableControl view) {
 			super(view.getViewModel().getHeader());
 			_renderer = renderer;
 			_view = view;
@@ -835,7 +820,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		/**
-		 * Writes the table body rows.
+		 * Writes the table body rows of the initial slice of a viewport table.
 		 */
 		@TemplateVariable("body_rows")
 		public void writeBodyRows(DisplayContext context, TagWriter out) throws IOException {
@@ -845,6 +830,16 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 				for (int row = slice.getFirstRow(); row <= slice.getLastRow(); row++) {
 					getView().addRowScope(TableUtil.createRendererForRow(this, row), context, out, row);
 				}
+			}
+		}
+
+		/**
+		 * Writes all table body rows defined by the table model.
+		 */
+		@TemplateVariable("body_rows_all")
+		public void writeBodyRowsAll(DisplayContext context, TagWriter out) throws IOException {
+			for (int row = 0; row < _model.getRowCount(); row++) {
+				getView().addRowScope(TableUtil.createRendererForRow(this, row), context, out, row);
 			}
 		}
 
@@ -860,21 +855,25 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		@Override
 		public void writeTable(DisplayContext context, TagWriter out) throws IOException {
 			Icons.TABLE_CONTAINER_TEMPLATE.get().write(context, out, this);
-
-			writeTableInitializer(out, getView());
 		}
 
-		private void writeTableInitializer(TagWriter out, TableControl view) throws IOException {
-			TableViewModel viewModel = view.getViewModel();
-
+		/**
+		 * The script to initialize the client-side state of the table.
+		 * 
+		 * <p>
+		 * Must be rendered after the table container element.
+		 * </p>
+		 */
+		@TemplateVariable("tableInitializer")
+		public void writeTableInitializer(DisplayContext context, TagWriter out) throws IOException {
 			out.beginScript();
 			out.append("services.ajax.executeAfterRendering(window, function() {");
 			out.append("TABLE.initTable('");
-			out.append(view.getID());
+			out.append(_view.getID());
 			out.append("', ");
-			appendTableInformerCreator(view, viewModel, out);
+			appendTableInformerCreator(_view, _model, out);
 			out.append(",");
-			appendClientDisplayData(out, viewModel);
+			appendClientDisplayData(out, _model);
 			out.append(");");
 			HTMLUtil.endScriptAfterRendering(out);
 		}
@@ -1154,7 +1153,40 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		 */
 		@TemplateVariable("title")
 		public void writeTitle(DisplayContext context, TagWriter out) throws IOException {
-			_renderer.writeTitle(context, out, this);
+			if (shouldWriteTitle()) {
+				Icons.TABLE_TITLE_TEMPLATE.get().write(context, out, this);
+			}
+		}
+
+		/**
+		 * An optional style value to add to the table title row.
+		 */
+		@TemplateVariable("titleStyle")
+		public String getTitleStyle() {
+			String titleStyle = _model.getTableConfiguration().getTitleStyle();
+			return titleStyle;
+		}
+
+		/**
+		 * Buttons to render in the tabel title row.
+		 */
+		@TemplateVariable("titleButtons")
+		public void writeTitleButtons(DisplayContext context, TagWriter out) throws IOException {
+			List<HTMLFragment> titleBarButtons = getView().getTitleBarButtons();
+			for (int cnt = titleBarButtons.size(), n = 0; n < cnt; n++) {
+				HTMLFragment button = titleBarButtons.get(n);
+				TableButtons.writeToolbarView(context, out, button);
+			}
+			ToolBar toolBar = getView().getTableData().getToolBar();
+			ToolbarControl.writeToolbarContents(context, out, SPAN, null, toolBar);
+		}
+
+		/**
+		 * The table title.
+		 */
+		@TemplateVariable("titleContents")
+		public void writeTitleContents(DisplayContext context, TagWriter out) throws IOException {
+			_renderer.getTitleView(getView()).write(context, out);
 		}
 
 		/**
@@ -1312,6 +1344,14 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	@Override
 	public final int getNumberHeaderRows() {
 		return this._numberHeaderRows;
+	}
+
+	@Override
+	protected final void writeControlContents(DisplayContext context, TagWriter out, TableControl control)
+			throws IOException {
+		if (control.getViewModel() != null) {
+			write(context, new DefaultRenderState(this, control), out);
+		}
 	}
 
 	/**
@@ -2004,82 +2044,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		tag.endEmptyTag(context, out);
 	}
 
-	/**
-	 * Write a title bar, if there is an I18N for it.
-	 *
-	 * This method will get the title via {@link TableControl#getTitle()}.
-	 * Depending on the returned value, the title bar will be written or
-	 * suppressed (if returned value is <code>null</code> or empty).
-	 */
-	@Override
-	public boolean writeTitle(DisplayContext context, TagWriter out, RenderState state) throws IOException {
-		if (state.shouldWriteTitle()) {
-			TableControl view = state.getView();
-
-			View title = getTitleView(view);
-			List<HTMLFragment> titleBarButtons = view.getTitleBarButtons();
-
-			TableData tableData = view.getTableData();
-			ToolBar toolBar = tableData.getToolBar();
-
-			boolean hasVisibleButtons = !toolBar.isEmpty();
-			if (!hasVisibleButtons) {
-				for (int cnt = titleBarButtons.size(), n = 0; n < cnt; n++) {
-					HTMLFragment button = titleBarButtons.get(n);
-					if (!(button instanceof View) || ((View) button).isVisible()) {
-						hasVisibleButtons = true;
-						break;
-					}
-				}
-			}
-			
-
-			if (title.isVisible() || hasVisibleButtons) {
-				out.beginBeginTag(DIV);
-				writeTitleClasses(out);
-				out.beginAttribute(STYLE_ATTR);
-				appendTitleStyles(out, view.getViewModel());
-				out.endAttribute();
-				out.endBeginTag();
-
-				if (title.isVisible()) {
-					out.beginBeginTag(DIV);
-					out.writeAttribute(CLASS_ATTR, TABLE_TITLE_LABEL_CSS_CLASS);
-					out.endBeginTag();
-					title.write(context, out);
-					out.endTag(DIV);
-				}
-				if (hasVisibleButtons) {
-					out.beginBeginTag(DIV);
-					out.writeAttribute(CLASS_ATTR, TABLE_TITLE_TOOLBAR_CSS_CLASS);
-					out.endBeginTag();
-					for (int cnt = titleBarButtons.size(), n = 0; n < cnt; n++) {
-						HTMLFragment button = titleBarButtons.get(n);
-						TableButtons.writeToolbarView(context, out, button);
-					}
-					ToolbarControl.writeToolbarContents(context, out, SPAN, null, toolBar);
-
-					out.endTag(DIV);
-				}
-
-				out.endTag(DIV);
-			}
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * Appends custom table title styles.
-	 */
-	protected final void appendTitleStyles(TagWriter out, final TableViewModel viewModel) throws IOException {
-		String titleStyle = viewModel.getTableConfiguration().getTitleStyle();
-		if (!StringServices.isEmpty(titleStyle)) {
-			out.append(titleStyle);
-		}
-	}
-
 	private boolean hasCustomColumnOrder(TableControl view) {
 		return view.getApplicationModel().getTableConfiguration().getColumnCustomization() != ColumnCustomization.NONE;
 	}
@@ -2606,16 +2570,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		return null;
 	}
 
-	protected final void writeTitleClasses(TagWriter out) throws IOException {
-		out.beginAttribute(CLASS_ATTR);
-		writeTitleClassesContent(out);
-		out.endAttribute();
-	}
-
-	protected void writeTitleClassesContent(Appendable out) throws IOException {
-		out.append(TABLE_TITLE_CSS_CLASS);
-	}
-
 	/**
 	 * The style for the counter (or the empty list message).
 	 * 
@@ -2696,7 +2650,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 	@Override
 	public void updateRows(TableControl view, List<UpdateRequest> updateRequests, UpdateQueue actions) {
-		RenderState state = new DefaultRenderState((TableRenderer<?>) view.getRenderer(), view);
+		RenderState state = new DefaultRenderState(this, view);
 		for (UpdateRequest updateRequest : updateRequests) {
 			int firstRow = updateRequest.getFirstAffectedRow();
 			int lastRow = updateRequest.getLastAffectedRow();

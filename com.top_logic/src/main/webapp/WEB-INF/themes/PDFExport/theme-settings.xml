@@ -8,27 +8,34 @@
 	</template>
 	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_BODY_TEMPLATE">
 		<value><![CDATA[<tbody class="tl-table__body">
-	{body_rows}
+	{body_rows_all}
 </tbody>]]></value>
 	</template>
 	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_CONTAINER_TEMPLATE">
-		<value><![CDATA[<div id="{id}_table"
-	class="tl-line_height--normal"
-	data-complexwidget="true"
->
-<table class="tl-table"
+		<value><![CDATA[<table id="{id}_table" class="tl-table tl-line_height--normal"
 	cellpadding="0"
 >
 	{colgroup}
-    <tr class="tl-table__title">
-        <th>{title}</th>
-    </tr>
-	{header}
+	<thead class="tl-table__header">
+        <tr class="tl-table__titleRow">
+            <th colspan="{columnCount}">{title}</th>
+        </tr>
+    	{headerRows}
+	</thead>
 	{body}
-	<tr class="tl-table__footer">
-	    <th>{footer}</th>
-	</tr>
-</table>
-</div>]]></value>
+	<tfoot>
+    	<tr class="tl-table__footerRow">
+	        <th colspan="{columnCount}">{footer}</th>
+	    </tr>
+	</tfoot>
+</table>]]></value>
+	</template>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_TITLE_TEMPLATE">
+		<value><![CDATA[<div class="tl-table__title" style="{titleStyle}">
+	<div class="tl-table__title-label">
+		{titleContents}
+	</div>
+</div>
+]]></value>
 	</template>
 </settings>

@@ -35,6 +35,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.html.template.EmptyTemplate;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.HTMLTemplateUtils;
 import com.top_logic.layout.DisplayDimension;
@@ -346,8 +347,13 @@ public abstract class ThemeFactory extends ConfiguredManagedClass<ThemeFactory.C
 			defaultFragment = null;
 		}
 		if (defaultFragment == null) {
-			defaultFragment = HTMLTemplateUtils
-				.parse("<span>[No template '" + resourceName + "' found for '" + name + "']</span>");
+			try {
+				defaultFragment = HTMLTemplateUtils
+					.parse("Error-template", "<span>[No template '" + resourceName + "' found for '" + name + "']</span>");
+			} catch (ConfigurationException ex) {
+				Logger.error("Cannot parse default template.", ex, ThemeFactory.class);
+				defaultFragment = EmptyTemplate.INSTANCE;
+			}
 		}
 		return defaultFragment;
 	}

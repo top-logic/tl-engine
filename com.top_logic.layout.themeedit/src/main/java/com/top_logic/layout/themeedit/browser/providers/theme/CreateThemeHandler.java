@@ -12,7 +12,9 @@ import java.util.Map;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.gui.MultiThemeFactory;
 import com.top_logic.gui.ThemeFactory;
@@ -65,7 +67,9 @@ public class CreateThemeHandler extends AbstractCommandHandler {
 	}
 
 	private HandlerResult createTheme(LayoutComponent component, FormContext formContext) throws IOError {
-		ThemeConfig themeConfig = getEditModel(formContext);
+		ThemeConfig form = getEditModel(formContext);
+		ThemeConfig themeConfig = TypedConfiguration.newConfigItem(ThemeConfig.class);
+		ConfigCopier.copyContent(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, form, themeConfig);
 
 		createThemeFiles(themeConfig);
 

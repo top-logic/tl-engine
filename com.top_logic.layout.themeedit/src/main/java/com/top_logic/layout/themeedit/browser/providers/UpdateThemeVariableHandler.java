@@ -163,7 +163,13 @@ public class UpdateThemeVariableHandler extends AbstractCommandHandler {
 	private ThemeSetting createThemeSetting(FormComponent form) {
 		ThemeSetting.Config<?> config = getThemeSettingConfig(form);
 
-		ThemeSetting newSetting = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+		// Ensure that when overriding an abstract setting, the new setting is not also marked
+		// abstract.
+		ThemeSetting.Config<?> copy = TypedConfiguration.copy(config);
+		copy.reset(TypedConfiguration.getConfigurationDescriptor(ThemeSetting.Config.class)
+			.getProperty(ThemeSetting.Config.ABSTRACT));
+
+		ThemeSetting newSetting = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(copy);
 
 		return newSetting.initThemeId(getSelectedThemeId(form));
 	}

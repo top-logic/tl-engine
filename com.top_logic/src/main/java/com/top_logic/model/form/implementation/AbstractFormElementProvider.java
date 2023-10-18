@@ -8,15 +8,12 @@ package com.top_logic.model.form.implementation;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.form.FormContainer;
@@ -200,27 +197,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	@Override
 	public boolean isVisible(TLStructuredType type, FormMode formMode) {
 		return true;
-	}
-
-	/**
-	 * Renders a {@link HTMLConstants#DIV} containing the PDF output for all visible given
-	 * {@link FormElementTemplateProvider}.
-	 * 
-	 * @param renderContext
-	 *        Context holding the necessary informations to create PDF export.
-	 * @param providers
-	 *        The {@link FormElementTemplateProvider}s to render.
-	 */
-	protected void renderPlain(DisplayContext context, TagWriter out, FormEditorContext renderContext,
-			Iterable<? extends FormElementTemplateProvider> providers) throws IOException {
-		out.beginTag(HTMLConstants.DIV);
-	
-		for (FormElementTemplateProvider content : providers) {
-			if (content.isVisible(renderContext.getFormType(), FormMode.EDIT)) {
-				content.renderPDFExport(context, out, renderContext);
-			}
-		}
-		out.endTag(HTMLConstants.DIV);
 	}
 
 }

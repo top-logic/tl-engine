@@ -122,9 +122,5 @@ public class MacroTemplateProvider extends AbstractFormElementProvider<MacroPart
 		return contentBox(htmlSource(MacroFormat.INSTANCE.getSpecification(expression)));
 	}
 
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		displayFragment(renderContext.getModel(), getConfig().getExpr()).write(context, out);
-	}
 }
 

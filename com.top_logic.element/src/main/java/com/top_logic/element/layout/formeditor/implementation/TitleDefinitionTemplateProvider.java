@@ -8,14 +8,10 @@ package com.top_logic.element.layout.formeditor.implementation;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
-
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.definition.TitleDefinition;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
@@ -83,13 +79,4 @@ public class TitleDefinitionTemplateProvider extends AbstractFormElementProvider
 	public DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
-
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		String level = level();
-		out.beginTag(level);
-		out.writeText(context.getResources().getString(title()));
-		out.endTag(level);
-	}
-
 }

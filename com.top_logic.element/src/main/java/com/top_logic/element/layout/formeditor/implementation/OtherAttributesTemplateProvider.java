@@ -8,7 +8,6 @@ package com.top_logic.element.layout.formeditor.implementation;
 import static com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTemplateProvider.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,18 +17,12 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.element.layout.formeditor.definition.FieldDefinition;
-import com.top_logic.element.layout.formeditor.definition.GroupDefinition;
 import com.top_logic.element.layout.formeditor.definition.OtherAttributes;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.FormContainer;
@@ -199,29 +192,6 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 	@Override
 	public DisplayDimension getDialogHeight() {
 		return GroupDefinitionTemplateProvider.HEIGHT;
-	}
-
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		List<TLStructuredTypePart> additionalParts = additionalParts(renderContext);
-		if (additionalParts.isEmpty()) {
-			return;
-		}
-		GroupDefinition groupDefinition = TypedConfiguration.newConfigItem(GroupDefinition.class);
-		groupDefinition.setWholeLine(true);
-		groupDefinition.setLabel(getConfig().getLabel());
-		for (TLStructuredTypePart additionalPart : additionalParts) {
-			FieldDefinition fieldDefinition = TypedConfiguration.newConfigItem(FieldDefinition.class);
-			fieldDefinition.setAttribute(additionalPart.getName());
-			groupDefinition.getContent().add(fieldDefinition);
-		}
-		GroupDefinitionTemplateProvider additionalAttributesGroup = TypedConfigUtil.createInstance(groupDefinition);
-		/* Attributes are resolved in the form type of the context. Therefore it must be set, cause
-		 * it can be null. */
-		renderContext = new FormEditorContext.Builder(renderContext)
-			.formType(concreteType(renderContext))
-			.build();
-		additionalAttributesGroup.renderPDFExport(context, out, renderContext);
 	}
 
 }

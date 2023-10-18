@@ -12,6 +12,7 @@ import static java.util.Collections.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,12 +24,14 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.layout.table.provider.ColumnInfo;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.ui.TLIDColumn;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.util.TLModelUtil;
@@ -196,10 +199,63 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 		 */
 		protected List<String> calcMainProperties(TLClass contentType) {
 			List<String> mainProperties = DisplayAnnotations.getMainProperties(contentType);
-			if (mainProperties.isEmpty()) {
-				return calcVisiblePartNames(contentType);
+			if (!mainProperties.isEmpty()) {
+				return mainProperties;
 			}
-			return mainProperties;
+			String idProperty = calcIdProperty(contentType);
+			if (idProperty != null) {
+				return List.of(idProperty);
+			}
+			List<String> subtypeIdProperties = calcSubtypeIdProperties(contentType);
+			if (!subtypeIdProperties.isEmpty()) {
+				return subtypeIdProperties;
+			}
+			return calcVisiblePartNames(contentType);
+		}
+
+		/**
+		 * The "id property" for all subclasses.
+		 * <p>
+		 * If there is none for a class, "name" is used. The result contains every property just
+		 * once and has a stable, though arbitrary, order. There is no defined order, as there is no
+		 * order between the subclasses.
+		 * </p>
+		 */
+		protected List<String> calcSubtypeIdProperties(TLClass type) {
+			Set<String> idProperties = set();
+			Set<TLClass> concreteSubtypes = TLModelUtil.getConcreteSpecializations(type);
+			for (TLClass subtype : concreteSubtypes) {
+				String idProperty = calcIdProperty(subtype);
+				if (idProperty != null) {
+					idProperties.add(idProperty);
+				}
+			}
+			if (idProperties.size() < 2) {
+				return List.copyOf(idProperties);
+			}
+			// Enforce a stable order:
+			List<String> stableIdProperties = list(idProperties);
+			stableIdProperties.sort(Comparator.naturalOrder());
+			return stableIdProperties;
+		}
+
+		/**
+		 * The property which is used to identify instances of this class on the GUI.
+		 * <p>
+		 * The nearest {@link TLIDColumn} in the chain of primary generalizations. If there is none,
+		 * "name" is used.
+		 * </p>
+		 */
+		protected String calcIdProperty(TLClass type) {
+			TLIDColumn idProperty = DisplayAnnotations.getIDColumn(type);
+			if (idProperty != null) {
+				return idProperty.getValue();
+			}
+			TLStructuredTypePart nameProperty = type.getPart(AbstractWrapper.NAME_ATTRIBUTE);
+			if (nameProperty != null) {
+				return AbstractWrapper.NAME_ATTRIBUTE;
+			}
+			return null;
 		}
 
 		/**

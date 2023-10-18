@@ -7,19 +7,14 @@ package com.top_logic.element.layout.formeditor.implementation;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.definition.TabbarDefinition.TabDefinition;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ImageProvider;
-import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormContainerProvider;
@@ -86,18 +81,6 @@ public class TabDefinitionTemplateProvider extends AbstractFormContainerProvider
 
 	String getCssClass() {
 		return ColumnsDefinitionTemplateProvider.cssClassForColumnsLayout(getConfig());
-	}
-
-	@Override
-	protected String pdfExportCssClass() {
-		return GroupDefinitionTemplateProvider.PDF_EXPORT_CSS;
-	}
-
-	@Override
-	protected void writeHeader(DisplayContext context, TagWriter out) throws IOException {
-		HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_HEADER_CSS);
-		out.writeText(context.getResources().getString(GroupDefinitionTemplateProvider.label(getConfig())));
-		out.endTag(HTMLConstants.DIV);
 	}
 
 }

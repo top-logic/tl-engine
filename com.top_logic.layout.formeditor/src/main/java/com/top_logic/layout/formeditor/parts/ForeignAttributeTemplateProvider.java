@@ -7,20 +7,16 @@ package com.top_logic.layout.formeditor.parts;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
-
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.definition.FieldDefinition;
 import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTemplateProvider;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
@@ -207,24 +203,6 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 				return null;
 		}
 		throw LabelPosition.noSuchPosition(labelPosition);
-	}
-
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		if (_delegate == null) {
-			return;
-		}
-		TLObject foreignItem = getForeignObject(renderContext.getModel());
-		if (foreignItem == null) {
-			return;
-		}
-		TLClass formType = OptionalTypeTemplateParameters.resolve(getConfig());
-		renderContext = new FormEditorContext.Builder(renderContext)
-			.concreteType(foreignItem.tType())
-			.model(foreignItem)
-			.formType(formType)
-			.build();
-		_delegate.renderPDFExport(context, out, renderContext);
 	}
 
 }

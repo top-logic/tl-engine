@@ -110,8 +110,4 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 		return HEIGHT;
 	}
 
-	@Override
-	protected String pdfExportCssClass() {
-		return "columns";
-	}
 }

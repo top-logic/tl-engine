@@ -7,7 +7,6 @@ package com.top_logic.layout.formeditor.parts;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +18,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
-import com.top_logic.element.layout.formeditor.implementation.GroupDefinitionTemplateProvider;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -43,8 +40,6 @@ import com.top_logic.layout.form.template.model.Member;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.ConfigKey;
-import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
@@ -54,7 +49,6 @@ import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
-import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -267,54 +261,6 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			finalTemplate = boxTemplate;
 		}
 		return finalTemplate;
-	}
-
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		TLClass targetType = OptionalTypeTemplateParameters.resolve(getConfig());
-		FormElementTemplateProvider globalLayout = TypedConfigUtil.createInstance(getConfig().getLayout());
-		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
-		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(renderContext.getModel()));
-		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
-		boolean noSeparateGroup = getConfig().isNoSeparateGroup();
-		for (Object obj : objects) {
-			TLObject item = SearchExpression.asTLObjectNonNull(itemsExpr.getSearch(), obj);
-			FormElementTemplateProvider layout;
-			FormEditorContext innerContext;
-			if (globalLayout != null) {
-				innerContext = new FormEditorContext.Builder(renderContext)
-					.formType(targetType)
-					.concreteType(null)
-					.model(item)
-					.build();
-				layout = globalLayout;
-			} else {
-				TypedForm typedForm = TypedForm.lookup(null, item);
-				layout = TypedConfigUtil.createInstance(typedForm.getFormDefinition());
-				innerContext = new FormEditorContext.Builder(renderContext)
-					.formType(typedForm.getFormType())
-					.concreteType(typedForm.getDisplayedType())
-					.model(item)
-					.build();
-			}
-
-			if (noSeparateGroup) {
-				layout.renderPDFExport(context, out, innerContext);
-			} else {
-				HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_EXPORT_CSS);
-
-				HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_HEADER_CSS);
-				out.writeText(label(labelExpr, item));
-				out.endTag(HTMLConstants.DIV);
-
-				HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_CONTENT_CSS);
-				layout.renderPDFExport(context, out, innerContext);
-				out.endTag(HTMLConstants.DIV);
-
-				out.endTag(HTMLConstants.DIV);
-			}
-
-		}
 	}
 
 }

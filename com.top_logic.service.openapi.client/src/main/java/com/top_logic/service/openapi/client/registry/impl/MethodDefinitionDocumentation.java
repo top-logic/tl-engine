@@ -165,7 +165,10 @@ public class MethodDefinitionDocumentation implements HTMLFragment {
 
 	private void writeParameterType(TagWriter out, ParameterDefinition parameter) {
 		out.beginTag(TD);
-		out.writeText(getType(parameter));
+		TLModelPartRef type = parameter.getType();
+		if (type != null) {
+			out.writeText(getTypeName(type));
+		}
 		out.endTag(TD);
 	}
 
@@ -175,8 +178,7 @@ public class MethodDefinitionDocumentation implements HTMLFragment {
 		out.endTag(TD);
 	}
 
-	private String getType(ParameterDefinition parameter) {
-		TLModelPartRef type = parameter.getType();
+	private String getTypeName(TLModelPartRef type) {
 		try {
 			TLModelPart resolved = type.resolve();
 			return MetaLabelProvider.INSTANCE.getLabel(resolved);

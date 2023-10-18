@@ -76,14 +76,32 @@ public class MethodDefinitionDocumentation implements HTMLFragment {
 		out.beginTag(CODE);
 		out.writeText(_definition.getName());
 		out.writeText('(');
-		boolean firstParam = true;
-		for (String parameterName : _definition.getParameterNames()) {
-			if (!firstParam) {
-				out.writeText(", ");
+		List<String> parameterNames = _definition.getParameterNames();
+		switch (parameterNames.size()) {
+			case 0: {
+				break;
 			}
-			out.writeText('$');
-			out.writeText(parameterName);
-			firstParam = false;
+			case 1: {
+				String parameter = parameterNames.get(0);
+				out.writeText(parameter);
+				out.writeText(": $");
+				out.writeText(parameter);
+				break;
+			}
+			default: {
+				boolean firstParam = true;
+				for (String parameter : parameterNames) {
+					if (!firstParam) {
+						out.writeText(",");
+					}
+					out.writeText("\n    ");
+					out.writeText(parameter);
+					out.writeText(": $");
+					out.writeText(parameter);
+					firstParam = false;
+				}
+				out.writeText("\n");
+			}
 		}
 		out.writeText(')');
 		out.endTag(CODE);

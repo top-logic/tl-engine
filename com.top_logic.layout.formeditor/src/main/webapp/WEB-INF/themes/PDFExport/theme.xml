@@ -2,7 +2,7 @@
 
 <theme id="PDFExport"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	extends="dezentModern"
+	extends="default"
 	state="disabled"
 >
 	<styles>

@@ -16,7 +16,6 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.dnd.TableDropTarget;
-import com.top_logic.layout.table.renderer.DefaultTableRenderer.DefaultRenderState;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
@@ -98,16 +97,6 @@ public abstract class AbstractTableRenderer<C extends AbstractTableRenderer.Conf
 		out.beginAttribute(ONDRAGLEAVE_ATTR);
 		out.append("return services.form.TableControl.handleOnDragLeave(event, this);");
 		out.endAttribute();
-	}
-
-	@Override
-	protected final void writeControlContents(DisplayContext context, TagWriter out, TableControl control)
-			throws IOException {
-		TableControl table = control;
-		if (table.getViewModel() == null) {
-			return;
-		}
-		write(context, new DefaultRenderState(this, table), out);
 	}
 
 	@Override

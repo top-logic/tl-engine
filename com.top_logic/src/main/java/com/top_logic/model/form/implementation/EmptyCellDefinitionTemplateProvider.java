@@ -7,13 +7,9 @@ package com.top_logic.model.form.implementation;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
-
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
@@ -67,8 +63,4 @@ public class EmptyCellDefinitionTemplateProvider extends AbstractFormElementProv
 			getWholeLine(context.getFormType()));
 	}
 
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		// Nothing to render here
-	}
 }

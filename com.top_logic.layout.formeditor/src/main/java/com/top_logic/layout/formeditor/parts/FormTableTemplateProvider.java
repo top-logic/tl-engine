@@ -25,7 +25,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTemplateProvider;
-import com.top_logic.element.layout.formeditor.implementation.SimplePDFTableFragment;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
@@ -68,7 +67,6 @@ import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -430,31 +428,6 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	@Override
 	public boolean openDialog() {
 		return OPEN_DIALOG;
-	}
-
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		Collection<ColumnDisplay> configuredCols = colums();
-
-		ColumnDisplayVisitor<String, Void> columnNameProvider = columnNameProvider();
-
-		List<String> visibleColumNames = new ArrayList<>();
-		for (ColumnDisplay column : configuredCols) {
-			visibleColumNames.add(column.visit(columnNameProvider, null));
-		}
-
-		TableConfigurationProvider tableConfig = TableConfigurationFactory.combine(
-			genericProvider(),
-			TableConfigurationFactory.setDefaultColumns(visibleColumNames),
-			GenericTableConfigurationProvider.showDefaultColumns(),
-			tableTitleProvider(),
-			additionalCommands(),
-			SimplePDFTableFragment.removeNonExportColumns());
-
-		List<?> rows = rows(renderContext.getModel());
-		HTMLUtil.beginDiv(out, "formTable");
-		new SimplePDFTableFragment(tableConfig, rows).write(context, out);
-		HTMLUtil.endDiv(out);
 	}
 
 }

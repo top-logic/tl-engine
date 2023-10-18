@@ -8,19 +8,14 @@ package com.top_logic.model.form.implementation;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
-
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.SeparatorDefinition;
@@ -79,8 +74,4 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 		return HEIGHT;
 	}
 
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		HTMLUtil.writeHr(out);
-	}
 }

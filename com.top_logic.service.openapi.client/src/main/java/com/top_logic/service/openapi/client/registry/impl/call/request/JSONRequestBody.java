@@ -100,27 +100,66 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 				}
 			};
 		} else {
-			// Note: The last argument is passed to the innermost function. Therefore, the lambdas
-			// must
-			// be constructed in reverse order.
-			for (int n = parameters.size() - 1; n >= 0; n--) {
-				expr = lambda(parameters.get(n), expr);
-			}
+			expr = addMethodParameters(expr, method);
 
 			QueryExecutor json = QueryExecutor.compile(expr);
 
 			return new JsonBodyBuilder() {
 				@Override
 				protected String jsonBody(ClassicHttpRequest request, Call call) {
-					Object[] args = new Object[parameters.size()];
-					for (int n = 0, cnt = parameters.size(); n < cnt; n++) {
-						args[n] = call.getArgument(n);
-					}
+					Object[] args = createCallArguments(call, method);
 					Object value = json.execute(args);
 					return JSON.toString(value);
 				}
 			};
 		}
+	}
+
+	/**
+	 * Create arguments that can be used to fill parameters in {@link Expr} derived from
+	 * {@link #addMethodParameters(Expr, MethodSpec)}.
+	 *
+	 * @param call
+	 *        {@link Call} to get argument values from.
+	 * @param method
+	 *        {@link MethodSpec} that was used to define additional parameters in
+	 *        {@link #addMethodParameters(Expr, MethodSpec)}.
+	 * @return Arguments for {@link #addMethodParameters(Expr, MethodSpec) enhanced} query.
+	 */
+	public static Object[] createCallArguments(Call call, MethodSpec method) {
+		List<String> parameters = method.getParameterNames();
+		Object[] args = new Object[parameters.size()];
+		for (int n = 0, cnt = parameters.size(); n < cnt; n++) {
+			args[n] = call.getArgument(n);
+		}
+		return args;
+	}
+
+	/**
+	 * Enhances the given {@link Expr} such that access to the parameters in the given method are
+	 * allowed.
+	 * 
+	 * <p>
+	 * The arguments for the parameters can be get from
+	 * {@link #createCallArguments(Call, MethodSpec)}.
+	 * </p>
+	 *
+	 * @param expr
+	 *        Base expression.
+	 * @param method
+	 *        Method defining the available parameters.
+	 * @return Enhanced {@link Expr}.
+	 * 
+	 * @see #createCallArguments(Call, MethodSpec)
+	 */
+	public static Expr addMethodParameters(Expr expr, MethodSpec method) {
+		List<String> parameters = method.getParameterNames();
+		// Note: The last argument is passed to the innermost function. Therefore, the lambdas
+		// must be constructed in reverse order.
+		for (int n = parameters.size() - 1; n >= 0; n--) {
+			expr = lambda(parameters.get(n), expr);
+		}
+		return expr;
 	}
 
 	private static Expr lambda(String param, Expr expr) {

@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -25,6 +26,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
@@ -99,7 +101,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return internalEval(context, args);
 		} catch (ScriptAbort ex) {
 			throw ex;
- 		} catch (TopLogicException ex) {
+		} catch (I18NRuntimeException ex) {
 			throw ex;
 		} catch (Error | Exception ex) {
 			throw new TopLogicException(
@@ -279,6 +281,39 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 				I18NConstants.ERROR_NOT_A_REFERENCE__EXPR_VALUE.fill(expr, value));
 		}
 		return (TLReference) value;
+	}
+
+	/**
+	 * Dynamic cast to {@link TLStructuredType} with user-readable error message and ensures the
+	 * value is not <code>null</code>.
+	 *
+	 * @param value
+	 *        The evaluation value.
+	 * @param expr
+	 *        The evaluated expression.
+	 * @return The given value cast to {@link TLStructuredType}.
+	 */
+	public static TLStructuredType asStructuredTypeNonNull(Object value, SearchExpression expr) {
+		return asStructuredType(notNull(expr, value), expr);
+	}
+
+	/**
+	 * Dynamic cast to {@link TLStructuredType} with user-readable error message.
+	 *
+	 * @param value
+	 *        The evaluation value. Must be <code>null</code> or a {@link TLStructuredType}.
+	 * @param expr
+	 *        The evaluated expression.
+	 * @return The given value cast to {@link TLStructuredType}.
+	 */
+	public static TLStructuredType asStructuredType(Object value, SearchExpression expr) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof TLStructuredType) {
+			return (TLStructuredType) value;
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_TYPE__VAL_EXPR.fill(value, expr));
 	}
 
 	/** 

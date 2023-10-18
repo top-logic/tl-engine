@@ -6,6 +6,7 @@
 package com.top_logic.util.error;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -72,7 +73,7 @@ public class ErrorRenderer implements Renderer<HandlerResult> {
 		List<HTMLFragment> description = new LinkedList<>();
 
 		getErrorSummary(result, resources, exception).ifPresent(summary -> description.add(summary));
-		getFirstExceptionCause(resources, exception).ifPresent(firstCause -> description.add(firstCause));
+		getExceptionCauses(resources, exception).ifPresent(cause -> description.add(cause));
 		getEncodedErrors(result, resources).ifPresent(encodedErrors -> description.add(encodedErrors));
 
 		return Fragments.concat(description.toArray(new HTMLFragment[description.size()]));
@@ -137,12 +138,31 @@ public class ErrorRenderer implements Renderer<HandlerResult> {
 		return exceptionCauses;
 	}
 
-	private Optional<HTMLFragment> getFirstExceptionCause(Resources resources, Throwable exception) {
+	private Optional<HTMLFragment> getExceptionCauses(Resources resources, Throwable exception) {
 		if (exception != null) {
-			Throwable cause = exception.getCause();
+			List<HTMLFragment> causes = new ArrayList<>();
 
-			if (cause != null && cause != exception) {
-				return createLinesFragment(getCauseMessage(resources, cause));
+			Throwable baseException = exception;
+			do {
+				Throwable cause = baseException.getCause();
+
+				if (cause != null && cause != baseException) {
+					createLinesFragment(getCauseMessage(resources, cause)).ifPresent(causes::add);
+					baseException = cause;
+				} else {
+					break;
+				}
+			} while (true);
+			switch (causes.size()) {
+				case 0: {
+					return Optional.empty();
+				}
+				case 1: {
+					return Optional.of(causes.get(0));
+				}
+				default: {
+					return Optional.of(Fragments.ul(causes.stream().map(Fragments::li).toArray(HTMLFragment[]::new)));
+				}
 			}
 		}
 

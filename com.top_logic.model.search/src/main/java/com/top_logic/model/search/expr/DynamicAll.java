@@ -15,7 +15,6 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link SearchExpression} looking up all instances of a type given as argument.
@@ -52,11 +51,9 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
-		if (!(singletonValue instanceof TLStructuredType)) {
-			throw new TopLogicException(I18NConstants.ERROR_NOT_A_TYPE__VAL_EXPR.fill(singletonValue, getSelf()));
-		}
+		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getSelf());
 
-		return All.all(this, (TLStructuredType) singletonValue);
+		return All.all(this, type);
 	}
 
 	@Override

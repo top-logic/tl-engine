@@ -1324,6 +1324,12 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 				}
 			}
 		}
+		if (control instanceof LayoutControlAdapter) {
+			HTMLFragment wrappedView = ((LayoutControlAdapter) control).getWrappedView();
+			if (wrappedView instanceof LayoutControl) {
+				return dispatchEvent(commandContext, commandProvider, (LayoutControl) wrappedView);
+			}
+		}
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

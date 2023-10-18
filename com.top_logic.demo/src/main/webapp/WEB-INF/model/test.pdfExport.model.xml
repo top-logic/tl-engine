@@ -114,7 +114,7 @@
 				/>
 			</attributes>
 		</class>
-		<class name="WithTables">
+		<class name="SpecialTypes">
 			<generalizations>
 				<generalization type="A"/>
 			</generalizations>
@@ -127,15 +127,117 @@
 							type="tl.core:String"
 						/>
 						<field
+							attribute="optionalCheckbox"
+							fullQualifiedName="test.pdfExport:SpecialTypes#optionalCheckbox"
+							type="tl.core:Tristate"
+						/>
+						<field
+							attribute="icon"
+							fullQualifiedName="test.pdfExport:SpecialTypes#icon"
+							type="tl.core:Icon"
+						/>
+						<field
+							attribute="color"
+							fullQualifiedName="test.pdfExport:SpecialTypes#color"
+							type="tl.util:Color"
+						/>
+						<field
+							attribute="textBox"
+							fullQualifiedName="test.pdfExport:SpecialTypes#textBox"
+							type="tl.core:Text"
+						/>
+						<field
+							attribute="html"
+							fullQualifiedName="test.pdfExport:SpecialTypes#html"
+							type="tl.model.wysiwyg:Html"
+						/>
+						<field
+							attribute="json"
+							fullQualifiedName="test.pdfExport:SpecialTypes#json"
+							type="tl.util:JSON"
+						/>
+						<field
+							attribute="image"
+							fullQualifiedName="test.pdfExport:SpecialTypes#image"
+							type="tl.imagegallery:GalleryImage"
+						>
+							<annotations>
+								<render-whole-line/>
+							</annotations>
+						</field>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="textBox"
+					type="tl.core:Text"
+				/>
+				<property name="html"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<property name="icon"
+					type="tl.core:Icon"
+				/>
+				<property name="color"
+					type="tl.util:Color"
+				/>
+				<property name="optionalCheckbox"
+					type="tl.core:Tristate"
+				/>
+				<reference name="image"
+					bag="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="tl.imagegallery:GalleryImage"
+				/>
+				<property name="json"
+					type="tl.util:JSON"
+				/>
+			</attributes>
+		</class>
+		<class name="WithTables">
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
 							attribute="composition"
 							fullQualifiedName="test.pdfExport:WithTables#composition"
 							type="test.pdfExport:RowObject"
-						/>
+						>
+							<annotations>
+								<label-position value="hide-label"/>
+							</annotations>
+						</field>
+						<group>
+							<field
+								attribute="name"
+								fullQualifiedName="test.pdfExport:A#name"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="version"
+								fullQualifiedName="test.pdfExport:A#version"
+								type="tl.core:Integer"
+							/>
+							<label key="dynamic.f0c5924f-1d0c-42ae-8eec-05c125f022f0">
+								<en>Identification</en>
+								<de>Identifikation</de>
+							</label>
+						</group>
 						<field
 							attribute="selectionTable"
 							fullQualifiedName="test.pdfExport:WithTables#selectionTable"
 							type="test.pdfExport:RowObject"
-						/>
+						>
+							<annotations>
+								<label-position value="hide-label"/>
+							</annotations>
+						</field>
 						<field
 							attribute="multiSelection"
 							fullQualifiedName="test.pdfExport:WithTables#multiSelection"

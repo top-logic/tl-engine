@@ -36,7 +36,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.config.ThemeConfig;
 import com.top_logic.gui.config.ThemeSetting;
 import com.top_logic.gui.config.ThemeSettings;
-import com.top_logic.gui.config.ThemeState;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.HTMLTemplateUtils;
 import com.top_logic.layout.basic.ThemeImage.Img;
@@ -228,14 +227,14 @@ public class Theme {
 		Collection<String> mergedCssNames = getMergedCssNames(log);
 		_cssNames = mergedCssNames.toArray(new String[mergedCssNames.size()]);
 
-		if (getConfig().getState() == ThemeState.ENABLED) {
-			if (_deployed) {
-				_styleSheet = getThemeGlobalStylesheetName();
-			} else {
-				String[] cssNames = this.getCSSNames();
-				String targetName = getThemeGlobalStylesheetName();
-				_styleSheet = createStyleSheet(cssNames, targetName);
-			}
+		// Note: Style sheets must be generated also for "abstract" themes, since those can be
+		// chosen for PDF export.
+		if (_deployed) {
+			_styleSheet = getThemeGlobalStylesheetName();
+		} else {
+			String[] cssNames = this.getCSSNames();
+			String targetName = getThemeGlobalStylesheetName();
+			_styleSheet = createStyleSheet(cssNames, targetName);
 		}
 
 		_valid = true;

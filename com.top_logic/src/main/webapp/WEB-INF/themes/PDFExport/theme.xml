@@ -4,7 +4,7 @@
 	config:interface="com.top_logic.layout.themeedit.browser.providers.theme.ThemeFormBuilder$EditModel"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	extends="dezentModern"
-	state="enabled"
+	state="disabled"
 >
 	<styles>
 		<style name="/style/PDFExport/pdfExport.css"/>

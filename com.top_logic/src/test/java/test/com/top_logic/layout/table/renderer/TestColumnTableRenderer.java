@@ -16,7 +16,6 @@ import test.com.top_logic.layout.table.control.TestTableControl;
 
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.layout.DefaultUpdateQueue;
-import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.TableRenderer.RenderState;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.control.TableControl.Slice;
@@ -29,7 +28,7 @@ import com.top_logic.layout.table.renderer.DefaultTableRenderer;
  */
 public abstract class TestColumnTableRenderer extends TestControl {
 
-	private TableRenderer _tableRenderer;
+	private DefaultTableRenderer _tableRenderer;
 	private DefaultUpdateQueue updateQueue;
 
 	private TableTestStructure tableTestStructure;

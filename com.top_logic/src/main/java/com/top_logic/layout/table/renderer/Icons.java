@@ -108,6 +108,12 @@ public class Icons extends IconsBase {
 	public static ThemeVar<HTMLTemplateFragment> TABLE_CONTAINER_TEMPLATE;
 
 	/**
+	 * Template for the table title row.
+	 */
+	@TemplateType(DefaultRenderState.class)
+	public static ThemeVar<HTMLTemplateFragment> TABLE_TITLE_TEMPLATE;
+
+	/**
 	 * Template defining a table body.
 	 */
 	@TemplateType(RenderState.class)
@@ -184,5 +190,6 @@ public class Icons extends IconsBase {
 	 */
 	@DefaultValue("7px")
 	public static ThemeVar<DisplayDimension> TABLE_SEPARATOR_WIDTH;
+
 
 }

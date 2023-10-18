@@ -22,6 +22,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.UpdateQueue;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableControl.Slice;
 import com.top_logic.layout.table.filter.CellExistenceTester;
@@ -113,6 +114,7 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
 		/**
 		 * The number of rendered content columns.
 		 */
+		@TemplateVariable("columnCount")
 		default int getColumnCount() {
 			return getColumns().size();
 		}
@@ -288,14 +290,6 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
      */
     public void write(DisplayContext context, RenderState state, TagWriter out)
         throws IOException;
-
-    /**
-	 * Write a title bar, if there is an I18N for it.
-	 * 
-	 * @return <code>true</code> if a title row has been written.
-	 */
-    public boolean writeTitle(DisplayContext context, TagWriter out, RenderState state)
-		throws IOException;
 
 	/**
 	 * Writes the header of the column with the given index

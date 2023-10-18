@@ -1,3 +1,29 @@
+/* Additional styles for PDF export of forms. */
+
+/*body.pdfExport*/
+
+table.tl-table {
+    -fs-table-paginate: paginate;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+td.tl-table__cell {
+	border-color: var(--TABLE_BORDER_COLOR);
+	border-left-color: var(--TABLE_BORDER_COLOR);
+
+	border-right-style: solid;
+	border-right-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+
+	border-bottom-style: solid;
+	border-bottom-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+	
+	border-style: solid;
+	border-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+
+	padding-left: 5px;
+}
+
 @font-face {
 	font-family: 'Font Awesome 5 Free';
 	font-style: normal;
@@ -36,87 +62,4 @@
 	src: url('../webfonts/tl_iconFont.ttf');
 	-fs-pdf-font-embed: embed;
 	-fs-pdf-font-encoding: Identity-H;
-}
-
-td.col1, th.col1 {
-	width: 100%;
-}
-
-td.col2, th.col2 {
-	width: 50%;
-}
-
-td.col3, th.col3 {
-	width: 33.3333%;
-}
-
-td.col4, th.col4 {
-	width: 25%;
-}
-
-td.col5, th.col5 {
-	width: 20%;
-}
-
-body.pdfExport, body.pdfExport table {
-	font-size: 18px;
-}
-
-body.pdfExport img.type-image[src*="svg"] {
-	width: 22px;
-	height: 22px;
-}
-
-body.pdfExport img {
-	vertical-align: middle;
-}
-
-body.pdfExport div.frame, body.pdfExport div.group  div.header, body.pdfExport div.static-html,
-	body.pdfExport div.field, body.pdfExport div.field div.value {
-	padding: 5px;
-}
-
-body.pdfExport div.group div.group {
-	margin: 5px;
-}
-
-body.pdfExport div.group div.header {
-	color: #FBFBFD;
-	background-color: #008FB8;
-}
-
-body.pdfExport div.group, body.pdfExport div.frame {
-	border: 1px solid rgb(223, 230, 240);
-	margin-bottom: 10px;
-}
-
-body.pdfExport div.field .label {
-	font-weight: bold;
-}
-
-body.pdfExport div.field div.value table, body.pdfExport div.content table,
-	body.pdfExport div.formTable table {
-	border-collapse: collapse;
-	width: 100%;
-}
-
-body.pdfExport div.field div.value table th, body.pdfExport div.formTable table th
-	{
-	background-color: #07606E;
-	color: #FBFBFD;
-	text-align: left;
-	padding: 5px;
-}
-
-body.pdfExport div.field div.value table th.title, body.pdfExport div.formTable table th.title
-	{
-	background-color: #008FB8;
-	color: #FBFBFD;
-	text-align: left;
-	padding: 5px;
-}
-
-body.pdfExport div.field div.value table td, body.pdfExport div.formTable table td
-	{
-	border: 1px #F0F0F0 solid;
 }

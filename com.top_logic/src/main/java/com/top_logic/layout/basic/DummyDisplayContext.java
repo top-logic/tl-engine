@@ -31,6 +31,8 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 
 	private ServletContext _servletContext;
 
+	private String _contextPath = "";
+
 	private Media _outputMedia;
 
 	/**
@@ -54,7 +56,15 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 
 	@Override
 	public String getContextPath() {
-		return "";
+		return _contextPath;
+	}
+
+	/**
+	 * Sets the {@link #getContextPath()}.
+	 */
+	public DummyDisplayContext initContextPath(String contextPath) {
+		_contextPath = contextPath;
+		return this;
 	}
 	
 	@Override

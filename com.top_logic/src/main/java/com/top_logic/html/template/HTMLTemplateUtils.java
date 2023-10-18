@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.html.template.config.ConfiguredTemplate;
 import com.top_logic.html.template.expr.StringLiteral;
@@ -30,45 +31,67 @@ public class HTMLTemplateUtils {
 
 	/**
 	 * Parses the given template from its textual form (HTML with embedded expressions).
-	 *
+	 * 
+	 * @param templateName
+	 *        The name of the template to parse for error reporting.
 	 * @param htmlTemplate
 	 *        The template source code.
+	 *
 	 * @return The parsed template.
+	 * @throws ConfigurationException
+	 *         If parsing fails.
 	 */
-	public static HTMLTemplateFragment parse(String htmlTemplate) {
+	public static HTMLTemplateFragment parse(String templateName, String htmlTemplate) throws ConfigurationException {
 		HTMLTemplateParser parser = new HTMLTemplateParser(new StringReader(htmlTemplate));
-		return new ConfiguredTemplate(internalParse(parser), htmlTemplate);
+
+		HTMLTemplateFragment template;
+		try {
+			RawTemplateFragment raw = parser.html();
+			template = checkStructure(raw);
+		} catch (ParseException | TokenMgrError ex) {
+			throw new ConfigurationException(
+				I18NConstants.ERROR_TEMPLATE_SYNTAX_ERROR__NAME_DESC.fill(templateName, ex.getLocalizedMessage()),
+				templateName, htmlTemplate, ex);
+		}
+
+		return new ConfiguredTemplate(template, htmlTemplate);
 	}
 
 	/**
 	 * Reads the template with the ginve name as resource relative to the given class.
+	 * 
+	 * @throws ConfigurationException
+	 *         If reading or parsing the template fails.
 	 */
-	public static HTMLTemplateFragment parse(Class<?> resourceClass, String resourceName) throws IOException {
-		return parse(resourceClass.getResourceAsStream(resourceName));
+	public static HTMLTemplateFragment parse(Class<?> resourceClass, String resourceName)
+			throws ConfigurationException {
+		return parse(resourceClass.getPackageName() + "/" + resourceName,
+			resourceClass.getResourceAsStream(resourceName));
 	}
 
 	/**
 	 * Parses the given template from its textual form (HTML with embedded expressions) read from
 	 * the given stream in UTF-8 encoding.
-	 *
+	 * 
+	 * @param templateName
+	 *        The name of the template for error reporting.
 	 * @param in
 	 *        The template source code.
+	 *
 	 * @return The parsed template.
+	 * @throws ConfigurationException
+	 *         If parsing fails.
 	 */
-	public static HTMLTemplateFragment parse(InputStream in) throws IOException {
+	public static HTMLTemplateFragment parse(String templateName, InputStream in)
+			throws ConfigurationException {
 		if (in == null) {
 			return null;
 		}
-		return parse(StreamUtilities.readAllFromStream(in, "utf-8"));
-	}
-
-	private static HTMLTemplateFragment internalParse(HTMLTemplateParser parser) {
 		try {
-			RawTemplateFragment raw = parser.html();
-			return checkStructure(raw);
-		} catch (ParseException | TokenMgrError ex) {
-			throw new TopLogicException(
-				I18NConstants.ERROR_TEMPLATE_SYNTAX_ERROR__DESC.fill(ex.getLocalizedMessage()), ex);
+			return parse(templateName, StreamUtilities.readAllFromStream(in, "utf-8"));
+		} catch (IOException ex) {
+			throw new ConfigurationException(I18NConstants.ERROR_TEMPLATE_READIN_FAILED__NAME.fill(templateName),
+				templateName, null, ex);
 		}
 	}
 

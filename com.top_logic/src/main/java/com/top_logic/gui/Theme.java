@@ -384,7 +384,7 @@ public class Theme {
 			for (String path : fm.getResourcePaths(themePrefix)) {
 				if (path.endsWith(TEMPLATE_SUFFIX)) {
 					try (InputStream in = fm.getStream(path)) {
-						HTMLTemplateFragment template = HTMLTemplateUtils.parse(in);
+						HTMLTemplateFragment template = HTMLTemplateUtils.parse(path, in);
 						settings.addTemplate(log, themeId, path,
 							path.substring(themePrefix.length(), path.length() - TEMPLATE_SUFFIX.length()), template);
 					}

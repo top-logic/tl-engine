@@ -26,7 +26,7 @@ public class HTMLTemplateFragmentFormat extends AbstractConfigurationValueProvid
 	protected HTMLTemplateFragment getValueNonEmpty(String propertyName, CharSequence propertyValue)
 			throws ConfigurationException {
 		String html = propertyValue.toString();
-		HTMLTemplateFragment template = HTMLTemplateUtils.parse(html);
+		HTMLTemplateFragment template = HTMLTemplateUtils.parse(propertyName, html);
 		return new ConfiguredTemplate(template, html);
 	}
 

@@ -31,7 +31,7 @@ public class HTMLTagFormat extends HTMLTemplateFragmentFormat {
 	protected HTMLTemplateFragment getValueNonEmpty(String propertyName, CharSequence propertyValue)
 			throws ConfigurationException {
 		String html = propertyValue.toString();
-		HTMLTemplateFragment template = HTMLTemplateUtils.parse(html);
+		HTMLTemplateFragment template = HTMLTemplateUtils.parse(propertyName, html);
 
 		if (template instanceof TagTemplate) {
 			StartTagTemplate start = ((TagTemplate) template).getStart();

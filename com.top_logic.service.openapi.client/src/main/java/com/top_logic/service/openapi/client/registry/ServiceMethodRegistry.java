@@ -46,7 +46,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
 import com.top_logic.service.openapi.client.authentication.NoSecurityEnhancement;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
@@ -213,19 +212,6 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		List<CallBuilder> modifiers =
 			serviceArguments.stream().map(sa -> sa.createRequestModifier(methodSpec)).collect(Collectors.toList());
 
-		int parameterCount = parameters.size();
-		int lastMandatoryIndex = -1;
-		QueryExecutor[] defaultValues = new QueryExecutor[parameterCount];
-		for (int n = 0; n < parameterCount; n++) {
-			ParameterDefinition parameter = parameters.get(n);
-			defaultValues[n] = QueryExecutor.compileOptional(parameter.getDefaultValue());
-			if (parameter.isRequired()) {
-				lastMandatoryIndex = n;
-			}
-		}
-
-		int minArgs = lastMandatoryIndex + 1;
-
 		String httpMethod = method.getHttpMethod().name();
 
 		SecurityEnhancer enhancer = securityEnhancer(method);
@@ -236,22 +222,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 
 			@Override
 			public Object execute(Object self, Object[] arguments) throws Exception {
-				Object[] allArguments;
-				if (arguments.length < parameterCount) {
-					allArguments = new Object[parameterCount];
-					System.arraycopy(arguments, 0, allArguments, 0, arguments.length);
-
-					// Fill default values.
-					int firstDefault = arguments.length;
-					for (int n = firstDefault; n < parameterCount; n++) {
-						QueryExecutor defaultValue = defaultValues[n];
-						allArguments[n] = defaultValue == null ? null : defaultValue.execute(allArguments);
-					}
-				} else {
-					allArguments = arguments;
-				}
-
-				Call call = Call.newInstance(allArguments);
+				Call call = Call.newInstance(arguments);
 				UriBuilder urlBuilder = new UriBuilder(baseUrl);
 				for (CallBuilder modifier : modifiers) {
 					modifier.buildUrl(urlBuilder, call);
@@ -306,8 +277,9 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 			}
 		};
 
-		return new ServiceMethodBuilder(methodName, minArgs, handler);
+		return new ServiceMethodBuilder(method, handler);
 	}
+
 
 	private static ResponseHandler createResponseHandler(
 			PolymorphicConfiguration<? extends ResponseHandlerFactory> factory,

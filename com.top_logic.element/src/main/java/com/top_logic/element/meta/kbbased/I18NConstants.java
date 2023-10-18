@@ -29,6 +29,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/** Error key used when no type specification is given for some given value. */
 	public static ResKey1 ERROR_NO_TL_TYPE_FOUND_FOR__VALUE;
 
+	/** @en Problem setting attribute value ''{0}'' to ''{1}''. */
+	public static ResKey2 ERROR_SETTING_VALUE__ATTRIBUTE_VALUE;
+
     static {
         initConstants(I18NConstants.class);
     }

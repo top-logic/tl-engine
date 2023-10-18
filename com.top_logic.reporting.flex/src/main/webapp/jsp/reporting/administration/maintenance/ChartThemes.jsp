@@ -53,8 +53,8 @@ contentType="text/html; charset=UTF-8"
 		FormContext result = new FormContext("context", PlainKeyResources.INSTANCE);
 		StandardChartTheme theme = (StandardChartTheme)ChartFactory.getChartTheme();
 		String label = provider.getLabel(theme);
-		List<ChartTheme> options = new ArrayList<ChartTheme>();
-		List<ChartTheme> init = new ArrayList<ChartTheme>();
+		List<ChartTheme> options = new ArrayList<>();
+		List<ChartTheme> init = new ArrayList<>();
 		if (ChartThemeConfigurator.Module.INSTANCE.isActive()) {
 			ChartThemeConfigurator configurator = ChartThemeConfigurator.getInstance();
 			for (String name : configurator.getThemeNames()) {

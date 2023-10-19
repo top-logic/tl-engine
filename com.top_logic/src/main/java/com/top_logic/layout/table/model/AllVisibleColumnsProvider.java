@@ -24,7 +24,7 @@ import com.top_logic.layout.table.provider.ColumnOptionLabelProvider;
 import com.top_logic.layout.table.provider.ColumnOptionMapping;
 
 /**
- * {@link TableConfigurationProvider} providing all columns that the user can display.
+ * {@link TableConfigurationProvider} for selecting columns that can be chosen by a user.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */

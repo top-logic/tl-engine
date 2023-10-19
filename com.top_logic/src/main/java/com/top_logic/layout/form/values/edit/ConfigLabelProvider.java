@@ -21,6 +21,7 @@ import com.top_logic.basic.config.template.StringOutput;
 import com.top_logic.basic.config.template.TemplateExpression;
 import com.top_logic.basic.config.template.TemplateScope;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
@@ -31,7 +32,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public final class ConfigLabelProvider implements LabelProvider {
+public final class ConfigLabelProvider extends AbstractResourceProvider {
 
 	private final TemplateScope _scope;
 
@@ -95,51 +96,94 @@ public final class ConfigLabelProvider implements LabelProvider {
 			return null;
 		}
 
-		String implementationName;
-		ConfigurationItem config;
 		if (object instanceof ConfigurationItem) {
-			config = (ConfigurationItem) object;
-			if (config instanceof PolymorphicConfiguration<?>) {
-				Class<?> implementationClass = ((PolymorphicConfiguration<?>) config).getImplementationClass();
-				if (implementationClass != null) {
-					implementationName = implementationClass.getName();
-				} else {
-					implementationName = null;
-				}
+			ConfigurationItem config = (ConfigurationItem) object;
+			ResourceTemplate template = configurationTemplate(config);
+			return expand(template, config);
+		}
+		else if (object instanceof ConfiguredInstance) {
+			ConfigurationItem config = ((ConfiguredInstance<?>) object).getConfig();
+			ResourceTemplate template = implementationTemplate(object, config);
+			return expand(template, config);
+		} else if (object instanceof Class<?>) {
+			return Resources.getInstance().getString(classKey(object));
+		} else {
+			return Resources.getInstance().getString(objectKey(object));
+		}
+	}
+
+	@Override
+	public String getTooltip(Object object) {
+		if (object == null) {
+			return null;
+		}
+
+		ResKey tooltip;
+		if (object instanceof ConfigurationItem) {
+			ConfigurationItem config = (ConfigurationItem) object;
+			ResourceTemplate template = configurationTemplate(config);
+			tooltip = templateTooltip(template);
+		} else if (object instanceof ConfiguredInstance) {
+			ConfigurationItem config = ((ConfiguredInstance<?>) object).getConfig();
+			ResourceTemplate template = implementationTemplate(object, config);
+			tooltip = templateTooltip(template);
+		} else if (object instanceof Class<?>) {
+			tooltip = classKey(object).tooltip();
+		} else {
+			tooltip = objectKey(object);
+		}
+
+		return Resources.getInstance().getString(tooltip, null);
+	}
+
+	private ResKey templateTooltip(ResourceTemplate template) {
+		return ResKey.internalCreate(template.getName()).tooltip();
+	}
+
+	private ResourceTemplate configurationTemplate(ConfigurationItem config) {
+		String implementationName;
+		if (config instanceof PolymorphicConfiguration<?>) {
+			Class<?> implementationClass = ((PolymorphicConfiguration<?>) config).getImplementationClass();
+			if (implementationClass != null) {
+				implementationName = implementationClass.getName();
 			} else {
 				implementationName = null;
 			}
+		} else {
+			implementationName = null;
 		}
-		else if (object instanceof ConfiguredInstance) {
-			config = ((ConfiguredInstance<?>) object).getConfig();
-			implementationName = object.getClass().getName();
-		}
-		else if (object instanceof Class<?>) {
-			Class<?> clazz = (Class<?>) object;
-			ResKey classKey = ResKey.forClass(clazz);
-			if (_suffix != null) {
-				// Workaround for classKey.suffix(_suffix) not being possible due to the constraint
-				// that suffix must start with '.' character.
-				ResKey suffixKey = ResKey.internalCreate(classKey.getKey() + _suffix);
-				classKey = ResKey.fallback(suffixKey, classKey);
-			}
-			
-			// Last resort: The simple class name - this makes UIs usable, even if not all classes
-			// are internationalized.
-			classKey = ResKey.fallback(classKey, ResKey.text(ClassLabelProvider.simpleName(clazz)));
-
-			return Resources.getInstance().getString(classKey);
-		}
-		else {
-			return Resources.getInstance().getString(ResKey.forClass(object.getClass()));
-		}
-
-		TemplateExpression template = getTemplate(config, implementationName);
-
-		return expand(template, config);
+		ResourceTemplate template = getTemplate(config, implementationName);
+		return template;
 	}
 
-	private String expand(TemplateExpression template, ConfigurationItem config) {
+	private ResourceTemplate implementationTemplate(Object object, ConfigurationItem config) {
+		String implementationName = object.getClass().getName();
+		ResourceTemplate template = getTemplate(config, implementationName);
+		return template;
+	}
+
+	private ResKey classKey(Object object) {
+		Class<?> clazz = (Class<?>) object;
+		ResKey classKey = ResKey.forClass(clazz);
+		if (_suffix != null) {
+			// Workaround for classKey.suffix(_suffix) not being possible due to the constraint
+			// that suffix must start with '.' character.
+			ResKey suffixKey = ResKey.internalCreate(classKey.getKey() + _suffix);
+			classKey = ResKey.fallback(suffixKey, classKey);
+		}
+		
+		// Last resort: The simple class name - this makes UIs usable, even if not all classes
+		// are internationalized.
+		classKey = ResKey.fallback(classKey, ResKey.text(ClassLabelProvider.simpleName(clazz)));
+		return classKey;
+	}
+
+	private ResKey objectKey(Object object) {
+		return ResKey.forClass(object.getClass());
+	}
+
+	private String expand(ResourceTemplate template, ConfigurationItem config) {
+		TemplateExpression expression = template.getExpression();
 		StringOutput buffer = new StringOutput() {
 			@Override
 			protected String toString(Object value) {
@@ -154,9 +198,9 @@ public final class ConfigLabelProvider implements LabelProvider {
 		};
 		Expand expander = new Expand(_scope, buffer);
 		try {
-			template.visit(expander, new Eval.EvalContext(config, _variables));
+			expression.visit(expander, new Eval.EvalContext(config, _variables));
 		} catch (EvalException ex) {
-			String message = "Error evaluating template '" + template + "' for configuration '"
+			String message = "Error evaluating template '" + expression + "' for configuration '"
 				+ config.descriptor().getConfigurationInterface().getName() + "': " + ex.getMessage();
 			Logger.error(message, ex, ConfigLabelProvider.class);
 			return "[" + message + "]";
@@ -164,9 +208,9 @@ public final class ConfigLabelProvider implements LabelProvider {
 		return buffer.toString();
 	}
 
-	private TemplateExpression getTemplate(ConfigurationItem config, String implementationName) {
+	private ResourceTemplate getTemplate(ConfigurationItem config, String implementationName) {
 		if (implementationName != null) {
-			TemplateExpression template = getTemplate(implementationName, true);
+			ResourceTemplate template = getTemplate(implementationName, true);
 			if (template != null) {
 				return template;
 			}
@@ -181,7 +225,7 @@ public final class ConfigLabelProvider implements LabelProvider {
 
 		String interfaceName = config.descriptor().getConfigurationInterface().getName();
 		if (_suffix != null) {
-			TemplateExpression template = getTemplateWithSuffix(interfaceName, true);
+			ResourceTemplate template = getTemplateWithSuffix(interfaceName, true);
 			if (template != null) {
 				return template;
 			}
@@ -189,7 +233,7 @@ public final class ConfigLabelProvider implements LabelProvider {
 		return getTemplateWithoutSuffix(interfaceName, false);
 	}
 
-	private TemplateExpression getTemplate(String baseName, boolean optional) {
+	private ResourceTemplate getTemplate(String baseName, boolean optional) {
 		if (_suffix != null) {
 			return getTemplateWithSuffix(baseName, optional);
 		} else {
@@ -197,11 +241,36 @@ public final class ConfigLabelProvider implements LabelProvider {
 		}
 	}
 
-	private TemplateExpression getTemplateWithSuffix(String baseName, boolean optional) {
-		return _scope.getTemplate(baseName + _suffix, optional);
+	private ResourceTemplate getTemplateWithSuffix(String baseName, boolean optional) {
+		String name = baseName + _suffix;
+		return ResourceTemplate.create(name, _scope.getTemplate(name, optional));
 	}
 
-	private TemplateExpression getTemplateWithoutSuffix(String baseName, boolean optional) {
-		return _scope.getTemplate(baseName, optional);
+	private ResourceTemplate getTemplateWithoutSuffix(String baseName, boolean optional) {
+		return ResourceTemplate.create(baseName, _scope.getTemplate(baseName, optional));
+	}
+
+	private interface ResourceTemplate {
+
+		String getName();
+
+		TemplateExpression getExpression();
+
+		public static ResourceTemplate create(String name, TemplateExpression expression) {
+			if (expression == null) {
+				return null;
+			}
+			return new ResourceTemplate() {
+				@Override
+				public String getName() {
+					return name;
+				}
+
+				@Override
+				public TemplateExpression getExpression() {
+					return expression;
+				}
+			};
+		}
 	}
 }

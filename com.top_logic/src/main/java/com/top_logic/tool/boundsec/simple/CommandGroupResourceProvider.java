@@ -29,7 +29,9 @@ public class CommandGroupResourceProvider extends DefaultResourceProvider {
 	@Override
 	public String getLabel(Object object) {
 		BoundCommandGroup group = (BoundCommandGroup) object;
-		return Resources.getInstance().getString(I18NConstants.COMMAND_GROUP_NAMES.key(group.getID()));
+		String groupId = group.getID();
+		Resources resources = Resources.getInstance();
+		return resources.getString(I18NConstants.COMMAND_GROUP_NAMES.key(groupId));
 	}
 
 	@Override
@@ -37,8 +39,7 @@ public class CommandGroupResourceProvider extends DefaultResourceProvider {
 		BoundCommandGroup group = (BoundCommandGroup) object;
 		String groupId = group.getID();
 		Resources resources = Resources.getInstance();
-		return resources.getString(I18NConstants.COMMAND_GROUP_NAMES.key(groupId).suffix(".toolTip"),
-			resources.getString(I18NConstants.COMMAND_GROUP_NAMES.key(groupId), groupId));
+		return resources.getString(I18NConstants.COMMAND_GROUP_NAMES.key(groupId).tooltip(), null);
 	}
 
 }

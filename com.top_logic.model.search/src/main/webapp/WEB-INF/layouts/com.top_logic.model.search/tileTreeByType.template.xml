@@ -3,7 +3,7 @@
 <config:template
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	assistant-for="com.top_logic/tileTree.template.xml"
-	groups="commons"
+	groups="commons,tiles"
 	usable-in-context="com.top_logic.mig.html.layout.tiles.IsInTileContext"
 >
 	<properties extends="com.top_logic.layout.editor.config.TypeWithReferenceTemplateParameters,com.top_logic.mig.html.layout.tiles.TileComponentName">

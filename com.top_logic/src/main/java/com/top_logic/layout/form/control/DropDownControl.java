@@ -321,27 +321,27 @@ public class DropDownControl extends AbstractSelectControl {
 	}
 
 	private void renderTooltip(DisplayContext context, TagWriter out, FormField dropdown, Object item,
-			Boolean useDropDownTooltip)
-			throws IOException {
+			boolean useDropDownTooltip) throws IOException {
 		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
 		ResourceProvider rprovider = LabelResourceProvider.toResourceProvider(lprovider);
-		String tooltip = rprovider.getTooltip(item);
+		String tooltip = item == SelectField.NO_OPTION ? null : rprovider.getTooltip(item);
+		if (tooltip == null) {
+			return;
+		}
 
 		if (useDropDownTooltip) {
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "ddwttTooltip");
 			out.endBeginTag();
 			{
-				if (tooltip != null) {
-					out.beginBeginTag(SPAN);
-					out.writeAttribute(CLASS_ATTR, "ddwttTooltipContent");
-					out.endBeginTag();
-					{
-						// We have to use this deprecated method so tooltips support HTML input
-						out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(tooltip));
-					}
-					out.endTag(SPAN);
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "ddwttTooltipContent");
+				out.endBeginTag();
+				{
+					// We have to use this deprecated method so tooltips support HTML input
+					out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(tooltip));
 				}
+				out.endTag(SPAN);
 			}
 			out.endTag(SPAN);
 		} else {

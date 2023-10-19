@@ -5,13 +5,14 @@
  */
 package com.top_logic.layout.table.model;
 
-
+import com.top_logic.basic.config.annotation.Label;
 
 /**
- * Supporter class for getting table relevant rendering information.
+ * Plug-in for dynamically changing a {@link TableConfiguration}.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
+@Label("Table configuration plug-in")
 public interface TableConfigurationProvider {
 
 	/** Empty {@link TableConfigurationProvider} array. */

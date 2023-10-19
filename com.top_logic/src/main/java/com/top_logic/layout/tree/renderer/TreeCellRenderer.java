@@ -28,7 +28,6 @@ import com.top_logic.layout.basic.ConstantCommandModel;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.check.ChangeHandler;
-import com.top_logic.layout.basic.check.CheckScoped;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.control.AbstractButtonRenderer;
 import com.top_logic.layout.form.control.ButtonControl;
@@ -39,7 +38,11 @@ import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.table.CellRenderer;
+import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer.Cell;
+import com.top_logic.layout.table.TableViewModel;
+import com.top_logic.layout.table.display.IndexRange;
+import com.top_logic.layout.tree.model.AbstractTreeTableModel.AbstractTreeTableNode;
 import com.top_logic.layout.tree.model.AbstractTreeUINodeModel.TreeUINode;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.HTMLConstants;
@@ -195,14 +198,14 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 		public Toggle locateModel(ActionContext context, ToggleName name) {
 			// The type 'CheckScoped' is not usable itself as a value context,
 			// but multiple subtypes are.
-			CheckScoped model = (CheckScoped) context.resolve(name.getContextModel());
-			TreeUINode<?> node = (TreeUINode<?>) context.resolve(name.getNode(), model);
+			TableData model = (TableData) context.resolve(name.getContextModel());
+			AbstractTreeTableNode<?> node = (AbstractTreeTableNode<?>) context.resolve(name.getNode(), model);
 			return new SetExpansionState(node, model, name.getExpand());
 		}
 
 		@Override
 		protected void initName(ToggleName name, Toggle model) {
-			CheckScoped valueContext = model.getCheckScoped();
+			TableData valueContext = model.getTableData();
 			name.setContextModel(ModelResolver.buildModelName(valueContext));
 			name.setNode(ModelResolver.buildModelName(valueContext, model.getNode()));
 			name.setExpand(!model.getNode().isExpanded());
@@ -214,8 +217,8 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 
 		private boolean _expand;
 
-		public SetExpansionState(TreeUINode<?> node, CheckScoped checkScoped, boolean expand) {
-			super(node, null, checkScoped);
+		public SetExpansionState(AbstractTreeTableNode<?> node, TableData tableData, boolean expand) {
+			super(node, null, tableData);
 
 			_expand = expand;
 		}
@@ -228,20 +231,20 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 	}
 
 	private static class Toggle extends ConstantCommandModel {
-		private final TreeUINode<?> _node;
+		private final AbstractTreeTableNode<? extends Object> _node;
 
-		private final CheckScoped _checkScoped;
+		private final TableData _tableData;
 
 		private String _columnName;
 
-		public Toggle(TreeUINode<?> node, String colName, CheckScoped checkScoped) {
+		public Toggle(AbstractTreeTableNode<? extends Object> node, String colName, TableData tableData) {
 			_node = node;
 			_columnName = colName;
-			_checkScoped = checkScoped;
+			_tableData = tableData;
 		}
 
-		public CheckScoped getCheckScoped() {
-			return _checkScoped;
+		public TableData getTableData() {
+			return _tableData;
 		}
 
 		public TreeUINode<?> getNode() {
@@ -256,7 +259,7 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 				// have to be stored before collapsing can proceed.
 				DirtyHandling dirtyhandling = DirtyHandling.getInstance();
 				Collection<? extends ChangeHandler> affectedFormHandlers =
-					getCheckScoped().getCheckScope().getAffectedFormHandlers();
+					getTableData().getCheckScope().getAffectedFormHandlers();
 				if (dirtyhandling.checkDirty(affectedFormHandlers)) {
 					Command continuation = new Command() {
 						@Override
@@ -284,7 +287,19 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 			context.set(FOCUSED_NODE, getNode());
 			context.set(FOCUSED_COL_NAME, _columnName);
 
+			TableViewModel viewModel = _tableData.getViewModel();
+			if (viewModel != null) {
+				viewModel.getClientDisplayData().getVisiblePaneRequest().setRowRange(getSubtreeIndexRange());
+			}
+
 			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		private IndexRange getSubtreeIndexRange() {
+			int firstRow = _node.getPosition();
+			int lastRow = firstRow + _node.getVisibleSubtreeSize() - 1;
+
+			return IndexRange.multiIndex(firstRow, lastRow);
 		}
 
 		@Override
@@ -335,7 +350,7 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 	 *        Rendered cell.
 	 */
 	protected void writeExpandButton(DisplayContext context, TagWriter out, Cell cell) throws IOException {
-		TreeUINode<?> node = (TreeUINode<?>) cell.getRowObject();
+		AbstractTreeTableNode<?> node = (AbstractTreeTableNode<?>) cell.getRowObject();
 
 		int indent = 0;
 		TreeUINode<?> parent = node.getParent();

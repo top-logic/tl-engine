@@ -67,7 +67,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Reading template '{0}' failed.
 	 */
-	public static ResKey1 ERROR_TEMPLATE_READIN_FAILED__NAME;
+	public static ResKey1 ERROR_TEMPLATE_READING_FAILED__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

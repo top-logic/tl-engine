@@ -11,7 +11,7 @@
 		>
 			<hidden/>
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplateDefault"/>
-			<layout-templates value="com.top_logic/placeholder.template.xml"/>
+			<layout-templates value="com.top_logic/tilePlaceholder.template.xml"/>
 		</property>
 	</properties>
 

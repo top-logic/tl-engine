@@ -60,6 +60,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.gui.Theme;
+import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.editor.commands.AdditionalComponentDefinition;
 import com.top_logic.layout.processor.ConstantLayout;
@@ -75,7 +76,6 @@ import com.top_logic.layout.processor.ResolveFailure;
 import com.top_logic.layout.processor.StringValue;
 import com.top_logic.layout.processor.TemplateCallProcessor;
 import com.top_logic.layout.processor.TemplateLayout;
-import com.top_logic.layout.provider.label.TypeSafeLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutReference;
@@ -175,16 +175,26 @@ public class DynamicComponentDefinition {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public static class Labels extends TypeSafeLabelProvider<DynamicComponentDefinition> {
+	public static class Labels extends AbstractResourceProvider {
 
 		@Override
-		protected Class<DynamicComponentDefinition> getObjectType() {
-			return DynamicComponentDefinition.class;
+		public String getLabel(Object object) {
+			if (object == null) {
+				return null;
+			}
+			return Resources.getInstance().getString(resourceKey(object));
 		}
 
 		@Override
-		protected String getNonNullLabel(DynamicComponentDefinition object) {
-			return Resources.getInstance().getString(object.label());
+		public String getTooltip(Object object) {
+			if (object == null) {
+				return null;
+			}
+			return Resources.getInstance().getString(resourceKey(object).tooltip(), null);
+		}
+
+		private ResKey resourceKey(Object object) {
+			return ((DynamicComponentDefinition) object).label();
 		}
 
 	}

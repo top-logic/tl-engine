@@ -98,8 +98,11 @@ public class ExportAsPdfHandler extends PreconditionCommandHandler {
 	private TypedForm getExportDescription(ProcessExecution model) {
 		Participant participant = model.getProcess().getParticipant();
 		FormDefinition exportDescription = participant.getExportDescription();
-		if (exportDescription != null) {
+		if (exportDescription == null) {
 			exportDescription = participant.getDisplayDescription();
+		}
+		if (exportDescription == null) {
+			return null;
 		}
 		return new TypedForm(model.tType(), participant.getModelType(), exportDescription, true);
 	}

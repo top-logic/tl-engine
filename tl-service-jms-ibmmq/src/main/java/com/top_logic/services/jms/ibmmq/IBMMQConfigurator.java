@@ -1,11 +1,8 @@
-package com.top_logic.services.jms;
+package com.top_logic.services.jms.ibmmq;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-
-import com.ibm.msg.client.jms.JmsConnectionFactory;
-import com.ibm.msg.client.jms.JmsFactoryFactory;
-import com.ibm.msg.client.wmq.WMQConstants;
+import com.ibm.msg.client.jakarta.jms.JmsConnectionFactory;
+import com.ibm.msg.client.jakarta.jms.JmsFactoryFactory;
+import com.ibm.msg.client.jakarta.wmq.WMQConstants;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -13,15 +10,21 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.services.jms.JMSService.MQSystemConfig;
+import com.top_logic.services.jms.JMSService.MQSystemConfigurator;
 import com.top_logic.util.Resources;
 
-public class IBMMQConfig extends AbstractConfiguredInstance<IBMMQConfig.Config<?>> implements MQSystemConfig {
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.JMSException;
+
+/**
+ * 
+ */
+public class IBMMQConfigurator extends AbstractConfiguredInstance<IBMMQConfigurator.Config<?>> implements MQSystemConfigurator {
 
 	/**
-	 * Configuration options for {@link IBMMQConfig}.
+	 * Configuration options for {@link IBMMQConfigurator}.
 	 */
-	public interface Config<I extends IBMMQConfig> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends IBMMQConfigurator> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * Configuration name for {@link #getHost()}.
@@ -73,21 +76,30 @@ public class IBMMQConfig extends AbstractConfiguredInstance<IBMMQConfig.Config<?
 	}
 
 	/**
-	 * Creates a {@link IBMMQConfig} from configuration.
+	 * Creates a {@link IBMMQConfigurator} from configuration.
 	 * 
 	 * @param config
 	 *        The configuration.
 	 */
-	public IBMMQConfig(InstantiationContext context, Config<?> config) {
+	public IBMMQConfigurator(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
+	/**
+	 * Setup for a connection with an IBM MQ.
+	 * 
+	 * // * @param config // * The config for the destination of the connection
+	 * 
+	 * @throws JMSException
+	 *         Exception if something is not jms conform
+	 * @return the connection factory
+	 */
 	@Override
-	public ConnectionFactory setupMQConnection() throws JMSException {
+	public ConnectionFactory setupMQConnection(String un, String pw) throws JMSException {
 		Config<?> config = getConfig();
 		JmsFactoryFactory ibmff;
 		JmsConnectionFactory ibmcf;
-		ibmff = JmsFactoryFactory.getInstance(WMQConstants.WMQ_PROVIDER);
+		ibmff = JmsFactoryFactory.getInstance(WMQConstants.JAKARTA_WMQ_PROVIDER);
 		ibmcf = ibmff.createConnectionFactory();
 
 		// Set properties for the connection
@@ -98,8 +110,13 @@ public class IBMMQConfig extends AbstractConfiguredInstance<IBMMQConfig.Config<?
 		ibmcf.setStringProperty(WMQConstants.WMQ_QUEUE_MANAGER, config.getQueueManager());
 		ibmcf.setStringProperty(WMQConstants.WMQ_APPLICATIONNAME,
 			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
-//		_ibmcf.setStringProperty(WMQConstants.USERID, config.getUser());
-//		_ibmcf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
+		ibmcf.setStringProperty(WMQConstants.USERID, un);
+		ibmcf.setStringProperty(WMQConstants.PASSWORD, pw);
 		return ibmcf;
+	}
+
+	@Override
+	public String getCharsetProperty() {
+		return WMQConstants.JMS_IBM_CHARACTER_SET;
 	}
 }

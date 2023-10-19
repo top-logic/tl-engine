@@ -3,16 +3,16 @@
  */
 package com.top_logic.services.jms;
 
-import javax.jms.JMSConsumer;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.Topic;
-
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.services.jms.JMSService.DestinationConfig;
 import com.top_logic.services.jms.JMSService.MessageProcessor;
 import com.top_logic.services.jms.JMSService.Type;
+
+import jakarta.jms.JMSConsumer;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.Topic;
 
 /**
  * Class for a jms consumer (fetches messages from a queue).

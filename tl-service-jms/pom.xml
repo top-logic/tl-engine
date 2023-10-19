@@ -17,6 +17,14 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-model-search</artifactId>
 		</dependency>
+		
+		<!-- JMS -->
+		<!-- https://mvnrepository.com/artifact/jakarta.jms/jakarta.jms-api -->
+		<dependency>
+			<groupId>jakarta.jms</groupId>
+			<artifactId>jakarta.jms-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
 
 		<!-- Tests -->
 		<dependency>
@@ -30,32 +38,6 @@
 			<artifactId>tl-core</artifactId>
 			<type>test-jar</type>
 			<scope>test</scope>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.ibm.mq/com.ibm.mq.allclient -->
-		<dependency>
-			<groupId>com.ibm.mq</groupId>
-			<artifactId>com.ibm.mq.allclient</artifactId>
-			<version>9.3.3.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.bouncycastle</groupId>
-					<artifactId>bcprov-jdk15to18</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.bouncycastle</groupId>
-					<artifactId>bcutil-jdk15to18</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.bouncycastle</groupId>
-					<artifactId>bcpkix-jdk15to18</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/javax.jms/javax.jms-api -->
-		<dependency>
-			<groupId>javax.jms</groupId>
-			<artifactId>javax.jms-api</artifactId>
-			<version>2.0.1</version>
 		</dependency>
 	</dependencies>
 </project>

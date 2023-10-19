@@ -5,19 +5,15 @@ package com.top_logic.services.jms;
 
 import java.io.Closeable;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-
-import com.ibm.msg.client.jms.JmsConnectionFactory;
-import com.ibm.msg.client.jms.JmsFactoryFactory;
-import com.ibm.msg.client.wmq.WMQConstants;
-
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.services.jms.JMSService.DestinationConfig;
-import com.top_logic.services.jms.JMSService.MQSystem;
+import com.top_logic.services.jms.JMSService.MQSystemConfigurator;
 import com.top_logic.services.jms.JMSService.Type;
-import com.top_logic.util.Resources;
+
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.Destination;
+import jakarta.jms.JMSContext;
+import jakarta.jms.JMSException;
 
 /**
  * The parent class for every jms producer and consumer.
@@ -32,9 +28,9 @@ public class JMSClient implements Closeable {
 
 	private String _destinationName;
 
-	private JmsFactoryFactory _ibmff;
+	private MQSystemConfigurator _mqSystemConfig;
 
-	private JmsConnectionFactory _ibmcf;
+	private String _charsetProperty;
 
 	/**
 	 * Constructor for every JMSClient (producer and consumer) that initializes the connection
@@ -42,11 +38,11 @@ public class JMSClient implements Closeable {
 	 */
 	public JMSClient(DestinationConfig config) throws JMSException {
 		_destinationName = config.getName();
-		if (config.getMQSystem() == MQSystem.IBMMQ) {
-			_cf = setupIBMMQConnection(config);
-		} else if (config.getMQSystem() == MQSystem.ACTIVEMQ) {
-			_cf = setupActiveMQConnection(config);
-		}
+
+		_mqSystemConfig = TypedConfigUtil.createInstance(config.getMQSystemConfigurator());
+		_cf = _mqSystemConfig.setupMQConnection(config.getUser(), config.getPassword());
+
+		_charsetProperty = _mqSystemConfig.getCharsetProperty();
 
 		// Create JMS objects
 		_context = _cf.createContext(config.getUser(), config.getPassword());
@@ -55,45 +51,6 @@ public class JMSClient implements Closeable {
 		} else {
 			_destination = getContext().createQueue(config.getDestName());
 		}
-	}
-
-	/**
-	 * Setup for a connection with an IBM MQ.
-	 * 
-	 * @param config
-	 *        The config for the destination of the connection
-	 * @throws JMSException
-	 *         Exception if something is not jms conform
-	 * @return the connection factory
-	 */
-	private ConnectionFactory setupIBMMQConnection(DestinationConfig config) throws JMSException {
-		_ibmff = JmsFactoryFactory.getInstance(WMQConstants.WMQ_PROVIDER);
-		_ibmcf = _ibmff.createConnectionFactory();
-
-		// Set properties for the connection
-		_ibmcf.setStringProperty(WMQConstants.WMQ_HOST_NAME, config.getHost());
-		_ibmcf.setIntProperty(WMQConstants.WMQ_PORT, config.getPort());
-		_ibmcf.setStringProperty(WMQConstants.WMQ_CHANNEL, config.getChannel());
-		_ibmcf.setIntProperty(WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT);
-		_ibmcf.setStringProperty(WMQConstants.WMQ_QUEUE_MANAGER, config.getQueueManager());
-		_ibmcf.setStringProperty(WMQConstants.WMQ_APPLICATIONNAME,
-			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
-//		_ibmcf.setStringProperty(WMQConstants.USERID, config.getUser());
-//		_ibmcf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
-		return _ibmcf;
-	}
-
-	/**
-	 * Setup for a connection with an ActiveMQ by Apache.
-	 * 
-	 * @param config
-	 *        The config for the destination of the connection
-	 * 
-	 * @return the connection factory
-	 */
-	private ConnectionFactory setupActiveMQConnection(DestinationConfig config) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	/**
@@ -121,6 +78,15 @@ public class JMSClient implements Closeable {
 	 */
 	protected String getDestinationName() {
 		return _destinationName;
+	}
+
+	/**
+	 * This method returns the name of the charset property for the given Message Queue System.
+	 * 
+	 * @return the name of the charset property
+	 */
+	public String getCharsetProperty() {
+		return _charsetProperty;
 	}
 
 	@Override

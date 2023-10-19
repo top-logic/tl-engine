@@ -123,9 +123,11 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-service-jms</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
+      <artifactId>tl-service-jms-activemq</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-service-jms-ibmmq</artifactId>
     </dependency>
   </dependencies>
   

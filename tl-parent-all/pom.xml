@@ -633,10 +633,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
-				<artifactId>tl-service-jms</artifactId>
+				<artifactId>tl-service-jms-activemq</artifactId>
 				<version>${tl.version}</version>
-				<type>test-jar</type>
-				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-service-jms-ibmmq</artifactId>
+				<version>${tl.version}</version>
 			</dependency>
 
 			<!-- Migration utilities -->

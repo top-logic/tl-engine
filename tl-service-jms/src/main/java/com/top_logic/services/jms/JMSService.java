@@ -6,10 +6,6 @@ package com.top_logic.services.jms;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.Message;
-
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.config.InstantiationContext;
@@ -19,10 +15,15 @@ import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.event.infoservice.InfoService;
+
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
 
 /**
  * The TopLogic Service to set the config for a connection and establish this connection to a JMS
@@ -55,7 +56,7 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		DestinationConfig.TYPE,
 		DestinationConfig.USER,
 		DestinationConfig.PASSWORD,
-		DestinationConfig.MQ_SYSTEM,
+		DestinationConfig.MQ_SYSTEM_CONFIGURATOR,
 		DestinationConfig.MESSAGE_PROCESSOR })
 	public interface DestinationConfig extends NamedConfigMandatory {
 
@@ -80,9 +81,9 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		String TYPE = "type";
 
 		/**
-		 * Configuration name for {@link #getMQSystem()}
+		 * Configuration name for {@link #getMQSystemConfigurator()}
 		 */
-		String MQ_SYSTEM = "mq-system";
+		String MQ_SYSTEM_CONFIGURATOR = "mq-system-configurator";
 
 		/**
 		 * Configuration name for {@link #getProcessor()}
@@ -98,15 +99,15 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		/**
 		 * The password to the given user name.
 		 */
-		@Name(PASSWORD)
 		@Encrypted
+		@Name(PASSWORD)
 		String getPassword();
 
 		/**
 		 * The name that is the destination of the connection.
 		 */
-		@Name(DEST_NAME)
 		@Mandatory
+		@Name(DEST_NAME)
 		String getDestName();
 
 		/**
@@ -116,10 +117,12 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		Type getType();
 
 		/**
-		 * The config for the Message Queue System that is being used.
+		 * The configurator for the Message Queue System that is being used.
 		 */
-		@Name(MQ_SYSTEM)
-		PolymorphicConfiguration<MQSystemConfig> getMQSystem();
+		@Mandatory
+		@Name(MQ_SYSTEM_CONFIGURATOR)
+		@ImplementationClassDefault(JNDIMQConfigurator.class)
+		PolymorphicConfiguration<MQSystemConfigurator> getMQSystemConfigurator();
 
 		/**
 		 * The config for a processor that processes messages.
@@ -145,13 +148,20 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	}
 
 	/**
-	 * The System behind the Message Queue that runs the Queue Manager.
+	 * The configuration for the System behind the Message Queue that runs the Queue Manager.
 	 */
-	public interface MQSystemConfig {
+	public interface MQSystemConfigurator {
 		/**
 		 * 
 		 */
-		public ConnectionFactory setupMQConnection() throws JMSException;
+		public ConnectionFactory setupMQConnection(String un, String pw) throws JMSException;
+
+		/**
+		 * 
+		 */
+		default String getCharsetProperty() {
+			return "charset";
+		}
 	}
 
 	/**

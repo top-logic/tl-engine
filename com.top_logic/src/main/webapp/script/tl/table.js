@@ -1360,6 +1360,15 @@ TABLE = {
 	},
 	
 	/**
+	 * Returns the number of elements the given range covers.
+	 *
+	 * @param{rangeOfRowIndices} Range of indices.
+	 */
+	getSizeOfRange: function(range) {
+		return range.lastRowIndex - range.firstRowIndex + 1;
+	},
+	
+	/**
 	 * Returns true if the given range of row indices is valid
 	 * i. e. the row indices has to be greater or equals than 0.
 	 * 
@@ -1531,25 +1540,34 @@ TABLE = {
 	 */
 	setVerticalScrollPosition: function(ctrlID, clientDisplayData, scrollContainer) {
 		var tableInformer = TABLE.getTableInformer(ctrlID);
-		
 		var firstRowIndexOnPage = tableInformer.rangeOfRowIndicesFitOnPage.firstRowIndex;
-		
-		var rangeOfRowsInViewport = TABLE.getRangeOfRowsInViewport(ctrlID, tableInformer, scrollContainer.scrollTop);
-		
-		var requestedForcedRowIndexToDisplay = clientDisplayData.visiblePane.rowRange.forcedVisibleIndexInRange - firstRowIndexOnPage;
-		
-		var currentFirstRowIndex = clientDisplayData.viewportState.rowAnchor.index - firstRowIndexOnPage;
-		
 		var rowsFitInViewport = TABLE.getNumberOfRowsFitInViewport(ctrlID, tableInformer);
 		
+		var clientViewportRows = TABLE.getRangeOfRowsInViewport(ctrlID, tableInformer, scrollContainer.scrollTop);
+		var serverViewportRows = TABLE.createRangeOfRows(clientDisplayData.viewportState.rowAnchor.index - firstRowIndexOnPage, rowsFitInViewport); 
+		var requestedRows = TABLE.createRangeOfRowIndices(clientDisplayData.visiblePane.rowRange.firstIndex, clientDisplayData.visiblePane.rowRange.lastIndex);
+		var forcedRowIndex = clientDisplayData.visiblePane.rowRange.forcedVisibleIndexInRange - firstRowIndexOnPage;
+		
 		if(TABLE.hasRowViewportRequest(clientDisplayData)) {
-			if(TABLE.hasRowViewportState(clientDisplayData) && currentFirstRowIndex <= requestedForcedRowIndexToDisplay && requestedForcedRowIndexToDisplay < currentFirstRowIndex + rowsFitInViewport) {
-				scrollContainer.scrollTop = currentFirstRowIndex * tableInformer.rowHeight + clientDisplayData.viewportState.rowAnchor.indexPixelOffset;
-			} else if(!TABLE.isRowIndexInsideRange(requestedForcedRowIndexToDisplay, rangeOfRowsInViewport)) {
-				scrollContainer.scrollTop = TABLE.getScrollTopToCenterRow(ctrlID, tableInformer, rangeOfRowsInViewport, requestedForcedRowIndexToDisplay);
+			if(TABLE.hasRowViewportState(clientDisplayData) && TABLE.isRowIndexInsideRange(forcedRowIndex, serverViewportRows)) {
+				if(TABLE.containsRange(serverViewportRows, requestedRows)) {
+					scrollContainer.scrollTop = serverViewportRows.firstRowIndex * tableInformer.rowHeight + clientDisplayData.viewportState.rowAnchor.indexPixelOffset;
+				} else {
+					if(TABLE.getNumberOfRows(requestedRows) > TABLE.getNumberOfRows(serverViewportRows)) {
+						scrollContainer.scrollTop = TABLE.getScrollTopToCenterRow(ctrlID, tableInformer, serverViewportRows, forcedRowIndex);
+					} else {
+						if(serverViewportRows.firstRowIndex - requestedRows.firstRowIndex > 0) {
+							scrollContainer.scrollTop = requestedRows.firstRowIndex * tableInformer.rowHeight;
+						} else {
+							scrollContainer.scrollTop = (requestedRows.lastRowIndex - (rowsFitInViewport - 1)) * tableInformer.rowHeight + (tableInformer.rowHeight - TABLE.getTableBodyHeight(ctrlID) % tableInformer.rowHeight);
+						}
+					}
+				}
+			} else if(!TABLE.isRowIndexInsideRange(forcedRowIndex, clientViewportRows)) {
+				scrollContainer.scrollTop = TABLE.getScrollTopToCenterRow(ctrlID, tableInformer, clientViewportRows, forcedRowIndex);
 			}
-		} else if(TABLE.hasRowViewportState(clientDisplayData) && !TABLE.isRowIndexInsideRange(currentFirstRowIndex, rangeOfRowsInViewport)) {
-			scrollContainer.scrollTop = currentFirstRowIndex * tableInformer.rowHeight + clientDisplayData.viewportState.rowAnchor.indexPixelOffset;
+		} else if(TABLE.hasRowViewportState(clientDisplayData) && !TABLE.isRowIndexInsideRange(serverViewportRows.firstRowIndex, clientViewportRows)) {
+			scrollContainer.scrollTop = serverViewportRows.firstRowIndex * tableInformer.rowHeight + clientDisplayData.viewportState.rowAnchor.indexPixelOffset;
 		}
 	},
 	
@@ -1582,6 +1600,16 @@ TABLE = {
 	 */
 	isRowIndexInsideRange: function(rowIndex, range) {
 		return range.firstRowIndex <= rowIndex && rowIndex <= range.lastRowIndex;
+	},
+	
+	/**
+	 * Returns true if the given first range contains the second given range.
+	 *
+ 	 * @param{range1} Range of row indices.
+	 * @param{range2} Range of row indices.
+	 */
+	containsRange: function(range1, range2) {
+		return range1.firstRowIndex <= range2.firstRowIndex && range1.lastRowIndex >= range2.lastRowIndex;
 	},
 	
 	/**

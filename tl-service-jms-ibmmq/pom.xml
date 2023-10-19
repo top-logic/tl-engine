@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<relativePath>../tl-parent-core/internal</relativePath>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-core-internal</artifactId>
+		<version>7.7.0-SNAPSHOT</version>	
+	</parent>
+	
+	<artifactId>tl-service-jms-ibmmq</artifactId>
+
+	<dependencies>
+		<!-- TopLogic JMS Service -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-jms</artifactId>
+		</dependency>
+		
+		<!-- IBM MQ -->
+		<!-- https://mvnrepository.com/artifact/com.ibm.mq/com.ibm.mq.allclient -->
+		<dependency>
+			<groupId>com.ibm.mq</groupId>
+			<artifactId>com.ibm.mq.jakarta.client</artifactId>
+			<version>9.3.3.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcprov-jdk15to18</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcutil-jdk15to18</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcpkix-jdk15to18</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+		<!-- Tests -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

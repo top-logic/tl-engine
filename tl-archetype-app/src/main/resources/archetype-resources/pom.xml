@@ -119,6 +119,21 @@
 		</dependency>
 #end
 
+#if ($useApiClient == "true")
+		<!-- Allow to integrate REST services through OpenAPI interface definitions. -->
+        <dependency>
+                <groupId>com.top-logic</groupId>
+                <artifactId>tl-service-openapi-client</artifactId>
+        </dependency>
+#end
+#if ($useApiServer == "true")
+		<!-- Provide REST services through OpenAPI interface definitions. -->
+        <dependency>
+                <groupId>com.top-logic</groupId>
+                <artifactId>tl-service-openapi-server</artifactId>
+        </dependency>
+#end
+
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>

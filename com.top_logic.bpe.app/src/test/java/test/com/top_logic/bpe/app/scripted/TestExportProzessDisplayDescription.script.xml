@@ -314,7 +314,7 @@
 					<constraints>
 						<constraint class="com.top_logic.layout.scripting.check.NoContentEqualityCheck">
 							<expected-value name="Prozess.pdf"
-								content-type="application/octet-stream"
+								content-type="application/pdf"
 							/>
 						</constraint>
 					</constraints>

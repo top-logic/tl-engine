@@ -9,15 +9,14 @@ import java.io.OutputStream;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
-import javax.jms.BytesMessage;
-import javax.jms.JMSException;
-import javax.jms.JMSProducer;
-import javax.jms.TextMessage;
-
-import com.ibm.msg.client.wmq.WMQConstants;
 
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.services.jms.JMSService.DestinationConfig;
+
+import jakarta.jms.BytesMessage;
+import jakarta.jms.JMSException;
+import jakarta.jms.JMSProducer;
+import jakarta.jms.TextMessage;
 
 /**
  * Class for a jms producer (sends messages to a queue).
@@ -93,7 +92,7 @@ public class Producer extends JMSClient {
 			throw new IOError(ex);
 		}
 		try {
-			message.setStringProperty(WMQConstants.JMS_IBM_CHARACTER_SET,
+			message.setStringProperty(getCharsetProperty(),
 				new MimeType(data.getContentType()).getParameter("charset"));
 		} catch (JMSException ex) {
 			ex.printStackTrace();

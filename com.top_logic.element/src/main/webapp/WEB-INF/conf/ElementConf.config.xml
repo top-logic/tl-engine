@@ -911,14 +911,17 @@
 						clique="create"/>
 					<handler id="editComment" class="com.top_logic.element.comment.layout.CommentDialogComponent$EditCommentHandler"
 						clique="edit"/>
-
-					<handler id="treeGridCollapseAll" class="com.top_logic.element.layout.grid.TreeGridCollapseAll"
-						clique="collapse"
-						image="theme:ICONS_COLLAPSE_ALL" disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED"
-					/>
-					<handler id="treeGridExpandAll" class="com.top_logic.element.layout.grid.TreeGridExpandAll"
+					<handler id="treeGridExpandAll" class="com.top_logic.element.layout.grid.TreeGridExpandCollapseAll"
 						clique="expand"
-						image="theme:ICONS_EXPAND_ALL" disabledImage="theme:ICONS_EXPAND_ALL_DISABLED"
+						disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" 
+						expand="true"
+						image="theme:ICONS_EXPAND_ALL"
+					/>
+					<handler id="treeGridCollapseAll" class="com.top_logic.element.layout.grid.TreeGridExpandCollapseAll"
+						clique="expand"
+						disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED"
+						expand="false"
+						image="theme:ICONS_COLLAPSE_ALL"
 					/>
 					<handler 
 						id="historicAttributedViewCommand"

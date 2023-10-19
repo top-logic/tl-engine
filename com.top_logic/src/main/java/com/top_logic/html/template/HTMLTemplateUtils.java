@@ -90,7 +90,7 @@ public class HTMLTemplateUtils {
 		try {
 			return parse(templateName, StreamUtilities.readAllFromStream(in, "utf-8"));
 		} catch (IOException ex) {
-			throw new ConfigurationException(I18NConstants.ERROR_TEMPLATE_READIN_FAILED__NAME.fill(templateName),
+			throw new ConfigurationException(I18NConstants.ERROR_TEMPLATE_READING_FAILED__NAME.fill(templateName),
 				templateName, null, ex);
 		}
 	}

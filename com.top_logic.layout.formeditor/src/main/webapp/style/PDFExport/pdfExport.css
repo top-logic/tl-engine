@@ -24,6 +24,21 @@ td.tl-table__cell {
 	padding-left: 5px;
 }
 
+.tl-table__title-label {
+    padding-top: 4px;
+}
+
+.rf_groupCell,
+.rf_groupCell.collapsed,
+.rf_groupCell .rf_header {
+    border-radius: 0px;
+}
+
+.rf_groupCell .rf_header {
+    padding-left: 8px;
+    padding-top: 4px;
+}
+
 @font-face {
 	font-family: 'Font Awesome 5 Free';
 	font-style: normal;

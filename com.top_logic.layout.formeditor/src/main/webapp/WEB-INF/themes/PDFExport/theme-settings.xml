@@ -38,4 +38,24 @@
 </div>
 ]]></value>
 	</template>
+	<template name="com.top_logic.layout.form.boxes.reactive_tag.Icons.FORM_GROUP_TEMPLATE">
+		<value><![CDATA[<div id="{id}"
+	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
+	style="{width ? 'width: ' + width + '; '}{style}"
+	draggable="{draggable}"
+	data-id="{dataId}"
+>
+	<tl:if test="hasLegend || collapsible || hasMenu">
+		<div class="rf_header">
+			<tl:if test="hasLegend">
+				{title}
+			</tl:if>
+		</div>
+	</tl:if>
+
+		<div class="rf_content rf_dropTarget {columns > 0 ? 'cols' + columns}">
+			{content}
+		</div>
+</div>]]></value>
+	</template>
 </settings>

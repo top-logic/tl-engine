@@ -301,7 +301,7 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 	 * @param settings
 	 *        All settings that could be referred to during initialization.
 	 */
-	protected void init(Log log, ThemeSettings settings) {
+	public void init(Log log, ThemeSettings settings) {
 		if (_initialized) {
 			// Has already a concrete value.
 			return;
@@ -473,7 +473,7 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 		}
 
 		@Override
-		protected void init(Log log, ThemeSettings settings) {
+		public void init(Log log, ThemeSettings settings) {
 			// Ignore.
 		}
 

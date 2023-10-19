@@ -19,6 +19,7 @@ import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.FileManager;
+import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -79,13 +80,15 @@ public class UpdateThemeVariableHandler extends AbstractCommandHandler {
 		return ((ThemeConfig) component.getDialogParent().getModel()).getId();
 	}
 
-	private void storeThemeSetting(ThemeSetting themeSetting) {
-		ThemeFactory.getInstance().getTheme(themeSetting.getThemeId()).getSettings().update(themeSetting);
+	private void storeThemeSetting(ThemeSetting setting) {
+		ThemeSettings settings = ThemeFactory.getInstance().getTheme(setting.getThemeId()).getSettings();
+		setting.init(new LogProtocol(ThemeSettings.class), settings);
+		settings.update(setting);
 
 		File topLevelThemeSettings =
-			FileManager.getInstance().getIDEFile(ThemeUtil.getThemeSettingsPath(themeSetting.getThemeId()));
+			FileManager.getInstance().getIDEFile(ThemeUtil.getThemeSettingsPath(setting.getThemeId()));
 
-		ThemeSettings.Config themeSettingsConfig = createUpdatedThemeSettings(themeSetting, topLevelThemeSettings);
+		ThemeSettings.Config themeSettingsConfig = createUpdatedThemeSettings(setting, topLevelThemeSettings);
 
 		writeThemeSettings(topLevelThemeSettings, themeSettingsConfig);
 	}
@@ -169,9 +172,9 @@ public class UpdateThemeVariableHandler extends AbstractCommandHandler {
 		copy.reset(TypedConfiguration.getConfigurationDescriptor(ThemeSetting.Config.class)
 			.getProperty(ThemeSetting.Config.ABSTRACT));
 
-		ThemeSetting newSetting = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(copy);
-
-		return newSetting.initThemeId(getSelectedThemeId(form));
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(copy)
+			.initThemeId(getSelectedThemeId(form));
 	}
 
 	private ThemeSetting.Config<?> getThemeSettingConfig(FormComponent form) {

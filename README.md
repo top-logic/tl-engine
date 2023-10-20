@@ -17,8 +17,11 @@ TopLogic features so-called in-app development. This means that most of the deve
 Start creating a new app, which is a three-step process:
 
 1. [Install the engine](https://dev.top-logic.com/tl/content/docs/GetStarted/) and log in.
-2. Draw and configure your models, processes, and user interfaces.
-3. Start using your new app.
+2. Draw and configure your [models](https://dev.top-logic.com/tl/content/docs/DeveloperGuide/Modelling/), 
+[processes](https://dev.top-logic.com/tl/content/docs/DeveloperGuide/ProcessEngine/), and 
+[user interfaces](https://dev.top-logic.com/tl/content/docs/DeveloperGuide/LayoutEditor/).
+3. Start using your new app or [deploy it](https://dev.top-logic.com/tl/content/docs/GetStarted/CreateApp/DeployApp/) 
+to your customer's infrastructure.
 
 Explore the features of TopLogic in-app development by following the guided tour in the [TopLogic Tutorial](https://dev.top-logic.com/tl/content/docs/Tutorial/).
 

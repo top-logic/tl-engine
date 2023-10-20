@@ -33,6 +33,8 @@ import com.top_logic.service.openapi.common.document.ParameterLocation;
  * method body.
  * </p>
  *
+ * @see MultiPartBodyParameter
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ParameterUsedIn(ParameterLocation.QUERY)

@@ -63,7 +63,6 @@ import com.top_logic.service.openapi.server.authentication.ServerSecret;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;
 import com.top_logic.service.openapi.server.parameter.ParameterUsedIn;
 import com.top_logic.service.openapi.server.parameter.ReferencedParameter;
-import com.top_logic.service.openapi.server.parameter.RequestBodyParameter;
 import com.top_logic.service.openapi.server.parameter.RequestParameter;
 import com.top_logic.service.openapi.server.parameter.RequestParameter.Config;
 
@@ -351,7 +350,7 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 			Optional<Config<? extends RequestParameter<?>>> bodyParam =
 				CollectionUtil.nonNull(parameters.getValue())
 					.stream()
-					.filter(RequestBodyParameter.Config.class::isInstance)
+					.filter(RequestParameter.Config::isBodyParameter)
 					.findAny();
 			if (bodyParam.isPresent()) {
 				Config<? extends RequestParameter<?>> config = bodyParam.get();
@@ -365,7 +364,8 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 	}
 
 	/**
-	 * {@link ValueDependency} asserting that there is at most one {@link RequestBodyParameter
+	 * {@link ValueDependency} asserting that there is at most one
+	 * {@link com.top_logic.service.openapi.server.parameter.RequestParameter.Config#isBodyParameter()
 	 * request body parameter}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -386,11 +386,11 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 			Set<String> reqBodyParameters = Stream.concat(
 				self.getValue()
 					.stream()
-					.filter(RequestBodyParameter.Config.class::isInstance)
+					.filter(RequestParameter.Config::isBodyParameter)
 					.map(RequestParameter.Config::getName),
 				other.getValue()
 					.stream()
-					.filter(RequestBodyParameter.Config.class::isInstance)
+					.filter(RequestParameter.Config::isBodyParameter)
 					.map(RequestParameter.Config::getName))
 				.collect(Collectors.toSet());
 			if (reqBodyParameters.size() > 1) {

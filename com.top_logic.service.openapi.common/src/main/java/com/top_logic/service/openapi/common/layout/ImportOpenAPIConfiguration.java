@@ -83,7 +83,10 @@ import com.top_logic.util.error.TopLogicException;
 public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler {
 
 	/** Pattern that must be matched by a parameter reference. */
-	private static final Pattern GLOBAL_PARAMETER_REFERENCE = Pattern.compile("#/components/parameters/" + "([^/]+)");
+	protected static final Pattern GLOBAL_PARAMETER_REFERENCE = Pattern.compile("#/components/parameters/" + "([^/]+)");
+
+	/** Pattern that must be matched by a schema reference. */
+	protected static final Pattern GLOBAL_SCHEMA_REFERENCE = Pattern.compile("#/components/schemas/" + "([^/]+)");
 
 	/**
 	 * Configuration for the {@link ImportOpenAPIConfiguration}.

@@ -103,11 +103,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_TYPE_NAME_MUST_NOT_BE_EMPTY;
 
 	/**
-	 * @en The value {2} for attribute {1} in object {0} is not a sequence of business objects.
-	 */
-	public static ResKey3 ERROR_VALUE_NOT_LIST_OF_TLOBJECT__OBJECT_ATTRIBUTE_VALUE;
-
-	/**
 	 * @en The value {2} for attribute {1} in object {0} produces a cycle: {3}
 	 */
 	public static ResKey4 ERROR_CYLCE_NOT_ALLOWED__OBJECT_ATTRIBUTE_VALUE_CYCLE;

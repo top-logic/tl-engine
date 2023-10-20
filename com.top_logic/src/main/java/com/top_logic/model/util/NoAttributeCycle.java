@@ -14,13 +14,20 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 
@@ -33,45 +40,84 @@ import com.top_logic.model.annotate.util.ConstraintCheck;
  * </p>
  */
 @InApp
-public class NoAttributeCycle implements ConstraintCheck {
+public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends AbstractConfiguredInstance<C>
+		implements ConstraintCheck {
+
+	/**
+	 * Typed configuration interface definition for {@link NoAttributeCycle}.
+	 * 
+	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
+	 */
+	public interface Config<I extends NoAttributeCycle<?>> extends PolymorphicConfiguration<I> {
+
+		/**
+		 * Name of the configuration option {@link #getAdditionalObservedAttributes()}.
+		 */
+		String ATTRIBUTES = "additional-observed-attributes";
+
+		/**
+		 * Additional attributes that are used to check for a cycle.
+		 */
+		@Name(ATTRIBUTES)
+		List<TLReferenceConfig> getAdditionalObservedAttributes();
+
+		/**
+		 * @see #getAdditionalObservedAttributes()
+		 */
+		void setAdditionalObservedAttributes(List<TLReferenceConfig> value);
+
+	}
+
+	private List<TLReference> _additionalAttributes;
+
+	/**
+	 * Create a {@link NoAttributeCycle}.
+	 * 
+	 * @param context
+	 *        the {@link InstantiationContext} to create the new object in
+	 * @param config
+	 *        the configuration object to be used for instantiation
+	 */
+	public NoAttributeCycle(InstantiationContext context, C config) {
+		super(context, config);
+		_additionalAttributes = config.getAdditionalObservedAttributes()
+			.stream()
+			.map(TLReferenceConfig::resolve)
+			.collect(Collectors.toList());
+	}
 
 	@Override
 	public ResKey check(TLObject object, TLStructuredTypePart attribute) {
-		Map<TLObject, Collection<? extends TLObject>> valueCache = new HashMap<>();
+		Map<TLObject, Collection<AttributeValue>> valueCache = new HashMap<>();
 
-		List<List<TLObject>> pathsToProcess = new ArrayList<>();
-		pathsToProcess.add(new ArrayList<>(Arrays.asList(object)));
+		List<List<AttributeValue>> pathsToProcess = new ArrayList<>();
+		pathsToProcess.add(new ArrayList<>(Arrays.asList(new AttributeValue(null, object))));
 		while (!pathsToProcess.isEmpty()) {
-			List<TLObject> path = pathsToProcess.remove(pathsToProcess.size() - 1);
-			TLObject tail = path.get(path.size() - 1);
-			Collection<? extends TLObject> collection = valueCache.get(tail);
+			List<AttributeValue> path = pathsToProcess.remove(pathsToProcess.size() - 1);
+			TLObject tail = path.get(path.size() - 1).value();
+			Collection<AttributeValue> collection = valueCache.get(tail);
 			if (collection == null) {
-				Object attrValue = tail.tValue(attribute);
-				Optional<Collection<? extends TLObject>> value = asListOfTLObject(attrValue);
-				if (value.isEmpty()) {
-					return I18NConstants.ERROR_VALUE_NOT_LIST_OF_TLOBJECT__OBJECT_ATTRIBUTE_VALUE.fill(tail, attribute,
-						attrValue);
-				}
-				collection = value.get();
+				collection = determineValues(tail, attribute);
 				valueCache.put(tail, collection);
 			}
 			if (collection.isEmpty()) {
 				// No cycle.
 				continue;
 			}
-			Iterator<? extends TLObject> iterator = collection.iterator();
+			Iterator<AttributeValue> iterator = collection.iterator();
 			boolean hasNext;
 			do {
-				List<TLObject> extendedPath = path;
-				TLObject item = iterator.next();
+				List<AttributeValue> extendedPath = path;
+				AttributeValue value = iterator.next();
 				hasNext = iterator.hasNext();
 				if (hasNext) {
 					extendedPath = new ArrayList<>(path);
 				}
-				extendedPath.add(item);
-				if (object.equals(item)) {
-					return I18NConstants.ERROR_CYLCE_NOT_ALLOWED__OBJECT_ATTRIBUTE_VALUE_CYCLE.fill(object, attribute,
-						object.tValue(attribute), extendedPath);
+				extendedPath.add(value);
+				for (int i = extendedPath.size() - 2; i >= 0; i--) {
+					if (extendedPath.get(i).equals(value)) {
+						return foundCycle(object, attribute, extendedPath);
+					}
 				}
 				pathsToProcess.add(extendedPath);
 			} while (hasNext);
@@ -79,26 +125,76 @@ public class NoAttributeCycle implements ConstraintCheck {
 		return null;
 	}
 
-	private static Optional<Collection<? extends TLObject>> asListOfTLObject(Object value) {
-		if (value instanceof TLObject) {
-			return Optional.of(Collections.singletonList((TLObject) value));
-		}
-		if (value == null) {
-			return Optional.of(Collections.emptyList());
-		}
-		if (value instanceof Collection<?>) {
-			if (((Collection<?>) value).stream().anyMatch(NoAttributeCycle::isNoTLObject)) {
-				return Optional.empty();
+	private ResKey foundCycle(TLObject object, TLStructuredTypePart attribute, List<AttributeValue> valuePath) {
+		Object path;
+		if (_additionalAttributes.isEmpty()) {
+			path = valuePath
+				.stream()
+				.map(AttributeValue::value)
+				.map(MetaLabelProvider.INSTANCE::getLabel)
+				.collect(Collectors.joining(" -> "));
+		} else {
+			StringBuilder b = new StringBuilder(MetaLabelProvider.INSTANCE.getLabel(valuePath.get(0).value()));
+			for (int i = 1; i < valuePath.size(); i++) {
+				AttributeValue entry = valuePath.get(i);
+				String attr = MetaLabelProvider.INSTANCE.getLabel(entry.attribute());
+				String value = MetaLabelProvider.INSTANCE.getLabel(entry.value());
+				b.append(" (").append(attr).append(")-> ").append(value);
 			}
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			Collection<? extends TLObject> tlObjectCollection = (Collection) value;
-			return Optional.of(tlObjectCollection);
+			path = b.toString();
 		}
-		return Optional.empty();
+		return I18NConstants.ERROR_CYLCE_NOT_ALLOWED__OBJECT_ATTRIBUTE_VALUE_CYCLE.fill(object, attribute,
+			object.tValue(attribute), path);
 	}
 
-	private static boolean isNoTLObject(Object o) {
-		return !(o instanceof TLObject);
+	private Set<AttributeValue> determineValues(TLObject item, TLStructuredTypePart attribute) {
+		Set<AttributeValue> result = Collections.emptySet();
+
+		if (TLModelUtil.isCompatibleInstance(attribute.getOwner(), item)) {
+			Set<AttributeValue> attributeValue = attributeValue(item, attribute);
+			result = add(result, attributeValue);
+		}
+		for (TLReference additional : _additionalAttributes) {
+			if (TLModelUtil.isCompatibleInstance(additional.getOwner(), item)) {
+				Set<AttributeValue> attributeValue = attributeValue(item, additional);
+				result = add(result, attributeValue);
+			}
+		}
+
+		return result;
+	}
+
+	private Set<AttributeValue> add(Set<AttributeValue> result, Set<AttributeValue> attributeValue) {
+		if (result.isEmpty()) {
+			return attributeValue;
+		}
+		if (attributeValue.isEmpty()) {
+			return result;
+		}
+		if (result.size() == 1) {
+			result = new HashSet<>(result);
+		}
+		result.addAll(attributeValue);
+		return result;
+	}
+
+	private static Set<AttributeValue> attributeValue(TLObject item, TLStructuredTypePart attribute) {
+		Object value = item.tValue(attribute);
+		if (value instanceof TLObject) {
+			return Collections.singleton(new AttributeValue(attribute, (TLObject) value));
+		}
+		if (value == null) {
+			return Collections.emptySet();
+		}
+		if (value instanceof Collection<?>) {
+			return ((Collection<?>) value)
+				.stream()
+				.filter(TLObject.class::isInstance)
+				.map(TLObject.class::cast)
+				.map(v -> new AttributeValue(attribute, v))
+				.collect(Collectors.toSet());
+		}
+		return Collections.emptySet();
 	}
 
 	@Override
@@ -111,14 +207,63 @@ public class NoAttributeCycle implements ConstraintCheck {
 			if (!seen.add(item)) {
 				continue;
 			}
-			Optional<Collection<? extends TLObject>> value = asListOfTLObject(item.tValue(attribute));
-			if (value.isEmpty()) {
-				continue;
-			}
-			remaining.addAll(value.get());
-			if (item != object) {
-				trace.add(Pointer.create(item, attribute));
-			}
+			Set<AttributeValue> values = determineValues(item, attribute);
+			remaining.addAll(values.stream().map(AttributeValue::value).collect(Collectors.toList()));
+			values.stream()
+				.map(AttributeValue::attribute)
+				.distinct()
+				.filter(attr -> {
+					if (!attr.equals(attribute)) {
+						return true;
+					} else {
+						return !item.equals(object);
+					}
+				})
+				.map(attr -> Pointer.create(item, attr))
+				.forEach(trace::add);
+		}
+
+	}
+
+	private static final class AttributeValue {
+
+		final TLStructuredTypePart _attribute;
+
+		final TLObject _value;
+
+		public AttributeValue(TLStructuredTypePart attribute, TLObject value) {
+			_attribute = attribute;
+			_value = Objects.requireNonNull(value);
+		}
+
+		public TLStructuredTypePart attribute() {
+			return _attribute;
+		}
+
+		public TLObject value() {
+			return _value;
+		}
+
+		@Override
+		public int hashCode() {
+			return value().hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			AttributeValue other = (AttributeValue) obj;
+			return value().equals(other.value());
+		}
+
+		@Override
+		public String toString() {
+			return attribute() + " -> " + value();
 		}
 
 	}

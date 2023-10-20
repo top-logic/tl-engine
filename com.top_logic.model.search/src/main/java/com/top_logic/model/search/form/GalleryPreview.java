@@ -7,6 +7,7 @@ package com.top_logic.model.search.form;
 
 import java.awt.Dimension;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -91,8 +92,8 @@ public class GalleryPreview extends AbstractPreviewContent<GalleryPreview.Config
 	public static class AllGalleryAttributes extends AllTypeAttributes {
 
 		@Override
-		public Collection<? extends TLStructuredTypePart> apply(TLModelPartRef typeRef) {
-			return super.apply(typeRef)
+		protected List<TLStructuredTypePart> findAttributes(TLClass type) {
+			return super.findAttributes(type)
 				.stream()
 				.filter(AllGalleryTypes::isGalleryAttribute)
 				.collect(Collectors.toList());

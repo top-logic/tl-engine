@@ -3244,6 +3244,7 @@ services.form = {
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
+		tooltipCl: "ddwttTooltip",
 
 		buttonDrop: function(button) {
 			const ddBox = button.nextElementSibling;
@@ -3416,7 +3417,7 @@ services.form = {
 				item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
 			}
 
-			let tooltip = item.lastElementChild;
+			let tooltip = item.querySelector(":scope > ." + this.tooltipCl);
 			if (!tooltip) return;
 
 			if (tooltip.childElementCount > 0) {

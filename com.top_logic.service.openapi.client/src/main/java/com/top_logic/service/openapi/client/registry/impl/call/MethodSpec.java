@@ -31,7 +31,7 @@ public interface MethodSpec {
 	int getParameterIndex(String name);
 
 	/**
-	 * Creates a {@link ValueProducer} returning the argument passed to the paramter with the given
+	 * Creates a {@link ValueProducer} returning the argument passed to the parameter with the given
 	 * name.
 	 */
 	default ValueProducer createParameterLookup(String parameterName) {

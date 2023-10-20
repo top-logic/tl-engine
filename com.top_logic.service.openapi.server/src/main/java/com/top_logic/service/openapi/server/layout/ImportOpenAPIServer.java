@@ -458,7 +458,8 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 
 	private String globallyReferencedSchema(Map<?, ?> schemaMap) {
 		Object referencedSchema = schemaMap.get("$ref");
-		if (referencedSchema instanceof String && ((String) referencedSchema).startsWith("#/components/schemas/")) {
+		if (referencedSchema instanceof String
+				&& GLOBAL_SCHEMA_REFERENCE.matcher((String) referencedSchema).matches()) {
 			return (String) referencedSchema;
 		}
 		return null;

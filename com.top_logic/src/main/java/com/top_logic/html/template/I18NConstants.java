@@ -5,6 +5,7 @@
  */
 package com.top_logic.html.template;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
@@ -56,6 +57,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Duplicate attribute "{0}" at line {1}, column {2}.
 	 */
 	public static ResKey3 ERROR_DUPLICATE_ATTRIBUTE__NAME_LINE_COL;
+
+	/**
+	 * @en Failed to render the template.
+	 */
+	public static ResKey ERROR_RENDERING_TEMPLATE_FAILED;
 
 	/**
 	 * @en Tag "{0}" at line {1}, column {2} is no valid HTML 5 void element.

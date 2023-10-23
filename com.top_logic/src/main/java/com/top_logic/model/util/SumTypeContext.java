@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
@@ -130,6 +131,15 @@ public class SumTypeContext implements TLTypeContext {
 	@Override
 	public TLTypePart getTypePart() {
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return new NameBuilder(this)
+			.add("lead", _lead)
+			.add("common-type", _commonType)
+			.add("concrete-types", _concreteTypes)
+			.build();
 	}
 
 }

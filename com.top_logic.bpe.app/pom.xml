@@ -15,9 +15,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-scripting-template</artifactId>
-			<type>test-jar</type>
-			<scope>test</scope>
+			<artifactId>tl-themes-dezent</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -33,10 +31,6 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-scripting-template</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
 			<artifactId>tl-monitoring</artifactId>
 		</dependency>
 		<dependency>
@@ -45,28 +39,22 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-chart-chartjs</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-service-openapi-client</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-service-openapi-server</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>com.top-logic</groupId>
 			<artifactId>tl-layout-themeedit</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-themes-dezent</artifactId>
+			<artifactId>tl-doc</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-doc</artifactId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

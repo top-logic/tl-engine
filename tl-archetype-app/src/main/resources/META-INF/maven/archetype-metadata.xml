@@ -35,6 +35,12 @@
 		<requiredProperty key="useBPE">
 			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
 		</requiredProperty>
+		<requiredProperty key="useApiClient">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="useApiServer">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
+		</requiredProperty>
 		<requiredProperty key="parentArtifactId">
 			<defaultValue>tl-parent-app</defaultValue>
 		</requiredProperty>

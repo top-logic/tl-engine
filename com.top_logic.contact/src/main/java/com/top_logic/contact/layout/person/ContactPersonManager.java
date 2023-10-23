@@ -10,11 +10,12 @@ import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.TLPersonManager;
 
 /**
  * {@link PersonManager} that initializes new accounts with contact information.
  */
-public class ContactPersonManager extends PersonManager {
+public class ContactPersonManager extends TLPersonManager {
 
 	/**
 	 * Creates a {@link ContactPersonManager}.

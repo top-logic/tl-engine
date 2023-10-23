@@ -23,6 +23,7 @@ import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -32,14 +33,15 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 
 /**
- * {@link ConstraintCheck} that checks that there is no cycle in the attribute value.
+ * {@link ConstraintCheck} that checks that the reference does not contain a cycle.
  * 
  * <p>
- * This check ensures that there is no sequence of values "a_0, a_1,... ,a_n, a_0", so that a_i+1 is
- * in the attribute value of a_i and a_0 is in the attribute value of a_n.
+ * This check ensures that there is no sequence of objects "a_0, a_1,... ,a_n, a_0", so that a_i+1
+ * is in the reference of a_i and a_0 is in the reference of a_n.
  * </p>
  */
 @InApp
+@Label("No cycle")
 public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends AbstractConfiguredInstance<C>
 		implements ConstraintCheck {
 
@@ -51,24 +53,31 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 	public interface Config<I extends NoAttributeCycle<?>> extends PolymorphicConfiguration<I> {
 
 		/**
-		 * Name of the configuration option {@link #getAdditionalObservedAttributes()}.
+		 * Name of the configuration option {@link #getAdditionalObservedReferences()}.
 		 */
-		String ATTRIBUTES = "additional-observed-attributes";
+		String REFERENCES = "additional-observed-references";
 
 		/**
-		 * Additional attributes that are used to check for a cycle.
+		 * Additional references that are used to check for a cycle.
+		 * 
+		 * <p>
+		 * It is important that at each additional reference an corresponding constraint of type
+		 * {@link NoAttributeCycle} is configured with this reference as
+		 * {@link #getAdditionalObservedReferences()}. This is the only way to ensure that the
+		 * constraint works correctly.
+		 * </p>
 		 */
-		@Name(ATTRIBUTES)
-		List<TLReferenceConfig> getAdditionalObservedAttributes();
+		@Name(REFERENCES)
+		List<TLReferenceConfig> getAdditionalObservedReferences();
 
 		/**
-		 * @see #getAdditionalObservedAttributes()
+		 * @see #getAdditionalObservedReferences()
 		 */
-		void setAdditionalObservedAttributes(List<TLReferenceConfig> value);
+		void setAdditionalObservedReferences(List<TLReferenceConfig> value);
 
 	}
 
-	private List<TLReference> _additionalAttributes;
+	private List<TLReference> _additionalReferences;
 
 	/**
 	 * Create a {@link NoAttributeCycle}.
@@ -80,7 +89,7 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 	 */
 	public NoAttributeCycle(InstantiationContext context, C config) {
 		super(context, config);
-		_additionalAttributes = config.getAdditionalObservedAttributes()
+		_additionalReferences = config.getAdditionalObservedReferences()
 			.stream()
 			.map(TLReferenceConfig::resolve)
 			.collect(Collectors.toList());
@@ -127,7 +136,7 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 
 	private ResKey foundCycle(TLObject object, TLStructuredTypePart attribute, List<AttributeValue> valuePath) {
 		Object path;
-		if (_additionalAttributes.isEmpty()) {
+		if (_additionalReferences.isEmpty()) {
 			path = valuePath
 				.stream()
 				.map(AttributeValue::value)
@@ -154,7 +163,7 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 			Set<AttributeValue> attributeValue = attributeValue(item, attribute);
 			result = add(result, attributeValue);
 		}
-		for (TLReference additional : _additionalAttributes) {
+		for (TLReference additional : _additionalReferences) {
 			if (TLModelUtil.isCompatibleInstance(additional.getOwner(), item)) {
 				Set<AttributeValue> attributeValue = attributeValue(item, additional);
 				result = add(result, attributeValue);

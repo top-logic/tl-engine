@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.table;
 
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.layout.table.model.Column;
 
 /**
@@ -53,6 +54,15 @@ public abstract class CellAdapter extends RenderInfoAdapter implements TableRend
 	@Override
 	public boolean cellExists() {
 		return impl().cellExists();
+	}
+
+	@Override
+	public String toString() {
+		return new NameBuilder(this)
+			.add("table", getModel().getTableConfiguration().getTableName())
+			.add("row", getRowObject())
+			.add("column", getColumnName())
+			.build();
 	}
 
 	@Override

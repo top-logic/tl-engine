@@ -160,6 +160,18 @@
 							</impl>
 						</field-provider>
 						<tag-provider impl="com.top_logic.element.meta.form.tag.StringTagProvider"/>
+
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+							</renderer>
+
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+
+							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
+							<comparator class=""/>
+						</column-info>
 					</attribute-setting>
 
 					<attribute-setting
@@ -172,6 +184,18 @@
 							</impl>
 						</field-provider>
 						<tag-provider impl="com.top_logic.model.search.persistency.attribute.report.ui.ReportTagProvider"/>
+
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+							</renderer>
+
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+
+							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
+							<comparator class=""/>
+						</column-info>
 					</attribute-setting>
 
 					<attribute-setting
@@ -181,6 +205,18 @@
 						<field-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.HiddenFieldProvider"/>
 						<tag-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroTagProvider"/>
 						<pdf-renderer impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroPDFRenderer"/>
+
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+							</renderer>
+
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+
+							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
+							<comparator class=""/>
+						</column-info>
 					</attribute-setting>
 				</attribute-settings>
 			</instance>

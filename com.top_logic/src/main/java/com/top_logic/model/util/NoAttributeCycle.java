@@ -101,12 +101,14 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 
 		List<List<AttributeValue>> pathsToProcess = new ArrayList<>();
 		pathsToProcess.add(new ArrayList<>(Arrays.asList(new AttributeValue(null, object))));
+		boolean initial = true;
 		while (!pathsToProcess.isEmpty()) {
 			List<AttributeValue> path = pathsToProcess.remove(pathsToProcess.size() - 1);
 			TLObject tail = path.get(path.size() - 1).value();
 			Collection<AttributeValue> collection = valueCache.get(tail);
 			if (collection == null) {
-				collection = determineValues(tail, attribute);
+				collection = determineValues(tail, attribute, initial);
+				initial = false;
 				valueCache.put(tail, collection);
 			}
 			if (collection.isEmpty()) {
@@ -156,17 +158,33 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 			object.tValue(attribute), path);
 	}
 
-	private Set<AttributeValue> determineValues(TLObject item, TLStructuredTypePart attribute) {
+	/**
+	 * Determines the values of the given item for the given attribute and all appropriate
+	 * {@link #_additionalReferences additional attributes}.
+	 *
+	 * @param item
+	 *        The item to get values from.
+	 * @param attribute
+	 *        the original {@link TLStructuredTypePart} at which this constraint is annotated.
+	 * @param initial
+	 *        Whether it is the first step in the attribute chain, i.e. the given item is the item
+	 *        given in {@link #check(TLObject, TLStructuredTypePart)} or
+	 *        {@link #traceDependencies(TLObject, TLStructuredTypePart, Sink)}. In this case only
+	 *        the given attribute is used, additional references are <b>not</b> navigated.
+	 */
+	private Set<AttributeValue> determineValues(TLObject item, TLStructuredTypePart attribute, boolean initial) {
 		Set<AttributeValue> result = Collections.emptySet();
 
 		if (TLModelUtil.isCompatibleInstance(attribute.getOwner(), item)) {
 			Set<AttributeValue> attributeValue = attributeValue(item, attribute);
 			result = add(result, attributeValue);
 		}
-		for (TLReference additional : _additionalReferences) {
-			if (TLModelUtil.isCompatibleInstance(additional.getOwner(), item)) {
-				Set<AttributeValue> attributeValue = attributeValue(item, additional);
-				result = add(result, attributeValue);
+		if (!initial) {
+			for (TLReference additional : _additionalReferences) {
+				if (TLModelUtil.isCompatibleInstance(additional.getOwner(), item)) {
+					Set<AttributeValue> attributeValue = attributeValue(item, additional);
+					result = add(result, attributeValue);
+				}
 			}
 		}
 
@@ -211,12 +229,14 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 		Set<TLObject> seen = new HashSet<>();
 		List<TLObject> remaining = new ArrayList<>();
 		remaining.add(object);
+		boolean initial = true;
 		while (!remaining.isEmpty()) {
 			TLObject item = remaining.remove(remaining.size() - 1);
 			if (!seen.add(item)) {
 				continue;
 			}
-			Set<AttributeValue> values = determineValues(item, attribute);
+			Set<AttributeValue> values = determineValues(item, attribute, initial);
+			initial = false;
 			remaining.addAll(values.stream().map(AttributeValue::value).collect(Collectors.toList()));
 			values.stream()
 				.map(AttributeValue::attribute)

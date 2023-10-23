@@ -5,9 +5,14 @@
  */
 package com.top_logic.element.meta.form.overlay;
 
+import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
+import static com.top_logic.model.util.TLModelUtil.*;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -142,18 +147,59 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 			return null;
 		}
 
-		Object result = update.convertValue(update.fieldToAttributeValue(field));
+		return fromUIToDBValue(update, part, field);
+	}
+
+	/**
+	 * Normalize value in a way as it has been retrieved from the persistency layer.
+	 * <p>
+	 * Without this code, attributes of type tl.core:Integer that have been edited in the UI return
+	 * de-facto values of type java.lang.Long. This is a problem, if those values are used in
+	 * set-contains comparisons.
+	 * </p>
+	 */
+	private Object fromUIToDBValue(AttributeUpdate update, TLStructuredTypePart part, FormField field) {
+		Object uiValue = update.convertValue(update.fieldToAttributeValue(field));
 		TLType type = part.getType();
 		if (type.getModelKind() == ModelKind.DATATYPE) {
 			StorageMapping<?> storageMapping = ((TLPrimitive) type).getStorageMapping();
-
-			// Normalize value in a way as it has been retrieved from the persistency layer. Without
-			// this code, attributes of type tl.core:Integer that have been edited in the UI return
-			// de-facto values of type java.lang.Long. This is a problem, if those values are used
-			// in set-contains comparisons.
-			return storageMapping.getBusinessObject(storageMapping.getStorageObject(result));
+			if (part.isMultiple()) {
+				return toDBValues(part, storageMapping, uiValue);
+			} else {
+				return toDBValue(storageMapping, uiValue);
+			}
 		}
-		return result;
+		return uiValue;
+	}
+
+	/** Create a {@link Collection} for the values of the given {@link TLStructuredTypePart}. */
+	protected Collection<Object> createCollection(TLStructuredTypePart attribute) {
+		if (!attribute.isMultiple()) {
+			throw new IllegalArgumentException("Attribute is not multiple: " + qualifiedName(attribute));
+		}
+		if (attribute.isBag()) {
+			return new ArrayList<>();
+		} else {
+			// Values must not appear multiple times, cannot use List.
+			if (attribute.isOrdered()) {
+				return new LinkedHashSet<>();
+			} else {
+				return new HashSet<>();
+			}
+		}
+	}
+
+	private Object toDBValues(TLStructuredTypePart part, StorageMapping<?> storageMapping, Object uiValues) {
+		Collection<Object> dbValues = createCollection(part);
+		for (Object uiValue : nonNull((Collection<?>) uiValues)) {
+			Object dbValue = toDBValue(storageMapping, uiValue);
+			dbValues.add(dbValue);
+		}
+		return dbValues;
+	}
+
+	private Object toDBValue(StorageMapping<?> storageMapping, Object uiValue) {
+		return storageMapping.getBusinessObject(storageMapping.getStorageObject(uiValue));
 	}
 
 	@Override

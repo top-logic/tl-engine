@@ -8,6 +8,7 @@ package com.top_logic.html.template;
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.TagWriter.State;
 import com.top_logic.layout.DisplayContext;
@@ -43,7 +44,9 @@ public class ExpressionTemplate implements RawTemplateFragment {
 			if (out.getState() != State.ELEMENT_CONTENT) {
 				throw exception;
 			}
-			RenderErrorUtil.writeErrorFragment(context, out, exception.getMessage(), this);
+			ResKey resKey = I18NConstants.ERROR_RENDERING_TEMPLATE_FAILED;
+			String message = exception.getMessage();
+			RenderErrorUtil.produceErrorOutput(context, out, resKey, message, exception, ExpressionTemplate.class);
 			return;
 		}
 

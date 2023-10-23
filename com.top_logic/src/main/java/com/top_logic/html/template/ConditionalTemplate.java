@@ -7,6 +7,7 @@ package com.top_logic.html.template;
 
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.expr.TestExpression;
 import com.top_logic.layout.DisplayContext;
@@ -84,7 +85,9 @@ public class ConditionalTemplate implements RawTemplateFragment {
 		try {
 			testResult = TestExpression.isTrue(_test.eval(context, properties));
 		} catch (RuntimeException exception) {
-			RenderErrorUtil.writeErrorFragment(context, out, exception.getMessage(), this);
+			ResKey resKey = I18NConstants.ERROR_RENDERING_TEMPLATE_FAILED;
+			String message = "Failed to write template.";
+			RenderErrorUtil.produceErrorOutput(context, out, resKey, message, exception, ConditionalTemplate.class);
 			return;
 		}
 		if (testResult) {

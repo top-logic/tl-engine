@@ -18,9 +18,12 @@ import org.apache.hc.core5.http.ContentType;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -65,7 +68,18 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
+	@DisplayOrder({
+		MultiPartContent.NAME_ATTRIBUTE,
+		MultiPartContent.CONTENT,
+		MultiPartContent.CONTENT_TYPE,
+	})
 	public interface MultiPartContent extends NamedConfigMandatory {
+
+		/** Name of the configuration option {@link #getContent()}. */
+		String CONTENT = "content";
+
+		/** Name of the configuration option {@link #getContentType()}. */
+		String CONTENT_TYPE = "content-type";
 
 		/**
 		 * The name of the part.
@@ -84,7 +98,30 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 		 */
 		@PropertyEditor(PlainEditor.class)
 		@Mandatory
+		@Name(CONTENT)
 		Expr getContent();
+
+		/**
+		 * Setter for {@link #getContent()}.
+		 */
+		void setContent(Expr value);
+
+		/**
+		 * The content type of this part of the body.
+		 * 
+		 * <p>
+		 * If nothing is configured, the content type for the request is determined dynamically from
+		 * the given value.
+		 * </p>
+		 */
+		@Format(ContentTypeFormat.class)
+		@Name(CONTENT_TYPE)
+		ContentType getContentType();
+		
+		/**
+		 * Setter for {@link #getContent()}.
+		 */
+		void setContentType(ContentType value);
 
 	}
 
@@ -126,8 +163,9 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 			
 			private void addBodyPart(MultipartEntityBuilder builder, MultiPartContent part, Object value) {
 				String name = part.getName();
+				ContentType configuredContentType = part.getContentType();
 				if (value == null) {
-					builder.addTextBody(name, "");
+					addTextBody(builder, name, configuredContentType, "");
 				} else if (value instanceof BinaryDataSource) {
 					BinaryData content = ((BinaryDataSource) value).toData();
 					InputStream stream;
@@ -136,11 +174,13 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 					} catch (IOException ex) {
 						throw new UncheckedIOException(ex);
 					}
-					builder.addBinaryBody(
-						name,
-						stream,
-						createContentType(name, content.getContentType()),
-						content.getName());
+					ContentType contentType;
+					if (configuredContentType != null) {
+						contentType = configuredContentType;
+					} else {
+						contentType = createContentType(name, content.getContentType());
+					}
+					builder.addBinaryBody(name, stream, contentType, content.getName());
 
 				} else if (value instanceof BinaryContent) {
 					BinaryContent content = (BinaryContent) value;
@@ -150,15 +190,26 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 					} catch (IOException ex) {
 						throw new UncheckedIOException(ex);
 					}
-					builder.addBinaryBody(
-						name,
-						stream,
-						ContentType.APPLICATION_OCTET_STREAM,
-						content.getName());
+					ContentType contentType;
+					if (configuredContentType != null) {
+						contentType = configuredContentType;
+					} else {
+						contentType = ContentType.APPLICATION_OCTET_STREAM;
+					}
+					builder.addBinaryBody(name, stream, contentType, content.getName());
 				} else if (value instanceof Map) {
 					builder.addTextBody(name, JSON.toString(value), ContentType.APPLICATION_JSON);
 				} else {
-					builder.addTextBody(name, MetaLabelProvider.INSTANCE.getLabel(value));
+					addTextBody(builder, name, configuredContentType, MetaLabelProvider.INSTANCE.getLabel(value));
+				}
+			}
+
+			private void addTextBody(MultipartEntityBuilder builder, String name, ContentType configuredContentType,
+					String text) {
+				if (configuredContentType != null) {
+					builder.addTextBody(name, text, configuredContentType);
+				} else {
+					builder.addTextBody(name, text);
 				}
 			}
 

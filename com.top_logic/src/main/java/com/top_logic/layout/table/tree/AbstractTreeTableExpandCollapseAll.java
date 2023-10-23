@@ -67,11 +67,21 @@ public abstract class AbstractTreeTableExpandCollapseAll extends AbstractExpandC
 	}
 
 	private void expandAndRestoreViewportState(TreeTableData data, boolean expand) {
-		expandAndRestoreViewportState(data, expand, getClientViewportState(data));
+		ViewportState state = getClientViewportState(data);
+
+		if (hasRowAnchor(state)) {
+			expandAndRestoreViewportState(data, expand, state);
+		} else {
+			TreeUIModelUtil.setExpandedAll(data.getTree(), expand);
+		}
 	}
 
 	private ViewportState getClientViewportState(TreeTableData data) {
 		return data.getViewModel().getClientDisplayData().getViewportState();
+	}
+
+	private boolean hasRowAnchor(ViewportState state) {
+		return state.getRowAnchor().getIndex() >= 0;
 	}
 
 	private void expandAndRestoreViewportState(TreeTableData data, boolean expand, ViewportState state) {

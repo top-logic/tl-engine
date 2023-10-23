@@ -11,6 +11,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -24,30 +25,32 @@ import com.top_logic.model.form.definition.NamedPartNames;
  * Definition of a {@link TLReference}.
  */
 @DisplayOrder({
-	TLReferenceConfig.OWNER,
+	TLReferenceConfig.DEFINITION,
 	TLReferenceConfig.NAME_ATTRIBUTE
 })
+@Label("Reference")
 public interface TLReferenceConfig extends NamedConfigMandatory {
 
 	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 	Lookup LOOKUP = MethodHandles.lookup();
 
-	/** Configuration option for value {@link #getOwner()}. */
-	String OWNER = "owner";
+	/** Configuration option for value {@link #getDefinition()}. */
+	String DEFINITION = "definition";
 
 	/**
 	 * Name of the reference.
 	 */
 	@Override
-	@Options(fun = AllReferenceAttributes.class, args = @Ref(OWNER), mapping = NamedPartNames.class)
+	@Options(fun = AllReferenceAttributes.class, args = @Ref(DEFINITION), mapping = NamedPartNames.class)
+	@Label("Reference")
 	String getName();
 
 	/**
-	 * The name of the type that owns the reference to resolve.
+	 * The name of the type that definies the reference to resolve.
 	 */
-	@Name(OWNER)
+	@Name(DEFINITION)
 	@Mandatory
-	TLModelPartRef getOwner();
+	TLModelPartRef getDefinition();
 
 	/**
 	 * Determines the configured {@link TLReference}.
@@ -55,7 +58,7 @@ public interface TLReferenceConfig extends NamedConfigMandatory {
 	default TLReference resolve() {
 		TLClass owner;
 		try {
-			owner = getOwner().resolveClass();
+			owner = getDefinition().resolveClass();
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError(ex);
 		}

@@ -9,10 +9,11 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.list;
 import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
+import static java.util.Comparator.*;
+import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,14 +25,13 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.layout.table.provider.ColumnInfo;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.annotate.ui.TLIDColumn;
+import com.top_logic.model.config.annotation.MainProperties;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.util.TLModelUtil;
@@ -190,6 +190,34 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 		}
 
 		/**
+		 * The {@link MainProperties} of the {@link TLClass}.
+		 * <p>
+		 * If none are defined, those of the subclasses are returned, recursively. If that does not
+		 * lead to any properties, all properties of the type are used.
+		 * </p>
+		 * <p>
+		 * This algorithm has the following properties:
+		 * <ol>
+		 * <li>The main properties of the given type will always be used when they exist.
+		 * Superclasses and subclasses won't override them.</li>
+		 * <li>When there are no main properties for the given type, it is ensured that each
+		 * subclass can be properly displayed: Either by using its main properties, recursively
+		 * collecting the main properties for its subclasses, or by using all of its properties.
+		 * That is important for classes with very diverse subclasses, for example "FooChild" types,
+		 * which might not even have common properties at all.</li>
+		 * <li>The nearest definition of main properties is used: When main properties are defined
+		 * for a class, its subclasses are not searched.</li>
+		 * <li>As long as the type has properties, the result is not empty. That is important to
+		 * avoid displaying a table without columns, as such a table is always useless and its
+		 * existence a bug.</li>
+		 * <li>All subclasses are equally important when calculating the set of main properties. As
+		 * their is no order between subclasses, there cannot be a "main" subclass. (Their names are
+		 * used to establish a stable order, though.)</li>
+		 * <li>The result has a stable order, as long as the model is not changed. Logouts and
+		 * server restarts won't cause the properties to "jump around".</li>
+		 * </ol>
+		 * </p>
+		 * 
 		 * @param contentType
 		 *        The {@link TLClass} whose main properties should be returned. Is not allowed to be
 		 *        null.
@@ -202,60 +230,18 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 			if (!mainProperties.isEmpty()) {
 				return mainProperties;
 			}
-			String idProperty = calcIdProperty(contentType);
-			if (idProperty != null) {
-				return List.of(idProperty);
-			}
-			List<String> subtypeIdProperties = calcSubtypeIdProperties(contentType);
-			if (!subtypeIdProperties.isEmpty()) {
-				return subtypeIdProperties;
+			List<String> subtypeMainProperties = contentType
+				.getSpecializations()
+				.stream()
+				.sorted(comparing(TLClass::getName)) // Ensure the order is stable.
+				.map(this::calcMainProperties)
+				.flatMap(Collection::stream)
+				.distinct()
+				.collect(toList());
+			if (!subtypeMainProperties.isEmpty()) {
+				return subtypeMainProperties;
 			}
 			return calcVisiblePartNames(contentType);
-		}
-
-		/**
-		 * The "id property" for all subclasses.
-		 * <p>
-		 * If there is none for a class, "name" is used. The result contains every property just
-		 * once and has a stable, though arbitrary, order. There is no defined order, as there is no
-		 * order between the subclasses.
-		 * </p>
-		 */
-		protected List<String> calcSubtypeIdProperties(TLClass type) {
-			Set<String> idProperties = set();
-			Set<TLClass> concreteSubtypes = TLModelUtil.getConcreteSpecializations(type);
-			for (TLClass subtype : concreteSubtypes) {
-				String idProperty = calcIdProperty(subtype);
-				if (idProperty != null) {
-					idProperties.add(idProperty);
-				}
-			}
-			if (idProperties.size() < 2) {
-				return List.copyOf(idProperties);
-			}
-			// Enforce a stable order:
-			List<String> stableIdProperties = list(idProperties);
-			stableIdProperties.sort(Comparator.naturalOrder());
-			return stableIdProperties;
-		}
-
-		/**
-		 * The property which is used to identify instances of this class on the GUI.
-		 * <p>
-		 * The nearest {@link TLIDColumn} in the chain of primary generalizations. If there is none,
-		 * "name" is used.
-		 * </p>
-		 */
-		protected String calcIdProperty(TLClass type) {
-			TLIDColumn idProperty = DisplayAnnotations.getIDColumn(type);
-			if (idProperty != null) {
-				return idProperty.getValue();
-			}
-			TLStructuredTypePart nameProperty = type.getPart(AbstractWrapper.NAME_ATTRIBUTE);
-			if (nameProperty != null) {
-				return AbstractWrapper.NAME_ATTRIBUTE;
-			}
-			return null;
 		}
 
 		/**

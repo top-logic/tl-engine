@@ -3,54 +3,92 @@
  */
 package com.top_logic.services.jms;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.services.jms.JMSService.DestinationConfig;
-import com.top_logic.services.jms.JMSService.MessageProcessor;
-import com.top_logic.services.jms.JMSService.Type;
+import java.io.Closeable;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
+
+import jakarta.jms.Destination;
 import jakarta.jms.JMSConsumer;
-import jakarta.jms.JMSException;
+import jakarta.jms.JMSContext;
 import jakarta.jms.Message;
 import jakarta.jms.Topic;
 
 /**
- * Class for a jms consumer (fetches messages from a queue).
+ * Base class for a jms consumer (fetches messages from a queue).
+ * 
+ * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
-public class Consumer extends JMSClient {
+public abstract class Consumer extends AbstractConfiguredInstance<Consumer.Config<?>> implements Closeable {
 
 	private JMSConsumer _consumer;
 
-	private MessageProcessor _processor;
+	private String _name;
 
 	/**
-	 * @param config
-	 *        The config for the connection to the queue
-	 * @throws JMSException
-	 *         Exception if something is not jms conform
+	 * Configuration options for {@link Consumer}.
 	 */
-	public Consumer(DestinationConfig config) throws JMSException {
-		super(config);
-		if (config.getType().equals(Type.TOPIC)) {
-			_consumer = getContext().createSharedDurableConsumer((Topic) getDestination(), config.getDestName());
-		} else {
-			_consumer = getContext().createConsumer(getDestination());
-		}
-		_processor = TypedConfigUtil.createInstance(config.getProcessor());
+	public interface Config<I extends Consumer> extends ClientConfig<I> {
+		/**
+		 * Implemented / extended by each unique consumer type.
+		 */
 	}
 
 	/**
-	 * Fetches a message from the given queue
+	 * Constructor for a consumer that sets the config.
+	 * 
+	 * @param config
+	 *        The config for the connection to the queue
+	 */
+	public Consumer(InstantiationContext instContext, Config<?> config) {
+		super(instContext, config);
+		_name = config.getName();
+	}
+
+	/**
+	 * Creates a {@link JMSConsumer} on an existing {@link JMSContext} containing the connection to
+	 * a message queue system.
+	 * 
+	 * @param client
+	 *        The Object establishing the connection and holding the {@link JMSContext}.
+	 */
+	public void setup(JMSClient client) {
+		Config.Type type = getConfig().getType();
+		String destName = getConfig().getDestName();
+		Destination destination = client.createDestination(type, destName);
+		if (type == Config.Type.TOPIC) {
+			_consumer = client.getContext().createSharedDurableConsumer((Topic) destination, destName);
+		} else {
+			_consumer = client.getContext().createConsumer(destination);
+		}
+	}
+
+	/**
+	 * Fetches a message from the given queue.
 	 */
 	public void receive() {
 		try {
 			while (true) {
 				Message message = _consumer.receive();
-				_processor.processMessage(message);
+				processMessage(message);
 			}
 		} finally {
-			Logger.info("Stopping consumer " + getDestinationName() + ".", Consumer.class);
+			Logger.info("Stopping consumer " + _name + ".", Consumer.class);
 			_consumer.close();
 		}
+	}
+
+	/**
+	 * Processes the received Message.
+	 * 
+	 * @param message
+	 *        The message to be processed
+	 */
+	public abstract void processMessage(Message message);
+
+	@Override
+	public void close() {
+		_consumer.close();
 	}
 }

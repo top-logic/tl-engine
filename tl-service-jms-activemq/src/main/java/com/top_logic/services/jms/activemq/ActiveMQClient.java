@@ -1,27 +1,36 @@
+/*
+ * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ */
 package com.top_logic.services.jms.activemq;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.services.jms.JMSService.MQSystemConfigurator;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.services.jms.JMSClient;
 
 import jakarta.jms.ConnectionFactory;
-import jakarta.jms.JMSException;
 
 /**
  * 
  */
-public class ActiveMQConfigurator extends AbstractConfiguredInstance<ActiveMQConfigurator.Config<?>> implements MQSystemConfigurator {
+public class ActiveMQClient extends JMSClient {
 
 	/**
-	 * Configuration options for {@link ActiveMQConfigurator}.
+	 * Configuration options for {@link ActiveMQClient}.
 	 */
-	public interface Config<I extends ActiveMQConfigurator> extends PolymorphicConfiguration<I> {
+	@DisplayOrder({ Config.URL_SCHEME,
+		Config.HOST,
+		Config.PORT,
+		Config.USER,
+		Config.PASSWORD,
+		Config.PRODUCER_CONFIGS,
+		Config.CONSUMER_CONFIGS })
+	public interface Config<I extends ActiveMQClient> extends JMSClient.Config<I> {
 
 		/**
 		 * Configuration name for {@link #getURLScheme()}.
@@ -37,6 +46,16 @@ public class ActiveMQConfigurator extends AbstractConfiguredInstance<ActiveMQCon
 		 * Configuration name for {@link #getPort()}.
 		 */
 		String PORT = "port";
+
+		/**
+		 * Configuration name for {@link #getUser()}.
+		 */
+		String USER = "user";
+
+		/**
+		 * Configuration name for {@link #getPassword()}.
+		 */
+		String PASSWORD = "password";
 
 		/**
 		 * The URL-Scheme of the connection.
@@ -58,6 +77,19 @@ public class ActiveMQConfigurator extends AbstractConfiguredInstance<ActiveMQCon
 		@Name(PORT)
 		@IntDefault(-1)
 		int getPort();
+
+		/**
+		 * The user name to log in to the message queue server.
+		 */
+		@Name(USER)
+		String getUser();
+
+		/**
+		 * The password to the given user name.
+		 */
+		@Encrypted
+		@Name(PASSWORD)
+		String getPassword();
 	}
 
 	/**
@@ -86,20 +118,27 @@ public class ActiveMQConfigurator extends AbstractConfiguredInstance<ActiveMQCon
 	}
 
 	/**
-	 * Creates a {@link ActiveMQConfigurator} from configuration.
+	 * Creates a {@link ActiveMQClient} from configuration.
 	 * 
 	 * @param config
 	 *        The configuration.
 	 */
-	public ActiveMQConfigurator(InstantiationContext context, Config<?> config) {
+	public ActiveMQClient(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
+	/**
+	 * Setup for a connection with an ActiveMQ.
+	 * 
+	 * @return the connection factory
+	 */
 	@Override
-	public ConnectionFactory setupMQConnection(String un, String pw) throws JMSException {
-		Config<?> config = getConfig();
+	public ConnectionFactory setupConnectionFactory() {
+		Config<?> config = (Config<?>) getConfig();
 		String url = config.getURLScheme().toString().toLowerCase() + "://" + config.getHost() + ":" + config.getPort();
 		ActiveMQConnectionFactory amqcf = new ActiveMQConnectionFactory(url);
+		amqcf.setUser(config.getUser());
+		amqcf.setPassword(config.getPassword());
 		return amqcf;
 	}
 }

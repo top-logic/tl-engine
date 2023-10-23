@@ -9,54 +9,7 @@
 		>
 			<instance class="com.top_logic.services.jms.JMSService">
 				<destination-configs>
-					<destination-config name="Queue1"
-						dest-name="DEV.QUEUE.1"
-						password="aUzA3W_7cpay8OTplKH-7cacuUApxk4b"
-						type="QUEUE"
-						user="app"
-					>
-						<mq-system-configurator class="com.top_logic.services.jms.ibmmq.IBMMQConfigurator"
-							channel="DEV.APP.SVRCONN"
-							host="localhost"
-							queue-manager="QM1"
-						/>
-						<message-processor class=""/>
-					</destination-config>
-					<destination-config name="Topic1"
-						dest-name="FruitsTopic"
-						password="ZBRQI2WxHFU51kL7YUY_f4rV7UwGcCia"
-						type="TOPIC"
-						user="app"
-					>
-						<mq-system-configurator class="com.top_logic.services.jms.ibmmq.IBMMQConfigurator"
-							channel="DEV.APP.SVRCONN"
-							host="localhost"
-							queue-manager="QM1"
-						/>
-					</destination-config>
-					<destination-config name="ActiveMQ"
-						dest-name="Tropical"
-						password="llRKjWltO1HpmevabIVlqVHJZV_cG8E"
-						user="artemis"
-					>
-						<mq-system-configurator class="com.top_logic.services.jms.activemq.ActiveMQConfigurator"
-							host="localhost"
-							port="61616"
-							url-scheme="TCP"
-						/>
-					</destination-config>
-					<destination-config name="ActiveMQTopic"
-						dest-name="Fruits"
-						password="fTFnFsIUT8HCt1JiEc9bBDGymhPSvKI"
-						type="TOPIC"
-						user="artemis"
-					>
-						<mq-system-configurator class="com.top_logic.services.jms.activemq.ActiveMQConfigurator"
-							host="localhost"
-							port="61616"
-							url-scheme="TCP"
-						/>
-					</destination-config>
+					
 				</destination-configs>
 			</instance>
 		</config>

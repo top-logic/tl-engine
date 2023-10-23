@@ -1,16 +1,19 @@
+/*
+ * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ */
 package com.top_logic.services.jms.ibmmq;
 
 import com.ibm.msg.client.jakarta.jms.JmsConnectionFactory;
 import com.ibm.msg.client.jakarta.jms.JmsFactoryFactory;
 import com.ibm.msg.client.jakarta.wmq.WMQConstants;
 
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.services.jms.JMSService.MQSystemConfigurator;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.services.jms.JMSClient;
 import com.top_logic.util.Resources;
 
 import jakarta.jms.ConnectionFactory;
@@ -19,12 +22,20 @@ import jakarta.jms.JMSException;
 /**
  * 
  */
-public class IBMMQConfigurator extends AbstractConfiguredInstance<IBMMQConfigurator.Config<?>> implements MQSystemConfigurator {
+public class IBMMQClient extends JMSClient {
 
 	/**
-	 * Configuration options for {@link IBMMQConfigurator}.
+	 * Configuration options for {@link IBMMQClient}.
 	 */
-	public interface Config<I extends IBMMQConfigurator> extends PolymorphicConfiguration<I> {
+	@DisplayOrder({ Config.HOST,
+		Config.PORT,
+		Config.USER,
+		Config.PASSWORD,
+		Config.CHANNEL,
+		Config.QUEUE_MANAGER,
+		Config.PRODUCER_CONFIGS,
+		Config.CONSUMER_CONFIGS })
+	public interface Config<I extends IBMMQClient> extends JMSClient.Config<I> {
 
 		/**
 		 * Configuration name for {@link #getHost()}.
@@ -35,6 +46,16 @@ public class IBMMQConfigurator extends AbstractConfiguredInstance<IBMMQConfigura
 		 * Configuration name for {@link #getPort()}.
 		 */
 		String PORT = "port";
+
+		/**
+		 * Configuration name for {@link #getUser()}.
+		 */
+		String USER = "user";
+
+		/**
+		 * Configuration name for {@link #getPassword()}.
+		 */
+		String PASSWORD = "password";
 
 		/**
 		 * Configuration name for {@link #getChannel()}.
@@ -61,6 +82,19 @@ public class IBMMQConfigurator extends AbstractConfiguredInstance<IBMMQConfigura
 		int getPort();
 
 		/**
+		 * The user name to log in to the message queue server.
+		 */
+		@Name(USER)
+		String getUser();
+
+		/**
+		 * The password to the given user name.
+		 */
+		@Encrypted
+		@Name(PASSWORD)
+		String getPassword();
+
+		/**
 		 * The channel of the target queue.
 		 */
 		@Mandatory
@@ -76,27 +110,25 @@ public class IBMMQConfigurator extends AbstractConfiguredInstance<IBMMQConfigura
 	}
 
 	/**
-	 * Creates a {@link IBMMQConfigurator} from configuration.
+	 * Creates a {@link IBMMQClient} from configuration.
 	 * 
 	 * @param config
 	 *        The configuration.
 	 */
-	public IBMMQConfigurator(InstantiationContext context, Config<?> config) {
+	public IBMMQClient(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
 	/**
 	 * Setup for a connection with an IBM MQ.
 	 * 
-	 * // * @param config // * The config for the destination of the connection
-	 * 
 	 * @throws JMSException
-	 *         Exception if something is not jms conform
+	 *         Exception if something is not JMS conform
 	 * @return the connection factory
 	 */
 	@Override
-	public ConnectionFactory setupMQConnection(String un, String pw) throws JMSException {
-		Config<?> config = getConfig();
+	public ConnectionFactory setupConnectionFactory() throws JMSException {
+		Config<?> config = (Config<?>) getConfig();
 		JmsFactoryFactory ibmff;
 		JmsConnectionFactory ibmcf;
 		ibmff = JmsFactoryFactory.getInstance(WMQConstants.JAKARTA_WMQ_PROVIDER);
@@ -110,8 +142,8 @@ public class IBMMQConfigurator extends AbstractConfiguredInstance<IBMMQConfigura
 		ibmcf.setStringProperty(WMQConstants.WMQ_QUEUE_MANAGER, config.getQueueManager());
 		ibmcf.setStringProperty(WMQConstants.WMQ_APPLICATIONNAME,
 			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
-		ibmcf.setStringProperty(WMQConstants.USERID, un);
-		ibmcf.setStringProperty(WMQConstants.PASSWORD, pw);
+		ibmcf.setStringProperty(WMQConstants.USERID, config.getUser());
+		ibmcf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
 		return ibmcf;
 	}
 

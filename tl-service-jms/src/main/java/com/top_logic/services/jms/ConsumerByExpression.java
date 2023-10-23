@@ -3,12 +3,9 @@
  */
 package com.top_logic.services.jms;
 
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.services.jms.JMSService.MessageProcessor;
 
 import jakarta.jms.BytesMessage;
 import jakarta.jms.JMSException;
@@ -16,19 +13,18 @@ import jakarta.jms.Message;
 import jakarta.jms.TextMessage;
 
 /**
- * Configurable {@link MessageProcessor} using TL-Script expressions.
+ * Consumer implementation that processes the message via a TL-Script function.
  * 
  * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
-public class MessageProcessorByExpression extends AbstractConfiguredInstance<MessageProcessorByExpression.Config<?>>
-		implements MessageProcessor {
+public class ConsumerByExpression extends Consumer {
 
 	private QueryExecutor _processing;
 
 	/**
-	 * Configuration options for {@link MessageProcessorByExpression}.
+	 * Configuration options for {@link ConsumerByExpression}.
 	 */
-	public interface Config<I extends MessageProcessorByExpression> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends ConsumerByExpression> extends Consumer.Config<I> {
 		/**
 		 * The function that will be used to process messages the consumer will receive.
 		 */
@@ -36,16 +32,24 @@ public class MessageProcessorByExpression extends AbstractConfiguredInstance<Mes
 	}
 
 	/**
-	 * Creates a {@link MessageProcessorByExpression} from configuration.
+	 * Constructor for the consumer that processes the message via a TL-Script function.
 	 * 
+	 * @param instContext
+	 *        The context which can be used to instantiate inner configurations.
 	 * @param config
-	 *        The configuration.
+	 *        The configuration for the consumer.
 	 */
-	public MessageProcessorByExpression(InstantiationContext context, Config<?> config) {
-		super(context, config);
+	public ConsumerByExpression(InstantiationContext instContext, Config<?> config) {
+		super(instContext, config);
 		_processing = QueryExecutor.compile(config.getProcessing());
 	}
 
+	/**
+	 * Processes the received Message with the defined process expression.
+	 * 
+	 * @param message
+	 *        The message to be processed
+	 */
 	@Override
 	public void processMessage(Message message) {
 		try {
@@ -60,5 +64,4 @@ public class MessageProcessorByExpression extends AbstractConfiguredInstance<Mes
 			ex.printStackTrace();
 		}
 	}
-
 }

@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.table.provider;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.knowledge.wrap.WebFolder;
@@ -17,33 +15,16 @@ import com.top_logic.layout.table.filter.FilterComparator;
  */
 public class WebFolderAttributeFilterComparator implements FilterComparator {
 
-	private final Comparator<Object> inner;
-
-	/**
-	 * Creates a {@link WebFolderAttributeFilterComparator}.
-	 */
-	public WebFolderAttributeFilterComparator() {
-		this(new WebFolderAttributeComparator(1));
-	}
-
-	/**
-	 * Creates a {@link WebFolderAttributeFilterComparator}.
-	 */
-	public WebFolderAttributeFilterComparator(Comparator<Object> aComparator) {
-		this.inner = aComparator;
-	}
+	/** The {@link WebFolderAttributeFilterComparator} instance. */
+	public static final WebFolderAttributeFilterComparator INSTANCE = new WebFolderAttributeFilterComparator();
 
 	@Override
 	public int compare(Object o1, Object o2) {
-		return this.inner.compare(o1, o2);
+		return WebFolderAttributeComparator.INSTANCE.compare(o1, o2);
 	}
 
 	@Override
 	public List<Class<?>> getSupportedObjectTypes() {
-		ArrayList<Class<?>> theResult = new ArrayList<>();
-
-		theResult.add(WebFolder.class);
-
-		return theResult;
+		return List.of(WebFolder.class);
 	}
 }

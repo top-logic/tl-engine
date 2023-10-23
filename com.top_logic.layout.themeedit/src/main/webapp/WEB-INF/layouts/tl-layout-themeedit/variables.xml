@@ -222,6 +222,8 @@
 				<button id="showInheritedThemeVariables"
 					class="com.top_logic.layout.themeedit.browser.providers.ShowInheritedThemeVariablesHandler"
 					clique="settings"
+					image="css:far fa-arrow-alt-circle-up"
+					activeImage="css:fas fa-arrow-alt-circle-up"
 				/>
 				<button id="deleteThemeVariable"
 					class="com.top_logic.layout.themeedit.browser.providers.DeleteThemeVariableHandler"

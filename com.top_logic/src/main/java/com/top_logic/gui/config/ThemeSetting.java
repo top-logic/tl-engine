@@ -101,6 +101,11 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 	public interface Config<I extends ThemeSetting> extends PolymorphicConfiguration<I> {
 
 		/**
+		 * @see #isAbstract()
+		 */
+		String ABSTRACT = "abstract";
+
+		/**
 		 * Configuration name of the {@link #getExpr()} property.
 		 */
 		String EXPRESSION_ATTRIBUTE = "expr";
@@ -164,6 +169,7 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 		 * An abstract setting is only there to define the type of a theme variable.
 		 * </p>
 		 */
+		@Name(ABSTRACT)
 		boolean isAbstract();
 
 		/**
@@ -295,7 +301,7 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 	 * @param settings
 	 *        All settings that could be referred to during initialization.
 	 */
-	protected void init(Log log, ThemeSettings settings) {
+	public void init(Log log, ThemeSettings settings) {
 		if (_initialized) {
 			// Has already a concrete value.
 			return;
@@ -467,7 +473,7 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 		}
 
 		@Override
-		protected void init(Log log, ThemeSettings settings) {
+		public void init(Log log, ThemeSettings settings) {
 			// Ignore.
 		}
 

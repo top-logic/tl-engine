@@ -5,6 +5,8 @@
  */
 package com.top_logic.service.openapi.server.layout;
 
+import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
+
 import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -468,27 +470,27 @@ public class OpenAPIExporter {
 	private String newSchema(ParameterFormat format, boolean multiple, String schema) {
 		switch (format) {
 			case INTEGER:
-				return primitiveSchema("integer", "int32", multiple);
+				return primitiveSchema(SCHEMA_TYPE_INTEGER, SCHEMA_FORMAT_INT32, multiple);
 			case LONG:
-				return primitiveSchema("integer", "int64", multiple);
+				return primitiveSchema(SCHEMA_TYPE_INTEGER, SCHEMA_FORMAT_INT64, multiple);
 			case OBJECT:
 				if (StringServices.isEmpty(schema)) {
-					return primitiveSchema("object", null, multiple);
+					return primitiveSchema(SCHEMA_TYPE_OBJECT, null, multiple);
 				} else {
 					return schema;
 				}
 			case STRING:
-				return primitiveSchema("string", null, multiple);
+				return primitiveSchema(SCHEMA_TYPE_STRING, null, multiple);
 			case DATE:
-				return primitiveSchema("string", "date", multiple);
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_DATE, multiple);
 			case DATE_TIME:
-				return primitiveSchema("string", "date-time", multiple);
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_DATE_TIME, multiple);
 			case BOOLEAN:
-				return primitiveSchema("boolean", null, multiple);
+				return primitiveSchema(SCHEMA_TYPE_BOOLEAN, null, multiple);
 			case DOUBLE:
-				return primitiveSchema("number", "double", multiple);
+				return primitiveSchema(SCHEMA_TYPE_NUMBER, SCHEMA_FORMAT_DOUBLE, multiple);
 			case FLOAT:
-				return primitiveSchema("number", "float", multiple);
+				return primitiveSchema(SCHEMA_TYPE_NUMBER, SCHEMA_FORMAT_FLOAT, multiple);
 			default:
 				throw new UnreachableAssertion("No such format: " + format);
 		}
@@ -510,9 +512,9 @@ public class OpenAPIExporter {
 
 	private void multiplePrimitiveSchema(JsonWriter json, String type, String format) throws IOException {
 		json.beginObject();
-		json.name("type");
-		json.value("array");
-		json.name("items");
+		json.name(SCHEMA_PROPERTY_TYPE);
+		json.value(SCHEMA_TYPE_ARRAY);
+		json.name(SCHEMA_PROPERTY_ITEMS);
 		singlePrimitiveSchema(json, type, format);
 		json.endObject();
 	}
@@ -520,10 +522,10 @@ public class OpenAPIExporter {
 	private void singlePrimitiveSchema(JsonWriter json, String type, String format) throws IOException {
 		json.beginObject();
 		{
-			json.name("type");
+			json.name(SCHEMA_PROPERTY_TYPE);
 			json.value(type);
 			if (format != null) {
-				json.name("format");
+				json.name(SCHEMA_PROPERTY_FORMAT);
 				json.value(format);
 			}
 		}

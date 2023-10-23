@@ -9,7 +9,6 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.Document;
-import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.provider.ColumnInfo;
@@ -19,7 +18,6 @@ import com.top_logic.layout.table.provider.GenericColumn;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.table.provider.PrimitiveColumn;
 import com.top_logic.layout.table.provider.ReferenceColumn;
-import com.top_logic.layout.table.provider.WebFolderColumn;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
@@ -97,9 +95,7 @@ public class ColumnInfoFactory implements ColumnInfoProvider {
 	
 			return createPrimitiveColumn(contentTypeContext, primitiveType.getKind(), headerI18NKey);
 		} else if (contentType instanceof TLClass) {
-			if (WebFolder.WEB_FOLDER_TYPE.equals(TLModelUtil.qualifiedName(contentType))) {
-				return createWebFolderColumn(contentTypeContext, headerI18NKey);
-			} else if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(contentType))) {
+			if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(contentType))) { // TODO JST In Konfiguration übertragen und löschen?
 				return createDocumentColumn(contentTypeContext, headerI18NKey);
 			} else {
 				return createReferenceColumn(contentTypeContext, headerI18NKey);
@@ -170,17 +166,6 @@ public class ColumnInfoFactory implements ColumnInfoProvider {
 			return DisplayMode.excluded;
 		}
 		return null;
-	}
-
-	/**
-	 * Create a {@link WebFolderColumn}.
-	 * @param contentType
-	 *        Content type of the column. Must not be <code>null</code>.
-	 * 
-	 * @return Never null.
-	 */
-	protected ColumnInfo createWebFolderColumn(TLTypeContext contentType, ResKey headerI18NKey) {
-		return new WebFolderColumn(contentType, headerI18NKey, visibility(contentType), getDefaultAccessor());
 	}
 
 	/**

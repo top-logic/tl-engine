@@ -553,6 +553,12 @@
 						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
 						<search-relevant value="false"/>
 						<fulltext-relevant value="false"/>
+						<column-info>
+							<comparator class="com.top_logic.layout.table.provider.WebFolderAttributeComparator"/>
+							<filterProvider class="com.top_logic.layout.table.provider.WebFolderAttributeFilterProvider"/>
+							<cellRenderer class="com.top_logic.layout.table.provider.WebFolderAttributeRenderer"/>
+							<editControlProvider class="com.top_logic.layout.table.provider.WebFolderSizeControl$CP"/>
+						</column-info>
 					</attribute-setting>
 
 					<attribute-setting config-name="SINGLE_STRUCTURE">

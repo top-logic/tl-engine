@@ -5,6 +5,8 @@
  */
 package com.top_logic.service.openapi.server.layout;
 
+import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,6 +42,7 @@ import com.top_logic.service.openapi.common.document.ParameterLocation;
 import com.top_logic.service.openapi.common.document.ParameterObject;
 import com.top_logic.service.openapi.common.document.PathItemObject;
 import com.top_logic.service.openapi.common.document.ReferencableParameterObject;
+import com.top_logic.service.openapi.common.document.ReferencingObject;
 import com.top_logic.service.openapi.common.document.ReferencingParameterObject;
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
 import com.top_logic.service.openapi.common.document.ResponsesObject;
@@ -369,11 +372,11 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				paramConf.setSchema(schema);
 				return;
 			}
-			String type = StringServices.nonNull((String) schemaMap.get("type"));
+			String type = StringServices.nonNull((String) schemaMap.get(SCHEMA_PROPERTY_TYPE));
 			String format = StringServices.EMPTY_STRING;
-			if ("array".equals(type)) {
+			if (SCHEMA_TYPE_ARRAY.equals(type)) {
 				paramConf.setMultiple(true);
-				Object items = schemaMap.get("items");
+				Object items = schemaMap.get(SCHEMA_PROPERTY_ITEMS);
 				if (items instanceof Map) {
 					Map<?, ?> itemsMap = (Map<?, ?>) items;
 					referencedSchema = globallyReferencedSchema(itemsMap);
@@ -382,19 +385,19 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 						paramConf.setSchema(schema);
 						return;
 					}
-					type = StringServices.nonNull((String) itemsMap.get("type"));
-					format = StringServices.nonNull((String) itemsMap.get("format"));
+					type = StringServices.nonNull((String) itemsMap.get(SCHEMA_PROPERTY_TYPE));
+					format = StringServices.nonNull((String) itemsMap.get(SCHEMA_PROPERTY_FORMAT));
 				}
 			} else {
-				format = StringServices.nonNull((String) schemaMap.get("format"));
+				format = StringServices.nonNull((String) schemaMap.get(SCHEMA_PROPERTY_FORMAT));
 			}
 			switch (type) {
-				case "number":
+				case SCHEMA_TYPE_NUMBER:
 					switch (format) {
-						case "float":
+						case SCHEMA_FORMAT_FLOAT:
 							paramConf.setFormat(ParameterFormat.FLOAT);
 							break;
-						case "double":
+						case SCHEMA_FORMAT_DOUBLE:
 						case "":
 							paramConf.setFormat(ParameterFormat.DOUBLE);
 							break;
@@ -405,12 +408,12 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 							break;
 					}
 					break;
-				case "integer":
+				case SCHEMA_TYPE_INTEGER:
 					switch (format) {
-						case "int32":
+						case SCHEMA_FORMAT_INT32:
 							paramConf.setFormat(ParameterFormat.INTEGER);
 							break;
-						case "int64":
+						case SCHEMA_FORMAT_INT64:
 						case "":
 							paramConf.setFormat(ParameterFormat.LONG);
 							break;
@@ -421,12 +424,12 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 							break;
 					}
 					break;
-				case "string":
+				case SCHEMA_TYPE_STRING:
 					switch (format) {
-						case "date":
+						case SCHEMA_FORMAT_DATE:
 							paramConf.setFormat(ParameterFormat.DATE);
 							break;
-						case "date-time":
+						case SCHEMA_FORMAT_DATE_TIME:
 							paramConf.setFormat(ParameterFormat.DATE_TIME);
 							break;
 						case "":
@@ -438,10 +441,10 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 								pathItemParam.getName()));
 					}
 					break;
-				case "boolean":
+				case SCHEMA_TYPE_BOOLEAN:
 					paramConf.setFormat(ParameterFormat.BOOLEAN);
 					break;
-				case "object":
+				case SCHEMA_TYPE_OBJECT:
 					paramConf.setFormat(ParameterFormat.OBJECT);
 					paramConf.setSchema(schema);
 					break;
@@ -457,7 +460,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 	}
 
 	private String globallyReferencedSchema(Map<?, ?> schemaMap) {
-		Object referencedSchema = schemaMap.get("$ref");
+		Object referencedSchema = schemaMap.get(ReferencingObject.$REF);
 		if (referencedSchema instanceof String
 				&& GLOBAL_SCHEMA_REFERENCE.matcher((String) referencedSchema).matches()) {
 			return (String) referencedSchema;

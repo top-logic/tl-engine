@@ -5,6 +5,8 @@
  */
 package com.top_logic.service.openapi.client.layout;
 
+import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
+
 import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -394,9 +396,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 				outerLoop:
 				while (reader.hasNext()) {
 					switch (reader.nextName()) {
-						case "type": {
+						case SCHEMA_PROPERTY_TYPE: {
 							String typeName = reader.nextString();
-							if (typeName.equals("array")) {
+							if (typeName.equals(SCHEMA_TYPE_ARRAY)) {
 								newParameterDef.setMultiple(true);
 							} else {
 								primitiveType = typeName;
@@ -407,13 +409,13 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 							}
 							break;
 						}
-						case "items": {
+						case SCHEMA_PROPERTY_ITEMS: {
 							reader.beginObject();
 							primitiveType = primitiveFormat = StringServices.EMPTY_STRING;
 							innerLoop:
 							while (reader.hasNext()) {
 								switch (reader.nextName()) {
-									case "type": {
+									case SCHEMA_PROPERTY_TYPE: {
 										primitiveType = reader.nextString();
 										if (!primitiveFormat.isEmpty()) {
 											skipObjectEntries(reader);
@@ -421,7 +423,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 										}
 										break;
 									}
-									case "format": {
+									case SCHEMA_PROPERTY_FORMAT: {
 										primitiveFormat = reader.nextString();
 										if (!primitiveType.isEmpty()) {
 											skipObjectEntries(reader);
@@ -437,7 +439,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 							reader.endObject();
 							break;
 						}
-						case "format": {
+						case SCHEMA_PROPERTY_FORMAT: {
 							primitiveFormat = reader.nextString();
 							if (!primitiveType.isEmpty()) {
 								skipObjectEntries(reader);
@@ -473,12 +475,12 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 			List<ResKey> warnings) {
 		String typespec;
 		switch (typeName) {
-			case "string":
+			case SCHEMA_TYPE_STRING:
 				switch (typeFormat) {
-					case "date":
+					case SCHEMA_FORMAT_DATE:
 						typespec = TypeSpec.DATE_TYPE;
 						break;
-					case "date-time":
+					case SCHEMA_FORMAT_DATE_TIME:
 						typespec = TypeSpec.DATE_TIME_TYPE;
 						break;
 					default:
@@ -486,12 +488,12 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 						break;
 				}
 				break;
-			case "number":
+			case SCHEMA_TYPE_NUMBER:
 				switch (typeFormat) {
-					case "float":
+					case SCHEMA_FORMAT_FLOAT:
 						typespec = TypeSpec.FLOAT_TYPE;
 						break;
-					case "double":
+					case SCHEMA_FORMAT_DOUBLE:
 						typespec = TypeSpec.DOUBLE_TYPE;
 						break;
 					default:
@@ -499,12 +501,12 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 						break;
 				}
 				break;
-			case "integer":
+			case SCHEMA_TYPE_INTEGER:
 				switch (typeFormat) {
-					case "int32":
+					case SCHEMA_FORMAT_INT32:
 						typespec = TypeSpec.INTEGER_TYPE;
 						break;
-					case "int64":
+					case SCHEMA_FORMAT_INT64:
 						typespec = TypeSpec.LONG_TYPE;
 						break;
 					default:
@@ -512,10 +514,10 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 						break;
 				}
 				break;
-			case "boolean":
+			case SCHEMA_TYPE_BOOLEAN:
 				typespec = TypeSpec.BOOLEAN_TYPE;
 				break;
-			case "object":
+			case SCHEMA_TYPE_OBJECT:
 				typespec = TypeSpec.JSON_TYPE;
 				break;
 			default:

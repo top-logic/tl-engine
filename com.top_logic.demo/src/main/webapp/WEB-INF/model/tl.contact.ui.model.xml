@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.contact.ui">
+		<class name="CreateAccount">
+			<generalizations>
+				<generalization type="CreateLogin"/>
+				<generalization type="Contacts:Contact.Person"/>
+			</generalizations>
+		</class>
+		<class name="CreateLogin">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="login"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> object -> {
+    existingNames = all(`tl.accounts:Person`).get(`tl.accounts:Person#name`);
+    $existingNames.containsElement($value)
+        ? #("Der Zugang ''{0}'' ist bereits vergeben."@de, "The login ''{0}'' is already used."@en).fill($value)
+        : null;
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

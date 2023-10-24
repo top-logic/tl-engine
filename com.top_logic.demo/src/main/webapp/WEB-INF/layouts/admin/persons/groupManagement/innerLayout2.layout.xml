@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/layout.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="admin/persons/groupManagement/groupsTable.layout.xml">
+				<layoutInfo size="320px"/>
+			</layout-reference>
+			<layout-reference resource="admin/persons/groupManagement/detailsForm.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

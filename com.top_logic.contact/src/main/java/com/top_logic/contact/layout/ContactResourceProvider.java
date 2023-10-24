@@ -5,6 +5,7 @@
  */
 package com.top_logic.contact.layout;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -161,7 +162,9 @@ public class ContactResourceProvider extends WrapperResourceProvider
      * Return the Label for a PersonContact.
      */
     protected String getLabelForPerson(PersonContact aPersonContact) {
-        return aPersonContact.getValue(PersonContact.NAME_ATTRIBUTE) + ", " + aPersonContact.getValue(PersonContact.FIRST_NAME);
+		String name = aPersonContact.getName();
+		String firstName = aPersonContact.getFirstName();
+		return StringServices.isEmpty(firstName) ? name : name + ", " + firstName;
     }
 
 }

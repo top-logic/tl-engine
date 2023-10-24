@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments name="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithForm.template.i18n.detail"
+		model="selection(admin/persons/accounts/accountsTable.layout.xml#Table)"
+		type="Contacts:PersonContact"
+	>
+		<buttons>
+			<button id="resetPersonalConfiguration"
+				class="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
+				clique="additional"
+				image="theme:ICON_RESET_PERSONAL_CONFIGURATION"
+			>
+				<resourceKey key="dynamic.49aa2499-5cb1-4f78-929e-4ac543b322aa">
+					<en>Reset personal configuration</en>
+					<de>Persönliche Konfiguration zurücksetzen</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="account -> $account != null"/>
+				</executability>
+				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
+					<en>Are you sure they want to delete {0}'s personal settings?</en>
+					<de>Sind Sie sicher, dass die die persönlichen Einstellungen von {0} löschen wollen?</de>
+				</confirmMessage>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="admin/persons/accounts/changePassword/dialog.layout.xml"/>
+		</dialogs>
+		<forms>
+			<form type="Contacts:PersonContact">
+				<formDefinition>
+					<group>
+						<field
+							attribute="firstname"
+							fullQualifiedName="Contacts:Contact.Person#firstname"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="name"
+							fullQualifiedName="Contacts:Contact.all#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="title"
+							fullQualifiedName="Contacts:Contact.Person#title"
+							type="tl.core:String"
+						/>
+						<label key="dynamic.1f5a7ca7-6bc0-405d-b2f8-6ebf4e87dbe8">
+							<en>User data</en>
+							<de>Nutzerdaten</de>
+						</label>
+					</group>
+					<foreign-objects
+						items="x -> $x.get(`Contacts:PersonContact#account`)"
+						label="`tl.accounts:Person`.toString()"
+						type="tl.accounts:Person"
+					>
+						<layout>
+							<field
+								attribute="name"
+								fullQualifiedName="tl.accounts:Person#name"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<field
+								attribute="locale"
+								fullQualifiedName="tl.accounts:Person#locale"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="admin"
+								fullQualifiedName="tl.accounts:Person#admin"
+								type="tl.core:Boolean"
+							/>
+							<field
+								attribute="restrictedUser"
+								fullQualifiedName="tl.accounts:Person#restrictedUser"
+								type="tl.core:Boolean"
+							/>
+							<field
+								attribute="authDeviceID"
+								fullQualifiedName="tl.accounts:Person#authDeviceID"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<field
+								attribute="dataDeviceID"
+								fullQualifiedName="tl.accounts:Person#dataDeviceID"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<field
+								attribute="groups"
+								fullQualifiedName="tl.accounts:Person#groups"
+								type="tl.accounts:Group"
+							/>
+						</layout>
+					</foreign-objects>
+					<group>
+						<field
+							attribute="email"
+							fullQualifiedName="Contacts:Contact.all#email"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="phone"
+							fullQualifiedName="Contacts:Contact.all#phone"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="phone_mobile"
+							fullQualifiedName="Contacts:Contact.Person#phone_mobile"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="phone_private"
+							fullQualifiedName="Contacts:Contact.Person#phone_private"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="fax"
+							fullQualifiedName="Contacts:Contact.Person#fax"
+							type="tl.core:String"
+						/>
+						<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
+							<en>Contact details</en>
+							<de>Kontaktdaten</de>
+						</label>
+					</group>
+					<group>
+						<field
+							attribute="position"
+							fullQualifiedName="Contacts:Contact.Person#position"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="boss"
+							fullQualifiedName="Contacts:Contact.Person#boss"
+							type="Contacts:Contact.Person"
+						/>
+						<field
+							attribute="company"
+							fullQualifiedName="Contacts:Contact.Person#company"
+							type="Contacts:Contact.Company"
+						/>
+						<label key="dynamic.ac4eddd9-e1ec-4e8e-87e8-0e0ef7186334">
+							<en>Organization</en>
+							<de>Organisation</de>
+						</label>
+					</group>
+					<group>
+						<field
+							attribute="remarks"
+							fullQualifiedName="Contacts:Contact.all#remarks"
+							type="tl.core:String"
+						>
+							<annotations>
+								<label-position value="hide-label"/>
+							</annotations>
+						</field>
+						<label key="dynamic.ce2445e8-bec3-40e9-b69f-788a7c1cc566">
+							<de>Bemerkungen</de>
+						</label>
+					</group>
+					<other-attributes/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

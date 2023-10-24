@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments name="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithForm.template.i18n.detail"
+		model="selection(admin/persons/roleManagement/rollersTable.layout.xml#Table)"
+		type="tl.accounts:Role"
+	/>
+</config:template-call>

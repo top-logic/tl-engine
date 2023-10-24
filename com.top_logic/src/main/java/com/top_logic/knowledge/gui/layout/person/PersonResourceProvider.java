@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.gui.layout.person;
 
 import com.top_logic.base.user.UserInterface;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -89,19 +90,28 @@ public class PersonResourceProvider extends WrapperResourceProvider
         if (anObject instanceof Person) {
 			Person account = (Person) anObject;
 
-			String loginName = account.getName();
 			UserInterface user = account.getUser();
 			if (user == null) {
-				return loginName;
+				// No additional information available.
+				return account.getName();
 			}
 
+			String loginName = account.getName();
 			String lastName = user.getName();
 			String firstName = user.getFirstName();
 			ResKey key;
 			if (getConfig().getShowLoginName()) {
-				key = I18NConstants.ACCOUNT_LABEL__FIRST_LAST_LOGIN.fill(firstName, lastName, loginName);
+				if (StringServices.isEmpty(firstName)) {
+					key = I18NConstants.ACCOUNT_LABEL__LAST_LOGIN.fill(lastName, loginName);
+				} else {
+					key = I18NConstants.ACCOUNT_LABEL__FIRST_LAST_LOGIN.fill(firstName, lastName, loginName);
+				}
 			} else {
-				key = I18NConstants.ACCOUNT_LABEL__FIRST_LAST.fill(firstName, lastName);
+				if (StringServices.isEmpty(firstName)) {
+					key = I18NConstants.ACCOUNT_LABEL__LAST.fill(lastName);
+				} else {
+					key = I18NConstants.ACCOUNT_LABEL__FIRST_LAST.fill(firstName, lastName);
+				}
 			}
 			return Resources.getInstance().getString(key);
 		} else {

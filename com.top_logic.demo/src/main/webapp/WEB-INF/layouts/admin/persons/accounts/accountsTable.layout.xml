@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,firstname,account"
+		size="300px"
+		type="Contacts:PersonContact"
+	>
+		<dialogs>
+			<layout-reference resource="admin/persons/accounts/newAccount/dialog.layout.xml"/>
+			<layout-reference resource="admin/persons/accounts/createAccount/dialog.layout.xml"/>
+			<layout-reference resource="admin/persons/accounts/createContact/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.98c36f50-b5a8-410c-a520-3803367d8868">
+			<en>Accounts</en>
+			<de>Zugänge</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`Contacts:PersonContact`)"
+			supportsElement="element->$element.instanceOf(`Contacts:PersonContact`)"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteSelection"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision>contact -&gt; $contact.get(`Contacts:PersonContact#account`).get(`tl.accounts:Person#admin`) ? #("Ein Administrator-Konto kann nicht gelöscht werden"@de, "An administrator account cannot be deleted"@en)  :null</decision>
+					</rule-by-expression>
+				</executability>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

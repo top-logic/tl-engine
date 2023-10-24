@@ -48,9 +48,25 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey REFRESH_ACCOUNTS_FAILED;
 
+	/**
+	 * @en {1}, {0} ({2})
+	 */
 	public static ResKey3 ACCOUNT_LABEL__FIRST_LAST_LOGIN;
 
+	/**
+	 * @en {1}, {0}
+	 */
 	public static ResKey2 ACCOUNT_LABEL__FIRST_LAST;
+
+	/**
+	 * @en {0} ({1})
+	 */
+	public static ResKey2 ACCOUNT_LABEL__LAST_LOGIN;
+
+	/**
+	 * @en {0}
+	 */
+	public static ResKey1 ACCOUNT_LABEL__LAST;
 
 	public static ResKey3 ACCOUNT_TOOLTIP__LABEL_MAIL_PHONE;
 

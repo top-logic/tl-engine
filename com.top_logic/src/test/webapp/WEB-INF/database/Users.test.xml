@@ -4,7 +4,6 @@
         <!--  User used in TestMailHelper to be found by UserService -->                  
 		<section name="TestMailHelper">
 			<entry name="username" value="test-user1"/>
-			<entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>
             <!-- Mail is expected in tests. -->
 			<entry name="mail" value="user1@develop.local"/>
             <!-- Given name and surname are necessary for ContactFactory to create PersonContact. -->
@@ -14,7 +13,6 @@
         <section name="dau">
             <entry name="username" value="dau"/>            
             <entry name="initials" value="dau"/>             
-            <entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>             
             <entry name="userrole" value="user"/>             
             <entry name="givenName" value="Dieter"/>             
             <entry name="sn" value="Aumann"/>            
@@ -34,7 +32,6 @@
         <section name="dummy">
             <entry name="initials" value="dummy"/>
             <entry name="username" value="dummy"/>             
-            <entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>             
             <entry name="userrole" value="user"/>             
             <entry name="givenName" value="Morty"/>            
             <entry name="sn" value="Dugar"/>            
@@ -57,7 +54,6 @@
 			<entry name="personalTitle" value=" "/>
 			<entry name="userrole" value=" "/>
 			<entry name="displayName" value="Deutscher Gast"/>
-			<entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>
 			<entry name="givenName" value="Deutscher"/>
 			<entry name="telephoneNumber" value=" "/>
 			<entry name="mail" value=" "/>
@@ -77,7 +73,6 @@
 			<entry name="personalTitle" value=" "/>
 			<entry name="userrole" value=" "/>
 			<entry name="displayName" value="English Guest"/>
-			<entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>
 			<entry name="givenName" value="English"/>
 			<entry name="telephoneNumber" value=" "/>
 			<entry name="mail" value=" "/>

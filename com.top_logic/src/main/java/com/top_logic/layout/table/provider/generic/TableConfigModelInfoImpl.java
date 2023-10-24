@@ -25,6 +25,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.table.provider.ColumnInfo;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
@@ -416,6 +417,13 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 
 		for (String mainColumn : mainColumns) {
 			if (!allColumns.containsKey(mainColumn)) {
+				if (mainColumn.equals(WrapperAccessor.SELF)) {
+					/* The '_self' column was used as a special column in old TL versions. It was
+					 * removed with #26872. But it can still appear in old, migrated systems. There
+					 * is no special code for such old systems. They need to declare this column and
+					 * the column order explicitly, if they want to keep it. */
+					continue;
+				}
 				/* This cannot be checked at application startup, as for example the '_self' column
 				 * is no type part. Other such legal columns without corresponding type part might
 				 * exists. */

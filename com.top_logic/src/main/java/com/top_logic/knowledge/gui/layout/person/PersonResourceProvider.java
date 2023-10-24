@@ -15,7 +15,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.WrapperResourceProvider;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.ResourceProvider;
-import com.top_logic.util.Resources;
 
 /**
  * {@link ResourceProvider} for {@link Person}s.
@@ -88,22 +87,7 @@ public class PersonResourceProvider extends WrapperResourceProvider
 	public String getLabel(Object anObject) {
         if (anObject instanceof Person) {
 			Person account = (Person) anObject;
-
-			String loginName = account.getName();
-			UserInterface user = account.getUser();
-			if (user == null) {
-				return loginName;
-			}
-
-			String lastName = user.getName();
-			String firstName = user.getFirstName();
-			ResKey key;
-			if (getConfig().getShowLoginName()) {
-				key = I18NConstants.ACCOUNT_LABEL__FIRST_LAST_LOGIN.fill(firstName, lastName, loginName);
-			} else {
-				key = I18NConstants.ACCOUNT_LABEL__FIRST_LAST.fill(firstName, lastName);
-			}
-			return Resources.getInstance().getString(key);
+			return account.getName();
 		} else {
             return super.getLabel(anObject);
         }

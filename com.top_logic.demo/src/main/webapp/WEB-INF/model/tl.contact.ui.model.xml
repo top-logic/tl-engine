@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.contact.ui">
+		<class name="CreateAccount">
+			<generalizations>
+				<generalization type="Contacts:Contact.Person"/>
+			</generalizations>
+			<attributes>
+				<property name="login"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="CreateLogin">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="login"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

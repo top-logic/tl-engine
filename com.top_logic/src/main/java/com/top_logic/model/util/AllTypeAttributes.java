@@ -9,14 +9,13 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.editor.I18NConstants;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -35,19 +34,25 @@ public class AllTypeAttributes extends Function1<Collection<? extends TLStructur
 	public Collection<? extends TLStructuredTypePart> apply(TLModelPartRef typeRef) {
 		if (typeRef != null) {
 			try {
-				TLType type = typeRef.resolveType();
-
-				if (type instanceof TLClass) {
-					return list(TLModelUtil.getMetaAttributesInHierarchy((TLClass) type));
-				} else {
-					Logger.error("Not a class: " + type, AllTypeAttributes.class);
-				}
+				TLClass type = typeRef.resolveClass();
+				return findAttributes(type);
 			} catch (ConfigurationException exception) {
 				throw new TopLogicException(I18NConstants.MODEL_TYPE_NOT_RESOLVED_ERROR, exception);
 			}
 		}
 
 		return Collections.emptyList();
+	}
+
+	/**
+	 * Determine the attributes of the referenced type to return in {@link #apply(TLModelPartRef)}.
+	 *
+	 * @param type
+	 *        The resolved {@link TLModelPartRef}.
+	 * @return Return value of {@link #apply(TLModelPartRef)}.
+	 */
+	protected List<TLStructuredTypePart> findAttributes(TLClass type) {
+		return list(TLModelUtil.getMetaAttributesInHierarchy(type));
 	}
 
 }

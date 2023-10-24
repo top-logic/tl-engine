@@ -73,18 +73,17 @@ public class TestCloudBlobRepository extends AbstractTestRepositoryDataSourceAda
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	protected PolymorphicConfiguration<?> getImplementationConfiguration() {
-		CloudBasedRepository.Config<?> theConfig = TypedConfiguration.newConfigItem(CloudBasedRepository.Config.class);
+		CloudBasedRepository.Config<?> config = TypedConfiguration.newConfigItem(CloudBasedRepository.Config.class);
 
-		theConfig.setConnectString(
-			"DefaultEndpointsProtocol=http;AccountName=asconaema01;AccountKey=R4aDB+85mcx/VkIgY49EcFaABgCxZJmxHVkL3cONHXq56zyCXXm9STbG7O01JJ0LalJWjOZPS+JTQnnlztK67Q==");
-		theConfig.setImplementationClass((Class) CloudBasedRepository.class);
-		theConfig.setContainerName("testcases");
-		theConfig.setBaseDirectoryName("test-" + StringServices.randomUUID().replace("-", ""));
-		theConfig.setPath("repository");
-		theConfig.setWorkarea("workarea");
-		theConfig.setAttic("attic");
+		config.setConnectString(System.getProperty("test.azure.connection"));
+		config.setImplementationClass((Class) CloudBasedRepository.class);
+		config.setContainerName("testcases");
+		config.setBaseDirectoryName("test-" + StringServices.randomUUID().replace("-", ""));
+		config.setPath("repository");
+		config.setWorkarea("workarea");
+		config.setAttic("attic");
 
-		return theConfig;
+		return config;
 	}
 
 	private String getName(ListBlobItem anItem) {

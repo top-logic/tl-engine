@@ -9,6 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -100,6 +101,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Type name must not be empty.
 	 */
 	public static ResKey ERROR_TYPE_NAME_MUST_NOT_BE_EMPTY;
+
+	/**
+	 * @en The value {2} for attribute {1} in object {0} produces a cycle: {3}
+	 */
+	public static ResKey4 ERROR_CYLCE_NOT_ALLOWED__OBJECT_ATTRIBUTE_VALUE_CYCLE;
 
 	static {
 		initConstants(I18NConstants.class);

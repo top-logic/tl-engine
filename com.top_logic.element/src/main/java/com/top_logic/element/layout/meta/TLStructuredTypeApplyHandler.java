@@ -5,10 +5,12 @@
  */
 package com.top_logic.element.layout.meta;
 
+import java.util.HashSet;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourceTransaction;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel;
@@ -16,6 +18,7 @@ import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.declarative.DeclarativeApplyHandler;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Applies changes to a {@link TLClass} model element.
@@ -55,8 +58,22 @@ public class TLStructuredTypeApplyHandler extends DeclarativeApplyHandler<EditMo
 		if (current.equals(generalizations)) {
 			return;
 		}
+		checkNoCycle(type, generalizations, new HashSet<>());
 		current.clear();
 		current.addAll(generalizations);
+	}
+
+	private void checkNoCycle(TLClass type, List<TLClass> generalizations, HashSet<Object> seen) {
+		for (TLClass generalization : generalizations) {
+			if (!seen.add(generalization)) {
+				continue;
+			}
+			if (type.equals(generalization)) {
+				throw new TopLogicException(ResKey.text("BBB"));
+			}
+			checkNoCycle(type, generalization.getGeneralizations(), seen);
+		}
+
 	}
 
 	@Override

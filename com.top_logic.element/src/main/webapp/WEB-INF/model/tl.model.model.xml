@@ -361,6 +361,9 @@
 									/>
 								</storage-algorithm>
 								<delete-protected/>
+								<constraints>
+									<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
+								</constraints>
 							</annotations>
 						</reference>
 						<reference name="specializations"

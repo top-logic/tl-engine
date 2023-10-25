@@ -49,8 +49,9 @@ Available options:
   --mvn-options \t\tOptions passed to the Maven build.
   --skip-build \t\t\tSkip maven build, assume WAR already in place.
   --skip-container \t\tSkip container build, reuse existing container.
-  -s|--start \t\t\tStart the container locally.\t\t\t
-  -t|--tag [Tag]\t\tTag for the docker image.\t\t
+  -s|--start \t\t\tStart the container locally.
+  -e [VAR=VALUE] \t\tPass an environment variable VAR with value VALUE to container start.
+  -t|--tag [Tag]\t\tTag for the docker image.
   -p|--push \t\t\tPush image to the configured docker registry";
 }
 
@@ -61,6 +62,7 @@ if [ -f "$PARAMETER_FILE"  ] ; then
 	. "$PARAMETER_FILE"
 fi
 
+ENVIRONMENT=()
 while [[ $# -gt 0 ]]; do
 	case $1 in
 		-h|--help) 
@@ -87,6 +89,11 @@ while [[ $# -gt 0 ]]; do
 	    	;;
 		-s|--start) 
 			START_LOCAL="true"
+	    	shift
+			;;
+		-e)
+			ENVIRONMENT+=("-e$2")
+	    	shift
 	    	shift
 			;;
 		-f|--config) 
@@ -123,7 +130,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Set defaults for empty parameters
-[ -z "$APPNAME" ]		&& APPNAME="toplogic"
+[ -z "$APPNAME" ]		&& APPNAME="\${projectName}"
 [ -z "$CONTEXT" ]		&& CONTEXT="ROOT"
 [ -z "$HTTP_PORT" ]		&& HTTP_PORT="8080"
 [ -z "$FILES" ]			&& FILES="$APPNAME"
@@ -325,13 +332,15 @@ function finish {
 }
 trap finish EXIT 2
 
+#set( $dollar = '$' )
+
 # Start container
 $DRY_RUN $RUN run \
   -tdi -p $HTTP_PORT:8080 \
+  "${dollar}{ENVIRONMENT[@]}" \
   -v "$FILES":"/var/lib/tomcat9/work/${APPNAME}" \
   --restart=unless-stopped \
   --memory ${DOCKER_MEMORY}m \
   --cpus $CPUS \
   --name="$APPNAME" \
   --hostname="$APPNAME" "$APPNAME" && $DRY_RUN $RUN logs -f "$APPNAME"
-

@@ -7,8 +7,6 @@ package com.top_logic.service.openapi.client.layout;
 
 import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,9 +26,8 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.shared.io.StringR;
+import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.admin.component.TLServiceConfigEditorFormBuilder;
 import com.top_logic.layout.form.component.EditComponent;
@@ -61,8 +59,15 @@ import com.top_logic.service.openapi.common.document.ParameterObject;
 import com.top_logic.service.openapi.common.document.PathItemObject;
 import com.top_logic.service.openapi.common.document.ReferencableParameterObject;
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
+import com.top_logic.service.openapi.common.document.SchemaObject;
 import com.top_logic.service.openapi.common.document.ServerObject;
 import com.top_logic.service.openapi.common.layout.ImportOpenAPIConfiguration;
+import com.top_logic.service.openapi.common.schema.ArraySchema;
+import com.top_logic.service.openapi.common.schema.ObjectSchema;
+import com.top_logic.service.openapi.common.schema.OpenAPISchemaUtils;
+import com.top_logic.service.openapi.common.schema.PrimitiveSchema;
+import com.top_logic.service.openapi.common.schema.Schema;
+import com.top_logic.service.openapi.common.schema.SchemaVisitor;
 import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
@@ -170,7 +175,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 				} while (true);
 			}
 
-			ParameterDefinition paramDef = createParameter(parameterName, parameter, warnings);
+			ParameterDefinition paramDef = createParameter(parameterName, parameter, warnings, completeAPI);
 			newMethod.getParameters().add(paramDef);
 
 			switch (parameter.getIn()) {
@@ -219,7 +224,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 				String schema = mediaObject.getSchema();
 				String description = requestBody.getDescription();
 				ParameterDefinition paramDef = createParameter(requestBodyParameterName(parameterNames), description,
-					requestBody.isRequired(), schema, warnings);
+					requestBody.isRequired(), schema, warnings, completeAPI);
 				newMethod.getParameters().add(paramDef);
 				try {
 					JSONRequestBody.Config<?> bodyArgument =
@@ -372,9 +377,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 	}
 
 	private ParameterDefinition createParameter(String parameterName, ParameterObject parameter,
-			List<ResKey> warnings) {
+			List<ResKey> warnings, OpenapiDocument completeAPI) {
 		return createParameter(parameterName, parameter.getDescription(), parameter.isRequired(), parameter.getSchema(),
-			warnings);
+			warnings, completeAPI);
 	}
 
 	private String getParameterName(ParameterObject parameter) {
@@ -382,7 +387,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 	}
 
 	private ParameterDefinition createParameter(String paramName, String description, boolean isRequired,
-			String schema, List<ResKey> warnings) {
+			String schema, List<ResKey> warnings, OpenapiDocument completeAPI) {
 		ParameterDefinition newParameterDef = TypedConfiguration.newConfigItem(ParameterDefinition.class);
 		newParameterDef.setName(paramName);
 		newParameterDef.setRequired(isRequired);
@@ -390,144 +395,132 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 			newParameterDef.setDescription(description);
 		}
 		if (!StringServices.isEmpty(schema)) {
-			try (JsonReader reader = new JsonReader(new StringR(schema))) {
-				reader.beginObject();
-				String primitiveType = StringServices.EMPTY_STRING, primitiveFormat = StringServices.EMPTY_STRING;
-				outerLoop:
-				while (reader.hasNext()) {
-					switch (reader.nextName()) {
-						case SCHEMA_PROPERTY_TYPE: {
-							String typeName = reader.nextString();
-							if (typeName.equals(SCHEMA_TYPE_ARRAY)) {
-								newParameterDef.setMultiple(true);
-							} else {
-								primitiveType = typeName;
-								if (!primitiveFormat.isEmpty()) {
-									skipObjectEntries(reader);
-									break outerLoop;
+			Schema schemaObject;
+			try {
+				Pattern globalSchemaReference = GLOBAL_SCHEMA_REFERENCE;
+				schemaObject = OpenAPISchemaUtils.parseSchema(schema, new Function<String, Schema>() {
+					@Override
+					public Schema apply(String globalSchemaRef) {
+						Matcher matcher = globalSchemaReference.matcher(globalSchemaRef);
+						if (matcher.matches()) {
+							String schemaName = matcher.group(1);
+							SchemaObject globalSchema = completeAPI.getComponents().getSchemas().get(schemaName);
+							if (globalSchema != null) {
+								try {
+									return OpenAPISchemaUtils.parseSchema(globalSchema.getSchema(), this);
+								} catch (ParseException ex) {
+									warnings.add(
+										I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_NAME__PROBLEM__SCHEMA_NAME
+											.fill(newParameterDef.getName(), schemaName, ex.getErrorKey()));
+									return null;
 								}
 							}
-							break;
+
+							warnings.add(I18NConstants.MISSING_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
+								.fill(newParameterDef.getName(), schemaName));
+							return null;
 						}
-						case SCHEMA_PROPERTY_ITEMS: {
-							reader.beginObject();
-							primitiveType = primitiveFormat = StringServices.EMPTY_STRING;
-							innerLoop:
-							while (reader.hasNext()) {
-								switch (reader.nextName()) {
-									case SCHEMA_PROPERTY_TYPE: {
-										primitiveType = reader.nextString();
-										if (!primitiveFormat.isEmpty()) {
-											skipObjectEntries(reader);
-											break innerLoop;
-										}
-										break;
-									}
-									case SCHEMA_PROPERTY_FORMAT: {
-										primitiveFormat = reader.nextString();
-										if (!primitiveType.isEmpty()) {
-											skipObjectEntries(reader);
-											break innerLoop;
-										}
-										break;
-									}
-									default:
-										reader.skipValue();
-										break;
-								}
-							}
-							reader.endObject();
-							break;
-						}
-						case SCHEMA_PROPERTY_FORMAT: {
-							primitiveFormat = reader.nextString();
-							if (!primitiveType.isEmpty()) {
-								skipObjectEntries(reader);
-								break outerLoop;
-							}
-							break;
-						}
-						default: {
-							reader.skipValue();
-						}
+						warnings.add(I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
+							.fill(newParameterDef.getName(), globalSchemaRef));
+						return null;
 					}
+				});
+				ResKey problem = schemaObject.visit(applySchema(), newParameterDef);
+				if (problem != ResKey.NONE) {
+					warnings
+						.add(I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
+							schemaObject.getType()));
 				}
-				if (!primitiveType.isEmpty()) {
-					addTypeRefFromSchemaType(newParameterDef, primitiveType, primitiveFormat, warnings);
-				}
-				reader.endObject();
-			} catch (IOException ex) {
-				throw new IOError(ex);
+
+			} catch (ParseException ex) {
+				warnings.add(I18NConstants.INVALID_SCHEMA_DEFINITION__PARAMETER_PROBLEM
+					.fill(newParameterDef.getName(), ex.getErrorKey()));
 			}
 		}
 
 		return newParameterDef;
 	}
 
-	void skipObjectEntries(JsonReader r) throws IOException {
-		while (r.hasNext()) {
-			r.nextName();
-			r.skipValue();
-		}
-	}
+	private SchemaVisitor<ResKey, ParameterDefinition> applySchema() {
+		return new SchemaVisitor<>() {
 
-	private void addTypeRefFromSchemaType(ParameterDefinition newParameterDef, String typeName, String typeFormat,
-			List<ResKey> warnings) {
-		String typespec;
-		switch (typeName) {
-			case SCHEMA_TYPE_STRING:
-				switch (typeFormat) {
-					case SCHEMA_FORMAT_DATE:
-						typespec = TypeSpec.DATE_TYPE;
+			@Override
+			public ResKey visitPrimitiveSchema(PrimitiveSchema schema, ParameterDefinition newParameterDef) {
+				String typespec;
+				String typeFormat = schema.getFormat();
+				switch (schema.getType()) {
+					case SCHEMA_TYPE_STRING:
+						switch (typeFormat) {
+							case SCHEMA_FORMAT_DATE:
+								typespec = TypeSpec.DATE_TYPE;
+								break;
+							case SCHEMA_FORMAT_DATE_TIME:
+								typespec = TypeSpec.DATE_TIME_TYPE;
+								break;
+							case StringServices.EMPTY_STRING:
+								typespec = TypeSpec.STRING_TYPE;
+								break;
+							default:
+								typespec = TypeSpec.STRING_TYPE;
+								break;
+						}
 						break;
-					case SCHEMA_FORMAT_DATE_TIME:
-						typespec = TypeSpec.DATE_TIME_TYPE;
+					case SCHEMA_TYPE_NUMBER:
+						switch (typeFormat) {
+							case SCHEMA_FORMAT_FLOAT:
+								typespec = TypeSpec.FLOAT_TYPE;
+								break;
+							case SCHEMA_FORMAT_DOUBLE:
+								typespec = TypeSpec.DOUBLE_TYPE;
+								break;
+							case StringServices.EMPTY_STRING:
+								typespec = TypeSpec.FLOAT_TYPE;
+								break;
+							default:
+								typespec = TypeSpec.FLOAT_TYPE;
+								break;
+						}
+						break;
+					case SCHEMA_TYPE_INTEGER:
+						switch (typeFormat) {
+							case SCHEMA_FORMAT_INT32:
+								typespec = TypeSpec.INTEGER_TYPE;
+								break;
+							case SCHEMA_FORMAT_INT64:
+								typespec = TypeSpec.LONG_TYPE;
+								break;
+							case StringServices.EMPTY_STRING:
+								typespec = TypeSpec.INTEGER_TYPE;
+								break;
+							default:
+								typespec = TypeSpec.INTEGER_TYPE;
+								break;
+						}
+						break;
+					case SCHEMA_TYPE_BOOLEAN:
+						typespec = TypeSpec.BOOLEAN_TYPE;
 						break;
 					default:
-						typespec = TypeSpec.STRING_TYPE;
-						break;
+						return I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
+							schema.getType());
 				}
-				break;
-			case SCHEMA_TYPE_NUMBER:
-				switch (typeFormat) {
-					case SCHEMA_FORMAT_FLOAT:
-						typespec = TypeSpec.FLOAT_TYPE;
-						break;
-					case SCHEMA_FORMAT_DOUBLE:
-						typespec = TypeSpec.DOUBLE_TYPE;
-						break;
-					default:
-						typespec = TypeSpec.FLOAT_TYPE;
-						break;
-				}
-				break;
-			case SCHEMA_TYPE_INTEGER:
-				switch (typeFormat) {
-					case SCHEMA_FORMAT_INT32:
-						typespec = TypeSpec.INTEGER_TYPE;
-						break;
-					case SCHEMA_FORMAT_INT64:
-						typespec = TypeSpec.LONG_TYPE;
-						break;
-					default:
-						typespec = TypeSpec.INTEGER_TYPE;
-						break;
-				}
-				break;
-			case SCHEMA_TYPE_BOOLEAN:
-				typespec = TypeSpec.BOOLEAN_TYPE;
-				break;
-			case SCHEMA_TYPE_OBJECT:
-				typespec = TypeSpec.JSON_TYPE;
-				break;
-			default:
-				warnings.add(I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
-					typeName));
-				return;
-		}
-		newParameterDef.setType(TLModelPartRef.ref(typespec));
-	}
+				newParameterDef.setType(TLModelPartRef.ref(typespec));
+				return ResKey.NONE;
+			}
 
+			@Override
+			public ResKey visitObjectSchema(ObjectSchema schema, ParameterDefinition newParameterDef) {
+				newParameterDef.setType(TLModelPartRef.ref(TypeSpec.JSON_TYPE));
+				return ResKey.NONE;
+			}
+
+			@Override
+			public ResKey visitArraySchema(ArraySchema schema, ParameterDefinition newParameterDef) {
+				newParameterDef.setMultiple(true);
+				return schema.getItems().visit(this, newParameterDef);
+			}
+		};
+	}
 	private String getMethodName(OperationObject operation, HttpMethod httpMethod, String baseName) {
 		String operationId = operation.getOperationId();
 		if (!operationId.isEmpty()) {

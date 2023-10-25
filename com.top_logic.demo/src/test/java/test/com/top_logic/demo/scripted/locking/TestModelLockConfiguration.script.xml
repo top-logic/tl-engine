@@ -508,23 +508,5 @@
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-			failure-expected="false"
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
-				expand="false"
-			>
-				<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-						tab-path="Administration > Development > Modell Editor"
-					/>
-				</context-model>
-				<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-					label-path="Demo > DemoTypes > Demo All > Demo A"
-				/>
-			</model-name>
-		</action>
 	</actions>
 </action>

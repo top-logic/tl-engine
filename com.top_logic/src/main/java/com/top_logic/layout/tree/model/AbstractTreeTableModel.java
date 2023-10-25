@@ -26,8 +26,6 @@ import com.top_logic.layout.table.FilterResult;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableRowFilter;
 import com.top_logic.layout.table.TableViewModel;
-import com.top_logic.layout.table.display.IndexRange;
-import com.top_logic.layout.table.display.VisiblePaneRequest;
 import com.top_logic.layout.table.model.AbstractObjectTableModel;
 import com.top_logic.layout.table.model.NearestDisplayedRowFinder;
 import com.top_logic.layout.table.model.NoPrepare;
@@ -910,7 +908,6 @@ public abstract class AbstractTreeTableModel<N extends AbstractTreeTableModel.Ab
 				int visibleDescendantsSizeBefore = sizeBefore - 1;
 				_table.removeRows(firstChildPosition, firstChildPosition + visibleDescendantsSizeBefore);
 			}
-			updateVisibilityRequest(node);
 		}
 	}
 
@@ -928,25 +925,6 @@ public abstract class AbstractTreeTableModel<N extends AbstractTreeTableModel.Ab
 			if (position >= 0) {
 				_table.updateRows(position, position);
 			}
-		}
-	}
-
-	/**
-	 * If this tree is attached to a {@link TableViewModel}, than its {@link VisiblePaneRequest} is
-	 * updated to the given node.
-	 * 
-	 * @param node
-	 *        The node to make visible on the client.
-	 * 
-	 * @see AbstractTreeTableModel#setViewModel(Provider)
-	 */
-	protected void updateVisibilityRequest(N node) {
-		TableViewModel viewModel = _viewModel.get();
-		if (viewModel != null) {
-			int firstVisibleRow = getPosition(node);
-			int lastVisibleRow = firstVisibleRow + node.getVisibleSubtreeSize() - 1;
-			viewModel.getClientDisplayData().getVisiblePaneRequest()
-				.setRowRange(IndexRange.multiIndex(firstVisibleRow, lastVisibleRow));
 		}
 	}
 

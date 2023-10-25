@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_HEADER_CELL_CONTENT_TEMPLATE">
+		<value><![CDATA[<div class="tl-table__header-cell-content h-100">
+		{label}
+</div>]]></value>
+	</template>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_BODY_TEMPLATE">
+		<value><![CDATA[<tbody class="tl-table__body">
+	{body_rows_all}
+</tbody>]]></value>
+	</template>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_CONTAINER_TEMPLATE">
+		<value><![CDATA[<table id="{id}_table" class="tl-table tl-line_height--normal"
+	cellpadding="0"
+>
+	{colgroup}
+	<thead class="tl-table__header">
+        <tr class="tl-table__titleRow">
+            <th colspan="{columnCount}">{title}</th>
+        </tr>
+    	{headerRows}
+	</thead>
+	{body}
+	<tfoot>
+    	<tr class="tl-table__footerRow">
+	        <th colspan="{columnCount}">{footer}</th>
+	    </tr>
+	</tfoot>
+</table>]]></value>
+	</template>
+	<template name="com.top_logic.layout.table.renderer.Icons.TABLE_TITLE_TEMPLATE">
+		<value><![CDATA[<div class="tl-table__title" style="{titleStyle}">
+	<div class="tl-table__title-label">
+		{titleContents}
+	</div>
+</div>
+]]></value>
+	</template>
+	<template name="com.top_logic.layout.form.boxes.reactive_tag.Icons.FORM_GROUP_TEMPLATE">
+		<value><![CDATA[<div id="{id}"
+	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
+	style="{width ? 'width: ' + width + '; '}{style}"
+	draggable="{draggable}"
+	data-id="{dataId}"
+>
+	<tl:if test="hasLegend || collapsible || hasMenu">
+		<div class="rf_header">
+			<tl:if test="hasLegend">
+				{title}
+			</tl:if>
+		</div>
+	</tl:if>
+
+		<div class="rf_content rf_dropTarget {columns > 0 ? 'cols' + columns}">
+			{content}
+		</div>
+</div>]]></value>
+	</template>
+</settings>

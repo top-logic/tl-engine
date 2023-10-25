@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<theme id="PDFExport"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	extends="default"
+	state="disabled"
+>
+	<styles>
+		<style name="/style/PDFExport/pdfExport.css"/>
+	</styles>
+</theme>

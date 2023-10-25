@@ -6,7 +6,6 @@
 package com.top_logic.layout.basic;
 
 import java.io.IOException;
-import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,7 +23,6 @@ import com.top_logic.layout.Renderer;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.Validator;
 import com.top_logic.layout.WindowScope;
-import com.top_logic.mig.html.Media;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -49,8 +47,6 @@ public abstract class AbstractDisplayContext extends DefaultInteractionContext i
 	private Resources resources;
 
 	private ProcessingInfo processingInfo;
-
-	private Media _outputMedia = Media.BROWSER;
 
 	/**
 	 * Constructs a new {@link DisplayContext} with an initial scope and some Resources,
@@ -204,18 +200,6 @@ public abstract class AbstractDisplayContext extends DefaultInteractionContext i
 			throw new IllegalArgumentException();
 		}
 		super.installSessionContext(session);
-	}
-
-	@Override
-	public Media getOutputMedia() {
-		return _outputMedia;
-	}
-
-	/**
-	 * Setter for {@link #getOutputMedia()}.
-	 */
-	public void setOutputMedia(Media outputMedia) {
-		_outputMedia = Objects.requireNonNull(outputMedia);
 	}
 
 }

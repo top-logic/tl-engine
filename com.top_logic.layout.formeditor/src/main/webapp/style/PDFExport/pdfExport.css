@@ -1,0 +1,80 @@
+/* Additional styles for PDF export of forms. */
+
+/*body.pdfExport*/
+
+table.tl-table {
+    -fs-table-paginate: paginate;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+td.tl-table__cell {
+	border-color: var(--TABLE_BORDER_COLOR);
+	border-left-color: var(--TABLE_BORDER_COLOR);
+
+	border-right-style: solid;
+	border-right-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+
+	border-bottom-style: solid;
+	border-bottom-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+	
+	border-style: solid;
+	border-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+
+	padding-left: 5px;
+}
+
+.tl-table__title-label {
+    padding-top: 4px;
+}
+
+.rf_groupCell,
+.rf_groupCell.collapsed,
+.rf_groupCell .rf_header {
+    border-radius: 0px;
+}
+
+.rf_groupCell .rf_header {
+    padding-left: 8px;
+    padding-top: 4px;
+}
+
+@font-face {
+	font-family: 'Font Awesome 5 Free';
+	font-style: normal;
+	font-weight: 400;
+	font-display: block;
+	src: url('../webfonts/fa-regular-400.ttf');
+	-fs-pdf-font-embed: embed;
+	-fs-pdf-font-encoding: Identity-H;
+}
+
+@font-face {
+	font-family: 'Font Awesome 5 Free';
+	font-style: normal;
+	font-weight: 900;
+	font-display: block;
+	src: url('../webfonts/fa-solid-900.ttf');
+	-fs-pdf-font-embed: embed;
+	-fs-pdf-font-encoding: Identity-H;
+}
+
+@font-face {
+	font-family: 'Font Awesome 5 Brands';
+	font-style: normal;
+	font-weight: 400;
+	font-display: block;
+	src: url('../webfonts/fa-brands-400.ttf');
+	-fs-pdf-font-embed: embed;
+	-fs-pdf-font-encoding: Identity-H;
+}
+
+@font-face {
+	font-family: 'tl_iconFont';
+	font-style: normal;
+	font-weight: normal;
+	font-display: block;
+	src: url('../webfonts/tl_iconFont.ttf');
+	-fs-pdf-font-embed: embed;
+	-fs-pdf-font-encoding: Identity-H;
+}

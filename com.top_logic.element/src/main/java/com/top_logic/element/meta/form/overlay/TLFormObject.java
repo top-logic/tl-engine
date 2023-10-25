@@ -11,6 +11,7 @@ import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.UpdateFactory;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.layout.form.FormContainer;
+import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -89,5 +90,12 @@ public interface TLFormObject extends TLObject, UpdateFactory {
 	 */
 	@FrameworkInternal
 	void initContainer(FormContainer formContainer);
+
+	/**
+	 * Where the for is written to.
+	 */
+	default Media getOutputMedia() {
+		return Media.BROWSER;
+	}
 
 }

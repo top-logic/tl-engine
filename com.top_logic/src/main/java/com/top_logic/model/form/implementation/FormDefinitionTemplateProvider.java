@@ -7,14 +7,11 @@ package com.top_logic.model.form.implementation;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
@@ -78,12 +75,6 @@ public class FormDefinitionTemplateProvider extends AbstractFormContainerProvide
 	public void addCssClassForContent(List<HTMLTemplateFragment> buffer) {
 		super.addCssClassForContent(buffer);
 		buffer.add(css(ColumnsDefinitionTemplateProvider.cssClassForColumnsLayout(getConfig())));
-	}
-
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext)
-			throws IOException {
-		renderPlain(context, out, renderContext, getContent());
 	}
 
 }

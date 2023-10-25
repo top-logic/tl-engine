@@ -8,18 +8,10 @@ package com.top_logic.element.layout.formeditor.implementation;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.SimpleInstantiationContext;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.layout.formeditor.definition.FieldDefinition;
 import com.top_logic.element.meta.AttributeOperations;
@@ -28,13 +20,9 @@ import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.EditContext;
-import com.top_logic.element.meta.form.FieldProvider;
-import com.top_logic.element.meta.form.fieldprovider.AbstractWrapperFieldProvider;
-import com.top_logic.element.meta.form.fieldprovider.TableSupportingComplexFieldProvider;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
@@ -42,17 +30,10 @@ import com.top_logic.layout.basic.ErrorFragmentGenerator;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.boxes.reactive_tag.AttributeImageProvider;
-import com.top_logic.layout.form.control.LabelControl;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.template.model.AbstractMember;
 import com.top_logic.layout.form.template.model.Templates;
-import com.top_logic.layout.provider.LabelProviderService;
-import com.top_logic.layout.table.model.TableConfig;
-import com.top_logic.layout.table.model.TableConfigurationFactory;
-import com.top_logic.layout.table.model.TableConfigurationProvider;
-import com.top_logic.layout.table.provider.DefaultTableConfigurationProvider;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -64,9 +45,6 @@ import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLCreateVisibility;
 import com.top_logic.model.annotate.TLVisibility;
 import com.top_logic.model.annotate.Visibility;
-import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
-import com.top_logic.model.annotate.ui.ReferencePresentation;
-import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
@@ -74,7 +52,6 @@ import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.export.pdf.PDFRenderer;
 /**
  * Creates a template for a {@link FieldDefinition} and stores the necessary information.
  * 
@@ -215,13 +192,6 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 
 		HTMLFragment error = ErrorFragmentGenerator.errorFragment(HTMLConstants.DIV, errorMessage, null);
 		return contentBox(htmlTemplate(error));
-	}
-
-	private HTMLFragment noSuchAttributeErrorFragment(TLStructuredType type, String attribute) {
-		ResKey errorMessage = noSuchAttributeErrorKey(type, attribute);
-
-		HTMLFragment error = ErrorFragmentGenerator.errorFragment(HTMLConstants.DIV, errorMessage, null);
-		return error;
 	}
 
 	/**
@@ -372,117 +342,6 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		return HEIGHT;
 	}
 
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext)
-			throws IOException {
-		TLStructuredTypePart part = attribute(renderContext);
-		if (part == null) {
-			noSuchAttributeErrorFragment(renderContext.getFormType(), getConfig().getAttribute()).write(context, out);
-			return;
-		}
-
-		SimpleEditContext editContext = new LocalAnnotationsEditContext(renderContext.getModel(), part, getConfig());
-
-		HTMLUtil.beginDiv(out, "field");
-		LabelPosition labelPosition = AttributeOperations.labelPosition(part, editContext);
-		switch (labelPosition) {
-			case DEFAULT:
-				HTMLUtil.beginDiv(out, "label");
-				renderLabel(context, out, editContext, true);
-				HTMLUtil.endDiv(out);
-
-				HTMLUtil.beginDiv(out, "value");
-				renderValue(context, out, editContext);
-				HTMLUtil.endDiv(out);
-				break;
-			case AFTER_VALUE:
-				HTMLUtil.beginSpan(out, "value");
-				renderValue(context, out, editContext);
-				HTMLUtil.endSpan(out);
-
-				HTMLUtil.beginSpan(out, "label");
-				renderLabel(context, out, editContext, false);
-				HTMLUtil.endSpan(out);
-				break;
-			case HIDE_LABEL:
-				HTMLUtil.beginSpan(out, "value");
-				renderValue(context, out, editContext);
-				HTMLUtil.endSpan(out);
-				break;
-		}
-		HTMLUtil.endDiv(out);
-	}
-
-	private void renderValue(DisplayContext context, TagWriter out, SimpleEditContext editContext) throws IOException {
-		Object value = editContext.getObject().tValue(editContext.getAttribute());
-		if (!editContext.isMultiple()) {
-			writeValue(context, out, editContext, value);
-		} else {
-			ReferencePresentation presentation = AttributeOperations.getPresentation(editContext);
-			switch (presentation) {
-				case DROP_DOWN:
-				case POP_UP:
-				case RADIO:
-				case RADIO_INLINE:
-					writeValue(context, out, editContext, value);
-					break;
-				case TABLE:
-					if (value instanceof Collection<?>) {
-						List<?> rows = CollectionUtil.toList((Collection<?>) value);
-						TableConfigurationProvider table = tableDefinition(editContext);
-						new SimplePDFTableFragment(table, rows).write(context, out);
-					} else {
-						writeValue(context, out, editContext, value);
-					}
-					break;
-				default:
-					throw new IllegalArgumentException(
-						"No such " + ReferencePresentation.class.getName() + ": " + presentation);
-			}
-		}
-	}
-
-	private void writeValue(DisplayContext context, TagWriter out, SimpleEditContext editContext, Object value)
-			throws IOException {
-		PDFRendererAnnotation rendererAnnotation = editContext.getAnnotation(PDFRendererAnnotation.class);
-		PDFRenderer renderer;
-		if (rendererAnnotation != null) {
-			renderer = TypedConfigUtil.createInstance(rendererAnnotation.getImpl());
-		} else {
-			renderer = LabelProviderService.getInstance().getPDFRenderer(value);
-		}
-		renderer.write(context, out, editContext.getObject(), value);
-	}
-
-	private TableConfigurationProvider tableDefinition(SimpleEditContext editContext) {
-		TableConfigurationProvider tableConfigurationProvider =
-			AbstractWrapperFieldProvider.getTableConfigurationProvider(editContext);
-		TLStructuredTypePart part = editContext.getAttribute();
-		if (tableConfigurationProvider == DefaultTableConfigurationProvider.INSTANCE) {
-			FieldProvider fieldProvider = AttributeOperations.getFieldProvider(part);
-			if (fieldProvider instanceof TableSupportingComplexFieldProvider) {
-				TableConfig table = ((TableSupportingComplexFieldProvider) fieldProvider).getConfig().getTable();
-				if (table != null) {
-					tableConfigurationProvider = TableConfigurationFactory
-						.toProvider(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, table);
-				}
-			}
-		}
-		List<String> exportColumns = TLAnnotations.getExportColumns(part);
-		return TableConfigurationFactory.combine(
-			tableConfigurationProvider,
-			exportColumns != null ? TableConfigurationFactory.setDefaultColumns(exportColumns)
-				: TableConfigurationFactory.emptyProvider(),
-			SimplePDFTableFragment.removeNonExportColumns());
-	}
-
-	private void renderLabel(DisplayContext context, TagWriter out, EditContext editContext, boolean useColon) {
-		out.writeText(context.getResources().getString(editContext.getLabelKey()));
-		if (useColon) {
-			out.writeText(LabelControl.COLON);
-		}
-	}
-
 	private static class LocalAnnotationsEditContext extends SimpleEditContext {
 
 		private AnnotationLookup _fieldAnnotations;
@@ -492,12 +351,6 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		LocalAnnotationsEditContext(TLStructuredTypePart attribute, AnnotationLookup localAnnotations) {
 			super(attribute);
 			_fieldAnnotations = localAnnotations;
-		}
-
-		LocalAnnotationsEditContext(TLObject object, TLStructuredTypePart attribute,
-				AnnotationLookup localAnnotations) {
-			this(attribute, localAnnotations);
-			_model = object;
 		}
 
 		@Override

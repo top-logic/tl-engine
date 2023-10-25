@@ -27,8 +27,12 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.security.password.PasswordManager;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.event.bus.Bus;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 
@@ -60,7 +64,14 @@ public class TestSessionService extends BasicTestCase {
         try {
 			HttpServletResponse response = ic.getResponse();
 			try (LoginCredentials login =
-				LoginCredentials.fromUserAndPassword(PersonManager.getManager().getRoot(), "root1234".toCharArray())) {
+				LoginCredentials.fromUserAndPassword(PersonManager.getManager().getRoot(),
+					SecureRandomService.getInstance().getRandomString().toCharArray())) {
+
+				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+					PasswordManager.getInstance().setPassword(login);
+					tx.commit();
+				}
+
 				Login.getInstance().login(servletRequest, response, login);
 			}
             

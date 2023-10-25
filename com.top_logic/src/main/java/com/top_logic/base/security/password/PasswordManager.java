@@ -13,6 +13,7 @@ import java.util.List;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.password.PasswordValidator.ValidationResult;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.user.UserService;
@@ -107,7 +108,9 @@ public class PasswordManager extends AbstractConfiguredInstance<PasswordManager.
 			userData.setAttributeValue(PersonAttributes.PASSWORD,
 				PasswordHashingService.getInstance().createHash(password));
 
-			addPwdToHistory(account, theOldPwd);
+			if (!DBUserRepository.NO_PASSWORD.equals(theOldPwd)) {
+				addPwdToHistory(account, theOldPwd);
+			}
 			setLastPWDChange(account, new Date());
 			account.updateUserData();
             return true;

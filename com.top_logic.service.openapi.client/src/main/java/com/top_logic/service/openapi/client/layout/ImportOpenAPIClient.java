@@ -9,6 +9,7 @@ import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
@@ -26,6 +28,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.TypeSpec;
@@ -44,6 +47,8 @@ import com.top_logic.service.openapi.client.registry.impl.call.CallBuilderFactor
 import com.top_logic.service.openapi.client.registry.impl.call.request.CookieHeaderArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.request.HeaderArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.request.JSONRequestBody;
+import com.top_logic.service.openapi.client.registry.impl.call.request.MultiPartRequestBody;
+import com.top_logic.service.openapi.client.registry.impl.call.request.MultiPartRequestBody.MultiPartContent;
 import com.top_logic.service.openapi.client.registry.impl.call.request.SimpleHeaderArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.PathArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.QueryArgument;
@@ -234,24 +239,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		if (newMethod.getHttpMethod().supportsBody()) {
 			RequestBodyObject requestBody = operation.getRequestBody();
 			if (requestBody != null) {
-				MediaTypeObject mediaObject = requestBody.getContent().values().iterator().next();
-				String schema = mediaObject.getSchema();
-				String description = requestBody.getDescription();
-				ParameterDefinition paramDef = createParameter(requestBodyParameterName(parameterNames), description,
-					requestBody.isRequired(), schema, warnings, completeAPI);
-				boolean encodeBase64 = false;
-				if (hasByteTypeWorkaround(paramDef)) {
-					encodeBase64 = true;
-					replaceByteTypeWorkaround(paramDef);
-				}
-				newMethod.getParameters().add(paramDef);
-				JSONRequestBody.Config<?> bodyArgument = newConfigForImplementation(JSONRequestBody.class);
-				if (encodeBase64) {
-					bodyArgument.setJson(newVariableBase64Encoded(paramDef.getName()));
-				} else {
-					bodyArgument.setJson(newVariable(paramDef.getName()));
-				}
-				newMethod.getCallBuilders().add(bodyArgument);
+				processBody(newMethod, warnings, parameterNames, requestBody, completeAPI);
 			}
 		} else {
 			// Body is either not allowed or behaviour is undefined. In this case a consumer
@@ -259,6 +247,71 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		}
 
 		handlePathParameters(newMethod, path.getPath());
+	}
+
+	private void processBody(MethodDefinition newMethod, List<ResKey> warnings, Set<String> parameterNames,
+			RequestBodyObject requestBody, OpenapiDocument completeAPI) {
+		Collection<MediaTypeObject> possibleBodyTypes = requestBody.getContent().values();
+		for (MediaTypeObject mediaObject : possibleBodyTypes) {
+			String mediaType = mediaObject.getMediaType();
+			switch (mediaType) {
+				case com.top_logic.mig.html.HTMLConstants.MULTIPART_FORM_DATA_VALUE:
+					addMultiPartBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+					return;
+				case JsonUtilities.JSON_CONTENT_TYPE:
+					addJSONBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+					return;
+				default:
+					continue;
+			}
+		}
+
+		/* Actually unsupported. Use "first" body. */
+		addJSONBody(newMethod, warnings, parameterNames, requestBody, possibleBodyTypes.iterator().next(), completeAPI);
+	}
+
+	private void addMultiPartBody(MethodDefinition newMethod, List<ResKey> warnings, Set<String> parameterNames,
+			RequestBodyObject requestBody, MediaTypeObject mediaObject, OpenapiDocument completeAPI) {
+		String schema = mediaObject.getSchema();
+		List<ParameterDefinition> newParams;
+		if (schema.isEmpty()) {
+			ParameterDefinition paramDef =
+				defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
+			newParams = Collections.singletonList(paramDef);
+		} else {
+			Schema parsedSchema = parseSchema(schema, "requestBody", completeAPI.getComponents().getSchemas(), warnings);
+			if (parsedSchema == null) {
+				ParameterDefinition paramDef =
+					defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
+				newParams = Collections.singletonList(paramDef);
+			} else if (parsedSchema instanceof ObjectSchema) {
+				newParams = ((ObjectSchema) parsedSchema).getProperties().stream().map(property -> {
+					Schema propSchema = property.getSchema();
+					String description = propSchema != null ? propSchema.getDescription() : null;
+					return createParameter(property.getName(), description, property.isRequired(), propSchema,
+						warnings);
+				}).collect(Collectors.toList());
+			} else {
+				warnings.add(I18NConstants.UNEXPECTED_SCHEMA_FOR_MULTIPART_BODY__METHOD.fill(newMethod.getName()));
+				return;
+			}
+		}
+		
+		MultiPartRequestBody.Config bodyArgument = newConfigForImplementation(MultiPartRequestBody.class);
+		for (ParameterDefinition param : newParams) {
+			String parameterName = param.getName();
+			MultiPartContent part = TypedConfiguration.newConfigItem(MultiPartContent.class);
+			part.setName(parameterName);
+			if (hasByteTypeWorkaround(param)) {
+				replaceByteTypeWorkaround(param);
+				part.setContent(newVariableBase64Encoded(parameterName));
+			} else {
+				part.setContent(newVariable(parameterName));
+			}
+			bodyArgument.getParts().add(part);
+		}
+		newMethod.getParameters().addAll(newParams);
+		newMethod.getCallBuilders().add(bodyArgument);
 	}
 
 	private static Expr newVariable(String variableName) {
@@ -277,6 +330,25 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError(ex);
 		}
+	}
+
+	private void addJSONBody(MethodDefinition newMethod, List<ResKey> warnings, Set<String> parameterNames,
+			RequestBodyObject requestBody, MediaTypeObject mediaObject, OpenapiDocument completeAPI) {
+		String schema = mediaObject.getSchema();
+		ParameterDefinition paramDef = defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
+		boolean encodeBase64 = false;
+		if (hasByteTypeWorkaround(paramDef)) {
+			replaceByteTypeWorkaround(paramDef);
+			encodeBase64 = true;
+		}
+		newMethod.getParameters().add(paramDef);
+		JSONRequestBody.Config<?> bodyArgument = newConfigForImplementation(JSONRequestBody.class);
+		if (encodeBase64) {
+			bodyArgument.setJson(newVariableBase64Encoded(paramDef.getName()));
+		} else {
+			bodyArgument.setJson(newVariable(paramDef.getName()));
+		}
+		newMethod.getCallBuilders().add(bodyArgument);
 	}
 
 	/**
@@ -300,6 +372,13 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 			return false;
 		}
 		return BYTE_TYPE_SPEC.equals(type.qualifiedName());
+	}
+
+	private ParameterDefinition defaultBodyParameter(String schema, List<ResKey> warnings, Set<String> parameterNames,
+			RequestBodyObject requestBody, OpenapiDocument completeAPI) {
+		String description = requestBody.getDescription();
+		return createParameter(requestBodyParameterName(parameterNames), description, requestBody.isRequired(), schema,
+			warnings, completeAPI);
 	}
 
 	/**
@@ -454,57 +533,72 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 
 	private ParameterDefinition createParameter(String paramName, String description, boolean isRequired,
 			String schema, List<ResKey> warnings, OpenapiDocument completeAPI) {
+		Schema schemaObject;
+		if (!StringServices.isEmpty(schema)) {
+			schemaObject = parseSchema(schema, paramName, completeAPI.getComponents().getSchemas(), warnings);
+		} else {
+			schemaObject = null;
+		}
+		return createParameter(paramName, description, isRequired, schemaObject, warnings);
+	}
+
+	private ParameterDefinition createParameter(String paramName, String description, boolean isRequired,
+			Schema schemaObject, List<ResKey> warnings) {
 		ParameterDefinition newParameterDef = TypedConfiguration.newConfigItem(ParameterDefinition.class);
 		newParameterDef.setName(paramName);
 		newParameterDef.setRequired(isRequired);
 		if (description != null && !description.isBlank()) {
 			newParameterDef.setDescription(description);
 		}
-		if (!StringServices.isEmpty(schema)) {
-			Schema schemaObject;
-			try {
-				Pattern globalSchemaReference = GLOBAL_SCHEMA_REFERENCE;
-				schemaObject = OpenAPISchemaUtils.parseSchema(schema, new Function<String, Schema>() {
-					@Override
-					public Schema apply(String globalSchemaRef) {
-						Matcher matcher = globalSchemaReference.matcher(globalSchemaRef);
-						if (matcher.matches()) {
-							String schemaName = matcher.group(1);
-							SchemaObject globalSchema = completeAPI.getComponents().getSchemas().get(schemaName);
-							if (globalSchema != null) {
-								try {
-									return OpenAPISchemaUtils.parseSchema(globalSchema.getSchema(), this);
-								} catch (ParseException ex) {
-									warnings.add(
-										I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_NAME__PROBLEM__SCHEMA_NAME
-											.fill(newParameterDef.getName(), schemaName, ex.getErrorKey()));
-									return null;
-								}
-							}
-
-							warnings.add(I18NConstants.MISSING_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
-								.fill(newParameterDef.getName(), schemaName));
-							return null;
-						}
-						warnings.add(I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
-							.fill(newParameterDef.getName(), globalSchemaRef));
-						return null;
-					}
-				});
-				ResKey problem = schemaObject.visit(applySchema(), newParameterDef);
-				if (problem != ResKey.NONE) {
-					warnings
-						.add(I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
-							schemaObject.getType()));
-				}
-
-			} catch (ParseException ex) {
-				warnings.add(I18NConstants.INVALID_SCHEMA_DEFINITION__PARAMETER_PROBLEM
-					.fill(newParameterDef.getName(), ex.getErrorKey()));
+		if (schemaObject != null) {
+			ResKey problem = schemaObject.visit(applySchema(), newParameterDef);
+			if (problem != ResKey.NONE) {
+				warnings.add(I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
+					schemaObject.getType()));
 			}
 		}
 
 		return newParameterDef;
+	}
+
+	private Schema parseSchema(String schema, String parameterName, Map<String, SchemaObject> globalSchemas,
+			List<ResKey> warnings) {
+		Schema schemaObject;
+		try {
+			Pattern globalSchemaReference = GLOBAL_SCHEMA_REFERENCE;
+			schemaObject = OpenAPISchemaUtils.parseSchema(schema, new Function<String, Schema>() {
+				@Override
+				public Schema apply(String globalSchemaRef) {
+					Matcher matcher = globalSchemaReference.matcher(globalSchemaRef);
+					if (matcher.matches()) {
+						String schemaName = matcher.group(1);
+						SchemaObject globalSchema = globalSchemas.get(schemaName);
+						if (globalSchema != null) {
+							try {
+								return OpenAPISchemaUtils.parseSchema(globalSchema.getSchema(), this);
+							} catch (ParseException ex) {
+								warnings.add(
+									I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_NAME__PROBLEM__SCHEMA_NAME
+										.fill(parameterName, schemaName, ex.getErrorKey()));
+								return null;
+							}
+						}
+
+						warnings.add(I18NConstants.MISSING_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
+							.fill(parameterName, schemaName));
+						return null;
+					}
+					warnings.add(I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
+						.fill(parameterName, globalSchemaRef));
+					return null;
+				}
+			});
+		} catch (ParseException ex) {
+			warnings.add(I18NConstants.INVALID_SCHEMA_DEFINITION__PARAMETER_PROBLEM
+				.fill(parameterName, ex.getErrorKey()));
+			schemaObject = null;
+		}
+		return schemaObject;
 	}
 
 	private SchemaVisitor<ResKey, ParameterDefinition> applySchema() {

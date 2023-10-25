@@ -1,6 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
 package com.top_logic.model.search.expr.config.operations.binary;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Base64;
 import java.util.Base64.Encoder;
@@ -8,6 +14,8 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
@@ -21,12 +29,6 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
-
-/*
- * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
- * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
- */
 
 /**
  * {@link GenericMethod} encoding a binary value into a string.
@@ -64,6 +66,16 @@ public class Base64Encode extends SimpleGenericMethod {
 			OutputStream buffer = new ASCIIBuffer();
 			try (OutputStream encoder = encoding.wrap(buffer)) {
 				((BinaryDataSource) self).deliverTo(encoder);
+			} catch (IOException ex) {
+				throw new TopLogicException(I18NConstants.ENCODING_FAILED__MSG_EXPR.fill(ex.getMessage(), getSelf()));
+			}
+			return buffer.toString();
+		} else if (self instanceof BinaryContent) {
+			Encoder encoding = asBoolean(arguments[0]) ? Base64.getMimeEncoder() : Base64.getEncoder();
+			
+			OutputStream buffer = new ASCIIBuffer();
+			try (InputStream data = ((BinaryContent) self).getStream(); OutputStream encoder = encoding.wrap(buffer)) {
+				StreamUtilities.copyStreamContents(data, encoder);
 			} catch (IOException ex) {
 				throw new TopLogicException(I18NConstants.ENCODING_FAILED__MSG_EXPR.fill(ex.getMessage(), getSelf()));
 			}

@@ -74,9 +74,21 @@
 			<demo-encrypted-long-mapping/>
 		</datatype>
 		<enum name="DemoEnum">
-			<classifier name="FirstOption"/>
-			<classifier name="MiddleOption"/>
-			<classifier name="LastOption"/>
+			<classifier name="FirstOption">
+				<annotations>
+					<instance-presentation icon="css:fas fa-star"/>
+				</annotations>
+			</classifier>
+			<classifier name="MiddleOption">
+				<annotations>
+					<instance-presentation icon="css:far fa-circle"/>
+				</annotations>
+			</classifier>
+			<classifier name="LastOption">
+				<annotations>
+					<instance-presentation icon="css:far fa-star"/>
+				</annotations>
+			</classifier>
 		</enum>
 		<interface name="AChild">
 			<generalizations>

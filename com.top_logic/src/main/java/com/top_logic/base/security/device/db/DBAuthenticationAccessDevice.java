@@ -169,13 +169,16 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 	private void initPassword(DataObject user, String superUserName) {
 		if (superUserName.equals(user.getAttributeValue(PersonAttributes.USER_NAME))) {
 			setupPassword(user);
-		} else if (user.getAttributeValue(PersonAttributes.PASSWORD) != null) {
+		} else {
 			// Drop insecure password.
-			user.setAttributeValue(PersonAttributes.PASSWORD, null);
-			Logger.info(
-				"Dropped insecure static password for user '"
-					+ user.getAttributeValue(PersonAttributes.USER_NAME) + "'.",
-				DBAuthenticationAccessDevice.class);
+			if (user.getAttributeValue(PersonAttributes.PASSWORD) != null) {
+				Logger.info(
+					"Dropped insecure static password for user '"
+						+ user.getAttributeValue(PersonAttributes.USER_NAME) + "'.",
+					DBAuthenticationAccessDevice.class);
+			}
+
+			user.setAttributeValue(PersonAttributes.PASSWORD, DBUserRepository.NO_PASSWORD);
 		}
 	}
 

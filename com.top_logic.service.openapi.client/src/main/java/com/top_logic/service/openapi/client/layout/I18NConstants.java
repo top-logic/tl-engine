@@ -5,6 +5,7 @@
  */
 package com.top_logic.service.openapi.client.layout;
 
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
@@ -30,6 +31,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/** @en Invalid schema reference ''{1}'' in parameter ''{0}''. */
 	public static ResKey2 INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA;
+
+	/** @en Object schema expected for ''multipart/form-data'' body in method {0}. */
+	public static ResKey1 UNEXPECTED_SCHEMA_FOR_MULTIPART_BODY__METHOD;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -27,6 +27,18 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_PROPERTY_ITEMS = "items";
 
 	/**
+	 * Property in a schema that defines the properties when the {@link #SCHEMA_PROPERTY_TYPE type}
+	 * is an {@link #SCHEMA_TYPE_OBJECT object}.
+	 */
+	public static final String SCHEMA_PROPERTY_PROPERTIES = "properties";
+
+	/**
+	 * Property in a schema that defines the names of the required properties when the
+	 * {@link #SCHEMA_PROPERTY_TYPE type} is an {@link #SCHEMA_TYPE_OBJECT object}.
+	 */
+	public static final String SCHEMA_PROPERTY_REQUIRED = "required";
+
+	/**
 	 * {@value #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_STRING string} attribute
 	 * representing a date with time.
 	 */

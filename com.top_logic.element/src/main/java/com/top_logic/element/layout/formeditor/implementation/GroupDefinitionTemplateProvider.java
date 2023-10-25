@@ -8,19 +8,16 @@ package com.top_logic.element.layout.formeditor.implementation;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.definition.GroupDefinition;
 import com.top_logic.element.layout.formeditor.definition.GroupProperties;
 import com.top_logic.element.layout.formeditor.definition.TextDefinition;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
@@ -28,8 +25,6 @@ import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
 import com.top_logic.layout.table.ConfigKey;
-import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
@@ -42,12 +37,6 @@ import com.top_logic.model.form.implementation.FormEditorContext;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvider<GroupDefinition> {
-
-	/** CSS class for the header of the group. */
-	public static final String PDF_HEADER_CSS = "header";
-
-	/** CSS class for PDF export. */
-	public static final String PDF_EXPORT_CSS = "group";
 
 	static final DisplayDimension HEIGHT = dim(600, DisplayUnit.PIXEL);
 
@@ -167,18 +156,6 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	@Override
 	public boolean openDialog() {
 		return true;
-	}
-
-	@Override
-	protected String pdfExportCssClass() {
-		return PDF_EXPORT_CSS;
-	}
-
-	@Override
-	protected void writeHeader(DisplayContext context, TagWriter out) throws IOException {
-		HTMLUtil.beginDiv(out, PDF_HEADER_CSS);
-		out.writeText(context.getResources().getString(label(getConfig())));
-		out.endTag(HTMLConstants.DIV);
 	}
 
 }

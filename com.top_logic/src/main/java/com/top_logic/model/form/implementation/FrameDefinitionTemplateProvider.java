@@ -114,8 +114,4 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 		return HEIGHT;
 	}
 
-	@Override
-	protected String pdfExportCssClass() {
-		return "frame";
-	}
 }

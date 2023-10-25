@@ -5,13 +5,10 @@
  */
 package com.top_logic.model.form.implementation;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
@@ -71,12 +68,6 @@ public interface FormElementTemplateProvider {
 	 * @return The {@link HTMLTemplateFragment} for this element and all its children.
 	 */
 	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context);
-
-	/**
-	 * Renders this {@link FormElementTemplateProvider} to HTML to export to PDF, i.e. no links,
-	 * controls, tooltips, and such must be used.
-	 */
-	void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException;
 
 	/**
 	 * Whether the element is rendered over the entire line.

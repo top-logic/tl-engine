@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.basic;
 
+import java.util.Objects;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +15,7 @@ import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.layout.ControlScope;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.mig.html.Media;
 import com.top_logic.mig.html.UserAgent;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.util.TLContext;
@@ -27,6 +30,10 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 	private static final UserAgent FEATURE_DETECTION_USER_AGENT = new UserAgent(UserAgent.FEATURE_DETECTION_BROWSER);
 
 	private ServletContext _servletContext;
+
+	private String _contextPath = "";
+
+	private Media _outputMedia;
 
 	/**
 	 * Creates a {@link DummyDisplayContext}.
@@ -49,7 +56,15 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 
 	@Override
 	public String getContextPath() {
-		return "";
+		return _contextPath;
+	}
+
+	/**
+	 * Sets the {@link #getContextPath()}.
+	 */
+	public DummyDisplayContext initContextPath(String contextPath) {
+		_contextPath = contextPath;
+		return this;
 	}
 	
 	@Override
@@ -78,6 +93,19 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 		return this;
 	}
 	
+	@Override
+	public Media getOutputMedia() {
+		return _outputMedia;
+	}
+
+	/**
+	 * Setter for {@link #getOutputMedia()}.
+	 */
+	public DummyDisplayContext initOutputMedia(Media outputMedia) {
+		_outputMedia = Objects.requireNonNull(outputMedia);
+		return this;
+	}
+
 	@Override
 	public HttpServletResponse asResponse() {
 		return null;

@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -24,8 +25,10 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
@@ -33,23 +36,31 @@ import com.top_logic.element.meta.LegacyTypeCodes;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.Control;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormContextProxy;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
+import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.TLConstraints;
+import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -57,6 +68,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.export.pdf.PDFRenderer;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
@@ -140,6 +152,16 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	protected FormMember createFormMember(
 			AttributeUpdate update, final AttributeUpdateContainer updateContainer, String name) {
 		final TLStructuredTypePart attribute = update.getAttribute();
+
+		if (update.getOutputMedia() == Media.PDF) {
+			PDFRendererAnnotation rendererAnnotation = update.getAnnotation(PDFRendererAnnotation.class);
+			if (rendererAnnotation != null) {
+				PDFRenderer renderer = TypedConfigUtil.createInstance(rendererAnnotation.getImpl());
+				FormMember result = FormFactory.newHiddenField(name);
+				result.setControlProvider(new PDFControlProvider(renderer));
+				return result;
+			}
+		}
 
 		FieldProvider provider = AttributeOperations.getFieldProvider(attribute);
 		if (provider != null) {
@@ -369,6 +391,57 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 			value = Utils.getlongValue(maximum);
 		}
 		return Long.valueOf(value);
+	}
+
+	/**
+	 * {@link ControlProvider} displaying a {@link FormField} using a {@link PDFRenderer}.
+	 */
+	private static final class PDFControlProvider extends AbstractFormFieldControlProvider {
+		/**
+		 * {@link Control} displaying a {@link FormField} in a PDF export using a
+		 * {@link PDFRenderer}.
+		 */
+		private static final class PDFFieldControl extends AbstractVisibleControl {
+			private final FormField _field;
+
+			private PDFRenderer _renderer;
+
+			/** 
+			 * Creates a {@link PDFFieldControl}.
+			 */
+			private PDFFieldControl(FormField field, PDFRenderer renderer) {
+				_field = field;
+				_renderer = renderer;
+			}
+
+			@Override
+			public FormMember getModel() {
+				return _field;
+			}
+
+			@Override
+			protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+				AttributeUpdate fieldUpdate = AttributeFormFactory.getAttributeUpdate(_field);
+				Object value = _field.getValue();
+				_renderer.write(context, out, fieldUpdate.getObject(), value);
+			}
+		}
+
+		private final PDFRenderer _renderer;
+
+		/**
+		 * Creates a {@link PDFControlProvider}.
+		 */
+		private PDFControlProvider(PDFRenderer renderer) {
+			_renderer = renderer;
+		}
+
+		@Override
+		protected Control createInput(FormMember member) {
+			FormField field = (FormField) member;
+
+			return new PDFFieldControl(field, _renderer);
+		}
 	}
 
 	public static class LazyFormContext implements FormContextProxy {

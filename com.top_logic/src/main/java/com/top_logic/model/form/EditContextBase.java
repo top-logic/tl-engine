@@ -7,6 +7,7 @@ package com.top_logic.model.form;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
@@ -126,6 +127,13 @@ public interface EditContextBase extends AnnotationLookup {
 	 */
 	default boolean isSearchUpdate() {
 		return false;
+	}
+
+	/**
+	 * Media to which the form is rendered.
+	 */
+	default Media getOutputMedia() {
+		return Media.BROWSER;
 	}
 
 	/**

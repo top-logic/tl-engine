@@ -6,6 +6,7 @@
 package com.top_logic.html.template;
 
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
@@ -32,9 +33,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_NOT_COMPARABLE__VALUE;
 
 	/**
-	 * @en Failed to parse template: {0}
+	 * @en Failed to parse template '{0}': {1}
 	 */
-	public static ResKey1 ERROR_TEMPLATE_SYNTAX_ERROR__DESC;
+	public static ResKey2 ERROR_TEMPLATE_SYNTAX_ERROR__NAME_DESC;
 
 	/**
 	 * @en There is no matching opening tag for tag with name "{0}" at line {1}, column {2}.
@@ -62,6 +63,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @see HTMLConstants#VOID_ELEMENTS
 	 */
 	public static ResKey3 NO_VALID_VOID_ELEMENT__NAME_LINE_COL;
+
+	/**
+	 * @en Reading template '{0}' failed.
+	 */
+	public static ResKey1 ERROR_TEMPLATE_READING_FAILED__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

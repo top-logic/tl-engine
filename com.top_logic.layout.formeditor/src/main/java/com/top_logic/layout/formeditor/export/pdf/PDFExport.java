@@ -7,13 +7,18 @@ package com.top_logic.layout.formeditor.export.pdf;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
 
@@ -35,18 +40,24 @@ import com.lowagie.text.DocumentException;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.layout.formeditor.builder.TypedForm;
+import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.gui.config.ThemeSetting;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
-import com.top_logic.layout.basic.AbstractDisplayContext;
+import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.form.template.model.internal.TemplateControl;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.Media;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
@@ -88,96 +99,91 @@ public class PDFExport {
 
 	private static final float INCH_MILLIES_FACTOR = 25.4F;
 
-	private static final String STYLE_PDF_EXPORT_CSS = "/style/pdfExport.css";
-
-	private static final String STYLE_TL_ICON_FONT_CSS = "/style/tl_iconFont.css";
-
-	private static final String STYLE_TL_FONT_COLOR_CSS = "/style/fontColor.css";
-
-	private static final String STYLE_FONTAWESOME_ALL_CSS = "/style/fontawesome/all.css";
-
 	private Dimension _pageSize = DEFAULT_PAGE_SIZE;
 
 	private float _pageResolution = DEFAULT_PAGE_RESOLUTION;
 
 	private int[] _margins = DEFAULT_MARGINS;
 
-	private Theme _exportTheme = ThemeFactory.getTheme();
+	private Theme _exportTheme = ThemeFactory.getInstance().getTheme("PDFExport");
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
+	 * 
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
-	 * @param exportDescription
-	 *        Description of the PDF export.
-	 * @param element
-	 *        Context object for the export.
+	 * @param exportForm
+	 *        Description of the PDF form to export.
+	 * @param model
+	 *        The underlying model to export.
 	 */
-	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
-			TLObject element) throws IOException, DocumentException {
-		createPDFExport(out, exportDescription, element, (TLClass) element.tType());
-	}
-
-	/**
-	 * Writes the PDF export computed from the given export description to the given output.
-	 * @param out
-	 *        {@link OutputStream} to write PDF to.
-	 * @param exportDescription
-	 *        Description of the PDF export.
-	 * @param element
-	 *        Context object for the export.
-	 * @param type
-	 *        Context type in which the export description is evaluated.
-	 */
-	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
-			TLObject element, TLClass type)
+	public void createPDFExport(OutputStream out, TypedForm exportForm, TLObject model)
 			throws IOException, DocumentException {
-		FormEditorContext renderContext = new FormEditorContext.Builder()
-			.model(element)
-			.formType(type)
-			.build();
-		createPDFExport(out, exportDescription, renderContext);
+		DisplayContext context = createDisplayContext();
 
+		AttributeFormContext formContext = new AttributeFormContext("pdf", ResPrefix.NONE, Media.PDF);
+		formContext.setImmutable(true);
+
+		FormElementTemplateProvider template =
+			TypedConfigUtil.createInstance(exportForm.getFormDefinition());
+
+		FormEditorContext renderContext = new FormEditorContext.Builder()
+			.formType(exportForm.getFormType())
+			.concreteType(exportForm.getDisplayedType())
+			.model(model)
+			.formContext(formContext)
+			.contentGroup(formContext)
+			.build();
+
+		StringWriter htmlBuffer = new StringWriter();
+		try (TagWriter tagWriter = new TagWriter(htmlBuffer)) {
+			ThemeFactory.getInstance().withTheme(getExportTheme(), () -> {
+				writeHTML(context, tagWriter, template, renderContext);
+				return null;
+			});
+		}
+
+		String html = htmlBuffer.toString();
+		String expandedHtml = expandThemeVariables(html);
+
+		Logger.debug(expandedHtml, PDFExport.class);
+
+		convertToPDF(context, out, expandedHtml);
 	}
 
-	/**
-	 * Writes the PDF export computed from the given export description to the given output.
-	 * @param out
-	 *        {@link OutputStream} to write PDF to.
-	 * @param exportDescription
-	 *        Description of the PDF export.
-	 * @param renderContext
-	 *        Context information about the exported object.
-	 */
-	public void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
-			FormEditorContext renderContext) throws IOException, DocumentException {
+	private String expandThemeVariables(String html) {
+		StringBuilder buffer = new StringBuilder();
+		Pattern varPattern = Pattern.compile("var\\(--([^\\)]+)\\)");
+		Matcher matcher = varPattern.matcher(html);
+		Theme theme = ThemeFactory.getTheme();
+		while (matcher.find()) {
+			ThemeSetting setting = theme.getSettings().get(matcher.group(1));
+			String replacement;
+			if (setting == null) {
+				replacement = "";
+			} else {
+				replacement = setting.getCssValue().replace("\\", "\\\\").replace("$", "\\$");
+			}
+			matcher.appendReplacement(buffer, replacement);
+		}
+		matcher.appendTail(buffer);
+		return buffer.toString();
+	}
+
+	private DisplayContext createDisplayContext() {
 		// Note: Must set up a separate display context, to allow one-time rendering of
 		// controls during export. The "current" display context is not available for
 		// control rendering, since the current session is not in rendering mode.
 		ServletContext servletContext = ServletContextService.getInstance().getServletContext();
-		DisplayContext context = new DummyDisplayContext().initServletContext(servletContext);
+
+		DisplayContext context =
+			new DummyDisplayContext()
+				.initServletContext(servletContext)
+				.initOutputMedia(Media.PDF)
+				.initContextPath(servletContext.getContextPath());
 		context.initScope(new DummyControlScope());
 		context.installSubSessionContext(TLContext.getContext());
-
-		StringWriter w = new StringWriter();
-		try (TagWriter tagWriter = new TagWriter(w)) {
-			Media outputMedia = context.getOutputMedia();
-			if (outputMedia == Media.PDF) {
-				writeHTML(context, tagWriter, exportDescription, renderContext);
-			} else if (!(context instanceof AbstractDisplayContext)) {
-				// try with default media.
-				writeHTML(context, tagWriter, exportDescription, renderContext);
-			} else {
-				AbstractDisplayContext dc = (AbstractDisplayContext) context;
-				dc.setOutputMedia(Media.PDF);
-				try {
-					writeHTML(context, tagWriter, exportDescription, renderContext);
-				} finally {
-					dc.setOutputMedia(outputMedia);
-				}
-			}
-		}
-		writeToPDF(context, out, w.toString());
+		return context;
 	}
 
 	/**
@@ -231,17 +237,30 @@ public class PDFExport {
 	protected void writePDFStyles(DisplayContext context, TagWriter out) throws IOException {
 		writePageStyles(context, out);
 
-		Theme currentTheme = getExportTheme();
-		String mergedCSS = currentTheme.getStyleSheet(
-			"pdfExport.css",
-			new String[] {
-				currentTheme.getFileLink(STYLE_FONTAWESOME_ALL_CSS),
-				currentTheme.getFileLink(STYLE_TL_ICON_FONT_CSS),
-				currentTheme.getFileLink(STYLE_TL_FONT_COLOR_CSS),
-				currentTheme.getFileLink(STYLE_PDF_EXPORT_CSS),
+		// Write styles inline to HTML to allow expanding CSS variables later on. The CSS engin of
+		// the PDF renderer does not support CSS variables.
+		out.beginBeginTag(HTMLConstants.STYLE_ATTR);
+		out.writeAttribute(HTMLConstants.TYPE_ATTR, "text/css");
+		out.endBeginTag();
+		{
+			String mergedCSS = getThemeCssResource();
+			try (InputStream css = FileManager.getInstance().getStream(mergedCSS)) {
+				try (InputStreamReader reader = new InputStreamReader(css, StandardCharsets.UTF_8)) {
+					StreamUtilities.copyReaderWriterContents(reader, out);
+				}
+			}
+		}
+		out.endTag(HTMLConstants.STYLE_ATTR);
+	}
 
-			});
-		HTMLUtil.writeStylesheetRef(out, context.getContextPath(), mergedCSS);
+	private String getThemeCssResource() {
+		Theme exportTheme = getExportTheme();
+		String mergedCSS = exportTheme.getStyleSheet();
+		int paramIndex = mergedCSS.lastIndexOf('?');
+		if (paramIndex >= 0) {
+			return mergedCSS.substring(0, paramIndex);
+		}
+		return mergedCSS;
 	}
 
 	/**
@@ -295,13 +314,17 @@ public class PDFExport {
 	 */
 	protected void renderContent(DisplayContext context, TagWriter out, FormElementTemplateProvider exportDescription,
 			FormEditorContext renderContext) throws IOException {
-		exportDescription.renderPDFExport(context, out, renderContext);
+
+		HTMLTemplateFragment template = exportDescription.createDisplayTemplate(renderContext);
+		TemplateControl control =
+			new TemplateControl(renderContext.getContentGroup(), MetaControlProvider.INSTANCE, template);
+		control.write(context, out);
 	}
 
 	/**
-	 * Writes the created HTML as PDF to given {@link OutputStream}.
+	 * Converts the given HTML string to PDF written to the given {@link OutputStream}.
 	 */
-	protected void writeToPDF(DisplayContext context, OutputStream out, String html) throws DocumentException {
+	protected void convertToPDF(DisplayContext context, OutputStream out, String html) throws DocumentException {
 		ITextRenderer renderer = new ITextRenderer(150f / 72f, 1);
 		setCustomizedUserAgentCallback(context, renderer);
 		renderer.setDocumentFromString(html);
@@ -440,7 +463,10 @@ public class PDFExport {
 		 * @return The transformed uri
 		 */
 		private String getTLPath(String uri) {
-			if (uri.startsWith(contextPath)) {
+			if (uri.startsWith("../")) {
+				// A resource that is relative to the /servlet URI (e.g. a font).
+				uri = uri.substring(2);
+			} else if (uri.startsWith(contextPath)) {
 				uri = uri.substring(contextPath.length());
 			}
 			int parameter = uri.lastIndexOf("?");

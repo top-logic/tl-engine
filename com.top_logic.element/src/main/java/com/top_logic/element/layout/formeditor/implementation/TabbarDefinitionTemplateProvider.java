@@ -5,10 +5,7 @@
  */
 package com.top_logic.element.layout.formeditor.implementation;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
@@ -17,13 +14,11 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.layout.formeditor.definition.TabbarDefinition;
 import com.top_logic.element.layout.formeditor.definition.TabbarDefinition.TabDefinition;
 import com.top_logic.element.layout.formeditor.definition.WithUUID;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
@@ -210,15 +205,6 @@ public class TabbarDefinitionTemplateProvider extends AbstractFormElementProvide
 	@Override
 	public ResKey getLabel(FormEditorContext context) {
 		return I18NConstants.TABBAR;
-	}
-
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		List<TabDefinitionTemplateProvider> tabs = getConfig().getTabs()
-			.stream()
-			.map(TypedConfigUtil::createInstance)
-			.collect(Collectors.toList());
-		renderPlain(context, out, renderContext, tabs);
 	}
 
 }

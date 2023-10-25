@@ -248,10 +248,11 @@ public class FormGroup extends AbstractFormContainer {
 		return lookupMember(ancestor, qname, localNameStart);
 	}
 
-	private static FormMember lookupMember(FormMember ancestor, String qname, int localNameStart)
+	private static FormMember lookupMember(FormMember root, String qname, int localNameStart)
 			throws NoSuchElementException
 	{
 		int separatorIndex = 0;
+		FormMember ancestor = root;
         while (true) {
             separatorIndex = qname.indexOf('.', localNameStart);
 			String step;
@@ -263,7 +264,8 @@ public class FormGroup extends AbstractFormContainer {
             
 			if (!(ancestor instanceof FormContainer)) {
 				throw new IllegalArgumentException("Cannot resolve path '" + step + "' relative to primitive member '"
-					+ ancestor.getQualifiedName() + "'.");
+					+ ancestor.getQualifiedName() + "', resolving '" + qname + "' relative to '"
+					+ root.getQualifiedName() + "'.");
 			}
 			ancestor = ((FormContainer) ancestor).getMember(step);
             

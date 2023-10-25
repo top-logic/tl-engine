@@ -1,0 +1,96 @@
+# Fallback for rare file endings: Let Git decide.
+* text=auto
+
+
+# Text files:
+*.bpml text
+*.bpmn text
+*.classpath text
+*.component text
+*.conf text
+*.css text
+*.csv text
+*.distexclude text
+*.djunitplugin text
+*.dtd text
+*.ed text
+*.ent text
+*.eslintrc text
+*.factorypath text
+*.gitignore text
+*.groovy text
+*.html text
+*.inc text
+*.incl text
+*.java text
+*.jj text
+*.jpl text
+*.js text
+*.json text
+*.jsp text
+*.launch text
+*.log text
+*.map text
+*.md text
+*.php text
+*.prefs text
+*.project text
+*.properties text
+*.proto text
+*.py text
+*.rb text
+*.rnc text
+*.rng text
+*.sql text
+*.srcexclude text
+*.svg text
+*.tld text
+*.tlr text
+*.txt text
+*.uxf text
+*.xmi text
+*.xml text
+*.xsd text
+*.xsl text
+*.xslt text
+MANIFEST.MF text
+
+# Linux Bash files should always use the Linux line ending:
+*.sh text eol=lf
+
+# Windows batch files should always use the Windows line ending:
+*.bat text eol=crlf
+
+
+# Binary files:
+*.bcmap binary
+*.class binary
+*.db binary
+*.doc binary
+*.docx binary
+*.eot binary
+*.gif binary
+*.gz binary
+*.ico binary
+*.jar binary
+*.jardesc binary
+*.jpg binary
+*.jpeg binary
+*.mdb binary
+*.odf binary
+*.odg binary
+*.odp binary
+*.ods binary
+*.odt binary
+*.pdf binary
+*.png binary
+*.ppt binary
+*.pptx binary
+*.rtf binary
+*.ttf binary
+*.war binary
+*.woff binary
+*.woff2 binary
+*.xls binary
+*.xlsx binary
+*.zip binary

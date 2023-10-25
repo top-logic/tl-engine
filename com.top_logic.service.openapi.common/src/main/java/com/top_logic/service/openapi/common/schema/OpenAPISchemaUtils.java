@@ -152,6 +152,20 @@ public class OpenAPISchemaUtils {
 				schema = null;
 			}
 		}
+		if (schema != null) {
+			String description = stringValue(schemaAsMap, SCHEMA_PROPERTY_DESCRIPTION);
+			if (!description.isEmpty()) {
+				schema.setDescription(description);
+			}
+			Object defaultValue = schemaAsMap.get(SCHEMA_PROPERTY_DEFAULT);
+			if (defaultValue != null) {
+				schema.setDefault(JSON.toString(defaultValue));
+			}
+			Object exampleValue = schemaAsMap.get(SCHEMA_PROPERTY_EXAMPLE);
+			if (exampleValue != null) {
+				schema.setDefault(JSON.toString(exampleValue));
+			}
+		}
 		return schema;
 	}
 

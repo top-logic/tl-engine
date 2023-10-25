@@ -27,6 +27,21 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_PROPERTY_ITEMS = "items";
 
 	/**
+	 * Property in a schema that holds a description for the schema.
+	 */
+	public static final String SCHEMA_PROPERTY_DESCRIPTION = "description";
+
+	/**
+	 * Property in a schema that holds a default value for the schema.
+	 */
+	public static final Object SCHEMA_PROPERTY_DEFAULT = "default";
+
+	/**
+	 * Property in a schema that holds an example value for the schema.
+	 */
+	public static final Object SCHEMA_PROPERTY_EXAMPLE = "example";
+
+	/**
 	 * Property in a schema that defines the properties when the {@link #SCHEMA_PROPERTY_TYPE type}
 	 * is an {@link #SCHEMA_TYPE_OBJECT object}.
 	 */

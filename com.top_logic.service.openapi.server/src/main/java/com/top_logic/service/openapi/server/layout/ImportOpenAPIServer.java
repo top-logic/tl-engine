@@ -426,6 +426,12 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 					break;
 				case SCHEMA_TYPE_STRING:
 					switch (format) {
+						case SCHEMA_FORMAT_BINARY:
+							paramConf.setFormat(ParameterFormat.BINARY);
+							break;
+						case SCHEMA_FORMAT_BYTE:
+							paramConf.setFormat(ParameterFormat.BYTE);
+							break;
 						case SCHEMA_FORMAT_DATE:
 							paramConf.setFormat(ParameterFormat.DATE);
 							break;

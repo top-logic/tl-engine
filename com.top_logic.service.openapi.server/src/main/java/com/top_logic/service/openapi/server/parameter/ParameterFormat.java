@@ -48,6 +48,18 @@ public enum ParameterFormat implements ExternallyNamed {
 	BOOLEAN("boolean"),
 
 	/**
+	 * A sequence of bytes.
+	 */
+	@Label("Byte sequence")
+	BINARY("binary"),
+
+	/**
+	 * A base64 encoded sequence of bytes.
+	 */
+	@Label("Base64 encoded bytes")
+	BYTE("byte"),
+
+	/**
 	 * A date value.
 	 */
 	DATE("date"),

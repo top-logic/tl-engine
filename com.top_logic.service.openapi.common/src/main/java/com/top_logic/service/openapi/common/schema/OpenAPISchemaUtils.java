@@ -131,6 +131,8 @@ public class OpenAPISchemaUtils {
 				primitiveSchema.setType(SCHEMA_TYPE_STRING);
 				String format = stringValue(schemaAsMap, SCHEMA_PROPERTY_FORMAT);
 				switch (format) {
+					case SCHEMA_FORMAT_BINARY:
+					case SCHEMA_FORMAT_BYTE:
 					case SCHEMA_FORMAT_DATE:
 					case SCHEMA_FORMAT_DATE_TIME: {
 						primitiveSchema.setFormat(format);

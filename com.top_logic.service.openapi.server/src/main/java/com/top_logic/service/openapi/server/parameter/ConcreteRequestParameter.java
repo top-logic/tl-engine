@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.server.parameter;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.util.Base64;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
@@ -297,6 +299,15 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 						"Invalid format in parameter '" + getConfig().getName() + "': " + rawValue
 								+ ". Dates must be formatted in XML dateTime format: http://www.w3.org/TR/xmlschema-2/#dateTime",
 						ex);
+				}
+			case BINARY:
+				throw new IllegalArgumentException();
+			case BYTE:
+				try {
+					return BinaryDataFactory.createBinaryData(Base64.getDecoder().decode(rawValue));
+				} catch (IllegalArgumentException ex) {
+					throw new InvalidValueException(
+						"Invalid Base64 encoded value in '" + getConfig().getName() + "': " + rawValue, ex);
 				}
 			default:
 				throw new UnreachableAssertion("No such format: " + getConfig().getFormat());

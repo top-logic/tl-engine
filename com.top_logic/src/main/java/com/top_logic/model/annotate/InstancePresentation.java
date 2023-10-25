@@ -18,7 +18,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName(InstancePresentation.TAG_NAME)
-@TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
+@TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION, TLTypeKind.ENUMERATION })
 @InApp
 @DisplayOrder({
 	InstancePresentation.ICON,

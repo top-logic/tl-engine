@@ -51,6 +51,11 @@ public class DBUserRepository {
 	 * Column name of the {@link PersonAttributes#USER_NAME} attribute.
 	 */
 	public static final String DB_USER_NAME = "CN";
+
+	/**
+	 * Value used for "no password set" in the non-null password column.
+	 */
+	public static final String NO_PASSWORD = "*";
 	
 	/**
 	 * The database name of the password identifier {@value PersonAttributes#PASSWORD}.
@@ -124,6 +129,9 @@ public class DBUserRepository {
 					try (ResultSet res = stmt.executeQuery()) {
 						if (res.next()) {
 							thePass = res.getString(1);
+							if (NO_PASSWORD.equals(thePass)) {
+								thePass = null;
+							}
 							if (res.next()) {
 								Logger.error("Error duplicate cn in " + _dbUserMO.getDBName() + " Check Primary key",
 									this);

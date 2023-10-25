@@ -92,7 +92,9 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 * </p>
 	 */
 	private final Collection<CommandHandler> _allCommands =
-			Arrays.<CommandHandler>asList(TreeGridExpandAll.getInstance(), TreeGridCollapseAll.getInstance());
+		Arrays.<CommandHandler> asList(
+			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.EXPAND_ID),
+			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.COLLAPSE_ID));
 
 	/**
 	 * Commands when <em>not</em> {@link #canExpandAll()}.
@@ -103,7 +105,8 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 * </p>
 	 */
 	private final Collection<CommandHandler> _restrictedCommands =
-			Arrays.<CommandHandler>asList(TreeGridCollapseAll.getInstance());
+		Arrays.<CommandHandler> asList(
+			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.COLLAPSE_ID));
 
 	private boolean _rootVisible;
 

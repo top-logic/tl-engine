@@ -20,7 +20,7 @@ import com.top_logic.tool.boundsec.conditional.Hide;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class TreeTableExpandCollapseAll extends AbstractExpandCollapseAll {
+public class TreeTableExpandCollapseAll extends AbstractTreeTableExpandCollapseAll {
 
 	/** The id at the {@link CommandHandlerFactory} for the "expand all" command. */
 	public static final String EXPAND_ID = "treeTableExpandAll";
@@ -38,7 +38,8 @@ public class TreeTableExpandCollapseAll extends AbstractExpandCollapseAll {
 		if (!(component instanceof TreeTableComponent)) {
 			return new Hide();
 		}
-		return prepare(((TreeTableComponent) component).getTableData().getTree());
+
+		return prepare(((TreeTableComponent) component).getTableData());
 	}
 
 }

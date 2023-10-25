@@ -481,6 +481,10 @@ public class OpenAPIExporter {
 				}
 			case STRING:
 				return primitiveSchema(SCHEMA_TYPE_STRING, null, multiple);
+			case BINARY:
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_BINARY, multiple);
+			case BYTE:
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_BYTE, multiple);
 			case DATE:
 				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_DATE, multiple);
 			case DATE_TIME:

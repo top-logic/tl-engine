@@ -54,19 +54,31 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_PROPERTY_REQUIRED = "required";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_STRING string} attribute
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_STRING string} attribute
 	 * representing a date with time.
 	 */
 	public static final String SCHEMA_FORMAT_DATE_TIME = "date-time";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_STRING string} attribute
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_STRING string} attribute
 	 * representing a date.
 	 */
 	public static final String SCHEMA_FORMAT_DATE = "date";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_INTEGER integer} attribute
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_STRING string} attribute
+	 * representing an arbitrary sequence of bytes.
+	 */
+	public static final String SCHEMA_FORMAT_BINARY = "binary";
+
+	/**
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_STRING string} attribute
+	 * representing base64 encoded characters.
+	 */
+	public static final String SCHEMA_FORMAT_BYTE = "byte";
+
+	/**
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_INTEGER integer} attribute
 	 * representing a precision of 64 bit.
 	 * 
 	 * @see Long
@@ -74,7 +86,7 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_FORMAT_INT64 = "int64";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_INTEGER integer} attribute
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_INTEGER integer} attribute
 	 * representing a precision of 32 bit.
 	 * 
 	 * @see Integer
@@ -82,7 +94,7 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_FORMAT_INT32 = "int32";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_NUMBER number} attribute
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_NUMBER number} attribute
 	 * representing a double.
 	 * 
 	 * @see Double
@@ -90,7 +102,7 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_FORMAT_DOUBLE = "double";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_NUMBER number} attribute
+	 * {@link #SCHEMA_PROPERTY_FORMAT Format} of a {@link #SCHEMA_TYPE_NUMBER number} attribute
 	 * representing a float.
 	 * 
 	 * @see Float
@@ -98,12 +110,12 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_FORMAT_FLOAT = "float";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_TYPE Type} representing an array.
+	 * {@link #SCHEMA_PROPERTY_TYPE Type} representing an array.
 	 */
 	public static final String SCHEMA_TYPE_ARRAY = "array";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_TYPE Type} representing a number.
+	 * {@link #SCHEMA_PROPERTY_TYPE Type} representing a number.
 	 * 
 	 * @see #SCHEMA_FORMAT_FLOAT
 	 * @see #SCHEMA_FORMAT_DOUBLE
@@ -111,7 +123,7 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_TYPE_NUMBER = "number";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_TYPE Type} representing an integer.
+	 * {@link #SCHEMA_PROPERTY_TYPE Type} representing an integer.
 	 * 
 	 * @see #SCHEMA_FORMAT_INT32
 	 * @see #SCHEMA_FORMAT_INT64
@@ -119,15 +131,17 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_TYPE_INTEGER = "integer";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_TYPE Type} representing a string.
+	 * {@link #SCHEMA_PROPERTY_TYPE Type} representing a string.
 	 * 
 	 * @see #SCHEMA_FORMAT_DATE
 	 * @see #SCHEMA_FORMAT_DATE_TIME
+	 * @see #SCHEMA_FORMAT_BINARY
+	 * @see #SCHEMA_FORMAT_BYTE
 	 */
 	public static final String SCHEMA_TYPE_STRING = "string";
 
 	/**
-	 * {@value #SCHEMA_PROPERTY_TYPE Type} representing a boolean.
+	 * {@link #SCHEMA_PROPERTY_TYPE Type} representing a boolean.
 	 */
 	public static final String SCHEMA_TYPE_BOOLEAN = "boolean";
 

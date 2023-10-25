@@ -48,6 +48,7 @@ import com.top_logic.service.openapi.client.registry.impl.call.request.SimpleHea
 import com.top_logic.service.openapi.client.registry.impl.call.uri.PathArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.QueryArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.SimpleQueryArgument;
+import com.top_logic.service.openapi.client.registry.impl.value.ComputedValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ConstantValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ParameterValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ValueProducerFactory;
@@ -77,6 +78,13 @@ import com.top_logic.tool.boundsec.CommandHandler;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
+
+	/**
+	 * Workaround type-spec: There is actually no type "base64 encoded bytes", but this information
+	 * is needed to transform an input of type {@link TypeSpec#BINARY_TYPE} to a base64 encoded
+	 * value.
+	 */
+	static final String BYTE_TYPE_SPEC = "tl.core:base64EncodedBytes";
 
 	/**
 	 * Configuration for the {@link ImportOpenAPIClient}.
@@ -177,14 +185,19 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 			}
 
 			ParameterDefinition paramDef = createParameter(parameterName, parameter, warnings, completeAPI);
+			boolean encodeBase64 = false;
+			if (hasByteTypeWorkaround(paramDef)) {
+				encodeBase64 = true;
+				replaceByteTypeWorkaround(paramDef);
+			}
 			newMethod.getParameters().add(paramDef);
 
 			switch (parameter.getIn()) {
 				case COOKIE:
 					CookieHeaderArgument.Config<?> cookieArgument;
-					if (requiredParameterName != parameterName) {
+					if (requiredParameterName != parameterName || encodeBase64) {
 						cookieArgument = newConfigForImplementation(CookieHeaderArgument.class);
-						cookieArgument.setValue(newParameterValue(parameterName));
+						cookieArgument.setValue(newParameterValue(parameterName, encodeBase64));
 					} else {
 						cookieArgument = newConfigForImplementation(CookieHeaderArgument.class);
 					}
@@ -193,9 +206,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 					break;
 				case HEADER:
 					HeaderArgument.Config<?> headerArgument;
-					if (requiredParameterName != parameterName) {
+					if (requiredParameterName != parameterName || encodeBase64) {
 						headerArgument = newConfigForImplementation(HeaderArgument.class);
-						headerArgument.setValue(newParameterValue(parameterName));
+						headerArgument.setValue(newParameterValue(parameterName, encodeBase64));
 					} else {
 						headerArgument = newConfigForImplementation(SimpleHeaderArgument.class);
 					}
@@ -207,9 +220,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 					break;
 				case QUERY:
 					QueryArgument.Config<?> queryArgument;
-					if (requiredParameterName != parameterName) {
+					if (requiredParameterName != parameterName || encodeBase64) {
 						queryArgument = newConfigForImplementation(QueryArgument.class);
-						queryArgument.setValue(newParameterValue(parameterName));
+						queryArgument.setValue(newParameterValue(parameterName, encodeBase64));
 					} else {
 						queryArgument = newConfigForImplementation(SimpleQueryArgument.class);
 					}
@@ -226,16 +239,19 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 				String description = requestBody.getDescription();
 				ParameterDefinition paramDef = createParameter(requestBodyParameterName(parameterNames), description,
 					requestBody.isRequired(), schema, warnings, completeAPI);
-				newMethod.getParameters().add(paramDef);
-				try {
-					JSONRequestBody.Config<?> bodyArgument =
-							newConfigForImplementation(JSONRequestBody.class);
-					bodyArgument.setJson(
-						ExprFormat.INSTANCE.getValue(JSONRequestBody.Config.JSON, "$" + paramDef.getName()));
-					newMethod.getCallBuilders().add(bodyArgument);
-				} catch (ConfigurationException ex) {
-					throw new ConfigurationError(ex);
+				boolean encodeBase64 = false;
+				if (hasByteTypeWorkaround(paramDef)) {
+					encodeBase64 = true;
+					replaceByteTypeWorkaround(paramDef);
 				}
+				newMethod.getParameters().add(paramDef);
+				JSONRequestBody.Config<?> bodyArgument = newConfigForImplementation(JSONRequestBody.class);
+				if (encodeBase64) {
+					bodyArgument.setJson(newVariableBase64Encoded(paramDef.getName()));
+				} else {
+					bodyArgument.setJson(newVariable(paramDef.getName()));
+				}
+				newMethod.getCallBuilders().add(bodyArgument);
 			}
 		} else {
 			// Body is either not allowed or behaviour is undefined. In this case a consumer
@@ -243,6 +259,47 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		}
 
 		handlePathParameters(newMethod, path.getPath());
+	}
+
+	private static Expr newVariable(String variableName) {
+		Expr.Var variable = TypedConfiguration.newConfigItem(Expr.Var.class);
+		variable.setName(variableName);
+		return variable;
+	}
+
+	private static Expr newVariableBase64Encoded(String variableName) {
+		return parseExpr("$" + variableName + ".base64Encode()");
+	}
+
+	private static Expr parseExpr(String expression) {
+		try {
+			return ExprFormat.INSTANCE.getValue(ImportOpenAPIClient.class.getSimpleName() + "#parseExpr", expression);
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
+	}
+
+	/**
+	 * Replaces the workaround "base64 encoded bytes" type in the given parameter by the
+	 * {@link TypeSpec#BINARY_TYPE}.
+	 * 
+	 * @see #hasByteTypeWorkaround(ParameterDefinition)
+	 */
+	private void replaceByteTypeWorkaround(ParameterDefinition paramDef) {
+		paramDef.setType(TLModelPartRef.ref(TypeSpec.BINARY_TYPE));
+	}
+
+	/**
+	 * Checks whether the parameter contains the workaround "base64 encoded bytes" type.
+	 * 
+	 * @see #replaceByteTypeWorkaround(ParameterDefinition)
+	 */
+	private boolean hasByteTypeWorkaround(ParameterDefinition paramDef) {
+		TLModelPartRef type = paramDef.getType();
+		if (type == null) {
+			return false;
+		}
+		return BYTE_TYPE_SPEC.equals(type.qualifiedName());
 	}
 
 	/**
@@ -287,10 +344,18 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		return newName.toString();
 	}
 
-	private ParameterValue.Config<?> newParameterValue(String name) {
+	private PolymorphicConfiguration<? extends ValueProducerFactory> newParameterValue(String name,
+			boolean encodeBase64) {
 		ParameterValue.Config<?> param = newConfigForImplementation(ParameterValue.class);
 		param.setParameter(name);
-		return param;
+		if (!encodeBase64) {
+			return param;
+		} else {
+			ComputedValue.Config<?> result = newConfigForImplementation(ComputedValue.class);
+			result.getArguments().add(param);
+			result.setFunction(parseExpr("param -> $param.base64Encode()"));
+			return result;
+		}
 	}
 
 	private String requestBodyParameterName(Set<String> parameterNames) {
@@ -457,6 +522,12 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 								break;
 							case SCHEMA_FORMAT_DATE_TIME:
 								typespec = TypeSpec.DATE_TIME_TYPE;
+								break;
+							case SCHEMA_FORMAT_BYTE:
+								typespec = BYTE_TYPE_SPEC;
+								break;
+							case SCHEMA_FORMAT_BINARY:
+								typespec = TypeSpec.BINARY_TYPE;
 								break;
 							case StringServices.EMPTY_STRING:
 								typespec = TypeSpec.STRING_TYPE;

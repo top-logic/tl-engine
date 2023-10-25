@@ -9,14 +9,14 @@
   </parent>
   <artifactId>ext-io-c9-ace</artifactId>
   
-  <description>Ace version 1.4.14 - the high performance code editor for the web</description>
+  <description>Ace version 1.31.0 - the high performance code editor for the web</description>
   <url>https://ace.c9.io/</url>
   
   <licenses>
   	<license>
   		<name>BSD-3-Clause (BSD-3-Clause "New" or "Revised" License)</name>
-  		<url>https://github.com/ajaxorg/ace/blob/v1.4.14/LICENSE</url>
-  		<comments>https://github.com/ajaxorg/ace/blob/v1.4.14/lib/ace/ace.js</comments>
+  		<url>https://github.com/ajaxorg/ace/blob/v1.31.0/LICENSE</url>
+  		<comments>https://github.com/ajaxorg/ace/tree/v1.31.0/lib/ace</comments>
   	</license>
   </licenses>
   

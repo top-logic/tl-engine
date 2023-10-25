@@ -35,6 +35,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.conf.MethodDefinition;
@@ -505,19 +506,46 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 							schema.getType());
 				}
 				newParameterDef.setType(TLModelPartRef.ref(typespec));
+				addDefaultValue(schema, newParameterDef);
+				addDescription(schema, newParameterDef);
 				return ResKey.NONE;
 			}
 
 			@Override
 			public ResKey visitObjectSchema(ObjectSchema schema, ParameterDefinition newParameterDef) {
 				newParameterDef.setType(TLModelPartRef.ref(TypeSpec.JSON_TYPE));
+				addDefaultValue(schema, newParameterDef);
+				addDescription(schema, newParameterDef);
 				return ResKey.NONE;
 			}
 
 			@Override
 			public ResKey visitArraySchema(ArraySchema schema, ParameterDefinition newParameterDef) {
 				newParameterDef.setMultiple(true);
+				addDescription(schema, newParameterDef);
 				return schema.getItems().visit(this, newParameterDef);
+			}
+
+			private void addDescription(Schema s, ParameterDefinition param) {
+				String description = s.getDescription();
+				if (description == null) {
+					return;
+				}
+				param.setDescription(description);
+			}
+
+			private void addDefaultValue(Schema s, ParameterDefinition param) {
+				String defaultValue = s.getDefault();
+				if (defaultValue == null) {
+					return;
+				}
+				Expr defaultExpr;
+				try {
+					defaultExpr = ExprFormat.INSTANCE.getValue(ParameterDefinition.DEFAULT_VALUE, defaultValue);
+				} catch (ConfigurationException ex) {
+					throw new ConfigurationError(ex);
+				}
+				param.setDefaultValue(defaultExpr);
 			}
 		};
 	}

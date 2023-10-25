@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.common.schema;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Nullable;
 
 /**
  * {@link Schema} for a value in the <i>OpenAPI</i> communication.
@@ -29,6 +30,7 @@ public interface Schema extends ConfigurationItem {
 	/**
 	 * Description of the possible value.
 	 */
+	@Nullable
 	String getDescription();
 
 	/**
@@ -40,6 +42,7 @@ public interface Schema extends ConfigurationItem {
 	 * String representation of the default value, that is used when an element of this
 	 * {@link Schema} is expected but nothing is given.
 	 */
+	@Nullable
 	String getDefault();
 
 	/**
@@ -50,6 +53,7 @@ public interface Schema extends ConfigurationItem {
 	/**
 	 * String representation of an potential value that satisfy this schema.
 	 */
+	@Nullable
 	String getExample();
 
 	/**

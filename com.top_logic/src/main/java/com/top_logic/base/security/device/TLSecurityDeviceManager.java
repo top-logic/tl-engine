@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
@@ -44,6 +45,7 @@ import com.top_logic.util.license.LicenseTool;
  */
 @ServiceDependencies({
 	SecureRandomService.Module.class,
+	Login.Module.class,
 })
 public class TLSecurityDeviceManager extends ManagedClass {
 	

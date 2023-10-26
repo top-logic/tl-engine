@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,6 +44,7 @@ import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.ByteArrayStream;
+import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
@@ -69,7 +71,10 @@ import com.top_logic.service.openapi.common.document.OpenapiDocument;
 import com.top_logic.service.openapi.common.document.ParameterObject;
 import com.top_logic.service.openapi.common.document.ReferencableParameterObject;
 import com.top_logic.service.openapi.common.document.ReferencingParameterObject;
+import com.top_logic.service.openapi.common.document.SchemaObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
+import com.top_logic.service.openapi.common.schema.OpenAPISchemaUtils;
+import com.top_logic.service.openapi.common.schema.Schema;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -422,6 +427,59 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 			return Collections.emptyMap();
 		}
 		return components.getParameters();
+	}
+
+	/**
+	 * Parses the given string serialization of an <code>OpenAPI</code> schema.
+	 *
+	 * @param schema
+	 *        The scheme to de-serialize.
+	 * @param parameterName
+	 *        Name of the parameter in which the schema is defined. Used to log problems.
+	 * @param globalSchemas
+	 *        Mapping of global {@link SchemaObject} to resolve schema references.
+	 * @param problems
+	 *        {@link List} to add possible problems.
+	 * @return The parsed schema. May be <code>null</code>, if there is a problem.
+	 */
+	protected Schema parseSchema(String schema, String parameterName, Map<String, SchemaObject> globalSchemas,
+			List<ResKey> problems) {
+		Schema schemaObject;
+		try {
+			Pattern globalSchemaReference = GLOBAL_SCHEMA_REFERENCE;
+			schemaObject = OpenAPISchemaUtils.parseSchema(schema, new Function<String, Schema>() {
+				@Override
+				public Schema apply(String globalSchemaRef) {
+					Matcher matcher = globalSchemaReference.matcher(globalSchemaRef);
+					if (matcher.matches()) {
+						String schemaName = matcher.group(1);
+						SchemaObject globalSchema = globalSchemas.get(schemaName);
+						if (globalSchema != null) {
+							try {
+								return OpenAPISchemaUtils.parseSchema(globalSchema.getSchema(), this);
+							} catch (ParseException ex) {
+								problems.add(
+									I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_NAME__PROBLEM__SCHEMA_NAME
+										.fill(parameterName, schemaName, ex.getErrorKey()));
+								return null;
+							}
+						}
+	
+						problems.add(I18NConstants.MISSING_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
+							.fill(parameterName, schemaName));
+						return null;
+					}
+					problems.add(I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
+						.fill(parameterName, globalSchemaRef));
+					return null;
+				}
+			});
+		} catch (ParseException ex) {
+			problems.add(I18NConstants.INVALID_SCHEMA_DEFINITION__PARAMETER_PROBLEM
+				.fill(parameterName, ex.getErrorKey()));
+			schemaObject = null;
+		}
+		return schemaObject;
 	}
 
 }

@@ -16,17 +16,21 @@ import com.top_logic.layout.I18NConstantsBase;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/** @en Invalid URL {0} in scheme {1}. */
 	public static ResKey2 INVALID_URL__URL__SCHEMA;
 
+	/** @en Only authentication via ClientCredentials is supported: {0} */
 	public static ResKey1 MISSING_CLIENT_CREDENTIALS_FLOW__SCHEMA;
 
+	/** @en OpenAPI configuration import */
 	public static ResKey IMPORT_OPEN_API_CONFIG_DIALOG_TITLE;
 
+	/** @en The following problems occurred while parsing the OpenAPI document: */
 	public static ResKey WARNING_WHEN_PARSING_OPEN_API_DOCUMENT;
 
+	/** @en The following problems occurred while processing the OpenAPI document: */
 	public static ResKey WARNING_WHEN_PROCESSING_OPEN_API_SPECIFICATION;
 
 	/**

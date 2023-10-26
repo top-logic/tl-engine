@@ -14,9 +14,11 @@ import com.top_logic.layout.I18NConstantsBase;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en The property "Required" must be set to "true" for a path parameter.
+	 */
 	public static ResKey ERROR_REQUIRE_MUST_BE_SET_ON_PATH_PARAMETER;
 
 	/**

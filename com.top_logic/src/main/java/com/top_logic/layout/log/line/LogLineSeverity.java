@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import java.util.Map;
 import java.util.Objects;
@@ -14,7 +14,7 @@ import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.tools.NameBuilder;
 
 /**
- * The severity of a {@link ParsedLogEntry}.
+ * The severity of a {@link LogLine}.
  * <p>
  * As Log4j supports custom log severities, this cannot be a fixed enum.
  * </p>
@@ -29,34 +29,34 @@ import com.top_logic.basic.tools.NameBuilder;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public final class LogEntrySeverity implements Comparable<LogEntrySeverity> {
+public final class LogLineSeverity implements Comparable<LogLineSeverity> {
 
 	/** @see #cleanUpSeverities() */
 	private static final int MAX_SEVERITIES = 100;
 
 	/** {@link Level#FATAL} */
-	public static final LogEntrySeverity FATAL = new LogEntrySeverity("FATAL", 6000);
+	public static final LogLineSeverity FATAL = new LogLineSeverity("FATAL", 6000);
 
 	/** {@link Level#ERROR} */
-	public static final LogEntrySeverity ERROR = new LogEntrySeverity("ERROR", 5000);
+	public static final LogLineSeverity ERROR = new LogLineSeverity("ERROR", 5000);
 
 	/** {@link Level#WARN} */
-	public static final LogEntrySeverity WARN = new LogEntrySeverity("WARN", 4000);
+	public static final LogLineSeverity WARN = new LogLineSeverity("WARN", 4000);
 
 	/** {@link Level#INFO} */
-	public static final LogEntrySeverity INFO = new LogEntrySeverity("INFO", 3000);
+	public static final LogLineSeverity INFO = new LogLineSeverity("INFO", 3000);
 
 	/** {@link Level#DEBUG} */
-	public static final LogEntrySeverity DEBUG = new LogEntrySeverity("DEBUG", 2000);
+	public static final LogLineSeverity DEBUG = new LogLineSeverity("DEBUG", 2000);
 
 	/** Not used in Top-Logic, but one of the official Log4j log levels. */
-	public static final LogEntrySeverity TRACE = new LogEntrySeverity("TRACE", 1000);
+	public static final LogLineSeverity TRACE = new LogLineSeverity("TRACE", 1000);
 
 	/** The sort order if none is specified. */
 	public static final int DEFAULT_SORT_ORDER = 0;
 
-	private static final Map<String, LogEntrySeverity> SEVERITIES =
-		new ConcurrentHashMap<>(new MapBuilder<String, LogEntrySeverity>()
+	private static final Map<String, LogLineSeverity> SEVERITIES =
+		new ConcurrentHashMap<>(new MapBuilder<String, LogLineSeverity>()
 			.put(FATAL.getName(), FATAL)
 			.put(ERROR.getName(), ERROR)
 			.put(WARN.getName(), WARN)
@@ -71,11 +71,11 @@ public final class LogEntrySeverity implements Comparable<LogEntrySeverity> {
 
 	private final String _cssClass;
 
-	private LogEntrySeverity(String name, int sortOrder) {
+	private LogLineSeverity(String name, int sortOrder) {
 		_name = name;
 		_sortOder = sortOrder;
 		/* Using a non-compiled regex is no problem here, as new log levels should be very, very rare. */
-		_cssClass = "tl-log-entries-table--" + name.toLowerCase().replaceAll("[^a-z0-9_-]", "");
+		_cssClass = "tl-log-lines-table--" + name.toLowerCase().replaceAll("[^a-z0-9_-]", "");
 	}
 
 	private void register() {
@@ -103,15 +103,15 @@ public final class LogEntrySeverity implements Comparable<LogEntrySeverity> {
 	}
 
 	/** Retrieves the severity with the given name or creates if it does not exist. */
-	public static LogEntrySeverity getOrCreate(String name) {
+	public static LogLineSeverity getOrCreate(String name) {
 		return SEVERITIES.computeIfAbsent(name, id -> addLogLevel(id, DEFAULT_SORT_ORDER));
 	}
 
-	private static LogEntrySeverity addLogLevel(String name, int sortOrder) {
+	private static LogLineSeverity addLogLevel(String name, int sortOrder) {
 		if (SEVERITIES.containsKey(name)) {
 			throw new RuntimeException("Severity '" + name + "' already exists: " + SEVERITIES.get(name));
 		}
-		LogEntrySeverity severity = new LogEntrySeverity(name, sortOrder);
+		LogLineSeverity severity = new LogLineSeverity(name, sortOrder);
 		severity.register();
 		return severity;
 	}
@@ -126,7 +126,7 @@ public final class LogEntrySeverity implements Comparable<LogEntrySeverity> {
 		return _sortOder;
 	}
 
-	/** The CSS class for displaying log entries with this severity. */
+	/** The CSS class for displaying a {@link LogLine} with this severity. */
 	public String getCssClass() {
 		return _cssClass;
 	}
@@ -141,16 +141,16 @@ public final class LogEntrySeverity implements Comparable<LogEntrySeverity> {
 		if (this == other) {
 			return true;
 		}
-		if (!(other instanceof LogEntrySeverity)) {
+		if (!(other instanceof LogLineSeverity)) {
 			return false;
 		}
-		LogEntrySeverity otherSeverity = (LogEntrySeverity) other;
+		LogLineSeverity otherSeverity = (LogLineSeverity) other;
 		return Objects.equals(getName(), otherSeverity.getName())
 			&& getSortOrder() == otherSeverity.getSortOrder();
 	}
 
 	@Override
-	public int compareTo(LogEntrySeverity other) {
+	public int compareTo(LogLineSeverity other) {
 		if (other == null) {
 			/* "null" has the least severity: If a message does not even have a severity, it
 			 * shouldn't be important. */

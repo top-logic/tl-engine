@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey2;
@@ -23,7 +23,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FAILED_TO_PARSE_FILE__NAME;
 
 	/** @en The log entry has been printed to the console. */
-	public static ResKey LOG_ENTRY_PRINTED_TO_CONSOLE;
+	public static ResKey LOG_LINE_PRINTED_TO_CONSOLE;
 
 	/** @en {0} / {1} errors */
 	public static ResKey2 TABLE_FOOTER_ERRORS__DISPLAYED_ALL;

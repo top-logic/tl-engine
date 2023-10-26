@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!-- This component shows logging files and possible configurations. -->
-<tableView name="logEntriesTable"
-	modelBuilder="com.top_logic.layout.log.entry.ParsedLogEntriesModelBuilder"
-	resPrefix="layouts.admin.technical.logs.logging.logEntriesTable."
+<tableView name="logLinesTable"
+	modelBuilder="com.top_logic.layout.log.line.LogLineModelBuilder"
+	resPrefix="layouts.admin.technical.logs.logging.logLinesTable."
 	resetInvisible="true"
 	securityProviderClass="securityRoot"
 >
@@ -12,18 +12,18 @@
 	<buttons>
 		<reference command-id="invalidate"/>
 		<button id="printToConsole"
-			class="com.top_logic.layout.log.entry.PrintLogEntryCommand"
+			class="com.top_logic.layout.log.line.PrintLogLineCommand"
 		/>
 	</buttons>
 	<table
 		defaultColumns="time, severity, file-category, category, thread, message, details"
 		defaultSortOrder="severity:descending, time:descending"
 		fixedColumns="2"
-		tableRenderer="com.top_logic.layout.log.entry.LogEntryTableRenderer"
+		tableRenderer="com.top_logic.layout.log.line.LogLineTableRenderer"
 	>
 		<column-default
-			accessor="com.top_logic.layout.log.entry.LogEntryAccessor"
-			cssClassProvider="com.top_logic.layout.log.entry.LogEntryCellClassProvider"
+			accessor="com.top_logic.layout.log.line.LogLineAccessor"
+			cssClassProvider="com.top_logic.layout.log.line.LogLineCellClassProvider"
 			filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			resourceProvider="com.top_logic.layout.provider.resource.LabelAsTooltipResourceProvider"
 		/>
@@ -39,7 +39,7 @@
 			</column>
 			<column name="severity"
 				columnWidth="90px"
-				labelProvider="com.top_logic.layout.log.entry.LogEntrySeverityLabelProvider"
+				labelProvider="com.top_logic.layout.log.line.LogLineSeverityLabelProvider"
 			>
 				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
 					show-option-entries="true"
@@ -82,7 +82,7 @@
 			</column>
 			<column name="details"
 				columnWidth="35px"
-				renderer="com.top_logic.layout.log.entry.LogEntryDetailsColumnRenderer"
+				renderer="com.top_logic.layout.log.line.LogLineDetailsColumnRenderer"
 			>
 				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
 					show-option-entries="false"

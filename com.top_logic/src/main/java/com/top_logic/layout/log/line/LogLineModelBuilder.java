@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import static java.util.stream.Collectors.*;
 
@@ -17,14 +17,14 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * A {@link ListModelBuilder} that collects the log files, parses them and returns the
- * {@link ParsedLogEntry} objects as {@link List} elements.
+ * {@link LogLine} objects as {@link List} elements.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class ParsedLogEntriesModelBuilder implements ListModelBuilder {
+public class LogLineModelBuilder implements ListModelBuilder {
 
-	/** The {@link ParsedLogEntriesModelBuilder} instance. */
-	public static final ParsedLogEntriesModelBuilder INSTANCE = new ParsedLogEntriesModelBuilder();
+	/** The {@link LogLineModelBuilder} instance. */
+	public static final LogLineModelBuilder INSTANCE = new LogLineModelBuilder();
 
 	@Override
 	public boolean supportsModel(Object model, LayoutComponent component) {
@@ -48,7 +48,7 @@ public class ParsedLogEntriesModelBuilder implements ListModelBuilder {
 
 	@Override
 	public boolean supportsListElement(LayoutComponent component, Object candidate) {
-		return candidate instanceof ParsedLogEntry;
+		return candidate instanceof LogLine;
 	}
 
 	@Override

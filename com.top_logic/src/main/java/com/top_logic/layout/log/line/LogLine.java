@@ -3,25 +3,19 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import static com.top_logic.basic.shared.string.StringServicesShared.*;
 
 import java.util.Date;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.tools.NameBuilder;
 
 /**
  * A log entry which was parsed from a log file.
  * <p>
- * This is a "parsed" log entry, as there are different types of log entries. For example the
- * {@link Logger} contains another class named {@link LogEntry}.
- * </p>
- * <p>
- * Every getter can return null, when the log entry did not contain that data or it could not be
- * parsed. String getter return the empty String instead of null.
+ * Every getter can return null, when the log did not contain that data or it could not be parsed.
+ * String getter return the empty String instead of null.
  * </p>
  * <p>
  * This class is recursively immutable.
@@ -29,7 +23,7 @@ import com.top_logic.basic.tools.NameBuilder;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class ParsedLogEntry {
+public class LogLine {
 
 	/** @see #getFileCategory() */
 	public static final String PROPERTY_FILE_CATEGORY = "file-category";
@@ -63,7 +57,7 @@ public class ParsedLogEntry {
 
 	private final Date _time;
 
-	private final LogEntrySeverity _severity;
+	private final LogLineSeverity _severity;
 
 	private final String _category;
 
@@ -72,14 +66,14 @@ public class ParsedLogEntry {
 	private final String _details;
 
 	/**
-	 * Creates a {@link ParsedLogEntry}.
+	 * Creates a {@link LogLine}.
 	 * <p>
 	 * All arguments can be null: If the String arguments are null, the empty String is used
 	 * instead. If "time" or "severity" are null, their getters will return null.
 	 * </p>
 	 */
-	public ParsedLogEntry(String fileCategory, String fileName, String message, Date time,
-			LogEntrySeverity severity, String category, String thread, String details) {
+	public LogLine(String fileCategory, String fileName, String message, Date time,
+			LogLineSeverity severity, String category, String thread, String details) {
 		_fileName = nonNull(fileName);
 		_fileCategory = nonNull(fileCategory);
 		_message = nonNull(message);
@@ -103,7 +97,7 @@ public class ParsedLogEntry {
 	/**
 	 * The timestamp when this entry was logged.
 	 * <p>
-	 * Returns null when the log entry contained no time stamp or it could not be parsed.
+	 * Returns null when the log contained no time stamp or it could not be parsed.
 	 * </p>
 	 */
 	public Date getTime() {
@@ -113,10 +107,10 @@ public class ParsedLogEntry {
 	/**
 	 * Whether this is just an information, a warning or an error.
 	 * <p>
-	 * Returns null when the log entry contained no severity or it could not be parsed.
+	 * Returns null when the log contained no severity or it could not be parsed.
 	 * </p>
 	 */
-	public LogEntrySeverity getSeverity() {
+	public LogLineSeverity getSeverity() {
 		return _severity;
 	}
 

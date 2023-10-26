@@ -3,10 +3,10 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
-import static com.top_logic.layout.log.entry.ParsedLogEntry.*;
+import static com.top_logic.layout.log.line.LogLine.*;
 import static java.util.stream.Collectors.*;
 
 import java.time.Instant;
@@ -28,7 +28,7 @@ import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.util.TLContextManager;
 
 /**
- * Parses a log file into {@link ParsedLogEntry} objects.
+ * Parses a log file into {@link LogLine} objects.
  * <p>
  * Example line:
  * <code>2023-08-25T13:59:11,136 INFO  [TL-Bootstrap]: com.top_logic.basic.module.BasicRuntimeModule - Service 'com.top_logic.knowledge.wrap.WebFolderFactory' successfully started.</code>
@@ -38,7 +38,7 @@ import com.top_logic.util.TLContextManager;
  * parts.
  * </p>
  * <p>
- * The parser stores a cache of log entry part strings to do a soft form of "interning"
+ * The parser stores a cache of {@link LogLine} part strings to do a soft form of "interning"
  * ({@link String#intern()}). Instead of filling the JVM string cache, it uses its own. The cache is
  * non-static. When the {@link LogParser} object is garbage collected, its cache is garbage
  * collected, too.
@@ -132,10 +132,10 @@ public class LogParser {
 	 *        Must not be null.
 	 * @return Never null. The {@link List} might be immutable.
 	 */
-	public List<ParsedLogEntry> parseLog(LogFile logFile) {
+	public List<LogLine> parseLog(LogFile logFile) {
 		return separateEntries(logFile)
 			.stream()
-			.map(logEntry -> createParsedLogEntry(logFile.getFileCategory(), logFile.getFileName(), logEntry))
+			.map(logLine -> createParsedLogLine(logFile.getFileCategory(), logFile.getFileName(), logLine))
 			.collect(toList());
 	}
 
@@ -223,15 +223,15 @@ public class LogParser {
 		return matcher.end();
 	}
 
-	private ParsedLogEntry createParsedLogEntry(String fileCategory, String fileName, Map<String, Object> entry) {
+	private LogLine createParsedLogLine(String fileCategory, String fileName, Map<String, Object> entry) {
 		String message = internMessage((String) entry.get(PROPERTY_MESSAGE));
 		Date time = parseTime((String) entry.get(PROPERTY_TIME));
-		LogEntrySeverity severity = LogEntrySeverity.getOrCreate((String) entry.get(PROPERTY_SEVERITY));
+		LogLineSeverity severity = LogLineSeverity.getOrCreate((String) entry.get(PROPERTY_SEVERITY));
 		String category = internCategory((String) entry.get(PROPERTY_CATEGORY));
 		String thread = internThread((String) entry.get(PROPERTY_THREAD));
 		@SuppressWarnings("unchecked")
 		String details = internDetails(joinDetails((List<String>) entry.get(PROPERTY_DETAILS)));
-		return new ParsedLogEntry(fileCategory, fileName, message, time, severity, category, thread, details);
+		return new LogLine(fileCategory, fileName, message, time, severity, category, thread, details);
 	}
 
 	private Date parseTime(String time) {

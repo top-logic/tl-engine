@@ -5,7 +5,7 @@
 	<components>
 		<tabbar name="loggingTabBar">
 			<components>
-				<include name="com.top_logic/admin/technical/logs/logEntries.layout.xml"/>
+				<include name="com.top_logic/admin/technical/logs/logLines.layout.xml"/>
 				<component class="com.top_logic.layout.log.LogFolderComponent"
 					columns="_download,name,_size,_date"
 					modelBuilder="com.top_logic.util.log.LogFilesBuilder"

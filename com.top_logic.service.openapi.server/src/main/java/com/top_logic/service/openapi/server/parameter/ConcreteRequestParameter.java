@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
@@ -44,24 +45,20 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		extends RequestParameter<C> {
 
 	/**
-	 * Configuration options for {@link ConcreteRequestParameter}.
+	 * Configuration of a parameter.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	@DisplayOrder({
-		Config.NAME_ATTRIBUTE,
-		Config.DESCRIPTION,
-		Config.FORMAT,
-		Config.REQUIRED,
-		Config.SCHEMA,
-		Config.EXAMPLE,
-		Config.MULTIPLE,
+		ParameterConfiguration.NAME_ATTRIBUTE,
+		ParameterConfiguration.DESCRIPTION,
+		ParameterConfiguration.FORMAT,
+		ParameterConfiguration.REQUIRED,
+		ParameterConfiguration.SCHEMA,
+		ParameterConfiguration.EXAMPLE,
+		ParameterConfiguration.MULTIPLE,
 	})
-	@Abstract
-	public interface Config<I extends ConcreteRequestParameter<?>> extends RequestParameter.Config<I>, Described {
-
-		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
-		Lookup LOOKUP = MethodHandles.lookup();
+	public interface ParameterConfiguration extends Described, NamedConfigMandatory {
 
 		/**
 		 * @see #getRequired()
@@ -122,7 +119,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		 * the definition of a JSON schema see
 		 * <code>https://spec.openapis.org/oas/v3.0.3#schema-object</code>.
 		 */
-		@DynamicMode(fun = Config.VisibleOnObjectParam.class, args = @Ref(FORMAT))
+		@DynamicMode(fun = ParameterConfiguration.VisibleOnObjectParam.class, args = @Ref(FORMAT))
 		@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
 		@PropertyEditor(DefaultCodeEditor.class)
 		@Name(SCHEMA)
@@ -138,7 +135,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		 * {@link #getExample()} defines an example for the argument. The example must match the
 		 * {@link #getSchema()}.
 		 */
-		@DynamicMode(fun = Config.VisibleOnObjectParam.class, args = @Ref(FORMAT))
+		@DynamicMode(fun = ParameterConfiguration.VisibleOnObjectParam.class, args = @Ref(FORMAT))
 		@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
 		@PropertyEditor(DefaultCodeEditor.class)
 		@Name(EXAMPLE)
@@ -162,23 +159,6 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		void setMultiple(boolean value);
 
 		/**
-		 * Service method to get the {@link ParameterLocation} where this configuration is used.
-		 */
-		default ParameterLocation getParameterLocation() {
-			ParameterUsedIn annotation = getImplementationClass().getAnnotation(ParameterUsedIn.class);
-			if (annotation == null) {
-				throw new IllegalStateException("No Annotation declared at " + getImplementationClass());
-			}
-			return annotation.value();
-		}
-
-		@Override
-		default ConcreteRequestParameter.Config<? extends ConcreteRequestParameter<?>> resolveParameter(
-				Map<String, ReferencedParameter> globalParams) {
-			return this;
-		}
-
-		/**
 		 * {@link Function1} that hides a {@link FormField} unless the given parameter is an
 		 * {@link ParameterFormat#OBJECT} parameter.
 		 * 
@@ -194,6 +174,37 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 				return FieldMode.INVISIBLE;
 			}
 
+		}
+
+	}
+
+	/**
+	 * Configuration options for {@link ConcreteRequestParameter}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	@Abstract
+	public interface Config<I extends ConcreteRequestParameter<?>>
+			extends ParameterConfiguration, RequestParameter.Config<I> {
+
+		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+		Lookup LOOKUP = MethodHandles.lookup();
+
+		/**
+		 * Service method to get the {@link ParameterLocation} where this configuration is used.
+		 */
+		default ParameterLocation getParameterLocation() {
+			ParameterUsedIn annotation = getImplementationClass().getAnnotation(ParameterUsedIn.class);
+			if (annotation == null) {
+				throw new IllegalStateException("No Annotation declared at " + getImplementationClass());
+			}
+			return annotation.value();
+		}
+
+		@Override
+		default ConcreteRequestParameter.Config<? extends ConcreteRequestParameter<?>> resolveParameter(
+				Map<String, ReferencedParameter> globalParams) {
+			return this;
 		}
 
 	}

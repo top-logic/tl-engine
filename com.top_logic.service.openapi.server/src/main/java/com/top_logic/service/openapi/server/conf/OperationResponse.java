@@ -15,7 +15,7 @@ import com.top_logic.layout.codeedit.editor.DefaultCodeEditor;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.service.openapi.common.document.Described;
-import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter.Config.VisibleOnObjectParam;
+import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter.ParameterConfiguration.VisibleOnObjectParam;
 import com.top_logic.service.openapi.server.parameter.ParameterFormat;
 
 /**

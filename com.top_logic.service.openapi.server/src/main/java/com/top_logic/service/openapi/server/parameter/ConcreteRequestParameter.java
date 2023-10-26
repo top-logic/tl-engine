@@ -8,6 +8,8 @@ package com.top_logic.service.openapi.server.parameter;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -223,6 +225,13 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 	}
 
 	/**
+	 * The names of parameters that will be filled in {@link #parse(Map, HttpServletRequest, Map)}.
+	 */
+	public List<String> getScriptParameterNames() {
+		return Collections.singletonList(getName());
+	}
+
+	/**
 	 * Fills the parameter in the given {@link Map} with values from the request.
 	 * 
 	 * @param parameters
@@ -242,7 +251,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 
 			return;
 		}
-		parameters.put(getConfig().getName(), value);
+		parameters.put(getName(), value);
 	}
 
 	/**
@@ -255,10 +264,33 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 	 * Parses a parameters raw value.
 	 */
 	protected final Object parse(String rawValue) throws InvalidValueException {
+		return parse(rawValue, getConfig().getFormat(), getConfig().getName());
+
+	}
+
+	/**
+	 * Parses the given raw value according to the given {@link ParameterFormat}.
+	 *
+	 * @param rawValue
+	 *        The raw raw value to parse. May be <code>null</code>.
+	 * @param format
+	 *        Format defining the expected value type. <b>Must not be
+	 *        {@link ParameterFormat#BINARY}.</b> Binary data can not be retrieved from a string.
+	 * @param parameterName
+	 *        Name of the parameter where the <code>rawValue</code> is taken from.
+	 * @return Parsed version of <code>rawValue</code>. May be <code>null</code> iff the input is
+	 *         <code>null</code>.
+	 * @throws InvalidValueException
+	 *         When the value can not be parsed by the given format.
+	 * @throws IllegalArgumentException
+	 *         If format is {@link ParameterFormat#BINARY}.
+	 */
+	protected static Object parse(String rawValue, ParameterFormat format, String parameterName)
+			throws InvalidValueException {
 		if (rawValue.isEmpty()) {
 			return null;
 		}
-		switch (getConfig().getFormat()) {
+		switch (format) {
 			case STRING:
 				return rawValue;
 			case DOUBLE:
@@ -266,14 +298,14 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 					return Double.parseDouble(rawValue);
 				} catch (NumberFormatException ex) {
 					throw new InvalidValueException(
-						"Invalid double format in parameter '" + getConfig().getName() + "': " + rawValue, ex);
+						"Invalid double format in parameter '" + parameterName + "': " + rawValue, ex);
 				}
 			case OBJECT:
 				try {
 					return JSON.fromString(rawValue);
 				} catch (ParseException ex) {
 					throw new InvalidValueException(
-						"Invalid JSON value in parameter '" + getConfig().getName() + "': " + rawValue, ex);
+						"Invalid JSON value in parameter '" + parameterName + "': " + rawValue, ex);
 				}
 			case BOOLEAN:
 				return Boolean.parseBoolean(rawValue);
@@ -282,21 +314,21 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 					return (int) Double.parseDouble(rawValue);
 				} catch (NumberFormatException ex) {
 					throw new InvalidValueException(
-						"Invalid integer format in parameter '" + getConfig().getName() + "': " + rawValue, ex);
+						"Invalid integer format in parameter '" + parameterName + "': " + rawValue, ex);
 				}
 			case FLOAT:
 				try {
 					return Float.parseFloat(rawValue);
 				} catch (NumberFormatException ex) {
 					throw new InvalidValueException(
-						"Invalid float format in parameter '" + getConfig().getName() + "': " + rawValue, ex);
+						"Invalid float format in parameter '" + parameterName + "': " + rawValue, ex);
 				}
 			case LONG:
 				try {
 					return (long) Double.parseDouble(rawValue);
 				} catch (NumberFormatException ex) {
 					throw new InvalidValueException(
-						"Invalid long format in parameter '" + getConfig().getName() + "': " + rawValue, ex);
+						"Invalid long format in parameter '" + parameterName + "': " + rawValue, ex);
 				}
 			case DATE_TIME:
 			case DATE:
@@ -304,7 +336,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 					return XmlDateTimeFormat.INSTANCE.parseObject(rawValue);
 				} catch (java.text.ParseException ex) {
 					throw new InvalidValueException(
-						"Invalid format in parameter '" + getConfig().getName() + "': " + rawValue
+						"Invalid format in parameter '" + parameterName + "': " + rawValue
 								+ ". Dates must be formatted in XML dateTime format: http://www.w3.org/TR/xmlschema-2/#dateTime",
 						ex);
 				}
@@ -315,21 +347,35 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 					return BinaryDataFactory.createBinaryData(Base64.getDecoder().decode(rawValue));
 				} catch (IllegalArgumentException ex) {
 					throw new InvalidValueException(
-						"Invalid Base64 encoded value in '" + getConfig().getName() + "': " + rawValue, ex);
+						"Invalid Base64 encoded value in '" + parameterName + "': " + rawValue, ex);
 				}
-			default:
-				throw new UnreachableAssertion("No such format: " + getConfig().getFormat());
 		}
-
+		throw new UnreachableAssertion("No such format: " + format);
 	}
 
 	/**
 	 * Report a failure, if this parameter is mandatory.
+	 * 
+	 * @see #checkNonMandatory(ParameterConfiguration)
 	 */
 	protected final void checkNonMandatory() throws InvalidValueException {
-		if (getConfig().getRequired()) {
+		checkNonMandatory(getConfig());
+	}
+
+	/**
+	 * Checks that the given parameter is not {@link ParameterConfiguration#getRequired()
+	 * mandatory}.
+	 *
+	 * @param parameter
+	 *        The parameter to check.
+	 * @throws InvalidValueException
+	 *         iff the given {@link ParameterConfiguration} is
+	 *         {@link ParameterConfiguration#getRequired() mandatory}.
+	 */
+	protected static void checkNonMandatory(ParameterConfiguration parameter) throws InvalidValueException {
+		if (parameter.getRequired()) {
 			throw new InvalidValueException(
-				"Parameter '" + getName() + "' is mandatory, but no value was given.");
+				"Parameter '" + parameter.getName() + "' is mandatory but no value is given.");
 		}
 	}
 

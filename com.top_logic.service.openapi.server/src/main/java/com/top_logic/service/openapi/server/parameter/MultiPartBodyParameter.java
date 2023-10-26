@@ -9,8 +9,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +31,8 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.config.order.DisplayInherited;
@@ -51,7 +56,7 @@ import com.top_logic.service.openapi.common.document.ParameterLocation;
  * 
  * @see RequestBodyParameter
  *
- * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ParameterUsedIn(ParameterLocation.QUERY)
 public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBodyParameter.Config> {
@@ -82,14 +87,14 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 
 	/**
 	 * Configuration options for {@link MultiPartBodyParameter}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	@DisplayOrder({
 		Config.NAME_ATTRIBUTE,
 		Config.DESCRIPTION,
-		Config.FORMAT,
+		Config.PARTS,
 		Config.REQUIRED,
-		Config.SCHEMA,
-		Config.EXAMPLE,
 	})
 	@DisplayInherited(DisplayStrategy.IGNORE)
 	@TagName("multipart-request-body")
@@ -97,6 +102,11 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
+
+		/**
+		 * Configuration name of the value {@link #getParts()}.
+		 */
+		String PARTS = "parts";
 
 		/**
 		 * There is only one body.
@@ -110,6 +120,31 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		default boolean isBodyParameter() {
 			return true;
 		}
+
+		/**
+		 * The parts that are allowed for this {@link MultiPartBodyParameter}.
+		 */
+		@Name(PARTS)
+		@Key(BodyPart.NAME_ATTRIBUTE)
+		Map<String, BodyPart> getParts();
+
+	}
+
+	/**
+	 * Part configuration for {@link MultiPartBodyParameter}.
+	 * 
+	 * <p>
+	 * A {@link BodyPart} defines the name of the field that can be contained in a
+	 * multipart/form-data request, whether the field is mandatory, and the format which the content
+	 * must have.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface BodyPart extends ParameterConfiguration {
+
+		// marker interface
+
 	}
 
 	/**
@@ -126,7 +161,52 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	}
 
 	@Override
-	protected Object getValue(HttpServletRequest req, Map<String, String> parametersRaw) throws InvalidValueException {
+	public List<String> getScriptParameterNames() {
+		Set<String> partNames = parts().keySet();
+		if (partNames.isEmpty()) {
+			return super.getScriptParameterNames();
+		}
+		List<String> result = new ArrayList<>(super.getScriptParameterNames());
+		result.addAll(partNames);
+		return result;
+	}
+
+	@Override
+	public void parse(Map<String, Object> parameters, HttpServletRequest req, Map<String, String> parametersRaw)
+			throws InvalidValueException {
+		Map<?, ?> value = getValue(req, parametersRaw);
+		if (value.isEmpty()) {
+			checkNonMandatory(getConfig());
+		}
+		parameters.put(getName(), value);
+		for (ParameterConfiguration part : parts().values()) {
+			String partName = part.getName();
+			Object partValue = value.get(partName);
+			if (partValue == null) {
+				checkNonMandatory(part);
+			}
+			if (part.isMultiple()) {
+				if (partValue == null) {
+					partValue = new MultipleParameterValues();
+				}
+				assert partValue instanceof MultipleParameterValues : "#getValue(...) ensures that the value is a MultipleParameterValues";
+			} else {
+				if (partValue instanceof MultipleParameterValues) {
+					throw new InvalidValueException(
+						"Received multiple values for single parameter '" + partName + "'.");
+				}
+			}
+			parameters.put(partName, partValue);
+		}
+	}
+
+	private Map<String, ? extends ParameterConfiguration> parts() {
+		return getConfig().getParts();
+	}
+
+	@Override
+	protected Map<?, ?> getValue(HttpServletRequest req, Map<String, String> parametersRaw)
+			throws InvalidValueException {
 		String characterEncoding = req.getCharacterEncoding();
 		Map<String, Object> values = new HashMap<>();
 		try {
@@ -178,31 +258,82 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 			throw new InvalidValueException("Missing parameter '" + CONTENT_DISPOSITION_NAME_PARAM
 					+ "' in content disposition header:  " + sContentDisposition);
 		}
-		String fileName = contentDisposition.getParameter(CONTENT_DISPOSITION_FILENAME_PARAM);
-		
-		Object value;
-		if (contentType.isEmpty()) {
-			value = readBinary(stream, fileName, BinaryData.CONTENT_TYPE_OCTET_STREAM);
-		} else {
-			MimeType mimeType = parseMimeType(contentType);
-			String charSet = mimeType.getParameter("charset");
-			if (charSet == null) {
-				charSet = defaultEncoding;
+		ParameterConfiguration bodyPartDefinition = parts().get(fieldName);
+		if (bodyPartDefinition == null) {
+			// Unspecified content.
+			Object value;
+			if (contentType.isEmpty()) {
+				value = readBinary(stream, fileName(contentDisposition), BinaryData.CONTENT_TYPE_OCTET_STREAM);
+			} else {
+				MimeType mimeType = parseMimeType(contentType);
+				String charSet = mimeType.getParameter("charset");
+				if (charSet == null) {
+					charSet = defaultEncoding;
+				}
+				if (MIME_TYPE_ANY_TEXT.match(mimeType)) {
+					value = readString(stream, charSet);
+				} else if (MIME_TYPE_JSON.match(mimeType)) {
+					String stringValue = readString(stream, charSet);
+					try {
+						value = JSON.fromString(stringValue);
+					} catch (com.top_logic.basic.json.JSON.ParseException ex) {
+						throw new InvalidValueException("Invalid JSON value: " + stringValue, ex);
+					}
+				} else {
+					value = readBinary(stream, fileName(contentDisposition), mimeType.getBaseType());
+				}
 			}
-			if (MIME_TYPE_ANY_TEXT.match(mimeType)) {
-				value = readString(stream, charSet);
-			} else if (MIME_TYPE_JSON.match(mimeType)) {
-				String stringValue = readString(stream, charSet);
-				try {
-					value = JSON.fromString(stringValue);
-				} catch (com.top_logic.basic.json.JSON.ParseException ex) {
-					throw new InvalidValueException("Invalid JSON value: " + stringValue, ex);
+			addValue(values, fieldName, value, false);
+		} else {
+			Object value;
+			if (bodyPartDefinition.getFormat() == ParameterFormat.BINARY) {
+				if (contentType.isEmpty()) {
+					value = readBinary(stream, fileName(contentDisposition), BinaryData.CONTENT_TYPE_OCTET_STREAM);
+				} else {
+					MimeType mimeType = parseMimeType(contentType);
+					String charSet = mimeType.getParameter("charset");
+					if (charSet == null) {
+						charSet = defaultEncoding;
+					}
+					value = readBinary(stream, fileName(contentDisposition), mimeType.getBaseType());
 				}
 			} else {
-				value = readBinary(stream, fileName, mimeType.getBaseType());
+				String charSet;
+				if (contentType.isEmpty()) {
+					charSet = defaultEncoding;
+				} else {
+					MimeType mimeType = parseMimeType(contentType);
+					charSet = mimeType.getParameter("charset");
+					if (charSet == null) {
+						charSet = defaultEncoding;
+					}
+				}
+				/* ParameterFormat#BINARY is handled above. */
+				ParameterFormat format = bodyPartDefinition.getFormat();
+				value = parse(readString(stream, charSet), format, bodyPartDefinition.getName());
 			}
+			addValue(values, fieldName, value, bodyPartDefinition.isMultiple());
 		}
-		values.put(fieldName, value);
+
+	}
+
+	private void addValue(Map<String, Object> values, String fieldName, Object value, boolean forceListValue) {
+		Object knownFieldValue = values.get(fieldName);
+		if (knownFieldValue != null || values.containsKey(fieldName)) {
+			if (knownFieldValue instanceof MultipleParameterValues) {
+				((MultipleParameterValues) knownFieldValue).add(value);
+			} else {
+				values.put(fieldName, MultipleParameterValues.create(knownFieldValue, value));
+			}
+		} else if (forceListValue) {
+			values.put(fieldName, MultipleParameterValues.create(value));
+		} else {
+			values.put(fieldName, value);
+		}
+	}
+
+	private String fileName(ContentDisposition contentDisposition) {
+		return contentDisposition.getParameter(CONTENT_DISPOSITION_FILENAME_PARAM);
 	}
 
 	private String readString(MultipartStream stream, String charSet)
@@ -263,5 +394,26 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 			boundary = boundaryParam.getBytes();
 		}
 		return boundary;
+	}
+
+	/**
+	 * Special {@link ArrayList} extension to determine multiple values for a field name.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	private static class MultipleParameterValues extends ArrayList<Object> {
+
+		public static MultipleParameterValues create(Object o1) {
+			MultipleParameterValues multipleParameterValues = new MultipleParameterValues();
+			multipleParameterValues.add(o1);
+			return multipleParameterValues;
+		}
+
+		public static MultipleParameterValues create(Object o1, Object o2) {
+			MultipleParameterValues multipleParameterValues = new MultipleParameterValues();
+			multipleParameterValues.add(o1);
+			multipleParameterValues.add(o2);
+			return multipleParameterValues;
+		}
 	}
 }

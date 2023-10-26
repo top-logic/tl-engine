@@ -14,8 +14,8 @@ import com.top_logic.basic.tools.NameBuilder;
 /**
  * A log entry which was parsed from a log file.
  * <p>
- * Every getter can return null, when the log did not contain that data or it could not be parsed.
- * String getter return the empty String instead of null.
+ * Every getter can return <code>null</code>, when the log did not contain that data or it could not
+ * be parsed. String getter return the empty String instead of <code>null</code>.
  * </p>
  * <p>
  * This class is recursively immutable.
@@ -68,8 +68,9 @@ public class LogLine {
 	/**
 	 * Creates a {@link LogLine}.
 	 * <p>
-	 * All arguments can be null: If the String arguments are null, the empty String is used
-	 * instead. If "time" or "severity" are null, their getters will return null.
+	 * All arguments can be <code>null</code>: If the String arguments are <code>null</code>, the
+	 * empty String is used instead. If "time" or "severity" are <code>null</code>, their getters
+	 * will return <code>null</code>.
 	 * </p>
 	 */
 	public LogLine(String fileCategory, String fileName, String message, Date time,
@@ -97,7 +98,7 @@ public class LogLine {
 	/**
 	 * The timestamp when this entry was logged.
 	 * <p>
-	 * Returns null when the log contained no time stamp or it could not be parsed.
+	 * Returns <code>null</code> when the log contained no time stamp or it could not be parsed.
 	 * </p>
 	 */
 	public Date getTime() {
@@ -107,7 +108,7 @@ public class LogLine {
 	/**
 	 * Whether this is just an information, a warning or an error.
 	 * <p>
-	 * Returns null when the log contained no severity or it could not be parsed.
+	 * Returns <code>null</code> when the log contained no severity or it could not be parsed.
 	 * </p>
 	 */
 	public LogLineSeverity getSeverity() {

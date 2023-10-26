@@ -19,10 +19,11 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.I18NConstants;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
+import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
@@ -35,7 +36,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Base64Encode extends SimpleGenericMethod {
+public class Base64Encode extends GenericMethod implements WithFlatMapSemantics<Encoder> {
 
 	/** 
 	 * Creates a {@link Base64Encode}.
@@ -55,14 +56,18 @@ public class Base64Encode extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+		Encoder encoding = asBoolean(arguments[0]) ? Base64.getMimeEncoder() : Base64.getEncoder();
+
+		return evalPotentialFlatMap(definitions, self, encoding);
+	}
+
+	@Override
+	public Object evalDirect(EvalContext definitions, Object self, Encoder encoding) {
 		if (self == null) {
 			return null;
 		}
-
 		if (self instanceof BinaryDataSource) {
-			Encoder encoding = asBoolean(arguments[0]) ? Base64.getMimeEncoder() : Base64.getEncoder();
-
 			OutputStream buffer = new ASCIIBuffer();
 			try (OutputStream encoder = encoding.wrap(buffer)) {
 				((BinaryDataSource) self).deliverTo(encoder);
@@ -71,7 +76,6 @@ public class Base64Encode extends SimpleGenericMethod {
 			}
 			return buffer.toString();
 		} else if (self instanceof BinaryContent) {
-			Encoder encoding = asBoolean(arguments[0]) ? Base64.getMimeEncoder() : Base64.getEncoder();
 			
 			OutputStream buffer = new ASCIIBuffer();
 			try (InputStream data = ((BinaryContent) self).getStream(); OutputStream encoder = encoding.wrap(buffer)) {

@@ -11,7 +11,7 @@
 	<tabInfo label="admin.logs.entries"/>
 	<buttons>
 		<reference command-id="invalidate"/>
-		<button id="printToConsole"
+		<button id="dumpLogLineToConsole"
 			class="com.top_logic.layout.log.line.DumpLogLineCommand"
 		/>
 	</buttons>

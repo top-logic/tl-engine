@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -60,7 +61,7 @@ public class DumpLogLineCommand extends AbstractCommandHandler {
 		 * command. It should not trigger a "System.err" observer that notifies the administrators
 		 * that something is wrong. */
 		print(System.out, (LogLine) model);
-		InfoService.showInfo(I18NConstants.LOG_LINE_PRINTED_TO_CONSOLE);
+		InfoService.showInfo(I18NConstants.LOG_LINE_DUMPED_TO_CONSOLE);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
@@ -73,6 +74,11 @@ public class DumpLogLineCommand extends AbstractCommandHandler {
 		out.println("--------------------------------------");
 		out.println(logLine.getMessage());
 		out.println(logLine.getDetails());
+	}
+
+	@Override
+	public ResKey getResourceKey(LayoutComponent component) {
+		return I18NConstants.DUMP_LOG_LINE_TO_CONSOLE;
 	}
 
 }

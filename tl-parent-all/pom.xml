@@ -1431,9 +1431,6 @@
 							<rule>
 								<groupId>org.codehaus.plexus</groupId>
 								<artifactId>plexus-archiver</artifactId>
-
-								<!-- Note: Newer versions have an issue with excessive memory consumption causing builds to fail when creating larger WAR artifacts. -->
-								<!-- The issue declared to be fixed, but can still be observed: https://issues.apache.org/jira/browse/MSOURCES-94 -->
 								<ignoreVersions>
 									<ignoreVersion>
 										<type>regex</type>

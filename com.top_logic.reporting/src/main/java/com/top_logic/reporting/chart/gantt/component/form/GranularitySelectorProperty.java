@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.layout.form.model.AbstractFormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.provider.EnumLabelProvider;
+import com.top_logic.layout.provider.EnumResourceProvider;
 import com.top_logic.reporting.chart.gantt.model.TimeGranularity;
 import com.top_logic.reporting.view.component.property.FilterProperty;
 import com.top_logic.tool.boundsec.BoundComponent;
@@ -45,7 +45,7 @@ public class GranularitySelectorProperty extends FilterProperty {
 	protected AbstractFormField createNewFormMember() {
 		SelectField granularityOptionsField = FormFactory.newSelectField(getName(), _validIntervals);
 		granularityOptionsField.setAsSelection((List) getInitialValue());
-		granularityOptionsField.setOptionLabelProvider(EnumLabelProvider.INSTANCE);
+		granularityOptionsField.setOptionLabelProvider(EnumResourceProvider.INSTANCE);
 		return granularityOptionsField;
 	}
 

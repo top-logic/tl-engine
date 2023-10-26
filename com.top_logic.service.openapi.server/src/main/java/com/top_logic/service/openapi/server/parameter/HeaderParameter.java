@@ -57,7 +57,6 @@ public class HeaderParameter extends ConcreteRequestParameter<HeaderParameter.Co
 		} else {
 			String header = req.getHeader(getConfig().getName());
 			if (header == null) {
-				checkNonMandatory();
 				return null;
 			}
 			return parse(header);

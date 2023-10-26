@@ -101,11 +101,7 @@ public class RequestBodyParameter extends ConcreteRequestParameter<RequestBodyPa
 				contents.append(buffer, 0, direct);
 			}
 
-			Object result = parse(contents.toString());
-			if (result == null) {
-				checkNonMandatory();
-			}
-			return result;
+			return parse(contents.toString());
 		} catch (IOException ex) {
 			throw new InvalidValueException("Failed to read body data.", ex);
 		}

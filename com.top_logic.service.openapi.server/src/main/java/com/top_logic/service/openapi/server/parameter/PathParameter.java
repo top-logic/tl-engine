@@ -86,7 +86,6 @@ public class PathParameter extends ConcreteRequestParameter<PathParameter.Config
 			return result;
 		} else {
 			if (variableValue == null) {
-				checkNonMandatory();
 				return null;
 			}
 

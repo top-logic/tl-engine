@@ -12,7 +12,7 @@
 	<buttons>
 		<reference command-id="invalidate"/>
 		<button id="printToConsole"
-			class="com.top_logic.layout.log.line.PrintLogLineCommand"
+			class="com.top_logic.layout.log.line.DumpLogLineCommand"
 		/>
 	</buttons>
 	<table

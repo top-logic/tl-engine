@@ -16,6 +16,9 @@ import com.top_logic.layout.I18NConstantsBase;
  */
 public class I18NConstants extends I18NConstantsBase {
 
+	/** @en Print to the console. */
+	public static ResKey DUMP_LOG_LINE_TO_CONSOLE;
+
 	/** @en Failed to read the log file {0}. */
 	public static ResKey FAILED_TO_READ_FILE__NAME;
 
@@ -23,7 +26,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FAILED_TO_PARSE_FILE__NAME;
 
 	/** @en The log entry has been printed to the console. */
-	public static ResKey LOG_LINE_PRINTED_TO_CONSOLE;
+	public static ResKey LOG_LINE_DUMPED_TO_CONSOLE;
 
 	/** @en {0} / {1} errors */
 	public static ResKey2 TABLE_FOOTER_ERRORS__DISPLAYED_ALL;

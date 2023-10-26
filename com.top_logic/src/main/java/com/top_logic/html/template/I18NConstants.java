@@ -34,7 +34,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_NOT_COMPARABLE__VALUE;
 
 	/**
-	 * @en Failed to parse template '{0}': {1}
+	 * @en Failed to parse template ''{0}'': {1}
 	 */
 	public static ResKey2 ERROR_TEMPLATE_SYNTAX_ERROR__NAME_DESC;
 
@@ -71,7 +71,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 NO_VALID_VOID_ELEMENT__NAME_LINE_COL;
 
 	/**
-	 * @en Reading template '{0}' failed.
+	 * @en Reading template ''{0}'' failed.
 	 */
 	public static ResKey1 ERROR_TEMPLATE_READING_FAILED__NAME;
 

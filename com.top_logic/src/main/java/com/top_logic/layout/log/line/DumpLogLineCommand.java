@@ -25,13 +25,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * Prints the selected {@link LogLine} to the console.
+ * Dumps the selected {@link LogLine} to the console.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class PrintLogLineCommand extends AbstractCommandHandler {
+public class DumpLogLineCommand extends AbstractCommandHandler {
 
-	/** {@link ConfigurationItem} for the {@link PrintLogLineCommand}. */
+	/** {@link ConfigurationItem} for the {@link DumpLogLineCommand}. */
 	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
@@ -48,8 +48,8 @@ public class PrintLogLineCommand extends AbstractCommandHandler {
 
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link PrintLogLineCommand}. */
-	public PrintLogLineCommand(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link DumpLogLineCommand}. */
+	public DumpLogLineCommand(InstantiationContext context, Config config) {
 		super(context, config);
 	}
 

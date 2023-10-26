@@ -15,7 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -29,7 +28,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.json.JsonUtilities;
-import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.admin.component.TLServiceConfigEditorFormBuilder;
@@ -66,12 +64,10 @@ import com.top_logic.service.openapi.common.document.ParameterObject;
 import com.top_logic.service.openapi.common.document.PathItemObject;
 import com.top_logic.service.openapi.common.document.ReferencableParameterObject;
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
-import com.top_logic.service.openapi.common.document.SchemaObject;
 import com.top_logic.service.openapi.common.document.ServerObject;
 import com.top_logic.service.openapi.common.layout.ImportOpenAPIConfiguration;
 import com.top_logic.service.openapi.common.schema.ArraySchema;
 import com.top_logic.service.openapi.common.schema.ObjectSchema;
-import com.top_logic.service.openapi.common.schema.OpenAPISchemaUtils;
 import com.top_logic.service.openapi.common.schema.PrimitiveSchema;
 import com.top_logic.service.openapi.common.schema.Schema;
 import com.top_logic.service.openapi.common.schema.SchemaVisitor;
@@ -559,46 +555,6 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		}
 
 		return newParameterDef;
-	}
-
-	private Schema parseSchema(String schema, String parameterName, Map<String, SchemaObject> globalSchemas,
-			List<ResKey> warnings) {
-		Schema schemaObject;
-		try {
-			Pattern globalSchemaReference = GLOBAL_SCHEMA_REFERENCE;
-			schemaObject = OpenAPISchemaUtils.parseSchema(schema, new Function<String, Schema>() {
-				@Override
-				public Schema apply(String globalSchemaRef) {
-					Matcher matcher = globalSchemaReference.matcher(globalSchemaRef);
-					if (matcher.matches()) {
-						String schemaName = matcher.group(1);
-						SchemaObject globalSchema = globalSchemas.get(schemaName);
-						if (globalSchema != null) {
-							try {
-								return OpenAPISchemaUtils.parseSchema(globalSchema.getSchema(), this);
-							} catch (ParseException ex) {
-								warnings.add(
-									I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_NAME__PROBLEM__SCHEMA_NAME
-										.fill(parameterName, schemaName, ex.getErrorKey()));
-								return null;
-							}
-						}
-
-						warnings.add(I18NConstants.MISSING_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
-							.fill(parameterName, schemaName));
-						return null;
-					}
-					warnings.add(I18NConstants.INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA
-						.fill(parameterName, globalSchemaRef));
-					return null;
-				}
-			});
-		} catch (ParseException ex) {
-			warnings.add(I18NConstants.INVALID_SCHEMA_DEFINITION__PARAMETER_PROBLEM
-				.fill(parameterName, ex.getErrorKey()));
-			schemaObject = null;
-		}
-		return schemaObject;
 	}
 
 	private SchemaVisitor<ResKey, ParameterDefinition> applySchema() {

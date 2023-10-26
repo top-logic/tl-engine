@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.common.layout;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -52,6 +53,18 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The referenced parameter {0} could not be found. Available global parameters: {1}
 	 */
 	public static ResKey2 REFERENCED_PARAMETER_NOT_FOUND__REFERENCE__AVAILABLE;
+
+	/** @en Schema definition of parameter ''{0}'' is invalid: {1} */
+	public static ResKey2 INVALID_SCHEMA_DEFINITION__PARAMETER_PROBLEM;
+
+	/** @en Global schema definition ''{2}'' in parameter ''{0}'' is invalid: {1} */
+	public static ResKey3 INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_NAME__PROBLEM__SCHEMA_NAME;
+
+	/** @en Missing global schema reference ''{1}'' in parameter ''{0}''. */
+	public static ResKey2 MISSING_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA;
+
+	/** @en Invalid schema reference ''{1}'' in parameter ''{0}''. */
+	public static ResKey2 INVALID_GLOBAL_SCHEMA_DEFINITION__PARAMETER_SCHEMA;
 
 	static {
 		initConstants(I18NConstants.class);

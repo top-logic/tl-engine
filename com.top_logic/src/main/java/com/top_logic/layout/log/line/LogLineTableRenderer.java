@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -25,44 +25,44 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class LogEntryTableRenderer extends DefaultTableRenderer {
+public class LogLineTableRenderer extends DefaultTableRenderer {
 
-	/** {@link TypedConfiguration} constructor for {@link LogEntryTableRenderer}. */
-	public LogEntryTableRenderer(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link LogLineTableRenderer}. */
+	public LogLineTableRenderer(InstantiationContext context, Config config) {
 		super(context, config);
 	}
 
 	@Override
 	protected HTMLFragment createFooterTextFragment(TableControl view) {
 		return (HTMLFragment) (context, out) -> {
-			writeLogEntrySummary(out, view.getViewModel());
+			writeLogLineSummary(out, view.getViewModel());
 		};
 	}
 
-	private void writeLogEntrySummary(TagWriter out, TableViewModel viewModel) {
+	private void writeLogLineSummary(TagWriter out, TableViewModel viewModel) {
 		int[] displayedRows = countDisplayedRows(viewModel.getDisplayedRows());
 		int displayedErrors = displayedRows[0];
 		int displayedWarnings = displayedRows[1];
-		int displayedLogEntries = displayedRows[2];
+		int displayedLines = displayedRows[2];
 
 		int[] allRows = countDisplayedRows(viewModel.getAllRows());
 		int allErrors = allRows[0];
 		int allWarnings = allRows[1];
-		int allLogEntries = allRows[2];
+		int allLines = allRows[2];
 
 		// Count files, all errors and warnings:
 		ResKey errorsMessage = I18NConstants.TABLE_FOOTER_ERRORS__DISPLAYED_ALL.fill(displayedErrors, allErrors);
 		ResKey warningsMessage = I18NConstants.TABLE_FOOTER_WARNINGS__DISPLAYED_ALL.fill(displayedWarnings, allWarnings);
-		ResKey rowsMessage = I18NConstants.TABLE_FOOTER_ROWS__DISPLAYED_ALL.fill(displayedLogEntries, allLogEntries);
+		ResKey rowsMessage = I18NConstants.TABLE_FOOTER_ROWS__DISPLAYED_ALL.fill(displayedLines, allLines);
 
 		/* Don't count "fatal": That level is not really used. Including it in "error" is good
 		 * enough. */
 		if (allErrors != 0) {
-			writeSummary(out, LogEntrySeverity.ERROR.getCssClass(), errorsMessage);
+			writeSummary(out, LogLineSeverity.ERROR.getCssClass(), errorsMessage);
 			out.writeText(", ");
 		}
 		if (allWarnings != 0) {
-			writeSummary(out, LogEntrySeverity.WARN.getCssClass(), warningsMessage);
+			writeSummary(out, LogLineSeverity.WARN.getCssClass(), warningsMessage);
 			out.writeText(", ");
 		}
 		/* Don't count the other levels individually: They are not important enough. */
@@ -73,11 +73,11 @@ public class LogEntryTableRenderer extends DefaultTableRenderer {
 		int errors = 0;
 		int warnings = 0;
 		for (Object row : rows) {
-			ParsedLogEntry logEntry = (ParsedLogEntry) row;
-			if (isErrorOrWorse(logEntry)) {
+			LogLine logLine = (LogLine) row;
+			if (isErrorOrWorse(logLine)) {
 				/* Errors and above. */
 				errors += 1;
-			} else if (isWarningOrWorse(logEntry)) {
+			} else if (isWarningOrWorse(logLine)) {
 				/* Warnings and, in case of custom log levels, above which are not errors. */
 				warnings += 1;
 			}
@@ -85,12 +85,12 @@ public class LogEntryTableRenderer extends DefaultTableRenderer {
 		return new int[] { errors, warnings, rows.size() };
 	}
 
-	private boolean isErrorOrWorse(ParsedLogEntry logEntry) {
-		return logEntry.getSeverity().getSortOrder() >= LogEntrySeverity.ERROR.getSortOrder();
+	private boolean isErrorOrWorse(LogLine logLine) {
+		return logLine.getSeverity().getSortOrder() >= LogLineSeverity.ERROR.getSortOrder();
 	}
 
-	private boolean isWarningOrWorse(ParsedLogEntry logEntry) {
-		return logEntry.getSeverity().getSortOrder() >= LogEntrySeverity.WARN.getSortOrder();
+	private boolean isWarningOrWorse(LogLine logLine) {
+		return logLine.getSeverity().getSortOrder() >= LogLineSeverity.WARN.getSortOrder();
 	}
 
 	private void writeSummary(TagWriter out, String cssClass, ResKey message) {

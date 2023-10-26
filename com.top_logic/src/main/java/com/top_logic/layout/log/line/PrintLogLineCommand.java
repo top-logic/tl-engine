@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -25,13 +25,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * Prints the selected {@link ParsedLogEntry} to the console.
+ * Prints the selected {@link LogLine} to the console.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class PrintLogEntryCommand extends AbstractCommandHandler {
+public class PrintLogLineCommand extends AbstractCommandHandler {
 
-	/** {@link ConfigurationItem} for the {@link PrintLogEntryCommand}. */
+	/** {@link ConfigurationItem} for the {@link PrintLogLineCommand}. */
 	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
@@ -48,8 +48,8 @@ public class PrintLogEntryCommand extends AbstractCommandHandler {
 
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link PrintLogEntryCommand}. */
-	public PrintLogEntryCommand(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link PrintLogLineCommand}. */
+	public PrintLogLineCommand(InstantiationContext context, Config config) {
 		super(context, config);
 	}
 
@@ -59,20 +59,20 @@ public class PrintLogEntryCommand extends AbstractCommandHandler {
 		/* Print to "System.out", not "System.err", as it is being printed there on someone's
 		 * command. It should not trigger a "System.err" observer that notifies the administrators
 		 * that something is wrong. */
-		print(System.out, (ParsedLogEntry) model);
-		InfoService.showInfo(I18NConstants.LOG_ENTRY_PRINTED_TO_CONSOLE);
+		print(System.out, (LogLine) model);
+		InfoService.showInfo(I18NConstants.LOG_LINE_PRINTED_TO_CONSOLE);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private void print(PrintStream out, ParsedLogEntry logEntry) {
+	private void print(PrintStream out, LogLine logLine) {
 		/* When an administrator reads the console, they should know where this message is coming
 		 * from. It might be an error printed to the console by another administrator. And that
 		 * error on the console should not cause the former administrator to needlessly investigate
 		 * its origin or even alarm other people. */
 		out.println("Log entry printed from the log viewer:");
 		out.println("--------------------------------------");
-		out.println(logEntry.getMessage());
-		out.println(logEntry.getDetails());
+		out.println(logLine.getMessage());
+		out.println(logLine.getDetails());
 	}
 
 }

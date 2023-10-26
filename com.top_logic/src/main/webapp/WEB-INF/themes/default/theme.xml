@@ -11,6 +11,6 @@
 		<style name="/style/assistant.css"/>
 		<style name="/style/fotorama.css"/>
 		<style name="/style/mdtimepicker.css"/>
-		<style name="/style/log-entry.css"/>
+		<style name="/style/log-line.css"/>
 	</styles>
 </theme>

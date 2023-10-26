@@ -5,32 +5,32 @@
  */
 
 /*
- * CSS for displaying log entries.
+ * CSS for displaying log lines.
  * 
- * The severity color is used in the cells and the footer of the log entries table.
+ * The severity color is used in the cells and the footer of the log lines table.
  * The "!important" is necessary, as there are some very specific selectors setting the text color in the table cells.
  */
 
-.tl-log-entries-table--fatal {
+.tl-log-lines-table--fatal {
 	color: purple !important;
 }
 
-.tl-log-entries-table--error {
+.tl-log-lines-table--error {
 	color: red !important;
 }
 
-.tl-log-entries-table--warn {
+.tl-log-lines-table--warn {
 	color: darkorange !important;
 }
 
-.tl-log-entries-table--info {
+.tl-log-lines-table--info {
 	color: green !important;
 }
 
-.tl-log-entries-table--debug {
+.tl-log-lines-table--debug {
 	color: black !important;
 }
 
-.tl-log-entries-table--trace {
+.tl-log-lines-table--trace {
 	color: black !important;
 }

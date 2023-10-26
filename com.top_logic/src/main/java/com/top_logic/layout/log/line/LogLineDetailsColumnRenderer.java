@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import static com.top_logic.layout.structure.DefaultDialogModel.*;
 import static com.top_logic.mig.html.HTMLConstants.*;
@@ -37,7 +37,7 @@ import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * The renderer for the "details" column of the {@link ParsedLogEntry} table.
+ * The renderer for the "details" column of the {@link LogLine} table.
  * <p>
  * The "details" are usually the stacktrace of the message. But if the logged message consists of
  * multiple lines, i.e. if it contains a line break, the "details" contain everything below the
@@ -46,13 +46,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class LogEntryDetailsColumnRenderer implements Renderer<String> {
+public class LogLineDetailsColumnRenderer implements Renderer<String> {
 
-	/** The {@link LogEntryDetailsColumnRenderer} instance. */
-	public static final LogEntryDetailsColumnRenderer INSTANCE = new LogEntryDetailsColumnRenderer();
+	/** The {@link LogLineDetailsColumnRenderer} instance. */
+	public static final LogLineDetailsColumnRenderer INSTANCE = new LogLineDetailsColumnRenderer();
 
 	/** The CSS class for this dialog. */
-	public static final String DIALOG_CSS_CLASS = "tl-log-entries-table__details-dialog";
+	public static final String DIALOG_CSS_CLASS = "tl-log-lines-table__details-dialog";
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, String value) throws IOException {

@@ -3,24 +3,24 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.entry;
+package com.top_logic.layout.log.line;
 
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.label.NullSafeLabelProvider;
 
 /**
- * {@link LabelProvider} for {@link LogEntrySeverity}.
+ * {@link LabelProvider} for {@link LogLineSeverity}.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class LogEntrySeverityLabelProvider extends NullSafeLabelProvider {
+public class LogLineSeverityLabelProvider extends NullSafeLabelProvider {
 
-	/** The {@link LogEntrySeverityLabelProvider} instance. */
-	public static final LogEntrySeverityLabelProvider INSTANCE = new LogEntrySeverityLabelProvider();
+	/** The {@link LogLineSeverityLabelProvider} instance. */
+	public static final LogLineSeverityLabelProvider INSTANCE = new LogLineSeverityLabelProvider();
 
 	@Override
 	protected String getLabelNullSafe(Object model) {
-		return ((LogEntrySeverity) model).getName();
+		return ((LogLineSeverity) model).getName();
 	}
 
 }

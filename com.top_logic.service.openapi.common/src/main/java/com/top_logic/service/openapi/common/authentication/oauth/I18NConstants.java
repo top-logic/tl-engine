@@ -13,9 +13,11 @@ import com.top_logic.layout.I18NConstantsBase;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en Invalid URI in URL {0}.
+	 */
 	public static ResKey1 ERROR_INVALID_URI__URL;
 
     static {

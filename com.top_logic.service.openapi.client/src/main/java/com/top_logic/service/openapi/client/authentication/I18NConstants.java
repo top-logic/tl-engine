@@ -15,21 +15,41 @@ import com.top_logic.layout.I18NConstantsBase;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en No API key authentication with name "{0}" available.
+	 */
 	public static ResKey1 ERROR_NO_API_KEY__AUTHENTICATION_NAME;
 
+	/**
+	 * @en No Client Credentials authentication with name "{0}" available.
+	 */
 	public static ResKey1 ERROR_NO_CLIENT_CREDENTIALS__AUTHENTICATION_NAME;
 
+	/**
+	 * @en No BasicAuth authentication with name "{0}" available.
+	 */
 	public static ResKey1 ERROR_BASIC_AUTH_CREDENTIALS__AUTHENTICATION_NAME;
 
+	/**
+	 * @en No Open ID authentication with name "{0}" available.
+	 */
 	public static ResKey1 ERROR_NO_OPEN_ID_CONFIGURATION__AUTHENTICATION_NAME;
 
+	/**
+	 * @en Failed to acquire access token: {0} {1}: {2}
+	 */
 	public static ResKey3 ERROR_NO_TOKEN_GENERATED__STATUS_CODE__CODE__DESCRIPTION;
 
+	/**
+	 * @en Error sending token request.
+	 */
 	public static ResKey ERROR_SENDING_TOKEN_REQUEST;
 
+	/**
+	 * @en Error parsing response from token request.
+	 */
 	public static ResKey ERROR_PARSING_TOKEN_RESPONSE;
 
     static {

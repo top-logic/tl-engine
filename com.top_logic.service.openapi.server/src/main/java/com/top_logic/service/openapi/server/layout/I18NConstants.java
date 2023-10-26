@@ -18,11 +18,16 @@ import com.top_logic.layout.ResPrefix;
  * @see ResPrefix
  * @see ResKey
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en Format ''{0}'' in parameter ''{1}'' is not supported.
+	 */
 	public static ResKey2 UNSUPPORTED_PARAMETER_FORMAT__FORMAT__PARAMETER;
 
+	/**
+	 * @en Type ''{0}'' in parameter ''{1}'' is not supported.
+	 */
 	public static ResKey2 UNSUPPORTED_PARAMETER_TYPE__TYPE__PARAMETER;
 
 	/**
@@ -30,8 +35,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 MISSING_PARAMETER_TYPE__PARAMETER;
 
+	/**
+	 * @en Implementation for {1}:{0} is invalid: {2}
+	 */
 	public static ResKey3 INVALID_IMPLEMENTATION_FOR_OPERATION___PATH__METHOD__MSG;
 
+	/**
+	 * @en Invalid implementation type
+	 */
 	public static ResKey INVALID_IMPLEMENTATION_TYPE;
 
 	/**

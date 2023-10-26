@@ -43,7 +43,6 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
@@ -205,7 +204,7 @@ public class TLStructuredTypeFormBuilder
 		@InstanceFormat
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Options(fun = AllModules.class)
-		@OptionLabels(MetaLabelProvider.class)
+		@OptionLabels(MetaResourceProvider.class)
 		@DynamicMode(fun = HideActiveIf.class, args = @Ref(EDITING))
 		@Mandatory
 		TLModule getModule();

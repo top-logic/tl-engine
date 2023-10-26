@@ -85,8 +85,8 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.EnumLabelProvider;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.provider.EnumResourceProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.resources.NestedResourceView;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.TableModel;
@@ -1275,7 +1275,7 @@ public class Fields {
 	}
 
 	public static SelectField options(SelectField select, Collection<?> options) {
-		return options(select, options, MetaLabelProvider.INSTANCE);
+		return options(select, options, MetaResourceProvider.INSTANCE);
 	}
 
 	public static SelectField options(SelectField select, Collection<?> options, LabelProvider labels) {
@@ -1283,7 +1283,7 @@ public class Fields {
 	}
 
 	public static SelectField options(SelectField select, Collection<?> options, Comparator<?> order) {
-		return options(select, options, MetaLabelProvider.INSTANCE, order);
+		return options(select, options, MetaResourceProvider.INSTANCE, order);
 	}
 
 	public static SelectField options(SelectField select, Collection<?> options, LabelProvider labels,
@@ -1311,7 +1311,7 @@ public class Fields {
 	public static SelectField enumField(FormContainer parent, String fieldName, Class<? extends Enum<?>> enumType) {
 		SelectField field = FormFactory.newSelectField(fieldName, Arrays.asList(enumType.getEnumConstants()), false,
 			Collections.singletonList(enumType.getEnumConstants()[0]), false);
-		field.setOptionLabelProvider(EnumLabelProvider.INSTANCE);
+		field.setOptionLabelProvider(EnumResourceProvider.INSTANCE);
 		parent.addMember(field);
 		return field;
 	}

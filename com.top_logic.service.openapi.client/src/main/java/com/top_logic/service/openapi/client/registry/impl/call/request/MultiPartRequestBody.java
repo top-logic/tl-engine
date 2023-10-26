@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.client.registry.impl.call.request;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
 
@@ -165,7 +166,8 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 				String name = part.getName();
 				ContentType configuredContentType = part.getContentType();
 				if (value == null) {
-					addTextBody(builder, name, configuredContentType, "");
+					// Do not deliver null values.
+					return;
 				} else if (value instanceof BinaryDataSource) {
 					BinaryData content = ((BinaryDataSource) value).toData();
 					InputStream stream;
@@ -197,6 +199,14 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 						contentType = ContentType.APPLICATION_OCTET_STREAM;
 					}
 					builder.addBinaryBody(name, stream, contentType, content.getName());
+				} else if (value instanceof Iterable<?>) {
+					for (Object singleValue : (Iterable<?>) value) {
+						addBodyPart(builder, part, singleValue);
+					}
+				} else if (value.getClass().isArray()) {
+					for (int index = 0, size = Array.getLength(value); index < size; index++) {
+						addBodyPart(builder, part, Array.get(value, index));
+					}
 				} else if (value instanceof Map) {
 					builder.addTextBody(name, JSON.toString(value), ContentType.APPLICATION_JSON);
 				} else {

@@ -238,10 +238,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 			throws InvalidValueException {
 		Object value = getValue(req, parametersRaw);
 		if (value == null) {
-			if (getConfig().getRequired()) {
-				throw new InvalidValueException(
-					"Parameter '" + getConfig().getName() + "' is mandatory but no value is given.");
-			}
+			checkNonMandatory();
 
 			return;
 		}

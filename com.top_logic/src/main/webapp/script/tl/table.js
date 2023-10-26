@@ -942,8 +942,10 @@ TABLE = {
 	/**
 	 * Replaces the tables body content.
 	 *
+	 * Adjusts the tables body space row heights w. r. t. the new set of rendered rows.
+	 *
 	 * Rows that are no longer needed are removed and placeholders for the new rows are added. These placeholder will be 
-	 * replaced later by the server.
+	 * replaced later by the server. All remaining rendered old rows are reused.
 	 *
  	 * @param{tableContainer} Container holds the table.
  	 * @param{tableInformer} Holds the tables metadata.
@@ -952,71 +954,26 @@ TABLE = {
 	 * @see {@link requestRowsToUpdate}
 	 */
 	replaceRenderedRangeOfRows: function(tableContainer, tableInformer, rangeTransformations) {
-		var tbody = TABLE.getTableBody(tableContainer);
-		
-		tbody.replaceChildren(TABLE.createTableBodyFragment(tableContainer.id, tableInformer, tbody, rangeTransformations));
-	},
-	
-	/**
-	 * Creates the tables body element content.
-	 *
- 	 * At first the top spacer row, then the content rows (with placeholders for rows that are loaded later) and after that 
-	 * the bottom spacer row is created.
-	 *
-	 * Each rendered old row that is no longer needed is removed. For each new row that was not already rendered 
-	 * a placeholder is added. All remaining rendered old rows are reused.
-	 *
-  	 * @param{ctrlID} Table containers identifier.
- 	 * @param{tableInformer} Holds the tables metadata.
- 	 * @param{tbody} Table body node.
- 	 * @param{rangeTransformations} Contains the information which rows should be added to or removed from the current table.
- 	 *
- 	 * @see {@link createTableRowPlaceholderTemplate}
-	 */
-	createTableBodyFragment: function(ctrlID, tableInformer, tbody, rangeTransformations) {
-		var tableBodyFragment = TABLE.createClonedTableBodyFragment(ctrlID, tableInformer, tbody);
+		TABLE.adjustTableSpacerRowHeights(tableContainer, tableInformer);
 		
 		for(var range of rangeTransformations.removeRanges) {
-			TABLE.removeTableRows(ctrlID, tableInformer, tableBodyFragment, range);
+			TABLE.removeTableRows(tableContainer.id, tableInformer, range);
 		}
 		
 		for(var range of rangeTransformations.addRanges) {
-			TABLE.addTableRows(ctrlID, tableInformer, tableBodyFragment, range);
+			TABLE.addTableRows(tableContainer.id, tableInformer, TABLE.getTableBody(tableContainer), range);
 		}
-		
-		return tableBodyFragment;
 	},
 	
 	/**
-	 * Clones the table body content and returns the resulting document fragment.
+	 * Adjust the tables body spacer row heights.
 	 * 
-	 * @param{ctrlID} Table containers identifier.
+	 * @param{tableContainer} Container holds the table.
  	 * @param{tableInformer} Holds the tables metadata.
- 	 * @param{tbody} Table body node.
 	 */
-	createClonedTableBodyFragment: function(ctrlID, tableInformer, tbody) {
-		var bodyFragment = document.createDocumentFragment();
-		
-		bodyFragment.appendChild(TABLE.createTableTopSpacerRow(ctrlID, tableInformer));
-		TABLE.getArrayOf(tbody.children).slice(1, -1).forEach(row => bodyFragment.appendChild(row.cloneNode(true)));
-		bodyFragment.appendChild(TABLE.createTableBottomSpacerRow(ctrlID, tableInformer));
-		
-		return bodyFragment;
-	},
-	
-	/**
-	 * Creates the tables top spacer row.
-	 * 
-	 * @param{ctrlID} Table containers identifier.
-	 * @param{tableInformer} Holds the tables metadata.
-	 */
-	createTableTopSpacerRow: function(ctrlID, tableInformer) {
-		var topSpacerRow = document.createElement('tr');
-		
-		topSpacerRow.id = ctrlID + '_topSpacer';
-		topSpacerRow.style.height = TABLE.getTableTopSpacerRowHeight(tableInformer) + 'px';
-		
-		return topSpacerRow;
+	adjustTableSpacerRowHeights: function(tableContainer, tableInformer) {
+		TABLE.getTopSpacerRow(tableContainer)?.style.height = TABLE.getTableTopSpacerRowHeight(tableInformer) + 'px';
+		TABLE.getBottomSpacerRow(tableContainer)?.style.height = TABLE.getTableBottomSpacerRowHeight(tableInformer) + 'px';
 	},
 	
 	/**
@@ -1030,21 +987,6 @@ TABLE = {
 		var firstRenderedRowOnPage= tableInformer.rangeOfRenderedRowIndices.firstRowIndex;
 		
 		return (firstRenderedRowOnPage - firstRowOnPage) * tableInformer.rowHeight;
-	},
-	
-	/**
-	 * Creates the tables bottom spacer row.
-	 * 
-	 * @param{ctrlID} Table containers identifier.
-	 * @param{tableInformer} Holds the tables metadata.
-	 */
-	createTableBottomSpacerRow: function(ctrlID, tableInformer) {
-		var topSpacerRow = document.createElement('tr');
-		
-		topSpacerRow.id = ctrlID + '_bottomSpacer';
-		topSpacerRow.style.height = TABLE.getTableBottomSpacerRowHeight(tableInformer) + 'px';
-		
-		return topSpacerRow;
 	},
 	
 	/**
@@ -1069,12 +1011,11 @@ TABLE = {
 	 * 
 	 * @param{ctrlID} Table containers identifier.
  	 * @param{tableInformer} Holds the tables metadata.
- 	 * @param{tbody} Table body node.
  	 * @param{rangeOfRows} Range of row indices that should be removed.
 	 */
-	removeTableRows: function(ctrlID, tableInformer, tbody, rangeOfRows) {
-		var firstRow = tbody.getElementById(`${ctrlID}.${rangeOfRows.firstRowIndex}`);
-		var lastRow = tbody.getElementById(`${ctrlID}.${rangeOfRows.lastRowIndex}`);
+	removeTableRows: function(ctrlID, tableInformer, rangeOfRows) {
+		var firstRow = document.getElementById(`${ctrlID}.${rangeOfRows.firstRowIndex}`);
+		var lastRow = document.getElementById(`${ctrlID}.${rangeOfRows.lastRowIndex}`);
 		
 		TABLE.executeOnElementsBetween(firstRow, lastRow, (row) => {
 			if(TABLE.isTableRowPlaceholder(row)) {
@@ -1123,7 +1064,7 @@ TABLE = {
 			var row = TABLE.createTableRowPlaceholder(tableInformer, `${ctrlID}.${i}`);
 			
 			if(tableInformer.rowsToRemove.delete(row.id)) {
-				row = tbody.getElementById(`${ctrlID}.${i}`);
+				row = document.getElementById(`${ctrlID}.${i}`);
 				
 				row.classList.remove('tl-hide');
 			}
@@ -1224,20 +1165,6 @@ TABLE = {
 		} else {
 			return 0;
 		}
-	},
-	
-	/**
-	 * Update the height of the tables top and bottom spacer row.
-	 *
-	 * @param{tableContainer} Container holding the table.
-	 * @param{tableInformer} Holds the tables metadata.
-	 *
-	 * @see {@link TABLE.getTopSpacerRow}
-	 * @see {@link TABLE.getBottomSpacerRow}
-	 */
-	updateTableSpacerRows: function(tableContainer, tableInformer) {
-		TABLE.getTopSpacerRow(tableContainer).style.height = BAL.getTopSpacerRowHeight(tableInformer) + 'px';
-		TABLE.getBottomSpacerRow(tableContainer).style.height = BAL.getBottomSpacerRowHeight(tableInformer) + 'px';
 	},
 	
 	/**

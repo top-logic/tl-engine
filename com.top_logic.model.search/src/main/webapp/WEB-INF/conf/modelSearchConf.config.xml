@@ -370,6 +370,7 @@
 					<method name="if" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
 					<method name="isEmpty" class="com.top_logic.model.search.expr.config.operations.IsEmptyBuilder"/>
 					<method name="new" class="com.top_logic.model.search.expr.CreateObject$Builder"/>
+					<method name="newTransient" class="com.top_logic.model.search.expr.CreateTransientObject$Builder"/>
 					<method name="delete" class="com.top_logic.model.search.expr.DeleteObject$Builder"/>
 					<method name="copy" class="com.top_logic.model.search.expr.config.operations.Copy$Builder"/>
 					<method name="get" class="com.top_logic.model.search.expr.config.operations.GetBuilder"/>

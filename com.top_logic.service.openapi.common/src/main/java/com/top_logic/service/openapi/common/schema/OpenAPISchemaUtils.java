@@ -41,7 +41,9 @@ public class OpenAPISchemaUtils {
 	 *         When the schema is not valid {@link JSON}.
 	 */
 	public static Schema parseSchema(String schema, Function<String, Schema> referencedSchemas) throws ParseException {
-		return createSchema(schemaAsMap(JSON.fromString(schema)), referencedSchemas);
+		Schema schemaInstance = createSchema(schemaAsMap(JSON.fromString(schema)), referencedSchemas);
+		schemaInstance.setAsString(schema);
+		return schemaInstance;
 	}
 
 	private static Schema createSchema(Map<?, ?> schemaAsMap, Function<String, Schema> referencedSchemas)
@@ -57,7 +59,9 @@ public class OpenAPISchemaUtils {
 			case SCHEMA_TYPE_ARRAY: {
 				ArraySchema arraySchema = TypedConfiguration.newConfigItem(ArraySchema.class);
 				Map<?, ?> itemsSchema = mapValue(schemaAsMap, SCHEMA_PROPERTY_ITEMS);
-				arraySchema.setItems(createSchema(itemsSchema, referencedSchemas));
+				Schema schemaInstance = createSchema(itemsSchema, referencedSchemas);
+				schemaInstance.setAsString(JSON.toString(itemsSchema));
+				arraySchema.setItems(schemaInstance);
 				schema = arraySchema;
 				break;
 			}

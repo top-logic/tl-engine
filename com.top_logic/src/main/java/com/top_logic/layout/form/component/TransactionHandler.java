@@ -31,7 +31,11 @@ public interface TransactionHandler {
 		} else {
 			kb = PersistencyLayer.getKnowledgeBase();
 		}
-		return kb.beginTransaction();
+		if (kb == null) {
+			return null;
+		} else {
+			return kb.beginTransaction();
+		}
 	}
 
 	/**
@@ -50,7 +54,9 @@ public interface TransactionHandler {
 	 *         If the commit fails.
 	 */
 	default void commit(Transaction tx, Object model) throws KnowledgeBaseException {
-		tx.commit();
+		if (tx != null) {
+			tx.commit();
+		}
 	}
 
 }

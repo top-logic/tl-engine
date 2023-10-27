@@ -17,6 +17,7 @@ import java.util.function.Function;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.basic.util.ResKey;
@@ -50,7 +51,17 @@ public class OpenAPISchemaUtils {
 			throws ParseException {
 		String referencedSchema = stringValue(schemaAsMap, ReferencingObject.$REF);
 		if (!referencedSchema.isEmpty()) {
-			return referencedSchemas.apply(referencedSchema);
+			Schema parsedReferencedSchema = referencedSchemas.apply(referencedSchema);
+			if (parsedReferencedSchema != null) {
+				/* Ensure that the schema still knows that it is a referenced schema. */
+				parsedReferencedSchema.setAsString(JsonUtilities.writeJSONContent(out -> {
+					out.beginObject();
+					out.name(ReferencingObject.$REF);
+					out.value(referencedSchema);
+					out.endObject();
+				}));
+			}
+			return parsedReferencedSchema;
 		}
 
 		String schemaType = stringValue(schemaAsMap, SCHEMA_PROPERTY_TYPE);

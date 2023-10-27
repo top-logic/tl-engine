@@ -11,6 +11,15 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.format.RegExpValueProvider;
+
 /**
  * Represents a log file and its content.
  * 
@@ -18,11 +27,31 @@ import java.util.regex.Pattern;
  */
 public class LogFile {
 
-	/** The value when no log file category can be derived. */
-	public static final String NO_CATEGORY = "";
+	/** {@link ConfigurationItem} for the {@link LogFile}. */
+	public interface Config extends ConfigurationItem {
 
-	/** The default {@link Pattern} for extracting the {@link #getFileCategory() log file category}. */
-	public static final Pattern DEFAULT_CATEGORY_PATTERN = Pattern.compile("^(.*?)(?:\\.[0-9]+)?\\.log$");
+		/** The default for {@link #getFileCategoryPattern()}. */
+		String DEFAULT_CATEGORY_PATTERN = "^(.*?)(?:\\.[0-9]+)?\\.log$";
+
+		/** The default for {@link #getNoCategoryPlaceholder()}. */
+		String NO_CATEGORY = "";
+
+		/**
+		 * The {@link Pattern} for extracting the {@link #getFileCategory() log file category}.
+		 * <p>
+		 * The first group in the match is used as the category. If there is no match,
+		 * {@link #NO_CATEGORY} is used.
+		 * </p>
+		 */
+		@NonNullable
+		@FormattedDefault(DEFAULT_CATEGORY_PATTERN)
+		@Format(RegExpValueProvider.class)
+		Pattern getFileCategoryPattern();
+
+		/** The value when no log file category can be derived. */
+		@StringDefault(NO_CATEGORY)
+		String getNoCategoryPlaceholder();
+	}
 
 	private final String _fileName;
 
@@ -47,18 +76,17 @@ public class LogFile {
 
 	private String extractCategory(String fileName) {
 		Matcher matcher = getCategoryPattern().matcher(fileName);
-		return matcher.find() ? matcher.group(1) : NO_CATEGORY;
+		return matcher.find() ? matcher.group(1) : getNoCategoryPlaceholder();
 	}
 
-	/**
-	 * The {@link Pattern} for extracting the {@link #getFileCategory() log file category}.
-	 * <p>
-	 * The first group in the match is used as the category. If there is no match,
-	 * {@link #NO_CATEGORY} is used.
-	 * </p>
-	 */
+	/** @see Config#getFileCategoryPattern() */
 	protected Pattern getCategoryPattern() {
-		return DEFAULT_CATEGORY_PATTERN;
+		return getConfig().getFileCategoryPattern();
+	}
+
+	/** @see Config#getNoCategoryPlaceholder() */
+	protected String getNoCategoryPlaceholder() {
+		return getConfig().getNoCategoryPlaceholder();
 	}
 
 	/**
@@ -84,6 +112,11 @@ public class LogFile {
 	/** The content of the file as a {@link String}. */
 	public String getContent() {
 		return _content;
+	}
+
+	/** The {@link TypedConfiguration} for this class. */
+	public Config getConfig() {
+		return ApplicationConfig.getInstance().getConfig(LogFile.Config.class);
 	}
 
 }

@@ -16,8 +16,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
+import com.top_logic.basic.config.format.CharsetFormat;
+import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
 
@@ -25,31 +40,69 @@ import com.top_logic.event.infoservice.InfoService;
  * Collects log files in a given directory, reads them and returns them as a {@link LogFile}
  * {@link List}.
  * <p>
- * This class is stateless and therefore thread safe.
+ * This class is immutable and therefore thread safe. (As the {@link ConfigurationItem} must not be
+ * changed anyway.)
  * </p>
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class LogFileCollector {
+public class LogFileCollector extends AbstractConfiguredInstance<LogFileCollector.Config> {
 
-	/** The {@link LogFileCollector} instance. */
-	public static final LogFileCollector INSTANCE = new LogFileCollector();
+	/** {@link ConfigurationItem} for the {@link LogFileCollector}. */
+	public interface Config extends PolymorphicConfiguration<LogFileCollector> {
 
-	/** The default file ending of log files. */
-	public static final String DEFAULT_FILE_ENDING = ".log";
+		/** The default for {@link #getFilePattern()}. */
+		String DEFAULT_FILE_PATTERN = ".*\\.log";
 
-	/** The default encoding of log files. */
-	public static final Charset DEFAULT_ENCODING = StandardCharsets.UTF_8;
+		/** The default for {@link #getEncoding()}. */
+		Charset DEFAULT_ENCODING = StandardCharsets.UTF_8;
 
-	/**
-	 * The maximum folder depth at which log files are searched.
-	 * <p>
-	 * When the folder structure is deeper than that, it is probably a loop caused by a symbolic
-	 * link to an enclosing folder. To prevent an infinite recursion, the depth is therefore limited
-	 * to this value.
-	 * </p>
-	 */
-	public static final int DEFAULT_MAX_FOLDER_DEPTH = 10;
+		/** The default for {@link #getMaxFolderDepth()}. */
+		int DEFAULT_MAX_FOLDER_DEPTH = 10;
+
+		/**
+		 * The pattern for detecting log files.
+		 * <p>
+		 * Only files whose name matches are collected. Only the local file name is matched, not the
+		 * path.
+		 * </p>
+		 */
+		@NonNullable
+		@FormattedDefault(DEFAULT_FILE_PATTERN)
+		@Format(RegExpValueProvider.class)
+		Pattern getFilePattern();
+
+		/**
+		 * The encoding of the log files.
+		 * <p>
+		 * Is used to read the file content.
+		 * </p>
+		 */
+		@FormattedDefault(StringServices.UTF8)
+		@Format(CharsetFormat.class)
+		Charset getEncoding();
+
+		/**
+		 * The maximum folder depth at which log files are searched.
+		 * <p>
+		 * When the folder structure is deeper than that, it is probably a loop caused by a symbolic
+		 * link to an enclosing folder. To prevent an infinite recursion, the depth is therefore
+		 * limited to this value.
+		 * </p>
+		 * <p>
+		 * For "unlimited" use a large number like {@link Integer#MAX_VALUE}.
+		 * </p>
+		 */
+		@Constraint(NonNegative.class)
+		@IntDefault(DEFAULT_MAX_FOLDER_DEPTH)
+		int getMaxFolderDepth();
+
+	}
+
+	/** {@link TypedConfiguration} constructor for {@link LogFileCollector}. */
+	public LogFileCollector(InstantiationContext context, Config config) {
+		super(context, config);
+	}
 
 	/** The default {@link FileVisitOption} settings when searching log files: Follow links. */
 	public static final FileVisitOption[] DEFAULT_FILE_VISIT_OPTIONS =
@@ -68,15 +121,21 @@ public class LogFileCollector {
 		return Files.find(logDirectory, getMaxFolderDepth(), this::isLogFile, getFileVisitOptions());
 	}
 
-	private boolean isLogFile(Path path, BasicFileAttributes attributes) {
-		return attributes.isRegularFile() && path.getFileName().toString().endsWith(DEFAULT_FILE_ENDING);
+	/** Whether the file is a log file. */
+	protected boolean isLogFile(Path path, BasicFileAttributes attributes) {
+		return attributes.isRegularFile() && matchesFilePattern(path.getFileName().toString());
+	}
+
+	/** Matches the given name against the {@link #getFilePattern()}. */
+	protected final boolean matchesFilePattern(String fileName) {
+		return getFilePattern().matcher(fileName).matches();
 	}
 
 	private LogFile readFile(Path file) {
 		String fileName = file.getFileName().toString();
 		try {
 			String content = Files.readString(file, getEncoding());
-			return new LogFile(fileName, content);
+			return createLogFile(fileName, content);
 		} catch (IOException exception) {
 			ResKey uiMessage = I18NConstants.FAILED_TO_READ_FILE__NAME;
 			String logMessage = "Failed to read a log file: " + fileName;
@@ -86,34 +145,28 @@ public class LogFileCollector {
 	}
 
 	/**
-	 * The file name ending of log files.
-	 * <p>
-	 * Only files whose name ends with this are collected.
-	 * </p>
+	 * Creates a {@link LogFile} object for the file and its content.
+	 * 
+	 * @param content
+	 *        <code>null</code> is converted to the empty string.
 	 */
-	protected String getFileEnding() {
-		return DEFAULT_FILE_ENDING;
+	protected LogFile createLogFile(String fileName, String content) {
+		return new LogFile(fileName, content);
 	}
 
-	/**
-	 * The encoding of the log files.
-	 * <p>
-	 * Is used to read the file content.
-	 * </p>
-	 */
+	/** @see Config#getFilePattern() */
+	protected Pattern getFilePattern() {
+		return getConfig().getFilePattern();
+	}
+
+	/** @see Config#getEncoding() */
 	protected Charset getEncoding() {
-		return DEFAULT_ENCODING;
+		return getConfig().getEncoding();
 	}
 
-	/**
-	 * The maximum folder depth at which log files are searched.
-	 * <p>
-	 * This should be a small value to prevent infinite recursion caused by symbolic links to
-	 * folders.
-	 * </p>
-	 */
+	/** @see Config#getMaxFolderDepth() */
 	protected int getMaxFolderDepth() {
-		return DEFAULT_MAX_FOLDER_DEPTH;
+		return getConfig().getMaxFolderDepth();
 	}
 
 	/** The {@link FileVisitOption} settings when searching log files. */

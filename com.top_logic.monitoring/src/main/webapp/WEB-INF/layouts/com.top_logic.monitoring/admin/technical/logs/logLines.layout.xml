@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<!-- This component shows logging files and possible configurations. -->
 <tableView name="logLinesTable"
-	modelBuilder="com.top_logic.layout.log.line.LogLineModelBuilder"
+	modelBuilder="com.top_logic.monitoring.log.LogLineModelBuilder"
 	resPrefix="layouts.admin.technical.logs.logging.logLinesTable."
 	resetInvisible="true"
 	securityProviderClass="securityRoot"
@@ -12,18 +11,18 @@
 	<buttons>
 		<reference command-id="invalidate"/>
 		<button id="dumpLogLineToConsole"
-			class="com.top_logic.layout.log.line.DumpLogLineCommand"
+			class="com.top_logic.monitoring.log.DumpLogLineCommand"
 		/>
 	</buttons>
 	<table
 		defaultColumns="time, severity, file-category, category, thread, message, details"
 		defaultSortOrder="severity:descending, time:descending"
 		fixedColumns="2"
-		tableRenderer="com.top_logic.layout.log.line.LogLineTableRenderer"
+		tableRenderer="com.top_logic.monitoring.log.LogLineTableRenderer"
 	>
 		<column-default
-			accessor="com.top_logic.layout.log.line.LogLineAccessor"
-			cssClassProvider="com.top_logic.layout.log.line.LogLineCellClassProvider"
+			accessor="com.top_logic.monitoring.log.LogLineAccessor"
+			cssClassProvider="com.top_logic.monitoring.log.LogLineCellClassProvider"
 			filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			resourceProvider="com.top_logic.layout.provider.resource.LabelAsTooltipResourceProvider"
 		/>
@@ -39,7 +38,7 @@
 			</column>
 			<column name="severity"
 				columnWidth="90px"
-				labelProvider="com.top_logic.layout.log.line.LogLineSeverityLabelProvider"
+				labelProvider="com.top_logic.monitoring.log.LogLineSeverityLabelProvider"
 			>
 				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
 					show-option-entries="true"
@@ -82,7 +81,7 @@
 			</column>
 			<column name="details"
 				columnWidth="35px"
-				renderer="com.top_logic.layout.log.line.LogLineDetailsColumnRenderer"
+				renderer="com.top_logic.monitoring.log.LogLineDetailsColumnRenderer"
 			>
 				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
 					show-option-entries="false"

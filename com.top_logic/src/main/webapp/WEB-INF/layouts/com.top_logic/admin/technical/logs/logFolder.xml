@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.layout.log.LogFolderComponent"
+	columns="_download,name,_size,_date"
+	modelBuilder="com.top_logic.util.log.LogFilesBuilder"
+	name="basicFileLogView"
+	resPrefix="admin.filelog.view."
+	securityProviderClass="securityRoot"
+>
+	<tabInfo label="admin.logs.files"/>
+</component>

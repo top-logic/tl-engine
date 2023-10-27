@@ -7,10 +7,10 @@ package com.top_logic.service.openapi.server.layout;
 
 import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -48,10 +49,9 @@ import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.ByteArrayStream;
-import com.top_logic.basic.shared.io.StringW;
-import com.top_logic.basic.shared.io.W;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfigVisitor;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
@@ -88,6 +88,8 @@ import com.top_logic.service.openapi.server.conf.OperationByMethod;
 import com.top_logic.service.openapi.server.conf.OperationResponse;
 import com.top_logic.service.openapi.server.conf.PathItem;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;
+import com.top_logic.service.openapi.server.parameter.MultiPartBodyParameter;
+import com.top_logic.service.openapi.server.parameter.MultiPartBodyParameter.BodyPart;
 import com.top_logic.service.openapi.server.parameter.ParameterFormat;
 import com.top_logic.service.openapi.server.parameter.ReferencedParameter;
 import com.top_logic.service.openapi.server.parameter.RequestBodyParameter;
@@ -417,9 +419,23 @@ public class OpenAPIExporter {
 				RequestBodyParameter.Config requestBodyParam = (RequestBodyParameter.Config) parameter;
 				RequestBodyObject bodyObject = newItem(RequestBodyObject.class);
 				transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
-				transferIfNotEmpty(requestBodyParam::getRequired, bodyObject::setRequired);
+				transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
 				MediaTypeObject content =
 					newMediaTypeObject(requestBodyParam.getFormat(), requestBodyParam.getSchema());
+				transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
+				bodyObject.getContent().put(content.getMediaType(), content);
+				requestBody.setValue(bodyObject);
+			} else if (parameter instanceof MultiPartBodyParameter.Config) {
+				if (requestBody.getValue() != null) {
+
+					// multiple body parameters
+					continue;
+				}
+				MultiPartBodyParameter.Config requestBodyParam = (MultiPartBodyParameter.Config) parameter;
+				RequestBodyObject bodyObject = newItem(RequestBodyObject.class);
+				transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
+				transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
+				MediaTypeObject content = newMultipartMediaTypeObject(requestBodyParam);
 				transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
 				bodyObject.getContent().put(content.getMediaType(), content);
 				requestBody.setValue(bodyObject);
@@ -444,7 +460,7 @@ public class OpenAPIExporter {
 		}
 		transferIfNotEmpty(source::getName, target::setName);
 		transferIfNotEmpty(source::getDescription, target::setDescription);
-		transferIfNotEmpty(source::getRequired, target::setRequired);
+		transferIfTrue(source::getRequired, target::setRequired);
 		transferIfNotEmpty(source::getParameterLocation, target::setIn);
 		return target;
 	}
@@ -464,6 +480,49 @@ public class OpenAPIExporter {
 				result.setMediaType("text/plain; charset=utf-8");
 
 		}
+		return result;
+	}
+
+	private MediaTypeObject newMultipartMediaTypeObject(MultiPartBodyParameter.Config parameter) {
+		MediaTypeObject result = newItem(MediaTypeObject.class);
+		result.setMediaType(HTMLConstants.MULTIPART_FORM_DATA_VALUE);
+
+		result.setSchema(JsonUtilities.writeJSONContent(json -> {
+			json.beginObject();
+			{
+
+				json.name(SCHEMA_PROPERTY_TYPE);
+				json.value(SCHEMA_TYPE_OBJECT);
+
+				json.name(SCHEMA_PROPERTY_REQUIRED);
+				json.beginArray();
+				{
+					parameter.getParts()
+						.values()
+						.stream()
+						.filter(MultiPartBodyParameter.BodyPart::getRequired)
+						.map(BodyPart::getName).forEach(t -> {
+							try {
+								json.value(t);
+							} catch (IOException ex) {
+								throw new UncheckedIOException(ex);
+							}
+						});
+				}
+				json.endArray();
+
+				json.name(SCHEMA_PROPERTY_PROPERTIES);
+				json.beginObject();
+				{
+					for (BodyPart part : parameter.getParts().values()) {
+						json.name(part.getName());
+						json.jsonValue(newSchema(part.getFormat(), part.isMultiple(), part.getSchema()));
+					}
+				}
+				json.endObject();
+			}
+			json.endObject();
+		}));
 		return result;
 	}
 
@@ -495,23 +554,18 @@ public class OpenAPIExporter {
 				return primitiveSchema(SCHEMA_TYPE_NUMBER, SCHEMA_FORMAT_DOUBLE, multiple);
 			case FLOAT:
 				return primitiveSchema(SCHEMA_TYPE_NUMBER, SCHEMA_FORMAT_FLOAT, multiple);
-			default:
-				throw new UnreachableAssertion("No such format: " + format);
 		}
+		throw new UnreachableAssertion("No such format: " + format);
 	}
 
 	private String primitiveSchema(String type, String format, boolean multiple) {
-		W out = new StringW();
-		try (JsonWriter json = new JsonWriter(out)) {
+		return JsonUtilities.writeJSONContent(json -> {
 			if (!multiple) {
 				singlePrimitiveSchema(json, type, format);
 			} else {
 				multiplePrimitiveSchema(json, type, format);
 			}
-		} catch (IOException ex) {
-			throw new IOError(ex);
-		}
-		return out.toString();
+		});
 	}
 
 	private void multiplePrimitiveSchema(JsonWriter json, String type, String format) throws IOException {
@@ -538,6 +592,12 @@ public class OpenAPIExporter {
 
 	static <T extends ConfigurationItem> T newItem(Class<T> configInterface) {
 		return TypedConfiguration.newConfigItem(configInterface);
+	}
+
+	static void transferIfTrue(BooleanSupplier supplier, Consumer<Boolean> consumer) {
+		if (supplier.getAsBoolean()) {
+			consumer.accept(Boolean.TRUE);
+		}
 	}
 
 	static <T> void transferIfNotEmpty(Supplier<T> supplier, Consumer<? super T> consumer) {

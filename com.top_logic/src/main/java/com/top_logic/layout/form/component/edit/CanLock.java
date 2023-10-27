@@ -14,11 +14,15 @@ import com.top_logic.base.locking.token.Token;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.component.IComponent;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -42,19 +46,27 @@ public interface CanLock extends IComponent {
 		 */
 		@Name("lockHandler")
 		@ImplementationClassDefault(ConfiguredLockHandler.class)
+		@Options(fun = AllInAppImplementations.class)
+		@DisplayMinimized
 		PolymorphicConfiguration<LockHandler> getLockHandler();
 
 		/**
-		 * Abstract operation performed by this component with regard to locking.
+		 * Name of operation performed by this component.
 		 * 
 		 * <p>
-		 * This property is a short-cut for {@link #getLockHandler()} using
-		 * {@link DefaultLockHandler} with the given operation. You can disable lock handling by
-		 * setting this property to empty.
+		 * The operation identifies an application-wide configured lock strategy configured in the
+		 * {@link LockService}.
+		 * </p>
+		 * 
+		 * <p>
+		 * This property is a short-cut for specifying {@link DefaultLockHandler} as
+		 * {@link #getLockHandler()} with the given operation. Lock handling can be disabled setting
+		 * this property to the empty value.
 		 * </p>
 		 * 
 		 * @see LockService#createLock(String, Object...)
 		 */
+		@Hidden
 		@Name("lockOperation")
 		@Nullable
 		@StringDefault(Token.DEFAULT_OPERATION)

@@ -5,6 +5,8 @@
  */
 package com.top_logic.base.locking;
 
+import java.util.Set;
+
 import com.top_logic.base.locking.strategy.LockStrategy;
 import com.top_logic.base.locking.token.TokenService;
 import com.top_logic.basic.CalledByReflection;
@@ -80,6 +82,11 @@ public abstract class LockService extends ManagedClass {
 		result.lock();
 		return result;
 	}
+
+	/**
+	 * All operations defined.
+	 */
+	public abstract Set<String> getOperations();
 
 	/**
 	 * The configured {@link LockService}.

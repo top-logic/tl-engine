@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
@@ -37,6 +39,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
@@ -102,7 +106,7 @@ public class ConfiguredLockService<C extends ConfiguredLockService.Config<?>> ex
 			interface OperationConfig extends NamedConfigMandatory, StrategyContainerConfig {
 
 				/**
-				 * The name of the abstract operation.
+				 * The name of the abstract operation for which a lock strategy is defined.
 				 */
 				@Override
 				String getName();
@@ -128,6 +132,7 @@ public class ConfiguredLockService<C extends ConfiguredLockService.Config<?>> ex
 				 */
 				@Name("strategies")
 				@DefaultContainer
+				@Options(fun = AllInAppImplementations.class)
 				List<PolymorphicConfiguration<? extends LockStrategy<?>>> getStragegies();
 			}
 		}
@@ -239,6 +244,11 @@ public class ConfiguredLockService<C extends ConfiguredLockService.Config<?>> ex
 	@Override
 	public long getLockTimeout() {
 		return _config.getLockTimeout();
+	}
+
+	@Override
+	public Set<String> getOperations() {
+		return _strategies.values().stream().flatMap(s -> s.keySet().stream()).collect(Collectors.toSet());
 	}
 
 	@Override

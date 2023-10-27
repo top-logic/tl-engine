@@ -16,7 +16,10 @@ import com.top_logic.base.locking.strategy.LockStrategy;
 import com.top_logic.base.locking.token.Token;
 import com.top_logic.base.locking.token.Token.Kind;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLObject;
@@ -31,6 +34,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
+@Label("Locking strategy defined via TL-Script")
 public class LockStrategyByExpression<C extends LockStrategyByExpression.Config<?>>
 		extends ConfiguredLockStrategy<C, Object> {
 
@@ -43,10 +48,11 @@ public class LockStrategyByExpression<C extends LockStrategyByExpression.Config<
 	public interface Config<I extends LockStrategyByExpression<?>> extends ConfiguredLockStrategy.Config<I> {
 
 		/**
-		 * Function that produces a set of objects for which tokens of kind {@link #getKind()}
-		 * should be allocated.
+		 * Function that takes the component's model as single argument and computes a set of
+		 * objects for which tokens should be allocated.
 		 */
 		@Name("objects")
+		@Mandatory
 		Expr getObjects();
 	}
 

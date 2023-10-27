@@ -78,7 +78,8 @@ public final class LogLineSeverity implements Comparable<LogLineSeverity> {
 		_cssClass = "tl-log-lines-table--" + name.toLowerCase().replaceAll("[^a-z0-9_-]", "");
 	}
 
-	private void register() {
+	/** Retrieves the severity with the given name or creates if it does not exist. */
+	public static LogLineSeverity getOrCreate(String name) {
 		if (SEVERITIES.size() > MAX_SEVERITIES) {
 			/* Prevent filling up this static cache by corrupted or wrongly parsed log files. If
 			 * there are that many log severities, something went wrong. Clearing the cache is not a
@@ -89,10 +90,10 @@ public final class LogLineSeverity implements Comparable<LogLineSeverity> {
 			 * filled up with too many severities . */
 			cleanUpSeverities();
 		}
-		SEVERITIES.put(getName(), this);
+		return SEVERITIES.computeIfAbsent(name, id -> new LogLineSeverity(id, DEFAULT_SORT_ORDER));
 	}
 
-	private void cleanUpSeverities() {
+	private static void cleanUpSeverities() {
 		SEVERITIES.clear();
 		SEVERITIES.put(FATAL.getName(), FATAL);
 		SEVERITIES.put(ERROR.getName(), ERROR);
@@ -100,20 +101,6 @@ public final class LogLineSeverity implements Comparable<LogLineSeverity> {
 		SEVERITIES.put(INFO.getName(), INFO);
 		SEVERITIES.put(DEBUG.getName(), DEBUG);
 		SEVERITIES.put(TRACE.getName(), TRACE);
-	}
-
-	/** Retrieves the severity with the given name or creates if it does not exist. */
-	public static LogLineSeverity getOrCreate(String name) {
-		return SEVERITIES.computeIfAbsent(name, id -> addLogLevel(id, DEFAULT_SORT_ORDER));
-	}
-
-	private static LogLineSeverity addLogLevel(String name, int sortOrder) {
-		if (SEVERITIES.containsKey(name)) {
-			throw new RuntimeException("Severity '" + name + "' already exists: " + SEVERITIES.get(name));
-		}
-		LogLineSeverity severity = new LogLineSeverity(name, sortOrder);
-		severity.register();
-		return severity;
 	}
 
 	/** The text in log files used for this severity. */

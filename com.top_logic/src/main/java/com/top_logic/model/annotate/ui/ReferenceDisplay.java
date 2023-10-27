@@ -7,6 +7,7 @@ package com.top_logic.model.annotate.ui;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.InAppClassifierConstants;
@@ -18,7 +19,8 @@ import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
- * {@link TLAnnotation} that defines display properties of {@link TLReference references}.
+ * {@link TLAnnotation} that defines how to display a {@link TLReference references} in a form or
+ * table cell.
  * 
  * @see OptionsPresentation
  * 
@@ -38,6 +40,7 @@ public interface ReferenceDisplay extends TLAttributeAnnotation, TLTypeAnnotatio
 	 * Chooses the way to display values.
 	 */
 	@Name(VALUE)
+	@Label("Presentation")
 	ReferencePresentation getValue();
 
 	/**

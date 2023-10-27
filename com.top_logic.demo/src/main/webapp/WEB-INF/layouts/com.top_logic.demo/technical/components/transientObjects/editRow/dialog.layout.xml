@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments helpID="ID_3e5315e0_772d_452d_8f64_b8bc4310ab41">
+		<title>
+			<title key="dynamic.7ec143f6-0540-4bae-9080-2058d5b74ff3">
+				<en>Edit row</en>
+				<de>Zeile bearbeiten</de>
+			</title>
+		</title>
+		<open-handler id="ID_bcc59282_57d0_4e9d_882a_2e870782d488"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-pen"
+			target="selection(com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table)"
+		>
+			<resourceKey key="dynamic.7ec143f6-0540-4bae-9080-2058d5b74ff3">
+				<en>Edit row</en>
+				<de>Zeile bearbeiten</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/editRow/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

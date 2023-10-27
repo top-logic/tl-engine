@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.transient">
+		<class name="EvalForm">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form columns="ONE">
+						<field
+							attribute="cnt"
+							fullQualifiedName="test.transient:EvalForm#cnt"
+							type="tl.core:Integer"
+						/>
+						<field
+							attribute="minNumber"
+							fullQualifiedName="test.transient:EvalForm#minNumber"
+							type="tl.core:Integer"
+						/>
+						<field
+							attribute="maxNumber"
+							fullQualifiedName="test.transient:EvalForm#maxNumber"
+							type="tl.core:Integer"
+						/>
+						<field
+							attribute="sum"
+							fullQualifiedName="test.transient:EvalForm#sum"
+							type="tl.core:Integer"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="cnt"
+					type="tl.core:Integer"
+				/>
+				<property name="maxNumber"
+					type="tl.core:Integer"
+				/>
+				<property name="minNumber"
+					type="tl.core:Integer"
+				/>
+				<property name="sum"
+					type="tl.core:Integer"
+				/>
+			</attributes>
+		</class>
+		<class name="SettingsForm">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form columns="ONE">
+						<field
+							attribute="von"
+							fullQualifiedName="test.transient:SettingsForm#von"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="bis"
+							fullQualifiedName="test.transient:SettingsForm#bis"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="divisor"
+							fullQualifiedName="test.transient:SettingsForm#divisor"
+							type="tl.core:Integer"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="von"
+					type="tl.core:Date"
+				/>
+				<property name="bis"
+					type="tl.core:Date"
+				/>
+				<property name="divisor"
+					type="tl.core:Integer"
+				/>
+			</attributes>
+		</class>
+		<class name="Row">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,date,number"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.transient:Row#name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="date"
+							fullQualifiedName="test.transient:Row#date"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="number"
+							fullQualifiedName="test.transient:Row#number"
+							type="tl.core:Integer"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="number"
+					type="tl.core:Integer"
+				/>
+				<property name="date"
+					type="tl.core:Date"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -188,7 +188,7 @@
 			<view name="com.top_logic/admin/technical/locks/locksView.layout.xml#adminTechnicalDeleteLocksView">
 				<commandGroup name="Read"/>
 			</view>
-			<view name="com.top_logic/admin/technical/logs/logsView.layout.xml#adminTechnicalViewLogsView">
+			<view name="com.top_logic/admin/technical/logs/logView.layout.xml#adminTechnicalViewLogsView">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
 				<commandGroup name="Read"/>

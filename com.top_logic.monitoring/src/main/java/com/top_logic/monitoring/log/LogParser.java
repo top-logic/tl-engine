@@ -3,10 +3,10 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.line;
+package com.top_logic.monitoring.log;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
-import static com.top_logic.layout.log.line.LogLine.*;
+import static com.top_logic.monitoring.log.LogLine.*;
 import static java.util.stream.Collectors.*;
 
 import java.time.Instant;

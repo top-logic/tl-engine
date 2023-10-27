@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.log.line;
+package com.top_logic.monitoring.log;
 
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.ReadOnlyAccessor;

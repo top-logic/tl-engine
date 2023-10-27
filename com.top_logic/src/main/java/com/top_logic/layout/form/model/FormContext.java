@@ -106,4 +106,16 @@ public class FormContext extends FormGroup {
 		return set(PROPERTY_CONTEXT_HANDLER, model);
 	}
 
+	/**
+	 * Transfers all values in this {@link FormContext} to the underlying model.
+	 * 
+	 * <p>
+	 * Note: Before storing values, {@link #checkAll()} has to be called to verify consistency of
+	 * user inputs.
+	 * </p>
+	 */
+	public void store() {
+		// Hook for subclasses.
+	}
+
 }

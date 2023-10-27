@@ -62,6 +62,17 @@ public interface Schema extends ConfigurationItem {
 	void setExample(String value);
 
 	/**
+	 * This schema in serialised form.
+	 */
+	@Nullable
+	String getAsString();
+
+	/**
+	 * Setter for {@link #getAsString()}
+	 */
+	void setAsString(String value);
+
+	/**
 	 * Visitor pattern for {@link Schema}.
 	 *
 	 * @param <R>

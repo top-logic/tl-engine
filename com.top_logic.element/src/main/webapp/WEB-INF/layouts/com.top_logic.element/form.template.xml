@@ -20,6 +20,12 @@
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
 			type="com.top_logic.layout.ModelSpec"
 		/>
+		<property name="editMode"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		>
+			<display-minimized/>
+		</property>
 		<property name="editExecutability"
 			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
 			instance-type="com.top_logic.tool.execution.ExecutabilityRule"
@@ -27,6 +33,7 @@
 		>
 			<!-- Note: Required to produce format compatible with CommandHandler.Config#executability. -->
 			<entry-tag value="rule"/>
+			<display-minimized/>
 		</property>
 		<property name="saveClosesDialog"
 			default="true"
@@ -56,6 +63,7 @@
 		defaultFor="${defaultFor}"
 		dialogs="${dialogs}"
 		editCommand="customEdit"
+		editMode="${editMode}"
 		model="${model}"
 		saveClosesDialog="${saveClosesDialog}"
 		securityObject="${securityObject}"

@@ -236,7 +236,7 @@ public class IndexedObjectNaming extends VersionedObjectNaming<TLObject, Indexed
 
 	@Override
 	public Maybe<Name> buildName(TLObject model) {
-		if (isIncompatible(model)) {
+		if (model.tTransient()) {
 			return Maybe.none();
 		}
 
@@ -262,16 +262,6 @@ public class IndexedObjectNaming extends VersionedObjectNaming<TLObject, Indexed
 			name.getAttributes().put(assignment.getName(), assignment);
 		}
 		return Maybe.some(name);
-	}
-
-	private boolean isIncompatible(TLObject model) {
-		try {
-			model.tType();
-		} catch (RuntimeException ex) {
-			// transient object or not existing type
-			return true;
-		}
-		return model.tHandle() == null;
 	}
 
 	static Object getValue(TLObject model, String attributeName) {

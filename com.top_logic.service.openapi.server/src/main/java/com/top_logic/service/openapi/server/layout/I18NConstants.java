@@ -21,6 +21,16 @@ import com.top_logic.layout.ResPrefix;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
+	 * @en Unsupported body types ''{1}'' in path ''{0}''. Supported: {2}
+	 */
+	public static ResKey3 UNSUPPORTED_BODY_TYPES__PATH_UNSUPPORTED_SUPPORTED;
+
+	/**
+	 * @en Missing body type in path ''{0}''.
+	 */
+	public static ResKey1 MISSING_BODY_TYPE__PATH;
+
+	/**
 	 * @en Format ''{0}'' in parameter ''{1}'' is not supported.
 	 */
 	public static ResKey2 UNSUPPORTED_PARAMETER_FORMAT__FORMAT__PARAMETER;

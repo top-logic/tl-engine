@@ -972,8 +972,8 @@ TABLE = {
  	 * @param{tableInformer} Holds the tables metadata.
 	 */
 	adjustTableSpacerRowHeights: function(tableContainer, tableInformer) {
-		TABLE.getTopSpacerRow(tableContainer)?.style.height = TABLE.getTableTopSpacerRowHeight(tableInformer) + 'px';
-		TABLE.getBottomSpacerRow(tableContainer)?.style.height = TABLE.getTableBottomSpacerRowHeight(tableInformer) + 'px';
+		TABLE.getTopSpacerRow(tableContainer)?.style.setProperty('height', TABLE.getTableTopSpacerRowHeight(tableInformer) + 'px');
+		TABLE.getBottomSpacerRow(tableContainer)?.style.setProperty('height', TABLE.getTableBottomSpacerRowHeight(tableInformer) + 'px');
 	},
 	
 	/**

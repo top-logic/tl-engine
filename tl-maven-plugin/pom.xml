@@ -132,14 +132,11 @@
 			<version>3.0.0</version>
 		</dependency>
 
-		<!-- Note: Newer versions have an issue with excessive memory consumption causing builds to fail when creating larger WAR artifacts. -->
-		<!-- The issue declared to be fixed, but can still be observed: https://issues.apache.org/jira/browse/MSOURCES-94 -->
 		<dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-archiver</artifactId>
-			<version>2.9.1</version>
+			<version>4.8.0</version>
 		</dependency>
-		
 		<dependency>
 		    <groupId>com.github.javaparser</groupId>
 		    <artifactId>javaparser-core</artifactId>

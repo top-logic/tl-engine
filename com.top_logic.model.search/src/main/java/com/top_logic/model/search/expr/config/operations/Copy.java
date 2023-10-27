@@ -25,6 +25,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -287,7 +288,11 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 			}
 
 			TLClass classType = (TLClass) type;
-			return _factory.createObject(classType, context, null);
+			if (orig.tTransient()) {
+				return TransientObjectFactory.INSTANCE.createObject(classType, context);
+			} else {
+				return _factory.createObject(classType, context);
+			}
 		}
 
 		private void copyComposite(TLObject orig, TLReference reference, TLObject copy) {

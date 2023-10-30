@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic.element/settings.template.xml"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.editor.config.TypeTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+	</properties>
+
+	<config name="${name}">
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="new(`${type}`, transient: true)"/>
+		</model>
+		<buttons>
+			<button id="updateOutput"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				group="System"
+				image="theme:ICONS_BUTTON_REFRESH"
+				operation="model -> $model.copy()"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.c890e5c2-35da-4766-9459-b7d3713ee339">
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+				<postCreateActions>
+					<setModel target="output(self())"/>
+				</postCreateActions>
+			</button>
+		</buttons>
+	</config>
+</config:template>

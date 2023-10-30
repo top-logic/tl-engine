@@ -33,7 +33,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
-import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.InfoObject;
 import com.top_logic.service.openapi.common.document.MediaTypeObject;
@@ -122,11 +121,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 	}
 
 	private void addGlobalParameters(OpenapiDocument config, OpenApiServer.Config<?> serviceConfiguration, List<ResKey> warnings) {
-		ComponentsObject components = config.getComponents();
-		if (components == null) {
-			return;
-		}
-		for (ReferencableParameterObject paramObject : components.getParameters().values()) {
+		for (ReferencableParameterObject paramObject : globalParameters(config).values()) {
 			ReferencedParameter item = TypedConfiguration.newConfigItem(ReferencedParameter.class);
 			item.setReferenceName(paramObject.getReferenceName());
 			item.setParameterDefinition(createRequestParameter(paramObject, warnings, config));
@@ -135,11 +130,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 	}
 
 	private void addGlobalSchemas(OpenapiDocument config, OpenApiServer.Config<?> serviceConfiguration) {
-		ComponentsObject components = config.getComponents();
-		if (components == null) {
-			return;
-		}
-		for (SchemaObject schema : components.getSchemas().values()) {
+		for (SchemaObject schema : globalSchemas(config).values()) {
 			SchemaObject schemaCopy = TypedConfiguration.copy(schema);
 			serviceConfiguration.getGlobalSchemas().put(schemaCopy.getName(), schemaCopy);
 		}
@@ -337,8 +328,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		if (schemaString == null) {
 			return;
 		}
-		Schema schema =
-			parseSchema(schemaString, multiPartBody.getName(), completeAPI.getComponents().getSchemas(), warnings);
+		Schema schema = parseSchema(schemaString, multiPartBody.getName(), globalSchemas(completeAPI), warnings);
 		if (schema instanceof ObjectSchema) {
 			for (ObjectSchemaProperty property : ((ObjectSchema) schema).getProperties()) {
 				Schema propertySchema = property.getSchema();
@@ -453,8 +443,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		if (schema == null) {
 			return null;
 		}
-		Schema schemaObject =
-			parseSchema(schema, paramConf.getName(), completeAPI.getComponents().getSchemas(), warnings);
+		Schema schemaObject = parseSchema(schema, paramConf.getName(), globalSchemas(completeAPI), warnings);
 
 		ResKey problem = schemaObject.visit(applySchema(), paramConf);
 		if (problem != ResKey.NONE) {

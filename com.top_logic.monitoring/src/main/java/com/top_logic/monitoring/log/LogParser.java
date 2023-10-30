@@ -47,9 +47,9 @@ import com.top_logic.util.TLContextManager;
  * parts.
  * </p>
  * <p>
- * The parser stores a cache of {@link LogLine} part strings to do a soft form of "interning"
- * ({@link String#intern()}). Instead of filling the JVM string cache, it uses its own. The cache is
- * non-static. When the {@link LogParser} object is garbage collected, its cache is garbage
+ * The parser stores a cache of {@link LogLine} part strings to do a soft form of "
+ * {@link String#intern() interning}". Instead of filling the JVM string cache, it uses its own. The
+ * cache is non-static. When the {@link LogParser} object is garbage collected, its cache is garbage
  * collected, too.
  * </p>
  * <p>

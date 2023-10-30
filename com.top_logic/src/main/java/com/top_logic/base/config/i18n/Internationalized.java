@@ -5,12 +5,10 @@
  */
 package com.top_logic.base.config.i18n;
 
-import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor.WithTooltipConfiguration;
@@ -23,17 +21,13 @@ import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor.W
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface Internationalized extends ConfigurationItem {
+@Label("Internationalization")
+public interface Internationalized extends InternationalizedDescription {
 
 	/**
 	 * @see #getLabel()
 	 */
 	String LABEL = "label";
-
-	/**
-	 * @see #getDescription()
-	 */
-	String DESCRIPTION = "description";
 
 	/**
 	 * The internationalized name of the attribute.
@@ -48,20 +42,11 @@ public interface Internationalized extends ConfigurationItem {
 	 * @see #getLabel()
 	 */
 	void setLabel(ResKey value);
-
+	
 	/**
 	 * The internationalized description of the attribute.
 	 */
-	@Name(DESCRIPTION)
-	@Nullable
-	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
-	@WithTooltipConfiguration(false)
-	@ControlProvider(MultiLineText.class)
+	@Override
 	ResKey getDescription();
-
-	/**
-	 * @see #getDescription()
-	 */
-	void setDescription(ResKey value);
 
 }

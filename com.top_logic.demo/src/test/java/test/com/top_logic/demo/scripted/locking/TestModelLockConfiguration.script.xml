@@ -246,7 +246,7 @@
 							value="1"
 						/>
 					</object>
-					<labeled-member label="Lokal"/>
+					<labeled-member label="Modell-Sperre"/>
 					<labeled-member label="Aspekt"/>
 				</path>
 			</field>
@@ -363,7 +363,7 @@
 							value="4"
 						/>
 					</object>
-					<labeled-member label="Sperrstrategie über Ausdruck"/>
+					<labeled-member label="Sperrstrategie über TL-Skript"/>
 					<labeled-member label="Aspekt"/>
 				</path>
 			</field>
@@ -384,7 +384,7 @@
 							value="4"
 						/>
 					</object>
-					<labeled-member label="Sperrstrategie über Ausdruck"/>
+					<labeled-member label="Sperrstrategie über TL-Skript"/>
 					<labeled-member label="Art"/>
 				</path>
 			</field>
@@ -459,7 +459,7 @@
 							value="1"
 						/>
 					</object>
-					<labeled-member label="Lokal"/>
+					<labeled-member label="Modell-Sperre"/>
 					<labeled-member label="Art"/>
 				</path>
 			</field>

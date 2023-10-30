@@ -35,7 +35,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
-@Label("Locking strategy defined via TL-Script")
+@Label("Locking strategy via TL-Script")
 public class LockStrategyByExpression<C extends LockStrategyByExpression.Config<?>>
 		extends ConfiguredLockStrategy<C, Object> {
 

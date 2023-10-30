@@ -95,7 +95,7 @@ public class ColumnInfoFactory implements ColumnInfoProvider {
 	
 			return createPrimitiveColumn(contentTypeContext, primitiveType.getKind(), headerI18NKey);
 		} else if (contentType instanceof TLClass) {
-			if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(contentType))) { // TODO JST In Konfiguration übertragen und löschen?
+			if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(contentType))) {
 				return createDocumentColumn(contentTypeContext, headerI18NKey);
 			} else {
 				return createReferenceColumn(contentTypeContext, headerI18NKey);

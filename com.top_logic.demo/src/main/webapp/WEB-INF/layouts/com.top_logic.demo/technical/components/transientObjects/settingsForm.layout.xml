@@ -13,15 +13,28 @@
 		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
 			<script expr="new(`test.transient:SettingsForm`, transient: true)"/>
 		</model>
-		<producer class="com.top_logic.model.search.providers.OutputProducerByExpression"
-			function="model -> $model.copy()"
-		/>
 		<buttons>
+			<button id="updateOutput"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				group="System"
+				image="theme:ICONS_BUTTON_REFRESH"
+				operation="model -> $model.copy()"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.c890e5c2-35da-4766-9459-b7d3713ee339">
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+				<postCreateActions>
+					<setModel target="output(self())"/>
+				</postCreateActions>
+			</button>
 			<button id="ID_75dfd06a_2b51_4ba4_9888_d06e94b0bea6"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 				image="css:fas fa-eraser"
 				operation="new(`test.transient:SettingsForm`, transient: true)"
 				target="model(self())"
+				transaction="false"
 			>
 				<resourceKey key="dynamic.b2c8ce7e-e02d-4cdd-ad72-3e57b6a91a57">
 					<en>Reset entries</en>
@@ -35,6 +48,7 @@
 			<button id="ID_d52e3540_14f2_4d4f_97bb_bfc027c02453"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 				image="css:fas fa-chevron-left"
+				transaction="false"
 			>
 				<resourceKey key="dynamic.cb88ffd2-6315-4baf-9189-002e72487893">
 					<en>Last week</en>
@@ -57,6 +71,7 @@
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 				image="css:fas fa-angle-right"
 				target="model(self())"
+				transaction="false"
 			>
 				<resourceKey key="dynamic.14419e01-26cd-45fd-97e1-7f19d77754ae">
 					<en>Next week</en>

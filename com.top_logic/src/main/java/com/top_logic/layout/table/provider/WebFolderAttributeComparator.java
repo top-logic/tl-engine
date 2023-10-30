@@ -17,9 +17,7 @@ public class WebFolderAttributeComparator implements Comparator<Object> {
 
 	@Override
 	public int compare(Object o1, Object o2) {
-		int count1 = getCount(o1);
-		int count2 = getCount(o2);
-		return Integer.compare(count1, count2);
+		return Integer.compare(getCount(o1), getCount(o2));
 	}
 
 	protected int getCount(Object aValue) {

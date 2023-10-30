@@ -29,7 +29,7 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
@@ -122,7 +122,7 @@ public class TLEnumerationFormBuilder
 		@InstanceFormat
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Options(fun = AllModules.class)
-		@OptionLabels(MetaLabelProvider.class)
+		@OptionLabels(MetaResourceProvider.class)
 		@Mandatory
 		TLModule getModule();
 

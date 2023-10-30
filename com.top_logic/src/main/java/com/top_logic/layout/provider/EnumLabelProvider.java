@@ -29,11 +29,15 @@ public class EnumLabelProvider implements LabelProvider {
 
 	/**
 	 * Singleton {@link EnumLabelProvider} instance.
+	 * 
+	 * @deprecated Better use {@link EnumResourceProvider#INSTANCE}.
 	 */
+	@Deprecated
 	public static final EnumLabelProvider INSTANCE = new EnumLabelProvider();
 
-	private EnumLabelProvider() {
-		// Singleton constructor.
+	/** Singleton constructor. */
+	protected EnumLabelProvider() {
+		super();
 	}
 
 	@Override

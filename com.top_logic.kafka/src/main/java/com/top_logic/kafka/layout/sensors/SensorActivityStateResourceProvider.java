@@ -10,7 +10,7 @@ import com.top_logic.kafka.services.sensors.Sensor.SensorActivityState;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.provider.EnumLabelProvider;
+import com.top_logic.layout.provider.EnumResourceProvider;
 
 /**
  * Provide matching images for the requested {@link SensorActivityState}.
@@ -42,6 +42,6 @@ public class SensorActivityStateResourceProvider extends AbstractResourceProvide
 
     @Override
     public String getTooltip(Object anObject) {
-		return (anObject instanceof Enum) ? TagUtil.encodeXML(EnumLabelProvider.INSTANCE.getLabel(anObject)) : null;
+		return (anObject instanceof Enum) ? TagUtil.encodeXML(EnumResourceProvider.INSTANCE.getLabel(anObject)) : null;
     }
 }

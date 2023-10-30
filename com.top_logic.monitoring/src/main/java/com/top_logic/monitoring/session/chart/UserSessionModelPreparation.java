@@ -17,7 +17,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.provider.EnumLabelProvider;
+import com.top_logic.layout.provider.EnumResourceProvider;
 import com.top_logic.reporting.flex.chart.config.aggregation.AggregationFunction;
 import com.top_logic.reporting.flex.chart.config.dataset.TimeseriesDatasetBuilder.Period;
 import com.top_logic.reporting.flex.chart.config.gui.ChartContextObserver;
@@ -67,7 +67,7 @@ public class UserSessionModelPreparation extends AbstractModelPreparationBuilder
 			@Override
 			public String getLabel(Object object) {
 				Period period = ((TimePeriodAggregator) object).getConfig().getPeriod();
-				return EnumLabelProvider.INSTANCE.getLabel(period);
+				return EnumResourceProvider.INSTANCE.getLabel(period);
 			}
 		});
 		container.addMember(periodField);

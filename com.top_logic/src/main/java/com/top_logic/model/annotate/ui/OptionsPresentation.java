@@ -9,8 +9,7 @@ import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.model.TLReference;
 
 /**
- * The display of options of a {@link TLReference} in a select dialog in case the reference is
- * displayed as {@link ReferencePresentation#POP_UP pop-up select}.
+ * Specifies how to display options for a {@link TLReference} in a select dialog.
  * 
  * @see OptionsDisplay
  * @see ReferencePresentation#POP_UP
@@ -19,10 +18,10 @@ import com.top_logic.model.TLReference;
  */
 public enum OptionsPresentation implements ExternallyNamed {
 
-	/** Display the options as plain list or tree, depending on the options. */
+	/** Display the options only by their labels. */
 	PLAIN("plain"),
 
-	/** Display the options as table. */
+	/** Display the options in a table showing their default columns. */
 	TABLE("table")
 	;
 

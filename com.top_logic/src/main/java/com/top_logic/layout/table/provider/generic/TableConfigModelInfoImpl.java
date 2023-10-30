@@ -9,7 +9,6 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.list;
 import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
-import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
@@ -231,10 +230,8 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 			if (!mainProperties.isEmpty()) {
 				return mainProperties;
 			}
-			List<String> subtypeMainProperties = contentType
-				.getSpecializations()
+			List<String> subtypeMainProperties = getSpecializationsOrdered(contentType)
 				.stream()
-				.sorted(comparing(TLClass::getName)) // Ensure the order is stable.
 				.map(this::calcMainProperties)
 				.flatMap(Collection::stream)
 				.distinct()

@@ -5,9 +5,12 @@
  */
 package com.top_logic.graph.diagramjs.server.commands;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.graph.common.model.GraphPart;
 import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.server.DiagramJSGraphComponent;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
@@ -45,17 +48,40 @@ public class RelayoutGraphCommand extends AbstractCommandHandler {
 		DiagramJSGraphComponent graphComponent = (DiagramJSGraphComponent) component;
 		LayoutContext context = graphComponent.getLayoutContext();
 
-		TLModule enclosingModule = GraphModelUtil.getEnclosingModule(model);
-		LayoutGraph graph = GraphModelUtil.createLayoutGraph(enclosingModule, context.showTableInterfaceTypes());
+		TLModule module = GraphModelUtil.getEnclosingModule(model);
+		LayoutGraph graph = GraphModelUtil.createLayoutGraph(module, context.showTableInterfaceTypes());
 		Sugiyama.INSTANCE.layout(context, graph);
 
-		SharedGraph graphModel =
-			GraphModelUtil.createDiagramJSSharedGraphModel(context.getLabelProvider(), graph, enclosingModule);
-		graphModel.setSelectedGraphParts(graphComponent.getGraphModel().getSelectedGraphParts());
-
-		graphComponent.setGraphModel(graphModel);
+		graphComponent.setGraphModel(createSharedGraph(graphComponent, module, graph));
 
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
+	private SharedGraph createSharedGraph(DiagramJSGraphComponent graphComponent, TLModule module, LayoutGraph graph) {
+		SharedGraph graphModel = createRawSharedGraph(graphComponent, module, graph);
+
+		setSelectedGraphParts(graphComponent, graphModel);
+
+		return graphModel;
+	}
+
+	private SharedGraph createRawSharedGraph(DiagramJSGraphComponent component, TLModule module, LayoutGraph graph) {
+		return GraphModelUtil.createDiagramJSSharedGraphModel(component.getLabelProvider(), graph, module);
+	}
+
+	private void setSelectedGraphParts(DiagramJSGraphComponent graphComponent, SharedGraph graphModel) {
+		graphModel.setSelectedGraphParts(getSelectedGraphPart(graphComponent)
+			.stream()
+			.filter(part -> hasGraphPart(graphModel, part))
+			.collect(Collectors.toSet())
+		);
+	}
+
+	private Collection<? extends GraphPart> getSelectedGraphPart(DiagramJSGraphComponent graphComponent) {
+		return graphComponent.getGraphModel().getSelectedGraphParts();
+	}
+
+	private boolean hasGraphPart(SharedGraph graphModel, GraphPart part) {
+		return graphModel.getGraphPart(part.getTag()) != null;
+	}
 }

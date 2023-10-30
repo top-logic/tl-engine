@@ -23,8 +23,7 @@
 		<property name="producer"
 			instance-type="com.top_logic.layout.form.component.setting.OutputProducer"
 			type="PolymorphicConfiguration"
-		>
-		</property>
+		/>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
 			type="List"
@@ -47,8 +46,7 @@
 		</modelBuilder>
 		<buttons>
 			${buttons}
-			
-			<button id="updateOutput" 
+			<button id="updateOutput"
 				class="com.top_logic.layout.form.component.setting.UpdateOutput"
 				group="System"
 				image="theme:ICONS_BUTTON_REFRESH"

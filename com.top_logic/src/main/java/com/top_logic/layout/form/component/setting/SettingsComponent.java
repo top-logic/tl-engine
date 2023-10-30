@@ -26,8 +26,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * <code>output</code> channel, that allows to communicate (a copy of) the edited object to
  * dependent components.
  * </p>
- * 
- * @see UpdateOutput
  */
 public class SettingsComponent extends FormComponent implements EditMode, WithOutputChannel {
 

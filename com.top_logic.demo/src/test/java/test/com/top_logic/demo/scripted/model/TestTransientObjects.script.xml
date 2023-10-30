@@ -1,0 +1,627 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Objekt erstellen"
+			command-name="addNewElement"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="A"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datum"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="03.10.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Zahl"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="50"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
+			command-label="Anlegen"
+			command-name="createNewElement"
+			component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/createObject/dialog.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Objekt erstellen"
+			command-name="addNewElement"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="B"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datum"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="10.10.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Zahl"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="60"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
+			command-label="Anlegen"
+			command-name="createNewElement"
+			component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/createObject/dialog.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Objekt erstellen"
+			command-name="addNewElement"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="C"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datum"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="17.10.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Zahl"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="90"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
+			command-label="Anlegen"
+			command-name="createNewElement"
+			component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/createObject/dialog.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+					<list>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+								class-name="test.transient:Row"
+								object-label="A"
+							/>
+						</entry>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+								class-name="test.transient:Row"
+								object-label="C"
+							/>
+						</entry>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+								class-name="test.transient:Row"
+								object-label="B"
+							/>
+						</entry>
+					</list>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+				<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+					tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Anzahl"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="3"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Minimum"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="50"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Maximum"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="90"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Summe"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="200"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface=""/>
+				<selection-state boolean="false"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+				<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+					tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Anzahl"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Minimum"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Maximum"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Summe"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/detailsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Von"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+					tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="09.10.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Bis"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+					tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="23.10.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			command-label="Aktualisieren"
+			command-name="updateOutput"
+			component-implementation-comment="com.top_logic.layout.form.component.setting.SettingsComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</table>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+				int="2"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			command-label="Vorige Woche"
+			component-implementation-comment="com.top_logic.layout.form.component.setting.SettingsComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Von"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="02.10.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Bis"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="16.10.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			command-label="Vorige Woche"
+			component-implementation-comment="com.top_logic.layout.form.component.setting.SettingsComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</table>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+				int="1"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			command-label="Eingaben zurücksetzen"
+			component-implementation-comment="com.top_logic.layout.form.component.setting.SettingsComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Von"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Bis"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form"
+						tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+					<list>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+								class-name="test.transient:Row"
+								object-label="A"
+							/>
+						</entry>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+								class-name="test.transient:Row"
+								object-label="C"
+							/>
+						</entry>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+								class-name="test.transient:Row"
+								object-label="B"
+							/>
+						</entry>
+					</list>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+				<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+					tab-path="Technisches Demo > Komponenten > Transiente Objekte"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+			command-label="Löschen"
+			command-name="deleteSelection"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

@@ -17,7 +17,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
@@ -70,7 +70,7 @@ public class ClassificationFieldProvider extends AbstractSelectFieldProvider {
 	
 		SelectField selectField = FormFactory.newSelectField(fieldName, Collections.EMPTY_LIST, true, isDisabled);
 		initField(selectField, editContext);
-		selectField.setOptionLabelProvider(MetaLabelProvider.INSTANCE);
+		selectField.setOptionLabelProvider(MetaResourceProvider.INSTANCE);
 
 		return selectField;
 	}

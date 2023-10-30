@@ -8,6 +8,7 @@ package com.top_logic.model.annotate.ui;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
+import com.top_logic.model.config.annotation.MainProperties;
 
 /**
  * Enumeration of the possible kinds to display the options and value of a {@link TLReference}.
@@ -22,11 +23,11 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPrese
 public enum ReferencePresentation implements ExternallyNamed {
 
 	/**
-	 * Show the possible values as pop up dialog.
+	 * Edit the reference by choosing values in a pop-up dialog.
 	 * 
 	 * <p>
-	 * When this presentation is used an {@link OptionsPresentation} defines how the options are
-	 * displayed in the "option choose dialog".
+	 * When this presentation is used the annotation {@link OptionsPresentation} defines how the
+	 * options are displayed in the dialog.
 	 * </p>
 	 * 
 	 * @see OptionsPresentation
@@ -34,32 +35,37 @@ public enum ReferencePresentation implements ExternallyNamed {
 	POP_UP("pop-up"),
 
 	/**
-	 * Show the possible values as drop down box.
-	 * */
+	 * Edit the reference by choosing values in a drop-down field.
+	 */
 	DROP_DOWN("drop-down"),
 
 	/**
-	 * Shows all possible values using a vertical list of radio buttons.
+	 * Edit the reference by showing all possible values in a vertical list of radio buttons.
 	 */
 	RADIO("radio"),
 
 	/**
-	 * Shows all possible values using horizontal list of radio buttons.
+	 * Edit the reference by showing all possible values in a horizontal list of radio buttons.
 	 */
 	RADIO_INLINE("radio-inline"),
 
 	/**
-	 * Show a table of values with an option to choose new ones and remove old ones.
+	 * Display the reference as table with values as rows.
 	 * 
 	 * <p>
-	 * The columns displayed by default are either specified by the MainColumns annotation, or are
-	 * the main columns of the reference type as globally configured in the application
-	 * configuration.
+	 * When editing the reference, the rows can be removed or new rows can be chosen in a pop-up
+	 * dialog that displays possible values.
 	 * </p>
 	 * 
 	 * <p>
-	 * When this presentation is used an {@link OptionsPresentation} defines how the options are
-	 * displayed in the "option choose dialog".
+	 * The columns displayed in the table are either specified by the {@link MainProperties}
+	 * annotation, or are the default columns of the reference type as globally configured in the
+	 * application configuration.
+	 * </p>
+	 * 
+	 * <p>
+	 * The presentation of options in the chooser dialog can be customized using the
+	 * {@link OptionsPresentation} annotation.
 	 * </p>
 	 */
 	TABLE("table"),

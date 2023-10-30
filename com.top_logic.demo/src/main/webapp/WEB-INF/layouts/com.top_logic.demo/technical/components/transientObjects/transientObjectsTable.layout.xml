@@ -6,6 +6,7 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
+		defaultSelection="false"
 		model="output(com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form)"
 		multiSelection="true"
 		size="300px"

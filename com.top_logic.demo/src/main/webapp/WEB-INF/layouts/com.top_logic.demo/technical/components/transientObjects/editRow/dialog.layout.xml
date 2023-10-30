@@ -21,6 +21,9 @@
 				<en>Edit row</en>
 				<de>Zeile bearbeiten</de>
 			</resourceKey>
+			<executability>
+				<rule-by-expression decision="selection -> $selection.size() == 1"/>
+			</executability>
 		</open-handler>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/editRow/innerLayout.layout.xml"/>

@@ -5,10 +5,13 @@
  */
 package com.top_logic.service.openapi.server.parameter;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +48,7 @@ import com.top_logic.basic.io.binary.InMemoryBinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ParameterLocation;
+import com.top_logic.service.openapi.common.layout.WithMultiPartBodyTransferType;
 
 /**
  * Interprets the request multipart body as parameter.
@@ -94,11 +98,13 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		Config.NAME_ATTRIBUTE,
 		Config.DESCRIPTION,
 		Config.PARTS,
+		Config.TRANSFER_TYPE,
 		Config.REQUIRED,
 	})
 	@DisplayInherited(DisplayStrategy.IGNORE)
 	@TagName("multipart-request-body")
-	public interface Config extends ConcreteRequestParameter.Config<MultiPartBodyParameter> {
+	public interface Config
+			extends ConcreteRequestParameter.Config<MultiPartBodyParameter>, WithMultiPartBodyTransferType {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -207,6 +213,101 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	@Override
 	protected Map<?, ?> getValue(HttpServletRequest req, Map<String, String> parametersRaw)
 			throws InvalidValueException {
+		try {
+			switch (getConfig().getTransferType()) {
+				case URL_ENCODED: {
+					return parseURLEncodedData(req);
+				}
+				case FORM_DATA: {
+					return parseMultiPartFormData(req);
+				}
+			}
+			throw new UnreachableAssertion("Uncovered case: " + getConfig().getTransferType());
+		} catch (IOException ex) {
+			throw new InvalidValueException("Unable to read content from stream.", ex);
+		}
+		
+	}
+
+	private Map<?, ?> parseURLEncodedData(HttpServletRequest req) throws InvalidValueException, IOException {
+		Charset characterEncoding = Charset.forName(req.getCharacterEncoding());
+		Map<String, Object> values = new HashMap<>();
+		StringBuilder name = new StringBuilder();
+		StringBuilder value = new StringBuilder();
+		boolean nameProcessing = true;
+		try (BufferedReader reader = req.getReader()) {
+			while (true) {
+				int current = reader.read();
+				if (current == -1) {
+					break;
+				}
+				char c = (char) current;
+				if (nameProcessing) {
+					switch (c) {
+						case '&': {
+							throw new InvalidValueException(
+								"Invalid URL encoded data: Unexpected character '&' when processing name '" + name
+										+ "'.");
+						}
+						case '=': {
+							nameProcessing = false;
+							break;
+						}
+						default: {
+							name.append(c);
+							break;
+						}
+					}
+				} else {
+					switch (c) {
+						case '&': {
+							addEncodedValue(values, name.toString(), value.toString(), characterEncoding);
+							name.setLength(0);
+							value.setLength(0);
+							nameProcessing = true;
+							break;
+						}
+						case '=': {
+							throw new InvalidValueException(
+								"Invalid URL encoded data: Unexpected character '=' when processing value '" + value
+										+ "' for name '" + name
+										+ "'.");
+						}
+						default: {
+							value.append(c);
+							break;
+						}
+					}
+				}
+			}
+			if (!nameProcessing) {
+				addEncodedValue(values, name.toString(), value.toString(), characterEncoding);
+			} else if (name.length() > 0) {
+				throw new InvalidValueException("Missing value for name: " + name);
+			}
+		}
+		return values;
+	}
+
+	private void addEncodedValue(Map<String, Object> values, String name, String value, Charset encoding)
+			throws InvalidValueException {
+		String decodedValue;
+		try {
+			decodedValue = URLDecoder.decode(value, encoding);
+		} catch (IllegalArgumentException ex) {
+			// Illegal strings are encountered.
+			throw new InvalidValueException("Illegal URL encoded value: " + value, ex);
+		}
+		BodyPart bodyPart = getConfig().getParts().get(name);
+		if (bodyPart == null) {
+			addValue(values, name, decodedValue, false);
+		} else {
+			ParameterFormat format = bodyPart.getFormat();
+			addValue(values, name, parse(decodedValue, format, name), bodyPart.isMultiple());
+		}
+	}
+
+	private Map<?, ?> parseMultiPartFormData(HttpServletRequest req) throws IOException, InvalidValueException {
 		String characterEncoding = req.getCharacterEncoding();
 		Map<String, Object> values = new HashMap<>();
 		try {
@@ -218,8 +319,6 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 			}
 		} catch (RuntimeException | InvalidValueException e) {
 			throw e;
-		} catch (IOException ex) {
-			throw new InvalidValueException("Invalid multi part body.", ex);
 		}
 		return values;
 	}

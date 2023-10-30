@@ -55,6 +55,7 @@ import com.top_logic.service.openapi.client.registry.impl.value.ComputedValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ConstantValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ParameterValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ValueProducerFactory;
+import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.MediaTypeObject;
@@ -66,6 +67,7 @@ import com.top_logic.service.openapi.common.document.ReferencableParameterObject
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
 import com.top_logic.service.openapi.common.document.ServerObject;
 import com.top_logic.service.openapi.common.layout.ImportOpenAPIConfiguration;
+import com.top_logic.service.openapi.common.layout.MultiPartBodyTransferType;
 import com.top_logic.service.openapi.common.schema.ArraySchema;
 import com.top_logic.service.openapi.common.schema.ObjectSchema;
 import com.top_logic.service.openapi.common.schema.PrimitiveSchema;
@@ -251,12 +253,26 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		for (MediaTypeObject mediaObject : possibleBodyTypes) {
 			String mediaType = mediaObject.getMediaType();
 			switch (mediaType) {
-				case com.top_logic.mig.html.HTMLConstants.MULTIPART_FORM_DATA_VALUE:
-					addMultiPartBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+				case OpenAPIConstants.MULTIPART_FORM_DATA_CONTENT_TYPE: {
+					MultiPartRequestBody.Config bodyParameter =
+						addMultiPartBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+					if (bodyParameter != null) {
+						bodyParameter.setTransferType(MultiPartBodyTransferType.FORM_DATA);
+					}
 					return;
-				case JsonUtilities.JSON_CONTENT_TYPE:
+				}
+				case OpenAPIConstants.APPLICATION_URL_ENCODED_CONTENT_TYPE: {
+					MultiPartRequestBody.Config bodyParameter =
+						addMultiPartBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+					if (bodyParameter != null) {
+						bodyParameter.setTransferType(MultiPartBodyTransferType.URL_ENCODED);
+					}
+					return;
+				}
+				case JsonUtilities.JSON_CONTENT_TYPE: {
 					addJSONBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
 					return;
+				}
 				default:
 					continue;
 			}
@@ -266,8 +282,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		addJSONBody(newMethod, warnings, parameterNames, requestBody, possibleBodyTypes.iterator().next(), completeAPI);
 	}
 
-	private void addMultiPartBody(MethodDefinition newMethod, List<ResKey> warnings, Set<String> parameterNames,
-			RequestBodyObject requestBody, MediaTypeObject mediaObject, OpenapiDocument completeAPI) {
+	private MultiPartRequestBody.Config addMultiPartBody(MethodDefinition newMethod, List<ResKey> warnings,
+			Set<String> parameterNames, RequestBodyObject requestBody, MediaTypeObject mediaObject,
+			OpenapiDocument completeAPI) {
 		String schema = mediaObject.getSchema();
 		List<ParameterDefinition> newParams;
 		if (schema.isEmpty()) {
@@ -289,7 +306,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 				}).collect(Collectors.toList());
 			} else {
 				warnings.add(I18NConstants.UNEXPECTED_SCHEMA_FOR_MULTIPART_BODY__METHOD.fill(newMethod.getName()));
-				return;
+				return null;
 			}
 		}
 		
@@ -308,6 +325,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		}
 		newMethod.getParameters().addAll(newParams);
 		newMethod.getCallBuilders().add(bodyArgument);
+		return bodyArgument;
 	}
 
 	private static Expr newVariable(String variableName) {

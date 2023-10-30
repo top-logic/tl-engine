@@ -51,7 +51,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfigVisitor;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
@@ -485,7 +485,14 @@ public class OpenAPIExporter {
 
 	private MediaTypeObject newMultipartMediaTypeObject(MultiPartBodyParameter.Config parameter) {
 		MediaTypeObject result = newItem(MediaTypeObject.class);
-		result.setMediaType(HTMLConstants.MULTIPART_FORM_DATA_VALUE);
+		switch (parameter.getTransferType()) {
+			case FORM_DATA:
+				result.setMediaType(OpenAPIConstants.MULTIPART_FORM_DATA_CONTENT_TYPE);
+				break;
+			case URL_ENCODED:
+				result.setMediaType(OpenAPIConstants.APPLICATION_URL_ENCODED_CONTENT_TYPE);
+				break;
+		}
 
 		result.setSchema(JsonUtilities.writeJSONContent(json -> {
 			json.beginObject();

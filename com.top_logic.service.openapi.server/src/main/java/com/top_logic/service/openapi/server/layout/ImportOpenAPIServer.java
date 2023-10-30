@@ -31,6 +31,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
@@ -48,6 +49,7 @@ import com.top_logic.service.openapi.common.document.ResponsesObject;
 import com.top_logic.service.openapi.common.document.SchemaObject;
 import com.top_logic.service.openapi.common.document.TagObject;
 import com.top_logic.service.openapi.common.layout.ImportOpenAPIConfiguration;
+import com.top_logic.service.openapi.common.layout.MultiPartBodyTransferType;
 import com.top_logic.service.openapi.common.schema.ArraySchema;
 import com.top_logic.service.openapi.common.schema.ObjectSchema;
 import com.top_logic.service.openapi.common.schema.ObjectSchemaProperty;
@@ -282,8 +284,18 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		for (MediaTypeObject mediaObject : possibleBodyTypes) {
 			String mediaType = mediaObject.getMediaType();
 			switch (mediaType) {
-				case com.top_logic.mig.html.HTMLConstants.MULTIPART_FORM_DATA_VALUE: {
-					MultiPartBodyParameter.Config multiPartBody = newBodyParameter(MultiPartBodyParameter.class, requestBody, mediaObject);
+				case OpenAPIConstants.MULTIPART_FORM_DATA_CONTENT_TYPE: {
+					MultiPartBodyParameter.Config multiPartBody =
+						newBodyParameter(MultiPartBodyParameter.class, requestBody, mediaObject);
+					multiPartBody.setTransferType(MultiPartBodyTransferType.FORM_DATA);
+					addBodyParts(multiPartBody, warnings, completeAPI);
+					bodyParam = multiPartBody;
+					break;
+				}
+				case OpenAPIConstants.APPLICATION_URL_ENCODED_CONTENT_TYPE: {
+					MultiPartBodyParameter.Config multiPartBody =
+						newBodyParameter(MultiPartBodyParameter.class, requestBody, mediaObject);
+					multiPartBody.setTransferType(MultiPartBodyTransferType.URL_ENCODED);
 					addBodyParts(multiPartBody, warnings, completeAPI);
 					bodyParam = multiPartBody;
 					break;
@@ -307,7 +319,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 			} else {
 				warnings.add(I18NConstants.UNSUPPORTED_BODY_TYPES__PATH_UNSUPPORTED_SUPPORTED
 					.fill(method, unsupportedMediaTypes,
-						Arrays.asList(com.top_logic.mig.html.HTMLConstants.MULTIPART_FORM_DATA_VALUE,
+						Arrays.asList(OpenAPIConstants.MULTIPART_FORM_DATA_CONTENT_TYPE,
 							JsonUtilities.JSON_CONTENT_TYPE)));
 			}
 			MediaTypeObject jsonMediaType = TypedConfiguration.newConfigItem(MediaTypeObject.class);

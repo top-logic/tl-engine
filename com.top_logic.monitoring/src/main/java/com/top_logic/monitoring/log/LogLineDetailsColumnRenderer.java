@@ -33,7 +33,6 @@ import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.structure.Scrolling;
-import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -57,13 +56,7 @@ public class LogLineDetailsColumnRenderer implements Renderer<String> {
 	@Override
 	public void write(DisplayContext context, TagWriter out, String value) throws IOException {
 		if (!StringServices.isEmpty(value)) {
-			out.beginBeginTag(SPAN);
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, value);
-			out.endBeginTag();
-			{
-				createButtonControl(context, value).write(context, out);
-			}
-			out.endTag(SPAN);
+			createButtonControl(context, value).write(context, out);
 		}
 	}
 

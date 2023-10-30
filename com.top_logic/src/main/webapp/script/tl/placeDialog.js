@@ -13,10 +13,14 @@ PlaceDialog = {
 	//  ========== Tooltip 2023 by SHA ==========
 	generateTooltip: function(target, content) {
 		let openTimeout = setTimeout(() => {
-			if (target.classList.contains("tlPopupOpen")) {
+			let targetZero = (target.offsetHeight == 0) && (target.offsetWidth == 0);
+			if (target.classList.contains("tlPopupOpen") || targetZero) {
 				return;
 			}
 			const outerDocument = document.body.firstElementChild;
+			
+			this.closeCurrentTooltip(outerDocument);
+			
 			const tooltip = document.createElement("div");
 			tooltip.classList.add("tooltip");
 			tooltip.id = PlaceDialog.tooltipId;
@@ -26,6 +30,17 @@ PlaceDialog = {
 			this.closeTooltip(target, tooltip);
 		}, 400);
 		target.setAttribute("data-ttOpen", openTimeout);
+	},
+	
+	closeCurrentTooltip: function(outerDocument) {
+		let oldTooltip = outerDocument.querySelector(":scope > .tooltip"),
+			activeTarget = outerDocument.querySelector(".activeTooltip");
+		if (oldTooltip) {
+			oldTooltip.remove();
+		}
+		if (activeTarget) {
+			activeTarget.classList.remove("activeTooltip");
+		}
 	},
 
 	closeTooltip: function(target, tooltip) {

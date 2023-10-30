@@ -7,10 +7,8 @@ package com.top_logic.html.template;
 
 import java.io.IOException;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.RenderErrorUtil;
 import com.top_logic.layout.template.WithProperties;
 
 /**
@@ -37,9 +35,7 @@ public class VariableTemplate implements RawTemplateFragment {
 		} catch (RuntimeException exception) {
 			switch (out.getState()) {
 				case ELEMENT_CONTENT:
-					ResKey resKey = I18NConstants.ERROR_RENDERING_TEMPLATE_FAILED;
-					String message = exception.getMessage();
-					RenderErrorUtil.produceErrorOutput(context, out, resKey, message, exception, VariableTemplate.class);
+					HTMLTemplateUtils.renderError(context, out, exception);
 					break;
 
 				default:

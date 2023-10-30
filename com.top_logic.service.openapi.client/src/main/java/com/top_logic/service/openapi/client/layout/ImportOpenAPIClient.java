@@ -292,7 +292,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 				defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
 			newParams = Collections.singletonList(paramDef);
 		} else {
-			Schema parsedSchema = parseSchema(schema, "requestBody", completeAPI.getComponents().getSchemas(), warnings);
+			Schema parsedSchema = parseSchema(schema, "requestBody", globalSchemas(completeAPI), warnings);
 			if (parsedSchema == null) {
 				ParameterDefinition paramDef =
 					defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
@@ -549,7 +549,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 			String schema, List<ResKey> warnings, OpenapiDocument completeAPI) {
 		Schema schemaObject;
 		if (!StringServices.isEmpty(schema)) {
-			schemaObject = parseSchema(schema, paramName, completeAPI.getComponents().getSchemas(), warnings);
+			schemaObject = parseSchema(schema, paramName, globalSchemas(completeAPI), warnings);
 		} else {
 			schemaObject = null;
 		}

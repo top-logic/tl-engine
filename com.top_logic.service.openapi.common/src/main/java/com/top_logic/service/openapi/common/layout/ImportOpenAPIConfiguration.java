@@ -419,14 +419,25 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 	}
 
 	/**
-	 * Globally declared {@link ParameterObject} in the given {@link OpenapiDocument}.
+	 * Globally declared {@link ReferencableParameterObject} in the given {@link OpenapiDocument}.
 	 */
-	protected Map<String, ReferencableParameterObject> globalParameters(OpenapiDocument config) {
-		ComponentsObject components = config.getComponents();
+	protected Map<String, ReferencableParameterObject> globalParameters(OpenapiDocument api) {
+		ComponentsObject components = api.getComponents();
 		if (components == null) {
 			return Collections.emptyMap();
 		}
 		return components.getParameters();
+	}
+
+	/**
+	 * Globally declared {@link SchemaObject } in the given {@link OpenapiDocument}.
+	 */
+	protected Map<String, SchemaObject> globalSchemas(OpenapiDocument api) {
+		ComponentsObject components = api.getComponents();
+		if (components == null) {
+			return Collections.emptyMap();
+		}
+		return components.getSchemas();
 	}
 
 	/**

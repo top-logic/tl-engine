@@ -9,8 +9,10 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -40,14 +42,24 @@ public class CreateObject extends AbstractObjectCreation {
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
 		TLClass type = (TLClass) asStructuredTypeNonNull(self, getSelf());
-		TLObject context = asTLObject(arguments.length > 0 ? arguments[0] : null);
-		return ModelService.getInstance().getFactory().createObject(type, context, null);
+		TLObject context = asTLObject(arguments[0]);
+		boolean transientObject = asBoolean(arguments[1]);
+		if (transientObject) {
+			return TransientObjectFactory.INSTANCE.createObject(type, context);
+		} else {
+			return ModelService.getInstance().getFactory().createObject(type, context, null);
+		}
 	}
 
 	/**
 	 * Builder creating a {@link CreateObject} expression.
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<CreateObject> {
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.optional("context")
+			.optional("transient", false)
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -58,8 +70,12 @@ public class CreateObject extends AbstractObjectCreation {
 		@Override
 		public CreateObject build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMaxArgs(expr, args, 1);
 			return new CreateObject(getName(), self, args);
+		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 	}
 

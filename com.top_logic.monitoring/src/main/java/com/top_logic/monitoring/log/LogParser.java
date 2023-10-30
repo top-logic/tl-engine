@@ -39,10 +39,6 @@ import com.top_logic.util.TLContextManager;
 /**
  * Parses a log file into {@link LogLine} objects.
  * <p>
- * Example line:
- * <code>2023-08-25T13:59:11,136 INFO  [TL-Bootstrap]: com.top_logic.basic.module.BasicRuntimeModule - Service 'com.top_logic.knowledge.wrap.WebFolderFactory' successfully started.</code>
- * </p>
- * <p>
  * There is no enum for the entry parts, as applications may use different log patterns with other
  * parts.
  * </p>
@@ -55,6 +51,9 @@ import com.top_logic.util.TLContextManager;
  * <p>
  * This class is thread-safe and can be used for parsing multiple files in parallel.
  * </p>
+ * 
+ * @implNote Example line:
+ *           <code>2023-08-25T13:59:11,136 INFO  [TL-Bootstrap]: com.top_logic.basic.module.BasicRuntimeModule - Service 'com.top_logic.knowledge.wrap.WebFolderFactory' successfully started.</code>
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
@@ -90,9 +89,8 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 
 		/**
 		 * The pattern for identifying a time stamp and the start of a new log statement.
-		 * <p>
-		 * Example: <code>2023-08-25T13:59:11,138</code>
-		 * </p>
+		 * 
+		 * @implNote Example: <code>2023-08-25T13:59:11,138</code>
 		 * 
 		 * @see #DEFAULT_TIME_FORMAT
 		 */
@@ -101,7 +99,7 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 		Pattern getTimePattern();
 
 		/**
-		 * The pattern identifying the start of a new log statement by expecting a time stamp.
+		 * The pattern identifying the start of a new log statement.
 		 * <p>
 		 * When this pattern does not match at the beginning of a line, that line is added to the
 		 * previous log statement's details.

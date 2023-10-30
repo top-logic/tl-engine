@@ -1,0 +1,881 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Service Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="OpenAPI-Server"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Module"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.service.openapi.server.layout.ImportOpenAPIServer"
+							command-label="OpenAPI-Server importieren"
+							command-name="importOpenAPIServer"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Api-Konfiguration öffnen"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+										content-type="application/x-yaml"
+										name="TestMultiPartBody.import.yaml"
+										url="file:./src/test/java/test/com/top_logic/demo/scripted/openapi/TestMultiPartBody.import.yaml"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.TLRestartServiceHandler"
+							command-label="Service neustarten"
+							command-name="restartService"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#TLServiceList"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="TL-Script-Funktionen für externe APIs"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Module"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.service.openapi.client.layout.ImportOpenAPIConfiguration"
+							command-label="OpenAPI Konfiguration importieren..."
+							command-name="importOpenAPIClient"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Api-Konfiguration öffnen"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+										content-type="application/x-yaml"
+										name="TestMultiPartBody.import.yaml"
+										url="file:./src/test/java/test/com/top_logic/demo/scripted/openapi/TestMultiPartBody.import.yaml"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.TLRestartServiceHandler"
+							command-label="Service neustarten"
+							command-name="restartService"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#TLServiceList"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path=""
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neu..."
+							command-name="openCreateDialog"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Anlageformular"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="DemoTypes:BNotUnderA"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Anlageformular"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="TestOpenAPI"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.create.GenericStructureCreateHandler"
+							command-label="Anlegen"
+							command-name="genericCreateStructure"
+							component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[put_createA_parent(["TestOpenAPI"], "newA0", true, true, false)
+
+]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[put_createA_parent(["TestOpenAPI"], "newA1", true, true, false)
+
+]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestOpenAPI > newA0"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="binary"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="iVBORw0KGgoAAAANSUhEUgAAANQAAAAwCAYAAABpC1SMAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAABCLSURBVHgB7V1ddtPIEq5W5kDgPkxmBXhWQLKCOC9D4D4QryBhBbFXgFmBnBXEs4JkHiYJvKBZAWEFo7uCMS-XwCHqWz-tf6kl2ZISuP7OMTjWT1dXd1dXV1dVA6yxxhprrLHGfYQKvzjuxQyU8zPcUwRa_wdAX-PHh8m_r6vuX7U-gYaPXN7kuVfrAfftAT61VXht8nwOXcP9cxtgY-goeKoB8DskaVnQR-ngYwDqvHadlqLjDMvdPHCU2i2gg-Bjt1topAW_e_X5eznAf4clV_2l6sS0Pjoq4RnEtOq_AG69Ov0uGlBqdvU3_jeA7wM-VvINSIP4RTe0WB8pq2JQ2MrT430FXcB0CKXgJZR3tgKohQJ9Hki9fGgD7uVQKfW6GR0MH5njVdIi739fdAkHwxzG-6-gLlagtaovxA1tk7BlDwtRA64Qj-JOMcAZ56liJuiQTh9pmAfHz95kbw47uFbOGILbT9AICt-vt_HduxAPEmLm3jIDuJMB5V4cKOW4sKLQQMLmKw0snDmQT6fQvHPmaVFqWtSWppzVB5T7Dts0IJ4NYTWUDqyVGho7EVVwiC9_1VitEdVgO_7hBtWr0aLeszj4lT5WMWNynT0aUFr_upIUdi-PQsEh5dyOiqb-3gYU8s1Rj1zsREfQHqzCogzOybtjfG6aEHDd0bLigOqC1iIB4MBdgKXaow_EIJSyZ1zJuoOJMHl2jgzc01qNgPVcGDCzeR3RMlBQcAPT2oPL2Tgz-nz_IL7BptfyYCJgvZwPcPL2sO4Dzsnb17gOmrU8mEJazqBFdEUrDVBndnWaKgv6hqgIJGkGSNFHrOgOTF6cwzLAgZXu7D91Nah8PX5Gg9eTctQp9A2cmZhvSj2FTqC3lNZzmgmq7pQOStK-C7DBYgQtoVtaQ2NZjJ-gZ6QGE9wMG81MRaDODjBy3Mu5VnBIM4h2z3awUf5ASXcMLULrhyOlvqJqp4ekCvZivTNwYHOma62XsEOiwQHESrmQ9WBA689dJZYs-9M4O2j3cqdU_cO1W70OmqWDUbQOTgFValw-vPChDTSiFYUl2wGStKpdZVlvabaY7k-Tv_U6oIy0GADpyQAHKw-mBALYHCv4QtIbF56PT7V-gDr110PWsNvCZG-Bne2E1lT4OWTdvQ_g4NVYXsVdvqxl972yGzQuytH8O0XaX5a_RtNMeIp12yugg2ZnF6zgGeYE4POsrH21vCu5NpXfeaG_pLaSo5VmdGd1WkW9J55l-e-D_m9u3dafyoeEhdJimQVwJaizaz0iJmEJaLG82RZmtY3NmZQBw17WUtKJX9tuoXpq_Xmnci9m8hvtqx2YLQcbhkWqH3aWKdhnSRzUitp2WiksaW063v81pIXbip5rCY7z-LgVWqmfTp4fsXFL1uvmWerD-ed6G1CmMcQi0_ZgCkHqnxlE0gmp89-0NgtKGXsL0EG4RTCE7jEES8eQjvhi3Myo83xaNahyg5gEon2WNJ3st8rNzwJaXnEd2oL7fgvfeVR-A2_WNqOV19EkAEh4lU8I_QyoZGNUS8cVkZhBcJZqU60MoclbQzCAjlExO_lLd0SeDZRNvcrOUkPLvUZdW1JQtr4WvUENxSqEJsvTSsKr_Nm-Zqgh_aMtng2tgVW_29-T5bYP1fogLYR06EHZZb2icJJ1pq0upDoLlGV2Mu06h3sCVTGTdklrLwNKkQGCgJY36AUbHpcrng7fMZTNKrd6x0gLn3zpaJHjL6hCgU04aV36jrtBOd90xxpSP1Y-pZ6YL83066XxwAP4AhUdcmnE5men0_ooMs-XOLNo2RNrASR8dMn2Qsg_VJ2tTjU3dstcziumLhp4z0Rl0T6kdQPXgw7Rl9k8bJh-BhQZDmZvF8xYssS1rWbino4Yf4Nu66NUubd8a76TVIeywWL4Z10rqhqdfvNgmc1wrTfJstZQvXYsgwnV28m-Dx2iX0-JDgwE5dDdlEUbuiIB_c7XgxVmX2gDteqgSjup7orPy2NgueZDx7gbX77vFeL-w1Y33bm18j6hdX-9HxY9DShjSWJdujcMoGWQB4Z5r38PrFoDaANicKiCX3ZBWWavu4Fjs1p2TmtPAyrct1lmYboE2vZgoJAJ9iomM7LZFOwDWn-0XGyJlzf297BKaOuk3e_FNcM333Jx0LVQ72VA6ahj6H4GVJv7TxyH8-iDhEzQYFJ7PaydGIkN5Bwik_bKsFlCQ6uszfjChoshWOGw82nRB1pf1zz27de7Fep9Wfk8_BxiJ3iJTJxBx3Ao6DH-a3uJGWvg4ODXSC-kInbVqLFrzUqwmbSNJ8OK-SGUglKPfM05PEBmqdBqWkaLzRxN8WsAhaZ17V5Oq3wVG4EtvFdEd-HAobJ0h6bznlS-zfOEQ-kQukTG50wpfSaBjI0-p1pCPwZGxXsjzqd9DibCA8_mybByR2SLpUVlS2zYasumPIfJ3FXQZQGwvWwOBJ32wX4GFO_IJ51Wu0PohBsCpdF1mbph-cxDJ0g9fvZLLe_pLiB8s-03DSkkBpZBtRd7NpPQvPxWCfmAe4Pg3HaVQ1CWXUu5Fwe2INYe46HIafXrsQnOW1lVKURqdlKiolBIR09rno5AKnJp_BKHxLgXn2Dyor4qnYyaLn9veluA2mt25VueGZLhJmiSfagrUM6P2ZUH5WvpbVwXUyDqqImglLwUATtfa_fPvaLcIv3tQ4nfGDcS5wxo3RIXdRIJabh_G47LATuyrvCVo0A6tkLW4SkH9jkfoGoDtGBboGrvjQw3nLinbtuSwSf082wZdWK-yNhUk2cDqpcMJn77Vlm6BQUrYJmsR-EzsGSmnULQhitseibfAsettJb1qCasWY9W2wT2cHa_VupL1SAQOjgtGK13yEIYmbsHjuPsIh3UeSutXDaeJdqvJh3kmmTexWrWgwEl5KyTSzBFxzJZj9yLWb00COpc1ohkzQx5Rin1quik9fW31EzVe04JycsgnYMYhFae1QZVWn3xe9sjaoBV1o1YH5rdPe2-Q74FHyrvp1lCOUeF76lXnjWuiYRnlbqYo2N2BXcCil2aXe1CpRDR5GuIwmYj8dsGVENmqmQOjv5djyRUnTq9DzKo_l52YU06bUJ9aW_Gu49ACyNrAh3CDKap9SaOio7ar0v4bURbowDvlFYTuu-Hf9-NLx83ysOd0PJHC2tWmciMW6XTktrgXo3p_jDXmuYp-_PODzuYQnCOQGcHOuggJop1WuvmjgdVnCOjBctqLMBb3_IoEkC9q3wRaAMOYIzT5XWY_SYyvfLGnPJNQnmGo9QTk9A9OX370hFaypTzPYBmKlKTizPxNAenc9s4gsl-01wQvnbf4-C-mbVCB5gYL8l85EGbkFRzO9DeJrLJMJW3VN_dgApBUpcWlZxeGQ5NzrZtk1s8sgDFKwDO93YNkpzk_2cgJSEz8REOLDLEGJ41Rq1DEOx0sFAkOqaAlkaVCJlvgnggdXgqCIESwriXc1haGIVpx25K046tNKCMOfevVgLtjHuKydk2BFkXDRJ3-PL5XCuKE9fgJ-Iq03LWo9Ly9Efs3D60D7_0igyGueTb-3YUJ5EsBm1yS8amlo-0kQE-khx2igTjS8U-gmWuSqFQBLJGntdT1QN8RlIb5MDJNBvRKkKAeMUCqZxWLfz3JKDz83lV31vJbL7GPUU-yraPYMgCOshM_q8BwO1WRAcJuLvwOqlCEc_uK61rrLHGGmusscYaa6yxxho_CBJHgpKjXzYFk8mLJlY3P-lXlbg2gJwbiiWfWpijLWtlkvIX6TJMmTba4ncesENs1pQeOjCG_lZRjrgMjUV0VfMkgWDBZSx7MmOSp1maQpTSZspOvavAEJHlRVzGgTn65rreMwXxRCFthfWIrLZ-vt0z9xc9X1puhucp_jSgI9dHivp72BeLcgzG5USeEnSuUjbQDh_ckmsqdoiMfOc2w452ZA4CO40-8bUc6JwjOW0wzRw-GTBh8k2WidfcAtq4UuJ-9Ogf8rjG-07F4yL2ApZ6_RR5QEflZ5hSRFcVT9hrPqqzOpKnNrfTzzyqPhlQjnahd4_TFzifXfwurtvZVp4nGx-c2Vu3iHcZHrugNmJnUT6n9_HfEe-k_oPMM4Z_Jn7ItH82IDN5Ldn-5AVv-sdrU4fcu-iI08zz20VsquJ5xIMsHeQ8jeUm6YDEyYNZvqTqlOOnlJXp7xG90YAyR4v8yt85sG5fNTC1-oDPR5_Sw7ooXonD4L0mO9aajv8059TSDrWhzZMjcoIZR9SOn_3CpyECLJhB6TdIAFzZOUtxHNV10juZeRKXm-MJe2lEdU4n7Sde0v188JuGmS2gTcKy1blEvubvk_dQ2ygzm5jfaQ-Kr6kR7uuMGwXNue_5_CQ6FI15x_zj3X8_vocjeg0eync5hUKFfoX8nepfWAbym_Z8yF0q6l-055MWHJyvw70YQw1YeU48KBReTLtEHoR01AjvSAqpHNL93Qt_ru3Lx1IMJWSJC_2Ar5EEzZw5miWSVQt9O4FWQpEdM1UbfyrxMTuRd8edSzag1TZ3oILYIory5UhdrSec2ahmx4x4kpkVM3fNZNMwHggphGqIVqaBTcfN3aPN5mOcgYhTeOE1R-ldaAzOdoTl3sZnaGXUMWxrOuj5d_IOUJJfoxEo1kkOEjCpA-S4oT8gk3Ne3r_xOmpP2zstPCdaWXhlliCcy4Q2f1lluzxyUIA5lWduoZBmIXVR2G4hDSacJUJtTwk53pGPTCw4GY5dMkyHKA_sC2eleAZhVxUvccsAGiFYcLMRYyMd3-SJS-vgdHr7GzP7TPGTkmJajn4kwgyTWYJOoQIxTwhlqbY4roZpKLrqkARH_ikVuDxEChLZiBBzKEAz424lYQcBn6ZHs0ujTUjfUFAsPGSgkxAC4_i13TTSWpO2AOyDmazLE-zcn9J3qpnSyCflnFa_08rzKd7xJBeOr_Un_O1nHT6jA2U0Epv3PgrYYItUYSg4BTOOcUv39_quR1QJcnURHdty1CJJzbP8qe7kqwd6kCDkIxJ7qN2zqbnX52M23UsfpcdTUwUPrNjEQfTFl3N1LyaOs_EUG2usk1I3xOTFDMua59Z3Rq0JZy7sQAuWzO7ZrKqDUlcL4j8HkBw0zsZLcK-UySrkF3ZEo2piJ5kDH36s_2Khk-m4odqZRWlgHbAz8W7gXoZ_ejk1nDMZXXmckMa9fEPtRsF0Wn_msHAZ6HAdJmehiqjmGYPmSOV7Do3H9zjK2dWipexlbzRHutLMZdUOrDyHVLxW_BsKKGSgoeMWZ0jnH6gDiaeioNVh-U0qlT8_N6B0gSSV32JpkL6H_bIWkJxC9aYHuSTvwQGrY5MX0-g2Dv5iFWdmdPIpvYcZJl7kvo0Oc-btnjznuAEF0WXL4GdM5iCxzm2l6KcOTZ3GPKMpk6r6gg3ycAgm9VUZT7T4gg3lB-54nvE5wxkjGOOEs5CBejODQmhUidCylhgUWJ9tEOnpST674tx8Wgbgp8JrOdq4_n72mSTPzd-_C4_ebwUKO3fCo9o44p7GwrKYthSvKHzffTvSSh9z-8hMupcSFuH93JbvRqCC0lmqkudSpo-0voLkLMV0XL5C4UV0DIWO-KT5HF8SdWAeKXWWiOSVslL9XfgLa6yxxhprrHFv8T_xqhGd6y_q3AAAAABJRU5ErkJggg"
+								content-type="image/png"
+								name="tl.png"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[put_setBinaryValue_target(
+  target: ["TestOpenAPI","newA1"],
+  file: all(`DemoTypes:A`).filter(item -> $item.get(`DemoTypes:A#name`) == "newA0").singleElement().get(`DemoTypes:DemoTypes.A#binary`)
+)
+]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
+  source = all(`DemoTypes:A`).filter(item -> $item.get(`DemoTypes:A#name`) == "newA0").singleElement();
+  target = all(`DemoTypes:A`).filter(item -> $item.get(`DemoTypes:A#name`) == "newA1").singleElement();
+  $source.get(`DemoTypes:DemoTypes.A#binary`) == $target.get(`DemoTypes:DemoTypes.A#binary`);
+}
+]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestOpenAPI > newA1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="binary"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[put_setBinaryValue_target(
+  target: ["TestOpenAPI","newA1"],
+  encoded: all(`DemoTypes:A`).filter(item -> $item.get(`DemoTypes:A#name`) == "newA0").singleElement().get(`DemoTypes:DemoTypes.A#binary`)
+)]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
+  source = all(`DemoTypes:A`).filter(item -> $item.get(`DemoTypes:A#name`) == "newA0").singleElement();
+  target = all(`DemoTypes:A`).filter(item -> $item.get(`DemoTypes:A#name`) == "newA1").singleElement();
+  $source.get(`DemoTypes:DemoTypes.A#binary`) == $target.get(`DemoTypes:DemoTypes.A#binary`);
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Service Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Reset configuration server"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="OpenAPI-Server"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Module"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+								<path>
+									<labeled-member label="Dienst-Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Pfade"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="1"
+										/>
+									</object>
+									<labeled-member label="Entfernen"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+								<path>
+									<labeled-member label="Dienst-Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Pfade"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="1"
+										/>
+									</object>
+									<labeled-member label="Entfernen"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.TLRestartServiceHandler"
+							command-label="Service neustarten"
+							command-name="restartService"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#TLServiceList"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Reset configuration client"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="TL-Script-Funktionen für externe APIs"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Module"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+								<path>
+									<labeled-member label="Dienst-Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Funktionsdefinitionen"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="0"
+										/>
+									</object>
+									<labeled-member label="Entfernen"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+								<path>
+									<labeled-member label="Dienst-Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Funktionsdefinitionen"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="0"
+										/>
+									</object>
+									<labeled-member label="Entfernen"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.TLRestartServiceHandler"
+							command-label="Service neustarten"
+							command-name="restartService"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#TLServiceList"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestOpenAPI"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

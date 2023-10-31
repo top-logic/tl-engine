@@ -10,7 +10,7 @@
 			input="selection(com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table)"
 		>
 			<function><![CDATA[selection -> {
-    form = newTransient(`test.transient:EvalForm`);
+    form = new(`test.transient:EvalForm`, transient:true);
     $form.set(`test.transient:EvalForm#cnt`, $selection.size());
     $form.set(`test.transient:EvalForm#minNumber`, $selection.map(r -> $r.get(`test.transient:Row#number`)).min());
     $form.set(`test.transient:EvalForm#maxNumber`, $selection.map(r -> $r.get(`test.transient:Row#number`)).max());

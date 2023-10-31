@@ -13,7 +13,7 @@ import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.export.ModelExportException;
 import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.export.PreloadOperation;
@@ -49,11 +49,11 @@ public class AssociationCachePreload implements PreloadOperation {
 		{
 			List<KnowledgeObject> baseKOs = new ArrayList<>(baseObjects.size());
 			for (Object obj : baseObjects) {
-				Wrapper wrapper = (Wrapper) obj;
+				TLObject wrapper = (TLObject) obj;
 				// It does only make sense to retrieve wrapped objects from wrappers,
 				// which are alive and therefore fetchable.
 				if (wrapper.tValid()) {
-					baseKOs.add(wrapper.tHandle());
+					baseKOs.add((KnowledgeObject) wrapper.tHandle());
 				}
 			}
 
@@ -74,15 +74,15 @@ public class AssociationCachePreload implements PreloadOperation {
 	}
 
 	/**
-	 * {@link KnowledgeBase}, belonging to all the wrappers of the {@link Collection}, or
-	 *         null, if all the {@link Wrapper}s of the {@link Collection} are invalid.
+	 * {@link KnowledgeBase}, belonging to all the wrappers of the {@link Collection}, or null, if
+	 * all the {@link TLObject}s of the {@link Collection} are invalid.
 	 */
 	protected final KnowledgeBase getWrappersKnowledgeBase(Collection<?> baseObjects) {
 		for (Object baseObject : baseObjects) {
 			// Can only retrieve knowledge base from living wrappers
-			Wrapper wrapper = (Wrapper) baseObject;
+			TLObject wrapper = (TLObject) baseObject;
 			if (wrapper.tValid()) {
-				return wrapper.getKnowledgeBase();
+				return wrapper.tKnowledgeBase();
 			}
 		}
 		return null;

@@ -1,0 +1,16 @@
+<p>An initial password is set for the administrator account (usually <code class="hljs inlineCode">root</code>) at the first system start. The password is in the standard output log of the web container after the initial boot of the application. The output looks like this:</p>
+
+<pre>
+<code>**************************************************************************
+***                                                                    ***
+***  Initial password for 'root': f3a16418-05f...                      ***
+***                                                                    ***
+**************************************************************************</code></pre>
+
+<h2>Specify initial password during installation</h2>
+
+<p>The initial password can also be specified during installation to simplify the first access. For this, the web container (e.g. Tomcat) must be started with the environment variable or system property <code class="hljs inlineCode">-Dtl_initial_password=&lt;my-secure-initial-password&gt;</code> set.</p>
+
+<h2>Reset administrator password</h2>
+
+<p>If the administrator password has been lost, a new initial password can be assigned. To do this, the application must be shut down and the environment variable or system property <code class="hljs inlineCode">-Dtl_reset_password=true</code> must be set the next time it is started. A new password for the administrator user (usually <code class="hljs inlineCode">root</code>) is then assigned during the startup process. As with initial password assignment, either a secure password is generated and written to the standard output log of the Web container during the boot process, or a default password is used if the environment variable <code class="hljs inlineCode">tl_initial_password</code> is set (see above).</p>

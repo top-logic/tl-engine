@@ -15,8 +15,8 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.element.meta.PersistentClass;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.export.PreloadOperation;
 import com.top_logic.model.v5.AssociationCachePreload;
@@ -95,7 +95,7 @@ public class SubMetaElementPreload extends AssociationNavigationPreload {
 	}
 
 	@Override
-	protected void processDestinations(PreloadContext context, List<Wrapper> destinations) {
+	protected void processDestinations(PreloadContext context, List<TLObject> destinations) {
 		super.processDestinations(context, destinations);
 		if (!destinations.isEmpty()) {
 			InteractionContext interaction = ThreadContextManager.getInteraction();

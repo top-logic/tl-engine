@@ -1,0 +1,9 @@
+<p>The view demonstrates the use of transient objects in application views.</p>
+
+<p><a class="tlObject" href="?page=new&amp;uuid=c24d295c-433b-4ac6-9e90-0f8427b399e6">Transient objects </a>exist only in a user's session. They are not stored in the database and are lost at the latest after the user logs out. Transient objects are suitable as a model of setting and display views in an application.</p>
+
+<p>The view shows in the center a table of normal persistent objects, there can be created and deleted. The selection of which objects are displayed in the table can be controlled by a filter component preceding the table on the left. The filter component uses as model a transient object, in which the entered values are stored. The "Update" button makes a copy of this filter object and sends it to the adjacent table via the <code class="hljs inlineCode">output</code> channel of the component. In the table, the Filter object is used to load only the appropriate rows for display.</p>
+
+<p>To the right of the table is a component that reacts to the current row selection in the table. A transient evaluation object is also created for this and filled with values from the current row selection in the table. The component is a standard form in which the editing mode is switched off, so that only the values of the transient evaluation object are displayed.</p>
+
+<p> </p>

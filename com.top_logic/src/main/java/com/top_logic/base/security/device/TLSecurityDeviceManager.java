@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
@@ -26,8 +27,10 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.dob.DataObject;
 import com.top_logic.util.license.LicenseTool;
@@ -40,6 +43,10 @@ import com.top_logic.util.license.LicenseTool;
  * 
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
+@ServiceDependencies({
+	SecureRandomService.Module.class,
+	Login.Module.class,
+})
 public class TLSecurityDeviceManager extends ManagedClass {
 	
 	private static final String TL_FEATURE_LDAP = "tl.feature.ldap";

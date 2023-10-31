@@ -33,6 +33,8 @@ import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.WebappFileManager;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.XMLProperties.XMLPropertiesConfig;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleException;
@@ -63,6 +65,12 @@ import com.top_logic.util.license.LicenseTool;
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
 public abstract class AbstractStartStopListener implements ServletContextListener {
+
+	/**
+	 * Message to dump when password was set up.
+	 */
+	public static final Property<String> PASSWORD_INITIALIZATION_MESSAGE =
+		TypedAnnotatable.property(String.class, "passwordInitializationMessage");
 
 	private static Date STARTUP_DATE = null;
 
@@ -263,6 +271,18 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 						} finally {
 							releaseTokenSystem(clusterManagerInstance);
 						}
+
+						String message = TLContext.getContext().get(PASSWORD_INITIALIZATION_MESSAGE);
+						if (message != null) {
+							System.out.println();
+							System.out.println("*****" + "*".repeat(message.length()) + "*****");
+							System.out.println("***  " + " ".repeat(message.length()) + "  ***");
+							System.out.println("***  " + message + "  ***");
+							System.out.println("***  " + " ".repeat(message.length()) + "  ***");
+							System.out.println("*****" + "*".repeat(message.length()) + "*****");
+							System.out.println();
+						}
+
 						return null;
 					} catch (Exception e) {
 						System.out.println("System startup failed.");

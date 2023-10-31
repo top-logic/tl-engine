@@ -4,7 +4,6 @@
         <section name="root">
             <entry name="initials" value="root"/>             
             <entry name="username" value="root"/>             
-            <entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$Hx6t6Q7lpQaAreHlr08W7A$xpgcrFrJqsMUHSlVOYnrK3E4P/hER6UYh6bLw3+irek"/>            
             <entry name="userrole" value="user,tl.admin,R.admin, admin"/>
             <entry name="givenName" value="Administrator"/>
             <entry name="sn" value="Super"/>             

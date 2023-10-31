@@ -17,14 +17,19 @@ import java.util.Properties;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.AbstractAuthenticationAccessDevice;
+import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.user.UserDataObject;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.XMLProperties;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.ListBinding;
+import com.top_logic.basic.core.workspace.Environment;
 import com.top_logic.basic.db.schema.properties.DBProperties;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
@@ -37,6 +42,9 @@ import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.util.AbstractStartStopListener;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.license.LicenseTool;
 
 /**
@@ -103,7 +111,20 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 			PooledConnection con = connectionPool.borrowWriteConnection();
 			try {
 				String initialized = DBProperties.getProperty(con, DBProperties.GLOBAL_PROPERTY, INITIALIZED_PROPERTY);
-				if (INITIALIZED_VALUE.equals(initialized)) {
+				boolean passwordReset =
+					Environment.getSystemPropertyOrEnvironmentVariable("tl_reset_password", null) != null;
+
+				if (INITIALIZED_VALUE.equals(initialized) && !passwordReset) {
+					return;
+				}
+
+				String superUserName = lookupSuperUserName();
+				if (passwordReset) {
+					DataObject root = _repository.searchUser(connectionPool, superUserName);
+					if (root != null) {
+						setupPassword(root);
+						_repository.updateUser(connectionPool, root);
+					}
 					return;
 				}
 
@@ -118,6 +139,9 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 						Iterator<? extends ExampleDataObject> iter = theListOfAllUsers.iterator();
 						while (iter.hasNext()) {
 							ExampleDataObject user = iter.next();
+
+							initPassword(user, superUserName);
+
 							try {
 								_repository.createUser(con, user);
 							} catch (SQLException | DataObjectException ex) {
@@ -140,6 +164,56 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 			Logger.error("Database access failed.", ex, DBAuthenticationAccessDevice.class);
 		}
 
+	}
+
+	private void initPassword(DataObject user, String superUserName) {
+		if (superUserName.equals(user.getAttributeValue(PersonAttributes.USER_NAME))) {
+			setupPassword(user);
+		} else {
+			// Drop insecure password.
+			if (user.getAttributeValue(PersonAttributes.PASSWORD) != null) {
+				Logger.info(
+					"Dropped insecure static password for user '"
+						+ user.getAttributeValue(PersonAttributes.USER_NAME) + "'.",
+					DBAuthenticationAccessDevice.class);
+			}
+
+			user.setAttributeValue(PersonAttributes.PASSWORD, DBUserRepository.NO_PASSWORD);
+		}
+	}
+
+	private void setupPassword(DataObject user) {
+		String initialPassword =
+			Environment.getSystemPropertyOrEnvironmentVariable("tl_initial_password", null);
+
+		String message;
+		Object userName = user.getAttributeValue(PersonAttributes.USER_NAME);
+		if (initialPassword == null) {
+			initialPassword = SecureRandomService.getInstance().getRandomString();
+			message = "Initial password for '" + userName + "': " + initialPassword;
+			Logger.info(message, DBAuthenticationAccessDevice.class);
+		} else {
+			message = "Initial password for '" + userName + "' set up from environment variable.";
+			Logger.info(message, DBAuthenticationAccessDevice.class);
+		}
+		TLContext.getContext()
+			.set(AbstractStartStopListener.PASSWORD_INITIALIZATION_MESSAGE, message);
+
+		user.setAttributeValue(PersonAttributes.PASSWORD,
+			PasswordHashingService.getInstance().createHash(initialPassword.toCharArray()));
+	}
+
+	private String lookupSuperUserName() {
+		String superUserName;
+		try {
+			PersonManager.Config accountConfig =
+				(PersonManager.Config) ApplicationConfig.getInstance().getServiceConfiguration(PersonManager.class);
+			superUserName = accountConfig.getSuperUserName();
+		} catch (ConfigurationException ex) {
+			Logger.error("Failed reading configuration.", ex, DBAuthenticationAccessDevice.class);
+			superUserName = PersonManager.Config.DEFAULT_SUPER_USER_NAME;
+		}
+		return superUserName;
 	}
 
 	/**

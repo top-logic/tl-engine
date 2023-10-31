@@ -39,7 +39,6 @@
 		</modelBuilder>
 		<buttons>
 			${buttons}
-
 			<include name="templates/editComponentCommands.xml"/>
 			<reference command-id="configureEditFormDefinitionCommand"/>
 			<reference command-id="deleteEditFormDefinitionCommand"/>

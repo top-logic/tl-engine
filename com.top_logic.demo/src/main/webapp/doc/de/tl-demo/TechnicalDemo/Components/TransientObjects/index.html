@@ -1,0 +1,9 @@
+<p>Die Sicht demonstriert die Verwendung von transienten Objekten in Anwendungssichten.</p>
+
+<p><a class="tlObject" href="?page=new&amp;uuid=c24d295c-433b-4ac6-9e90-0f8427b399e6">Transiente Objekte </a>existieren nur in einer Session eines Nutzers. Sie werden nicht in der Datenbank abgelegt und gehen spätestens nach dem Logout des Nutzers verloren. Transiente Objekte eignen sich als Modell von Einstellungs- und Anzeigesichten in einer Anwendung.</p>
+
+<p>Die Sicht zeigt in der Mitte eine Tabelle von normalen persistenten Objekten, dort angelegt und gelöscht werden können. Die Auswahl, welche Objekte in der Tabelle angezeigt werden, kann durch eine der Tabelle links vorgeschaltete Filterkomponente gesteuert werden. Die Filterkomponente benutzt als Modell ein transientes Objekt, in das die eingegebenen Werte gespeichert werden. Der Knopf "Aktualisieren" fertigt eine Kopie dieses Filter-Objektes an und schickt diese über den <code class="hljs inlineCode">output</code>-Kanal der Komponente an die nebenstehende Tabelle. In der Tabelle wird das Filter-Objekt verwendet, um nur die passenden Zeilen zur Anzeige zu laden.</p>
+
+<p>Rechts neben der Tabelle steht eine Komponente, die auf die akutelle Zeilenauswahl in der Tabelle reagiert. Hierfür wird ebenfalls ein transientes Auswertungsobjekt angelegt und mit Werten aus der aktuellen Zeilenauswahl der Tabelle gefüllt. Die Komponente ist ein Standarfformular, bei dem der Bearbeitungsmodus ausgeschaltet ist, so dass nur die Werte des transienten Auswertungsobjektes angezeigt werden.</p>
+
+<p> </p>

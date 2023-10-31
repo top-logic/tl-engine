@@ -11,8 +11,8 @@ import java.util.List;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.element.meta.PersistentClass;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.export.PreloadOperation;
 import com.top_logic.model.util.TLModelUtil;
@@ -40,7 +40,7 @@ public final class SuperMetaElementPreload extends AssociationNavigationPreload 
 	}
 
 	@Override
-	protected void processDestinations(PreloadContext context, List<Wrapper> destinations) {
+	protected void processDestinations(PreloadContext context, List<TLObject> destinations) {
 		super.processDestinations(context, destinations);
 
 		// load super MetaElements

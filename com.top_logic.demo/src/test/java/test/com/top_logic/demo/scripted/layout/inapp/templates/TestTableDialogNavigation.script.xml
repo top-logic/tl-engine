@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Model/Create-Module.xml"
+			template-name-comment="Create Module"
+		>
+			<parameters>
+				<parameter name="name"
+					value="test.tablewithdialog"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Model/Create-Type.xml"
+			template-name-comment="Create Type"
+		>
+			<parameters>
+				<parameter name="module"
+					value="test.tablewithdialog"
+				/>
+				<parameter name="name"
+					value="TableRow"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Erzeuge Daten"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+					command-label="Neue Instanz anlegen."
+					command-name="newInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="A"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+					command-label="Übernehmen"
+					command-name="gridApplyRowObject"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+					command-label="Neue Instanz anlegen."
+					command-name="newInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="B"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+					command-label="Übernehmen"
+					command-name="gridApplyRowObject"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+					command-label="Neue Instanz anlegen."
+					command-name="newInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="C"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Erzeuge Sicht"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.editor.commands.AddTabCommand"
+					command-label="Tab hinzufügen"
+					command-name="addTabCommand"
+					component-implementation-comment="com.top_logic.layout.component.TabComponent"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Deutsch"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Table with Dialogs"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Englisch"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Table with Dialogs"
+					/>
+				</action>
+				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				>
+					<identifiers>
+						<component-keys>
+							<component-key value="5c81c54c-cd3f-47fc-93c1-e47100818018.layout.xml"/>
+							<component-key value="ae2e0360-eb7f-41a2-a7b1-ec71b7b5f1a3.layout.xml"/>
+							<component-key value="9b527ee6-a5bf-48c9-9d41-c29978d85fd9.layout.xml"/>
+						</component-keys>
+						<uuids>
+							<uuid value="ID_6d088fbc_db4d_49dd_a36b_2166790c760f"/>
+						</uuids>
+					</identifiers>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+					command-label="Sicht hinzufügen..."
+					command-name="addComponentCommand"
+					component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+					component-name="5c81c54c-cd3f-47fc-93c1-e47100818018.layout.xml#placeholder"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Auswahl"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Tabelle (mit Bearbeitungsdialog)"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Deutsch"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="My rows"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Englisch"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="My rows"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Typ"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="test.tablewithdialog:TableRow"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				>
+					<identifiers>
+						<component-keys>
+							<component-key value="a6932869-6f01-4e04-8a9a-c95624d5d092.layout.xml"/>
+							<component-key value="a3ecef8a-3b05-444f-a74d-ce321ee0af40.layout.xml"/>
+							<component-key value="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml"/>
+						</component-keys>
+						<uuids>
+							<uuid value="ID_869e65a1_51b2_41dd_b0ff_97c62bb5af0c"/>
+						</uuids>
+					</identifiers>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teste Sicht"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Table with Dialogs > My rows"
+							/>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="3"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="B"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Table with Dialogs > My rows"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.GenericCommnadActionOp"
+					user-id="root"
+				>
+					<arguments>
+						<argument name="TARGET_MODEL">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+									class-name="test.tablewithdialog:TableRow"
+									object-label="B"
+								/>
+							</value>
+						</argument>
+					</arguments>
+					<command config:interface="com.top_logic.layout.table.provider.ButtonColumnProvider$CommandInTableRowNaming$Name"
+						column-id="_actions"
+						command-id="openEditDialog"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Table with Dialogs > My rows"
+							/>
+						</table>
+					</command>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="name"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Eigenschaften (Formular)"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="B"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+					command-label="Zurück"
+					command-name="showPrevious"
+					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
+					component-name="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml#Dialog"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+					comment=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Eigenschaften (Formular)"
+						/>
+					</actual-value>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+									class-name="test.tablewithdialog:TableRow"
+									object-label="A"
+								/>
+							</expected-value>
+						</constraint>
+					</constraints>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+					command-label="Zurück"
+					command-name="showPrevious"
+					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
+					component-name="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml#Dialog"
+					reason-key="tl.executable.disabled"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+					command-label="Weiter"
+					command-name="showNext"
+					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
+					component-name="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml#Dialog"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+					command-label="Weiter"
+					command-name="showNext"
+					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
+					component-name="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml#Dialog"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="name"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Eigenschaften (Formular)"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="C"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+					command-label="Weiter"
+					command-name="showNext"
+					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
+					component-name="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml#Dialog"
+					reason-key="tl.executable.disabled"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="a3ecef8a-3b05-444f-a74d-ce321ee0af40.layout.xml#Form"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Lösche Daten und Sicht"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Table with Dialogs > My rows"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="deleteRow"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="5c81c54c-cd3f-47fc-93c1-e47100818018.layout.xml#Table"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="B"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Table with Dialogs > My rows"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="deleteRow"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="5c81c54c-cd3f-47fc-93c1-e47100818018.layout.xml#Table"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="C"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Table with Dialogs > My rows"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="deleteRow"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="5c81c54c-cd3f-47fc-93c1-e47100818018.layout.xml#Table"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.editor.scripting.CommandActionWithIdentifiers$CommandActionOpWithIdentifiers"
+					command-name="deleteComponentCommand"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					user-id="root"
+				>
+					<arguments>
+						<argument name="__execution_confirmed">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</argument>
+					</arguments>
+					<identifiers/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Model/Delete-Module.xml"
+					template-name-comment="Delete Module"
+				>
+					<parameters>
+						<parameter name="name"
+							value="test.tablewithdialog"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus verlassen"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

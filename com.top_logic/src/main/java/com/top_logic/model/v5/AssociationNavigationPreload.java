@@ -18,8 +18,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.service.db2.DBObjectKey;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.export.PreloadContext;
 
 /**
@@ -55,7 +55,7 @@ public class AssociationNavigationPreload extends AssociationCachePreload {
 			(AbstractAssociationQuery<KnowledgeAssociation, ? extends Collection<KnowledgeAssociation>>) getQuery();
 		boolean outgoing = AssociationQueryUtil.isOutgoing(query);
 		for (Object baseObject : baseObjects) {
-			Wrapper wrapper = (Wrapper) baseObject;
+			TLObject wrapper = (TLObject) baseObject;
 			// Only valid wrappers (still alive) can be used to resolve links
 			if (wrapper.tValid()) {
 				Collection<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(wrapper, query);
@@ -80,7 +80,7 @@ public class AssociationNavigationPreload extends AssociationCachePreload {
 			return;
 		}
 		
-		List<Wrapper> destinations = WrapperFactory.getWrappersForKOsGeneric(destinationKOs);
+		List<TLObject> destinations = WrapperFactory.getWrappersForKOsGeneric(destinationKOs);
 
 		processDestinations(context, destinations);
 	}
@@ -88,7 +88,7 @@ public class AssociationNavigationPreload extends AssociationCachePreload {
 	/**
 	 * Hook for processing the destination objects.
 	 */
-	protected void processDestinations(PreloadContext context, List<Wrapper> destinations) {
+	protected void processDestinations(PreloadContext context, List<TLObject> destinations) {
 		for (Object destination : destinations) {
 			context.keepObject(destination);
 		}

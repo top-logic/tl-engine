@@ -28,6 +28,7 @@ import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -767,9 +768,8 @@ public class DisplayAnnotations {
 	/**
 	 * Searches the {@link TLAnnotation} for the given {@link TLType}.
 	 * <p>
-	 * When the type itself is not annotated with it, the chain of
-	 * {@link TLModelUtil#getPrimaryGeneralization(TLType) primary generalizations} is searched.
-	 * When neither of them is annotated, too, <code>null</code> is returned.
+	 * When the type itself is not annotated with it, the super types are searched recursively,
+	 * depth first. When none of them is annotated, too, <code>null</code> is returned.
 	 * </p>
 	 */
 	public static <A extends TLAnnotation> A getAnnotation(TLType type, Class<A> annotationClass) {
@@ -777,9 +777,15 @@ public class DisplayAnnotations {
 		if (annotation != null) {
 			return annotation;
 		}
-		TLClass primaryGeneralization = TLModelUtil.getPrimaryGeneralization(type);
-		if (primaryGeneralization != null) {
-			return getAnnotation(primaryGeneralization, annotationClass);
+		if (type.getModelKind() != ModelKind.CLASS) {
+			return null;
+		}
+		TLClass tlClass = (TLClass) type;
+		for (TLType generalization : tlClass.getGeneralizations()) {
+			A inheritedAnnotation = getAnnotation(generalization, annotationClass);
+			if (inheritedAnnotation != null) {
+				return inheritedAnnotation;
+			}
 		}
 		return null;
 	}

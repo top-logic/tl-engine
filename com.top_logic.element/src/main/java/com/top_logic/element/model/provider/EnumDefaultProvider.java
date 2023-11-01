@@ -186,7 +186,7 @@ public class EnumDefaultProvider implements DefaultProvider, ConfiguredInstance<
 			}
 
 			private String inputName(ValueModel model) {
-				return model.getProperty().getPropertyName();
+				return normalizeFieldName(model.getProperty().getPropertyName());
 			}
 
 			private static String toName(TLClassifier c) {

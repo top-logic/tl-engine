@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.layout.formeditor;
 
+import static com.top_logic.layout.form.values.Fields.*;
+
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationChange;
 import com.top_logic.basic.config.ConfigurationException;
@@ -56,7 +58,7 @@ public class FormDefinitionEditor implements Editor {
 		ConfigurationItem configItem = model.getModel();
 		PropertyDescriptor typeProperty = getTypeProperty(configItem, property);
 		
-		CommandField commandField = new CommandField(property.getPropertyName()) {
+		CommandField commandField = new CommandField(normalizeFieldName(property.getPropertyName())) {
 
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {

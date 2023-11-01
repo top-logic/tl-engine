@@ -133,7 +133,7 @@ public class ConfiguredLockService<C extends ConfiguredLockService.Config<?>> ex
 				@Name("strategies")
 				@DefaultContainer
 				@Options(fun = AllInAppImplementations.class)
-				List<PolymorphicConfiguration<? extends LockStrategy<?>>> getStragegies();
+				List<PolymorphicConfiguration<? extends LockStrategy<?>>> getStrategies();
 			}
 		}
 
@@ -207,7 +207,7 @@ public class ConfiguredLockService<C extends ConfiguredLockService.Config<?>> ex
 			}
 			for (Config.TypeConfig.OperationConfig operationConfig : typeConfig.getOperations()) {
 				String operationName = operationConfig.getName();
-				LockStrategy<Object> strategy = createStrategy(context, operationConfig.getStragegies());
+				LockStrategy<Object> strategy = createStrategy(context, operationConfig.getStrategies());
 				operations.put(operationName, new Pair<>(timeout(operationConfig.getLockTimeout()), strategy));
 			}
 		}
@@ -309,7 +309,7 @@ public class ConfiguredLockService<C extends ConfiguredLockService.Config<?>> ex
 			Config.TypeConfig.OperationConfig operationConfig = annotation.getOperations().get(operation);
 			if (operationConfig != null) {
 				LockStrategy<Object> strategy = createStrategy(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
-					operationConfig.getStragegies());
+					operationConfig.getStrategies());
 				return new Pair<>(timeout(operationConfig.getLockTimeout()), strategy);
 			}
 		}

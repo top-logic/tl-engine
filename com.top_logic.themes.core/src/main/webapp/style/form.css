@@ -149,7 +149,7 @@ label.disabled  {
 	text-decoration: none;
 }
 
-.frmBody {
+.frmBody, .sidebarFilterContainer {
 	padding: 0 var(--spacing-03);
 }
 

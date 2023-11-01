@@ -206,14 +206,13 @@ div.cmdProgress img {
 	color: var(--icon-on-color);
 }
 
+.tlButton.cmdButtonDisabled,
+.tlButton.cmdButtonDisabled:hover,
 .cDefaultButton button:disabled {
 	cursor: default;
-}
-
-.tlButton.cmdButtonDisabled,
-.cDefaultButton button:disabled {
 	background: none;
 	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	text-decoration: none;
 }
 
 .tlButton.cmdButtonDisabled:focus {
@@ -490,3 +489,14 @@ div.cmdProgress img {
 }
 
 
+
+span.cImageButton .input-image.disabled i, span.cmdLink .input-image.disabled i, span.cOpenCalendar .input-image.disabled i, 
+span.cTimeInput .input-image.disabled i, span.cPopupSelect .input-image.disabled i, .cIntegerInput .input-image.disabled i, 
+span.cTextSelect .input-image.disabled i, span.cImageLinkButton .input-image.disabled i, .cDownload .input-image.disabled i, 
+span.cDecoratedCell .input-image.disabled i, span.cExpandableTextInput .input-image.disabled i, span.cBlockTextInput .input-image.disabled i, 
+span.urlWithIcon .input-image.disabled i, span.cIconSelect .input-image.cannot-edit i, .fChoose.input-image.disabled i, a.cmdButtonDisabled i, 
+.cMenuButton.menuEntryDisabled i, .cMenuButton.menuEntryDisabled:hover i, .cmdLinkDisabled .input-image.disabled i,
+span.dlgToolbar .input-image.disabled i, span.pdlgToolbar .input-image.disabled i,
+div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input-image.disabled i {
+	color: var(--icon-disabled);
+}

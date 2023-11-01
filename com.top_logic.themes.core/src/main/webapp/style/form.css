@@ -173,18 +173,13 @@ div.frmBody > div.dropPane {
 /* ================================= */
 
 .rf_content {
-	grid-column: 1;
-	grid-row: 2;
-	display: grid;
-	grid-auto-flow: row;
-	grid-gap: var(--RF_VERTICAL_GAP_CELLS) var(--RF_HORIZONTAL_GAP_CELLS);
-	padding-top: 15px;
-	padding-left: 10px;
-	padding-right: 10px;
-	padding-bottom: 10px;
-	grid-auto-rows: max-content;
-	line-height: 1.5rem;
-	border-radius: 0px 0px 3px 3px;
+	grid-area: 2 / 1 / auto / auto;
+  	display: grid;
+  	grid: auto / auto-flow / max-content;
+  	gap: var(--RF_VERTICAL_GAP_CELLS) var(--RF_HORIZONTAL_GAP_CELLS);
+  	padding: 15px 10px 10px 10px;
+  	line-height: 1.5rem;
+  	border-radius: 0 0 3px 3px;
 }
 
 .rf_content .rf_header {
@@ -263,7 +258,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .rf_columnsLayout .rf_line.dfList {
 	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
-	width: calc(100% - 25px);
+	/* width: calc(100% - 25px); */
   	box-sizing: border-box;
 }
 
@@ -330,6 +325,36 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 
 /* in lists */
+.dfEntryTitle.colored {
+	grid-row: 1;
+    grid-column: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	height: 2.5rem;
+	background: var(--layer-accent);
+	padding: 0 0 0 var(--spacing-03);
+	white-space: nowrap;
+}
+
+.dfEntryTitle.colored a {
+	color: var(--text-primary);
+}
+
+.dfEntryTitle.colored:hover {
+	background: var(--layer-accent-hover);
+}
+
+.cOnExpandedControl {
+	padding: 0 0 0 var(--spacing-03);
+}
+
+
+
+
+
+
+
 .dfListContent > .rf_columnsLayout {
 	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
 }
@@ -582,10 +607,14 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	align-items: center;
 	gap: var(--spacing-03);
 	height: 2.5rem;
-	border-top: solid 1px var(--border-subtle);
+	background: var(--layer-accent);
 	padding: 0 0 0 var(--spacing-03);
 	white-space: nowrap;
 }
+
+
+
+
 
 .rf_groupCell .rf_header:hover {
 	background: var(--layer-hover);
@@ -2016,14 +2045,6 @@ div.sizeContainer, div.imageContainer {
 /* ==================================== */
 /* ======    Icon Chooser css     ===== */
 /* ==================================== */
-.cIconChooser .input-image {
-	height: 1.5rem;
-	width: 1.5rem;
-	padding: 0;
-	border: 1px solid var(--border-strong);
-	border-radius: .25rem;
-}
-
 .cIconChooser div.header .searchTextField input.is-input {
     margin-top: 10px;
     margin-left: 10px;
@@ -2069,7 +2090,7 @@ div.sizeContainer, div.imageContainer {
 	position: absolute;
 	top: 12px;
 	left: 12px;
-	color: #DCDCDC;
+	color: var(--icon-secondary);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons {
@@ -2079,7 +2100,7 @@ div.sizeContainer, div.imageContainer {
     margin-right: 5px;
 	width: 30px;
 	height: 30px;
-	border: 1px solid #7A7A7A;
+	border: 1px solid var(--border-subtle);
 }
 
 .cIconChooser a,
@@ -2115,14 +2136,12 @@ div.sizeContainer, div.imageContainer {
 }
 
 .cIconChooser .fptBodyContent .displayedIcons:hover {
-	background-color: var(--layer-hover);
+	background-color: var(--layer-accent-hover);
 }
 
-.cIconChooser i.fab, 
-.cIconChooser i.far,
-.cIconChooser i.fas,
-.cIconChooser i.tl-icon {
-    font-size: 1.5em;
+.cIconChooser i {
+    font-size: 1rem;
+    color: var(--icon-primary);
 }
 
 .cIconChooser div.header {
@@ -2151,23 +2170,23 @@ div.sizeContainer, div.imageContainer {
 	display: inline-block;
 }
 
+.cIconChooser .input-image {
+	height: 1.5rem;
+	width: 1.5rem;
+	padding: 0;
+	border: 1px solid var(--border-strong);
+	border-radius: .25rem;
+	background-color: var(--layer-accent);
+}
+
 .cIconChooser .input-image:hover {
-	background-color: var(--layer-hover);
+	background-color: var(--layer-accent-hover);
 }
 
 .cIconChooser .input-image.disabled,
 .cIconChooser .input-image.disabled:hover {
-	background-color: var(--icon-disabled);
-}
-
-.cIconChooser .gray {
-	color: #AAAAAA;
-}
-
-.cIconChooser .preview i.fab, 
-.cIconChooser .preview i.far,
-.cIconChooser .preview i.fas {
-    font-size: 1.2em;
+	color: var(--icon-disabled);
+	background-color: none;
 }
 
 .cIconChooser, 

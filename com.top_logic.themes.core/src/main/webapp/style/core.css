@@ -71,6 +71,18 @@ span.can-edit {
     text-overflow: ellipsis;
 }
 
+i.red {
+	color: var(--support-danger);
+}
+
+i.green {
+	color: var(--support-success);
+}
+
+i.yellow {
+	color: var(--support-warning);
+}
+
 /*
 ****					****
 ****	Anchor syles	****
@@ -85,17 +97,17 @@ a, a:link {
 	text-decoration: none;
 }
 
-a:hover {
+a:not(.disabled):hover {
 	color: var(--link-primary-hover);
 	text-decoration: underline;
 }
 
-a:active {
+a:not(.disabled):active {
 	color: var(--text-primary);
 	text-decoration: underline;
 }
 
-a:focus {
+a:not(.disabled):focus {
     color: var(--link-primary-hover);
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
@@ -607,7 +619,13 @@ div.fltList {
 }
 
 .popupMenu a:focus {
+	color: var(--text-primary);
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.popupMenu a:active {
+	color: var(--text-primary);
+	text-decoration: none;
 }
 
 a.cMenuButton.menuEntryDisabled {
@@ -763,8 +781,11 @@ div.dlgMaximized .input-image.dlgRestore {
 	margin-right: var(--spacing-02);
 }
 
-.dlgToolbar a {
+.dlgToolbar a,
+.dlgToolbar a:hover,
+.dlgToolbar a:focus {
 	color: var(--icon-primary);
+	box-shaodw: none;
 }
 
 .dlgBorderNE.dlgResizeNE {
@@ -1744,26 +1765,26 @@ h5.card-title a {
 	padding: inherit;
 }
 
-.quickSearch .cButton.quickSearchButton a:hover,
-.mtbGroup .cButton a:hover,
-.mtbGroup .trbEntry a:hover,
-.cButton a:hover[alt="Administration"] {
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:hover,
+.mtbGroup .cButton:not(.cmdLinkDisabled) a:hover,
+.mtbGroup .trbEntry a:not(.disabled):hover,
+.cButton:not(.cmdLinkDisabled) a:hover[alt="Administration"] {
 	background: var(--background-hover);
 	box-shadow: inset 0px 0px 0px 1px var(--background-hover);
 }
 
-.quickSearch .cButton.quickSearchButton a:focus,
-.mtbGroup .cButton a:focus,
-.mtbGroup .trbEntry a:focus,
-.cButton a:focus[alt="Administration"] {
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:focus,
+.mtbGroup .cButton:not(.cmdLinkDisabled) a:focus,
+.mtbGroup .trbEntry:not(.disabled) a:focus,
+.cButton:not(.cmdLinkDisabled) a:focus[alt="Administration"] {
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 	background: transparent;
 }
 
-.quickSearch .cButton.quickSearchButton a:active,
-.mtbGroup .cButton a:active,
-.mtbGroup .trbEntry a:active,
-.cButton a:active[alt="Administration"] {
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:active,
+.mtbGroup .cButton:not(.cmdLinkDisabled) a:active,
+.mtbGroup .trbEntry:not(.disabled) a:active,
+.cButton:not(.cmdLinkDisabled) a:active[alt="Administration"] {
 	background: var(--background-active);
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }

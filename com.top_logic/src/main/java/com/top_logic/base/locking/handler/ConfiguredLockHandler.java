@@ -60,7 +60,7 @@ public class ConfiguredLockHandler extends AbstractConfiguredLockHandler<Configu
 	@CalledByReflection
 	public ConfiguredLockHandler(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_strategy = ConfiguredLockService.createStrategy(context, config.getStragegies());
+		_strategy = ConfiguredLockService.createStrategy(context, config.getStrategies());
 	}
 
 	@Override

@@ -583,6 +583,14 @@ td.fltButton {
 	color: var(--icon-interactive);
 }
 
+i.bi-funnel-fill.tablefilter {
+	color: var(--icon-interactive);
+}
+
+a:not(.disabled) i.bi-funnel-fill.tablefilter:hover {
+	color: var(--support-danger);
+}
+
 th span.tl-table__filter-sort-icons {
 	align-self: end;
 	font-size: 0.8em;
@@ -831,6 +839,7 @@ table td span.cTextInput,
 table td .cDataItem,
 table td span.downloadControl {
 	display: flex;
+	align-items: center;
 	width: 100%;
 	height: 100%;
 }

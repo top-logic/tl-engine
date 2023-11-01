@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="components"/>
+		<param name="dialogs">
+			<!-- No dialogs by default. -->
+		</param>
+	</params>
+
+	<tabbar name="mainTabber">
+		<layoutInfo size="100%"/>
+		<dialogs>
+			<include name="GlobalDialogs.xml"/>
+			${dialogs}
+		</dialogs>
+		<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.DeckpaneOnlyTabControlProvider"/>
+		<windows>
+			<include name="GlobalWindows.xml"/>
+		</windows>
+		<commands>
+			<reference command-id="reloadI18N"/>
+			<reference command-id="reloadTheme"/>
+			<reference command-id="toggleAlwaysShowKeys"/>
+			<reference command-id="toggleShowAllCommands"/>
+			<reference command-id="releaseLayout"/>
+			<reference command-id="exportLayout"/>
+		</commands>
+		<components>${components}</components>
+	</tabbar>
+</template>

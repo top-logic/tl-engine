@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="mainTabbar"/>
+	</params>
+
+	<layout name="sblMain"
+		horizontal="true"
+		resizable="%SIDEBAR_RESIZABLE%"
+	>
+		<layoutInfo size="100%"/>
+
+		<components>
+			<layout name="sblSidebar"
+				resizable="false"
+			>
+				<layoutInfo size="%SIDEBAR_WIDTH%"/>
+
+				<componentControlProvider class="com.top_logic.layout.structure.MinimizableControl$Provider">
+					<minimizedSize
+						height="100%"
+						width="%SIDEBAR_WIDTH_MINIMIZED%"
+					/>
+				</componentControlProvider>
+
+				<components>
+					<component class="com.top_logic.mig.html.layout.PageComponent"
+						name="sblLogo"
+						page="/jsp/sidebar/appLogo.jsp"
+						toolbar="false"
+					>
+						<layoutInfo size="%QUICK_SEARCH_HEIGHT%"/>
+						<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"
+							css-class="sblLogo"
+						/>
+						<views>
+							<view class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
+								active="%QUICK_SEARCH_ENABLED%"
+								maxResults="%QUICK_SEARCH_MAX_RESULTS%"
+								name="quickSearch"
+								searchComponent="%QUICK_SEARCH_SEARCH_COMPONENT%"
+							/>
+						</views>
+					</component>
+
+					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+						<layoutInfo size="0px"/>
+						<componentControlProvider class="com.top_logic.themes.modern.layout.structure.ConditionalViewLayout"
+							css-class="notificationTitle licenseView"
+							size="%LICENCE_EXPIRE_BAR_HEIGHT%"
+						>
+							<include name="com.top_logic/license/license-expiry.xml"/>
+						</componentControlProvider>
+					</layoutControl>
+
+					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+						<layoutInfo size="100%"/>
+						<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.SidebarLayoutControlProvider"
+							accordion="%SBL_ACCORDION%"
+							css-class="accRoot tooltipHorizontal"
+						>
+							<include name="SidebarButtons.xml"/>
+						</componentControlProvider>
+					</layoutControl>
+				</components>
+			</layout>
+
+			<layout name="sblRight"
+				resizable="false"
+			>
+				<layoutInfo size="100%"/>
+
+				<components>
+					<include name="templates/navigationComponent.xml"
+						componentName="sblNavigation"
+					>
+						<inject>
+							<layoutInfo size="%MAIN_NAVIGATION_BAR_HEIGHT%"/>
+						</inject>
+					</include>
+
+					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+						<layoutInfo size="0px"/>
+						<componentControlProvider class="com.top_logic.themes.modern.layout.structure.ConditionalViewLayout"
+							css-class="notificationTitle"
+							size="%MAINTAINANCE_BAR_HEIGHT%"
+						>
+							<view class="com.top_logic.layout.component.configuration.MaintenanceViewConfiguration"
+								name="maintenance"
+							/>
+						</componentControlProvider>
+					</layoutControl>
+
+					<component class="com.top_logic.tool.boundsec.CockpitLayout"
+						horizontal="false"
+						name="sblContent"
+					>
+						<layoutInfo size="100%"/>
+
+						<components>${mainTabbar}</components>
+					</component>
+
+					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+						<layoutInfo
+							scrolleable="false"
+							size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
+						/>
+						<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.TitleButtonsViewProvider"
+							size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
+						/>
+					</layoutControl>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

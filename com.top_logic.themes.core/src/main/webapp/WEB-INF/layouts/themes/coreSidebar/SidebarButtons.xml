@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="renderer"
+			value="com.top_logic.layout.accordion.AccordionButtonRenderer"
+		/>
+		<param name="entryRenderer"
+			value="com.top_logic.layout.accordion.AccordionEntryRenderer"
+		/>
+	</params>
+	<views>
+		<include name="toolrow/defaultButtons.xml"
+			entryRenderer="${entryRenderer}"
+			renderer="${renderer}"
+		/>
+
+		<include name="toolrow/customButtons.xml"
+			entryRenderer="${entryRenderer}"
+			renderer="${renderer}"
+		/>
+
+		<include name="toolrow/homeButton.xml"
+			entryRenderer="${entryRenderer}"
+			horizontalPosition="TO_THE_RIGHT"
+			renderer="${renderer}"
+		/>
+		<include name="toolrow/scriptingButtons.xml"
+			entryRenderer="${entryRenderer}"
+			horizontalPosition="TO_THE_RIGHT"
+			renderer="${renderer}"
+		/>
+	</views>
+</template>

@@ -1,0 +1,1459 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<settings>
+	<type name="MAIN_LAYOUT_CLASS"
+		interface="com.top_logic.mig.html.layout.MainLayout"
+		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
+	/>
+	<int name="FILTER_SINGLE_LINE_HEIGHT"
+		value="44"
+	/>
+	<int name="STRUCTURE_DIALOG_HEIGHT"
+		value="500"
+	/>
+	<int name="STRUCTURE_DIALOG_WIDTH"
+		value="680"
+	/>
+	<int name="CHANGE_PASSWORD_DIAGLOG_HEIGHT"
+		value="300"
+	/>
+	<string name="MAIN_TAB_BAR_CSS"
+		value="mainTabBar"
+	/>
+	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
+		value="36"
+	/>
+	<int name="TOOL_ROW_HEIGHT"
+		value="72"
+	/>
+	<int name="MAIN_TAB_BAR_HEIGHT"
+		value="52"
+	/>
+	<int name="LICENCE_EXPIRE_BAR_HEIGHT"
+		expr="34"
+	/>
+	<int name="QUICK_SEARCH_HEIGHT"
+		value="80"
+	/>
+	<boolean name="QUICK_SEARCH_ENABLED"
+		value="true"
+	/>
+	<int name="QUICK_SEARCH_MAX_RESULTS"
+		value="40"
+	/>
+	<boolean name="SBL_ACCORDION"
+		value="false"
+	/>
+	<boolean name="SIDEBAR_RESIZABLE"
+		value="true"
+	/>
+	<dim name="SIDEBAR_WIDTH"
+		value="200px"
+	/>
+	<dim name="SIDEBAR_WIDTH_MINIMIZED"
+		value="40px"
+	/>
+	<int name="MAINTAINANCE_BAR_HEIGHT"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
+		value="48px"
+	/>
+	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
+		value="40"
+	/>
+	<size name="tabbar-height"
+		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px"
+	/>
+	<icon name="HEADER_RIGHT_IMAGE"
+		value="/images/appLogo.svg"
+	/>
+	<icon name="com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR"
+		value="css:bi bi-binoculars-fill"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.BUTTON_INSPECTOR"
+		value="css:bi bi-binoculars-fill"
+	/>
+	<int name="VERSION_ROW_HEIGHT"
+		value="21"
+	/>
+	<type name="VERSION_RENDERER_CLASS"
+		interface="com.top_logic.layout.Renderer"
+		value="com.top_logic.themes.modern.layout.DefaultVersionRenderer"
+	/>
+	<boolean name="BREADCRUMB_ROOT_VISIBLE"
+		value="true"
+	/>
+	<icon name="BREADCRUMB_ROOT_ICON"
+		value="css:bi bi-house"
+	/>
+	<icon name="READ_ONLY_NAVIGATION_SEPARATOR_ICON"
+		value="css:bi bi-chevron-right"
+	/>
+	<string name="READ_ONLY_NAVIGATION_SEPARATOR_LABEL"
+		value=""
+	/>
+	<string name="BREADCRUMB_SEPARATOR_LABEL"
+		value=""
+	/>
+	<boolean name="LOGOUT_TIMER"
+		value="true"
+	/>
+	<dim name="MC_TOGGLE_HEIGHT"
+		value="50px"
+	/>
+	<dim name="MC_TOGGLE_WIDTH"
+		value="8px"
+	/>
+	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID"
+		value="css:bi bi-file-spreadsheet-fill"
+	/>
+	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID_DISABLED"
+		value="css:bi bi-file-spreadsheet-fill"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
+		value="css:bi bi-file-spreadsheet-fill"
+	/>
+	<size name="TABLE_TITLE_HEIGHT"
+		value="32px"
+	/>
+	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
+		value="height: 22px;"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_FOOTER_HEIGHT"
+		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_HEADER_ROW_HEIGHT"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT"
+		expr="%TABLE_TITLE_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TREE_TABLE_TITLE_HEIGHT"
+		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
+	/>
+	<icon name="com.top_logic.layout.tabbar.Icons.TAB_LEFT_SCROLL_BUTTON"
+		value="css:bi bi-chevron-left"
+	/>
+	<icon name="com.top_logic.layout.tabbar.Icons.TAB_RIGHT_SCROLL_BUTTON"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.EDIT_TILE_PREVIEW_ICON"
+		value="css:bi bi-pencil"
+	/>
+	<icon name="com.top_logic.layout.Icons.DELETE_COMPONENT_COMMAND"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="com.top_logic.layout.Icons.ADD_TAB_COMMAND"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="com.top_logic.layout.Icons.ADD_COMPONENT_COMMAND"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="com.top_logic.doc.create.Icons.CREATE_ICON"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="com.top_logic.layout.Icons.OK_BUTTON"
+		value="css:bi bi-check-square-fill"
+	/>
+	<icon name="com.top_logic.layout.Icons.OK_BUTTON_DISABLED"
+		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
+	/>
+	<icon name="MISC_SLIDER"
+		value="/images/Slider.gif"
+	/>
+	<img name="com.top_logic.layout.buttonbar.Icons.SLIDER_IMG"
+		value="/images/Slider.gif"
+	/>
+	<img name="com.top_logic.layout.image.gallery.Icons.NO_PREVIEW_IMAGE"
+		value="/images/noPreviewImage.png"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL"
+		value="css:bi bi-pencil-square"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL_DISABLED"
+		value="css:bi bi-pencil-square"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
+		expr="%ICONS_BUTTON_SAVE%"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
+		expr="%ICONS_BUTTON_SAVE%"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_MODIFIED"
+		value="css:bi bi-save-fill"
+	/>
+	<icon name="com.top_logic.element.layout.meta.search.quick.Icons.SEARCH"
+		value="css:bi bi-search"
+	/>
+	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
+		value="css:bi bi-list"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.BUTTON_REFRESH"
+		value="css:bi-arrow-repeat"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.BUTTON_REFRESH_DISABLED"
+		value="css:bi-arrow-repeat"
+	/>
+	<icon name="com.top_logic.tool.export.Icons.REFRESH"
+		value="css:bi-arrow-repeat"
+	/>
+	<icon name="com.top_logic.tool.export.Icons.REFRESH_DISABLED"
+		value="css:bi-arrow-repeat"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL"
+		value="css:bi bi-search"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL_ACTIVE"
+		value="css:bi bi-search"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER"
+		value="css:bi bi bi-funnel-fill tablefilter"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED"
+		value="css:bi bi bi-funnel-fill"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORTABLE"
+		value="css:bi bi-arrow-down-up"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_DESC"
+		value="css:bi bi-arrow-down"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_ASC"
+		value="css:bi bi-arrow-up"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_ASC_SMALL"
+		value="css:bi bi-arrow-up"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_DESC_SMALL"
+		value="css:bi bi-arrow-down"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
+		value="css:bi bi bi-funnel"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FRAME"
+		value="css: bi-fullscreen"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE"
+		value="css: bi-fullscreen"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MINIMIZE"
+		value="css:bi bi-fullscreen-exit"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE"
+		value="css:bi bi-window-stack"
+	/>
+	<icon name="com.top_logic.layout.tabbar.Icons.TAB_BAR_COMMANDS_MENU"
+		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH"
+		value="32px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_HEIGHT"
+		value="32px"
+	/>
+	<icon name="com.top_logic.layout.compare.Icons.OPEN_COMPARE_VIEW"
+		value="css:bi bi-arrow-left-right"
+	/>
+	<icon name="MISC_COMPARE_COMPARE_MODE_ACTIVE"
+		value="css:bi bi-arrow-left-right"
+	/>
+	<icon name="MISC_COMPARE_COMPARE_MODE_INACTIVE"
+		value="css:bi bi-arrow-left-right"
+	/>
+	<!-- Tree -->
+	<icon name="com.top_logic.layout.tree.renderer.Icons.L"
+		value="/tree/l.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.REFRESH_SMALL"
+		value="colored:tl-icon reload icon-red"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.S"
+		value="/tree/s.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LEAF"
+		value="/tree/tree-leaf.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LF"
+		value="/tree/lf.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LL"
+		value="/tree/ll.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LNL"
+		value="/tree/lnl.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LS"
+		value="/tree/ls.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MF"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_ML"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MNL"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MS"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PF"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PL"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PNL"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PS"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LL"
+		value="/tree/table/ll.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LF"
+		value="/tree/table/lf.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LNL"
+		value="/tree/table/lnl.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LS"
+		value="/tree/table/ls.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MF"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.ML"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MNL"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MS"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PF"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PL"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PNL"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PS"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="TILES_CONFIGURE_GROUP_ICON"
+		value="css:bi bi-gear-fill"
+	/>
+	<icon name="TILES_STEP_OUT_TILE_ICON"
+		value="css:bi bi-chevron-double-left"
+	/>
+	<icon name="TILES_STEP_INTO_CONTEXT_ICON"
+		value="css:bi bi-box-arrow-in-right"
+	/>
+	<icon name="TILES_ADD_GROUP_ICON"
+		value="css:bi bi-collection-fill"
+	/>
+	<icon name="TILES_ADD_VIEW_ICON"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BOX_EXPANDED"
+		value="css:bi bi-chevron-up"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BOX_COLLAPSED"
+		value="css:bi bi-chevron-down"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_DISABLED_IMAGE"
+		value="css:bi bi-dash"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE"
+		value="css:bi bi-dash"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_DISABLED_IMAGE"
+		value="css:bi bi-plus"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_IMAGE"
+		value="css:bi bi-plus"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ALERT"
+		value="css:bi bi-x-octagon-fill"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.TRANSLATE"
+		value="css:bi bi-translate"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CALENDAR"
+		value="css:bi bi-calendar"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CLOCK"
+		value="css:bi bi-clock"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.SELECT_FILTER"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.OPEN_TEXT_EDITOR"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.OPEN_TEXT_EDITOR_DISABLED"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER_DISABLED"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.OPEN_SELECTOR"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.OPEN_SELECTOR_DISABLED"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.EDIT_MAXIMIZE"
+		value="css:bi bi-arrows-angle-expand"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.EDIT_MINIMIZE"
+		value="css:bi bi-arrows-angle-contract"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.UPLOAD_ICON"
+		value="css:bi bi-upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD"
+		value="css:bi bi-upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD60"
+		value="css:bi bi-upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD_DISABLED"
+		value="css:bi bi-upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.CLIPBOARD"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.CLIPBOARD_DISABLED"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="mime.Clipboard"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="mime.Clipboard.large"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.ADD_CLIPBOARD"
+		value="css:bi bi-clipboard-plus-fill"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.ADD_CLIPBOARD_DISABLED"
+		value="css:bi bi-clipboard-plus-fill"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD_FOLDER"
+		value="css:bi bi-file-arrow-down"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD_FOLDER_DISABLED"
+		value="css:bi bi-file-arrow-down"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TODAY"
+		value="css:bi bi-calendar-check"
+	/>
+	
+	
+	<icon name="BOOKMARK_LINK"
+		value="css:bi bi-bookmark-fill"
+	/>
+	<icon name="HEAD_HOME"
+		value="css:bi bi-house"
+	/>
+	<icon name="USER_MENU_ICON"
+		value="css:bi bi-person-fill"
+	/>
+	
+	<icon name="ICON_PASSWORD"
+		value="css:bi-lock-fill"
+	/>
+	<icon name="ICON_HOME"
+		value="css:bi bi-house"
+	/>
+	<icon name="ICON_RESET_STARTPAGE"
+		value="css:bi bi-house"
+	/>
+	<icon name="ICON_RESET_PERSONAL_CONFIGURATION"
+		value="css:bi bi-person-fill-lock"
+	/>
+	<icon name="ICONS_BUTTON_SEARCH"
+		value="css:bi bi-search"
+	/>
+	<icon name="ICONS_EXPORT"
+		value="css: bi-file-arrow-down-fill"
+	/>
+	<icon name="ICONS_EXPORT_DISABLED"
+		expr="%ICONS_EXPORT%"
+	/>
+	<icon name="ICONS_EXPORT_GRID"
+		value="css:bi bi-file-spreadsheet-fill"
+	/>
+	<icon name="ICONS_EXPORT_GRID_DISABLED"
+		value="css:bi bi-file-spreadsheet-fill"
+	/>
+	<icon name="ICONS_EXPORT_GRID_PPT"
+		value="css:bi bi-filetype-ppt"
+	/>
+	<icon name="ICONS_EXPORT_GRID_PPTDISABLED"
+		value="css:bi bi-filetype-ppt"
+	/>
+	<icon name="ICONS_EXPORT_PDF"
+		value="css:bi bi-filetype-pdf"
+	/>
+	<icon name="ICONS_EXPORT_PDFDISABLED"
+		value="css:bi bi-filetype-pdf"
+	/>
+	<icon name="ICONS_EXPORT_POWERPOINT"
+		value="css:bi bi-filetype-ppt"
+	/>
+	<icon name="ICONS_EXPORT_POWERPOINT_DISABLED"
+		value="css:bi bi-filetype-ppt"
+	/>
+	<icon name="ICONS_BUTTON_XML_EXPORT"
+		value="css:bi bi-filetype-xml"
+	/>
+	<icon name="ICONS_BUTTON_XML_EXPORT_DISABLED"
+		value="css:bi bi-filetype-xml"
+	/>
+	<icon name="ICON_TABLE"
+		value="css:bi bi-table"
+	/>
+	<icon name="ICON_BRIEFCASE"
+		value="css:bi bi-briefcase-fill"
+	/>
+	<icon name="ICON_USER_SECRET"
+		value="css:bi bi-people-fill"
+	/>
+	<icon name="ICON_CHART_JS"
+		value="css:bi bi-bar-chart-line-fill"
+	/>
+	<icon name="ICONS_BUTTON_EDIT"
+		value="css:bi bi-pencil-fill"
+	/>
+	<icon name="ICONS_BUTTON_EDIT_DISABLED"
+		expr="%ICONS_BUTTON_EDIT%"
+	/>
+	<icon name="ICONS_EDIT48"
+		value="css:bi bi-pencil"
+	/>
+	<icon name="ICONS_GEAR"
+		value="css:bi bi-gear-fill"
+	/>
+	<icon name="ICONS_GEAR_DISABLED"
+		expr="%ICONS_GEAR%"
+	/>
+	<icon name="ICONS_ADD_BUTTON"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="ICON_PLUS"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="ICONS_ADD_BUTTON_DISABLED"
+		expr="%ICONS_ADD_BUTTON%"
+	/>
+	<icon name="ICONS_BUTTON_SAVE"
+		value="css:bi bi-save2-fill"
+	/>
+	<icon name="ICONS_BUTTON_SAVE_DISABLED"
+		expr="%ICONS_BUTTON_SAVE%"
+	/>
+	<icon name="ICONS_SAVE_BUTTON_ICON"
+		expr="%ICONS_BUTTON_SAVE%"
+	/>
+	<icon name="ICONS_SAVE_BUTTON_ICON_DISABLED"
+		expr="%ICONS_BUTTON_SAVE%"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICON_GLOBE"
+		value="css:bi bi-globe"
+	/>
+	<icon name="ICONS_BUTTON_REFRESH"
+		value="css:bi-arrow-repeat"
+	/>
+	<icon name="ICONS_BUTTON_REFRESH_DISABLED"
+		value="css:bi-arrow-repeat"
+	/>
+	<icon name="ICONS_COMPARE"
+		value="css:bi bi-arrow-left-right"
+	/>
+	<icon name="ICONS_OPEN_SELECTOR"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="ICONS_OPEN_SELECTOR_DISABLED"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="ICONS_UPLOAD"
+		value="css:bi bi-upload"
+	/>
+	<icon name="ICONS_HISTORY"
+		value="css:bi bi-clock-history"
+	/>
+	<icon name="ICONS_HISTORY_BACK"
+		value="css:bi bi-arrow-left"
+	/>
+	<icon name="ICONS_HISTORY_BACK_DISABLED"
+		value="css:bi bi-arrow-left"
+	/>
+	<icon name="ICONS_HISTORY_FORWARD"
+		value="css:bi bi-arrow-right"
+	/>
+	<icon name="ICONS_HISTORY_FORWARD_DISABLED"
+		value="css:bi bi-arrow-right"
+	/>
+	<icon name="ICONS_ADD2_CLIPBOARD"
+		value="css:bi bi-clipboard-plus-fill"
+	/>
+	<icon name="ICONS_ADD2_CLIPBOARD_DISABLED"
+		value="css:bi-clipboard-plus-fill"
+	/>
+	<icon name="ICONS_CLIPBOARD_BUTTON_ICON"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="ICONS_CLIPBOARD_BUTTON_ICON_DISABLED"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="ICONS_BUTTON_BACKWARD"
+		value="css:bi bi-chevron-double-left"
+	/>	
+	<icon name="ICONS_BUTTON_BACKWARD_DISABLED"
+		expr="%ICONS_BUTTON_BACKWARD%"
+	/>
+	<icon name="ICONS_MOVE_ROW_DOWN"
+		value="css:bi bi-chevron-down"
+	/>	
+	<icon name="ICONS_MOVE_ROW_DOWN_DISABLED"
+		value="css:bi bi-chevron-down"
+	/>
+	<icon name="ICONS_MOVE_ROW_LEFT"
+		value="css:bi bi-chevron-left"
+	/>
+	<icon name="ICONS_MOVE_ROW_LEFT_DISABLED"
+		value="css:bi bi-chevron-left"
+	/>
+	<icon name="ICONS_MOVE_ROW_RIGHT"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="ICONS_MOVE_ROW_RIGHT_DISABLED"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="ICONS_MOVE_ROW_TO_BOTTOM"
+		value="css:bi bi-chevron-double-down"
+	/>
+	<icon name="ICONS_MOVE_ROW_TO_BOTTOM_DISABLED"
+		value="css:bi bi-chevron-double-down"
+	/>
+	<icon name="ICONS_MOVE_ROW_TO_TOP"
+		value="css:bi bi-chevron-double-up"
+	/>
+	<icon name="ICONS_MOVE_ROW_TO_TOP_DISABLED"
+		value="css:bi bi-chevron-double-up"
+	/>
+	<icon name="ICONS_DELETE_TOOLBAR"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_DELETE_TOOLBAR_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_DELETE_MENU"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_DELETE_MENU_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_BUTTON_CLOSE"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_BUTTON_CLEAR"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_EXPAND_ALL"
+		value="css:bi bi-chevron-expand"
+	/>
+	<icon name="ICONS_EXPAND_ALL_DISABLED"
+		value="css:bi bi-chevron-expand"
+	/>
+	<icon name="ICONS_COLLAPSE_ALL"
+		value="css:bi bi-chevron-contract"
+	/>
+	<icon name="ICONS_COLLAPSE_ALL_DISABLED"
+		value="css:bi bi-chevron-contract"
+	/>
+	<icon name="ICONS_DIALOG_QUESTION"
+		value="css:bi bi-info-square"
+	/>
+	<icon name="ICON_VALIDATE_PAGE"
+		value="css:bi bi-check"
+	/>
+	<icon name="ICON_VALIDATE_ALL_PAGES"
+		value="css:bi bi-check-all"
+	/>
+	<icon name="ICONS_BUTTON_EXPERT"
+		value="css:bi bi-gear-fill"
+	/>
+	<icon name="ICONS_GRID_CANCEL"
+		value="css:bi bi-arrow-counterclockwise"
+	/>
+	<icon name="ICONS_GRID_CANCEL_DISABLED"
+		value="css:bi bi-arrow-counterclockwise"
+	/>
+	<icon name="ICONS_BUTTON_CANCEL"
+		value="css:bi bi-arrow-counterclockwise"
+	/>
+	<icon name="EDIT_SECURITY_PROFILES_IMPORT_ICON"
+		value="css: bi-file-arrow-up-fill"
+	/>
+	
+	
+	<!-- wird im contact modul definiert. -->
+	<icon name="IMAGE_BUTTONS_PERSONAL_SETTINGS22"
+		value="css:bi bi-person-fill-gear"
+	/>
+	<!--  -->
+	
+	
+	<icon name="IMAGE_BUTTONS_DASH_BOARD22"
+		value="css:bi bi-bar-chart-steps"
+	/>
+	<icon name="IMAGES_CLOSE_BTN"
+		value="/images/close_btn.png"
+	/>
+	<icon name="IMAGE_BUTTONS_ADMINISTRATION22"
+		value="css:bi bi-gear-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_SEARCH22"
+		value="css:bi bi-search"
+	/>
+	<icon name="IMAGE_BUTTONS_RESULT"
+		value="css:bi bi-file-text-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_RESULT_ACTIVE"
+		expr="%IMAGE_BUTTONS_RESULT%"
+	/>
+	<icon name="IMAGE_BUTTONS_STRUCTURE22"
+		value="css:bi bi-layout-wtf"
+	/>
+	<icon name="IMAGE_BUTTONS_CHART"
+		value="css:bi bi-layout-wtf"
+	/>
+	<icon name="IMAGE_BUTTONS_CHART_ACTIVE"
+		value="colored:tl-icon chart-bar-line"
+	/>
+	<icon name="IMAGE_DEBUG_22"
+		value="css:bi bi-bug-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_GUI_INSPECTOR22"
+		value="css:bi bi-binoculars-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_LOGOUT22"
+		value="css: bi bi-box-arrow-right"
+	/>
+	<icon name="IMAGE_BUTTONS_DOC"
+		value="css:bi bi-book"
+	/>
+	<icon name="IMAGE_BUTTONS_DOC_TRANSLATE"
+		value="css:bi bi-translate"
+	/>
+	<icon name="IMAGE_BUTTONS_GENERATE_DOC_PAGES"
+		value="css:bi bi-folder-plus"
+	/>
+	<icon name="IMAGE_BUTTONS_GOTO_HELP_COMPONENT"
+		value="css:bi bi-link-45deg"
+	/>
+	<icon name="IMAGE_BUTTONS_SCRIPT_RECORDER22"
+		value="css:bi bi-circle-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_CLIPBOARD"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_CLIPBOARD_ACTIVE"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_I18N_RELOAD22"
+		value="css:bi bi-arrow-clockwise"
+	/>
+	<icon name="IMAGE_BUTTONS_THEME_RELOAD22"
+		value="css:bi bi-easel-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_I18N_DEBUG22"
+		value="css:bi bi-bug-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_I18N_DEBUG_ACTIVE22"
+		value="css:bi bi-bug-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS"
+		value="css:bi bi-terminal-fill"
+	/>
+	<icon name="IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
+		value="css:bi bi-terminal-fill"
+	/>
+	
+	
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_OPTIONS"
+		value="css:bi bi-funnel-fill"
+	/>
+	<icon name="BEACON_BALLS_GREEN"
+		value="/beacon/balls/Green.png"
+	/>
+	<icon name="BEACON_BALLS_RED"
+		value="/beacon/balls/Red.png"
+	/>
+	<icon name="BEACON_BALLS_WHITE"
+		value="/beacon/balls/White.png"
+	/>
+	<icon name="BEACON_BALLS_YELLOW"
+		value="/beacon/balls/Yellow.png"
+	/>
+	<icon name="bea3_1"
+		value="/beacon/green.svg"
+	/>
+	<icon name="bea3_2"
+		value="/beacon/yellow.svg"
+	/>
+	<icon name="bea3_3"
+		value="/beacon/red.svg"
+	/>
+	<icon name="bea3_EMPTY"
+		value="/beacon/empty.svg"
+	/>
+	<int name="bea3_NUM"
+		value="3"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.SYSTEMSTATE_GREEN"
+		value="/beacon/green.png"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.GREEN"
+		value="/beacon/balls/Green.png"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.RED_CROSS"
+		value="/beacon/balls/RedCross.png"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.YELLOW"
+		value="/beacon/balls/Yellow.png"
+	/>
+	<icon name="ICONS_BUTTON_OK"
+		value="css: bi bi-check-lg"
+	/>
+	<icon name="ICONS_BUTTON_OK_DISABLED"
+		value="css: bi bi-check-lg"
+	/>
+	<icon name="mime.image/bmp"
+		value="css: bi bi-image"
+	/>
+	<icon name="mime.image/gif"
+		value="css: bi bi-image"
+	/>
+	<icon name="mime.image/png"
+		value="css: bi bi-image"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN"
+		value="css:bi bi-chevron-down"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN_DISABLED"
+		value="css:bi bi-chevron-down"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_BOTTOM"
+		value="css:bi bi-chevron-double-down"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_BOTTOM_DISABLED"
+		value="css:bi bi-chevron-double-down"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_TOP"
+		value="css:bi bi-chevron-double-up"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_TOP_DISABLED"
+		value="css:bi bi-chevron-double-up"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP"
+		value="css:bi bi-chevron-up"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP_DISABLED"
+		value="css:bi bi-chevron-up"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ARROW_LEFT"
+		value="css:bi bi-chevron-left"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ARROW_RIGHT"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ARROW_UP"
+		value="css:bi bi-chevron-up"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FAST_BACKWARD"
+		value="css:bi bi-chevron-double-left"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FAST_FORWARD"
+		value="css:bi bi-chevron-double-right"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_FIRST"
+		value="css:bi bi-chevron-double-left"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_FIRST_DISABLED"
+		value="css:bi bi-chevron-double-left"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_LAST"
+		value="css:bi bi-chevron-double-right"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_LAST_DISABLED"
+		value="css:bi bi-chevron-double-right"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_NEXT"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_NEXT_DISABLED"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_PREV"
+		value="css:bi bi-chevron-left"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_PREV_DISABLED"
+		value="css:bi bi-chevron-left"
+	/>	
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_LEFT"
+		value="css:bi bi-chevron-left"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_LEFT_DISABLED"
+		value="css:bi bi-chevron-left"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_RIGHT"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_RIGHT_DISABLED"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP"
+		value="css:bi bi-chevron-up"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP_DISABLED"
+		value="css:bi bi-chevron-up"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR_DISABLED"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
+		value="css:bi bi-circle-fill"
+	/>
+	<icon name="layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand"
+		value="css:bi bi-brush-fill"
+	/>
+	<icon name="layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand@active"
+		value="css:bi bi-brush-fill"
+	/>
+	<icon name="layouts.themes.default.toolrow.designModeButton.ReleaseLayout"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
+		value="css:bi bi-arrow-down-up"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
+		value="css:bi bi-arrow-down-up"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.RESET_TABLE"
+		value="css:bi bi-table"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_BUTTON_ICON"
+		value="css:bi bi-arrow-down-up"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_COLUMN_CONFIG"
+		value="css:bi bi-layout-three-columns"
+	/>
+	<size name="com.top_logic.layout.layoutRenderer.Icons.POPUP_TITLE_HEIGHT"
+		value="32px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_TITLE_HEIGHT"
+		value="32px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
+		value="10px"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.CLOSE_DIALOG"
+		value="css:bi bi-x-lg"
+	/>
+	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
+		value="50px"
+	/>
+	
+	<!-- Form spacings  -->
+	<dim name="RF_FIRST_COLUMN_WIDTH"
+		value="10em"
+	/>
+	<dim name="RF_HORIZONTAL_GAP_CELLS"
+		value="4rem"
+	/>
+	<dim name="RF_VERTICAL_GAP_CELLS"
+		value="0.5rem"
+	/>
+	<dim name="RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY"
+		value="90px"
+	/>
+	<!-- Self created Checkbox symbols. -->
+	<icon name="com.top_logic.layout.form.boxes.tag.Icons.NULL"
+		value="css:bi bi-slash-circle"
+	/>
+	<icon name="com.top_logic.layout.provider.Icons.NULL_DISABLED"
+		value="css:bi bi-slash-circle"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL"
+		value="css:bi bi-slash-circle"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL_DISABLED"
+		value="css:bi bi-slash-circle"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL"
+		value="css:bi bi-slash-circle"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL_DISABLED"
+		value="css:bi bi-slash-circle"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE_DISABLED"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
+		value="css:bi bi-dash-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE_DISABLED"
+		value="css:bi bi-dash-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE_DISABLED"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TRUE_DISABLED"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE"
+		value="css:bi bi-dash-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE_DISABLED"
+		value="css:bi bi-dash-lg"
+	/>
+	<icon name="com.top_logic.layout.provider.Icons.FALSE_DISABLED"
+		value="css:bi bi-dash-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRANSPARENT_BACKGROUND"
+		value="/colorchooser/transparentBackground.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CIRCLE"
+		value="/colorchooser/circle.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.COLORLINE"
+		value="/colorchooser/colorline.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.LINE"
+		value="/colorchooser/line.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.RESET_COLORS"
+		value="css:bi bi bi-trash3"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.EXPAND_ALL"
+		value="css:bi bi-chevron-expand"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.EXPAND_ALL_DISABLED"
+		value="css:bi bi-chevron-expand"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.COLLAPSE_ALL"
+		value="css:bi bi-chevron-contract"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.COLLAPSE_ALL_DISABLED"
+		value="css:bi bi-chevron-contract"
+	/>
+	
+	
+	<string name="COLORCHOOSER_NO_COLOR"
+		value="url(/colorchooser/noColor.png)"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.EMPTY_ICON"
+		value="css:"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__EXPERT_MODE_BUTTON"
+		value="css:bi bi-keyboard-fill"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__OK_BUTTON"
+		value="css:bi bi-check"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON"
+		value="css:bi bi bi-trash3"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH"
+		value="css:bi bi-search search"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH_MODE_BUTTON"
+		value="css:bi bi-search"
+	/>
+	
+	
+	<icon name="layouts.themes.default.toolrow.ExportLayout"
+		value="css:bi bi-box-arrow-right"
+	/>
+	<icon name="model.tl.doc.Page.icon"
+		value="css:bi bi-book"
+	/>
+	<icon name="com.top_logic.doc.command.Icons.OPEN_DOCUMENTATION"
+		value="css:bi bi-book"
+	/>
+	<icon name="com.top_logic.util.error.Icons.INFO"
+		value="css:bi bi-info-circle-fill"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.RENDERING_ERROR_NORMAL"
+		value="css:bi bi-exclamation-triangle-fill"
+	/>
+	<icon name="com.top_logic.util.error.Icons.ERROR"
+		value="css:bi bi-exclamation-triangle-fill"
+	/>
+	<icon name="com.top_logic.util.error.Icons.WARNING"
+		value="css:bi bi-info-circle-fill"
+	/>
+	<icon name="com.top_logic.util.error.Icons.SYSTEM_FAILURE"
+		value="css:bi bi-x-octagon-fill"
+	/>
+	<icon name="com.top_logic.util.error.Icons.QUESTION"
+		value="css:bi bi-info-square"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.CLOSE_INFO_SERVICE_ITEM"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_ERROR"
+		value="css:bi bi-exclamation-triangle-fill"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_WARNING"
+		value="css:bi bi-info-circle-fill"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_INFO"
+		value="css:bi bi-info-circle-fill"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFO_SERVICE_DETAIL_EXPANDER"
+		value="css:bi bi-chevron-up"
+	/>
+	<int name="com.top_logic.layout.form.selection.Icons.SELECTION_CONTROL_FIELD_HEIGHT"
+		value="40"
+	/>
+	<box name="GROUP_COLLAPSED_RADIUS"
+		value="5px 5px 0px 0px"
+	/>
+	
+	<!-- Style Tokens -->
+	<!-- Color Tokens -->
+	<color name="background"
+		value="#ffffff"
+	/>
+	<color name="background-hover"
+		value="#d3d5d9"
+	/>
+	<color name="background-active"
+		value="#a7abb2"
+	/>
+	<color name="background-selected"
+		value="#f0f1f2"
+	/>
+	<color name="background-disabled"
+		value="#f0f1f2"
+	/>
+	<color name="background-brand"
+		value="#2968c8"
+	/>
+	<color name="text-primary"
+		value="#101113"
+	/>
+	<color name="text-secondary"
+		value="#676b72"
+	/>
+	<color name="text-disabled"
+		value="#c4c7cc"
+	/>
+	<color name="text-on-color"
+		value="#ffffff"
+	/>
+	<color name="text-on-color-disabled"
+		value="#878d96"
+	/>
+	<color name="text-placeholder"
+		value="#a7abb2"
+	/>
+	<color name="text-helper"
+		value="#676b72"
+	/>
+	<color name="text-interactive"
+		value="#2968c8"
+	/>
+	<color name="link-primary"
+		value="#2968c8"
+	/>
+	<color name="link-primary-hover"
+		value="#245db2"
+	/>
+	<color name="link-visited"
+		value="#8955a6"
+	/>
+	<color name="field"
+		value="#f0f1f2"
+	/>
+	<color name="field-hover"
+		value="#e5e5e6"
+	/>
+	<color name="focus"
+		value="#2968C8"
+	/>
+	<color name="focus-inset"
+		value="#ffffff"
+	/>
+	<color name="focus-inverse"
+		value="#ffffff"
+	/>
+	<color name="button-primary"
+		value="#2968c8"
+	/>
+	<color name="button-primary-hover"
+		value="#245db2"
+	/>
+	<color name="button-primary-active"
+		value="#09387e"
+	/>
+	<color name="button-secondary"
+		value="#2968c8"
+	/>
+	<color name="button-secondary-hover"
+		value="#245db2"
+	/>
+	<color name="button-secondary-active"
+		value="#09387e"
+	/>
+	<color name="button-danger"
+		value="#d3181b"
+	/>
+	<color name="button-danger-hover"
+		value="#bc1518"
+	/>
+	<color name="button-danger-active"
+		value="#7b090b"
+	/>
+	<color name="button-disabled"
+		value="#e1e2e5"
+	/>
+	<color name="icon-primary"
+		value="#101113"
+	/>
+	<color name="icon-secondary"
+		value="#676b72"
+	/>
+	<color name="icon-on-color"
+		value="#ffffff"
+	/>
+	<color name="icon-disabled"
+		value="#c4c7cc"
+	/>
+	<color name="icon-on-color-disabled"
+		value="#878d96"
+	/>
+	<color name="icon-interactive"
+		value="#2968c8"
+	/>
+	<color name="layer"
+		value="#f0f1f2"
+	/>
+	<color name="layer-hover"
+		value="#e5e5e6"
+	/>
+	<color name="layer-active"
+		value="#c4c7cc"
+	/>
+	<color name="layer-selected"
+		value="#e1e2e5"
+	/>
+	<color name="layer-selected-hover"
+		value="#d3d5d9"
+	/>
+	<color name="layer-grid-interactive"
+		value="#d6e3f7"
+	/>
+	<color name="layer-accent"
+		value="#e1e2e5"
+	/>
+	<color name="layer-accent-hover"
+		value="#d3d5d9"
+	/>
+	<color name="layer-accent-active"
+		value="#a7abb2"
+	/>
+	<color name="border-subtle"
+		value="#c4c7cc"
+	/>
+	<color name="border-strong"
+		value="#878d96"
+	/>
+	<color name="border-interactive"
+		value="#2968c8"
+	/>
+	<color name="debug"
+		value="#ecf1fa"
+	/>
+	<color name="debug-hover"
+		value="#d0ddf1"
+	/>
+	<color name="interactive"
+		value="#2968c8"
+	/>
+	<color name="overlay"
+		value="#10111359"
+	/>
+	<color name="support-info"
+		value="#2968C8"
+	/>
+	<color name="support-danger"
+		value="#D3181B"
+	/>
+	<color name="support-success"
+		value="#04A38D"
+	/>
+	<color name="support-warning"
+		value="#D3A118"
+	/>
+	<color name="notification-info-background"
+		value="#D6E3F7"
+	/>
+	<color name="notification-success-background"
+		value="#C5EAE1"
+	/>
+	<color name="notification-danger-background"
+		value="#FFDAD4"
+	/>
+	<color name="notification-warning-background"
+		value="#FFF1CC"
+	/>
+	<!-- Spacing Tokens -->
+	<string name="spacing-01"
+		value=".25rem"
+	/>
+	<string name="spacing-02"
+		value=".5rem"
+	/>
+	<string name="spacing-03"
+		value="1rem"
+	/>
+	<string name="spacing-04"
+		value="1.5rem"
+	/>
+	<string name="spacing-05"
+		value="2rem"
+	/>
+	<string name="spacing-06"
+		value="3rem"
+	/>
+	<string name="spacing-07"
+		value="4rem"
+	/>
+	<!-- Typography Tokens -->
+	<string name="body-01-font-size"
+		value=".75rem"
+	/>
+	<string name="body-01-line-height"
+		value="1rem"
+	/>
+	<string name="body-01-letter-spacing"
+		value=".15px"
+	/>
+	<string name="body-02-font-size"
+		value=".875rem"
+	/>
+	<string name="body-02-line-height"
+		value="1.125rem"
+	/>
+	<string name="body-02-letter-spacing"
+		value=".15px"
+	/>
+	<string name="heading-compact-01-font-size"
+		value=".75rem"
+	/>
+	<string name="heading-compact-01-line-height"
+		value="1rem"
+	/>
+	<string name="heading-compact-01-letter-spacing"
+		value=".15px"
+	/>
+	<string name="heading-compact-02-font-size"
+		value=".875rem"
+	/>
+	<string name="heading-compact-02-line-height"
+		value="1.125rem"
+	/>
+	<string name="heading-compact-02-letter-spacing"
+		value=".15px"
+	/>
+	<string name="heading-03-font-size"
+		value="1rem"
+	/>
+	<string name="heading-03-line-height"
+		value="1.5rem"
+	/>
+	<string name="heading-03-letter-spacing"
+		value="0px"
+	/>
+	<string name="heading-04-font-size"
+		value="1.5rem"
+	/>
+	<string name="heading-04-line-height"
+		value="2rem"
+	/>
+	<string name="heading-04-letter-spacing"
+		value="0px"
+	/>
+	<string name="heading-05-font-size"
+		value="1.875rem"
+	/>
+	<string name="heading-05-line-height"
+		value="2.375rem"
+	/>
+	<string name="heading-05-letter-spacing"
+		value="0px"
+	/>
+	<string name="shadow-menu"
+		value=" 0 2px 6px 0 rgba(0,0,0,0.32)"
+	/>
+</settings>
+

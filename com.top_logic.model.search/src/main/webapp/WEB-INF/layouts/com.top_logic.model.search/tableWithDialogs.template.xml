@@ -92,6 +92,78 @@
 							<layoutInfo/>
 						</config:template-call>
 					</components>
+					<buttons>
+						<button id="showPrevious"
+							class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+							group="System"
+							image="css:fas fa-chevron-left"
+							transaction="false"
+						>
+							<resourceKey key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.previousObject"/>
+							<target class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+								<channel name="rows">
+									<target name="__enclosingLayoutScope__#Table"/>
+								</channel>
+								<channel name="model">
+									<target name="__editForm__#Form"/>
+								</channel>
+							</target>
+							<executability>
+								<rule-by-expression show-disabled="true">
+									<decision><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $index > 0;
+}]]></decision>
+								</rule-by-expression>
+							</executability>
+							<operation><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $rows[$index - 1];
+}]]></operation>
+							<postCreateActions>
+								<setModel target="model(__editForm__#Form)"/>
+							</postCreateActions>
+						</button>
+						<button id="showNext"
+							class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+							group="System"
+							image="css:fas fa-chevron-right"
+							transaction="false"
+						>
+							<resourceKey key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.nextObject"/>
+							<target class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+								<channel name="rows">
+									<target name="__enclosingLayoutScope__#Table"/>
+								</channel>
+								<channel name="model">
+									<target name="__editForm__#Form"/>
+								</channel>
+							</target>
+							<executability>
+								<rule-by-expression show-disabled="true">
+									<decision><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $index < $rows.size() - 1
+}]]></decision>
+								</rule-by-expression>
+							</executability>
+							<operation><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $rows[$index + 1];
+}]]></operation>
+							<postCreateActions>
+								<setModel target="model(__editForm__#Form)"/>
+							</postCreateActions>
+						</button>
+					</buttons>
 				</arguments>
 			</config:template-call>
 		</dialogs>

@@ -171,8 +171,6 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Check similar documents."
-			failure-message=""
-			user-id="root"
 		>
 			<actions>
 				<action class="com.top_logic.knowledge.indexing.lucene.scripting.runtime.action.WaitForLuceneFinishedActionOp"
@@ -183,125 +181,104 @@
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					comment="Check similar of doc1.txt."
-					failure-message=""
-					user-id="root"
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-							comment=""
 							failure-expected="false"
-							failure-message=""
 							user-id="root"
 						>
-							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
-								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
 									tab-path="Strukturen > Typendemo > 2 Dokumente"
 								/>
 								<path>
-									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-										field-label-comment=""
-										field-name="rows"
-									/>
-									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
-										column-name="_similar"
-										field-label-comment=""
-									>
-										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+									<named-member name="rows"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
 											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
 										>
 											<name>
 												<part key="element">
-													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-														string="doc1.txt"
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="doc1.txt"
 													/>
 												</part>
 											</name>
-										</row-object>
-									</node>
+										</business-object>
+									</object>
+									<labeled-member label="Ähnliche Dokumente"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+									<path>
+										<named-member name="g"/>
+										<named-member name="table"/>
+									</path>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="1"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="g"/>
+									<named-member name="rows"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.knowledge.wrap.WrapperNaming"
+										>
+											<name>
+												<part key="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="copyOfDoc1.txt"
+													/>
+												</part>
+											</name>
+										</business-object>
+									</object>
+									<labeled-member label="Herunterladen"/>
 								</path>
 							</model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Check that there is a similar document named copyOfDoc1.txt"
-							failure-message=""
+							comment="Check and clear download."
 							user-id="root"
 						>
 							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-									comment=""
-									failure-expected="false"
-									failure-message=""
-									user-id="root"
-								>
-									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
-										<form-handler-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-										<path>
-											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-												field-label-comment=""
-												field-name="g"
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+										file-name="copyOfDoc1.txt"
+									/>
+									<constraints>
+										<constraint class="com.top_logic.layout.scripting.check.BinaryFileEqualityCheck">
+											<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+												base64data="U29tZSBzaW1wbGUgY29udGVudC4"
+												content-type="text/plain"
+												name="copyOfDoc1.txt"
 											/>
-											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-												field-label-comment=""
-												field-name="rows"
-											/>
-											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
-												column-name="_download"
-												field-label-comment=""
-											>
-												<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
-													provider-name="com.top_logic.knowledge.wrap.WrapperNaming"
-												>
-													<name>
-														<part key="name">
-															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-																string="copyOfDoc1.txt"
-															/>
-														</part>
-													</name>
-												</row-object>
-											</node>
-										</path>
-									</model-name>
+										</constraint>
+									</constraints>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-									comment="Check and clear download."
-									failure-message=""
-									user-id="root"
-								>
-									<actions>
-										<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
-											comment=""
-											failure-message=""
-											user-id="root"
-										>
-											<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
-												file-name="copyOfDoc1.txt"
-											/>
-											<constraints>
-												<constraint class="com.top_logic.layout.scripting.check.BinaryFileEqualityCheck">
-													<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
-														base64data="U29tZSBzaW1wbGUgY29udGVudC4"
-														content-type="text/plain"
-														name="copyOfDoc1.txt"
-													/>
-												</constraint>
-											</constraints>
-										</action>
-										<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"
-											comment=""
-											failure-message=""
-											user-id="root"
-										/>
-									</actions>
-								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-							comment=""
-							component-implementation-comment=""
 							component-name="rootLayout#masterFrame"
-							failure-message=""
 							label="Schließen"
 							user-id="root"
 						/>
@@ -309,125 +286,104 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					comment="Check similar of copyOfDoc1.txt."
-					failure-message=""
-					user-id="root"
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-							comment=""
 							failure-expected="false"
-							failure-message=""
 							user-id="root"
 						>
-							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
-								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
 									tab-path="Strukturen > Typendemo > 2 Dokumente"
 								/>
 								<path>
-									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-										field-label-comment=""
-										field-name="rows"
-									/>
-									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
-										column-name="_similar"
-										field-label-comment=""
-									>
-										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+									<named-member name="rows"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
 											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
 										>
 											<name>
 												<part key="element">
-													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-														string="copyOfDoc1.txt"
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="copyOfDoc1.txt"
 													/>
 												</part>
 											</name>
-										</row-object>
-									</node>
+										</business-object>
+									</object>
+									<labeled-member label="Ähnliche Dokumente"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+									<path>
+										<named-member name="g"/>
+										<named-member name="table"/>
+									</path>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="1"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="g"/>
+									<named-member name="rows"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.knowledge.wrap.WrapperNaming"
+										>
+											<name>
+												<part key="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="doc1.txt"
+													/>
+												</part>
+											</name>
+										</business-object>
+									</object>
+									<labeled-member label="Herunterladen"/>
 								</path>
 							</model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Check that there is a similar document named copyOfDoc1.txt"
-							failure-message=""
+							comment="Check and clear download."
 							user-id="root"
 						>
 							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-									comment=""
-									failure-expected="false"
-									failure-message=""
-									user-id="root"
-								>
-									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
-										<form-handler-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-										<path>
-											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-												field-label-comment=""
-												field-name="g"
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+										file-name="doc1.txt"
+									/>
+									<constraints>
+										<constraint class="com.top_logic.layout.scripting.check.BinaryFileEqualityCheck">
+											<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+												base64data="U29tZSBzaW1wbGUgY29udGVudC4"
+												content-type="text/plain"
+												name="doc1.txt"
 											/>
-											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-												field-label-comment=""
-												field-name="rows"
-											/>
-											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
-												column-name="_download"
-												field-label-comment=""
-											>
-												<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
-													provider-name="com.top_logic.knowledge.wrap.WrapperNaming"
-												>
-													<name>
-														<part key="name">
-															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-																string="doc1.txt"
-															/>
-														</part>
-													</name>
-												</row-object>
-											</node>
-										</path>
-									</model-name>
+										</constraint>
+									</constraints>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-									comment="Check and clear download."
-									failure-message=""
-									user-id="root"
-								>
-									<actions>
-										<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
-											comment=""
-											failure-message=""
-											user-id="root"
-										>
-											<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
-												file-name="doc1.txt"
-											/>
-											<constraints>
-												<constraint class="com.top_logic.layout.scripting.check.BinaryFileEqualityCheck">
-													<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
-														base64data="U29tZSBzaW1wbGUgY29udGVudC4"
-														content-type="text/plain"
-														name="doc1.txt"
-													/>
-												</constraint>
-											</constraints>
-										</action>
-										<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"
-											comment=""
-											failure-message=""
-											user-id="root"
-										/>
-									</actions>
-								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-							comment=""
-							component-implementation-comment=""
 							component-name="rootLayout#masterFrame"
-							failure-message=""
 							label="Schließen"
 							user-id="root"
 						/>

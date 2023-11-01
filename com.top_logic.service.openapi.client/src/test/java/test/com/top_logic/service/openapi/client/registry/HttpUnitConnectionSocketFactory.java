@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import javax.activation.MimeType;
@@ -54,6 +55,8 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.ProxyInputStream;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.ByteArrayStream;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 
 /**
@@ -180,15 +183,57 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 
 		private InputStream initStream() throws IOException {
 			WebRequest webRequest = newWebRequest(_request, _requestContent);
-			InvocationContext invocation;
-			try {
-				TestedApplicationSession applicationSession = TestedApplicationSession.get();
-				invocation = applicationSession.newInvocation(webRequest);
-				invocation.service();
-			} catch (ServletException ex) {
-				throw new IOException(ex);
-			}
+			TestedApplicationSession applicationSession = TestedApplicationSession.get();
+			InvocationContext invocation = applicationSession.newInvocation(webRequest);
+
+			inThread(() -> {
+				try {
+					invocation.service();
+				} catch (ServletException ex) {
+					throw new IOException(ex);
+				}
+				return null;
+			});
 			return responseAsStream(invocation);
+		}
+
+		private InputStream inThread(ComputationEx<InputStream, IOException> supplier) throws IOException {
+			Class<HttpUnitResponse> clazz = HttpUnitResponse.class;
+
+			AtomicReference<Throwable> problem = new AtomicReference<>();
+			AtomicReference<InputStream> result = new AtomicReference<>();
+			Thread other = new Thread() {
+
+				@Override
+				public void run() {
+					try {
+						result.set(ThreadContextManager.inSystemInteraction(clazz, supplier));
+					} catch (IOException ex) {
+						problem.set(ex);
+					} catch (RuntimeException | Error ex) {
+						problem.set(ex);
+					}
+					super.run();
+				}
+
+			};
+			other.start();
+			try {
+				other.join();
+			} catch (InterruptedException ex) {
+				throw new RuntimeException("Unexpected interrupt.", ex);
+			}
+
+			if (problem.get() != null) {
+				if (problem.get() instanceof IOException) {
+					throw (IOException) problem.get();
+				} else if (problem.get() instanceof Error) {
+					throw (Error) problem.get();
+				} else {
+					throw (RuntimeException) problem.get();
+				}
+			}
+			return result.get();
 		}
 
 		private InputStream responseAsStream(InvocationContext invocation) throws IOException {

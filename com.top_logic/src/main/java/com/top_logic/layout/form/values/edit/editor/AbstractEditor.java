@@ -54,7 +54,7 @@ public abstract class AbstractEditor implements Editor {
 
 	@Override
 	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
-		return addField(editorFactory, container, model, model.getProperty().getPropertyName());
+		return addField(editorFactory, container, model, normalizeFieldName(model.getProperty().getPropertyName()));
 	}
 
 	/**

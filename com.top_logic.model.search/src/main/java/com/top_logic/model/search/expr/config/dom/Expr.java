@@ -15,6 +15,7 @@ import java.util.Map;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -1200,6 +1201,21 @@ public interface Expr extends ConfigurationItem {
 
 		/** @see #getExpr() */
 		void setExpr(Expr value);
+
+		/**
+		 * Creates a new {@link Define} with the given values.
+		 *
+		 * @param name
+		 *        {@link Define#getName() Name} of the resulting {@link Define}.
+		 * @param expr
+		 *        {@link Define#getExpr() Expr} of the resulting {@link Define}.
+		 */
+		static Define create(String name, Expr expr) {
+			Define result = TypedConfiguration.newConfigItem(Define.class);
+			result.setName(name);
+			result.setExpr(expr);
+			return result;
+		}
 
 	}
 

@@ -126,6 +126,7 @@
 }]]></operation>
 							<postCreateActions>
 								<setModel target="model(__editForm__#Form)"/>
+								<setModel target="selection(__enclosingLayoutScope__#Table)"/>
 							</postCreateActions>
 						</button>
 						<button id="showNext"
@@ -161,6 +162,7 @@
 }]]></operation>
 							<postCreateActions>
 								<setModel target="model(__editForm__#Form)"/>
+								<setModel target="selection(__enclosingLayoutScope__#Table)"/>
 							</postCreateActions>
 						</button>
 					</buttons>

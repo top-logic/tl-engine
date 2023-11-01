@@ -1178,7 +1178,7 @@ public class Fields {
 	 */
 	public static FormGroup group(FormContainer parent, AnnotationCustomizations annotationCustomizations,
 			PropertyDescriptor property) {
-		FormGroup group = group(parent, property.getPropertyName());
+		FormGroup group = group(parent, normalizeFieldName(property.getPropertyName()));
 		boolean displayMinimized = displayMinimized(annotationCustomizations, property);
 		group.setCollapsed(displayMinimized);
 		return group;
@@ -1368,7 +1368,7 @@ public class Fields {
 	}
 
 	public static FormField field(FormContainer parent, String name) {
-		FormField result = FormFactory.newDisplayField(name, null);
+		FormField result = FormFactory.newDisplayField(normalizeFieldName(name), null);
 		parent.addMember(result);
 		return result;
 	}
@@ -1593,6 +1593,11 @@ public class Fields {
 		} else {
 			return annotation.value();
 		}
+	}
+
+	/** {@link FormMember} don't allow the dot in their name. */
+	public static String normalizeFieldName(String name) {
+		return name.replace('.', '-');
 	}
 
 }

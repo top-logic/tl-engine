@@ -400,7 +400,7 @@ public class MetaElementUtil {
 	 */
 	public static void preloadAttribute(PreloadContext context, Collection<? extends TLObject> baseObjects,
 			TLStructuredTypePart attribute) {
-		StorageImplementation storageImplementation = (StorageImplementation) AttributeOperations.getStorageImplementation(attribute);
+		StorageImplementation storageImplementation = AttributeOperations.getStorageImplementation(attribute);
 		if (storageImplementation == null) {
 			Logger.error("Cannot preload attribute '" + attribute + "' without storage implementation.",
 				MetaElementUtil.class);

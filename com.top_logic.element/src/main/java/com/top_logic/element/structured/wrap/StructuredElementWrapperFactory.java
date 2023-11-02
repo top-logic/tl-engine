@@ -347,7 +347,7 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 		private AssociationStorage parentStorage(StructuredElement element) {
 			TLClass type = (TLClass) element.tType();
 			TLStructuredTypePart parentAttr = type.getPart(StructuredElementWrapper.PARENT_ATTR);
-			return (AssociationStorage) AttributeOperations.getStorageImplementation(parentAttr);
+			return (AssociationStorage) AttributeOperations.getStorageImplementation(element, parentAttr);
 		}
 
     }

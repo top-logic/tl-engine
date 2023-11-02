@@ -98,7 +98,7 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 		TLAssociationEnd sourceEnd = reference.getEnd();
 		TLAssociationEnd destinationEnd = TLModelUtil.getOtherEnd(sourceEnd);
 		TLStructuredTypePart destinationReference = destinationEnd.getReference();
-		StorageImplementation destStorage = AttributeOperations.getStorageImplementation(destinationReference);
+		StorageImplementation destStorage = AttributeOperations.getStorageImplementation(self, destinationReference);
 
 		Object result;
 		try {

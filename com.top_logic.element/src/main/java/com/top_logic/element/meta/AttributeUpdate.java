@@ -78,7 +78,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 			TLStructuredTypePart attribute = update.getAttribute();
 			AttributeOperations.checkAlive(object, attribute);
 
-			StorageImplementation storage = AttributeOperations.getStorageImplementation(attribute);
+			StorageImplementation storage = AttributeOperations.getStorageImplementation(object, attribute);
 			storage.update(update);
 		}
 	}

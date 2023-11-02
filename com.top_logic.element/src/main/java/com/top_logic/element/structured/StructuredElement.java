@@ -225,7 +225,7 @@ public interface StructuredElement extends Wrapper, TLScope {
 			return Collections.emptyList();
 		}
 		TLStructuredTypePart attribute = tType().getPart(CHILDREN_ATTR);
-		StorageImplementation storage = AttributeOperations.getStorageImplementation(attribute);
+		StorageImplementation storage = AttributeOperations.getStorageImplementation(this, attribute);
 		@SuppressWarnings("unchecked")
 		List<StructuredElement> result = (List<StructuredElement>) storage.getLiveCollection(this, attribute);
 		return result;
@@ -239,7 +239,7 @@ public interface StructuredElement extends Wrapper, TLScope {
 			throw new UnsupportedOperationException("No children supported.");
 		}
 		TLStructuredTypePart attribute = tType().getPart(CHILDREN_ATTR);
-		StorageImplementation storage = AttributeOperations.getStorageImplementation(attribute);
+		StorageImplementation storage = AttributeOperations.getStorageImplementation(this, attribute);
 		storage.addAttributeValue(this, attribute, newChild);
 	}
 
@@ -251,7 +251,7 @@ public interface StructuredElement extends Wrapper, TLScope {
 			return;
 		}
 		TLStructuredTypePart attribute = tType().getPart(CHILDREN_ATTR);
-		StorageImplementation storage = AttributeOperations.getStorageImplementation(attribute);
+		StorageImplementation storage = AttributeOperations.getStorageImplementation(this, attribute);
 		storage.removeAttributeValue(this, attribute, oldChild);
 	}
 

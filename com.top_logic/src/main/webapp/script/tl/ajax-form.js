@@ -3240,6 +3240,7 @@ services.form = {
 		activeCl: "ddwttDropBtnActive",
 		searchCl: "ddwttSearch",
 		hideCl: "ddwttHide",
+		boxCl: "ddwttDDBox",
 		listCl: "ddwttDDList",
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
@@ -3247,8 +3248,8 @@ services.form = {
 		tooltipCl: "ddwttTooltip",
 
 		buttonDrop: function(button) {
-			const ddBox = button.nextElementSibling;
-			const ddList = ddBox.querySelector("." + this.listCl);
+			const ddBoxOriginal = button.nextElementSibling;
+			let ddBox = this.getDDBox();
 
 			const onGlobalChange = function() {
 				if (ddBox.contains(document.activeElement)) {
@@ -3260,19 +3261,31 @@ services.form = {
 			button.parentElement.classList.toggle(this.activeCl);
 
 			if (prevActive) {
-				this.closeDD(button, ddBox, ddList);
+				this.closeDD(button, ddBox);
 			} else {
+				const outerDocument = document.body.firstElementChild;
+				ddBox = ddBoxOriginal.cloneNode(true);
+				outerDocument.append(ddBox);
+				const ddList = ddBox.querySelector("." + this.listCl);
 				let activeItem = this.getActiveItem(button, ddList);
 
-				this.positionDD(ddBox);
+				this.positionDD(button, ddBox);
 				if (activeItem) {
 					this.positionTt(activeItem, true);
 					this.addScrollEvents(button, onGlobalChange);
 				}
 			}
 		},
+		
+		getDDBox: function() {
+			return document.body.firstElementChild.querySelector(":scope > ." + this.boxCl);
+		},
+		
+		getButton: function(ddBox) {
+			return document.body.firstElementChild.querySelector("#" + ddBox.dataset.ctrlid + " ." + this.buttonCl);
+		},
 
-		closeDD: function(button, ddBox, ddList) {
+		closeDD: function(button, ddBox) {
 			// reset chevron to default (right)
 			button.classList.remove("down");
 			button.classList.remove("up");
@@ -3282,16 +3295,14 @@ services.form = {
 			search.value = "";
 			search.classList.add(this.hideCl);
 
-			// hide items
-			for (item of ddList.children) {
-				item.style.display = "";
-			}
-
 			this.cancelScrollEvents(button);
 
 			if (ddBox.contains(document.activeElement)) {
 				button.focus();
 			}
+			
+			// hide DropDown
+			ddBox.remove();
 		},
 
 		cancelScrollEvents: function(button) {
@@ -3353,12 +3364,11 @@ services.form = {
 			}
 		},
 
-		positionDD: function(ddBox) {
+		positionDD: function(button, ddBox) {
 			ddBox.style.left = 0;
 			ddBox.style.top = 0;
 
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect(),
+			let btnPos = button.getBoundingClientRect(),
 				ddBoxPos = ddBox.getBoundingClientRect(),
 				hWindow = window.innerHeight;
 
@@ -3366,35 +3376,31 @@ services.form = {
 				ddMaxHeight = bottomSpace;
 
 			if ((bottomSpace >= ddBoxPos.height) || (bottomSpace >= btnPos.top)) {
-				this.openDown(ddBox);
+				this.openDown(button, ddBox);
 			} else {
 				ddMaxHeight = btnPos.top;
-				this.openUp(ddBox);
+				this.openUp(button, ddBox);
 			}
-			this.setDimensions(ddBox, ddMaxHeight);
+			this.setDimensions(btnPos, ddBox, ddMaxHeight);
 		},
 
-		openDown: function(ddBox) {
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect();
+		openDown: function(button, ddBox) {
+			let btnPos = button.getBoundingClientRect();
 			button.classList.add("down");
 			ddBox.style.removeProperty("bottom");
 			ddBox.style.setProperty("top", btnPos.bottom + "px");
 			ddBox.style.setProperty("flex-direction", "column");
 		},
 
-		openUp: function(ddBox) {
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect();
+		openUp: function(button, ddBox) {
+			let btnPos = button.getBoundingClientRect();
 			button.classList.add("up");
 			ddBox.style.removeProperty("top");
 			ddBox.style.setProperty("bottom", (window.innerHeight - btnPos.top) + "px");
 			ddBox.style.setProperty("flex-direction", "column-reverse");
 		},
 
-		setDimensions: function(ddBox, ddMaxHeight) {
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect();
+		setDimensions: function(btnPos, ddBox, ddMaxHeight) {
 			ddBox.style.setProperty("left", btnPos.left + "px");
 			ddBox.style.setProperty("min-width", btnPos.width + "px");
 			ddBox.style.setProperty("max-height", ddMaxHeight + "px");
@@ -3404,31 +3410,37 @@ services.form = {
 		},
 
 		positionTt: function(item, scroll) {
-
+			
 			let ddList = item.parentElement;
 			let previousActive = ddList.querySelector(":scope > ." + this.actItemCl);
 			if (previousActive) {
 				if (previousActive == item) return;
 				this.setItemInactive(previousActive);
 			}
-			item.classList.add(this.actItemCl);
 
 			if (scroll) {
 				item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
 			}
+			item.classList.add(this.actItemCl);
+			
+			const mouseoverEvent = new Event('mouseover', { 'bubbles': true });
+			item.dispatchEvent(mouseoverEvent);
 
 			let tooltip = item.querySelector(":scope > ." + this.tooltipCl);
 			if (!tooltip) return;
 
 			if (tooltip.childElementCount > 0) {
-				tooltip.style.left = 0;
-				tooltip.style.removeProperty("top");
-				tooltip.style.removeProperty("bottom");
-				tooltip.style.removeProperty("transform");
-
-				let itemPos = item.getBoundingClientRect();
-				this.setTtHorizontal(tooltip, itemPos);
-				this.setTtVertical(tooltip, itemPos);
+//				let openTimeout = setTimeout(() => {
+					tooltip.style.left = 0;
+					tooltip.style.removeProperty("top");
+					tooltip.style.removeProperty("bottom");
+					tooltip.style.removeProperty("transform");
+	
+					let itemPos = item.getBoundingClientRect();
+					this.setTtHorizontal(tooltip, itemPos);
+					this.setTtVertical(tooltip, itemPos);
+//				}, 400);
+//				target.setAttribute("data-ttOpen", openTimeout);
 			} else {
 				tooltip.style.display = "none";
 			}
@@ -3500,8 +3512,9 @@ services.form = {
 			tooltip.style.setProperty("left", leftPos + "px");
 		},
 
-		lostFocus: function(ddBox) {
-			const button = ddBox.previousElementSibling;
+		lostFocus: function() {
+			const ddBox = this.getDDBox();
+			const button = this.getButton(ddBox);
 			const ddList = ddBox.querySelector("." + this.listCl);
 			let itemList = ddList.children;
 
@@ -3528,11 +3541,25 @@ services.form = {
 				tooltip.firstElementChild.scrollTop = 0;
 			}
 			item.classList.remove(this.actItemCl);
+			const mouseleaveEvent = new Event('mouseleave', { 'bubbles': true });
+			item.dispatchEvent(mouseleaveEvent);
 		},
 
-		keyPressed: function(ddBox, event, multi) {
+		keyPressed: function(event, multi) {
+			let ddBox = this.getDDBox();
+			let button = event.target;
+			if (ddBox) {
+				button = this.getButton(ddBox);
+			} else {
+				if (multi) {
+					this.buttonDrop(button);
+					ddBox = this.getDDBox();
+					button = this.getButton(ddBox);
+				} else {
+					ddBox = button.nextElementSibling;
+				}
+			}
 			let ddList = ddBox.querySelector("." + this.listCl);
-			let button = ddBox.previousElementSibling;
 			let sourceBtn = (event.target == button);
 
 			let activeItem = this.getActiveItem(button, ddList);
@@ -3614,14 +3641,24 @@ services.form = {
 				case "PageUp":
 				// [PageDown|PgDn|Bild v] was pressed
 				case "PageDown":
-					if (sourceBtn) {
+					let tempList = ddList,
+						tempActive = activeItem;
+						
+					if (sourceBtn && !multi) {
 						this.buttonDrop(button);
+						ddList = this.getDDBox().querySelector("." + this.listCl);
+						activeItem = this.getActiveItem(button, ddList);
 					}
+					
 					let pageH = ddList.getBoundingClientRect().height,
 						itemH = activeItem.getBoundingClientRect().height;
-					if (sourceBtn) {
+						
+					if (sourceBtn && !multi) {
 						this.buttonDrop(button);
+						ddList = tempList;
+						activeItem = tempActive;
 					}
+					
 					let itemCount = Math.trunc(pageH / itemH),
 						scrollH = itemCount * itemH;
 
@@ -3657,7 +3694,7 @@ services.form = {
 					} else {
 						ddList.scrollBy({ top: scrollH, behavior: "smooth" });
 						this.positionTt(activeItem, false);
-						break;
+						return;
 					}
 
 				// [END|ENDE] was Pressed
@@ -3688,10 +3725,12 @@ services.form = {
 						this.selectItem(activeItem);
 						return;
 					}
+					event.stopImmediatePropagation();
+					break;
 
 				// [ESC] was pressed
 				case "Escape":
-					if (sourceBtn) {
+					if (sourceBtn && !multi) {
 						return;
 					}
 					this.buttonDrop(button);
@@ -3715,14 +3754,15 @@ services.form = {
 					return;
 			}
 
-			if (sourceBtn) {
+			if (sourceBtn && !multi) {
 				this.buttonDrop(button);
 			}
 
-			let search = ddBox.querySelector(":scope > ." + this.searchCl);
+			let search = this.getDDBox().querySelector(":scope > ." + this.searchCl);
 			if (event.target != search) {
 				search.focus();
 			}
+			
 		},
 
 		isDisplayedItem: function(item) {
@@ -3758,11 +3798,10 @@ services.form = {
 		},
 
 		selectItem: function(item) {
-			let container = item.closest("." + this.containerCl),
-				ctrlID = container.id;
+			const ddBox = item.parentElement.parentElement;
+			const button = this.getButton(ddBox);
+			let ctrlID = ddBox.dataset.ctrlid;
 			
-			const button = container.querySelector(":scope > ." + this.buttonCl);
-
 			if (button.parentElement.classList.contains(this.activeCl)) {
 				this.buttonDrop(button);
 			}

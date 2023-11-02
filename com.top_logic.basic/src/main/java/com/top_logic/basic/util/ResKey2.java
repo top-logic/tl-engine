@@ -33,7 +33,7 @@ public interface ResKey2 {
 	 * @param arg2
 	 *        Second dynamic part of the translation. May be <code>null</code>.
 	 * 
-	 * @return The {@link ResKey} that encapsulates the given argument.
+	 * @return The {@link ResKey} that encapsulates the given arguments.
 	 */
 	ResKey fill(Object arg1, Object arg2);
 

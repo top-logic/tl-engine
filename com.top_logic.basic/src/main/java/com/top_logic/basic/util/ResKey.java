@@ -1807,12 +1807,20 @@ public abstract class ResKey {
 	public static class ValueBinding extends AbstractConfigurationValueBinding<ResKey> {
 
 		/**
-		 * Singleton {@link ValueBinding} instance.
+		 * Default {@link ValueBinding} instance.
 		 */
-		public static final ValueBinding INSTANCE = new ValueBinding();
+		public static final ValueBinding INSTANCE = new ValueBinding(false);
 
-		private ValueBinding() {
-			// Singleton constructor.
+		private final boolean _cData;
+
+		/**
+		 * Creates a {@link ValueBinding}.
+		 *
+		 * @param cdataContent
+		 *        Whether the content must be written and read as CDATA.
+		 */
+		public ValueBinding(boolean cdataContent) {
+			_cData = cdataContent;
 		}
 
 		@Override
@@ -1904,7 +1912,11 @@ public abstract class ResKey {
 
 				if (!StringServices.isEmpty(translation)) {
 					out.writeStartElement(locale.toString());
-					out.writeCharacters(translation);
+					if (_cData) {
+						out.writeCData(translation);
+					} else {
+						out.writeCharacters(translation);
+					}
 					out.writeEndElement();
 				}
 			}

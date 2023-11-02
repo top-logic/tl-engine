@@ -872,6 +872,8 @@
 					<dependency key="com.top_logic.layout.provider.LabelProviderService$Module" value="true" />
 					<dependency key="com.top_logic.tool.boundsec.simple.CommandGroupRegistry$Module" value="true" />
 				</dependencies>
+				<checker config:operation="remove" class="com.top_logic.basic.i18n.I18NConstantsChecker" />
+				<checker class="com.top_logic.html.i18n.I18NConstantsChecker" />
 				<checker class="com.top_logic.util.resource.check.CommandHandlerI18NCheck" />
 				<checker class="com.top_logic.util.resource.check.ModelI18NCheck" />
 				<checker class="com.top_logic.tool.boundsec.simple.CommandGroupI18NCheck" />

@@ -45,7 +45,7 @@
 		value="css:bi bi-binoculars-fill"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.BUTTON_INSPECTOR"
-		value="css:bi bi-binoculars-fill"
+		expr="%com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR%"
 	/>
 	<int name="VERSION_ROW_HEIGHT"
 		value="21"
@@ -67,7 +67,7 @@
 		value="css:bi bi-house"
 	/>
 	<icon name="READ_ONLY_NAVIGATION_SEPARATOR_ICON"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<string name="READ_ONLY_NAVIGATION_SEPARATOR_LABEL"
 		value=""
@@ -88,13 +88,13 @@
 		value="48px"
 	/>
 	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID"
-		value="css:bi bi-file-spreadsheet-fill"
+		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID_DISABLED"
-		value="css:bi bi-file-spreadsheet-fill"
+		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
-		value="css:bi bi-file-spreadsheet-fill"
+		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<size name="TABLE_TITLE_HEIGHT"
 		value="32px"
@@ -118,10 +118,10 @@
 		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
 	/>
 	<icon name="com.top_logic.layout.tabbar.Icons.TAB_LEFT_SCROLL_BUTTON"
-		value="css:bi bi-chevron-left"
+		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
 	<icon name="com.top_logic.layout.tabbar.Icons.TAB_RIGHT_SCROLL_BUTTON"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.EDIT_TILE_PREVIEW_ICON"
 		value="css:bi bi-pencil"
@@ -197,7 +197,7 @@
 		value="css:bi bi-save-fill"
 	/>
 	<icon name="com.top_logic.element.layout.meta.search.quick.Icons.SEARCH"
-		value="css:bi bi-search"
+		expr="%ICONS_BUTTON_SEARCH%"
 	/>
 	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
 		value="css:bi bi-list"
@@ -215,10 +215,10 @@
 		value="css:bi-arrow-repeat"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL"
-		value="css:bi bi-search"
+		expr="%ICONS_BUTTON_SEARCH%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL_ACTIVE"
-		value="css:bi bi-search"
+		expr="%ICONS_BUTTON_SEARCH%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.LOAD_NAMED_TABLE_SETTINGS"
 		value="css:bi bi-file-plus-fill"
@@ -557,7 +557,7 @@
 		value="css:bi bi-bookmark-fill"
 	/>
 	<icon name="HEAD_HOME"
-		value="css:bi bi-house"
+		expr="%BREADCRUMB_ROOT_ICON%"
 	/>
 	<icon name="USER_MENU_ICON"
 		value="css:bi bi-person-fill"
@@ -569,10 +569,10 @@
 		value="css:bi-lock-fill"
 	/>
 	<icon name="ICON_HOME"
-		value="css:bi bi-house"
+		expr="%BREADCRUMB_ROOT_ICON%"
 	/>
 	<icon name="ICON_RESET_STARTPAGE"
-		value="css:bi bi-house"
+		expr="%BREADCRUMB_ROOT_ICON%"
 	/>
 	<icon name="ICON_RESET_PERSONAL_CONFIGURATION"
 		value="css:bi bi-person-fill-lock"
@@ -593,7 +593,7 @@
 		value="css:bi bi-file-spreadsheet-fill"
 	/>
 	<icon name="ICONS_EXPORT_GRID_DISABLED"
-		value="css:bi bi-file-spreadsheet-fill"
+		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<icon name="ICONS_EXPORT_GRID_PPT"
 		value="css:bi bi-filetype-ppt"
@@ -749,25 +749,25 @@
 		value="css:bi bi-chevron-left"
 	/>
 	<icon name="ICONS_MOVE_ROW_LEFT_DISABLED"
-		value="css:bi bi-chevron-left"
+		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
 	<icon name="ICONS_MOVE_ROW_RIGHT"
 		value="css:bi bi-chevron-right"
 	/>
 	<icon name="ICONS_MOVE_ROW_RIGHT_DISABLED"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="ICONS_MOVE_ROW_TO_BOTTOM"
 		value="css:bi bi-chevron-double-down"
 	/>
 	<icon name="ICONS_MOVE_ROW_TO_BOTTOM_DISABLED"
-		value="css:bi bi-chevron-double-down"
+		expr="%ICONS_MOVE_ROW_TO_BOTTOM%"
 	/>
 	<icon name="ICONS_MOVE_ROW_TO_TOP"
 		value="css:bi bi-chevron-double-up"
 	/>
 	<icon name="ICONS_MOVE_ROW_TO_TOP_DISABLED"
-		value="css:bi bi-chevron-double-up"
+		expr="%ICONS_MOVE_ROW_TO_TOP%"
 	/>
 	<icon name="ICONS_DELETE_TOOLBAR"
 		value="css:bi bi-x-lg"
@@ -821,7 +821,7 @@
 		value="css:bi bi-arrow-counterclockwise"
 	/>
 	<icon name="EDIT_SECURITY_PROFILES_IMPORT_ICON"
-		value="css: bi-file-arrow-down-fill"
+		expr="%ICONS_EXPORT%"
 	/>
 	<icon name="EDIT_SECURITY_PROFILES_IMPORT_ICON_DISABLED"
 		expr="%EDIT_SECURITY_PROFILES_IMPORT_ICON%"
@@ -838,7 +838,12 @@
 	<icon name="ICONS_BUTTON_IDE_EXTRACT_DISABLED"
 		value="css:bi bi-terminal-fill"
 	/>
-	
+	<icon name="ICON_SHOW_INHERITED_VARIABLES"
+		value="css:bi bi-diagram-3-fill"
+	/>
+	<icon name="ICON_SHOW_INHERITED_VARIABLES_ACTIVE"
+		value="css:bi bi-diagram-3-fill"
+	/>
 	
 	
 	<icon name="ICONS_IMPORT"
@@ -908,7 +913,7 @@
 		value="css:bi bi-gear-fill"
 	/>
 	<icon name="IMAGE_BUTTONS_SEARCH22"
-		value="css:bi bi-search"
+		expr="%ICONS_BUTTON_SEARCH%"
 	/>
 	<icon name="IMAGE_BUTTONS_RESULT"
 		value="css:bi bi-file-text-fill"
@@ -929,7 +934,7 @@
 		value="css:bi bi-bug-fill"
 	/>
 	<icon name="IMAGE_BUTTONS_GUI_INSPECTOR22"
-		value="css:bi bi-binoculars-fill"
+		expr="%com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR%"
 	/>
 	<icon name="IMAGE_BUTTONS_LOGOUT22"
 		value="css: bi bi-box-arrow-right"
@@ -1031,16 +1036,16 @@
 		value="css:bi bi-chevron-down"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_BOTTOM"
-		value="css:bi bi-chevron-double-down"
+		expr="%ICONS_MOVE_ROW_TO_BOTTOM%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_BOTTOM_DISABLED"
-		value="css:bi bi-chevron-double-down"
+		expr="%ICONS_MOVE_ROW_TO_BOTTOM%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_TOP"
-		value="css:bi bi-chevron-double-up"
+		expr="%ICONS_MOVE_ROW_TO_TOP%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_TOP_DISABLED"
-		value="css:bi bi-chevron-double-up"
+		expr="%ICONS_MOVE_ROW_TO_TOP%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP"
 		value="css:bi bi-chevron-up"
@@ -1049,10 +1054,10 @@
 		value="css:bi bi-chevron-up"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_LEFT"
-		value="css:bi bi-chevron-left"
+		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_RIGHT"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_UP"
 		value="css:bi bi-chevron-up"
@@ -1076,31 +1081,31 @@
 		value="css:bi bi-chevron-double-right"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_NEXT"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_NEXT_DISABLED"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_PREV"
-		value="css:bi bi-chevron-left"
+		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_PREV_DISABLED"
-		value="css:bi bi-chevron-left"
+		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>	
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED"
 		value="css:bi bi-x-lg"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_LEFT"
-		value="css:bi bi-chevron-left"
+		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_LEFT_DISABLED"
-		value="css:bi bi-chevron-left"
+		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_RIGHT"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_RIGHT_DISABLED"
-		value="css:bi bi-chevron-right"
+		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP"
 		value="css:bi bi-chevron-up"
@@ -1279,7 +1284,7 @@
 		value="css:bi bi-search search"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH_MODE_BUTTON"
-		value="css:bi bi-search"
+		expr="%ICONS_BUTTON_SEARCH%"
 	/>
 	
 	

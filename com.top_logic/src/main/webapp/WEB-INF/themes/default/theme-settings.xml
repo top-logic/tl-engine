@@ -784,6 +784,12 @@
 	<icon name="ICONS_BUTTON_IDE_EXTRACT_DISABLED"
 		value="css:fas fa-hdd"
 	/>
+	<icon name="ICON_SHOW_INHERITED_VARIABLES"
+		value="css:fas fa-arrow-alt-circle-up"
+	/>
+	<icon name="ICON_SHOW_INHERITED_VARIABLES_ACTIVE"
+		value="css:fas fa-arrow-alt-circle-up"
+	/>
 	<icon name="ICONS_BUTTON_NEW_ELEMENT"
 		value="/icons/buttonNewElement.png"
 	/>

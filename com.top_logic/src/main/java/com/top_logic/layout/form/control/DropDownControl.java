@@ -38,7 +38,6 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.provider.LabelResourceProvider;
-import com.top_logic.layout.tooltip.HtmlToolTip;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -277,7 +276,6 @@ public class DropDownControl extends AbstractSelectControl {
 	private void renderItem(DisplayContext context, TagWriter out, FormField dropdown, Object item)
 			throws IOException {
 		String classes = "ddwttItem tooltipHorizontal";
-		boolean useDropDownTooltip = false;
 		
 		if (isMultiple() && SelectFieldUtils.getSelectionList(dropdown).contains(item)) {
 			classes += " ddwttSelectedItem";
@@ -287,24 +285,18 @@ public class DropDownControl extends AbstractSelectControl {
 		out.writeAttribute(CLASS_ATTR, classes);
 		out.writeAttribute(ID, getItemID(item));
 		addItemEvents(out);
-		if (!useDropDownTooltip) {
-			renderTooltip(context, out, dropdown, item, false);
-		}
+		renderTooltip(context, out, dropdown, item);
 		out.writeAttribute(TABINDEX_ATTR, "-1");
 		out.endBeginTag();
 		{
 			renderItemLabel(out, dropdown, item);
-
-			if (useDropDownTooltip) {
-				renderTooltip(context, out, dropdown, item, true);
-			}
 		}
 		out.endTag(SPAN);
 	}
 
 	private void addItemEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "positionTt", "this, true");
+		addJSFunction(out, "setItemActive", "this, true");
 		out.endAttribute();
 		out.beginAttribute(ONFOCUSOUT_ATTR);
 		addJSFunction(out, "lostFocus", null);
@@ -327,33 +319,15 @@ public class DropDownControl extends AbstractSelectControl {
 		out.endTag(SPAN);
 	}
 
-	private void renderTooltip(DisplayContext context, TagWriter out, FormField dropdown, Object item,
-			boolean useDropDownTooltip) throws IOException {
+	private void renderTooltip(DisplayContext context, TagWriter out, FormField dropdown, Object item)
+			throws IOException {
 		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
 		ResourceProvider rprovider = LabelResourceProvider.toResourceProvider(lprovider);
 		String tooltip = item == SelectField.NO_OPTION ? null : rprovider.getTooltip(item);
 		if (tooltip == null) {
 			return;
 		}
-
-		if (useDropDownTooltip) {
-			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "ddwttTooltip");
-			out.endBeginTag();
-			{
-				out.beginBeginTag(SPAN);
-				out.writeAttribute(CLASS_ATTR, "ddwttTooltipContent");
-				out.endBeginTag();
-				{
-					// We have to use this deprecated method so tooltips support HTML input
-					out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(tooltip));
-				}
-				out.endTag(SPAN);
-			}
-			out.endTag(SPAN);
-		} else {
-			HTMLUtil.writeImageTooltipHtml(context, out, tooltip);
-		}
+		HTMLUtil.writeImageTooltipHtml(context, out, tooltip);
 	}
 
 	private void renderTags(DisplayContext context, TagWriter out) throws IOException {
@@ -370,7 +344,7 @@ public class DropDownControl extends AbstractSelectControl {
 				out.beginBeginTag(SPAN);
 				out.writeAttribute(ID, itemID + "-tag");
 				out.writeAttribute(CLASS_ATTR, "ddwttTag");
-				renderTooltip(context, out, dropdown, selectedItem, false);
+				renderTooltip(context, out, dropdown, selectedItem);
 				out.endBeginTag();
 				{
 					out.write(getItemLabel(dropdown, selectedItem));
@@ -423,7 +397,6 @@ public class DropDownControl extends AbstractSelectControl {
 		FormField dropdown = getFieldModel();
 		String separator = SelectFieldUtils.getCollectionSeparator(dropdown);
 		List<?> selection = SelectFieldUtils.getSelectionList(dropdown);
-		boolean useDropDownTooltip = false;
 		boolean first = true;
 
 		out.beginBeginTag(SPAN);
@@ -443,32 +416,27 @@ public class DropDownControl extends AbstractSelectControl {
 					} else {
 						out.append(separator);
 					}
-					renderImmutableItem(context, out, dropdown, useDropDownTooltip, item);
+					renderImmutableItem(context, out, dropdown, item);
 				}
 			}
 		}
 		out.endTag(SPAN);
 	}
 
-	private void renderImmutableItem(DisplayContext context, TagWriter out, FormField dropdown,
-			boolean useDropDownTooltip, Object item) throws IOException {
+	private void renderImmutableItem(DisplayContext context, TagWriter out, FormField dropdown, Object item)
+			throws IOException {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "ddwttImmutableItem");
 		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "positionTt", "this, false");
+		addJSFunction(out, "setItemActive", "this, false");
 		out.endAttribute();
 		out.beginAttribute(ONMOUSEOUT_ATTR);
 		addJSFunction(out, "setItemInactive", "this");
 		out.endAttribute();
-		if (!useDropDownTooltip) {
-			renderTooltip(context, out, dropdown, item, useDropDownTooltip);
-		}
+		renderTooltip(context, out, dropdown, item);
 		out.endBeginTag();
 		{
 			out.write(getItemLabel(dropdown, item));
-			if (useDropDownTooltip) {
-				renderTooltip(context, out, dropdown, item, useDropDownTooltip);
-			}
 		}
 		out.endTag(SPAN);
 	}

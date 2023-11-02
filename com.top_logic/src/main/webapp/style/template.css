@@ -7874,72 +7874,7 @@ div.dirtyHandlingDialog .changes {
 	display: block;
 }
 
-/* Tooltip */
-.ddwttTooltip {
-	display: none;
-	min-width: 200px;
-	max-width: 500px;
-	background-color: #464646;
-	border-radius: 1em;
-	position: fixed;
-	filter: drop-shadow(0 1px 4px rgba(0,0,0,0.8));
-	z-index: 9999999999999999;
-}
-
-.ddwttActiveItem .ddwttTooltip {
-	display: flex;
-	flex-direction: column;
-}
-
-/* tooltip Arrow */
-.ddwttTooltip::after {
-	content: '';
-	position: absolute;
-	width: var(--ttArrow-dim);
-	height: var(--ttArrow-dim);
-	top: var(--ttArrow-top);
-	transform: var(--ttArrow-trans);
-	background-color: #464646;
-	--ttArrow-dim: 18px;
-}
-
-.ddwttTtArrowLeft::after {
-	left: 2px;
-	--ttArrow-trans: translate(-50%, -50%);
-	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
-}
-
-.ddwttTtArrowRight::after {
-	right: 2px;
-	--ttArrow-trans: translate(50%, -50%);
-	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
-}
-
-.ddwttTooltipContent {
-	overflow-y: auto;
-	white-space: normal;
-	overflow-wrap: break-word;
-	max-height: calc(100vh - (var(--ttPadding) * 4));
-	--ttPadding: 8px;
-	padding: var(--ttPadding) 12px;
-	line-height: 1.5 !important;
-	color: white;
-}
-
-.ddwttTooltipContent * {
-	margin: 0;
-	color: white;
-	line-height: 1.5 !important;
-	padding: 0 !important;
-}
-
-.ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
-	text-align: center;
-	clear: both;
-	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
-	margin-bottom: 8px;
-}
-
+/* Tags */
 .ddwttTagLoc, .ddwttTag {
 	display: inline-block;
 	width: fit-content;

@@ -8,6 +8,7 @@ package com.top_logic.util;
 import java.util.Locale;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -18,6 +19,7 @@ import com.top_logic.basic.util.I18NBundleSPI;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.DataObject;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
@@ -391,6 +393,16 @@ public class Resources extends DefaultBundle {
 	 */
 	protected String getDisplayLanguageImpl(Locale locale) {
 		return locale.getDisplayLanguage(getLocale());
+	}
+
+	/**
+	 * Retrieves the {@link HTMLFragment} for the given {@link HtmlResKey}.
+	 *
+	 * @param key
+	 *        The key to resolve within this {@link Resources}.
+	 */
+	public HTMLFragment getHtml(HtmlResKey key) {
+		return key.getHtml(getCurrentLocale());
 	}
 
 }

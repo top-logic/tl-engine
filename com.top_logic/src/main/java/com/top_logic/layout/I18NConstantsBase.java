@@ -11,6 +11,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 
+import com.top_logic.html.i18n.DefaultHtmlResKey;
+import com.top_logic.html.i18n.HtmlResKey;
+import com.top_logic.html.i18n.HtmlResKey1;
+import com.top_logic.html.i18n.HtmlResKey2;
+import com.top_logic.html.i18n.HtmlResKey3;
+import com.top_logic.html.i18n.HtmlResKey4;
+import com.top_logic.html.i18n.HtmlResKey5;
+import com.top_logic.html.i18n.HtmlResKeyN;
+
 /**
  * Common base class for all I18NConstant classes.
  * 
@@ -141,16 +150,26 @@ public class I18NConstantsBase extends com.top_logic.basic.i18n.I18NConstantsBas
 
 		@Override
 		protected boolean canHandle(Field constantField) {
-			return super.canHandle(constantField) || constantField.getType() == ResPrefix.class;
+			return super.canHandle(constantField) || constantField.getType() == ResPrefix.class
+					|| isHtmlResKeyLike(constantField.getType());
+		}
+
+		private boolean isHtmlResKeyLike(Class<?> type) {
+			return type == HtmlResKey.class || type == HtmlResKey1.class || type == HtmlResKey2.class
+					|| type == HtmlResKey3.class || type == HtmlResKey4.class || type == HtmlResKey5.class
+					|| type == HtmlResKeyN.class;
 		}
 
 		@Override
 		protected void init(Field constantField, StringBuilder qualifiedKeyBuilder) throws IllegalAccessException {
-			boolean resourcePrefix = constantField.getType() == ResPrefix.class;
+			Class<?> fieldType = constantField.getType();
+			boolean resourcePrefix = fieldType == ResPrefix.class;
 			if (resourcePrefix) {
 				qualifiedKeyBuilder.append('.');
 				String qualifiedKey = qualifiedKeyBuilder.toString();
 				constantField.set(null, ResPrefix.internalCreate(qualifiedKey));
+			} else if (isHtmlResKeyLike(fieldType)) {
+				constantField.set(null, new DefaultHtmlResKey(toResKey(qualifiedKeyBuilder)));
 			} else {
 				super.init(constantField, qualifiedKeyBuilder);
 			}

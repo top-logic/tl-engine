@@ -56,6 +56,9 @@ public class RenderErrorUtil {
 
 	/**
 	 * Renders an error marker with some explanation as placeholder.
+	 * <p>
+	 * Does not log the error. If it should be logged, the caller has to log it.
+	 * </p>
 	 */
 	public static final void writeErrorFragment(DisplayContext context, TagWriter out, String errorReason,
 			Object caller) throws IOException {

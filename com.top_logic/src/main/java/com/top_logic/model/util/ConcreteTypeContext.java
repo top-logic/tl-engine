@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.util;
 
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.TLAnnotation;
@@ -51,6 +52,11 @@ public class ConcreteTypeContext implements TLTypeContext {
 	@Override
 	public TLTypePart getTypePart() {
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return NameBuilder.buildName(this, TLModelUtil.qualifiedName(_type));
 	}
 
 }

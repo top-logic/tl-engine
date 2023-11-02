@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.util;
 
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -59,6 +60,11 @@ public class TypePartContext implements TLTypeContext {
 	@Override
 	public TLTypePart getTypePart() {
 		return _part;
+	}
+
+	@Override
+	public String toString() {
+		return NameBuilder.buildName(this, TLModelUtil.qualifiedName(_part));
 	}
 
 }

@@ -137,8 +137,8 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		AttributeUpdateContainer updateContainer = update.getOverlay().getScope();
 
 		List<TableConfigurationProvider> tableConfigProviders = new ArrayList<>();
-		tableConfigProviders.add(new FieldAccessProvider(updateContainer));
 		tableConfigProviders.add(AbstractWrapperFieldProvider.getTableConfigurationProvider(update));
+		tableConfigProviders.add(new FieldAccessProvider(updateContainer));
 
 		TableConfiguration config = TableConfigurationFactory.build(tableConfigProviders);
 
@@ -300,7 +300,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 		@Override
 		public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-			adaptColumn(defaultColumn);
+			// Nothing to do.
 		}
 
 		private void adaptColumn(ColumnConfiguration col) {
@@ -444,6 +444,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				TLFormObject editedObject, TLStructuredTypePart attribute, Collection<String> readOnlyColumns) {
 			AttributeFormContext formContext = updateContainer.getFormContext();
 			AttributeUpdate update = editedObject.newEditUpdateDefault(attribute, false);
+			update.setInTableContext(true);
 			return createFieldForUpdate(contentGroup, attribute, readOnlyColumns, formContext, update);
 		}
 
@@ -708,6 +709,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				return null;
 			}
 			AttributeUpdate update = newObject.newCreateUpdate(attribute);
+			update.setInTableContext(true);
 			return createFieldForUpdate(contentGroup, attribute, readOnlyColumns, formContext, update);
 		}
 

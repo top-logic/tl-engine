@@ -58,6 +58,8 @@ public class SimpleEditContext implements EditContext {
 
 	private TLStructuredTypePart _targetAttribute;
 
+	private boolean _inTableContext = false;
+
 	/**
 	 * Creates a {@link SimpleEditContext}.
 	 *
@@ -137,6 +139,16 @@ public class SimpleEditContext implements EditContext {
 	@Override
 	public boolean isComposition() {
 		return AttributeOperations.isComposition(getAttribute());
+	}
+
+	@Override
+	public boolean inTableContext() {
+		return _inTableContext;
+	}
+
+	/** @see #inTableContext() */
+	public void setInTableContext(boolean inTableContext) {
+		_inTableContext = inTableContext;
 	}
 
 	@Override

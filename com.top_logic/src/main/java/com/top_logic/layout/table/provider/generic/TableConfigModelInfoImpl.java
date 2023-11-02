@@ -9,6 +9,7 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.list;
 import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,10 +24,14 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.table.provider.ColumnInfo;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.config.annotation.MainProperties;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.util.TLModelUtil;
@@ -185,6 +190,34 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 		}
 
 		/**
+		 * The {@link MainProperties} of the {@link TLClass}.
+		 * <p>
+		 * If none are defined, those of the subclasses are returned, recursively. If that does not
+		 * lead to any properties, all properties of the type are used.
+		 * </p>
+		 * <p>
+		 * This algorithm has the following properties:
+		 * <ol>
+		 * <li>The main properties of the given type will always be used when they exist.
+		 * Superclasses and subclasses won't override them.</li>
+		 * <li>When there are no main properties for the given type, it is ensured that each
+		 * subclass can be properly displayed: Either by using its main properties, recursively
+		 * collecting the main properties for its subclasses, or by using all of its properties.
+		 * That is important for classes with very diverse subclasses, for example "FooChild" types,
+		 * which might not even have common properties at all.</li>
+		 * <li>The nearest definition of main properties is used: When main properties are defined
+		 * for a class, its subclasses are not searched.</li>
+		 * <li>As long as the type has properties, the result is not empty. That is important to
+		 * avoid displaying a table without columns, as such a table is always useless and its
+		 * existence a bug.</li>
+		 * <li>All subclasses are equally important when calculating the set of main properties. As
+		 * their is no order between subclasses, there cannot be a "main" subclass. (Their names are
+		 * used to establish a stable order, though.)</li>
+		 * <li>The result has a stable order, as long as the model is not changed. Logouts and
+		 * server restarts won't cause the properties to "jump around".</li>
+		 * </ol>
+		 * </p>
+		 * 
 		 * @param contentType
 		 *        The {@link TLClass} whose main properties should be returned. Is not allowed to be
 		 *        null.
@@ -194,10 +227,19 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 		 */
 		protected List<String> calcMainProperties(TLClass contentType) {
 			List<String> mainProperties = DisplayAnnotations.getMainProperties(contentType);
-			if (mainProperties.isEmpty()) {
-				return calcVisiblePartNames(contentType);
+			if (!mainProperties.isEmpty()) {
+				return mainProperties;
 			}
-			return mainProperties;
+			List<String> subtypeMainProperties = getSpecializationsOrdered(contentType)
+				.stream()
+				.map(this::calcMainProperties)
+				.flatMap(Collection::stream)
+				.distinct()
+				.collect(toList());
+			if (!subtypeMainProperties.isEmpty()) {
+				return subtypeMainProperties;
+			}
+			return calcVisiblePartNames(contentType);
 		}
 
 		/**
@@ -296,8 +338,13 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 	protected void addPartColumns(Map<String, ColumnInfo> result, List<TLStructuredTypePart> parts) {
 		for (TLStructuredTypePart typePart : parts) {
 			String columnName = typePart.getName();
+			ColumnInfo clash = result.get(columnName);
+			if ((clash != null) && !isAttributeRelevant(typePart, clash)) {
+				/* Keep the existing ColumnInfo, as only it is relevant for this table. */
+				continue;
+			}
 			ColumnInfo info = createColumnInfo(typePart);
-			ColumnInfo clash = result.put(columnName, info);
+			result.put(columnName, info);
 			if (clash != null) {
 				// Note: The order is important here. the existing column `clash` is joined with the
 				// new one keeping core attributes like the label. In case of an overridden
@@ -307,6 +354,48 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 				result.put(columnName, info);
 			}
 		}
+	}
+
+	private boolean isAttributeRelevant(TLStructuredTypePart newAttribute, ColumnInfo clash) {
+		TLTypePart clashAttribute = clash.getTypeContext().getTypePart();
+		if (clashAttribute == null) {
+			/* The new attribute is relevant: If there is no attribute, this clash cannot be caused
+			 * by an attribute override. And only when this is about an attribute override can the
+			 * new attribute be irrelevant. */
+			return true;
+		}
+		/* The cast is safe: Only StructuredTypes can have TypeParts. */
+		TLStructuredType clashOwner = (TLStructuredType) clashAttribute.getOwner();
+		TLStructuredType ownOwner = newAttribute.getOwner();
+		if (!TLModelUtil.isGeneralization(ownOwner, clashOwner)) {
+			/* This is not a simple attribute override. The new attribute is therefore relevant. */
+			return true;
+		}
+		return isGeneralizationRelevant(clashOwner, ownOwner);
+	}
+
+	/**
+	 * Whether the overridden attribute is relevant for this table.
+	 * <p>
+	 * That is the case, when the table can display subtypes of the original attribute's owner, that
+	 * are not subtypes of the specialized attribute's owner.
+	 * </p>
+	 */
+	private boolean isGeneralizationRelevant(TLStructuredType override, TLStructuredType original) {
+		for (TLClass contentType : getContentTypes()) {
+			if (TLModelUtil.isGeneralization(override, contentType)) {
+				// This contentType uses the specialized attribute. The original attribute is not
+				// relevant for this content type.
+				continue;
+			}
+			if (TLModelUtil.isGeneralization(original, contentType)
+				|| TLModelUtil.isGeneralization(contentType, original)) {
+				/* There might be subclasses that use the original attribute, not the specialized
+				 * one. The original attribute is therefore relevant. */
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -325,6 +414,13 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 
 		for (String mainColumn : mainColumns) {
 			if (!allColumns.containsKey(mainColumn)) {
+				if (mainColumn.equals(WrapperAccessor.SELF)) {
+					/* The '_self' column was used as a special column in old TL versions. It was
+					 * removed with #26872. But it can still appear in old, migrated systems. There
+					 * is no special code for such old systems. They need to declare this column and
+					 * the column order explicitly, if they want to keep it. */
+					continue;
+				}
 				/* This cannot be checked at application startup, as for example the '_self' column
 				 * is no type part. Other such legal columns without corresponding type part might
 				 * exists. */
@@ -351,8 +447,6 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 	@Override
 	public ColumnInfo createColumnInfo(TLStructuredTypePart typePart) {
 		TLTypeContext contentType = new TypePartContext(typePart);
-		boolean multiple = typePart.isMultiple();
-		boolean mandatory = typePart.isMandatory();
 
 		ColumnInfo info = createColumnInfo(contentType, headerI18N(typePart));
 		if (TLModelUtil.isAccessAware(typePart)) {

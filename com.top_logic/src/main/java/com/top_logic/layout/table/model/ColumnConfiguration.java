@@ -21,6 +21,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.annotation.Inspectable;
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.LabelProvider;
@@ -806,7 +807,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 
 	@Override
 	public String toString() {
-		return super.toString() + " columnName=" + getName();
+		return NameBuilder.buildName(this, getName());
 	}
 
 	static abstract class Property extends AbstractProperty<ColumnConfiguration> {

@@ -31,8 +31,7 @@ import com.top_logic.layout.table.provider.generic.TableConfigModelInfoProvider;
 import com.top_logic.layout.table.provider.generic.TableConfigModelService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.TLType;
-import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.TLIDColumn;
 import com.top_logic.model.annotate.ui.TLSortColumns;
 import com.top_logic.model.util.TLModelUtil;
@@ -205,7 +204,7 @@ public class GenericTableConfigurationProvider extends DefaultTableConfiguration
 
 
 	private void adaptIDColumn(TableConfiguration table) {
-		TLIDColumn idColumnAnnotation = getAnnotation(commonSuperType, TLIDColumn.class);
+		TLIDColumn idColumnAnnotation = DisplayAnnotations.getIDColumn(commonSuperType);
 
 		if (idColumnAnnotation != null) {
 			table.setIDColumn(idColumnAnnotation.getValue());
@@ -217,26 +216,11 @@ public class GenericTableConfigurationProvider extends DefaultTableConfiguration
 	}
 
 	private void adaptSortColumns(TableConfiguration table) {
-		TLSortColumns sortColumnsAnnotation = getAnnotation(commonSuperType, TLSortColumns.class);
+		TLSortColumns sortColumnsAnnotation = DisplayAnnotations.getSortColumns(commonSuperType);
 
 		if (sortColumnsAnnotation != null) {
 			table.setDefaultSortOrder(sortColumnsAnnotation.getOrder());
 		}
-	}
-
-	private <A extends TLAnnotation> A getAnnotation(TLType type, Class<A> annotationClass) {
-		A annotation = type.getAnnotation(annotationClass);
-
-		if (annotation != null) {
-			return annotation;
-		}
-
-		TLClass primaryGeneralization = TLModelUtil.getPrimaryGeneralization(type);
-		if (primaryGeneralization != null) {
-			return getAnnotation(primaryGeneralization, annotationClass);
-		}
-
-		return null;
 	}
 
 	private boolean containsDefaultColumnsOnly(TableConfiguration table) {

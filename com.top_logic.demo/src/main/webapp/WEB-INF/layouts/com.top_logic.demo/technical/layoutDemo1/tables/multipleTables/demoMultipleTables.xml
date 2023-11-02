@@ -3,7 +3,7 @@
 <layout>
 	<components>
 		<!-- Layout with toolbar representing a table with a form embedded into the header. -->
-		<layout name="DemoMultipeTableLayoutControl"
+		<layout name="DemoMultipleTableLayoutControl"
 			resPrefix="layouts.demo.table.demoMultipleTables.Layout."
 			resizable="false"
 			toolbar="true"

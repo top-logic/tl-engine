@@ -16,11 +16,16 @@ import java.util.Stack;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.html.template.config.ConfiguredTemplate;
 import com.top_logic.html.template.expr.StringLiteral;
 import com.top_logic.html.template.parser.HTMLTemplateParser;
 import com.top_logic.html.template.parser.ParseException;
 import com.top_logic.html.template.parser.TokenMgrError;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.RenderErrorUtil;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.error.TopLogicException;
 
@@ -373,4 +378,15 @@ public class HTMLTemplateUtils {
 				return new TemplateSequence(contents);
 		}
 	}
+
+	/**
+	 * Logs the {@link Throwable}, displays an {@link InfoService} error message and produces a
+	 * placeholder error fragment.
+	 */
+	public static void renderError(DisplayContext context, TagWriter out, Throwable exception) throws IOException {
+		ResKey resKey = I18NConstants.ERROR_RENDERING_TEMPLATE_FAILED;
+		String message = exception.getMessage();
+		RenderErrorUtil.produceErrorOutput(context, out, resKey, message, exception, HTMLTemplateUtils.class);
+	}
+
 }

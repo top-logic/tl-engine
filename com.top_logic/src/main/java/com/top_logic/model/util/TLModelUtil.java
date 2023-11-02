@@ -7,6 +7,7 @@ package com.top_logic.model.util;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.basic.util.Utils.*;
+import static java.util.Comparator.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1409,6 +1410,24 @@ public class TLModelUtil {
 	 */
 	public static Set<TLClass> getConcreteSubclasses(Iterable<? extends TLClass> baseClasses) {
 		return TLModelUtil.getReflexiveTransitiveSpecializations(TLModelUtil.IS_CONCRETE, baseClasses);
+	}
+
+	/**
+	 * The direct subclasses in a stable order.
+	 * <p>
+	 * Subclasses have no inherent order. Therefore, they are sorted by their name.
+	 * </p>
+	 * <p>
+	 * Getting the subclasses in a stable order is necessary when something is derived from them
+	 * which needs a stable order and there is no better order in that situation.
+	 * </p>
+	 * 
+	 * @return A new, mutable and resizable {@link List}.
+	 */
+	public static List<TLClass> getSpecializationsOrdered(TLClass baseClass) {
+		List<TLClass> result = list(baseClass.getSpecializations());
+		result.sort(comparing(TLClass::getName));
+		return result;
 	}
 
 	/**

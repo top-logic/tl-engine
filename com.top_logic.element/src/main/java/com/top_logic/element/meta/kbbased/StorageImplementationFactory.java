@@ -108,7 +108,7 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 
 			@Override
 			public StorageImplementation visitAssociationEnd(TLAssociationEnd model, Void arg) {
-				return null;
+				return NoStorage.INSTANCE;
 			}
 
 			@Override

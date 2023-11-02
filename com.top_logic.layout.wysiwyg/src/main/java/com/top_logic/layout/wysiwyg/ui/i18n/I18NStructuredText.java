@@ -9,6 +9,7 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 import static java.util.Collections.*;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,6 +38,11 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class I18NStructuredText implements FullTextSearchable {
+
+	/**
+	 * {@link I18NStructuredText} without any content.
+	 */
+	public static final I18NStructuredText EMPTY = new I18NStructuredText(Collections.emptyMap());
 
 	private final Map<Locale, StructuredText> _content;
 

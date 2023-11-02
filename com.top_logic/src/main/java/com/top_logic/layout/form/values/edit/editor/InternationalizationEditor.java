@@ -420,6 +420,28 @@ public class InternationalizationEditor implements Editor {
 		return result;
 	}
 
+	/**
+	 * Creates an empty {@link Builder} which has the same "dynamic key" as the old value, or a new
+	 * "dynamic key" if the old value is <code>null</code> or does not have a dynamic key.
+	 * 
+	 * @see com.top_logic.base.config.i18n.I18NConstants#DYNAMIC
+	 * 
+	 * @param oldValue
+	 *        Base value. May be <code>null</code>.
+	 * @return Builder for a new {@link ResKey} with dynamic key.
+	 */
+	public static Builder builder(ResKey oldValue) {
+		String oldKey = oldValue != null && oldValue.hasKey() ? oldValue.getKey() : null;
+
+		// Note: If the original value was a code-defined resource key, this key must not be
+		// assigned a new value to. Instead, a new dynamic key must be allocated.
+		boolean hasDynamicKey = oldKey != null && oldKey.startsWith(
+			com.top_logic.base.config.i18n.I18NConstants.DYNAMIC.toPrefix());
+		String key = hasDynamicKey ? oldKey : InternationalizedUtil.newKey().getKey();
+
+		return ResKey.builder(key);
+	}
+
 	static class ValueBinding implements ValueListener, ConfigurationListener {
 
 		private final boolean _mandatory;
@@ -477,15 +499,7 @@ public class InternationalizationEditor implements Editor {
 
 		private void updateModel() {
 			ResKey oldValue = (ResKey) _model.getValue();
-			String oldKey = oldValue != null && oldValue.hasKey() ? oldValue.getKey() : null;
-
-			// Note: If the original value was a code-defined resource key, this key must not be
-			// assigned a new value to. Instead, a new dynamic key must be allocated.
-			boolean hasDynamicKey = oldKey != null && oldKey.startsWith(
-				com.top_logic.base.config.i18n.I18NConstants.DYNAMIC.toPrefix());
-			String key = hasDynamicKey ? oldKey : InternationalizedUtil.newKey().getKey();
-
-			Builder literal = ResKey.builder(key);
+			Builder literal = builder(oldValue);
 			for (Iterator<FormField> it = _group.getFields(); it.hasNext();) {
 				FormField input = it.next();
 				String value = (String) input.getValue();

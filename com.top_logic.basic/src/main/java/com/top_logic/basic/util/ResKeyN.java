@@ -10,7 +10,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 
 /**
- * A {@link ResKey} generator with variable number of arguments one argument.
+ * A {@link ResKey} generator with variable number of arguments.
  * 
  * @see ResKey1
  * @see ResKey2

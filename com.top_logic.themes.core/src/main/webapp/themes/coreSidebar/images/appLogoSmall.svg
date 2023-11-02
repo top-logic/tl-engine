@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="TL-icon"
+   viewBox="0 0 180 180"
+   version="1.1"
+   sodipodi:docname="appLogoSmall.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   inkscape:export-filename="/home/bhu/devel/tl-engine/com.top_logic/src/main/webapp/images/appLogoSmall.png"
+   inkscape:export-xdpi="136.53"
+   inkscape:export-ydpi="136.53"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview13"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="4"
+     inkscape:cx="145.75"
+     inkscape:cy="117.5"
+     inkscape:window-width="2560"
+     inkscape:window-height="1372"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="TL-icon" />
+  <defs
+     id="defs4">
+    <style
+       id="style2">.cls-1{fill:#0090b8;}.cls-2{fill:#fff;}</style>
+  </defs>
+  <title
+     id="title6">TL-icon</title>
+  <polygon
+     class="cls-2"
+     points="146,112 110,112 110,53 33,53 33,58 64,58 64,126 70,126 70,58 94,58 94,126 146,126 "
+     id="polygon10"
+     transform="matrix(1.5929204,0,0,1.5929204,-52.566372,-52.669493)"
+     style="fill:#0090b8;fill-opacity:1;stroke-width:0.627778" />
+  <metadata
+     id="metadata830">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>TL-icon</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

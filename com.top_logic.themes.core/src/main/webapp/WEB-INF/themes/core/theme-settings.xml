@@ -29,17 +29,26 @@
 	<int name="MAIN_TAB_BAR_HEIGHT"
 		value="52"
 	/>
+	<int name="MAINTAINANCE_BAR_HEIGHT"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
+		value="48px"
+	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
 		value="40"
 	/>
 	<size name="tabbar-height"
 		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px"
 	/>
-	<int name="MAINTAINANCE_BAR_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
-	/>
 	<icon name="HEADER_RIGHT_IMAGE"
 		value="/images/appLogo.svg"
+	/>
+	<icon name="IMAGES_APP_LOGO"
+		value="/images/appLogoSmall.svg"
+	/>
+	<icon name="IMAGES_APP_LOGO_MINIMIZED"
+		expr="%IMAGES_APP_LOGO%"
 	/>
 	<icon name="com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR"
 		value="css:bi bi-binoculars-fill"
@@ -84,8 +93,11 @@
 	<dim name="MC_TOGGLE_WIDTH"
 		value="8px"
 	/>
-	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
-		value="48px"
+	<string name="MC_MINIMIZE_ICON"
+		value="url(/icons/minimizeNormal.png)"
+	/>
+	<string name="MC_NORMALIZE_ICON"
+		value="url(/icons/minimizeMinimized.png)"
 	/>
 	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID"
 		expr="%ICONS_EXPORT_GRID%"
@@ -1266,7 +1278,7 @@
 		value="css:bi bi-exclamation-triangle-fill"
 	/>
 	<icon name="com.top_logic.util.error.Icons.WARNING"
-		expr="%com.com.top_logic.util.error.Icons.INFO%"
+		expr="%com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.util.error.Icons.SYSTEM_FAILURE"
 		expr="%com.top_logic.layout.form.control.Icons.ALERT%"
@@ -1281,10 +1293,10 @@
 		expr="%com.top_logic.util.error.Icons.ERROR%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_WARNING"
-		expr="%com.com.top_logic.util.error.Icons.INFO%"
+		expr="%com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_INFO"
-		expr="%com.com.top_logic.util.error.Icons.INFO%"
+		expr="%com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFO_SERVICE_DETAIL_EXPANDER"
 		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
@@ -1365,7 +1377,7 @@
 		expr="%ICONS_BUTTON_STOP%"
 	/>
 	<icon name="com.top_logic.util.sched.layout.Icons.EXCEPTION"
-		expr="%com.com.top_logic.util.error.Icons.INFO%"
+		expr="%com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
 		value="css:bi bi-pause-fill red"

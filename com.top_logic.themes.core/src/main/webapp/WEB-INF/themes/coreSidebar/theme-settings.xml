@@ -416,10 +416,10 @@
 		expr="%ICONS_MOVE_ROW_DOWN%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE"
-		expr="%com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE%"
+		value="css:bi bi-dash"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_DISABLED_IMAGE"
-		value="css:bi bi-dash"
+		expr="%com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_IMAGE"
 		value="css:bi bi-plus"

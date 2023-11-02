@@ -496,52 +496,45 @@
 	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.REMOVE_CLIPBOARD"
 		value="css:bi bi-clipboard-minus-fill"
 	/>
-	
-	
-	
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOCUMENT_UPDATE_60"
-		value="/icons/document-update-60.png"
+		value="css:bi bi-file-earmark-diff-fill"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOCUMENT_VERSIONS_60"
-		value="/icons/document-versions-60.png"
+		expr="%ICONS_HISTORY%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT"
-		value="/icons/docCommit.png"
+		value="css:bi bi-file-earmark-plus-fill"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT_DISABLED"
-		value="/icons/docCommitDisabled.png"
+		expr="%com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS"
-		value="/icons/keywords.png"
+		value="css:bi bi-hash"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_60"
-		value="/icons/keywords-60.png"
+		expr="%com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_DISABLED"
-		value="/icons/keywordsDisabled.png"
+		expr="%com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16"
-		value="/icons/mail-forward-16.png"
+		value="css:bi bi-forward-fill"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_60"
-		value="/icons/mail-forward-60.png"
+		expr="%com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_DISABLED_16"
-		value="/icons/mail-forward-disabled-16.png"
+		expr="%com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.DOCUMENT_SIMILAR_60"
-		value="/icons/document-similar-60.png"
+		value="css:bi bi-files"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.SIMILAR_OBJECTS"
-		value="/icons/similarObjects.png"
+		expr="%com.top_logic.common.webfolder.ui.similar.Icons.DOCUMENT_SIMILAR_60%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.SIMILAR_OBJECTS_DISABLED"
-		value="/icons/similarObjectsDisabled.png"
+		expr="%com.top_logic.common.webfolder.ui.similar.Icons.DOCUMENT_SIMILAR_60%"
 	/>
-	
-	
-	
-	
 	<icon name="BOOKMARK_LINK"
 		value="css:bi bi-bookmark-fill"
 	/>
@@ -985,7 +978,6 @@
 	<icon name="com.top_logic.layout.form.tag.Icons.SYSTEMSTATE_GREEN"
 		value="/beacon/green.png"
 	/>
-	
 	<icon name="ICONS_BUTTON_OK"
 		value="css: bi bi-check-lg"
 	/>
@@ -1234,8 +1226,6 @@
 	<icon name="com.top_logic.layout.basic.Icons.COLLAPSE_ALL_DISABLED"
 		expr="%ICONS_COLLAPSE_ALL%"
 	/>
-	
-	
 	<string name="COLORCHOOSER_NO_COLOR"
 		value="url(/colorchooser/noColor.png)"
 	/>
@@ -1257,8 +1247,6 @@
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH_MODE_BUTTON"
 		expr="%ICONS_BUTTON_SEARCH%"
 	/>
-	
-	
 	<icon name="layouts.themes.default.toolrow.ExportLayout"
 		value="css:bi bi-box-arrow-right"
 	/>
@@ -1357,6 +1345,9 @@
 	/>
 	<icon name="ICONS_BUTTON_TIME_DISABLED"
 		expr="%ICONS_BUTTON_TIME%"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PUBLIC"
+		expr="%com.top_logic.util.monitor.Icons.GREEN%"
 	/>
 	<icon name="com.top_logic.util.monitor.Icons.GREEN"
 		value="css:bi bi-circle-fill green"

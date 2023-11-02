@@ -322,7 +322,8 @@ public class AttributeOperations {
 	public static void removeAttributeValue(TLObject anAttributed, TLStructuredTypePart metaAttribute, Object aValue)
 			throws NoSuchAttributeException, AttributeException {
 		checkAlive(anAttributed, metaAttribute);
-		AttributeOperations.getStorageImplementation(metaAttribute).removeAttributeValue(anAttributed, metaAttribute, aValue);
+		AttributeOperations.getStorageImplementation(anAttributed, metaAttribute).removeAttributeValue(anAttributed,
+			metaAttribute, aValue);
 	}
 
 	/**
@@ -1159,7 +1160,7 @@ public class AttributeOperations {
 	 * The {@link StorageImplementation} of the given attribute in the context of the given object.
 	 * 
 	 * <p>
-	 * In contrast to {@link #getStorageImplementation(TLStructuredTypePart)}, this method considers
+	 * In contrast to {@link #getStorageImplementation(TLObject, TLStructuredTypePart)}, this method considers
 	 * potential overrides of the given attribute in the concrete type of the given object.
 	 * </p>
 	 *
@@ -1175,7 +1176,13 @@ public class AttributeOperations {
 		if (matchingOverride == null) {
 			return NO_STORAGE;
 		}
-		return AttributeOperations.getStorageImplementation(matchingOverride);
+
+		if (object.tTransient()) {
+			return TransientStorage.INSTANCE;
+		}
+
+		StorageImplementation result = AttributeOperations.getStorageImplementation(matchingOverride);
+		return result;
 	}
 
 	/**

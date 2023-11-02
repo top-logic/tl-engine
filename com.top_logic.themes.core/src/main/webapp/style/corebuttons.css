@@ -32,7 +32,8 @@
   display: block;
 }
 
-.cButton:hover, .tlButton:hover {
+.cButton:hover, 
+.tlButton:hover {
 	text-decoration: none;
 }
 
@@ -52,6 +53,11 @@ div.cmdProgress img {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+}
+
+.cButton.active .menuEntryImage i, 
+.cButton.active .input-image i {
+  color: var(--support-danger);
 }
 
 /*

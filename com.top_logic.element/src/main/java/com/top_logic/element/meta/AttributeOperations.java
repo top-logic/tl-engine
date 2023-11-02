@@ -1177,7 +1177,7 @@ public class AttributeOperations {
 			return NO_STORAGE;
 		}
 
-		if (object.tTransient()) {
+		if (object != null && object.tTransient()) {
 			return TransientStorage.INSTANCE;
 		}
 

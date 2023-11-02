@@ -124,15 +124,13 @@
 		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.EDIT_TILE_PREVIEW_ICON"
-		value="css:bi bi-pencil"
+		expr="%ICONS_BUTTON_EDIT%"
 	/>
-	
-	
 	<icon name="com.top_logic.layout.Icons.DELETE_COMPONENT_COMMAND"
-		value="css:bi bi bi-trash3"
+		expr="%com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.Icons.ADD_COMPONENT_COMMAND"
-		value="css:bi bi-plus-lg"
+		expr="%ICON_PLUS%"
 	/>
 	<icon name="com.top_logic.layout.Icons.EDIT_COMPONENT_COMMAND"
 		value="css:bi bi-pencil-square"
@@ -144,27 +142,25 @@
 		value="css:bi bi-menu-button-wide"
 	/>
 	<icon name="com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.Icons.ADD_DIALOG_COMMAND"
-		value="css:bi bi-window-plus"
+		expr="%ICONS_LOGIN_MESSAGE_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.Icons.ADD_TAB_COMMAND"
-		value="css:bi bi-plus-lg"
+		expr="%ICON_PLUS%"
 	/>
 	<icon name="CONFIGURE_TABS_ICON"
 		value="css:bi bi-window-split"
 	/>
 	<icon name="RESET_LAYOUT_CONFIGURATION_ICON"
-		value="css:bi bi-arrow-counterclockwise"
+		expr="%ICON_UNDO%"
 	/>
 	<icon name="ICON_UNDO"
 		value="css:bi bi-arrow-counterclockwise"
 	/>
-	
-	
 	<icon name="com.top_logic.doc.create.Icons.CREATE_ICON"
-		value="css:bi bi-plus-lg"
+		expr="%ICON_PLUS%"
 	/>
 	<icon name="com.top_logic.layout.Icons.OK_BUTTON"
 		value="css:bi bi-check-square-fill"
@@ -194,7 +190,7 @@
 		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_MODIFIED"
-		value="css:bi bi-save-fill"
+		expr="%SAVE_SERVICE_CONFIGURATION%"
 	/>
 	<icon name="com.top_logic.element.layout.meta.search.quick.Icons.SEARCH"
 		expr="%ICONS_BUTTON_SEARCH%"
@@ -203,16 +199,16 @@
 		value="css:bi bi-list"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.BUTTON_REFRESH"
-		value="css:bi-arrow-repeat"
+		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.BUTTON_REFRESH_DISABLED"
-		value="css:bi-arrow-repeat"
+		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="com.top_logic.tool.export.Icons.REFRESH"
-		value="css:bi-arrow-repeat"
+		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="com.top_logic.tool.export.Icons.REFRESH_DISABLED"
-		value="css:bi-arrow-repeat"
+		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL"
 		expr="%ICONS_BUTTON_SEARCH%"
@@ -221,7 +217,7 @@
 		expr="%ICONS_BUTTON_SEARCH%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.LOAD_NAMED_TABLE_SETTINGS"
-		value="css:bi bi-file-plus-fill"
+		expr="%TREE_NEW_ELEMENT%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER"
 		value="css:bi bi bi-funnel-fill tablefilter"
@@ -239,16 +235,16 @@
 		value="css:bi bi-arrow-up"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_ASC_SMALL"
-		value="css:bi bi-arrow-up"
+		expr="%com.top_logic.layout.table.renderer.Icons.SORT_ASC%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_DESC_SMALL"
-		value="css:bi bi-arrow-down"
+		expr="%com.top_logic.layout.table.renderer.Icons.SORT_DESC%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
 		value="css:bi bi bi-funnel"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FRAME"
-		value="css: bi-fullscreen"
+		expr="%com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE%"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE"
 		value="css: bi-fullscreen"
@@ -269,13 +265,13 @@
 		value="32px"
 	/>
 	<icon name="com.top_logic.layout.compare.Icons.OPEN_COMPARE_VIEW"
-		value="css:bi bi-arrow-left-right"
+		expr="%ICONS_COMPARE%"
 	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_ACTIVE"
-		value="css:bi bi-arrow-left-right"
+		expr="%ICONS_COMPARE%"
 	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_INACTIVE"
-		value="css:bi bi-arrow-left-right"
+		expr="%ICONS_COMPARE%"
 	/>
 	<!-- Tree -->
 	<icon name="com.top_logic.layout.tree.renderer.Icons.L"
@@ -309,28 +305,28 @@
 		value="/tree/ls.png"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MF"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_ML"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MNL"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MS"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PF"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PL"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PNL"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PS"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LL"
 		value="/tree/table/ll.png"
@@ -345,34 +341,34 @@
 		value="/tree/table/ls.png"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MF"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.ML"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MNL"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MS"
-		value="css:bi bi-caret-down-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PF"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PL"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PNL"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PS"
-		value="css:bi bi-caret-right-fill"
+		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
 	<icon name="TILES_CONFIGURE_GROUP_ICON"
-		value="css:bi bi-gear-fill"
+		expr="%ICONS_GEAR%"
 	/>
 	<icon name="TILES_STEP_OUT_TILE_ICON"
-		value="css:bi bi-chevron-double-left"
+		expr="%ICONS_BUTTON_BACKWARD%"
 	/>
 	<icon name="TILES_STEP_INTO_CONTEXT_ICON"
 		value="css:bi bi-box-arrow-in-right"
@@ -381,31 +377,31 @@
 		value="css:bi bi-collection-fill"
 	/>
 	<icon name="TILES_ADD_VIEW_ICON"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.BOX_EXPANDED"
-		value="css:bi bi-chevron-up"
+		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.BOX_COLLAPSED"
-		value="css:bi bi-chevron-down"
+		expr="%ICONS_MOVE_ROW_DOWN%"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE"
+		expr="%com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_DISABLED_IMAGE"
 		value="css:bi bi-dash"
 	/>
-	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE"
-		value="css:bi bi-dash"
-	/>
-	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_DISABLED_IMAGE"
-		value="css:bi bi-plus"
-	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_IMAGE"
 		value="css:bi bi-plus"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_DISABLED_IMAGE"
+		expr="%com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_IMAGE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ALERT"
 		value="css:bi bi-x-octagon-fill"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.TRANSLATE"
-		value="css:bi bi-translate"
+		expr="%IMAGE_BUTTONS_DOC_TRANSLATE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.CALENDAR"
 		value="css:bi bi-calendar"
@@ -414,25 +410,25 @@
 		value="css:bi bi-clock"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.SELECT_FILTER"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.OPEN_TEXT_EDITOR"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.OPEN_TEXT_EDITOR_DISABLED"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER_DISABLED"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.OPEN_SELECTOR"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.OPEN_SELECTOR_DISABLED"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.EDIT_MAXIMIZE"
 		value="css:bi bi-arrows-angle-expand"
@@ -441,69 +437,65 @@
 		value="css:bi bi-arrows-angle-contract"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.UPLOAD_ICON"
-		value="css:bi bi-upload"
+		expr="%ICONS_UPLOAD%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TODAY"
 		value="css:bi bi-calendar-check"
 	/>
 	<icon name="mime.Clipboard"
-		value="css:bi bi-clipboard-fill"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="mime.Clipboard.large"
-		value="css:bi bi-clipboard-fill"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
-	
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD"
-		value="css:bi bi-upload"
+		expr="%ICONS_UPLOAD%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD60"
-		value="css:bi bi-upload"
+		expr="%ICONS_UPLOAD%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD_DISABLED"
-		value="css:bi bi-upload"
+		expr="%ICONS_UPLOAD%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.CLIPBOARD"
-		value="css:bi bi-clipboard-fill"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.CLIPBOARD_DISABLED"
-		value="css:bi bi-clipboard-fill"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.ADD_CLIPBOARD"
-		value="css:bi bi-clipboard-plus-fill"
+		expr="%ICONS_ADD2_CLIPBOARD%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.ADD_CLIPBOARD_DISABLED"
-		value="css:bi bi-clipboard-plus-fill"
+		expr="%ICONS_ADD2_CLIPBOARD%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD60"
 		expr="%ICONS_DOWNLOAD60%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD_FOLDER"
-		value="css:bi bi-download"
+		expr="%ICONS_DOWNLOAD60%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD_FOLDER_DISABLED"
-		value="css:bi bi-download"
+		expr="%ICONS_DOWNLOAD60%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.NEW_FOLDER"
-		value="css:bi bi-folder-plus"
+		expr="%IMAGE_BUTTONS_GENERATE_DOC_PAGES%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.NEW_FOLDER_DISABLED"
-		value="css:bi bi-folder-plus"
+		expr="%IMAGE_BUTTONS_GENERATE_DOC_PAGES%"
 	/>
 	<icon name="com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE"
 		value="css:bi bi-x-square-fill"
 	/>
 	<icon name="com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE_DISABLED"
-		value="css:bi bi-x-square-fill"
+		expr="%com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.Icons.SMALL_LINK"
-		value="css:bi bi-link-45deg"
+		expr="%IMAGE_BUTTONS_GOTO_HELP_COMPONENT%"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.REMOVE_CLIPBOARD"
 		value="css:bi bi-clipboard-minus-fill"
 	/>
-	
-	
-	
 	
 	
 	
@@ -550,9 +542,6 @@
 	
 	
 	
-	
-	
-	
 	<icon name="BOOKMARK_LINK"
 		value="css:bi bi-bookmark-fill"
 	/>
@@ -580,9 +569,6 @@
 	<icon name="ICONS_BUTTON_SEARCH"
 		value="css:bi bi-search"
 	/>
-	
-	
-	
 	<icon name="ICONS_EXPORT"
 		value="css: bi-file-arrow-down-fill"
 	/>
@@ -596,28 +582,28 @@
 		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<icon name="ICONS_EXPORT_GRID_PPT"
-		value="css:bi bi-filetype-ppt"
+		expr="%ICONS_EXPORT_POWERPOINT%"
 	/>
 	<icon name="ICONS_EXPORT_GRID_PPTDISABLED"
-		value="css:bi bi-filetype-ppt"
+		expr="%ICONS_EXPORT_POWERPOINT%"
 	/>
 	<icon name="ICONS_EXPORT_PDF"
 		value="css:bi bi-filetype-pdf"
 	/>
 	<icon name="ICONS_EXPORT_PDFDISABLED"
-		value="css:bi bi-filetype-pdf"
+		expr="%ICONS_EXPORT_PDF%"
 	/>
 	<icon name="ICONS_EXPORT_POWERPOINT"
 		value="css:bi bi-filetype-ppt"
 	/>
 	<icon name="ICONS_EXPORT_POWERPOINT_DISABLED"
-		value="css:bi bi-filetype-ppt"
+		expr="%ICONS_EXPORT_POWERPOINT%"
 	/>
 	<icon name="ICONS_EXPORT_WORD"
 		value="css:bi bi-file-word-fill"
 	/>
 	<icon name="ICONS_EXPORT_WORD_DISABLED"
-		value="css:bi bi-file-word-fill"
+		expr="%ICONS_EXPORT_WORD%"
 	/>
 	<icon name="ICONS_EXPORT_ZIP"
 		value="css:bi bi-file-zip-fill"
@@ -626,11 +612,8 @@
 		value="css:bi bi-filetype-xml"
 	/>
 	<icon name="ICONS_BUTTON_XML_EXPORT_DISABLED"
-		value="css:bi bi-filetype-xml"
+		expr="%ICONS_BUTTON_XML_EXPORT%"
 	/>
-	
-	
-	
 	<icon name="ICON_TABLE"
 		value="css:bi bi-table"
 	/>
@@ -650,7 +633,7 @@
 		expr="%ICONS_BUTTON_EDIT%"
 	/>
 	<icon name="ICONS_EDIT48"
-		value="css:bi bi-pencil"
+		expr="%ICONS_BUTTON_EDIT%"
 	/>
 	<icon name="ICONS_GEAR"
 		value="css:bi bi-gear-fill"
@@ -659,7 +642,7 @@
 		expr="%ICONS_GEAR%"
 	/>
 	<icon name="ICONS_ADD_BUTTON"
-		value="css:bi bi-plus-lg"
+		expr="%ICON_PLUS%"
 	/>
 	<icon name="ICON_PLUS"
 		value="css:bi bi-plus-lg"
@@ -683,7 +666,7 @@
 		value="css:bi bi-x-lg"
 	/>
 	<icon name="ICONS_CANCEL_BUTTON_DISABLED"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICON_GLOBE"
 		value="css:bi bi-globe"
@@ -692,7 +675,7 @@
 		value="css:bi-arrow-repeat"
 	/>
 	<icon name="ICONS_BUTTON_REFRESH_DISABLED"
-		value="css:bi-arrow-repeat"
+		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="ICONS_COMPARE"
 		value="css:bi bi-arrow-left-right"
@@ -701,7 +684,7 @@
 		value="css:bi bi-box-arrow-up-right"
 	/>
 	<icon name="ICONS_OPEN_SELECTOR_DISABLED"
-		value="css:bi bi-box-arrow-up-right"
+		expr="%ICONS_OPEN_SELECTOR%"
 	/>
 	<icon name="ICONS_UPLOAD"
 		value="css:bi bi-upload"
@@ -713,25 +696,25 @@
 		value="css:bi bi-arrow-left"
 	/>
 	<icon name="ICONS_HISTORY_BACK_DISABLED"
-		value="css:bi bi-arrow-left"
+		expr="%ICONS_HISTORY_BACK%"
 	/>
 	<icon name="ICONS_HISTORY_FORWARD"
 		value="css:bi bi-arrow-right"
 	/>
 	<icon name="ICONS_HISTORY_FORWARD_DISABLED"
-		value="css:bi bi-arrow-right"
+		expr="%ICONS_HISTORY_FORWARD%"
 	/>
 	<icon name="ICONS_ADD2_CLIPBOARD"
 		value="css:bi bi-clipboard-plus-fill"
 	/>
 	<icon name="ICONS_ADD2_CLIPBOARD_DISABLED"
-		value="css:bi-clipboard-plus-fill"
+		expr="%ICONS_ADD2_CLIPBOARD%"
 	/>
 	<icon name="ICONS_CLIPBOARD_BUTTON_ICON"
 		value="css:bi bi-clipboard-fill"
 	/>
 	<icon name="ICONS_CLIPBOARD_BUTTON_ICON_DISABLED"
-		value="css:bi bi-clipboard-fill"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="ICONS_BUTTON_BACKWARD"
 		value="css:bi bi-chevron-double-left"
@@ -743,7 +726,7 @@
 		value="css:bi bi-chevron-down"
 	/>	
 	<icon name="ICONS_MOVE_ROW_DOWN_DISABLED"
-		value="css:bi bi-chevron-down"
+		expr="%ICONS_MOVE_ROW_DOWN%"
 	/>
 	<icon name="ICONS_MOVE_ROW_LEFT"
 		value="css:bi bi-chevron-left"
@@ -770,34 +753,34 @@
 		expr="%ICONS_MOVE_ROW_TO_TOP%"
 	/>
 	<icon name="ICONS_DELETE_TOOLBAR"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICONS_DELETE_TOOLBAR_DISABLED"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICONS_DELETE_MENU"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICONS_DELETE_MENU_DISABLED"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICONS_BUTTON_CLOSE"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICONS_BUTTON_CLEAR"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICONS_EXPAND_ALL"
 		value="css:bi bi-chevron-expand"
 	/>
 	<icon name="ICONS_EXPAND_ALL_DISABLED"
-		value="css:bi bi-chevron-expand"
+		expr="%ICONS_EXPAND_ALL%"
 	/>
 	<icon name="ICONS_COLLAPSE_ALL"
 		value="css:bi bi-chevron-contract"
 	/>
 	<icon name="ICONS_COLLAPSE_ALL_DISABLED"
-		value="css:bi bi-chevron-contract"
+		expr="%ICONS_COLLAPSE_ALL%"
 	/>
 	<icon name="ICONS_DIALOG_QUESTION"
 		value="css:bi bi-info-square"
@@ -809,16 +792,16 @@
 		value="css:bi bi-check-all"
 	/>
 	<icon name="ICONS_BUTTON_EXPERT"
-		value="css:bi bi-gear-fill"
+		expr="%ICONS_GEAR%"
 	/>
 	<icon name="ICONS_GRID_CANCEL"
-		value="css:bi bi-arrow-counterclockwise"
+		expr="%ICON_UNDO%"
 	/>
 	<icon name="ICONS_GRID_CANCEL_DISABLED"
-		value="css:bi bi-arrow-counterclockwise"
+		expr="%ICON_UNDO%"
 	/>
 	<icon name="ICONS_BUTTON_CANCEL"
-		value="css:bi bi-arrow-counterclockwise"
+		expr="%ICON_UNDO%"
 	/>
 	<icon name="EDIT_SECURITY_PROFILES_IMPORT_ICON"
 		expr="%ICONS_EXPORT%"
@@ -830,79 +813,68 @@
 		value="css:bi bi-file-arrow-up-fill"
 	/>
 	<icon name="ICONS_BUTTON_MODEL_IMPORT"
-		value="css:bi bi-file-arrow-up-fill"
+		expr="%ICON_FILE_IMPORT%"
 	/>
 	<icon name="ICONS_BUTTON_IDE_EXTRACT"
-		value="css:bi bi-terminal-fill"
+		expr="%IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS%"
 	/>
 	<icon name="ICONS_BUTTON_IDE_EXTRACT_DISABLED"
-		value="css:bi bi-terminal-fill"
+		expr="%IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS%"
 	/>
 	<icon name="ICON_SHOW_INHERITED_VARIABLES"
 		value="css:bi bi-diagram-3-fill"
 	/>
 	<icon name="ICON_SHOW_INHERITED_VARIABLES_ACTIVE"
-		value="css:bi bi-diagram-3-fill"
+		expr="%ICON_SHOW_INHERITED_VARIABLES%"
 	/>
-	
-	
 	<icon name="ICONS_IMPORT"
-		value="css:bi bi-file-arrow-up-fill"
+		expr="%ICON_FILE_IMPORT%"
 	/>
 	<icon name="com.top_logic.knowledge.service.migration.load.Icons.DATA_IMPORT"
 		expr="%ICONS_IMPORT%"
 	/>
 	<icon name="com.top_logic.knowledge.service.migration.load.Icons.START_IMPORT"
-		value="css:bi bi-file-arrow-up-fill"
+		expr="%ICON_FILE_IMPORT%"
 	/>
 	<icon name="ICONS_IMPORT_DISABLED"
 		expr="%ICONS_IMPORT%"
 	/>
 	<icon name="THEME_EXPORT"
-		value="css:bi bi-upload"
+		expr="%ICONS_UPLOAD%"
 	/>
 	<icon name="THEME_IMPORT"
-		value="css:bi bi-download"
+		expr="%ICONS_DOWNLOAD60%"
 	/>
 	<icon name="com.top_logic.layout.themeedit.browser.providers.resources.Icons.FONT"
 		value="css:bi bi-fonts"
 	/>
-	
-	
 	<icon name="START_SERVICE"
 		value="css:bi bi-play-fill"
 	/>
 	<icon name="STOP_SERVICE"
-		value="css:bi bi-stop-fill"
+		expr="%ICONS_BUTTON_STOP_DISABLED%"
 	/>
 	<icon name="RESTART_SERVICE"
-		value="css:bi bi-arrow-clockwise"
+		expr="%IMAGE_BUTTONS_I18N_RELOAD22%"
 	/>
 	<icon name="SAVE_SERVICE_CONFIGURATION"
 		value="css:bi bi-save-fill"
 	/>
 	<icon name="RESET_SERVICE_CONFIGURATION"
-		value="css:bi bi-arrow-counterclockwise"
+		expr="%ICON_UNDO%"
 	/>
 	<icon name="ICON_EXPORT_OPEN_API_SERVER"
-		value="css:bi bi-download"
+		expr="%ICONS_DOWNLOAD60%"
 	/>
 	<icon name="TREE_NEW_ELEMENT"
 		value="css:bi bi-file-plus-fill"
 	/>
 	<icon name="TREE_NEW_ELEMENT_DISABLED"
-		value="css:bi bi-file-plus-fill"
+		expr="%TREE_NEW_ELEMENT%"
 	/>
-	
-	
-	
-	<!-- wird im contact modul definiert. -->
 	<icon name="IMAGE_BUTTONS_PERSONAL_SETTINGS22"
 		value="css:bi bi-person-fill-gear"
 	/>
-	<!--  -->
-	
-	
 	<icon name="IMAGE_BUTTONS_DASH_BOARD22"
 		value="css:bi bi-bar-chart-steps"
 	/>
@@ -910,7 +882,7 @@
 		value="/images/close_btn.png"
 	/>
 	<icon name="IMAGE_BUTTONS_ADMINISTRATION22"
-		value="css:bi bi-gear-fill"
+		expr="%ICONS_GEAR%"
 	/>
 	<icon name="IMAGE_BUTTONS_SEARCH22"
 		expr="%ICONS_BUTTON_SEARCH%"
@@ -925,7 +897,7 @@
 		value="css:bi bi-layout-wtf"
 	/>
 	<icon name="IMAGE_BUTTONS_CHART"
-		value="css:bi bi-layout-wtf"
+		expr="%IMAGE_BUTTONS_STRUCTURE22%"
 	/>
 	<icon name="IMAGE_BUTTONS_CHART_ACTIVE"
 		value="colored:tl-icon chart-bar-line"
@@ -955,10 +927,10 @@
 		value="css:bi bi-circle-fill"
 	/>
 	<icon name="IMAGE_BUTTONS_CLIPBOARD"
-		value="css:bi bi-clipboard-fill"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="IMAGE_BUTTONS_CLIPBOARD_ACTIVE"
-		value="css:bi bi-clipboard-fill"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="IMAGE_BUTTONS_I18N_RELOAD22"
 		value="css:bi bi-arrow-clockwise"
@@ -967,10 +939,10 @@
 		value="css:bi bi-easel-fill"
 	/>
 	<icon name="IMAGE_BUTTONS_I18N_DEBUG22"
-		value="css:bi bi-bug-fill"
+		expr="%IMAGE_DEBUG_22%"
 	/>
 	<icon name="IMAGE_BUTTONS_I18N_DEBUG_ACTIVE22"
-		value="css:bi bi-bug-fill"
+		expr="%IMAGE_DEBUG_22%"
 	/>
 	<icon name="IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS"
 		value="css:bi bi-terminal-fill"
@@ -1018,22 +990,22 @@
 		value="css: bi bi-check-lg"
 	/>
 	<icon name="ICONS_BUTTON_OK_DISABLED"
-		value="css: bi bi-check-lg"
+		expr="%ICONS_BUTTON_OK%"
 	/>
 	<icon name="mime.image/bmp"
-		value="css: bi bi-image"
+		expr="%mime.image/png%"
 	/>
 	<icon name="mime.image/gif"
-		value="css: bi bi-image"
+		expr="%mime.image/png%"
 	/>
 	<icon name="mime.image/png"
 		value="css: bi bi-image"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN"
-		value="css:bi bi-chevron-down"
+		expr="%ICONS_MOVE_ROW_DOWN%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN_DISABLED"
-		value="css:bi bi-chevron-down"
+		expr="%ICONS_MOVE_ROW_DOWN%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_TO_BOTTOM"
 		expr="%ICONS_MOVE_ROW_TO_BOTTOM%"
@@ -1051,7 +1023,7 @@
 		value="css:bi bi-chevron-up"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP_DISABLED"
-		value="css:bi bi-chevron-up"
+		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_LEFT"
 		expr="%ICONS_MOVE_ROW_LEFT%"
@@ -1060,25 +1032,25 @@
 		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_UP"
-		value="css:bi bi-chevron-up"
+		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FAST_BACKWARD"
-		value="css:bi bi-chevron-double-left"
+		expr="%ICONS_BUTTON_BACKWARD%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FAST_FORWARD"
-		value="css:bi bi-chevron-double-right"
+		expr="%com.top_logic.layout.table.renderer.Icons.TBL_LAST%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_FIRST"
-		value="css:bi bi-chevron-double-left"
+		expr="%ICONS_BUTTON_BACKWARD%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_FIRST_DISABLED"
-		value="css:bi bi-chevron-double-left"
+		expr="%ICONS_BUTTON_BACKWARD%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_LAST"
 		value="css:bi bi-chevron-double-right"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_LAST_DISABLED"
-		value="css:bi bi-chevron-double-right"
+		expr="%com.top_logic.layout.table.renderer.Icons.TBL_LAST%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_NEXT"
 		expr="%ICONS_MOVE_ROW_RIGHT%"
@@ -1093,7 +1065,7 @@
 		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>	
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_LEFT"
 		expr="%ICONS_MOVE_ROW_LEFT%"
@@ -1108,31 +1080,31 @@
 		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP"
-		value="css:bi bi-chevron-up"
+		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP_DISABLED"
-		value="css:bi bi-chevron-up"
+		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR_DISABLED"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
-		value="css:bi bi-circle-fill"
+		expr="%IMAGE_BUTTONS_SCRIPT_RECORDER22%"
 	/>
 	<icon name="layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand"
 		value="css:bi bi-brush-fill"
@@ -1144,16 +1116,16 @@
 		value="css:bi bi-check-lg"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
-		value="css:bi bi-arrow-down-up"
+		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
-		value="css:bi bi-arrow-down-up"
+		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.RESET_TABLE"
-		value="css:bi bi-table"
+		expr="%ICON_TABLE%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_BUTTON_ICON"
-		value="css:bi bi-arrow-down-up"
+		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_COLUMN_CONFIG"
 		value="css:bi bi-layout-three-columns"
@@ -1168,7 +1140,7 @@
 		value="10px"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.CLOSE_DIALOG"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
 		value="50px"
@@ -1187,51 +1159,50 @@
 	<dim name="RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY"
 		value="90px"
 	/>
-	<!-- Self created Checkbox symbols. -->
 	<icon name="com.top_logic.layout.form.boxes.tag.Icons.NULL"
 		value="css:bi bi-slash-circle"
 	/>
 	<icon name="com.top_logic.layout.provider.Icons.NULL_DISABLED"
-		value="css:bi bi-slash-circle"
+		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL"
-		value="css:bi bi-slash-circle"
+		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL_DISABLED"
-		value="css:bi bi-slash-circle"
+		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL"
-		value="css:bi bi-slash-circle"
+		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL_DISABLED"
-		value="css:bi bi-slash-circle"
+		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
-		value="css:bi bi-check-lg"
+		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE_DISABLED"
-		value="css:bi bi-check-lg"
+		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
-		value="css:bi bi-dash-lg"
+		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE_DISABLED"
-		value="css:bi bi-dash-lg"
+		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE"
-		value="css:bi bi-check-lg"
+		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE_DISABLED"
-		value="css:bi bi-check-lg"
+		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TRUE_DISABLED"
-		value="css:bi bi-check-lg"
+		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE"
-		value="css:bi bi-dash-lg"
+		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE_DISABLED"
-		value="css:bi bi-dash-lg"
+		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
 	/>
 	<icon name="com.top_logic.layout.provider.Icons.FALSE_DISABLED"
 		value="css:bi bi-dash-lg"
@@ -1249,19 +1220,19 @@
 		value="/colorchooser/line.png"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.RESET_COLORS"
-		value="css:bi bi bi-trash3"
+		expr="%com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.EXPAND_ALL"
-		value="css:bi bi-chevron-expand"
+		expr="%ICONS_EXPAND_ALL%"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.EXPAND_ALL_DISABLED"
-		value="css:bi bi-chevron-expand"
+		expr="%ICONS_EXPAND_ALL%"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.COLLAPSE_ALL"
-		value="css:bi bi-chevron-contract"
+		expr="%ICONS_COLLAPSE_ALL%"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.COLLAPSE_ALL_DISABLED"
-		value="css:bi bi-chevron-contract"
+		expr="%ICONS_COLLAPSE_ALL%"
 	/>
 	
 	
@@ -1275,7 +1246,7 @@
 		value="css:bi bi-keyboard-fill"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__OK_BUTTON"
-		value="css:bi bi-check"
+		expr="%ICON_VALIDATE_PAGE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON"
 		value="css:bi bi bi-trash3"
@@ -1292,43 +1263,43 @@
 		value="css:bi bi-box-arrow-right"
 	/>
 	<icon name="model.tl.doc.Page.icon"
-		value="css:bi bi-book"
+		expr="%IMAGE_BUTTONS_DOC%"
 	/>
 	<icon name="com.top_logic.doc.command.Icons.OPEN_DOCUMENTATION"
-		value="css:bi bi-book"
+		expr="%IMAGE_BUTTONS_DOC%"
 	/>
 	<icon name="com.top_logic.util.error.Icons.INFO"
 		value="css:bi bi-info-circle-fill"
 	/>
 	<icon name="com.top_logic.layout.basic.Icons.RENDERING_ERROR_NORMAL"
-		value="css:bi bi-exclamation-triangle-fill"
+		expr="%com.top_logic.util.error.Icons.ERROR%"
 	/>
 	<icon name="com.top_logic.util.error.Icons.ERROR"
 		value="css:bi bi-exclamation-triangle-fill"
 	/>
 	<icon name="com.top_logic.util.error.Icons.WARNING"
-		value="css:bi bi-info-circle-fill"
+		expr="%com.com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.util.error.Icons.SYSTEM_FAILURE"
-		value="css:bi bi-x-octagon-fill"
+		expr="%com.top_logic.layout.form.control.Icons.ALERT%"
 	/>
 	<icon name="com.top_logic.util.error.Icons.QUESTION"
-		value="css:bi bi-info-square"
+		expr="%ICONS_DIALOG_QUESTION%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.CLOSE_INFO_SERVICE_ITEM"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_ERROR"
-		value="css:bi bi-exclamation-triangle-fill"
+		expr="%com.top_logic.util.error.Icons.ERROR%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_WARNING"
-		value="css:bi bi-info-circle-fill"
+		expr="%com.com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_INFO"
-		value="css:bi bi-info-circle-fill"
+		expr="%com.com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFO_SERVICE_DETAIL_EXPANDER"
-		value="css:bi bi-chevron-up"
+		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
 	<int name="com.top_logic.layout.form.selection.Icons.SELECTION_CONTROL_FIELD_HEIGHT"
 		value="40"
@@ -1336,14 +1307,8 @@
 	<box name="GROUP_COLLAPSED_RADIUS"
 		value="5px 5px 0px 0px"
 	/>
-	
-	
-	
-	
-	
-	
 	<icon name="ICONS_LARGE_LOGIN_MESSAGE60"
-		value="css:bi bi-window"
+		expr="%ICONS_LOGIN_MESSAGE%"
 	/>
 	<icon name="ICONS_LOGIN_MESSAGE"
 		value="css:bi bi-window"
@@ -1352,38 +1317,35 @@
 		value="css:bi bi-window-plus"
 	/>
 	<icon name="LOGIN_MESSAGE_RESET_ICON"
-		value="css:bi bi-arrow-counterclockwise"
+		expr="%ICON_UNDO%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.SELECT_TYPE"
-		value="css:bi bi-list"
+		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
-	
 	<icon name="ICONS_BUTTON_START"
 		value="css:bi bi-play-fill green"
 	/>
 	<icon name="ICONS_BUTTON_START_DISABLED"
-		value="css:bi bi-play-fill green"
+		expr="%ICONS_BUTTON_START%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_INTO"
 		value="css:bi bi-arrow-return-right green"
 	/>
 	<icon name="ICONS_BUTTON_STEP_INTO_DISABLED"
-		value="css:bi bi-arrow-return-right green"
+		expr="%ICONS_BUTTON_STEP_INTO%"
 	/>
-	
 	<icon name="ICONS_BUTTON_STEP_OUT"
-		value="colored:tl-icon step-out icon-green"
+		value="css:bi bi-arrow-return-left green"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OUT_DISABLED"
-		value="colored:tl-icon step-out icon-green"
+		expr="%ICONS_BUTTON_STEP_OUT%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OVER"
-		value="colored:tl-icon step-over icon-green"
+		value="css:bi bi-arrow-90deg-right green"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OVER_DISABLED"
-		value="colored:tl-icon step-over icon-green"
+		expr="%ICONS_BUTTON_STEP_OVER%"
 	/>
-	
 	<icon name="ICONS_BUTTON_STOP"
 		value="css:bi bi-stop-fill red"
 	/>
@@ -1394,10 +1356,8 @@
 		value="css:bi bi-clock-fill"
 	/>
 	<icon name="ICONS_BUTTON_TIME_DISABLED"
-		value="css:bi bi-clock-fill"
+		expr="%ICONS_BUTTON_TIME%"
 	/>
-	
-	
 	<icon name="com.top_logic.util.monitor.Icons.GREEN"
 		value="css:bi bi-circle-fill green"
 	/>
@@ -1408,13 +1368,13 @@
 		value="css:bi bi-circle-fill yellow"
 	/>
 	<icon name="com.top_logic.util.monitor.thread.Icons.BUTTON_START"
-		value="css:bi bi-play-fill green"
+		expr="%ICONS_BUTTON_START%"
 	/>
 	<icon name="com.top_logic.util.monitor.thread.Icons.BUTTON_STOP"
-		value="css:bi bi-stop-fill red"
+		expr="%ICONS_BUTTON_STOP%"
 	/>
 	<icon name="com.top_logic.util.sched.layout.Icons.EXCEPTION"
-		value="css:bi bi-info-circle-fill"
+		expr="%com.com.top_logic.util.error.Icons.INFO%"
 	/>
 	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
 		value="css:bi bi-pause-fill red"
@@ -1423,13 +1383,13 @@
 		value="css:bi bi-pause-fill yellow"
 	/>
 	<icon name="com.top_logic.util.sched.task.Icons.CANCELING"
-		value="css:bi bi-x-lg"
+		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.util.sched.task.Icons.INACTIVE"
-		value="css:bi bi-stop-fill"
+		expr="%ICONS_BUTTON_STOP_DISABLED%"
 	/>
 	<icon name="com.top_logic.util.sched.task.Icons.RUNNING"
-		value="css:bi bi-play-fill"
+		expr="%START_SERVICE%"
 	/>
 	<icon name="com.top_logic.util.sched.task.result.Icons.CANCELED"
 		value="css:bi bi-x-circle-fill red"
@@ -1438,16 +1398,16 @@
 		value="css:bi bi-info-circle-fill yellow"
 	/>
 	<icon name="com.top_logic.util.sched.task.result.Icons.NOT_FINISHED"
-		value="css:bi bi-play-fill"
+		expr="%START_SERVICE%"
 	/>
 	<icon name="com.top_logic.util.sched.task.result.Icons.SUCCESS"
 		value="css:bi bi-check-circle-fill green"
 	/>
 	<icon name="com.top_logic.util.sched.task.result.Icons.UNKNOWN"
-		value="css:bi bi-question-circle-fill"
+		expr="%com.top_logic.tool.boundsec.assistent.Icons.STEP_OPEN%"
 	/>
 	<icon name="com.top_logic.tool.boundsec.assistent.Icons.STEP_FINISHED"
-		value="css:bi bi-check-circle-fill green"
+		expr="%com.top_logic.util.sched.task.result.Icons.SUCCESS%"
 	/>
 	<icon name="com.top_logic.tool.boundsec.assistent.Icons.STEP_OPEN"
 		value="css:bi bi-question-circle-fill"
@@ -1462,13 +1422,13 @@
 		value="css:bi bi-square"
 	/>
 	<icon name="ICONS_REMOVE_CHECKBOX_DISABLED"
-		value="css:bi bi-square"
+		expr="%ICONS_REMOVE_CHECKBOX%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.REMOVE_CHECKBOX"
-		value="css:bi bi-square"
+		expr="%ICONS_REMOVE_CHECKBOX%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.REMOVE_CHECKBOX_DISABLED"
-		value="css:bi bi-square"
+		expr="%ICONS_REMOVE_CHECKBOX%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_ALL_CHECKBOXES"
 		expr="%ICONS_SELECT_ALL_CHECKBOXES%"

@@ -83,6 +83,10 @@ i.yellow {
 	color: var(--support-warning);
 }
 
+.layoutVerticalAdjustmentGrabber {
+    background: var(--border-strong);
+}
+
 /*
 ****					****
 ****	Anchor syles	****

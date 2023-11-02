@@ -153,6 +153,17 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 
 	}
 
+	/**
+	 * The default sort order for an unknown severity.
+	 * <p>
+	 * It might be anything from more than "fatal" to less than "debug". The default is minimally
+	 * higher than "info": Unknown severities are not "warnings" or "errors" and should not hide
+	 * them. But they are unusual and should also be noticed, as their appearance might be serious.
+	 * Therefore between "info" and "warning".
+	 * </p>
+	 */
+	public static final int DEFAULT_SEVERITY_SORT_ORDER = LogLineSeverity.INFO.getSortOrder() + 1;
+
 	private final ZoneId _timeZoneId = TLContextManager.getSubSession().getCurrentTimeZone().toZoneId();
 
 	/** The format for parsing the time stamp. */
@@ -169,6 +180,9 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 	private final Pattern _categoryPattern;
 
 	private final String _messageStartMarker;
+
+	private final Map<String, LogLineSeverity> _severities =
+		new ConcurrentHashMap<>(LogLineSeverity.STANDARD_SEVERITIES);
 
 	private final Map<String, String> _messages = new ConcurrentHashMap<>();
 
@@ -302,7 +316,7 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 	protected LogLine createLogLine(String fileCategory, String fileName, Map<String, Object> entry) {
 		String message = internMessage((String) entry.get(PROPERTY_MESSAGE));
 		Date time = parseTime((String) entry.get(PROPERTY_TIME));
-		LogLineSeverity severity = LogLineSeverity.getOrCreate((String) entry.get(PROPERTY_SEVERITY));
+		LogLineSeverity severity = getSeverity((String) entry.get(PROPERTY_SEVERITY));
 		String category = internCategory((String) entry.get(PROPERTY_CATEGORY));
 		String thread = internThread((String) entry.get(PROPERTY_THREAD));
 		@SuppressWarnings("unchecked")
@@ -338,6 +352,11 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 			return "";
 		}
 		return StringServices.join(originals, System.lineSeparator());
+	}
+
+	/** Creates, caches and returns the {@link LogLineSeverity}. */
+	protected LogLineSeverity getSeverity(String name) {
+		return _severities.computeIfAbsent(name, ignored -> new LogLineSeverity(name, DEFAULT_SEVERITY_SORT_ORDER));
 	}
 
 	/** Interns the {@link String} by using a single cached instance for every equal text. */

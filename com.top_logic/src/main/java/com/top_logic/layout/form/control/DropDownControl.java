@@ -204,7 +204,7 @@ public class DropDownControl extends AbstractSelectControl {
 		addJSFunction(out, "buttonDrop", "this");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "this.nextElementSibling, event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event, " + isMultiple());
 		out.endAttribute();
 	}
 
@@ -218,10 +218,10 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addSearchEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONFOCUSOUT_ATTR);
-		addJSFunction(out, "lostFocus", "this.parentElement");
+		addJSFunction(out, "lostFocus", null);
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "this.parentElement, event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event, " + isMultiple());
 		out.endAttribute();
 		out.beginAttribute(ONINPUT_ATTR);
 		addJSFunction(out, "search", "this");
@@ -233,6 +233,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "ddwttDDBox");
+		out.writeAttribute("data-ctrlID", getID());
 		out.endBeginTag();
 		{
 			renderSearch(out);
@@ -275,7 +276,8 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void renderItem(DisplayContext context, TagWriter out, FormField dropdown, Object item)
 			throws IOException {
-		String classes = "ddwttItem";
+		String classes = "ddwttItem tooltipHorizontal";
+		boolean useDropDownTooltip = false;
 		
 		if (isMultiple() && SelectFieldUtils.getSelectionList(dropdown).contains(item)) {
 			classes += " ddwttSelectedItem";
@@ -285,12 +287,17 @@ public class DropDownControl extends AbstractSelectControl {
 		out.writeAttribute(CLASS_ATTR, classes);
 		out.writeAttribute(ID, getItemID(item));
 		addItemEvents(out);
+		if (!useDropDownTooltip) {
+			renderTooltip(context, out, dropdown, item, false);
+		}
 		out.writeAttribute(TABINDEX_ATTR, "-1");
 		out.endBeginTag();
 		{
 			renderItemLabel(out, dropdown, item);
 
-			renderTooltip(context, out, dropdown, item, true);
+			if (useDropDownTooltip) {
+				renderTooltip(context, out, dropdown, item, true);
+			}
 		}
 		out.endTag(SPAN);
 	}
@@ -300,10 +307,10 @@ public class DropDownControl extends AbstractSelectControl {
 		addJSFunction(out, "positionTt", "this, true");
 		out.endAttribute();
 		out.beginAttribute(ONFOCUSOUT_ATTR);
-		addJSFunction(out, "lostFocus", "this.parentElement.parentElement");
+		addJSFunction(out, "lostFocus", null);
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "this.parentElement.parentElement, event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event, " + isMultiple());
 		out.endAttribute();
 	}
 
@@ -402,7 +409,10 @@ public class DropDownControl extends AbstractSelectControl {
 			out.append(custom);
 		}
 		if (showWait(this)) {
-			out.append(", true);");
+			if ((custom != null) && (custom != "")) {
+				out.append(", ");
+			}
+			out.append("true);");
 		} else {
 			out.append(");");
 		}

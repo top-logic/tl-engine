@@ -339,7 +339,8 @@ public class DynamicColumnProviderByExpression
 
 						EditContext editContext = new CustomEditContext(type)
 							.setLabel(labelKey)
-							.setValue(accessor.getValue(row, columnName));
+							.setValue(accessor.getValue(row, columnName))
+							.setInTableContext(true);
 						FormMember field = fieldProvider.getFormField(editContext, columnName);
 						if (field instanceof FormField) {
 							((FormField) field).initializeField(editContext.getCorrectValues());

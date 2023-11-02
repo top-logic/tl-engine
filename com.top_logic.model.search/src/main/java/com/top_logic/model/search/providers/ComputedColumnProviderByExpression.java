@@ -210,7 +210,8 @@ public class ComputedColumnProviderByExpression
 				public FormMember createField(Object row, Accessor uselessAccessor, String columnName) {
 					EditContext editContext = new CustomEditContext(type)
 						.setLabel(labelKey)
-						.setValue(accessor.getValue(row, columnName));
+						.setValue(accessor.getValue(row, columnName))
+						.setInTableContext(true);
 					FormMember field = fieldProvider.getFormField(editContext, columnName);
 					if (field instanceof FormField) {
 						AttributeFormFactory.initFieldValue(editContext, (FormField) field);

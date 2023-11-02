@@ -250,7 +250,7 @@
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-						column-label="Vollständiger Name"
+						column-label="Name"
 					>
 						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 							<default-table-data-owner config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
@@ -266,7 +266,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="TestPerson TestPerson"
+						value="TestPerson"
 					/>
 				</action>
 			</actions>

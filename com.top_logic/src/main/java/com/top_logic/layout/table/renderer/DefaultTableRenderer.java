@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
@@ -1237,6 +1238,16 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			}
 			out.endEmptyTag();
 		}
+
+		@Override
+		public String toString() {
+			return new NameBuilder(this)
+				.add("table", getModel().getTableConfiguration().getTableName())
+				.add("row", getRowObject())
+				.add("column", getColumnName())
+				.build();
+		}
+
 	}
 
 	private static final String ADJUSTABLE_COLUMN_CLASS = "adjustableColumn";

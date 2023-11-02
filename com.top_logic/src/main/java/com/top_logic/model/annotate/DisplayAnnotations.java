@@ -28,6 +28,7 @@ import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -40,6 +41,8 @@ import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.Format;
 import com.top_logic.model.annotate.ui.InputSize;
+import com.top_logic.model.annotate.ui.TLIDColumn;
+import com.top_logic.model.annotate.ui.TLSortColumns;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.config.AttributeConfigBase;
@@ -659,6 +662,24 @@ public class DisplayAnnotations {
 	}
 
 	/**
+	 * Searches the relevant {@link TLIDColumn} annotation for the {@link TLType}.
+	 * 
+	 * @return <code>null</code> when there is none.
+	 */
+	public static TLIDColumn getIDColumn(TLType type) {
+		return getAnnotation(type, TLIDColumn.class);
+	}
+
+	/**
+	 * Searches the relevant {@link TLSortColumns} annotation for the {@link TLType}.
+	 * 
+	 * @return <code>null</code> when there is none.
+	 */
+	public static TLSortColumns getSortColumns(TLType type) {
+		return getAnnotation(type, TLSortColumns.class);
+	}
+
+	/**
 	 * Returns the "main properties" of a {@link TLStructuredType}.
 	 * 
 	 * @return An unmodifiable {@link List}.
@@ -742,6 +763,31 @@ public class DisplayAnnotations {
 	 */
 	public static void setDeleteProtected(TLStructuredTypePart part) {
 		part.setAnnotation(TypedConfiguration.newConfigItem(TLDeleteProtected.class));
+	}
+
+	/**
+	 * Searches the {@link TLAnnotation} for the given {@link TLType}.
+	 * <p>
+	 * When the type itself is not annotated with it, the super types are searched recursively,
+	 * depth first. When none of them is annotated, too, <code>null</code> is returned.
+	 * </p>
+	 */
+	public static <A extends TLAnnotation> A getAnnotation(TLType type, Class<A> annotationClass) {
+		A annotation = type.getAnnotation(annotationClass);
+		if (annotation != null) {
+			return annotation;
+		}
+		if (type.getModelKind() != ModelKind.CLASS) {
+			return null;
+		}
+		TLClass tlClass = (TLClass) type;
+		for (TLType generalization : tlClass.getGeneralizations()) {
+			A inheritedAnnotation = getAnnotation(generalization, annotationClass);
+			if (inheritedAnnotation != null) {
+				return inheritedAnnotation;
+			}
+		}
+		return null;
 	}
 
 	private static void setAnnotation(AttributeConfigBase config, Class<TLDeleteProtected> type) {

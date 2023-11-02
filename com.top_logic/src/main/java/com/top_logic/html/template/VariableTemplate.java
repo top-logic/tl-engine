@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.RenderErrorUtil;
 import com.top_logic.layout.template.WithProperties;
 
 /**
@@ -36,7 +35,7 @@ public class VariableTemplate implements RawTemplateFragment {
 		} catch (RuntimeException exception) {
 			switch (out.getState()) {
 				case ELEMENT_CONTENT:
-					RenderErrorUtil.writeErrorFragment(context, out, exception.getMessage(), this);
+					HTMLTemplateUtils.renderError(context, out, exception);
 					break;
 
 				default:

@@ -10,7 +10,6 @@ import java.io.IOException;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.expr.TestExpression;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.RenderErrorUtil;
 import com.top_logic.layout.template.WithProperties;
 
 /**
@@ -84,7 +83,7 @@ public class ConditionalTemplate implements RawTemplateFragment {
 		try {
 			testResult = TestExpression.isTrue(_test.eval(context, properties));
 		} catch (RuntimeException exception) {
-			RenderErrorUtil.writeErrorFragment(context, out, exception.getMessage(), this);
+			HTMLTemplateUtils.renderError(context, out, exception);
 			return;
 		}
 		if (testResult) {

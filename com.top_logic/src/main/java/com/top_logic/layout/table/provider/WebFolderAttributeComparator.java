@@ -12,24 +12,15 @@ import java.util.Comparator;
  */
 public class WebFolderAttributeComparator implements Comparator<Object> {
 
-	private final int direction;
-
-	/**
-	 * Creates a {@link WebFolderAttributeComparator}.
-	 */
-	public WebFolderAttributeComparator(int aDirection) {
-		this.direction = aDirection;
-	}
+	/** The {@link WebFolderAttributeComparator} instance. */
+	public static final WebFolderAttributeComparator INSTANCE = new WebFolderAttributeComparator();
 
 	@Override
 	public int compare(Object o1, Object o2) {
-		Integer theVal1 = getCount(o1);
-		Integer theVal2 = getCount(o2);
-
-		return this.direction * (theVal1 - theVal2);
+		return Integer.compare(getCount(o1), getCount(o2));
 	}
 
-	protected Integer getCount(Object aValue) {
+	protected int getCount(Object aValue) {
 		return WebFolderTableUtil.getWebFolderCount(aValue);
 	}
 }

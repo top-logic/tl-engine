@@ -25,7 +25,7 @@ public class WebFolderTableUtil {
 	 * @return The requested number (children for a {@link WebFolder} instance), never
 	 *         <code>null</code>.
 	 */
-	protected static Integer getWebFolderCount(Object aValue) {
+	protected static int getWebFolderCount(Object aValue) {
 		if (aValue instanceof WebFolder) {
 			WebFolder theFolder = (WebFolder) aValue;
 			Collection<? extends TLObject> theChildren = theFolder.getContent();

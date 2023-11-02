@@ -2285,6 +2285,7 @@ public class GridComponent extends EditComponent implements
 						}
 
 						if (update != null) {
+							update.setInTableContext(true);
 							update = this.modifyUpdateForAdd(columnName, attribute, editedObject, update);
 						}
 

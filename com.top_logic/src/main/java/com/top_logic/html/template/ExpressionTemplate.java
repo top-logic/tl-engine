@@ -12,7 +12,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.TagWriter.State;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DispatchingRenderer;
-import com.top_logic.layout.basic.RenderErrorUtil;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.model.TLObject;
@@ -43,7 +42,7 @@ public class ExpressionTemplate implements RawTemplateFragment {
 			if (out.getState() != State.ELEMENT_CONTENT) {
 				throw exception;
 			}
-			RenderErrorUtil.writeErrorFragment(context, out, exception.getMessage(), this);
+			HTMLTemplateUtils.renderError(context, out, exception);
 			return;
 		}
 

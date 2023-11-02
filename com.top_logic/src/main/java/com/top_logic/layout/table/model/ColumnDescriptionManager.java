@@ -17,6 +17,7 @@ import org.apache.commons.collections4.IterableUtils;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Icons;
 import com.top_logic.layout.ResPrefix;
@@ -648,4 +649,10 @@ public class ColumnDescriptionManager extends TableConfiguration {
 	private void copyColumnsTo(TableConfiguration configurationCopy) {
 		columns().copyTo(configurationCopy.columns());
 	}
+
+	@Override
+	public String toString() {
+		return NameBuilder.buildName(this, getTableName());
+	}
+
 }

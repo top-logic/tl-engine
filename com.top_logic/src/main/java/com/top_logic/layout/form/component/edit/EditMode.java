@@ -14,7 +14,10 @@ import com.top_logic.layout.channel.TypedChannelSPI;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.component.IComponent;
 import com.top_logic.layout.form.component.Editor;
+import com.top_logic.layout.form.component.PostCreateAction;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link LayoutComponent} plug-in interface for supporting edit-mode.
@@ -59,9 +62,21 @@ public interface EditMode extends IComponent {
 	public interface Config extends IComponent.ComponentConfig {
 
 		/**
-		 * {@link EditMode} channel linking.
+		 * Component channel for controlling the edit mode of an edit component.
+		 * 
+		 * <p>
+		 * The channel value is of type boolean. The value <code>true</code> means, the component is
+		 * in edit mode, the value <code>false</code> signals that the component is in view mode.
+		 * </p>
+		 * 
+		 * <p>
+		 * An edit component can be switched to edit mode, by setting the edit mode channel value to
+		 * <code>true</code>. In a {@link CommandHandler}, this can be done by setting the "edit
+		 * mode channel model" in a {@link PostCreateAction}.
+		 * </p>
 		 */
 		@Name(EDIT_MODE_CHANNEL)
+		@DisplayMinimized
 		ModelSpec getEditMode();
 
 	}

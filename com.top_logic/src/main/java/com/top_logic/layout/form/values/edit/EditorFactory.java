@@ -971,11 +971,14 @@ public class EditorFactory implements AnnotationCustomizations {
 	
 			PropertyDescriptor property = _descriptor.getProperty(baseKey);
 			if (property == null) {
-				if (!optional) {
-					Logger.error("No such property '" + baseKey + "' in '"
-						+ _descriptor.getConfigurationInterface().getName() + "'.", PropertyBasedResources.class);
+				property = searchPropertyByNormalizedName(baseKey);
+				if (property == null) {
+					if (!optional) {
+						Logger.error("No such property '" + baseKey + "' in '"
+							+ _descriptor.getConfigurationInterface().getName() + "'.", PropertyBasedResources.class);
+					}
+					return optional ? null : "[" + resourceKey + "]";
 				}
-				return optional ? null : "[" + resourceKey + "]";
 			}
 	
 			String propertyLabel;
@@ -990,6 +993,15 @@ public class EditorFactory implements AnnotationCustomizations {
 				return enhancePropertyNameFormat(property.getPropertyName());
 			}
 			return propertyLabel;
+		}
+
+		private PropertyDescriptor searchPropertyByNormalizedName(String searchedName) {
+			for (PropertyDescriptor property : _descriptor.getProperties()) {
+				if (normalizeFieldName(property.getPropertyName()).equals(searchedName)) {
+					return property;
+				}
+			}
+			return null;
 		}
 
 		private String enhancePropertyNameFormat(String name) {

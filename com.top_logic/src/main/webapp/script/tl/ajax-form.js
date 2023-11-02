@@ -3245,7 +3245,6 @@ services.form = {
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
-		tooltipCl: "ddwttTooltip",
 
 		buttonDrop: function(button) {
 			const ddBoxOriginal = button.nextElementSibling;
@@ -3271,7 +3270,7 @@ services.form = {
 
 				this.positionDD(button, ddBox);
 				if (activeItem) {
-					this.positionTt(activeItem, true);
+					this.setItemActive(activeItem, true);
 					this.addScrollEvents(button, onGlobalChange);
 				}
 			}
@@ -3294,6 +3293,8 @@ services.form = {
 			const search = ddBox.querySelector("." + this.searchCl);
 			search.value = "";
 			search.classList.add(this.hideCl);
+			
+			PlaceDialog.closeCurrentTooltip(document.body.firstElementChild);
 
 			this.cancelScrollEvents(button);
 
@@ -3409,107 +3410,32 @@ services.form = {
 			search.focus();
 		},
 
-		positionTt: function(item, scroll) {
-			
+		setItemActive: function(item, scroll) {
 			let ddList = item.parentElement;
 			let previousActive = ddList.querySelector(":scope > ." + this.actItemCl);
 			if (previousActive) {
 				if (previousActive == item) return;
 				this.setItemInactive(previousActive);
 			}
+			item.classList.add(this.actItemCl);
 
 			if (scroll) {
 				item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
 			}
-			item.classList.add(this.actItemCl);
 			
 			const mouseoverEvent = new Event('mouseover', { 'bubbles': true });
 			item.dispatchEvent(mouseoverEvent);
-
-			let tooltip = item.querySelector(":scope > ." + this.tooltipCl);
-			if (!tooltip) return;
-
-			if (tooltip.childElementCount > 0) {
-//				let openTimeout = setTimeout(() => {
-					tooltip.style.left = 0;
-					tooltip.style.removeProperty("top");
-					tooltip.style.removeProperty("bottom");
-					tooltip.style.removeProperty("transform");
-	
-					let itemPos = item.getBoundingClientRect();
-					this.setTtHorizontal(tooltip, itemPos);
-					this.setTtVertical(tooltip, itemPos);
-//				}, 400);
-//				target.setAttribute("data-ttOpen", openTimeout);
-			} else {
-				tooltip.style.display = "none";
-			}
 		},
-
-		ttSnapAtEdge: function(tooltip, edge) {
-			tooltip.style.setProperty(edge, 0);
-		},
-
-		setArrowVertical: function(tooltip, topPos) {
-			let topPosArrow = topPos - tooltip.getBoundingClientRect().top;
-			tooltip.style.setProperty("--ttArrow-top", topPosArrow + "px");
-		},
-
-		setTtVertical: function(tooltip, itemPos) {
-			let hWindow = window.innerHeight,
-				topPos = (itemPos.top + itemPos.height / 2),
-				topEdge = (itemPos.top <= 8) ? "top" : "bottom";
-
-			if ((topEdge == "top") || (itemPos.bottom >= (hWindow - 8))) {
-				this.ttSnapAtEdge(tooltip, topEdge);
-				this.setArrowVertical(tooltip, topPos);
-				return;
+		
+		setItemInactive: function(item) {
+			let tooltip = item.lastElementChild;
+			if (tooltip && tooltip.childElementCount > 0) {
+				tooltip.firstElementChild.scrollTop = 0;
 			}
-
-			let ttPadding = parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding"));
-
-			let bottomPos = (hWindow - topPos),
-				rectTt = tooltip.getBoundingClientRect(),
-				overflowTop = (rectTt.height / 2) + ttPadding > topPos,
-				overflowBottom = (rectTt.height / 2) + ttPadding > bottomPos;
-
-			if (overflowTop) {
-				tooltip.style.setProperty("top", ttPadding + "px");
-			} else if (overflowBottom) {
-				tooltip.style.setProperty("bottom", ttPadding + "px");
-			} else {
-				tooltip.style.setProperty("top", topPos + "px");
-				tooltip.style.setProperty("transform", "translate(0, -50%)");
-			}
-			this.setArrowVertical(tooltip, topPos);
-		},
-
-		setTtHorizontal: function(tooltip, itemPos) {
-			let offset = (parseFloat(window.getComputedStyle(tooltip, "::after").getPropertyValue("--ttArrow-dim")) / 2) - 3,
-				minWidthTt = parseFloat(window.getComputedStyle(tooltip).minWidth) + offset;
-
-			let spaceL = itemPos.left,
-				spaceR = (window.innerWidth - itemPos.right);
-
-			if ((spaceL < minWidthTt) && (spaceR < minWidthTt)) {
-				tooltip.style.display = "none";
-				return;
-			}
-
-			let widthTt = (tooltip.getBoundingClientRect().width + offset),
-				ttLeft = (spaceL > spaceR) && (spaceR < widthTt);
-
-			tooltip.classList.toggle("ddwttTtArrowRight", ttLeft);
-			tooltip.classList.toggle("ddwttTtArrowLeft", !ttLeft);
-
-			let ttPadding = parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding")),
-				space = (ttLeft ? spaceL : spaceR) - ttPadding;
-			if (space < widthTt) {
-				tooltip.style.setProperty("width", space + "px");
-				widthTt = space + offset;
-			}
-			let leftPos = (ttLeft ? (spaceL - widthTt) : (itemPos.right + offset));
-			tooltip.style.setProperty("left", leftPos + "px");
+			item.classList.remove(this.actItemCl);
+			
+			const mouseleaveEvent = new Event('mouseleave', { 'bubbles': true });
+			item.dispatchEvent(mouseleaveEvent);
 		},
 
 		lostFocus: function() {
@@ -3533,16 +3459,6 @@ services.form = {
 					}
 				}
 			}, 150);
-		},
-
-		setItemInactive: function(item) {
-			let tooltip = item.lastElementChild;
-			if (tooltip && tooltip.childElementCount > 0) {
-				tooltip.firstElementChild.scrollTop = 0;
-			}
-			item.classList.remove(this.actItemCl);
-			const mouseleaveEvent = new Event('mouseleave', { 'bubbles': true });
-			item.dispatchEvent(mouseleaveEvent);
 		},
 
 		keyPressed: function(event, multi) {
@@ -3589,7 +3505,7 @@ services.form = {
 						return;
 					} else {
 						// set previous item active
-						this.positionTt(previous, true);
+						this.setItemActive(previous, true);
 						break;
 					}
 
@@ -3617,7 +3533,7 @@ services.form = {
 						return;
 					} else {
 						// set next item active
-						this.positionTt(next, true);
+						this.setItemActive(next, true);
 						break;
 					}
 
@@ -3633,7 +3549,7 @@ services.form = {
 						return;
 					} else {
 						// set first item active
-						this.positionTt(first, true);
+						this.setItemActive(first, true);
 						break;
 					}
 
@@ -3693,7 +3609,7 @@ services.form = {
 						return;
 					} else {
 						ddList.scrollBy({ top: scrollH, behavior: "smooth" });
-						this.positionTt(activeItem, false);
+						this.setItemActive(activeItem, false);
 						return;
 					}
 
@@ -3714,7 +3630,7 @@ services.form = {
 						return;
 					} else {
 						// set last item active
-						this.positionTt(last, true);
+						this.setItemActive(last, true);
 						break;
 					}
 
@@ -3793,7 +3709,7 @@ services.form = {
 				}
 			}
 			if (firstItem) {
-				this.positionTt(firstItem, true);
+				this.setItemActive(firstItem, true);
 			}
 		},
 

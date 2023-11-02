@@ -340,8 +340,17 @@ public class I18NConstantsBase {
 		 *        A {@link StringBuilder} filled with the qualified name of the given field.
 		 */
 		protected void init(Field constantField, StringBuilder qualifiedKeyBuilder) throws IllegalAccessException {
-			String qualifiedKey = qualifiedKeyBuilder.toString();
-			constantField.set(null, ResKey.internalCreate(qualifiedKey));
+			constantField.set(null, toResKey(qualifiedKeyBuilder));
+		}
+
+		/**
+		 * Creates a {@link ResKey} from the qualified name of the field.
+		 *
+		 * @param qualifiedKeyBuilder
+		 *        Value given in {@link #init(Field, StringBuilder)}.
+		 */
+		protected ResKey toResKey(StringBuilder qualifiedKeyBuilder) {
+			return ResKey.internalCreate(qualifiedKeyBuilder.toString());
 		}
 
 	}

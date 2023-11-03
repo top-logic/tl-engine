@@ -15,6 +15,7 @@ import java.util.Map;
 import com.top_logic.base.services.simpleajax.ElementReplacement;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.IDBuilder;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
@@ -383,7 +384,7 @@ public class DropDownControl extends AbstractSelectControl {
 			out.append(custom);
 		}
 		if (showWait(this)) {
-			if ((custom != null) && (custom != "")) {
+			if (!StringServices.isEmpty(custom)) {
 				out.append(", ");
 			}
 			out.append("true);");

@@ -192,6 +192,12 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		Map<String, Integer> parameterIndex = MapUtil.createIndexMap(parameterNames);
 
 		MethodSpec methodSpec = new MethodSpec() {
+
+			@Override
+			public String getMethodName() {
+				return methodName;
+			}
+
 			@Override
 			public List<String> getParameterNames() {
 				return parameterNames;
@@ -201,7 +207,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 			public int getParameterIndex(String name) {
 				Integer result = parameterIndex.get(name);
 				if (result == null) {
-					Logger.error("Undefined parameter '" + name + "' in method '" + methodName + "'.",
+					Logger.error("Undefined parameter '" + name + "' in method '" + getMethodName() + "'.",
 						ServiceMethodRegistry.class);
 					return 0;
 				}

@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.client.registry.impl.call.request;
+package com.top_logic.service.openapi.server.impl;
 
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -14,14 +14,9 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en {0} is not a legal content type in part {1}.
+	 * @en Error when compiling operation for path "{0}" with parameters "{1}".
 	 */
-	public static ResKey2 ILLEGAL_CONTENT_TYPE__TYPE_NAME;
-
-	/**
-	 * @en Error when compiling request body for method "{0}" with parameters "{1}".
-	 */
-	public static ResKey2 ERROR_COMPILING_EXPR__METHOD_PARAMETERS;
+	public static ResKey2 ERROR_COMPILING_EXPRESSION__PATH_PARAMETERS;
 
 	static {
 		initConstants(I18NConstants.class);

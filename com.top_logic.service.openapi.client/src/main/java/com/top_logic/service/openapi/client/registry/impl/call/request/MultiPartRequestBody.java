@@ -161,8 +161,7 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 		for (int i = 0; i < executors.length; i++) {
 			MultiPartContent part = parts.get(i);
 			Expr expr = part.getContent();
-			expr = JSONRequestBody.addMethodParameters(expr, method);
-			executors[i] = QueryExecutor.compile(expr);
+			executors[i] = JSONRequestBody.compileWithMethodParameters(expr, method);
 		}
 		switch (getConfig().getTransferType()) {
 			case FORM_DATA:

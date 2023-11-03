@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.element.layout.formeditor.builder.EditFormBuilder$UIOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.layout.form.component.edit.EditMode$Config">
+		<annotations>
+			<display-inherited value="APPEND"/>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="form, commons"/>
+		</property>
+	</properties>
+
+	<settings name="Form"
+		dialogs="${dialogs}"
+		editMode="${editMode}"
+		model="${model}"
+		titleKey="${name}"
+	>
+		<modelBuilder class="com.top_logic.element.layout.formeditor.builder.EditFormBuilder"
+			showNoModel="${showNoModel}"
+			type="${type}"
+		>
+			<forms>${forms}</forms>
+		</modelBuilder>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+			<reference command-id="configureEditFormDefinitionCommand"/>
+			<reference command-id="deleteEditFormDefinitionCommand"/>
+		</buttons>
+	</settings>
+</config:template>

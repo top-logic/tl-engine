@@ -25,6 +25,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -88,33 +89,41 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 		definitions.defineVar(COPY_OPERATION, operation);
 		try {
-			if (arguments.length >= 1) {
-				operation.setContext(asTLObject(arguments[0]), null);
-				if (arguments.length >= 2) {
-					Object filterArgument = arguments[1];
-					if (filterArgument instanceof Boolean) {
-						// Interpret as constant function.
-						if (!((Boolean) filterArgument).booleanValue()) {
-							operation.setFilter((part, value, context) -> false);
-						} else {
-							// The true filter is default.
-						}
-					} else {
-						SearchExpression filterExpr = asSearchExpression(filterArgument);
-						operation.setFilter((part, value, context) -> {
-							return asBoolean(filterExpr.eval(definitions, part, value, context));
-						});
-					}
+			Object copyContext = arguments[0];
+			Object filterArgument = arguments[1];
+			Object constructor = arguments[2];
+			Boolean transientCopy = asBooleanOrNull(arguments[3]);
 
-					if (arguments.length >= 3) {
-						SearchExpression constructorExpr = asSearchExpression(arguments[2]);
-						operation.setConstructor((orig, reference, context) -> {
-							return asTLObject(constructorExpr,
-								constructorExpr.eval(definitions, orig, reference, context));
-						});
+			if (copyContext != null) {
+				operation.setContext(asTLObject(copyContext), null);
+			}
+
+			if (filterArgument != null) {
+				if (filterArgument instanceof Boolean) {
+					// Interpret as constant function.
+					if (!((Boolean) filterArgument).booleanValue()) {
+						operation.setFilter((part, value, context) -> false);
+					} else {
+						// The true filter is default.
 					}
+				} else {
+					SearchExpression filterExpr = asSearchExpression(filterArgument);
+					operation.setFilter((part, value, context) -> {
+						return asBoolean(filterExpr.eval(definitions, part, value, context));
+					});
 				}
 			}
+
+			if (constructor != null) {
+				SearchExpression constructorExpr = asSearchExpression(constructor);
+				operation.setConstructor((orig, reference, context) -> {
+					return asTLObject(constructorExpr,
+						constructorExpr.eval(definitions, orig, reference, context));
+				});
+			}
+
+			operation.setTransient(transientCopy);
+
 			Object result = evalPotentialFlatMap(definitions, self, operation);
 
 			operation.finish();
@@ -126,6 +135,10 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 				definitions.deleteVar(COPY_OPERATION);
 			}
 		}
+	}
+
+	private static Boolean asBooleanOrNull(Object object) {
+		return object == null ? null : asBoolean(object);
 	}
 
 	@Override
@@ -198,8 +211,18 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 
 		private CopyConstructor _constructor = this;
 
+		private Boolean _transientCopy;
+
 		public void setFilter(CopyFilter filter) {
 			_filter = filter;
+		}
+
+		/**
+		 * Whether to allocate transient objects by default (if no explicit constructor function is
+		 * given).
+		 */
+		public void setTransient(Boolean transientCopy) {
+			_transientCopy = transientCopy;
 		}
 
 		public void setConstructor(CopyConstructor constructor) {
@@ -287,7 +310,12 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 			}
 
 			TLClass classType = (TLClass) type;
-			return _factory.createObject(classType, context, null);
+			boolean copyTransient = _transientCopy == null ? orig.tTransient() : _transientCopy;
+			if (copyTransient) {
+				return TransientObjectFactory.INSTANCE.createObject(classType, context);
+			} else {
+				return _factory.createObject(classType, context);
+			}
 		}
 
 		private void copyComposite(TLObject orig, TLReference reference, TLObject copy) {
@@ -482,6 +510,13 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 	 * {@link MethodBuilder} creating {@link Copy}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Copy> {
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.optional("context")
+			.optional("filter")
+			.optional("constructor")
+			.optional("transient")
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -490,11 +525,13 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 
 		@Override
-		public Copy build(Expr expr, SearchExpression self, SearchExpression[] args)
-				throws ConfigurationException {
-			checkMinArgs(expr, args, 0);
-			checkMaxArgs(expr, args, 3);
+		public Copy build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
 			return new Copy(getConfig().getName(), self, args);
+		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 	}
 

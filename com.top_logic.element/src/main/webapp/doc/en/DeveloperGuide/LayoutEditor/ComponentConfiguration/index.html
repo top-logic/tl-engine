@@ -1,0 +1,11 @@
+<p>The settings that can be made via the "Edit View" dialog differ in detail from component to component and are explained via tooltips in the settings. A common concept for all components, however, is the communication between the components.</p>
+
+<p>In general, the amount of information displayed in a view (component) depends on selections made by the user in other components. For example, if a form is located next to a table, the form should react to the row selection in the table and display or edit the properties of the selected object.</p>
+
+<p>Interaction between components is implemented in TopLogic using so-called component channels. A component channel is provided by one component (e.g. the selection in a table) and subscribed to by another component (the model of the adjacent form).</p>
+
+<p>Which channels a component provides depends on its type. Practically every component has a model channel. This channel defines what information the component should display. For example, a form displays the properties of the object that is made available to the form via the model channel. In addition to the model channel, tables and trees also have a selection channel through which they make available the rows selected by the user.</p>
+
+<p>When configuring a component, its channels can be linked to the channels of other components. In the example "Form shows selection in a table", the model channel of the form is linked to the selection channel of the table.</p>
+
+<p> </p>

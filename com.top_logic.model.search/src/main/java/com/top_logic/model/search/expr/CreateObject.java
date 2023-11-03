@@ -5,15 +5,14 @@
  */
 package com.top_logic.model.search.expr;
 
-import java.util.List;
-
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLType;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -21,9 +20,7 @@ import com.top_logic.util.model.ModelService;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateObject extends GenericMethod {
-
-	private static final String METHOD_NAME = "new";
+public class CreateObject extends AbstractObjectCreation {
 
 	/**
 	 * Creates a {@link CreateObject}.
@@ -33,42 +30,36 @@ public class CreateObject extends GenericMethod {
 	 * @param args
 	 *        The optional create context (at most a single argument).
 	 */
-	CreateObject(SearchExpression self, SearchExpression[] args) {
-		super(METHOD_NAME, self, args);
+	CreateObject(String name, SearchExpression self, SearchExpression[] args) {
+		super(name, self, args);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new CreateObject(self, arguments);
-	}
-
-	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		SearchExpression self = getSelf();
-		if (self instanceof Literal) {
-			return (TLClass) ((Literal) self).getValue();
-		} else {
-			// No type can be determined without evaluating the self expression.
-			return null;
-		}
-	}
-
-	@Override
-	public boolean isSideEffectFree() {
-		return false;
+		return new CreateObject(getName(), self, arguments);
 	}
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
 		TLClass type = (TLClass) asStructuredTypeNonNull(self, getSelf());
-		TLObject context = asTLObject(arguments.length > 0 ? arguments[0] : null);
-		return ModelService.getInstance().getFactory().createObject(type, context, null);
+		TLObject context = asTLObject(arguments[0]);
+		boolean transientObject = asBoolean(arguments[1]);
+		if (transientObject) {
+			return TransientObjectFactory.INSTANCE.createObject(type, context);
+		} else {
+			return ModelService.getInstance().getFactory().createObject(type, context, null);
+		}
 	}
 
 	/**
 	 * Builder creating a {@link CreateObject} expression.
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<CreateObject> {
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.optional("context")
+			.optional("transient", false)
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -79,8 +70,12 @@ public class CreateObject extends GenericMethod {
 		@Override
 		public CreateObject build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMaxArgs(expr, args, 1);
-			return new CreateObject(self, args);
+			return new CreateObject(getName(), self, args);
+		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 	}
 

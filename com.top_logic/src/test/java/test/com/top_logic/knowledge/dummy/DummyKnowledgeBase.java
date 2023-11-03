@@ -44,14 +44,13 @@ import com.top_logic.knowledge.search.HistoryQueryArguments;
 import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.search.RevisionQueryArguments;
 import com.top_logic.knowledge.service.AbstractKnowledgeBase;
-import com.top_logic.knowledge.service.AbstractTransaction;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.CompiledQueryCache;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
-import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.NoHistoryManager;
+import com.top_logic.knowledge.service.NoTransaction;
 import com.top_logic.knowledge.service.ReaderConfig;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
@@ -135,29 +134,7 @@ public class DummyKnowledgeBase extends AbstractKnowledgeBase {
 	
 	@Override
 	public Transaction beginTransaction(Message commitMessage) {
-		return new AbstractTransaction(this) {
-			
-			@Override
-			public boolean isNested() {
-				return false;
-			}
-			
-			@Override
-			protected void internalRollback(Message message, Throwable cause) {
-				// Ignore.
-			}
-			
-			@Override
-			protected void internalCommit() throws KnowledgeBaseException {
-				// Ignore.
-			}
-			
-			@Override
-			protected Revision internalGetCommitRevision() {
-				return null;
-			}
-			
-		};
+		return new NoTransaction(this);
 	}
 	
 	/**

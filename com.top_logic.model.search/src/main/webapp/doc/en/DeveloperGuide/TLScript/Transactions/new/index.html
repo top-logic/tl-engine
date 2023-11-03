@@ -1,45 +1,67 @@
 <h2>Syntax</h2>
-<pre>	<code>new(`my.module:MyType`)
-new(`my.module:MyType`, $context)
+
+<pre>
+<code>new(`my.module:MyType`)
+new(`my.module:MyType`, context: $context, transient: false)
 </code>
 </pre>
+
 <h2>Description</h2>
+
 <p>Creates a new object of the specified type. As an optional context, another object can be specified in whose logical context the new object will be created. This context object is available when calculating default values of attributes of the newly created object.</p>
+
 <p>Typically, the object in whose composition reference the newly created object will be stored should be passed as the context. When creating a tree structure, the parent node has a composition reference "children", in which a newly created child node will be stored after creation. So when creating the child node, the parent node should be given as a context object.</p>
-<p></p>
+
+<p> </p>
+
 <h2>Parameters</h2>
+
 <table class="tlDocTable">
- <thead>
-  <tr>
-   <th>Name</th>
-   <th>Type</th>
-   <th>Description</th>
-   <th>Mandatory</th>
-   <th>Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>type-literal</td>
-   <td>String</td>
-   <td>Literal of the object type from which a new object is to be created.</td>
-   <td>yes</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td>context</td>
-   <td>Object</td>
-   <td>The object in whose context the creation takes place. Can be used for standard value calculations for attributes.</td>
-   <td>no</td>
-   <td><code class="hljs inlineCode">null</code></td>
-  </tr>
- </tbody>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>type-literal</td>
+			<td>String</td>
+			<td>Literal of the object type from which a new object is to be created.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>context</td>
+			<td>Object</td>
+			<td>The object in whose context the creation takes place. Can be used for standard value calculations for attributes.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">null</code></td>
+		</tr>
+		<tr>
+			<td>transient</td>
+			<td>Boolean</td>
+			<td>Whether a transient object should be created. Transient objects are only visible locally in the user's session and cannot be stored in the reference of a persistent object. Conversely, however, a transient object can reference normal persistent objects in its references.</td>
+			<td>no</td>
+			<td>false</td>
+		</tr>
+	</tbody>
 </table>
+
 <h2>Return value</h2>
-<p><span style="color:#3498db"><strong>Type:</strong></span> Subject object</p>
+
+<p><span style="color:#3498db"><strong>type:</strong></span> Subject object</p>
+
 <p>The newly created object of type <code class="hljs inlineCode">my.module:MyType</code>.</p>
+
 <h2>Examples</h2>
-<pre>	<code>new(`my.module:MyClass`)
+
+<pre>
+	<code>new(`my.module:MyClass`)
 </code>
 </pre>
-<p><span style="color:#3498db"><strong>Output:</strong></span> Creates an object of the type <code class="hljs inlineCode">my.module:MyClass</code>.</p>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> Creates an object of type <code class="hljs inlineCode">my.module:MyClass</code>.</p>

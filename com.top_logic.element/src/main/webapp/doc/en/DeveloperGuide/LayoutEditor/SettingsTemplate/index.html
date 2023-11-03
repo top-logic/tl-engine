@@ -1,0 +1,5 @@
+<p>The Settings Component layout template is special because a view configured over it does not represent application model data, but provides a form for editing session-local settings (usually for other components).</p>
+
+<p>To configure a settings component, you need a name and a type that describes the fields of the settings form. This type is a regular model type that can be created using the <a class="tlObject" href="?page=Classes&amp;uuid=943d549c-c0d4-476e-8c1b-125027dfa575">Model Editor</a> like all other elements of the application model. However, only one <a class="tlObject" href="?page=new&amp;uuid=c24d295c-433b-4ac6-9e90-0f8427b399e6">transient object of</a> this type is created and edited in the settings component.</p>
+
+<p>The object edited in a settings component is available for subscription by other components via the component's <code class="hljs inlineCode">output</code> channel. In this way, it is possible, for example, to have options for the calculation of rows in a table entered via a form without these entries having to be persistently present in the database.</p>

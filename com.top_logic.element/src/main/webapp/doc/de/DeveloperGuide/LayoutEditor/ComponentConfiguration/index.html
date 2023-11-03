@@ -1,0 +1,11 @@
+<p>Die Einstellungen, welche über den Dialog "Sicht bearbeiten" vorgenommen werden können, unterscheiden sich im Detail von Komponente zu Komponente und werden über Tooltips bei den Einstellungen erklärt. Ein gemeinsames Konzept für alle Komponenten ist aber die Kommunikation der Komponenten untereinander.</p>
+
+<p>In aller Regel hängt die Menge an Informationen, die in einer Sicht (Komponente) angezeigt werden, von Auswahlen ab, die der Nutzer in anderen Komponenten getätigt hat. Steht ein Formular neben einer Tabelle, so soll z.B. das Formular auf die Zeilenselektion in der Tabelle reagieren und die Eigenschaften des selektierten Objektes anzeigen bzw. bearbeiten.</p>
+
+<p>Die Interaktion zwischen Komponenten wird in TopLogic über sog. Komponetenkanäle realisiert. Ein Komponentenkanal wird von einer Komponente bereitgestellt (z.B. die Selektion in einer Tabelle) und von einer anderen Komponente aboniert (das Modell des nebenstehenden Formulars).</p>
+
+<p>Welche Kanäle eine Komponente bereitstellt hängt von ihrem Typ ab. Praktisch jede Komponente verfügt über einen Modell-Kanal. Über diesen Kanal wird definiert, welche Informationen die Komponente anzeigen soll. So zeigt ein Formular die Eigenschaften desjenigen Objektes an, das über den Modell-Kanal dem Formular zur Verfügung gestellt wird. Tabellen und Bäume verfügen neben dem Modell-Kanal noch über einen Selektionskanal, über den sie die durch den Nutzer selektierten Zeilen zur Verfügung stellen.</p>
+
+<p>Bei der Konfiguration einer Komponente können ihre Kanäle mit den Kanälen anderer Komponenten verknüpft werden. In dem Beispiel "Formular zeigt Selektion in einer Tabelle" wird der Modell-Kanal des Formulars mit dem Selektionskanal der Tabelle verknüpft.</p>
+
+<p> </p>

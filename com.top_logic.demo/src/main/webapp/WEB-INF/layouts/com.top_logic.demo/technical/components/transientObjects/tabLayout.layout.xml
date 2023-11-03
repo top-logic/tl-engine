@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_5d0ae9c2_54ce_4f83_99ff_da2fbf853f1e">
+		<tabLabel key="dynamic.da03270f-6d12-464f-9302-c175623bd1db">
+			<en>Transient objects</en>
+			<de>Transiente Objekte</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

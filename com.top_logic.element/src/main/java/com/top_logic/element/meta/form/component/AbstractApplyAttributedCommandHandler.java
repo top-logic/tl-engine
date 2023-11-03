@@ -44,8 +44,8 @@ public abstract class AbstractApplyAttributedCommandHandler extends AbstractAppl
      *           {@link AttributeFormContext}).
      */
     public boolean saveMetaAttributes(FormContext aContext) {
-        if (aContext instanceof AttributeFormContext) {
-            ((AttributeFormContext) aContext).store();
+		if (aContext != null) {
+			aContext.store();
 			return true;
         }
         return false;

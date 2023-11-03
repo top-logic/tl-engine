@@ -137,12 +137,7 @@ public class AttributeFormContext extends FormContext {
 		return _updateContainer.createObject(type, domain, container, constructor);
 	}
 
-    /**
-	 * Transfers all values in this {@link FormContext} to the underlying
-	 * {@link #getAttributeUpdateContainer()}.
-	 * 
-	 * @see AttributeUpdateContainer#store()
-	 */
+	@Override
 	public void store() {
 		_updateContainer.store();
 	}

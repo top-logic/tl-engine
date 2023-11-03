@@ -147,6 +147,6 @@ public class EditFormBuilder extends ConfiguredDynamicFormBuilder {
 
 	private boolean isTypeInstance(Object model) {
 		return _type == null
-			|| ((model instanceof TLObject) && TLModelUtil.isCompatibleInstance(_type, (TLObject) model));
+			|| ((model instanceof TLObject) && TLModelUtil.isCompatibleInstance(_type, model));
 	}
 }

@@ -68,7 +68,7 @@ public class StructuredTextUtil {
 				try (InputStream in = binaryData.getStream()) {
 					StreamUtilities.copyStreamContents(in, Base64.getEncoder().wrap(srcBuilder));
 				}
-				newSrc = srcBuilder.toString(charset.name());
+				newSrc = srcBuilder.toString(charset);
 			}
 			I18NStructuredTextUtil.setSrcValue(localImg, newSrc);
 		}

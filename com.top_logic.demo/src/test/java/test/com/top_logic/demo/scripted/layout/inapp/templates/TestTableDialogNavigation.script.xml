@@ -409,7 +409,7 @@
 					command-name="showPrevious"
 					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
 					component-name="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml#Dialog"
-					reason-key="tl.executable.disabled"
+					reason-key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.firstRow"
 					user-id="root"
 				>
 					<arguments/>
@@ -458,7 +458,7 @@
 					command-name="showNext"
 					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
 					component-name="a06e911a-c6e2-4ca0-ac91-51a428fa3b8d.layout.xml#Dialog"
-					reason-key="tl.executable.disabled"
+					reason-key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.lastRow"
 					user-id="root"
 				>
 					<arguments/>

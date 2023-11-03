@@ -59,11 +59,17 @@ public class ServiceMethodBuilderByExpression extends AbstractConfiguredInstance
 		 * The operation to execute upon request.
 		 * 
 		 * <p>
-		 * Expected is an expression that creates a value that can be serialized as JSON value.
+		 * The expression has access to the implicit parameters defined for this service method.
 		 * </p>
 		 * 
 		 * <p>
-		 * The expression has access to the implicit parameters defined for this service method.
+		 * The script is expected to return a JSON-serializable object if the request is successful.
+		 * </p>
+		 * 
+		 * <p>
+		 * Alternatively, a response object can be created and returned. This response object then
+		 * defines the status code and the content of the response. Such a response object can be
+		 * created using the <i>response</i> function.
 		 * </p>
 		 * 
 		 * @implNote Note that {@link PlainEditor} instead of the default {@link Editor} for

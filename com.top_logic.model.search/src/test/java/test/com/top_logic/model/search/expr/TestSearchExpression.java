@@ -1046,8 +1046,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(true, execute(search("[1.0, 2.0].containsElement(1.0)")));
 		assertEquals(false, execute(search("[1.0, 2.0].containsElement(1.1)")));
 
-		// 1 == 1.toInt()
-		// 1 == 1.1.toInt()
 		assertEquals(true, execute(search("[1, [\"a\", \"b\"].size()].containsElement([\"a\", \"b\"].size())")));
 
 		assertEquals(true, execute(search("[1, 2].containsElement([\"a\", \"b\"].size()+0)")));
@@ -1062,6 +1060,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(true, execute(search("count(0, 3).containsElement(2)")));
 		assertEquals(true, execute(search("count(0, 3).containsElement(2.0)")));
 		assertEquals(true, execute(search("count(0, 3).containsElement(1 + 1)")));
+
+		assertEquals(true, execute(search("100 == 1e2")));
+		assertEquals(true, execute(search("157.6 == 1.576E2")));
 	}
 
 	public void testNullFragment() throws ParseException {

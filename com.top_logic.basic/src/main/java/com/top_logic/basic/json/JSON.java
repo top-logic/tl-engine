@@ -301,9 +301,15 @@ public class JSON {
 		case ValueAnalyzer.INTEGER_TYPE:
 			out.append(valueAnalyzer.getNumber(object).toString());
 			break;
-		case ValueAnalyzer.FLOAT_TYPE:
-			out.append(valueAnalyzer.getNumber(object).toString());
+		case ValueAnalyzer.FLOAT_TYPE: {
+			double num = valueAnalyzer.getNumber(object).doubleValue();
+			if (num == Math.floor(num)) {
+				out.append(Long.toString((long) num));
+			} else {
+				out.append(Double.toString(num));
+			}
 			break;
+		}
 		case ValueAnalyzer.STRING_TYPE:
 			String s = valueAnalyzer.getString(object);
 			writeString(out, s);

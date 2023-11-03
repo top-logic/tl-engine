@@ -1,8 +1,12 @@
 <h2>Syntax</h2>
-<pre>	<code>response($status_code, $result, $content_type)</code>
+<pre><code>response(
+  statusCode: $statusCode, 
+  content: $content, 
+  contentType: $contentType
+)</code>
 </pre>
 <h2>Description</h2>
-<p>Creates a response object that will be returned to an HTTP request</p>
+<p>Creates a response object that will be returned to an HTTP request.</p>
 <h2>Parameters</h2>
 <table class="tlDocTable" >
  <thead>
@@ -16,14 +20,14 @@
  </thead>
  <tbody>
   <tr>
-   <td>status_code</td>
+   <td>statusCode</td>
    <td >Number</td>
-   <td >Status code for the response. HTTP response codes are specified here, e.g. 200 (OK) or 404 (NOT FOUND)</td>
+   <td >Status code for the response. HTTP response codes are specified here, e.g. 200 (OK) or 404 (NOT FOUND).</td>
    <td>yes</td>
    <td ></td>
   </tr>
   <tr>
-   <td>result</td>
+   <td>content</td>
    <td >
     <table class="tlDocTable" >
      <tbody>
@@ -37,13 +41,13 @@
    <td ></td>
   </tr>
   <tr>
-   <td>content_type</td>
+   <td>contentType</td>
    <td >String</td>
    <td >
     <table class="tlDocTable">
      <tbody>
       <tr>
-       <td>Content type of the response. Must match the answer</td>
+       <td>Content type of the response. The content type must be appropriate to the result of the answer.</td>
       </tr>
      </tbody>
     </table></td>
@@ -71,6 +75,3 @@
   "text/html");
 </code>
 </pre>
-<p></p>
-<p></p>
-<p></p>

@@ -556,6 +556,10 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 	/**
 	 * Converts the given number to an object according to TL-Script number semantics.
+	 * 
+	 * <p>
+	 * Note: Use this method before returning a potentially numeric value from a TL-Script function.
+	 * </p>
 	 */
 	public static Double toNumber(double value) {
 		return Double.valueOf(value);
@@ -563,15 +567,29 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 	/**
 	 * Converts the given number to an object according to TL-Script number semantics.
+	 * 
+	 * <p>
+	 * Note: Use this method before returning a numeric value from a TL-Script function.
+	 * </p>
 	 */
 	public static Double toNumber(int value) {
+		if (value >= MIN && value <= MAX) {
+			return NUMBER_CACHE[value - MIN];
+		}
 		return Double.valueOf(value);
 	}
 
 	/**
 	 * Converts the given number to an object according to TL-Script number semantics.
+	 * 
+	 * <p>
+	 * Note: Use this method before returning a numeric value from a TL-Script function.
+	 * </p>
 	 */
 	public static Double toNumber(long value) {
+		if (value >= MIN && value <= MAX) {
+			return NUMBER_CACHE[((int) value) - MIN];
+		}
 		return Double.valueOf(value);
 	}
 
@@ -768,4 +786,18 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		return ResourcesModule.localeFromString(language);
 	}
 
+	private static final int MIN = -128;
+
+	private static final int MAX = 127;
+
+	private static final Double[] NUMBER_CACHE;
+
+	static {
+		int cnt = MAX - MIN + 1;
+		Double[] numbers = new Double[cnt];
+		for (int num = MIN; num <= MAX; num++) {
+			numbers[num - MIN] = Double.valueOf(num);
+		}
+		NUMBER_CACHE = numbers;
+	}
 }

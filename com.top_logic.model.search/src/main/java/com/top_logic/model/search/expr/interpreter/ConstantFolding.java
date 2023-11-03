@@ -249,7 +249,7 @@ public class ConstantFolding {
 				return literal(expr.compute(literalValue(listResult)));
 			}
 			if (listResult instanceof ListExpr) {
-				return literal(((ListExpr) listResult).getElements().length);
+				return literal(SearchExpression.toNumber(((ListExpr) listResult).getElements().length));
 			}
 			return super.composeSize(expr, arg, listResult);
 		}

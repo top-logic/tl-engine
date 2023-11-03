@@ -33,13 +33,13 @@ public class Length extends UnaryOperation {
 	public final Object compute(Object value) {
 		if (value == null) {
 			// Identifiy null and the emtpy string.
-			return 0;
+			return toNumber(0);
 		}
 		if (!(value instanceof CharSequence)) {
 			// Cannot compute length.
 			return null;
 		}
-		return ((CharSequence) value).length();
+		return toNumber(((CharSequence) value).length());
 	}
 
 	@Override

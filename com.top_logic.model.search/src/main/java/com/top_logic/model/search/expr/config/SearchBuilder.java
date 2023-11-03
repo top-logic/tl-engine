@@ -469,7 +469,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 
 	@Override
 	public SearchExpression visit(NumberLiteral expr, TLModel arg) throws ConfigurationException {
-		return literal(expr.getValue());
+		return literal(SearchExpression.toNumber(expr.getValue()));
 	}
 
 	@Override

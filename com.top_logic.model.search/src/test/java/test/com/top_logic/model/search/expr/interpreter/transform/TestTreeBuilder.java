@@ -43,7 +43,7 @@ public class TestTreeBuilder extends TestCase {
 		TLStructuredTypePart foo = TLModelUtil.addProperty(A, "foo", TLCore.getPrimitiveType(model, Kind.INT));
 		TLStructuredTypePart bar = TLModelUtil.addProperty(A, "bar", TLCore.getPrimitiveType(model, Kind.STRING));
 
-		SearchExpression expr = foreach(filter(all(A), lambda("x", isEqual(literal(42), access(var("x"), foo)))),
+		SearchExpression expr = foreach(filter(all(A), lambda("x", isEqual(literal(SearchExpression.toNumber(42)), access(var("x"), foo)))),
 			lambda("y", access(var("y"), bar)));
 
 		assertRoundTrip(expr);

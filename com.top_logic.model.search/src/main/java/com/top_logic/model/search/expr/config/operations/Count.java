@@ -61,14 +61,14 @@ public class Count extends SimpleGenericMethod {
 		} else {
 			step = 1;
 		}
-		ArrayList<Integer> result = new ArrayList<>(Math.max(0, stop - start));
+		ArrayList<Double> result = new ArrayList<>(Math.max(0, stop - start));
 		if (step > 0) {
 			for (int n = start; n < stop; n += step) {
-				result.add(Integer.valueOf(n));
+				result.add(SearchExpression.toNumber(n));
 			}
 		} else {
 			for (int n = start; n > stop; n += step) {
-				result.add(Integer.valueOf(n));
+				result.add(SearchExpression.toNumber(n));
 			}
 		}
 		return result;

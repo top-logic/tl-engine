@@ -37,14 +37,14 @@ public class Size extends UnaryOperation {
 	public final Object compute(Object list) {
 		if (list == null) {
 			// Identify null and the empty list.
-			return 0;
+			return toNumber(0);
 		} else if (list instanceof Collection<?>) {
-			return ((Collection<?>) list).size();
+			return toNumber(((Collection<?>) list).size());
 		} else if (list instanceof Map<?, ?>) {
-			return ((Map<?, ?>) list).size();
+			return toNumber(((Map<?, ?>) list).size());
 		} else {
 			// Identify an object and the singleton list containing only this object.
-			return 1;
+			return toNumber(1);
 		}
 	}
 

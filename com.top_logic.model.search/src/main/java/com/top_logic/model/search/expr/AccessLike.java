@@ -53,7 +53,7 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart> {
 	 * @return The value of the given attribute.
 	 */
 	default Object lookupValue(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-		return self.tValue(part);
+		return SearchExpression.normalizeValue(self.tValue(part));
 	}
 
 }

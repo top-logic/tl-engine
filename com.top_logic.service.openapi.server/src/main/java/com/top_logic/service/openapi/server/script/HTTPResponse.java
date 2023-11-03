@@ -18,6 +18,7 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 
 /**
  * Creates an HTTP response object to deliver to an {@link HttpServletResponse}.
@@ -47,12 +48,7 @@ public class HTTPResponse extends GenericMethod {
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
 		int sc = asInt(arguments[0]);
 		Object result = arguments[1];
-		String contentType;
-		if (arguments.length > 2) {
-			contentType = asString(arguments[2]);
-		} else {
-			contentType = JsonUtilities.JSON_CONTENT_TYPE;
-		}
+		String contentType = asString(arguments[2]);
 		return new Response(sc, result, contentType);
 	}
 
@@ -60,6 +56,13 @@ public class HTTPResponse extends GenericMethod {
 	 * {@link AbstractSimpleMethodBuilder} creating {@link HTTPResponse}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<HTTPResponse> {
+
+		/** Description of parameters for a {@link HTTPResponse}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("statusCode")
+			.mandatory("content")
+			.optional("contentType", JsonUtilities.JSON_CONTENT_TYPE)
+			.build();
 
 		/**
 		 * Creates a {@link Builder}.
@@ -71,8 +74,12 @@ public class HTTPResponse extends GenericMethod {
 		@Override
 		public HTTPResponse build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkArgs(expr, args, 2, 3);
 			return new HTTPResponse(getConfig().getName(), self, args);
+		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 
 		@Override

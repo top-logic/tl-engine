@@ -1,8 +1,12 @@
 <h2>Syntax</h2>
-<pre>	<code>response($status_code, $result, $content_type)</code>
+<pre><code>response(
+  statusCode: $statusCode, 
+  content: $content, 
+  contentType: $contentType
+)</code>
 </pre>
 <h2>Beschreibung</h2>
-<p>Erstellt ein Antwort-Objekt dass auf eine HTTP-Anfrage zurückgegeben wird</p>
+<p>Erstellt ein Antwort-Objekt, dass auf eine HTTP-Anfrage zurückgegeben wird.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -16,14 +20,14 @@
  </thead>
  <tbody>
   <tr>
-   <td>status_code</td>
+   <td>statusCode</td>
    <td >Zahl</td>
-   <td >Status-Code für die Antwort. Hier werden HTTP-Response Codes angegeben, z.B. 200 (OK) oder 404 (NOT FOUND)</td>
+   <td >Status-Code für die Antwort. Hier werden HTTP-Response Codes angegeben, z.B. 200 (OK) oder 404 (NOT FOUND).</td>
    <td>ja</td>
    <td ></td>
   </tr>
   <tr>
-   <td>result</td>
+   <td>content</td>
    <td>
     <table class="tlDocTable" >
      <tbody>
@@ -32,18 +36,18 @@
       </tr>
      </tbody>
     </table></td>
-   <td >Inhalt der Anwort</td>
+   <td >Inhalt der Antwort.</td>
    <td>ja</td>
    <td></td>
   </tr>
   <tr>
-   <td>content_type</td>
+   <td>contentType</td>
    <td >Zeichenkette</td>
    <td >
     <table class="tlDocTable" >
      <tbody>
       <tr>
-       <td>Inhaltstyp der Antwort. Muss zur Antwort passen</td>
+       <td>Inhaltstyp der Antwort. Dieser muss zum Resultat der Antwort passen.</td>
       </tr>
      </tbody>
     </table></td>
@@ -71,6 +75,3 @@
   "text/html");
 </code>
 </pre>
-<p></p>
-<p></p>
-<p></p>

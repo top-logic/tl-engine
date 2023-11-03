@@ -114,7 +114,7 @@
     rows = $input[0];
     model = $input[1];
     index = $rows.elementIndex($model);
-    $index > 0;
+    $index > 0 || #"class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.firstRow";
 }]]></decision>
 								</rule-by-expression>
 							</executability>
@@ -150,7 +150,7 @@
     rows = $input[0];
     model = $input[1];
     index = $rows.elementIndex($model);
-    $index < $rows.size() - 1
+    $index < $rows.size() - 1 || #"class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.lastRow"
 }]]></decision>
 								</rule-by-expression>
 							</executability>

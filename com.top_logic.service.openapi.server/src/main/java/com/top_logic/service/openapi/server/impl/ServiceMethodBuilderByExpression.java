@@ -23,6 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.TLScriptPropertyEditor;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ServiceMethodBuilder} that can be parameterized with a TL-Script expression to execute
@@ -110,7 +111,13 @@ public class ServiceMethodBuilderByExpression extends AbstractConfiguredInstance
 			expr = lambda(parameters.get(n), expr);
 		}
 
-		QueryExecutor operation = QueryExecutor.compile(expr);
+		QueryExecutor operation;
+		try {
+			operation = QueryExecutor.compile(expr);
+		} catch (RuntimeException ex) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_COMPILING_EXPRESSION__PATH_PARAMETERS.fill(path, parameters), ex);
+		}
 		boolean transaction = getConfig().isTransaction();
 
 		return new ServiceMethodByExpression(path, parameters, transaction, operation);

@@ -19,6 +19,11 @@ import com.top_logic.service.openapi.client.registry.impl.value.ValueProducer;
 public interface MethodSpec {
 
 	/**
+	 * The name of the method.
+	 */
+	String getMethodName();
+
+	/**
 	 * The defined parameter names.
 	 */
 	List<String> getParameterNames();

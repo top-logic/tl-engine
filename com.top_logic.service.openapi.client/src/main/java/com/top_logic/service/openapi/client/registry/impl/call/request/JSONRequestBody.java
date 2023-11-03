@@ -18,6 +18,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.json.JSON;
@@ -30,6 +31,7 @@ import com.top_logic.service.openapi.client.registry.impl.call.Call;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilder;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilderFactory;
 import com.top_logic.service.openapi.client.registry.impl.call.MethodSpec;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Produces a {@link CallBuilder} constructing a request body in JSON format.
@@ -62,6 +64,7 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 		 * </p>
 		 */
 		@PropertyEditor(PlainEditor.class)
+		@Name(JSON)
 		Expr getJson();
 
 		/**
@@ -100,9 +103,7 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 				}
 			};
 		} else {
-			expr = addMethodParameters(expr, method);
-
-			QueryExecutor json = QueryExecutor.compile(expr);
+			QueryExecutor json = compileWithMethodParameters(expr, method);
 
 			return new JsonBodyBuilder() {
 				@Override
@@ -116,15 +117,15 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 	}
 
 	/**
-	 * Create arguments that can be used to fill parameters in {@link Expr} derived from
-	 * {@link #addMethodParameters(Expr, MethodSpec)}.
+	 * Create arguments that can be used to fill parameters in {@link QueryExecutor} derived from
+	 * {@link #compileWithMethodParameters(Expr, MethodSpec)}.
 	 *
 	 * @param call
 	 *        {@link Call} to get argument values from.
 	 * @param method
 	 *        {@link MethodSpec} that was used to define additional parameters in
-	 *        {@link #addMethodParameters(Expr, MethodSpec)}.
-	 * @return Arguments for {@link #addMethodParameters(Expr, MethodSpec) enhanced} query.
+	 *        {@link #compileWithMethodParameters(Expr, MethodSpec)}.
+	 * @return Arguments for {@link #compileWithMethodParameters(Expr, MethodSpec) enhanced} query.
 	 */
 	public static Object[] createCallArguments(Call call, MethodSpec method) {
 		List<String> parameters = method.getParameterNames();
@@ -136,8 +137,7 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 	}
 
 	/**
-	 * Enhances the given {@link Expr} such that access to the parameters in the given method are
-	 * allowed.
+	 * Enhances the given {@link Expr} such that access to the given parameters is allowed.
 	 * 
 	 * <p>
 	 * The arguments for the parameters can be get from
@@ -146,20 +146,45 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 	 *
 	 * @param expr
 	 *        Base expression.
-	 * @param method
-	 *        Method defining the available parameters.
+	 * @param parameters
+	 *        Additional available parameters.
 	 * @return Enhanced {@link Expr}.
 	 * 
 	 * @see #createCallArguments(Call, MethodSpec)
 	 */
-	public static Expr addMethodParameters(Expr expr, MethodSpec method) {
-		List<String> parameters = method.getParameterNames();
+	private static Expr addMethodParameters(Expr expr, List<String> parameters) {
 		// Note: The last argument is passed to the innermost function. Therefore, the lambdas
 		// must be constructed in reverse order.
 		for (int n = parameters.size() - 1; n >= 0; n--) {
 			expr = lambda(parameters.get(n), expr);
 		}
 		return expr;
+	}
+
+	/**
+	 * Enhanced the given {@link Expr} with parameters from the method, and compiles the result.
+	 *
+	 * <p>
+	 * The arguments for the parameters can be get from
+	 * {@link #createCallArguments(Call, MethodSpec)}.
+	 * </p>
+	 *
+	 * @param expr
+	 *        Partial {@link Expr} to compile.
+	 * @param method
+	 *        Method defining the additional parameters
+	 * 
+	 * @return Compiled enhanced expression.
+	 */
+	public static QueryExecutor compileWithMethodParameters(Expr expr, MethodSpec method) {
+		List<String> parameterNames = method.getParameterNames();
+		Expr enhanced = addMethodParameters(expr, parameterNames);
+		try {
+			return QueryExecutor.compile(enhanced);
+		} catch (RuntimeException ex) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_COMPILING_EXPR__METHOD_PARAMETERS.fill(method.getMethodName(), parameterNames), ex);
+		}
 	}
 
 	private static Expr lambda(String param, Expr expr) {

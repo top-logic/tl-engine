@@ -32,11 +32,14 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyInitializer;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.ValueInitializer;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
@@ -115,6 +118,18 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		String PARTS = "parts";
 
 		/**
+		 * The name of the {@link MultiPartBodyParameter} can be used to access all parts of the
+		 * body. It is possible to access both the declared parts and the undeclared parts.
+		 * 
+		 * <p>
+		 * The value is a mapping from the field name in the body request to the value of the field.
+		 * </p>
+		 */
+		@Override
+		@ValueInitializer(BodyNameInitializer.class)
+		String getName();
+
+		/**
 		 * There is only one body.
 		 */
 		@Override
@@ -134,6 +149,20 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		@Key(BodyPart.NAME_ATTRIBUTE)
 		Map<String, BodyPart> getParts();
 
+		/**
+		 * Initializer for the name of a {@link MultiPartBodyParameter}.
+		 * 
+		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+		 */
+		public class BodyNameInitializer implements PropertyInitializer {
+
+			@Override
+			public Object getInitialValue(PropertyDescriptor property) {
+				return "body";
+			}
+
+		}
+
 	}
 
 	/**
@@ -149,7 +178,11 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	 */
 	public interface BodyPart extends ParameterConfiguration {
 
-		// marker interface
+		/**
+		 * The name of the body parameter.
+		 */
+		@Override
+		String getName();
 
 	}
 

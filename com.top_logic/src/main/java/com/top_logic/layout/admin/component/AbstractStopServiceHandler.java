@@ -137,7 +137,7 @@ public abstract class AbstractStopServiceHandler extends AbstractConfirmationHan
 			public ExecutableState isExecutable(LayoutComponent aComponent, Object model,
 					Map<String, Object> someValues) {
 				BasicRuntimeModule<?> module = (BasicRuntimeModule<?>) model;
-				if (!module.isActive()) {
+				if (module != null && !module.isActive()) {
 					return ExecutableState
 						.createDisabledState(I18NConstants.SERVICE_NOT_STARTED__SERVICE.fill(moduleLabel(module)));
 				}

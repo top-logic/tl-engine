@@ -72,12 +72,12 @@ public class At extends SearchExpression {
 			return null;
 		} else if (self instanceof Map<?, ?>) {
 			Map<?, ?> map = (Map<?, ?>) self;
-			return map.get(indexArg);
+			return SearchExpression.normalizeValue(map.get(indexArg));
 		} else if (self instanceof List<?>) {
 			List<?> list = (List<?>) self;
 			int index = asInt(indexArg);
 			try {
-				return list.get(index);
+				return SearchExpression.normalizeValue(list.get(index));
 			} catch (IndexOutOfBoundsException ex) {
 				throw new TopLogicException(
 					I18NConstants.ERROR_INVALID_LIST_INDEX__LIST_INDEX_EXPR.fill(list, index, this));
@@ -85,7 +85,7 @@ public class At extends SearchExpression {
 		} else if (self instanceof TLObject) {
 			TLObject obj = (TLObject) self;
 			if (indexArg instanceof TLStructuredTypePart) {
-				return obj.tValue((TLStructuredTypePart) indexArg);
+				return SearchExpression.normalizeValue(obj.tValue((TLStructuredTypePart) indexArg));
 			} else {
 				String propertyName = asString(indexArg);
 				TLStructuredTypePart property = obj.tType().getPart(propertyName);
@@ -93,7 +93,7 @@ public class At extends SearchExpression {
 					throw new TopLogicException(
 						I18NConstants.ERROR_NO_SUCH_PROPERTY__OBJ_NAME_EXPR.fill(obj, propertyName, this));
 				}
-				return obj.tValueByName(propertyName);
+				return SearchExpression.normalizeValue(obj.tValueByName(propertyName));
 			}
 		} else {
 			throw new TopLogicException(I18NConstants.ERROR_LIST_MAP_OR_OBJECT_REQUIRED__VALUE_EXPR.fill(self, this));

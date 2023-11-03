@@ -505,7 +505,7 @@ public class SearchExpressionFactory {
 	 *        See {@link Literal#getValue()}.
 	 */
 	public static Literal literal(Object value) {
-		return new Literal(value);
+		return new Literal(SearchExpression.internalCheckValue(value));
 	}
 
 	/**

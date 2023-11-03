@@ -36,15 +36,15 @@ public class ElementIndex extends AbstractListAccess {
 
 	@Override
 	protected Object evalOnEmpty() {
-		return -1;
+		return toNumber(-1);
 	}
 
 	@Override
 	protected Object evalOnSingleton(Object self, Object[] arguments) {
 		if (Utils.equals(self, element(arguments))) {
-			return 0;
+			return toNumber(0);
 		} else {
-			return -1;
+			return toNumber(-1);
 		}
 	}
 
@@ -56,19 +56,19 @@ public class ElementIndex extends AbstractListAccess {
 		while (true) {
 			Object value = iterator.next();
 			if (Utils.equals(element, value)) {
-				return index;
+				return toNumber(index);
 			}
 			index++;
 
 			if (!iterator.hasNext()) {
-				return -1;
+				return toNumber(-1);
 			}
 		}
 	}
 
 	@Override
 	protected Object evalOnList(List<?> list, Object[] arguments) {
-		return list.indexOf(element(arguments));
+		return toNumber(list.indexOf(element(arguments)));
 	}
 
 	private Object element(Object[] arguments) {

@@ -125,7 +125,7 @@ public class CalendarField extends SimpleGenericMethod {
 		if (date == null) {
 			return null;
 		}
-		return date.get(_field.getCalendarField());
+		return toNumber(date.get(_field.getCalendarField()));
 	}
 
 	@Override

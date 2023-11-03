@@ -98,7 +98,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 */
 	public final Object evalWith(EvalContext context, Args args) {
 		try {
-			return internalEval(context, args);
+			return internalCheckValue(internalEval(context, args));
 		} catch (ScriptAbort ex) {
 			throw ex;
 		} catch (I18NRuntimeException ex) {
@@ -107,6 +107,28 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			throw new TopLogicException(
 				I18NConstants.ERROR_EVALUATION_FAILED__EXPR_ARGS_DEFS.fill(this, args, context), ex);
 		}
+	}
+
+	/**
+	 * Checks the given value to adhere to TL-Script number semantics.
+	 */
+	public static Object internalCheckValue(Object result) {
+		assert !(result instanceof Integer)
+			&& !(result instanceof Long) : "Numbers in TL-Script must be represented as Double only. Use SearchExpression.toNumber() before returning a number from a TL-Script function.";
+		return result;
+	}
+
+	/**
+	 * Normalizes a (numeric) value to TL-Script semantics.
+	 */
+	public static Object normalizeValue(Object result) {
+		if (result instanceof Integer) {
+			return toNumber(((Integer) result).intValue());
+		}
+		if (result instanceof Long) {
+			return toNumber(((Long) result).longValue());
+		}
+		return result;
 	}
 
 	/**
@@ -526,6 +548,34 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	}
 
 	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 */
+	public static Double toNumber(float value) {
+		return Double.valueOf(value);
+	}
+
+	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 */
+	public static Double toNumber(double value) {
+		return Double.valueOf(value);
+	}
+
+	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 */
+	public static Double toNumber(int value) {
+		return Double.valueOf(value);
+	}
+
+	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 */
+	public static Double toNumber(long value) {
+		return Double.valueOf(value);
+	}
+
+	/**
 	 * Converts the given value to an <code>double</code> value.
 	 */
 	public double asDouble(Object value) {
@@ -574,6 +624,14 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		value = asSingleElement(value);
 		if (value == null) {
 			return defaultValue;
+		}
+		if (value instanceof Double) {
+			double x = ((Double) value).doubleValue();
+			if (Math.floor(x) == x) {
+				// Do not insist in marking numbers as floating point values. In TL-Script, all
+				// numbers are treated as Double internally.
+				return Long.toString((long) x);
+			}
 		}
 		return value.toString();
 	}

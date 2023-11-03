@@ -60,7 +60,7 @@ public class HTTPResponse extends GenericMethod {
 		/** Description of parameters for a {@link HTTPResponse}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("statusCode")
-			.mandatory("content")
+			.optional("content")
 			.optional("contentType", JsonUtilities.JSON_CONTENT_TYPE)
 			.build();
 

@@ -14,6 +14,7 @@ import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilteredIterable;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -220,4 +221,18 @@ public class UpdateEvent {
 	private static <K, V> Map<K, V> unmodifiableMap(Map<K, V> map) {
 		return map.isEmpty() ? Collections.<K, V> emptyMap() : Collections.unmodifiableMap(map);
 	}
+
+	@Override
+	public String toString() {
+		return new NameBuilder(this)
+			.add("knowledge-base", getKnowledgeBase().getName())
+			.add("context-id", getContextId())
+			.add("commit-number", getCommitNumber())
+			.add("remote", isRemote())
+			.add("creates", getCreatedObjects().size())
+			.add("updates", getUpdatedObjects().size())
+			.add("deletes", getDeletedObjectKeys().size())
+			.build();
+	}
+
 }

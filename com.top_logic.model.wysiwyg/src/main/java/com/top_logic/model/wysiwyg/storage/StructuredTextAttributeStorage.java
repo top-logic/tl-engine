@@ -134,4 +134,12 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 		return HTML_ATTRIBUTE_STORAGE;
 	}
 
+	@Override
+	public boolean isEmpty(Object value) {
+		if (value instanceof StructuredText) {
+			return StringServices.isEmpty(((StructuredText) value).getSourceCode());
+		}
+		return super.isEmpty(value);
+	}
+
 }

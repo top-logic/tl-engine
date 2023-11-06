@@ -138,13 +138,7 @@
 				<form:inputCell name="textInputWithPlaceholder"/>
 				<form:inputCell name="textInputWithContextMenu"/>
 
-				<form:groupCell
-					personalizationName="structuredText"
-					titleText="Structured Text"
-				>
-					<form:custom name="structuredText"/>
-					<form:error name="structuredText"/>
-				</form:groupCell>
+				<form:inputCell name="structuredText"/>
 
 				<form:groupCell
 					personalizationName="codeEditorGroup"
@@ -595,7 +589,7 @@
 						size="2"
 					/>
 				</form:descriptionCell>
-				
+
 				<form:descriptionCell>
 					<form:description>
 						<form:label name="dropDown"/>
@@ -1221,7 +1215,7 @@
 						renderer="<%= DefaultButtonRenderer.INSTANCE %>"
 					/>
 				</form:cell>
-				
+
 				<form:cell>
 					<form:command name="InfoServiceErrorWithDetails"
 						renderer="<%= DefaultButtonRenderer.INSTANCE %>"
@@ -1233,21 +1227,21 @@
 						renderer="<%= DefaultButtonRenderer.INSTANCE %>"
 					/>
 				</form:cell>
-				
+
 				<form:cell>
 					<form:input name="DialogWindowWarningMessage"/>
 				</form:cell>
-				
+
 				<form:cell>
 					<form:input name="DialogWindowErrorMessage"/>
 				</form:cell>
-				
-				<form:cell>					
+
+				<form:cell>
 					<form:command name="ThrowErrorDialogWindow"
 						renderer="<%= DefaultButtonRenderer.INSTANCE %>"
 					/>
 				</form:cell>
-				
+
 				<form:cell>
 					<form:button
 						command="checkAll"
@@ -1262,7 +1256,7 @@
 						renderer="<%= ButtonComponentButtonRenderer.INSTANCE %>"
 					/>
 				</form:cell>
-				
+
 				<form:group name="image"
 					firstColumnWidth="12em"
 				>

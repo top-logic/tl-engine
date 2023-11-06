@@ -18,8 +18,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey3 ERROR_CONSTRAINT_VIOLATED__OBJECT_ATTRIBUTE_MESSAGE;
 
-	public static ResKey ERROR_EMPTY_VALUE_IN_MANDATORY_ATTRIBUTE;
-
 	public static ResKey2 ERROR_STRING_TO_SMALL__LENGTH_MIN;
 
 	public static ResKey2 ERROR_STRING_TO_LARGE__LENGTH_MAX;

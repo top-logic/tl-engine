@@ -1499,7 +1499,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 
 	private void savePersonalFixColumnCount(ConfigKey configKey) {
 		List<Object> config = new ArrayList<>(2);
-		List<Double> formatVersion = Collections.singletonList(FIXED_COLUMNS_FORMAT_VERSION);
+		List<Number> formatVersion = Collections.singletonList(FIXED_COLUMNS_FORMAT_VERSION);
 		List<Integer> personalFixedColumnCount = Collections.singletonList(personalFixedColumns);
 		
 		config.add(formatVersion);
@@ -1545,8 +1545,8 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			
 			try {
 				// Check format version
-				List<Double> formatContainer = (List<Double>) ((List<Object>)fixedColumnsConfig).get(0);
-				double configFormatVersion = formatContainer.get(0);
+				List<Number> formatContainer = (List<Number>) ((List<Object>) fixedColumnsConfig).get(0);
+				double configFormatVersion = formatContainer.get(0).doubleValue();
 				
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring fixed columns configuration from personal configuration. Column " +
@@ -1614,7 +1614,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			return;
 		}
 		List<Object> config = new ArrayList<>(3);
-		List<Double> formatVersion = Collections.singletonList(COLUMN_PERMUTATION_FORMAT_VERSION);
+		List<Number> formatVersion = Collections.singletonList(COLUMN_PERMUTATION_FORMAT_VERSION);
 		List<String> columnNames = getColumnNames();
 
 		config.add(formatVersion);
@@ -1646,7 +1646,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			try {
 				// Check format version
 				List<?> formatContainer = (List<?>) config.get(0);
-				double configFormatVersion = (Double) formatContainer.get(0);
+				double configFormatVersion = ((Number) formatContainer.get(0)).doubleValue();
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring column configuration from personal configuration. Column " +
 						"configuration format version '" + configFormatVersion +
@@ -1894,7 +1894,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 
 	private void internalSaveFilter(ConfigKey globalKey) {
 		ArrayList<Object> filterConfigurationContainer = new ArrayList<>(2);
-		List<Double> formatVersion = Collections.singletonList(FILTER_CONFIGURATION_FORMAT_VERSION); 
+		List<Number> formatVersion = Collections.singletonList(FILTER_CONFIGURATION_FORMAT_VERSION);
 		ArrayList<Object> globalFilterConfiguration = new ArrayList<>(getColumnCountApplication());
 		for (int applicationColumn = 0, cnt = getColumnCountApplication(); applicationColumn < cnt; applicationColumn++) {
 			TableFilter filter = availableFilters[applicationColumn];
@@ -1938,8 +1938,8 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			
 			try {
 				// Check format version
-				List<Double> formatContainer = (List<Double>) ((List<Object>)filterConfig).get(0);
-				double configFormatVersion = formatContainer.get(0);
+				List<Number> formatContainer = (List<Number>) ((List<Object>) filterConfig).get(0);
+				double configFormatVersion = formatContainer.get(0).doubleValue();
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring filter configuration from personal configuration. Filter " +
 						"configuration format version '" + configFormatVersion +
@@ -2035,7 +2035,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			return;
 		}
 		List<Object> config = new ArrayList<>(2);
-		List<Double> formatVersion = Collections.singletonList(SIDEBAR_FILTERS_FORMAT_VERSION);
+		List<Number> formatVersion = Collections.singletonList(SIDEBAR_FILTERS_FORMAT_VERSION);
 
 		config.add(formatVersion);
 		config.add(_sidebarFilters);
@@ -2064,9 +2064,9 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 
 	private void loadPersonalSidebarFilters(ConfigKey globalKey, Object configurationContainer) {
 		try {
-			List<Double> formatContainer = (List<Double>) ((List<Object>) configurationContainer).get(0);
+			List<Number> formatContainer = (List<Number>) ((List<Object>) configurationContainer).get(0);
 			// Check format version
-			double configFormatVersion = formatContainer.get(0);
+			double configFormatVersion = formatContainer.get(0).doubleValue();
 			if (Logger.isDebugEnabled(TableViewModel.class)) {
 				Logger.debug("Restoring sidebar filter configuration from personal configuration. Sidebar " +
 						"configuration format version '" + configFormatVersion +
@@ -2161,9 +2161,9 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		if(configurationContainer != null) {
 			
 			try {
-				List<Double> formatContainer = (List<Double>) ((List<Object>) configurationContainer).get(0);
+				List<Number> formatContainer = (List<Number>) ((List<Object>) configurationContainer).get(0);
 				// Check format version
-				double configFormatVersion = formatContainer.get(0);
+				double configFormatVersion = formatContainer.get(0).doubleValue();
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring column width configuration from personal configuration. Column " +
 						"width configuration format version '" + configFormatVersion +

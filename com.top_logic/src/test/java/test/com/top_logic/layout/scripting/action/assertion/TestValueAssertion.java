@@ -25,7 +25,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.ValueRef;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@SuppressWarnings("javadoc")
+@SuppressWarnings({ "javadoc", "deprecation" })
 public class TestValueAssertion extends BasicTestCase {
 
 	public void testComparision() {

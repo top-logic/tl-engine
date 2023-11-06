@@ -84,7 +84,7 @@ public interface ValueAssertion extends GuiAssertion {
 			@Override
 			public boolean compare(ConfigurationItem context, Object actual, Object expected) {
 				if (actual instanceof Number && expected instanceof Number) {
-					return ((Number) expected).doubleValue() == ((Number) actual).doubleValue();
+					return ((Number) actual).doubleValue() == ((Number) expected).doubleValue();
 				}
 				return Utils.equals(actual, expected);
 			}
@@ -260,7 +260,7 @@ public interface ValueAssertion extends GuiAssertion {
 	
 		protected int comare(ConfigurationItem context, Object actual, Object expected) {
 			if (actual instanceof Number && expected instanceof Number) {
-				return Double.compare(((Number) expected).doubleValue(), ((Number) actual).doubleValue());
+				return Double.compare(((Number) actual).doubleValue(), ((Number) expected).doubleValue());
 			}
 
 			return asComparable(context, actual).compareTo(asComparable(context, expected));

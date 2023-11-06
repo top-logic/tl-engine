@@ -305,4 +305,12 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		return IMAGES_TABLE_NAME;
 	}
 
+	@Override
+	public boolean isEmpty(Object value) {
+		if (value instanceof I18NStructuredText) {
+			return ((I18NStructuredText) value).getEntries().isEmpty();
+		}
+		return super.isEmpty(value);
+	}
+
 }

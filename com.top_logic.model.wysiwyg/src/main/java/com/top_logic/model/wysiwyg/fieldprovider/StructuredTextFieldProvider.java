@@ -40,6 +40,9 @@ public class StructuredTextFieldProvider extends AbstractFieldProvider {
 		} else {
 			result = StructuredTextFieldFactory.create(fieldName, null);
 		}
+		result.setMandatory(editContext.isMandatory());
+		result.setImmutable(editContext.isDisabled());
+
 		// Note: If a field has a control provider set, this cannot be overridden in table context
 		// with an edit control provider.
 		result.setControlProvider(null);

@@ -139,7 +139,6 @@ done
 [ -z "$DATABASE" ]		&& DATABASE="h2"
 [ -z "$JAVA_XMS" ]		&& JAVA_XMS="256"
 [ -z "$JAVA_XMX" ]		&& JAVA_XMX="4096"
-[ -z "$CPUS" ]			&& CPUS="2.0"
 [ -z "$DOCKER_REGISTRY" ] && DOCKER_REGISTRY="hub.docker.com"
 [ -z "$DOCKER_IMAGE_NAME" ]	&& DOCKER_IMAGE_NAME="$APPNAME"
 [ -z "$DOCKER_TAG" ]	&& DOCKER_TAG="latest"
@@ -341,6 +340,5 @@ $DRY_RUN $RUN run \
   -v "$FILES":"/var/lib/tomcat9/work/${APPNAME}" \
   --restart=unless-stopped \
   --memory ${DOCKER_MEMORY}m \
-  --cpus $CPUS \
   --name="$APPNAME" \
   --hostname="$APPNAME" "$APPNAME" && $DRY_RUN $RUN logs -f "$APPNAME"

@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.constraints;
 
 import java.util.Collection;
+import java.util.Map;
 
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.FormField;
@@ -35,10 +36,9 @@ public class GenericMandatoryConstraint extends AbstractConstraint {
 	 * Implements the non-empty check in a generic way.
 	 * 
 	 * <ul>
-	 * <li>{@link String} values are checked not to consist solely of
-	 *     whitespace.</li>
-	 * <li>{@link java.util.Collection} values are checked to contain at least
-	 *     one element.</li>
+	 * <li>{@link String} values are checked not to consist solely of whitespace.</li>
+	 * <li>{@link java.util.Collection} values are checked to contain at least one element.</li>
+	 * <li>{@link java.util.Map} values are checked to contain at least one element.</li>
 	 * <li>All other types are checked to be not <code>null</code>.</li>
 	 * </ul>
 	 * 
@@ -55,7 +55,12 @@ public class GenericMandatoryConstraint extends AbstractConstraint {
 				throw createNotEmptyException();
 			}
 		} else if (value instanceof Collection){
-			Collection collectionValue = (Collection) value;
+			Collection<?> collectionValue = (Collection<?>) value;
+			if (collectionValue.size() == 0) {
+				throw createNotEmptyException();
+			}
+		} else if (value instanceof Map) {
+			Map<?, ?> collectionValue = (Map<?, ?>) value;
 			if (collectionValue.size() == 0) {
 				throw createNotEmptyException();
 			}

@@ -3240,15 +3240,15 @@ services.form = {
 		activeCl: "ddwttDropBtnActive",
 		searchCl: "ddwttSearch",
 		hideCl: "ddwttHide",
+		boxCl: "ddwttDDBox",
 		listCl: "ddwttDDList",
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
-		tooltipCl: "ddwttTooltip",
 
 		buttonDrop: function(button) {
-			const ddBox = button.nextElementSibling;
-			const ddList = ddBox.querySelector("." + this.listCl);
+			const ddBoxOriginal = button.nextElementSibling;
+			let ddBox = this.getDDBox();
 
 			const onGlobalChange = function() {
 				if (ddBox.contains(document.activeElement)) {
@@ -3260,19 +3260,31 @@ services.form = {
 			button.parentElement.classList.toggle(this.activeCl);
 
 			if (prevActive) {
-				this.closeDD(button, ddBox, ddList);
+				this.closeDD(button, ddBox);
 			} else {
+				const outerDocument = document.body.firstElementChild;
+				ddBox = ddBoxOriginal.cloneNode(true);
+				outerDocument.append(ddBox);
+				const ddList = ddBox.querySelector("." + this.listCl);
 				let activeItem = this.getActiveItem(button, ddList);
 
-				this.positionDD(ddBox);
+				this.positionDD(button, ddBox);
 				if (activeItem) {
-					this.positionTt(activeItem, true);
+					this.setItemActive(activeItem, true);
 					this.addScrollEvents(button, onGlobalChange);
 				}
 			}
 		},
+		
+		getDDBox: function() {
+			return document.body.firstElementChild.querySelector(":scope > ." + this.boxCl);
+		},
+		
+		getButton: function(ddBox) {
+			return document.body.firstElementChild.querySelector("#" + ddBox.dataset.ctrlid + " ." + this.buttonCl);
+		},
 
-		closeDD: function(button, ddBox, ddList) {
+		closeDD: function(button, ddBox) {
 			// reset chevron to default (right)
 			button.classList.remove("down");
 			button.classList.remove("up");
@@ -3281,17 +3293,17 @@ services.form = {
 			const search = ddBox.querySelector("." + this.searchCl);
 			search.value = "";
 			search.classList.add(this.hideCl);
-
-			// hide items
-			for (item of ddList.children) {
-				item.style.display = "";
-			}
+			
+			PlaceDialog.closeCurrentTooltip(document.body.firstElementChild);
 
 			this.cancelScrollEvents(button);
 
 			if (ddBox.contains(document.activeElement)) {
 				button.focus();
 			}
+			
+			// hide DropDown
+			ddBox.remove();
 		},
 
 		cancelScrollEvents: function(button) {
@@ -3353,12 +3365,11 @@ services.form = {
 			}
 		},
 
-		positionDD: function(ddBox) {
+		positionDD: function(button, ddBox) {
 			ddBox.style.left = 0;
 			ddBox.style.top = 0;
 
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect(),
+			let btnPos = button.getBoundingClientRect(),
 				ddBoxPos = ddBox.getBoundingClientRect(),
 				hWindow = window.innerHeight;
 
@@ -3366,35 +3377,31 @@ services.form = {
 				ddMaxHeight = bottomSpace;
 
 			if ((bottomSpace >= ddBoxPos.height) || (bottomSpace >= btnPos.top)) {
-				this.openDown(ddBox);
+				this.openDown(button, ddBox);
 			} else {
 				ddMaxHeight = btnPos.top;
-				this.openUp(ddBox);
+				this.openUp(button, ddBox);
 			}
-			this.setDimensions(ddBox, ddMaxHeight);
+			this.setDimensions(btnPos, ddBox, ddMaxHeight);
 		},
 
-		openDown: function(ddBox) {
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect();
+		openDown: function(button, ddBox) {
+			let btnPos = button.getBoundingClientRect();
 			button.classList.add("down");
 			ddBox.style.removeProperty("bottom");
 			ddBox.style.setProperty("top", btnPos.bottom + "px");
 			ddBox.style.setProperty("flex-direction", "column");
 		},
 
-		openUp: function(ddBox) {
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect();
+		openUp: function(button, ddBox) {
+			let btnPos = button.getBoundingClientRect();
 			button.classList.add("up");
 			ddBox.style.removeProperty("top");
 			ddBox.style.setProperty("bottom", (window.innerHeight - btnPos.top) + "px");
 			ddBox.style.setProperty("flex-direction", "column-reverse");
 		},
 
-		setDimensions: function(ddBox, ddMaxHeight) {
-			let button = ddBox.previousElementSibling,
-				btnPos = button.getBoundingClientRect();
+		setDimensions: function(btnPos, ddBox, ddMaxHeight) {
 			ddBox.style.setProperty("left", btnPos.left + "px");
 			ddBox.style.setProperty("min-width", btnPos.width + "px");
 			ddBox.style.setProperty("max-height", ddMaxHeight + "px");
@@ -3403,8 +3410,7 @@ services.form = {
 			search.focus();
 		},
 
-		positionTt: function(item, scroll) {
-
+		setItemActive: function(item, scroll) {
 			let ddList = item.parentElement;
 			let previousActive = ddList.querySelector(":scope > ." + this.actItemCl);
 			if (previousActive) {
@@ -3416,92 +3422,25 @@ services.form = {
 			if (scroll) {
 				item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
 			}
-
-			let tooltip = item.querySelector(":scope > ." + this.tooltipCl);
-			if (!tooltip) return;
-
-			if (tooltip.childElementCount > 0) {
-				tooltip.style.left = 0;
-				tooltip.style.removeProperty("top");
-				tooltip.style.removeProperty("bottom");
-				tooltip.style.removeProperty("transform");
-
-				let itemPos = item.getBoundingClientRect();
-				this.setTtHorizontal(tooltip, itemPos);
-				this.setTtVertical(tooltip, itemPos);
-			} else {
-				tooltip.style.display = "none";
+			
+			const mouseoverEvent = new Event('mouseover', { 'bubbles': true });
+			item.dispatchEvent(mouseoverEvent);
+		},
+		
+		setItemInactive: function(item) {
+			let tooltip = item.lastElementChild;
+			if (tooltip && tooltip.childElementCount > 0) {
+				tooltip.firstElementChild.scrollTop = 0;
 			}
+			item.classList.remove(this.actItemCl);
+			
+			const mouseleaveEvent = new Event('mouseleave', { 'bubbles': true });
+			item.dispatchEvent(mouseleaveEvent);
 		},
 
-		ttSnapAtEdge: function(tooltip, edge) {
-			tooltip.style.setProperty(edge, 0);
-		},
-
-		setArrowVertical: function(tooltip, topPos) {
-			let topPosArrow = topPos - tooltip.getBoundingClientRect().top;
-			tooltip.style.setProperty("--ttArrow-top", topPosArrow + "px");
-		},
-
-		setTtVertical: function(tooltip, itemPos) {
-			let hWindow = window.innerHeight,
-				topPos = (itemPos.top + itemPos.height / 2),
-				topEdge = (itemPos.top <= 8) ? "top" : "bottom";
-
-			if ((topEdge == "top") || (itemPos.bottom >= (hWindow - 8))) {
-				this.ttSnapAtEdge(tooltip, topEdge);
-				this.setArrowVertical(tooltip, topPos);
-				return;
-			}
-
-			let ttPadding = parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding"));
-
-			let bottomPos = (hWindow - topPos),
-				rectTt = tooltip.getBoundingClientRect(),
-				overflowTop = (rectTt.height / 2) + ttPadding > topPos,
-				overflowBottom = (rectTt.height / 2) + ttPadding > bottomPos;
-
-			if (overflowTop) {
-				tooltip.style.setProperty("top", ttPadding + "px");
-			} else if (overflowBottom) {
-				tooltip.style.setProperty("bottom", ttPadding + "px");
-			} else {
-				tooltip.style.setProperty("top", topPos + "px");
-				tooltip.style.setProperty("transform", "translate(0, -50%)");
-			}
-			this.setArrowVertical(tooltip, topPos);
-		},
-
-		setTtHorizontal: function(tooltip, itemPos) {
-			let offset = (parseFloat(window.getComputedStyle(tooltip, "::after").getPropertyValue("--ttArrow-dim")) / 2) - 3,
-				minWidthTt = parseFloat(window.getComputedStyle(tooltip).minWidth) + offset;
-
-			let spaceL = itemPos.left,
-				spaceR = (window.innerWidth - itemPos.right);
-
-			if ((spaceL < minWidthTt) && (spaceR < minWidthTt)) {
-				tooltip.style.display = "none";
-				return;
-			}
-
-			let widthTt = (tooltip.getBoundingClientRect().width + offset),
-				ttLeft = (spaceL > spaceR) && (spaceR < widthTt);
-
-			tooltip.classList.toggle("ddwttTtArrowRight", ttLeft);
-			tooltip.classList.toggle("ddwttTtArrowLeft", !ttLeft);
-
-			let ttPadding = parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding")),
-				space = (ttLeft ? spaceL : spaceR) - ttPadding;
-			if (space < widthTt) {
-				tooltip.style.setProperty("width", space + "px");
-				widthTt = space + offset;
-			}
-			let leftPos = (ttLeft ? (spaceL - widthTt) : (itemPos.right + offset));
-			tooltip.style.setProperty("left", leftPos + "px");
-		},
-
-		lostFocus: function(ddBox) {
-			const button = ddBox.previousElementSibling;
+		lostFocus: function() {
+			const ddBox = this.getDDBox();
+			const button = this.getButton(ddBox);
 			const ddList = ddBox.querySelector("." + this.listCl);
 			let itemList = ddList.children;
 
@@ -3522,17 +3461,21 @@ services.form = {
 			}, 150);
 		},
 
-		setItemInactive: function(item) {
-			let tooltip = item.lastElementChild;
-			if (tooltip && tooltip.childElementCount > 0) {
-				tooltip.firstElementChild.scrollTop = 0;
+		keyPressed: function(event, multi) {
+			let ddBox = this.getDDBox();
+			let button = event.target;
+			if (ddBox) {
+				button = this.getButton(ddBox);
+			} else {
+				if (multi) {
+					this.buttonDrop(button);
+					ddBox = this.getDDBox();
+					button = this.getButton(ddBox);
+				} else {
+					ddBox = button.nextElementSibling;
+				}
 			}
-			item.classList.remove(this.actItemCl);
-		},
-
-		keyPressed: function(ddBox, event, multi) {
 			let ddList = ddBox.querySelector("." + this.listCl);
-			let button = ddBox.previousElementSibling;
 			let sourceBtn = (event.target == button);
 
 			let activeItem = this.getActiveItem(button, ddList);
@@ -3562,7 +3505,7 @@ services.form = {
 						return;
 					} else {
 						// set previous item active
-						this.positionTt(previous, true);
+						this.setItemActive(previous, true);
 						break;
 					}
 
@@ -3590,7 +3533,7 @@ services.form = {
 						return;
 					} else {
 						// set next item active
-						this.positionTt(next, true);
+						this.setItemActive(next, true);
 						break;
 					}
 
@@ -3606,7 +3549,7 @@ services.form = {
 						return;
 					} else {
 						// set first item active
-						this.positionTt(first, true);
+						this.setItemActive(first, true);
 						break;
 					}
 
@@ -3614,14 +3557,24 @@ services.form = {
 				case "PageUp":
 				// [PageDown|PgDn|Bild v] was pressed
 				case "PageDown":
-					if (sourceBtn) {
+					let tempList = ddList,
+						tempActive = activeItem;
+						
+					if (sourceBtn && !multi) {
 						this.buttonDrop(button);
+						ddList = this.getDDBox().querySelector("." + this.listCl);
+						activeItem = this.getActiveItem(button, ddList);
 					}
+					
 					let pageH = ddList.getBoundingClientRect().height,
 						itemH = activeItem.getBoundingClientRect().height;
-					if (sourceBtn) {
+						
+					if (sourceBtn && !multi) {
 						this.buttonDrop(button);
+						ddList = tempList;
+						activeItem = tempActive;
 					}
+					
 					let itemCount = Math.trunc(pageH / itemH),
 						scrollH = itemCount * itemH;
 
@@ -3656,8 +3609,8 @@ services.form = {
 						return;
 					} else {
 						ddList.scrollBy({ top: scrollH, behavior: "smooth" });
-						this.positionTt(activeItem, false);
-						break;
+						this.setItemActive(activeItem, false);
+						return;
 					}
 
 				// [END|ENDE] was Pressed
@@ -3677,7 +3630,7 @@ services.form = {
 						return;
 					} else {
 						// set last item active
-						this.positionTt(last, true);
+						this.setItemActive(last, true);
 						break;
 					}
 
@@ -3688,10 +3641,12 @@ services.form = {
 						this.selectItem(activeItem);
 						return;
 					}
+					event.stopImmediatePropagation();
+					break;
 
 				// [ESC] was pressed
 				case "Escape":
-					if (sourceBtn) {
+					if (sourceBtn && !multi) {
 						return;
 					}
 					this.buttonDrop(button);
@@ -3715,14 +3670,15 @@ services.form = {
 					return;
 			}
 
-			if (sourceBtn) {
+			if (sourceBtn && !multi) {
 				this.buttonDrop(button);
 			}
 
-			let search = ddBox.querySelector(":scope > ." + this.searchCl);
+			let search = this.getDDBox().querySelector(":scope > ." + this.searchCl);
 			if (event.target != search) {
 				search.focus();
 			}
+			
 		},
 
 		isDisplayedItem: function(item) {
@@ -3753,16 +3709,15 @@ services.form = {
 				}
 			}
 			if (firstItem) {
-				this.positionTt(firstItem, true);
+				this.setItemActive(firstItem, true);
 			}
 		},
 
 		selectItem: function(item) {
-			let container = item.closest("." + this.containerCl),
-				ctrlID = container.id;
+			const ddBox = item.parentElement.parentElement;
+			const button = this.getButton(ddBox);
+			let ctrlID = ddBox.dataset.ctrlid;
 			
-			const button = container.querySelector(":scope > ." + this.buttonCl);
-
 			if (button.parentElement.classList.contains(this.activeCl)) {
 				this.buttonDrop(button);
 			}

@@ -5,8 +5,6 @@
  */
 package com.top_logic.element.i18n;
 
-import java.util.Iterator;
-
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
 import com.top_logic.layout.Control;
@@ -61,8 +59,7 @@ public class I18NStringControlProvider implements ControlProvider {
 
 	private Control createControl(I18NStringField member) {
 		OnVisibleControl block = new OnVisibleControl(member);
-		for (Iterator<FormField> it = member.getFields(); it.hasNext();) {
-			FormField field = it.next();
+		for (FormField field : member.getLanguageFields()) {
 			TextInputControl control = new TextInputControl(field);
 			control.setMultiLine(_multiline);
 			control.setColumns(_columns);

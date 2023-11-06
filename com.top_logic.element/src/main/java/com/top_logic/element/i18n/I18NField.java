@@ -23,6 +23,7 @@ import com.top_logic.layout.form.ErrorChangedListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ImmutablePropertyListener;
+import com.top_logic.layout.form.LabelChangedListener;
 import com.top_logic.layout.form.MandatoryChangedListener;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.constraints.AbstractConstraint;
@@ -85,6 +86,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		_constraint = constraint;
 		_mandatoryConstraint = mandatoryConstraint;
 		_proxyField = createProxyField(isMandatory, isDisabled);
+		addMember(_proxyField);
 	}
 
 	/**
@@ -139,6 +141,27 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		FormField field = new I18NProxyField(PROFY_FIELD_SUFFIX);
 		field.setMandatory(isMandatory);
 		field.setDisabled(isDisabled);
+		addListener(FormMember.LABEL_PROPERTY, new LabelChangedListener() {
+
+			@Override
+			public Bubble handleLabelChanged(Object sender, String oldLabel, String newLabel) {
+				if (sender != I18NField.this) {
+					// Label was set to a child of group where this listener was added to.
+					return Bubble.BUBBLE;
+				}
+				String proxyLabel;
+				if (newLabel == null) {
+					proxyLabel = newLabel;
+				} else {
+					ResKey label = I18NConstants.I18N_PROXY_FIELD_LABEL__FIELD.fill(newLabel);
+					proxyLabel = Resources.getInstance().getString(label);
+
+				}
+				field.setLabel(proxyLabel);
+				return Bubble.BUBBLE;
+			}
+
+		});
 		return field;
 	}
 
@@ -287,7 +310,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	/**
 	 * Gets the language fields.
 	 */
-	protected List<F> getLanguageFields() {
+	public List<F> getLanguageFields() {
 		if (_languageFields == null) {
 			throw new IllegalStateException("Field not initialized.");
 		}

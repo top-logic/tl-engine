@@ -7674,9 +7674,10 @@ div.dirtyHandlingDialog .changes {
 }
 
 .ddwttDDList {
-	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
+	overflow-y: auto;
+	scrollbar-gutter: stable;
 }
 
 .ddwttSearch {
@@ -7698,6 +7699,8 @@ div.dirtyHandlingDialog .changes {
 .ddwttItem {
 	position: relative;
 	text-align: left;
+	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
+	padding: 0.2em 8px;
 }
 
 .ddwttActiveItem {
@@ -7710,10 +7713,9 @@ div.dirtyHandlingDialog .changes {
 	text-align: left;
 }
 
-.ddwttItemLabel {
-	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
-	padding: 0.2em 8px;
-	display: block;
+.ddwttItem .ddwttItemLabel, .ddwttTag .ddwttItemLabel {
+	padding: 0 8px;
+	display: inline-block;
 }
 
 /* Tags */
@@ -7723,7 +7725,7 @@ div.dirtyHandlingDialog .changes {
 	text-align: left;
 }
 
-.ddwttTagX {
+.ddwttTag .ddwttTagX {
 	padding: 0;
 	/* Style from .input-image */
 	display: inline-block;
@@ -7735,8 +7737,8 @@ div.dirtyHandlingDialog .changes {
 	height: var(--ICON_SIZE_NORMAL);
 	/* Style from .fClear */
 	transform: scale(0.7);
-	margin-right: 5px;
-	margin-left: -2px;
+	margin-right: 0px;
+	margin-left: -8px;
 	margin-top: -2px;
 }
 

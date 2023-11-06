@@ -22,11 +22,13 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
@@ -39,6 +41,7 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.provider.LabelResourceProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -290,6 +293,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.writeAttribute(TABINDEX_ATTR, "-1");
 		out.endBeginTag();
 		{
+			renderItemIcon(context, out, dropdown, item, Flavor.DEFAULT);
 			renderItemLabel(out, dropdown, item);
 		}
 		out.endTag(SPAN);
@@ -305,14 +309,29 @@ public class DropDownControl extends AbstractSelectControl {
 		out.beginAttribute(ONKEYDOWN_ATTR);
 		addJSFunction(out, "keyPressed", "event, " + isMultiple());
 		out.endAttribute();
+		out.beginAttribute(ONCLICK_ATTR);
+		addJSFunction(out, "selectItem", "this");
+		out.endAttribute();
 	}
 
-	private void renderItemLabel(TagWriter out, FormField dropdown, Object item) throws IOException {
+	private void renderItemIcon(DisplayContext context, TagWriter out, FormField dropdown, Object item, Flavor flavor)
+			throws IOException {
+		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
+		if (!(lprovider instanceof MetaResourceProvider)) {
+			return;
+		}
+		MetaResourceProvider mrprovider = (MetaResourceProvider) lprovider;
+		ThemeImage icon = item == SelectField.NO_OPTION ? null : mrprovider.getImage(item, flavor);
+		if (icon == null) {
+			return;
+		}
+		icon.write(context, out);
+	}
+
+	private void renderItemLabel(TagWriter out, FormField dropdown, Object item)
+			throws IOException {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "ddwttItemLabel");
-		out.beginAttribute(ONCLICK_ATTR);
-		addJSFunction(out, "selectItem", "this.parentElement");
-		out.endAttribute();
 		out.endBeginTag();
 		{
 			out.write(getItemLabel(dropdown, item));
@@ -348,7 +367,8 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTooltip(context, out, dropdown, selectedItem);
 				out.endBeginTag();
 				{
-					out.write(getItemLabel(dropdown, selectedItem));
+					renderItemIcon(context, out, dropdown, selectedItem, Flavor.DEFAULT);
+					renderItemLabel(out, dropdown, selectedItem);
 
 					renderXButton(context, out, itemID);
 				}
@@ -428,16 +448,9 @@ public class DropDownControl extends AbstractSelectControl {
 			throws IOException {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "ddwttImmutableItem");
-		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "setItemActive", "this, false");
-		out.endAttribute();
-		out.beginAttribute(ONMOUSEOUT_ATTR);
-		addJSFunction(out, "setItemInactive", "this");
-		out.endAttribute();
-		renderTooltip(context, out, dropdown, item);
 		out.endBeginTag();
 		{
-			out.write(getItemLabel(dropdown, item));
+			SelectFieldUtils.getOptionRenderer((SelectField) dropdown).write(context, out, item);
 		}
 		out.endTag(SPAN);
 	}

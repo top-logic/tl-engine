@@ -5,6 +5,9 @@
  */
 package com.top_logic.element.layout.meta;
 
+import static com.top_logic.element.meta.MetaElementUtil.*;
+import static com.top_logic.model.util.TLModelUtil.*;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -31,7 +34,6 @@ import com.top_logic.basic.func.misc.NonEmpty;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.ClassConfig;
 import com.top_logic.element.config.ExtendsConfig;
-import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -415,7 +417,7 @@ public class TLStructuredTypeFormBuilder
 		TLClass type = businessModel;
 		formModel.setEditedType(type);
 		formModel.setTypeSpec(TLModelUtil.qualifiedName(type));
-		formModel.setInstances(!type.getSpecializations().isEmpty() || hasInstances(businessModel));
+		formModel.setInstances(hasInstances(businessModel));
 		formModel.setModule(type.getModule());
 		formModel.setAbstract(type.isAbstract());
 		formModel.setFinal(type.isFinal());
@@ -436,9 +438,14 @@ public class TLStructuredTypeFormBuilder
 	}
 
 	private boolean hasInstances(TLClass businessModel) {
-		try (CloseableIterator<TLObject> it = MetaElementUtil.iterateDirectInstances(businessModel, TLObject.class)) {
-			return it.hasNext();
+		for (TLClass type : getConcreteSpecializations(businessModel)) {
+			try (CloseableIterator<?> instances = iterateDirectInstances(type, TLObject.class)) {
+				if (instances.hasNext()) {
+					return true;
+				}
+			}
 		}
+		return false;
 	}
 
 }

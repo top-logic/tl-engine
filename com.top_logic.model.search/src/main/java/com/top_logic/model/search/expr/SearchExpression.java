@@ -16,10 +16,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
+import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -113,8 +115,18 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Checks the given value to adhere to TL-Script number semantics.
 	 */
 	public static Object internalCheckValue(Object result) {
-		assert !(result instanceof Integer)
-			&& !(result instanceof Long) : "Numbers in TL-Script must be represented as Double only. Use SearchExpression.toNumber() before returning a number from a TL-Script function.";
+		if (result instanceof Integer || result instanceof Long || result instanceof Short || result instanceof Byte) {
+			Logger.error(
+				"Numbers in TL-Script must be represented as Double only. Use SearchExpression.toNumber() before returning a number from a TL-Script function.",
+				new StackTrace());
+			return toNumber(((Number) result).longValue());
+		}
+		if (result instanceof Float) {
+			Logger.error(
+				"Numbers in TL-Script must be represented as Double only. Use SearchExpression.toNumber() before returning a number from a TL-Script function.",
+				new StackTrace());
+			return toNumber(((Number) result).floatValue());
+		}
 		return result;
 	}
 
@@ -122,11 +134,11 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Normalizes a (numeric) value to TL-Script semantics.
 	 */
 	public static Object normalizeValue(Object result) {
-		if (result instanceof Integer) {
-			return toNumber(((Integer) result).intValue());
+		if (result instanceof Integer || result instanceof Long || result instanceof Short || result instanceof Byte) {
+			return toNumber(((Number) result).longValue());
 		}
-		if (result instanceof Long) {
-			return toNumber(((Long) result).longValue());
+		if (result instanceof Float) {
+			return toNumber(((Number) result).floatValue());
 		}
 		return result;
 	}

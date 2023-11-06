@@ -70,8 +70,6 @@ public class SelectControl extends AbstractSelectControl implements OptionModelL
 	 */
 	private boolean hasSize;
 
-	private int columns;
-	
 	private DisplayDimension _width;
 
 	private DisplayDimension _height;

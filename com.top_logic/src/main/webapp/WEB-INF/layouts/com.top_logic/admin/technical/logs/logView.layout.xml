@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="tl.admin.technical.viewLogs.tabber"
+		z_legacy_componentName="adminTechnicalViewLogsView"
+		z_legacy_tabBarName="loggingTabBar"
+		z_legacy_tabLabel="tl.admin.technical.viewLogs.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic/admin/technical/logs/logFolder.xml"/>
+			<layout-reference resource="com.top_logic/admin/technical/logs/logSettings.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

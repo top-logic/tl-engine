@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<components>
+		<layout-reference
+			config:position="before"
+			config:reference="com.top_logic/admin/technical/logs/logFolder.xml"
+			resource="com.top_logic.monitoring/admin/technical/logs/logLines.layout.xml"
+		/>
+	</components>
+</arguments>

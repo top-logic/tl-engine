@@ -31,7 +31,7 @@ public class IconChooserEditor implements Editor {
 	@Override
 	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
 		final PropertyDescriptor property = model.getProperty();
-		String fieldName = property.getPropertyName();
+		String fieldName = normalizeFieldName(property.getPropertyName());
 		ComplexField field = FormFactory.newComplexField(fieldName, ThemeImageFormat.INSTANCE);
 		container.addMember(field);
 

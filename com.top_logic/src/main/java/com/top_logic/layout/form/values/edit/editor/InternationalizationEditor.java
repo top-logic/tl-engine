@@ -200,7 +200,7 @@ public class InternationalizationEditor implements Editor {
 	}
 
 	static String suffixFieldName(String language, String keySuffix) {
-		return language + "_" + keySuffix;
+		return normalizeFieldName(language + "_" + keySuffix);
 	}
 
 	private void displayDerivedCommand(FormGroup container, List<? extends StringField> members) {
@@ -354,7 +354,7 @@ public class InternationalizationEditor implements Editor {
 	 * @return The new {@link FormField}.
 	 */
 	protected StringField createInternationalizationField(EditorFactory editorFactory, ValueModel model, String name) {
-		StringField result = FormFactory.newStringField(name);
+		StringField result = FormFactory.newStringField(normalizeFieldName(name));
 		editorFactory.processControlProviderAnnotation(model.getProperty(), result);
 
 		return result;

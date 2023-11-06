@@ -96,6 +96,8 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	private boolean updateSourceCode(TLObject owner, TLStructuredTypePart attribute, String sourceCode) {
+		// Do not store empty value.
+		sourceCode = StringServices.nonEmpty(sourceCode);
 		Object formerValue = owner.tSetData(attribute.getName(), sourceCode);
 		return Utils.equals(formerValue, sourceCode);
 	}

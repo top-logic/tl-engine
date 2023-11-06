@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.kbbased.storage;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -22,6 +23,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_LAST_VALUE_MUST_NOT_BE_REMOVED_FROM_MANDATORY_ATTRIBUTE__ATTRIBUTE;
 
 	public static ResKey2 NOT_APPLICATION_VALUE_TYPE___EXPECTED_ACTUAL;
+	
+	/**
+	 * @en The value must not be empty.
+	 */
+	public static ResKey ERROR_EMPTY_VALUE_IN_MANDATORY_ATTRIBUTE;
 
 	/**
 	 * @en The given value {0} is not a TLAnnotation.

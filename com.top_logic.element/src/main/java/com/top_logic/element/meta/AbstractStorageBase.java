@@ -7,6 +7,8 @@ package com.top_logic.element.meta;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -14,11 +16,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
+import com.top_logic.element.meta.kbbased.storage.GenericMandatoryCheck;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.check.InstanceCheck;
 
 /**
  * Base class for all {@link StorageImplementation}s.
@@ -131,8 +135,27 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 	/**
 	 * Whether the given value is considered empty.
 	 */
-	protected boolean isEmpty(Object value) {
-		return value == null;
+	public boolean isEmpty(Object value) {
+		if (value == null) {
+			return true;
+		}
+		if (value instanceof CharSequence && ((CharSequence) value).length() == 0) {
+			return true;
+		}
+		if (value instanceof Collection<?> && ((Collection<?>) value).isEmpty()) {
+			return true;
+		}
+		if (value instanceof Map<?, ?> && ((Map<?, ?>) value).isEmpty()) {
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void addConstraints(TLStructuredTypePart attribute, List<InstanceCheck> checks) {
+		if (attribute.isMandatory()) {
+			checks.add(new GenericMandatoryCheck(attribute, this));
+		}
 	}
 
 	@Override

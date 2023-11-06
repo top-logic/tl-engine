@@ -113,6 +113,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.check.InstanceCheck;
 
 /**
  * Utilities for executing {@link StorageImplementation} operations.
@@ -213,6 +214,11 @@ public class AttributeOperations {
 		@Override
 		public Unimplementable unimplementable() {
 			return null;
+		}
+
+		@Override
+		public void addConstraints(TLStructuredTypePart attribute, java.util.List<InstanceCheck> checks) {
+			// No checks.
 		}
 	};
 

@@ -3245,6 +3245,7 @@ services.form = {
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
+		mutObserver: "",
 
 		buttonDrop: function(button) {
 			const ddBoxOriginal = button.nextElementSibling;
@@ -3258,9 +3259,11 @@ services.form = {
 
 			let prevActive = button.parentElement.classList.contains(this.activeCl);
 			button.parentElement.classList.toggle(this.activeCl);
+			
 
 			if (prevActive) {
 				this.closeDD(button, ddBox);
+				this.mutObserver.disconnect();
 			} else {
 				const outerDocument = document.body.firstElementChild;
 				ddBox = ddBoxOriginal.cloneNode(true);
@@ -3272,6 +3275,11 @@ services.form = {
 				if (activeItem) {
 					this.setItemActive(activeItem, true);
 					this.addScrollEvents(button, onGlobalChange);
+				}
+				
+				let dialog = button.closest(".dlgWindow");
+				if (dialog) {
+					this.setMutationObserver(dialog, button);
 				}
 			}
 		},
@@ -3304,6 +3312,24 @@ services.form = {
 			
 			// hide DropDown
 			ddBox.remove();
+		},
+		
+		setMutationObserver: function(dialog, button) {
+			// Options for the observer (which mutations to observe)
+			const config = {attributeFilter: ["style"], attributeOldValue: true};
+			
+			// Callback function to execute when mutations are observed
+			const callback = (mutationList) => {
+				mutationList.forEach((mutation) => {
+					switch (mutation.type) {
+						case "attributes":
+							this.buttonDrop(button);
+							break;
+					}
+				});
+			};
+			this.mutObserver = new MutationObserver(callback);
+			this.mutObserver.observe(dialog, config);
 		},
 
 		cancelScrollEvents: function(button) {
@@ -3364,7 +3390,7 @@ services.form = {
 				}
 			}
 		},
-
+		
 		positionDD: function(button, ddBox) {
 			ddBox.style.left = 0;
 			ddBox.style.top = 0;

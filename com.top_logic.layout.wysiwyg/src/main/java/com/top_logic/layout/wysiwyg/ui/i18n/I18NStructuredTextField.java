@@ -110,6 +110,8 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 	protected FormField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean isDisabled,
 			Constraint constraint, Locale language) {
 		HiddenField field = FormFactory.newHiddenField(fieldName);
+		field.setMandatory(isMandatory);
+		field.setDisabled(isDisabled);
 		if (constraint != null) {
 			field.addConstraint(constraint);
 		}

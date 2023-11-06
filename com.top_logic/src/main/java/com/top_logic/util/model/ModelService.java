@@ -5,6 +5,8 @@
  */
 package com.top_logic.util.model;
 
+import static com.top_logic.model.util.TLModelUtil.*;
+
 import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,6 +56,7 @@ import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.layout.form.values.edit.AllQualifiedTLTypeNames;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -74,6 +77,8 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.filter.ModelFilterConfig;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.internal.PersistentQuery;
+import com.top_logic.model.internal.PersistentType;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.list.ListInitializationUtil;
 import com.top_logic.util.model.check.AttributeChecker;
@@ -304,16 +309,63 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	}
 
 	private void dropInvalidCachedChecks(UpdateEvent event) {
-		for (KnowledgeItem item : event.getUpdatedObjects().values()) {
-			if (item.tTable().getName().equals(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)) {
+		for (KnowledgeItem item : event.getCreatedObjects().values()) {
+			if (isAttribute(item)) {
+				/* Example: A mandatory attribute might have been added. */
 				TLStructuredType type = ((TLStructuredTypePart) item.getWrapper()).getOwner();
-				_checkForType.remove(type);
+				removeChecksForType(type);
 			}
 		}
-		for (KnowledgeItem item : event.getCachedDeletedObjects()) {
-			if (item.tTable().getName().equals(ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE)) {
-				_checkForType.remove(item.getWrapper());
+		for (KnowledgeItem item : event.getUpdatedObjects().values()) {
+			if (isAttribute(item)) {
+				/* Example: An attribute might have become (non-)mandatory. */
+				TLStructuredType type = ((TLStructuredTypePart) item.getWrapper()).getOwner();
+				removeChecksForType(type);
 			}
+			if (isType(item)) {
+				/* Example: The super types might have changed, causing mandatory attributes to be added or removed. */
+				TLStructuredType type = ((TLStructuredType) item.getWrapper());
+				removeChecksForType(type);
+			}
+		}
+		KnowledgeBase knowledgeBase = event.getKnowledgeBase();
+		for (KnowledgeItem item : event.getCachedDeletedObjects()) {
+			if (isAttribute(item)) {
+				/* Example: A mandatory attribute might have been removed. */
+				TLStructuredTypePart deletedAttribute = (TLStructuredTypePart) item.getWrapper();
+				knowledgeBase.withoutModifications(() -> {
+					removeChecksForType(deletedAttribute.getOwner());
+					return null;
+				});
+			}
+			if (isType(item)) {
+				knowledgeBase.withoutModifications(() -> {
+					removeChecksForType((TLStructuredType) item.getWrapper());
+					return null;
+				});
+			}
+		}
+	}
+
+	private boolean isAttribute(KnowledgeItem item) {
+		return item.tTable().getName().equals(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
+	}
+
+	private boolean isType(KnowledgeItem item) {
+		return item.tTable().getName().equals(ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE);
+	}
+
+	private void removeChecksForType(TLStructuredType type) {
+		for (TLStructuredType subType : getSubtypes(type)) {
+			_checkForType.remove(subType);
+		}
+	}
+
+	private Set<? extends TLStructuredType> getSubtypes(TLStructuredType type) {
+		if (type instanceof TLClass) {
+			return getReflexiveTransitiveSpecializations((TLClass) type);
+		} else {
+			return Set.of(type);
 		}
 	}
 
@@ -385,7 +437,12 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		if (result != null) {
 			return result;
 		}
-
+		if (!(type instanceof PersistentType)) {
+			return createCheck(type);
+		}
+		if (!TLModelUtil.isGlobal(type)) {
+			return createCheck(type);
+		}
 		return MapUtil.putIfAbsent(_checkForType, type, createCheck(type));
 	}
 

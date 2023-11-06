@@ -67,6 +67,8 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	private final Constraint _constraint;
 
+	private final Constraint _mandatoryConstraint;
+
 	private List<F> _languageFields;
 
 	/**
@@ -76,11 +78,12 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 *           after creation, i.e. caller must either trigger {@link #initLanguageFields()} or
 	 *           add this note.
 	 */
-	protected I18NField(String fieldName, boolean isMandatory, boolean isDisabled, Constraint constraint) {
+	protected I18NField(String fieldName, boolean isMandatory, boolean isDisabled, Constraint constraint, Constraint mandatoryConstraint) {
 		super(fieldName, com.top_logic.layout.form.values.edit.editor.I18NConstants.LANGUAGE);
 		_isMandatory = isMandatory;
 		_isDisabled = isDisabled;
 		_constraint = constraint;
+		_mandatoryConstraint = mandatoryConstraint;
 		_proxyField = createProxyField(isMandatory, isDisabled);
 	}
 
@@ -434,7 +437,6 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		 * Overridden to dispatch default value changes to language fields as there exists no
 		 * default value changed listener.
 		 */
-		@SuppressWarnings("synthetic-access")
 		@Override
 		public void setDefaultValue(Object defaultValue) {
 			super.setDefaultValue(defaultValue);
@@ -447,6 +449,11 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 					langField.set(LISTENER_DISABLED, null);
 				}
 			}
+		}
+
+		@Override
+		protected Constraint mandatoryConstraint() {
+			return _mandatoryConstraint;
 		}
 
 	}

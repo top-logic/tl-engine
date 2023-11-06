@@ -700,10 +700,20 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		this.mandatory = newMandatory;
 		
 		if (newMandatory) {
-			addConstraint(GenericMandatoryConstraint.SINGLETON);
+			addConstraint(mandatoryConstraint());
 		} else {
-			removeConstraint(GenericMandatoryConstraint.SINGLETON);
+			removeConstraint(mandatoryConstraint());
 		}
+	}
+
+	/**
+	 * The constraint that is internally set when the field becomes mandatory.
+	 * 
+	 * @implSpec The constraint is removed, when the field becomes non-mandatory, therefore this
+	 *           method must always return the same constraint to avoid inconsistencies.
+	 */
+	protected Constraint mandatoryConstraint() {
+		return GenericMandatoryConstraint.SINGLETON;
 	}
 	
 	@Override

@@ -307,9 +307,9 @@ public class TestControlsForm extends FormComponent {
 				(StringField) formContext.getContainer("configuration").getField("switchStateField");
 			String configuredFields = switchStateField.getAsString().trim();
 			if (configuredFields.isEmpty()) {
-				String[] groupNames = new String[] { "controls", "dataFieldGroup" };
+				String[] groupNames = new String[] { "controls", "dataFieldGroup", "controls.i18n" };
 				for (int i = 0; i < groupNames.length; i++) {
-					FormGroup controlsGroup = (FormGroup) formContext.getMember(groupNames[i]);
+					FormGroup controlsGroup = (FormGroup) FormGroup.getMemberByRelativeName(formContext, groupNames[i]);
 
 					for (Iterator<? extends FormMember> it = controlsGroup.getMembers(); it.hasNext();) {
 						doForMember(aContext, it.next());

@@ -7601,13 +7601,13 @@ div.dirtyHandlingDialog .changes {
 }
 
 .ddwttDropBtn {
+	display: inline-flex;
+	align-items: center;
 	width: fit-content;
 	max-width: 100%;
 	height: 22px;
 	border: 1px solid var(--border-subtle);
 	border-radius: 4px;
-	display: inline-flex;
-	align-items: center;
 }
 
 .ddwttDropBtn.up {
@@ -7625,15 +7625,15 @@ div.dirtyHandlingDialog .changes {
 }
 
 .ddwttChevron::after {
-	border-style: solid;
-	border-width: 0.2em 0.2em 0 0;
-	content: '';
-	position: relative;
 	display: inline-block;
+	position: relative;
 	height: 0.5em;
 	width: 0.5em;
 	transform: rotate(45deg);
 	margin-left: 0.5em;
+	content: '';
+	border-style: solid;
+	border-width: 0.2em 0.2em 0 0;
 	color: var(--ICON_COLOR_BASIC);
 	flex-shrink: 0;
 }
@@ -7650,7 +7650,9 @@ div.dirtyHandlingDialog .changes {
 
 /* DropDown */
 .ddwttDDBox {
-	display: none;
+	display: flex;
+	flex-direction: column;
+	margin: 0;
 	position: fixed;
 	width: fit-content;
 	z-index: 10;
@@ -7667,10 +7669,8 @@ div.dirtyHandlingDialog .changes {
 	/* line-height: 2em !important; */ /* estimated setting for new design-theme */
 }
 
-.ddwttDropBtnActive .ddwttDDBox {
-	margin: 0;
-	display: flex;
-	flex-direction: column;
+.ddwttContainer .ddwttDDBox {
+	display: none;
 }
 
 .ddwttDDList {
@@ -7716,86 +7716,21 @@ div.dirtyHandlingDialog .changes {
 	display: block;
 }
 
-/* Tooltip */
-.ddwttTooltip {
-	min-width: 200px;
-	max-width: 500px;
-	background-color: #464646;
-	border-radius: 1em;
-	position: fixed;
-	filter: drop-shadow(0 1px 4px rgba(0,0,0,0.8));
-	display: none;
-	z-index: 9999999999999999;
-}
-
-.ddwttActiveItem .ddwttTooltip {
-	display: flex;
-	flex-direction: column;
-}
-
-/* tooltip Arrow */
-.ddwttTooltip::after {
-	content: '';
-	position: absolute;
-	width: var(--ttArrow-dim);
-	height: var(--ttArrow-dim);
-	top: var(--ttArrow-top);
-	transform: var(--ttArrow-trans);
-	background-color: #464646;
-	--ttArrow-dim: 18px;
-}
-
-.ddwttTtArrowLeft::after {
-	left: 2px;
-	--ttArrow-trans: translate(-50%, -50%);
-	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
-}
-
-.ddwttTtArrowRight::after {
-	right: 2px;
-	--ttArrow-trans: translate(50%, -50%);
-	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
-}
-
-.ddwttTooltipContent {
-	overflow-y: auto;
-	white-space: normal;
-	overflow-wrap: break-word;
-	max-height: calc(100vh - (var(--ttPadding) * 4));
-	--ttPadding: 8px;
-	padding: var(--ttPadding) 12px;
-	line-height: 1.5 !important;
-	color: white;
-}
-
-.ddwttTooltipContent * {
-	margin: 0;
-	color: white;
-	line-height: 1.5 !important;
-	padding: 0 !important;
-}
-
-.ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
-    text-align: center;
-    clear: both;
-	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
-	margin-bottom: 8px;
-}
-
+/* Tags */
 .ddwttTagLoc, .ddwttTag {
 	display: inline-block;
-    width: fit-content;
-    text-align: left;
+	width: fit-content;
+	text-align: left;
 }
 
 .ddwttTagX {
 	padding: 0;
 	/* Style from .input-image */
+	display: inline-block;
 	background-color: var(--LAYOUT_MAIN_COLOR);
 	background: var(--IMAGE_BUTTON_BACKGROUND);
 	border: var(--IMAGE_BUTTON_BACKGROUND_BORDER);
 	box-shadow: var(--IMAGE_BUTTON_BACKGROUND_BOXSHADOW);
-	display: inline-block;
 	width: var(--ICON_SIZE_NORMAL);
 	height: var(--ICON_SIZE_NORMAL);
 	/* Style from .fClear */

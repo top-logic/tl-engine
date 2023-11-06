@@ -3,5 +3,6 @@
 <theme>
 	<styles>
 		<style name="/style/monitoringStyle.css"/>
+		<style name="/style/log-line.css"/>
 	</styles>
 </theme>

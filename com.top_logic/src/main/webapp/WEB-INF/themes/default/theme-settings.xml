@@ -2733,7 +2733,7 @@
 		value="/icons/buttonArrowDisabled.png"
 	/>
 	<icon name="com.top_logic.layout.renderers.Icons.STACKTRACE"
-		value="/icons/stacktrace.png"
+		value="css:fas fa-code"
 	/>
 	<icon name="com.top_logic.layout.tabbar.Icons.TAB_BAR_COMMANDS_MENU"
 		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"

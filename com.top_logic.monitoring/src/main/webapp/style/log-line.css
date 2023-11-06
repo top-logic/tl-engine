@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+
+/*
+ * CSS for displaying log lines.
+ * 
+ * The severity color is used in the cells and the footer of the log lines table.
+ * The "!important" is necessary, as there are some very specific selectors setting the text color in the table cells.
+ */
+
+.tl-log-lines-table--fatal {
+	color: purple !important;
+}
+
+.tl-log-lines-table--error {
+	color: red !important;
+}
+
+.tl-log-lines-table--warn {
+	color: darkorange !important;
+}
+
+.tl-log-lines-table--info {
+	color: green !important;
+}
+
+.tl-log-lines-table--debug {
+	color: black !important;
+}
+
+.tl-log-lines-table--trace {
+	color: black !important;
+}

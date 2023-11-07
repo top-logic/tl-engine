@@ -12,6 +12,7 @@ import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.model.TLObject;
@@ -88,15 +89,19 @@ public abstract class TokenService extends ManagedClass {
 	 * Creates a lock conflict error with lock owner details.
 	 */
 	protected TopLogicException createDetailedLockConflictError(TLObject owner, long timeout, Long nodeId) {
-		return new TopLogicException(
+		TopLogicException ex = new TopLogicException(
 			I18NConstants.ERROR_LOCK_CONFLICT__OWNER_TIMEOUT_NODE.fill(owner, new Date(timeout), nodeId));
+		ex.initSeverity(ErrorSeverity.INFO);
+		return ex;
 	}
 
 	/**
 	 * Creates a lock conflict error without lock owner details.
 	 */
 	protected TopLogicException createGenericLockConflictError() {
-		return new TopLogicException(I18NConstants.ERROR_LOCK_CONFLICT);
+		TopLogicException ex = new TopLogicException(I18NConstants.ERROR_LOCK_CONFLICT);
+		ex.initSeverity(ErrorSeverity.INFO);
+		return ex;
 	}
 
 	/**

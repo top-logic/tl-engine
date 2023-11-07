@@ -12,6 +12,7 @@ import com.top_logic.base.locking.strategy.ConfiguredLockStrategy;
 import com.top_logic.base.locking.strategy.LockStrategy;
 import com.top_logic.base.locking.token.Token;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.structured.StructuredElement;
@@ -31,6 +32,7 @@ import com.top_logic.element.structured.StructuredElement;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
 public class AncestorsLockStrategy<C extends AncestorsLockStrategy.Config<?>>
 		extends ConfiguredLockStrategy<C, StructuredElement> {
 

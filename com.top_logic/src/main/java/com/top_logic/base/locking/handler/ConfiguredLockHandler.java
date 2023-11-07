@@ -14,9 +14,11 @@ import com.top_logic.base.locking.service.ConfiguredLockService.Config.TypeConfi
 import com.top_logic.base.locking.strategy.LockStrategy;
 import com.top_logic.base.locking.token.Token;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.format.MillisFormat;
 
@@ -25,6 +27,8 @@ import com.top_logic.basic.config.format.MillisFormat;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
+@Label("Configured lock")
 public class ConfiguredLockHandler extends AbstractConfiguredLockHandler<ConfiguredLockHandler.Config<?>> {
 
 	/**
@@ -36,6 +40,7 @@ public class ConfiguredLockHandler extends AbstractConfiguredLockHandler<Configu
 		/**
 		 * Duration in milliseconds an acquired {@link Lock} keeps valid.
 		 */
+		@Label("Validity period")
 		@Name("lock-timeout")
 		@Format(MillisFormat.class)
 		Long getLockTimeout();
@@ -55,7 +60,7 @@ public class ConfiguredLockHandler extends AbstractConfiguredLockHandler<Configu
 	@CalledByReflection
 	public ConfiguredLockHandler(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_strategy = ConfiguredLockService.createStrategy(context, config.getStragegies());
+		_strategy = ConfiguredLockService.createStrategy(context, config.getStrategies());
 	}
 
 	@Override

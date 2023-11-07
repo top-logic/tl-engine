@@ -7,9 +7,11 @@ package com.top_logic.base.locking.handler;
 
 import com.top_logic.base.locking.Lock;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -23,6 +25,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
+@Label("Locks defined elsewhere")
 public class SharedLockHandler extends AbstractConfiguredInstance<SharedLockHandler.Config<?>> implements LockHandler {
 
 	/**

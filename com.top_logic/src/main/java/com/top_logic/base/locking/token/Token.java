@@ -7,6 +7,7 @@ package com.top_logic.base.locking.token;
 
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.model.TLObject;
 
 /**
@@ -14,6 +15,7 @@ import com.top_logic.model.TLObject;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Lock")
 public final class Token {
 
 	/**
@@ -24,7 +26,7 @@ public final class Token {
 	public enum Kind implements ExternallyNamed {
 
 		/**
-		 * An exclusive {@link Token} an only be acquired by exactly one process.
+		 * An exclusive {@link Token} can only be acquired by exactly one process.
 		 * 
 		 * <p>
 		 * Holding an exclusive {@link Token} also prevents other processes from acquiring
@@ -37,9 +39,9 @@ public final class Token {
 		 * Multiple shared {@link Token}s can be acquired concurrently be different processes.
 		 * 
 		 * <p>
-		 * Holding a shared {@link Token} prevents other processes from acquiring {@link #EXCLUSIVE}
-		 * tokens on the same object but allows other processes to acquire other {@link #SHARED}
-		 * tokens on the same object.
+		 * However, holding a shared {@link Token} prevents other processes from acquiring
+		 * {@link #EXCLUSIVE} tokens on the same object while it allows concurrent processes to
+		 * acquire other {@link #SHARED} tokens on the same object.
 		 * </p>
 		 */
 		SHARED("shared");

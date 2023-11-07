@@ -19,6 +19,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormHandler;
+import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -149,16 +150,16 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 					// switched to edit mode just before: A grid can be switched to edit mode, even
 					// if the the currently selected row cannot be locked, since changing the row
 					// selection keeps the edit mode.
-					if (editor instanceof LockHandler) {
-						((LockHandler) editor).updateLock();
+					if (editor instanceof CanLock) {
+						((CanLock) editor).getLockHandler().updateLock();
 					}
 					doApplyChanges(component, model, arguments);
 				} finally {
 					editor.setViewMode();
 				}
 			} else {
-				if (editor instanceof LockHandler) {
-					((LockHandler) editor).updateLock();
+				if (editor instanceof CanLock) {
+					((CanLock) editor).getLockHandler().updateLock();
 				}
 				doApplyChanges(component, model, arguments);
 			}

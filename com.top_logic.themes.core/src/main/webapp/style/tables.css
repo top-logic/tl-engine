@@ -1158,19 +1158,6 @@ div.dirtyHandlingDialog .changes {
 	cursor: ns-resize;
 }
 
-.h-100 {
-  height: 100% !important;
-}
-
-.w-100 {
-  width: 100% !important;
-}
-
-.px-1 {
-  padding-right: 0.25rem !important;
-  padding-left: 0.25rem !important;
-}
-
 .placeholder {
   display: inline-block;
   min-height: 1em;
@@ -1188,6 +1175,27 @@ div.dirtyHandlingDialog .changes {
   50% {
     opacity: 0.2;
   }
+}
+
+.h-100 {
+  height: 100% !important;
+}
+
+.w-100 {
+  width: 100% !important;
+}
+
+.px-1 {
+  padding-right: 0.25rem !important;
+  padding-left: 0.25rem !important;
+}
+
+.tl-table__content-container {
+	min-height: 0;
+	position: relative;
+	overflow: hidden;
+	/* tables content should always be displayed over its footer e. g. dropdowns */
+	z-index: 1;
 }
 
 .tl-vstack {

@@ -104,6 +104,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Var;
 import com.top_logic.model.search.expr.config.dom.Expr.Wrapped;
 import com.top_logic.model.search.expr.config.dom.ExprVisitor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.search.expr.documentation.DocumentationConstants;
 import com.top_logic.model.search.expr.html.AttributeMacro;
 import com.top_logic.model.search.ui.help.HelpPageIndex;
 import com.top_logic.model.search.ui.help.HelpPageIndex.Page;
@@ -120,9 +121,6 @@ import com.top_logic.model.util.TLModelUtil;
 public class SearchBuilder<C extends SearchBuilder.Config<?>> extends ConfiguredManagedClass<C>
 		implements ExprVisitor<SearchExpression, TLModel, ConfigurationException>
 {
-
-	/** CSS class for the documentation of a TL script function. */
-	public static final String DOCUMENTATION_CSS_CLASS = "tlScriptDoc";
 
 	static final SearchExpression[] EMPTY_EXPR_ARRAY = new SearchExpression[0];
 
@@ -284,7 +282,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 
 	@SuppressWarnings("deprecation")
 	private void writeDocumentation(TagWriter out, Page page) throws IOException {
-		out.beginTag(DIV, CLASS_ATTR, DOCUMENTATION_CSS_CLASS);
+		out.beginTag(DIV, CLASS_ATTR, DocumentationConstants.DOCUMENTATION_CSS_CLASS);
 
 		out.beginTag(H2);
 		out.writeText(page.getTitle());

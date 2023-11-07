@@ -16,12 +16,12 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.format.CommonMark;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.search.expr.config.ExprFormat;
-import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.documentation.DocumentationConstants;
+import com.top_logic.model.search.expr.documentation.I18NConstants;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.service.openapi.client.registry.conf.MethodDefinition;
 import com.top_logic.service.openapi.client.registry.conf.ParameterDefinition;
@@ -34,12 +34,6 @@ import com.top_logic.util.Resources;
  */
 public class MethodDefinitionDocumentation implements HTMLFragment {
 
-	/**
-	 * CSS class for a {@link HTMLConstants#TABLE table} that describes the parameters of a
-	 * function.
-	 */
-	public static String PARAMETER_TABLE_CSS_CLASS = "tlDocTable";
-
 	private MethodDefinition _definition;
 
 	/**
@@ -51,7 +45,7 @@ public class MethodDefinitionDocumentation implements HTMLFragment {
 
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
-		out.beginTag(DIV, CLASS_ATTR, SearchBuilder.DOCUMENTATION_CSS_CLASS);
+		out.beginTag(DIV, CLASS_ATTR, DocumentationConstants.DOCUMENTATION_CSS_CLASS);
 
 		writeName(out);
 		writeSyntax(context, out);
@@ -114,6 +108,8 @@ public class MethodDefinitionDocumentation implements HTMLFragment {
 		String description = _definition.getDescription();
 		if (description != null) {
 			CommonMark.writeCommonMark(out, description);
+		} else {
+			out.writeText(context.getResources().getString(I18NConstants.MESSAGE_DOC_NO_DESCRIPTION));
 		}
 	}
 
@@ -128,7 +124,7 @@ public class MethodDefinitionDocumentation implements HTMLFragment {
 		out.writeText(res.getString(I18NConstants.MESSAGE_DOC_PARAMETERS_HEADER));
 		out.endTag(H2);
 
-		HTMLUtil.beginTable(out, null, PARAMETER_TABLE_CSS_CLASS);
+		HTMLUtil.beginTable(out, null, DocumentationConstants.PARAMETER_TABLE_CSS_CLASS);
 		out.beginTag(THEAD);
 		writeTH(out, res, I18NConstants.MESSAGE_DOC_PARAMETERS_COLUMN_NAME);
 		writeTH(out, res, I18NConstants.MESSAGE_DOC_PARAMETERS_COLUMN_TYPE);

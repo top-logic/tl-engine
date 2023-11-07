@@ -6,12 +6,12 @@
 package com.top_logic.doc.control;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.element.i18n.I18NField;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.control.WithPlaceHolder;
-import com.top_logic.layout.form.model.CompositeField;
 import com.top_logic.layout.form.template.ControlProvider;
 
 /**
@@ -38,7 +38,7 @@ public class TranslatedI18nStringFieldControl extends TranslatedI18nFieldControl
 		}
 
 		@Override
-		protected Control createControl(CompositeField i18nField, ComponentChannel language, String style) {
+		protected Control createControl(I18NField<?, ?, ?> i18nField, ComponentChannel language, String style) {
 			return new TranslatedI18nStringFieldControl(i18nField, language, style);
 		}
 
@@ -48,11 +48,11 @@ public class TranslatedI18nStringFieldControl extends TranslatedI18nFieldControl
 	 * Creates a {@link TranslatedI18nStringFieldControl}.
 	 * <p>
 	 * See
-	 * {@link TranslatedI18nFieldControl#TranslatedI18nFieldControl(CompositeField, ComponentChannel, String)}
+	 * {@link TranslatedI18nFieldControl#TranslatedI18nFieldControl(I18NField, ComponentChannel, String)}
 	 * for the parameter documentation.
 	 * </p>
 	 */
-	public TranslatedI18nStringFieldControl(CompositeField i18nField, ComponentChannel language, String style) {
+	public TranslatedI18nStringFieldControl(I18NField<?, ?, ?> i18nField, ComponentChannel language, String style) {
 		super(i18nField, language, style);
 	}
 

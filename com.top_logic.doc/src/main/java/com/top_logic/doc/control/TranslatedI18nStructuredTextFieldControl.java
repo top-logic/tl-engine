@@ -9,10 +9,10 @@ import java.util.List;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.element.i18n.I18NField;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.model.CompositeField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextControl;
@@ -44,7 +44,7 @@ public class TranslatedI18nStructuredTextFieldControl extends TranslatedI18nFiel
 		}
 
 		@Override
-		protected Control createControl(CompositeField i18nField, ComponentChannel language, String style) {
+		protected Control createControl(I18NField<?, ?, ?> i18nField, ComponentChannel language, String style) {
 			return new TranslatedI18nStructuredTextFieldControl((I18NStructuredTextField) i18nField, language, style);
 		}
 
@@ -53,7 +53,7 @@ public class TranslatedI18nStructuredTextFieldControl extends TranslatedI18nFiel
 	/**
 	 * Creates a {@link TranslatedI18nStructuredTextFieldControl}.
 	 * 
-	 * @see TranslatedI18nFieldControl#TranslatedI18nFieldControl(CompositeField, ComponentChannel,
+	 * @see TranslatedI18nFieldControl#TranslatedI18nFieldControl(I18NField, ComponentChannel,
 	 *      String) Parameter definitions.
 	 */
 	public TranslatedI18nStructuredTextFieldControl(I18NStructuredTextField i18nField, ComponentChannel language,

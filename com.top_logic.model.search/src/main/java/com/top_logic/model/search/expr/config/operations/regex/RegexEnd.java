@@ -63,7 +63,7 @@ public class RegexEnd extends SimpleGenericMethod {
 
 	private Object getEnd(Object self, int groupId) {
 		Match match = (Match) self;
-		return match.group(groupId).getEnd();
+		return toNumber(match.group(groupId).getEnd());
 	}
 
 	/**

@@ -191,7 +191,10 @@ public class TestJSON extends BasicTestCase {
 
 	public void testNumberReadBack() throws ParseException {
 		assertParse(Integer.valueOf(42), JSON.toString(Integer.valueOf(42)));
-		assertParse(Double.valueOf(42), JSON.toString(Double.valueOf(42)));
+		assertParse(Integer.valueOf(42), JSON.toString(Double.valueOf(42)));
+		assertParse(Double.valueOf(42.1), JSON.toString(Double.valueOf(42.1)));
+		assertParse(Integer.valueOf(-42), JSON.toString(Double.valueOf(-42)));
+		assertParse(Double.valueOf(-42.1), JSON.toString(Double.valueOf(-42.1)));
 		assertParse(Double.valueOf(42E99), JSON.toString(Double.valueOf(42E99)));
 	}
 	

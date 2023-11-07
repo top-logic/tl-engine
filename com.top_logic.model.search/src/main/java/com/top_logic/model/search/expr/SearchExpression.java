@@ -16,10 +16,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
+import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -98,7 +100,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 */
 	public final Object evalWith(EvalContext context, Args args) {
 		try {
-			return internalEval(context, args);
+			return internalCheckValue(internalEval(context, args));
 		} catch (ScriptAbort ex) {
 			throw ex;
 		} catch (I18NRuntimeException ex) {
@@ -107,6 +109,38 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			throw new TopLogicException(
 				I18NConstants.ERROR_EVALUATION_FAILED__EXPR_ARGS_DEFS.fill(this, args, context), ex);
 		}
+	}
+
+	/**
+	 * Checks the given value to adhere to TL-Script number semantics.
+	 */
+	public static Object internalCheckValue(Object result) {
+		if (result instanceof Integer || result instanceof Long || result instanceof Short || result instanceof Byte) {
+			Logger.error(
+				"Numbers in TL-Script must be represented as Double only. Use SearchExpression.toNumber() before returning a number from a TL-Script function.",
+				new StackTrace());
+			return toNumber(((Number) result).longValue());
+		}
+		if (result instanceof Float) {
+			Logger.error(
+				"Numbers in TL-Script must be represented as Double only. Use SearchExpression.toNumber() before returning a number from a TL-Script function.",
+				new StackTrace());
+			return toNumber(((Number) result).floatValue());
+		}
+		return result;
+	}
+
+	/**
+	 * Normalizes a (numeric) value to TL-Script semantics.
+	 */
+	public static Object normalizeValue(Object result) {
+		if (result instanceof Integer || result instanceof Long || result instanceof Short || result instanceof Byte) {
+			return toNumber(((Number) result).longValue());
+		}
+		if (result instanceof Float) {
+			return toNumber(((Number) result).floatValue());
+		}
+		return result;
 	}
 
 	/**
@@ -526,6 +560,52 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	}
 
 	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 */
+	public static Double toNumber(float value) {
+		return Double.valueOf(value);
+	}
+
+	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 * 
+	 * <p>
+	 * Note: Use this method before returning a potentially numeric value from a TL-Script function.
+	 * </p>
+	 */
+	public static Double toNumber(double value) {
+		return Double.valueOf(value);
+	}
+
+	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 * 
+	 * <p>
+	 * Note: Use this method before returning a numeric value from a TL-Script function.
+	 * </p>
+	 */
+	public static Double toNumber(int value) {
+		if (value >= MIN && value <= MAX) {
+			return NUMBER_CACHE[value - MIN];
+		}
+		return Double.valueOf(value);
+	}
+
+	/**
+	 * Converts the given number to an object according to TL-Script number semantics.
+	 * 
+	 * <p>
+	 * Note: Use this method before returning a numeric value from a TL-Script function.
+	 * </p>
+	 */
+	public static Double toNumber(long value) {
+		if (value >= MIN && value <= MAX) {
+			return NUMBER_CACHE[((int) value) - MIN];
+		}
+		return Double.valueOf(value);
+	}
+
+	/**
 	 * Converts the given value to an <code>double</code> value.
 	 */
 	public double asDouble(Object value) {
@@ -574,6 +654,14 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		value = asSingleElement(value);
 		if (value == null) {
 			return defaultValue;
+		}
+		if (value instanceof Double) {
+			double x = ((Double) value).doubleValue();
+			if (Math.floor(x) == x) {
+				// Do not insist in marking numbers as floating point values. In TL-Script, all
+				// numbers are treated as Double internally.
+				return Long.toString((long) x);
+			}
 		}
 		return value.toString();
 	}
@@ -710,4 +798,18 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		return ResourcesModule.localeFromString(language);
 	}
 
+	private static final int MIN = -128;
+
+	private static final int MAX = 127;
+
+	private static final Double[] NUMBER_CACHE;
+
+	static {
+		int cnt = MAX - MIN + 1;
+		Double[] numbers = new Double[cnt];
+		for (int num = MIN; num <= MAX; num++) {
+			numbers[num - MIN] = Double.valueOf(num);
+		}
+		NUMBER_CACHE = numbers;
+	}
 }

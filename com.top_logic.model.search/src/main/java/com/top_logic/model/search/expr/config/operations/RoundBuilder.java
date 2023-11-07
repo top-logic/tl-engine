@@ -42,7 +42,7 @@ public class RoundBuilder extends AbstractSimpleMethodBuilder<SearchExpression> 
 			throw error(I18NConstants.ERROR_AT_LEAST_ONE_ARGUMENT_EXPECTED__EXPR.fill(toString(expr)));
 		}
 		if (args.length == 0) {
-			return SearchExpressions.literal(Integer.valueOf(0));
+			return SearchExpressions.literal(SearchExpression.toNumber(0));
 		}
 		return args[0];
 	}

@@ -48,7 +48,7 @@ public class ParseExpr extends SimpleGenericMethod {
 		Format format = (Format) self;
 		String arg = asString(arguments[0]);
 		try {
-			return format.parseObject(arg);
+			return normalizeValue(format.parseObject(arg));
 		} catch (ParseException ex) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_INVALID_FORMAT__STR_EXPR_MSG.fill(arg, this, ex.getMessage()));

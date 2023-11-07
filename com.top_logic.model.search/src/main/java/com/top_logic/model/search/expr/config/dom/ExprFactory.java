@@ -150,11 +150,15 @@ public class ExprFactory {
 
 	/** Creates a negated expression */
 	public Expr neg(Expr expr) {
-		Sub result = node(Sub.class);
-		List<Expr> operands = result.getOperands();
-		operands.add(numberLiteral(0.0));
-		operands.add(expr);
-		return result;
+		if (expr instanceof NumberLiteral) {
+			return numberLiteral(-((NumberLiteral) expr).getValue());
+		} else {
+			Sub result = node(Sub.class);
+			List<Expr> operands = result.getOperands();
+			operands.add(numberLiteral(0));
+			operands.add(expr);
+			return result;
+		}
 	}
 
 	/**
@@ -492,9 +496,14 @@ public class ExprFactory {
 		return result;
 	}
 
-	/** @see NumberLiteral */
-	public Expr numberLiteral(String value) {
+	/** A floating point value. */
+	public Expr doubleLiteral(String value) {
 		return numberLiteral(Double.parseDouble(value));
+	}
+
+	/** An integer value. */
+	public Expr longLiteral(String value) {
+		return numberLiteral(Long.parseLong(value.replace("_", "")));
 	}
 
 	private Expr numberLiteral(double num) {

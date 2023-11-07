@@ -48,7 +48,7 @@ public class ToMillis extends AbstractDateMethod {
 		if (self == null) {
 			return null;
 		}
-		return asDate(self).getTime();
+		return SearchExpression.toNumber(asDate(self).getTime());
 	}
 
 	/**

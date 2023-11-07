@@ -48,8 +48,8 @@ public class Compare extends BinaryOperation implements BooleanExpression {
 	/**
 	 * Actually computes the comparison based on the given concret values.
 	 */
-	public final Integer compute(Object left, Object right) {
-		return Integer.valueOf(Cmp.NULL_LARGEST.compare(left, right));
+	public final Number compute(Object left, Object right) {
+		return toNumber(Cmp.NULL_LARGEST.compare(left, right));
 	}
 
 	@Override

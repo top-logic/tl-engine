@@ -99,7 +99,7 @@ public interface FloatCompare
 		public SearchExpression build(ExpressionBuilder builder, SearchExpression contextExpr) {
 			SearchExpression rightExpression =
 				buildExpression(builder, getConfig().getComparisonValue());
-			SearchExpression precision = literal(getConfig().getPrecision());
+			SearchExpression precision = literal(SearchExpression.toNumber(getConfig().getPrecision()));
 			switch (getConfig().getKind()) {
 				case EQUALS: {
 					return SearchExpressions.isFloatEqual(contextExpr, rightExpression, precision);

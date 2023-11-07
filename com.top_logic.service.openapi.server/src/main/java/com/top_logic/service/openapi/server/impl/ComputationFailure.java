@@ -18,9 +18,11 @@ public class ComputationFailure extends Exception {
 	 * 
 	 * @param message
 	 *        see {@link Exception#Exception(String)}
+	 * @param ex
+	 *        The cause of the problem.
 	 */
-	public ComputationFailure(String message) {
-		super(message);
+	public ComputationFailure(String message, Throwable ex) {
+		super(message, ex);
 	}
 
 }

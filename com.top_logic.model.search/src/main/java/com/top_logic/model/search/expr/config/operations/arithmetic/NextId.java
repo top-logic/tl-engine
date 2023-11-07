@@ -76,7 +76,7 @@ public class NextId extends GenericMethod {
 
 		PooledConnection connection = currentContext.getConnection();
 		try {
-			return Long.valueOf(
+			return toNumber(
 				SEQUENCE_MANAGER.nextSequenceNumber(connection.getSQLDialect(), connection, 3, sequenceName));
 		} catch (SQLException ex) {
 			throw new TopLogicException(

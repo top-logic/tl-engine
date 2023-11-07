@@ -263,18 +263,18 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testNextId() throws ParseException {
-		assertEquals(1L, update("nextId()"));
-		assertEquals(2L, update("nextId()"));
-		assertEquals(3L, update("nextId(null)"));
+		assertEquals(1.0, update("nextId()"));
+		assertEquals(2.0, update("nextId()"));
+		assertEquals(3.0, update("nextId(null)"));
 
-		assertEquals(1L, update("nextId('foo')"));
-		assertEquals(2L, update("nextId('foo')"));
+		assertEquals(1.0, update("nextId('foo')"));
+		assertEquals(2.0, update("nextId('foo')"));
 
-		assertEquals(1L, update("nextId('foo', 'bar')"));
-		assertEquals(2L, update("nextId('foo', 'bar')"));
+		assertEquals(1.0, update("nextId('foo', 'bar')"));
+		assertEquals(2.0, update("nextId('foo', 'bar')"));
 
-		assertEquals(1L, update("nextId(`TestSearchExpression:A`)"));
-		assertEquals(2L, update("nextId(`TestSearchExpression:A`)"));
+		assertEquals(1.0, update("nextId(`TestSearchExpression:A`)"));
+		assertEquals(2.0, update("nextId(`TestSearchExpression:A`)"));
 	}
 
 	public void testNextIdWithoutTransaction() throws ParseException {
@@ -364,7 +364,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					execute(search("`" + contextTable + "/" + contextBranch + "/" + contextId + ":Local`")));
 				assertEquals(propertyX,
 					execute(search("`" + contextTable + "/" + contextBranch + "/" + contextId + ":Local#x`")));
-				assertEquals(42,
+				assertEquals(42.0,
 					execute(
 						search("x -> $x.get(`" + contextTable + "/" + contextBranch + "/" + contextId + ":Local#x`)"),
 						local));
@@ -551,6 +551,8 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testInt() throws ParseException {
 		assertEquals(7.0, execute(search("7")));
+		assertEquals(7.0, execute(search("7.0")));
+		assertEquals(Double.valueOf(7_000_000_000_000_000L), execute(search("7_000_000_000_000_000")));
 	}
 
 	public void testDouble() throws ParseException {
@@ -818,7 +820,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testParse() throws ParseException {
-		assertEquals(42L, execute(search("numberFormat('0000').parse('0042')")));
+		assertEquals(42.0, execute(search("numberFormat('0000').parse('0042')")));
 	}
 
 	/**
@@ -920,7 +922,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 * Test for {@link ToMillis}
 	 */
 	public void testToMillis() throws ParseException, java.text.ParseException {
-		assertEquals(((Date) XmlDateTimeFormat.INSTANCE.parseObject("2019-08-05T15:38:52.123")).getTime(),
+		assertEquals(
+			SearchExpression
+				.toNumber(((Date) XmlDateTimeFormat.INSTANCE.parseObject("2019-08-05T15:38:52.123")).getTime()),
 			execute(
 				search(
 					"toDate('2019-08-05T15:38:52.123').toMillis()")));
@@ -931,10 +935,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 */
 	public void testCalendarUpdate() throws ParseException, java.text.ParseException {
 		assertEquals(
-			CalendarUtil.convertToSystemZone(
+			SearchExpression.toNumber(CalendarUtil.convertToSystemZone(
 				CalendarUtil.createCalendar(
 					(Date) XmlDateTimeFormat.INSTANCE.parseObject("2019-08-05T15:38:52.123Z"), getTimeZone("GMT")))
-				.getTimeInMillis(),
+				.getTimeInMillis()),
 			execute(
 				search(
 					"now().toUserCalendar().withYear(2019).withMonth(8-1).withDay(5).withHour(15).withMinute(38).withSecond(52).withMillisecond(123).toDate().toMillis()")));
@@ -1015,9 +1019,8 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testGeneration() throws ParseException {
-		Object search1 = execute(
-			search("0.recursion(x -> $x + 1, 0, 5)"));
-		assertEquals(list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), search1);
+		assertEquals(list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), execute(search("0.0.recursion(x -> $x + 1, 0, 5)")));
+		assertEquals(list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), execute(search("0.recursion(x -> $x + 1, 0, 5)")));
 	}
 
 	public void testSubstraction() throws ParseException {
@@ -1032,6 +1035,36 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(3.0, execute(search("-1+4")));
 	}
 
+	public void testNumberCompare() throws ParseException {
+		assertEquals(true, execute(search("[1, 2].containsElement([\"a\", \"b\"].size())")));
+
+		assertEquals(true, execute(search("[1, 2].containsElement(1)")));
+		assertEquals(true, execute(search("[1, 2].containsElement(1.0)")));
+		assertEquals(false, execute(search("[1, 2].containsElement(1.1)")));
+
+		assertEquals(true, execute(search("[1.0, 2.0].containsElement(1)")));
+		assertEquals(true, execute(search("[1.0, 2.0].containsElement(1.0)")));
+		assertEquals(false, execute(search("[1.0, 2.0].containsElement(1.1)")));
+
+		assertEquals(true, execute(search("[1, [\"a\", \"b\"].size()].containsElement([\"a\", \"b\"].size())")));
+
+		assertEquals(true, execute(search("[1, 2].containsElement([\"a\", \"b\"].size()+0)")));
+		assertEquals(true, execute(search("[1, [\"a\", \"b\"].size()].containsElement([\"a\", \"b\"].size()+0)")));
+
+		assertEquals(true, execute(search("[\"a\", \"b\"].size() == 2")));
+		assertEquals(true, execute(search("[\"a\", \"b\"].size() == 2.0")));
+
+		assertEquals("b", execute(search("[\"a\", \"b\"][1]")));
+		assertEquals("b", execute(search("[\"a\", \"b\"][1.0]")));
+
+		assertEquals(true, execute(search("count(0, 3).containsElement(2)")));
+		assertEquals(true, execute(search("count(0, 3).containsElement(2.0)")));
+		assertEquals(true, execute(search("count(0, 3).containsElement(1 + 1)")));
+
+		assertEquals(true, execute(search("100 == 1e2")));
+		assertEquals(true, execute(search("157.6 == 1.576E2")));
+	}
+
 	public void testNullFragment() throws ParseException {
 		assertEquals(true, execute(search("0.1 > 0.0")));
 		assertEquals(true, execute(search("0 == 0.0")));
@@ -1043,7 +1076,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(true, execute(search("1.0 >= 1")));
 		String intExpression = "list('a', 'b').size()";
 		String doubleExpression = "1.0";
-		assertInstanceof(execute(search(intExpression)), Integer.class);
+		assertInstanceof(execute(search(intExpression)), Double.class);
 		assertInstanceof(execute(search(doubleExpression)), Double.class);
 		assertEquals(true, execute(search(intExpression + " >= " + doubleExpression)));
 		assertEquals(true, execute(search(intExpression + " == " + intExpression)));
@@ -1514,9 +1547,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testLength() throws ParseException {
-		assertEquals(5, eval("'Hello'.length()"));
-		assertEquals(0, eval("''.length()"));
-		assertEquals(0, eval("null.length()"));
+		assertEquals(5.0, eval("'Hello'.length()"));
+		assertEquals(0.0, eval("''.length()"));
+		assertEquals(0.0, eval("null.length()"));
 		assertEquals(null, eval("(3).length()"));
 		assertEquals(null, eval("length(3)"));
 		assertEquals(null, eval("list(3, 'foo', 5).length()"));
@@ -1544,24 +1577,24 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testListWithNull() throws ParseException {
 		// null is equivalent to the empty list.
-		assertEquals(0, eval("null.size()"));
-		assertEquals(0, eval("list().size()"));
-		assertEquals(1, eval("list(42).size()"));
-		assertEquals(1, eval("list(list()).size()"));
+		assertEquals(0.0, eval("null.size()"));
+		assertEquals(0.0, eval("list().size()"));
+		assertEquals(1.0, eval("list(42).size()"));
+		assertEquals(1.0, eval("list(list()).size()"));
 
 		// list() does not filter out null values.
-		assertEquals(1, eval("x -> list($x).size()", new Object[] { null }));
-		assertEquals(1, eval("list(null).size()"));
-		assertEquals(2, eval("list(null, null).size()"));
+		assertEquals(1.0, eval("x -> list($x).size()", new Object[] { null }));
+		assertEquals(1.0, eval("list(null).size()"));
+		assertEquals(2.0, eval("list(null, null).size()"));
 
 		// In contrast, singleton() collapses null values to empty lists.
-		assertEquals(0, eval("singleton(null).size()"));
-		assertEquals(1, eval("singleton(42).size()"));
+		assertEquals(0.0, eval("singleton(null).size()"));
+		assertEquals(1.0, eval("singleton(42).size()"));
 
-		assertEquals(-1, eval("null.elementIndex(null)"));
-		assertEquals(-1, eval("list().elementIndex(null)"));
-		assertEquals(0, eval("list(null).elementIndex(null)"));
-		assertEquals(0, eval("list(null, null).elementIndex(null)"));
+		assertEquals(-1.0, eval("null.elementIndex(null)"));
+		assertEquals(-1.0, eval("list().elementIndex(null)"));
+		assertEquals(0.0, eval("list(null).elementIndex(null)"));
+		assertEquals(0.0, eval("list(null, null).elementIndex(null)"));
 	}
 
 	public void testListAccessWithInvalidString() throws ParseException {
@@ -1736,12 +1769,12 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testSize() throws ParseException {
-		assertEquals(1, eval("'Hello'.size()"));
-		assertEquals(1, eval("''.size()"));
-		assertEquals(0, eval("null.size()"));
-		assertEquals(1, eval("(3).size()"));
-		assertEquals(1, eval("size(3)"));
-		assertEquals(3, eval("list(3, 'foo', 5).size()"));
+		assertEquals(1.0, eval("'Hello'.size()"));
+		assertEquals(1.0, eval("''.size()"));
+		assertEquals(0.0, eval("null.size()"));
+		assertEquals(1.0, eval("(3).size()"));
+		assertEquals(1.0, eval("size(3)"));
+		assertEquals(3.0, eval("list(3, 'foo', 5).size()"));
 	}
 
 	public void testFirstElement() throws ParseException {
@@ -1774,26 +1807,26 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testElementIndex() throws ParseException {
-		assertEquals(3, eval("list(3, 7, 30, 2).elementIndex(2)"));
-		assertEquals(-1, eval("list(3, 7, 30, 2).elementIndex(10)"));
-		assertEquals(1, eval("list(3, 'foobar', 30, 2).elementIndex('foobar')"));
-		assertEquals(-1, eval("list(3, 'foobar', 30, 2).elementIndex('xxx')"));
-		assertEquals(0, eval("list(3, 'foobar', 30, 2).elementIndex(3)"));
-		assertEquals(0, eval("list(3).elementIndex(3)"));
-		assertEquals(0, eval("(3).elementIndex(3)"));
-		assertEquals(-1, eval("list().elementIndex(3)"));
-		assertEquals(-1, eval("null.elementIndex(3)"));
-		assertEquals(-1, eval("null.elementIndex(null)"));
+		assertEquals(3.0, eval("list(3, 7, 30, 2).elementIndex(2)"));
+		assertEquals(-1.0, eval("list(3, 7, 30, 2).elementIndex(10)"));
+		assertEquals(1.0, eval("list(3, 'foobar', 30, 2).elementIndex('foobar')"));
+		assertEquals(-1.0, eval("list(3, 'foobar', 30, 2).elementIndex('xxx')"));
+		assertEquals(0.0, eval("list(3, 'foobar', 30, 2).elementIndex(3)"));
+		assertEquals(0.0, eval("list(3).elementIndex(3)"));
+		assertEquals(0.0, eval("(3).elementIndex(3)"));
+		assertEquals(-1.0, eval("list().elementIndex(3)"));
+		assertEquals(-1.0, eval("null.elementIndex(3)"));
+		assertEquals(-1.0, eval("null.elementIndex(null)"));
 	}
 
 	public void testCount() throws ParseException {
-		assertEquals(list(3, 4, 5), execute(search("count(3, 6)")));
-		assertEquals(list(3, 4, 5), execute(search("count(3, 6, 0)")));
+		assertEquals(list(3.0, 4.0, 5.0), execute(search("count(3, 6)")));
+		assertEquals(list(3.0, 4.0, 5.0), execute(search("count(3, 6, 0)")));
 		assertEquals(list(), execute(search("count(3, 3)")));
 		assertEquals(list(), execute(search("count(3, 2)")));
-		assertEquals(list(3), execute(search("count(3, 4)")));
-		assertEquals(list(3, 7, 11), execute(search("count(3, 15, 4)")));
-		assertEquals(list(11, 7, 3), execute(search("count(11, 2, -4)")));
+		assertEquals(list(3.0), execute(search("count(3, 4)")));
+		assertEquals(list(3.0, 7.0, 11.0), execute(search("count(3, 15, 4)")));
+		assertEquals(list(11.0, 7.0, 3.0), execute(search("count(11, 2, -4)")));
 	}
 
 	public void testToList() throws ParseException {
@@ -1835,7 +1868,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	public void testRegex() throws ParseException {
 		assertEquals(list("ab", "a", "a", "ab"),
 			execute(search("regex('ab?').regexSearch('abcaxyaabcd').map(m -> $m.regexGroup())")));
-		assertEquals(list(0, 2, 3, 4, 6, 7, 7, 9),
+		assertEquals(list(0.0, 2.0, 3.0, 4.0, 6.0, 7.0, 7.0, 9.0),
 			execute(search(
 				// -----------------------01234567890
 				"regex('ab?').regexSearch('abcaxyaabcd').map(m -> list($m.regexStart(), $m.regexEnd())).flatten()")));

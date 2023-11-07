@@ -450,7 +450,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.writeAttribute(CLASS_ATTR, "ddwttImmutableItem");
 		out.endBeginTag();
 		{
-			SelectFieldUtils.getOptionRenderer((SelectField) dropdown).write(context, out, item);
+			SelectFieldUtils.getOptionRenderer(dropdown).write(context, out, item);
 		}
 		out.endTag(SPAN);
 	}

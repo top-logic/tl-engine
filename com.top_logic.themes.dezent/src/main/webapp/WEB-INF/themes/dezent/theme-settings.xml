@@ -1095,10 +1095,6 @@
 		expr=""
 		value="colored:tl-icon arrow-top-right-square"
 	/>
-	<img name="com.top_logic.layout.form.control.Icons.WAIT_IMAGE"
-		expr=""
-		value="/animation/hourglass.svg"
-	/>
 	<icon name="com.top_logic.layout.form.decorator.Icons.CHANGED"
 		expr=""
 		value="colored:tl-icon arrow-right"

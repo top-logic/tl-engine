@@ -8,7 +8,6 @@ package com.top_logic.layout.form.component;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.UnreachableAssertion;
@@ -22,6 +21,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
@@ -218,8 +218,8 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
 	 */
 	protected void updateLock(LayoutComponent component, FormContext formContext, Object model) {
-		if (component instanceof LockHandler) {
-			((LockHandler) component).updateLock();
+		if (component instanceof CanLock) {
+			((CanLock) component).getLockHandler().updateLock();
 		}
 	}
 

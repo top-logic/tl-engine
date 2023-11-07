@@ -10,16 +10,23 @@ import java.util.List;
 
 import com.top_logic.base.locking.token.Token;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.model.TLObject;
 
 /**
- * {@link LockStrategy} creating a token with the same well-known global name for all given
- * {@link TLObject}s.
+ * {@link LockStrategy} creating global locks.
+ * 
+ * <p>
+ * A global lock is independent of the object for which it was acquired. A global lock refers only
+ * to the lock aspect.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
+@Label("Global locking")
 public class GlobalLockStrategy<C extends GlobalLockStrategy.Config<?>> extends ConfiguredLockStrategy<C, Object> {
 
 	/**

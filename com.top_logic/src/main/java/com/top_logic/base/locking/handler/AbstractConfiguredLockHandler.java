@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -52,7 +53,9 @@ public abstract class AbstractConfiguredLockHandler<C extends PolymorphicConfigu
 	@Override
 	public final void acquireLock(Object model) throws IllegalStateException, TopLogicException {
 		if (hasLock() && _lock.isStateAcquired()) {
-			throw new TopLogicException(I18NConstants.ERROR_ALREADY_LOCKED);
+			TopLogicException ex = new TopLogicException(I18NConstants.ERROR_ALREADY_LOCKED);
+			ex.initSeverity(ErrorSeverity.WARNING);
+			throw ex;
 		}
 		_lock = createLock(model);
 		_lock.lock();
@@ -79,13 +82,17 @@ public abstract class AbstractConfiguredLockHandler<C extends PolymorphicConfigu
 		}
 		ensureAcquired();
 		if (!_lock.renew()) {
-			throw new TopLogicException(I18NConstants.ERROR_LOCK_NOT_ACQUIRED);
+			TopLogicException ex = new TopLogicException(I18NConstants.ERROR_LOCK_NOT_ACQUIRED);
+			ex.initSeverity(ErrorSeverity.WARNING);
+			throw ex;
 		}
 	}
 
 	private void ensureAcquired() {
 		if (!_lock.isStateAcquired()) {
-			throw new TopLogicException(I18NConstants.ERROR_LOCK_NOT_ACQUIRED);
+			TopLogicException ex = new TopLogicException(I18NConstants.ERROR_LOCK_NOT_ACQUIRED);
+			ex.initSeverity(ErrorSeverity.WARNING);
+			throw ex;
 		}
 	}
 

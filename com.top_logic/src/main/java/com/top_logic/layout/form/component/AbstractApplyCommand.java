@@ -6,10 +6,10 @@
 package com.top_logic.layout.form.component;
 
 import com.top_logic.base.locking.Lock;
-import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -39,9 +39,9 @@ public abstract class AbstractApplyCommand implements Command {
 	@Override
 	public final HandlerResult executeCommand(DisplayContext context) {
 
-		if (component instanceof LockHandler) {
-			LockHandler editComponent = (LockHandler) this.component;
-			editComponent.updateLock();
+		if (component instanceof CanLock) {
+			CanLock editComponent = (CanLock) this.component;
+			editComponent.getLockHandler().updateLock();
 		}
 
 		return executeApplyCommand(context, component);

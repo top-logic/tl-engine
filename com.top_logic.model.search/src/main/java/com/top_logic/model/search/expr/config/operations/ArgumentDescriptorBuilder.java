@@ -45,7 +45,7 @@ public interface ArgumentDescriptorBuilder {
 	 * Creates an optional named parameter with an integer default.
 	 */
 	default ArgumentDescriptorBuilder optional(String name, int defaultValue) {
-		return optional(name, () -> SearchExpressionFactory.literal(Integer.valueOf(defaultValue)));
+		return optional(name, () -> SearchExpressionFactory.literal(SearchExpression.toNumber(defaultValue)));
 	}
 
 	/**

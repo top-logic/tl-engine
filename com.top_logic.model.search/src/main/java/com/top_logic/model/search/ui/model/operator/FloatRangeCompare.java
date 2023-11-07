@@ -64,7 +64,7 @@ public interface FloatRangeCompare
 			FloatRangeCompare comparison = getConfig();
 			SearchExpression lowerBound = buildExpression(builder, comparison.getLowerBound());
 			SearchExpression upperBound = buildExpression(builder, comparison.getUpperBound());
-			SearchExpression precision = literal(comparison.getPrecision());
+			SearchExpression precision = literal(SearchExpression.toNumber(comparison.getPrecision()));
 			switch (comparison.getKind()) {
 				case IN_RANGE: {
 					return not(isFloatInRange(contextExpr, lowerBound, upperBound, precision));

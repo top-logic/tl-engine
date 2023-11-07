@@ -255,7 +255,7 @@ public abstract class QueryExecutor {
 	 * @see #executeWith(DisplayContext, TagWriter, Args)
 	 */
 	public Object execute(Object arg) {
-		return executeWith(context(), Args.some(arg));
+		return executeWith(context(), Args.some(SearchExpression.normalizeValue(arg)));
 	}
 
 	/**

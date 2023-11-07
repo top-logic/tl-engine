@@ -43,7 +43,7 @@ public class GetValue extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return asEntry(self).getValue();
+		return normalizeValue(asEntry(self).getValue());
 	}
 
 	/**

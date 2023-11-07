@@ -111,7 +111,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		try {
 			return _operation.execute(arguments(arguments));
 		} catch (RuntimeException ex) {
-			throw new ComputationFailure(ex.getMessage());
+			throw new ComputationFailure(ex.getMessage(), ex);
 		}
 	}
 

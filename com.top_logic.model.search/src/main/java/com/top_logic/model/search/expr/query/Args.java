@@ -108,7 +108,7 @@ public abstract class Args {
 		private final Args _next;
 
 		public Arg(Object value, Args next) {
-			_value = value;
+			_value = SearchExpression.normalizeValue(value);
 			_next = next;
 		}
 

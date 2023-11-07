@@ -63,7 +63,7 @@ public class RegexStart extends SimpleGenericMethod {
 
 	private Object getStart(Object self, int groupId) {
 		Match match = (Match) self;
-		return match.group(groupId).getStart();
+		return toNumber(match.group(groupId).getStart());
 	}
 
 	/**

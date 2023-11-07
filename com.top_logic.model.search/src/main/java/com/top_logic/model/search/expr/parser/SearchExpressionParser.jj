@@ -80,7 +80,9 @@ TOKEN :
 | < RESKEY : "#" < STRING > > 
 | < LANGTAG : "@" (["a"-"z", "A"-"Z"])+ ("-" (["a"-"z", "A"-"Z", "0"-"9"])+)* >
 | < #QUOTE : "\\\\" | "\\'" | "\\\"" >
-| < NUM : ("0" | ( [ "1"-"9" ] ([ "0"-"9" ])* )) ("." ([ "0"-"9" ])+)? >
+| < INT : ("0" | ( [ "1"-"9" ] ( ("_")? [ "0"-"9" ])* )) >
+| < #NUM : ("0" | ( [ "1"-"9" ] ([ "0"-"9" ])* )) >
+| < FLOAT : < NUM > ("." ([ "0"-"9" ])+)? (["e", "E"] < NUM >)? >
 | < #MODEL_NAME : ( ~[ "`", ":", "#", " ", "\t", "\n", "\r", "\f" ] )+ >
 | < MODULE : "`" < MODEL_NAME > "`" >
 | < TYPE : "`" < MODEL_NAME > ":" < MODEL_NAME > "`" >
@@ -339,8 +341,10 @@ Expr atomicExpr() :
     { expr=l == null ? _f.stringLiteral(t.image) : _f.i18nBuilder().add(t.image, l.image).build(); }
   | t=< RESKEY >
     { expr=_f.reskeyLiteral(t.image); }
-  | t=< NUM > 
-    { expr=_f.numberLiteral(t.image); }
+  | t=< FLOAT > 
+    { expr=_f.doubleLiteral(t.image); }
+  | t=< INT > 
+    { expr=_f.longLiteral(t.image); }
   | t=< VAR > 
     { expr=_f.var(t.image); }
   | expr=modelLiteral()

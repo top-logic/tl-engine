@@ -298,12 +298,23 @@ public class JSON {
 	private static void internalWrite(Appendable out, ValueAnalyzer valueAnalyzer, Object object, int indentation)
 			throws IOException {
 		switch (valueAnalyzer.getType(object)) {
-		case ValueAnalyzer.INTEGER_TYPE:
-			out.append(valueAnalyzer.getNumber(object).toString());
+		case ValueAnalyzer.INTEGER_TYPE: {
+			Number number = valueAnalyzer.getNumber(object);
+			out.append(number.toString());
 			break;
-		case ValueAnalyzer.FLOAT_TYPE:
-			out.append(valueAnalyzer.getNumber(object).toString());
+		}
+		case ValueAnalyzer.FLOAT_TYPE: {
+			Number number = valueAnalyzer.getNumber(object);
+			double x = number.doubleValue();
+			if (x == Math.floor(x) && x >= Long.MIN_VALUE && x <= Long.MAX_VALUE) {
+				out.append(Long.toString((long) x));
+			} else {
+				// In case of a float, do not cast to double to avoid adding additional fragment
+				// digits.
+				out.append(number.toString());
+			}
 			break;
+		}
 		case ValueAnalyzer.STRING_TYPE:
 			String s = valueAnalyzer.getString(object);
 			writeString(out, s);

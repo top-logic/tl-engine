@@ -58,46 +58,54 @@
 						value="${$name}"
 					/>
 				</action>
-				<t:if condition="!#equals($de, &quot;&quot;) ">
-					<t:then>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
-									tab-path=""
-								/>
-								<path>
-									<labeled-member label="Bezeichnung"/>
-									<labeled-member label="Deutsch"/>
-								</path>
-							</field>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+							tab-path=""
+						/>
+						<path>
+							<labeled-member label="Bezeichnung"/>
+							<labeled-member label="Deutsch"/>
+						</path>
+					</field>
+					<t:if condition="!#equals($de, &quot;&quot;) ">
+						<t:then>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 								value="${$de}"
 							/>
-						</action>
-					</t:then>
-				</t:if>
-				<t:if condition="!#equals($en, &quot;&quot;) ">
-					<t:then>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
-									tab-path=""
-								/>
-								<path>
-									<labeled-member label="Bezeichnung"/>
-									<labeled-member label="Englisch"/>
-								</path>
-							</field>
+						</t:then>
+						<t:else>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="${$name}"
+							/>
+						</t:else>
+					</t:if>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+							tab-path=""
+						/>
+						<path>
+							<labeled-member label="Bezeichnung"/>
+							<labeled-member label="Englisch"/>
+						</path>
+					</field>
+					<t:if condition="!#equals($en, &quot;&quot;) ">
+						<t:then>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 								value="${$en}"
 							/>
-						</action>
-					</t:then>
-				</t:if>
+						</t:then>
+						<t:else>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="${$name}"
+							/>
+						</t:else>
+					</t:if>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.element.layout.meta.TLModuleCreateHandler"
 					command-label="Anlegen"

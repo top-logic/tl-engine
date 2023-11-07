@@ -146,7 +146,7 @@
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="dezentModern"
+						value="core"
 					/>
 				</action>
 			</actions>

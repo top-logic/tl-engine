@@ -1777,15 +1777,14 @@ span.ltcCounting input {
 .card {
 	display: flex;
 	flex-direction: column;
-	background: var(--background);
+	background: var(--layer);
 	border: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) var(--spacing-03);
-	padding: var(--spacing-02) var(--spacing-03);
+	padding-bottom: var(--spacing-03);
 	min-width: 0px;
-	word-wrap: break-word;
 	background-clip: border-box;
 	border-radius: .25rem;
-	height: 21rem;
+	height: 20rem;
 	width: 16rem;
 	overflow: hidden;
 	cursor: pointer;
@@ -1800,13 +1799,24 @@ span.ltcCounting input {
 	background-color: var(--background-active);
 }
 
+.card:hover {
+	box-shadow: var(--shadow-menu);
+	background-color: var(--layer-active);
+}
+
+.card:hover h5.card-title,
+.card:hover .card-text {
+	background-color: var(--layer-active);
+}
+
 .previewBoxOuter {
     order: 1;
     width: 100%;
     height: 0;
-    padding-bottom: 75%; /* Adjust the aspect ratio to your desired value */
+    padding-bottom: 75%;
     position: relative;
     overflow: hidden;
+    background: var(--background);
 }
 
 .previewBoxOuter .previewBoxInner {
@@ -1826,7 +1836,13 @@ span.ltcCounting input {
 
 h5.card-title {
 	order: 2;
-	margin: var(--spacing-03) 0 0 0;
+	flex-shrink: 0;
+	padding: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
+	background: var(--layer);
+	margin: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 h5.card-title a {
@@ -1835,7 +1851,16 @@ h5.card-title a {
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
-	margin: var(--spacing-03) 0 0 0;
+}
+
+h5.card-title a:hover {
+	color: var(--text-primary);
+	text-decoration: none;
+}
+
+h5.card-title a:focus {
+	color: var(--text-primary);
+	box-shadow: none;
 }
 
 .card-text {
@@ -1845,6 +1870,13 @@ h5.card-title a {
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
+	background: var(--layer);
+	padding: 0 var(--spacing-03);
+	margin: 0;
+}
+
+.card-text p {
+	margin: 0;
 }
 
 /*

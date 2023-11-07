@@ -1138,7 +1138,7 @@
 		value="css:bi bi-check-lg"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
-		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
+		value="css:bi bi-arrow-down-up"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
 		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"

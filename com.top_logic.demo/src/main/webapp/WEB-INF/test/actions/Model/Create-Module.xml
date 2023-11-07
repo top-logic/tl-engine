@@ -24,7 +24,9 @@
 		</t:parameters>
 	</t:head>
 	<t:body>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create Module '${$name}'"
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 					user-id="root"

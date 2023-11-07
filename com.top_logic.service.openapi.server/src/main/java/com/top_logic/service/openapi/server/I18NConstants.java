@@ -12,9 +12,11 @@ import com.top_logic.layout.I18NConstantsBase;
 /**
  * Internationalization constants for this package.
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en No authentication algorithm for {1}:{0} could be created.
+	 */
 	public static ResKey2 CREATING_AUTHENTICATOR_FAILED__PATH__METHOD;
 
 	/**

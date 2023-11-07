@@ -393,8 +393,9 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 				ServiceMethodBuilder implBuilder = TypedConfigUtil.createInstance(operation.getImplementation());
 
 				List<String> parameterNames = allParameters.stream()
-						.map(p -> p.getName())
-						.collect(Collectors.toList());
+					.map(ConcreteRequestParameter::getScriptParameterNames)
+					.flatMap(List::stream)
+					.collect(Collectors.toList());
 
 				String path = pathItem.getCompletePath();
 				Authenticator authenticator = authenticator(operation);

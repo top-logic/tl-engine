@@ -19,6 +19,11 @@ import com.top_logic.service.openapi.client.registry.impl.value.ValueProducer;
 public interface MethodSpec {
 
 	/**
+	 * The name of the method.
+	 */
+	String getMethodName();
+
+	/**
 	 * The defined parameter names.
 	 */
 	List<String> getParameterNames();
@@ -31,7 +36,7 @@ public interface MethodSpec {
 	int getParameterIndex(String name);
 
 	/**
-	 * Creates a {@link ValueProducer} returning the argument passed to the paramter with the given
+	 * Creates a {@link ValueProducer} returning the argument passed to the parameter with the given
 	 * name.
 	 */
 	default ValueProducer createParameterLookup(String parameterName) {

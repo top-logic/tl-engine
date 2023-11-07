@@ -5,10 +5,12 @@
  */
 package com.top_logic.service.openapi.server.layout;
 
-import java.io.IOError;
+import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -46,10 +49,9 @@ import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.ByteArrayStream;
-import com.top_logic.basic.shared.io.StringW;
-import com.top_logic.basic.shared.io.W;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfigVisitor;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
@@ -86,6 +88,8 @@ import com.top_logic.service.openapi.server.conf.OperationByMethod;
 import com.top_logic.service.openapi.server.conf.OperationResponse;
 import com.top_logic.service.openapi.server.conf.PathItem;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;
+import com.top_logic.service.openapi.server.parameter.MultiPartBodyParameter;
+import com.top_logic.service.openapi.server.parameter.MultiPartBodyParameter.BodyPart;
 import com.top_logic.service.openapi.server.parameter.ParameterFormat;
 import com.top_logic.service.openapi.server.parameter.ReferencedParameter;
 import com.top_logic.service.openapi.server.parameter.RequestBodyParameter;
@@ -415,9 +419,23 @@ public class OpenAPIExporter {
 				RequestBodyParameter.Config requestBodyParam = (RequestBodyParameter.Config) parameter;
 				RequestBodyObject bodyObject = newItem(RequestBodyObject.class);
 				transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
-				transferIfNotEmpty(requestBodyParam::getRequired, bodyObject::setRequired);
+				transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
 				MediaTypeObject content =
 					newMediaTypeObject(requestBodyParam.getFormat(), requestBodyParam.getSchema());
+				transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
+				bodyObject.getContent().put(content.getMediaType(), content);
+				requestBody.setValue(bodyObject);
+			} else if (parameter instanceof MultiPartBodyParameter.Config) {
+				if (requestBody.getValue() != null) {
+
+					// multiple body parameters
+					continue;
+				}
+				MultiPartBodyParameter.Config requestBodyParam = (MultiPartBodyParameter.Config) parameter;
+				RequestBodyObject bodyObject = newItem(RequestBodyObject.class);
+				transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
+				transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
+				MediaTypeObject content = newMultipartMediaTypeObject(requestBodyParam);
 				transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
 				bodyObject.getContent().put(content.getMediaType(), content);
 				requestBody.setValue(bodyObject);
@@ -442,7 +460,7 @@ public class OpenAPIExporter {
 		}
 		transferIfNotEmpty(source::getName, target::setName);
 		transferIfNotEmpty(source::getDescription, target::setDescription);
-		transferIfNotEmpty(source::getRequired, target::setRequired);
+		transferIfTrue(source::getRequired, target::setRequired);
 		transferIfNotEmpty(source::getParameterLocation, target::setIn);
 		return target;
 	}
@@ -465,66 +483,130 @@ public class OpenAPIExporter {
 		return result;
 	}
 
+	private MediaTypeObject newMultipartMediaTypeObject(MultiPartBodyParameter.Config parameter) {
+		MediaTypeObject result = newItem(MediaTypeObject.class);
+		switch (parameter.getTransferType()) {
+			case FORM_DATA:
+				result.setMediaType(OpenAPIConstants.MULTIPART_FORM_DATA_CONTENT_TYPE);
+				break;
+			case URL_ENCODED:
+				result.setMediaType(OpenAPIConstants.APPLICATION_URL_ENCODED_CONTENT_TYPE);
+				break;
+		}
+
+		result.setSchema(JsonUtilities.writeJSONContent(json -> {
+			json.beginObject();
+			{
+
+				json.name(SCHEMA_PROPERTY_TYPE);
+				json.value(SCHEMA_TYPE_OBJECT);
+
+				json.name(SCHEMA_PROPERTY_REQUIRED);
+				json.beginArray();
+				{
+					parameter.getParts()
+						.values()
+						.stream()
+						.filter(MultiPartBodyParameter.BodyPart::getRequired)
+						.map(BodyPart::getName).forEach(t -> {
+							try {
+								json.value(t);
+							} catch (IOException ex) {
+								throw new UncheckedIOException(ex);
+							}
+						});
+				}
+				json.endArray();
+
+				json.name(SCHEMA_PROPERTY_PROPERTIES);
+				json.beginObject();
+				{
+					for (BodyPart part : parameter.getParts().values()) {
+						json.name(part.getName());
+						json.jsonValue(
+							newSchema(part.getFormat(), part.isMultiple(), part.getSchema(), part.getDescription()));
+					}
+				}
+				json.endObject();
+			}
+			json.endObject();
+		}));
+		return result;
+	}
+
 	private String newSchema(ParameterFormat format, boolean multiple, String schema) {
+		return newSchema(format, multiple, schema, null);
+	}
+
+	private String newSchema(ParameterFormat format, boolean multiple, String schema, String description) {
 		switch (format) {
 			case INTEGER:
-				return primitiveSchema("integer", "int32", multiple);
+				return primitiveSchema(SCHEMA_TYPE_INTEGER, SCHEMA_FORMAT_INT32, multiple, description);
 			case LONG:
-				return primitiveSchema("integer", "int64", multiple);
+				return primitiveSchema(SCHEMA_TYPE_INTEGER, SCHEMA_FORMAT_INT64, multiple, description);
 			case OBJECT:
 				if (StringServices.isEmpty(schema)) {
-					return primitiveSchema("object", null, multiple);
+					return primitiveSchema(SCHEMA_TYPE_OBJECT, null, multiple, description);
 				} else {
 					return schema;
 				}
 			case STRING:
-				return primitiveSchema("string", null, multiple);
+				return primitiveSchema(SCHEMA_TYPE_STRING, null, multiple, description);
+			case BINARY:
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_BINARY, multiple, description);
+			case BYTE:
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_BYTE, multiple, description);
 			case DATE:
-				return primitiveSchema("string", "date", multiple);
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_DATE, multiple, description);
 			case DATE_TIME:
-				return primitiveSchema("string", "date-time", multiple);
+				return primitiveSchema(SCHEMA_TYPE_STRING, SCHEMA_FORMAT_DATE_TIME, multiple, description);
 			case BOOLEAN:
-				return primitiveSchema("boolean", null, multiple);
+				return primitiveSchema(SCHEMA_TYPE_BOOLEAN, null, multiple, description);
 			case DOUBLE:
-				return primitiveSchema("number", "double", multiple);
+				return primitiveSchema(SCHEMA_TYPE_NUMBER, SCHEMA_FORMAT_DOUBLE, multiple, description);
 			case FLOAT:
-				return primitiveSchema("number", "float", multiple);
-			default:
-				throw new UnreachableAssertion("No such format: " + format);
+				return primitiveSchema(SCHEMA_TYPE_NUMBER, SCHEMA_FORMAT_FLOAT, multiple, description);
 		}
+		throw new UnreachableAssertion("No such format: " + format);
 	}
 
-	private String primitiveSchema(String type, String format, boolean multiple) {
-		W out = new StringW();
-		try (JsonWriter json = new JsonWriter(out)) {
+	private String primitiveSchema(String type, String format, boolean multiple, String description) {
+		return JsonUtilities.writeJSONContent(json -> {
 			if (!multiple) {
-				singlePrimitiveSchema(json, type, format);
+				singlePrimitiveSchema(json, type, format, description);
 			} else {
-				multiplePrimitiveSchema(json, type, format);
+				multiplePrimitiveSchema(json, type, format, description);
 			}
-		} catch (IOException ex) {
-			throw new IOError(ex);
-		}
-		return out.toString();
+		});
 	}
 
-	private void multiplePrimitiveSchema(JsonWriter json, String type, String format) throws IOException {
+	private void multiplePrimitiveSchema(JsonWriter json, String type, String format, String description)
+			throws IOException {
 		json.beginObject();
-		json.name("type");
-		json.value("array");
-		json.name("items");
-		singlePrimitiveSchema(json, type, format);
+		json.name(SCHEMA_PROPERTY_TYPE);
+		json.value(SCHEMA_TYPE_ARRAY);
+		if (description != null) {
+			json.name(SCHEMA_PROPERTY_DESCRIPTION);
+			json.value(description);
+		}
+		json.name(SCHEMA_PROPERTY_ITEMS);
+		singlePrimitiveSchema(json, type, format, null);
 		json.endObject();
 	}
 
-	private void singlePrimitiveSchema(JsonWriter json, String type, String format) throws IOException {
+	private void singlePrimitiveSchema(JsonWriter json, String type, String format, String description)
+			throws IOException {
 		json.beginObject();
 		{
-			json.name("type");
+			json.name(SCHEMA_PROPERTY_TYPE);
 			json.value(type);
 			if (format != null) {
-				json.name("format");
+				json.name(SCHEMA_PROPERTY_FORMAT);
 				json.value(format);
+			}
+			if (description != null) {
+				json.name(SCHEMA_PROPERTY_DESCRIPTION);
+				json.value(description);
 			}
 		}
 		json.endObject();
@@ -532,6 +614,12 @@ public class OpenAPIExporter {
 
 	static <T extends ConfigurationItem> T newItem(Class<T> configInterface) {
 		return TypedConfiguration.newConfigItem(configInterface);
+	}
+
+	static void transferIfTrue(BooleanSupplier supplier, Consumer<Boolean> consumer) {
+		if (supplier.getAsBoolean()) {
+			consumer.accept(Boolean.TRUE);
+		}
 	}
 
 	static <T> void transferIfNotEmpty(Supplier<T> supplier, Consumer<? super T> consumer) {

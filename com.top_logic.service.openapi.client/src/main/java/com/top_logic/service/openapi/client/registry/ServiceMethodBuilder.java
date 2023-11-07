@@ -9,8 +9,12 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.operations.AbstractMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptorBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.service.openapi.client.registry.conf.MethodDefinition;
+import com.top_logic.service.openapi.client.registry.conf.ParameterDefinition;
 import com.top_logic.service.openapi.client.registry.impl.CallHandler;
 import com.top_logic.service.openapi.client.registry.impl.RPCMethod;
 
@@ -20,19 +24,38 @@ import com.top_logic.service.openapi.client.registry.impl.RPCMethod;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 final class ServiceMethodBuilder implements MethodBuilder<SearchExpression>, Factory {
+
 	private final String _name;
 
 	private final CallHandler _handler;
 
-	private int _minArgs;
+	private ArgumentDescriptor _descriptor;
 
-	/** 
+	/**
 	 * Creates a {@link ServiceMethodBuilder}.
 	 */
-	public ServiceMethodBuilder(String name, int minArgs, CallHandler handler) {
-		_name = name;
-		_minArgs = minArgs;
+	public ServiceMethodBuilder(MethodDefinition method, CallHandler handler) {
+		_name = method.getName();
 		_handler = handler;
+		_descriptor = createDescriptor(method);
+	}
+
+	private ArgumentDescriptor createDescriptor(MethodDefinition method) {
+		ArgumentDescriptorBuilder builder = ArgumentDescriptor.builder();
+		for (ParameterDefinition param : method.getParameters()) {
+			String name = param.getName();
+			if (param.isRequired()) {
+				builder.mandatory(name);
+			} else {
+				Expr defaultValue = param.getDefaultValue();
+				if (defaultValue == null) {
+					builder.optional(name);
+				} else {
+					builder.optional(name, () -> QueryExecutor.compileExpr(defaultValue));
+				}
+			}
+		}
+		return builder.build();
 	}
 
 	public void init() {
@@ -42,8 +65,6 @@ final class ServiceMethodBuilder implements MethodBuilder<SearchExpression>, Fac
 	@Override
 	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
-		AbstractMethodBuilder.checkMinArgs(expr, args, _minArgs);
-
 		return new RPCMethod(_handler, _name, self, args);
 	}
 
@@ -64,6 +85,11 @@ final class ServiceMethodBuilder implements MethodBuilder<SearchExpression>, Fac
 	@Override
 	public Object getId() {
 		return _name;
+	}
+
+	@Override
+	public ArgumentDescriptor descriptor() {
+		return _descriptor;
 	}
 
 }

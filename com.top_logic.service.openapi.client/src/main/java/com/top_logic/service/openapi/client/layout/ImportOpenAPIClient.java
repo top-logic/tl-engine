@@ -5,10 +5,11 @@
  */
 package com.top_logic.service.openapi.client.layout;
 
-import java.io.IOError;
-import java.io.IOException;
+import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
@@ -25,9 +27,8 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.shared.io.StringR;
+import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.admin.component.TLServiceConfigEditorFormBuilder;
 import com.top_logic.layout.form.component.EditComponent;
@@ -35,6 +36,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.conf.MethodDefinition;
@@ -43,13 +45,17 @@ import com.top_logic.service.openapi.client.registry.impl.call.CallBuilderFactor
 import com.top_logic.service.openapi.client.registry.impl.call.request.CookieHeaderArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.request.HeaderArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.request.JSONRequestBody;
+import com.top_logic.service.openapi.client.registry.impl.call.request.MultiPartRequestBody;
+import com.top_logic.service.openapi.client.registry.impl.call.request.MultiPartRequestBody.MultiPartContent;
 import com.top_logic.service.openapi.client.registry.impl.call.request.SimpleHeaderArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.PathArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.QueryArgument;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.SimpleQueryArgument;
+import com.top_logic.service.openapi.client.registry.impl.value.ComputedValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ConstantValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ParameterValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ValueProducerFactory;
+import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.MediaTypeObject;
@@ -61,6 +67,12 @@ import com.top_logic.service.openapi.common.document.ReferencableParameterObject
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
 import com.top_logic.service.openapi.common.document.ServerObject;
 import com.top_logic.service.openapi.common.layout.ImportOpenAPIConfiguration;
+import com.top_logic.service.openapi.common.layout.MultiPartBodyTransferType;
+import com.top_logic.service.openapi.common.schema.ArraySchema;
+import com.top_logic.service.openapi.common.schema.ObjectSchema;
+import com.top_logic.service.openapi.common.schema.PrimitiveSchema;
+import com.top_logic.service.openapi.common.schema.Schema;
+import com.top_logic.service.openapi.common.schema.SchemaVisitor;
 import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
@@ -69,6 +81,13 @@ import com.top_logic.tool.boundsec.CommandHandler;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
+
+	/**
+	 * Workaround type-spec: There is actually no type "base64 encoded bytes", but this information
+	 * is needed to transform an input of type {@link TypeSpec#BINARY_TYPE} to a base64 encoded
+	 * value.
+	 */
+	static final String BYTE_TYPE_SPEC = "tl.core:base64EncodedBytes";
 
 	/**
 	 * Configuration for the {@link ImportOpenAPIClient}.
@@ -168,15 +187,20 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 				} while (true);
 			}
 
-			ParameterDefinition paramDef = createParameter(parameterName, parameter, warnings);
+			ParameterDefinition paramDef = createParameter(parameterName, parameter, warnings, completeAPI);
+			boolean encodeBase64 = false;
+			if (hasByteTypeWorkaround(paramDef)) {
+				encodeBase64 = true;
+				replaceByteTypeWorkaround(paramDef);
+			}
 			newMethod.getParameters().add(paramDef);
 
 			switch (parameter.getIn()) {
 				case COOKIE:
 					CookieHeaderArgument.Config<?> cookieArgument;
-					if (requiredParameterName != parameterName) {
+					if (requiredParameterName != parameterName || encodeBase64) {
 						cookieArgument = newConfigForImplementation(CookieHeaderArgument.class);
-						cookieArgument.setValue(newParameterValue(parameterName));
+						cookieArgument.setValue(newParameterValue(parameterName, encodeBase64));
 					} else {
 						cookieArgument = newConfigForImplementation(CookieHeaderArgument.class);
 					}
@@ -185,9 +209,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 					break;
 				case HEADER:
 					HeaderArgument.Config<?> headerArgument;
-					if (requiredParameterName != parameterName) {
+					if (requiredParameterName != parameterName || encodeBase64) {
 						headerArgument = newConfigForImplementation(HeaderArgument.class);
-						headerArgument.setValue(newParameterValue(parameterName));
+						headerArgument.setValue(newParameterValue(parameterName, encodeBase64));
 					} else {
 						headerArgument = newConfigForImplementation(SimpleHeaderArgument.class);
 					}
@@ -199,9 +223,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 					break;
 				case QUERY:
 					QueryArgument.Config<?> queryArgument;
-					if (requiredParameterName != parameterName) {
+					if (requiredParameterName != parameterName || encodeBase64) {
 						queryArgument = newConfigForImplementation(QueryArgument.class);
-						queryArgument.setValue(newParameterValue(parameterName));
+						queryArgument.setValue(newParameterValue(parameterName, encodeBase64));
 					} else {
 						queryArgument = newConfigForImplementation(SimpleQueryArgument.class);
 					}
@@ -213,21 +237,7 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		if (newMethod.getHttpMethod().supportsBody()) {
 			RequestBodyObject requestBody = operation.getRequestBody();
 			if (requestBody != null) {
-				MediaTypeObject mediaObject = requestBody.getContent().values().iterator().next();
-				String schema = mediaObject.getSchema();
-				String description = requestBody.getDescription();
-				ParameterDefinition paramDef = createParameter(requestBodyParameterName(parameterNames), description,
-					requestBody.isRequired(), schema, warnings);
-				newMethod.getParameters().add(paramDef);
-				try {
-					JSONRequestBody.Config<?> bodyArgument =
-							newConfigForImplementation(JSONRequestBody.class);
-					bodyArgument.setJson(
-						ExprFormat.INSTANCE.getValue(JSONRequestBody.Config.JSON, "$" + paramDef.getName()));
-					newMethod.getCallBuilders().add(bodyArgument);
-				} catch (ConfigurationException ex) {
-					throw new ConfigurationError(ex);
-				}
+				processBody(newMethod, warnings, parameterNames, requestBody, completeAPI);
 			}
 		} else {
 			// Body is either not allowed or behaviour is undefined. In this case a consumer
@@ -235,6 +245,154 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		}
 
 		handlePathParameters(newMethod, path.getPath());
+	}
+
+	private void processBody(MethodDefinition newMethod, List<ResKey> warnings, Set<String> parameterNames,
+			RequestBodyObject requestBody, OpenapiDocument completeAPI) {
+		Collection<MediaTypeObject> possibleBodyTypes = requestBody.getContent().values();
+		for (MediaTypeObject mediaObject : possibleBodyTypes) {
+			String mediaType = mediaObject.getMediaType();
+			switch (mediaType) {
+				case OpenAPIConstants.MULTIPART_FORM_DATA_CONTENT_TYPE: {
+					MultiPartRequestBody.Config bodyParameter =
+						addMultiPartBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+					if (bodyParameter != null) {
+						bodyParameter.setTransferType(MultiPartBodyTransferType.FORM_DATA);
+					}
+					return;
+				}
+				case OpenAPIConstants.APPLICATION_URL_ENCODED_CONTENT_TYPE: {
+					MultiPartRequestBody.Config bodyParameter =
+						addMultiPartBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+					if (bodyParameter != null) {
+						bodyParameter.setTransferType(MultiPartBodyTransferType.URL_ENCODED);
+					}
+					return;
+				}
+				case JsonUtilities.JSON_CONTENT_TYPE: {
+					addJSONBody(newMethod, warnings, parameterNames, requestBody, mediaObject, completeAPI);
+					return;
+				}
+				default:
+					continue;
+			}
+		}
+
+		/* Actually unsupported. Use "first" body. */
+		addJSONBody(newMethod, warnings, parameterNames, requestBody, possibleBodyTypes.iterator().next(), completeAPI);
+	}
+
+	private MultiPartRequestBody.Config addMultiPartBody(MethodDefinition newMethod, List<ResKey> warnings,
+			Set<String> parameterNames, RequestBodyObject requestBody, MediaTypeObject mediaObject,
+			OpenapiDocument completeAPI) {
+		String schema = mediaObject.getSchema();
+		List<ParameterDefinition> newParams;
+		if (schema.isEmpty()) {
+			ParameterDefinition paramDef =
+				defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
+			newParams = Collections.singletonList(paramDef);
+		} else {
+			Schema parsedSchema = parseSchema(schema, "requestBody", globalSchemas(completeAPI), warnings);
+			if (parsedSchema == null) {
+				ParameterDefinition paramDef =
+					defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
+				newParams = Collections.singletonList(paramDef);
+			} else if (parsedSchema instanceof ObjectSchema) {
+				newParams = ((ObjectSchema) parsedSchema).getProperties().stream().map(property -> {
+					Schema propSchema = property.getSchema();
+					String description = propSchema != null ? propSchema.getDescription() : null;
+					return createParameter(property.getName(), description, property.isRequired(), propSchema,
+						warnings);
+				}).collect(Collectors.toList());
+			} else {
+				warnings.add(I18NConstants.UNEXPECTED_SCHEMA_FOR_MULTIPART_BODY__METHOD.fill(newMethod.getName()));
+				return null;
+			}
+		}
+		
+		MultiPartRequestBody.Config bodyArgument = newConfigForImplementation(MultiPartRequestBody.class);
+		for (ParameterDefinition param : newParams) {
+			String parameterName = param.getName();
+			MultiPartContent part = TypedConfiguration.newConfigItem(MultiPartContent.class);
+			part.setName(parameterName);
+			if (hasByteTypeWorkaround(param)) {
+				replaceByteTypeWorkaround(param);
+				part.setContent(newVariableBase64Encoded(parameterName));
+			} else {
+				part.setContent(newVariable(parameterName));
+			}
+			bodyArgument.getParts().add(part);
+		}
+		newMethod.getParameters().addAll(newParams);
+		newMethod.getCallBuilders().add(bodyArgument);
+		return bodyArgument;
+	}
+
+	private static Expr newVariable(String variableName) {
+		Expr.Var variable = TypedConfiguration.newConfigItem(Expr.Var.class);
+		variable.setName(variableName);
+		return variable;
+	}
+
+	private static Expr newVariableBase64Encoded(String variableName) {
+		return parseExpr("$" + variableName + ".base64Encode()");
+	}
+
+	private static Expr parseExpr(String expression) {
+		try {
+			return ExprFormat.INSTANCE.getValue(ImportOpenAPIClient.class.getSimpleName() + "#parseExpr", expression);
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
+	}
+
+	private void addJSONBody(MethodDefinition newMethod, List<ResKey> warnings, Set<String> parameterNames,
+			RequestBodyObject requestBody, MediaTypeObject mediaObject, OpenapiDocument completeAPI) {
+		String schema = mediaObject.getSchema();
+		ParameterDefinition paramDef = defaultBodyParameter(schema, warnings, parameterNames, requestBody, completeAPI);
+		boolean encodeBase64 = false;
+		if (hasByteTypeWorkaround(paramDef)) {
+			replaceByteTypeWorkaround(paramDef);
+			encodeBase64 = true;
+		}
+		newMethod.getParameters().add(paramDef);
+		JSONRequestBody.Config<?> bodyArgument = newConfigForImplementation(JSONRequestBody.class);
+		if (encodeBase64) {
+			bodyArgument.setJson(newVariableBase64Encoded(paramDef.getName()));
+		} else {
+			bodyArgument.setJson(newVariable(paramDef.getName()));
+		}
+		newMethod.getCallBuilders().add(bodyArgument);
+	}
+
+	/**
+	 * Replaces the workaround "base64 encoded bytes" type in the given parameter by the
+	 * {@link TypeSpec#BINARY_TYPE}.
+	 * 
+	 * @see #hasByteTypeWorkaround(ParameterDefinition)
+	 */
+	private void replaceByteTypeWorkaround(ParameterDefinition paramDef) {
+		paramDef.setType(TLModelPartRef.ref(TypeSpec.BINARY_TYPE));
+	}
+
+	/**
+	 * Checks whether the parameter contains the workaround "base64 encoded bytes" type.
+	 * 
+	 * @see #replaceByteTypeWorkaround(ParameterDefinition)
+	 */
+	private boolean hasByteTypeWorkaround(ParameterDefinition paramDef) {
+		TLModelPartRef type = paramDef.getType();
+		if (type == null) {
+			return false;
+		}
+		return BYTE_TYPE_SPEC.equals(type.qualifiedName());
+	}
+
+	private ParameterDefinition defaultBodyParameter(String schema, List<ResKey> warnings, Set<String> parameterNames,
+			RequestBodyObject requestBody, OpenapiDocument completeAPI) {
+		String description = requestBody.getDescription();
+		return createParameter(requestBodyParameterName(parameterNames), description, requestBody.isRequired(), schema,
+			warnings, completeAPI);
 	}
 
 	/**
@@ -279,10 +437,18 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		return newName.toString();
 	}
 
-	private ParameterValue.Config<?> newParameterValue(String name) {
+	private PolymorphicConfiguration<? extends ValueProducerFactory> newParameterValue(String name,
+			boolean encodeBase64) {
 		ParameterValue.Config<?> param = newConfigForImplementation(ParameterValue.class);
 		param.setParameter(name);
-		return param;
+		if (!encodeBase64) {
+			return param;
+		} else {
+			ComputedValue.Config<?> result = newConfigForImplementation(ComputedValue.class);
+			result.getArguments().add(param);
+			result.setFunction(parseExpr("param -> $param.base64Encode()"));
+			return result;
+		}
 	}
 
 	private String requestBodyParameterName(Set<String> parameterNames) {
@@ -370,9 +536,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 	}
 
 	private ParameterDefinition createParameter(String parameterName, ParameterObject parameter,
-			List<ResKey> warnings) {
+			List<ResKey> warnings, OpenapiDocument completeAPI) {
 		return createParameter(parameterName, parameter.getDescription(), parameter.isRequired(), parameter.getSchema(),
-			warnings);
+			warnings, completeAPI);
 	}
 
 	private String getParameterName(ParameterObject parameter) {
@@ -380,152 +546,148 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 	}
 
 	private ParameterDefinition createParameter(String paramName, String description, boolean isRequired,
-			String schema, List<ResKey> warnings) {
+			String schema, List<ResKey> warnings, OpenapiDocument completeAPI) {
+		Schema schemaObject;
+		if (!StringServices.isEmpty(schema)) {
+			schemaObject = parseSchema(schema, paramName, globalSchemas(completeAPI), warnings);
+		} else {
+			schemaObject = null;
+		}
+		return createParameter(paramName, description, isRequired, schemaObject, warnings);
+	}
+
+	private ParameterDefinition createParameter(String paramName, String description, boolean isRequired,
+			Schema schemaObject, List<ResKey> warnings) {
 		ParameterDefinition newParameterDef = TypedConfiguration.newConfigItem(ParameterDefinition.class);
 		newParameterDef.setName(paramName);
 		newParameterDef.setRequired(isRequired);
 		if (description != null && !description.isBlank()) {
 			newParameterDef.setDescription(description);
 		}
-		if (!StringServices.isEmpty(schema)) {
-			try (JsonReader reader = new JsonReader(new StringR(schema))) {
-				reader.beginObject();
-				String primitiveType = StringServices.EMPTY_STRING, primitiveFormat = StringServices.EMPTY_STRING;
-				outerLoop:
-				while (reader.hasNext()) {
-					switch (reader.nextName()) {
-						case "type": {
-							String typeName = reader.nextString();
-							if (typeName.equals("array")) {
-								newParameterDef.setMultiple(true);
-							} else {
-								primitiveType = typeName;
-								if (!primitiveFormat.isEmpty()) {
-									skipObjectEntries(reader);
-									break outerLoop;
-								}
-							}
-							break;
-						}
-						case "items": {
-							reader.beginObject();
-							primitiveType = primitiveFormat = StringServices.EMPTY_STRING;
-							innerLoop:
-							while (reader.hasNext()) {
-								switch (reader.nextName()) {
-									case "type": {
-										primitiveType = reader.nextString();
-										if (!primitiveFormat.isEmpty()) {
-											skipObjectEntries(reader);
-											break innerLoop;
-										}
-										break;
-									}
-									case "format": {
-										primitiveFormat = reader.nextString();
-										if (!primitiveType.isEmpty()) {
-											skipObjectEntries(reader);
-											break innerLoop;
-										}
-										break;
-									}
-									default:
-										reader.skipValue();
-										break;
-								}
-							}
-							reader.endObject();
-							break;
-						}
-						case "format": {
-							primitiveFormat = reader.nextString();
-							if (!primitiveType.isEmpty()) {
-								skipObjectEntries(reader);
-								break outerLoop;
-							}
-							break;
-						}
-						default: {
-							reader.skipValue();
-						}
-					}
-				}
-				if (!primitiveType.isEmpty()) {
-					addTypeRefFromSchemaType(newParameterDef, primitiveType, primitiveFormat, warnings);
-				}
-				reader.endObject();
-			} catch (IOException ex) {
-				throw new IOError(ex);
+		if (schemaObject != null) {
+			ResKey problem = schemaObject.visit(applySchema(), newParameterDef);
+			if (problem != ResKey.NONE) {
+				warnings.add(I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
+					schemaObject.getType()));
 			}
 		}
 
 		return newParameterDef;
 	}
 
-	void skipObjectEntries(JsonReader r) throws IOException {
-		while (r.hasNext()) {
-			r.nextName();
-			r.skipValue();
-		}
-	}
+	private SchemaVisitor<ResKey, ParameterDefinition> applySchema() {
+		return new SchemaVisitor<>() {
 
-	private void addTypeRefFromSchemaType(ParameterDefinition newParameterDef, String typeName, String typeFormat,
-			List<ResKey> warnings) {
-		String typespec;
-		switch (typeName) {
-			case "string":
-				switch (typeFormat) {
-					case "date":
-						typespec = TypeSpec.DATE_TYPE;
+			@Override
+			public ResKey visitPrimitiveSchema(PrimitiveSchema schema, ParameterDefinition newParameterDef) {
+				String typespec;
+				String typeFormat = schema.getFormat();
+				switch (schema.getType()) {
+					case SCHEMA_TYPE_STRING:
+						switch (typeFormat) {
+							case SCHEMA_FORMAT_DATE:
+								typespec = TypeSpec.DATE_TYPE;
+								break;
+							case SCHEMA_FORMAT_DATE_TIME:
+								typespec = TypeSpec.DATE_TIME_TYPE;
+								break;
+							case SCHEMA_FORMAT_BYTE:
+								typespec = BYTE_TYPE_SPEC;
+								break;
+							case SCHEMA_FORMAT_BINARY:
+								typespec = TypeSpec.BINARY_TYPE;
+								break;
+							case StringServices.EMPTY_STRING:
+								typespec = TypeSpec.STRING_TYPE;
+								break;
+							default:
+								typespec = TypeSpec.STRING_TYPE;
+								break;
+						}
 						break;
-					case "date-time":
-						typespec = TypeSpec.DATE_TIME_TYPE;
+					case SCHEMA_TYPE_NUMBER:
+						switch (typeFormat) {
+							case SCHEMA_FORMAT_FLOAT:
+								typespec = TypeSpec.FLOAT_TYPE;
+								break;
+							case SCHEMA_FORMAT_DOUBLE:
+								typespec = TypeSpec.DOUBLE_TYPE;
+								break;
+							case StringServices.EMPTY_STRING:
+								typespec = TypeSpec.FLOAT_TYPE;
+								break;
+							default:
+								typespec = TypeSpec.FLOAT_TYPE;
+								break;
+						}
+						break;
+					case SCHEMA_TYPE_INTEGER:
+						switch (typeFormat) {
+							case SCHEMA_FORMAT_INT32:
+								typespec = TypeSpec.INTEGER_TYPE;
+								break;
+							case SCHEMA_FORMAT_INT64:
+								typespec = TypeSpec.LONG_TYPE;
+								break;
+							case StringServices.EMPTY_STRING:
+								typespec = TypeSpec.INTEGER_TYPE;
+								break;
+							default:
+								typespec = TypeSpec.INTEGER_TYPE;
+								break;
+						}
+						break;
+					case SCHEMA_TYPE_BOOLEAN:
+						typespec = TypeSpec.BOOLEAN_TYPE;
 						break;
 					default:
-						typespec = TypeSpec.STRING_TYPE;
-						break;
+						return I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
+							schema.getType());
 				}
-				break;
-			case "number":
-				switch (typeFormat) {
-					case "float":
-						typespec = TypeSpec.FLOAT_TYPE;
-						break;
-					case "double":
-						typespec = TypeSpec.DOUBLE_TYPE;
-						break;
-					default:
-						typespec = TypeSpec.FLOAT_TYPE;
-						break;
-				}
-				break;
-			case "integer":
-				switch (typeFormat) {
-					case "int32":
-						typespec = TypeSpec.INTEGER_TYPE;
-						break;
-					case "int64":
-						typespec = TypeSpec.LONG_TYPE;
-						break;
-					default:
-						typespec = TypeSpec.INTEGER_TYPE;
-						break;
-				}
-				break;
-			case "boolean":
-				typespec = TypeSpec.BOOLEAN_TYPE;
-				break;
-			case "object":
-				typespec = TypeSpec.JSON_TYPE;
-				break;
-			default:
-				warnings.add(I18NConstants.UNSUPPORTED_PARAMETER_TYPE__PARAMETER__TYPE.fill(newParameterDef.getName(),
-					typeName));
-				return;
-		}
-		newParameterDef.setType(TLModelPartRef.ref(typespec));
-	}
+				newParameterDef.setType(TLModelPartRef.ref(typespec));
+				addDefaultValue(schema, newParameterDef);
+				addDescription(schema, newParameterDef);
+				return ResKey.NONE;
+			}
 
+			@Override
+			public ResKey visitObjectSchema(ObjectSchema schema, ParameterDefinition newParameterDef) {
+				newParameterDef.setType(TLModelPartRef.ref(TypeSpec.JSON_TYPE));
+				addDefaultValue(schema, newParameterDef);
+				addDescription(schema, newParameterDef);
+				return ResKey.NONE;
+			}
+
+			@Override
+			public ResKey visitArraySchema(ArraySchema schema, ParameterDefinition newParameterDef) {
+				newParameterDef.setMultiple(true);
+				addDescription(schema, newParameterDef);
+				return schema.getItems().visit(this, newParameterDef);
+			}
+
+			private void addDescription(Schema s, ParameterDefinition param) {
+				String description = s.getDescription();
+				if (description == null) {
+					return;
+				}
+				param.setDescription(description);
+			}
+
+			private void addDefaultValue(Schema s, ParameterDefinition param) {
+				String defaultValue = s.getDefault();
+				if (defaultValue == null) {
+					return;
+				}
+				Expr defaultExpr;
+				try {
+					defaultExpr = ExprFormat.INSTANCE.getValue(ParameterDefinition.DEFAULT_VALUE, defaultValue);
+				} catch (ConfigurationException ex) {
+					throw new ConfigurationError(ex);
+				}
+				param.setDefaultValue(defaultExpr);
+			}
+		};
+	}
 	private String getMethodName(OperationObject operation, HttpMethod httpMethod, String baseName) {
 		String operationId = operation.getOperationId();
 		if (!operationId.isEmpty()) {

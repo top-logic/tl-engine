@@ -47,6 +47,11 @@ public class Response {
 
 	/**
 	 * The actual result to write to {@link HttpServletResponse#getWriter()}.
+	 * 
+	 * <p>
+	 * When the result is <code>null</code> the response is treated as error and the containers
+	 * default page for error with code {@link #getStatus()} is delivered.
+	 * </p>
 	 */
 	public Object getResult() {
 		return _result;

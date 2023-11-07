@@ -12,13 +12,21 @@ import com.top_logic.layout.I18NConstantsBase;
 /**
  * Internationalization constants for this package.
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en Missing authentication data.
+	 */
 	public static ResKey AUTH_FAILED_MISSING_AUTHENTICATION_DATA;
 
+	/**
+	 * @en Wrong credentials for user "{0}".
+	 */
 	public static ResKey1 AUTH_FAILED_WRONG_AUTHENTICATION_DATA__USER;
 
+	/**
+	 * @en Not a BasicAuth authentication.
+	 */
 	public static ResKey AUTH_FAILED_NO_BASIC_AUTH;
 
 	static {

@@ -5,6 +5,8 @@
  */
 package com.top_logic.basic.json;
 
+import static com.top_logic.basic.json.I18NConstants.*;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -20,6 +22,8 @@ import java.util.Map.Entry;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Utility class for converting primitive Java objects and collections thereof
@@ -245,10 +249,10 @@ public class JSON {
 		parser.skipWhiteSpace();
 		try {
 			if (input.hasNext()) {
-				throw parseProblem(parser, "Unexpected contents at end.");
+				throw parseProblem(parser, ERROR_UNEXPECTED_INPUT);
 			}
 		} catch (IOException e) {
-			throw parseProblem(parser, "Reading source failed.");
+			throw parseProblem(parser, ERROR_READING_SOURCE);
 		}
 	}
 
@@ -532,15 +536,15 @@ public class JSON {
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
-	public static class ParseException extends Exception {
+	public static class ParseException extends I18NException {
 		private final int errorOffset;
 
-		public ParseException(String message, int pos) {
+		public ParseException(ResKey message, int pos) {
 			super(buildMessage(message, pos));
 			errorOffset = pos;
 		}
 		
-		public ParseException(String message, int pos, CharSequence source) {
+		public ParseException(ResKey message, int pos, CharSequence source) {
 			super(buildMessage(message, pos, source));
 			errorOffset = pos;
 		}
@@ -551,19 +555,16 @@ public class JSON {
 		public int getErrorOffset() {
 			return errorOffset;
 		}
-		private static String buildMessage(String message, int pos, CharSequence source) {
-			return 
-				buildMessage(message, pos) + 
-				" Problematic characters around: '" + 
-				source.subSequence(Math.max(0, pos - 10), pos) + 
-				"<>" + 
-				source.subSequence(pos, Math.min(source.length(), pos + 10)) + 
-				"'.";
+
+		private static ResKey buildMessage(ResKey message, int pos, CharSequence source) {
+			return PARSE_ERROR__MESSAGE__BEFORE_PROBLEM__AFTER_PROBLEM.fill(
+				buildMessage(message, pos),
+				source.subSequence(Math.max(0, pos - 10), pos),
+				source.subSequence(pos, Math.min(source.length(), pos + 10)));
 		}
 
-		private static String buildMessage(String message, int pos) {
-			return "Parse error at position " + pos + ": " + 
-							message;
+		private static ResKey buildMessage(ResKey message, int pos) {
+			return PARSE_ERROR__MESSAGE_POSITION.fill(message, pos);
 		}
 	}
 
@@ -1277,7 +1278,7 @@ public class JSON {
 		
 		private Object readObject() throws ParseException {
 			if (! hasNext()) {
-				throw parseProblem(this, "Unexpected end of input.");
+				throw parseProblem(this, ERROR_UNEXPECTED_END_OF_INPUT);
 			}
 			char currentChar = peek();
 			switch (currentChar) {
@@ -1320,9 +1321,10 @@ public class JSON {
 					case 'd': {
 						if ("date".equals(identifier)) {
 							skipWhiteSpace();
-							if ((! hasNext()) || (next() != '(')) {
-								throw parseProblem(this, "Expected '('.");
+							if (!hasNext()) {
+								throw parseProblem(this, ERROR_UNEXPECTED_END_OF_INPUT);
 							}
+							assertCharacterValue('(', next());
 							
 							int dateStart = getPos();
 							clearBuffer();
@@ -1330,14 +1332,15 @@ public class JSON {
 								bufferChar();
 							}
 							
-							if ((! hasNext()) || (next() != ')')) {
-								throw parseProblem(this, "Expected ')'.");
+							if (!hasNext()) {
+								throw parseProblem(this, ERROR_UNEXPECTED_END_OF_INPUT);
 							}
+							assertCharacterValue(')', next());
 							
 							try {
 								return XmlDateTimeFormat.INSTANCE.parseObject(bufferContent().toString());
 							} catch (java.text.ParseException ex) {
-								throw parseProblem(this, "Invalid date format.", dateStart + ex.getErrorOffset());
+								throw parseProblem(this, ERROR_INVALID_DATE_FORMAT, dateStart + ex.getErrorOffset());
 							}
 						}
 						break;
@@ -1362,7 +1365,7 @@ public class JSON {
 					}
 					}
 				}
-				throw parseProblem(this, "Invalid character '" + currentChar + "'.");
+				throw parseProblem(this, ERROR_INVALID_CHARACTER__CHARACTER.fill(currentChar));
 			}
 		}
 
@@ -1408,7 +1411,7 @@ public class JSON {
 					return valueFactory.createIntegerValue(bufferContent());
 				}
 			} catch (NumberFormatException ex) {
-				throw (ParseException) parseProblem(this, "Invalid number format", startPos).initCause(ex);
+				throw (ParseException) parseProblem(this, ERROR_INVALID_NUMBER_FORMAT, startPos).initCause(ex);
 			}
 		}
 
@@ -1418,15 +1421,18 @@ public class JSON {
 			Object result = parseMapContents();
 			
 			if (! hasNext()) {
-				throw parseProblem(this, "Missing end of map symbol.");
+				throw parseProblem(this, ERROR_UNEXPECTED_END_OF_INPUT);
 			}
-			char currentChar = peek();
-			if (currentChar != '}') {
-				throw parseProblem(this, "Unexpected character '" + currentChar + "'.");
-			}
+			assertCharacterValue('}', peek());
 			drop();
 			
 			return result;
+		}
+
+		private void assertCharacterValue(char expected, char actual) throws ParseException {
+			if (actual != expected) {
+				throw parseProblem(this, ERROR_UNEXPECTED_VALUE__EXPECTED_ACUTAL.fill(expected, actual));
+			}
 		}
 
 		/**
@@ -1457,12 +1463,9 @@ public class JSON {
 				skipWhiteSpace();
 
 				if (! hasNext()) {
-					throw parseProblem(this, "Expected key value separator.");
+					throw parseProblem(this, ERROR_UNEXPECTED_END_OF_INPUT);
 				}
-				char separator = next();
-				if (separator != ':') {
-					throw parseProblem(this, "Key value pair not separated with ':'.");
-				}
+				assertCharacterValue(':', next());
 
 				skipWhiteSpace();
 				valueFactory.putMap(result, key, readObject());
@@ -1482,7 +1485,7 @@ public class JSON {
 					break;
 				}
 				default: {
-					throw parseProblem(this, "Unexpected character '" + currentChar + "'.");
+					throw parseProblem(this, ERROR_INVALID_CHARACTER__CHARACTER.fill(currentChar));
 				}
 				}
 			}
@@ -1507,12 +1510,12 @@ public class JSON {
 					break;
 
 				default:
-					throw parseProblem(this, "Expected map key.");
+					throw parseProblem(this, ERROR_MISSING_MAP_KEY);
 				}
 			}
 			
 			if (bufferSize() == 0) {
-				throw parseProblem(this, "Expected map key name.");
+				throw parseProblem(this, ERROR_MISSING_MAP_KEY_NAME);
 			}
 			
 			return bufferContent().toString();
@@ -1535,12 +1538,9 @@ public class JSON {
 			Object result = parseListContents();
 
 			if (! hasNext()) {
-				throw parseProblem(this, "Unterminated list.");
+				throw parseProblem(this, ERROR_UNEXPECTED_END_OF_INPUT);
 			}
-			char currentChar = peek();
-			if (currentChar != ']') {
-				throw parseProblem(this, "Unexpected character '" + currentChar + "'.");
-			}
+			assertCharacterValue(']', peek());
 			drop();
 			
 			return result;
@@ -1588,7 +1588,7 @@ public class JSON {
 						return finishList(result);
 					
 				default:
-					throw parseProblem(this, "Unexpected character '" + currentChar + "'.");
+					throw parseProblem(this, ERROR_INVALID_CHARACTER__CHARACTER.fill(currentChar));
 				}
 			}
 		}
@@ -1608,7 +1608,7 @@ public class JSON {
 			char quoteChar = next();
 			while (true) {
 				if (! hasNext()) {
-					throw parseProblem(this, "Unterminated string value.");
+					throw parseProblem(this, ERROR_UNTERMINATED_STRING_VALUE);
 				}
 				char currentChar = peek();
 				if (currentChar == quoteChar) {
@@ -1618,7 +1618,7 @@ public class JSON {
 				else if (currentChar == '\\') {
 					drop();
 					if (! hasNext()) {
-						throw parseProblem(this, "Unterminated string escape.");
+						throw parseProblem(this, ERROR_UNTERMINATED_STRING_ESCAPE);
 					}
 					
 					char escapedChar = next();
@@ -1641,8 +1641,8 @@ public class JSON {
 						case 'u':
 							int code = 0;
 							for (int n = 0; n < 4; n++) {
-								if (! hasNext()) {
-									throw parseProblem(this, "Unterminated unicode escape.");
+								if (!hasNext()) {
+									throw parseProblem(this, ERROR_UNTERMINATED_UNICODE_ESCAPE);
 								}
 								char digitChar = Character.toUpperCase(next());
 								
@@ -1654,7 +1654,7 @@ public class JSON {
 									digit = 0x0a + digitChar - 'A';
 								}
 								else {
-									throw parseProblem(this, "Invalid unicode escape.");
+									throw parseProblem(this, ERROR_INVALID_UNICODE_ESCAPE);
 								}
 								code = (code << 4) | digit;
 							}
@@ -1675,7 +1675,7 @@ public class JSON {
 			try {
 				return source.next();
 			} catch (IOException e) {
-				throw (ParseException) parseProblem(this, "Reading source failed.").initCause(e);
+				throw (ParseException) parseProblem(this, ERROR_READING_SOURCE).initCause(e);
 			}
 		}
 
@@ -1683,7 +1683,7 @@ public class JSON {
 			try {
 				source.bufferChar();
 			} catch (IOException e) {
-				throw (ParseException) parseProblem(this, "Reading source failed.").initCause(e);
+				throw (ParseException) parseProblem(this, ERROR_READING_SOURCE).initCause(e);
 			}
 		}
 
@@ -1712,7 +1712,7 @@ public class JSON {
 			try {
 				return source.hasNext();
 			} catch (IOException e) {
-				throw (ParseException) parseProblem(this, "Reading source failed.").initCause(e);
+				throw (ParseException) parseProblem(this, ERROR_READING_SOURCE).initCause(e);
 			}
 		}
 
@@ -1720,7 +1720,7 @@ public class JSON {
 			try {
 				return source.peek();
 			} catch (IOException e) {
-				throw (ParseException) parseProblem(this, "Reading source failed.").initCause(e);
+				throw (ParseException) parseProblem(this, ERROR_READING_SOURCE).initCause(e);
 			}
 		}
 
@@ -1728,7 +1728,7 @@ public class JSON {
 			try {
 				source.drop();
 			} catch (IOException e) {
-				throw (ParseException) parseProblem(this, "Reading source failed.").initCause(e);
+				throw (ParseException) parseProblem(this, ERROR_READING_SOURCE).initCause(e);
 			}
 		}
 		
@@ -1750,11 +1750,11 @@ public class JSON {
 		
 	}
 	
-	protected static ParseException parseProblem(Parser parser, String message) {
+	protected static ParseException parseProblem(Parser parser, ResKey message) {
 		return parseProblem(parser, message, parser.getSource().getPos());
 	}
-	
-	protected static ParseException parseProblem(Parser parser, String message, int pos) {
+
+	protected static ParseException parseProblem(Parser parser, ResKey message, int pos) {
 		InputSource source = parser.getSource();
 		if (source instanceof BufferedInputSource) {
 			BufferedInputSource bufferedSource = (BufferedInputSource) source;

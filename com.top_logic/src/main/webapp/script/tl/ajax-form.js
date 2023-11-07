@@ -3245,7 +3245,7 @@ services.form = {
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
-		mutObserver: "",
+		mutObserver: null,
 
 		buttonDrop: function(button) {
 			const ddBoxOriginal = button.nextElementSibling;
@@ -3263,7 +3263,10 @@ services.form = {
 
 			if (prevActive) {
 				this.closeDD(button, ddBox);
-				this.mutObserver.disconnect();
+				if (this.mutObserver) {
+					this.mutObserver.disconnect();
+					this.mutObserver = null;
+				}
 			} else {
 				const outerDocument = document.body.firstElementChild;
 				ddBox = ddBoxOriginal.cloneNode(true);

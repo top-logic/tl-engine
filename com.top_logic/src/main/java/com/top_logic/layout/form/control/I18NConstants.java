@@ -147,8 +147,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey COMPLETION_NO_ELEMENTS = legacyKey("layout.form.popupSelect.noElements");
 
-	public static ResKey UPLOAD_IN_PROGRESS = legacyKey("tl.dialog.folder.upload.progress");
-
 	public static ResKey PASSWORD_WEAK = legacyKey("tl.pwdvalidation.verdicts.weak");
 
 	public static ResKey PASSWORD_NORMAL = legacyKey("tl.pwdvalidation.verdicts.normal");

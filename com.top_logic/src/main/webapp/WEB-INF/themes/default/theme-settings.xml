@@ -2489,9 +2489,6 @@
 	<icon name="com.top_logic.layout.form.control.Icons.URL_LINK"
 		value="colored:tl-icon arrow-top-right-square"
 	/>
-	<img name="com.top_logic.layout.form.control.Icons.WAIT_IMAGE"
-		value="/animation/hourglass.png"
-	/>
 	<icon name="com.top_logic.layout.form.control.Icons.WARN"
 		value="/icons/warn.png"
 	/>

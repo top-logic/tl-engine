@@ -70,7 +70,6 @@ public class QueryParameter extends ConcreteRequestParameter<QueryParameter.Conf
 		} else {
 			String rawValue = req.getParameter(getConfig().getName());
 			if (rawValue == null) {
-				checkNonMandatory();
 				return null;
 			}
 

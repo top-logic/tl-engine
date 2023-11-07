@@ -68,6 +68,14 @@ public abstract class RequestParameter<C extends RequestParameter.Config<?>> ext
 		}
 
 		/**
+		 * Whether this parameter is a body parameter. A body parameter must occur at most once in
+		 * the parameter list.
+		 */
+		default boolean isBodyParameter() {
+			return false;
+		}
+
+		/**
 		 * {@link Function} that resolves the given {@link RequestParameter.Config parameter
 		 * configuration}.
 		 * 

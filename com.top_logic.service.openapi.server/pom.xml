@@ -30,6 +30,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-service-openapi-common</artifactId>
     </dependency>
+	<dependency>
+	    <groupId>javax.mail</groupId>
+	    <artifactId>javax.mail-api</artifactId>
+	</dependency>
+
     <dependency>
 	    <groupId>org.webjars.npm</groupId>
 	    <artifactId>swagger-ui-dist</artifactId>

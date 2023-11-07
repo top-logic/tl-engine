@@ -45,7 +45,6 @@ public class CookieParameter extends ConcreteRequestParameter<CookieParameter.Co
 	protected Object getValue(HttpServletRequest req, Map<String, String> parametersRaw) throws InvalidValueException {
 		Cookie[] cookies = req.getCookies();
 		if (cookies == null) {
-			checkNonMandatory();
 			return null;
 		}
 		String cookieName = getName();
@@ -67,7 +66,6 @@ public class CookieParameter extends ConcreteRequestParameter<CookieParameter.Co
 					return parse(cookie.getValue());
 				}
 			}
-			checkNonMandatory();
 			return null;
 		}
 	}

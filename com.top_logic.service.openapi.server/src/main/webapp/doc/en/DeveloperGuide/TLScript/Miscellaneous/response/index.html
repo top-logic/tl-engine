@@ -1,68 +1,98 @@
 <h2>Syntax</h2>
-<pre>	<code>response($status_code, $result, $content_type)</code>
+
+<pre>
+<code>response(
+  statusCode: $statusCode, 
+  content: $content, 
+  contentType: $contentType
+)</code>
 </pre>
+
 <h2>Description</h2>
-<p>Creates a response object that will be returned to an HTTP request</p>
+
+<p>Creates a response object that is returned in response to an HTTP request.</p>
+
 <h2>Parameters</h2>
-<table class="tlDocTable" >
- <thead>
-  <tr>
-   <th>Name</th>
-   <th >Type</th>
-   <th >Description</th>
-   <th>Mandatory</th>
-   <th >Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>status_code</td>
-   <td >Number</td>
-   <td >Status code for the response. HTTP response codes are specified here, e.g. 200 (OK) or 404 (NOT FOUND)</td>
-   <td>yes</td>
-   <td ></td>
-  </tr>
-  <tr>
-   <td>result</td>
-   <td >
-    <table class="tlDocTable" >
-     <tbody>
-      <tr>
-       <td>Object</td>
-      </tr>
-     </tbody>
-    </table></td>
-   <td>Content of the response</td>
-   <td>yes</td>
-   <td ></td>
-  </tr>
-  <tr>
-   <td>content_type</td>
-   <td >String</td>
-   <td >
-    <table class="tlDocTable">
-     <tbody>
-      <tr>
-       <td>Content type of the response. Must match the answer</td>
-      </tr>
-     </tbody>
-    </table></td>
-   <td>no</td>
-   <td >application/json</td>
-  </tr>
- </tbody>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>statusCode</td>
+			<td>Number</td>
+			<td>Status code for the response. HTTP response codes are specified here, e.g. 200 (OK) or 404 (NOT FOUND).</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>content</td>
+			<td>
+			<table class="tlDocTable">
+				<tbody>
+					<tr>
+						<td>Object</td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+			<td>Content of the response. If no content is given, the status code is interpreted as an error code and the standard response of the container is sent.</td>
+			<td>no</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>contentType</td>
+			<td>Character string</td>
+			<td>
+			<table class="tlDocTable">
+				<tbody>
+					<tr>
+						<td>Content type of the response. This must match the result of the response.</td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+			<td>no</td>
+			<td>application/json</td>
+		</tr>
+	</tbody>
 </table>
-<p></p>
+
+<p> </p>
+
 <h2>Examples</h2>
-<p></p>
-<h3>example 1</h3>
-<pre>	<code>response(404, {"message":"Element could not be found"});
+
+<p> </p>
+
+<h3>Example 1</h3>
+
+<pre>
+<code>response(200, {"name": "Rüdiger"});
 </code>
 </pre>
-<p></p>
-<h3>example 2</h3>
-<p></p>
-<pre>	<code>response(
+
+<p>The request was successful and <code class="hljs inlineCode">{"name": "Rüdiger"}</code> is sent with the content type <code class="hljs inlineCode">application/json</code>.</p>
+
+<h3>Example 2</h3>
+
+<pre>
+<code>response(404);
+</code>
+</pre>
+
+<p>The standard response is sent that the resource was not found.</p>
+
+<h3>Example 3</h3>
+
+<pre>
+<code>response(
   500,
   "&lt;html&gt;
     &lt;head&gt;&lt;title&gt;Error 500 Server Error&lt;/title&gt;&lt;/head&gt;
@@ -71,6 +101,5 @@
   "text/html");
 </code>
 </pre>
-<p></p>
-<p></p>
-<p></p>
+
+<p> The error code <code class="hljs inlineCode">500</code> is sent with the given content.</p>

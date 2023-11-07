@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
 package com.top_logic.model.search.expr.config.operations.binary;
 
 import java.io.IOException;
@@ -11,27 +16,22 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
+import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
 
-/*
- * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
- * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
- */
-
 /**
  * {@link GenericMethod} encoding a binary value into a string.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Base64Decode extends SimpleGenericMethod {
+public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<Object[]> {
 
 	/** 
 	 * Creates a {@link Base64Decode}.
@@ -51,7 +51,12 @@ public class Base64Decode extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+		return evalPotentialFlatMap(definitions, self, arguments);
+	}
+
+	@Override
+	public Object evalDirect(EvalContext definitions, Object self, Object[] arguments) {
 		String input = asString(self);
 		if (input.isEmpty()) {
 			return null;

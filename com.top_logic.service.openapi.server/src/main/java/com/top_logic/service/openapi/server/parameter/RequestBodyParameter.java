@@ -7,6 +7,8 @@ package com.top_logic.service.openapi.server.parameter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,10 +29,12 @@ import com.top_logic.service.openapi.common.document.ParameterLocation;
  * Interprets the request body as parameter.
  * 
  * <p>
- * This allows to read the resource contents e.g. in a {@link HttpMethod#PUT} request from the method
- * body.
+ * This allows to read the resource contents e.g. in a {@link HttpMethod#PUT} request from the
+ * method body.
  * </p>
  *
+ * @see MultiPartBodyParameter
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ParameterUsedIn(ParameterLocation.QUERY)
@@ -51,6 +55,9 @@ public class RequestBodyParameter extends ConcreteRequestParameter<RequestBodyPa
 	@TagName("request-body")
 	public interface Config extends ConcreteRequestParameter.Config<RequestBodyParameter> {
 
+		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+		Lookup LOOKUP = MethodHandles.lookup();
+
 		/**
 		 * There is only one body.
 		 */
@@ -58,6 +65,11 @@ public class RequestBodyParameter extends ConcreteRequestParameter<RequestBodyPa
 		@Hidden
 		@Derived(fun = AlwaysFalse.class, args = {})
 		boolean isMultiple();
+
+		@Override
+		default boolean isBodyParameter() {
+			return true;
+		}
 	}
 
 	/**
@@ -89,11 +101,7 @@ public class RequestBodyParameter extends ConcreteRequestParameter<RequestBodyPa
 				contents.append(buffer, 0, direct);
 			}
 
-			Object result = parse(contents.toString());
-			if (result == null) {
-				checkNonMandatory();
-			}
-			return result;
+			return parse(contents.toString());
 		} catch (IOException ex) {
 			throw new InvalidValueException("Failed to read body data.", ex);
 		}

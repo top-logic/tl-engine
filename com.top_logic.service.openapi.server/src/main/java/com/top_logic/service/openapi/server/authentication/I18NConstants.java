@@ -13,31 +13,57 @@ import com.top_logic.layout.I18NConstantsBase;
 /**
  * Internationalization constants for this package.
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en No cookie with name ''{0}'' found.
+	 */
 	public static ResKey1 AUTH_FAILED_NO_COOKIE__PARAMETER;
 
+	/**
+	 * @en No query parameter with name ''{0}'' found.
+	 */
 	public static ResKey1 AUTH_FAILED_NO_QUERY_PARAM__PARAMETER;
 
+	/**
+	 * @en No header with name ''{0}'' found.
+	 */
 	public static ResKey1 AUTH_FAILED_NO_HEADER__PARAMETER;
 
+	/**
+	 * @en Invalid API key found in parameter ''{0}''.
+	 */
 	public static ResKey1 AUTH_FAILED_INVALID_API_KEY__PARAMETER;
 
+	/**
+	 * @en Unable to get token.
+	 */
 	public static ResKey AUTH_FAILED_NO_TOKEN;
 
+	/**
+	 * @en Token declined: {0} {1}: {2}.
+	 */
 	public static ResKey3 AUTH_FAILED_TOKEN_DECLINED__STATUS_CODE__CODE__DESCRIPTION;
 
+	/**
+	 * @en Token inactive.
+	 */
 	public static ResKey AUTH_FAILED_TOKEN_INACTIVE;
 
 	/** @en Authentication token is expired at {0}. */
 	public static ResKey1 AUTH_FAILED_TOKEN_EXPIRED__DATE;
 
+	/**
+	 * @en Invalid server response when validating token: {0}
+	 */
 	public static ResKey1 AUTH_FAILED_ILLEGAL_TOKEN_VALIDATION_RESPONSE__MSG;
 
 	/** @en Missing authentication secret. */
 	public static ResKey ERROR_MISSING_AUTHENTICATION_SECRET;
 
+	/**
+	 * @en Multiple Client Credential configurations for domain {0}.
+	 */
 	public static ResKey1 ERROR_MULTIPLE_CLIENT_CREDENTIAL_SECRETS__DOMAIN;
 
 	static {

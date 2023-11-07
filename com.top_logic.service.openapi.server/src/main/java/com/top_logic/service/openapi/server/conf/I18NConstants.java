@@ -17,13 +17,22 @@ import com.top_logic.layout.ResPrefix;
  * @see ResPrefix
  * @see ResKey
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en There can only be one request body parameter in the API and the operation: {0}
+	 */
 	public static ResKey1 ERROR_MULTIPLE_REQUEST_BODY_PARAMETERS__PARAMETERS;
 
+	/**
+	 * @en It is not allowed to define parameter with same name and location both in the API and in
+	 *     the operation: {0}
+	 */
 	public static ResKey1 ERROR_LOCAL_GLOBAL_PARAMETER_CLASH__CLASHES;
 
+	/**
+	 * @en The request parameter {0} is not allowed for the selected method {1}.
+	 */
 	public static ResKey2 ERROR_BODY_PARAM_UNSUPPORTED_FOR_METHOD__PARAM__METHOD;
 
 	/** @en Path parameters are not allowed at operation definitions: {0} */

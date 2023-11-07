@@ -34,7 +34,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 ERROR_END_ELEMENT_EXPECTED__TAG; // Expected to have consumed all data up to the matching end element of ''{0}''.
 
-	public static ResKey2 ERROR_UNEXPECTED_END_TAG__EXPECTED_FOUND; // Expected to have consumed all data up to the matching end element of '{0}', found: {1}
+	public static ResKey2 ERROR_UNEXPECTED_END_TAG__EXPECTED_FOUND; // Expected to have consumed all data up to the matching end element of ''{0}'', found: {1}
 
 
 	static {

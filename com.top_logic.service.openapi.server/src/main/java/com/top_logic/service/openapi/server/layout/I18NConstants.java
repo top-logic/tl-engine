@@ -18,11 +18,26 @@ import com.top_logic.layout.ResPrefix;
  * @see ResPrefix
  * @see ResKey
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en Unsupported body types ''{1}'' in path ''{0}''. Supported: {2}
+	 */
+	public static ResKey3 UNSUPPORTED_BODY_TYPES__PATH_UNSUPPORTED_SUPPORTED;
+
+	/**
+	 * @en Missing body type in path ''{0}''.
+	 */
+	public static ResKey1 MISSING_BODY_TYPE__PATH;
+
+	/**
+	 * @en Format ''{0}'' in parameter ''{1}'' is not supported.
+	 */
 	public static ResKey2 UNSUPPORTED_PARAMETER_FORMAT__FORMAT__PARAMETER;
 
+	/**
+	 * @en Type ''{0}'' in parameter ''{1}'' is not supported.
+	 */
 	public static ResKey2 UNSUPPORTED_PARAMETER_TYPE__TYPE__PARAMETER;
 
 	/**
@@ -30,8 +45,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 MISSING_PARAMETER_TYPE__PARAMETER;
 
+	/**
+	 * @en Implementation for {1}:{0} is invalid: {2}
+	 */
 	public static ResKey3 INVALID_IMPLEMENTATION_FOR_OPERATION___PATH__METHOD__MSG;
 
+	/**
+	 * @en Invalid implementation type
+	 */
 	public static ResKey INVALID_IMPLEMENTATION_TYPE;
 
 	/**

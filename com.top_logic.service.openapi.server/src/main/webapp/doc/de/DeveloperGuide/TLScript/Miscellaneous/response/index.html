@@ -1,68 +1,98 @@
 <h2>Syntax</h2>
-<pre>	<code>response($status_code, $result, $content_type)</code>
+
+<pre>
+<code>response(
+  statusCode: $statusCode, 
+  content: $content, 
+  contentType: $contentType
+)</code>
 </pre>
+
 <h2>Beschreibung</h2>
-<p>Erstellt ein Antwort-Objekt dass auf eine HTTP-Anfrage zurückgegeben wird</p>
+
+<p>Erstellt ein Antwort-Objekt, dass auf eine HTTP-Anfrage zurückgegeben wird.</p>
+
 <h2>Parameter</h2>
+
 <table class="tlDocTable">
- <thead>
-  <tr>
-   <th>Name</th>
-   <th >Typ</th>
-   <th >Beschreibung</th>
-   <th>Pflicht</th>
-   <th >Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>status_code</td>
-   <td >Zahl</td>
-   <td >Status-Code für die Antwort. Hier werden HTTP-Response Codes angegeben, z.B. 200 (OK) oder 404 (NOT FOUND)</td>
-   <td>ja</td>
-   <td ></td>
-  </tr>
-  <tr>
-   <td>result</td>
-   <td>
-    <table class="tlDocTable" >
-     <tbody>
-      <tr>
-       <td>Objekt</td>
-      </tr>
-     </tbody>
-    </table></td>
-   <td >Inhalt der Anwort</td>
-   <td>ja</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td>content_type</td>
-   <td >Zeichenkette</td>
-   <td >
-    <table class="tlDocTable" >
-     <tbody>
-      <tr>
-       <td>Inhaltstyp der Antwort. Muss zur Antwort passen</td>
-      </tr>
-     </tbody>
-    </table></td>
-   <td>nein</td>
-   <td >application/json</td>
-  </tr>
- </tbody>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>statusCode</td>
+			<td>Zahl</td>
+			<td>Status-Code für die Antwort. Hier werden HTTP-Response Codes angegeben, z.B. 200 (OK) oder 404 (NOT FOUND).</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>content</td>
+			<td>
+			<table class="tlDocTable">
+				<tbody>
+					<tr>
+						<td>Objekt</td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+			<td>Inhalt der Antwort. Ist kein Inhalt gegeben wird der Status-Code als Fehlercode interpretiert und die Standardantwort des Containers gesendet.</td>
+			<td>nein</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>contentType</td>
+			<td>Zeichenkette</td>
+			<td>
+			<table class="tlDocTable">
+				<tbody>
+					<tr>
+						<td>Inhaltstyp der Antwort. Dieser muss zum Resultat der Antwort passen.</td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+			<td>nein</td>
+			<td>application/json</td>
+		</tr>
+	</tbody>
 </table>
-<p></p>
+
+<p> </p>
+
 <h2>Beispiele</h2>
-<p></p>
+
+<p> </p>
+
 <h3>Beispiel 1</h3>
-<pre>	<code>response(404, {"message":"Element could not be found"});
+
+<pre>
+<code>response(200, {"name": "Rüdiger"});
 </code>
 </pre>
-<p></p>
+
+<p>​Die Anfrage war erfolgreich und <code class="hljs inlineCode">{"name": "Rüdiger"}</code> wird mit dem Inhaltstyp <code class="hljs inlineCode">application/json</code> übertragen.</p>
+
 <h3>Beispiel 2</h3>
-<p></p>
-<pre>	<code>response(
+
+<pre>
+<code>response(404);
+</code>
+</pre>
+
+<p>Es wird dDie Standard-Antwort gesendet, dass die Resource nicht gefunden wurde.</p>
+
+<h3>Beispiel 3</h3>
+
+<pre>
+<code>response(
   500,
   "&lt;html&gt;
     &lt;head&gt;&lt;title&gt;Error 500 Server Error&lt;/title&gt;&lt;/head&gt;
@@ -71,6 +101,5 @@
   "text/html");
 </code>
 </pre>
-<p></p>
-<p></p>
-<p></p>
+
+<p> Der Fehlercode <code class="hljs inlineCode">500</code> wird gesendet mit dem gegebenen Inhalt.</p>

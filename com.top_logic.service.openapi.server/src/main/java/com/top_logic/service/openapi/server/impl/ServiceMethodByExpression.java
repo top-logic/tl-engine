@@ -69,6 +69,10 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		if (result instanceof Response) {
 			Response response = ((Response) result);
 			status = response.getStatus();
+			if (response.getResult() == null) {
+				resp.sendError(status);
+				return;
+			}
 			contentType = response.getContentType();
 			if (JsonUtilities.JSON_CONTENT_TYPE.equals(contentType)) {
 				content = JSON.toString(response.getResult());

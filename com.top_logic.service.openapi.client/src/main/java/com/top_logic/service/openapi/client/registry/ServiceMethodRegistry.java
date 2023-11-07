@@ -19,8 +19,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.apache.hc.core5.http.protocol.BasicHttpContext;
 import org.apache.hc.core5.http.protocol.HttpContext;
@@ -46,7 +46,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
 import com.top_logic.service.openapi.client.authentication.NoSecurityEnhancement;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
@@ -193,6 +192,12 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		Map<String, Integer> parameterIndex = MapUtil.createIndexMap(parameterNames);
 
 		MethodSpec methodSpec = new MethodSpec() {
+
+			@Override
+			public String getMethodName() {
+				return methodName;
+			}
+
 			@Override
 			public List<String> getParameterNames() {
 				return parameterNames;
@@ -202,7 +207,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 			public int getParameterIndex(String name) {
 				Integer result = parameterIndex.get(name);
 				if (result == null) {
-					Logger.error("Undefined parameter '" + name + "' in method '" + methodName + "'.",
+					Logger.error("Undefined parameter '" + name + "' in method '" + getMethodName() + "'.",
 						ServiceMethodRegistry.class);
 					return 0;
 				}
@@ -212,19 +217,6 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 
 		List<CallBuilder> modifiers =
 			serviceArguments.stream().map(sa -> sa.createRequestModifier(methodSpec)).collect(Collectors.toList());
-
-		int parameterCount = parameters.size();
-		int lastMandatoryIndex = -1;
-		QueryExecutor[] defaultValues = new QueryExecutor[parameterCount];
-		for (int n = 0; n < parameterCount; n++) {
-			ParameterDefinition parameter = parameters.get(n);
-			defaultValues[n] = QueryExecutor.compileOptional(parameter.getDefaultValue());
-			if (parameter.isRequired()) {
-				lastMandatoryIndex = n;
-			}
-		}
-
-		int minArgs = lastMandatoryIndex + 1;
 
 		String httpMethod = method.getHttpMethod().name();
 
@@ -236,22 +228,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 
 			@Override
 			public Object execute(Object self, Object[] arguments) throws Exception {
-				Object[] allArguments;
-				if (arguments.length < parameterCount) {
-					allArguments = new Object[parameterCount];
-					System.arraycopy(arguments, 0, allArguments, 0, arguments.length);
-
-					// Fill default values.
-					int firstDefault = arguments.length;
-					for (int n = firstDefault; n < parameterCount; n++) {
-						QueryExecutor defaultValue = defaultValues[n];
-						allArguments[n] = defaultValue == null ? null : defaultValue.execute(allArguments);
-					}
-				} else {
-					allArguments = arguments;
-				}
-
-				Call call = Call.newInstance(allArguments);
+				Call call = Call.newInstance(arguments);
 				UriBuilder urlBuilder = new UriBuilder(baseUrl);
 				for (CallBuilder modifier : modifiers) {
 					modifier.buildUrl(urlBuilder, call);
@@ -268,9 +245,17 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 
 				try (final CloseableHttpClient httpclient = enhancer.enhanceClient(HttpClients.custom()).build()) {
 					enhancer.enhanceRequest(httpclient, request);
-					try (CloseableHttpResponse response = httpclient.execute(request, _requestContext)) {
-						return _responseHandler.handle(method, call, response);
-					}
+					return httpclient.execute(request, _requestContext, response -> {
+						try {
+							return _responseHandler.handle(method, call, response);
+						} catch (RuntimeException ex) {
+							throw ex;
+						} catch (IOException | HttpException ex) {
+							throw ex;
+						} catch (Exception ex) {
+							throw new IOException("Problem processing response.", ex);
+						}
+					});
 				}
 			}
 
@@ -298,8 +283,9 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 			}
 		};
 
-		return new ServiceMethodBuilder(methodName, minArgs, handler);
+		return new ServiceMethodBuilder(method, handler);
 	}
+
 
 	private static ResponseHandler createResponseHandler(
 			PolymorphicConfiguration<? extends ResponseHandlerFactory> factory,

@@ -12,9 +12,11 @@ import com.top_logic.layout.I18NConstantsBase;
 /**
  * Internationalization constants for this package.
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en The call "{0}" with the arguments {1} failed: {2}
+	 */
 	public static ResKey3 ERROR_REQUEST_FAILED__METHOD_ARGS_MESSAGE;
 
 	/**

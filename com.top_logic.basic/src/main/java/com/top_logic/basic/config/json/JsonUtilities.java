@@ -7,6 +7,7 @@ package com.top_logic.basic.config.json;
 
 import java.io.IOError;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,10 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.function.IOConsumer;
+
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.shared.io.StringR;
 import com.top_logic.basic.shared.io.StringW;
+import com.top_logic.basic.shared.io.W;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.common.json.gstream.MalformedJsonException;
@@ -226,11 +230,23 @@ public class JsonUtilities {
 	 *        The Json value to format. May be <code>null</code>.
 	 */
 	public static String format(Object value) {
-		StringW out = new StringW();
-		try (JsonWriter w = new JsonWriter(out)) {
-			writeValue(w, value);
+		return writeJSONContent(out -> writeValue(out, value));
+	}
+
+	/**
+	 * Writes the given Json content to {@link String}.
+	 *
+	 * @param content
+	 *        The content to write.
+	 * 
+	 * @return The serialized content.
+	 */
+	public static String writeJSONContent(IOConsumer<JsonWriter> content) {
+		W out = new StringW();
+		try (JsonWriter json = new JsonWriter(out)) {
+			content.accept(json);
 		} catch (IOException ex) {
-			throw new IOError(ex);
+			throw new UncheckedIOException(ex);
 		}
 		return out.toString();
 	}

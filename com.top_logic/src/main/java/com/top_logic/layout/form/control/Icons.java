@@ -11,7 +11,6 @@ import com.top_logic.gui.ThemeVar;
 import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.basic.ThemeImage.Img;
 
 /**
  * Icon constants for this package.
@@ -168,11 +167,6 @@ public class Icons extends IconsBase {
 	public static ThemeImage URL_LINK;
 
 	public static ThemeImage WARN;
-
-	/**
-	 * Image which is shown during the upload of a file.
-	 */
-	public static ThemeVar<Img> WAIT_IMAGE;
 
 	public static ThemeImage EDIT_MAXIMIZE;
 

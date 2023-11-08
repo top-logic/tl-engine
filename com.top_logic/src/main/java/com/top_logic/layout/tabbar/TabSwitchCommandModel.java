@@ -14,6 +14,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.VetoException;
@@ -28,7 +29,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
@@ -80,7 +80,7 @@ public class TabSwitchCommandModel extends ComponentCommandModel {
 		}
 	};
 
-	private TabSwitchCommandModel(CommandHandler handler, TabComponent component, String tabName, String label) {
+	private TabSwitchCommandModel(CommandHandler handler, TabComponent component, String tabName, ResKey label) {
 		super(handler, component, args(tabName), label);
 		this.model = component.getTabBarModel();
 		this.tabName = tabName;
@@ -142,7 +142,7 @@ public class TabSwitchCommandModel extends ComponentCommandModel {
 	}
 
 	private static TabSwitchCommandModel newInstance(TabComponent component, String tabName, CommandHandler handler) {
-		String label = DefaultButtonUIModel.getCommandI18N(component, handler, Resources.getInstance());
+		ResKey label = DefaultButtonUIModel.getCommandI18N(component, handler);
 		return new TabSwitchCommandModel(handler, component, tabName, label);
 	}
 

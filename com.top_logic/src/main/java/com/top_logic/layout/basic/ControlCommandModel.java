@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -34,7 +35,7 @@ public class ControlCommandModel extends AbstractCommandModel {
 	 * <code>null</code>.
 	 */
 	public ControlCommandModel(ControlCommand aCommand, Control aControl, Map<String, Object> someArguments,
-			String aLabel) {
+			ResKey aLabel) {
 		if (aLabel == null) {
 			throw new IllegalArgumentException("'aLabel' must not be 'null'.");
 		}
@@ -50,7 +51,9 @@ public class ControlCommandModel extends AbstractCommandModel {
 		this.command = aCommand;
 		this.control = aControl;
 		this.arguments = someArguments;
-		setLabel(aLabel);
+		Resources resources = Resources.getInstance();
+		setLabel(resources.getString(aLabel));
+		setTooltip(resources.getString(aLabel.tooltip(), null));
 	}
 
 	/**
@@ -59,7 +62,7 @@ public class ControlCommandModel extends AbstractCommandModel {
 	 * {@link AJAXCommandHandler#getDefaultI18NKey() I18N key of the command}.
 	 */
 	public ControlCommandModel(ControlCommand aCommand, Control aControl, Map<String, Object> someArguments) {
-		this(aCommand, aControl, someArguments, getCommandI18N(aCommand, Resources.getInstance()));
+		this(aCommand, aControl, someArguments, getCommandI18N(aCommand));
 	}
 
 	/**

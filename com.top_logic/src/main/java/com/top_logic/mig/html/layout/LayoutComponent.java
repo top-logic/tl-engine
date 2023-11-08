@@ -3412,7 +3412,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
 	protected CommandModel modelForCommand(Resources res, CommandHandler command, Map<String, Object> arguments,
 			LayoutComponent targetComponent) {
-		String label = createCommandLabel(res, targetComponent, command);
+		ResKey label = createCommandLabel(targetComponent, command);
 
 		CommandModel theModel = CommandModelFactory.commandModel(command, targetComponent, arguments, label);
 		ThemeImage commandImage = command.getImage(targetComponent);
@@ -3445,9 +3445,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return res.getString(labelKey.tooltip(), null);
 	}
 
-	public static String createCommandLabel(Resources resources, LayoutComponent targetComponent,
-			CommandHandler command) {
-		return resources.getString(command.getResourceKey(targetComponent));
+	public static ResKey createCommandLabel(LayoutComponent targetComponent, CommandHandler command) {
+		return command.getResourceKey(targetComponent);
 	}
 
 	/**

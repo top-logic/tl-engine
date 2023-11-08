@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.ExecutabilityModel;
@@ -45,21 +46,10 @@ public class CommandModelFactory {
 	/**
 	 * Creates a {@link CommandModel} for a {@link CommandHandler} that does not need any arguments.
 	 * 
-	 * @see #commandModel(CommandHandler, Resources, LayoutComponent, Map)
+	 * @see #commandModel(CommandHandler, LayoutComponent, Map)
 	 */
 	public static ComponentCommandModel commandModel(CommandHandler command, Resources res, LayoutComponent component) {
-		return commandModel(command, res, component, CommandHandler.NO_ARGS);
-	}
-
-	/**
-	 * Creates a {@link CommandModel} invoking the given {@link CommandHandler} on the given
-	 * {@link LayoutComponent} with the given arguments.
-	 * 
-	 * @see #commandModel(CommandHandler, Resources, LayoutComponent, Map)
-	 */
-	public static ComponentCommandModel commandModel(CommandHandler command, LayoutComponent component,
-			Map<String, Object> someArguments) {
-		return commandModel(command, Resources.getInstance(), component, someArguments);
+		return commandModel(command, component, CommandHandler.NO_ARGS);
 	}
 
 	/**
@@ -74,28 +64,25 @@ public class CommandModelFactory {
 	 * 
 	 * @param command
 	 *        The {@link CommandHandler} to invoke.
-	 * @param res
-	 *        The {@link Resources} instance to create the label with.
 	 * @param component
 	 *        The {@link LayoutComponent} to invoke the given handler on.
 	 * @param someArguments
 	 *        The arguments to pass to the given {@link CommandHandler}, see
 	 *        {@link CommandHandler#handleCommand(com.top_logic.layout.DisplayContext, LayoutComponent, Object, Map)}
-	 * 
-	 * @see #commandModel(CommandHandler, LayoutComponent, Map, String)
+	 * @see #commandModel(CommandHandler, LayoutComponent, Map, ResKey)
 	 */
-	public static ComponentCommandModel commandModel(CommandHandler command, Resources res, LayoutComponent component,
+	public static ComponentCommandModel commandModel(CommandHandler command, LayoutComponent component,
 			Map<String, Object> someArguments) {
-		return commandModel(command, component, someArguments, getCommandI18N(component, command, res));
+		return commandModel(command, component, someArguments, getCommandI18N(component, command));
 	}
 
 	/**
 	 * Creates a {@link ComponentCommandModel} for a command which does not need any arguments. The
 	 * label of this {@link ComponentCommandModel} is the given label.
 	 * 
-	 * @see #commandModel(CommandHandler, LayoutComponent, Map, String)
+	 * @see #commandModel(CommandHandler, LayoutComponent, Map, ResKey)
 	 */
-	public static CommandModel commandModel(CommandHandler command, LayoutComponent component, String label) {
+	public static CommandModel commandModel(CommandHandler command, LayoutComponent component, ResKey label) {
 		return commandModel(command, component, CommandHandler.NO_ARGS, label);
 	}
 
@@ -114,7 +101,7 @@ public class CommandModelFactory {
 	 *        The label of the button.
 	 */
 	public static ComponentCommandModel commandModel(CommandHandler command, LayoutComponent component,
-			Map<String, Object> someArguments, String label) {
+			Map<String, Object> someArguments, ResKey label) {
 		return new ComponentCommandModel(command, component, someArguments, label);
 	}
 

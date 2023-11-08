@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -75,6 +76,60 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 		out.beginTag(H2);
 		out.writeText(context.getResources().getString(I18NConstants.MESSAGE_DOC_SYNTAX_HEADER));
 		out.endTag(H2);
+		writeUnchainedCall(context, out);
+		writeChainedCall(context, out);
+	}
+
+	private void writeChainedCall(DisplayContext context, TagWriter out) {
+		if (_parameters.isEmpty()) {
+			// No parameters -> no chaining.
+			return;
+		}
+		out.beginTag(PRE);
+		out.beginTag(CODE);
+		out.writeText('$');
+		out.writeText(parameterName(_parameters.get(0)));
+		out.writeText('.');
+		out.writeText(scriptName(context));
+		out.writeText('(');
+		switch (_parameters.size()) {
+			case 0: {
+				throw new UnreachableAssertion("Empty parameters are handled before.");
+			}
+			case 1: {
+				break;
+			}
+			case 2: {
+				String parameterName = parameterName(_parameters.get(1));
+				out.writeText(parameterName);
+				out.writeText(": $");
+				out.writeText(parameterName);
+				break;
+			}
+			default: {
+				boolean firstParam = true;
+				for (int i = 1; i < _parameters.size(); i++) {
+					T parameter = _parameters.get(i);
+					String parameterName = parameterName(parameter);
+
+					if (!firstParam) {
+						out.writeText(",");
+					}
+					out.writeText("\n    ");
+					out.writeText(parameterName);
+					out.writeText(": $");
+					out.writeText(parameterName);
+					firstParam = false;
+				}
+				out.writeText("\n");
+			}
+		}
+		out.writeText(')');
+		out.endTag(CODE);
+		out.endTag(PRE);
+	}
+
+	private void writeUnchainedCall(DisplayContext context, TagWriter out) {
 		out.beginTag(PRE);
 		out.beginTag(CODE);
 		out.writeText(scriptName(context));

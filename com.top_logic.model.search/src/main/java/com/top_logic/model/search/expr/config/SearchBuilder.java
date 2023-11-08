@@ -727,7 +727,12 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		return Module.INSTANCE.getImplementationInstance();
 	}
 
-	private static final class BuilderFactory implements Factory {
+	/**
+	 * Factory that bases on a {@link MethodBuilder}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static final class BuilderFactory implements Factory {
 	
 		private final MethodBuilder<?> _builder;
 	

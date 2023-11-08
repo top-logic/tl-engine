@@ -43,4 +43,9 @@ public class Argument {
 		return _value;
 	}
 
+	@Override
+	public String toString() {
+		return "Argument [_name=" + _name + ", _value=" + _value + "]";
+	}
+
 }

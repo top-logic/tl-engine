@@ -9,6 +9,7 @@
 				   <module key="com.top_logic.model.search.ModelBasedSearch$Module" value="true"/>
 				   <module key="com.top_logic.model.search.expr.config.SearchBuilder$Module" value="true"/>
 				   <module key="com.top_logic.model.search.ui.help.HelpPageIndex$Module" value="true"/>
+				   <module key="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -615,6 +616,9 @@
 					<method name="currentRevision" class="com.top_logic.model.search.expr.config.operations.revision.CurrentRevision$Builder"/>
 					<method name="equalsUnversioned" class="com.top_logic.model.search.expr.config.operations.EqualsUnversioned$Builder"/>
 				</methods>
+				<method-resolvers>
+					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>
+				</method-resolvers>
 			</instance>
 		</config>
 

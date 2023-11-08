@@ -567,8 +567,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-template-rows: minmax(22px, max-content) 1fr;
 	grid-gap: 0px;
 	border: 1px solid var(--border-subtle);
-	border-radius: var(--GROUP_RADIUS);
-	margin-bottom: 10px;
+	margin-top: var(--spacing-02);
     min-width: -moz-min-content;    /* Firefox */
     min-width: -webkit-min-content; /* Chrome */
     min-width: min-content;
@@ -584,10 +583,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .rf_groupCell.noBorder {
 	border: 0px;
-}
-
-.rf_groupCell.collapsed {
-	border-radius: var(--GROUP_COLLAPSED_RADIUS);
 }
 
 .fltContent .rf_groupCell {

@@ -29,7 +29,7 @@
 }
 
 .cmdButtonsDialogOpener.visible {
-  display: block;
+	display: block;
 }
 
 .cButton:hover, 
@@ -57,7 +57,7 @@ div.cmdProgress img {
 
 .cButton.active .menuEntryImage i, 
 .cButton.active .input-image i {
-  color: var(--support-danger);
+	color: var(--support-danger);
 }
 
 /*
@@ -197,8 +197,8 @@ div.cmdProgress img {
 	color: var(--icon-on-color);
 }
 
-.tlButton:active
-.cDefaultButton button: active {
+.tlButton:active,
+.cDefaultButton button:active {
 	background: var(--button-secondary-active);
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
@@ -493,8 +493,6 @@ div.cmdProgress img {
 .tlDropdownContent a:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus);
 }
-
-
 
 span.cImageButton .input-image.disabled i, span.cmdLink .input-image.disabled i, span.cOpenCalendar .input-image.disabled i, 
 span.cTimeInput .input-image.disabled i, span.cPopupSelect .input-image.disabled i, .cIntegerInput .input-image.disabled i, 

@@ -9,9 +9,9 @@ import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
-import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.util.TLModelPartRef;
@@ -30,13 +30,20 @@ public interface FormsTemplateParameter extends ConfigurationItem {
 	String FORMS = "forms";
 
 	/**
-	 * Determines the form view.
+	 * Form definitions to use for displaying objects in this component.
+	 * 
+	 * <p>
+	 * To display an object, the first form definition is this list is used that matches the
+	 * object's type. If no such form definition is found, a form definition is used that is
+	 * annotated to the object's type. If there is no such form definition either, a generic form is
+	 * rendered displaying all properties of the object.
+	 * </p>
 	 * 
 	 * @see FormDefinition
 	 */
 	@Name(FORMS)
 	@Key(TypedFormDefinition.TYPE)
-	@Hidden
+	@DisplayMinimized
 	Map<TLModelPartRef, TypedFormDefinition> getForms();
 
 }

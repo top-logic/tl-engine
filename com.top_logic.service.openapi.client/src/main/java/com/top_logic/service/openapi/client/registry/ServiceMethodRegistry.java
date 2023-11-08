@@ -8,14 +8,20 @@ package com.top_logic.service.openapi.client.registry;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.lang.reflect.Array;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -42,10 +48,12 @@ import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
 import com.top_logic.service.openapi.client.authentication.NoSecurityEnhancement;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
@@ -228,7 +236,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 
 			@Override
 			public Object execute(Object self, Object[] arguments) throws Exception {
-				Call call = Call.newInstance(arguments);
+				Call call = Call.newInstance(adaptValuesToExpectedType(arguments));
 				UriBuilder urlBuilder = new UriBuilder(baseUrl);
 				for (CallBuilder modifier : modifiers) {
 					modifier.buildUrl(urlBuilder, call);
@@ -257,6 +265,124 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 						}
 					});
 				}
+			}
+
+			/**
+			 * The arguments are given by a TL-Script function. TL-Script always works with
+			 * {@link Double} as {@link Number} implementation. Therefore such a value must be
+			 * adapted to have expected parameter type.
+			 */
+			private Object[] adaptValuesToExpectedType(Object[] arguments) {
+				if (parameters.size() != arguments.length) {
+					Logger.error("Expected " + parameters.size() + " arguments but got " + arguments.length,
+						ServiceMethodRegistry.class);
+					return arguments;
+				}
+				Object[] transformedArgs = arguments;
+				for (int i = 0; i < arguments.length; i++) {
+					Object arg = arguments[i];
+					if (arg == null) {
+						continue;
+					}
+					ParameterDefinition param = parameters.get(i);
+					Object transformed;
+					if (arg instanceof Set) {
+						transformed = transformCollection((Set<?>) arg, param, LinkedHashSet::new);
+					} else if (arg instanceof List) {
+						transformed = transformCollection((List<?>) arg, param, ArrayList::new);
+					} else if (arg.getClass().isArray()) {
+						transformed = transformArray((Object[]) arg, param);
+					} else {
+						transformed = transformArgument(arg, param);
+					}
+					if (transformed == arg) {
+						// Actually no change
+						continue;
+					}
+					if (transformedArgs == arguments) {
+						// No change until now. Create copy.
+						transformedArgs = Arrays.copyOf(arguments, arguments.length);
+					}
+					transformedArgs[i] = arg;
+				}
+				return transformedArgs;
+			}
+			
+			private Object transformArray(Object[] arg, ParameterDefinition param) {
+				if (!param.isMultiple()) {
+					return arg;
+				}
+				Object[] copy = Arrays.copyOf(arg, Array.getLength(arg));
+				if (!transformInline(copy, param)) {
+					return arg;
+				}
+				return copy;
+			}
+
+			private Object transformCollection(Collection<?> arg, ParameterDefinition param,
+					Supplier<Collection<Object>> factory) {
+				if (!param.isMultiple()) {
+					return arg;
+				}
+				Object[] content = arg.toArray();
+				if (!transformInline(content, param)) {
+					return arg;
+				}
+				Collection<Object> result = factory.get();
+				Collections.addAll(result, content);
+				return result;
+			}
+
+			private boolean transformInline(Object[] args, ParameterDefinition param) {
+				boolean anyChange = false;
+				for (int i = 0; i < args.length; i++) {
+					Object arg = args[i];
+					Object transformed = transformArgument(arg, param);
+					if (arg == transformed) {
+						// Actually no transformation.
+						continue;
+					}
+					anyChange = true;
+					args[i] = transformed;
+				}
+				return anyChange;
+			}
+
+			private Object transformArgument(Object arg, ParameterDefinition param) {
+				if (!(arg instanceof Number)) {
+					return arg;
+				}
+				TLModelPartRef paramType = param.getType();
+				if (paramType == null) {
+					return arg;
+				}
+				switch (paramType.qualifiedName()) {
+					case TypeSpec.DOUBLE_TYPE: {
+						if (!(arg instanceof Double)) {
+							arg = Double.valueOf(((Number) arg).doubleValue());
+						}
+						break;
+					}
+					case TypeSpec.FLOAT_TYPE: {
+						if (!(arg instanceof Float)) {
+							arg = Float.valueOf(((Number) arg).floatValue());
+						}
+						break;
+					}
+					case TypeSpec.LONG_TYPE: {
+						if (!(arg instanceof Long)) {
+							arg = Long.valueOf(((Number) arg).longValue());
+						}
+						break;
+					}
+					case TypeSpec.INTEGER_TYPE: {
+						if (!(arg instanceof Integer)) {
+							arg = Integer.valueOf(((Number) arg).intValue());
+						}
+						break;
+					}
+				}
+				return arg;
 			}
 
 			@Override

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions"
+			config:override="true"
+		>
+			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+				<scripts>
+					<configured-script name="demoNewA">
+						<label key="dynamic.e45b6929-5895-448b-a98c-b50ed44760a8">
+							<en>Create Demo A</en>
+							<de>Demo A anlegen</de>
+						</label>
+						<description key="dynamic.bb6ba050-b6e2-448f-a522-9cab3d4225bf">
+							<en><![CDATA[<p>Creates an object of type "Demo A".</p>
+]]></en>
+							<de><![CDATA[<p>Erstellt ein Objekt vom Typ "Demo A".</p>
+]]></de>
+						</description>
+						<parameters>
+							<parameter name="name"
+								mandatory="true"
+								type="tl.core:String"
+							>
+								<description key="dynamic.23dcb41a-ae44-40ec-b25a-cc3bc88f2190">
+									<en>The name of the new "Demo A" object.</en>
+									<de>Der Name des neuen "Demo A" Objekt.</de>
+								</description>
+							</parameter>
+							<parameter name="parent"
+								type="tl.element:StructuredElementContainer"
+							>
+								<description key="dynamic.feb2d868-d9ca-4c00-bfb1-35845e98e868">
+									<en>The parent element of the new element.</en>
+									<de>Das Elternelement des neuen Elementes.</de>
+								</description>
+							</parameter>
+						</parameters>
+						<implementation><![CDATA[{
+  newA = `DemoTypes:A`.new();
+  $newA.set(`DemoTypes:A#name`, $name);
+  $newA.set(`DemoTypes:A#booleanMandatory`, true);
+  $newA.set(`DemoTypes:A#booleanRadioMandatory`, false);
+  $newA.set(`DemoTypes:A#booleanSelectMandatory`, true);
+  if ($parent, $parent.add(`tl.element:StructuredElementContainer#children`, $newA), null);
+  $newA;
+}]]></implementation>
+					</configured-script>
+					<configured-script name="demoElementsWithName">
+						<label key="dynamic.5c2028e2-7a64-4209-8d91-d2a7ed5da484">
+							<en>Elements with names</en>
+							<de>Elemente mit Namen</de>
+						</label>
+						<description key="dynamic.cd657bf7-f1ff-4eb3-8fdb-7841e53f12b2">
+							<en><![CDATA[<p>Determines the elements of the given type whose name is contained in the given set.</p>
+]]></en>
+							<de><![CDATA[<p>Bestimmt die Elemente des gegebenen Typs deren Name in der übergebenden Menge enthalten ist.</p>
+]]></de>
+						</description>
+						<parameters>
+							<parameter name="type"
+								mandatory="true"
+								type="tl.model:TLClass"
+							>
+								<description key="dynamic.dbdfea8a-43f0-47dc-ae35-2ac425e0c38c">
+									<en>The type whose instances are to be determined.</en>
+									<de>Der Typ dessen Instanzen bestimmt werden sollen.</de>
+								</description>
+							</parameter>
+							<parameter name="names"
+								mandatory="true"
+								multiple="true"
+								type="tl.core:String"
+							>
+								<description key="dynamic.22ea87ed-2708-40c6-a558-b707fa20c6f3">
+									<en>The names of the objects you are looking for.</en>
+									<de>Die Namen der gesuchten Objekte.</de>
+								</description>
+							</parameter>
+						</parameters>
+						<implementation><![CDATA[{
+ allClasses = $type.recursion(t -> $t.get(`tl.model:TLClass#generalizations`)).toSet();
+ nameAttributes = $allClasses.reduce([], subresult -> element -> if ($subresult.isEmpty(),{
+   $element.get(`tl.model:TLClass#localParts`).filter(x -> $x.get(`tl.model:TLNamedPart#name`) == "name")
+   }, $subresult));
+ if ($nameAttributes.isEmpty(), [], {
+   nameAttribute = $nameAttributes.firstElement();
+   all($type).filter(x -> $names.toSet().containsElement($x.get($nameAttribute)));
+ });
+}]]></implementation>
+					</configured-script>
+				</scripts>
+			</instance>
+		</config>
+	</services>
+</application>

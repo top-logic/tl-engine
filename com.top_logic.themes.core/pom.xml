@@ -10,12 +10,9 @@
 
   <artifactId>tl-themes-core</artifactId>
   <description>TopLogic theme "core".</description>
-
+	<url>${tl.repository.url}</url>
+	
   <dependencies>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-search-lucene</artifactId>
-    </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-element</artifactId>
@@ -27,10 +24,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>ext-com-inter-fonts</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-doc</artifactId>
     </dependency>
   </dependencies>
 </project>

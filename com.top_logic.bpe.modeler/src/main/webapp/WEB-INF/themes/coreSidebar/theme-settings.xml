@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_BACKSPACE"
+		value="css:bi bi-backspace-fill"
+	/>
+	<icon name="ICON_CODE_BRANCH"
+		value="css:bi bi-braces"
+	/>
+	<icon name="ICON_EDIT"
+		value="css:bi bi-pencil"
+	/>
+	<icon name="ICON_FILE_DOWNLOAD"
+		value="css:bi bi-file-arrow-down-fill"
+	/>
+	<icon name="ICON_FILE_IMPORT"
+		value="css:bi bi-file-arrow-up-fill"
+	/>
+	<icon name="ICON_PLUS"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="ICON_SHOE_PRINTS"
+		value="css:bi bi-arrow-right-square-fill"
+	/>
+	<icon name="ICON_TRASH_ALT"
+		value="css:bi bi bi-trash3"
+	/>
+</settings>

@@ -315,7 +315,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 *         command has no default I18N.
 	 */
 	protected ResKey getDefaultI18NKey() {
-		return ResKey.NONE;
+		return ResKey.forClass(this.getClass());
 	}
 
 	/**

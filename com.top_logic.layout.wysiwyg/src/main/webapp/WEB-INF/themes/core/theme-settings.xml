@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="com.top_logic.layout.wysiwyg.ui.formeditor.implementation.Icons.STATIC_HTML_CONTENT"
+		value="css:bi bi-braces"
+	/>
+</settings>

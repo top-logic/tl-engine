@@ -33,5 +33,9 @@
       <groupId>com.top-logic</groupId>
       <artifactId>ext-com-ckeditor</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-bootstrap-icons</artifactId>
+    </dependency>
   </dependencies>
 </project>

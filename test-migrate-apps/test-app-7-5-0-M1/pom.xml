@@ -46,6 +46,10 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
+      		<artifactId>tl-themes-core</artifactId>
+    	</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
 			<artifactId>tl-themes-dezent</artifactId>
 		</dependency>
 		<dependency>

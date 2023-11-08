@@ -13,6 +13,10 @@
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<dependencies>
+  		<dependency>
+      		<groupId>com.top-logic</groupId>
+      		<artifactId>tl-themes-core</artifactId>
+    	</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-themes-dezent</artifactId>

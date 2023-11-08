@@ -7,7 +7,7 @@
 >
 	<styles>
 		<style name="/style/core.css"/>
-		<style name="/style/corebuttons.css"/>
+		<style name="/style/coreButtons.css"/>
 		<style name="/style/tabbar.css"/>
 		<style name="/style/form.css"/>
 		<style name="/style/tables.css"/>

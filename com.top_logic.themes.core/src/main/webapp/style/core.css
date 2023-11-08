@@ -250,6 +250,18 @@ div.mcMinimized .sblTitle img {
     border-radius: 0;
 }
 
+div.licenseView {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	padding: 0px;
+}
+
+.licenseContent {
+	color: var(--support-danger);
+}
+
 /* =============================================== */
 /* ====== AccordionControl (prefix is 'acc') ===== */
 /* =============================================== */
@@ -1296,8 +1308,7 @@ div.sxError {
 }
 
 div.sxMessage,
-div.sxFailure
-{
+div.sxFailure {
 	margin: 10px;
 }
 
@@ -1308,8 +1319,7 @@ div.sxButtons {
 }
 
 div.sxFailure,
-div.sxButtons
-{
+div.sxButtons{
 	display: none;	
 }
 
@@ -1383,7 +1393,8 @@ div.cMinimizable:HOVER > div.mcToggle {
 	visibility: visible;
 }
 
-div.mcMinimized.frmBody, div.mcMinimized div.frmBody {
+div.mcMinimized.frmBody, 
+div.mcMinimized div.frmBody {
 	overflow: hidden;
 }
 
@@ -1634,7 +1645,7 @@ div.mcMinimized .accText {
 
 .tl-info-service-item__log-time {
 	color: var(--text-helper);
-	padding-left: var(--spacing-02)
+	padding-left: var(--spacing-02);
 	white-space: nowrap;
 }
 
@@ -1762,7 +1773,6 @@ span.ltcCounting input {
     from {transform: rotateZ(90deg);}
     to {transform: rotateZ(0deg);}
 }
-
 
 /*
 ****					****
@@ -2108,7 +2118,7 @@ h5.card-title a:focus {
 
 /* 
 Is needes as long as the data-hover class exist.
-If they're delete, this can be deleted too
+If they're deleted, this can be deleted too
 */
 .breadcrumb span.hover,
 .breadcrumb span.hover:active {

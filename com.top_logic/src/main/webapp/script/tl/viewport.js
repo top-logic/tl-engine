@@ -717,7 +717,7 @@ services.viewport = {
 		const scrollAmount = 70;
 		 
 		if (tabBar.clientWidth > scrollContainer.scrollWidth || 
-		scrollContainer.scrollWidth < scrollContainer.clientWidth) {
+				scrollContainer.scrollWidth < scrollContainer.clientWidth) {
 	        scrollLeftButton.style.display = 'none';
 	        scrollRightButton.style.display = 'none';
 	    } else {
@@ -726,58 +726,58 @@ services.viewport = {
 	    }
 	    
 		function scrollLeft() {
-		  scrollContainer.scrollBy({
-		    left: -scrollAmount,
-		    behavior: 'smooth'
-		  });
-		  if (isScrolling) {
-		    setTimeout(scrollLeft, 100);
-		  }
+			scrollContainer.scrollBy({
+				left: -scrollAmount,
+				behavior: 'smooth'
+			});
+			if (isScrolling) {
+				setTimeout(scrollLeft, 100);
+			}
 		}
 		
 		function scrollRight() {
-		  scrollContainer.scrollBy({
-		    left: scrollAmount,
-		    behavior: 'smooth'
-		  });
-		  if (isScrolling) {
-		    setTimeout(scrollRight, 100);
-		  }
+			scrollContainer.scrollBy({
+				left: scrollAmount,
+				behavior: 'smooth'
+			});
+			if (isScrolling) {
+				setTimeout(scrollRight, 100);
+			}
 		}
 	    	    
 	    scrollLeftButton.addEventListener('mousedown', function() {
-		  isScrolling = true;
-		  scrollLeft();
+	    	isScrolling = true;
+	    	scrollLeft();
 		});
 		
 		scrollRightButton.addEventListener('mousedown', function() {
-		  isScrolling = true;
-		  scrollRight();
+			isScrolling = true;
+			scrollRight();
 		});
 		
 		scrollLeftButton.addEventListener('mouseup', function() {
-		  isScrolling = false;
+			isScrolling = false;
 		});
 		
 		scrollRightButton.addEventListener('mouseup', function() {
-		  isScrolling = false;
+			isScrolling = false;
 		});
 		
 		scrollContainer.addEventListener("mousedown", function(e) {
-	        isScrolling = true;
+			isScrolling = true;
 	        const initialX = e.clientX;
 	        
 	        const moveHandler = function(e) {
-	            if (!isScrolling) return;
-	            if (Math.abs(initialX - e.clientX) > 5) { 
-	                scrollContainer.classList.add("scrolling");
-	                scrollContainer.scrollLeft -= e.movementX;
-	            }
+	        	if (!isScrolling) return;
+	        	if (Math.abs(initialX - e.clientX) > 5) {
+	        		scrollContainer.classList.add("scrolling");
+	        		scrollContainer.scrollLeft -= e.movementX;
+	        	}
 	        };
 	
 	        const upHandler = function() {
-	            isScrolling = false;
-	            scrollContainer.classList.remove("scrolling");
+	        	isScrolling = false;
+	        	scrollContainer.classList.remove("scrolling");
 	            document.removeEventListener("mousemove", moveHandler);
 	            document.removeEventListener("mouseup", upHandler);
 	        };
@@ -797,6 +797,12 @@ services.viewport = {
         
 	},
 	
+	/* 
+	*	Hides buttons that are no longer visible in the browser or exceeds the width 
+	*	of the container, and makes them visible again if the container gets wider again.
+	*	Hidden buttons will be displayed in a dropdown button.
+	*	Parameter: Button component element.
+	*/
 	buttonComponentResizing: function(element) {
 		const elementID = element.id;
 	  	const buttonComponentParent = document.getElementById(elementID);
@@ -816,36 +822,42 @@ services.viewport = {
 	    	buttons[i].style.display = 'inline-block';
 	  	}
 	  	
+	  	// Migrates the hidden buttons into the dropdown content.
 	  	for (let i = 0; i < buttonsSize; i++) {
 	    	if(buttons[i].offsetLeft < 1) {
-	      	dropdown.style.display = 'inline-block';
-	      	currButton = buttonsClone[i].firstElementChild;
-	      	currButton.classList = "tlInDropdown"
-	      	dropdownHtml += currButton.outerHTML;
-	      	buttons[i].style.display = 'none';
+	    		dropdown.style.display = 'inline-block';
+	      		currButton = buttonsClone[i].firstElementChild;
+	      		currButton.classList = "tlInDropdown"
+	      		dropdownHtml += currButton.outerHTML;
+	      		buttons[i].style.display = 'none';
 	    	}
 	  	}
 	  	dropdownContent.innerHTML = dropdownHtml;
 	},
 	
+	/* 
+	*	Opens the dropdown with all the hidden buttons.
+	*
+	*	Parameter: Dropdown button.
+	*/
 	openButtonComponentsDropdown: function(dropdownButton) {
 		const dropdownContent = dropdownButton.nextElementSibling;
 	  	if (dropdownContent.style.display === 'none') {
 	    	dropdownContent.style.display = 'block';
-	    	// Finds the button with the biggest width. Dropdown Content's width depends on that,
-	    	// because normally an element grows in the right direction but this dropdown menu should 
-	    	// grow in the left direction.
+	    	// Finds the button with the biggest width. Dropdown content's width depends on that,
+	    	// because normally an element grows in the right direction but this dropdown menu has 
+	    	// to grow in the left direction.
 	    	let maxWidth = 0;
 	    	const labels = dropdownContent.querySelectorAll('a .tlButtonLabel');
 			for (let i = 0; i < labels.length; i++) {
-			  const label = labels[i];
-			  let width = label.getBoundingClientRect().width;
-			  const nextSibling = label.nextElementSibling;
-  			  if (nextSibling) {
-				  width += nextSibling.getBoundingClientRect().width;
-				  width += parseFloat(getComputedStyle(nextSibling).getPropertyValue('padding-right'));
-  			  }
-			  maxWidth = Math.max(maxWidth, width);
+				const label = labels[i];
+			  	let width = label.getBoundingClientRect().width;
+			  	const nextSibling = label.nextElementSibling;
+  			  	if (nextSibling) {
+					width += nextSibling.getBoundingClientRect().width;
+				  	width += parseFloat(getComputedStyle(nextSibling).getPropertyValue('padding-right'));
+  			  	}
+			  	maxWidth = Math.max(maxWidth, width);
 			}
 			const anchors = dropdownContent.querySelectorAll('a');
 			const buttonPadding = getComputedStyle(anchors[0]);
@@ -854,7 +866,6 @@ services.viewport = {
 			dropdownContent.style.width = `${maxWidth + paddingLeft + paddingRight}px`;
 			const ancestorWithLcHidden = this.findAncestorWithClass(dropdownButton, 'lcHidden', 5);
 	        if (ancestorWithLcHidden) {
-	            // Code hier um das 'overflow' des gefundenen Elements vorübergehend zu ändern
 	            ancestorWithLcHidden.style.overflow = 'visible';
 	        }
 	  	} else {

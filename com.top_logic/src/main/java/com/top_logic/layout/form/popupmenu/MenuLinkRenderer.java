@@ -52,6 +52,11 @@ public class MenuLinkRenderer implements LinkRenderer {
 			out.beginCssClasses();
 			button.writeCssClassesContent(out);
 			out.endCssClasses();
+
+			String tooltip = ButtonRenderer.lookupTooltipLabelFallback(button, true, true);
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
+				button.getTooltipCaption());
+
 			if (!button.isDisabled()) {
 				out.beginCssClasses(TL_HOVER_CLASS_ATTR);
 				{
@@ -72,12 +77,8 @@ public class MenuLinkRenderer implements LinkRenderer {
 	}
 
 	private <B> void writeLabel(DisplayContext context, TagWriter out, Link button) throws IOException {
-		String tooltip = ButtonRenderer.lookupTooltipLabelFallback(button, false, true);
-
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, MENU_ENTRY_CELL_CLASS);
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltip,
-			button.getTooltipCaption());
 		out.endBeginTag();
 		out.writeText(button.getLabel());
 		out.endTag(SPAN);

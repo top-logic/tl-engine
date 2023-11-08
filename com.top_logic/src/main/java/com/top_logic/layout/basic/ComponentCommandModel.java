@@ -7,6 +7,7 @@ package com.top_logic.layout.basic;
 
 import java.util.Map;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.check.CheckScope;
 import com.top_logic.layout.basic.check.DefaultCheckScope;
@@ -17,6 +18,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * {@link DynamicCommandModel} calling a {@link CommandHandler} on a specific
@@ -40,15 +42,17 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 	 * @param label
 	 *        The label of the button.
 	 * 
-	 * @see CommandModelFactory#commandModel(CommandHandler, LayoutComponent, Map, String)
+	 * @see CommandModelFactory#commandModel(CommandHandler, LayoutComponent, Map, ResKey)
 	 */
 	protected ComponentCommandModel(CommandHandler command, LayoutComponent component,
-			Map<String, Object> someArguments, String label) {
+			Map<String, Object> someArguments, ResKey label) {
 		super(ComponentCommand.newInstance(command, component, someArguments));
 		if (label == null) {
 			throw new IllegalArgumentException("'label' must not be 'null'.");
 		}
-		setLabel(label);
+		Resources resources = Resources.getInstance();
+		setLabel(resources.getString(label));
+		setTooltip(resources.getString(label.tooltip(), null));
 		setImage(command.getImage(component));
 		setNotExecutableImage(command.getNotExecutableImage(component));
 		setCssClasses(command.getCssClasses(component));

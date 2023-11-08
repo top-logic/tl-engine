@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.basic;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.InlineMap;
 import com.top_logic.basic.col.LazyTypedAnnotatableMixin;
@@ -19,7 +18,6 @@ import com.top_logic.layout.form.model.AbstractFormMember;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
@@ -470,23 +468,10 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 	 *        The target component displaying the given command.
 	 * @param aCommand
 	 *        The command to get the I18N for, must not be <code>null</code>.
-	 * @param aResource
-	 *        The resource to get the I18N from. If <code>aResource</code> is <code>null</code> the
-	 *        I18N will be taken from the default resources.
 	 * @return The requested I18N.
 	 */
-	protected static String getCommandI18N(LayoutComponent component, BoundCommand aCommand, Resources aResource) {
-		ResKey theKey = aCommand.getResourceKey(component);
-
-        if (theKey != null) {
-			return aResource == null ? Resources.getInstance().getString(theKey) : aResource.getString(theKey);
-        }
-        else {
-            Logger.warn("No default I18N for '" + aCommand.getID() + 
-                         "' (class is: " +aCommand.getClass().getName() + ")!", AbstractCommandModel.class);
-
-            return StringServices.EMPTY_STRING;
-        }
+	protected static ResKey getCommandI18N(LayoutComponent component, BoundCommand aCommand) {
+		return aCommand.getResourceKey(component);
     }
 	
 	/**
@@ -494,23 +479,10 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 	 * 
 	 * @param aCommand
 	 *        The command to get the I18N for, must not be <code>null</code>.
-	 * @param aResource
-	 *        The resource to get the I18N from. If <code>aResource</code> is <code>null</code> the
-	 *        I18N will be taken from the default resources.
 	 * @return The requested I18N.
 	 */
-	protected static String getCommandI18N(ControlCommand aCommand, Resources aResource) {
-		ResKey theKey = aCommand.getI18NKey();
-
-		if (theKey != null) {
-			return aResource == null ? Resources.getInstance().getString(theKey) : aResource.getString(theKey);
-		}
-		else {
-			Logger.warn("No default I18N for '" + aCommand.getID() +
-				"' (class is: " + aCommand.getClass().getName() + ")!", AbstractCommandModel.class);
-
-			return StringServices.EMPTY_STRING;
-		}
+	protected static ResKey getCommandI18N(ControlCommand aCommand) {
+		return aCommand.getI18NKey();
 	}
 
 	@Override

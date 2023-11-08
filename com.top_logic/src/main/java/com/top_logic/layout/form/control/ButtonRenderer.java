@@ -12,6 +12,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ButtonUIModel;
@@ -161,8 +162,8 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 		}
 
 		String tooltip = button.getTooltip();
-		if (tooltip == null) {
-			return button.getLabel();
+		if (tooltip == null && !labelRendered) {
+			return TagUtil.encodeXML(button.getLabel());
 		}
 		return tooltip;
 	}
@@ -174,15 +175,15 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 		String tooltip = button.getTooltip();
 		if (StringServices.isEmpty(tooltip)) {
 			if (labelRendered) {
-				return disabledReason;
+				return TagUtil.encodeXML(disabledReason);
 			} else {
-				tooltip = button.getLabel();
+				tooltip = TagUtil.encodeXML(button.getLabel());
 			}
 		}
 		if (StringServices.isEmpty(disabledReason)) {
 			return tooltip;
 		}
-		return tooltip + " (" + disabledReason + ")";
+		return tooltip + " (" + TagUtil.encodeXML(disabledReason) + ")";
 	}
     
     @Override

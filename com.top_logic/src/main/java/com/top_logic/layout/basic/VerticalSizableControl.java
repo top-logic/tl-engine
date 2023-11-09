@@ -89,8 +89,8 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 			Object sizeConfig = PersonalConfiguration.getPersonalConfiguration().getJSONValue(configKey);
 
 			if (sizeConfig != null) {
-				double configFormatVersion = ((List<Double>) ((List<Object>) sizeConfig).get(0)).get(0);
-
+				double configFormatVersion = ((List<Number>) ((List<Object>) sizeConfig).get(0)).get(0).doubleValue();
+				
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Load tables height configuration from personal configuration. " +
 						"Configuration format version '" + configFormatVersion +
@@ -98,7 +98,7 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 				}
 
 				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
-					return ((List<Double>) ((List<Object>) sizeConfig).get(1)).get(0);
+					return ((List<Number>) ((List<Object>) sizeConfig).get(1)).get(0).doubleValue();
 				} else {
 					if (Logger.isDebugEnabled(TableViewModel.class)) {
 						Logger.debug("Failed to load tables height from personal configuration, " +

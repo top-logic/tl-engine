@@ -46,6 +46,22 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 DIALOG_TITLE_EDIT_FORM_ELEMENT__ELEMENT;
 
+	/**
+	 * @en Design form
+	 * 
+	 * @tooltip Opens the form designer for the type of the object currently displayed.
+	 *          <p>
+	 *          If the displayed object's type has already a form definition, it is edited.
+	 *          Otherwise, a new form definition for the displayed object's type is created.
+	 *          </p>
+	 *          <p>
+	 *          The form definition my either be defined locally in this form or annotated to the
+	 *          object's type. When editing a form definition annotated to an object's type, you
+	 *          have the option to save the edited form locally to this component afterwards.
+	 *          </p>
+	 */
+	public static ResKey CONFIGURE_FORM_DEFINITION_COMMAND;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

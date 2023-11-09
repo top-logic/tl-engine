@@ -1404,7 +1404,6 @@
 						clique="debugButtons"
 						executability="DebugOnly"
 						image="theme:IMAGE_BUTTONS_I18N_RELOAD22"
-						resourceKey="debug.button.reloadI18N"
 					/>
 					<handler id="reloadTheme"
 						class="com.top_logic.layout.debug.ReloadThemeCommand"

@@ -1,0 +1,247 @@
+/* CSS for the com.top_logic-config.diff */
+
+table.ConfigDiffTable {
+	border-color:#A7A7A7;
+	border-left-width:0.1em;
+	border-right-width:0.1em;
+	border-top-width:0.1em;
+	border-bottom-width:0.1em;
+	border-left-style:solid;
+	border-right-style:solid;
+	border-top-style:solid;
+	border-bottom-style:solid;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-top:0.0em;
+	padding-bottom:0.0em;
+	/*font-family:Monospace;*/
+}
+
+tr.ConfigDiff {
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+	padding-top:0.0em;
+}
+
+/* to highlight rows.... 												*/
+td.ConfigDiffHighlighted {
+	background-color:#ffcc88;   		/*orange*/
+	font-family:Monospace;
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}
+
+/* to highlight rows.... 												*/
+td.ConfigDiffHighlightedLR {
+	background-color:#ffcc88;   		/*orange*/
+	font-family:Monospace;
+	border-color:#A7A7A7;
+	border-left-width:0.1em;
+	border-right-width:0.1em;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	border-left-style:solid;
+	border-right-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}
+
+/* higlight deleted linePart 											*/
+span.ConfigDiffDelete {
+	background-color:#ff8888;   	/*light red*/
+	font-family:Monospace;
+}
+/* highligt inserted linePart 											*/
+span.ConfigDiffInsert{
+	background-color:#88ff88;   	/*light green*/
+	font-family:Monospace;
+}
+
+th.ConfigDiffTHLR {
+	background-color:#A7A7A7;
+	color:#000000;
+	border-color:#A7A7A7;
+	border-left-width:0.1em;
+	border-right-width:0.1em;
+	border-left-style:solid;
+	border-right-style:solid;
+
+	/* font-family:Monospace; */
+	
+	padding-left:0.0em;
+	padding-right:0.0em;
+}
+
+th.ConfigDiff {
+	background-color:#A7A7A7;
+	color:#000000;
+}
+
+
+
+/* sets background color for sourceLine in changed region 				*/
+td.ConfigDiffChangedLineS {
+	background-color: #ffdddd;		/*light red*/
+	font-family:Monospace;
+	
+	border-color:#c0c0c0;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+	
+	border-left-width:0.1em;
+	border-right-width:0.1em;
+	border-left-style:solid;
+	border-right-style:solid;
+}
+/* sets background color for destLine in changed region 				*/
+td.ConfigDiffChangedLineD {
+	background-color: #ddffdd;		/*light green*/
+	font-family:Monospace;
+	border-color:#A7A7A7;
+	
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}
+/* sets background color for sourceLine in unchanged region 			*/
+td.ConfigDiffUnchangedLineS {
+	font-family:Monospace;
+	background-color:#FFFFFF;		/*white*/
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+	
+	border-left-width:0.1em;
+	border-right-width:0.1em;
+	border-left-style:solid;
+	border-right-style:solid;
+}
+/* sets background color for destLine in unchanged region 				*/
+td.ConfigDiffUnchangedLineD {
+	font-family:Monospace;
+	background-color:#FFFFFF;		/*white*/
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}
+
+
+/* sets background color for sourceLinenumber in changed region 		*/
+td.ConfigDiffChangedLineNumberS {
+	background-color: #F5F5F5;		/*light grey*/
+	font-family:Monospace;
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}
+/* sets background color for destLinenumber in changed region   	 	*/
+td.ConfigDiffChangedLineNumberD {
+	background-color: #F5F5F5;		/*light grey*/
+	font-family:Monospace;
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+	
+	border-left-width:0.1em;
+	border-right-width:0.1em;
+	border-left-style:solid;
+	border-right-style:solid;
+}
+/* sets background color for sourceLinenumber in an unchanged region 	*/
+td.ConfigDiffUnchangedLineNumberS {
+	font-family:Monospace;
+	background-color:#FFFFFF;		/*white*/
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}
+/* sets background color for destLineNumber in an unchanged region 		*/
+td.ConfigDiffUnchangedLineNumberD {
+	font-family:Monospace;
+	background-color:#FFFFFF;		/*white*/
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+	
+	border-left-width:0.1em;
+	border-right-width:0.1em;
+	border-left-style:solid;
+	border-right-style:solid;
+}
+
+
+/* sets background color for hasBeenSeen column -seen						*/
+td.ConfigDiffSeen {
+	background-color: #F5F5F5;		/*light grey*/
+	font-family:Monospace;
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}
+/* sets background color for hasBeenSeen column -unseen					*/
+td.ConfigDiffUnseen {
+	background-color: #E20074;		/*telekom magenta*/
+	font-family:Monospace;
+	
+	border-color:#A7A7A7;
+	border-top-width:0.1em;
+	border-top-style:solid;
+	padding-top:0.0em;
+	padding-left:0.0em;
+	padding-right:0.0em;
+	padding-bottom:0.0em;
+}

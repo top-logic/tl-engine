@@ -15,6 +15,7 @@
 .tlButtonScrollContainer, .cmdButtons {
  	display: flex;
  	justify-content: flex-end;
+ 	margin-top: var(--spacing-02);
 }
 
 .cmdButtons .cButton,

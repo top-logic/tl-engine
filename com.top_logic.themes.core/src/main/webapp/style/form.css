@@ -17,6 +17,16 @@
 	letter-spacing: var(--heading-03-letter-spacing);
 }
 
+.rf_header > .rf_menu, .dfModeFull .dfListCommands {
+	margin-left: auto;
+	padding-right: var(--spacing-03);
+	display: flex;
+}
+
+.dfListCommands .cOnExpandedControl {
+	padding: 0;
+}
+
 div.fptPage {
     position: absolute;
     top: 0px;

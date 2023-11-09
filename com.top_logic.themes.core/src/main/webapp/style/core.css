@@ -757,10 +757,6 @@ div.fltList {
 
 .popupMenu {
 	border-collapse: collapse;
-}
-
-.popupMenu {
-	border-collapse: collapse;
 	width: 100%;
 	display: table;
 }
@@ -2135,6 +2131,34 @@ If they're deleted, this can be deleted too
 
 .breadcrumb > span .selectableNode.tcrLink:last-child:focus {
 	box-shadow: none;
+}
+
+.breadcrumbMenu {
+	display: none;
+}
+
+.tl-table__title-label .breadcrumb {
+	gap: 0;
+}
+
+.breadcrumbMenuVisible {
+	background: var(--layer-accent);
+	border: 1px solid var(--border-subtle);	
+	z-index: 2;
+}
+
+/* class of the lines which contains the nodes in the menu */
+.breadcrumbMenuNode, .breadcrumbMenuNode_hover {
+	cursor: pointer;
+	padding: var(--spacing-01);
+}
+
+.breadcrumbMenuNode_hover {
+	background-color: var(--layer-accent-hover);
+}
+
+.breadcrumbNodeSeparator i {
+	color: var(--icon-primary);
 }
 
 /*

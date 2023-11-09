@@ -3277,7 +3277,7 @@ services.form = {
 
 				this.positionDD(button, ddBox);
 				if (activeItem) {
-					this.setItemActive(activeItem, true);
+					this.setItemActive(activeItem, true, false);
 					this.addScrollEvents(button, onGlobalChange);
 				}
 				
@@ -3449,7 +3449,7 @@ services.form = {
 			search.focus();
 		},
 
-		setItemActive: function(item, scroll) {
+		setItemActive: function(item, scroll, mouse) {
 			let ddList = item.parentElement;
 			let previousActive = ddList.querySelector(":scope > ." + this.actItemCl);
 			if (previousActive) {
@@ -3462,6 +3462,7 @@ services.form = {
 				item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
 			}
 			
+			if (mouse) return;
 			const mouseoverEvent = new Event('mouseover', { 'bubbles': true });
 			item.dispatchEvent(mouseoverEvent);
 		},
@@ -3544,7 +3545,7 @@ services.form = {
 						return;
 					} else {
 						// set previous item active
-						this.setItemActive(previous, true);
+						this.setItemActive(previous, true, false);
 						break;
 					}
 
@@ -3572,7 +3573,7 @@ services.form = {
 						return;
 					} else {
 						// set next item active
-						this.setItemActive(next, true);
+						this.setItemActive(next, true, false);
 						break;
 					}
 
@@ -3588,7 +3589,7 @@ services.form = {
 						return;
 					} else {
 						// set first item active
-						this.setItemActive(first, true);
+						this.setItemActive(first, true, false);
 						break;
 					}
 
@@ -3648,7 +3649,7 @@ services.form = {
 						return;
 					} else {
 						ddList.scrollBy({ top: scrollH, behavior: "smooth" });
-						this.setItemActive(activeItem, false);
+						this.setItemActive(activeItem, false, false);
 						return;
 					}
 
@@ -3669,7 +3670,7 @@ services.form = {
 						return;
 					} else {
 						// set last item active
-						this.setItemActive(last, true);
+						this.setItemActive(last, true, false);
 						break;
 					}
 
@@ -3748,7 +3749,7 @@ services.form = {
 				}
 			}
 			if (firstItem) {
-				this.setItemActive(firstItem, true);
+				this.setItemActive(firstItem, true, false);
 			}
 		},
 

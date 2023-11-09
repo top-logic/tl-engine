@@ -1539,14 +1539,14 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		}
     	PersonalConfiguration personalConfig = getPersonalConfiguration();
 
-		Object fixedColumnsConfig = personalConfig.getJSONValue(fixedColumnsConfigKey);
+		List<?> fixedColumnsConfig = (List<?>) personalConfig.getJSONValue(fixedColumnsConfigKey);
 		
 		if(fixedColumnsConfig != null) {
 			
 			try {
 				// Check format version
-				List<Number> formatContainer = (List<Number>) ((List<Object>) fixedColumnsConfig).get(0);
-				double configFormatVersion = formatContainer.get(0).doubleValue();
+				List<?> formatContainer = (List<?>) fixedColumnsConfig.get(0);
+				double configFormatVersion = ((Number) formatContainer.get(0)).doubleValue();
 				
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring fixed columns configuration from personal configuration. Column " +
@@ -1555,10 +1555,9 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 				}
 				
 				if(configFormatVersion == FIXED_COLUMNS_FORMAT_VERSION) {
-					
 					// Restore fixed column count
-					List<Integer> fixedColumnsSetting = (List<Integer>) ((List<Object>)fixedColumnsConfig).get(1);
-					personalFixedColumns = Math.min(fixedColumnsSetting.get(0), getColumnCount());
+					List<?> fixedColumnsSetting = (List<?>) fixedColumnsConfig.get(1);
+					personalFixedColumns = Math.min(((Number) fixedColumnsSetting.get(0)).intValue(), getColumnCount());
 				}
 				
 				// If format version of personal configuration does not match current format version
@@ -1655,7 +1654,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 
 				if(configFormatVersion == COLUMN_PERMUTATION_FORMAT_VERSION) {
 					// Retrieve stored column names and currently defined column names
-					List<String> storedColumnNames = (List) config.get(1);
+					List<String> storedColumnNames = (List<String>) config.get(1);
 					List<String> newColumnNames = new ArrayList<>(storedColumnNames.size());
 					
 					Set<String> missingDefaultColumns = TableModelUtils.getDefaultVisibleColumnSet(applicationModel);
@@ -1932,13 +1931,13 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			return;
 		}
 		PersonalConfiguration config = getPersonalConfiguration();
-		Object filterConfig = (List) config.getJSONValue(filterConfigKey);
+		List<?> filterConfig = (List<?>) config.getJSONValue(filterConfigKey);
 		
 		if(filterConfig != null) {
 			
 			try {
 				// Check format version
-				List<Number> formatContainer = (List<Number>) ((List<Object>) filterConfig).get(0);
+				List<Number> formatContainer = (List<Number>) filterConfig.get(0);
 				double configFormatVersion = formatContainer.get(0).doubleValue();
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring filter configuration from personal configuration. Filter " +
@@ -1952,12 +1951,12 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 					 * their filter state. */
 					boolean changed = clearAllFilters();
 
-					List<Object> overallFilterConfiguration = (List<Object>) ((List<Object>)filterConfig).get(1);
+					List<?> overallFilterConfiguration = (List<?>) filterConfig.get(1);
 					
 					// Apply filter configurations to registered table filters
 					boolean updateFilterConfiguration = false;
 					for (int i = 0, size = overallFilterConfiguration.size(); i < size; i++) {
-						List singleFilterConfig = (List)overallFilterConfiguration.get(i);
+						List<?> singleFilterConfig = (List<?>) overallFilterConfiguration.get(i);
 						String columnName = (String)singleFilterConfig.get(0);
 						
 						// Lookup for table filter
@@ -2058,8 +2057,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			return null;
 		}
 		PersonalConfiguration config = getPersonalConfiguration();
-		Object configurationContainer = (List) config.getJSONValue(sidebarFiltersConfigKey);
-		return configurationContainer;
+		return config.getJSONValue(sidebarFiltersConfigKey);
 	}
 
 	private void loadPersonalSidebarFilters(ConfigKey globalKey, Object configurationContainer) {
@@ -2848,7 +2846,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			PersonalConfiguration config = getPersonalConfiguration();
 			Object storedSettings = config.getJSONValue(filterOptionsKey);
 			if (storedSettings instanceof List) {
-				List<?> settings = (List) storedSettings;
+				List<?> settings = (List<?>) storedSettings;
 				treeTable.internalSetFilterOptions(
 					Utils.getbooleanValue(settings.get(0)), Utils.getbooleanValue(settings.get(1)));
 			}

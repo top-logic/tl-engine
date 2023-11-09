@@ -8,6 +8,7 @@ package com.top_logic.layout.editor.commands;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -22,10 +23,16 @@ import com.top_logic.util.LayoutBasedSecurity;
 import com.top_logic.util.TLContext;
 
 /**
- * Command to release the personal layout configuration for all other users.
+ * Publishes all design-mode changes to the application views to all users of the application.
+ * 
+ * <p>
+ * Changes in design-mode are only visible for the current user, until he publishes his changes
+ * using this command.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Release layout")
 public class ReleaseLayoutConfiguration extends ConfirmCommandHandler {
 
 	static String layoutKey(LayoutComponent component) {
@@ -54,11 +61,6 @@ public class ReleaseLayoutConfiguration extends ConfirmCommandHandler {
 	protected ResKey getConfirmMessage(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> someArguments) {
 		return I18NConstants.CONFIRM_RELEASE_LAYOUT_CMD;
-	}
-
-	@Override
-	protected ResKey getDefaultI18NKey() {
-		return I18NConstants.RELEASE_LAYOUT;
 	}
 
 	@Override

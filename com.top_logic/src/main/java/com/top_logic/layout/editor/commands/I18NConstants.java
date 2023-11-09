@@ -50,20 +50,6 @@ public class I18NConstants extends I18NConstantsBase {
 	
 	public static ResKey1 RESOLVE_COMPONENT_ERROR__LAYOUT_KEY;
 
-	/**
-	 * @en Release layout
-	 * @tooltip Publishes all changes to the application layout done by the current user to all
-	 *          users of the application.
-	 */
-	public static ResKey RELEASE_LAYOUT;
-
-	/**
-	 * @en Export layout
-	 * @tooltip Exports the in-app configured application layout currently stored in the database to
-	 *          XML files in the development environment.
-	 */
-	public static ResKey EXPORT_LAYOUTS;
-
 	static {
 		initConstants(I18NConstants.class);
 	}

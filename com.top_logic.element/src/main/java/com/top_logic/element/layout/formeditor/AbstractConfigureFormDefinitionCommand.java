@@ -11,6 +11,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.layout.formeditor.builder.FormDefinitionUtil;
 import com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter;
@@ -33,7 +34,6 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.ModelBuilder;
-import com.top_logic.mig.html.layout.I18NConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.TLLayout;
 import com.top_logic.model.TLStructuredType;
@@ -85,7 +85,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 				return guiEditorDialog.open(context);
 			} else {
-				return HandlerResult.error(I18NConstants.NO_TEMPLATE_COMPONENT_ERROR);
+				return HandlerResult.error(com.top_logic.mig.html.layout.I18NConstants.NO_TEMPLATE_COMPONENT_ERROR);
 			}
 		}
 
@@ -139,7 +139,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 	private HandlerResult updateStandardForm(DisplayContext context, GUIEditorDialog guiEditorDialog,
 			LayoutComponent component, TLStructuredType type, FormComponent form) {
-		String message = context.getResources().getString(I18NConstants.STORE_FOR_MODEL);
+		String message = context.getResources().getString(com.top_logic.mig.html.layout.I18NConstants.STORE_FOR_MODEL);
 		FormDefinition formDefinition = guiEditorDialog.getFormDefinition();
 
 		CommandModel yes =
@@ -180,7 +180,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 		if (success) {
 			return HandlerResult.DEFAULT_RESULT;
 		} else {
-			return HandlerResult.error(I18NConstants.NO_TEMPLATE_COMPONENT_ERROR);
+			return HandlerResult.error(com.top_logic.mig.html.layout.I18NConstants.NO_TEMPLATE_COMPONENT_ERROR);
 		}
 	}
 
@@ -286,5 +286,10 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 			Map<String, Object> someArguments) {
 		// setting of a FormDefinition is recorded as block
 		return true;
+	}
+
+	@Override
+	public ResKey getDefaultI18NKey() {
+		return I18NConstants.CONFIGURE_FORM_DEFINITION_COMMAND;
 	}
 }

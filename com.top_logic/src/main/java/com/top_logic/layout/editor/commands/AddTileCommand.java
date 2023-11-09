@@ -14,6 +14,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -27,7 +28,6 @@ import com.top_logic.mig.html.layout.LayoutReference;
 import com.top_logic.mig.html.layout.TLLayout;
 import com.top_logic.mig.html.layout.tiles.GroupTileComponent;
 import com.top_logic.mig.html.layout.tiles.RootTileComponent;
-import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
@@ -37,10 +37,11 @@ import com.top_logic.tool.execution.InDesignModeExecutable;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link CommandHandler} to add a tile to a {@link GroupTileComponent}.
+ * Adds a tile to a {@link GroupTileComponent}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Add tile")
 public class AddTileCommand extends AbstractComponentConfigurationCommandHandler {
 
 	/**

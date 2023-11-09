@@ -13,6 +13,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.channel.ComponentChannel;
@@ -45,6 +46,7 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Group of tiles")
 public class GroupTileComponent extends LayoutList implements Selectable, BoundCheckerDelegate {
 
 	/**

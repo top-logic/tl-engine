@@ -13,6 +13,7 @@ import java.util.function.Function;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -34,10 +35,17 @@ import com.top_logic.tool.execution.InDesignModeExecutable;
 import com.top_logic.tool.execution.UniqueToolbarCommandRule;
 
 /**
- * Command to edit the given component instantiated from a typed template.
+ * Opens a dialog with configuration options for the current view.
+ * 
+ * <p>
+ * Buttons can be added to the current view from within this configuration dialog. Buttons that
+ * represent opening buttons of dialogs can be edited by this command executed from within the open
+ * dialog.
+ * </p>
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
+@Label("Edit view")
 public class EditComponentCommand extends AbstractCommandHandler {
 
 	/**

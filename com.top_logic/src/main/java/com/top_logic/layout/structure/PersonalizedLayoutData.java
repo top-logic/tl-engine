@@ -108,9 +108,9 @@ public class PersonalizedLayoutData extends DefaultLayoutData {
 			if (jsonLayout != null) {
 				try {
 					boolean isHorizontal = (Boolean) jsonLayout.get(0);
-					float width = ((Double) jsonLayout.get(1)).floatValue();
+					float width = ((Number) jsonLayout.get(1)).floatValue();
 					String widthUnit = (String) jsonLayout.get(2);
-					float height = ((Double) jsonLayout.get(3)).floatValue();
+					float height = ((Number) jsonLayout.get(3)).floatValue();
 					String heightUnit = (String) jsonLayout.get(4);
 					DisplayDimension widthDimension = DisplayDimension.parseDimension(width + widthUnit);
 					DisplayDimension heightDimension = DisplayDimension.parseDimension(height + heightUnit);

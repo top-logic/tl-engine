@@ -91,9 +91,19 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 			try {
 				List<?> sizeConfig = (List<?>) personalConfiguration.getJSONValue(configKey);
 
+			if (sizeConfig != null) {
+				double configFormatVersion = ((List<Number>) ((List<Object>) sizeConfig).get(0)).get(0).doubleValue();
+				
 				if (sizeConfig != null) {
 					double configFormatVersion = ((Number) ((List<?>) sizeConfig.get(0)).get(0)).doubleValue();
 
+
+				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
+					return ((List<Number>) ((List<Object>) sizeConfig).get(1)).get(0).doubleValue();
+				} else {
+				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
+					return ((List<Number>) ((List<Object>) sizeConfig).get(1)).get(0).doubleValue();
+				} else {
 					if (Logger.isDebugEnabled(TableViewModel.class)) {
 						Logger.debug("Load tables height configuration from personal configuration. " +
 							"Configuration format version '" + configFormatVersion +

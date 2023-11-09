@@ -32,6 +32,28 @@
 			<generalizations>
 				<generalization type="A"/>
 			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<static-html>
+							<content><![CDATA[<p>Formular für B  aus dem Modell.</p>
+]]></content>
+						</static-html>
+						<columnsLayout>
+							<field
+								attribute="name"
+								fullQualifiedName="test.polymorphism:A#name"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="propA"
+								fullQualifiedName="test.polymorphism:A#propA"
+								type="tl.core:String"
+							/>
+						</columnsLayout>
+					</form>
+				</form-definition>
+			</annotations>
 			<attributes>
 				<property name="propAB"
 					override="true"

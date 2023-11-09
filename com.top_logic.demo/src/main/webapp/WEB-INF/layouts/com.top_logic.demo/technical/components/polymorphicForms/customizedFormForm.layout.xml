@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
 	<arguments model="selection(com.top_logic.demo/technical/components/polymorphicForms/objectsTable.layout.xml#Table)">
@@ -13,30 +13,33 @@
 		<forms>
 			<form type="test.polymorphism:A">
 				<formDefinition>
-					<field
-						attribute="name"
-						fullQualifiedName="test.polymorphism:A#name"
-						type="tl.core:String"
-					/>
-					<field
-						attribute="propADefault"
-						fullQualifiedName="test.polymorphism:A#propADefault"
-						type="tl.core:String"
-					/>
-					<field
-						attribute="propA"
-						fullQualifiedName="test.polymorphism:A#propA"
-						type="tl.core:String"
-					/>
-					<field
-						attribute="propAB"
-						fullQualifiedName="test.polymorphism:A#propAB"
-						type="tl.core:String"
-					/>
-					<other-attributes/>
-					<macro>
-						<expr><![CDATA[<p>Hello <strong>{$model}</strong>!</p>]]></expr>
+					<macro wholeLine="true">
+						<expr><![CDATA[<p>Form defined für type <code class="hljs inlineCode">A</code> locally in the component, hello <strong>{$model}</strong>!</p>
+]]></expr>
 					</macro>
+					<columnsLayout>
+						<field
+							attribute="name"
+							fullQualifiedName="test.polymorphism:A#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="propA"
+							fullQualifiedName="test.polymorphism:A#propA"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="propADefault"
+							fullQualifiedName="test.polymorphism:A#propADefault"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="propAB"
+							fullQualifiedName="test.polymorphism:A#propAB"
+							type="tl.core:String"
+						/>
+					</columnsLayout>
+					<other-attributes/>
 				</formDefinition>
 			</form>
 		</forms>

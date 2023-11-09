@@ -303,7 +303,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 						// No change until now. Create copy.
 						transformedArgs = Arrays.copyOf(arguments, arguments.length);
 					}
-					transformedArgs[i] = arg;
+					transformedArgs[i] = transformed;
 				}
 				return transformedArgs;
 			}

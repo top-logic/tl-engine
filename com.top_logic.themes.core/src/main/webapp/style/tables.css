@@ -845,6 +845,13 @@ table td span.downloadControl {
 	height: 100%;
 }
 
+table td span.cExpandableTextInput,
+table td span.cTextInput {
+	white-space: break-spaces;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
 table td span.cTextPopup span.content,
 table td .cDataItem span.lFlexible span.content,
 table td span.downloadControl span.content {
@@ -951,10 +958,6 @@ table td span.lFlexible > input:not([type="image"]) {
 
 table td span.cDatetime span.timePart {
 	min-width: 5em;
-}
-
-.timePart span.cDatetimeTime:not(:empty):before {
-	content: " - ";
 }
 
 /* Use default display for span in title of

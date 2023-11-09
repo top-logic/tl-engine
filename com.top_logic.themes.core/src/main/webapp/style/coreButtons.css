@@ -102,55 +102,6 @@ div.cmdProgress img {
 	cursor: pointer;
 }
 
-.tlAdditionalRightContent .cButton.cImageButton {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 1.5rem;
-	width: 1.5rem;
-	padding: var(--spacing-02) var(--spacing-02);
-	border-radius: .25rem;
-}
-
-.tlAdditionalRightContent .cButton.cImageButton a {
-	padding: inherit;
-}
-
-.tlAdditionalRightContent .cButton.cImageButton {
-	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
-}
-
-.tlAdditionalRightContent .cButton.cImageButton a {
-	color: var(--icon-on-color);
-}
-
-.tlAdditionalRightContent .cButton.cImageButton:hover {
-	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
-}
-
-.tlAdditionalRightContent .cButton.cImageButton:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
-}
-
-.tlAdditionalRightContent .cButton.cImageButton a:focus {
-	box-shadow: none;
-}
-
-.tlAdditionalRightContent .cButton.cImageButton:active {
-	background: var(--button-primary-active);
-}
-
-.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled {
-	background: var(--button-disabled);
-	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
-}
-
-.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled a {
-	color: var(--icon-on-color-disabled);
-}
-
 .tlButtonLabel, .cDefaultButton button {
 	font-weight: 600;
 }
@@ -505,3 +456,111 @@ span.dlgToolbar .input-image.disabled i, span.pdlgToolbar .input-image.disabled 
 div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input-image.disabled i {
 	color: var(--icon-disabled);
 }
+
+
+
+/* Icon Styles */
+.tlAdditionalRightContent .cImageButton,
+.sblLogo .cImageButton,
+.dfListCommands .cmdLink,
+.px-1 .cmdLink {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--spacing-02) var(--spacing-02);
+	border-radius: .25rem;
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+}
+
+.tlAdditionalRightContent .cImageButton,
+.tlAdditionalRightContent .cImageButton.cmdButtonDisabled {
+	height: 1.5rem;
+	width: 1.5rem;
+}
+
+.tlAdditionalRightContent .cImageButton.cmdButtonDisabled {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--spacing-02) var(--spacing-02);
+	border-radius: .25rem;
+	height: .5rem;
+	width: .5rem;
+}
+
+.sblLogo .cImageButton,
+.dfListCommands .cmdLink,
+.px-1 .cmdLink {
+	height: .5rem;
+	width: .5rem;
+}
+
+.sblLogo .cImageButton.cmdButtonDisabled,
+.dfListCommands .cmdLinkDisabled,
+.px-1 .cmdLinkDisabled {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--spacing-02) var(--spacing-02);
+	border-radius: .25rem;
+	height: .5rem;
+	width: .5rem;
+}
+
+.tlAdditionalRightContent .cImageButton a,
+.sblLogo .cImageButton a,
+.dfListCommands .cmdLink a,
+.px-1 .cmdLink a {
+	padding: inherit;
+	color: var(--icon-on-color);
+}
+
+.tlAdditionalRightContent .cImageButton:hover,
+.sblLogo .cImageButton:hover,
+.dfListCommands .cmdLink:hover,
+.px-1 .cmdLink:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
+}
+
+.tlAdditionalRightContent .cImageButton:focus,
+.sblLogo .cImageButton:focus,
+.dfListCommands .cmdLink:focus,
+.px-1 .cmdLink:focus {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.tlAdditionalRightContent .cImageButton a:focus,
+.sblLogo .cImageButton a:focus,
+.dfListCommands .cmdLink a:focus,
+.px-1 .cmdLink a:focus {
+	box-shadow: none;
+}
+
+.tlAdditionalRightContent .cImageButton:active,
+.sblLogo .cImageButton:active,
+.dfListCommands .cmdLink:active,
+.px-1 .cmdLink:active {
+	background: var(--button-primary-active);
+}
+
+.tlAdditionalRightContent .cImageButton.cmdButtonDisabled,
+.sblLogo .cImageButton.cmdButtonDisabled,
+.dfListCommands .cmdLinkDisabled,
+.px-1 .cmdLinkDisabled {
+	background: var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	cursor: default;
+}
+
+.tlAdditionalRightContent .cImageButton.cmdButtonDisabled a,
+.sblLogo .cImageButton.cmdButtonDisabled a,
+.dfListCommands .cmdLinkDisabled a,
+.px-1 .cmdLinkDisabled a {
+	color: var(--icon-on-color-disabled);
+	cursor: default;
+}
+
+
+

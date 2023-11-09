@@ -108,6 +108,10 @@ public class DropDownControl extends AbstractSelectControl {
 		_preventClear = preventClear;
 	}
 
+	private String getButtonContentID() {
+		return getID() + "-ButtonContent";
+	}
+
 	private String getItemIdPrefix() {
 		return getID() + "-Item";
 	}
@@ -126,17 +130,6 @@ public class DropDownControl extends AbstractSelectControl {
 			return SelectFieldUtils.getOptionLabel(dropdown, item);
 		}
 		return "";
-	}
-
-	private String getSelectionLabel(FormField dropdown) {
-		List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
-		if (selection.size() <= 0) {
-			return SelectFieldUtils.getEmptySelectionLabel(dropdown);
-		}
-		if (isMultiple()) {
-			return SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
-		}
-		return getItemLabel(dropdown, selection.get(0));
 	}
 
 	private String getTagLocID() {
@@ -175,14 +168,14 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTags(context, out);
 			}
 			
-			renderDropDownButton(out, dropdown);
+			renderDropDownButton(context, out, dropdown);
 
 			renderDropDownBox(context, out, dropdown);
 		}
 		out.endTag(SPAN);
 	}
 
-	private void renderDropDownButton(TagWriter out, FormField dropdown) throws IOException {
+	private void renderDropDownButton(DisplayContext context, TagWriter out, FormField dropdown) throws IOException {
 		out.beginBeginTag(BUTTON);
 		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn ddwttChevron");
 		if (dropdown.isDisabled()) {
@@ -193,11 +186,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.writeAttribute(ID, getInputId());
 		out.endBeginTag();
 		{
-			out.beginTag(SPAN);
-			{
-				out.write(getSelectionLabel(dropdown));
-			}
-			out.endTag(SPAN);
+			renderButtonContent(context, out);
 		}
 		out.endTag(BUTTON);
 	}
@@ -209,6 +198,30 @@ public class DropDownControl extends AbstractSelectControl {
 		out.beginAttribute(ONKEYDOWN_ATTR);
 		addJSFunction(out, "keyPressed", "event, " + isMultiple());
 		out.endAttribute();
+	}
+
+	private void renderButtonContent(DisplayContext context, TagWriter out) throws IOException {
+		FormField dropdown = getFieldModel();
+
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(ID, getButtonContentID());
+		out.endBeginTag();
+		{
+			String label;
+			List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
+			if (isMultiple()) {
+				label = SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
+			} else {
+				if (selection.size() > 0) {
+					label = getItemLabel(dropdown, selection.get(0));
+					renderItemIcon(context, out, dropdown, selection.get(0), Flavor.DEFAULT);
+				} else {
+					label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
+				}
+			}
+			out.write(label);
+		}
+		out.endTag(SPAN);
 	}
 
 	private void renderSearch(TagWriter out) throws IOException {
@@ -272,7 +285,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private boolean isInfiniteTree(OptionModel<?> _optionModel) {
 		if (_optionModel instanceof TreeOptionModel) {
-			return !((TreeOptionModel) _optionModel).getBaseModel().isFinite();
+			return !((TreeOptionModel<?>) _optionModel).getBaseModel().isFinite();
 		}
 		return false;
 	}
@@ -325,7 +338,7 @@ public class DropDownControl extends AbstractSelectControl {
 		if (icon == null) {
 			return;
 		}
-		icon.write(context, out);
+		icon.writeWithCss(context, out, "ddwttItemIcon");
 	}
 
 	private void renderItemLabel(TagWriter out, FormField dropdown, Object item)
@@ -482,11 +495,12 @@ public class DropDownControl extends AbstractSelectControl {
 					}
 				}
 			}
-			addUpdate(
-				new JSFunctionCall(
-					getInputId(),
-					DROPDOWN_CONTROL_CLASS, "setSelectedLabel",
-					getSelectionLabel(field)));
+//			addUpdate(
+//				new JSFunctionCall(
+//					getInputId(),
+//					DROPDOWN_CONTROL_CLASS, "setSelectedLabel",
+//					getSelectionLabel(field)));
+			addUpdate(new ElementReplacement(getButtonContentID(), this::renderButtonContent));
 		}
 	}
 

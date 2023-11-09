@@ -7677,7 +7677,6 @@ div.dirtyHandlingDialog .changes {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
-	scrollbar-gutter: stable;
 }
 
 .ddwttSearch {
@@ -7713,16 +7712,29 @@ div.dirtyHandlingDialog .changes {
 	text-align: left;
 }
 
-.ddwttItem .ddwttItemLabel, .ddwttTag .ddwttItemLabel {
-	padding: 0 8px;
+.ddwttItemIcon {
+	margin-right: 8px !important;
+	padding-left: 3px;
+}
+
+.ddwttItem .ddwttItemLabel {
 	display: inline-block;
+	cursor: default;
 }
 
 /* Tags */
 .ddwttTagLoc, .ddwttTag {
-	display: inline-block;
+	display: inline-flex;
 	width: fit-content;
 	text-align: left;
+}
+
+.ddwttTag {
+	margin-right: 8px;
+	border: 1px solid var(--border-subtle);
+	border-radius: 4px;
+	height: 22px;
+	align-items: center;
 }
 
 .ddwttTag .ddwttTagX {
@@ -7737,9 +7749,7 @@ div.dirtyHandlingDialog .changes {
 	height: var(--ICON_SIZE_NORMAL);
 	/* Style from .fClear */
 	transform: scale(0.7);
-	margin-right: 0px;
-	margin-left: -8px;
-	margin-top: -2px;
+	margin: 0;
 }
 
 .ddwttTagX i {

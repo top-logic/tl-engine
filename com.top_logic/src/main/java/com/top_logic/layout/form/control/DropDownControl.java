@@ -314,7 +314,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addItemEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "setItemActive", "this, true");
+		addJSFunction(out, "setItemActive", "this, true, true");
 		out.endAttribute();
 		out.beginAttribute(ONFOCUSOUT_ATTR);
 		addJSFunction(out, "lostFocus", null);

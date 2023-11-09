@@ -3245,6 +3245,7 @@ services.form = {
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
+		itemLabelCl: "ddwttItemLabel",
 		mutObserver: null,
 
 		buttonDrop: function(button) {
@@ -3431,11 +3432,20 @@ services.form = {
 		},
 
 		setDimensions: function(btnPos, ddBox, ddMaxHeight) {
+			let search = ddBox.querySelector(":scope > ." + this.searchCl),
+				ddList = ddBox.querySelector(":scope > ." + this.listCl),
+				incrWidth = window.getComputedStyle(ddBox).getPropertyValue("width");
+				
 			ddBox.style.setProperty("left", btnPos.left + "px");
 			ddBox.style.setProperty("min-width", btnPos.width + "px");
 			ddBox.style.setProperty("max-height", ddMaxHeight + "px");
-			let search = ddBox.querySelector(":scope > ." + this.searchCl);
-			search.style.setProperty("width", window.getComputedStyle(ddBox).getPropertyValue("width"));
+			
+			let scrollbarW = ddList.offsetWidth - ddList.clientWidth;
+			if (btnPos.width < (parseFloat(incrWidth) + scrollbarW)) {
+				incrWidth = parseFloat(incrWidth) + scrollbarW + "px";
+				ddList.style.setProperty("width", incrWidth);
+			}
+			search.style.setProperty("width", incrWidth);
 			search.focus();
 		},
 
@@ -3727,7 +3737,7 @@ services.form = {
 				this.setItemInactive(item);
 				item.style.display = "";
 				if (this.isDisplayedItem(item)) {
-					let label = item.firstElementChild.textContent.toLowerCase();
+					let label = item.querySelector("." + this.itemLabelCl).textContent.toLowerCase();
 					if (label.includes(inputStr)) {
 						if (!firstItem) {
 							firstItem = item;

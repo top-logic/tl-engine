@@ -577,10 +577,20 @@ div.fltList {
 	margin: 2px 2px;
 }
 
-.defaultFilterContainer .cPopupSelect, .defaultFilterContainer .cTextSelect, .defaultFilterContainer .cExpandableTextInput, .defaultFilterContainer .cTextInput, .defaultFilterContainer .cDatetime, .defaultFilterContainer .cDateInput, .defaultFilterContainer .cIntegerInput, .defaultFilterContainer .cTimeInput {
+.defaultFilterContainer .cPopupSelect, 
+.defaultFilterContainer .cTextSelect, 
+.defaultFilterContainer .cExpandableTextInput, 
+.defaultFilterContainer .cTextInput, 
+.defaultFilterContainer .cDatetime, 
+.defaultFilterContainer .cDateInput, 
+.defaultFilterContainer .cIntegerInput, 
+.defaultFilterContainer .cTimeInput {
 	display: table;
 	width: 100%;
 	box-sizing: border-box;
+	white-space: break-spaces;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .defaultFilterContainer .lFlexible {
@@ -702,6 +712,9 @@ div.fltList {
 	display: table;
 	width: 100%;
 	box-sizing: border-box;
+	white-space: break-spaces;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .defaultFilterContainer .lFlexible {

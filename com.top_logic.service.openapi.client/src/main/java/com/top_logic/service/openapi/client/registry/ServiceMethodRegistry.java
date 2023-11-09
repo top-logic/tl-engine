@@ -215,8 +215,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 			public int getParameterIndex(String name) {
 				Integer result = parameterIndex.get(name);
 				if (result == null) {
-					Logger.error("Undefined parameter '" + name + "' in method '" + getMethodName() + "'.",
-						ServiceMethodRegistry.class);
+					logError("Undefined parameter '" + name + "' in method '" + getMethodName() + "'.");
 					return 0;
 				}
 				return result;
@@ -244,7 +243,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 				enhancer.enhanceUrl(urlBuilder);
 				URI uri = urlBuilder.build();
 
-				Logger.debug("Calling external API: " + uri.toString(), ServiceMethodRegistry.class);
+				logDebug("Calling external API: " + uri.toString());
 
 				BasicClassicHttpRequest request = new BasicClassicHttpRequest(httpMethod, uri);
 				for (CallBuilder modifier : modifiers) {
@@ -274,8 +273,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 			 */
 			private Object[] adaptValuesToExpectedType(Object[] arguments) {
 				if (parameters.size() != arguments.length) {
-					Logger.error("Expected " + parameters.size() + " arguments but got " + arguments.length,
-						ServiceMethodRegistry.class);
+					logError("Expected " + parameters.size() + " arguments but got " + arguments.length);
 					return arguments;
 				}
 				Object[] transformedArgs = arguments;
@@ -303,7 +301,11 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 						// No change until now. Create copy.
 						transformedArgs = Arrays.copyOf(arguments, arguments.length);
 					}
-					transformedArgs[i] = arg;
+					transformedArgs[i] = transformed;
+				}
+				if (transformedArgs != arguments) {
+					logDebug("Transformed arguments '" + Arrays.deepToString(arguments) + "' to '"
+						+ Arrays.deepToString(transformedArgs) + "'.");
 				}
 				return transformedArgs;
 			}
@@ -412,6 +414,15 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		return new ServiceMethodBuilder(method, handler);
 	}
 
+	static void logError(String message) {
+		Logger.error(message, ServiceMethodRegistry.class);
+	}
+
+	static void logDebug(String message) {
+		if (Logger.isDebugEnabled(ServiceMethodRegistry.class)) {
+			Logger.debug(message, ServiceMethodRegistry.class);
+		}
+	}
 
 	private static ResponseHandler createResponseHandler(
 			PolymorphicConfiguration<? extends ResponseHandlerFactory> factory,

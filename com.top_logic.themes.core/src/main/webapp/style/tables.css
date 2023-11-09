@@ -173,6 +173,7 @@ td.tl-table__cell {
 }
 
 .tl-table__row.header .tl-table__cell:hover {
+	color: var(--text-primary);
 	background: var(--layer-accent-hover);
 }
 
@@ -1492,15 +1493,12 @@ td.tl-table__cell--selected {
     border-color:     var(--border-subtle);
 }
 
-td.tl-table__cell--selected a {
-	color: var(--text-primary);
-}
-
 .tblSelected.tl-table__row:hover {
 	background-color: var(--layer-selected-hover)
 }
 
 .tl-table__row:not(.tblSelected):hover > td {
+	color: var(--text-primary);
 	background-color: var(--layer-hover);
 }
 

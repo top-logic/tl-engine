@@ -29,7 +29,7 @@ import com.top_logic.model.config.AbstractModelPartMapping;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
 
 /**
- * Textual reference to a {@link TLType} that can be safely used in configurations.
+ * Textual reference to a {@link TLModelPart} that can be safely used in configurations.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -136,7 +136,7 @@ public class TLModelPartRef {
 
 	/**
 	 * {@link ConfigurationValueProvider} for {@link TLModelPartRef}s referencing
-	 * {@link TLTypePart}s.
+	 * {@link TLModelPart}s.
 	 */
 	public static class TypePartRefValueProvider extends AbstractRefValueProvider {
 
@@ -146,7 +146,7 @@ public class TLModelPartRef {
 		public static final TypePartRefValueProvider INSTANCE = new TypePartRefValueProvider();
 
 		private TypePartRefValueProvider() {
-			super(Pattern.compile(TLModelUtil.TYPE_NAME_PATTERN_SRC),
+			super(Pattern.compile(TLModelUtil.MODEL_PART_NAME_PATTERN_SRC),
 				I18NConstants.ERROR_INVALID_PART_REFERENCE__VALUE);
 		}
 

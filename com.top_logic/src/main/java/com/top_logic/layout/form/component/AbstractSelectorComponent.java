@@ -58,7 +58,7 @@ import com.top_logic.mig.html.layout.LayoutComponentUIOptions;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLTypeRefsFormat;
+import com.top_logic.model.util.TLModelPartRefsFormat;
 import com.top_logic.util.Resources;
 
 /**
@@ -110,7 +110,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		@Name(TYPES)
 		@DynamicMode(fun = VisibleIfTable.class, args = @Ref(PRESENTATION))
 		@DynamicMandatory(fun = IfTable.class, args = @Ref(PRESENTATION))
-		@Format(TLTypeRefsFormat.class)
+		@Format(TLModelPartRefsFormat.class)
 		List<TLModelPartRef> getTypes();
 
 		/**

@@ -40,7 +40,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLTypeRefsFormat;
+import com.top_logic.model.util.TLModelPartRefsFormat;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -267,7 +267,7 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * triggered.
 		 */
 		@Name(TYPES_TO_OBSERVE)
-		@Format(TLTypeRefsFormat.class)
+		@Format(TLModelPartRefsFormat.class)
 		List<TLModelPartRef> getTypesToObserve();
 
 	}

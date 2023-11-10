@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.base.services.simpleajax.HTMLFragmentProvider;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.exception.I18NException;
@@ -32,7 +33,6 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.VisibilityModel;
-import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.HTMLConstants;
@@ -249,7 +249,7 @@ public class Fragments {
 	 *        The content that is conditionally displayed.
 	 * @return A display that dynamically changes its visibility.
 	 */
-	public static Control conditional(VisibilityModel model, Tag display) {
+	public static HTMLFragment conditional(VisibilityModel model, Tag display) {
 		return new ConditionalDisplayControl(model, display);
 	}
 
@@ -258,11 +258,11 @@ public class Fragments {
 	 * 
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #labelWithColon(ControlProvider, FormMember)
+	 * @see #labelWithColon(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control label(FormMember field) {
+	public static HTMLFragment label(FormMember field) {
 		return label(DefaultFormFieldControlProvider.INSTANCE, field);
 	}
 
@@ -270,14 +270,14 @@ public class Fragments {
 	 * Display the label of the given field.
 	 * 
 	 * @param cp
-	 *        An externally specified {@link ControlProvider}.
+	 *        An externally specified {@link HTMLFragmentProvider}.
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #labelWithColon(ControlProvider, FormMember)
+	 * @see #labelWithColon(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control label(ControlProvider cp, FormMember field) {
+	public static HTMLFragment label(HTMLFragmentProvider cp, FormMember field) {
 		return view(cp, field, FormTemplateConstants.STYLE_LABEL_VALUE);
 	}
 
@@ -286,11 +286,11 @@ public class Fragments {
 	 * 
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #labelWithColon(ControlProvider, FormMember)
+	 * @see #labelWithColon(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control labelWithColon(FormMember field) {
+	public static HTMLFragment labelWithColon(FormMember field) {
 		return labelWithColon(DefaultFormFieldControlProvider.INSTANCE, field);
 	}
 
@@ -298,15 +298,15 @@ public class Fragments {
 	 * Display the label of the given field appending a colon.
 	 * 
 	 * @param cp
-	 *        An externally specified {@link ControlProvider}.
+	 *        An externally specified {@link HTMLFragmentProvider}.
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #labelWithColon(ControlProvider, FormMember)
+	 * @see #labelWithColon(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control labelWithColon(ControlProvider cp, FormMember field) {
-		return cp.createControl(field, FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE);
+	public static HTMLFragment labelWithColon(HTMLFragmentProvider cp, FormMember field) {
+		return view(cp, field, FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE);
 	}
 
 	/**
@@ -314,11 +314,11 @@ public class Fragments {
 	 * 
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #valueWithError(ControlProvider, FormMember)
+	 * @see #valueWithError(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control value(FormMember field) {
+	public static HTMLFragment value(FormMember field) {
 		return value(DefaultFormFieldControlProvider.INSTANCE, field);
 	}
 
@@ -326,14 +326,14 @@ public class Fragments {
 	 * Display the input aspect of the given field.
 	 * 
 	 * @param cp
-	 *        An externally specified {@link ControlProvider}.
+	 *        An externally specified {@link HTMLFragmentProvider}.
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #valueWithError(ControlProvider, FormMember)
+	 * @see #valueWithError(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control value(ControlProvider cp, FormMember field) {
+	public static HTMLFragment value(HTMLFragmentProvider cp, FormMember field) {
 		return view(cp, field, null);
 	}
 
@@ -342,11 +342,11 @@ public class Fragments {
 	 * 
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #value(ControlProvider, FormMember)
+	 * @see #value(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control error(FormMember field) {
+	public static HTMLFragment error(FormMember field) {
 		return error(DefaultFormFieldControlProvider.INSTANCE, field);
 	}
 
@@ -354,14 +354,14 @@ public class Fragments {
 	 * Display the error aspect of the given field.
 	 * 
 	 * @param cp
-	 *        An externally specified {@link ControlProvider}.
+	 *        An externally specified {@link HTMLFragmentProvider}.
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #value(ControlProvider, FormMember)
+	 * @see #value(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control error(ControlProvider cp, FormMember field) {
+	public static HTMLFragment error(HTMLFragmentProvider cp, FormMember field) {
 		return view(cp, field, FormTemplateConstants.STYLE_ERROR_VALUE);
 	}
 
@@ -372,29 +372,29 @@ public class Fragments {
 	 *        The {@link FormMember} whose label should be displayed.
 	 * @param style
 	 *        The aspect to display, see {@link FormTemplateConstants#STYLE_LABEL_VALUE}.
-	 * @return A {@link Control} displaying the requested aspect.
+	 * @return A {@link HTMLFragment} displaying the requested aspect.
 	 * 
-	 * @see #view(ControlProvider, FormMember, String)
+	 * @see #view(HTMLFragmentProvider, FormMember, String)
 	 */
-	public static Control view(FormMember member, String style) {
+	public static HTMLFragment view(FormMember member, String style) {
 		return view(DefaultFormFieldControlProvider.INSTANCE, member, style);
 	}
 
 	/**
-	 * Displays the given aspect of the given member using the given {@link ControlProvider}.
+	 * Displays the given aspect of the given member using the given {@link HTMLFragmentProvider}.
 	 * 
 	 * @param cp
-	 *        The {@link ControlProvider} to use.
+	 *        The {@link HTMLFragmentProvider} to use.
 	 * @param member
 	 *        The {@link FormMember} whose label should be displayed.
 	 * @param style
 	 *        The aspect to display, see {@link FormTemplateConstants#STYLE_LABEL_VALUE}.
-	 * @return A {@link Control} displaying the requested aspect.
+	 * @return A {@link HTMLFragment} displaying the requested aspect.
 	 * 
-	 * @see #view(ControlProvider, FormMember, String)
+	 * @see #view(HTMLFragmentProvider, FormMember, String)
 	 */
-	public static Control view(ControlProvider cp, FormMember member, String style) {
-		return cp.createControl(member, style);
+	public static HTMLFragment view(HTMLFragmentProvider cp, FormMember member, String style) {
+		return cp.createFragment(member, style);
 	}
 
 	/**
@@ -402,11 +402,11 @@ public class Fragments {
 	 * 
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #value(ControlProvider, FormMember)
+	 * @see #value(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control valueWithError(FormMember field) {
+	public static HTMLFragment valueWithError(FormMember field) {
 		return valueWithError(DefaultFormFieldControlProvider.INSTANCE, field);
 	}
 
@@ -414,14 +414,14 @@ public class Fragments {
 	 * Display the value of the given field with the error display appended.
 	 * 
 	 * @param cp
-	 *        An externally specified {@link ControlProvider}.
+	 *        An externally specified {@link HTMLFragmentProvider}.
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #value(ControlProvider, FormMember)
+	 * @see #value(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control valueWithError(ControlProvider cp, FormMember field) {
+	public static HTMLFragment valueWithError(HTMLFragmentProvider cp, FormMember field) {
 		return conditional(field, span(value(cp, field), error(cp, field)));
 	}
 
@@ -430,11 +430,11 @@ public class Fragments {
 	 * 
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #valueWithError(ControlProvider, FormMember)
+	 * @see #valueWithError(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control errorWithValue(FormMember field) {
+	public static HTMLFragment errorWithValue(FormMember field) {
 		return errorWithValue(DefaultFormFieldControlProvider.INSTANCE, field);
 	}
 
@@ -442,14 +442,14 @@ public class Fragments {
 	 * Display the value of the given field with the error display prepended.
 	 * 
 	 * @param cp
-	 *        An externally specified {@link ControlProvider}.
+	 *        An externally specified {@link HTMLFragmentProvider}.
 	 * @param field
 	 *        The {@link FormMember} whose label should be displayed.
-	 * @return A {@link Control} displaying the label.
+	 * @return A {@link HTMLFragment} displaying the label.
 	 * 
-	 * @see #valueWithError(ControlProvider, FormMember)
+	 * @see #valueWithError(HTMLFragmentProvider, FormMember)
 	 */
-	public static Control errorWithValue(ControlProvider cp, FormMember field) {
+	public static HTMLFragment errorWithValue(HTMLFragmentProvider cp, FormMember field) {
 		return conditional(field, span(error(cp, field), value(cp, field)));
 	}
 
@@ -593,7 +593,7 @@ public class Fragments {
 
 	/**
 	 * Renders the value of the {@link #CURRENT_MEMBER current member} using the given
-	 * {@link ControlProvider}.
+	 * {@link HTMLFragmentProvider}.
 	 * 
 	 * <p>
 	 * This fragment is to be used within the member template of a
@@ -601,10 +601,10 @@ public class Fragments {
 	 * </p>
 	 * 
 	 * @param cp
-	 *        The {@link ControlProvider} to use for creating the view.
+	 *        The {@link HTMLFragmentProvider} to use for creating the view.
 	 * @return A member template fragment.
 	 */
-	public static HTMLFragment refValue(ControlProvider cp) {
+	public static HTMLFragment refValue(HTMLFragmentProvider cp) {
 		return refValue(CURRENT_MEMBER, cp);
 	}
 
@@ -629,7 +629,7 @@ public class Fragments {
 
 	/**
 	 * Renders the value of the member referenced by the given name relative to the
-	 * {@link #CURRENT_MEMBER current member} using the given {@link ControlProvider}.
+	 * {@link #CURRENT_MEMBER current member} using the given {@link HTMLFragmentProvider}.
 	 * 
 	 * <p>
 	 * This fragment is to be used within the member template of a
@@ -641,10 +641,10 @@ public class Fragments {
 	 *        {@link #foreach(FormContainer, Tag) foreach} fragment. See
 	 *        {@link FormGroup#getMemberByRelativeName(FormMember, String)}.
 	 * @param cp
-	 *        The {@link ControlProvider} to use for creating the view.
+	 *        The {@link HTMLFragmentProvider} to use for creating the view.
 	 * @return A member template fragment.
 	 */
-	public static HTMLFragment refValue(String fieldName, ControlProvider cp) {
+	public static HTMLFragment refValue(String fieldName, HTMLFragmentProvider cp) {
 		return refView(fieldName, cp, null);
 	}
 
@@ -716,12 +716,12 @@ public class Fragments {
 	 *        {@link #foreach(FormContainer, Tag) foreach} fragment. See
 	 *        {@link FormGroup#getMemberByRelativeName(FormMember, String)}.
 	 * @param cp
-	 *        The {@link ControlProvider} to use.
+	 *        The {@link HTMLFragmentProvider} to use.
 	 * @param style
 	 *        The aspect to render, see {@link FormTemplateConstants#STYLE_LABEL_VALUE}.
 	 * @return A member template fragment.
 	 */
-	public static HTMLFragment refView(String fieldName, final ControlProvider cp, final String style) {
+	public static HTMLFragment refView(String fieldName, final HTMLFragmentProvider cp, final String style) {
 		return new ForeachControl.ReferenceRenderer(fieldName) {
 			@Override
 			public void write(DisplayContext context, TagWriter out, FormMember member) throws IOException {

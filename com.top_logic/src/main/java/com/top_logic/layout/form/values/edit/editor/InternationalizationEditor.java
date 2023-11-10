@@ -53,7 +53,10 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
+import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
+import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
 import com.top_logic.layout.form.values.Fields;
+import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -101,7 +104,8 @@ public class InternationalizationEditor implements Editor {
 
 	private static final String DISPLAY_DERIVED_FIELD = "displayDerived";
 
-	private static TagTemplate templateDefinition(FormMember member, boolean initiallyCollapsed, List<String> languages,
+	private static com.top_logic.layout.form.template.ControlProvider templateDefinition(FormMember i18n,
+			FormMember currentLanguage, boolean initiallyCollapsed, List<String> languages,
 			List<String> additionals) {
 
 		TranslateButtonCP cp = new TranslateButtonCP(additionals);
@@ -127,11 +131,20 @@ public class InternationalizationEditor implements Editor {
 			}
 		}
 
-		return div(css(ITEM_CSS_CLASS),
+		TagTemplate editTemplate = div(css(ITEM_CSS_CLASS),
 			fieldsetBox(
 				span(css(ITEM_TITLE_CSS_CLASS), label(), span(css(TOOLBAR_CSS_CLASS), member(DISPLAY_DERIVED_FIELD))),
 				div(contentTemplates.toArray(new HTMLTemplateFragment[contentTemplates.size()])),
-				ConfigKey.field(member)).setInitiallyCollapsed(initiallyCollapsed));
+				ConfigKey.field(i18n)).setInitiallyCollapsed(initiallyCollapsed));
+		if (currentLanguage == null) {
+			return new TemplateControlProvider(editTemplate, DefaultFormFieldControlProvider.INSTANCE);
+		} else {
+			HTMLTemplateFragment viewTemplate = member(currentLanguage,
+				descriptionBox(fragment(labelWithColon(".."), error()), self()));
+			Value<Boolean> immutableValue = isImmutable(i18n);
+			return new SwitchingTemplateCP(immutableValue, viewTemplate, editTemplate);
+		}
+
 	}
 
 	/**
@@ -156,7 +169,9 @@ public class InternationalizationEditor implements Editor {
 		List<String> languages = new ArrayList<>();
 		List<StringField> suffixMembers = new ArrayList<>();
 
-		for (Locale locale : Resources.getInstance().getSupportedLocalesInDisplayOrder()) {
+		String currentLanguage = Resources.getCurrentLocale().getLanguage();
+		FormMember currentLanguageMember = null;
+		for (Locale locale : resources.getSupportedLocalesInDisplayOrder()) {
 			String language = locale.getLanguage();
 			languages.add(language);
 			
@@ -165,6 +180,9 @@ public class InternationalizationEditor implements Editor {
 			input.set(LOCALE, locale);
 			input.setLabel(translateLanguageName(resources, locale));
 			group.addMember(input);
+			if (currentLanguage.equals(language)) {
+				currentLanguageMember = input;
+			}
 			
 			for (String keySuffix : suffixes) {
 				StringField suffixField = FormFactory.newStringField(suffixFieldName(language, keySuffix));
@@ -185,7 +203,7 @@ public class InternationalizationEditor implements Editor {
 
 		displayDerivedCommand(group, suffixMembers);
 
-		template(group, templateDefinition(group, minimized, languages, suffixes));
+		group.setControlProvider(templateDefinition(group, currentLanguageMember, minimized, languages, suffixes));
 
 		return group;
 	}

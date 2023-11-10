@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
@@ -25,6 +26,11 @@ public class IconInputTagProvider implements DisplayProvider, ControlProvider {
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
 		return createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	@Override
+	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
+		return createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
 	}
 
 	@Override

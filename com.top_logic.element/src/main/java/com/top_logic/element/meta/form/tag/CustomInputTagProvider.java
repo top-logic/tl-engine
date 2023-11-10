@@ -59,6 +59,15 @@ public class CustomInputTagProvider extends AbstractConfiguredInstance<CustomInp
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
+		return cp(member).createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	@Override
+	public Control createDisplayFragment(EditContext editContext, FormMember member) {
+		return cp(member).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	private ControlProvider cp(FormMember member) {
 		ControlProvider controlProvider = getConfig().getControlProvider();
 		if (controlProvider == null) {
 			ControlProvider cp = member.getControlProvider();
@@ -68,7 +77,7 @@ public class CustomInputTagProvider extends AbstractConfiguredInstance<CustomInp
 				controlProvider = DefaultFormFieldControlProvider.INSTANCE;
 			}
 		}
-		return controlProvider.createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+		return controlProvider;
 	}
 
 }

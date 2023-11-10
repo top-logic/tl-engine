@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
@@ -29,6 +30,11 @@ public class SelectTagProvider implements DisplayProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
+		return new DropDownControl((FormField) member);
+	}
+
+	@Override
+	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
 		return new DropDownControl((FormField) member);
 	}
 

@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;
@@ -47,6 +48,25 @@ public class EnumerationTagProvider extends AbstractReferenceTagProvider {
 				return createChoiceDisplay(member, Orientation.HORIZONTAL);
 		}
 		throw ClassificationPresentation.noSuchEnum(presentation);
+	}
+
+	@Override
+	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
+		ClassificationPresentation presentation = TLAnnotations.getClassificationPresentation(editContext);
+		switch (presentation) {
+			case CHECKLIST:
+				return new ChecklistControl((SelectField) member);
+			case DROP_DOWN:
+				return SelectTagProvider.INSTANCE.createDisplay(editContext, member);
+			case POP_UP:
+				return createPopupDisplay(editContext, member);
+			case RADIO:
+				return createChoiceDisplay(member, Orientation.VERTICAL);
+			case RADIO_INLINE:
+				return createChoiceDisplay(member, Orientation.HORIZONTAL);
+			default:
+				throw ClassificationPresentation.noSuchEnum(presentation);
+		}
 	}
 
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.persistency.attribute.macro.ui;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.tag.DisplayProvider;
 import com.top_logic.layout.Control;
@@ -21,8 +22,16 @@ public class MacroTagProvider implements DisplayProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
-		return new MacroControlProvider(editContext.getObject()).createControl(member,
-			FormTemplateConstants.STYLE_DIRECT_VALUE);
+		return cp(editContext).createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	@Override
+	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
+		return cp(editContext).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	private MacroControlProvider cp(EditContext editContext) {
+		return new MacroControlProvider(editContext.getObject());
 	}
 
 }

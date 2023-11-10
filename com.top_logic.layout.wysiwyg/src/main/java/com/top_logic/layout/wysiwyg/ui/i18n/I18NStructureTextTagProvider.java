@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.wysiwyg.ui.i18n;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.tag.DisplayProvider;
@@ -26,6 +27,12 @@ public class I18NStructureTextTagProvider implements DisplayProvider {
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
 		return I18NStructuredTextControlProvider.INSTANCE.createControl(member,
+			FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	@Override
+	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
+		return I18NStructuredTextControlProvider.INSTANCE.createFragment(member,
 			FormTemplateConstants.STYLE_DIRECT_VALUE);
 	}
 

@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.Control;
@@ -44,6 +45,8 @@ public interface DisplayProvider {
 	 *           call back to the {@link ControlProvider} annotated to the field.
 	 */
 	Control createDisplay(EditContext editContext, FormMember member);
+
+	HTMLFragment createDisplayFragment(EditContext editContext, FormMember member);
 
 	/**
 	 * @deprecated Compatibility code re-adding a {@link ControlProvider} indirection.

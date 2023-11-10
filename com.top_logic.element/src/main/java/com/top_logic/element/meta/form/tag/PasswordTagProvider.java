@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
@@ -31,6 +32,12 @@ public class PasswordTagProvider implements DisplayProvider, ControlProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
+		int columns = DisplayAnnotations.inputSize(editContext, 0);
+		return PasswordInputControlProvider.createPasswordControl((FormField) member, 0, 0, columns);
+	}
+
+	@Override
+	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
 		int columns = DisplayAnnotations.inputSize(editContext, 0);
 		return PasswordInputControlProvider.createPasswordControl((FormField) member, 0, 0, columns);
 	}

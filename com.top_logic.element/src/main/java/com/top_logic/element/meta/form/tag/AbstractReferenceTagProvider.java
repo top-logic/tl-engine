@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
@@ -46,10 +47,6 @@ public abstract class AbstractReferenceTagProvider implements DisplayProvider {
 		return tag.createControl(member);
 	}
 
-	Control createSelectReferenceDisplay(EditContext editContext, FormMember member) {
-		return SelectTagProvider.INSTANCE.createDisplay(editContext, member);
-	}
-
 	/**
 	 * Creates a reference display according to the given {@link ReferencePresentation}.
 	 */
@@ -57,7 +54,34 @@ public abstract class AbstractReferenceTagProvider implements DisplayProvider {
 		ReferencePresentation presentation = AttributeOperations.getPresentation(editContext);
 		switch (presentation) {
 			case DROP_DOWN: {
-				return createSelectReferenceDisplay(editContext, member);
+				return SelectTagProvider.INSTANCE.createDisplay(editContext, member);
+			}
+			case RADIO:
+				return createChoiceDisplay(member, Orientation.VERTICAL);
+			case RADIO_INLINE:
+				return createChoiceDisplay(member, Orientation.HORIZONTAL);
+			case POP_UP: {
+				return createPopupDisplay(editContext, member);
+			}
+			case TABLE: {
+				if (editContext.inTableContext()) {
+					return createPopupDisplay(editContext, member);
+				}
+				return createTableDisplay(member);
+			}
+			default:
+				throw ReferencePresentation.unknownPresentation(presentation);
+		}
+	}
+
+	/**
+	 * Creates a reference display according to the given {@link ReferencePresentation}.
+	 */
+	protected HTMLFragment getReferenceDisplayFragment(EditContext editContext, FormMember member) {
+		ReferencePresentation presentation = AttributeOperations.getPresentation(editContext);
+		switch (presentation) {
+			case DROP_DOWN: {
+				return SelectTagProvider.INSTANCE.createDisplayFragment(editContext, member);
 			}
 			case RADIO:
 				return createChoiceDisplay(member, Orientation.VERTICAL);

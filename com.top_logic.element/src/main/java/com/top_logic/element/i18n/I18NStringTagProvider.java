@@ -46,6 +46,15 @@ public class I18NStringTagProvider implements DisplayProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
+		return cp(editContext).createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	@Override
+	public Control createDisplayFragment(EditContext editContext, FormMember member) {
+		return cp(editContext).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+	}
+
+	private I18NStringControlProvider cp(EditContext editContext) {
 		int rows;
 		boolean multiline;
 		if (AttributeOperations.isMultiline(editContext) && !editContext.isSearchUpdate()) {
@@ -61,9 +70,9 @@ public class I18NStringTagProvider implements DisplayProvider {
 			rows = 0;
 			multiline = false;
 		}
-		return new I18NStringControlProvider(multiline, rows,
-			DisplayAnnotations.inputSize(editContext, TextInputControl.NO_COLUMNS)).createControl(member,
-				FormTemplateConstants.STYLE_DIRECT_VALUE);
+		I18NStringControlProvider i18nStringControlProvider = new I18NStringControlProvider(multiline, rows,
+			DisplayAnnotations.inputSize(editContext, TextInputControl.NO_COLUMNS));
+		return i18nStringControlProvider;
 	}
 
 	/**

@@ -55,6 +55,10 @@ import com.top_logic.util.ToBeValidated;
  */
 public abstract class I18NField<F extends FormField, V, B> extends CompositeField {
 
+	/** Property for whether all languages should be displayed in view mode. */
+	public static final Property<Boolean> DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE =
+		TypedAnnotatable.property(Boolean.class, "all values", Boolean.FALSE);
+
 	/** Field name language separator. */
 	public static final String FIELD_NAME_LANGUAGE_SEPARATOR = "_";
 

@@ -86,9 +86,13 @@ public class I18NStringControlProvider implements ControlProvider {
 				}
 			}
 		}
-		ImmutablePropertyListener immutableListener = immutableListener(block);
-		member.addListener(FormField.IMMUTABLE_PROPERTY, immutableListener);
-		immutableListener.handleImmutableChanged(member, !member.isImmutable(), member.isImmutable());
+		if (member.get(I18NField.DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE)) {
+			block.setRenderer(editModeRenderer());
+		} else {
+			ImmutablePropertyListener immutableListener = immutableListener(block);
+			member.addListener(FormField.IMMUTABLE_PROPERTY, immutableListener);
+			immutableListener.handleImmutableChanged(member, !member.isImmutable(), member.isImmutable());
+		}
 		return block;
 	}
 
@@ -103,19 +107,24 @@ public class I18NStringControlProvider implements ControlProvider {
 					// Display only the value for the current locale in view mode.
 					newRenderer = I18NStringActiveLanguageControlRenderer.INSTANCE;
 				} else {
-					// Display each value in view mode.
-					if (_multiline) {
-						newRenderer = I18NStringControlRenderer.ABOVE_INSTANCE;
-					} else {
-						newRenderer = I18NStringControlRenderer.INSTANCE;
-					}
+					// Display each value in edit mode.
+					newRenderer = editModeRenderer();
 				}
 				composite.setRenderer(newRenderer);
 				return Bubble.BUBBLE;
 			}
-		};
 
+		};
 	}
 
+	ControlRenderer<CompositeControl> editModeRenderer() {
+		ControlRenderer<CompositeControl> newRenderer;
+		if (_multiline) {
+			newRenderer = I18NStringControlRenderer.ABOVE_INSTANCE;
+		} else {
+			newRenderer = I18NStringControlRenderer.INSTANCE;
+		}
+		return newRenderer;
+	}
 }
 

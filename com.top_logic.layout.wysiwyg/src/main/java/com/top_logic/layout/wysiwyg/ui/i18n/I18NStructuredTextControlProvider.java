@@ -62,9 +62,13 @@ public class I18NStructuredTextControlProvider implements ControlProvider {
 					StructuredTextFieldTranslator.INSTANCE));
 			}
 		}
-		ImmutablePropertyListener immutableListener = immutableListener(block);
-		member.addListener(FormField.IMMUTABLE_PROPERTY, immutableListener);
-		immutableListener.handleImmutableChanged(member, !member.isImmutable(), member.isImmutable());
+		if (member.get(I18NField.DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE)) {
+			block.setRenderer(editModeRenderer());
+		} else {
+			ImmutablePropertyListener immutableListener = immutableListener(block);
+			member.addListener(FormField.IMMUTABLE_PROPERTY, immutableListener);
+			immutableListener.handleImmutableChanged(member, !member.isImmutable(), member.isImmutable());
+		}
 		return block;
 	}
 
@@ -78,14 +82,18 @@ public class I18NStructuredTextControlProvider implements ControlProvider {
 					// Display only the value for the current locale in view mode.
 					newRenderer = I18NStringActiveLanguageControlRenderer.INSTANCE;
 				} else {
-					// Display each value in view mode.
-					newRenderer = I18NStringControlRenderer.ABOVE_INSTANCE;
+					// Display each value in edit mode.
+					newRenderer = editModeRenderer();
 				}
 				composite.setRenderer(newRenderer);
 				return Bubble.BUBBLE;
 			}
 		};
 
+	}
+
+	I18NStringControlRenderer editModeRenderer() {
+		return I18NStringControlRenderer.ABOVE_INSTANCE;
 	}
 
 }

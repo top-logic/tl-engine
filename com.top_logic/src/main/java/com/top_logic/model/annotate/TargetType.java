@@ -28,15 +28,14 @@ public @interface TargetType {
 	 * The {@link TLTypeKind}s the annotated annotation is compatible with.
 	 * 
 	 * <p>
-	 * In case {@link TLTypeKind#REF} or {@link TLTypeKind#CUSTOM}, {@link #name()} is used to
-	 * define optional names for {@link TLType} that are compatible with the annotated annotation.
+	 * {@link #name()} is used to define optional names for {@link TLType} that are compatible with
+	 * the annotated annotation.
 	 * </p>
 	 */
 	TLTypeKind[] value();
 
 	/**
-	 * When {@link TLTypeKind#REF} or {@link TLTypeKind#CUSTOM} is specified for {@link #value()},
-	 * this property returns optional type names that specify the super types, the annotated
+	 * This property returns optional type names that specify the super types, the annotated
 	 * annotation is compatible with.
 	 */
 	String[] name() default {};

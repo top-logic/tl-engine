@@ -33,7 +33,7 @@ import com.top_logic.model.resources.TLPartScopedResourceProvider;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@Format(TLModelPartRef.TypePartRefValueProvider.class)
+@Format(TLModelPartRef.TLModelPartRefValueProvider.class)
 @ControlProvider(SelectionControlProvider.class)
 @Options(fun = AllClasses.class, mapping = TLModelPartRef.PartMapping.class)
 @OptionLabels(TLPartScopedResourceProvider.class)
@@ -138,14 +138,14 @@ public class TLModelPartRef {
 	 * {@link ConfigurationValueProvider} for {@link TLModelPartRef}s referencing
 	 * {@link TLModelPart}s.
 	 */
-	public static class TypePartRefValueProvider extends AbstractRefValueProvider {
+	public static class TLModelPartRefValueProvider extends AbstractRefValueProvider {
 
 		/**
-		 * Singleton {@link TypePartRefValueProvider} instance.
+		 * Singleton {@link TLModelPartRefValueProvider} instance.
 		 */
-		public static final TypePartRefValueProvider INSTANCE = new TypePartRefValueProvider();
+		public static final TLModelPartRefValueProvider INSTANCE = new TLModelPartRefValueProvider();
 
-		private TypePartRefValueProvider() {
+		private TLModelPartRefValueProvider() {
 			super(Pattern.compile(TLModelUtil.MODEL_PART_NAME_PATTERN_SRC),
 				I18NConstants.ERROR_INVALID_PART_REFERENCE__VALUE);
 		}

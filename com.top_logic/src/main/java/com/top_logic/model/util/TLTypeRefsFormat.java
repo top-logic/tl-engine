@@ -20,7 +20,7 @@ public class TLTypeRefsFormat extends ListFormat<TLModelPartRef> {
 	 * Creates a {@link ListFormat} for {@link TLModelPartRef}s.
 	 */
 	public TLTypeRefsFormat() {
-		super(TLModelPartRef.TypePartRefValueProvider.INSTANCE, ",");
+		super(TLModelPartRef.TLModelPartRefValueProvider.INSTANCE, ",");
 	}
 
 }

@@ -7,9 +7,7 @@ package com.top_logic.element.layout.formeditor;
 
 import static com.top_logic.layout.form.values.Fields.*;
 
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationChange;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -84,14 +82,10 @@ public class FormDefinitionEditor implements Editor {
 			}
 
 			private TLStructuredType resolveFormType() {
-				try {
-					Object formType = configItem.value(typeProperty);
-					return formType instanceof TLModelPartRef
+				Object formType = configItem.value(typeProperty);
+				return formType instanceof TLModelPartRef
 						? (TLStructuredType) ((TLModelPartRef) formType).resolveType()
-						: (TLStructuredType) formType;
-				} catch (ConfigurationException ex) {
-					throw new ConfigurationError(ex);
-				}
+							: (TLStructuredType) formType;
 			}
 
 			private Command newAcceptCommand(FormDefinition formDefinitionOrigin, GUIEditorDialog guiEditorDialog) {
@@ -166,25 +160,13 @@ public class FormDefinitionEditor implements Editor {
 					if (oldValue != null && !newValue.equals(oldValue)) {
 						TLType oldType;
 						if (oldValue instanceof TLModelPartRef) {
-							try {
-								oldType = ((TLModelPartRef) oldValue).resolveType();
-							} catch (ConfigurationException ex) {
-								// failure
-								model.setValue(null);
-								return;
-							}
+							oldType = ((TLModelPartRef) oldValue).resolveType();
 						} else {
 							oldType = (TLType) oldValue;
 						}
 						TLType newType;
 						if (newValue instanceof TLModelPartRef) {
-							try {
-								newType = ((TLModelPartRef) newValue).resolveType();
-							} catch (ConfigurationException ex) {
-								// failure
-								model.setValue(null);
-								return;
-							}
+							newType = ((TLModelPartRef) newValue).resolveType();
 						} else {
 							newType = (TLType) newValue;
 						}

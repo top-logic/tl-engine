@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.i18n;
 
+import java.util.List;
+
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
 import com.top_logic.layout.Control;
@@ -12,6 +14,7 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.OnVisibleControl;
 import com.top_logic.layout.form.control.TextInputControl;
+import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil;
@@ -59,7 +62,8 @@ public class I18NStringControlProvider implements ControlProvider {
 
 	private Control createControl(I18NStringField member) {
 		OnVisibleControl block = new OnVisibleControl(member);
-		for (FormField field : member.getLanguageFields()) {
+		List<StringField> languageFields = member.getLanguageFields();
+		for (FormField field : languageFields) {
 			TextInputControl control = new TextInputControl(field);
 			control.setMultiLine(_multiline);
 			control.setColumns(_columns);
@@ -70,8 +74,8 @@ public class I18NStringControlProvider implements ControlProvider {
 			block.addChild(new ErrorControl(field, true));
 			if (TranslationService.isActive()) {
 				if (!I18NTranslationUtil.isSourceField(field)) {
-					block.addChild(
-						I18NTranslationUtil.getTranslateControl(field, member, StringValuedFieldTranslator.INSTANCE));
+					block.addChild(I18NTranslationUtil.getTranslateControl(field, languageFields.iterator(),
+						StringValuedFieldTranslator.INSTANCE));
 				}
 			}
 		}

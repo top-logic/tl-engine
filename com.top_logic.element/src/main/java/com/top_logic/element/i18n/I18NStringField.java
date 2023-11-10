@@ -14,6 +14,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.util.Resources;
 
@@ -45,7 +46,7 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	 */
 	protected I18NStringField(String fieldName, boolean isMandatory, boolean isDisabled, boolean isMultiLine,
 			Constraint constraint) {
-		super(fieldName, isMandatory, isDisabled, constraint);
+		super(fieldName, isMandatory, isDisabled, constraint, GenericMandatoryConstraint.SINGLETON);
 		_isMultiLine = isMultiLine;
 	}
 

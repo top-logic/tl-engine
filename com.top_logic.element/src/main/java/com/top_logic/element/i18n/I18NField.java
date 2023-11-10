@@ -15,6 +15,10 @@ import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.VetoException;
+import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.BlockedStateChangedListener;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
@@ -23,13 +27,17 @@ import com.top_logic.layout.form.ErrorChangedListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ImmutablePropertyListener;
+import com.top_logic.layout.form.LabelChangedListener;
 import com.top_logic.layout.form.MandatoryChangedListener;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.constraints.AbstractConstraint;
 import com.top_logic.layout.form.model.CompositeField;
+import com.top_logic.layout.form.model.FormFieldInternals;
 import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.ToBeValidated;
 
 /**
  * A {@link CompositeField} that displays a {@link FormField} for each language supported by the
@@ -67,6 +75,8 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	private final Constraint _constraint;
 
+	private final Constraint _mandatoryConstraint;
+
 	private List<F> _languageFields;
 
 	/**
@@ -76,12 +86,14 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 *           after creation, i.e. caller must either trigger {@link #initLanguageFields()} or
 	 *           add this note.
 	 */
-	protected I18NField(String fieldName, boolean isMandatory, boolean isDisabled, Constraint constraint) {
+	protected I18NField(String fieldName, boolean isMandatory, boolean isDisabled, Constraint constraint, Constraint mandatoryConstraint) {
 		super(fieldName, com.top_logic.layout.form.values.edit.editor.I18NConstants.LANGUAGE);
 		_isMandatory = isMandatory;
 		_isDisabled = isDisabled;
 		_constraint = constraint;
+		_mandatoryConstraint = mandatoryConstraint;
 		_proxyField = createProxyField(isMandatory, isDisabled);
+		addMember(_proxyField);
 	}
 
 	/**
@@ -136,6 +148,27 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		FormField field = new I18NProxyField(PROFY_FIELD_SUFFIX);
 		field.setMandatory(isMandatory);
 		field.setDisabled(isDisabled);
+		addListener(FormMember.LABEL_PROPERTY, new LabelChangedListener() {
+
+			@Override
+			public Bubble handleLabelChanged(Object sender, String oldLabel, String newLabel) {
+				if (sender != I18NField.this) {
+					// Label was set to a child of group where this listener was added to.
+					return Bubble.BUBBLE;
+				}
+				String proxyLabel;
+				if (newLabel == null) {
+					proxyLabel = newLabel;
+				} else {
+					ResKey label = I18NConstants.I18N_PROXY_FIELD_LABEL__FIELD.fill(newLabel);
+					proxyLabel = Resources.getInstance().getString(label);
+
+				}
+				field.setLabel(proxyLabel);
+				return Bubble.BUBBLE;
+			}
+
+		});
 		return field;
 	}
 
@@ -284,7 +317,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	/**
 	 * Gets the language fields.
 	 */
-	protected List<F> getLanguageFields() {
+	public List<F> getLanguageFields() {
 		if (_languageFields == null) {
 			throw new IllegalStateException("Field not initialized.");
 		}
@@ -292,15 +325,13 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	}
 
 	/**
-	 * Updates the value of the proxy field with the values of the language fields.
+	 * Updates the error of the proxy field with the errors of the language fields.
 	 */
-	protected void transportValues() {
+	protected void transportErrors() {
 		FormField proxy = getProxy();
-		B builder = createValueBuilder();
-
 		Resources res = Resources.getInstance();
 		StringBuilder sb = new StringBuilder();
-		boolean hasError = false, hasValue = false;
+		boolean hasError = false;
 		for (F field : getLanguageFields()) {
 			if (field.hasError()) {
 				if (hasError) {
@@ -309,25 +340,84 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 				Locale language = field.get(LANGUAGE);
 				sb.append(InternationalizationEditor.translateLanguageName(res, language) + ": " + field.getError());
 				hasError = true;
-			} else if (field.hasValue()) {
-				Locale locale = field.get(LANGUAGE);
-				addValueToBuilder(builder, proxy, locale, field);
-				hasValue = true;
 			}
 		}
-
 		proxy.set(LISTENER_DISABLED, Boolean.TRUE);
-		proxy.setValue(hasValue ? buildValue(builder) : null);
 		if (hasError) {
 			proxy.setError(sb.toString());
+		} else {
+			proxy.clearError();
 		}
-		proxy.set(LISTENER_DISABLED, null);
+		proxy.reset(LISTENER_DISABLED);
 	}
 
 	/**
-	 * Creates an object that can {@link #addValueToBuilder(Object, FormField, Locale, FormField) accumulate}
-	 * the values for each {@link Locale}, until the whole value is {@link #buildValue(Object)
-	 * built}.
+	 * Updates the value of the proxy field with the values of the language fields.
+	 */
+	protected void transportValues(FormField sender, Object formerValue) {
+		FormField proxy = getProxy();
+		B builder = createValueBuilder();
+
+		for (F field : getLanguageFields()) {
+			if (field.hasValue()) {
+				Locale locale = field.get(LANGUAGE);
+				addValueToBuilder(builder, proxy, locale, field);
+			} else {
+				// Some of the fields have an error. This error is also transported, so in the end,
+				// the proxy has also an error.
+				return;
+			}
+				
+		}
+
+		proxy.set(LISTENER_DISABLED, Boolean.TRUE);
+		Object proxyValue = buildValue(builder);
+		try {
+			FormFieldInternals.updateFieldNoClientUpdate(proxy, proxyValue);
+		} catch (VetoException ex) {
+			/* TODO Ticket #15445: Value can not be reset by the ValueListener that triggers the
+			 * change. Therefore the whole exception handling is done in a validation step. */
+			DefaultDisplayContext.getDisplayContext().getLayoutContext().notifyInvalid(new ToBeValidated() {
+
+				@Override
+				public void validate(DisplayContext validationContext) {
+					handleVetoInProxy(proxy, proxyValue, sender, formerValue, ex);
+				}
+			});
+		}
+		proxy.reset(LISTENER_DISABLED);
+	}
+
+	/**
+	 * Handles a {@link VetoException} when setting value to {@link #getProxy()} does not work.
+	 * 
+	 * <p>
+	 * Reverts the value in the changed field and sets a continuation to the {@link Exception} that
+	 * sets the proxy value again.
+	 * </p>
+	 */
+	void handleVetoInProxy(FormField proxy, Object dateTime, FormField changedField, Object formerValue,
+			VetoException ex) {
+		changedField.setValue(formerValue);
+		ex.setContinuationCommand(new Command() {
+
+			@Override
+			public HandlerResult executeCommand(DisplayContext continuationContext) {
+				try {
+					FormFieldInternals.updateFieldNoClientUpdate(proxy, dateTime);
+				} catch (VetoException ignoredEx) {
+					// ignore
+				}
+				return HandlerResult.DEFAULT_RESULT;
+			}
+		});
+		ex.process(DefaultDisplayContext.getDisplayContext().getWindowScope());
+	}
+
+	/**
+	 * Creates an object that can {@link #addValueToBuilder(Object, FormField, Locale, FormField)
+	 * accumulate} the values for each {@link Locale}, until the whole value is
+	 * {@link #buildValue(Object) built}.
 	 * 
 	 * @return Is not allowed to be null.
 	 */
@@ -365,7 +455,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		@Override
 		public void valueChanged(FormField field, Object oldValue, Object newValue) {
 			if (!Utils.getbooleanValue(field.get(LISTENER_DISABLED))) {
-				transportValues();
+				transportValues(field, oldValue);
 			}
 		}
 	}
@@ -387,7 +477,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 		@Override
 		public Bubble handleErrorChanged(FormField sender, String oldError, String newError) {
-			transportValues();
+			transportErrors();
 			return Bubble.CANCEL_BUBBLE;
 		}
 
@@ -434,7 +524,6 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		 * Overridden to dispatch default value changes to language fields as there exists no
 		 * default value changed listener.
 		 */
-		@SuppressWarnings("synthetic-access")
 		@Override
 		public void setDefaultValue(Object defaultValue) {
 			super.setDefaultValue(defaultValue);
@@ -447,6 +536,11 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 					langField.set(LISTENER_DISABLED, null);
 				}
 			}
+		}
+
+		@Override
+		protected Constraint mandatoryConstraint() {
+			return _mandatoryConstraint;
 		}
 
 	}

@@ -254,7 +254,7 @@ import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.tree.model.TreeNodeComparator;
 import com.top_logic.layout.tree.model.UserObjectNodeComparator;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextFieldFactory;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextControlProvider;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextField;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
@@ -307,9 +307,9 @@ public class TestControlsForm extends FormComponent {
 				(StringField) formContext.getContainer("configuration").getField("switchStateField");
 			String configuredFields = switchStateField.getAsString().trim();
 			if (configuredFields.isEmpty()) {
-				String[] groupNames = new String[] { "controls", "dataFieldGroup" };
+				String[] groupNames = new String[] { "controls", "dataFieldGroup", "controls.i18n" };
 				for (int i = 0; i < groupNames.length; i++) {
-					FormGroup controlsGroup = (FormGroup) formContext.getMember(groupNames[i]);
+					FormGroup controlsGroup = (FormGroup) FormGroup.getMemberByRelativeName(formContext, groupNames[i]);
 
 					for (Iterator<? extends FormMember> it = controlsGroup.getMembers(); it.hasNext();) {
 						doForMember(aContext, it.next());
@@ -1154,7 +1154,7 @@ public class TestControlsForm extends FormComponent {
 		controlsGroup.addMember(member);
 		controlsGroup.addMember(createTextInputWithPlaceholder());
 		controlsGroup.addMember(createTextInputWithContextMenu());
-		controlsGroup.addMember(createStructuredTextField());
+		controlsGroup.addMember(StructuredTextFieldFactory.create("structuredText", new StructuredText()));
 		addI18NGroup(controlsGroup);
 		controlsGroup.addMember(createCodeEditorField());
 		controlsGroup.addMember(FormFactory.newStringField("textInputControl2"));
@@ -2592,13 +2592,6 @@ public class TestControlsForm extends FormComponent {
 				return result;
 			}
 		});
-		return field;
-	}
-
-	private FormMember createStructuredTextField() {
-		HiddenField field = FormFactory.newHiddenField("structuredText");
-		field.setValue(new StructuredText());
-		field.setControlProvider(StructuredTextControlProvider.INSTANCE);
 		return field;
 	}
 

@@ -8,10 +8,10 @@ package com.top_logic.doc.control;
 import java.util.Locale;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.element.i18n.I18NField;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.model.CompositeField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextControl;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextField;
@@ -43,7 +43,7 @@ public class ScrollableTranslatedI18nStructuredTextFieldControl extends Translat
 		}
 
 		@Override
-		protected Control createControl(CompositeField i18nField, ComponentChannel language, String style) {
+		protected Control createControl(I18NField<?, ?, ?> i18nField, ComponentChannel language, String style) {
 			return new ScrollableTranslatedI18nStructuredTextFieldControl((I18NStructuredTextField) i18nField, language,
 				style);
 		}

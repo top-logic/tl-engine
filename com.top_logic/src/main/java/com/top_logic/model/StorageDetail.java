@@ -5,6 +5,10 @@
  */
 package com.top_logic.model;
 
+import java.util.List;
+
+import com.top_logic.util.model.check.InstanceCheck;
+
 /**
  * Methods from <code>com.top_logic.element.meta.StorageImplementation</code> that are needed in
  * "com.top_logic".
@@ -24,5 +28,15 @@ public interface StorageDetail {
 	 * </p>
 	 */
 	boolean isReadOnly();
+
+	/**
+	 * Add constraints for the given attribute.
+	 * 
+	 * @param attribute
+	 *        The attribute to create checks for.
+	 * @param checks
+	 *        List to add checks to.
+	 */
+	void addConstraints(TLStructuredTypePart attribute, List<InstanceCheck> checks);
 
 }

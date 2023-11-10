@@ -5,12 +5,9 @@
  */
 package com.top_logic.layout.wysiwyg.ui;
 
-import static com.top_logic.layout.form.model.FormFactory.*;
-
 import java.util.List;
 
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.model.HiddenField;
 
 /**
  * Factory for {@link FormField}s representing a {@link StructuredText}.
@@ -103,15 +100,10 @@ public class StructuredTextFieldFactory {
 		return structuredTextField;
 	}
 
-	/**
-	 * @implNote The return type is not {@link HiddenField}, to hide this implementation detail. If
-	 *           an actual <code>StructuredTextField</code> is implemented some day, this prevents a
-	 *           code migration: When no one "knows" that this returns a {@link HiddenField}, no one
-	 *           can use that type. And switching it to <code>StructuredTextField</code> is
-	 *           effortless.
-	 */
 	private static FormField createInternal(String name, StructuredText value) {
-		return newHiddenField(name, value);
+		StructuredTextField field = new StructuredTextField(name);
+		field.initializeField(value);
+		return field;
 	}
 
 }

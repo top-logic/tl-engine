@@ -67,6 +67,40 @@ public class I18NStringTagProvider implements DisplayProvider {
 	}
 
 	/**
+	 * Control renderer for {@link I18NStringField} fields that renders only the value of the
+	 * current {@link Locale}.
+	 */
+	public static class I18NStringActiveLanguageControlRenderer extends DefaultControlRenderer<CompositeControl> {
+
+		/** Instance of this class. */
+		public static final I18NStringActiveLanguageControlRenderer INSTANCE =
+			new I18NStringActiveLanguageControlRenderer();
+
+		@Override
+		protected String getControlTag(CompositeControl control) {
+			return SPAN;
+		}
+
+		@Override
+		protected void writeControlContents(DisplayContext context, TagWriter out, CompositeControl control)
+				throws IOException {
+			Locale currentLocale = context.getResources().getLocale();
+			List<? extends HTMLFragment> controls = control.getChildren();
+			int i = 0;
+			I18NField<?, ?, ?> i18nField = (I18NField<?, ?, ?>) control.getModel();
+			for (FormField field : i18nField.getLanguageFields()) {
+				Locale fieldLocale = I18NTranslationUtil.getLocaleFromField(field);
+				HTMLFragment fieldControl = controls.get(i++);
+				if (!I18NTranslationUtil.equalLanguage(currentLocale, fieldLocale)) {
+					continue;
+				}
+				fieldControl.write(context, out);
+			}
+		}
+
+	}
+
+	/**
 	 * Control renderer for I18NString fields.
 	 */
 	public static class I18NStringControlRenderer extends DefaultControlRenderer<CompositeControl> {

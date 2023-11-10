@@ -1,5 +1,5 @@
 <h2>Syntax</h2>
-<pre>	<code>revisionAt($date)</code>
+<pre>	<code>revisionAt($dateTime)</code>
 </pre>
 <h2>Description</h2>
 <p>Determines the revision that was valid at the given time, i.e. the latest revision created not later than the given date.</p>
@@ -29,8 +29,35 @@
 <p>The revision that was current at the given time.</p>
 <h2>Examples</h2>
 <h3>Example 1</h3>
-<pre>	<code>revisionAt(date(2023,2,6))</code>
+<pre>	<code>revisionAt(dateTime(2023,8,28))</code>
 </pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> r245</p>
-<p>Here, the revision that was current at the time March 6, 2023 is determined. In this example r245.</p>
+<p>Here, the revision that was current at the time September 28, 2023 is determined. In this example revision 6040.</p>
+
+<h3>Example 2</h3>
+
+<pre>
+	<code>revisionAt(dateTime(2023,8,28))</code>
+</pre>
+
+<p><strong>Output:</strong></p>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Revision date</th>
+			<th>Author</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>6.004</td>
+			<td>27.09.2023, 14:56:54</td>
+			<td>Great, administrator</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>This determines the revision that was current on September 28, 2023 at midnight. In this example revision 6004.</p>
 <p></p>

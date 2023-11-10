@@ -1,5 +1,5 @@
 <h2>Syntax</h2>
-<pre>	<code>revisionAt($date)</code>
+<pre>	<code>revisionAt($dateTime)</code>
 </pre>
 <h2>Beschreibung</h2>
 <p>Bestimmt die Revision die zu dem gegeben Zeitpunkt gültig war, d.h. die neuste Revision die nicht später als das gegebene Datum erstellt wurde.</p>
@@ -29,8 +29,51 @@
 <p>Die Revision die zu dem gegebenen Zeitpunkt aktuell war.</p>
 <h2>Beispiele</h2>
 <h3>Beispiel 1</h3>
-<pre>	<code>revisionAt(date(2023,2,6))</code>
+<pre>	<code>revisionAt(dateTime(2023,8,28,12))</code>
 </pre>
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> r245</p>
-<p>Hier wird die Revison ermittelt, die zum Zeitpunkt 6. März 2023 aktuell war. In diesem Beispiel r245.</p>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Revision</th>
+   <th>Datum</th>
+   <th>Autor</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>6.040</td>
+   <td>28.09.2023, 10:40:15</td>
+   <td>Clever, Fred</td>
+  </tr>
+ </tbody>
+</table>
+<p>Hier wird die Revison ermittelt, die zum Zeitpunkt 28. September 2023 um 12 Uhr mittags aktuell war. In diesem Beispiel Revision 6040.</p>
+
+<h3>Beispiel 2</h3>
+
+<pre>
+	<code>revisionAt(dateTime(2023,8,28))</code>
+</pre>
+
+<p><strong>Ausgabe:</strong></p>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Datum</th>
+			<th>Autor</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>6.004</td>
+			<td>27.09.2023, 14:56:54</td>
+			<td>Super, Administrator</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Hier wird die Revison ermittelt, die am 28. September 2023 um 0 Uhr aktuell war. In diesem Beispiel Revision 6004.</p>
 <p></p>

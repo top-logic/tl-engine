@@ -153,6 +153,18 @@ public class TLModelUtil {
 	public static final String SINGLETON_NAME_PATTERN_SRC =
 		MODULE_NAME_PATTERN_SRC + QUALIFIED_NAME_PART_SEPARATOR + NAME_PATTERN_SRC;
 
+	/**
+	 * {@link Pattern Regular expression} source of a {@link TLModelPart}.
+	 * <p>
+	 * This can be one of: {@link TLModule}, {@link TLType}, {@link TLStructuredTypePart} or
+	 * {@link TLModuleSingleton}.
+	 * </p>
+	 */
+	public static final String MODEL_PART_NAME_PATTERN_SRC =
+		MODULE_NAME_PATTERN_SRC + "(?:" + SCOPE_ID_PART_SEPARATOR + "\\d+" + SCOPE_ID_PART_SEPARATOR + "\\d+" + ")?" // Module
+			+ "(?:" + QUALIFIED_NAME_SEPARATOR + QNAME_PATTERN_SRC + ")?" // Type
+			+ "(?:" + QUALIFIED_NAME_PART_SEPARATOR + NAME_PATTERN_SRC + ")?"; // Attribute or Singleton
+
 	private static final class QualifiedNameVisitor extends DefaultTLModelVisitor<Void, StringBuilder> {
 
 		/** Singleton {@link QualifiedNameVisitor} instance. */

@@ -80,21 +80,21 @@ public class TLModelPartRef {
 	/**
 	 * Resolves a referenced type.
 	 */
-	public TLModelPart resolve() throws ConfigurationException {
+	public TLModelPart resolve() {
 		return TLModelUtil.resolveModelPart(qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
-	public TLType resolveType() throws ConfigurationException {
+	public TLType resolveType() {
 		return TLModelUtil.findType(qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
-	public TLTypePart resolvePart() throws ConfigurationException {
+	public TLTypePart resolvePart() {
 		return TLModelUtil.findPart(qualifiedName());
 	}
 
@@ -249,11 +249,7 @@ public class TLModelPartRef {
 			if (arg == null) {
 				return null;
 			}
-			try {
-				return arg.resolveType();
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError(ex);
-			}
+			return arg.resolveType();
 		}
 	}
 

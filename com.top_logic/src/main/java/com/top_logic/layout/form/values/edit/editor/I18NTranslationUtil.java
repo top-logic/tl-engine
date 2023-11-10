@@ -18,7 +18,6 @@ import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.form.BlockedStateChangedListener;
 import com.top_logic.layout.form.DisabledPropertyListener;
-import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ImmutablePropertyListener;
@@ -125,9 +124,9 @@ public class I18NTranslationUtil {
 	/**
 	 * Creates a {@link ButtonControl} for a {@link #getTranslateCommand translation command}.
 	 */
-	public static ButtonControl getTranslateControl(FormField field, FormContainer container,
+	public static ButtonControl getTranslateControl(FormField field, Iterator<? extends FormField> languageFields,
 			FieldTranslator translator) {
-		CommandModel command = getTranslateCommand(field, container, translator);
+		CommandModel command = getTranslateCommand(field, languageFields, translator);
 		ButtonControl button = new ButtonControl(command);
 		button.addListener(AbstractControlBase.ATTACHED_PROPERTY, new Listener(field, button));
 		return button;
@@ -135,15 +134,15 @@ public class I18NTranslationUtil {
 
 	/**
 	 * Creates a command that fills the given I18N-{@link FormField} with a translation based on the
-	 * value of a specified {@link #getSourceField source I18N-field} from the given
-	 * {@link FormContainer}.
+	 * value of a specified {@link #getSourceField source I18N-field} from the given language
+	 * fields.
 	 */
-	public static CommandModel getTranslateCommand(FormField targetField, FormContainer container,
+	public static CommandModel getTranslateCommand(FormField targetField, Iterator<? extends FormField> languageFields,
 			FieldTranslator translator) {
 		CommandModel command = new AbstractCommandModel() {
 			@Override
 			protected HandlerResult internalExecuteCommand(DisplayContext context) {
-				FormField sourceField = getSourceField(container);
+				FormField sourceField = getSourceField(languageFields);
 				translator.translate(sourceField, targetField);
 				return HandlerResult.DEFAULT_RESULT;
 			}
@@ -168,13 +167,19 @@ public class I18NTranslationUtil {
 	}
 
 	/**
-	 * Looks up the {@link FormField} belonging to the {@link #getSourceLanguage() source language} from
-	 * the given {@link FormContainer}.
+	 * Looks up the {@link FormField} belonging to the {@link #getSourceLanguage() source language}
+	 * from the given language fields.
+	 *
+	 * <p>
+	 * Each language field must have an attached {@link Locale}.
+	 * </p>
+	 * 
+	 * @see #getLocaleFromField(FormField)
 	 */
-	public static FormField getSourceField(FormContainer container) {
+	public static FormField getSourceField(Iterator<? extends FormField> languageFields) {
 		Locale sourceLanguage = getSourceLanguage();
-		for (Iterator<FormField> it = container.getFields(); it.hasNext();) {
-			FormField field = it.next();
+		while (languageFields.hasNext()) {
+			FormField field = languageFields.next();
 			Locale fieldLanguage = I18NTranslationUtil.getLocaleFromField(field);
 			if (I18NTranslationUtil.equalLanguage(fieldLanguage, sourceLanguage)) {
 				return field;

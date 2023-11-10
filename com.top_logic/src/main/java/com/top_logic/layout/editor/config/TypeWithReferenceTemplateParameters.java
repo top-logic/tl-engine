@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -42,7 +41,6 @@ public interface TypeWithReferenceTemplateParameters extends TypeTemplateParamet
 	/**
 	 * {@link TLReference} of {@link #getType()}.
 	 */
-	@Format(TLModelPartRef.TypePartRefValueProvider.class)
 	@Options(fun = MultipleReferencesOfType.class, args = { @Ref(TYPE) }, mapping = TLModelPartRef.PartMapping.class)
 	@Mandatory
 	@Name(REFERENCE)

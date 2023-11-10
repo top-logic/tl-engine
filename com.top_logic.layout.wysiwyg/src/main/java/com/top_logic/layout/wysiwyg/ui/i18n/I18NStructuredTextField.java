@@ -15,14 +15,17 @@ import java.util.Map;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.element.i18n.I18NField;
+import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.constraints.AbstractConstraint;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
+import com.top_logic.util.Resources;
 
 /**
  * An {@link I18NField} that displays {@link I18NStructuredText}.
@@ -30,6 +33,27 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class I18NStructuredTextField extends I18NField<FormField, I18NStructuredText, Map<Locale, StructuredText>> {
+
+	private static final Constraint NOT_EMPTY_I18N_STRUCTURED_TEXT = new AbstractConstraint() {
+
+		@Override
+		public boolean check(Object value) throws CheckException {
+			if (value == null) {
+				throw createNotEmptyException();
+			}
+			I18NStructuredText i18nValue = (I18NStructuredText) value;
+			if (i18nValue.getEntries().isEmpty()) {
+				throw createNotEmptyException();
+			}
+			return true;
+		}
+
+		private CheckException createNotEmptyException() {
+			return new CheckException(Resources.getInstance().getString(
+				com.top_logic.layout.form.I18NConstants.NOT_EMPTY));
+		}
+
+	};
 
 	/**
 	 * Creates a new {@link I18NStructuredTextField}.
@@ -100,7 +124,7 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 	 */
 	protected I18NStructuredTextField(String fieldName, boolean mandatory, boolean disabled,
 			Constraint constraint, List<String> featureConfig, List<String> templateFiles, String templates) {
-		super(fieldName, mandatory, disabled, constraint);
+		super(fieldName, mandatory, disabled, constraint, NOT_EMPTY_I18N_STRUCTURED_TEXT);
 		_featureConfig = unmodifiableList(list(featureConfig));
 		_templateFiles = unmodifiableList(list(templateFiles));
 		_templates = templates;
@@ -110,6 +134,8 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 	protected FormField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean isDisabled,
 			Constraint constraint, Locale language) {
 		HiddenField field = FormFactory.newHiddenField(fieldName);
+		field.setMandatory(isMandatory);
+		field.setDisabled(isDisabled);
 		if (constraint != null) {
 			field.addConstraint(constraint);
 		}

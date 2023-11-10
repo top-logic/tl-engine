@@ -96,6 +96,8 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	private boolean updateSourceCode(TLObject owner, TLStructuredTypePart attribute, String sourceCode) {
+		// Do not store empty value.
+		sourceCode = StringServices.nonEmpty(sourceCode);
 		Object formerValue = owner.tSetData(attribute.getName(), sourceCode);
 		return Utils.equals(formerValue, sourceCode);
 	}
@@ -130,6 +132,14 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	@Override
 	protected String getImagesTableName() {
 		return HTML_ATTRIBUTE_STORAGE;
+	}
+
+	@Override
+	public boolean isEmpty(Object value) {
+		if (value instanceof StructuredText) {
+			return StringServices.isEmpty(((StructuredText) value).getSourceCode());
+		}
+		return super.isEmpty(value);
 	}
 
 }

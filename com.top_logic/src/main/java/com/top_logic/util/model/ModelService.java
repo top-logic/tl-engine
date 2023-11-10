@@ -83,7 +83,6 @@ import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.list.ListInitializationUtil;
 import com.top_logic.util.model.check.AttributeChecker;
 import com.top_logic.util.model.check.CombinedChecker;
-import com.top_logic.util.model.check.GenericMandatoryCheck;
 import com.top_logic.util.model.check.InstanceCheck;
 import com.top_logic.util.model.check.NumberRangeCheck;
 import com.top_logic.util.model.check.StringSizeCheck;
@@ -454,9 +453,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 				// nobody can do anything about it.
 				continue;
 			}
-			if (attribute.isMandatory()) {
-				checks.add(new GenericMandatoryCheck(attribute));
-			}
+			attribute.getStorageImplementation().addConstraints(attribute, checks);
 
 			TLSize sizeAnnotation = attribute.getAnnotation(TLSize.class);
 			if (sizeAnnotation != null) {

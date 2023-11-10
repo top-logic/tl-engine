@@ -5,8 +5,6 @@
  */
 package com.top_logic.element.i18n;
 
-import static com.top_logic.basic.shared.collection.iterator.IteratorUtilShared.*;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -109,7 +107,7 @@ public class I18NStringTagProvider implements DisplayProvider {
 
 			int i = 0;
 			I18NField<?, ?, ?> i18nField = (I18NField<?, ?, ?>) control.getModel();
-			for (FormField field : toList(i18nField.getFields())) {
+			for (FormField field : i18nField.getLanguageFields()) {
 				HTMLFragment fieldControl = controls.get(i++);
 				HTMLFragment errorControl = controls.get(i++);
 				// There is no translate button for the field containing the source that is translated.

@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.wysiwyg.ui.i18n;
 
-import java.util.Iterator;
-
 import com.top_logic.element.i18n.I18NField;
 import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
 import com.top_logic.layout.Control;
@@ -46,8 +44,7 @@ public class I18NStructuredTextControlProvider implements ControlProvider {
 
 	private Control internalCreateControl(I18NField<?, ?, ?> member, String style) {
 		OnVisibleControl block = new OnVisibleControl(member);
-		for (Iterator<FormField> it = member.getFields(); it.hasNext();) {
-			FormField field = it.next();
+		for (FormField field : member.getLanguageFields()) {
 			block.addChild(StructuredTextControlProvider.INSTANCE.createControl(field, style));
 			block.addChild(new ErrorControl(field, true));
 			if (!I18NTranslationUtil.isSourceField(field)) {

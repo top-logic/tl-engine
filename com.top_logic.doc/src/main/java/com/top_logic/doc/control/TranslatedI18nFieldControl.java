@@ -5,7 +5,6 @@
  */
 package com.top_logic.doc.control;
 
-import static com.top_logic.basic.shared.collection.iterator.IteratorUtilShared.*;
 import static java.util.Collections.*;
 import static java.util.Objects.*;
 
@@ -30,14 +29,13 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.AbstractFormFieldControl;
 import com.top_logic.layout.form.control.AbstractFormMemberControl;
-import com.top_logic.layout.form.model.CompositeField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
 
 /**
- * A {@link Control} that displays an i18n {@link CompositeField} by displaying just one of the
+ * A {@link Control} that displays an {@link I18NField i18n} field by displaying just one of the
  * languages.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
@@ -51,7 +49,7 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 		/**
 		 * Typed configuration interface definition for {@link TranslatedI18nFieldControl.Provider}.
 		 * 
-		 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
+		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 		 */
 		public interface Config
 				extends PolymorphicConfiguration<TranslatedI18nFieldControl.Provider>, WithDocumentationLanguage {
@@ -81,7 +79,7 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 
 		@Override
 		public Control createControl(Object model, String style) {
-			CompositeField field = (CompositeField) model;
+			I18NField<?, ?, ?> field = (I18NField<?, ?, ?>) model;
 			ComponentChannel languageChannel;
 			if (_contextComponent != null) {
 				Protocol log = new LogProtocol(TranslatedI18nFieldControl.class);
@@ -97,7 +95,7 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 		 * Creates the actual result control.
 		 * 
 		 * @param i18nField
-		 *        The {@link CompositeField} holding as children the actual field to display
+		 *        The {@link I18NField} holding as children the actual field to display.
 		 * @param language
 		 *        The {@link ComponentChannel} of type {@link Locale} which holds the language to
 		 *        determine the field to display.
@@ -105,11 +103,11 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 		 *        Style of the result control (See
 		 *        {@link ControlProvider#createControl(Object, String)})
 		 */
-		protected abstract Control createControl(CompositeField i18nField, ComponentChannel language, String style);
+		protected abstract Control createControl(I18NField<?, ?, ?> i18nField, ComponentChannel language, String style);
 
 	}
 
-	private static final String CSS_CLASS = "tlTranslatedI18nField";
+	private static final String TYPE_CSS_CLASS = "tlTranslatedI18nField";
 
 	private C _innerControl;
 
@@ -129,7 +127,7 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 	 * @param style
 	 *        See the second parameter of {@link ControlProvider#createControl(Object, String)}.
 	 */
-	public TranslatedI18nFieldControl(CompositeField i18nField, ComponentChannel language, String style) {
+	public TranslatedI18nFieldControl(I18NField<?, ?, ?> i18nField, ComponentChannel language, String style) {
 		super(i18nField, emptyMap());
 		_language = language;
 		_style = style;
@@ -153,7 +151,7 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 
 	/** The CSS class specific to this type of {@link Control}. */
 	protected String getCssClass() {
-		return CSS_CLASS;
+		return TYPE_CSS_CLASS;
 	}
 
 	@Override
@@ -206,7 +204,7 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 
 	private FormField getInnerField(Locale language) {
 		SearchResult<FormField> searchResult = new SearchResult<>();
-		for (FormField partField : toList(getFieldModel().getFields())) {
+		for (FormField partField : getFieldModel().getLanguageFields()) {
 			Locale fieldLanguage = partField.get(I18NField.LANGUAGE);
 			searchResult.addCandidate(partField);
 			if (isSameLanguage(language, fieldLanguage)) {
@@ -236,8 +234,8 @@ public abstract class TranslatedI18nFieldControl<C extends AbstractFormFieldCont
 	}
 
 	/** Redirect to {@link #getModel()} that declares the correct type. */
-	protected CompositeField getFieldModel() {
-		return (CompositeField) getModel();
+	protected I18NField<?, ?, ?> getFieldModel() {
+		return (I18NField<?, ?, ?>) getModel();
 	}
 
 }

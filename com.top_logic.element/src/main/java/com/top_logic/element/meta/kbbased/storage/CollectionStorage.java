@@ -116,11 +116,6 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 		}
 	}
 
-	@Override
-	protected boolean isEmpty(Object value) {
-		return super.isEmpty(value) || ((Collection<?>) value).isEmpty();
-	}
-
 	/**
 	 * Checks that the last value is not removed from a mandatory attribute.
 	 */

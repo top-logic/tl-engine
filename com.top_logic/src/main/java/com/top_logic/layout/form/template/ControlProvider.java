@@ -52,7 +52,7 @@ public interface ControlProvider extends HTMLFragmentProvider {
 	}
 
 	@Override
-	default Control createFragment(Object model, String style) {
+	default HTMLFragment createFragment(Object model, String style) {
 		return createControl(model, style);
 	}
 

@@ -48,7 +48,7 @@ public class Count extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		int start = asInt(arguments[0]);
 		int stop = asInt(arguments[1]);
 		int step;

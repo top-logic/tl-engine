@@ -61,7 +61,7 @@ public class NextId extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		StringBuilder result = new StringBuilder("nextId");
 		for (Object arg : arguments) {
 			SequenceIdGenerator.addNames(result, arg);

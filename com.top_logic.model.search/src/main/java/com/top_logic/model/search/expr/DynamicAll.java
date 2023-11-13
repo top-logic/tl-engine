@@ -41,7 +41,7 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (arguments[0] == null) {
 			return Collections.emptyList();
 		}

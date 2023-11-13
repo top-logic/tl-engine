@@ -60,7 +60,7 @@ public class Binary extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String name = asString(arguments[0]);
 		Object rawData = arguments[1];
 		String specifiedContentType = asString(arguments[2], null);

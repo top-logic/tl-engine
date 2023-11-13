@@ -43,7 +43,7 @@ public class Regex extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		String pattern = asString(notNull(getArguments()[0], arguments[0]));
 		return Pattern.compile(pattern);
 	}

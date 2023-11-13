@@ -52,7 +52,7 @@ public class Translate extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object inputArg = arguments[0];
 		if (inputArg == null) {
 			return null;

@@ -44,7 +44,7 @@ public class ToUpperCase extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		String str = asString(arguments[0]);
 		return str.toUpperCase();
 	}

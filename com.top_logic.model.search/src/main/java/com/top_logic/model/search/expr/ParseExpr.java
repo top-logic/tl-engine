@@ -44,7 +44,7 @@ public class ParseExpr extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Format format = (Format) arguments[0];
 		String arg = asString(arguments[1]);
 		try {

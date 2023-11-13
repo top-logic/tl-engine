@@ -39,7 +39,7 @@ public class SubList extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		List<?> list = asList(arguments[0]);
 		int beginIndex = index(list, arguments[1]);
 		int endIndex = arguments.length < 3 ? list.size() : index(list, arguments[2]);

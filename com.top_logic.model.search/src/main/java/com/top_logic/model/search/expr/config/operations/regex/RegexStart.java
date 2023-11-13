@@ -49,7 +49,7 @@ public class RegexStart extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Object match = arguments[0];
 		if (match == null) {
 			return null;

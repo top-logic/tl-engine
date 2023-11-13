@@ -49,7 +49,7 @@ public class ResKeyArguments extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		if (!(arguments[0] instanceof ResKey)) {
 			// Null, literal string?
 			return arguments[0];

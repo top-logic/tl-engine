@@ -78,7 +78,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		OperationImpl outerOperation = (OperationImpl) definitions.getVarOrNull(COPY_OPERATION);
 
 		OperationImpl operation;

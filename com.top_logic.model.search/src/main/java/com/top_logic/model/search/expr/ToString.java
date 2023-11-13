@@ -44,7 +44,7 @@ public class ToString extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Object base = arguments[0];
 		if (arguments.length > 1 || base instanceof Collection<?>) {
 			StringBuilder result = new StringBuilder();

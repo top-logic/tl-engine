@@ -42,7 +42,7 @@ public class I18NTranslate extends Translate {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (arguments[0] instanceof StructuredText) {
 			StructuredText text = (StructuredText) arguments[0];
 
@@ -64,7 +64,7 @@ public class I18NTranslate extends Translate {
 			String translation = translator.translate(text.getSourceCode(), sourceLang, targetLang);
 			return new StructuredText(translation, Collections.unmodifiableMap(text.getImages()));
 		}
-		return super.eval(self, arguments, definitions);
+		return super.eval(arguments, definitions);
 	}
 
 	/**

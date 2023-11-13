@@ -43,7 +43,7 @@ public class IconBuilder extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return asImage(arguments[0]);
 	}
 

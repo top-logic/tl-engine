@@ -45,7 +45,7 @@ public class HTTPResponse extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		int sc = asInt(arguments[0]);
 		Object result = arguments[1];
 		String contentType = asString(arguments[2]);

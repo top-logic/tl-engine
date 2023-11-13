@@ -46,7 +46,7 @@ public class CreateRevision extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject tlObject = asTLObject(arguments[0]);
 		if (tlObject == null) {
 			return null;

@@ -98,15 +98,13 @@ public abstract class GenericMethod extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		Object self = eval(getSelf(), definitions);
-
 		SearchExpression[] argExprs = getArguments();
 		Object[] arguments = new Object[argExprs.length];
 		for (int n = 0, cnt = arguments.length; n < cnt; n++) {
 			arguments[n] = eval(argExprs[n], definitions);
 		}
 
-		return eval(self, arguments, definitions);
+		return eval(arguments, definitions);
 	}
 
 	private Object eval(SearchExpression expr, EvalContext definitions) {
@@ -125,7 +123,7 @@ public abstract class GenericMethod extends SearchExpression {
 	public abstract TLType getType(TLType selfType, List<TLType> argumentTypes);
 
 	/**
-	 * Whether the {@link #eval(Object, Object[], EvalContext)} implementation does not modify
+	 * Whether the {@link #eval(Object[], EvalContext)} implementation does not modify
 	 * state.
 	 * 
 	 * <p>
@@ -138,15 +136,13 @@ public abstract class GenericMethod extends SearchExpression {
 
 	/**
 	 * Performs the evaluation on concrete values computed from sub expressions.
-	 *
-	 * @param self
-	 *        The object on which to operate.
 	 * @param arguments
 	 *        The arguments to the method.
 	 * @param definitions
 	 *        See {@link SearchExpression#evalWith(EvalContext, Args)}.
+	 *
 	 * @return The result of the invocation.
 	 */
-	protected abstract Object eval(Object self, Object[] arguments, EvalContext definitions);
+	protected abstract Object eval(Object[] arguments, EvalContext definitions);
 
 }

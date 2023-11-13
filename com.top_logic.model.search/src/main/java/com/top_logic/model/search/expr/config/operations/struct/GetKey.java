@@ -42,7 +42,7 @@ public class GetKey extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		return asEntry(arguments[0]).getKey();
 	}
 

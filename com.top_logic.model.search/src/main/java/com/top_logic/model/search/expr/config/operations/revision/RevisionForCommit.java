@@ -46,7 +46,7 @@ public class RevisionForCommit extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		long commitNumber = asLong(arguments[0]);
 		if (commitNumber < 0) {
 			throw new TopLogicException(I18NConstants.ERROR_NEGATIVE_COMMIT_NR__EXPR_COMMIT.fill(this, commitNumber));

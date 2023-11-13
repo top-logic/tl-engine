@@ -44,7 +44,7 @@ public class InCurrent extends GenericMethod implements WithFlatMapSemantics<Voi
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return evalPotentialFlatMap(definitions, arguments[0], null);
 	}
 

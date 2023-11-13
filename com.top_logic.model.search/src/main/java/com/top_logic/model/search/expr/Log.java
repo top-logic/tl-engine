@@ -44,7 +44,7 @@ public class Log extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String message = asString(arguments[0]);
 		if (arguments.length > 1) {
 			message = MessageFormat.format(message, Arrays.copyOfRange(arguments, 1, arguments.length));

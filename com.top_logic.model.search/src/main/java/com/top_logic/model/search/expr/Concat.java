@@ -41,7 +41,7 @@ public class Concat extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		List<Object> result = new ArrayList<>();
 		for (Object arg : arguments) {
 			add(result, arg);

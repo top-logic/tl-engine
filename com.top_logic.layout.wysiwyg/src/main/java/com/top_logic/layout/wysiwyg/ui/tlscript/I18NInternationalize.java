@@ -48,7 +48,7 @@ public class I18NInternationalize extends Internationalize {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object inputArg = arguments[0];
 		boolean translate = asBoolean(arguments[2]);
 		if (inputArg instanceof StructuredText) {
@@ -111,7 +111,7 @@ public class I18NInternationalize extends Internationalize {
 				return result;
 			}
 		}
-		return super.eval(self, arguments, definitions);
+		return super.eval(arguments, definitions);
 	}
 
 	/**

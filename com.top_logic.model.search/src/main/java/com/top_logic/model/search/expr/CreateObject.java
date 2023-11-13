@@ -40,7 +40,7 @@ public class CreateObject extends AbstractObjectCreation {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLClass type = (TLClass) asStructuredTypeNonNull(arguments[0], getArguments()[0]);
 		TLObject context = asTLObject(arguments[1]);
 		boolean transientObject = asBoolean(arguments[2]);

@@ -51,7 +51,7 @@ public class ZipEntry extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		BinaryDataSource contents = (BinaryDataSource) arguments[0];
 		String comment = asString(arguments[1], null);
 		Object rawTime = arguments[2];

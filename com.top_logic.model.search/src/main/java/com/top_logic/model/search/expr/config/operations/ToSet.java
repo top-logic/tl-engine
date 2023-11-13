@@ -52,7 +52,7 @@ public class ToSet extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Object base = arguments[0];
 		Set<?> result;
 		if (base == null) {

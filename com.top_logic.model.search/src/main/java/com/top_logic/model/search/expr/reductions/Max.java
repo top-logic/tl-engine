@@ -41,7 +41,7 @@ public class Max extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		return new Evaluator().add(arguments).getValue();
 	}
 

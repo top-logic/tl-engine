@@ -51,7 +51,7 @@ public class SupplierSearchExpression extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return _builder.getValue();
 	}
 

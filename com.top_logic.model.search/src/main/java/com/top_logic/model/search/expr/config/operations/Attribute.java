@@ -43,7 +43,7 @@ public class Attribute extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		if (arguments[0] instanceof TLStructuredType) {
 			return ((TLStructuredType) arguments[0]).getPart(asString(arguments[1]));
 		} else {

@@ -350,7 +350,7 @@ public class ConstantFolding {
 
 				Object literalValue = literalValue(baseResult);
 				if (simpleExpr.canEvaluateAtCompileTime(literalValue, arguments)) {
-					return literal(simpleExpr.eval(literalValue, arguments));
+					return literal(simpleExpr.eval(arguments));
 				}
 			}
 			return super.composeGenericMethod(expr, arg, baseResult, argumentsResult);

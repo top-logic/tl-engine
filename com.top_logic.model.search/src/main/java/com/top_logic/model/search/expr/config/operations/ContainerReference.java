@@ -41,7 +41,7 @@ public class ContainerReference extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
 			return object.tContainerReference();

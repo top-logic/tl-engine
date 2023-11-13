@@ -43,7 +43,7 @@ public class Add extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 

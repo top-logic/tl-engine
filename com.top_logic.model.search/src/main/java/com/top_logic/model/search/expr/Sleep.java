@@ -39,7 +39,7 @@ public class Sleep extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		long sleepTime = asLong(arguments[0]);
 		try {
 			Thread.sleep(sleepTime);

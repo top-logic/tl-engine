@@ -51,7 +51,7 @@ public class RegexReplace extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object input = arguments[1];
 		if (input == null) {
 			return null;

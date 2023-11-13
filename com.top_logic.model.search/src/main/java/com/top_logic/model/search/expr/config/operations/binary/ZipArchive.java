@@ -52,7 +52,7 @@ public class ZipArchive extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String name = asString(arguments[0]);
 		List<?> entries = asList(arguments[1]);
 		String comment = asString(arguments[2], null);

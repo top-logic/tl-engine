@@ -6,7 +6,7 @@
 package com.top_logic.model.search.expr;
 
 /**
- * {@link GenericMethod} that can {@link #eval(Object, Object[]) be evaluated} without any context.
+ * {@link GenericMethod} that can {@link #eval(Object[]) be evaluated} without any context.
  * 
  * <p>
  * A {@link SimpleGenericMethod} take part in the constant folding optimization of the script
@@ -25,20 +25,20 @@ public abstract class SimpleGenericMethod extends GenericMethod {
 	}
 
 	@Override
-	protected final Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return eval(self, arguments);
+	protected final Object eval(Object[] arguments, EvalContext definitions) {
+		return eval(arguments);
 	}
 
 	/**
-	 * Whether the {@link #eval(Object, Object[])} can be evaluated during expression compilation.
+	 * Whether the {@link #eval(Object[])} can be evaluated during expression compilation.
 	 */
 	public boolean canEvaluateAtCompileTime(Object self, Object[] arguments) {
 		return true;
 	}
 
 	/**
-	 * Implementation of {@link #eval(Object, Object[], EvalContext)} without {@link EvalContext}.
+	 * Implementation of {@link #eval(Object[], EvalContext)} without {@link EvalContext}.
 	 */
-	public abstract Object eval(Object self, Object[] arguments);
+	public abstract Object eval(Object[] arguments);
 
 }

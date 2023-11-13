@@ -47,7 +47,7 @@ public class Average extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Double eval(Object self, Object[] arguments) {
+	public Double eval(Object[] arguments) {
 		int size = size(this, arguments);
 		if (size == 0) {
 			return null;

@@ -33,7 +33,7 @@ public class ToBoolean extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		return asBoolean(arguments[0]);
 	}
 

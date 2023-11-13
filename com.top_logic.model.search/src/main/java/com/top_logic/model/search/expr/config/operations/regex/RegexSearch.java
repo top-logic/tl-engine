@@ -52,7 +52,7 @@ public class RegexSearch extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Object input = arguments[1];
 		if (input == null) {
 			return null;

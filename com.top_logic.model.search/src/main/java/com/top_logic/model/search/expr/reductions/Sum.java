@@ -47,7 +47,7 @@ public class Sum extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Double eval(Object self, Object[] arguments) {
+	public Double eval(Object[] arguments) {
 		return sum(this, arguments);
 	}
 

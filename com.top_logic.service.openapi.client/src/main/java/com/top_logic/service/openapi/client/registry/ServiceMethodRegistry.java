@@ -234,7 +234,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 			private ResponseHandler _responseHandler;
 
 			@Override
-			public Object execute(Object self, Object[] arguments) throws Exception {
+			public Object execute(Object[] arguments) throws Exception {
 				Call call = Call.newInstance(adaptValuesToExpectedType(arguments));
 				UriBuilder urlBuilder = new UriBuilder(baseUrl);
 				for (CallBuilder modifier : modifiers) {

@@ -27,17 +27,17 @@ public class StructTypeDef extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link StructTypeDef}.
 	 */
-	protected StructTypeDef(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected StructTypeDef(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new StructTypeDef(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new StructTypeDef(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -61,7 +61,7 @@ public class StructTypeDef extends SimpleGenericMethod {
 		public StructTypeDef build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkNoTarget(expr, self);
-			return new StructTypeDef(getConfig().getName(), self, args);
+			return new StructTypeDef(getConfig().getName(), args);
 		}
 
 	}

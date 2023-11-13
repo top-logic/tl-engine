@@ -20,13 +20,13 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link AbstractListAccess}.
 	 */
-	protected AbstractListAccess(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected AbstractListAccess(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override

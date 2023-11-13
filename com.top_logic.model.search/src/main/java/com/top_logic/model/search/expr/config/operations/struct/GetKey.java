@@ -27,17 +27,17 @@ public class GetKey extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link GetKey}.
 	 */
-	protected GetKey(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected GetKey(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new GetKey(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new GetKey(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -61,7 +61,7 @@ public class GetKey extends SimpleGenericMethod {
 		public GetKey build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new GetKey(getConfig().getName(), self, args);
+			return new GetKey(getConfig().getName(), args);
 		}
 
 	}

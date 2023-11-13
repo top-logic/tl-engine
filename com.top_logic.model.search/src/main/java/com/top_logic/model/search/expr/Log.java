@@ -29,17 +29,17 @@ public class Log extends GenericMethod {
 	/**
 	 * Creates a {@link Log}.
 	 */
-	protected Log(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Log(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Log(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Log(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -80,7 +80,7 @@ public class Log extends GenericMethod {
 		public Log build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkMinArgs(expr, args, 1);
-			return new Log(getName(), self, args);
+			return new Log(getName(), args);
 		}
 
 	}

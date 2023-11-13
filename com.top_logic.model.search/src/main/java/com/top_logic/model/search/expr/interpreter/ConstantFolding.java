@@ -325,15 +325,12 @@ public class ConstantFolding {
 		}
 
 		@Override
-		protected SearchExpression composeGenericMethod(GenericMethod expr, Void arg, SearchExpression baseResult,
+		protected SearchExpression composeGenericMethod(GenericMethod expr, Void arg,
 				List<SearchExpression> argumentsResult) {
 			optimize:
 			if (expr instanceof SimpleGenericMethod) {
 				SimpleGenericMethod simpleExpr = (SimpleGenericMethod) expr;
 				if (!simpleExpr.isSideEffectFree()) {
-					break optimize;
-				}
-				if (!isLiteral(baseResult)) {
 					break optimize;
 				}
 				for (SearchExpression argExpr : argumentsResult) {
@@ -348,12 +345,11 @@ public class ConstantFolding {
 					arguments[n] = literalValue(argumentsResult.get(n));
 				}
 
-				Object literalValue = literalValue(baseResult);
-				if (simpleExpr.canEvaluateAtCompileTime(literalValue, arguments)) {
+				if (simpleExpr.canEvaluateAtCompileTime(arguments)) {
 					return literal(simpleExpr.eval(arguments));
 				}
 			}
-			return super.composeGenericMethod(expr, arg, baseResult, argumentsResult);
+			return super.composeGenericMethod(expr, arg, argumentsResult);
 		}
 
 		private static boolean isLiteral(SearchExpression result) {

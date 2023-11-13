@@ -36,17 +36,17 @@ public class RegexGroup extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link RegexGroup}.
 	 */
-	protected RegexGroup(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexGroup(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexGroup(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexGroup(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
@@ -89,7 +89,7 @@ public class RegexGroup extends SimpleGenericMethod {
 
 		@Override
 		public RegexGroup build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new RegexGroup(getConfig().getName(), self, args);
+			return new RegexGroup(getConfig().getName(), args);
 		}
 
 		@Override

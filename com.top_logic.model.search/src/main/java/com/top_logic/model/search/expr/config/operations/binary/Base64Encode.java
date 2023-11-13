@@ -41,17 +41,17 @@ public class Base64Encode extends GenericMethod implements WithFlatMapSemantics<
 	/** 
 	 * Creates a {@link Base64Encode}.
 	 */
-	protected Base64Encode(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Base64Encode(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Base64Encode(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Base64Encode(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
@@ -72,7 +72,7 @@ public class Base64Encode extends GenericMethod implements WithFlatMapSemantics<
 			try (OutputStream encoder = encoding.wrap(buffer)) {
 				((BinaryDataSource) self).deliverTo(encoder);
 			} catch (IOException ex) {
-				throw new TopLogicException(I18NConstants.ENCODING_FAILED__MSG_EXPR.fill(ex.getMessage(), getSelf()));
+				throw errorEncodingFailed(ex);
 			}
 			return buffer.toString();
 		} else if (self instanceof BinaryContent) {
@@ -81,12 +81,17 @@ public class Base64Encode extends GenericMethod implements WithFlatMapSemantics<
 			try (InputStream data = ((BinaryContent) self).getStream(); OutputStream encoder = encoding.wrap(buffer)) {
 				StreamUtilities.copyStreamContents(data, encoder);
 			} catch (IOException ex) {
-				throw new TopLogicException(I18NConstants.ENCODING_FAILED__MSG_EXPR.fill(ex.getMessage(), getSelf()));
+				throw errorEncodingFailed(ex);
 			}
 			return buffer.toString();
 		} else {
-			throw new TopLogicException(I18NConstants.ERROR_NOT_A_BINARY_VALUE__VAL_EXPR.fill(self, getSelf()));
+			throw new TopLogicException(I18NConstants.ERROR_NOT_A_BINARY_VALUE__VAL_EXPR.fill(self, getArguments()[0]));
 		}
+	}
+
+	private TopLogicException errorEncodingFailed(IOException ex) {
+		return new TopLogicException(
+			I18NConstants.ENCODING_FAILED__MSG_EXPR.fill(ex.getMessage(), getArguments()[0]));
 	}
 
 	/**
@@ -128,7 +133,7 @@ public class Base64Encode extends GenericMethod implements WithFlatMapSemantics<
 
 		@Override
 		public Base64Encode build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new Base64Encode(getName(), self, args);
+			return new Base64Encode(getName(), args);
 		}
 
 		@Override

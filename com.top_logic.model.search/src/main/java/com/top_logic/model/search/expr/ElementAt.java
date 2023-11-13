@@ -24,13 +24,13 @@ public class ElementAt extends AbstractListAccess {
 	/**
 	 * Creates a {@link ElementAt}.
 	 */
-	protected ElementAt(SearchExpression self, SearchExpression... arguments) {
-		super("elementAt", self, arguments);
+	protected ElementAt(SearchExpression... arguments) {
+		super("elementAt", arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ElementAt(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ElementAt(arguments);
 	}
 
 	@Override

@@ -24,18 +24,18 @@ public class SubList extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link SubList}.
 	 */
-	protected SubList(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected SubList(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new SubList(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new SubList(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -78,7 +78,7 @@ public class SubList extends SimpleGenericMethod {
 		public SubList build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 2, 3);
-			return new SubList("subList", self, args);
+			return new SubList("subList", args);
 		}
 
 	}

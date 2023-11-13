@@ -37,17 +37,17 @@ public class ToSet extends SimpleGenericMethod {
 	/**
 	 * Creates a new {@link ToSet}.
 	 */
-	public ToSet(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public ToSet(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToSet(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToSet(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -81,7 +81,7 @@ public class ToSet extends SimpleGenericMethod {
 		public ToSet build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new ToSet(getConfig().getName(), self, args);
+			return new ToSet(getConfig().getName(), args);
 		}
 
 	}

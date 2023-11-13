@@ -25,8 +25,6 @@ public abstract class GenericMethod extends SearchExpression {
 
 	private final String _name;
 
-	private SearchExpression _self;
-
 	private SearchExpression[] _args;
 
 	/**
@@ -34,47 +32,28 @@ public abstract class GenericMethod extends SearchExpression {
 	 *
 	 * @param name
 	 *        See {@link #getName()}.
-	 * @param self
-	 *        See {@link #getSelf()}.
 	 * @param arguments
 	 *        See {@link #getArguments()}
 	 */
-	protected GenericMethod(String name, SearchExpression self, SearchExpression[] arguments) {
+	protected GenericMethod(String name, SearchExpression[] arguments) {
 		_name = name;
-		_self = self;
 		_args = arguments;
 	}
 
 	/**
-	 * Creates a {@link SearchExpression} implementing the same generic method but invoked on
-	 * another object with other arguments.
+	 * Creates a {@link SearchExpression} implementing the same generic method but invoked with
+	 * other arguments.
 	 * 
-	 * @param self
-	 *        Copy of the expression, on which the method is invoked.
 	 * @param arguments
 	 *        Copies of the argument expressions of the method.
 	 */
-	public abstract GenericMethod copy(SearchExpression self, SearchExpression[] arguments);
+	public abstract GenericMethod copy(SearchExpression[] arguments);
 
 	/**
 	 * The name of the method.
 	 */
 	public String getName() {
 		return _name;
-	}
-
-	/**
-	 * The expression delivering the object on which the method is invoked.
-	 */
-	public SearchExpression getSelf() {
-		return _self;
-	}
-
-	/**
-	 * @see #getSelf()
-	 */
-	public void setSelf(SearchExpression self) {
-		_self = self;
 	}
 
 	/**
@@ -113,14 +92,12 @@ public abstract class GenericMethod extends SearchExpression {
 
 	/**
 	 * Compute the type of the method result.
-	 *
-	 * @param selfType
-	 *        The type of the base object.
 	 * @param argumentTypes
 	 *        The types of the arguments.
+	 *
 	 * @return The type of the result.
 	 */
-	public abstract TLType getType(TLType selfType, List<TLType> argumentTypes);
+	public abstract TLType getType(List<TLType> argumentTypes);
 
 	/**
 	 * Whether the {@link #eval(Object[], EvalContext)} implementation does not modify

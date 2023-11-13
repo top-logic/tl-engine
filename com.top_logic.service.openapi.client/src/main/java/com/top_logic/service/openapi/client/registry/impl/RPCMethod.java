@@ -46,7 +46,7 @@ public class RPCMethod extends GenericMethod {
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
 		try {
-			return _handler.execute(self, arguments);
+			return _handler.execute(arguments);
 		} catch (I18NRuntimeException ex) {
 			throw ex;
 		} catch (Exception ex) {

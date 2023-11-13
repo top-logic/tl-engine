@@ -18,7 +18,7 @@ public interface CallHandler {
 	/**
 	 * Performs the call operation.
 	 */
-	Object execute(Object self, Object[] arguments) throws Exception;
+	Object execute(Object[] arguments) throws Exception;
 
 	/**
 	 * Initializes this {@link CallHandler}.

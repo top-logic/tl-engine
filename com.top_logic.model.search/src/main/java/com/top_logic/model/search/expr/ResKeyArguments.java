@@ -36,7 +36,7 @@ public class ResKeyArguments extends SimpleGenericMethod {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new ResKeyArguments(arguments);
+		return SearchExpressionFactory.reskeyArguments(arguments);
 	}
 
 	@Override

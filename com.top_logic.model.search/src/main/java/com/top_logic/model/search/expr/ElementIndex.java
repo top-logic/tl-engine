@@ -31,7 +31,7 @@ public class ElementIndex extends AbstractListAccess {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new ElementIndex(arguments);
+		return SearchExpressionFactory.elementIndex(arguments);
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class ElementIndex extends AbstractListAccess {
 		public ElementIndex build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return SearchExpressionFactory.elementIndex(self, args[0]);
+			return SearchExpressionFactory.elementIndex(args);
 		}
 
 	}

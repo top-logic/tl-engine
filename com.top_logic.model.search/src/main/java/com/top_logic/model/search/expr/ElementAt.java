@@ -105,7 +105,7 @@ public class ElementAt extends AbstractListAccess {
 		public ElementAt build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return SearchExpressionFactory.elementAt(self, args[0]);
+			return SearchExpressionFactory.elementAt(args);
 		}
 
 	}

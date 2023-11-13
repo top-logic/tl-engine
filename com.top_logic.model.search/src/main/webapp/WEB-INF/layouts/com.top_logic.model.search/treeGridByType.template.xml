@@ -63,6 +63,17 @@
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
 			/>
+			<button id="createNewRow"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				createContext="model -> $model"
+				initOperation="createContext -> newObject -> target -> $createContext.add(`${reference}`, $newObject)"
+				target="selection(self())"
+			>
+				<type-options class="com.top_logic.element.layout.create.AttributeBasedCreateTypeOptions"
+					owner="${type}"
+					attribute="${reference}"
+				/>
+			</button>
 		</buttons>
 	</config>
 </config:template>

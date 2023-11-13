@@ -95,8 +95,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix SELECT_CONCRETE_TYPE_DIALOG;
 
-	public static ResKey1 ABSTRACT_TYPE_WITHOUT_SUBTYPES__TYPE;
-
 	/**
 	 * @en The context object ''{0}'' is not part of the tree.
 	 */
@@ -106,6 +104,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en No context object given for the new row.
 	 */
 	public static ResKey NO_CONTEXT_OBJECT_FOR_ROW;
+
+	/**
+	 * @en It's not possible to create a new object in this context: {0}
+	 */
+	public static ResKey1 NO_NEW_OBJECT_FOR_THIS_CONTEXT__CONTEXT;
 
 	/**
 	 * @en The context object ''{0}'' exists multiple times in the tree.

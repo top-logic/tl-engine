@@ -5,6 +5,9 @@
  */
 package com.top_logic.element.layout.grid;
 
+import static com.top_logic.basic.config.TypedConfiguration.*;
+import static com.top_logic.basic.config.misc.TypedConfigUtil.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +18,9 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.element.layout.create.ConstantCreateTypeOptions;
+import com.top_logic.element.layout.create.CreateTypeOptions;
 import com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler;
 import com.top_logic.element.model.util.TypeReferenceConfig;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -26,6 +32,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -92,6 +99,8 @@ public class GridCreateHandler extends AbstractGridCreateHandler {
 
 	private final AbstractCreateCommandHandler _createHander;
 
+	private final CreateTypeOptions _typeOptions;
+
 	/**
 	 * Creates a new {@link GridCreateHandler}.
 	 */
@@ -100,6 +109,7 @@ public class GridCreateHandler extends AbstractGridCreateHandler {
 
 		_metaElement = TypeReferenceConfig.Resolver.getMetaElement(aConfig);
 		_createHander = createCreateHandler(context, aConfig);
+		_typeOptions = initTypeOptions(_metaElement);
 	}
 
 	private static AbstractCreateCommandHandler createCreateHandler(InstantiationContext context, Config config) {
@@ -196,7 +206,31 @@ public class GridCreateHandler extends AbstractGridCreateHandler {
 	}
 
 	@Override
-	protected TLClass getCreateType() {
+	protected CreateTypeOptions getTypeOptions() {
+		return _typeOptions;
+	}
+
+	/**
+	 * Creates the {@link CreateTypeOptions} that computes which types the user can instantiate.
+	 * <p>
+	 * This is called at the end of the constructor. Therefore, if this is overridden in subclasses,
+	 * it must not access any fields as they might not have been initialized.
+	 * </p>
+	 * 
+	 * @param createType
+	 *        The user can choose between this type and all its concrete subtypes, recursively.
+	 *        Abstract types are filtered out.
+	 */
+	protected CreateTypeOptions initTypeOptions(TLClass createType) {
+		@SuppressWarnings("unchecked")
+		ConstantCreateTypeOptions.Config<ConstantCreateTypeOptions<?>> config =
+			newConfigItem(ConstantCreateTypeOptions.Config.class);
+		setProperty(config, TypeReferenceConfig.TYPE, TLModelPartRef.ref(createType));
+		return TypedConfigUtil.createInstance(config);
+	}
+
+	/** @see Config#getType() */
+	protected final TLClass getCreateType() {
 		return _metaElement;
 	}
 

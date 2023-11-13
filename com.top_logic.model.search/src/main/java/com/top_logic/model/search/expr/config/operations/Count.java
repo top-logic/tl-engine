@@ -33,18 +33,18 @@ public class Count extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Count}.
 	 */
-	protected Count(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Count(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Count(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Count(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class Count extends SimpleGenericMethod {
 		public Count build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 2, 3);
-			return new Count(getConfig().getName(), self, args);
+			return new Count(getConfig().getName(), args);
 		}
 
 	}

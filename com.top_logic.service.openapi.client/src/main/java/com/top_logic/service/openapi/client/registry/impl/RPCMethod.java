@@ -27,19 +27,19 @@ public class RPCMethod extends GenericMethod {
 	/**
 	 * Creates a {@link RPCMethod}.
 	 */
-	public RPCMethod(CallHandler handler, String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public RPCMethod(CallHandler handler, String name, SearchExpression[] arguments) {
+		super(name, arguments);
 
 		_handler = handler;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RPCMethod(_handler, getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RPCMethod(_handler, getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 

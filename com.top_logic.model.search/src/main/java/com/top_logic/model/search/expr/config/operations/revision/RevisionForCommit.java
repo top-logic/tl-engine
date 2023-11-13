@@ -31,17 +31,17 @@ public class RevisionForCommit extends GenericMethod {
 	/**
 	 * Creates a new {@link RevisionForCommit}.
 	 */
-	protected RevisionForCommit(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RevisionForCommit(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RevisionForCommit(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RevisionForCommit(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TlCoreFactory.getRevisionType();
 	}
 
@@ -77,7 +77,7 @@ public class RevisionForCommit extends GenericMethod {
 		public RevisionForCommit build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new RevisionForCommit(getConfig().getName(), self, args);
+			return new RevisionForCommit(getConfig().getName(), args);
 		}
 
 	}

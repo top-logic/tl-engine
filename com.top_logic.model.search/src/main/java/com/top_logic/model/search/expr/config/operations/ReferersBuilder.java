@@ -36,7 +36,7 @@ public class ReferersBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 		if (arg1 instanceof Literal) {
 			return SearchExpressionFactory.referers(arg0, resolveReference(expr, arg1));
 		} else {
-			return new DynamicReferers(getName(), arg0, new SearchExpression[] { arg1 });
+			return new DynamicReferers(getName(), new SearchExpression[] { arg0, arg1 });
 		}
 	}
 

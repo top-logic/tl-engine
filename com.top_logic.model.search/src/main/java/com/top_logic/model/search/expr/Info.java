@@ -28,18 +28,18 @@ public class Info extends GenericMethod {
 	/**
 	 * Creates a {@link Info}.
 	 */
-	protected Info(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Info(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Info(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Info(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class Info extends GenericMethod {
 		public Info build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 1, 2);
-			return new Info(getName(), self, args);
+			return new Info(getName(), args);
 		}
 
 	}

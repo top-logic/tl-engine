@@ -37,18 +37,18 @@ public class IndexReduce extends GenericMethod {
 	/**
 	 * Creates a {@link IndexReduce}.
 	 */
-	protected IndexReduce(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected IndexReduce(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new IndexReduce(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new IndexReduce(getName(), arguments);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class IndexReduce extends GenericMethod {
 		public IndexReduce build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 4, 4);
-			return new IndexReduce(getConfig().getName(), self, args);
+			return new IndexReduce(getConfig().getName(), args);
 		}
 
 	}

@@ -32,17 +32,17 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 public class Average extends SimpleGenericMethod {
 
 	/** Creates a {@link Average}. */
-	protected Average(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Average(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Average(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Average(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return findType(TLCore.TL_CORE, "Double");
 	}
 
@@ -92,7 +92,7 @@ public class Average extends SimpleGenericMethod {
 		@Override
 		public Average build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Average("average", self, args);
+			return new Average("average", args);
 		}
 
 	}

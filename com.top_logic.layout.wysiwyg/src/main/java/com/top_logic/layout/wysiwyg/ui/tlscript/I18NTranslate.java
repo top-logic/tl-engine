@@ -32,13 +32,13 @@ public class I18NTranslate extends Translate {
 	/**
 	 * Creates a {@link I18NTranslate} expression.
 	 */
-	protected I18NTranslate(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected I18NTranslate(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new I18NTranslate(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new I18NTranslate(getName(), arguments);
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class I18NTranslate extends Translate {
 		@Override
 		public I18NTranslate build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new I18NTranslate(getConfig().getName(), self, args);
+			return new I18NTranslate(getConfig().getName(), args);
 		}
 
 	}

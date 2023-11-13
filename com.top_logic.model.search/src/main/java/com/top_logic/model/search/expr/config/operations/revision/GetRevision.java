@@ -29,17 +29,17 @@ public class GetRevision extends GenericMethod {
 	/**
 	 * Creates a new {@link GetRevision}.
 	 */
-	protected GetRevision(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected GetRevision(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new GetRevision(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new GetRevision(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TlCoreFactory.getRevisionType();
 	}
 
@@ -68,7 +68,7 @@ public class GetRevision extends GenericMethod {
 		public GetRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new GetRevision(getConfig().getName(), self, args);
+			return new GetRevision(getConfig().getName(), args);
 		}
 
 	}

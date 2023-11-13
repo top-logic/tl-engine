@@ -160,9 +160,7 @@ public abstract class Rewriter<A> extends DescendingVisitor<SearchExpression, A>
 	}
 
 	@Override
-	protected SearchExpression composeGenericMethod(GenericMethod expr, A arg, SearchExpression baseResult,
-			List<SearchExpression> argumentsResult) {
-		expr.setSelf(baseResult);
+	protected SearchExpression composeGenericMethod(GenericMethod expr, A arg, List<SearchExpression> argumentsResult) {
 		expr.setArguments(toArray(argumentsResult));
 		return compose(expr, arg);
 	}

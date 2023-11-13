@@ -31,17 +31,17 @@ public class SubString extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link SubString}.
 	 */
-	protected SubString(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected SubString(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new SubString(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new SubString(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
@@ -102,7 +102,7 @@ public class SubString extends SimpleGenericMethod {
 		@Override
 		public SubString build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new SubString(getConfig().getName(), self, args);
+			return new SubString(getConfig().getName(), args);
 		}
 
 	}

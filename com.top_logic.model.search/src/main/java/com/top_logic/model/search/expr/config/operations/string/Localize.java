@@ -35,17 +35,17 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 	/**
 	 * Creates a {@link Localize} expression.
 	 */
-	protected Localize(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Localize(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Localize(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Localize(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
@@ -87,7 +87,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 		@Override
 		public Localize build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Localize(getConfig().getName(), self, args);
+			return new Localize(getConfig().getName(), args);
 		}
 	}
 

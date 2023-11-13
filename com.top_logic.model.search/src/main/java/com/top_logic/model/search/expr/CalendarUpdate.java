@@ -35,19 +35,19 @@ public class CalendarUpdate extends GenericMethod {
 	/**
 	 * Creates a {@link CalendarUpdate}.
 	 */
-	protected CalendarUpdate(String name, Field field, Op op, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected CalendarUpdate(String name, Field field, Op op, SearchExpression[] arguments) {
+		super(name, arguments);
 		_field = field;
 		_op = op;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new CalendarUpdate(getName(), _field, _op, self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new CalendarUpdate(getName(), _field, _op, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.DATE_TIME_TYPE);
 	}
 
@@ -151,7 +151,7 @@ public class CalendarUpdate extends GenericMethod {
 		public CalendarUpdate build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new CalendarUpdate(getName(), _field, _op, self, args);
+			return new CalendarUpdate(getName(), _field, _op, args);
 		}
 
 		@Override

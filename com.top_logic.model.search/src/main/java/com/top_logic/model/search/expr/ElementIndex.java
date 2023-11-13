@@ -25,13 +25,13 @@ public class ElementIndex extends AbstractListAccess {
 	/**
 	 * Creates a {@link ElementIndex}.
 	 */
-	protected ElementIndex(SearchExpression self, SearchExpression... arguments) {
-		super("elementIndex", self, arguments);
+	protected ElementIndex(SearchExpression... arguments) {
+		super("elementIndex", arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ElementIndex(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ElementIndex(arguments);
 	}
 
 	@Override

@@ -29,17 +29,17 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 	/**
 	 * Creates a new {@link DynamicReferers}.
 	 */
-	public DynamicReferers(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public DynamicReferers(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DynamicReferers(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DynamicReferers(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		/* Unable to determine type of this method statically, because it depends on the type of the
 		 * TLStructureTypePart to search usages for. */
 		return null;
@@ -92,7 +92,7 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 		public DynamicReferers build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new DynamicReferers(getConfig().getName(), self, args);
+			return new DynamicReferers(getConfig().getName(), args);
 		}
 
 	}

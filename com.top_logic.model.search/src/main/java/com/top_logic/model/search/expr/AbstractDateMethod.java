@@ -17,8 +17,8 @@ public abstract class AbstractDateMethod extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link AbstractDateMethod}.
 	 */
-	protected AbstractDateMethod(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected AbstractDateMethod(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 }

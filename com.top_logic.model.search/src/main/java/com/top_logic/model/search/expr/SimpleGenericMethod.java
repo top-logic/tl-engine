@@ -20,8 +20,8 @@ public abstract class SimpleGenericMethod extends GenericMethod {
 	/**
 	 * Creates a {@link SimpleGenericMethod}.
 	 */
-	protected SimpleGenericMethod(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected SimpleGenericMethod(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
@@ -32,7 +32,7 @@ public abstract class SimpleGenericMethod extends GenericMethod {
 	/**
 	 * Whether the {@link #eval(Object[])} can be evaluated during expression compilation.
 	 */
-	public boolean canEvaluateAtCompileTime(Object self, Object[] arguments) {
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
 		return true;
 	}
 

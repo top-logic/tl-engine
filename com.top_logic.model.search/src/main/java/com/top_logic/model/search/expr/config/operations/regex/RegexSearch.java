@@ -37,17 +37,17 @@ public class RegexSearch extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link RegexSearch}.
 	 */
-	protected RegexSearch(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexSearch(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexSearch(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexSearch(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -81,7 +81,7 @@ public class RegexSearch extends SimpleGenericMethod {
 		@Override
 		public RegexSearch build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new RegexSearch(getConfig().getName(), self, args);
+			return new RegexSearch(getConfig().getName(), args);
 		}
 
 	}

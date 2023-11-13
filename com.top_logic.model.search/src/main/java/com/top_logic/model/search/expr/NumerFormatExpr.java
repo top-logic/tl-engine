@@ -27,17 +27,17 @@ public class NumerFormatExpr extends GenericMethod {
 	/**
 	 * Creates a {@link NumerFormatExpr}.
 	 */
-	protected NumerFormatExpr(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected NumerFormatExpr(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new NumerFormatExpr(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new NumerFormatExpr(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -65,7 +65,7 @@ public class NumerFormatExpr extends GenericMethod {
 		public NumerFormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new NumerFormatExpr(getName(), self, args);
+			return new NumerFormatExpr(getName(), args);
 		}
 
 	}

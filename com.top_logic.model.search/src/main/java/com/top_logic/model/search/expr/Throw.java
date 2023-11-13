@@ -27,18 +27,18 @@ public class Throw extends GenericMethod {
 	/**
 	 * Creates a {@link Throw}.
 	 */
-	protected Throw(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Throw(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Throw(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Throw(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class Throw extends GenericMethod {
 		public Throw build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 1, 2);
-			return new Throw(getName(), self, args);
+			return new Throw(getName(), args);
 		}
 
 	}

@@ -45,17 +45,17 @@ public class Binary extends GenericMethod {
 	/**
 	 * Creates a {@link Binary}.
 	 */
-	public Binary(String name, SearchExpression self, SearchExpression[] args) {
-		super(name, self, args);
+	protected Binary(String name, SearchExpression[] args) {
+		super(name, args);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Binary(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Binary(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.BINARY_TYPE);
 	}
 
@@ -239,7 +239,7 @@ public class Binary extends GenericMethod {
 
 		@Override
 		public Binary build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new Binary(getConfig().getName(), self, args);
+			return new Binary(getConfig().getName(), args);
 		}
 
 	}

@@ -34,17 +34,17 @@ public class RegexEnd extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link RegexEnd}.
 	 */
-	protected RegexEnd(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexEnd(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexEnd(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexEnd(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.INTEGER_TYPE);
 	}
 
@@ -87,7 +87,7 @@ public class RegexEnd extends SimpleGenericMethod {
 
 		@Override
 		public RegexEnd build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new RegexEnd(getConfig().getName(), self, args);
+			return new RegexEnd(getConfig().getName(), args);
 		}
 
 		@Override

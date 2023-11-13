@@ -31,17 +31,17 @@ public class DateExpr extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link DateExpr}.
 	 */
-	protected DateExpr(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected DateExpr(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DateExpr(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DateExpr(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.DATE_TYPE);
 	}
 
@@ -85,7 +85,7 @@ public class DateExpr extends SimpleGenericMethod {
 		@Override
 		public DateExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new DateExpr(getName(), self, args);
+			return new DateExpr(getName(), args);
 		}
 
 	}

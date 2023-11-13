@@ -34,17 +34,17 @@ public class RegexStart extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link RegexStart}.
 	 */
-	protected RegexStart(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexStart(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexStart(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexStart(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.INTEGER_TYPE);
 	}
 
@@ -87,7 +87,7 @@ public class RegexStart extends SimpleGenericMethod {
 
 		@Override
 		public RegexStart build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new RegexStart(getConfig().getName(), self, args);
+			return new RegexStart(getConfig().getName(), args);
 		}
 
 		@Override

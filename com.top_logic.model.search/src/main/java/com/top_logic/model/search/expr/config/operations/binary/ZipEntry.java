@@ -36,17 +36,17 @@ public class ZipEntry extends GenericMethod {
 	/**
 	 * Creates a {@link ZipEntry}.
 	 */
-	public ZipEntry(String name, SearchExpression self, SearchExpression[] args) {
-		super(name, self, args);
+	public ZipEntry(String name, SearchExpression[] args) {
+		super(name, args);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ZipEntry(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ZipEntry(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.BINARY_TYPE);
 	}
 
@@ -111,7 +111,7 @@ public class ZipEntry extends GenericMethod {
 
 		@Override
 		public ZipEntry build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new ZipEntry(getConfig().getName(), self, args);
+			return new ZipEntry(getConfig().getName(), args);
 		}
 
 	}

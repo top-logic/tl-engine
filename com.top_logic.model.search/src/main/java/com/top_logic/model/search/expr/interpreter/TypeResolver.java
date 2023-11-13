@@ -353,9 +353,8 @@ public class TypeResolver extends DescendingVisitor<TLType, TLType> {
 	}
 
 	@Override
-	protected TLType composeGenericMethod(GenericMethod expr, TLType arg, TLType baseResult,
-			List<TLType> argumentsResult) {
-		return setType(expr, expr.getType(baseResult, argumentsResult));
+	protected TLType composeGenericMethod(GenericMethod expr, TLType arg, List<TLType> argumentsResult) {
+		return setType(expr, expr.getType(argumentsResult));
 	}
 
 	@Override

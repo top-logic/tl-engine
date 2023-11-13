@@ -28,17 +28,17 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 	/**
 	 * Creates a new {@link DynamicGet}.
 	 */
-	public DynamicGet(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public DynamicGet(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DynamicGet(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DynamicGet(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		/* Unable to determine type of this method statically, because it depends on the type of the
 		 * TLStructureTypePart to get value for. */
 		return null;
@@ -82,7 +82,7 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 		public DynamicGet build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new DynamicGet(getConfig().getName(), self, args);
+			return new DynamicGet(getConfig().getName(), args);
 		}
 
 	}

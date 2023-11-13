@@ -34,23 +34,20 @@ public class ReduceOperation extends GenericMethod {
 
 	/**
 	 * Creates a {@link ReduceOperation}.
-	 *
-	 * @param self
-	 *        An expression producing a collection.
 	 * @param arguments
 	 *        The identity element and an associative function combining two elements.
 	 */
-	ReduceOperation(SearchExpression self, SearchExpression[] arguments) {
-		super(REDUCE, self, arguments);
+	ReduceOperation(SearchExpression[] arguments) {
+		super(REDUCE, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return SearchExpressionFactory.reduce(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return SearchExpressionFactory.reduce(arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return argumentTypes.get(0);
 	}
 
@@ -78,7 +75,7 @@ public class ReduceOperation extends GenericMethod {
 		@Override
 		protected ReduceOperation internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
 				SearchExpression arg2) throws ConfigurationException {
-			return SearchExpressionFactory.reduce(null, arg0, arg1, arg2);
+			return SearchExpressionFactory.reduce(arg0, arg1, arg2);
 		}
 	}
 

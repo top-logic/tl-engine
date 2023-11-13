@@ -30,17 +30,17 @@ public class RevisionAt extends GenericMethod {
 	/**
 	 * Creates a new {@link RevisionAt}.
 	 */
-	protected RevisionAt(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RevisionAt(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RevisionAt(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RevisionAt(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TlCoreFactory.getRevisionType();
 	}
 
@@ -76,7 +76,7 @@ public class RevisionAt extends GenericMethod {
 		public RevisionAt build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkMaxArgs(expr, args, 1);
-			return new RevisionAt(getConfig().getName(), self, args);
+			return new RevisionAt(getConfig().getName(), args);
 		}
 
 	}

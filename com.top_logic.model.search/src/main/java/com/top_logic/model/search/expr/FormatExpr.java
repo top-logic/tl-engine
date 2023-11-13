@@ -30,17 +30,17 @@ public class FormatExpr extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link FormatExpr}.
 	 */
-	protected FormatExpr(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected FormatExpr(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new FormatExpr(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new FormatExpr(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
@@ -78,7 +78,7 @@ public class FormatExpr extends SimpleGenericMethod {
 		@Override
 		public FormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new FormatExpr(getName(), self, args);
+			return new FormatExpr(getName(), args);
 		}
 
 	}

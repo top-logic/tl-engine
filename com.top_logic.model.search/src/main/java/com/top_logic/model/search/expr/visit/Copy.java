@@ -240,9 +240,9 @@ public class Copy extends DescendingVisitor<SearchExpression, Void> {
 	}
 
 	@Override
-	protected SearchExpression composeGenericMethod(GenericMethod expr, Void arg, SearchExpression baseResult,
+	protected SearchExpression composeGenericMethod(GenericMethod expr, Void arg,
 			List<SearchExpression> argumentsResult) {
-		return expr.copy(baseResult, toArray(argumentsResult));
+		return expr.copy(toArray(argumentsResult));
 	}
 
 	@Override

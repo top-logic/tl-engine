@@ -31,7 +31,7 @@ public class SupplierSearchExpression extends GenericMethod {
 
 	/** Creates a {@link SupplierSearchExpression}. */
 	protected SupplierSearchExpression(String name, SupplierSearchExpressionBuilder builder) {
-		super(name, NO_SELF, NO_ARGUMENTS);
+		super(name, NO_ARGUMENTS);
 		_builder = builder;
 	}
 
@@ -41,12 +41,12 @@ public class SupplierSearchExpression extends GenericMethod {
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
+	public GenericMethod copy(SearchExpression[] arguments) {
 		return new SupplierSearchExpression(getName(), _builder);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return _builder.getType();
 	}
 

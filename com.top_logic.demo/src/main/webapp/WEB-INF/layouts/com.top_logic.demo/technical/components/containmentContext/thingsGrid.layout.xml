@@ -31,7 +31,6 @@
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
 				clique=""
 				confirm="false"
-				createType="test.containmentContext:Thing"
 				disabledImage=""
 				group=""
 				image="css:fas fa-plus"
@@ -49,6 +48,10 @@
 					<en>New row</en>
 					<de>Neue Zeile</de>
 				</resourceKey>
+				<type-options class="com.top_logic.element.layout.create.ConstantCreateTypeOptions"
+					include-subtypes="false"
+					type="test.containmentContext:Thing"
+				/>
 			</button>
 			<button id="ID_8ee64c6a_7d45_4027_941a_1f77af0b2d67"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"

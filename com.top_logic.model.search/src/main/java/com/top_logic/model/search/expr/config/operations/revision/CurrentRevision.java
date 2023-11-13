@@ -66,11 +66,6 @@ public class CurrentRevision extends SimpleGenericMethod {
 			return new CurrentRevision(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
-
 	}
 
 }

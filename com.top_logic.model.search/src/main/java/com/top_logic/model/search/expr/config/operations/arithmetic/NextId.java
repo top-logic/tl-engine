@@ -63,7 +63,6 @@ public class NextId extends GenericMethod {
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
 		StringBuilder result = new StringBuilder("nextId");
-		SequenceIdGenerator.addNames(result, self);
 		for (Object arg : arguments) {
 			SequenceIdGenerator.addNames(result, arg);
 		}
@@ -100,6 +99,7 @@ public class NextId extends GenericMethod {
 				throws ConfigurationException {
 			return new NextId(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

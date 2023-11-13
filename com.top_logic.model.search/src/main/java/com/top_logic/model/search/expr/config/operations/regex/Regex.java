@@ -44,7 +44,7 @@ public class Regex extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		String pattern = asString(notNull(this, self));
+		String pattern = asString(notNull(getArguments()[0], arguments[0]));
 		return Pattern.compile(pattern);
 	}
 
@@ -61,8 +61,9 @@ public class Regex extends SimpleGenericMethod {
 
 		@Override
 		public Regex build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new Regex(getConfig().getName(), self, args);
 		}
+
 	}
 }

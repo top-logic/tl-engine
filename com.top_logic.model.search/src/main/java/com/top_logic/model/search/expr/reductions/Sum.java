@@ -48,14 +48,14 @@ public class Sum extends SimpleGenericMethod {
 
 	@Override
 	public Double eval(Object self, Object[] arguments) {
-		return sum(this, self, arguments);
+		return sum(this, arguments);
 	}
 
 	/**
 	 * Evaluates the sum function on the given arguments.
 	 */
-	public static double sum(SearchExpression context, Object self, Object[] arguments) {
-		return sumAny(context, self) + sumIterable(context, Arrays.asList(arguments));
+	public static double sum(SearchExpression context, Object[] arguments) {
+		return sumIterable(context, Arrays.asList(arguments));
 	}
 
 	private static double sumIterable(SearchExpression context, Iterable<?> arguments) {
@@ -88,10 +88,6 @@ public class Sum extends SimpleGenericMethod {
 			return new Sum("sum", self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

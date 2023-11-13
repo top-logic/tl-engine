@@ -61,10 +61,10 @@ public class ContextPath extends SimpleGenericMethod {
 		@Override
 		public ContextPath build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoTarget(expr, self);
 			checkNoArguments(expr, args);
 			return new ContextPath(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

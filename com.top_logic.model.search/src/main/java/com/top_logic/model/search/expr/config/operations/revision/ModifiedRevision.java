@@ -47,7 +47,7 @@ public class ModifiedRevision extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLObject tlObject = asTLObject(self);
+		TLObject tlObject = asTLObject(arguments[0]);
 		if (tlObject == null) {
 			return null;
 		}
@@ -73,7 +73,7 @@ public class ModifiedRevision extends GenericMethod {
 		@Override
 		public ModifiedRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
+			checkSingleArg(expr, args);
 			return new ModifiedRevision(getConfig().getName(), self, args);
 		}
 

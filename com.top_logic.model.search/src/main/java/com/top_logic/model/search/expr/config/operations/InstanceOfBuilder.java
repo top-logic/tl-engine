@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class InstanceOfBuilder extends SingleArgMethodBuilder<InstanceOf> {
+public class InstanceOfBuilder extends TwoArgsMethodBuilder<InstanceOf> {
 
 	/**
 	 * Creates a {@link InstanceOfBuilder}.
@@ -31,9 +31,9 @@ public class InstanceOfBuilder extends SingleArgMethodBuilder<InstanceOf> {
 	}
 
 	@Override
-	protected InstanceOf internalBuild(Expr expr, SearchExpression self, SearchExpression arg)
+	protected InstanceOf internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1)
 			throws ConfigurationException {
-		return instanceOf(self, resolveStructuredType(expr, arg));
+		return instanceOf(arg0, resolveStructuredType(expr, arg1));
 	}
 
 }

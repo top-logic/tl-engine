@@ -53,10 +53,10 @@ public class IndexReduce extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Collection<?> source = asCollection(self);
-		SearchExpression fun = asSearchExpression(arguments[0]);
-		Object unit = arguments[1];
-		SearchExpression reduce = asSearchExpression(arguments[2]);
+		Collection<?> source = asCollection(arguments[0]);
+		SearchExpression fun = asSearchExpression(arguments[1]);
+		Object unit = arguments[2];
+		SearchExpression reduce = asSearchExpression(arguments[3]);
 
 		Map<Object, Object> result = new LinkedHashMap<>();
 		for (Object obj : source) {
@@ -88,9 +88,9 @@ public class IndexReduce extends GenericMethod {
 		@Override
 		public IndexReduce build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 3);
-			checkMaxArgs(expr, args, 3);
+			checkArgs(expr, args, 4, 4);
 			return new IndexReduce(getConfig().getName(), self, args);
 		}
+
 	}
 }

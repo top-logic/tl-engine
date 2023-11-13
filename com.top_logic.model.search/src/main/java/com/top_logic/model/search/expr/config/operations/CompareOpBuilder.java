@@ -53,8 +53,8 @@ public class CompareOpBuilder<C extends CompareOpBuilder.Config<?>> extends Abst
 	@Override
 	public CompareOp build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
-		SingleArgMethodBuilder.checkSingleArg(expr, args);
-		return SearchExpressions.compareOp(operator(), self, args[0]);
+		checkTwoArgs(expr, args);
+		return SearchExpressions.compareOp(operator(), args[0], args[1]);
 	}
 
 	private CompareKind operator() {

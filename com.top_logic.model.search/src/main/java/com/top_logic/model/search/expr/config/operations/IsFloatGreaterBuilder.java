@@ -17,7 +17,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IsFloatGreaterBuilder extends TwoArgMethodBuilder<SearchExpression> {
+public class IsFloatGreaterBuilder extends ThreeArgsMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link IsFloatGreaterBuilder}.
@@ -27,9 +27,9 @@ public class IsFloatGreaterBuilder extends TwoArgMethodBuilder<SearchExpression>
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg1,
+	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
 			SearchExpression arg2) {
-		return SearchExpressions.isFloatGreater(self, arg1, arg2);
+		return SearchExpressions.isFloatGreater(arg0, arg1, arg2);
 	}
 
 }

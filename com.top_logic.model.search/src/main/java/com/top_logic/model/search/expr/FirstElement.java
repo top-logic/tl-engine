@@ -67,7 +67,7 @@ public class FirstElement extends AbstractListAccess {
 		@Override
 		public FirstElement build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return SearchExpressionFactory.firstElement(self);
 		}
 

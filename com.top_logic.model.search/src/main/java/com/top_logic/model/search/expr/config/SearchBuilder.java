@@ -591,16 +591,8 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		List<Arg> argExprs = expr.getArgs();
 
 		MethodBuilder<?> builder = getBuilder(expr);
-		SearchExpression self;
-		Argument[] args;
-		if (builder.hasSelf() && !argExprs.isEmpty() && argExprs.get(0).getName() == null) {
-			self = descend(argExprs.get(0).getValue(), arg);
-			args = descendExceptFirst(argExprs, arg);
-		} else {
-			self = null;
-			args = descendArgs(argExprs, arg);
-		}
-		return builder.build(expr, self, args);
+		Argument[] args = descendArgs(argExprs, arg);
+		return builder.build(expr, null, args);
 	}
 
 	private MethodBuilder<?> getBuilder(AbstractMethod expr) throws ConfigurationException {
@@ -762,26 +754,11 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 	
 		@Override
 		public Object create(Object type, Object[] children) {
-			SearchExpression self;
-			SearchExpression[] args;
-			if (_builder.hasSelf()) {
-				if (children.length > 0) {
-					self = asExpr(children[0]);
-					int argCnt = children.length - 1;
-					args = new SearchExpression[argCnt];
-					copy(children, 1, args, 0, argCnt);
-				} else {
-					self = null;
-					args = EMPTY_EXPR_ARRAY;
-				}
-			} else {
-				self = null;
-				int argCnt = children.length;
-				args = new SearchExpression[argCnt];
-				copy(children, 0, args, 0, argCnt);
-			}
+			int argCnt = children.length;
+			SearchExpression[] args = new SearchExpression[argCnt];
+			copy(children, 0, args, 0, argCnt);
 			try {
-				return _builder.build(null, self, args);
+				return _builder.build(null, null, args);
 			} catch (ConfigurationException ex) {
 				throw new ConfigurationError(ex);
 			}

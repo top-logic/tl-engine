@@ -31,23 +31,24 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+		Object base = arguments[0];
+		if (base == null) {
 			return evalOnEmpty();
 		}
-		if (self instanceof List) {
-			List<?> list = (List<?>) self;
+		if (base instanceof List) {
+			List<?> list = (List<?>) base;
 			if (list.isEmpty()) {
 				return evalOnEmpty();
 			}
 			return evalOnList(list, arguments);
-		} else if (self instanceof Iterable<?>) {
-			Iterator<?> iterator = ((Iterable<?>) self).iterator();
+		} else if (base instanceof Iterable<?>) {
+			Iterator<?> iterator = ((Iterable<?>) base).iterator();
 			if (!iterator.hasNext()) {
 				return evalOnEmpty();
 			}
 			return evalOnIterator(iterator, arguments);
 		} else {
-			return evalOnSingleton(self, arguments);
+			return evalOnSingleton(base, arguments);
 		}
 	}
 

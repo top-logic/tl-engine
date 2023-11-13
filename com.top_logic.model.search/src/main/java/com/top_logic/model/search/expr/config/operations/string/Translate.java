@@ -53,7 +53,7 @@ public class Translate extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object inputArg = self;
+		Object inputArg = arguments[0];
 		if (inputArg == null) {
 			return null;
 		}
@@ -63,7 +63,7 @@ public class Translate extends GenericMethod {
 			return text;
 		}
 
-		Object sourceArg = arguments[1];
+		Object sourceArg = arguments[2];
 
 		if (!TranslationService.isActive()) {
 			return text;
@@ -71,7 +71,7 @@ public class Translate extends GenericMethod {
 
 		Locale sourceLang =
 			sourceArg == null ? TLContext.getLocale() : (AUTO_DETECT.equals(sourceArg) ? null : asLocale(sourceArg));
-		Locale targetLang = asLocale(arguments[0]);
+		Locale targetLang = asLocale(arguments[1]);
 
 		if (targetLang.equals(sourceLang)) {
 			return text;
@@ -94,6 +94,7 @@ public class Translate extends GenericMethod {
 
 		/** Description of parameters for a {@link Translate}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("input")
 			.mandatory("targetLang")
 			.optional("sourceLang")
 			.build();
@@ -115,6 +116,7 @@ public class Translate extends GenericMethod {
 				throws ConfigurationException {
 			return new Translate(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

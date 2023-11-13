@@ -53,8 +53,8 @@ public class GroupBy extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Collection<?> source = asCollection(self);
-		SearchExpression fun = asSearchExpression(arguments[0]);
+		Collection<?> source = asCollection(arguments[0]);
+		SearchExpression fun = asSearchExpression(arguments[1]);
 
 		Map<Object, List<Object>> result = new LinkedHashMap<>();
 		for (Object obj : source) {
@@ -67,8 +67,8 @@ public class GroupBy extends GenericMethod {
 			values.add(obj);
 		}
 
-		if (arguments.length >= 2) {
-			SearchExpression mapping = asSearchExpression(arguments[1]);
+		if (arguments.length >= 3) {
+			SearchExpression mapping = asSearchExpression(arguments[2]);
 
 			LinkedHashMap<Object, Object> mappedResult = new LinkedHashMap<>();
 			for (Entry<Object, List<Object>> entry : result.entrySet()) {
@@ -94,9 +94,9 @@ public class GroupBy extends GenericMethod {
 		@Override
 		public GroupBy build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
+			checkArgs(expr, args, 2, 3);
 			return new GroupBy(getConfig().getName(), self, args);
 		}
+
 	}
 }

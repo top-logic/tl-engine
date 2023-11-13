@@ -32,8 +32,8 @@ public class CompareBuilder extends AbstractSimpleMethodBuilder<Compare> {
 	@Override
 	public Compare build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
-		SingleArgMethodBuilder.checkSingleArg(expr, args);
-		return SearchExpressions.compare(self, args[0]);
+		checkTwoArgs(expr, args);
+		return SearchExpressions.compare(args[0], args[1]);
 	}
 
 }

@@ -121,7 +121,7 @@ public class CalendarField extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		Calendar date = asCalendar(self);
+		Calendar date = asCalendar(arguments[0]);
 		if (date == null) {
 			return null;
 		}
@@ -167,7 +167,7 @@ public class CalendarField extends SimpleGenericMethod {
 		@Override
 		public CalendarField build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new CalendarField(getName(), _field, self, args);
 		}
 
@@ -175,5 +175,6 @@ public class CalendarField extends SimpleGenericMethod {
 		public Object getId() {
 			return _field;
 		}
+
 	}
 }

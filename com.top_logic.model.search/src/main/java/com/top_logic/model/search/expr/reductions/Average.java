@@ -48,19 +48,19 @@ public class Average extends SimpleGenericMethod {
 
 	@Override
 	public Double eval(Object self, Object[] arguments) {
-		int size = size(this, self, arguments);
+		int size = size(this, arguments);
 		if (size == 0) {
 			return null;
 		}
-		double sum = Sum.sum(this, self, arguments);
+		double sum = Sum.sum(this, arguments);
 		return sum / size;
 	}
 
 	/**
 	 * Evaluates the sum function on the given arguments.
 	 */
-	public static int size(SearchExpression context, Object self, Object[] arguments) {
-		return sizeAny(context, self) + sizeIterable(context, Arrays.asList(arguments));
+	public static int size(SearchExpression context, Object[] arguments) {
+		return sizeIterable(context, Arrays.asList(arguments));
 	}
 
 	private static int sizeIterable(SearchExpression context, Iterable<?> arguments) {
@@ -95,10 +95,6 @@ public class Average extends SimpleGenericMethod {
 			return new Average("average", self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

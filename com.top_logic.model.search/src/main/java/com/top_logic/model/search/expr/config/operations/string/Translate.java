@@ -37,17 +37,17 @@ public class Translate extends GenericMethod {
 	/**
 	 * Creates a {@link Translate} expression.
 	 */
-	protected Translate(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Translate(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Translate(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Translate(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -114,7 +114,7 @@ public class Translate extends GenericMethod {
 		@Override
 		public Translate build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Translate(getConfig().getName(), self, args);
+			return new Translate(getConfig().getName(), args);
 		}
 
 	}

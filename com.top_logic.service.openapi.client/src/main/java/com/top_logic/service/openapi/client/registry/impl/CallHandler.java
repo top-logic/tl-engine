@@ -8,8 +8,7 @@ package com.top_logic.service.openapi.client.registry.impl;
 /**
  * Implementation of a {@link RPCMethod}.
  * 
- * @see RPCMethod#RPCMethod(CallHandler, String, com.top_logic.model.search.expr.SearchExpression,
- *      com.top_logic.model.search.expr.SearchExpression[])
+ * @see RPCMethod#RPCMethod(CallHandler, String, com.top_logic.model.search.expr.SearchExpression[])
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

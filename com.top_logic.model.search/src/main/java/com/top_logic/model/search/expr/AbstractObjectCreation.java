@@ -18,15 +18,14 @@ public abstract class AbstractObjectCreation extends GenericMethod {
 	/**
 	 * Creates a {@link AbstractObjectCreation}.
 	 */
-	protected AbstractObjectCreation(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected AbstractObjectCreation(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		SearchExpression self = getSelf();
-		if (self instanceof Literal) {
-			return (TLClass) ((Literal) self).getValue();
+	public TLType getType(List<TLType> argumentTypes) {
+		if (argumentTypes.get(0) instanceof Literal) {
+			return (TLClass) ((Literal) argumentTypes.get(0)).getValue();
 		} else {
 			// No type can be determined without evaluating the self expression.
 			return null;

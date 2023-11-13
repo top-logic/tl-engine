@@ -24,13 +24,13 @@ public class FirstElement extends AbstractListAccess {
 	/**
 	 * Creates a {@link FirstElement}.
 	 */
-	protected FirstElement(SearchExpression self, SearchExpression[] arguments) {
-		super("firstElement", self, arguments);
+	protected FirstElement(SearchExpression[] arguments) {
+		super("firstElement", arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new FirstElement(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new FirstElement(arguments);
 	}
 
 	@Override

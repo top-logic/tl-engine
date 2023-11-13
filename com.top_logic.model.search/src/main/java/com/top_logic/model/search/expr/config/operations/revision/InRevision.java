@@ -34,18 +34,18 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 	/**
 	 * Creates a new {@link InRevision}.
 	 */
-	protected InRevision(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected InRevision(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new InRevision(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new InRevision(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -113,7 +113,7 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 		@Override
 		public InRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new InRevision(getConfig().getName(), self, args);
+			return new InRevision(getConfig().getName(), args);
 		}
 
 		@Override

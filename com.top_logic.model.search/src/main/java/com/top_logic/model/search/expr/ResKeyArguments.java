@@ -27,23 +27,20 @@ public class ResKeyArguments extends SimpleGenericMethod {
 
 	/**
 	 * Creates a {@link ResKeyArguments}.
-	 * 
-	 * @param self
-	 *        See {@link #getSelf()}.
 	 * @param arguments
 	 *        The arguments to set on the {@link ResKey}, see {@link #getArguments()}.
 	 */
-	ResKeyArguments(SearchExpression self, SearchExpression[] arguments) {
-		super(METHOD_NAME, self, arguments);
+	ResKeyArguments(SearchExpression[] arguments) {
+		super(METHOD_NAME, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ResKeyArguments(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ResKeyArguments(arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		// No type.
 		return null;
 	}

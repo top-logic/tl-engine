@@ -26,17 +26,17 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 	/**
 	 * Creates a {@link DynamicAll}.
 	 */
-	public DynamicAll(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public DynamicAll(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DynamicAll(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DynamicAll(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -90,7 +90,7 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 		public DynamicAll build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new DynamicAll(getConfig().getName(), self, args);
+			return new DynamicAll(getConfig().getName(), args);
 		}
 
 	}

@@ -29,17 +29,17 @@ public class ToSystemCalendar extends AbstractDateMethod {
 	/**
 	 * Creates a {@link ToSystemCalendar}.
 	 */
-	protected ToSystemCalendar(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToSystemCalendar(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToSystemCalendar(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToSystemCalendar(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.DATE_TIME_TYPE);
 	}
 
@@ -71,7 +71,7 @@ public class ToSystemCalendar extends AbstractDateMethod {
 		public ToSystemCalendar build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new ToSystemCalendar(getName(), self, args);
+			return new ToSystemCalendar(getName(), args);
 		}
 
 	}

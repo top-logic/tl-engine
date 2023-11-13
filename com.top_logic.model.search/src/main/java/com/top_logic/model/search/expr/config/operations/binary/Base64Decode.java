@@ -36,17 +36,17 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 	/** 
 	 * Creates a {@link Base64Decode}.
 	 */
-	protected Base64Decode(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Base64Decode(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Base64Decode(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Base64Decode(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
@@ -143,7 +143,7 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 
 		@Override
 		public Base64Decode build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new Base64Decode(getName(), self, args);
+			return new Base64Decode(getName(), args);
 		}
 
 		@Override

@@ -30,8 +30,8 @@ public class FlattenBuilder extends NoArgMethodBuilder<Flatten> {
 	}
 
 	@Override
-	protected Flatten internalBuild(Expr expr, SearchExpression self) {
-		return flatten(self);
+	protected Flatten internalBuild(Expr expr, SearchExpression argument) {
+		return flatten(argument);
 	}
 
 }

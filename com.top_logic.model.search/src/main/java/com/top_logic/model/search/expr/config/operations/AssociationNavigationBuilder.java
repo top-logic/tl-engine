@@ -22,7 +22,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class AssociationNavigationBuilder extends TwoArgMethodBuilder<AssociationNavigation> {
+public class AssociationNavigationBuilder extends ThreeArgsMethodBuilder<AssociationNavigation> {
 
 	/**
 	 * Creates a {@link AssociationNavigationBuilder}.
@@ -32,9 +32,9 @@ public class AssociationNavigationBuilder extends TwoArgMethodBuilder<Associatio
 	}
 
 	@Override
-	protected AssociationNavigation internalBuild(Expr expr, SearchExpression self, SearchExpression arg1,
+	protected AssociationNavigation internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
 			SearchExpression arg2) throws ConfigurationException {
-		return associationNavigation(self,
+		return associationNavigation(arg0,
 			resolveEnd(expr, arg1),
 			resolveEnd(expr, arg2));
 	}

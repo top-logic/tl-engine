@@ -72,7 +72,7 @@ public class ElementIndex extends AbstractListAccess {
 	}
 
 	private Object element(Object[] arguments) {
-		return arguments[0];
+		return arguments[1];
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class ElementIndex extends AbstractListAccess {
 		@Override
 		public ElementIndex build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return SearchExpressionFactory.elementIndex(self, args[0]);
 		}
 

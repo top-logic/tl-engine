@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class FilterBuilder extends SingleArgMethodBuilder<Filter> {
+public class FilterBuilder extends TwoArgsMethodBuilder<Filter> {
 	/**
 	 * Creates a {@link FilterBuilder}.
 	 */
@@ -29,8 +29,8 @@ public class FilterBuilder extends SingleArgMethodBuilder<Filter> {
 	}
 
 	@Override
-	protected Filter internalBuild(Expr expr, SearchExpression self, SearchExpression arg) {
-		return filter(self, arg);
+	protected Filter internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+		return filter(arg0, arg1);
 	}
 
 }

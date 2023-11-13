@@ -100,9 +100,5 @@ public class DateTimeExpr extends GenericMethod {
 			return new DateTimeExpr(getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 }

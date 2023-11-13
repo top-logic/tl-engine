@@ -45,36 +45,36 @@ public class ToString extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (arguments.length > 0 || self instanceof Collection<?>) {
+		Object base = arguments[0];
+		if (arguments.length > 1 || base instanceof Collection<?>) {
 			StringBuilder result = new StringBuilder();
-			append(result, self);
 			for (Object arg : arguments) {
 				append(result, arg);
 			}
 			return result.toString();
 		} else {
-			return toString(self);
+			return toString(base);
 		}
 	}
 
-	private void append(StringBuilder result, Object self) {
-		if (self instanceof Collection<?>) {
-			for (Object element : (Collection<?>) self) {
+	private void append(StringBuilder result, Object arg) {
+		if (arg instanceof Collection<?>) {
+			for (Object element : (Collection<?>) arg) {
 				append(result, element);
 			}
 		} else {
-			result.append(toString(self));
+			result.append(toString(arg));
 		}
 	}
 
 	/**
 	 * Converts a value to a string / label.
 	 */
-	public static String toString(Object self) {
-		if (self == null) {
+	public static String toString(Object arg) {
+		if (arg == null) {
 			return "";
 		}
-		return MetaLabelProvider.INSTANCE.getLabel(self);
+		return MetaLabelProvider.INSTANCE.getLabel(arg);
 	}
 
 	@Override

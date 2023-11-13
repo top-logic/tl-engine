@@ -52,13 +52,14 @@ public class ToList extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
+		Object base = arguments[0];
 		List<?> result;
-		if (self == null) {
+		if (base == null) {
 			result = Collections.emptyList();
-		} else if (self instanceof Collection<?>) {
-			result = CollectionUtil.toList((Collection<?>) self);
+		} else if (base instanceof Collection<?>) {
+			result = CollectionUtil.toList((Collection<?>) base);
 		} else {
-			result = Collections.singletonList(self);
+			result = Collections.singletonList(base);
 		}
 		return result;
 	}
@@ -78,9 +79,10 @@ public class ToList extends SimpleGenericMethod {
 		@Override
 		public ToList build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToList(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

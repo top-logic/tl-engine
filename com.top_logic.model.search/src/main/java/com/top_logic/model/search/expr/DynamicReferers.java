@@ -47,13 +47,13 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object arg0 = arguments[0];
-		if (arg0 == null) {
+		Object arg1 = arguments[1];
+		if (arg1 == null) {
 			// Not yet set
 			return null;
 		}
-		TLReference part = asReference(getArguments()[0], arg0);
-		return evalPotentialFlatMap(definitions, self, part);
+		TLReference part = asReference(getArguments()[1], arg1);
+		return evalPotentialFlatMap(definitions, arguments[0], part);
 	}
 
 	@Override
@@ -91,9 +91,10 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 		@Override
 		public DynamicReferers build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return new DynamicReferers(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

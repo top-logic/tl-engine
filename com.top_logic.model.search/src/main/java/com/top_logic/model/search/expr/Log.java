@@ -6,6 +6,7 @@
 package com.top_logic.model.search.expr;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
@@ -44,9 +45,9 @@ public class Log extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		String message = asString(self);
-		if (arguments.length > 0) {
-			message = MessageFormat.format(message, arguments);
+		String message = asString(arguments[0]);
+		if (arguments.length > 1) {
+			message = MessageFormat.format(message, Arrays.copyOfRange(arguments, 1, arguments.length));
 		}
 		Logger.info("Script (" + whoAmI() + ") reported: " + message, Log.class);
 		return null;
@@ -78,8 +79,9 @@ public class Log extends GenericMethod {
 		@Override
 		public Log build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkHasTarget(expr, self);
+			checkMinArgs(expr, args, 1);
 			return new Log(getName(), self, args);
 		}
+
 	}
 }

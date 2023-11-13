@@ -34,7 +34,7 @@ public class ToBoolean extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return asBoolean(self);
+		return asBoolean(arguments[0]);
 	}
 
 	@Override
@@ -62,9 +62,10 @@ public class ToBoolean extends SimpleGenericMethod {
 		@Override
 		public ToBoolean build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToBoolean(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

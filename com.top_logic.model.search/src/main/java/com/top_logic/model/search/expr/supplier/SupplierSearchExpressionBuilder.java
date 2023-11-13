@@ -34,14 +34,8 @@ public abstract class SupplierSearchExpressionBuilder extends AbstractSimpleMeth
 	@Override
 	public SupplierSearchExpression build(Expr expr, SearchExpression self, SearchExpression[] arguments)
 			throws ConfigurationException {
-		checkNoTarget(expr, self);
-		checkMaxArgs(expr, arguments, 0);
+		checkNoArguments(expr, arguments);
 		return new SupplierSearchExpression(getName(), this);
-	}
-
-	@Override
-	public boolean hasSelf() {
-		return false;
 	}
 
 	@Override

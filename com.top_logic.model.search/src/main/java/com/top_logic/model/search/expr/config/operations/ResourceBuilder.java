@@ -138,10 +138,6 @@ public class ResourceBuilder extends GenericMethod {
 			return new ResourceBuilder(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

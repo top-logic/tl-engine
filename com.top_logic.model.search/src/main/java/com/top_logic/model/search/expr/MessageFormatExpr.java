@@ -43,10 +43,10 @@ public class MessageFormatExpr extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		return new MessageFormat(asString(self), ThreadContext.getLocale());
+		return new MessageFormat(asString(arguments[0]), ThreadContext.getLocale());
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class MessageFormatExpr extends GenericMethod {
 		@Override
 		public MessageFormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new MessageFormatExpr(getName(), self, args);
 		}
 

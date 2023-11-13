@@ -43,17 +43,17 @@ public class I18NTranslate extends Translate {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self instanceof StructuredText) {
-			StructuredText text = (StructuredText) self;
+		if (arguments[0] instanceof StructuredText) {
+			StructuredText text = (StructuredText) arguments[0];
 
-			Object sourceArg = arguments[1];
+			Object sourceArg = arguments[2];
 			if (!TranslationService.isActive()) {
 				return text;
 			}
 
 			Locale sourceLang = sourceArg == null ? TLContext.getLocale()
 				: (AUTO_DETECT.equals(sourceArg) ? null : asLocale(sourceArg));
-			Locale targetLang = asLocale(arguments[0]);
+			Locale targetLang = asLocale(arguments[1]);
 
 			if (targetLang.equals(sourceLang)) {
 				return text;
@@ -89,7 +89,7 @@ public class I18NTranslate extends Translate {
 				throws ConfigurationException {
 			return new I18NTranslate(getConfig().getName(), self, args);
 		}
-	}
 
+	}
 }
 

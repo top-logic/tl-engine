@@ -66,10 +66,6 @@ public class IconBuilder extends GenericMethod {
 			return new IconBuilder(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

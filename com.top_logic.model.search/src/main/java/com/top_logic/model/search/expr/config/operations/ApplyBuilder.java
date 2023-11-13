@@ -32,11 +32,11 @@ public class ApplyBuilder extends AbstractSimpleMethodBuilder<Call> {
 
 	@Override
 	public Call build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-		checkMinArgs(expr, args, 1);
+		checkMinArgs(expr, args, 2);
 
-		SearchExpression result = self;
-		for (SearchExpression arg : args) {
-			result = call(result, arg);
+		SearchExpression result = args[0];
+		for (int i = 1; i < args.length; i++) {
+			result = call(result, args[i]);
 		}
 		return (Call) result;
 	}

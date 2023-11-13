@@ -50,10 +50,10 @@ public class ToSystemCalendar extends AbstractDateMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		return CalendarUtil.createCalendar(asDate(self));
+		return CalendarUtil.createCalendar(asDate(arguments[0]));
 	}
 
 	/**
@@ -70,8 +70,9 @@ public class ToSystemCalendar extends AbstractDateMethod {
 		@Override
 		public ToSystemCalendar build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToSystemCalendar(getName(), self, args);
 		}
+
 	}
 }

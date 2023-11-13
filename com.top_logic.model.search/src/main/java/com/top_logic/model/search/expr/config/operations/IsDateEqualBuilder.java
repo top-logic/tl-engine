@@ -19,7 +19,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IsDateEqualBuilder extends SingleArgMethodBuilder<SearchExpression> {
+public class IsDateEqualBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link IsDateEqualBuilder}.
@@ -29,8 +29,8 @@ public class IsDateEqualBuilder extends SingleArgMethodBuilder<SearchExpression>
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg) {
-		return SearchExpressions.isDateEqual(self, arg);
+	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+		return SearchExpressions.isDateEqual(arg0, arg1);
 	}
 
 }

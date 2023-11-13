@@ -49,9 +49,9 @@ public class DynamicSet extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLObject obj = asTLObjectNonNull(self);
-		TLStructuredTypePart part = asTypePart(getArguments()[0], arguments[0]);
-		Object value = arguments[1];
+		TLObject obj = asTLObjectNonNull(arguments[0]);
+		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
+		Object value = arguments[2];
 		obj.tUpdate(part, value);
 		return null;
 	}
@@ -82,9 +82,10 @@ public class DynamicSet extends GenericMethod {
 		@Override
 		public DynamicSet build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkTwoArgs(expr, args);
+			checkThreeArgs(expr, args);
 			return new DynamicSet(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

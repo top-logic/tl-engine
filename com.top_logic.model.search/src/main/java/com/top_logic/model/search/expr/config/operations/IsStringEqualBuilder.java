@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IsStringEqualBuilder extends TwoArgOptionalBooleanMethodBuilder<SearchExpression> {
+public class IsStringEqualBuilder extends ThreeArgsOptionalBooleanMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link IsStringEqualBuilder}.
@@ -30,10 +30,9 @@ public class IsStringEqualBuilder extends TwoArgOptionalBooleanMethodBuilder<Sea
 		super(context, config);
 	}
 
-	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg1,
+	@Override SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
 			SearchExpression arg2) {
-		return ifElse(arg2, isStringEqual(self, arg1, true), isStringEqual(copy(self), copy(arg1), false));
+		return ifElse(arg2, isStringEqual(arg0, arg1, true), isStringEqual(copy(arg0), copy(arg1), false));
 	}
 
 }

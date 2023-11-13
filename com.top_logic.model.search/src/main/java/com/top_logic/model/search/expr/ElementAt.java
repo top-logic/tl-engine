@@ -80,7 +80,7 @@ public class ElementAt extends AbstractListAccess {
 	}
 
 	private int index(Object[] arguments) {
-		Object firstArg = arguments[0];
+		Object firstArg = arguments[1];
 		int index;
 		if (firstArg instanceof Number) {
 			index = ((Number) firstArg).intValue();
@@ -104,7 +104,7 @@ public class ElementAt extends AbstractListAccess {
 		@Override
 		public ElementAt build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return SearchExpressionFactory.elementAt(self, args[0]);
 		}
 

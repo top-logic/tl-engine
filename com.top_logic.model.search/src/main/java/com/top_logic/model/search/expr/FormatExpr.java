@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.text.Format;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -45,9 +46,9 @@ public class FormatExpr extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		Format format = (Format) self;
-		if (arguments.length == 1) {
-			Object first = arguments[0];
+		Format format = (Format) arguments[0];
+		if (arguments.length == 2) {
+			Object first = arguments[1];
 			if (first instanceof Collection<?>) {
 				return format.format(((Collection<?>) first).toArray());
 			} else {
@@ -58,7 +59,7 @@ public class FormatExpr extends SimpleGenericMethod {
 				}
 			}
 		} else {
-			return format.format(arguments);
+			return format.format(Arrays.copyOfRange(arguments, 1, arguments.length));
 		}
 	}
 

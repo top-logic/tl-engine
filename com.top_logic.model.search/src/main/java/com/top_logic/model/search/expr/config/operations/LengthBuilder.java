@@ -32,8 +32,8 @@ public class LengthBuilder extends AbstractSimpleMethodBuilder<Length> {
 	@Override
 	public Length build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
-		checkNoArguments(expr, self, args);
-		return length(self);
+		checkSingleArg(expr, args);
+		return length(args[0]);
 	}
 
 }

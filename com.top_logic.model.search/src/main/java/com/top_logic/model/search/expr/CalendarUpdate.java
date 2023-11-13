@@ -53,12 +53,12 @@ public class CalendarUpdate extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		int amount = asInt(arguments[0]);
+		int amount = asInt(arguments[1]);
 
-		Calendar calendar = asCalendar(self);
+		Calendar calendar = asCalendar(arguments[0]);
 		Calendar result = (Calendar) calendar.clone();
 		_op.update(result, _field, amount);
 		return result;
@@ -150,7 +150,7 @@ public class CalendarUpdate extends GenericMethod {
 		@Override
 		public CalendarUpdate build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return new CalendarUpdate(getName(), _field, _op, self, args);
 		}
 
@@ -158,5 +158,6 @@ public class CalendarUpdate extends GenericMethod {
 		public Object getId() {
 			return new Pair<>(_field, _op);
 		}
+
 	}
 }

@@ -50,11 +50,11 @@ public class ToUserCalendar extends AbstractDateMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return null;
 		}
 		Calendar result = CalendarUtil.createCalendarInUserTimeZone();
-		result.setTime(asDate(self));
+		result.setTime(asDate(arguments[0]));
 		return result;
 	}
 
@@ -72,8 +72,9 @@ public class ToUserCalendar extends AbstractDateMethod {
 		@Override
 		public ToUserCalendar build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToUserCalendar(getName(), self, args);
 		}
+
 	}
 }

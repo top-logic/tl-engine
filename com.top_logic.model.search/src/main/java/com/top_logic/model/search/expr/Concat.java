@@ -43,7 +43,6 @@ public class Concat extends SimpleGenericMethod {
 	@Override
 	public Object eval(Object self, Object[] arguments) {
 		List<Object> result = new ArrayList<>();
-		add(result, self);
 		for (Object arg : arguments) {
 			add(result, arg);
 		}
@@ -76,5 +75,7 @@ public class Concat extends SimpleGenericMethod {
 				throws ConfigurationException {
 			return new Concat("concat", self, args);
 		}
+
 	}
+
 }

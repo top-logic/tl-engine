@@ -33,11 +33,11 @@ public class SortBuilder extends AbstractSimpleMethodBuilder<Sort> {
 	@Override
 	public Sort build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
-		checkMaxArgs(expr, args, 1);
-		if (args.length == 0) {
-			return sort(self);
+		checkArgs(expr, args, 1, 2);
+		if (args.length == 1) {
+			return sort(args[0]);
 		} else {
-			return sort(self, args[0]);
+			return sort(args[0], args[1]);
 		}
 	}
 

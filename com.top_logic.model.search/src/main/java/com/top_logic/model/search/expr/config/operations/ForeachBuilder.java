@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ForeachBuilder extends SingleArgMethodBuilder<Foreach> {
+public class ForeachBuilder extends TwoArgsMethodBuilder<Foreach> {
 
 	/**
 	 * Creates a {@link ForeachBuilder}.
@@ -30,8 +30,8 @@ public class ForeachBuilder extends SingleArgMethodBuilder<Foreach> {
 	}
 
 	@Override
-	protected Foreach internalBuild(Expr expr, SearchExpression self, SearchExpression arg) {
-		return foreach(self, arg);
+	protected Foreach internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+		return foreach(arg0, arg1);
 	}
 
 }

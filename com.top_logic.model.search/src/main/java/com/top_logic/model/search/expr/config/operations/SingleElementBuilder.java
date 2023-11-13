@@ -30,8 +30,8 @@ public class SingleElementBuilder extends NoArgMethodBuilder<SingleElement> {
 	}
 
 	@Override
-	protected SingleElement internalBuild(Expr expr, SearchExpression self) {
-		return singleElement(self);
+	protected SingleElement internalBuild(Expr expr, SearchExpression argument) {
+		return singleElement(argument);
 	}
 
 }

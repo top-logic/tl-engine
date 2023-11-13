@@ -49,11 +49,11 @@ public class Count extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		int start = asInt(self);
-		int stop = asInt(arguments[0]);
+		int start = asInt(arguments[0]);
+		int stop = asInt(arguments[1]);
 		int step;
-		if (arguments.length > 1) {
-			step = asInt(arguments[1]);
+		if (arguments.length > 2) {
+			step = asInt(arguments[2]);
 			if (step == 0) {
 				// For safety reasons.
 				step = 1;
@@ -88,9 +88,9 @@ public class Count extends SimpleGenericMethod {
 		@Override
 		public Count build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
+			checkArgs(expr, args, 2, 3);
 			return new Count(getConfig().getName(), self, args);
 		}
+
 	}
 }

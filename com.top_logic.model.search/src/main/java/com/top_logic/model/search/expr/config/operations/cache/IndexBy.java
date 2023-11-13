@@ -56,12 +56,12 @@ public class IndexBy extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Collection<?> source = asCollection(self);
-		SearchExpression fun = asSearchExpression(arguments[0]);
+		Collection<?> source = asCollection(arguments[0]);
+		SearchExpression fun = asSearchExpression(arguments[1]);
 
 		Map<Object, Object> result = new LinkedHashMap<>();
-		if (arguments.length >= 2) {
-			SearchExpression reduce = asSearchExpression(arguments[1]);
+		if (arguments.length >= 3) {
+			SearchExpression reduce = asSearchExpression(arguments[2]);
 
 			for (Object obj : source) {
 				Object key = fun.eval(definitions, obj);
@@ -106,9 +106,9 @@ public class IndexBy extends GenericMethod {
 		@Override
 		public IndexBy build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
+			checkArgs(expr, args, 2, 3);
 			return new IndexBy(getConfig().getName(), self, args);
 		}
+
 	}
 }

@@ -72,6 +72,7 @@ public class I18NLocalize extends Localize {
 				throws ConfigurationException {
 			return new I18NLocalize(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

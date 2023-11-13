@@ -45,7 +45,7 @@ public class ToUpperCase extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		String str = asString(self);
+		String str = asString(arguments[0]);
 		return str.toUpperCase();
 	}
 
@@ -63,9 +63,10 @@ public class ToUpperCase extends SimpleGenericMethod {
 		@Override
 		public ToUpperCase build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToUpperCase(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

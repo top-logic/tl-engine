@@ -53,7 +53,7 @@ public class ResolveModelPart extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		String qualifiedPartName = asString(self);
+		String qualifiedPartName = asString(arguments[0]);
 		return TLModelUtil.resolveModelPart(qualifiedPartName);
 	}
 
@@ -72,7 +72,7 @@ public class ResolveModelPart extends SimpleGenericMethod {
 		@Override
 		public ResolveModelPart build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ResolveModelPart(getName(), self, args);
 		}
 

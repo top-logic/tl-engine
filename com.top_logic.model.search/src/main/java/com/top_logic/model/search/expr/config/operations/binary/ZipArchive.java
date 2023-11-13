@@ -151,10 +151,6 @@ public class ZipArchive extends GenericMethod {
 			return new ZipArchive(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

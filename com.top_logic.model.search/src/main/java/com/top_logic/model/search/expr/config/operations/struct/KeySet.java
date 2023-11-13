@@ -43,7 +43,7 @@ public class KeySet extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return asMap(self).keySet();
+		return asMap(arguments[0]).keySet();
 	}
 
 	/**
@@ -60,9 +60,10 @@ public class KeySet extends SimpleGenericMethod {
 		@Override
 		public KeySet build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new KeySet(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

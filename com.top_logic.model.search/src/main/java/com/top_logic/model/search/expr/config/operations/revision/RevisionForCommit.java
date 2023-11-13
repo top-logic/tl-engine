@@ -47,7 +47,7 @@ public class RevisionForCommit extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		long commitNumber = asLong(self);
+		long commitNumber = asLong(arguments[0]);
 		if (commitNumber < 0) {
 			throw new TopLogicException(I18NConstants.ERROR_NEGATIVE_COMMIT_NR__EXPR_COMMIT.fill(this, commitNumber));
 		} else if (commitNumber == 0) {
@@ -76,7 +76,7 @@ public class RevisionForCommit extends GenericMethod {
 		@Override
 		public RevisionForCommit build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
+			checkSingleArg(expr, args);
 			return new RevisionForCommit(getConfig().getName(), self, args);
 		}
 

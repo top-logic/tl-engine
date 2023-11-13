@@ -54,7 +54,7 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, self, null);
+		return evalPotentialFlatMap(definitions, arguments[0], null);
 	}
 
 	@Override
@@ -85,9 +85,9 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 		}
 
 		@Override
-		protected DeleteObject internalBuild(Expr expr, SearchExpression self)
+		protected DeleteObject internalBuild(Expr expr, SearchExpression argument)
 				throws ConfigurationException {
-			return new DeleteObject(getName(), self);
+			return new DeleteObject(getName(), argument);
 		}
 	}
 

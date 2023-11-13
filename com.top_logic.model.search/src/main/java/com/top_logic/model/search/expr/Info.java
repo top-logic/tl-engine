@@ -49,11 +49,11 @@ public class Info extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		ResKey message = toResKey(self);
+		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
 			ResKey details;
-			if (arguments.length > 0) {
-				details = toResKey(arguments[0]);
+			if (arguments.length > 1) {
+				details = toResKey(arguments[1]);
 			} else {
 				details = ResKey.NONE;
 			}
@@ -76,9 +76,9 @@ public class Info extends GenericMethod {
 		@Override
 		public Info build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkHasTarget(expr, self);
-			checkMaxArgs(expr, args, 1);
+			checkArgs(expr, args, 1, 2);
 			return new Info(getName(), self, args);
 		}
+
 	}
 }

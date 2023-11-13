@@ -45,7 +45,7 @@ public class ToLowerCase extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		String str = asString(self);
+		String str = asString(arguments[0]);
 		return str.toLowerCase();
 	}
 
@@ -63,9 +63,10 @@ public class ToLowerCase extends SimpleGenericMethod {
 		@Override
 		public ToLowerCase build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToLowerCase(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

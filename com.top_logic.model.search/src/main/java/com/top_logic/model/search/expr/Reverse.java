@@ -42,7 +42,7 @@ public class Reverse extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		List<?> list = asList(self);
+		List<?> list = asList(arguments[0]);
 		ArrayList<?> result = new ArrayList<>(list);
 		Collections.reverse(result);
 		return result;
@@ -62,8 +62,9 @@ public class Reverse extends SimpleGenericMethod {
 		@Override
 		public Reverse build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new Reverse(getName(), self, args);
 		}
+
 	}
 }

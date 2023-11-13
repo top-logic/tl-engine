@@ -242,10 +242,6 @@ public class Binary extends GenericMethod {
 			return new Binary(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

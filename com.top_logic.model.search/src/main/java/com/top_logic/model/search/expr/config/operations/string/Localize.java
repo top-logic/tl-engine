@@ -51,12 +51,12 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, self, asLocale(arguments[0]));
+		return evalPotentialFlatMap(definitions, arguments[0], asLocale(arguments[1]));
 	}
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object base, Locale param) {
-		ResKey key = asResKeyNotNull(base, getSelf());
+		ResKey key = asResKeyNotNull(base, getArguments()[0]);
 
 		return Resources.getInstance(param).getString(key);
 	}
@@ -68,6 +68,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 
 		/** Description of parameters for a {@link Localize}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("resourceKey")
 			.optional("lang", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
 			.build();
 

@@ -56,12 +56,12 @@ public class Internationalize extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object inputArg = self;
+		Object inputArg = arguments[0];
 		if (inputArg == null) {
 			return null;
 		}
 
-		boolean translate = asBoolean(arguments[1]);
+		boolean translate = asBoolean(arguments[2]);
 		if (inputArg instanceof Map) {
 			ResKey.Builder builder = ResKey.builder();
 			for (Entry<?, ?> entry : ((Map<?, ?>) inputArg).entrySet()) {
@@ -100,7 +100,7 @@ public class Internationalize extends GenericMethod {
 			return builder.build();
 		} else {
 			String text = asString(inputArg);
-			Object langArg = arguments[0];
+			Object langArg = arguments[1];
 
 			ResourcesModule resources = ResourcesModule.getInstance();
 			Locale lang = langArg == null ? resources.getDefaultLocale() : asLocale(langArg);
@@ -136,6 +136,7 @@ public class Internationalize extends GenericMethod {
 
 		/** Description of parameters for an {@link Internationalize}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("input")
 			.optional("sourceLang")
 			.optional("translate", false)
 			.build();
@@ -157,6 +158,7 @@ public class Internationalize extends GenericMethod {
 				throws ConfigurationException {
 			return new Internationalize(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

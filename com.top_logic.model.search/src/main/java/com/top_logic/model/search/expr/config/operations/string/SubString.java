@@ -47,10 +47,10 @@ public class SubString extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		Object from = arguments[0];
-		Object to = arguments[1];
+		Object from = arguments[1];
+		Object to = arguments[2];
 
-		String str = asString(self);
+		String str = asString(arguments[0]);
 		int beginIndex = toIndex(str, asInt(from));
 		int endIndex = (to == null) ? str.length() : toIndex(str, asInt(to));
 
@@ -82,6 +82,7 @@ public class SubString extends SimpleGenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<SubString> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("input")
 			.optional("from", 0)
 			.optional("to")
 			.build();
@@ -103,6 +104,7 @@ public class SubString extends SimpleGenericMethod {
 				throws ConfigurationException {
 			return new SubString(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

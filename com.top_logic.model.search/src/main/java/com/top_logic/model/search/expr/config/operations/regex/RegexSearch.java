@@ -53,11 +53,11 @@ public class RegexSearch extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		Object input = arguments[0];
+		Object input = arguments[1];
 		if (input == null) {
 			return null;
 		}
-		Pattern pattern = (Pattern) self;
+		Pattern pattern = (Pattern) arguments[0];
 		String text = asString(input);
 		Matcher matcher = pattern.matcher(text);
 		List<Match> result = new ArrayList<>();
@@ -80,8 +80,9 @@ public class RegexSearch extends SimpleGenericMethod {
 
 		@Override
 		public RegexSearch build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return new RegexSearch(getConfig().getName(), self, args);
 		}
+
 	}
 }

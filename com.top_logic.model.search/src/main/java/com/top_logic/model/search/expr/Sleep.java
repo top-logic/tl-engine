@@ -78,9 +78,5 @@ public class Sleep extends GenericMethod {
 			return new Sleep(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 }

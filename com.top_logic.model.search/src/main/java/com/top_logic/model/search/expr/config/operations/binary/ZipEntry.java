@@ -114,10 +114,6 @@ public class ZipEntry extends GenericMethod {
 			return new ZipEntry(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

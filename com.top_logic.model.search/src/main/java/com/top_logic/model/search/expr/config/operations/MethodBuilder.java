@@ -78,21 +78,6 @@ public interface MethodBuilder<E extends SearchExpression> {
 	E build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException;
 
 	/**
-	 * The "self" argument of a function is a special unnamed argument that represents the "main"
-	 * input to the function. A function with a self argument is normally written as
-	 * <code>$input.fun($opt1, ...., $optn)</code>, where <code>$input</code> represents the "self"
-	 * argument.
-	 * 
-	 * <p>
-	 * If this methd returns <code>true</code>, the <code>self</code> argument of
-	 * {@link #build(Expr, SearchExpression, SearchExpression[])} is filled.
-	 * </p>
-	 */
-	default boolean hasSelf() {
-		return true;
-	}
-
-	/**
 	 * The custom identifier for this builder that triggers its usage when instantiating generic
 	 * expression trees from transformation.
 	 * 

@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IsStringGreaterBuilder extends TwoArgOptionalBooleanMethodBuilder<SearchExpression> {
+public class IsStringGreaterBuilder extends ThreeArgsOptionalBooleanMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link IsStringGreaterBuilder}.
@@ -30,10 +30,9 @@ public class IsStringGreaterBuilder extends TwoArgOptionalBooleanMethodBuilder<S
 		super(context, config);
 	}
 
-	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg1,
+	@Override SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
 			SearchExpression arg2) {
-		return ifElse(arg2, isStringGreater(self, arg1, true), isStringGreater(copy(self), copy(arg1), false));
+		return ifElse(arg2, isStringGreater(arg0, arg1, true), isStringGreater(copy(arg0), copy(arg1), false));
 	}
 
 }

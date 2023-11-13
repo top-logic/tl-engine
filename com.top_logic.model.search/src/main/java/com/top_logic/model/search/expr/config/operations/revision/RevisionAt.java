@@ -46,10 +46,10 @@ public class RevisionAt extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		Date date = asDate(self);
+		Date date = asDate(arguments[0]);
 		Revision requestedRevision = HistoryUtils.getRevisionAt(date.getTime());
 		Revision sessionRevision = HistoryUtils.getSessionRevision();
 		if (requestedRevision.compareTo(sessionRevision) > 0) {
@@ -75,7 +75,7 @@ public class RevisionAt extends GenericMethod {
 		@Override
 		public RevisionAt build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
+			checkMaxArgs(expr, args, 1);
 			return new RevisionAt(getConfig().getName(), self, args);
 		}
 

@@ -45,10 +45,10 @@ public class ToMillis extends AbstractDateMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		return SearchExpression.toNumber(asDate(self).getTime());
+		return SearchExpression.toNumber(asDate(arguments[0]).getTime());
 	}
 
 	/**
@@ -65,8 +65,9 @@ public class ToMillis extends AbstractDateMethod {
 		@Override
 		public ToMillis build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToMillis(getName(), self, args);
 		}
+
 	}
 }

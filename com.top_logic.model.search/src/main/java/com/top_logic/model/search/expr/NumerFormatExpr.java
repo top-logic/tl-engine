@@ -43,10 +43,10 @@ public class NumerFormatExpr extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		return new DecimalFormat(asString(self), DecimalFormatSymbols.getInstance(ThreadContext.getLocale()));
+		return new DecimalFormat(asString(arguments[0]), DecimalFormatSymbols.getInstance(ThreadContext.getLocale()));
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class NumerFormatExpr extends GenericMethod {
 		@Override
 		public NumerFormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new NumerFormatExpr(getName(), self, args);
 		}
 

@@ -44,8 +44,8 @@ public class Attribute extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (self instanceof TLStructuredType) {
-			return ((TLStructuredType) self).getPart(asString(arguments[0]));
+		if (arguments[0] instanceof TLStructuredType) {
+			return ((TLStructuredType) arguments[0]).getPart(asString(arguments[1]));
 		} else {
 			return null;
 		}
@@ -65,8 +65,9 @@ public class Attribute extends SimpleGenericMethod {
 		@Override
 		public Attribute build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return new Attribute(getConfig().getName(), self, args);
 		}
+
 	}
 }

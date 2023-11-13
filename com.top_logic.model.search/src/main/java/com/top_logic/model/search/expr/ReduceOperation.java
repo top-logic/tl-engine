@@ -11,7 +11,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.operations.TwoArgMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ThreeArgsMethodBuilder;
 
 /**
  * A reduce operation combining a sequence of input elements.
@@ -56,9 +56,9 @@ public class ReduceOperation extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object result = arguments[0];
-		SearchExpression fun = asSearchExpression(arguments[1]);
-		for (Object input : asCollection(self)) {
+		Object result = arguments[1];
+		SearchExpression fun = asSearchExpression(arguments[2]);
+		for (Object input : asCollection(arguments[0])) {
 			result = fun.eval(definitions, result, input);
 		}
 		return result;
@@ -67,7 +67,7 @@ public class ReduceOperation extends GenericMethod {
 	/**
 	 * Builder creating a {@link CreateObject} expression.
 	 */
-	public static class Builder extends TwoArgMethodBuilder<ReduceOperation> {
+	public static class Builder extends ThreeArgsMethodBuilder<ReduceOperation> {
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -76,9 +76,9 @@ public class ReduceOperation extends GenericMethod {
 		}
 
 		@Override
-		protected ReduceOperation internalBuild(Expr expr, SearchExpression self, SearchExpression arg1,
+		protected ReduceOperation internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
 				SearchExpression arg2) throws ConfigurationException {
-			return SearchExpressionFactory.reduce(self, arg1, arg2);
+			return SearchExpressionFactory.reduce(null, arg0, arg1, arg2);
 		}
 	}
 

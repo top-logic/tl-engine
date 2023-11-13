@@ -18,6 +18,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -49,20 +50,21 @@ public class RegexEnd extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+		Object match = arguments[0];
+		if (match == null) {
 			return null;
 		}
 
-		int groupId = arguments.length > 0 ? asInt(arguments[0]) : 0;
-		if (self instanceof Collection<?>) {
-			return ((Collection<?>) self).stream().map(m -> getEnd(m, groupId)).collect(Collectors.toList());
+		int groupId = asInt(arguments[1]);
+		if (match instanceof Collection<?>) {
+			return ((Collection<?>) match).stream().map(m -> getEnd(m, groupId)).collect(Collectors.toList());
 		} else {
-			return getEnd(self, groupId);
+			return getEnd(match, groupId);
 		}
 	}
 
-	private Object getEnd(Object self, int groupId) {
-		Match match = (Match) self;
+	private Object getEnd(Object base, int groupId) {
+		Match match = (Match) base;
 		return toNumber(match.group(groupId).getEnd());
 	}
 
@@ -70,6 +72,12 @@ public class RegexEnd extends SimpleGenericMethod {
 	 * {@link MethodBuilder} creating {@link RegexEnd}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<RegexEnd> {
+
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("match")
+			.optional("groupId", 0)
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -79,8 +87,13 @@ public class RegexEnd extends SimpleGenericMethod {
 
 		@Override
 		public RegexEnd build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			checkMaxArgs(expr, args, 1);
 			return new RegexEnd(getConfig().getName(), self, args);
 		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
+		}
+
 	}
 }

@@ -32,8 +32,8 @@ public class SizeBuilder extends AbstractSimpleMethodBuilder<Size> {
 	@Override
 	public Size build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
-		checkNoArguments(expr, self, args);
-		return size(self);
+		checkSingleArg(expr, args);
+		return size(args[0]);
 	}
 
 }

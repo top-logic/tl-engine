@@ -82,10 +82,6 @@ public class HTTPResponse extends GenericMethod {
 			return DESCRIPTOR;
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

@@ -43,7 +43,7 @@ public class Values extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return asMap(self).values();
+		return asMap(arguments[0]).values();
 	}
 
 	/**
@@ -60,9 +60,10 @@ public class Values extends SimpleGenericMethod {
 		@Override
 		public Values build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new Values(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

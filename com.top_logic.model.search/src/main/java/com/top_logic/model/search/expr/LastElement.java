@@ -30,7 +30,7 @@ public class LastElement extends AbstractListAccess {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new LastElement(arguments);
+		return SearchExpressionFactory.lastElement(arguments);
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class LastElement extends AbstractListAccess {
 		public LastElement build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return SearchExpressionFactory.lastElement(args[0]);
+			return SearchExpressionFactory.lastElement(args);
 		}
 
 	}

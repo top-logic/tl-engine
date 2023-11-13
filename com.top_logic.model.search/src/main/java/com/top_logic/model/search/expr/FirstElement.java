@@ -30,7 +30,7 @@ public class FirstElement extends AbstractListAccess {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new FirstElement(arguments);
+		return SearchExpressionFactory.firstElement(arguments);
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class FirstElement extends AbstractListAccess {
 		public FirstElement build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return SearchExpressionFactory.firstElement(self);
+			return SearchExpressionFactory.firstElement(args);
 		}
 
 	}

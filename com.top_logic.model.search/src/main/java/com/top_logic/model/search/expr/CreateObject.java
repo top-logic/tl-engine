@@ -41,9 +41,9 @@ public class CreateObject extends AbstractObjectCreation {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLClass type = (TLClass) asStructuredTypeNonNull(self, getSelf());
-		TLObject context = asTLObject(arguments[0]);
-		boolean transientObject = asBoolean(arguments[1]);
+		TLClass type = (TLClass) asStructuredTypeNonNull(arguments[0], getArguments()[0]);
+		TLObject context = asTLObject(arguments[1]);
+		boolean transientObject = asBoolean(arguments[2]);
 		if (transientObject) {
 			return TransientObjectFactory.INSTANCE.createObject(type, context);
 		} else {
@@ -56,6 +56,7 @@ public class CreateObject extends AbstractObjectCreation {
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<CreateObject> {
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("type")
 			.optional("context")
 			.optional("transient", false)
 			.build();
@@ -77,6 +78,7 @@ public class CreateObject extends AbstractObjectCreation {
 		public ArgumentDescriptor descriptor() {
 			return DESCRIPTOR;
 		}
+
 	}
 
 }

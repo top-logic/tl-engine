@@ -43,7 +43,7 @@ public class Ceil extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return Math.ceil(asDouble(self));
+		return Math.ceil(asDouble(arguments[0]));
 	}
 
 	/**
@@ -60,9 +60,10 @@ public class Ceil extends SimpleGenericMethod {
 		@Override
 		public Ceil build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new Ceil(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

@@ -30,8 +30,8 @@ public class SingletonBuilder extends NoArgMethodBuilder<Singleton> {
 	}
 
 	@Override
-	protected Singleton internalBuild(Expr expr, SearchExpression self) {
-		return singleton(self);
+	protected Singleton internalBuild(Expr expr, SearchExpression argument) {
+		return singleton(argument);
 	}
 
 }

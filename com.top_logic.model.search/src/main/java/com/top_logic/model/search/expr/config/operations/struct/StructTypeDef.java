@@ -64,10 +64,6 @@ public class StructTypeDef extends SimpleGenericMethod {
 			return new StructTypeDef(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

@@ -46,13 +46,13 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object arg0 = arguments[0];
-		if (arg0 == null) {
+		Object arg1 = arguments[1];
+		if (arg1 == null) {
 			// Not yet set
 			return null;
 		}
-		TLStructuredTypePart part = asTypePart(getArguments()[0], arg0);
-		return evalPotentialFlatMap(definitions, self, part);
+		TLStructuredTypePart part = asTypePart(getArguments()[1], arg1);
+		return evalPotentialFlatMap(definitions, arguments[0], part);
 	}
 
 	/**
@@ -81,9 +81,10 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 		@Override
 		public DynamicGet build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return new DynamicGet(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

@@ -42,7 +42,7 @@ public class Min extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return new Evaluator().add(self).add(arguments).getValue();
+		return new Evaluator().add(arguments).getValue();
 	}
 
 	class Evaluator {
@@ -102,10 +102,6 @@ public class Min extends SimpleGenericMethod {
 			return new Min("min", self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

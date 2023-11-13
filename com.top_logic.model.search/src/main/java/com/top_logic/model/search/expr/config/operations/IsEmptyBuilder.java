@@ -30,8 +30,8 @@ public class IsEmptyBuilder extends NoArgMethodBuilder<IsEmpty> {
 	}
 
 	@Override
-	protected IsEmpty internalBuild(Expr expr, SearchExpression self) {
-		return isEmpty(self);
+	protected IsEmpty internalBuild(Expr expr, SearchExpression argument) {
+		return isEmpty(argument);
 	}
 
 }

@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IsEqualBuilder extends SingleArgMethodBuilder<IsEqual> {
+public class IsEqualBuilder extends TwoArgsMethodBuilder<IsEqual> {
 
 	/**
 	 * Creates a {@link IsEqualBuilder}.
@@ -30,8 +30,8 @@ public class IsEqualBuilder extends SingleArgMethodBuilder<IsEqual> {
 	}
 
 	@Override
-	protected IsEqual internalBuild(Expr expr, SearchExpression self, SearchExpression arg) {
-		return isEqual(self, arg);
+	protected IsEqual internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+		return isEqual(arg0, arg1);
 	}
 
 }

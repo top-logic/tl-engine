@@ -78,11 +78,6 @@ final class ServiceMethodBuilder implements MethodBuilder<SearchExpression>, Fac
 	}
 
 	@Override
-	public boolean hasSelf() {
-		return false;
-	}
-
-	@Override
 	public Object getId() {
 		return _name;
 	}

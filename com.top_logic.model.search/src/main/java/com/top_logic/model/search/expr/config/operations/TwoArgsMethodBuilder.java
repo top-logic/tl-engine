@@ -11,15 +11,15 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
- * {@link MethodBuilder} for methods with a single argument.
+ * {@link MethodBuilder} for methods with two arguments.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class TwoArgMethodBuilder<E extends SearchExpression> extends AbstractSimpleMethodBuilder<E> {
+public abstract class TwoArgsMethodBuilder<E extends SearchExpression> extends AbstractSimpleMethodBuilder<E> {
 	/**
-	 * Creates a {@link TwoArgMethodBuilder}.
+	 * Creates a {@link TwoArgsMethodBuilder}.
 	 */
-	public TwoArgMethodBuilder(InstantiationContext context, Config<?> config) {
+	public TwoArgsMethodBuilder(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
@@ -27,13 +27,13 @@ public abstract class TwoArgMethodBuilder<E extends SearchExpression> extends Ab
 	public E build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
 		checkTwoArgs(expr, args);
-		return internalBuild(expr, self, args[0], args[1]);
+		return internalBuild(expr, args[0], args[1]);
 	}
 
 	/**
 	 * Implementation of {@link #build(Expr, SearchExpression, SearchExpression[])}
 	 */
-	protected abstract E internalBuild(Expr expr, SearchExpression self,
-			SearchExpression arg1, SearchExpression arg2) throws ConfigurationException;
+	protected abstract E internalBuild(Expr expr, SearchExpression arg0,
+			SearchExpression arg1) throws ConfigurationException;
 
 }

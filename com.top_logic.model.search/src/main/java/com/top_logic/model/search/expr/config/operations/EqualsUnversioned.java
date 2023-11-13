@@ -45,8 +45,8 @@ public class EqualsUnversioned extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLObject first = asTLObject(self);
-		TLObject second = asTLObject(arguments[0]);
+		TLObject first = asTLObject(arguments[0]);
+		TLObject second = asTLObject(arguments[1]);
 		return WrapperHistoryUtils.equalsUnversioned(first, second);
 	}
 
@@ -64,8 +64,9 @@ public class EqualsUnversioned extends GenericMethod {
 		@Override
 		public EqualsUnversioned build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return new EqualsUnversioned(getConfig().getName(), self, args);
 		}
+
 	}
 }

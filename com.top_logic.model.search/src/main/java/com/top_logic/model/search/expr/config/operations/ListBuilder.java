@@ -30,11 +30,6 @@ public class ListBuilder extends AbstractSimpleMethodBuilder<ListExpr> {
 	}
 
 	@Override
-	public boolean hasSelf() {
-		return false;
-	}
-
-	@Override
 	public ListExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
 			throws ConfigurationException {
 		checkNoTarget(expr, self);

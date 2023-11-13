@@ -45,7 +45,7 @@ public class InCurrent extends GenericMethod implements WithFlatMapSemantics<Voi
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, self, null);
+		return evalPotentialFlatMap(definitions, arguments[0], null);
 	}
 
 	@Override
@@ -72,7 +72,7 @@ public class InCurrent extends GenericMethod implements WithFlatMapSemantics<Voi
 		@Override
 		public InCurrent build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
+			checkSingleArg(expr, args);
 			return new InCurrent(getConfig().getName(), self, args);
 		}
 

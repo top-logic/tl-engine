@@ -43,7 +43,7 @@ public class GetKey extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return asEntry(self).getKey();
+		return asEntry(arguments[0]).getKey();
 	}
 
 	/**
@@ -60,9 +60,10 @@ public class GetKey extends SimpleGenericMethod {
 		@Override
 		public GetKey build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new GetKey(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

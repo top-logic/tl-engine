@@ -33,12 +33,12 @@ public class AllBuilder extends NoArgMethodBuilder<SearchExpression> {
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self)
+	protected SearchExpression internalBuild(Expr expr, SearchExpression argument)
 			throws ConfigurationException {
-		if (self instanceof Literal) {
-			return all(resolveStructuredType(expr, self));
+		if (argument instanceof Literal) {
+			return all(resolveStructuredType(expr, argument));
 		} else {
-			return new DynamicAll(getConfig().getName(), self, new SearchExpression[0]);
+			return new DynamicAll(getConfig().getName(), argument, new SearchExpression[0]);
 		}
 	}
 

@@ -49,11 +49,11 @@ public class I18NInternationalize extends Internationalize {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object inputArg = self;
-		boolean translate = asBoolean(arguments[1]);
+		Object inputArg = arguments[0];
+		boolean translate = asBoolean(arguments[2]);
 		if (inputArg instanceof StructuredText) {
 			StructuredText structuredText = (StructuredText) inputArg;
-			Object langArg = arguments[0];
+			Object langArg = arguments[1];
 
 			ResourcesModule resources = ResourcesModule.getInstance();
 			String sourceCode = structuredText.getSourceCode();
@@ -136,6 +136,7 @@ public class I18NInternationalize extends Internationalize {
 				throws ConfigurationException {
 			return new I18NInternationalize(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

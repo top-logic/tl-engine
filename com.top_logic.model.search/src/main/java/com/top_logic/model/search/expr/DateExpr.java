@@ -88,9 +88,5 @@ public class DateExpr extends SimpleGenericMethod {
 			return new DateExpr(getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 }

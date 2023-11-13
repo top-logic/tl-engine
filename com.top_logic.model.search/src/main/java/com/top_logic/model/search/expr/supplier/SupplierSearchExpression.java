@@ -5,12 +5,9 @@
  */
 package com.top_logic.model.search.expr.supplier;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.top_logic.basic.ArrayUtil;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -45,41 +42,17 @@ public class SupplierSearchExpression extends GenericMethod {
 
 	@Override
 	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		checkNoSelf(self);
-		checkNoArguments(arguments);
 		return new SupplierSearchExpression(getName(), _builder);
 	}
 
 	@Override
 	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		checkNoSelf(selfType);
-		checkNoArguments(argumentTypes);
 		return _builder.getType();
 	}
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		checkNoSelf(self);
-		checkNoArguments(arguments);
 		return _builder.getValue();
-	}
-
-	private void checkNoSelf(Object object) {
-		if (object != null) {
-			throw new IllegalArgumentException("This expression has no 'self'.");
-		}
-	}
-
-	private void checkNoArguments(Object[] array) {
-		if (!ArrayUtil.isEmpty(array)) {
-			throw new IllegalArgumentException("This expression does not take arguments.");
-		}
-	}
-
-	private void checkNoArguments(Collection<?> collection) {
-		if (!CollectionUtil.isEmpty(collection)) {
-			throw new IllegalArgumentException("This expression does not take arguments.");
-		}
 	}
 
 }

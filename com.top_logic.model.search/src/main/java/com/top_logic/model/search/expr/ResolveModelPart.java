@@ -30,20 +30,20 @@ public class ResolveModelPart extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link ResolveModelPart}.
 	 */
-	protected ResolveModelPart(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ResolveModelPart(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ResolveModelPart(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ResolveModelPart(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		TLModel model;
-		if (selfType != null) {
-			model = selfType.getModel();
+		if (argumentTypes.get(0) != null) {
+			model = argumentTypes.get(0).getModel();
 		} else {
 			model = ModelService.getApplicationModel();
 		}
@@ -73,7 +73,7 @@ public class ResolveModelPart extends SimpleGenericMethod {
 		public ResolveModelPart build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new ResolveModelPart(getName(), self, args);
+			return new ResolveModelPart(getName(), args);
 		}
 
 	}

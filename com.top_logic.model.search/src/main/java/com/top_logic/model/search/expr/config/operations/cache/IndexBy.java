@@ -40,18 +40,18 @@ public class IndexBy extends GenericMethod {
 	/**
 	 * Creates a {@link IndexBy}.
 	 */
-	protected IndexBy(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected IndexBy(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new IndexBy(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new IndexBy(getName(), arguments);
 	}
 
 	@Override
@@ -107,7 +107,7 @@ public class IndexBy extends GenericMethod {
 		public IndexBy build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 2, 3);
-			return new IndexBy(getConfig().getName(), self, args);
+			return new IndexBy(getConfig().getName(), args);
 		}
 
 	}

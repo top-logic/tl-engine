@@ -38,7 +38,7 @@ public class GetBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 		if (arg1 instanceof Literal) {
 			return access(arg0, resolvePart(expr, arg1));
 		} else {
-			return new DynamicGet(getConfig().getName(), arg0, new SearchExpression[] { arg1 });
+			return new DynamicGet(getConfig().getName(), new SearchExpression[] { arg0, arg1 });
 		}
 	}
 

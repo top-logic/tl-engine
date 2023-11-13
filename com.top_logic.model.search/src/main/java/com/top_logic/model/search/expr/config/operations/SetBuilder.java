@@ -39,7 +39,7 @@ public class SetBuilder extends ThreeArgsMethodBuilder<SearchExpression> {
 		if (arg1 instanceof Literal) {
 			return update(arg0, resolvePart(expr, arg1), arg2);
 		} else {
-			return new DynamicSet(getConfig().getName(), arg0, new SearchExpression[] { arg1, arg2 });
+			return new DynamicSet(getConfig().getName(), new SearchExpression[] { arg0, arg1, arg2 });
 		}
 	}
 

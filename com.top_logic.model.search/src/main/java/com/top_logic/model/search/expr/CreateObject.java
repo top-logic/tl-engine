@@ -24,19 +24,16 @@ public class CreateObject extends AbstractObjectCreation {
 
 	/**
 	 * Creates a {@link CreateObject}.
-	 *
-	 * @param self
-	 *        The expression evaluating to the type to instantiate (usually a model type literal).
 	 * @param args
 	 *        The optional create context (at most a single argument).
 	 */
-	CreateObject(String name, SearchExpression self, SearchExpression[] args) {
-		super(name, self, args);
+	CreateObject(String name, SearchExpression[] args) {
+		super(name, args);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new CreateObject(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new CreateObject(getName(), arguments);
 	}
 
 	@Override
@@ -71,7 +68,7 @@ public class CreateObject extends AbstractObjectCreation {
 		@Override
 		public CreateObject build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new CreateObject(getName(), self, args);
+			return new CreateObject(getName(), args);
 		}
 
 		@Override

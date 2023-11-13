@@ -29,18 +29,18 @@ public class InCurrent extends GenericMethod implements WithFlatMapSemantics<Voi
 	/**
 	 * Creates a new {@link InCurrent}.
 	 */
-	protected InCurrent(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected InCurrent(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new InCurrent(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new InCurrent(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class InCurrent extends GenericMethod implements WithFlatMapSemantics<Voi
 		public InCurrent build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new InCurrent(getConfig().getName(), self, args);
+			return new InCurrent(getConfig().getName(), args);
 		}
 
 	}

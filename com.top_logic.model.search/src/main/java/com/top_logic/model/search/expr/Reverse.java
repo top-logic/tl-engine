@@ -26,18 +26,18 @@ public class Reverse extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Reverse}.
 	 */
-	protected Reverse(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Reverse(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Reverse(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Reverse(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class Reverse extends SimpleGenericMethod {
 		public Reverse build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new Reverse(getName(), self, args);
+			return new Reverse(getName(), args);
 		}
 
 	}

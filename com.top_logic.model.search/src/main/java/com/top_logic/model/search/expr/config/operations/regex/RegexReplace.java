@@ -36,17 +36,17 @@ public class RegexReplace extends GenericMethod {
 	/**
 	 * Creates a {@link RegexReplace}.
 	 */
-	protected RegexReplace(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexReplace(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexReplace(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexReplace(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -100,7 +100,7 @@ public class RegexReplace extends GenericMethod {
 		@Override
 		public RegexReplace build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
 			checkThreeArgs(expr, args);
-			return new RegexReplace(getConfig().getName(), self, args);
+			return new RegexReplace(getConfig().getName(), args);
 		}
 
 		@Override

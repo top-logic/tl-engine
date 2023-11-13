@@ -104,18 +104,18 @@ public class CalendarField extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link CalendarField}.
 	 */
-	protected CalendarField(String name, Field field, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected CalendarField(String name, Field field, SearchExpression[] arguments) {
+		super(name, arguments);
 		_field = field;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new CalendarField(getName(), _field, self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new CalendarField(getName(), _field, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.INTEGER_TYPE);
 	}
 
@@ -168,7 +168,7 @@ public class CalendarField extends SimpleGenericMethod {
 		public CalendarField build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new CalendarField(getName(), _field, self, args);
+			return new CalendarField(getName(), _field, args);
 		}
 
 		@Override

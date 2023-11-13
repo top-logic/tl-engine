@@ -45,7 +45,7 @@ public class FormatExpr extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Format format = (Format) arguments[0];
 		if (arguments.length == 2) {
 			Object first = arguments[1];

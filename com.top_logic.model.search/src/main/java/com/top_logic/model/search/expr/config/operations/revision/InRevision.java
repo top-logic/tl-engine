@@ -64,7 +64,7 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object arg = asSingleElement(arguments[1]);
 		if (arg == null) {
 			throw new TopLogicException(I18NConstants.ERROR_REVISION_ARGUMENT_NULL__EXPR.fill(this));

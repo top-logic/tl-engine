@@ -50,7 +50,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return evalPotentialFlatMap(definitions, arguments[0], asLocale(arguments[1]));
 	}
 

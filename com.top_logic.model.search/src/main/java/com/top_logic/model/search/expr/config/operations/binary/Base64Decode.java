@@ -51,7 +51,7 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return evalPotentialFlatMap(definitions, null, arguments);
 	}
 

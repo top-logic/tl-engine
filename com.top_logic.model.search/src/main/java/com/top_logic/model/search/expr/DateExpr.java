@@ -46,7 +46,7 @@ public class DateExpr extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Calendar calendar = CalendarUtil.createCalendar();
 		setCalendarParts(this, calendar, arguments);
 		return calendar.getTime();

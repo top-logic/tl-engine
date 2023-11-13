@@ -41,7 +41,7 @@ public class Reverse extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		List<?> list = asList(arguments[0]);
 		ArrayList<?> result = new ArrayList<>(list);
 		Collections.reverse(result);

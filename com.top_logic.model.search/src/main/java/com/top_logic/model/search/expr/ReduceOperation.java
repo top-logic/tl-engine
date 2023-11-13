@@ -55,7 +55,7 @@ public class ReduceOperation extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object result = arguments[1];
 		SearchExpression fun = asSearchExpression(arguments[2]);
 		for (Object input : asCollection(arguments[0])) {

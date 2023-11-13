@@ -43,7 +43,7 @@ public class AliasResolver extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String alias = asString(arguments[0]);
 		if (alias == null) {
 			return null;

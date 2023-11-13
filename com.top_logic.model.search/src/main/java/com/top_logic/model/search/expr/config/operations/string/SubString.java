@@ -46,7 +46,7 @@ public class SubString extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Object from = arguments[1];
 		Object to = arguments[2];
 

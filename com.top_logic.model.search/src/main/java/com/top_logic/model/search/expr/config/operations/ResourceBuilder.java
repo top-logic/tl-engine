@@ -45,7 +45,7 @@ public class ResourceBuilder extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		int numberArgs = arguments.length;
 
 		Object userObject = null;

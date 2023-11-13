@@ -42,7 +42,7 @@ public class ContainerReference extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		TLObject object = asTLObject(self);
+		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
 			return object.tContainerReference();
 		} else {
@@ -64,8 +64,9 @@ public class ContainerReference extends SimpleGenericMethod {
 		@Override
 		public ContainerReference build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ContainerReference(getConfig().getName(), self, args);
 		}
+
 	}
 }

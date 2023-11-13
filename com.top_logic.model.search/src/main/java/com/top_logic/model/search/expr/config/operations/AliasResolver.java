@@ -70,11 +70,6 @@ public class AliasResolver extends GenericMethod {
 			return new AliasResolver(getConfig().getName(), self, args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
-
 }
 

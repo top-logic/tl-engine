@@ -45,8 +45,8 @@ public class ParseExpr extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		Format format = (Format) self;
-		String arg = asString(arguments[0]);
+		Format format = (Format) arguments[0];
+		String arg = asString(arguments[1]);
 		try {
 			return normalizeValue(format.parseObject(arg));
 		} catch (ParseException ex) {
@@ -70,7 +70,7 @@ public class ParseExpr extends SimpleGenericMethod {
 		@Override
 		public ParseExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
+			checkTwoArgs(expr, args);
 			return new ParseExpr(getName(), self, args);
 		}
 

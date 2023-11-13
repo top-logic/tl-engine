@@ -53,13 +53,14 @@ public class ToSet extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
+		Object base = arguments[0];
 		Set<?> result;
-		if (self == null) {
+		if (base == null) {
 			result = Collections.emptySet();
-		} else if (self instanceof Collection<?>) {
-			result = CollectionUtil.toSet((Collection<?>) self);
+		} else if (base instanceof Collection<?>) {
+			result = CollectionUtil.toSet((Collection<?>) base);
 		} else {
-			result = Collections.singleton(self);
+			result = Collections.singleton(base);
 		}
 		return result;
 	}
@@ -79,9 +80,10 @@ public class ToSet extends SimpleGenericMethod {
 		@Override
 		public ToSet build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new ToSet(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

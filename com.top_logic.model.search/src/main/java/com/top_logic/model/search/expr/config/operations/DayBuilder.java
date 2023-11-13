@@ -30,8 +30,8 @@ public class DayBuilder extends NoArgMethodBuilder<GetDay> {
 	}
 
 	@Override
-	protected GetDay internalBuild(Expr expr, SearchExpression self) {
-		return day(self);
+	protected GetDay internalBuild(Expr expr, SearchExpression argument) {
+		return day(argument);
 	}
 
 }

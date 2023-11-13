@@ -49,7 +49,7 @@ public class Type extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		TLObject object = asTLObject(self);
+		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
 			return object.tType();
 		} else {
@@ -71,8 +71,9 @@ public class Type extends SimpleGenericMethod {
 		@Override
 		public Type build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new Type(getConfig().getName(), self, args);
 		}
+
 	}
 }

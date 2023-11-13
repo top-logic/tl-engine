@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class GetBuilder extends SingleArgMethodBuilder<SearchExpression> {
+public class GetBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link GetBuilder}.
@@ -33,12 +33,12 @@ public class GetBuilder extends SingleArgMethodBuilder<SearchExpression> {
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg)
+	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1)
 			throws ConfigurationException {
-		if (arg instanceof Literal) {
-			return access(self, resolvePart(expr, arg));
+		if (arg1 instanceof Literal) {
+			return access(arg0, resolvePart(expr, arg1));
 		} else {
-			return new DynamicGet(getConfig().getName(), self, new SearchExpression[] { arg });
+			return new DynamicGet(getConfig().getName(), arg0, new SearchExpression[] { arg1 });
 		}
 	}
 

@@ -20,6 +20,8 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.model.search.expr.config.operations.string.Translate;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -63,12 +65,12 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object arg = asSingleElement(arguments[0]);
+		Object arg = asSingleElement(arguments[1]);
 		if (arg == null) {
 			throw new TopLogicException(I18NConstants.ERROR_REVISION_ARGUMENT_NULL__EXPR.fill(this));
 		} else if (arg instanceof Revision) {
 			Revision revision = (Revision) arg;
-			return evalPotentialFlatMap(definitions, self, revision);
+			return evalPotentialFlatMap(definitions, arguments[0], revision);
 		} else {
 			long commitNumber = asLong(arg);
 
@@ -77,16 +79,16 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 					I18NConstants.ERROR_NEGATIVE_COMMIT_NR__EXPR_COMMIT.fill(this, commitNumber));
 			}
 			if (commitNumber == Revision.INITIAL.getCommitNumber()) {
-				return evalPotentialFlatMap(definitions, self, Revision.INITIAL);
+				return evalPotentialFlatMap(definitions, arguments[0], Revision.INITIAL);
 			}
 			if (commitNumber == Revision.CURRENT.getCommitNumber()) {
-				return evalPotentialFlatMap(definitions, self, Revision.CURRENT);
+				return evalPotentialFlatMap(definitions, arguments[0], Revision.CURRENT);
 			}
 			if (commitNumber > HistoryUtils.getHistoryManager().getSessionRevision()) {
 				throw new TopLogicException(
 					I18NConstants.ERROR_UNKNOWN_COMMIT_NR__EXPR_COMMIT.fill(this, commitNumber));
 			}
-			return evalPotentialFlatMap(definitions, self, HistoryUtils.getRevision(commitNumber));
+			return evalPotentialFlatMap(definitions, arguments[0], HistoryUtils.getRevision(commitNumber));
 		}
 	}
 
@@ -94,6 +96,12 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 	 * {@link AbstractSimpleMethodBuilder} creating {@link InRevision}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<InRevision> {
+
+		/** Description of parameters for a {@link Translate}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("item")
+			.mandatory("revision")
+			.build();
 
 		/**
 		 * Creates a {@link Builder}.
@@ -105,8 +113,12 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 		@Override
 		public InRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
 			return new InRevision(getConfig().getName(), self, args);
+		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 
 	}

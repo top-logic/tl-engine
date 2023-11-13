@@ -43,7 +43,7 @@ public class Floor extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		return Math.floor(asDouble(self));
+		return Math.floor(asDouble(arguments[0]));
 	}
 
 	/**
@@ -60,9 +60,10 @@ public class Floor extends SimpleGenericMethod {
 		@Override
 		public Floor build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
+			checkSingleArg(expr, args);
 			return new Floor(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
@@ -49,11 +50,11 @@ public class ResKeyArguments extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (!(self instanceof ResKey)) {
+		if (!(arguments[0] instanceof ResKey)) {
 			// Null, literal string?
-			return self;
+			return arguments[0];
 		}
-		return ResKey.message((ResKey) self, arguments);
+		return ResKey.message((ResKey) arguments[0], Arrays.copyOfRange(arguments, 1, arguments.length));
 	}
 
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr.config.operations.struct;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
@@ -56,17 +57,18 @@ public class NewStruct extends SimpleGenericMethod {
 
 	@Override
 	public Object eval(Object self, Object[] arguments) {
-		if (!(self instanceof StructType)) {
-			throw new TopLogicException(I18NConstants.ERROR_STRUCT_TYPE_EXPECTED__VALUE_EXPR.fill(self, this));
+		if (!(arguments[0] instanceof StructType)) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_STRUCT_TYPE_EXPECTED__VALUE_EXPR.fill(arguments[0], getArguments()[0]));
 		}
-		StructType type = (StructType) self;
+		StructType type = (StructType) arguments[0];
 
-		if (arguments.length != type.size()) {
+		if (arguments.length != type.size() + 1) {
 			throw new TopLogicException(I18NConstants.ERROR_ARGUMENT_COUNT_MISMATCH__EXPECTED_ACTUAL_EXPR
 				.fill(type, arguments.length, this));
 		}
 
-		return new StructValue(type, arguments);
+		return new StructValue(type, Arrays.copyOfRange(arguments, 1, arguments.length));
 	}
 
 	/**
@@ -83,7 +85,7 @@ public class NewStruct extends SimpleGenericMethod {
 		@Override
 		public NewStruct build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkHasTarget(expr, self);
+			checkMinArgs(expr, args, 1);
 			return new NewStruct(getConfig().getName(), self, args);
 		}
 	}

@@ -52,19 +52,19 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, self, arguments);
+		return evalPotentialFlatMap(definitions, null, arguments);
 	}
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object self, Object[] arguments) {
-		String input = asString(self);
+		String input = asString(arguments[0]);
 		if (input.isEmpty()) {
 			return null;
 		}
 
-		String name = asString(arguments[0]);
+		String name = asString(arguments[1]);
 
-		String specifiedContentType = asString(arguments[1]);
+		String specifiedContentType = asString(arguments[2]);
 		String contentType;
 		if (specifiedContentType == null) {
 			contentType = MimeTypesModule.getInstance().getMimeType(name);
@@ -129,6 +129,7 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 	public static class Builder extends AbstractSimpleMethodBuilder<Base64Decode> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("encodedData")
 			.optional("name", "data")
 			.optional("contentType")
 			.build();

@@ -42,16 +42,16 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+		if (arguments[0] == null) {
 			return Collections.emptyList();
 		}
 
-		return evalPotentialFlatMap(definitions, self, null);
+		return evalPotentialFlatMap(definitions, arguments[0], null);
 	}
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
-		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getSelf());
+		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getArguments()[0]);
 
 		return All.all(this, type);
 	}
@@ -89,9 +89,10 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 		@Override
 		public DynamicAll build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
+			checkSingleArg(expr, args);
 			return new DynamicAll(getConfig().getName(), self, args);
 		}
+
 	}
 
 }

@@ -48,12 +48,12 @@ public class Throw extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		ResKey message = toResKey(self);
+		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
 			TopLogicException problem = new ScriptAbort(message);
 			problem.initSeverity(ErrorSeverity.WARNING);
-			if (arguments.length > 0) {
-				ResKey details = toResKey(arguments[0]);
+			if (arguments.length > 1) {
+				ResKey details = toResKey(arguments[1]);
 				if (details != null) {
 					problem.initDetails(details);
 				}
@@ -88,9 +88,9 @@ public class Throw extends GenericMethod {
 		@Override
 		public Throw build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			checkHasTarget(expr, self);
-			checkMaxArgs(expr, args, 1);
+			checkArgs(expr, args, 1, 2);
 			return new Throw(getName(), self, args);
 		}
+
 	}
 }

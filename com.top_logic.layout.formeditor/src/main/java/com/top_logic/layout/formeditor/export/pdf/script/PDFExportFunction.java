@@ -54,11 +54,11 @@ public class PDFExportFunction extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLObject exportObject = asTLObject(self);
+		TLObject exportObject = asTLObject(arguments[0]);
 		if (exportObject == null) {
 			return null;
 		}
-		String name = asString(arguments[0]);
+		String name = asString(arguments[1]);
 
 		return new PDFData(name, exportObject);
 	}
@@ -69,6 +69,7 @@ public class PDFExportFunction extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<PDFExportFunction> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("dataObject")
 			.optional("name", "export.pdf")
 			.build();
 
@@ -89,6 +90,7 @@ public class PDFExportFunction extends GenericMethod {
 		public ArgumentDescriptor descriptor() {
 			return DESCRIPTOR;
 		}
+
 	}
 
 }

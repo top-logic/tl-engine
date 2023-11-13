@@ -46,7 +46,7 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object arg1 = arguments[1];
 		if (arg1 == null) {
 			// Not yet set

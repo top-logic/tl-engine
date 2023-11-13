@@ -56,7 +56,7 @@ public class Base64Encode extends GenericMethod implements WithFlatMapSemantics<
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Encoder encoding = asBoolean(arguments[1]) ? Base64.getMimeEncoder() : Base64.getEncoder();
 
 		return evalPotentialFlatMap(definitions, arguments[0], encoding);

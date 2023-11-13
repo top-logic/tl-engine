@@ -48,7 +48,7 @@ public class Info extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
 			ResKey details;

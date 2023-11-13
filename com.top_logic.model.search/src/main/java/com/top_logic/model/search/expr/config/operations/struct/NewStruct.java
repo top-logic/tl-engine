@@ -56,7 +56,7 @@ public class NewStruct extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		if (!(arguments[0] instanceof StructType)) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_STRUCT_TYPE_EXPECTED__VALUE_EXPR.fill(arguments[0], getArguments()[0]));

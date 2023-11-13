@@ -44,7 +44,7 @@ public class EqualsUnversioned extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject first = asTLObject(arguments[0]);
 		TLObject second = asTLObject(arguments[1]);
 		return WrapperHistoryUtils.equalsUnversioned(first, second);

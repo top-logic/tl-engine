@@ -42,7 +42,7 @@ public class Ceil extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		return Math.ceil(asDouble(arguments[0]));
 	}
 

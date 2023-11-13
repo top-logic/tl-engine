@@ -46,7 +46,7 @@ public class ToDate extends AbstractDateMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		if (arguments[0] == null) {
 			return null;
 		}

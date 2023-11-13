@@ -30,7 +30,7 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Object base = arguments[0];
 		if (base == null) {
 			return evalOnEmpty();

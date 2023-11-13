@@ -33,7 +33,7 @@ public interface Call {
 
 	/**
 	 * Creates a {@link Call} from the signature of
-	 * {@link GenericMethod#eval(Object, Object[], EvalContext)}.
+	 * {@link GenericMethod#eval(Object[], EvalContext)}.
 	 */
 	static Call newInstance(Object self, Object[] arguments) {
 		return new Call() {

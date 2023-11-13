@@ -120,7 +120,7 @@ public class CalendarField extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		Calendar date = asCalendar(arguments[0]);
 		if (date == null) {
 			return null;

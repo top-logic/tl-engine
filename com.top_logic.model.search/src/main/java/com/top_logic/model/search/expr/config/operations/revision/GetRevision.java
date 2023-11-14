@@ -65,7 +65,7 @@ public class GetRevision extends GenericMethod {
 		}
 
 		@Override
-		public GetRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public GetRevision build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new GetRevision(getConfig().getName(), args);

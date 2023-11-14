@@ -65,7 +65,7 @@ public class ToDate extends AbstractDateMethod {
 		}
 
 		@Override
-		public ToDate build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToDate build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ToDate(getName(), args);

@@ -66,7 +66,7 @@ public class CreateObject extends AbstractObjectCreation {
 		}
 
 		@Override
-		public CreateObject build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public CreateObject build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new CreateObject(getName(), args);
 		}

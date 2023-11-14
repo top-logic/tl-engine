@@ -133,7 +133,7 @@ public class ResourceBuilder extends GenericMethod {
 		}
 
 		@Override
-		public ResourceBuilder build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ResourceBuilder build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new ResourceBuilder(getConfig().getName(), args);
 		}

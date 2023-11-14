@@ -28,7 +28,7 @@ public abstract class ThreeArgsOptionalBooleanMethodBuilder<E extends SearchExpr
 	}
 
 	@Override
-	public E build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public E build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		if (args.length < 2) {
 			throw error(I18NConstants.ERROR_AT_LEAST_ONE_ARGUMENT_EXPECTED__EXPR.fill(toString(expr)));
@@ -46,7 +46,7 @@ public abstract class ThreeArgsOptionalBooleanMethodBuilder<E extends SearchExpr
 	}
 
 	/**
-	 * Implementation of {@link #build(Expr, SearchExpression, SearchExpression[])}
+	 * Implementation of {@link #build(Expr, SearchExpression[])}
 	 */
 	abstract E internalBuild(Expr expr, SearchExpression arg0,
 			SearchExpression arg1, SearchExpression arg2) throws ConfigurationException;

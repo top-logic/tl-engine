@@ -78,7 +78,7 @@ public class ToSet extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToSet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToSet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ToSet(getConfig().getName(), args);

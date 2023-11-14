@@ -92,7 +92,7 @@ public class GroupBy extends GenericMethod {
 		}
 
 		@Override
-		public GroupBy build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public GroupBy build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 2, 3);
 			return new GroupBy(getConfig().getName(), args);

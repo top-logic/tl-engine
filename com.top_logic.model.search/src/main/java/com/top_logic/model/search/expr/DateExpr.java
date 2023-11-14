@@ -83,7 +83,7 @@ public class DateExpr extends SimpleGenericMethod {
 		}
 
 		@Override
-		public DateExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DateExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new DateExpr(getName(), args);
 		}

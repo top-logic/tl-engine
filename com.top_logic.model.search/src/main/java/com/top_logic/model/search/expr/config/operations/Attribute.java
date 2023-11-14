@@ -63,7 +63,7 @@ public class Attribute extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Attribute build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Attribute build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return new Attribute(getConfig().getName(), args);

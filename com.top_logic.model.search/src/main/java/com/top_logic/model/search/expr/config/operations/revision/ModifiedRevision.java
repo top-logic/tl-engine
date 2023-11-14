@@ -71,7 +71,7 @@ public class ModifiedRevision extends GenericMethod {
 		}
 
 		@Override
-		public ModifiedRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ModifiedRevision build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ModifiedRevision(getConfig().getName(), args);

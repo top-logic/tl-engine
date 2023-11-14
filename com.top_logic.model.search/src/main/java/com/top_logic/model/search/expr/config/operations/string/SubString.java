@@ -100,7 +100,7 @@ public class SubString extends SimpleGenericMethod {
 		}
 
 		@Override
-		public SubString build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public SubString build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new SubString(getConfig().getName(), args);
 		}

@@ -79,7 +79,7 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 		}
 
 		@Override
-		public DynamicGet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicGet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return new DynamicGet(getConfig().getName(), args);

@@ -77,7 +77,7 @@ public class ToList extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToList build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToList build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ToList(getConfig().getName(), args);

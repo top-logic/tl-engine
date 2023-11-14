@@ -62,7 +62,7 @@ public class DateFormatExpr extends GenericMethod {
 		}
 
 		@Override
-		public DateFormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DateFormatExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new DateFormatExpr(getName(), args);

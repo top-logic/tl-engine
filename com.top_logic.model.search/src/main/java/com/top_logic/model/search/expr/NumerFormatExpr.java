@@ -62,7 +62,7 @@ public class NumerFormatExpr extends GenericMethod {
 		}
 
 		@Override
-		public NumerFormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public NumerFormatExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new NumerFormatExpr(getName(), args);

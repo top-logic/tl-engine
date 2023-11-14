@@ -97,7 +97,7 @@ public class Min extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Min build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Min build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Min("min", args);
 		}

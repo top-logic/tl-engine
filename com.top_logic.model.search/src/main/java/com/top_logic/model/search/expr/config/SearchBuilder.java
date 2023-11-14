@@ -579,7 +579,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		Argument[] args = descendArgs(expr.getArgs(), arg);
 
 		MethodBuilder<?> builder = getBuilder(expr);
-		return builder.build(expr, self, args);
+		return builder.build(expr, args);
 	}
 
 	private ConfigurationException error(String message) throws ConfigurationException {
@@ -592,7 +592,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 
 		MethodBuilder<?> builder = getBuilder(expr);
 		Argument[] args = descendArgs(argExprs, arg);
-		return builder.build(expr, null, args);
+		return builder.build(expr, args);
 	}
 
 	private MethodBuilder<?> getBuilder(AbstractMethod expr) throws ConfigurationException {
@@ -758,7 +758,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 			SearchExpression[] args = new SearchExpression[argCnt];
 			copy(children, 0, args, 0, argCnt);
 			try {
-				return _builder.build(null, null, args);
+				return _builder.build(null, args);
 			} catch (ConfigurationException ex) {
 				throw new ConfigurationError(ex);
 			}

@@ -58,9 +58,8 @@ public class StructTypeDef extends SimpleGenericMethod {
 		}
 
 		@Override
-		public StructTypeDef build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public StructTypeDef build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoTarget(expr, self);
 			return new StructTypeDef(getConfig().getName(), args);
 		}
 

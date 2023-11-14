@@ -110,7 +110,7 @@ public class ZipEntry extends GenericMethod {
 		}
 
 		@Override
-		public ZipEntry build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public ZipEntry build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new ZipEntry(getConfig().getName(), args);
 		}
 

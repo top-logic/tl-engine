@@ -24,14 +24,14 @@ public abstract class NoArgMethodBuilder<E extends SearchExpression> extends Abs
 	}
 
 	@Override
-	public E build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public E build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkSingleArg(expr, args);
 		return internalBuild(expr, args[0]);
 	}
 
 	/**
-	 * Implementation of {@link #build(Expr, SearchExpression, SearchExpression[])}
+	 * Implementation of {@link #build(Expr, SearchExpression[])}
 	 */
 	protected abstract E internalBuild(Expr expr, SearchExpression argument)
 			throws ConfigurationException;

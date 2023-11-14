@@ -86,7 +86,7 @@ public class RegexEnd extends SimpleGenericMethod {
 		}
 
 		@Override
-		public RegexEnd build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public RegexEnd build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new RegexEnd(getConfig().getName(), args);
 		}
 

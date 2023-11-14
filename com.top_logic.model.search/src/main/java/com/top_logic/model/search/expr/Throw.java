@@ -86,7 +86,7 @@ public class Throw extends GenericMethod {
 		}
 
 		@Override
-		public Throw build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Throw build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 1, 2);
 			return new Throw(getName(), args);

@@ -556,11 +556,6 @@ div.fltList {
     gap: var(--spacing-02);
 }
 
-.checkboxMultiSelectEntry {
-    display: flex;
-    gap: var(--spacing-02);
-}
-
 .fltList span {
 	margin-left: 0 !important;
 }
@@ -740,10 +735,6 @@ div.fltList {
 	right: 0;
 }
 
-.checkboxMultiSelectContainer {
-	/* No special settings */
-}
-
 .sidebarFilterContainer .checkboxMultiSelectContainer {
 	max-height: none;
 }
@@ -753,6 +744,8 @@ div.fltList {
 }
 
 .checkboxMultiSelectEntry {
+	display: flex;
+    gap: var(--spacing-02);
 	cursor: default;
 	margin: 0 0 var(--spacing-01) 0;
 	padding: 0;

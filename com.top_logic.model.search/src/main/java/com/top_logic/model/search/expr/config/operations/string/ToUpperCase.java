@@ -61,7 +61,7 @@ public class ToUpperCase extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToUpperCase build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToUpperCase build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ToUpperCase(getConfig().getName(), args);

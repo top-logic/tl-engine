@@ -83,7 +83,7 @@ public class Sum extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Sum build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Sum build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Sum("sum", args);
 		}

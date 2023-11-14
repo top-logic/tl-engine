@@ -109,7 +109,7 @@ public class ToString extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToString build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public ToString build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new ToString(getName(), args);
 		}
 

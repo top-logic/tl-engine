@@ -58,7 +58,7 @@ public class Floor extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Floor build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Floor build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Floor(getConfig().getName(), args);

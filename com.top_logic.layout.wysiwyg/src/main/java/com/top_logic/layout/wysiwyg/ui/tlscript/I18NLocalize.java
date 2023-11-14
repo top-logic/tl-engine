@@ -68,7 +68,7 @@ public class I18NLocalize extends Localize {
 		}
 
 		@Override
-		public I18NLocalize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public I18NLocalize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new I18NLocalize(getConfig().getName(), args);
 		}

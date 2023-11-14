@@ -112,7 +112,7 @@ public class Translate extends GenericMethod {
 		}
 
 		@Override
-		public Translate build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Translate build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Translate(getConfig().getName(), args);
 		}

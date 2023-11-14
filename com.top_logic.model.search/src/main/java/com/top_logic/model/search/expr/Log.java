@@ -77,7 +77,7 @@ public class Log extends GenericMethod {
 		}
 
 		@Override
-		public Log build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Log build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkMinArgs(expr, args, 1);
 			return new Log(getName(), args);

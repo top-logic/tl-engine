@@ -64,7 +64,7 @@ public class AliasResolver extends GenericMethod {
 		}
 
 		@Override
-		public AliasResolver build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public AliasResolver build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new AliasResolver(getConfig().getName(), args);

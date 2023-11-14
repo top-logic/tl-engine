@@ -88,7 +88,7 @@ public class RegexGroup extends SimpleGenericMethod {
 		}
 
 		@Override
-		public RegexGroup build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public RegexGroup build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new RegexGroup(getConfig().getName(), args);
 		}
 

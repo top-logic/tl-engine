@@ -73,7 +73,7 @@ public class RevisionAt extends GenericMethod {
 		}
 
 		@Override
-		public RevisionAt build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public RevisionAt build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkMaxArgs(expr, args, 1);
 			return new RevisionAt(getConfig().getName(), args);

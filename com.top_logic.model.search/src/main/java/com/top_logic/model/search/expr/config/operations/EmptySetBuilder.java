@@ -27,7 +27,7 @@ public class EmptySetBuilder extends AbstractSimpleMethodBuilder<SearchExpressio
 	}
 
 	@Override
-	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public SearchExpression build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkNoArguments(expr, args);
 		return SearchExpressions.literalEmptySet();

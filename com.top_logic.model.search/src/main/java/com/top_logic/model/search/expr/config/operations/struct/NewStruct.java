@@ -83,7 +83,7 @@ public class NewStruct extends SimpleGenericMethod {
 		}
 
 		@Override
-		public NewStruct build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public NewStruct build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkMinArgs(expr, args, 1);
 			return new NewStruct(getConfig().getName(), args);

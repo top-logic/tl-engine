@@ -68,7 +68,7 @@ public class ToSystemCalendar extends AbstractDateMethod {
 		}
 
 		@Override
-		public ToSystemCalendar build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToSystemCalendar build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ToSystemCalendar(getName(), args);

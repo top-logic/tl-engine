@@ -95,7 +95,7 @@ public class DateTimeExpr extends GenericMethod {
 		}
 
 		@Override
-		public DateTimeExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DateTimeExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new DateTimeExpr(getName(), args);
 		}

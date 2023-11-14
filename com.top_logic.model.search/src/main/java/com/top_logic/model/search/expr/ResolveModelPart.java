@@ -70,7 +70,7 @@ public class ResolveModelPart extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ResolveModelPart build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ResolveModelPart build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ResolveModelPart(getName(), args);

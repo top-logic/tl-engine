@@ -219,7 +219,7 @@ public class ButtonBarControl extends AbstractCompositeControl<ButtonBarControl>
 		}
 	}
 
-	private Control createButtonControl(CommandModel theModel) {
+	private HTMLFragment createButtonControl(CommandModel theModel) {
 		if (theModel.showProgress()) {
 			theModel.set(ButtonControl.SHOW_PROGRESS_DIV_ID, new AbstractDisplayValue() {
 				@Override
@@ -230,9 +230,9 @@ public class ButtonBarControl extends AbstractCompositeControl<ButtonBarControl>
 		}
 
 		ControlProvider controlProvider = theModel.get(ButtonComponent.BUTTON_CONTROL_PROVIDER);
-		Control control;
+		HTMLFragment control;
 		if (controlProvider != null) {
-			control = controlProvider.createControl(theModel);
+			control = controlProvider.createFragment(theModel);
 		} else {
 			IButtonRenderer renderer = theModel.get(ButtonControl.BUTTON_RENDERER);
 			if (renderer == null) {

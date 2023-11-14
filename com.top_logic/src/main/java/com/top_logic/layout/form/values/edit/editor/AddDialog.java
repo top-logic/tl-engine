@@ -104,7 +104,7 @@ class AddDialog extends AbstractFormDialogBase {
 	@Override
 	protected HTMLFragment createView() {
 		return Fragments.div(FormConstants.FORM_BODY_CSS_CLASS,
-			DefaultFormFieldControlProvider.INSTANCE.createControl(getFormContext()));
+			DefaultFormFieldControlProvider.INSTANCE.createFragment(getFormContext()));
 	}
 
 	@Override

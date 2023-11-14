@@ -63,17 +63,22 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 
 			@Override
 			public Control createControl(Object model, String style) {
-				return new FragmentControl(new HTMLFragment() {
+				return new FragmentControl(createFragment(model, style));
+			}
+
+			@Override
+			public HTMLFragment createFragment(Object model, String style) {
+				return new HTMLFragment() {
 
 					@Override
 					public void write(DisplayContext context, TagWriter out) throws IOException {
 						out.beginBeginTag(HTMLConstants.DIV);
 						out.writeAttribute(HTMLConstants.STYLE_ATTR, "position:relative; height:600px;");
 						out.endBeginTag();
-						DisplayPDFControl.CONTROL_PROVIDER.createControl(model, style).write(context, out);
+						DisplayPDFControl.CONTROL_PROVIDER.createFragment(model, style).write(context, out);
 						out.endTag(HTMLConstants.DIV);
 					}
-				});
+				};
 			}
 		});
 		uploadField.addValueListener(new ValueListener() {

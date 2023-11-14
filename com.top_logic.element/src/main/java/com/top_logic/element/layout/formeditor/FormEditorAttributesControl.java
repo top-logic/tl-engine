@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationChange.Kind;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -26,7 +27,6 @@ import com.top_logic.element.layout.formeditor.definition.TLFormDefinition;
 import com.top_logic.element.layout.formeditor.definition.TabbarDefinition;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.fragments.Fragments;
@@ -74,7 +74,7 @@ public class FormEditorAttributesControl extends FormEditorDisplayControl {
 	void writeContent(DisplayContext context, TagWriter out, AttributeFormContext formContext) throws IOException {
 		createTemplate(formContext);
 
-		Control ctrl = createControl(formContext);
+		HTMLFragment ctrl = createControl(formContext);
 		GroupCellControl groupAttributes =
 			new GroupCellControl(ctrl, new DefaultExpansionModel(false), new DefaultGroupSettings());
 		groupAttributes.setTitle(Fragments.message(I18NConstants.FORM_EDITOR__ATTRIBUTES));

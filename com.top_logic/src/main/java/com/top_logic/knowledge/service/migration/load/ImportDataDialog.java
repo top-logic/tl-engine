@@ -212,7 +212,7 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 
 	@Override
 	protected HTMLFragment createBodyContent() {
-		return DefaultFormFieldControlProvider.INSTANCE.createControl(getFormContext());
+		return DefaultFormFieldControlProvider.INSTANCE.createFragment(getFormContext());
 	}
 
 	@Override

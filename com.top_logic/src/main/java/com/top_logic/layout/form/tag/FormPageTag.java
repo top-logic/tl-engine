@@ -670,7 +670,7 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 	 * Display of the given {@link FormMember}'s label.
 	 */
 	public static HTMLFragment label(ControlProvider cp, FormMember member) {
-		return cp.createControl(member, FormTemplateConstants.STYLE_LABEL_VALUE);
+		return cp.createFragment(member, FormTemplateConstants.STYLE_LABEL_VALUE);
 	}
 
 	/**
@@ -684,7 +684,7 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 	 * Display of the given {@link FormMember}'s input element.
 	 */
 	public static HTMLFragment input(ControlProvider cp, FormMember member) {
-		return cp.createControl(member);
+		return cp.createFragment(member);
 	}
 
 	/**
@@ -698,7 +698,7 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 	 * Display of the given {@link FormMember}'s error view.
 	 */
 	public static HTMLFragment error(ControlProvider cp, FormMember member) {
-		return cp.createControl(member, FormTemplateConstants.STYLE_ERROR_VALUE);
+		return cp.createFragment(member, FormTemplateConstants.STYLE_ERROR_VALUE);
 	}
 
 	private void writeResource(ResKey messageKey) throws IOException {

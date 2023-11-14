@@ -7,6 +7,7 @@ package com.top_logic.layout.table.provider;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -87,10 +88,10 @@ public class FlexibleCellControlProvider implements ControlProvider {
 					out.writeAttribute(CLASS_ATTR, "lFlexibleCustom");
 					out.writeAttribute(STYLE_ATTR, "width:" + widthStyle + ";");
 					out.endBeginTag();
-					Control inner = cp.createControl(member);
+					HTMLFragment inner = cp.createFragment(member);
 					inner.write(context, out);
 
-					Control error = cp.createControl(member, FormTemplateConstants.STYLE_ERROR_VALUE);
+					HTMLFragment error = cp.createFragment(member, FormTemplateConstants.STYLE_ERROR_VALUE);
 					error.write(context, out);
 					out.endTag(SPAN);
 				}

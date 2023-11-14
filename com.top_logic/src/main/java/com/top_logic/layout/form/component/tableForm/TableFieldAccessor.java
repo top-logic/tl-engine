@@ -59,7 +59,7 @@ public class TableFieldAccessor extends ReadOnlyAccessor<Object> {
             if (this.group.hasMember(theId)) {
                 FormGroup theGroup     = (FormGroup) this.group.getMember(theId);
                 FormField theField     =  theGroup.getField(theFiledName);
-				return generator.getControlProvider().createControl(theField);
+				return generator.getControlProvider().createFragment(theField);
             }
             return null;
         } else {

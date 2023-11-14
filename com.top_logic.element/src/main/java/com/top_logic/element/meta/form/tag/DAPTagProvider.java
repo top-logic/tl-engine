@@ -51,7 +51,7 @@ public class DAPTagProvider extends AbstractReferenceTagProvider {
 			case RADIO_INLINE:
 				return createChoiceDisplay(member, Orientation.HORIZONTAL);
 			default:
-				return createPopupDisplay(editContext, member);
+				return createPopupDisplayFragment(editContext, member);
 		}
 	}
 }

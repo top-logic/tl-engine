@@ -34,6 +34,13 @@ public class TestDefaultFormFieldControlProvider extends TestCase {
 				result.addChild(DefaultFormFieldControlProvider.INSTANCE.createControl(model, style));
 				return result;
 			}
+
+			@Override
+			public Control createFragment(Object model, String style) {
+				BlockControl result = new BlockControl();
+				result.addChild(DefaultFormFieldControlProvider.INSTANCE.createFragment(model, style));
+				return result;
+			}
 		};
 
 		StringField field = FormFactory.newStringField("foo");

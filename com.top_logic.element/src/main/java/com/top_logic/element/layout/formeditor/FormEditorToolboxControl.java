@@ -11,12 +11,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.fragments.Fragments;
@@ -75,7 +75,7 @@ public class FormEditorToolboxControl extends FormEditorDisplayControl {
 	void writeContent(DisplayContext context, TagWriter out, AttributeFormContext formContext) throws IOException {
 		if (_isInEditMode) {
 			createTemplate(formContext);
-			Control buttons = createControl(formContext);
+			HTMLFragment buttons = createControl(formContext);
 
 			GroupCellControl group = new GroupCellControl(buttons, new DefaultExpansionModel(false),
 				new DefaultGroupSettings().setColumns(1));

@@ -15,13 +15,14 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.base.services.simpleajax.HTMLFragmentProvider;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.doc.model.Page;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.check.CheckScope;
@@ -37,7 +38,6 @@ import com.top_logic.layout.form.control.BlockControl;
 import com.top_logic.layout.form.model.CheckChangesValueVetoListener;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.tree.component.WithSelectionPath;
@@ -74,7 +74,7 @@ public class DocumentationTreeComponent extends DocumentationViewerTree implemen
 
 	private FormContext _formContext;
 
-	private Control _languageControl;
+	private HTMLFragment _languageControl;
 
 	/** {@link TypedConfiguration} constructor for {@link DocumentationTreeComponent}. */
 	public DocumentationTreeComponent(InstantiationContext context, Config config) throws ConfigurationException {
@@ -175,12 +175,12 @@ public class DocumentationTreeComponent extends DocumentationViewerTree implemen
 		return MasterSlaveCheckProvider.INSTANCE.getCheckScope(this);
 	}
 
-	private Control createLanguageControl(FormField languageField) {
-		return getControlProvider(languageField).createControl(languageField);
+	private HTMLFragment createLanguageControl(FormField languageField) {
+		return getControlProvider(languageField).createFragment(languageField);
 	}
 
-	private ControlProvider getControlProvider(FormField languageField) {
-		ControlProvider controlProvider = languageField.getControlProvider();
+	private HTMLFragmentProvider getControlProvider(FormField languageField) {
+		HTMLFragmentProvider controlProvider = languageField.getControlProvider();
 		if (controlProvider != null) {
 			return controlProvider;
 		}
@@ -200,11 +200,11 @@ public class DocumentationTreeComponent extends DocumentationViewerTree implemen
 	}
 
 	private void setTitle(ToolBar newToolBar) {
-		Control titleControl = createToolBarTitleControl(newToolBar);
+		HTMLFragment titleControl = createToolBarTitleControl(newToolBar);
 		newToolBar.setTitle(titleControl);
 	}
 
-	private Control createToolBarTitleControl(ToolBar toolBar) {
+	private HTMLFragment createToolBarTitleControl(ToolBar toolBar) {
 		if (toolBar.getTitle() == null) {
 			return getLanguageControl();
 		}
@@ -214,7 +214,7 @@ public class DocumentationTreeComponent extends DocumentationViewerTree implemen
 		return combinedControl;
 	}
 
-	private Control getLanguageControl() {
+	private HTMLFragment getLanguageControl() {
 		return requireNonNull(_languageControl);
 	}
 

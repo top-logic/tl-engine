@@ -51,7 +51,7 @@ public class I18NStringTagProvider implements DisplayProvider {
 	}
 
 	@Override
-	public Control createDisplayFragment(EditContext editContext, FormMember member) {
+	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
 		return cp(editContext).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
 	}
 

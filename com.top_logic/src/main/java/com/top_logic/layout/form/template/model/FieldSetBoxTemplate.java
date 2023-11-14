@@ -125,7 +125,7 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 		if (_initializer != null) {
 			_initializer.accept(groupCell);
 		}
-		TemplateRenderer.renderControl(displayContext, out, groupCell);
+		TemplateRenderer.renderFragment(displayContext, out, groupCell);
 	}
 
 	private Collapsible createExpansionModel() {

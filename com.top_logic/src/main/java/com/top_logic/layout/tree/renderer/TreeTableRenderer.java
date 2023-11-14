@@ -8,9 +8,9 @@ package com.top_logic.layout.tree.renderer;
 import java.io.IOException;
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResourceProvider;
@@ -268,7 +268,8 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 		                            Object columnValue = accessor.getValue(userObject, columnName);
 
 //		                          ControlScope renderingScope = context.getRenderingScope();
-		                            Control columnControl = controlProvider.createControl(columnValue, column.getStyle());
+									HTMLFragment columnControl =
+										controlProvider.createFragment(columnValue, column.getStyle());
 		                            if (columnControl != null) {
 		                                columnControl.write(context, writer);
 		                            } else {

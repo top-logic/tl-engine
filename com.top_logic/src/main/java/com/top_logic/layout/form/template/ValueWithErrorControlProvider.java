@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.template;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -121,6 +122,26 @@ public class ValueWithErrorControlProvider extends AbstractConfiguredInstance<Va
 	public Control createControl(Object model, String style) {
 		Config config = getConfig();
 		Control innerControl = config.getInnerControlProvider().createControl(model, style);
+		if (model instanceof FormMember && !FormTemplateConstants.STYLE_ERROR_VALUE.equals(style)) {
+			BlockControl block = new BlockControl();
+			ErrorControl errorControl = new ErrorControl((FormMember) model, true);
+			if (config.getErrorFirst()) {
+				block.addChild(errorControl);
+				block.addChild(innerControl);
+			} else {
+				block.addChild(innerControl);
+				block.addChild(errorControl);
+			}
+			return block;
+		} else {
+			return innerControl;
+		}
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		Config config = getConfig();
+		HTMLFragment innerControl = config.getInnerControlProvider().createFragment(model, style);
 		if (model instanceof FormMember && !FormTemplateConstants.STYLE_ERROR_VALUE.equals(style)) {
 			BlockControl block = new BlockControl();
 			ErrorControl errorControl = new ErrorControl((FormMember) model, true);

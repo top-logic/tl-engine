@@ -198,7 +198,7 @@ public class DeclarativeFormComponent extends FormComponent implements ControlRe
 	public Control getRenderingControl() {
 		return new FragmentControl(
 			div(getConfig().getFormBodyClass(),
-				getControlProvider().createControl(getFormMemberToDisplay())));
+				getControlProvider().createFragment(getFormMemberToDisplay())));
 	}
 
 	/**

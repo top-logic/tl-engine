@@ -8,6 +8,7 @@ package com.top_logic.element.i18n;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.DisplayUnit.*;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.Control;
@@ -57,7 +58,7 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 	}
 
 	@Override
-	protected Control createEditControl(FormField editField) {
+	protected HTMLFragment createEditFragment(FormField editField) {
 		// Default values are copied from MetaInputTag.initDefaultValues()
 		int rows;
 		int columns;
@@ -71,7 +72,7 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 			rows = 0;
 			multiline = false;
 		}
-		return new I18NStringControlProvider(multiline, rows, columns).createControl(editField, null);
+		return new I18NStringControlProvider(multiline, rows, columns).createFragment(editField);
 	}
 
 	@Override

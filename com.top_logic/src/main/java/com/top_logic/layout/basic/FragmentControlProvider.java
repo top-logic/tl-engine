@@ -49,7 +49,12 @@ public class FragmentControlProvider extends AbstractConfiguredInstance<Fragment
 
 	@Override
 	public Control createControl(Object model, String cssStyle) {
-		return new FragmentControl(createInternal(model, cssStyle));
+		return new FragmentControl(createFragment(model, cssStyle));
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model, String cssStyle) {
+		return createInternal(model, cssStyle);
 	}
 
 	private HTMLFragment createInternal(Object model, String cssStyle) {

@@ -444,7 +444,7 @@ public class TileContainerComponent extends LayoutContainer implements BoundChec
 		if (newToolbar == null) {
 			return;
 		}
-		newToolbar.setTitle(_breadcrumb.createControl(this));
+		newToolbar.setTitle(_breadcrumb.createFragment(this));
 	}
 
 	private String personalStructureKey() {

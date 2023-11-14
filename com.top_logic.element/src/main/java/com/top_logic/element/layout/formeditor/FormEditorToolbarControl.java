@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.definition.TLFormDefinition;
@@ -78,7 +79,7 @@ public class FormEditorToolbarControl extends FormEditorAbstractControl {
 	private void writeTemplateList(DisplayContext context, TagWriter out) throws IOException {
 		if (isInEditMode()) {
 			if (_templateField != null) {
-				Control templateSelector = DefaultFormFieldControlProvider.INSTANCE.createControl(_templateField);
+				HTMLFragment templateSelector = DefaultFormFieldControlProvider.INSTANCE.createFragment(_templateField);
 				templateSelector.write(context, out);
 			}
 		}

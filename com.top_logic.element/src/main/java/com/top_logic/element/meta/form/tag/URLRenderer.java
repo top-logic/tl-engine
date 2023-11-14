@@ -30,7 +30,7 @@ public class URLRenderer implements Renderer<String> {
 		if (value != null) {
 			// Simple way to render a URL-String as an input field.
 			StringField tmp = FormFactory.newStringField("tmp", value, FormFactory.IMMUTABLE);
-			_cp.createControl(tmp, null).write(context, out);
+			_cp.createFragment(tmp).write(context, out);
 		}
 	}
 

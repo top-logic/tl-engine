@@ -7,6 +7,7 @@ package com.top_logic.layout.form.template.model;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -54,7 +55,7 @@ public class FormTabbarTemplate implements Template {
 		out.beginBeginTag(HTMLConstants.DIV);
 		out.writeAttribute(HTMLConstants.CLASS_ATTR, ReactiveFormCSS.RF_LOCKED);
 		out.endBeginTag();
-		TemplateRenderer.renderControl(displayContext, out, DeckField.CP.INSTANCE.createControl(deckField));
+		TemplateRenderer.renderFragment(displayContext, out, DeckField.CP.INSTANCE.createFragment(deckField));
 		out.endTag(HTMLConstants.DIV);
 
 		ControlProvider cp = new ControlProvider() {
@@ -65,7 +66,15 @@ public class FormTabbarTemplate implements Template {
 				FormMember tabGroup = (FormMember) card.getContent();
 				return DefaultFormFieldControlProvider.INSTANCE.createControl(tabGroup, aStyle);
 			}
+
+			@Override
+			public HTMLFragment createFragment(Object model, String style) {
+				Card card = (Card) model;
+
+				FormMember tabGroup = (FormMember) card.getContent();
+				return DefaultFormFieldControlProvider.INSTANCE.createFragment(tabGroup, style);
+			}
 		};
-		TemplateRenderer.renderControl(displayContext, out, new DeckPaneControl(deckField.getModel(), cp));
+		TemplateRenderer.renderFragment(displayContext, out, new DeckPaneControl(deckField.getModel(), cp));
 	}
 }

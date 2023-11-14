@@ -117,7 +117,7 @@ public class CompositionControlProvider implements ControlProvider {
 
 					hideTableLabel(getModel());
 
-					Control content = MetaControlProvider.INSTANCE.createControl(getModel());
+					HTMLFragment content = MetaControlProvider.INSTANCE.createFragment(getModel());
 					CommandModel closeButton = MessageBox.button(ButtonType.CLOSE, dialogModel.getCloseAction());
 					dialogModel.setDefaultCommand(closeButton);
 					MessageBox.open(context, dialogModel, content, Collections.singletonList(closeButton));

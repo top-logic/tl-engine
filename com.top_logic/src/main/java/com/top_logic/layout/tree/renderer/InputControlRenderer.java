@@ -7,8 +7,8 @@ package com.top_logic.layout.tree.renderer;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ResourceRenderer;
@@ -41,13 +41,13 @@ public class InputControlRenderer implements Renderer<FormField> {
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, FormField value) throws IOException {
-		Control control = _controlProvider.createControl(value);
+		HTMLFragment control = _controlProvider.createFragment(value);
 		if (control == null) {
 			_fallbackRenderer.write(context, out, value);
 		} else {
 			control.write(context, out);
 
-			Control error = _controlProvider.createControl(value, FormTemplateConstants.STYLE_ERROR_VALUE);
+			HTMLFragment error = _controlProvider.createFragment(value, FormTemplateConstants.STYLE_ERROR_VALUE);
 			if (error != null) {
 				error.write(context, out);
 			}

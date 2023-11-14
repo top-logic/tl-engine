@@ -56,7 +56,7 @@ public class LabelValueTable extends FormControlProviderAdapter {
 							out.writeAttribute(CLASS_ATTR, "label");
 							out.endBeginTag();
 							{
-								_cp.createControl(member, STYLE_LABEL_VALUE).write(context, out);
+								_cp.createFragment(member, STYLE_LABEL_VALUE).write(context, out);
 							}
 							out.endTag(TD);
 
@@ -64,9 +64,9 @@ public class LabelValueTable extends FormControlProviderAdapter {
 							out.writeAttribute(CLASS_ATTR, "value");
 							out.endBeginTag();
 							{
-								_cp.createControl(member).write(context, out);
+								_cp.createFragment(member).write(context, out);
 								out.writeText(NBSP);
-								_cp.createControl(member, STYLE_ERROR_VALUE).write(context, out);
+								_cp.createFragment(member, STYLE_ERROR_VALUE).write(context, out);
 							}
 						}
 						out.endTag(TD);

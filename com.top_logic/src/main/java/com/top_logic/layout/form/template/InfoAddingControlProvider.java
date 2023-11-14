@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.template;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -75,6 +76,21 @@ public class InfoAddingControlProvider implements ControlProvider {
 			return innerControl;
         }
     }
+
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		HTMLFragment innerControl = _innerControlProvider.createFragment(model, style);
+		if (innerControl == null) {
+			return null;
+		} else if (model instanceof FormMember) {
+			BlockControl combinedControl = new BlockControl();
+			combinedControl.addChild(innerControl);
+			combinedControl.addChild(InfoControl.createInfoControl((FormMember) model, null));
+			return combinedControl;
+		} else {
+			return innerControl;
+		}
+	}
 
 }
 

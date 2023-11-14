@@ -309,7 +309,7 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 		if (inlineTemplate == null) {
 			ControlProvider controlProvider = template.getControlProvider();
 			
-			result = controlProvider.createControl(member, style);
+			result = controlProvider.createFragment(member, style);
 		} else {
 			result = FormTemplateControlFactory.createFormTemplateControl(member, template, inlineTemplate);
 		}

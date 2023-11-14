@@ -7,6 +7,7 @@ package com.top_logic.layout.compare;
 
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -156,6 +157,15 @@ public class CompareListsDialog extends SimpleTableDialog {
 					return createTableControl((SelectField) model);
 				}
 				return DefaultFormFieldControlProvider.INSTANCE.createControl(model, style);
+			}
+
+			@Override
+			public HTMLFragment createFragment(Object model, String style) {
+				if (StringServices.isEmpty(style)
+						&& SimpleFormDialog.INPUT_FIELD.equals(((FormMember) model).getName())) {
+					return createTableControl((SelectField) model);
+				}
+				return DefaultFormFieldControlProvider.INSTANCE.createFragment(model, style);
 			}
 
 			private Control createTableControl(SelectField model) {

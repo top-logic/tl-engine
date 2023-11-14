@@ -83,7 +83,7 @@ public abstract class AbstractCreateConfigurationDialog<C> extends AbstractFormD
 
 	@Override
 	protected HTMLFragment createView() {
-		Tag content = div("mboxInput", DefaultFormFieldControlProvider.INSTANCE.createControl(getFormContext()));
+		Tag content = div("mboxInput", DefaultFormFieldControlProvider.INSTANCE.createFragment(getFormContext()));
 		HTMLFragment header;
 		if (getHeaderKey() != ResKey.NONE) {
 			header = div("mboxHeader", message(getHeaderKey()));

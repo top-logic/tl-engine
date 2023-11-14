@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -40,6 +41,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceExtensionPoint(SearchBuilder.Module.class)
+@Label("Configured TL-Script functions")
 public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.Config<?>>
 		extends ConfiguredManagedClass<C> implements MethodResolver {
 

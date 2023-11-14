@@ -7,6 +7,7 @@ package com.top_logic.layout.wysiwyg.ui.i18n;
 
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.element.i18n.I18NField;
 import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
@@ -48,6 +49,14 @@ public class I18NStructuredTextControlProvider implements ControlProvider {
 			return internalCreateControl((I18NField<?, ?, ?>) model, style);
 		}
 		return DefaultFormFieldControlProvider.INSTANCE.createControl(model, style);
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		if (model instanceof I18NField) {
+			return internalCreateControl((I18NField<?, ?, ?>) model, style);
+		}
+		return DefaultFormFieldControlProvider.INSTANCE.createFragment(model, style);
 	}
 
 	private Control internalCreateControl(I18NField<?, ?, ?> member, String style) {

@@ -1756,11 +1756,11 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		
 		MapWithProperties headerColumnFilterProperties = new MapWithProperties();
 		headerColumnFilterProperties.put("label", (HTMLFragment) (context1, out1) -> {
-			Control control = (Control) DefaultTableRenderer.createColumnControl(state, column,
-				ColumnConfiguration.COLUMN_CONTROL_TYPE_HEADER);
+			HTMLFragment fragment =
+				DefaultTableRenderer.createColumnControl(state, column, ColumnConfiguration.COLUMN_CONTROL_TYPE_HEADER);
 
-			if (control != null) {
-				control.write(context1, out1);
+			if (fragment != null) {
+				fragment.write(context1, out1);
 			} else {
 				out1.beginBeginTag(SPAN);
 				if (customColumnOrder || sortable) {
@@ -2672,7 +2672,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 	}
 
-	public static Object createColumnControl(RenderState state, int viewColumn, String aType) {
+	public static HTMLFragment createColumnControl(RenderState state, int viewColumn, String aType) {
 		ColumnConfiguration config = getColumnConfiguration(state, viewColumn);
 		ControlProvider theCP = getHeaderControlProvider(state, config);
 		if (theCP == null) {
@@ -2684,9 +2684,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			if (model instanceof FormTableModel) {
 				FormContainer columnGroup =
 					((FormTableModel) viewModel.getApplicationModel()).getColumnGroup(applicationColumn);
-				return theCP.createControl(columnGroup, aType);
+				return theCP.createFragment(columnGroup, aType);
 			} else {
-				return theCP.createControl(state, aType);
+				return theCP.createFragment(state, aType);
 			}
 		}
 	}

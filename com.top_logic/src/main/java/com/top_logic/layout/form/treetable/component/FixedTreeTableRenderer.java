@@ -625,8 +625,8 @@ public class FixedTreeTableRenderer extends ThemeTreeTableRenderer {
 							case ColumnDeclaration.CONTROL_COLUMN: {
 								ControlProvider controlProvider = column.getControlProvider();
 								Object columnValue = accessor.getValue(userObject, columnName);
-								Control columnControl =
-										controlProvider.createControl(columnValue, column.getStyle());
+								HTMLFragment columnControl =
+									controlProvider.createFragment(columnValue, column.getStyle());
 								if (columnControl != null) {
 									columnControl.write(context, writer);
 								} else {

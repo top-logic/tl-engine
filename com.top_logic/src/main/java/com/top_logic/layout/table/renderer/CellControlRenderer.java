@@ -7,6 +7,7 @@ package com.top_logic.layout.table.renderer;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -102,7 +103,7 @@ public class CellControlRenderer extends AbstractCellRenderer {
 	@Override
 	public void writeCell(DisplayContext context, TagWriter out, Cell cell) throws IOException {
 		Object value = cell.getValue();
-		Control control = _controlProvider.createControl(value);
+		HTMLFragment control = _controlProvider.createFragment(value);
 		if (control != null) {
 			control.write(context, out);
 		} else {

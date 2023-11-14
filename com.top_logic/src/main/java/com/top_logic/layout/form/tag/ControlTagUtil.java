@@ -11,6 +11,7 @@ import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.Tag;
 import javax.servlet.jsp.tagext.TagSupport;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -22,11 +23,12 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
  */
 public class ControlTagUtil {
 
-	public static void writeControl(AbstractTag self, PageContext pageContext, Control control) throws IOException {
+	public static void writeControl(AbstractTag self, PageContext pageContext, HTMLFragment control)
+			throws IOException {
 		writeControl(self.getOut(), self, pageContext, control);
 	}
 
-	public static void writeControl(TagWriter out, Tag self, PageContext pageContext, Control control)
+	public static void writeControl(TagWriter out, Tag self, PageContext pageContext, HTMLFragment control)
 			throws IOException {
 		ControlBodyTag compositeTag = 
 			(ControlBodyTag) TagSupport.findAncestorWithClass(self, ControlBodyTag.class);

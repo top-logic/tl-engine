@@ -3799,7 +3799,7 @@ public class GridComponent extends EditComponent implements
 		@Override
 		public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
 			if (value instanceof FormMember) {
-				this.controlProvider.createControl(value).write(context, out);
+				this.controlProvider.createFragment(value).write(context, out);
 				if (value instanceof FormField) {
 					new ErrorControl((FormField) value, true).write(context, out);
 				}

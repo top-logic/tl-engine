@@ -383,7 +383,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		FormField originalField = (FormField) getModel();
 
 		FormField editField = createEditFieldInternal(originalField);
-		Control editControl = createEditControl(editField);
+		HTMLFragment editFragment = createEditFragment(editField);
 
 		// Insert into dummy form context to get default check for errors and warning when
 		// pressing OK.
@@ -395,7 +395,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		DialogWindowControl dialogControl = new DialogWindowControl(dialogModel);
 		FixedFlowLayoutControl layout = new FixedFlowLayoutControl(Orientation.VERTICAL);
 
-		LayoutControlAdapter editlayout = new LayoutControlAdapter(editControl);
+		LayoutControlAdapter editlayout = new LayoutControlAdapter(editFragment);
 		editlayout.setConstraint(
 			new DefaultLayoutData(
 				DisplayDimension.percent(100), 100,
@@ -438,8 +438,8 @@ public class PopupEditControl extends AbstractFormFieldControl {
 	/**
 	 * Creates the control for the edit field to show in dialog.
 	 */
-	protected Control createEditControl(FormField editField) {
-		return _settings.getEditControlProvider().createControl(editField, null);
+	protected HTMLFragment createEditFragment(FormField editField) {
+		return _settings.getEditControlProvider().createFragment(editField);
 	}
 
 	/**

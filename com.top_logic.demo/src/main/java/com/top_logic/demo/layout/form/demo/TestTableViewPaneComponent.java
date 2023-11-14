@@ -348,13 +348,13 @@ public class TestTableViewPaneComponent extends FormComponent {
 
 				private void writeApplyPaneField(DisplayContext context, TagWriter out)
 						throws IOException {
-					ButtonControlProvider.INSTANCE.createControl(self.applyPaneField).write(context, out);
+					ButtonControlProvider.INSTANCE.createFragment(self.applyPaneField).write(context, out);
 				}
 
 				private void writeIntField(DisplayContext context, TagWriter out, FormField field) throws IOException {
 					out.beginTag(DIV);
 					new LabelControl(field).write(context, out);
-					DefaultFormFieldControlProvider.INSTANCE.createControl(field).write(context, out);
+					DefaultFormFieldControlProvider.INSTANCE.createFragment(field).write(context, out);
 					out.endTag(DIV);
 				}
 			});

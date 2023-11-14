@@ -47,4 +47,9 @@ public class PasswordTagProvider implements DisplayProvider, ControlProvider {
 		return new PasswordInputControlProvider(0, 0, 0).createControl(model, style);
 	}
 
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		return new PasswordInputControlProvider(0, 0, 0).createFragment(model, style);
+	}
+
 }

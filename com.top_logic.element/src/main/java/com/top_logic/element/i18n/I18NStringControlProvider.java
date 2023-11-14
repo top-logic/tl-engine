@@ -7,6 +7,7 @@ package com.top_logic.element.i18n;
 
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringActiveLanguageControlRenderer;
@@ -59,12 +60,21 @@ public class I18NStringControlProvider implements ControlProvider {
 	}
 
 	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		if (model instanceof I18NStringField) {
+			I18NStringField member = (I18NStringField) model;
+			return createControl(member);
+		}
+		return DefaultFormFieldControlProvider.INSTANCE.createFragment(model, style);
+	}
+
+	@Override
 	public Control createControl(Object model, String style) {
 		if (model instanceof I18NStringField) {
 			I18NStringField member = (I18NStringField) model;
 			return createControl(member);
 		}
-		return DefaultFormFieldControlProvider.INSTANCE.createControl(model);
+		return DefaultFormFieldControlProvider.INSTANCE.createControl(model, style);
 	}
 
 	private Control createControl(I18NStringField member) {

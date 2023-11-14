@@ -7,6 +7,7 @@ package com.top_logic.layout.wysiwyg.ui.i18n;
 
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.i18n.I18NField;
@@ -75,8 +76,8 @@ public class I18NStructuredTextPopupControl extends I18NStringTextPopupControl {
 	}
 
 	@Override
-	protected Control createEditControl(FormField editField) {
-		return I18NStructuredTextControlProvider.INSTANCE.createControl(editField);
+	protected HTMLFragment createEditFragment(FormField editField) {
+		return I18NStructuredTextControlProvider.INSTANCE.createFragment(editField);
 	}
 
 	@Override

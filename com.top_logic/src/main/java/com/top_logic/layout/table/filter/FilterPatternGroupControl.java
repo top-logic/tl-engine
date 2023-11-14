@@ -106,9 +106,9 @@ public class FilterPatternGroupControl extends AbstractControl implements ValueL
 		out.writeAttribute(ID_ATTR, patternId);
 		out.writeAttribute(CLASS_ATTR, patternClass);
 		out.endBeginTag();
-		CONTROL_PROVIDER.createControl(filterPatternField).write(
+		CONTROL_PROVIDER.createFragment(filterPatternField).write(
 			context, out);
-		CONTROL_PROVIDER.createControl(filterPatternField, FormTemplateConstants.STYLE_ERROR_VALUE).write(
+		CONTROL_PROVIDER.createFragment(filterPatternField, FormTemplateConstants.STYLE_ERROR_VALUE).write(
 			context, out);
 		out.endTag(DIV);
 	}

@@ -105,6 +105,6 @@ public class DescriptionBoxTemplate implements Template {
 		descriptionCell.setLabelPosition(getLabelPosition());
 		descriptionCell.setLabelPlacement(_labelPlacement);
 
-		TemplateRenderer.renderControl(displayContext, out, descriptionCell);
+		TemplateRenderer.renderFragment(displayContext, out, descriptionCell);
 	}
 }

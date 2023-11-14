@@ -152,9 +152,9 @@ public class TemplateRenderer {
 		if (cp == null) {
 			cp = TemplateRenderer.contextControlProvider(properties);
 		}
-		Control control = cp.createControl(member, style.getControlProviderStyle());
+		HTMLFragment control = cp.createFragment(member, style.getControlProviderStyle());
 		if (control != null) {
-			renderControl(displayContext, out, control);
+			renderFragment(displayContext, out, control);
 		}
 	}
 
@@ -164,7 +164,7 @@ public class TemplateRenderer {
 		if (template instanceof TagTemplate) {
 			ControlProvider contextControlProvider = TemplateRenderer.contextControlProvider(properties);
 			Control control = new TemplateControl(member, contextControlProvider, template);
-			renderControl(displayContext, out, control);
+			renderFragment(displayContext, out, control);
 		} else if (template instanceof Embedd) {
 			Embedd embedd = (Embedd) template;
 			TemplateRenderer.scope(properties).addPart(member);
@@ -202,11 +202,11 @@ public class TemplateRenderer {
 	}
 
 	/**
-	 * Renders the given {@link Control} closing a potentially open start tag before.
+	 * Renders the given {@link HTMLFragment} wrapping a potential {@link IOException}.
 	 */
-	public static void renderControl(DisplayContext displayContext, TagWriter out, Control control) {
+	public static void renderFragment(DisplayContext displayContext, TagWriter out, HTMLFragment fragment) {
 		try {
-			control.write(displayContext, out);
+			fragment.write(displayContext, out);
 		} catch (IOException ex) {
 			throw new IOError(ex);
 		}

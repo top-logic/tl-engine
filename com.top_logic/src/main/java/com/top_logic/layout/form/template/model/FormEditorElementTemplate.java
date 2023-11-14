@@ -97,6 +97,6 @@ public class FormEditorElementTemplate implements Template {
 			formAttribute.setValue(arguments.get(FormEditorElementProperties.FORM_EDITOR_LABEL));
 		}
 
-		TemplateRenderer.renderControl(displayContext, out, formAttribute);
+		TemplateRenderer.renderFragment(displayContext, out, formAttribute);
 	}
 }

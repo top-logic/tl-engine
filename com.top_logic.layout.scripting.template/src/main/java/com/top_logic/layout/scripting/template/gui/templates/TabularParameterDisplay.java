@@ -7,6 +7,7 @@ package com.top_logic.layout.scripting.template.gui.templates;
 
 import static com.top_logic.layout.basic.fragments.Fragments.*;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.FragmentControl;
 import com.top_logic.layout.form.model.FormGroup;
@@ -33,10 +34,14 @@ public class TabularParameterDisplay implements ControlProvider {
 
 	@Override
 	public Control createControl(Object model, String style) {
+		return new FragmentControl(createFragment(model, style));
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
 		FormGroup group = (FormGroup) model;
 		
-		return new FragmentControl(
-			table("scriptingRecorderTemplateParams",
+		return table("scriptingRecorderTemplateParams",
 				tr(
 					th("scriptingRecorderLabelColumn",
 						value(group.getMember("sort"))
@@ -62,7 +67,7 @@ public class TabularParameterDisplay implements ControlProvider {
 					th(attributes(attribute(HTMLConstants.COLSPAN_ATTR, "3")),
 						value(group.getMember("add"))
 					)
-				)));
+			));
 	}
 
 }

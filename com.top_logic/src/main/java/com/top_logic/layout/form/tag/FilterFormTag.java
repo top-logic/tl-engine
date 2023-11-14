@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import javax.servlet.jsp.JspException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.NothingCommand;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.StringServices;
@@ -266,7 +267,7 @@ public class FilterFormTag extends FormTag {
 	 * Write the refresh command to the UI.
 	 */
 	protected void writeRefreshButton() throws IOException {
-		Control refreshControl = createRefreshButton();
+		HTMLFragment refreshControl = createRefreshButton();
 		if (refreshControl != null) {
 			ControlTagUtil.writeControl(this, pageContext, refreshControl);
 		}
@@ -277,7 +278,7 @@ public class FilterFormTag extends FormTag {
 	 * 
 	 * @return The control to be used for refresh, <code>null</code> to render no refresh button.
 	 */
-	protected Control createRefreshButton() {
+	protected HTMLFragment createRefreshButton() {
 		boolean enableRefresh = getFormContext() != null;
 
 		if (!enableRefresh) {
@@ -351,14 +352,14 @@ public class FilterFormTag extends FormTag {
 	 *        The name of the requested command.
 	 * @return The control to be used for refresh.
 	 */
-	protected Control createRefreshByCommandField(String buttonName) {
+	protected HTMLFragment createRefreshByCommandField(String buttonName) {
 		CommandField commandField = (CommandField) getFormContext().getMember(buttonName);
 
 		ControlProvider cp = commandField.getControlProvider();
 		if (cp == null) {
 			return createButtonControl(commandField);
 		} else {
-			return cp.createControl(commandField, FormTemplateConstants.STYLE_DIRECT_VALUE);
+			return cp.createFragment(commandField, FormTemplateConstants.STYLE_DIRECT_VALUE);
 		}
 	}
 

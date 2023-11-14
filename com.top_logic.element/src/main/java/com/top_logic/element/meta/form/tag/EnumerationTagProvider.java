@@ -57,9 +57,9 @@ public class EnumerationTagProvider extends AbstractReferenceTagProvider {
 			case CHECKLIST:
 				return new ChecklistControl((SelectField) member);
 			case DROP_DOWN:
-				return SelectTagProvider.INSTANCE.createDisplay(editContext, member);
+				return SelectTagProvider.INSTANCE.createDisplayFragment(editContext, member);
 			case POP_UP:
-				return createPopupDisplay(editContext, member);
+				return createPopupDisplayFragment(editContext, member);
 			case RADIO:
 				return createChoiceDisplay(member, Orientation.VERTICAL);
 			case RADIO_INLINE:

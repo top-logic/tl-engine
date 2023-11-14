@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.template;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -21,7 +22,8 @@ import com.top_logic.layout.form.model.AbstractFormMemberVisitor;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class FormControlProviderAdapter extends AbstractFormMemberVisitor<Control, String> implements ControlProvider {
+public class FormControlProviderAdapter extends AbstractFormMemberVisitor<HTMLFragment, String>
+		implements ControlProvider {
 
 	private final ControlProvider _fallback;
 
@@ -44,12 +46,17 @@ public class FormControlProviderAdapter extends AbstractFormMemberVisitor<Contro
 	}
 
 	@Override
-	public Control visitFormMember(FormMember member, String arg) {
-		return _fallback.createControl(member, arg);
+	public HTMLFragment visitFormMember(FormMember member, String arg) {
+		return _fallback.createFragment(member, arg);
 	}
 
 	@Override
 	public Control createControl(Object model, String style) {
+		return (Control) createFragment(model, style);
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
 		return ((FormMember) model).visit(this, style);
 	}
 

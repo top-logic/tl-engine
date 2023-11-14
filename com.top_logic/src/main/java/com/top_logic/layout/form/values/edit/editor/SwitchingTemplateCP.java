@@ -8,6 +8,7 @@ package com.top_logic.layout.form.values.edit.editor;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.Control;
@@ -97,6 +98,36 @@ public class SwitchingTemplateCP implements ControlProvider {
 		return proxy;
 	}
 
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		_binding.close();
+		HTMLFragment trueControl = _trueCP.createFragment(model, style);
+		HTMLFragment falseControl = _falseCP.createFragment(model, style);
+		HTMLFragment delegate;
+		if (_value.get()) {
+			delegate = trueControl;
+		} else {
+			delegate = falseControl;
+		}
+		ProxyControl proxy = new ProxyControl(delegate);
+		ListenerBinding listeningBinding = _value.addListener(sender -> {
+			HTMLFragment newDelegate;
+			if (_value.get()) {
+				newDelegate = trueControl;
+			} else {
+				newDelegate = falseControl;
+			}
+			proxy.setDelegate(newDelegate);
+		});
+		_binding = () -> {
+			listeningBinding.close();
+			// Control does not longer react on value changes. For safety reason ensure that it is
+			// not longer rendered.
+			proxy.detach();
+		};
+		return proxy;
+	}
+
 	/**
 	 * Control that renders a root tag and delegates the content to a given other {@link Control}.
 	 * 
@@ -104,14 +135,14 @@ public class SwitchingTemplateCP implements ControlProvider {
 	 */
 	public static class ProxyControl extends AbstractConstantControlBase {
 
-		private Control _delegate;
+		private HTMLFragment _delegate;
 
 		private String _rootTag = DIV;
 
 		/**
 		 * Creates a {@link ProxyControl}.
 		 */
-		public ProxyControl(Control delegate) {
+		public ProxyControl(HTMLFragment delegate) {
 			setDelegate(delegate);
 		}
 
@@ -135,7 +166,7 @@ public class SwitchingTemplateCP implements ControlProvider {
 		/**
 		 * Sets the {@link Control} to render.
 		 */
-		public void setDelegate(Control delegate) {
+		public void setDelegate(HTMLFragment delegate) {
 			requestRepaint();
 			_delegate = Objects.requireNonNull(delegate);
 		}
@@ -143,18 +174,24 @@ public class SwitchingTemplateCP implements ControlProvider {
 		@Override
 		protected void detachInvalidated() {
 			super.detachInvalidated();
-			_delegate.detach();
+			if (_delegate instanceof Control) {
+				((Control) _delegate).detach();
+			}
 		}
 
 		@Override
-		public Control getModel() {
+		public HTMLFragment getModel() {
 			return _delegate;
 		}
 
 		@Override
 		public boolean isVisible() {
-			return getModel().isVisible();
+			if (_delegate instanceof Control) {
+				return ((Control) _delegate).isVisible();
+			}
+			return true;
 		}
+
 
 	}
 

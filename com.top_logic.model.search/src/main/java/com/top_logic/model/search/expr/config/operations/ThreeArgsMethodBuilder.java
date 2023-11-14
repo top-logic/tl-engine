@@ -27,13 +27,17 @@ public abstract class ThreeArgsMethodBuilder<E extends SearchExpression> extends
 	public E build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkThreeArgs(expr, args);
-		return internalBuild(expr, args[0], args[1], args[2]);
+		return internalBuild(expr, args[0], args[1], args[2], args);
 	}
 
 	/**
-	 * Implementation of {@link #build(Expr, SearchExpression[])}
+	 * Implementation of {@link #build(Expr, SearchExpression[])}.
+	 * 
+	 * @param allArgs
+	 *        All arguments: A 3-size array containing exactly the given arguments. This is just
+	 *        delivered to avoid re-creating array where it is needed.
 	 */
-	protected abstract E internalBuild(Expr expr, SearchExpression arg0,
-			SearchExpression arg1, SearchExpression arg2) throws ConfigurationException;
+	protected abstract E internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression arg2,
+			SearchExpression[] allArgs) throws ConfigurationException;
 
 }

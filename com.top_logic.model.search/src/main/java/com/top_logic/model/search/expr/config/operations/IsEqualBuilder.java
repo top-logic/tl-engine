@@ -30,7 +30,7 @@ public class IsEqualBuilder extends TwoArgsMethodBuilder<IsEqual> {
 	}
 
 	@Override
-	protected IsEqual internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected IsEqual internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return isEqual(arg0, arg1);
 	}
 

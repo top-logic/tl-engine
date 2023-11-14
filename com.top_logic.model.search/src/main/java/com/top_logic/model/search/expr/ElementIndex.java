@@ -35,7 +35,7 @@ public class ElementIndex extends AbstractListAccess {
 	}
 
 	@Override
-	protected Object evalOnEmpty() {
+	protected Object evalOnEmpty(Object[] arguments) {
 		return toNumber(-1);
 	}
 

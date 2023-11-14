@@ -42,13 +42,17 @@ public abstract class ThreeArgsOptionalBooleanMethodBuilder<E extends SearchExpr
 		} else {
 			secondArg = literal(false);
 		}
-		return internalBuild(expr, args[0], args[1], secondArg);
+		return internalBuild(expr, args[0], args[1], secondArg, args);
 	}
 
 	/**
-	 * Implementation of {@link #build(Expr, SearchExpression[])}
+	 * Implementation of {@link #build(Expr, SearchExpression[])}.
+	 * 
+	 * @param allArgs
+	 *        All arguments. This is just delivered to avoid re-creating array where it is needed.
+	 * 
 	 */
 	abstract E internalBuild(Expr expr, SearchExpression arg0,
-			SearchExpression arg1, SearchExpression arg2) throws ConfigurationException;
+			SearchExpression arg1, SearchExpression arg2, SearchExpression[] allArgs) throws ConfigurationException;
 
 }

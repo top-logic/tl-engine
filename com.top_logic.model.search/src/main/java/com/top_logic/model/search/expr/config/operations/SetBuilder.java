@@ -35,11 +35,11 @@ public class SetBuilder extends ThreeArgsMethodBuilder<SearchExpression> {
 
 	@Override
 	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) throws ConfigurationException {
+			SearchExpression arg2, SearchExpression[] allArgs) throws ConfigurationException {
 		if (arg1 instanceof Literal) {
 			return update(arg0, resolvePart(expr, arg1), arg2);
 		} else {
-			return new DynamicSet(getConfig().getName(), new SearchExpression[] { arg0, arg1, arg2 });
+			return new DynamicSet(getConfig().getName(), allArgs);
 		}
 	}
 

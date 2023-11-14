@@ -30,7 +30,7 @@ public class ContainsAllBuilder extends TwoArgsMethodBuilder<ContainsAll> {
 	}
 
 	@Override
-	protected ContainsAll internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected ContainsAll internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return containsAll(arg0, arg1);
 	}
 

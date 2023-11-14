@@ -31,7 +31,7 @@ public class IsStringEqualBuilder extends ThreeArgsOptionalBooleanMethodBuilder<
 	}
 
 	@Override SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) {
+			SearchExpression arg2, SearchExpression[] allArgs) {
 		return ifElse(arg2, isStringEqual(arg0, arg1, true), isStringEqual(copy(arg0), copy(arg1), false));
 	}
 

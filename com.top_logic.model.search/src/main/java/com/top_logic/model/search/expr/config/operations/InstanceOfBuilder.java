@@ -31,7 +31,7 @@ public class InstanceOfBuilder extends TwoArgsMethodBuilder<InstanceOf> {
 	}
 
 	@Override
-	protected InstanceOf internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1)
+	protected InstanceOf internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs)
 			throws ConfigurationException {
 		return instanceOf(arg0, resolveStructuredType(expr, arg1));
 	}

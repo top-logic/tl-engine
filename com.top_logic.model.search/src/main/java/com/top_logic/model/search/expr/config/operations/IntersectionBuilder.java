@@ -30,7 +30,7 @@ public class IntersectionBuilder extends TwoArgsMethodBuilder<Intersection> {
 	}
 
 	@Override
-	protected Intersection internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected Intersection internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return intersection(arg0, arg1);
 	}
 

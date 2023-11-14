@@ -31,7 +31,7 @@ public class IsStringGreaterBuilder extends ThreeArgsOptionalBooleanMethodBuilde
 	}
 
 	@Override SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) {
+			SearchExpression arg2, SearchExpression[] allArgs) {
 		return ifElse(arg2, isStringGreater(arg0, arg1, true), isStringGreater(copy(arg0), copy(arg1), false));
 	}
 

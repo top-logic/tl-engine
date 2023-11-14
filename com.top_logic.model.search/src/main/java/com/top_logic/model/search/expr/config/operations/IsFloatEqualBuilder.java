@@ -28,7 +28,7 @@ public class IsFloatEqualBuilder extends ThreeArgsMethodBuilder<SearchExpression
 
 	@Override
 	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) {
+			SearchExpression arg2, SearchExpression[] allArgs) {
 		return SearchExpressions.isFloatEqual(arg0, arg1, arg2);
 	}
 

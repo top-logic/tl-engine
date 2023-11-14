@@ -30,7 +30,7 @@ public class ForeachBuilder extends TwoArgsMethodBuilder<Foreach> {
 	}
 
 	@Override
-	protected Foreach internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected Foreach internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return foreach(arg0, arg1);
 	}
 

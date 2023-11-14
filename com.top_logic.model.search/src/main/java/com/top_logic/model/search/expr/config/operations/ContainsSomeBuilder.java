@@ -30,7 +30,7 @@ public class ContainsSomeBuilder extends TwoArgsMethodBuilder<ContainsSome> {
 	}
 
 	@Override
-	protected ContainsSome internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected ContainsSome internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return containsSome(arg0, arg1);
 	}
 

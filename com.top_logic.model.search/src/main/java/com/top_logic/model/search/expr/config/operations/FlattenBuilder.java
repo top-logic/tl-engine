@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class FlattenBuilder extends NoArgMethodBuilder<Flatten> {
+public class FlattenBuilder extends SingleArgMethodBuilder<Flatten> {
 
 	/**
 	 * Creates a {@link FlattenBuilder}.
@@ -30,7 +30,7 @@ public class FlattenBuilder extends NoArgMethodBuilder<Flatten> {
 	}
 
 	@Override
-	protected Flatten internalBuild(Expr expr, SearchExpression argument) {
+	protected Flatten internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs) {
 		return flatten(argument);
 	}
 

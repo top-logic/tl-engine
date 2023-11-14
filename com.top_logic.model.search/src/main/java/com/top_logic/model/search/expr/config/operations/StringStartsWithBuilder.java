@@ -32,7 +32,7 @@ public class StringStartsWithBuilder extends ThreeArgsOptionalBooleanMethodBuild
 	}
 
 	@Override IfElse internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) {
+			SearchExpression arg2, SearchExpression[] allArgs) {
 		return ifElse(arg2, stringStartsWith(arg0, arg1, true), stringStartsWith(copy(arg0), copy(arg1), false));
 	}
 

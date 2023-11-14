@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class AllBuilder extends NoArgMethodBuilder<SearchExpression> {
+public class AllBuilder extends SingleArgMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link AllBuilder}.
@@ -33,12 +33,12 @@ public class AllBuilder extends NoArgMethodBuilder<SearchExpression> {
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression argument)
+	protected SearchExpression internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs)
 			throws ConfigurationException {
 		if (argument instanceof Literal) {
 			return all(resolveStructuredType(expr, argument));
 		} else {
-			return new DynamicAll(getConfig().getName(), new SearchExpression[] { argument });
+			return new DynamicAll(getConfig().getName(), allArgs);
 		}
 	}
 

@@ -163,7 +163,7 @@ label.disabled  {
 	text-decoration: none;
 }
 
-.frmBody, .sidebarFilterContainer {
+.frmBody {
 	padding: 0 var(--spacing-03);
 }
 
@@ -1639,9 +1639,11 @@ span.bcc-option, .cChoice-option {
 	cursor: default;
 }
 
-.cSelectOption {
-	display: inline-block;
+.cSelectOption,
+.cCheckbox {
+	display: inline-flex;
   	padding: 0 var(--spacing-03) 0 var(--spacing-02);
+  	vertical-align: middle;
 }
 
 /* ==================================== */

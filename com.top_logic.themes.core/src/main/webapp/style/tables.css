@@ -627,11 +627,13 @@ div.tl-table__filter-sort-container {
 .sidebarFilterEntry {
 	position: relative;
 	box-sizing: border-box;
-	height: 23px;
+	height: 1.5rem;
 	width: 100%;
-	margin-top: 2px;
-	padding-top: 4px;
 	white-space: nowrap;
+	background: var(--layer);
+	padding-left: var(--spacing-01);
+	display: flex;
+	align-items: center;
 }
 
 .collapsibleFilterEntry {
@@ -640,9 +642,8 @@ div.tl-table__filter-sort-container {
 
 .resetSidebarFilterButton {
 	position: absolute;
-	top: 0;
 	right: 0;
-	cursor: auto;
+	padding-right: var(--spacing-01);
 }
 
 table.tblFrozen {
@@ -1440,10 +1441,6 @@ tr.tl-table__row:last-child > td, .tl-table__header tr {
 
 table.tl-table--fixed td.tl-table__cell--selected.treeTableTd {
     border-left-width: var(--TABLE_COLUMN_BORDER_WIDTH);
-}
-
-.sidebarFilterEntry {
-	background: var(--TABLE_FILTER_HEADER_BACKGROUND);
 }
 
 th.treeTableTh {

@@ -75,7 +75,7 @@ public class SubList extends SimpleGenericMethod {
 		}
 
 		@Override
-		public SubList build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public SubList build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 2, 3);
 			return new SubList("subList", args);

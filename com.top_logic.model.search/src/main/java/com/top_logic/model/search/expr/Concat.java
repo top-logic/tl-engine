@@ -71,7 +71,7 @@ public class Concat extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Concat build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Concat build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Concat("concat", args);
 		}

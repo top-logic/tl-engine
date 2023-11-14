@@ -71,7 +71,7 @@ public class CreateRevision extends GenericMethod {
 		}
 
 		@Override
-		public CreateRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public CreateRevision build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new CreateRevision(getConfig().getName(), args);

@@ -79,7 +79,7 @@ public class RegexSearch extends SimpleGenericMethod {
 		}
 
 		@Override
-		public RegexSearch build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public RegexSearch build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return new RegexSearch(getConfig().getName(), args);
 		}

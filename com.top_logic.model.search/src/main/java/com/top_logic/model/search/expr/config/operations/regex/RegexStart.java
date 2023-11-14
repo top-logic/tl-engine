@@ -86,7 +86,7 @@ public class RegexStart extends SimpleGenericMethod {
 		}
 
 		@Override
-		public RegexStart build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public RegexStart build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new RegexStart(getConfig().getName(), args);
 		}
 

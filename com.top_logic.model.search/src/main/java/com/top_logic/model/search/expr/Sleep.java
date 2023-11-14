@@ -72,7 +72,7 @@ public class Sleep extends GenericMethod {
 		}
 
 		@Override
-		public Sleep build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Sleep build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Sleep(getConfig().getName(), args);

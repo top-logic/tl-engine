@@ -58,7 +58,7 @@ public class GetKey extends SimpleGenericMethod {
 		}
 
 		@Override
-		public GetKey build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public GetKey build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new GetKey(getConfig().getName(), args);

@@ -60,7 +60,7 @@ public class Reverse extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Reverse build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Reverse build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Reverse(getName(), args);

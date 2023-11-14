@@ -85,7 +85,7 @@ public class Add extends GenericMethod {
 		}
 
 		@Override
-		public Add build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Add build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 3, 4);
 			return new Add(getConfig().getName(), args);

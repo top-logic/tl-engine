@@ -85,7 +85,7 @@ public class I18NTranslate extends Translate {
 		}
 
 		@Override
-		public I18NTranslate build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public I18NTranslate build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new I18NTranslate(getConfig().getName(), args);
 		}

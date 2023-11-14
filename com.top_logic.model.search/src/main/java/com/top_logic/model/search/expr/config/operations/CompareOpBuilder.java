@@ -51,7 +51,7 @@ public class CompareOpBuilder<C extends CompareOpBuilder.Config<?>> extends Abst
 	}
 
 	@Override
-	public CompareOp build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public CompareOp build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkTwoArgs(expr, args);
 		return SearchExpressions.compareOp(operator(), args[0], args[1]);

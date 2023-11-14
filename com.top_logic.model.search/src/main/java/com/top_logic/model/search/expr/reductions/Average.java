@@ -90,7 +90,7 @@ public class Average extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Average build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Average build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Average("average", args);
 		}

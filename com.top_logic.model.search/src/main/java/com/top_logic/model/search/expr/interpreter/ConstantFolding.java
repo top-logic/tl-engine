@@ -71,8 +71,6 @@ public class ConstantFolding {
 		 */
 		public static final Fold INSTANCE = new Fold();
 
-		private static final SearchExpression[] NO_ARGS = {};
-
 		private Fold() {
 			// Singleton constructor.
 		}
@@ -167,7 +165,7 @@ public class ConstantFolding {
 					if (toBooleanBuilder == null) {
 						throw new IllegalStateException("Missing built-in method 'toBoolean'.");
 					}
-					return toBooleanBuilder.build(null, result, NO_ARGS);
+					return toBooleanBuilder.build(null, new SearchExpression[] { result });
 				} catch (ConfigurationException ex) {
 					throw new ConfigurationError(ex);
 				}

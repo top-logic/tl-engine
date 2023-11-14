@@ -70,7 +70,7 @@ public class LastElement extends AbstractListAccess {
 		}
 
 		@Override
-		public LastElement build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public LastElement build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return SearchExpressionFactory.lastElement(args);

@@ -30,7 +30,7 @@ public class DescBuilder extends AbstractSimpleMethodBuilder<Desc> {
 	}
 
 	@Override
-	public Desc build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public Desc build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkSingleArg(expr, args);
 		return desc(args[0]);

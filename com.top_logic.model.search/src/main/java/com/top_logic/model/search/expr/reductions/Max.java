@@ -97,7 +97,7 @@ public class Max extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Max build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Max build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Max("max", args);
 		}

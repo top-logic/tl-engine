@@ -69,7 +69,7 @@ public class Type extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Type build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Type build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Type(getConfig().getName(), args);

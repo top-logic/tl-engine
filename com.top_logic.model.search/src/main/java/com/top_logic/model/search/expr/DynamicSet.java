@@ -80,7 +80,7 @@ public class DynamicSet extends GenericMethod {
 		}
 
 		@Override
-		public DynamicSet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicSet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkThreeArgs(expr, args);
 			return new DynamicSet(getConfig().getName(), args);

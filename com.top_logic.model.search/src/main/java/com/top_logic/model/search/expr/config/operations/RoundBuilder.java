@@ -36,7 +36,7 @@ public class RoundBuilder extends AbstractSimpleMethodBuilder<SearchExpression> 
 	}
 
 	@Override
-	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public SearchExpression build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		return round(args[0], args[1]);
 	}

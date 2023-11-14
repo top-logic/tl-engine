@@ -98,7 +98,7 @@ public class RegexReplace extends GenericMethod {
 		}
 
 		@Override
-		public RegexReplace build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public RegexReplace build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			checkThreeArgs(expr, args);
 			return new RegexReplace(getConfig().getName(), args);
 		}

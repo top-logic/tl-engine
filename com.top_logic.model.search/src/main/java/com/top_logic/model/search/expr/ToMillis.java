@@ -63,7 +63,7 @@ public class ToMillis extends AbstractDateMethod {
 		}
 
 		@Override
-		public ToMillis build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToMillis build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new ToMillis(getName(), args);

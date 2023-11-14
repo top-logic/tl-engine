@@ -24,14 +24,14 @@ public abstract class ThreeArgsMethodBuilder<E extends SearchExpression> extends
 	}
 
 	@Override
-	public E build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public E build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkThreeArgs(expr, args);
 		return internalBuild(expr, args[0], args[1], args[2]);
 	}
 
 	/**
-	 * Implementation of {@link #build(Expr, SearchExpression, SearchExpression[])}
+	 * Implementation of {@link #build(Expr, SearchExpression[])}
 	 */
 	protected abstract E internalBuild(Expr expr, SearchExpression arg0,
 			SearchExpression arg1, SearchExpression arg2) throws ConfigurationException;

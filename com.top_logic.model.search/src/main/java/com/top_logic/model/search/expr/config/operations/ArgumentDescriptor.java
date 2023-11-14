@@ -13,7 +13,7 @@ import com.top_logic.model.search.expr.config.Argument;
  * Description of arguments of a {@link MethodBuilder}.
  * 
  * @see MethodBuilder#build(com.top_logic.model.search.expr.config.dom.Expr.AbstractMethod,
- *      SearchExpression, Argument[])
+ *      Argument[])
  */
 public interface ArgumentDescriptor {
 

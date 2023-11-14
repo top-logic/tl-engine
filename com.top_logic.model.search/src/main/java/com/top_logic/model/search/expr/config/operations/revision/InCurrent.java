@@ -70,7 +70,7 @@ public class InCurrent extends GenericMethod implements WithFlatMapSemantics<Voi
 		}
 
 		@Override
-		public InCurrent build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public InCurrent build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new InCurrent(getConfig().getName(), args);

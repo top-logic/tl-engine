@@ -526,7 +526,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 
 		@Override
-		public Copy build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public Copy build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new Copy(getConfig().getName(), args);
 		}
 

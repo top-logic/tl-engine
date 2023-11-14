@@ -86,7 +86,7 @@ public class Count extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Count build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Count build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 2, 3);
 			return new Count(getConfig().getName(), args);

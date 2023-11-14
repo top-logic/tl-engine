@@ -111,7 +111,7 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 		}
 
 		@Override
-		public InRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public InRevision build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new InRevision(getConfig().getName(), args);
 		}

@@ -97,7 +97,7 @@ public class NextId extends GenericMethod {
 		}
 
 		@Override
-		public NextId build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public NextId build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new NextId(getConfig().getName(), args);
 		}

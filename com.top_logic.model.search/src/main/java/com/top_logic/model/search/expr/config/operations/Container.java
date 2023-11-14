@@ -62,7 +62,7 @@ public class Container extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Container build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Container build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Container(getConfig().getName(), args);

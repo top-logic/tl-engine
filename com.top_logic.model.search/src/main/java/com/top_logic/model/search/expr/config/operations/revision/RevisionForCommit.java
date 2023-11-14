@@ -74,7 +74,7 @@ public class RevisionForCommit extends GenericMethod {
 		}
 
 		@Override
-		public RevisionForCommit build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public RevisionForCommit build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new RevisionForCommit(getConfig().getName(), args);

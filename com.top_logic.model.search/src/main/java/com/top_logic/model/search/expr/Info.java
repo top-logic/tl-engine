@@ -74,7 +74,7 @@ public class Info extends GenericMethod {
 		}
 
 		@Override
-		public Info build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Info build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 1, 2);
 			return new Info(getName(), args);

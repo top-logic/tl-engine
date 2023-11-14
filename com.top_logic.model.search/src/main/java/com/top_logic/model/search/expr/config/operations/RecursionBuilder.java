@@ -43,7 +43,7 @@ public class RecursionBuilder extends AbstractSimpleMethodBuilder<Recursion> {
 	}
 
 	@Override
-	public Recursion build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public Recursion build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		return SearchExpressions.recursion(args[0], args[1], args[2], args[3]);
 	}

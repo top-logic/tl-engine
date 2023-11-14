@@ -132,7 +132,7 @@ public class I18NInternationalize extends Internationalize {
 		}
 
 		@Override
-		public I18NInternationalize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public I18NInternationalize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new I18NInternationalize(getConfig().getName(), args);
 		}

@@ -238,7 +238,7 @@ public class Binary extends GenericMethod {
 		}
 
 		@Override
-		public Binary build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public Binary build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new Binary(getConfig().getName(), args);
 		}
 

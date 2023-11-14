@@ -68,7 +68,7 @@ public class ParseExpr extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ParseExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ParseExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return new ParseExpr(getName(), args);

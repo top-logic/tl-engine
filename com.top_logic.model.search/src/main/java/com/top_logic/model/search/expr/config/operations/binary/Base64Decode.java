@@ -142,7 +142,7 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 		}
 
 		@Override
-		public Base64Decode build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public Base64Decode build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new Base64Decode(getName(), args);
 		}
 

@@ -30,7 +30,7 @@ public class ResKeyArgumentsBuilder extends AbstractSimpleMethodBuilder<ResKeyAr
 	}
 
 	@Override
-	public ResKeyArguments build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public ResKeyArguments build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		return reskeyArguments(args);
 	}

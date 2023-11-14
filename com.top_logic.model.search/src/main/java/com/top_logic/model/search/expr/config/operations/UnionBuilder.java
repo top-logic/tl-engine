@@ -31,7 +31,7 @@ public class UnionBuilder extends AbstractSimpleMethodBuilder<SearchExpression> 
 	}
 
 	@Override
-	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public SearchExpression build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		if (args.length == 0) {
 			return SearchExpressions.literalEmptySet();

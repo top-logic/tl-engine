@@ -60,7 +60,7 @@ public class Regex extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Regex build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public Regex build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Regex(getConfig().getName(), args);
 		}

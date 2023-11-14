@@ -58,7 +58,7 @@ public class Ceil extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Ceil build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Ceil build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Ceil(getConfig().getName(), args);

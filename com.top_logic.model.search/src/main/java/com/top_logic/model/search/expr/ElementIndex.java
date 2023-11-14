@@ -87,7 +87,7 @@ public class ElementIndex extends AbstractListAccess {
 		}
 
 		@Override
-		public ElementIndex build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ElementIndex build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return SearchExpressionFactory.elementIndex(args);

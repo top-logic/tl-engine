@@ -86,7 +86,7 @@ public class IndexReduce extends GenericMethod {
 		}
 
 		@Override
-		public IndexReduce build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public IndexReduce build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 4, 4);
 			return new IndexReduce(getConfig().getName(), args);

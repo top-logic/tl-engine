@@ -31,7 +31,7 @@ public class ApplyBuilder extends AbstractSimpleMethodBuilder<Call> {
 	}
 
 	@Override
-	public Call build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+	public Call build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 		checkMinArgs(expr, args, 2);
 
 		SearchExpression result = args[0];

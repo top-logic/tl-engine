@@ -147,7 +147,7 @@ public class ZipArchive extends GenericMethod {
 		}
 
 		@Override
-		public ZipArchive build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
+		public ZipArchive build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new ZipArchive(getConfig().getName(), args);
 		}
 

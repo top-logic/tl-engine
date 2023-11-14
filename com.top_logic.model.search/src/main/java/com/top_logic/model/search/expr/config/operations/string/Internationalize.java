@@ -154,7 +154,7 @@ public class Internationalize extends GenericMethod {
 		}
 
 		@Override
-		public Internationalize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Internationalize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Internationalize(getConfig().getName(), args);
 		}

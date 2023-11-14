@@ -81,7 +81,7 @@ public class PDFExportFunction extends GenericMethod {
 		}
 
 		@Override
-		public PDFExportFunction build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public PDFExportFunction build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new PDFExportFunction(getName(), args);
 		}

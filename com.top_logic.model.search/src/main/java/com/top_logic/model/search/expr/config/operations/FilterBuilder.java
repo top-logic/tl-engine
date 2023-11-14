@@ -29,7 +29,7 @@ public class FilterBuilder extends TwoArgsMethodBuilder<Filter> {
 	}
 
 	@Override
-	protected Filter internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected Filter internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return filter(arg0, arg1);
 	}
 

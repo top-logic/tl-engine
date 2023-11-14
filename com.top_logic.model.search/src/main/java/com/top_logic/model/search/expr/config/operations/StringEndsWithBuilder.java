@@ -31,7 +31,7 @@ public class StringEndsWithBuilder extends ThreeArgsOptionalBooleanMethodBuilder
 	}
 
 	@Override SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) {
+			SearchExpression arg2, SearchExpression[] allArgs) {
 		return ifElse(arg2, stringEndsWith(arg0, arg1, true), stringEndsWith(copy(arg0), copy(arg1), false));
 	}
 

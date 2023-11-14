@@ -33,18 +33,18 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	public Object eval(Object[] arguments) {
 		Object base = arguments[0];
 		if (base == null) {
-			return evalOnEmpty();
+			return evalOnEmpty(arguments);
 		}
 		if (base instanceof List) {
 			List<?> list = (List<?>) base;
 			if (list.isEmpty()) {
-				return evalOnEmpty();
+				return evalOnEmpty(arguments);
 			}
 			return evalOnList(list, arguments);
 		} else if (base instanceof Iterable<?>) {
 			Iterator<?> iterator = ((Iterable<?>) base).iterator();
 			if (!iterator.hasNext()) {
-				return evalOnEmpty();
+				return evalOnEmpty(arguments);
 			}
 			return evalOnIterator(iterator, arguments);
 		} else {
@@ -54,21 +54,37 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 
 	/**
 	 * Result for evaluation on an empty list.
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
-	protected abstract Object evalOnEmpty();
+	protected abstract Object evalOnEmpty(Object[] arguments);
 
 	/**
 	 * Result for evaluation on a singleton element (not a list at all).
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
 	protected abstract Object evalOnSingleton(Object self, Object[] arguments);
 
 	/**
 	 * Result for evaluation on an iterable value.
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
 	protected abstract Object evalOnIterator(Iterator<?> iterator, Object[] arguments);
 
 	/**
 	 * Result for evaluation on an true list value.
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
 	protected abstract Object evalOnList(List<?> list, Object[] arguments);
 

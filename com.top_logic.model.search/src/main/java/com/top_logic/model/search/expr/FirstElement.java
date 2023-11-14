@@ -34,7 +34,7 @@ public class FirstElement extends AbstractListAccess {
 	}
 
 	@Override
-	protected Object evalOnEmpty() {
+	protected Object evalOnEmpty(Object[] arguments) {
 		return null;
 	}
 

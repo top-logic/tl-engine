@@ -28,7 +28,7 @@ public class IsFloatGreaterBuilder extends ThreeArgsMethodBuilder<SearchExpressi
 
 	@Override
 	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) {
+			SearchExpression arg2, SearchExpression[] allArgs) {
 		return SearchExpressions.isFloatGreater(arg0, arg1, arg2);
 	}
 

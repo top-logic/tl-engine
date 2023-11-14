@@ -29,7 +29,7 @@ public class IsDateEqualBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return SearchExpressions.isDateEqual(arg0, arg1);
 	}
 

@@ -27,13 +27,17 @@ public abstract class TwoArgsMethodBuilder<E extends SearchExpression> extends A
 	public E build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkTwoArgs(expr, args);
-		return internalBuild(expr, args[0], args[1]);
+		return internalBuild(expr, args[0], args[1], args);
 	}
 
 	/**
-	 * Implementation of {@link #build(Expr, SearchExpression[])}
+	 * Implementation of {@link #build(Expr, SearchExpression[])}.
+	 * 
+	 * @param allArgs
+	 *        All arguments: A 2-size array containing exactly the given arguments. This is just
+	 *        delivered to avoid re-creating array where it is needed.
 	 */
 	protected abstract E internalBuild(Expr expr, SearchExpression arg0,
-			SearchExpression arg1) throws ConfigurationException;
+			SearchExpression arg1, SearchExpression[] allArgs) throws ConfigurationException;
 
 }

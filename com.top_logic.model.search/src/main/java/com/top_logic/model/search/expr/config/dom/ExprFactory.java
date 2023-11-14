@@ -65,7 +65,6 @@ import com.top_logic.model.search.expr.config.dom.Expr.ResKeyLiteral.LangStringC
 import com.top_logic.model.search.expr.config.dom.Expr.ResKeyReference;
 import com.top_logic.model.search.expr.config.dom.Expr.SingletonLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.StartTag;
-import com.top_logic.model.search.expr.config.dom.Expr.StaticMethod;
 import com.top_logic.model.search.expr.config.dom.Expr.StringLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Sub;
 import com.top_logic.model.search.expr.config.dom.Expr.TextContent;
@@ -643,7 +642,7 @@ public class ExprFactory {
 	/** @see Method */
 	public Expr method(String name, Expr self, List<Arg> args) {
 		Method result = method(name, self);
-		result.setArgs(args);
+		result.getArgs().addAll(args);
 		return result;
 	}
 
@@ -651,13 +650,15 @@ public class ExprFactory {
 	public Method method(String name, Expr self) {
 		Method result = node(Method.class);
 		result.setName(name);
-		result.setSelf(self);
+		if (self != null) {
+			result.getArgs().add(arg(self));
+		}
 		return result;
 	}
 
-	/** @see StaticMethod */
+	/** @see Method */
 	public Expr staticMethod(String name, List<Arg> args) {
-		StaticMethod result = node(StaticMethod.class);
+		Method result = node(Method.class);
 		result.setName(name);
 		result.setArgs(args);
 		return result;

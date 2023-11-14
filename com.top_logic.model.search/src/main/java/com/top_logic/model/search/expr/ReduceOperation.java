@@ -74,8 +74,8 @@ public class ReduceOperation extends GenericMethod {
 
 		@Override
 		protected ReduceOperation internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-				SearchExpression arg2) throws ConfigurationException {
-			return SearchExpressionFactory.reduce(arg0, arg1, arg2);
+				SearchExpression arg2, SearchExpression[] allArgs) throws ConfigurationException {
+			return SearchExpressionFactory.reduce(allArgs);
 		}
 	}
 

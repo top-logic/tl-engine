@@ -16,7 +16,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.operations.NoArgMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.SingleArgMethodBuilder;
 
 /**
  * {@link SearchExpression} creating a new object of a given {@link TLClass} type.
@@ -71,7 +71,7 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	/**
 	 * Builder creating a {@link DeleteObject} expression.
 	 */
-	public static class Builder extends NoArgMethodBuilder<DeleteObject> {
+	public static class Builder extends SingleArgMethodBuilder<DeleteObject> {
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -80,9 +80,9 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 		}
 
 		@Override
-		protected DeleteObject internalBuild(Expr expr, SearchExpression argument)
+		protected DeleteObject internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs)
 				throws ConfigurationException {
-			return new DeleteObject(getName(), new SearchExpression[] { argument });
+			return new DeleteObject(getName(), allArgs);
 		}
 	}
 

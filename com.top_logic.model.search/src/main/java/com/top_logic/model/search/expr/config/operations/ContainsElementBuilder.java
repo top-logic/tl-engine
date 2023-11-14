@@ -30,7 +30,7 @@ public class ContainsElementBuilder extends TwoArgsMethodBuilder<ContainsElement
 	}
 
 	@Override
-	protected ContainsElement internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1) {
+	protected ContainsElement internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
 		return containsElement(arg0, arg1);
 	}
 

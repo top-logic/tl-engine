@@ -33,7 +33,7 @@ public class AssociationNavigationBuilder extends ThreeArgsMethodBuilder<Associa
 
 	@Override
 	protected AssociationNavigation internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
-			SearchExpression arg2) throws ConfigurationException {
+			SearchExpression arg2, SearchExpression[] allArgs) throws ConfigurationException {
 		return associationNavigation(arg0,
 			resolveEnd(expr, arg1),
 			resolveEnd(expr, arg2));

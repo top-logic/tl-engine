@@ -3,17 +3,9 @@
 <theme id="coreSidebar"
 	config:interface="com.top_logic.gui.config.ThemeConfig"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	extends="core"
 	state="enabled"
 >
 	<styles>
-		<style name="/style/core.css"/>
-		<style name="/style/coreButtons.css"/>
-		<style name="/style/tabbar.css"/>
-		<style name="/style/form.css"/>
-		<style name="/style/tables.css"/>
-		<style name="/style/fotorama.css"/>
-		<style name="/style/mdtimepicker.css"/>
-		<style name="/style/bootstrap-icons.css"/>
-		<style name="/style/interFonts.css"/>
 	</styles>
 </theme>

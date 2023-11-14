@@ -14,6 +14,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.element.layout.create.CreateTypeOptions;
@@ -56,13 +57,12 @@ public abstract class AbstractGridCreateHandler extends PreconditionCommandHandl
 
 		/**
 		 * Whether the user can choose from concrete sub-types of the create type.
-		 * 
 		 * <p>
-		 * The value of this option is only relevant for a concrete types. If the type is abstract,
-		 * a type chooser is always shown.
+		 * The value of this option is only relevant when there are multiple types to choose from.
 		 * </p>
 		 */
 		@Name("typeChooser")
+		@BooleanDefault(true)
 		boolean getTypeChooser();
 
 		@Override

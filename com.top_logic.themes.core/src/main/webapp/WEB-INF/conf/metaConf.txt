@@ -1,1 +1,1 @@
-tl-themes-core.xml
+tl-themes-core.config.xml

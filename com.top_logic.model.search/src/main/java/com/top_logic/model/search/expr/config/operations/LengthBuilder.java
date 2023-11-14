@@ -30,7 +30,7 @@ public class LengthBuilder extends AbstractSimpleMethodBuilder<Length> {
 	}
 
 	@Override
-	public Length build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public Length build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkSingleArg(expr, args);
 		return length(args[0]);

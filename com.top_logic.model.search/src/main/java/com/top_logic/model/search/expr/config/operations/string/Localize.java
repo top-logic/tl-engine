@@ -85,7 +85,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 		}
 
 		@Override
-		public Localize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Localize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new Localize(getConfig().getName(), args);
 		}

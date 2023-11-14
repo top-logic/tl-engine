@@ -104,7 +104,7 @@ public class IndexBy extends GenericMethod {
 		}
 
 		@Override
-		public IndexBy build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public IndexBy build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 2, 3);
 			return new IndexBy(getConfig().getName(), args);

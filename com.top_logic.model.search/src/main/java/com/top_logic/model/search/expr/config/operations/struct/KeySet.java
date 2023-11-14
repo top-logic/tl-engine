@@ -58,7 +58,7 @@ public class KeySet extends SimpleGenericMethod {
 		}
 
 		@Override
-		public KeySet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public KeySet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new KeySet(getConfig().getName(), args);

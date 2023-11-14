@@ -72,7 +72,7 @@ public class HTTPResponse extends GenericMethod {
 		}
 
 		@Override
-		public HTTPResponse build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public HTTPResponse build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new HTTPResponse(getConfig().getName(), args);
 		}

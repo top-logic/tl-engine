@@ -31,7 +31,7 @@ public class SortBuilder extends AbstractSimpleMethodBuilder<Sort> {
 	}
 
 	@Override
-	public Sort build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public Sort build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkArgs(expr, args, 1, 2);
 		if (args.length == 1) {

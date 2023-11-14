@@ -89,7 +89,7 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 		}
 
 		@Override
-		public DynamicReferers build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicReferers build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return new DynamicReferers(getConfig().getName(), args);

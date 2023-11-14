@@ -102,7 +102,7 @@ public class ElementAt extends AbstractListAccess {
 		}
 
 		@Override
-		public ElementAt build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ElementAt build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return SearchExpressionFactory.elementAt(args);

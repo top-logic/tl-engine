@@ -60,7 +60,7 @@ public class CurrentRevision extends SimpleGenericMethod {
 		}
 
 		@Override
-		public CurrentRevision build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public CurrentRevision build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkNoArguments(expr, args);
 			return new CurrentRevision(getConfig().getName(), args);

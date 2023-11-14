@@ -148,7 +148,7 @@ public class CalendarUpdate extends GenericMethod {
 		}
 
 		@Override
-		public CalendarUpdate build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public CalendarUpdate build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
 			return new CalendarUpdate(getName(), _field, _op, args);

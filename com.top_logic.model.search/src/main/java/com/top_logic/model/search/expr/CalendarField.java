@@ -165,7 +165,7 @@ public class CalendarField extends SimpleGenericMethod {
 		}
 
 		@Override
-		public CalendarField build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public CalendarField build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new CalendarField(getName(), _field, args);

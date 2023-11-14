@@ -87,7 +87,7 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 		}
 
 		@Override
-		public DynamicAll build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicAll build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new DynamicAll(getConfig().getName(), args);

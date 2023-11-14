@@ -63,7 +63,7 @@ final class ServiceMethodBuilder implements MethodBuilder<SearchExpression>, Fac
 	}
 
 	@Override
-	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public SearchExpression build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		return new RPCMethod(_handler, _name, args);
 	}

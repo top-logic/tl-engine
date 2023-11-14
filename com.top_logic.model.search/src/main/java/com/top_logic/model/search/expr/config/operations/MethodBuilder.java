@@ -35,16 +35,14 @@ public interface MethodBuilder<E extends SearchExpression> {
 	 * @param expr
 	 *        The {@link Expr source expression} to translate (for error reporting only). If
 	 *        <code>null</code>, potential errors are are unusable.
-	 * @param self
-	 *        The translated target of the method call.
 	 * @param args
 	 *        The translated arguments to the method call.
 	 * @return The resulting {@link SearchExpression} for evaluation.
 	 * @throws ConfigurationException
 	 *         If the expression has errors.
 	 */
-	default E build(AbstractMethod expr, SearchExpression self, Argument[] args) throws ConfigurationException {
-		return build(expr, self, descriptor().unwrap(expr.getName(), args));
+	default E build(AbstractMethod expr, Argument[] args) throws ConfigurationException {
+		return build(expr, descriptor().unwrap(expr.getName(), args));
 	}
 
 	/**
@@ -65,17 +63,15 @@ public interface MethodBuilder<E extends SearchExpression> {
 	 * @param expr
 	 *        The {@link Expr source expression} to translate (for error reporting only). If
 	 *        <code>null</code>, potential errors are are unusable.
-	 * @param self
-	 *        The translated target of the method call.
 	 * @param args
 	 *        The translated arguments to the method call.
 	 * @return The resulting {@link SearchExpression} for evaluation.
 	 * @throws ConfigurationException
 	 *         If the expression has errors.
 	 * 
-	 * @see #build(AbstractMethod, SearchExpression, Argument[])
+	 * @see #build(AbstractMethod, Argument[])
 	 */
-	E build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException;
+	E build(Expr expr, SearchExpression[] args) throws ConfigurationException;
 
 	/**
 	 * The custom identifier for this builder that triggers its usage when instantiating generic

@@ -58,7 +58,7 @@ public class Values extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Values build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Values build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new Values(getConfig().getName(), args);

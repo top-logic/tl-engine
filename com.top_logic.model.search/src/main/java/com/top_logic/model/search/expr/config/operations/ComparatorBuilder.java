@@ -28,7 +28,7 @@ public class ComparatorBuilder extends AbstractSimpleMethodBuilder<SearchExpress
 	}
 
 	@Override
-	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public SearchExpression build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
 		checkSingleArg(expr, args);
 		return comparator(args[0]);

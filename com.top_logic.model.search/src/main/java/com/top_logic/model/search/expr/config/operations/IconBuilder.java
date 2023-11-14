@@ -60,7 +60,7 @@ public class IconBuilder extends GenericMethod {
 		}
 
 		@Override
-		public IconBuilder build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public IconBuilder build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
 			return new IconBuilder(getConfig().getName(), args);

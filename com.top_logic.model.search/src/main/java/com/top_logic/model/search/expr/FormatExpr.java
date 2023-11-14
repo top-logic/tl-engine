@@ -76,7 +76,7 @@ public class FormatExpr extends SimpleGenericMethod {
 		}
 
 		@Override
-		public FormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public FormatExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			return new FormatExpr(getName(), args);
 		}

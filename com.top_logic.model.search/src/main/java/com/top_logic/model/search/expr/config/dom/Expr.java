@@ -1369,8 +1369,8 @@ public interface Expr extends ConfigurationItem {
 	/**
 	 * {@link Expr} representing a globally defined function.
 	 */
-	@Abstract
-	public interface AbstractMethod extends Expr {
+	@TagName("method")
+	public interface Method extends Expr {
 
 		/**
 		 * The name of the method to call.
@@ -1381,7 +1381,7 @@ public interface Expr extends ConfigurationItem {
 		void setName(String value);
 
 		/**
-		 * The arguments to pass to the invokation.
+		 * The arguments to pass to the invocation.
 		 */
 		List<Arg> getArgs();
 
@@ -1419,32 +1419,6 @@ public interface Expr extends ConfigurationItem {
 		 * @see #getValue()
 		 */
 		void setValue(Expr expr);
-	}
-
-	/**
-	 * A method invocation with instance syntax <code>self.method(...)</code>.
-	 */
-	@TagName("method")
-	public interface Method extends AbstractMethod {
-
-		/**
-		 * The value to invoke the method on.
-		 */
-		@DefaultContainer
-		@Mandatory
-		Expr getSelf();
-
-		/** @see #getSelf() */
-		void setSelf(Expr value);
-
-	}
-
-	/**
-	 * A method invocation with static syntax <code>method(...)</code>.
-	 */
-	@TagName("staticMethod")
-	public interface StaticMethod extends AbstractMethod {
-		// Pure marker interface.
 	}
 
 	/**

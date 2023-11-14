@@ -19,12 +19,14 @@ model -> $model.get(`T:others`)
   <method name="get">
     <args>
     <arg>
+      <var name="model"/>
+    </arg>
+    <arg>
       <type name="others"
         module="T"
       />
     </arg>
     </args>
-    <var name="model"/>
   </method>
 </config>
 
@@ -66,7 +68,7 @@ all(`my.module:MyType`)
   .filter(x -> $x.get(`T:other`).get(`TLObject:tType`).get(`TLType:module`)==`other.module`)
   .filter(y -> $y.get(`T:ref`) == `my.module:OtherType#part`)
 -----
-all(`my.module:MyType`).filter(x -> $x.get(`T:other`).get(`TLObject:tType`).get(`TLType:module`) == `other.module`).filter(y -> $y.get(`T:ref`) == `my.module:OtherType#part`)
+`my.module:MyType`.all().filter(x -> $x.get(`T:other`).get(`TLObject:tType`).get(`TLType:module`) == `other.module`).filter(y -> $y.get(`T:ref`) == `my.module:OtherType#part`)
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -74,17 +76,77 @@ all(`my.module:MyType`).filter(x -> $x.get(`T:other`).get(`TLObject:tType`).get(
 >
   <args>
   <arg>
+    <method name="filter">
+      <args>
+      <arg>
+        <method name="all">
+          <args>
+          <arg>
+            <type name="MyType"
+              module="my.module"
+            />
+          </arg>
+          </args>
+        </method>
+      </arg>
+      <arg>
+        <define name="x">
+          <eq>
+            <method name="get">
+              <args>
+              <arg>
+                <method name="get">
+                  <args>
+                  <arg>
+                    <method name="get">
+                      <args>
+                      <arg>
+                        <var name="x"/>
+                      </arg>
+                      <arg>
+                        <type name="other"
+                          module="T"
+                        />
+                      </arg>
+                      </args>
+                    </method>
+                  </arg>
+                  <arg>
+                    <type name="tType"
+                      module="TLObject"
+                    />
+                  </arg>
+                  </args>
+                </method>
+              </arg>
+              <arg>
+                <type name="module"
+                  module="TLType"
+                />
+              </arg>
+              </args>
+            </method>
+            <module name="other.module"/>
+          </eq>
+        </define>
+      </arg>
+      </args>
+    </method>
+  </arg>
+  <arg>
     <define name="y">
       <eq>
         <method name="get">
           <args>
+          <arg>
+            <var name="y"/>
+          </arg>
           <arg>
             <type name="ref"
               module="T"
             />
           </arg>
           </args>
-          <var name="y"/>
         </method>
         <part name="part"
           module="my.module"
@@ -94,54 +156,6 @@ all(`my.module:MyType`).filter(x -> $x.get(`T:other`).get(`TLObject:tType`).get(
     </define>
   </arg>
   </args>
-  <method name="filter">
-    <args>
-    <arg>
-      <define name="x">
-        <eq>
-          <method name="get">
-            <args>
-            <arg>
-              <type name="module"
-                module="TLType"
-              />
-            </arg>
-            </args>
-            <method name="get">
-              <args>
-              <arg>
-                <type name="tType"
-                  module="TLObject"
-                />
-              </arg>
-              </args>
-              <method name="get">
-                <args>
-                <arg>
-                  <type name="other"
-                    module="T"
-                  />
-                </arg>
-                </args>
-                <var name="x"/>
-              </method>
-            </method>
-          </method>
-          <module name="other.module"/>
-        </eq>
-      </define>
-    </arg>
-    </args>
-    <staticMethod name="all">
-      <args>
-      <arg>
-        <type name="MyType"
-          module="my.module"
-        />
-      </arg>
-      </args>
-    </staticMethod>
-  </method>
 </config>
 
 ===== Singleton literal
@@ -238,7 +252,7 @@ tuple(
 		x -> $a.get(`test:A#values`).contains(
 			$x.get(`test:B#value`))))
 -----
-tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`).contains($x.get(`test:B#value`))))
+tuple(a -> `test:A`.all(), b? -> `test:B`.all().filter(x -> $a.get(`test:A#values`).contains($x.get(`test:B#value`))))
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Tuple"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -246,7 +260,7 @@ tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`
   <coord name="a"
     optional="false"
   >
-    <staticMethod name="all">
+    <method name="all">
       <args>
       <arg>
         <type name="A"
@@ -254,13 +268,24 @@ tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`
         />
       </arg>
       </args>
-    </staticMethod>
+    </method>
   </coord>
   <coord name="b"
     optional="true"
   >
     <method name="filter">
       <args>
+      <arg>
+        <method name="all">
+          <args>
+          <arg>
+            <type name="B"
+              module="test"
+            />
+          </arg>
+          </args>
+        </method>
+      </arg>
       <arg>
         <define name="x">
           <method name="contains">
@@ -269,40 +294,37 @@ tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`
               <method name="get">
                 <args>
                 <arg>
+                  <var name="a"/>
+                </arg>
+                <arg>
+                  <part name="values"
+                    module="test"
+                    type="A"
+                  />
+                </arg>
+                </args>
+              </method>
+            </arg>
+            <arg>
+              <method name="get">
+                <args>
+                <arg>
+                  <var name="x"/>
+                </arg>
+                <arg>
                   <part name="value"
                     module="test"
                     type="B"
                   />
                 </arg>
                 </args>
-                <var name="x"/>
               </method>
             </arg>
             </args>
-            <method name="get">
-              <args>
-              <arg>
-                <part name="values"
-                  module="test"
-                  type="A"
-                />
-              </arg>
-              </args>
-              <var name="a"/>
-            </method>
           </method>
         </define>
       </arg>
       </args>
-      <staticMethod name="all">
-        <args>
-        <arg>
-          <type name="B"
-            module="test"
-          />
-        </arg>
-        </args>
-      </staticMethod>
     </method>
   </coord>
 </config>
@@ -310,13 +332,13 @@ tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`
 ===== HTML
 x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
 -----
-x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
+x -> {{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}}.foo()
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
   name="x"
 >
-  <staticMethod name="foo">
+  <method name="foo">
     <args>
     <arg>
       <html>
@@ -343,7 +365,7 @@ x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</
       </html>
     </arg>
     </args>
-  </staticMethod>
+  </method>
 </config>
 
 ===== SafeHTML
@@ -385,7 +407,7 @@ model ->
     )
     .map(z -> $z.get(`T:other`))
 -----
-model -> all(`tl.graph.demo:A`).filter(y -> $y.get(`T:owner`).contains($model) and $y.get(`T:ref`).instanceOf(`tl.graph.demo:C`)).map(z -> $z.get(`T:other`))
+model -> `tl.graph.demo:A`.all().filter(y -> $y.get(`T:owner`).contains($model) and $y.get(`T:ref`).instanceOf(`tl.graph.demo:C`)).map(z -> $z.get(`T:other`))
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -394,84 +416,98 @@ model -> all(`tl.graph.demo:A`).filter(y -> $y.get(`T:owner`).contains($model) a
   <method name="map">
     <args>
     <arg>
+      <method name="filter">
+        <args>
+        <arg>
+          <method name="all">
+            <args>
+            <arg>
+              <type name="A"
+                module="tl.graph.demo"
+              />
+            </arg>
+            </args>
+          </method>
+        </arg>
+        <arg>
+          <define name="y">
+            <and>
+              <method name="contains">
+                <args>
+                  <arg>
+                  <method name="get">
+                    <args>
+                    <arg>
+                      <var name="y"/>
+                    </arg>
+                    <arg>
+                      <type name="owner"
+                        module="T"
+                      />
+                    </arg>
+                    </args>
+                  </method>
+                </arg>
+                <arg>
+                  <var name="model"/>
+                </arg>
+                </args>
+              </method>
+              <method name="instanceOf">
+                <args>
+                <arg>
+                  <method name="get">
+                    <args>
+                    <arg>
+                      <var name="y"/>
+                    </arg>
+                    <arg>
+                      <type name="ref"
+                        module="T"
+                      />
+                    </arg>
+                    </args>
+                  </method>
+                </arg>
+                <arg>
+                  <type name="C"
+                    module="tl.graph.demo"
+                  />
+                </arg>
+                </args>
+              </method>
+            </and>
+          </define>
+        </arg>
+        </args>
+      </method>
+    </arg>
+    <arg>
       <define name="z">
         <method name="get">
           <args>
+          <arg>
+            <var name="z"/>
+          </arg>
           <arg>
             <type name="other"
               module="T"
             />
           </arg>
           </args>
-          <var name="z"/>
         </method>
       </define>
     </arg>
     </args>
-    <method name="filter">
-      <args>
-      <arg>
-        <define name="y">
-          <and>
-            <method name="contains">
-              <args>
-              <arg>
-                <var name="model"/>
-              </arg>
-              </args>
-              <method name="get">
-                <args>
-                <arg>
-                  <type name="owner"
-                    module="T"
-                  />
-                </arg>
-                </args>
-                <var name="y"/>
-              </method>
-            </method>
-            <method name="instanceOf">
-              <args>
-              <arg>
-                <type name="C"
-                  module="tl.graph.demo"
-                />
-              </arg>
-              </args>
-              <method name="get">
-                <args>
-                <arg>
-                  <type name="ref"
-                    module="T"
-                  />
-                </arg>
-                </args>
-                <var name="y"/>
-              </method>
-            </method>
-          </and>
-        </define>
-      </arg>
-      </args>
-      <staticMethod name="all">
-        <args>
-        <arg>
-          <type name="A"
-            module="tl.graph.demo"
-          />
-        </arg>
-        </args>
-      </staticMethod>
-    </method>
   </method>
 </config>
 
 ===== String quoting
 concat("Some \"String\" with \\", 'Some \"String\"', 'Some "String"', 'Some \'String\'')
 -----
-concat("Some \"String\" with \\", "Some \"String\"", "Some \"String\"", "Some 'String'")
+"Some \"String\" with \\".concat("Some \"String\"", "Some \"String\"", "Some 'String'")
 -----
-<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$StaticMethod"
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
   name="concat"
 >
@@ -494,12 +530,12 @@ concat("Some \"String\" with \\", "Some \"String\"", "Some \"String\"", "Some 'S
 ===== Function application
 (obj -> {$obj.set(`my:Type#attr`, "initial-value"); $obj; })(new(`my:Type`))
 -----
-(obj -> {$obj.set(`my:Type#attr`, "initial-value"); $obj; })(new(`my:Type`))
+(obj -> {$obj.set(`my:Type#attr`, "initial-value"); $obj; })(`my:Type`.new())
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Apply"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
-  <arg config:interface="com.top_logic.model.search.expr.config.dom.Expr$StaticMethod"
+  <arg config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
     name="new"
   >
     <args>
@@ -517,6 +553,9 @@ concat("Some \"String\" with \\", "Some \"String\"", "Some \"String\"", "Some 'S
       <method name="set">
         <args>
         <arg>
+          <var name="obj"/>
+        </arg>
+        <arg>
           <part name="attr"
             module="my"
             type="Type"
@@ -526,7 +565,6 @@ concat("Some \"String\" with \\", "Some \"String\"", "Some \"String\"", "Some 'S
           <string value="initial-value"/>
         </arg>
         </args>
-        <var name="obj"/>
       </method>
       <var name="obj"/>
     </block>
@@ -538,14 +576,16 @@ $outer.set(`my:Type#others`,
 	$values.map(
 		val -> ((other -> {$other.set(`my:Other#val`, $val); $other; })(new(`my:Other`)))))
 -----
-$outer.set(`my:Type#others`, $values.map(val -> (other -> {$other.set(`my:Other#val`, $val); $other; })(new(`my:Other`))))
+$outer.set(`my:Type#others`, $values.map(val -> (other -> {$other.set(`my:Other#val`, $val); $other; })(`my:Other`.new())))
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
   name="set"
 >
-  <var name="outer"/>
   <args>
+  <arg>
+    <var name="outer"/>
+  </arg>
   <arg>
     <part name="others"
       module="my"
@@ -554,8 +594,10 @@ $outer.set(`my:Type#others`, $values.map(val -> (other -> {$other.set(`my:Other#
   </arg>
   <arg>
     <method name="map">
-      <var name="values"/>
       <args>
+      <arg>
+        <var name="values"/>
+      </arg>
       <arg>
         <define name="val">
           <apply>
@@ -566,6 +608,9 @@ $outer.set(`my:Type#others`, $values.map(val -> (other -> {$other.set(`my:Other#
                 <method name="set">
                   <args>
                   <arg>
+                    <var name="other"/>
+                  </arg>
+                  <arg>
                     <part name="val"
                       module="my"
                       type="Other"
@@ -575,12 +620,11 @@ $outer.set(`my:Type#others`, $values.map(val -> (other -> {$other.set(`my:Other#
                     <var name="val"/>
                   </arg>
                   </args>
-                  <var name="other"/>
                 </method>
                 <var name="other"/>
               </block>
             </fun>
-            <arg config:interface="com.top_logic.model.search.expr.config.dom.Expr$StaticMethod"
+            <arg config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
               name="new"
             >
               <args>
@@ -611,7 +655,7 @@ all(`my.module:A`)
 			}
 		).apply($y.get(`my.module:B#foo`)))
 -----
-all(`my.module:A`).filter(x -> $x.instanceOf(`my.module:B`)).foreach(y -> (foovalue -> {$y.set(`my.module:B#foo`, $y.get(`my.module:B#bar`)); $y.set(`my.module:B#bar`, $foovalue); }).apply($y.get(`my.module:B#foo`)))
+`my.module:A`.all().filter(x -> $x.instanceOf(`my.module:B`)).foreach(y -> (foovalue -> {$y.set(`my.module:B#foo`, $y.get(`my.module:B#bar`)); $y.set(`my.module:B#bar`, $foovalue); }).apply($y.get(`my.module:B#foo`)))
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -619,12 +663,98 @@ all(`my.module:A`).filter(x -> $x.instanceOf(`my.module:B`)).foreach(y -> (foova
 >
   <args>
   <arg>
+    <method name="filter">
+      <args>
+      <arg>
+        <method name="all">
+          <args>
+          <arg>
+            <type name="A"
+              module="my.module"
+            />
+          </arg>
+          </args>
+        </method>
+      </arg>
+      <arg>
+        <define name="x">
+          <method name="instanceOf">
+            <args>
+            <arg>
+              <var name="x"/>
+            </arg>
+            <arg>
+              <type name="B"
+                module="my.module"
+              />
+            </arg>
+            </args>
+          </method>
+        </define>
+      </arg>
+      </args>
+    </method>
+  </arg>
+  <arg>
     <define name="y">
       <method name="apply">
         <args>
         <arg>
+          <define name="foovalue">
+            <block>
+              <method name="set">
+                <args>
+                <arg>
+                  <var name="y"/>
+                </arg>
+                <arg>
+                  <part name="foo"
+                    module="my.module"
+                    type="B"
+                  />
+                </arg>
+                <arg>
+                  <method name="get">
+                    <args>
+                    <arg>
+                      <var name="y"/>
+                    </arg>
+                    <arg>
+                      <part name="bar"
+                        module="my.module"
+                        type="B"
+                      />
+                    </arg>
+                    </args>
+                  </method>
+                </arg>
+                </args>
+              </method>
+              <method name="set">
+                <args>
+                <arg>
+                  <var name="y"/>
+                </arg>
+                <arg>
+                  <part name="bar"
+                    module="my.module"
+                    type="B"
+                  />
+                </arg>
+                <arg>
+                  <var name="foovalue"/>
+                </arg>
+                </args>
+              </method>
+            </block>
+          </define>
+        </arg>
+        <arg>
           <method name="get">
             <args>
+            <arg>
+              <var name="y"/>
+            </arg>
             <arg>
               <part name="foo"
                 module="my.module"
@@ -632,83 +762,13 @@ all(`my.module:A`).filter(x -> $x.instanceOf(`my.module:B`)).foreach(y -> (foova
               />
             </arg>
             </args>
-            <var name="y"/>
           </method>
         </arg>
         </args>
-        <define name="foovalue">
-          <block>
-            <method name="set">
-              <args>
-              <arg>
-                <part name="foo"
-                  module="my.module"
-                  type="B"
-                />
-              </arg>
-              <arg>
-                <method name="get">
-                  <args>
-                  <arg>
-                    <part name="bar"
-                      module="my.module"
-                      type="B"
-                    />
-                  </arg>
-                  </args>
-                  <var name="y"/>
-                </method>
-              </arg>
-              </args>
-              <var name="y"/>
-            </method>
-            <method name="set">
-              <args>
-              <arg>
-                <part name="bar"
-                  module="my.module"
-                  type="B"
-                />
-              </arg>
-              <arg>
-                <var name="foovalue"/>
-              </arg>
-              </args>
-              <var name="y"/>
-            </method>
-          </block>
-        </define>
       </method>
     </define>
   </arg>
   </args>
-  <method name="filter">
-    <args>
-    <arg>
-      <define name="x">
-        <method name="instanceOf">
-          <args>
-          <arg>
-            <type name="B"
-              module="my.module"
-            />
-          </arg>
-          </args>
-          <var name="x"/>
-        </method>
-      </define>
-    </arg>
-    </args>
-    <staticMethod name="all">
-      <args>
-      <arg>
-        <type name="A"
-          module="my.module"
-        />
-      </arg>
-      </args>
-    </staticMethod>
-  </method>
 </config>
 
 ===== Zero fragment
@@ -723,6 +783,9 @@ x -> $x.reduce(0.1, c -> d -> $c + $d)
   <method name="reduce">
     <args>
     <arg>
+      <var name="x"/>
+    </arg>
+    <arg>
       <number value="0.1"/>
     </arg>
     <arg>
@@ -736,7 +799,6 @@ x -> $x.reduce(0.1, c -> d -> $c + $d)
       </define>
     </arg>
     </args>
-    <var name="x"/>
   </method>
 </config>
 
@@ -745,13 +807,16 @@ $outer.set(`my:Type#others`,
 	$values.map(
 		val -> {other = new(`my:Other`); $other.set(`my:Other#val`, $val); $other; } ))
 -----
-$outer.set(`my:Type#others`, $values.map(val -> {other = new(`my:Other`); $other.set(`my:Other#val`, $val); $other; }))
+$outer.set(`my:Type#others`, $values.map(val -> {other = `my:Other`.new(); $other.set(`my:Other#val`, $val); $other; }))
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
   name="set"
 >
   <args>
+  <arg>
+    <var name="outer"/>
+  </arg>
   <arg>
     <part name="others"
       module="my"
@@ -762,10 +827,13 @@ $outer.set(`my:Type#others`, $values.map(val -> {other = new(`my:Other`); $other
     <method name="map">
       <args>
       <arg>
+        <var name="values"/>
+      </arg>
+      <arg>
         <define name="val">
           <block>
             <assign name="other">
-              <staticMethod name="new">
+              <method name="new">
                 <args>
                 <arg>
                   <type name="Other"
@@ -773,10 +841,13 @@ $outer.set(`my:Type#others`, $values.map(val -> {other = new(`my:Other`); $other
                   />
                 </arg>
                 </args>
-              </staticMethod>
+              </method>
             </assign>
             <method name="set">
               <args>
+              <arg>
+                <var name="other"/>
+              </arg>
               <arg>
                 <part name="val"
                   module="my"
@@ -787,17 +858,14 @@ $outer.set(`my:Type#others`, $values.map(val -> {other = new(`my:Other`); $other
                 <var name="val"/>
               </arg>
               </args>
-              <var name="other"/>
             </method>
             <var name="other"/>
           </block>
         </define>
       </arg>
       </args>
-      <var name="values"/>
     </method>
   </arg>
   </args>
-  <var name="outer"/>
 </config>
 

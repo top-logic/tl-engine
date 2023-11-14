@@ -5,6 +5,7 @@
  */
 package com.top_logic.bpe.modeler.component.properties;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
@@ -37,8 +38,21 @@ public class InputOnlyControlProvider implements ControlProvider {
 		}
 	}
 
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		if (style == null || style.equals(FormTemplateConstants.STYLE_DIRECT_VALUE)) {
+			return createInputFragement(model, style);
+		} else {
+			return DefaultFormFieldControlProvider.INSTANCE.createFragment(model, style);
+		}
+	}
+
 	private Control createInputControl(Object model, String style) {
 		return _cp.createControl(model, style);
+	}
+
+	private HTMLFragment createInputFragement(Object model, String style) {
+		return _cp.createFragment(model, style);
 	}
 
 }

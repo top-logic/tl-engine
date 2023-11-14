@@ -561,7 +561,7 @@ public class TestLayoutProblems extends FormComponent {
 				final Object currentNode = nodeContext.currentNode();
 				final Object userObject = nodeContext.getTree().getData().getTreeModel().getUserObject(currentNode);
 				final FormMember booleanField = ((FormGroup) userObject).getMember("booleanField");
-				DefaultFormFieldControlProvider.INSTANCE.createControl(booleanField).write(context, writer);
+				DefaultFormFieldControlProvider.INSTANCE.createFragment(booleanField).write(context, writer);
 			}
 			
 		};
@@ -1214,7 +1214,7 @@ public class TestLayoutProblems extends FormComponent {
 
 			@Override
 			public Object getValue(Object object, String property) {
-				return DefaultFormFieldControlProvider.INSTANCE.createControl(object);
+				return DefaultFormFieldControlProvider.INSTANCE.createFragment(object);
 			}
 		};
 		manager.getDefaultColumn().setAccessor(optionAccessor);

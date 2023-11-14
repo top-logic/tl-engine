@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.wysiwyg.ui;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.base.services.simpleajax.HTMLFragmentProvider;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.i18n.I18NStringTextPopupControl;
@@ -35,10 +37,10 @@ public class StructuredTextPopupControl extends PopupEditControl {
 	}
 
 	@Override
-	protected Control createEditControl(FormField editField) {
-		ControlProvider cp = editField.getControlProvider();
+	protected HTMLFragment createEditFragment(FormField editField) {
+		HTMLFragmentProvider cp = editField.getControlProvider();
 		if (cp != null) {
-			return cp.createControl(editField);
+			return cp.createFragment(editField);
 		}
 		return new StructuredTextControl(editField);
 	}

@@ -2041,7 +2041,12 @@ public class TestControlsForm extends FormComponent {
 
 			@Override
 			public Control createControl(Object model, String style) {
-				return new FragmentControl(new HTMLFragment() {
+				return new FragmentControl(createFragment(model, style));
+			}
+
+			@Override
+			public HTMLFragment createFragment(Object model, String style) {
+				return new HTMLFragment() {
 
 					@Override
 					public void write(DisplayContext context, TagWriter out) throws IOException {
@@ -2061,7 +2066,7 @@ public class TestControlsForm extends FormComponent {
 						icon.endEmptyTag(context, out);
 						out.endTag(HTMLConstants.SPAN);
 					}
-				});
+				};
 			}
 		});
 	}
@@ -2078,7 +2083,12 @@ public class TestControlsForm extends FormComponent {
 			
 			@Override
 			public Control createControl(Object model, String style) {
-				return new ControlViewAdapter(new HTMLFragmentView((HTMLFragment) ((HiddenField) model).getValue()));
+				return new ControlViewAdapter(new HTMLFragmentView(createFragment(model, style)));
+			}
+			
+			@Override
+			public HTMLFragment createFragment(Object model, String style) {
+				return (HTMLFragment) ((HiddenField) model).getValue();
 			}
 		};
 		ExternalLink simpleLink = new ExternalLink("http://www.top-logic.com");
@@ -2653,8 +2663,8 @@ public class TestControlsForm extends FormComponent {
 			@Override
 			public Control createControl(Object model, String style) {
 				BlockControl blockControl = new BlockControl();
-				Control uploadControl =
-					DefaultFormFieldControlProvider.INSTANCE.createControl(model,
+				HTMLFragment uploadControl =
+					DefaultFormFieldControlProvider.INSTANCE.createFragment(model,
 						FormTemplateConstants.STYLE_DIRECT_VALUE);
 				blockControl.addChild(uploadControl);
 				blockControl.addChild(imageControl);

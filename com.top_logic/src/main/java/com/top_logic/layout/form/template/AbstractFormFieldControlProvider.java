@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.template;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.ErrorControl;
@@ -44,6 +45,39 @@ public abstract class AbstractFormFieldControlProvider implements ControlProvide
 			ControlProvider cp = member.getControlProvider();
 			if (cp != null && cp != this) {
 				return cp.createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+			}
+		}
+
+		return createInput(member);
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		if (model == null) {
+			return null;
+		}
+
+		if (!(model instanceof FormMember)) {
+			return null;
+		}
+
+		FormMember member = (FormMember) model;
+		if (FormTemplateConstants.STYLE_LABEL_VALUE.equals(style)) {
+			return createLabel(member);
+		}
+		if (FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE.equals(style)) {
+			LabelControl label = createLabel(member);
+			label.setColon(true);
+			return label;
+		}
+		if (FormTemplateConstants.STYLE_ERROR_VALUE.equals(style)) {
+			return createError(member);
+		}
+
+		if (!FormTemplateConstants.STYLE_DIRECT_VALUE.equals(style)) {
+			ControlProvider cp = member.getControlProvider();
+			if (cp != null && cp != this) {
+				return cp.createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
 			}
 		}
 

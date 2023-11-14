@@ -138,7 +138,7 @@ public class MergeTreeComponenet extends FormComponent implements ControlReprese
 			FormGroup   theGroup     = (FormGroup) theTreeModel.getUserObject(theNode);
 			FormMember  theField     = (theGroup != null) ? theGroup.getMember(APPROVE_FIELD) : FormFactory.newBooleanField(APPROVE_FIELD, true, true);
 
-			DefaultFormFieldControlProvider.INSTANCE.createControl(theField).write(aContext, aWriter);
+			DefaultFormFieldControlProvider.INSTANCE.createFragment(theField).write(aContext, aWriter);
 			aWriter.writeContent(this.getResourceProvider().getLabel(theNode));
 			theTree.setCollapsed(false);
 		}

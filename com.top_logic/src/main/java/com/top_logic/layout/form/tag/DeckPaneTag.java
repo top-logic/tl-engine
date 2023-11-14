@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.servlet.jsp.JspException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
@@ -81,6 +82,24 @@ public class DeckPaneTag extends AbstractFormMemberControlTag implements FormCon
 						return customCP.createControl(tabGroup, aStyle);
 					} else {
 						return getControlProvider().createControl(tabGroup, aStyle);
+					}
+				}
+			}
+
+			@Override
+			public HTMLFragment createFragment(Object model, String aStyle) {
+				Card card = (Card) model;
+				FormMember tabGroup = (FormMember) card.getContent();
+
+				Control existingControl = getControlForMember(tabGroup);
+				if (existingControl != null) {
+					return existingControl;
+				} else {
+					ControlProvider customCP = tabGroup.getControlProvider();
+					if (customCP != null) {
+						return customCP.createFragment(tabGroup, aStyle);
+					} else {
+						return getControlProvider().createFragment(tabGroup, aStyle);
 					}
 				}
 			}

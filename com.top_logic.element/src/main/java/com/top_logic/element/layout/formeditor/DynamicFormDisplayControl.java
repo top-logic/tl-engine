@@ -7,9 +7,9 @@ package com.top_logic.element.layout.formeditor;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.definition.TLFormDefinition;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ConstantControl;
 import com.top_logic.layout.form.FormMember;
@@ -56,12 +56,13 @@ public abstract class DynamicFormDisplayControl extends ConstantControl<FormDefi
 	}
 
 	/**
-	 * Create a {@link Control} for the given {@link FormMember} and writes it.
+	 * Create a {@link HTMLFragment} for the given {@link FormMember} and writes it.
 	 * 
-	 * @return The rendered control.
+	 * @return The rendered fragment.
 	 */
-	public static Control writeTemplate(DisplayContext context, TagWriter out, FormMember member) throws IOException {
-		Control ctrl = createControl(member);
+	public static HTMLFragment writeTemplate(DisplayContext context, TagWriter out, FormMember member)
+			throws IOException {
+		HTMLFragment ctrl = createControl(member);
 		if (ctrl != null) {
 			ctrl.write(context, out);
 		}
@@ -69,11 +70,11 @@ public abstract class DynamicFormDisplayControl extends ConstantControl<FormDefi
 	}
 
 	/**
-	 * Creates a {@link Control} to display the given {@link FormMember} using the
+	 * Creates a {@link HTMLFragment} to display the given {@link FormMember} using the
 	 * {@link DefaultFormFieldControlProvider}.
 	 */
-	protected static Control createControl(FormMember member) {
-		return DefaultFormFieldControlProvider.INSTANCE.createControl(member);
+	protected static HTMLFragment createControl(FormMember member) {
+		return DefaultFormFieldControlProvider.INSTANCE.createFragment(member);
 	}
 
 }

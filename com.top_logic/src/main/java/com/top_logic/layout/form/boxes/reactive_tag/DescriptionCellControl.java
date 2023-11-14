@@ -12,7 +12,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
@@ -22,7 +21,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.CheckboxControl;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.IconSelectControl;
-import com.top_logic.layout.form.control.LabelControl;
 import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.model.VisibilityModel.AlwaysVisible;
@@ -58,12 +56,13 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 			cp = DefaultFormFieldControlProvider.INSTANCE;
 		}
 	
-		Control inputControl = cp.createControl(member, inputStyle);
+		HTMLFragment inputControl = cp.createFragment(member, inputStyle);
 		LabelPosition labelPosition = controlLabelFirst(inputControl);
 		boolean wholeLine = controlWholeLine(inputControl);
 	
-		LabelControl labelControl = (LabelControl) labelControl(member, colon, labelPosition);
-		Control errorControl = DefaultFormFieldControlProvider.INSTANCE.createControl(member, FormTemplateConstants.STYLE_ERROR_VALUE);
+		HTMLFragment labelControl = labelFragment(member, colon, labelPosition);
+		HTMLFragment errorControl =
+			DefaultFormFieldControlProvider.INSTANCE.createFragment(member, FormTemplateConstants.STYLE_ERROR_VALUE);
 		if (errorControl instanceof ErrorControl) {
 			((ErrorControl) errorControl).setIconDisplay(!errorAsText);
 		}
@@ -85,13 +84,13 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		return result;
 	}
 
-	private static Control labelControl(FormMember member, boolean colon, LabelPosition labelPosition) {
+	private static HTMLFragment labelFragment(FormMember member, boolean colon, LabelPosition labelPosition) {
 		ControlProvider cp = DefaultFormFieldControlProvider.INSTANCE;
 		switch (labelPosition) {
 			case AFTER_VALUE:
-				return cp.createControl(member, FormTemplateConstants.STYLE_LABEL_VALUE);
+				return cp.createFragment(member, FormTemplateConstants.STYLE_LABEL_VALUE);
 			case DEFAULT:
-				return cp.createControl(member,
+				return cp.createFragment(member,
 					colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 						: FormTemplateConstants.STYLE_LABEL_VALUE);
 			case HIDE_LABEL:

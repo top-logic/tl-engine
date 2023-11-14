@@ -422,7 +422,7 @@ public class DirectFormDisplay {
 		}
 		ControlProvider controlProvider = getConfig().getControlProvider();
 		return div(getConfig().getCssClass(),
-			controlProvider.createControl(formMember));
+			controlProvider.createFragment(formMember));
 	}
 
 	private HTMLFragment noModelView(ResKey noModelKey) {

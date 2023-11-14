@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.tag;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -29,6 +30,21 @@ public class CustomInputTag extends AbstractFormFieldControlTag {
 	@Override
 	public Control createControl(FormMember member, String displayStyle) {
 		return controlProvider.createControl(member, displayStyle);
+	}
+
+	@Override
+	public Control createControl(Object model) {
+		return controlProvider.createControl(model);
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model) {
+		return controlProvider.createFragment(model);
+	}
+
+	@Override
+	public HTMLFragment createFragment(Object model, String displayStyle) {
+		return controlProvider.createFragment(model, displayStyle);
 	}
 
 	@Override

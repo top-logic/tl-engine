@@ -250,7 +250,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 
 	@Override
 	protected HTMLFragment createBodyContent() {
-		return DefaultFormFieldControlProvider.INSTANCE.createControl(
+		return DefaultFormFieldControlProvider.INSTANCE.createFragment(
 			getFormContext().getMember(TABLE_FIELD));
 	}
 

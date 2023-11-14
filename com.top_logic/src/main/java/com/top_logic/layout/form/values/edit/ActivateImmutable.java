@@ -62,6 +62,12 @@ public final class ActivateImmutable implements ControlProvider {
 		return new ActivateImmutableControl((FormField) model, display);
 	}
 
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		HTMLFragment display = _impl.createFragment(model, FormTemplateConstants.STYLE_DIRECT_VALUE);
+		return new ActivateImmutableControl((FormField) model, display);
+	}
+
 	static class ActivateImmutableControl extends AbstractVisibleControl implements ImmutablePropertyListener {
 
 		private static final String ACTIVATABLE_CSS_CLASS = "activatable";

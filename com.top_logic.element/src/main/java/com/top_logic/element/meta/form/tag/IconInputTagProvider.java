@@ -42,4 +42,13 @@ public class IconInputTagProvider implements DisplayProvider, ControlProvider {
 		}
 	}
 
+	@Override
+	public HTMLFragment createFragment(Object model, String style) {
+		if (style == null || FormTemplateConstants.STYLE_DIRECT_VALUE.equals(style)) {
+			return new IconInputControl((FormField) model);
+		} else {
+			return DefaultFormFieldControlProvider.INSTANCE.createFragment(model, style);
+		}
+	}
+
 }

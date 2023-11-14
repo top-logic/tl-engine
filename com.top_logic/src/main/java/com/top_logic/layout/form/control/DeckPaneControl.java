@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.base.services.simpleajax.HTMLFragmentProvider;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -34,7 +36,8 @@ public class DeckPaneControl extends AbstractVisibleControl implements SingleSel
 
 	private final DeckPaneModel deckPane;
 	private final ControlProvider controlProvider;
-	private final HashMap<Object, Control> controlsByCard = new HashMap<>();
+
+	private final HashMap<Object, HTMLFragment> controlsByCard = new HashMap<>();
 
 	public DeckPaneControl(Map<String, ControlCommand> commandsByName, DeckPaneModel aDeckPane,
 			ControlProvider controlProvider) {
@@ -61,7 +64,7 @@ public class DeckPaneControl extends AbstractVisibleControl implements SingleSel
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
-		Control theDisplayedSelection = getControlFor(deckPane.getSingleSelection());
+		HTMLFragment theDisplayedSelection = getControlFor(deckPane.getSingleSelection());
 		if (theDisplayedSelection != null) {
 			theDisplayedSelection.write(context, out);
 		}
@@ -80,9 +83,9 @@ public class DeckPaneControl extends AbstractVisibleControl implements SingleSel
 		super.internalDetach();
 		deckPane.removeSingleSelectionListener(this);
 		deckPane.removeModelChangedListener(this);
-		Control associatedControl = controlsByCard.get(deckPane.getSingleSelection());
-		if (associatedControl != null) {
-			associatedControl.detach();
+		HTMLFragment associatedControl = controlsByCard.get(deckPane.getSingleSelection());
+		if (associatedControl instanceof Control) {
+			((Control) associatedControl).detach();
 		}
 		controlsByCard.clear();
 	}
@@ -90,9 +93,9 @@ public class DeckPaneControl extends AbstractVisibleControl implements SingleSel
 	@Override
 	public void notifySelectionChanged(SingleSelectionModel model, Object formerlySelectedObject, Object selectedObject) {
 		if (formerlySelectedObject != null) {
-			Control theAssociatedControl = controlsByCard.get(formerlySelectedObject);
-			if (theAssociatedControl != null) {
-				theAssociatedControl.detach();
+			HTMLFragment theAssociatedControl = controlsByCard.get(formerlySelectedObject);
+			if (theAssociatedControl instanceof Control) {
+				((Control) theAssociatedControl).detach();
 			}
 			requestRepaint();
 		}
@@ -105,19 +108,20 @@ public class DeckPaneControl extends AbstractVisibleControl implements SingleSel
 	}
 
 	/**
-	 * This method returns an {@link Control} for the given Object <code>anSelectedObject</code>,
-	 * given by the {@link ControlProvider} of this {@link DeckPaneControl}.
+	 * This method returns an {@link HTMLFragment} for the given Object
+	 * <code>anSelectedObject</code>, given by the {@link HTMLFragmentProvider} of this
+	 * {@link DeckPaneControl}.
 	 * 
-	 * @return a {@link Control} for the given Object or <code>null</code> if
+	 * @return a {@link HTMLFragment} for the given Object or <code>null</code> if
 	 *         <code>anSelectedObject</code> is <code>null</code>.
 	 */
-	public Control getControlFor(Object anSelectedObject) {
+	public HTMLFragment getControlFor(Object anSelectedObject) {
 		if (anSelectedObject == null) {
 			return null;
 		}
-		Control associatedControl = controlsByCard.get(anSelectedObject);
+		HTMLFragment associatedControl = controlsByCard.get(anSelectedObject);
 		if (associatedControl == null) {
-			associatedControl = controlProvider.createControl(anSelectedObject);
+			associatedControl = controlProvider.createFragment(anSelectedObject);
 			if (associatedControl == null) {
 				return null;
 			}

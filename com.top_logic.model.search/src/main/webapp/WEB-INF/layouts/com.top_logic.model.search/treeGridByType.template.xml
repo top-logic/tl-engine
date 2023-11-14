@@ -70,8 +70,8 @@
 				target="selection(self())"
 			>
 				<type-options class="com.top_logic.element.layout.create.AttributeBasedCreateTypeOptions"
-					owner="${type}"
 					attribute="${reference}"
+					owner="${type}"
 				/>
 			</button>
 		</buttons>

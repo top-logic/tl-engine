@@ -11,10 +11,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.Argument;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.AbstractMethod;
+import com.top_logic.model.search.expr.config.dom.Expr.Method;
 
 /**
- * Plugin into the search expression evaluation engine that translates {@link AbstractMethod}
+ * Plugin into the search expression evaluation engine that translates {@link Method}
  * {@link Expr}s.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -30,7 +30,7 @@ public interface MethodBuilder<E extends SearchExpression> {
 	}
 
 	/**
-	 * Builds the implementation of the given {@link AbstractMethod}.
+	 * Builds the implementation of the given {@link Method}.
 	 *
 	 * @param expr
 	 *        The {@link Expr source expression} to translate (for error reporting only). If
@@ -41,7 +41,7 @@ public interface MethodBuilder<E extends SearchExpression> {
 	 * @throws ConfigurationException
 	 *         If the expression has errors.
 	 */
-	default E build(AbstractMethod expr, Argument[] args) throws ConfigurationException {
+	default E build(Method expr, Argument[] args) throws ConfigurationException {
 		return build(expr, descriptor().unwrap(expr.getName(), args));
 	}
 
@@ -58,7 +58,7 @@ public interface MethodBuilder<E extends SearchExpression> {
 	}
 
 	/**
-	 * Builds the implementation of the given {@link AbstractMethod} with only positional arguments.
+	 * Builds the implementation of the given {@link Method} with only positional arguments.
 	 *
 	 * @param expr
 	 *        The {@link Expr source expression} to translate (for error reporting only). If
@@ -69,7 +69,7 @@ public interface MethodBuilder<E extends SearchExpression> {
 	 * @throws ConfigurationException
 	 *         If the expression has errors.
 	 * 
-	 * @see #build(AbstractMethod, Argument[])
+	 * @see #build(Method, Argument[])
 	 */
 	E build(Expr expr, SearchExpression[] args) throws ConfigurationException;
 

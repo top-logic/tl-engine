@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 
 import com.top_logic.basic.util.ResKey.LangString;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.AbstractMethod;
 import com.top_logic.model.search.expr.config.dom.Expr.Add;
 import com.top_logic.model.search.expr.config.dom.Expr.And;
 import com.top_logic.model.search.expr.config.dom.Expr.Apply;
@@ -46,7 +45,6 @@ import com.top_logic.model.search.expr.config.dom.Expr.ResKeyLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.ResKeyReference;
 import com.top_logic.model.search.expr.config.dom.Expr.SingletonLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.StartTag;
-import com.top_logic.model.search.expr.config.dom.Expr.StaticMethod;
 import com.top_logic.model.search.expr.config.dom.Expr.StringLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Sub;
 import com.top_logic.model.search.expr.config.dom.Expr.TextContent;
@@ -310,11 +308,6 @@ public class ExprPrinter implements ExprVisitor<Appendable, Appendable, IOExcept
 				return arg > ACCESS;
 			}
 
-			@Override
-			public Boolean visit(StaticMethod expr, Integer arg) throws RuntimeException {
-				return false;
-			}
-			
 			@Override
 			public Boolean visit(Wrapped expr, Integer arg) throws RuntimeException {
 				// Note: When using a wrapped expression within another expression, this is treated
@@ -675,23 +668,18 @@ public class ExprPrinter implements ExprVisitor<Appendable, Appendable, IOExcept
 
 	@Override
 	public Appendable visit(Method expr, Appendable arg) throws IOException {
-		descend(expr.getSelf(), arg, ACCESS);
-		arg.append(".");
-		printMethod(expr, arg);
-		return arg;
-	}
-
-	@Override
-	public Appendable visit(StaticMethod expr, Appendable arg) throws IOException {
-		printMethod(expr, arg);
-		return arg;
-	}
-
-	private void printMethod(AbstractMethod expr, Appendable arg) throws IOException {
+		List<Arg> args = expr.getArgs();
+		boolean withContext = false;
+		if (!args.isEmpty() && args.get(0).getName() == null) {
+			descend(args.get(0).getValue(), arg, ACCESS);
+			arg.append(".");
+			withContext = true;
+		}
 		arg.append(expr.getName());
 		arg.append("(");
 		boolean first = true;
-		for (Arg argument : expr.getArgs()) {
+		for (int i = withContext ? 1 : 0; i < args.size(); i++) {
+			Arg argument = args.get(i);
 			if (first) {
 				first = false;
 			} else {
@@ -705,6 +693,7 @@ public class ExprPrinter implements ExprVisitor<Appendable, Appendable, IOExcept
 			descendDirect(argument.getValue(), arg);
 		}
 		arg.append(")");
+		return arg;
 	}
 
 	@Override

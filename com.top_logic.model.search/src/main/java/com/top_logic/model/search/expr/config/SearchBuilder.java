@@ -60,7 +60,7 @@ import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.SearchExpressions;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.AbstractMethod;
+import com.top_logic.model.search.expr.config.dom.Expr.Method;
 import com.top_logic.model.search.expr.config.dom.Expr.Add;
 import com.top_logic.model.search.expr.config.dom.Expr.And;
 import com.top_logic.model.search.expr.config.dom.Expr.Apply;
@@ -80,7 +80,6 @@ import com.top_logic.model.search.expr.config.dom.Expr.Eq;
 import com.top_logic.model.search.expr.config.dom.Expr.False;
 import com.top_logic.model.search.expr.config.dom.Expr.Html;
 import com.top_logic.model.search.expr.config.dom.Expr.HtmlContent;
-import com.top_logic.model.search.expr.config.dom.Expr.Method;
 import com.top_logic.model.search.expr.config.dom.Expr.Mod;
 import com.top_logic.model.search.expr.config.dom.Expr.ModuleLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Mul;
@@ -95,7 +94,6 @@ import com.top_logic.model.search.expr.config.dom.Expr.ResKeyLiteral.LangStringC
 import com.top_logic.model.search.expr.config.dom.Expr.ResKeyReference;
 import com.top_logic.model.search.expr.config.dom.Expr.SingletonLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.StartTag;
-import com.top_logic.model.search.expr.config.dom.Expr.StaticMethod;
 import com.top_logic.model.search.expr.config.dom.Expr.StringLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Sub;
 import com.top_logic.model.search.expr.config.dom.Expr.TextContent;
@@ -575,7 +573,6 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 
 	@Override
 	public SearchExpression visit(Method expr, TLModel arg) throws ConfigurationException {
-		SearchExpression self = descend(expr.getSelf(), arg);
 		Argument[] args = descendArgs(expr.getArgs(), arg);
 
 		MethodBuilder<?> builder = getBuilder(expr);
@@ -586,16 +583,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		throw new ConfigurationException(message);
 	}
 
-	@Override
-	public SearchExpression visit(StaticMethod expr, TLModel arg) throws ConfigurationException {
-		List<Arg> argExprs = expr.getArgs();
-
-		MethodBuilder<?> builder = getBuilder(expr);
-		Argument[] args = descendArgs(argExprs, arg);
-		return builder.build(expr, args);
-	}
-
-	private MethodBuilder<?> getBuilder(AbstractMethod expr) throws ConfigurationException {
+	private MethodBuilder<?> getBuilder(Method expr) throws ConfigurationException {
 		String methodName = expr.getName();
 		MethodBuilder<?> builder = getBuilder(methodName);
 		if (builder == null) {

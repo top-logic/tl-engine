@@ -2,27 +2,27 @@
 
 <settings>
 	<icon name="ICON_BACKSPACE"
-		value="css:fas fa-backspace"
+		value="css:bi bi-backspace-fill"
 	/>
 	<icon name="ICON_CODE_BRANCH"
-		value="css:fas fa-code-branch"
+		value="css:bi bi-braces"
 	/>
 	<icon name="ICON_EDIT"
-		value="css:fas fa-edit"
+		value="css:bi bi-pencil"
 	/>
 	<icon name="ICON_FILE_DOWNLOAD"
-		value="css:fas fa-file-download"
+		value="css:bi bi-file-arrow-down-fill"
 	/>
 	<icon name="ICON_FILE_IMPORT"
-		value="css:fas fa-file-import"
+		value="css:bi bi-file-arrow-up-fill"
 	/>
 	<icon name="ICON_PLUS"
-		value="css:fas fa-plus"
+		value="css:bi bi-plus-lg"
 	/>
 	<icon name="ICON_SHOE_PRINTS"
-		value="css:fas fa-shoe-prints"
+		value="css:bi bi-arrow-right-square-fill"
 	/>
 	<icon name="ICON_TRASH_ALT"
-		value="css:fas fa-trash-alt"
+		value="css:bi bi bi-trash3"
 	/>
 </settings>

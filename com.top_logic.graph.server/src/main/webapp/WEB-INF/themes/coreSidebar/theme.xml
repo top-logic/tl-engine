@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<theme>
+<theme extends="core">
 	<styles>
-		<style name="/style/tl.graph.server.css"/>
 	</styles>
 </theme>

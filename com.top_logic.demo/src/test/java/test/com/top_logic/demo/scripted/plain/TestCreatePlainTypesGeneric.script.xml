@@ -257,54 +257,16 @@
 							<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 						</model>
 					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
-					executable="false"
-					reason-key="class.com.top_logic.layout.form.I18NConstants.NOT_EMPTY"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-						label="Ok"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Konkreter Typ"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Flaches A"
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="DemoPlain:A"
 							/>
 						</values>
-					</value>
+					</expected-value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
 					executable="true"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-						label="Ok"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Konkreter Typ"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
-					executable="false"
-					reason-key="class.com.top_logic.layout.form.I18NConstants.NOT_EMPTY"
 					user-id="root"
 				>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"

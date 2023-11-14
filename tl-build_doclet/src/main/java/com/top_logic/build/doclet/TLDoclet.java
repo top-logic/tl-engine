@@ -1430,7 +1430,7 @@ public class TLDoclet implements Doclet {
 			if (startOfSentence) {
 				return Character.toUpperCase(firstChar) + value.substring(1);
 			} else {
-				Matcher spaceMatcher = Pattern.compile("\\s").matcher(value);
+				Matcher spaceMatcher = Pattern.compile("[-\\s]").matcher(value);
 				if (spaceMatcher.find()) {
 					if (isAllUpperCase(value.substring(0, spaceMatcher.start()))) {
 						return value;

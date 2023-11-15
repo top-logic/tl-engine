@@ -500,13 +500,29 @@ public class TabBarControl extends AbstractVisibleControl implements TabBarListe
 	 * window. The function handles scrolling with the mouse as well as with the arrow buttons.
 	 * 
 	 * @param out
-	 *        Writes tabs.
+	 *        Writes js function.
 	 * @throws IOException
 	 *         If an I/O error occurs.
 	 */
 	@TemplateVariable("tabScrollBehaviour")
 	public void writeScrollButtonScript(TagWriter out) throws IOException {
 		out.append("services.viewport.tabScrollBehaviour(");
+		out.append(getID());
+		out.append(");");
+	}
+
+	/**
+	 * Ensures that the selected tab is being displayed in the tab container and will not be hidden
+	 * outside the tab bar scope.
+	 * 
+	 * @param out
+	 *        Writes js function.
+	 * @throws IOException
+	 *         If an I/O error occurs.
+	 */
+	@TemplateVariable("ensureTabVisible")
+	public void writeEnsureTabVisibleScript(TagWriter out) throws IOException {
+		out.append("services.viewport.ensureTabVisible(");
 		out.append(getID());
 		out.append(");");
 	}

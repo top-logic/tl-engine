@@ -8,6 +8,7 @@ package com.top_logic.layout.basic.fragments;
 import java.io.IOError;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -150,15 +151,40 @@ public class Fragments {
 	 *        The other fragments to concatenate, <code>null</code> means {@link #empty()}.
 	 */
 	public static HTMLFragment concat(HTMLFragment... fragments) {
-		if (fragments == null || fragments.length == 0) {
+		if (fragments == null) {
 			return empty();
 		}
-		if (fragments.length == 1) {
-			return fragments[0];
+		switch (fragments.length) {
+			case 0:
+				return empty();
+			case 1:
+				return fragments[0];
+			default:
+				return new ConcatenatedFragment(fragments);
 		}
-		return new ConcatenatedFragment(fragments);
 	}
 
+	/**
+	 * Concatenation of the given fragments.
+	 * 
+	 * @param fragments
+	 *        The other fragments to concatenate, <code>null</code> means {@link #empty()}.
+	 * 
+	 * @implNote When the number of fragments is &gt; 1, a new array for the fragments is created.
+	 */
+	public static HTMLFragment concat(Collection<? extends HTMLFragment> fragments) {
+		if (fragments == null) {
+			return empty();
+		}
+		switch (fragments.size()) {
+			case 0:
+				return empty();
+			case 1:
+				return fragments.iterator().next();
+			default:
+				return new ConcatenatedFragment(fragments.toArray(new HTMLFragment[0]));
+		}
+	}
 
 	/**
 	 * Wraps the given {@link XMLTag} around the given {@link HTMLFragment}.

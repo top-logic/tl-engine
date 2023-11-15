@@ -1,55 +1,76 @@
 <h2>Syntax</h2>
-<pre><code>$source.internationalize(
+
+<pre>
+<code>$input.internationalize(
     sourceLang: $sourceLang, 
     translate: $translate
 )</code></pre>
+
 <p>Wandelt den Text der gegebenen Sprache in einen internationalisierten Text um.</p>
-<pre><code>{"en": $englishText, "de": $germanText}
+
+<pre>
+<code>{"en": $englishText, "de": $germanText}
     .internationalize(translate: $translate)</code></pre>
+
 <p>Fasst Texte in mehreren Sprachen zu einem internationalisierten Text zusammen.</p>
+
 <h2>Parameter</h2>
+
 <table class="tlDocTable">
- <thead>
-  <tr>
-   <th>Name</th>
-   <th>Typ</th>
-   <th>Beschreibung</th>
-   <th>Pflicht</th>
-   <th>Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>input</td>
-   <td>Text oder Wörterbuch mit Texten</td>
-   <td>Entweder der umzuwandelnde Text, oder ein Wörterbuch, das Sprachkürzel auf Texte in der jeweiligen Sprache abbildet.</td>
-   <td>ja</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td>sourceLang</td>
-   <td>Zeichenkette</td>
-   <td>Die Sprache der Eingabezeichenkette. Nur relevant in der Form mit der einzelnen Zeichenkette als Eingabe.</td>
-   <td>nein</td>
-   <td>Die Standardsprache der Anwendung</td>
-  </tr>
-  <tr>
-   <td>translate</td>
-   <td>Wahrheitswert</td>
-   <td>Ob der Übersetzungsservice verwendet werden soll, um die fehlenden Übersetzungen zu ergänzen. Wenn nicht alle von der Anwendung unterstützten Sprachen für die Konstruktion der internationalisierten Zeichenkette angegeben wurde, und nicht übersetzt werden soll (oder der Übersetzungsservice nicht alle Sprachen der Anwendung unterstützt) wird eine internationalisierte Zeichenkette erzeugt, die für manche Sprachen in der Standardsprache angezeigt wird.</td>
-   <td>nein</td>
-   <td>false</td>
-  </tr>
- </tbody>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Text oder Wörterbuch mit Texten</td>
+			<td>Entweder der umzuwandelnde Text, oder ein Wörterbuch, das Sprachkürzel auf Texte in der jeweiligen Sprache abbildet.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>sourceLang</td>
+			<td>Zeichenkette</td>
+			<td>Die Sprache der Eingabezeichenkette. Nur relevant in der Form mit der einzelnen Zeichenkette als Eingabe.</td>
+			<td>nein</td>
+			<td>Die Standardsprache der Anwendung</td>
+		</tr>
+		<tr>
+			<td>translate</td>
+			<td>Wahrheitswert</td>
+			<td>Ob der Übersetzungsservice verwendet werden soll, um die fehlenden Übersetzungen zu ergänzen. Wenn nicht alle von der Anwendung unterstützten Sprachen für die Konstruktion der internationalisierten Zeichenkette angegeben wurde, und nicht übersetzt werden soll (oder der Übersetzungsservice nicht alle Sprachen der Anwendung unterstützt) wird eine internationalisierte Zeichenkette erzeugt, die für manche Sprachen in der Standardsprache angezeigt wird.</td>
+			<td>nein</td>
+			<td>false</td>
+		</tr>
+	</tbody>
 </table>
+
 <h2>Rückgabewert</h2>
+
 <p><strong>Typ:</strong> Internationalisierter Text</p>
+
 <p>Ein Wert der in der Sprache des angemeldeten Nutzers dargestellt werden kann. Die Eingangstexte werden zu einem internationalisierten Text zusammengefasst und optional durch generierte Übersetzungen des Übersetzungsservice ergänzt.</p>
+
 <h2>Beispiele</h2>
+
 <h3>Einzelnen Text internationalisieren</h3>
+
 <p>Mache aus der englischen Zeichenkette "Hello world!" eine internationalisierte Zeichenkette (<code class="hljs inlineCode">tl.model.i18n:I18NString</code>). Fülle die restlichen von der Anwendung unterstützten Sprachen mit Übersetzungen, die vom Übersetzungsservice generiert werden:</p>
-<pre><code>"Hello world".internationalize(lang:"en", translate: true)</code></pre>
+
+<pre>
+<code>"Hello world".internationalize(lang:"en", translate: true)</code></pre>
+
 <p>Liefert einen Wert, der für einen Nutzer mit der Sprache Deutsch als "Hallo Welt!" dargestellt würde.</p>
+
 <h3>Texte in mehreren Sprachen zu einer internationalisierten Zeichenkette zusammenfassen</h3>
-<pre><code>{"en": "Hello world!", "de": "Hallo Welt!"}.internationalize()</code></pre>
+
+<pre>
+<code>{"en": "Hello world!", "de": "Hallo Welt!"}.internationalize()</code></pre>
+
 <p>Liefert dasselbe wie das TL-Script-Literal <code class="hljs inlineCode">#("Hello world!"@en, "Hallo Welt!"@de)</code> kann aber mit dynamischen Werten verwendet werden.</p>

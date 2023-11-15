@@ -75,7 +75,7 @@ public class RegexEnd extends SimpleGenericMethod {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("match")
-			.optional("groupId", 0)
+			.optional("index", 0)
 			.build();
 
 		/**

@@ -3,7 +3,7 @@
 <pre>
 <code>new(`my.module:MyType`)
 
-new(`my.module:MyType`, context: $context, transient: false)
+new(type: $type, context: $context, transient: false)
 </code>
 </pre>
 
@@ -29,9 +29,9 @@ new(`my.module:MyType`, context: $context, transient: false)
 	</thead>
 	<tbody>
 		<tr>
-			<td>type-literal</td>
-			<td>Zeichenkette</td>
-			<td>Literal des Objekttypes, von welchem ein neues Objekt erzeugt werden soll.</td>
+			<td>type</td>
+			<td>Objekttyp</td>
+			<td>Der Objekttyp, von welchem ein neues Objekt erzeugt werden soll.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
@@ -60,8 +60,7 @@ new(`my.module:MyType`, context: $context, transient: false)
 
 <h2>Beispiele</h2>
 
-<pre>
-	<code>new(`my.module:MyClass`)
+<pre><code>new(`my.module:MyClass`)
 </code>
 </pre>
 

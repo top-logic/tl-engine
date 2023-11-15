@@ -1,9 +1,10 @@
 <h2>Syntax</h2>
 
 <pre>
-<code>$object.copy()
+<code>$orig.copy()
 
-$object.copy(context: $context, 
+copy(orig: $orig,
+	context: $context, 
 	filter: $filter, 
 	constructor: $constructor, 
 	transient: false)</code>
@@ -11,7 +12,7 @@ $object.copy(context: $context,
 
 <h2>Description</h2>
 
-<p>Creates a deep copy of the object or a simple copy of the value <code class="hljs inlineCode">object</code>.</p>
+<p>Creates a deep copy of the object or a simple copy of the value <code class="hljs inlineCode">orig</code>.</p>
 
 <ul>
 </ul>
@@ -32,7 +33,7 @@ $object.copy(context: $context,
 	</thead>
 	<tbody>
 		<tr>
-			<td>object</td>
+			<td>orig</td>
 			<td>Number/string/boolean/business object/set</td>
 			<td>The object or value to be copied.</td>
 			<td>yes</td>
@@ -41,7 +42,7 @@ $object.copy(context: $context,
 		<tr>
 			<td>context</td>
 			<td>Business object</td>
-			<td>The context object that will be passed when creating the top-level copy (from <code class="hljs inlineCode">object</code>).</td>
+			<td>The context object that will be passed when creating the top-level copy (from <code class="hljs inlineCode">orig</code>).</td>
 			<td>no</td>
 			<td>null</td>
 		</tr>
@@ -100,17 +101,16 @@ $object.copy(context: $context,
 <p>Depending on the type of <code class="hljs inlineCode">x</code> the following is returned by the function:</p>
 
 <ul>
-	<li><strong>Reference to a business object</strong>: a deep copy of this object.</li>
+	<li><strong>Reference to a business object:</strong> a deep copy of this object.</li>
 	<li><strong>list:</strong> a list in which all business objects are replaced by deep copies.</li>
-	<li><strong>all other values: </strong>the value itself.</li>
+	<li><strong>all other values:</strong> the value itself.</li>
 </ul>
 
 <h2>Examples</h2>
 
 <h3>Object copy</h3>
 
-<pre>
-	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    $a.set(`my.module:MyClass#name`, "orig");
    b = $a.copy();
@@ -123,8 +123,7 @@ $object.copy(context: $context,
 
 <h3>Object list copy</h3>
 
-<pre>
-	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    b = new(`my.module:MyClass`);
    list = list($a, $b);
@@ -136,8 +135,7 @@ $object.copy(context: $context,
 
 <h3>Value copy</h3>
 
-<pre>
-	<code>{
+<pre><code>{
    a = 5;
    b = $a.copy();
    list($a, $b);

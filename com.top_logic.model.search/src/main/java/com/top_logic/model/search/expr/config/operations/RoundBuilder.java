@@ -25,7 +25,7 @@ public class RoundBuilder extends AbstractSimpleMethodBuilder<SearchExpression> 
 
 	private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 		.mandatory("value")
-		.optional("precision", 0)
+		.optional("digits", 0)
 		.build();
 
 	/**

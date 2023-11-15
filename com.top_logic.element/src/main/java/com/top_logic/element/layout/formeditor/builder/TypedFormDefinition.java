@@ -11,6 +11,7 @@ import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.model.form.definition.FormDefinition;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Configuration for a typed {@link FormDefinition}.
@@ -22,7 +23,18 @@ public interface TypedFormDefinition extends TypeTemplateParameters {
 	/** Configuration name for the value of the {@link #getFormDefinition()}. */
 	String FORM_DEFINITION_NAME = "formDefinition";
 
-	/** The form belonging to the type. */
+	/**
+	 * The type for which a form is defined.
+	 * 
+	 * <p>
+	 * If an object that is being displayed has the given type, this form definition is used to
+	 * create the form.
+	 * </p>
+	 */
+	@Override
+	TLModelPartRef getType();
+
+	/** The form to render for objects of the given {@link #getType()}. */
 	@FormTypeProperty(TYPE)
 	@ItemDisplay(ItemDisplayType.VALUE)
 	@Name(FORM_DEFINITION_NAME)

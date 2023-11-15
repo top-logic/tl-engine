@@ -12,6 +12,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.CustomPropertiesSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.KBSetup.KBType;
 import test.com.top_logic.layout.scripting.ApplicationTestSetup;
 
 import com.top_logic.basic.io.FileUtilities;
@@ -63,6 +64,7 @@ public class AppMigrationTestSetup extends TestSetup {
 	public static Test suite(Test migrationTest) {
 		return new AppMigrationTestSetup(
 			ApplicationTestSetup.setupApplication(
-				new CustomPropertiesSetup(migrationTest, "/WEB-INF/conf/test-migrate-app-with-h2.xml")));
+				new CustomPropertiesSetup(migrationTest, "/WEB-INF/conf/test-migrate-app-with-h2.xml"),
+				KBType.KB_H2));
 	}
 }

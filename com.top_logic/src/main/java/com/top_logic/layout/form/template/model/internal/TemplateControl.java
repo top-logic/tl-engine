@@ -8,6 +8,7 @@ package com.top_logic.layout.form.template.model.internal;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
@@ -50,7 +51,7 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 	private static final CssTagAttributeTemplate CSS_CLASS_EXPR_ATTR =
 		new CssTagAttributeTemplate(0, 0, HTMLConstants.CLASS_ATTR, CSS_CLASS_EXPR);
 
-	private final HTMLTemplateFragment _template;
+	private HTMLTemplateFragment _template;
 
 	private List<FormMember> _parts = null;
 
@@ -76,7 +77,7 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 	public TemplateControl(FormMember model, ControlProvider controlProvider, HTMLTemplateFragment template) {
 		super(model, COMMANDS);
 		_controlProvider = controlProvider;
-		_template = ensureTechnicalAttributes(template);
+		setTemplate(template);
 	}
 
 	private static HTMLTemplateFragment ensureTechnicalAttributes(HTMLTemplateFragment template) {
@@ -130,6 +131,14 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 	@Override
 	protected String buildInputId() {
 		return null;
+	}
+
+	/**
+	 * Updates the view displayed by this {@link TemplateControl}.
+	 */
+	public void setTemplate(HTMLTemplateFragment template) {
+		detach();
+		_template = ensureTechnicalAttributes(Objects.requireNonNull(template));
 	}
 
 	/**

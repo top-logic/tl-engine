@@ -33,10 +33,10 @@ public interface FormsTemplateParameter extends ConfigurationItem {
 	 * Form definitions to use for displaying objects in this component.
 	 * 
 	 * <p>
-	 * To display an object, the first form definition is this list is used that matches the
-	 * object's type. If no such form definition is found, a form definition is used that is
-	 * annotated to the object's type. If there is no such form definition either, a generic form is
-	 * rendered displaying all properties of the object.
+	 * To display an object, the most specific form definition in this list is used that matches the
+	 * object's type (or one of its primary generalizations). If no such form definition is found, a
+	 * form definition is used that is annotated to the object's type. If there is no such form
+	 * definition either, a generic form is rendered displaying all properties of the object.
 	 * </p>
 	 * 
 	 * @see FormDefinition

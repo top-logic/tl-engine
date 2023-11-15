@@ -23,6 +23,7 @@ import com.top_logic.model.search.providers.GridCreateHandlerByExpression;
  * <p>
  * The migration is the following:
  * </p>
+ * 
  * <pre>
  * <code>
  * - 	createType="TYPE"
@@ -30,7 +31,7 @@ import com.top_logic.model.search.providers.GridCreateHandlerByExpression;
  * + 		include-subtypes="false"
  * + 		type="TYPE"
  * + 	/&gt;
- * <code>
+ * </code>
  * </pre>
  *
  * @implNote The string literals are copied here and not references into the actual code, as that

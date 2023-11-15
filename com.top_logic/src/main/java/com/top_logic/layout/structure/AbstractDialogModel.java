@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.col.LazyTypedAnnotatableMixin;
 import com.top_logic.basic.col.InlineMap;
+import com.top_logic.basic.col.LazyTypedAnnotatableMixin;
 import com.top_logic.basic.config.annotation.Inspectable;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.table.ConfigKey;
@@ -143,8 +143,8 @@ public abstract class AbstractDialogModel extends DefaultWindowModel implements 
 	@Override
 	public Dimension getCustomizedSize() {
 		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
-		List<Integer> jsonValue = (List<Integer>) config.getJSONValue(_configKey.get());
-		return new Dimension(jsonValue.get(0), jsonValue.get(1));
+		List<?> jsonValue = (List<?>) config.getJSONValue(_configKey.get());
+		return new Dimension(((Number) jsonValue.get(0)).intValue(), ((Number) jsonValue.get(1)).intValue());
 	}
 
 	@Override

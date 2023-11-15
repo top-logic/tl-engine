@@ -25,6 +25,7 @@ import test.com.top_logic.basic.RearrangableTestSetup;
 import test.com.top_logic.basic.RearrangableThreadContextSetup;
 import test.com.top_logic.basic.TestUtils.RearrangeToEnd;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.KBSetup.KBType;
 import test.com.top_logic.layout.scripting.runtime.TestedApplication;
 
 import com.top_logic.basic.Logger.LogEntry;
@@ -143,6 +144,17 @@ public class ApplicationTestSetup extends RearrangableThreadContextSetup {
 	}
 
 	/**
+	 * Creates a setup for the given test starting the module's application (without the test
+	 * configuration) and forces the usage of the given database.
+	 */
+	public static Test setupApplication(Test test, KBType kb) {
+		// enclose the KBSetup with another TestSetup to ensure that this test
+		// is not merged within unit tests when calling
+		// TestUtils.rearrangeTest(Test)
+		return new Setup(kbTest(test, kb));
+	}
+
+	/**
 	 * Creates a setup for the given test class starting the module's application (without the test
 	 * configuration).
 	 */
@@ -167,6 +179,10 @@ public class ApplicationTestSetup extends RearrangableThreadContextSetup {
 	 */
 	public static Test setupTestApplication(Class<? extends Test> testClass) {
 		return setupTestApplication(new TestSuite(testClass));
+	}
+
+	private static Test kbTest(Test test, KBType kb) {
+		return KBSetup.getKBTest(wrap(test), kb);
 	}
 
 	private static Test kbTest(Test test) {

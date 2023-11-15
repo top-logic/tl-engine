@@ -120,7 +120,7 @@ public class Base64Encode extends GenericMethod implements WithFlatMapSemantics<
 	public static class Builder extends AbstractSimpleMethodBuilder<Base64Encode> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.optional("data")
+			.optional("input")
 			.optional("mime", false)
 			.build();
 

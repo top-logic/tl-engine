@@ -99,7 +99,7 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 
 		/** Description of parameters for a {@link Translate}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("item")
+			.mandatory("object")
 			.mandatory("revision")
 			.build();
 

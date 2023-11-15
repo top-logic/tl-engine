@@ -82,7 +82,7 @@ public class SubString extends SimpleGenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<SubString> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("input")
+			.mandatory("string")
 			.optional("from", 0)
 			.optional("to")
 			.build();

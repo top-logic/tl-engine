@@ -68,7 +68,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 
 		/** Description of parameters for a {@link Localize}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("resourceKey")
+			.mandatory("input")
 			.optional("lang", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
 			.build();
 

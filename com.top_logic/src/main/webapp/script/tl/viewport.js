@@ -706,6 +706,12 @@ services.viewport = {
 		return document.getElementById(viewportReferences.buttonSpaceHolderContainer);
 	},
 	
+	/* 
+	*	Makes Tabbar scrollable with mouse drag and drop, 
+	*	gui-arrows on each end of the tabbar and keyword 
+	*	shift or ctrl + mouse wheel
+	*	Parameter: TabBarControl.
+	*/
 	tabScrollBehaviour: function(element) {
 		const elementID = element.id;
 		const tabLayout = document.getElementById(elementID);
@@ -795,6 +801,27 @@ services.viewport = {
        		}
         });
         
+	},
+	
+	/* 
+	*	Ensures that the selected tab is being displayed in the tab container
+	*	and not hidden outside the tab bar scope.
+	*	Parameter: TabBarControl.
+	*/
+	ensureTabVisible: function(element) {
+		const elementID = element.id;
+		const tabLayout = document.getElementById(elementID);
+		const tabContainer = tabLayout.querySelector('.tlTabScrollContainer');
+		const activeTab = tabContainer.querySelector('.activeTab');
+  		const containerWidth = tabContainer.clientWidth;
+  		const tabLeftEnd = activeTab.offsetLeft;
+  		const tabRightEnd = tabLeftEnd + activeTab.clientWidth;
+
+  		if (tabLeftEnd < tabContainer.scrollLeft) {
+    		tabContainer.scrollLeft = tabLeftEnd;
+  		} else if (tabRightEnd > tabContainer.scrollLeft + containerWidth) {
+    		tabContainer.scrollLeft = tabRightEnd - containerWidth;
+  		}
 	},
 	
 	/* 

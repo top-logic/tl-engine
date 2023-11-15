@@ -1537,16 +1537,15 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		if (fixedColumnsConfigKey == null) {
 			return;
 		}
-    	PersonalConfiguration personalConfig = getPersonalConfiguration();
 
-		Object fixedColumnsConfig = personalConfig.getJSONValue(fixedColumnsConfigKey);
-		
-		if(fixedColumnsConfig != null) {
-			
+    	Object configValue = getPersonalConfiguration().getJSONValue(fixedColumnsConfigKey);
+		if (configValue != null) {
 			try {
+				List<?> fixedColumnsConfig = (List<?>) configValue;
+
 				// Check format version
-				List<Number> formatContainer = (List<Number>) ((List<Object>) fixedColumnsConfig).get(0);
-				double configFormatVersion = formatContainer.get(0).doubleValue();
+				List<?> formatContainer = (List<?>) fixedColumnsConfig.get(0);
+				double configFormatVersion = ((Number) formatContainer.get(0)).doubleValue();
 				
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring fixed columns configuration from personal configuration. Column " +
@@ -1555,40 +1554,21 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 				}
 				
 				if(configFormatVersion == FIXED_COLUMNS_FORMAT_VERSION) {
-					
 					// Restore fixed column count
-					List<Integer> fixedColumnsSetting = (List<Integer>) ((List<Object>)fixedColumnsConfig).get(1);
-					personalFixedColumns = Math.min(fixedColumnsSetting.get(0), getColumnCount());
+					List<?> fixedColumnsSetting = (List<?>) fixedColumnsConfig.get(1);
+					personalFixedColumns = Math.min(((Number) fixedColumnsSetting.get(0)).intValue(), getColumnCount());
+					return;
 				}
 				
-				// If format version of personal configuration does not match current format version
-				else {
-					resetPersistentFixedColumnCount(configKey, new IllegalArgumentException());
-				}
+				Logger.debug("Incompatible personal configuration format: " + configFormatVersion,
+					TableViewModel.class);
+			} catch (RuntimeException ex) {
+				Logger.warn("Invalid personal configuration.", ex, TableViewModel.class);
 			}
 			
-			// In case of invalid fixed column configuration format
-			catch (ClassCastException e) {
-				resetPersistentFixedColumnCount(configKey, e);
-			}
-			
-			// In case of invalid fixed column configuration format
-			catch (IndexOutOfBoundsException e) {
-				resetPersistentFixedColumnCount(configKey, e);
-			}
+			internalRemovePersonalFixColumnCount(configKey);
 		}
     }
-
-	private void resetPersistentFixedColumnCount(ConfigKey configKey, Exception e) {
-		if (Logger.isDebugEnabled(TableViewModel.class)) {
-			Logger.debug("Failed to restore fixed column count from personal configuration, " +
-				"due to invalid configuration format. Current format version is '" +
-				FIXED_COLUMNS_FORMAT_VERSION + "'. Resetting personal configuration.",
-				e, TableViewModel.class);
-		}
-		
-		internalRemovePersonalFixColumnCount(configKey);
-	}
 
 	/**
 	 * Method to save the personal column order to the personal TL-context.
@@ -1639,28 +1619,30 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			return;
 		}
 
-		PersonalConfiguration personalConfig = getPersonalConfiguration();
-		List<?> config = (List<?>) personalConfig.getJSONValue(tableColumnSortConfigKey);
-		if(config != null) {
+		Object configValue = getPersonalConfiguration().getJSONValue(tableColumnSortConfigKey);
+		if (configValue != null) {
 			boolean dirty = false;
+
 			try {
+				List<?> config = (List<?>) configValue;
+
 				// Check format version
 				List<?> formatContainer = (List<?>) config.get(0);
 				double configFormatVersion = ((Number) formatContainer.get(0)).doubleValue();
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
-					Logger.debug("Restoring column configuration from personal configuration. Column " +
-						"configuration format version '" + configFormatVersion +
-						"' found.", TableViewModel.class);
+					Logger.debug(
+						"Restoring columns from personal configuration format " + configFormatVersion + ".",
+						TableViewModel.class);
 				}
 
 				if(configFormatVersion == COLUMN_PERMUTATION_FORMAT_VERSION) {
 					// Retrieve stored column names and currently defined column names
-					List<String> storedColumnNames = (List) config.get(1);
+					List<?> storedColumnNames = (List<?>) config.get(1);
 					List<String> newColumnNames = new ArrayList<>(storedColumnNames.size());
 					
 					Set<String> missingDefaultColumns = TableModelUtils.getDefaultVisibleColumnSet(applicationModel);
 					for (int n = 0, cnt = storedColumnNames.size(); n < cnt; n++) {
-						String columnName = storedColumnNames.get(n);
+						String columnName = (String) storedColumnNames.get(n);
 						if (isExcludedColumn(columnName)) {
 							// Column does no longer exist.
 							dirty = true;
@@ -1682,46 +1664,18 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 					}
 
 					newColumnNames = initColumns(newColumnNames);
-				}
-				
-				// If format version of personal configuration does not match current format version
-				else {
-					if (Logger.isDebugEnabled(TableViewModel.class)) {
-						Logger.debug("Failed to restore column permutation from personal configuration, " +
-							"due to invalid configuration format version. Current format version is '" +
-							COLUMN_PERMUTATION_FORMAT_VERSION + "', but '" + configFormatVersion +
-							"' was found. Resetting personal configuration.",
-							TableViewModel.class);
-					}
-
+				} else {
 					dirty = true;
+
+					Logger.debug("Incompatible personal configuration format: " + configFormatVersion,
+						TableViewModel.class);
 				}
+			} catch (RuntimeException ex) {
+				dirty = true;
+
+				Logger.warn("Invalid personal configuration.", ex, TableViewModel.class);
 			}
 			
-			// In case of invalid column configuration format
-			catch (ClassCastException e) {
-				if (Logger.isDebugEnabled(TableViewModel.class)) {
-					Logger.debug("Failed to restore column permutation from personal configuration, " +
-						"due to invalid configuration format. Current format version is '" +
-						COLUMN_PERMUTATION_FORMAT_VERSION + "'. Resetting personal configuration.",
-						e, TableViewModel.class);
-				}
-
-				dirty = true;
-			}
-			
-			// In case of invalid column configuration format
-			catch (IndexOutOfBoundsException e) {
-				if (Logger.isDebugEnabled(TableViewModel.class)) {
-					Logger.debug("Failed to restore column permutation from personal configuration, " +
-						"due to invalid configuration format. Current format version is '" +
-						COLUMN_PERMUTATION_FORMAT_VERSION + "'. Resetting personal configuration.",
-						e, TableViewModel.class);
-				}
-
-				dirty = true;
-			}
-
 			// Synchronize personal configuration, in case the set of current column names
 			// is not equal to the set of stored column names
 			if (dirty) {
@@ -1932,13 +1886,13 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			return;
 		}
 		PersonalConfiguration config = getPersonalConfiguration();
-		Object filterConfig = (List) config.getJSONValue(filterConfigKey);
+		List<?> filterConfig = (List<?>) config.getJSONValue(filterConfigKey);
 		
 		if(filterConfig != null) {
 			
 			try {
 				// Check format version
-				List<Number> formatContainer = (List<Number>) ((List<Object>) filterConfig).get(0);
+				List<Number> formatContainer = (List<Number>) filterConfig.get(0);
 				double configFormatVersion = formatContainer.get(0).doubleValue();
 				if (Logger.isDebugEnabled(TableViewModel.class)) {
 					Logger.debug("Restoring filter configuration from personal configuration. Filter " +
@@ -1952,12 +1906,12 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 					 * their filter state. */
 					boolean changed = clearAllFilters();
 
-					List<Object> overallFilterConfiguration = (List<Object>) ((List<Object>)filterConfig).get(1);
+					List<?> overallFilterConfiguration = (List<?>) filterConfig.get(1);
 					
 					// Apply filter configurations to registered table filters
 					boolean updateFilterConfiguration = false;
 					for (int i = 0, size = overallFilterConfiguration.size(); i < size; i++) {
-						List singleFilterConfig = (List)overallFilterConfiguration.get(i);
+						List<?> singleFilterConfig = (List<?>) overallFilterConfiguration.get(i);
 						String columnName = (String)singleFilterConfig.get(0);
 						
 						// Lookup for table filter
@@ -2058,8 +2012,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			return null;
 		}
 		PersonalConfiguration config = getPersonalConfiguration();
-		Object configurationContainer = (List) config.getJSONValue(sidebarFiltersConfigKey);
-		return configurationContainer;
+		return config.getJSONValue(sidebarFiltersConfigKey);
 	}
 
 	private void loadPersonalSidebarFilters(ConfigKey globalKey, Object configurationContainer) {
@@ -2848,7 +2801,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 			PersonalConfiguration config = getPersonalConfiguration();
 			Object storedSettings = config.getJSONValue(filterOptionsKey);
 			if (storedSettings instanceof List) {
-				List<?> settings = (List) storedSettings;
+				List<?> settings = (List<?>) storedSettings;
 				treeTable.internalSetFilterOptions(
 					Utils.getbooleanValue(settings.get(0)), Utils.getbooleanValue(settings.get(1)));
 			}

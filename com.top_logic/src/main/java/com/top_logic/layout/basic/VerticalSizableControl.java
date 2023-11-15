@@ -86,27 +86,33 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 		String configKey = _configKey.get();
 
 		if (configKey != null) {
-			List<?> sizeConfig = (List<?>) PersonalConfiguration.getPersonalConfiguration().getJSONValue(configKey);
+			PersonalConfiguration personalConfiguration = PersonalConfiguration.getPersonalConfiguration();
 
-			if (sizeConfig != null) {
-				double configFormatVersion = ((Number) ((List<?>) sizeConfig.get(0)).get(0)).doubleValue();
+			try {
+				List<?> sizeConfig = (List<?>) personalConfiguration.getJSONValue(configKey);
 
-				if (Logger.isDebugEnabled(TableViewModel.class)) {
-					Logger.debug("Load tables height configuration from personal configuration. " +
-						"Configuration format version '" + configFormatVersion +
-						"' found.", TableViewModel.class);
-				}
+				if (sizeConfig != null) {
+					double configFormatVersion = ((Number) ((List<?>) sizeConfig.get(0)).get(0)).doubleValue();
 
-				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
-					return ((Number) ((List<?>) sizeConfig.get(1)).get(0)).doubleValue();
-				} else {
 					if (Logger.isDebugEnabled(TableViewModel.class)) {
-						Logger.debug("Failed to load tables height from personal configuration, " +
-							"due to invalid configuration format. Current format version is '" +
-							VERTICAL_SIZE_FORMAT_VERSION + "'.", TableViewModel.class);
+						Logger.debug("Load tables height configuration from personal configuration. " +
+							"Configuration format version '" + configFormatVersion +
+							"' found.", TableViewModel.class);
+					}
+
+					if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
+						return ((Number) ((List<?>) sizeConfig.get(1)).get(0)).doubleValue();
+					} else {
+						Logger.debug("Incompatible personal configuration format: " + configFormatVersion,
+							VerticalSizableControl.class);
 					}
 				}
+			} catch (RuntimeException ex) {
+				Logger.warn("Invalid personal configuration.", ex, VerticalSizableControl.class);
 			}
+
+			// Reset configuration.
+			personalConfiguration.setValue(configKey, null);
 		}
 
 		return 300.;

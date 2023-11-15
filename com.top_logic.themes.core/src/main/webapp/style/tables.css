@@ -620,8 +620,8 @@ div.tl-table__filter-sort-container {
 	overflow-y: auto;
 }
 
-.sidebarFilterContainer .can-edit {
-	white-space: normal;
+.sidebarFilterContainer > div {
+  	margin-bottom: var(--spacing-03);
 }
 
 .sidebarFilterEntry {

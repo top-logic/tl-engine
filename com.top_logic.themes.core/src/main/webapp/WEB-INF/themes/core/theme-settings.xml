@@ -955,8 +955,9 @@
 	<icon name="IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
 		value="css:bi bi-terminal-fill red"
 	/>
-	
-	
+	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
+		value="450"
+	/>	
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_OPTIONS"
 		value="css:bi bi-funnel-fill"
 	/>
@@ -1347,10 +1348,10 @@
 		expr="%ICONS_BUTTON_STEP_OVER%"
 	/>
 	<icon name="ICONS_BUTTON_FAST_FORWARD"
-		value="%com.top_logic.layout.table.renderer.Icons.TBL_LAST%"
+		expr="%com.top_logic.layout.table.renderer.Icons.TBL_LAST%"
 	/>
 	<icon name="ICONS_BUTTON_FAST_FORWARD_DISABLED"
-		value="%com.top_logic.layout.table.renderer.Icons.TBL_LAST%"
+		expr="%com.top_logic.layout.table.renderer.Icons.TBL_LAST%"
 	/>
 	<icon name="ICONS_BUTTON_RECORD"
 		value="css:bi bi-record-fill red"
@@ -1449,28 +1450,28 @@
 		expr="%ICONS_SELECT_ALL_CHECKBOXES%"
 	/>
 	<icon name="ICONS_BUTTON_PASTE"
-		value="%ICONS_CLIPBOARD_BUTTON_ICON%"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="ICONS_BUTTON_PASTE_DISABLED"
-		value="%ICONS_CLIPBOARD_BUTTON_ICON%"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="ICONS_BUTTON_CUT"
 		value="css:bi bi-scissors"
 	/>
 	<icon name="ICONS_BUTTON_CUT_DISABLED"
-		value="%ICONS_BUTTON_CUT%"
+		expr="%ICONS_BUTTON_CUT%"
 	/>
 	<icon name="ICONS_BUTTON_GROUP"
 		value="css:bi bi-stack"
 	/>
 	<icon name="ICONS_BUTTON_GROUP_DISABLED"
-		value="%ICONS_BUTTON_GROUP%"
+		expr="%ICONS_BUTTON_GROUP%"
 	/>
 	<icon name="ICONS_BUTTON_UNGROUP"
 		value="css:bi bi-layers-half"
 	/>
 	<icon name="ICONS_BUTTON_UNGROUP_DISABLED"
-		value="%ICONS_BUTTON_UNGROUP%"
+		expr="%ICONS_BUTTON_UNGROUP%"
 	/>
 
 	<!-- Style Tokens -->

@@ -1,5 +1,7 @@
-
 /* Style-sheet for the TopLogic core theme. */
+:focus-visible {
+    outline: -webkit-focus-ring-color auto 0;
+}
 
 body {
 	font-family: 'Inter-Regular';
@@ -62,13 +64,6 @@ div.layoutHorizontalAdjustmentGrabber {
 	position: relative; 
 	top: 40%; 
 	text-align: center
-}
-
-span.can-edit {
-	width: inherit;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
 i.red {
@@ -292,6 +287,7 @@ a.accEntry span.accLabel {
 	color: var(--text-secondary);
 	display: table-cell;
 	width: 100%;
+	line-height: 2rem;
 }
 
 a.accEntry img.accMarker {
@@ -455,6 +451,10 @@ a.accEntry.accContainer.accSelected:hover .accIcon i {
 	color: var(--icon-primary);
 }
 
+.pdlgToolbar a:hover {
+	color: var(--icon-primary);
+}
+
 .pdlgTitle {
 	overflow: hidden;
 	white-space: nowrap;
@@ -481,31 +481,12 @@ div.fltHeader {
 	padding: 0 var(--spacing-03);
 }
 
-/*
-
-div.fltCommandContent {
-	box-sizing: border-box;
-	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
-	text-align: right;
-	margin: 0px;
-	padding-top: 8px;
-	background-color: var(--TABLE_FILTER_BACKGROUND_COLOR);
-}
-
-*/
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
 }
 
 .fltButtons {
-	/* 
-	img.fltButton {
-		position: absolute;
-		right: 0px;
-		top: 0px;
-	}
-	 */
 	display: flex;
 	justify-content: space-around;
 	margin: var(--spacing-02) 0;
@@ -530,12 +511,25 @@ div.fltCommandContent {
 
 .fltSubContent {
 	margin: 0px;
-	padding-bottom: var(--spacing-01);
 	overflow: auto;
+	padding: var(--spacing-03) 0 var(--spacing-02) var(--spacing-01);
+}
+
+.fltMenu.fltSubContent {
+	margin: 0px;
+	overflow: auto;
+	padding: 0 var(--spacing-02) var(--spacing-02) var(--spacing-01);
 }
 
 .fltSubContent > hr {
 	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-03) 0;
+}
+
+.sidebarFilterContainer .fToggle,
+.sidebarFilterContainer .fToggle:focus,
+.sidebarFilterContainer .fToggle:hover {
+	color: var(--icon-primary);
 }
 
 ul.fltList {
@@ -569,82 +563,49 @@ div.fltList {
 }
 
 .filterBox {
-	margin: 2px 2px;
-}
-
-.defaultFilterContainer .cPopupSelect, 
-.defaultFilterContainer .cTextSelect, 
-.defaultFilterContainer .cExpandableTextInput, 
-.defaultFilterContainer .cTextInput, 
-.defaultFilterContainer .cDatetime, 
-.defaultFilterContainer .cDateInput, 
-.defaultFilterContainer .cIntegerInput, 
-.defaultFilterContainer .cTimeInput {
-	display: table;
-	width: 100%;
-	box-sizing: border-box;
-	white-space: break-spaces;
-    word-wrap: break-word;
-    word-break: break-word;
-}
-
-.defaultFilterContainer .lFlexible {
-	display: table-cell;
-	box-sizing: border-box;
-	width: 100%;
-	padding: 2px;
-}
-
-.defaultFilterContainer .lFlexible input {
-	width: 100%;
-	padding: 2px;
-}
-
-.defaultFilterContainer span.cError img {
-	position: absolute;
-	top: 0;
-	right: 0;
-}
-
-.operatorBox, .patternBox, .patternBoxExpanded {
-	position: relative;
-	overflow: hidden;	
-}
-
-.patternBox, .patternBoxExpanded {
-	min-width: 70px;
-}
-
-.patternBox {
-	height: 50px;
-}
-
-.patternBoxExpanded {
-	height: 75px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-01);
+	margin: var(--spacing-01) 0;
 }
 
 .operatorBox {
-	vertical-align: top;
-	margin-right: 5px;
-	float: left;
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
 }
 
-.firstPattern, .secondPattern, .pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
-	position: absolute;
-	overflow: hidden;
+
+.patternBox {
+	display: inline-flex;
+	align-items: center;
+	flex-direction: column;
 }
 
-.firstPattern, .pullUpForeground, .pullUpBackground {
-	top: 0;
-	left: 0;
+.patternBoxExpanded {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-03);
 }
 
-.secondPattern, .pushDownForeground, .pushDownBackground {
-	top: 25px;
-	left: 0;
+.firstPattern, 
+.secondPattern, 
+.pushDownForeground, 
+.pushDownBackground, 
+.pullUpForeground, 
+.pullUpBackground {
+	display: inline-flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	gap: var(--spacing-01);
 }
 
-.pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
+.pushDownForeground, 
+.pushDownBackground, 
+.pullUpForeground, 
+.pullUpBackground {
 	animation-duration: 0.3s;
 	animation-direction: reverse;
 }
@@ -704,28 +665,21 @@ div.fltList {
 .defaultFilterContainer .cDateInput,
 .defaultFilterContainer .cIntegerInput,
 .defaultFilterContainer .cTimeInput {
-	display: table;
 	width: 100%;
-	box-sizing: border-box;
 	white-space: break-spaces;
-    word-wrap: break-word;
-    word-break: break-word;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
-.defaultFilterContainer .lFlexible {
-	display: table-cell;
-	box-sizing: border-box;
-	width: 100%;
-	padding: 2px;
+.defaultFilterContainer .cDatetime input {
+	width: 65px;
 }
 
-.defaultFilterContainer .lFixedRight {
-	display: table-cell;
-	padding: 2px 2px 2px 0;
+.defaultFilterContainer .cDateInput input {
+	width: 100px;
 }
 
 .defaultFilterContainer .lFlexible > input {
-	width: 100%;
 	box-sizing: border-box;
 }
 
@@ -2349,4 +2303,28 @@ If they're deleted, this can be deleted too
 	background: var(--layer-accent);
 }
 
+/*
+****								****
+****	Assistent progress syles	****
+****								****
+*/
+.assistantContent {
+	margin-top: var(--spacing-02);
+	background-color: var(--background);
+}
+
+.assistantList {
+	display: flex;
+	justify-content: center;
+	gap: var(--spacing-03);
+	margin: 0;
+	padding: 0;
+}
+
+.assistantElement {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	color: var(--text-primary);
+}
 

@@ -12,6 +12,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.List;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -89,6 +91,11 @@ public class TestFragments extends TestCase {
 		assertRender("", Fragments.concat(new HTMLFragment[0]));
 		assertRender("foo", Fragments.concat(Fragments.text("foo")));
 		assertRender("foobar", Fragments.concat(Fragments.text("foo"), Fragments.text("bar")));
+
+		assertRender("", Fragments.concat((List<HTMLFragment>) null));
+		assertRender("", Fragments.concat(Collections.emptyList()));
+		assertRender("foo", Fragments.concat(Collections.singletonList(Fragments.text("foo"))));
+		assertRender("foobar", Fragments.concat(BasicTestCase.list(Fragments.text("foo"), Fragments.text("bar"))));
 	}
 
 	public void testPlainTag() throws IOException {

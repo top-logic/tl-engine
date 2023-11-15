@@ -76,7 +76,7 @@ public class ErrorRenderer implements Renderer<HandlerResult> {
 		getExceptionCauses(resources, exception).ifPresent(cause -> description.add(cause));
 		getEncodedErrors(result, resources).ifPresent(encodedErrors -> description.add(encodedErrors));
 
-		return Fragments.concat(description.toArray(new HTMLFragment[description.size()]));
+		return Fragments.concat(description);
 	}
 
 	private Optional<HTMLFragment> getErrorSummary(HandlerResult result, Resources resources, I18NRuntimeException exception) {

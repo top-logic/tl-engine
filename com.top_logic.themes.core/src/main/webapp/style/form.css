@@ -136,14 +136,12 @@ div.fptIconBar > span.fptIconOverlay > i {
 	color: var(--text-secondary);
 	word-break: break-all;
 	white-space: nowrap;
-	font-weight: bold;
 }
 
 .rf_label {
 	margin: var(--spacing-02) 0;
 	word-break: break-all;
 	white-space: nowrap;
-	font-weight: bold;
 }
 
 .rf_label .cLabel label.disabled,
@@ -154,6 +152,72 @@ label.disabled  {
 .mandatory.can-edit label:after {
     content: "*";
 }
+
+.is-tooltip {
+	display: none;
+}
+
+.config {
+    display: none;
+}
+
+.mulitLines .rf_label span.can-edit {
+	/* labels are rendered over more than one line if needed */
+	white-space: pre-line;
+}
+
+span.can-edit {
+	width: inherit;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/*
+ * Functional styles. No configuration!
+ */
+
+.invisible {
+	display: none;
+}
+
+.can-edit .is-display {
+	display: none;
+}
+
+.cannot-edit .is-input {
+	display: none;
+}
+
+.cannot-edit .is-input,
+.cannot-edit .is-upload {
+	display: none;
+}
+
+.disabled .is-action {
+	display: none;
+}
+
+.cannot-edit .is-action {
+	display: none;
+}
+
+input.is-action,
+a.is-action {
+	margin-left: 2px;
+}
+
+/*.is-onerror*/.no-error .is-error {
+	display: none;
+}
+
+.dragImage ul {
+	list-style-type: none;	
+}
+
+
+
+
 
 .frmGroupExpand a {
 	color: var(--icon);
@@ -363,12 +427,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	padding: 0 0 0 var(--spacing-03);
 }
 
-
-
-
-
-
-
 .dfListContent > .rf_columnsLayout {
 	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
 }
@@ -564,12 +622,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	font-weight:normal;
 }
 
-
-.mulitLines .rf_label span.can-edit {
-	/* labels are rendered over more than one line if needed */
-	white-space: pre-line;
-}
-
 .rf_inputCell .rightAlign {
 	text-align: right;
 	padding-right: 5px;
@@ -620,10 +672,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	padding: 0 0 0 var(--spacing-03);
 	white-space: nowrap;
 }
-
-
-
-
 
 .rf_groupCell .rf_header:hover {
 	background: var(--layer-hover);
@@ -1251,53 +1299,37 @@ div.cal_zoom_inAnimation {
 }
 
 .cDateInput, .cTimeInput {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 }
 
 .cDatetime {
-	display: flex;
+	display: inline-flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 2rem;
-}
-
-.timePart span.cDatetimeTime:not(:empty):before {
-	content: " - ";
-    margin: 0 10px 0 50px
 }
 
 .cIntegerInput.num {
-	display: flex;
+	display: inline-flex;
 	align-items: stretch;
-}
-
-.cError .error i {
-	color: var(--support-danger);
 }
 
 .cDecoratedCell,.cExpandableTextInput ,.cBlockTextInput, .cPopupSelect {
-	display: flex;
+	display: inline-flex;
 }
 
+.lFixedRight > :not(.cannot-edit),
 .cIntegerInput.num .lFixedRight {
-	display: flex;
+	display: inline-flex;
 	align-items: stretch;
 	color: var(--icon-primary);
 	background: var(--field);
 }
-
-.lFixedRight {
-	display: flex;
-	align-items: stretch;
-	color: var(--icon-primary);
-	background: var(--field);
-}
-
 .lFixedRight a:not(.lFlexible),
-.lFixedRight span:not(.lFlexible),
+.lFixedRight:not(.timePart) span:not(.lFlexible),
 .lFixedRight span span:not(.lFlexible),
 .lFixedRight .fChoose:not(.lFlexible) {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     color: var(--icon-primary);
@@ -1379,43 +1411,139 @@ span.cIconSelect .input-image.cannot-edit i {
 	color: var(--text-placeholder);
 }
 
-.cTextInput input:focus,
-.cTextInput.error input:focus,
-.cTextInput textarea:focus,
-.cTextInput.error textarea:focus,
-.cExpandableTextInput input:focus,
-.cBlockTextInput input:focus,
-.cExpandableTextInput.error input:focus,
-.cBlockTextInput.error input:focus,
-.cPopupSelect input:focus,
-.cPopupSelect.error input:focus,
-.cDropdownSelect select:focus,
-.cDropdownSelect.error select:focus,
-.cDateInput input:focus,
-.cDateInput.error input:focus,
-.cTimeInput input:focus,
-.cTimeInput.error input:focus {
+.cError .error i,
+.cError .error-annotation i {
+	color: var(--support-danger);
+}
+
+.error input.is-input, 
+.error-annotation input.is-input, 
+.error input.is-popup, 
+.error-annotation input.is-popup, 
+.error input.is-upload, 
+.error-annotation input.is-upload, 
+.error button.ColorChooser,
+.error-annotation button.ColorChooser,
+.error.active input.tristate,
+.error-annotation.active input.tristate,
+.error.active input.is-checkbox,
+.error-annotation.active input.is-checkbox,
+.error.active input.is-radio,
+.error-annotation.active input.is-radio,
+.error.active.cBeacon, /* AND selector --> .error AND .cBeacon */
+.error-annotation.active.cBeacon, /* AND selector --> .error-annotation AND .cBeacon */
+.error.cDataItem iframe, /* AND selector --> .error AND .cDataItem */
+.error-annotation.cDataItem iframe, /* AND selector --> .error-annotation AND .cDataItem */
+.error select, 
+.error-annotation select, 
+.error textarea,
+.error-annotation textarea,
+.error .ace_editor,
+.error-annotation .ace_editor,
+.error .ace_editor textarea,
+.error-annotation .ace_editor textarea {
+	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.warning input.is-input, 
+.warning-annotation input.is-input, 
+.warning input.is-popup,
+.warning-annotation input.is-popup,
+.warning input.is-upload,
+.warning-annotation input.is-upload,
+.warning button.ColorChooser,
+.warning-annotation button.ColorChooser,
+.warning.active input.tristate,
+.warning-annotation.active input.tristate,
+.warning.active input.is-checkbox,
+.warning-annotation.active input.is-checkbox,
+.warning.active input.is-radio,
+.warning-annotation.active input.is-radio,
+.warning.active.cBeacon,
+.warning-annotation.active.cBeacon,
+.warning.cDataItem iframe,
+.warning-annotation.cDataItem iframe,
+.warning select, 
+.warning-annotation select, 
+.warning textarea,
+.warning-annotation textarea,
+.warning .ace_editor,
+.warning-annotation .ace_editor,
+.warning .ace_editor textarea, 
+.warning-annotation .ace_editor textarea {
+	box-shadow: inset 0px 0px 0px 1px var(--support-warning),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+input.is-input:focus, 
+.error input.is-input:focus, 
+.warning input.is-input:focus, 
+.error-annotation input.is-input:focus, 
+.warning-annotation input.is-input:focus, 
+input.is-popup:focus, 
+.error input.is-popup:focus, 
+.warning input.is-popup:focus, 
+.error-annotation input.is-popup:focus, 
+.warning-annotation input.is-popup:focus, 
+input.is-upload:focus,
+.error input.is-upload:focus, 
+.warning input.is-upload:focus, 
+.error-annotation input.is-upload:focus, 
+.warning-annotation input.is-upload:focus, 
+button.ColorChooser:focus,
+.error button.ColorChooser:focus,
+.warning button.ColorChooser:focus,
+.error-annotation button.ColorChooser:focus,
+.warning-annotation button.ColorChooser:focus,
+input.tristate:focus,
+.error.active input.tristate:focus,
+.warning.active input.tristate:focus,
+.error-annotation.active input.tristate:focus,
+.warning-annotation.active input.tristate:focus,
+input.is-checkbox:focus,
+.error.active input.is-checkbox:focus,
+.warning.active input.is-checkbox:focus,
+.error-annotation.active input.is-checkbox:focus,
+.warning-annotation.active input.is-checkbox:focus,
+input.is-radio:focus,
+.error.active input.is-radio:focus,
+.warning.active input.is-radio:focus,
+.error-annotation.active input.is-radio:focus,
+.warning-annotation.active input.is-radio:focus,
+.cBeacon:focus,
+.error.active.cBeacon:focus,
+.warning.active.cBeacon:focus,
+.error-annotation.active.cBeacon:focus,
+.warning-annotation.active.cBeacon:focus,
+cDataItem iframe:focus,
+.error.cDataItem iframe:focus,
+.warning.cDataItem iframe:focus,
+.error-annotation.cDataItem iframe:focus,
+.warning-annotation.cDataItem iframe:focus,
+select:focus,
+.error select:focus, 
+.warning select:focus, 
+.error-annotation select:focus, 
+.warning-annotation select:focus, 
+textarea:focus,
+.error textarea:focus,
+.warning textarea:focus,
+.error-annotation textarea:focus,
+.warning-annotation textarea:focus,
+.ace_editor textarea:focus,
+.error .ace_editor textarea:focus,
+.warning .ace_editor textarea:focus,
+.error-annotation .ace_editor textarea:focus,
+.warning-annotation .ace_editor textarea:focus {
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 	outline: none;
 }
 
 .cIntegerInput.num input:focus,
-.cIntegerInput.num.error input:focus {
+.cIntegerInput.num.error input:focus,
+.cIntegerInput.num.error-annotation input:focus {
 	outline: none;
 	border: none;
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
-}
-
-.cTextInput.error input,
-.cTextInput.error textarea,
-.cIntegerInput.num.error input,
-.cExpandableTextInput.error input,
-.cBlockTextInput.error input,
-.cPopupSelect.error input,
-.cDropdownSelect.error select,
-.cDateInput.error input,
-.cTimeInput.error input {
-	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
 .cTextInput.disabled input,
@@ -1441,25 +1569,32 @@ span.cIconSelect .input-image.cannot-edit i {
 select:not([multiple="multiple"]) {
 	-webkit-appearance: none;
 	appearance: none;
-	background: var(--field);
 	color: var(--text-primary);
 	padding-left: var(--spacing-03);
 	padding-right: var(--spacing-06);
 	height: 2rem;
 	max-width: 100%;
 	box-sizing: border-box;
-	background-image: url("../themes/core/chevron-down.svg");
-	background-repeat: no-repeat;
-	background-position: right calc(1rem + 1px) center; /* Icon in der Mitte rechts positionieren mit Abstand zum rechten Rand */	
-	background-size: 1rem 1rem;
+	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
+    background-position: calc(100% - 10px) center, calc(100% - 5px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
 }
 
 select:not([multiple="multiple"]):disabled {
-	background-color: var(--text-disabled);
-    -webkit-mask-image: url("../themes/core/chevron-down.svg");
-    mask-image: url("../themes/core/chevron-down.svg");
-	-webkit-mask-repeat: no-repeat;
-	mask-repeat: no-repeat;
+    background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
+    background-position: calc(100% - 10px) center, calc(100% - 5px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+
+.rf_header select,
+select:focus:not( [multiple="multiple"] ) {
+	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
+}
+
+span.disabled > span.lFlexible > select:not( [multiple="multiple"] ) {
+	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
 }
 
 .cPopupSelect .lFlexible, 
@@ -1488,7 +1623,7 @@ input[type="radio"] {
 
 input[type="radio"] {
 	align-self: center;
-	display: grid;
+	display: inline-grid;
 	place-content: center;
 	position: relative;
 	height: 1rem;
@@ -1529,17 +1664,13 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"] {
-    /*
-    display: grid;
-	align-self: center;
+    display: inline-grid;
     place-content: center;
-    */
     position: relative;
     height: 1rem;
     width: 1rem;
     border-radius: 1px;
     border: 1px solid var(--icon-primary);
-    align-self: center;
 }
 
 input[type="checkbox"]::before {
@@ -1557,10 +1688,9 @@ input[type="checkbox"]:checked::before {
 	content: '\f633';
 	font-family: "bootstrap-icons";
 	font-size: .8rem;
+	display: inline-grid;
+    place-content: center;
 	color: white;
-	display: flex;
-	align-items: center;
-	justify-content: center;
 	background-color: var(--icon-primary);
 	transform: scaleX(1);
 }
@@ -1579,17 +1709,17 @@ input[type="checkbox"]:focus {
 ****										****
 */
 .cBooleanChoice, .cChoice-horizontal {
-    display: flex;
+    display: inline-flex;
     gap: var(--spacing-03);
 }
 
 span.bcc-option, .cChoice-option {
-    display: flex;
+    display: inline-flex;
     gap: var(--spacing-02);
 }
 
 .cChoice-vertical {
-	display: flex;
+	display: inline-flex;
 	flex-direction: column;
 	gap: var(--spacing-02);
 }
@@ -1639,10 +1769,11 @@ span.bcc-option, .cChoice-option {
 	cursor: default;
 }
 
-.cSelectOption,
-.cCheckbox {
+.fltSubContent .cSelectOption,
+.fltSubContent .cCheckbox {
 	display: inline-flex;
-  	padding: 0 var(--spacing-03) 0 var(--spacing-02);
+	align-items: center;
+  	padding: 0;
   	vertical-align: middle;
 }
 
@@ -1720,13 +1851,13 @@ div.cColorComposer tr.spacer {
 }
 
 .cBeacon {
-	display: flex;
+	display: inline-flex;
 	flex-direction: row;
 	height: 100%;
 }
 
 .cBeacon > span{
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 }
 
@@ -2133,7 +2264,7 @@ span.disabled .ddwttChevron::after {
 
 /* DropDown */
 .ddwttDDBox {
-	display: flex;
+	display: inline-flex;
 	flex-direction: column;
 	margin: 0;
 	position: fixed;
@@ -2155,22 +2286,11 @@ span.disabled .ddwttChevron::after {
 	display: none;
 }
 
-.ddwttDropBtnActive .ddwttDDBox,
-.error .ddwttDDBox {
-	border: 1px solid var(--focus);
-}
-
-.ddwttDropBtnActive .ddwttDDBox {
-	margin: 0;
-	display: flex;
-	flex-direction: column;
-	cursor: pointer;
-}
-
 .ddwttDDList {
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
+	border: 1px solid var(--focus);
 }
 
 .ddwttSearch {

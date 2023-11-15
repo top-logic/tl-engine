@@ -143,6 +143,7 @@ public class AttributeBasedCreateTypeOptions
 	 * The context model can be an instance of a subtype which overrides the attribute and
 	 * specializes the type. It is therefore necessary to resolve the attribute on the model and not
 	 * just take the configured attribute.
+	 * </p>
 	 */
 	protected TLClass resolveAttributeTypeOnModel(Object model) {
 		/* No need to check the casts or anything: 'supportsContext' did that already. */

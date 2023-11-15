@@ -511,7 +511,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Copy> {
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("original")
+			.mandatory("orig")
 			.optional("context")
 			.optional("filter")
 			.optional("constructor")

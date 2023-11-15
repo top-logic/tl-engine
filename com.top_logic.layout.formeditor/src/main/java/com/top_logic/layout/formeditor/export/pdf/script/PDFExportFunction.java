@@ -69,7 +69,7 @@ public class PDFExportFunction extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<PDFExportFunction> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("dataObject")
+			.mandatory("input")
 			.optional("name", "export.pdf")
 			.build();
 

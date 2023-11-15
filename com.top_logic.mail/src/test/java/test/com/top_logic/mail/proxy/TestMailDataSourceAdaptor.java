@@ -6,12 +6,11 @@
 package test.com.top_logic.mail.proxy;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.textui.TestRunner;
 
-import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DataAccessService;
@@ -22,7 +21,7 @@ import com.top_logic.mail.proxy.MailReceiverService;
 /**
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public class TestMailDataSourceAdaptor extends TestCase {
+public class TestMailDataSourceAdaptor extends BasicTestCase {
 
     /**
      * Constructor for TestMailFolder.
@@ -79,7 +78,7 @@ public class TestMailDataSourceAdaptor extends TestCase {
      * @return The test to be executed.
      */
     public static Test suite() {
-		return TLTestSetup.createTLTestSetup(ServiceTestSetup.createSetup(TestMailDataSourceAdaptor.class,
+		return KBSetup.getSingleKBTest(ServiceTestSetup.createSetup(TestMailDataSourceAdaptor.class,
 			DataAccessService.Module.INSTANCE, MailReceiverService.Module.INSTANCE));
     }
 

@@ -111,13 +111,12 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 		}
 	}
 
-	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
-		createCommandMap(new ControlCommand[] {
-			FileNameUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
+	private static final Map<String, ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
+		createCommandMap(FileNameUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE,
+			FieldInspector.INSTANCE);
 
-	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITH_DOWNLOAD =
-		createCommandMap(DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD, new ControlCommand[] {
-			DownloadCommand.INSTANCE });
+	private static final Map<String, ControlCommand> DATA_ITEM_COMMANDS_WITH_DOWNLOAD =
+		createCommandMap(DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD, DownloadCommand.INSTANCE);
 
 	/**
 	 * css class of the control tag.
@@ -162,7 +161,7 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 		super(model, commands(model));
 	}
 
-	private static Map<String, ? extends ControlCommand> commands(DataField model) {
+	private static Map<String, ControlCommand> commands(DataField model) {
 		return model.isDownload() ? DATA_ITEM_COMMANDS_WITH_DOWNLOAD : DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD;
 	}
 

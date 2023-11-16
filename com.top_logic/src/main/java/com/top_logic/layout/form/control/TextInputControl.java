@@ -19,6 +19,7 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.basic.ConstantDisplayValue;
+import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormConstants;
@@ -85,8 +86,8 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
     }
     
 	/** Create a new {@link TextInputControl}. */
-    protected TextInputControl(FormField model, Map aCommands) {
-        super(model, aCommands);
+	protected TextInputControl(FormField model, Map<String, ControlCommand> commandsByName) {
+        super(model, commandsByName);
 		type = TEXT_TYPE_VALUE;
     }
 

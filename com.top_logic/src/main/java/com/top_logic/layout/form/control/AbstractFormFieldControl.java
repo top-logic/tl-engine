@@ -12,6 +12,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -36,7 +37,7 @@ public abstract class AbstractFormFieldControl extends AbstractFormFieldControlB
 	private boolean hasTabIndex;
 	private int tabIndex;
 
-	protected AbstractFormFieldControl(FormField model, Map commandsByName) {
+	protected AbstractFormFieldControl(FormField model, Map<String, ControlCommand> commandsByName) {
 		super(model, commandsByName);
 	}
 	

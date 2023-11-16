@@ -12,6 +12,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -23,17 +24,23 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutReference;
 import com.top_logic.mig.html.layout.TLLayout;
-import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InDesignModeExecutable;
 
 /**
- * {@link CommandHandler} to add dialogs on this component.
+ * Adds new dialogs to this component.
+ * 
+ * <p>
+ * A dialog normally comes with an opening button that is added to the current view. The opening
+ * button an the details of the dialog can be edited from within the open dialog using the command
+ * {@link EditComponentCommand}.
+ * </p>
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
+@Label("Add dialog")
 public class AddDialogCommand extends AbstractComponentConfigurationCommandHandler {
 
 	/**

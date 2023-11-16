@@ -78,7 +78,6 @@ import com.top_logic.basic.listener.PropertyObservable;
 import com.top_logic.basic.shared.collection.map.MapUtilShared;
 import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.gui.JSFileCompiler;
@@ -3413,7 +3412,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
 	protected CommandModel modelForCommand(Resources res, CommandHandler command, Map<String, Object> arguments,
 			LayoutComponent targetComponent) {
-		String label = createCommandLabel(res, targetComponent, command);
+		ResKey label = createCommandLabel(targetComponent, command);
 
 		CommandModel theModel = CommandModelFactory.commandModel(command, targetComponent, arguments, label);
 		ThemeImage commandImage = command.getImage(targetComponent);
@@ -3432,7 +3431,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			Resources res) {
 		String tooltip = getTooltip(res, command, targetComponent);
 		if (tooltip != null) {
-			commandModel.setTooltip(TagUtil.encodeXML(tooltip));
+			commandModel.setTooltip(tooltip);
 		}
 	}
 
@@ -3446,9 +3445,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return res.getString(labelKey.tooltip(), null);
 	}
 
-	public static String createCommandLabel(Resources resources, LayoutComponent targetComponent,
-			CommandHandler command) {
-		return resources.getString(command.getResourceKey(targetComponent));
+	public static ResKey createCommandLabel(LayoutComponent targetComponent, CommandHandler command) {
+		return command.getResourceKey(targetComponent);
 	}
 
 	/**

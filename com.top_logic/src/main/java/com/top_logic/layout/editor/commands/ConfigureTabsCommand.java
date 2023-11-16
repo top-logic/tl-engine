@@ -16,6 +16,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -54,10 +55,17 @@ import com.top_logic.util.TLResKeyUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link CommandHandler} to configure the tabs in a tab component.
+ * Rearranges the order of tabs displayed in a tab bar.
+ * 
+ * <p>
+ * Additionally, tabs can be removed from or added to this tab bar. Removing a tab does not delete
+ * its view. This can be used to move a tab to another tab bar by removing it from its current tab
+ * bar and adding it at another location.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Configure tabs")
 public class ConfigureTabsCommand extends AbstractCommandHandler {
 
 	/**

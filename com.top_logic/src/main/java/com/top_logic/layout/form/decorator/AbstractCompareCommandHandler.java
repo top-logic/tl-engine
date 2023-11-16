@@ -13,7 +13,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ListDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.CommandModel;
@@ -132,7 +131,7 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 		}
 		model.setLabel(label);
 		if (tooltip != null) {
-			model.setTooltip(TagUtil.encodeXML(tooltip));
+			model.setTooltip(tooltip);
 		} else {
 			model.setTooltip(null);
 		}
@@ -147,7 +146,7 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 	}
 
 	private String createActivatedLabel(Resources resources, LayoutComponent targetComponent) {
-		return LayoutComponent.createCommandLabel(resources, targetComponent, this);
+		return resources.getString(LayoutComponent.createCommandLabel(targetComponent, this));
 	}
 
 	private String getTooltip(Resources res, LayoutComponent targetComponent) {

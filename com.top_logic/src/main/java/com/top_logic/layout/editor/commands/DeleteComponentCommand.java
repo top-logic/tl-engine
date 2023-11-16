@@ -14,6 +14,7 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -35,7 +36,6 @@ import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.TLLayout;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.ConfirmCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -46,10 +46,16 @@ import com.top_logic.tool.execution.UniqueToolbarCommandRule;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link CommandHandler} to delete the layout by the given component.
+ * Deletes the current view.
+ * 
+ * <p>
+ * When executed in a tab bar, the currently active tab is deleted. When executed in a component
+ * within a split view, only this component is deleted.
+ * </p>
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
+@Label("Delete view")
 public class DeleteComponentCommand extends ConfirmCommandHandler {
 
 	/**

@@ -90,7 +90,8 @@ public interface ToolBarGroupConfig extends NamedConfigMandatory {
 				return CommandModelFactory.commandModel(command, component, buttonConfig.getArguments(), toLabel(component, command, buttonConfig));
 			}
 
-			private static String toLabel(LayoutComponent component, CommandHandler command, ButtonConfig buttonConfig) {
+			private static ResKey toLabel(LayoutComponent component, CommandHandler command,
+					ButtonConfig buttonConfig) {
 				ResKey labelKey;
 				if (isSet(buttonConfig, ButtonUIConfig.LABEL_KEY)) {
 					labelKey = buttonConfig.getLabelKey();
@@ -99,7 +100,7 @@ public interface ToolBarGroupConfig extends NamedConfigMandatory {
 						ResKey.fallback(component.getResPrefix().key(command.getID()),
 							command.getResourceKey(component));
 				}
-				return resolve(labelKey);
+				return labelKey;
 			}
 
 			private static CommandModel applyUI(CommandModel button, ButtonUIConfig uiConfig) {

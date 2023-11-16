@@ -10,6 +10,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -17,12 +18,18 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.DefaultResourcesModule;
 
 /**
- * Command that reloads the I18N of the application.
+ * Reloads the internationalization files of the application.
+ * 
+ * <p>
+ * When running from a local development environment, this command picks up changes made in external
+ * editors without the need of an application restart.
+ * </p>
  * 
  * @since 5.7.3
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Reload resources")
 public class ReloadI18NCommand extends AbstractCommandHandler {
 
 	/**

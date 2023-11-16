@@ -34,6 +34,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ThemeImage;
@@ -406,7 +407,7 @@ public class GanttComponent extends AbstractImageComponent {
 		commandField.setNotExecutableImage(disabledImage);
 		String label = getResString("button." + name);
 		commandField.setLabel(label);
-		commandField.setTooltip(label);
+		commandField.setTooltip(TagUtil.encodeXML(label));
 		commandField.setControlProvider(PAGE_BUTTON_CP);
 		return commandField;
 	}

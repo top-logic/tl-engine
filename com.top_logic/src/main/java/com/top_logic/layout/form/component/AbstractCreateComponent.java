@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -322,10 +323,10 @@ public class AbstractCreateComponent extends FormComponent {
     }
     
     /**
-     * Default Cancel Command that will close the Dialog, too.
-     * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
-     */
+	 * Cancels the current create operation. All values edited so far are lost and an open dialog is
+	 * closed.
+	 */
+	@Label("Cancel")
     public static class CancelHandler extends CloseModalDialogCommandHandler {
 
         public static final String COMMAND_ID = "cancelCreate";

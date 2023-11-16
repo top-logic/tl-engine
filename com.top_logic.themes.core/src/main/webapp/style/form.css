@@ -50,7 +50,6 @@ div.fptBodyContent {
 	right: 0px;
 	top: 0px;
 	bottom: 0px;
-	padding: 0 var(--spacing-03);
 }
 
 div.fptTitle {
@@ -93,7 +92,6 @@ div.fptSubtitle {
     right: 0px;
     height: 25px;
     overflow: hidden;
-    background-color: var(--layer-accent);
 }
 
 div.fptSubtitleContent {
@@ -1865,11 +1863,6 @@ div.cColorComposer tr.spacer {
 .cBeacon input {
 	width: 16px;
 	height: 16px;
-}
-
-div.layoutHorizontalAdjustmentGrabber {
-  background: var(--layer-selected);
-  cursor: e-resize;
 }
 
 div.sizeContainer, div.imageContainer {

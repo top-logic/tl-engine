@@ -79,32 +79,36 @@ public class NavigationDecorator extends AbstractConfiguredInstance<NavigationDe
 	@Override
 	public void endDecoration(DisplayContext context, TagWriter out, Object value) throws IOException {
 		out.endTag(DIV);
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "breadCrumbRight");
+			out.endBeginTag();
+			{
+				if (getConfig().getLogoutView() != null) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "Right");
+					out.endBeginTag();
+					TypedConfigUtil.createInstance(getConfig().getLogoutView()).write(context, out);
+					out.endTag(DIV);
+				}
 
-		{
-			if (getConfig().getLogoutView() != null) {
 				out.beginBeginTag(DIV);
 				out.writeAttribute(CLASS_ATTR, "Right");
 				out.endBeginTag();
-				TypedConfigUtil.createInstance(getConfig().getLogoutView()).write(context, out);
+				TLContext theContext = TLContext.getContext();
+				out.writeText(theContext.getCurrentPersonWrapper().getFullName());
 				out.endTag(DIV);
-			}
 
-			out.beginBeginTag(DIV);
-			out.writeAttribute(CLASS_ATTR, "Right");
-			out.endBeginTag();
-			TLContext theContext = TLContext.getContext();
-			out.writeText(theContext.getCurrentPersonWrapper().getFullName());
+				if (getConfig().getLogoutTimer()) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "Right");
+					out.endBeginTag();
+					new LogoutTimerControl().write(context, out);
+					out.endTag(DIV);
+				}
+			}
 			out.endTag(DIV);
 
-			if (getConfig().getLogoutTimer()) {
-				out.beginBeginTag(DIV);
-				out.writeAttribute(CLASS_ATTR, "Right");
-				out.endBeginTag();
-				new LogoutTimerControl().write(context, out);
-				out.endTag(DIV);
-			}
-		}
-		out.endTag(DIV);
+			out.endTag(DIV);
 
 		out.endTag(DIV);
 	}

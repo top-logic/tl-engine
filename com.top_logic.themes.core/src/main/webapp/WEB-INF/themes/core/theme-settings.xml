@@ -21,7 +21,13 @@
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="36"
+		value="68"
+	/>
+	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
+	/>
+	<int name="MAINTAINANCE_BAR_HEIGHT"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
 	/>
 	<int name="TOOL_ROW_HEIGHT"
 		value="72"
@@ -29,17 +35,11 @@
 	<int name="MAIN_TAB_BAR_HEIGHT"
 		value="52"
 	/>
-	<int name="MAINTAINANCE_BAR_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
-	/>
-	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
-		value="48px"
-	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="40"
+		value="52"
 	/>
 	<size name="tabbar-height"
-		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px"
+		value="40px"
 	/>
 	<icon name="HEADER_RIGHT_IMAGE"
 		value="/images/appLogo.svg"
@@ -49,6 +49,9 @@
 	/>
 	<icon name="IMAGES_APP_LOGO_MINIMIZED"
 		expr="%IMAGES_APP_LOGO%"
+	/>
+	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
+		value="48px"
 	/>
 	<icon name="com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR"
 		value="css:bi bi-binoculars-fill"
@@ -86,6 +89,12 @@
 	/>
 	<boolean name="LOGOUT_TIMER"
 		value="true"
+	/>
+	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE"
+		value="0"
+	/>
+	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE"
+		value="16"
 	/>
 	<dim name="MC_TOGGLE_HEIGHT"
 		value="50px"

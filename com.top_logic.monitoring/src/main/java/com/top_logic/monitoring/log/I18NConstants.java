@@ -6,6 +6,7 @@
 package com.top_logic.monitoring.log;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -20,10 +21,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DUMP_LOG_LINE_TO_CONSOLE;
 
 	/** @en Failed to read the log file {0}. */
-	public static ResKey FAILED_TO_READ_FILE__NAME;
+	public static ResKey1 FAILED_TO_READ_FILE__NAME;
 
 	/** @en Failed to parse the log file {0}. */
-	public static ResKey FAILED_TO_PARSE_FILE__NAME;
+	public static ResKey1 FAILED_TO_PARSE_FILE__NAME;
 
 	/**
 	 * @en Failed to read log file {0}. The encoding {1} failed to parse the characters. The file

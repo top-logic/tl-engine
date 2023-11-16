@@ -243,8 +243,9 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 		try {
 			return separateEntriesUnsafe(logFile.getContent());
 		} catch (RuntimeException exception) {
-			ResKey uiMessage = I18NConstants.FAILED_TO_PARSE_FILE__NAME;
-			String logMessage = "Failed to split a log file into entries: " + logFile.getFileName();
+			String fileName = logFile.getFileName();
+			ResKey uiMessage = I18NConstants.FAILED_TO_PARSE_FILE__NAME.fill(fileName);
+			String logMessage = "Failed to split a log file into entries: " + fileName;
 			InfoService.logError(uiMessage, logMessage, exception, LogParser.class);
 			return List.of();
 		}

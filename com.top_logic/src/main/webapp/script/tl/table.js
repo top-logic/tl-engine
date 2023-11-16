@@ -1208,7 +1208,7 @@ TABLE = {
 		
 		var rowsFitInViewport = TABLE.getNumberOfRowsFitInViewport(ctrlID, tableInformer);
 		
-		if(TABLE.hasRowViewportRequest(clientDisplayData) && TABLE.hasRowViewportRequest(clientDisplayData) && currentFirstRowIndex <= requestedRangeOfRows.forcedVisibleIndexInRange && requestedRangeOfRows.forcedVisibleIndexInRange < currentFirstRowIndex + rowsFitInViewport) {
+		if(TABLE.hasRowViewportRequest(clientDisplayData) && TABLE.hasRowViewportState(clientDisplayData) && currentFirstRowIndex <= requestedRangeOfRows.forcedVisibleIndexInRange && requestedRangeOfRows.forcedVisibleIndexInRange < currentFirstRowIndex + rowsFitInViewport) {
 			if(requestedRangeOfRows.lastIndex < currentFirstRowIndex + numberOfRowsToRenderOnClient) {
 				return TABLE.createRangeOfRows(currentFirstRowIndex, requestedRangeOfRows.lastIndex);
 			} else {
@@ -1354,7 +1354,9 @@ TABLE = {
 			
 			rangeOfRowsToRender = TABLE.extendEvenlyRangeOfRowsToSize(tableInformer, rangeOfRowsToRender, TABLE.getNumberOfRowsToRender(ctrlID, tableInformer));
 			
-			TABLE.ensureEvenFirstRowIndexInRange(rangeOfRowsToRender);
+			if(rangeOfRowsToRender.firstRowIndex != tableInformer.rangeOfRowIndicesFitOnPage.firstRowIndex) {
+				TABLE.ensureEvenFirstRowIndexInRange(rangeOfRowsToRender);
+			}
 			
 			return rangeOfRowsToRender;
 		}

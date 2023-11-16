@@ -53,7 +53,10 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
+import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
+import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
 import com.top_logic.layout.form.values.Fields;
+import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -78,7 +81,35 @@ public class InternationalizationEditor implements Editor {
 
 	/**
 	 * Annotation for the method or type which is annotated with an
+	 * {@link InternationalizationEditor} to define, that always the values for all languages are
+	 * displayed.
+	 * 
+	 * <p>
+	 * The absence of this annotation means "display only the value for the session language in view
+	 * mode".
+	 * </p>
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	@Retention(RUNTIME)
+	@Target({ TYPE, METHOD })
+	@TagName("all-languages-in-view-mode")
+	public @interface AllLanguagesInViewMode {
+
+		/**
+		 * If <code>true</code>, then all languages are displayed also in view mode. Otherwise only
+		 * the value for the language of the current session is displayed.
+		 */
+		boolean value();
+	}
+
+	/**
+	 * Annotation for the method or type which is annotated with an
 	 * {@link InternationalizationEditor} to define whether derived resources can be edited.
+	 * 
+	 * <p>
+	 * The absence of this annotation means "edit also derived resources".
+	 * </p>
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -88,7 +119,7 @@ public class InternationalizationEditor implements Editor {
 	public @interface WithTooltipConfiguration {
 
 		/**
-		 * If <code>true</code> that not just the actual {@link ResKey} can be edited in an
+		 * If <code>true</code>, then not just the actual {@link ResKey} can be edited in an
 		 * {@link InternationalizationEditor}, but also the derived {@link ResKey}.
 		 */
 		boolean value();
@@ -101,7 +132,8 @@ public class InternationalizationEditor implements Editor {
 
 	private static final String DISPLAY_DERIVED_FIELD = "displayDerived";
 
-	private static TagTemplate templateDefinition(FormMember member, boolean initiallyCollapsed, List<String> languages,
+	private static com.top_logic.layout.form.template.ControlProvider templateDefinition(FormMember i18n,
+			FormMember currentLanguage, boolean initiallyCollapsed, List<String> languages,
 			List<String> additionals) {
 
 		TranslateButtonCP cp = new TranslateButtonCP(additionals);
@@ -127,11 +159,20 @@ public class InternationalizationEditor implements Editor {
 			}
 		}
 
-		return div(css(ITEM_CSS_CLASS),
+		TagTemplate editTemplate = div(css(ITEM_CSS_CLASS),
 			fieldsetBox(
 				span(css(ITEM_TITLE_CSS_CLASS), label(), span(css(TOOLBAR_CSS_CLASS), member(DISPLAY_DERIVED_FIELD))),
 				div(contentTemplates.toArray(new HTMLTemplateFragment[contentTemplates.size()])),
-				ConfigKey.field(member)).setInitiallyCollapsed(initiallyCollapsed));
+				ConfigKey.field(i18n)).setInitiallyCollapsed(initiallyCollapsed));
+		if (currentLanguage == null) {
+			return new TemplateControlProvider(editTemplate, DefaultFormFieldControlProvider.INSTANCE);
+		} else {
+			HTMLTemplateFragment viewTemplate = member(currentLanguage,
+				descriptionBox(fragment(labelWithColon(".."), error()), self()));
+			Value<Boolean> immutableValue = isImmutable(i18n);
+			return new SwitchingTemplateCP(immutableValue, viewTemplate, editTemplate);
+		}
+
 	}
 
 	/**
@@ -156,7 +197,9 @@ public class InternationalizationEditor implements Editor {
 		List<String> languages = new ArrayList<>();
 		List<StringField> suffixMembers = new ArrayList<>();
 
-		for (Locale locale : Resources.getInstance().getSupportedLocalesInDisplayOrder()) {
+		String currentLanguage = Resources.getCurrentLocale().getLanguage();
+		FormMember currentLanguageMember = null;
+		for (Locale locale : resources.getSupportedLocalesInDisplayOrder()) {
 			String language = locale.getLanguage();
 			languages.add(language);
 			
@@ -165,6 +208,9 @@ public class InternationalizationEditor implements Editor {
 			input.set(LOCALE, locale);
 			input.setLabel(translateLanguageName(resources, locale));
 			group.addMember(input);
+			if (currentLanguage.equals(language)) {
+				currentLanguageMember = input;
+			}
 			
 			for (String keySuffix : suffixes) {
 				StringField suffixField = FormFactory.newStringField(suffixFieldName(language, keySuffix));
@@ -184,19 +230,33 @@ public class InternationalizationEditor implements Editor {
 		binding.bind();
 
 		displayDerivedCommand(group, suffixMembers);
+		if (allValuesInViewMode(editorFactory, model)) {
+			// null member ensures that always all languages are displayed.
+			currentLanguageMember = null;
+		}
 
-		template(group, templateDefinition(group, minimized, languages, suffixes));
+		group.setControlProvider(templateDefinition(group, currentLanguageMember, minimized, languages, suffixes));
 
 		return group;
 	}
 
 	private Map<String, ResKey> getDerivedResourceDefinition(EditorFactory editorFactory, ValueModel model) {
-		WithTooltipConfiguration annotation =
-			editorFactory.getAnnotation(model.getProperty(), WithTooltipConfiguration.class);
-		if (annotation != null && !annotation.value()) {
+		if (!withTooltipConfiguration(editorFactory, model)) {
 			return Collections.emptyMap();
 		}
 		return Collections.singletonMap(ResKey.TOOLTIP.substring(1), I18NConstants.DERIVED_RESOURCE_TOOLTIP);
+	}
+
+	private boolean withTooltipConfiguration(EditorFactory editorFactory, ValueModel model) {
+		WithTooltipConfiguration annotation =
+			editorFactory.getAnnotation(model.getProperty(), WithTooltipConfiguration.class);
+		return annotation == null || annotation.value();
+	}
+
+	private boolean allValuesInViewMode(EditorFactory editorFactory, ValueModel model) {
+		AllLanguagesInViewMode annotation =
+			editorFactory.getAnnotation(model.getProperty(), AllLanguagesInViewMode.class);
+		return annotation != null && annotation.value();
 	}
 
 	static String suffixFieldName(String language, String keySuffix) {

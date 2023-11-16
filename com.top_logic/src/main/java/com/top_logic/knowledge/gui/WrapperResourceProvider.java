@@ -5,7 +5,9 @@
  */
 package com.top_logic.knowledge.gui;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.layout.ResourceProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
@@ -80,8 +82,15 @@ public class WrapperResourceProvider extends AbstractTLItemResourceProvider {
 
 	private String getValue(TLObject object, TLStructuredTypePart part) {
 		Object value = object.tValue(part);
+		if (value == null) {
+			return StringServices.EMPTY_STRING;
+		}
+		if (value instanceof CharSequence) {
+			return ((CharSequence) value).toString();
+		}
 
-		return value == null ? "" : value.toString();
+		/* Value may be a complex object, e.g. a ResKey. */
+		return MetaResourceProvider.INSTANCE.getLabel(value);
 	}
 
 }

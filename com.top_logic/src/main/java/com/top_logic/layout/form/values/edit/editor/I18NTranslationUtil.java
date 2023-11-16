@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.form.values.edit.editor;
 
-import java.util.Iterator;
 import java.util.Locale;
 
 import com.top_logic.basic.StringServices;
@@ -124,7 +123,7 @@ public class I18NTranslationUtil {
 	/**
 	 * Creates a {@link ButtonControl} for a {@link #getTranslateCommand translation command}.
 	 */
-	public static ButtonControl getTranslateControl(FormField field, Iterator<? extends FormField> languageFields,
+	public static ButtonControl getTranslateControl(FormField field, Iterable<? extends FormField> languageFields,
 			FieldTranslator translator) {
 		CommandModel command = getTranslateCommand(field, languageFields, translator);
 		ButtonControl button = new ButtonControl(command);
@@ -137,7 +136,7 @@ public class I18NTranslationUtil {
 	 * value of a specified {@link #getSourceField source I18N-field} from the given language
 	 * fields.
 	 */
-	public static CommandModel getTranslateCommand(FormField targetField, Iterator<? extends FormField> languageFields,
+	public static CommandModel getTranslateCommand(FormField targetField, Iterable<? extends FormField> languageFields,
 			FieldTranslator translator) {
 		CommandModel command = new AbstractCommandModel() {
 			@Override
@@ -176,10 +175,9 @@ public class I18NTranslationUtil {
 	 * 
 	 * @see #getLocaleFromField(FormField)
 	 */
-	public static FormField getSourceField(Iterator<? extends FormField> languageFields) {
+	public static FormField getSourceField(Iterable<? extends FormField> languageFields) {
 		Locale sourceLanguage = getSourceLanguage();
-		while (languageFields.hasNext()) {
-			FormField field = languageFields.next();
+		for (FormField field : languageFields) {
 			Locale fieldLanguage = I18NTranslationUtil.getLocaleFromField(field);
 			if (I18NTranslationUtil.equalLanguage(fieldLanguage, sourceLanguage)) {
 				return field;

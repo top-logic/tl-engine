@@ -102,10 +102,8 @@ public class IconInputControl extends AbstractFormFieldControl {
 	 * 
 	 * @see #getCommand(String)
 	 */
-	public static final Map<?, ?> ICON_CHOOSER_COMMANDS = createCommandMap(TextInputControl.COMMANDS,
-		new ControlCommand[] {
-			new OpenIconChooserCommand()
-		});
+	public static final Map<String, ControlCommand> ICON_CHOOSER_COMMANDS =
+		createCommandMap(TextInputControl.COMMANDS, new OpenIconChooserCommand());
 
 	@Override
 	protected String getTypeCssClass() {

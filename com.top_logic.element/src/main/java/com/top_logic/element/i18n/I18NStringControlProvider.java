@@ -81,7 +81,7 @@ public class I18NStringControlProvider implements ControlProvider {
 			block.addChild(new ErrorControl(field, true));
 			if (TranslationService.isActive()) {
 				if (!I18NTranslationUtil.isSourceField(field)) {
-					block.addChild(I18NTranslationUtil.getTranslateControl(field, languageFields.iterator(),
+					block.addChild(I18NTranslationUtil.getTranslateControl(field, languageFields,
 						StringValuedFieldTranslator.INSTANCE));
 				}
 			}

@@ -58,7 +58,7 @@ public class I18NStructuredTextControlProvider implements ControlProvider {
 			block.addChild(StructuredTextControlProvider.INSTANCE.createControl(field, style));
 			block.addChild(new ErrorControl(field, true));
 			if (!I18NTranslationUtil.isSourceField(field)) {
-				block.addChild(I18NTranslationUtil.getTranslateControl(field, languageFields.iterator(),
+				block.addChild(I18NTranslationUtil.getTranslateControl(field, languageFields,
 					StructuredTextFieldTranslator.INSTANCE));
 			}
 		}

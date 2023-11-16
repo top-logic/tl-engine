@@ -367,7 +367,7 @@ public class InternationalizationEditor implements Editor {
 				return null;
 			}
 
-			return I18NTranslationUtil.getTranslateControl(field, member.getParent().getFields(),
+			return I18NTranslationUtil.getTranslateControl(field, member.getParent()::getFields,
 				new MultiFieldTranslator(_additionals));
 		}
 

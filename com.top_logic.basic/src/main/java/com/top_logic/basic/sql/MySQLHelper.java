@@ -461,20 +461,14 @@ public class MySQLHelper extends DBHelper {
         return super.canRetry(sqlX);
     }
     
-    /**
-     * @see com.top_logic.basic.sql.DBHelper#analyzeTable(java.sql.Statement, java.lang.String)
-     */
     @Override
-    public void analyzeTable(Statement aStmt, String aTableName) throws SQLException {
-        aStmt.execute("ANALYZE TABLE " + aTableName);
+	public void analyzeTable(Statement aStmt, String tableName) throws SQLException {
+		aStmt.execute("ANALYZE TABLE " + tableRef(tableName));
     }
 
-    /**
-     * @see com.top_logic.basic.sql.DBHelper#analyzeTable(java.sql.Statement, java.lang.String)
-     */
     @Override
-    public void optimizeTable(Statement aStmt, String aTableName) throws SQLException {
-        aStmt.execute("OPTIMIZE TABLE " + aTableName);
+	public void optimizeTable(Statement aStmt, String tableName) throws SQLException {
+		aStmt.execute("OPTIMIZE TABLE " + tableRef(tableName));
     }
 
     @Override
@@ -482,6 +476,11 @@ public class MySQLHelper extends DBHelper {
 		return '`' + columnName + '`';
 	}
 	
+	@Override
+	public String tableRef(String tableName) {
+		return '`' + tableName + '`';
+	}
+
 	@Override
 	public boolean supportsDistinctLob() {
 		return true;

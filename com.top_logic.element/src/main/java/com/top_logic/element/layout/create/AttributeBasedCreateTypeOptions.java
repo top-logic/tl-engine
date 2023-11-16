@@ -5,12 +5,14 @@
  */
 package com.top_logic.element.layout.create;
 
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.basic.util.Utils.*;
 import static com.top_logic.model.util.TLModelUtil.*;
 
 import java.util.List;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -20,7 +22,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.layout.basic.LabelSorter;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -31,8 +35,10 @@ import com.top_logic.model.util.AllReferenceAttributes;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
- * {@link CreateTypeOptions} that computes the {@link TLClass TLClasses} that can be stored in a
+ * {@link CreateTypeOptions} that computes the {@link TLClass TLClasses} that are subtypes of a
  * given attribute.
+ * 
+ * @tooltip Use the types that are subtypes of the type of a given attribute.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
@@ -50,7 +56,7 @@ public class AttributeBasedCreateTypeOptions
 		/** Property name of {@link #getAttribute()}. */
 		String ATTRIBUTE = "attribute";
 
-		/** The owner of the {@link #getAttribute() attribute}. */
+		/** The type on which the {@link #getAttribute() attribute} is defined. */
 		@Mandatory
 		@Name(OWNER)
 		TLModelPartRef getOwner();
@@ -63,11 +69,14 @@ public class AttributeBasedCreateTypeOptions
 
 	}
 
+	private final TLClass _attributeOwner;
+
 	private final TLStructuredTypePart _attribute;
 
 	/** {@link TypedConfiguration} constructor for {@link AttributeBasedCreateTypeOptions}. */
-	public AttributeBasedCreateTypeOptions(InstantiationContext context, Config config) {
+	public AttributeBasedCreateTypeOptions(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+		_attributeOwner = getConfig().getOwner().resolveClass();
 		_attribute = resolveAttribute(context, config);
 	}
 
@@ -93,6 +102,9 @@ public class AttributeBasedCreateTypeOptions
 		if (!(contextType instanceof TLClass)) {
 			return false;
 		}
+		if (!isCompatibleType(getAttributeOwner(), contextType)) {
+			return false;
+		}
 		/* Resolve the attribute on the concrete context model, as the context model can be an
 		 * instance of a subtype which overrides the attribute and specializes the type. */
 		TLStructuredTypePart subtypeAttribute = contextType.getPart(getAttribute().getName());
@@ -115,7 +127,13 @@ public class AttributeBasedCreateTypeOptions
 			return List.of();
 		}
 		TLClass attributeType = resolveAttributeTypeOnModel(contextModel);
-		return List.copyOf(getConcreteSpecializations(attributeType));
+		List<TLClass> result = list(getConcreteSpecializations(attributeType));
+		LabelSorter.sortByLabelInline(result, MetaLabelProvider.INSTANCE);
+		return result;
+	}
+
+	private TLClass getAttributeOwner() {
+		return _attributeOwner;
 	}
 
 	private TLStructuredTypePart getAttribute() {

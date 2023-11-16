@@ -1115,6 +1115,7 @@ div.fltButtons button {
 .defaultFilterContainer .cPopupSelect,
 .defaultFilterContainer .cTextSelect,
 .defaultFilterContainer .cExpandableTextInput,
+.defaultFilterContainer .cTextWithButton,
 .defaultFilterContainer .cTextInput,
 .defaultFilterContainer .cDatetime,
 .defaultFilterContainer .cDateInput,
@@ -1421,6 +1422,7 @@ table td span.cDatetime,
 table td span.cTimeInput,
 table td span.cTextPopup,
 table td span.cExpandableTextInput,
+table td span.cTextWithButton,
 table td span.cTextInput,
 table td .cDataItem,
 table td span.downloadControl {
@@ -1704,12 +1706,6 @@ div.fptIconBar {
 /* =============================================== */
 /* ====== Control styles (prefix is 'c')     ===== */
 /* =============================================== */
-
-/* AbstractButtonControl */
-span.cButton {
-	/* Make the span get the height of the contained image to allow placing popups below the image without overlap. */
-	display: inline-block;
-}
 
 .cButton input.appended {
 	margin-left: 3px;
@@ -5361,6 +5357,8 @@ span.configuredTooltipLabel {
 .dfContent span.cDropdownSelect::after,
 .dfContent span.cExpandableTextInput::before,
 .dfContent span.cExpandableTextInput::after,
+.dfContent span.cTextWithButton::before,
+.dfContent span.cTextWithButton::after,
 .dfContent span.cTextInput::before,
 .dfContent span.cTextInput::after,
 .dfContent span.cButton::before,
@@ -6480,6 +6478,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cPopupSelect.active,
 .cPopupSelect.disabled,
 .cExpandableTextInput.active,
+.cTextWithButton.active,
 .cIntegerInput.active,
 .cBlockTextInput.active {
 	display: flex;
@@ -6491,6 +6490,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .cPopupSelect.active > .lFlexible,
 .cExpandableTextInput.active > .lFlexible,
+.cTextWithButton.active > .lFlexible,
 .cIntegerInput.active > .lFlexible,
 .cBlockTextInput.active > .lFlexible  {
 	display: contents;
@@ -6502,6 +6502,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cIntegerInput .is-input:not([size]),
 .cExpandableTextInput .lFlexible,
 .cExpandableTextInput .is-input:not([size]),
+.cTextWithButton .lFlexible,
+.cTextWithButton .is-input:not([size]),
 .cTextInput:not(.searchIrrelevant) .is-input:not([size]),
 .cBlockTextInput .lFlexible,
 .cBlockTextInput .is-input:not([size]),
@@ -6513,6 +6515,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cPopupSelect .is-popup,
 .cIntegerInput .is-input,
 .cExpandableTextInput .is-input,
+.cTextWithButton .is-input,
 .cTextInput .is-input,
 .cBlockTextInput .is-input {
 	min-width: 20px;

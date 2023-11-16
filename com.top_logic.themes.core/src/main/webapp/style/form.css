@@ -1529,6 +1529,7 @@ div.cal_zoom_inAnimation {
 
 .cDecoratedCell,
 .cExpandableTextInput,
+.cTextWithButton,
 .cBlockTextInput {
 	display: inline-flex;
 }
@@ -1549,7 +1550,8 @@ div.cal_zoom_inAnimation {
 }
 
 .cBlockTextInput .lFixedRight a:not(.lFlexible),
-.cExpandableTextInput .lFixedRight a:not(.lFlexible) {
+.cExpandableTextInput .lFixedRight a:not(.lFlexible),
+.cTextWithButton .lFixedRight a:not(.lFlexible) {
 	height: inherit;
 }
 
@@ -1630,6 +1632,7 @@ span.cIconSelect .input-image.cannot-edit i {
 .cTextInput input,
 .cIntegerInput.num input,
 .cExpandableTextInput input,
+.cTextWithButton input,
 .cBlockTextInput input,
 .cPopupSelect input,
 .cDateInput input,
@@ -1652,6 +1655,7 @@ span.cIconSelect .input-image.cannot-edit i {
 
 .cTextInput textarea,
 .cExpandableTextInput textarea, 
+.cTextWithButton textarea, 
 .cBlockTextInput textarea {
 	color: var(--text-primary);
 	background: var(--field);
@@ -1675,6 +1679,8 @@ span.cIconSelect .input-image.cannot-edit i {
 .cTextInput textarea::placeholder,
 .cExpandableTextInput input::placeholder,
 .cExpandableTextInput textarea::placeholder,
+.cTextWithButton input::placeholder,
+.cTextWithButton textarea::placeholder,
 .cBlockTextInput input::placeholder,
 .cBlockTextInput textarea::placeholder,
 .cPopupSelect input::placeholder {
@@ -1831,6 +1837,8 @@ textarea:focus,
 .cIntegerInput.num.disabled input,
 .cExpandableTextInput.disabled input,
 .cExpandableTextInput.disabled textarea,
+.cTextWithButton.disabled input,
+.cTextWithButton.disabled textarea,
 .cBlockTextInput.disabled input,
 .cBlockTextInput.disabled textarea,
 .cPopupSelect.disabled input,
@@ -1844,6 +1852,8 @@ textarea:focus,
 .cTextInput.disabled textarea::placeholder,
 .cExpandableTextInput.disabled input:placeholder,
 .cExpandableTextInput.disabled textarea::placeholder,
+.cTextWithButton.disabled input:placeholder,
+.cTextWithButton.disabled textarea::placeholder,
 .cBlockTextInput.disabled input:placeholder,
 .cBlockTextInput.disabled textarea::placeholder,
 .cPopupSelect.disabled input::placeholder {
@@ -1889,6 +1899,8 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 .cIntegerInput .is-input:not([size]), 
 .cExpandableTextInput .lFlexible, 
 .cExpandableTextInput .is-input:not([size]), 
+.cTextWithButton .lFlexible, 
+.cTextWithButton .is-input:not([size]), 
 .cTextInput:not(.searchIrrelevant) .is-input:not([size]), 
 .cBlockTextInput .lFlexible, 
 .cBlockTextInput .is-input:not([size]), 
@@ -1898,6 +1910,7 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 }
 
 .cExpandableTextInput .lFlexible,
+.cTextWithButton .lFlexible,
 .cBlockTextInput .lFlexible {
 	display: inline-flex
 }

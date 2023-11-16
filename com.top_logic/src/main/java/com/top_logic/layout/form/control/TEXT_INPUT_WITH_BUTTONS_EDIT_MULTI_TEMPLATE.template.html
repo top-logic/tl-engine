@@ -3,7 +3,8 @@
 		<textarea id="{inputId}" name="{inputId}"
 			cols="{columns > 0 ? columns}" rows="{rows > 0 ? rows}" disabled="{disabled}" class="is-input"
 			style="{inputStyle}" placeholder="{placeholder}" autocomplete="off"
-			tabindex="{tabindex}" onchange="{onchange}"
+			tabindex="{tabindex}" onchange="{onchange}" onfocus="{onfocus}"
+			oninput="{oninput}" onblur="{onblur}"
 		>{value}</textarea>
 	</div>
 	<span class="lFixedRight">{buttons}</span>

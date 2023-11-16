@@ -210,10 +210,14 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 	}
 
 	@Override
-    protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+	protected void attachRevalidated() {
+		super.attachRevalidated();
 		updateMinMaxLength();
+	}
 
-		if (multiLine) {
+	@Override
+    protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+		if (isMultiLine()) {
 			Icons.TEXT_INPUT_EDIT_MULTI_TEMPLATE.get().write(context, out, this);
 		} else {
 			Icons.TEXT_INPUT_EDIT_SINGLE_TEMPLATE.get().write(context, out, this);
@@ -373,7 +377,7 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 
 	@Override
     protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
-		if (multiLine) {
+		if (isMultiLine()) {
 			Icons.TEXT_INPUT_IMMUTABLE_MULTI_TEMPLATE.get().write(context, out, this);
 		} else {
 			Icons.TEXT_INPUT_IMMUTABLE_SINGLE_TEMPLATE.get().write(context, out, this);
@@ -410,7 +414,7 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 		if (this.maxLengthShown > -1 && (value.length() >= this.maxLengthShown)) {
 			value = StringServices.minimizeString(value, maxLengthShown, maxLengthShown - 3);
 		}
-		if (multiLine) {
+		if (isMultiLine()) {
 			writeMultiLineTextContent(out, value);
 		} else {
 			writeValueText(out, value);

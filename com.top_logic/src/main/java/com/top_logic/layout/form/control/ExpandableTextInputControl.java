@@ -16,7 +16,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.CollapsedListener;
 import com.top_logic.layout.form.Collapsible;
@@ -103,9 +102,9 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 			Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE.get().write(context, out, this);
 		}
 	}
-    
-	@TemplateVariable("buttons")
-	public void writeToggleModeButton(DisplayContext context, TagWriter out) throws IOException {
+
+	@Override
+	public void writeButtons(DisplayContext context, TagWriter out) throws IOException {
 		String anId = getOpenButtonID();
 		ControlCommand aCommand = getToggleFieldModeCommand();
 

@@ -49,7 +49,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Design form
 	 * 
-	 * @tooltip Opens the form designer for the type of the object currently displayed.
+	 * @tooltip Opens the form editor for the type of the object currently displayed.
 	 *          <p>
 	 *          If the displayed object's type has already a form definition, it is edited.
 	 *          Otherwise, a new form definition for the displayed object's type is created.

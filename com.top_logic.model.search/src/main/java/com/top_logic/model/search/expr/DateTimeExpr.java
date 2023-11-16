@@ -33,22 +33,22 @@ public class DateTimeExpr extends GenericMethod {
 	/**
 	 * Creates a {@link DateTimeExpr}.
 	 */
-	protected DateTimeExpr(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected DateTimeExpr(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DateTimeExpr(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DateTimeExpr(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.DATE_TIME_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Calendar calendar = CalendarUtil.createCalendarInUserTimeZone();
 		setCalendarParts(this, calendar, arguments);
 		return calendar.getTime();
@@ -95,14 +95,10 @@ public class DateTimeExpr extends GenericMethod {
 		}
 
 		@Override
-		public DateTimeExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DateTimeExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new DateTimeExpr(getName(), self, args);
+			return new DateTimeExpr(getName(), args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 }

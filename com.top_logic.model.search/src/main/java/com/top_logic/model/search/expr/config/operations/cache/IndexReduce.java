@@ -37,26 +37,26 @@ public class IndexReduce extends GenericMethod {
 	/**
 	 * Creates a {@link IndexReduce}.
 	 */
-	protected IndexReduce(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected IndexReduce(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new IndexReduce(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new IndexReduce(getName(), arguments);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Collection<?> source = asCollection(self);
-		SearchExpression fun = asSearchExpression(arguments[0]);
-		Object unit = arguments[1];
-		SearchExpression reduce = asSearchExpression(arguments[2]);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Collection<?> source = asCollection(arguments[0]);
+		SearchExpression fun = asSearchExpression(arguments[1]);
+		Object unit = arguments[2];
+		SearchExpression reduce = asSearchExpression(arguments[3]);
 
 		Map<Object, Object> result = new LinkedHashMap<>();
 		for (Object obj : source) {
@@ -86,11 +86,11 @@ public class IndexReduce extends GenericMethod {
 		}
 
 		@Override
-		public IndexReduce build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public IndexReduce build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 3);
-			checkMaxArgs(expr, args, 3);
-			return new IndexReduce(getConfig().getName(), self, args);
+			checkArgs(expr, args, 4, 4);
+			return new IndexReduce(getConfig().getName(), args);
 		}
+
 	}
 }

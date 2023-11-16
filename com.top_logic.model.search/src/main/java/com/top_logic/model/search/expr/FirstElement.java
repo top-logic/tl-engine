@@ -24,17 +24,17 @@ public class FirstElement extends AbstractListAccess {
 	/**
 	 * Creates a {@link FirstElement}.
 	 */
-	protected FirstElement(SearchExpression self, SearchExpression[] arguments) {
-		super("firstElement", self, arguments);
+	protected FirstElement(SearchExpression[] arguments) {
+		super("firstElement", arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new FirstElement(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return SearchExpressionFactory.firstElement(arguments);
 	}
 
 	@Override
-	protected Object evalOnEmpty() {
+	protected Object evalOnEmpty(Object[] arguments) {
 		return null;
 	}
 
@@ -65,10 +65,10 @@ public class FirstElement extends AbstractListAccess {
 		}
 
 		@Override
-		public FirstElement build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public FirstElement build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return SearchExpressionFactory.firstElement(self);
+			checkSingleArg(expr, args);
+			return SearchExpressionFactory.firstElement(args);
 		}
 
 	}

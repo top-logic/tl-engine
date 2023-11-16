@@ -38,27 +38,27 @@ public class PDFExportFunction extends GenericMethod {
 	/**
 	 * Creates a {@link PDFExportFunction}.
 	 */
-	protected PDFExportFunction(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected PDFExportFunction(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new PDFExportFunction(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new PDFExportFunction(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLCore.getPrimitiveType(ModelService.getInstance().getModel(), Kind.BINARY);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLObject exportObject = asTLObject(self);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		TLObject exportObject = asTLObject(arguments[0]);
 		if (exportObject == null) {
 			return null;
 		}
-		String name = asString(arguments[0]);
+		String name = asString(arguments[1]);
 
 		return new PDFData(name, exportObject);
 	}
@@ -69,6 +69,7 @@ public class PDFExportFunction extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<PDFExportFunction> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("input")
 			.optional("name", "export.pdf")
 			.build();
 
@@ -80,15 +81,16 @@ public class PDFExportFunction extends GenericMethod {
 		}
 
 		@Override
-		public PDFExportFunction build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public PDFExportFunction build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new PDFExportFunction(getName(), self, args);
+			return new PDFExportFunction(getName(), args);
 		}
 
 		@Override
 		public ArgumentDescriptor descriptor() {
 			return DESCRIPTOR;
 		}
+
 	}
 
 }

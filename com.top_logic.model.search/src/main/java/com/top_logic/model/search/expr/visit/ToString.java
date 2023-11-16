@@ -232,11 +232,6 @@ public class ToString implements Visitor<Void, StringBuilder> {
 
 	@Override
 	public Void visitGenericMethod(GenericMethod expr, StringBuilder out) {
-		SearchExpression self = expr.getSelf();
-		if (self != null) {
-			self.visit(this, out);
-			out.append(".");
-		}
 		operation(out, expr.getName(), expr.getArguments());
 		return none();
 	}

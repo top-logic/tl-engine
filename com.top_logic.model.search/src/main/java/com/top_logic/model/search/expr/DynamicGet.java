@@ -28,31 +28,31 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 	/**
 	 * Creates a new {@link DynamicGet}.
 	 */
-	public DynamicGet(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public DynamicGet(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DynamicGet(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DynamicGet(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		/* Unable to determine type of this method statically, because it depends on the type of the
 		 * TLStructureTypePart to get value for. */
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object arg0 = arguments[0];
-		if (arg0 == null) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Object arg1 = arguments[1];
+		if (arg1 == null) {
 			// Not yet set
 			return null;
 		}
-		TLStructuredTypePart part = asTypePart(getArguments()[0], arg0);
-		return evalPotentialFlatMap(definitions, self, part);
+		TLStructuredTypePart part = asTypePart(getArguments()[1], arg1);
+		return evalPotentialFlatMap(definitions, arguments[0], part);
 	}
 
 	/**
@@ -79,11 +79,12 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 		}
 
 		@Override
-		public DynamicGet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicGet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
-			return new DynamicGet(getConfig().getName(), self, args);
+			checkTwoArgs(expr, args);
+			return new DynamicGet(getConfig().getName(), args);
 		}
+
 	}
 
 }

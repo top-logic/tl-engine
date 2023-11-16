@@ -22,7 +22,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class StringStartsWithBuilder extends TwoArgOptionalBooleanMethodBuilder<IfElse> {
+public class StringStartsWithBuilder extends ThreeArgsOptionalBooleanMethodBuilder<IfElse> {
 
 	/**
 	 * Creates a {@link StringStartsWithBuilder}.
@@ -31,10 +31,9 @@ public class StringStartsWithBuilder extends TwoArgOptionalBooleanMethodBuilder<
 		super(context, config);
 	}
 
-	@Override
-	protected IfElse internalBuild(Expr expr, SearchExpression self, SearchExpression arg1,
-			SearchExpression arg2) {
-		return ifElse(arg2, stringStartsWith(self, arg1, true), stringStartsWith(copy(self), copy(arg1), false));
+	@Override IfElse internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
+			SearchExpression arg2, SearchExpression[] allArgs) {
+		return ifElse(arg2, stringStartsWith(arg0, arg1, true), stringStartsWith(copy(arg0), copy(arg1), false));
 	}
 
 }

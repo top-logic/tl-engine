@@ -11,10 +11,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.Argument;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.AbstractMethod;
+import com.top_logic.model.search.expr.config.dom.Expr.Method;
 
 /**
- * Plugin into the search expression evaluation engine that translates {@link AbstractMethod}
+ * Plugin into the search expression evaluation engine that translates {@link Method}
  * {@link Expr}s.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -30,21 +30,19 @@ public interface MethodBuilder<E extends SearchExpression> {
 	}
 
 	/**
-	 * Builds the implementation of the given {@link AbstractMethod}.
+	 * Builds the implementation of the given {@link Method}.
 	 *
 	 * @param expr
 	 *        The {@link Expr source expression} to translate (for error reporting only). If
 	 *        <code>null</code>, potential errors are are unusable.
-	 * @param self
-	 *        The translated target of the method call.
 	 * @param args
 	 *        The translated arguments to the method call.
 	 * @return The resulting {@link SearchExpression} for evaluation.
 	 * @throws ConfigurationException
 	 *         If the expression has errors.
 	 */
-	default E build(AbstractMethod expr, SearchExpression self, Argument[] args) throws ConfigurationException {
-		return build(expr, self, descriptor().unwrap(expr.getName(), args));
+	default E build(Method expr, Argument[] args) throws ConfigurationException {
+		return build(expr, descriptor().unwrap(expr.getName(), args));
 	}
 
 	/**
@@ -60,37 +58,20 @@ public interface MethodBuilder<E extends SearchExpression> {
 	}
 
 	/**
-	 * Builds the implementation of the given {@link AbstractMethod} with only positional arguments.
+	 * Builds the implementation of the given {@link Method} with only positional arguments.
 	 *
 	 * @param expr
 	 *        The {@link Expr source expression} to translate (for error reporting only). If
 	 *        <code>null</code>, potential errors are are unusable.
-	 * @param self
-	 *        The translated target of the method call.
 	 * @param args
 	 *        The translated arguments to the method call.
 	 * @return The resulting {@link SearchExpression} for evaluation.
 	 * @throws ConfigurationException
 	 *         If the expression has errors.
 	 * 
-	 * @see #build(AbstractMethod, SearchExpression, Argument[])
+	 * @see #build(Method, Argument[])
 	 */
-	E build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException;
-
-	/**
-	 * The "self" argument of a function is a special unnamed argument that represents the "main"
-	 * input to the function. A function with a self argument is normally written as
-	 * <code>$input.fun($opt1, ...., $optn)</code>, where <code>$input</code> represents the "self"
-	 * argument.
-	 * 
-	 * <p>
-	 * If this methd returns <code>true</code>, the <code>self</code> argument of
-	 * {@link #build(Expr, SearchExpression, SearchExpression[])} is filled.
-	 * </p>
-	 */
-	default boolean hasSelf() {
-		return true;
-	}
+	E build(Expr expr, SearchExpression[] args) throws ConfigurationException;
 
 	/**
 	 * The custom identifier for this builder that triggers its usage when instantiating generic

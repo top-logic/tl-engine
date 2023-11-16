@@ -49,10 +49,9 @@ final class TracingAccessRewriter extends Rewriter<Void> {
 	@Override
 	public SearchExpression visitGenericMethod(GenericMethod expr, Void arg) {
 		if (expr instanceof DynamicGet) {
-			SearchExpression self = descendPart(expr, arg, expr.getSelf());
 			List<SearchExpression> argumentsList = descendParts(expr, arg, expr.getArguments());
 			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
-			return new TracingDynamicGet(expr.getName(), self, arguments);
+			return new TracingDynamicGet(expr.getName(), null, arguments);
 		} else {
 			return super.visitGenericMethod(expr, arg);
 		}

@@ -29,24 +29,24 @@ public class EqualsUnversioned extends GenericMethod {
 	/**
 	 * Creates a {@link EqualsUnversioned}.
 	 */
-	protected EqualsUnversioned(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected EqualsUnversioned(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new EqualsUnversioned(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new EqualsUnversioned(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.BOOLEAN_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLObject first = asTLObject(self);
-		TLObject second = asTLObject(arguments[0]);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		TLObject first = asTLObject(arguments[0]);
+		TLObject second = asTLObject(arguments[1]);
 		return WrapperHistoryUtils.equalsUnversioned(first, second);
 	}
 
@@ -62,10 +62,11 @@ public class EqualsUnversioned extends GenericMethod {
 		}
 
 		@Override
-		public EqualsUnversioned build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public EqualsUnversioned build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
-			return new EqualsUnversioned(getConfig().getName(), self, args);
+			checkTwoArgs(expr, args);
+			return new EqualsUnversioned(getConfig().getName(), args);
 		}
+
 	}
 }

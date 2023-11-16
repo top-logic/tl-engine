@@ -26,24 +26,23 @@ public class Concat extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Concat}.
 	 */
-	protected Concat(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Concat(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Concat(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Concat(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		List<Object> result = new ArrayList<>();
-		add(result, self);
 		for (Object arg : arguments) {
 			add(result, arg);
 		}
@@ -72,9 +71,11 @@ public class Concat extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Concat build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Concat build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Concat("concat", self, args);
+			return new Concat("concat", args);
 		}
+
 	}
+
 }

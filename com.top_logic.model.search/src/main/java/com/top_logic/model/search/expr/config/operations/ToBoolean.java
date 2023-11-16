@@ -28,22 +28,22 @@ public class ToBoolean extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link ToBoolean}.
 	 */
-	protected ToBoolean(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToBoolean(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		return asBoolean(self);
+	public Object eval(Object[] arguments) {
+		return asBoolean(arguments[0]);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToBoolean(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToBoolean(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.BOOLEAN_TYPE);
 	}
 
@@ -60,11 +60,12 @@ public class ToBoolean extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToBoolean build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToBoolean build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToBoolean(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToBoolean(getConfig().getName(), args);
 		}
+
 	}
 
 }

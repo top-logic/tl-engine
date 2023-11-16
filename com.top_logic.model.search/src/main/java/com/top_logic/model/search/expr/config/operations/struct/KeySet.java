@@ -27,23 +27,23 @@ public class KeySet extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link KeySet}.
 	 */
-	protected KeySet(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected KeySet(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new KeySet(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new KeySet(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		return asMap(self).keySet();
+	public Object eval(Object[] arguments) {
+		return asMap(arguments[0]).keySet();
 	}
 
 	/**
@@ -58,11 +58,12 @@ public class KeySet extends SimpleGenericMethod {
 		}
 
 		@Override
-		public KeySet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public KeySet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new KeySet(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new KeySet(getConfig().getName(), args);
 		}
+
 	}
 
 }

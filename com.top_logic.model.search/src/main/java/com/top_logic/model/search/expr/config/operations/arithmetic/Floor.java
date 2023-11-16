@@ -27,23 +27,23 @@ public class Floor extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Floor}.
 	 */
-	protected Floor(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Floor(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Floor(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Floor(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		return Math.floor(asDouble(self));
+	public Object eval(Object[] arguments) {
+		return Math.floor(asDouble(arguments[0]));
 	}
 
 	/**
@@ -58,11 +58,12 @@ public class Floor extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Floor build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Floor build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new Floor(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new Floor(getConfig().getName(), args);
 		}
+
 	}
 
 }

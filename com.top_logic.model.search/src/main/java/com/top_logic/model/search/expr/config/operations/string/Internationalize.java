@@ -40,28 +40,28 @@ public class Internationalize extends GenericMethod {
 	/**
 	 * Creates a {@link Internationalize}.
 	 */
-	protected Internationalize(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Internationalize(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Internationalize(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Internationalize(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object inputArg = self;
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Object inputArg = arguments[0];
 		if (inputArg == null) {
 			return null;
 		}
 
-		boolean translate = asBoolean(arguments[1]);
+		boolean translate = asBoolean(arguments[2]);
 		if (inputArg instanceof Map) {
 			ResKey.Builder builder = ResKey.builder();
 			for (Entry<?, ?> entry : ((Map<?, ?>) inputArg).entrySet()) {
@@ -100,7 +100,7 @@ public class Internationalize extends GenericMethod {
 			return builder.build();
 		} else {
 			String text = asString(inputArg);
-			Object langArg = arguments[0];
+			Object langArg = arguments[1];
 
 			ResourcesModule resources = ResourcesModule.getInstance();
 			Locale lang = langArg == null ? resources.getDefaultLocale() : asLocale(langArg);
@@ -136,6 +136,7 @@ public class Internationalize extends GenericMethod {
 
 		/** Description of parameters for an {@link Internationalize}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("input")
 			.optional("sourceLang")
 			.optional("translate", false)
 			.build();
@@ -153,10 +154,11 @@ public class Internationalize extends GenericMethod {
 		}
 
 		@Override
-		public Internationalize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Internationalize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Internationalize(getConfig().getName(), self, args);
+			return new Internationalize(getConfig().getName(), args);
 		}
+
 	}
 
 }

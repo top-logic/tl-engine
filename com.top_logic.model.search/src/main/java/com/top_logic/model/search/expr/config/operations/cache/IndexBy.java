@@ -40,28 +40,28 @@ public class IndexBy extends GenericMethod {
 	/**
 	 * Creates a {@link IndexBy}.
 	 */
-	protected IndexBy(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected IndexBy(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new IndexBy(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new IndexBy(getName(), arguments);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Collection<?> source = asCollection(self);
-		SearchExpression fun = asSearchExpression(arguments[0]);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Collection<?> source = asCollection(arguments[0]);
+		SearchExpression fun = asSearchExpression(arguments[1]);
 
 		Map<Object, Object> result = new LinkedHashMap<>();
-		if (arguments.length >= 2) {
-			SearchExpression reduce = asSearchExpression(arguments[1]);
+		if (arguments.length >= 3) {
+			SearchExpression reduce = asSearchExpression(arguments[2]);
 
 			for (Object obj : source) {
 				Object key = fun.eval(definitions, obj);
@@ -104,11 +104,11 @@ public class IndexBy extends GenericMethod {
 		}
 
 		@Override
-		public IndexBy build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public IndexBy build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
-			return new IndexBy(getConfig().getName(), self, args);
+			checkArgs(expr, args, 2, 3);
+			return new IndexBy(getConfig().getName(), args);
 		}
+
 	}
 }

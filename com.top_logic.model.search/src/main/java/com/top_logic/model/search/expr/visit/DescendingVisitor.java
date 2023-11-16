@@ -136,14 +136,13 @@ public abstract class DescendingVisitor<R, A> extends AbstractDescendingVisitor<
 
 	@Override
 	public R visitGenericMethod(GenericMethod expr, A arg) {
-		return composeGenericMethod(expr, arg, descendPart(expr, arg, expr.getSelf()),
-			descendParts(expr, arg, expr.getArguments()));
+		return composeGenericMethod(expr, arg, descendParts(expr, arg, expr.getArguments()));
 	}
 
 	/**
 	 * Combines the visit results of {@link GenericMethod} contents.
 	 */
-	protected abstract R composeGenericMethod(GenericMethod expr, A arg, R baseResult, List<R> argumentsResult);
+	protected abstract R composeGenericMethod(GenericMethod expr, A arg, List<R> argumentsResult);
 
 	@Override
 	public R visitAnd(And expr, A arg) {

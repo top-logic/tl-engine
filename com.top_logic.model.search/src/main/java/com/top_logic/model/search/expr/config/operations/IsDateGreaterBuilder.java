@@ -19,7 +19,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IsDateGreaterBuilder extends SingleArgMethodBuilder<SearchExpression> {
+public class IsDateGreaterBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link IsDateGreaterBuilder}.
@@ -29,8 +29,8 @@ public class IsDateGreaterBuilder extends SingleArgMethodBuilder<SearchExpressio
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg) {
-		return SearchExpressions.isDateGreater(self, arg);
+	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
+		return SearchExpressions.isDateGreater(arg0, arg1);
 	}
 
 }

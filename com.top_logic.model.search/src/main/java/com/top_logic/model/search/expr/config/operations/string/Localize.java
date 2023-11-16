@@ -35,28 +35,28 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 	/**
 	 * Creates a {@link Localize} expression.
 	 */
-	protected Localize(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Localize(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Localize(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Localize(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, self, asLocale(arguments[0]));
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		return evalPotentialFlatMap(definitions, arguments[0], asLocale(arguments[1]));
 	}
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object base, Locale param) {
-		ResKey key = asResKeyNotNull(base, getSelf());
+		ResKey key = asResKeyNotNull(base, getArguments()[0]);
 
 		return Resources.getInstance(param).getString(key);
 	}
@@ -68,6 +68,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 
 		/** Description of parameters for a {@link Localize}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("input")
 			.optional("lang", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
 			.build();
 
@@ -84,9 +85,9 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 		}
 
 		@Override
-		public Localize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Localize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Localize(getConfig().getName(), self, args);
+			return new Localize(getConfig().getName(), args);
 		}
 	}
 

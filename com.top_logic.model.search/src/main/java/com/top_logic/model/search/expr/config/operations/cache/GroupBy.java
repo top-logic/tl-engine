@@ -37,24 +37,24 @@ public class GroupBy extends GenericMethod {
 	/**
 	 * Creates a {@link GroupBy}.
 	 */
-	protected GroupBy(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected GroupBy(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new GroupBy(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new GroupBy(getName(), arguments);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Collection<?> source = asCollection(self);
-		SearchExpression fun = asSearchExpression(arguments[0]);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Collection<?> source = asCollection(arguments[0]);
+		SearchExpression fun = asSearchExpression(arguments[1]);
 
 		Map<Object, List<Object>> result = new LinkedHashMap<>();
 		for (Object obj : source) {
@@ -67,8 +67,8 @@ public class GroupBy extends GenericMethod {
 			values.add(obj);
 		}
 
-		if (arguments.length >= 2) {
-			SearchExpression mapping = asSearchExpression(arguments[1]);
+		if (arguments.length >= 3) {
+			SearchExpression mapping = asSearchExpression(arguments[2]);
 
 			LinkedHashMap<Object, Object> mappedResult = new LinkedHashMap<>();
 			for (Entry<Object, List<Object>> entry : result.entrySet()) {
@@ -92,11 +92,11 @@ public class GroupBy extends GenericMethod {
 		}
 
 		@Override
-		public GroupBy build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public GroupBy build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
-			return new GroupBy(getConfig().getName(), self, args);
+			checkArgs(expr, args, 2, 3);
+			return new GroupBy(getConfig().getName(), args);
 		}
+
 	}
 }

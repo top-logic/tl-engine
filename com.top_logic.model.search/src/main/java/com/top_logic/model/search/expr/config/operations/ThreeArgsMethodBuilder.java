@@ -11,35 +11,33 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
- * {@link MethodBuilder} for methods with one single argument.
+ * {@link MethodBuilder} for methods with three arguments.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class SingleArgMethodBuilder<E extends SearchExpression> extends AbstractSimpleMethodBuilder<E> {
+public abstract class ThreeArgsMethodBuilder<E extends SearchExpression> extends AbstractSimpleMethodBuilder<E> {
 	/**
-	 * Creates a {@link SingleArgMethodBuilder}.
+	 * Creates a {@link ThreeArgsMethodBuilder}.
 	 */
-	public SingleArgMethodBuilder(InstantiationContext context, Config<?> config) {
+	public ThreeArgsMethodBuilder(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
 	@Override
 	public E build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
-		checkSingleArg(expr, args);
-		return internalBuild(expr, args[0], args);
+		checkThreeArgs(expr, args);
+		return internalBuild(expr, args[0], args[1], args[2], args);
 	}
 
 	/**
 	 * Implementation of {@link #build(Expr, SearchExpression[])}.
 	 * 
-	 * @param argument
-	 *        The single argument.
 	 * @param allArgs
-	 *        All arguments: An 1-size array containing exactly the given argument. This is just
+	 *        All arguments: A 3-size array containing exactly the given arguments. This is just
 	 *        delivered to avoid re-creating array where it is needed.
 	 */
-	protected abstract E internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs)
-			throws ConfigurationException;
+	protected abstract E internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression arg2,
+			SearchExpression[] allArgs) throws ConfigurationException;
 
 }

@@ -30,10 +30,10 @@ public class IfElseBuilder extends AbstractSimpleMethodBuilder<IfElse> {
 	}
 
 	@Override
-	public IfElse build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public IfElse build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
-		checkArgs(expr, args, 1, 2);
-		return ifElse(self, args[0], args.length >= 2 ? args[1] : literal(null));
+		checkArgs(expr, args, 2, 3);
+		return ifElse(args[0], args[1], args.length >= 3 ? args[2] : literal(null));
 	}
 
 }

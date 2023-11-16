@@ -63,9 +63,9 @@ final class ServiceMethodBuilder implements MethodBuilder<SearchExpression>, Fac
 	}
 
 	@Override
-	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public SearchExpression build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
-		return new RPCMethod(_handler, _name, self, args);
+		return new RPCMethod(_handler, _name, args);
 	}
 
 	@Override
@@ -74,12 +74,7 @@ final class ServiceMethodBuilder implements MethodBuilder<SearchExpression>, Fac
 		for (int n = 0; n < args.length; n++) {
 			args[n] = (SearchExpression) children[n];
 		}
-		return new RPCMethod(_handler, _name, null, args);
-	}
-
-	@Override
-	public boolean hasSelf() {
-		return false;
+		return new RPCMethod(_handler, _name, args);
 	}
 
 	@Override

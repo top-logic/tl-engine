@@ -221,11 +221,7 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 	@Override
 	public R visitGenericMethod(GenericMethod expr, A arg) {
 		SearchExpression[] arguments = expr.getArguments();
-		SearchExpression self = expr.getSelf();
-		List<R> partResults = newResult((self == null ? 0 : 1) + arguments.length);
-		if (self != null) {
-			partResults.add(descendPart(expr, arg, self));
-		}
+		List<R> partResults = newResult(arguments.length);
 		List<R> parts = descendParts(partResults, expr, arg, arguments);
 		return compose(expr, arg, parts);
 	}

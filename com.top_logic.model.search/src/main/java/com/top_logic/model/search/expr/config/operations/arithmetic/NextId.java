@@ -12,6 +12,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.element.structured.util.SequenceIdGenerator;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.db2.RowLevelLockingSequenceManager;
@@ -23,6 +24,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -41,18 +43,18 @@ public class NextId extends GenericMethod {
 	/**
 	 * Creates a {@link NextId}.
 	 */
-	protected NextId(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected NextId(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new NextId(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new NextId(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return TLModelUtil.findType(TypeSpec.DOUBLE_TYPE);
 	}
 
 	@Override
@@ -61,9 +63,8 @@ public class NextId extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		StringBuilder result = new StringBuilder("nextId");
-		SequenceIdGenerator.addNames(result, self);
 		for (Object arg : arguments) {
 			SequenceIdGenerator.addNames(result, arg);
 		}
@@ -96,10 +97,11 @@ public class NextId extends GenericMethod {
 		}
 
 		@Override
-		public NextId build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public NextId build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new NextId(getConfig().getName(), self, args);
+			return new NextId(getConfig().getName(), args);
 		}
+
 	}
 
 }

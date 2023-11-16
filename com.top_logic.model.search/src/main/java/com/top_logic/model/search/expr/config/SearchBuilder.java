@@ -60,7 +60,7 @@ import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.SearchExpressions;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.AbstractMethod;
+import com.top_logic.model.search.expr.config.dom.Expr.Method;
 import com.top_logic.model.search.expr.config.dom.Expr.Add;
 import com.top_logic.model.search.expr.config.dom.Expr.And;
 import com.top_logic.model.search.expr.config.dom.Expr.Apply;
@@ -80,7 +80,6 @@ import com.top_logic.model.search.expr.config.dom.Expr.Eq;
 import com.top_logic.model.search.expr.config.dom.Expr.False;
 import com.top_logic.model.search.expr.config.dom.Expr.Html;
 import com.top_logic.model.search.expr.config.dom.Expr.HtmlContent;
-import com.top_logic.model.search.expr.config.dom.Expr.Method;
 import com.top_logic.model.search.expr.config.dom.Expr.Mod;
 import com.top_logic.model.search.expr.config.dom.Expr.ModuleLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Mul;
@@ -95,7 +94,6 @@ import com.top_logic.model.search.expr.config.dom.Expr.ResKeyLiteral.LangStringC
 import com.top_logic.model.search.expr.config.dom.Expr.ResKeyReference;
 import com.top_logic.model.search.expr.config.dom.Expr.SingletonLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.StartTag;
-import com.top_logic.model.search.expr.config.dom.Expr.StaticMethod;
 import com.top_logic.model.search.expr.config.dom.Expr.StringLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Sub;
 import com.top_logic.model.search.expr.config.dom.Expr.TextContent;
@@ -575,35 +573,17 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 
 	@Override
 	public SearchExpression visit(Method expr, TLModel arg) throws ConfigurationException {
-		SearchExpression self = descend(expr.getSelf(), arg);
 		Argument[] args = descendArgs(expr.getArgs(), arg);
 
 		MethodBuilder<?> builder = getBuilder(expr);
-		return builder.build(expr, self, args);
+		return builder.build(expr, args);
 	}
 
 	private ConfigurationException error(String message) throws ConfigurationException {
 		throw new ConfigurationException(message);
 	}
 
-	@Override
-	public SearchExpression visit(StaticMethod expr, TLModel arg) throws ConfigurationException {
-		List<Arg> argExprs = expr.getArgs();
-
-		MethodBuilder<?> builder = getBuilder(expr);
-		SearchExpression self;
-		Argument[] args;
-		if (builder.hasSelf() && !argExprs.isEmpty() && argExprs.get(0).getName() == null) {
-			self = descend(argExprs.get(0).getValue(), arg);
-			args = descendExceptFirst(argExprs, arg);
-		} else {
-			self = null;
-			args = descendArgs(argExprs, arg);
-		}
-		return builder.build(expr, self, args);
-	}
-
-	private MethodBuilder<?> getBuilder(AbstractMethod expr) throws ConfigurationException {
+	private MethodBuilder<?> getBuilder(Method expr) throws ConfigurationException {
 		String methodName = expr.getName();
 		MethodBuilder<?> builder = getBuilder(methodName);
 		if (builder == null) {
@@ -762,26 +742,11 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 	
 		@Override
 		public Object create(Object type, Object[] children) {
-			SearchExpression self;
-			SearchExpression[] args;
-			if (_builder.hasSelf()) {
-				if (children.length > 0) {
-					self = asExpr(children[0]);
-					int argCnt = children.length - 1;
-					args = new SearchExpression[argCnt];
-					copy(children, 1, args, 0, argCnt);
-				} else {
-					self = null;
-					args = EMPTY_EXPR_ARRAY;
-				}
-			} else {
-				self = null;
-				int argCnt = children.length;
-				args = new SearchExpression[argCnt];
-				copy(children, 0, args, 0, argCnt);
-			}
+			int argCnt = children.length;
+			SearchExpression[] args = new SearchExpression[argCnt];
+			copy(children, 0, args, 0, argCnt);
 			try {
-				return _builder.build(null, self, args);
+				return _builder.build(null, args);
 			} catch (ConfigurationException ex) {
 				throw new ConfigurationError(ex);
 			}

@@ -12,7 +12,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.search.expr.Round;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
-import com.top_logic.model.search.expr.SearchExpressions;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
@@ -23,6 +22,12 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class RoundBuilder extends AbstractSimpleMethodBuilder<SearchExpression> {
+
+	private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+		.mandatory("value")
+		.optional("digits", 0)
+		.build();
+
 	/**
 	 * Creates a {@link RoundBuilder}.
 	 */
@@ -31,20 +36,14 @@ public class RoundBuilder extends AbstractSimpleMethodBuilder<SearchExpression> 
 	}
 
 	@Override
-	public SearchExpression build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public SearchExpression build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
-		return round(self, optionalPrecision(expr, args));
+		return round(args[0], args[1]);
 	}
 
-	private SearchExpression optionalPrecision(Expr expr, SearchExpression[] args)
-			throws ConfigurationException {
-		if (args.length > 1) {
-			throw error(I18NConstants.ERROR_AT_LEAST_ONE_ARGUMENT_EXPECTED__EXPR.fill(toString(expr)));
-		}
-		if (args.length == 0) {
-			return SearchExpressions.literal(SearchExpression.toNumber(0));
-		}
-		return args[0];
+	@Override
+	public ArgumentDescriptor descriptor() {
+		return DESCRIPTOR;
 	}
 
 }

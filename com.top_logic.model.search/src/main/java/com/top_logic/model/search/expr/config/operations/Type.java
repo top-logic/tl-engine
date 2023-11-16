@@ -33,23 +33,23 @@ public class Type extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Type}.
 	 */
-	protected Type(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Type(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Type(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Type(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TlModelFactory.getTLClassType();
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		TLObject object = asTLObject(self);
+	public Object eval(Object[] arguments) {
+		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
 			return object.tType();
 		} else {
@@ -69,10 +69,11 @@ public class Type extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Type build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Type build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new Type(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new Type(getConfig().getName(), args);
 		}
+
 	}
 }

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<web-app
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	ns1:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	xmlns:ns1="http://www.w3.org/2001/XMLSchema-instance"
+	metadata-complete="true"
+	version="3.0"
+>
+	<absolute-ordering>
+		<!-- Complete web.xml. -->
+	</absolute-ordering>
+	<display-name>Test-App-7.4.0</display-name>
+	<listener>
+		<listener-class>com.top_logic.demo.DemoStartStopListener</listener-class>
+	</listener>
+	<jsp-config>
+		<taglib>
+			<taglib-uri>meta</taglib-uri>
+			<taglib-location>/WEB-INF/tlds/meta.tld</taglib-location>
+		</taglib>
+	</jsp-config>
+	<filter>
+		<filter-name>Pac4jSecurityFilter</filter-name>
+		<filter-class>org.pac4j.jee.filter.SecurityFilter</filter-class>
+	</filter>
+	<filter>
+		<filter-name>Pac4jCallbackFilter</filter-name>
+		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>Pac4jSecurityFilter</filter-name>
+		<url-pattern>/servlet/openid</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Pac4jCallbackFilter</filter-name>
+		<url-pattern>/servlet/callback</url-pattern>
+	</filter-mapping>
+	<servlet>
+		<display-name>External authentication with the Pac4j library.</display-name>
+		<servlet-name>Pac4jAuthenticationServlet</servlet-name>
+		<servlet-class>com.top_logic.security.auth.pac4j.servlet.Pac4jAuthenticationServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>OpenApiServlet</servlet-name>
+		<servlet-class>com.top_logic.service.openapi.server.OpenApiServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Pac4jAuthenticationServlet</servlet-name>
+		<url-pattern>/servlet/openid</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>OpenApiServlet</servlet-name>
+		<url-pattern>/api/*</url-pattern>
+	</servlet-mapping>
+</web-app>

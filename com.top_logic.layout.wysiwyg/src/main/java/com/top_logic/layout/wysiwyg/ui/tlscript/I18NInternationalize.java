@@ -38,22 +38,22 @@ public class I18NInternationalize extends Internationalize {
 	/**
 	 * Creates a {@link I18NInternationalize}.
 	 */
-	protected I18NInternationalize(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected I18NInternationalize(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new I18NInternationalize(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new I18NInternationalize(getName(), arguments);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object inputArg = self;
-		boolean translate = asBoolean(arguments[1]);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Object inputArg = arguments[0];
+		boolean translate = asBoolean(arguments[2]);
 		if (inputArg instanceof StructuredText) {
 			StructuredText structuredText = (StructuredText) inputArg;
-			Object langArg = arguments[0];
+			Object langArg = arguments[1];
 
 			ResourcesModule resources = ResourcesModule.getInstance();
 			String sourceCode = structuredText.getSourceCode();
@@ -111,7 +111,7 @@ public class I18NInternationalize extends Internationalize {
 				return result;
 			}
 		}
-		return super.eval(self, arguments, definitions);
+		return super.eval(arguments, definitions);
 	}
 
 	/**
@@ -132,10 +132,11 @@ public class I18NInternationalize extends Internationalize {
 		}
 
 		@Override
-		public I18NInternationalize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public I18NInternationalize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new I18NInternationalize(getConfig().getName(), self, args);
+			return new I18NInternationalize(getConfig().getName(), args);
 		}
+
 	}
 
 }

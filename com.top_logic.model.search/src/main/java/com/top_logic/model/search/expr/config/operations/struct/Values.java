@@ -27,23 +27,23 @@ public class Values extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Values}.
 	 */
-	protected Values(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Values(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Values(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Values(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		return asMap(self).values();
+	public Object eval(Object[] arguments) {
+		return asMap(arguments[0]).values();
 	}
 
 	/**
@@ -58,11 +58,12 @@ public class Values extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Values build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Values build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new Values(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new Values(getConfig().getName(), args);
 		}
+
 	}
 
 }

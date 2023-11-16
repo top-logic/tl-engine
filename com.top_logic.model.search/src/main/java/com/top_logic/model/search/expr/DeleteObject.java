@@ -16,7 +16,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.operations.NoArgMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.SingleArgMethodBuilder;
 
 /**
  * {@link SearchExpression} creating a new object of a given {@link TLClass} type.
@@ -25,25 +25,20 @@ import com.top_logic.model.search.expr.config.operations.NoArgMethodBuilder;
  */
 public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<Void> {
 
-	private static final SearchExpression[] NO_ARGS = {};
-
 	/**
 	 * Creates a {@link DeleteObject}.
-	 *
-	 * @param self
-	 *        The expression evaluating to the type to instantiate (usually a model type literal).
 	 */
-	DeleteObject(String name, SearchExpression self) {
-		super(name, self, NO_ARGS);
+	DeleteObject(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DeleteObject(getName(), self);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DeleteObject(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -53,8 +48,8 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, self, null);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		return evalPotentialFlatMap(definitions, arguments[0], null);
 	}
 
 	@Override
@@ -76,7 +71,7 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	/**
 	 * Builder creating a {@link DeleteObject} expression.
 	 */
-	public static class Builder extends NoArgMethodBuilder<DeleteObject> {
+	public static class Builder extends SingleArgMethodBuilder<DeleteObject> {
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -85,9 +80,9 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 		}
 
 		@Override
-		protected DeleteObject internalBuild(Expr expr, SearchExpression self)
+		protected DeleteObject internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs)
 				throws ConfigurationException {
-			return new DeleteObject(getName(), self);
+			return new DeleteObject(getName(), allArgs);
 		}
 	}
 

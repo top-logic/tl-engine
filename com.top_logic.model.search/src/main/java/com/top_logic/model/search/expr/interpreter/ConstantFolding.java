@@ -71,8 +71,6 @@ public class ConstantFolding {
 		 */
 		public static final Fold INSTANCE = new Fold();
 
-		private static final SearchExpression[] NO_ARGS = {};
-
 		private Fold() {
 			// Singleton constructor.
 		}
@@ -167,7 +165,7 @@ public class ConstantFolding {
 					if (toBooleanBuilder == null) {
 						throw new IllegalStateException("Missing built-in method 'toBoolean'.");
 					}
-					return toBooleanBuilder.build(null, result, NO_ARGS);
+					return toBooleanBuilder.build(null, new SearchExpression[] { result });
 				} catch (ConfigurationException ex) {
 					throw new ConfigurationError(ex);
 				}
@@ -325,15 +323,12 @@ public class ConstantFolding {
 		}
 
 		@Override
-		protected SearchExpression composeGenericMethod(GenericMethod expr, Void arg, SearchExpression baseResult,
+		protected SearchExpression composeGenericMethod(GenericMethod expr, Void arg,
 				List<SearchExpression> argumentsResult) {
 			optimize:
 			if (expr instanceof SimpleGenericMethod) {
 				SimpleGenericMethod simpleExpr = (SimpleGenericMethod) expr;
 				if (!simpleExpr.isSideEffectFree()) {
-					break optimize;
-				}
-				if (!isLiteral(baseResult)) {
 					break optimize;
 				}
 				for (SearchExpression argExpr : argumentsResult) {
@@ -348,12 +343,11 @@ public class ConstantFolding {
 					arguments[n] = literalValue(argumentsResult.get(n));
 				}
 
-				Object literalValue = literalValue(baseResult);
-				if (simpleExpr.canEvaluateAtCompileTime(literalValue, arguments)) {
-					return literal(simpleExpr.eval(literalValue, arguments));
+				if (simpleExpr.canEvaluateAtCompileTime(arguments)) {
+					return literal(simpleExpr.eval(arguments));
 				}
 			}
-			return super.composeGenericMethod(expr, arg, baseResult, argumentsResult);
+			return super.composeGenericMethod(expr, arg, argumentsResult);
 		}
 
 		private static boolean isLiteral(SearchExpression result) {

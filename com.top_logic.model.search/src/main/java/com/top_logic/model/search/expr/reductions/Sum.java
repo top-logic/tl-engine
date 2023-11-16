@@ -32,30 +32,30 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 public class Sum extends SimpleGenericMethod {
 
 	/** Creates a {@link Sum}. */
-	protected Sum(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Sum(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Sum(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Sum(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return findType(TLCore.TL_CORE, "Double");
 	}
 
 	@Override
-	public Double eval(Object self, Object[] arguments) {
-		return sum(this, self, arguments);
+	public Double eval(Object[] arguments) {
+		return sum(this, arguments);
 	}
 
 	/**
 	 * Evaluates the sum function on the given arguments.
 	 */
-	public static double sum(SearchExpression context, Object self, Object[] arguments) {
-		return sumAny(context, self) + sumIterable(context, Arrays.asList(arguments));
+	public static double sum(SearchExpression context, Object[] arguments) {
+		return sumIterable(context, Arrays.asList(arguments));
 	}
 
 	private static double sumIterable(SearchExpression context, Iterable<?> arguments) {
@@ -83,15 +83,11 @@ public class Sum extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Sum build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Sum build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Sum("sum", self, args);
+			return new Sum("sum", args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

@@ -28,18 +28,18 @@ public class Info extends GenericMethod {
 	/**
 	 * Creates a {@link Info}.
 	 */
-	protected Info(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Info(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Info(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Info(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -48,12 +48,12 @@ public class Info extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		ResKey message = toResKey(self);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
 			ResKey details;
-			if (arguments.length > 0) {
-				details = toResKey(arguments[0]);
+			if (arguments.length > 1) {
+				details = toResKey(arguments[1]);
 			} else {
 				details = ResKey.NONE;
 			}
@@ -74,11 +74,11 @@ public class Info extends GenericMethod {
 		}
 
 		@Override
-		public Info build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Info build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkHasTarget(expr, self);
-			checkMaxArgs(expr, args, 1);
-			return new Info(getName(), self, args);
+			checkArgs(expr, args, 1, 2);
+			return new Info(getName(), args);
 		}
+
 	}
 }

@@ -29,31 +29,31 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 	/**
 	 * Creates a new {@link DynamicReferers}.
 	 */
-	public DynamicReferers(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public DynamicReferers(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DynamicReferers(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DynamicReferers(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		/* Unable to determine type of this method statically, because it depends on the type of the
 		 * TLStructureTypePart to search usages for. */
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object arg0 = arguments[0];
-		if (arg0 == null) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Object arg1 = arguments[1];
+		if (arg1 == null) {
 			// Not yet set
 			return null;
 		}
-		TLReference part = asReference(getArguments()[0], arg0);
-		return evalPotentialFlatMap(definitions, self, part);
+		TLReference part = asReference(getArguments()[1], arg1);
+		return evalPotentialFlatMap(definitions, arguments[0], part);
 	}
 
 	@Override
@@ -89,11 +89,12 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 		}
 
 		@Override
-		public DynamicReferers build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicReferers build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
-			return new DynamicReferers(getConfig().getName(), self, args);
+			checkTwoArgs(expr, args);
+			return new DynamicReferers(getConfig().getName(), args);
 		}
+
 	}
 
 }

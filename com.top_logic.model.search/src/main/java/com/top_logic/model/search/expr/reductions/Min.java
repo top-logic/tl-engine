@@ -26,23 +26,23 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 public class Min extends SimpleGenericMethod {
 
 	/** Creates a {@link Min}. */
-	protected Min(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Min(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Min(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Min(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		return new Evaluator().add(self).add(arguments).getValue();
+	public Object eval(Object[] arguments) {
+		return new Evaluator().add(arguments).getValue();
 	}
 
 	class Evaluator {
@@ -97,15 +97,11 @@ public class Min extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Min build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Min build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new Min("min", self, args);
+			return new Min("min", args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

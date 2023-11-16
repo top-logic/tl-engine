@@ -27,23 +27,23 @@ public class GetKey extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link GetKey}.
 	 */
-	protected GetKey(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected GetKey(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new GetKey(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new GetKey(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		return asEntry(self).getKey();
+	public Object eval(Object[] arguments) {
+		return asEntry(arguments[0]).getKey();
 	}
 
 	/**
@@ -58,11 +58,12 @@ public class GetKey extends SimpleGenericMethod {
 		}
 
 		@Override
-		public GetKey build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public GetKey build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new GetKey(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new GetKey(getConfig().getName(), args);
 		}
+
 	}
 
 }

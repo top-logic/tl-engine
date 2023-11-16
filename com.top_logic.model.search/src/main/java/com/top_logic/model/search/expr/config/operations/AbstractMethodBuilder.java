@@ -170,6 +170,15 @@ public abstract class AbstractMethodBuilder<C extends AbstractMethodBuilder.Conf
 	}
 
 	/**
+	 * Checks that exactly three arguments are given.
+	 */
+	public static void checkThreeArgs(Expr expr, SearchExpression[] args) throws ConfigurationException {
+		if (args.length != 3) {
+			throw error(I18NConstants.ERROR_THREE_ARGUMENTS_EXPECTED__CNT_EXPR.fill(args.length, toString(expr)));
+		}
+	}
+
+	/**
 	 * Resolves a {@link TLStructuredTypePart} from a literal argument.
 	 */
 	protected static TLReference resolveReference(Expr expr, SearchExpression arg)

@@ -33,27 +33,27 @@ public class Count extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Count}.
 	 */
-	protected Count(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Count(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Count(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Count(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		int start = asInt(self);
-		int stop = asInt(arguments[0]);
+	public Object eval(Object[] arguments) {
+		int start = asInt(arguments[0]);
+		int stop = asInt(arguments[1]);
 		int step;
-		if (arguments.length > 1) {
-			step = asInt(arguments[1]);
+		if (arguments.length > 2) {
+			step = asInt(arguments[2]);
 			if (step == 0) {
 				// For safety reasons.
 				step = 1;
@@ -86,11 +86,11 @@ public class Count extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Count build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Count build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
-			return new Count(getConfig().getName(), self, args);
+			checkArgs(expr, args, 2, 3);
+			return new Count(getConfig().getName(), args);
 		}
+
 	}
 }

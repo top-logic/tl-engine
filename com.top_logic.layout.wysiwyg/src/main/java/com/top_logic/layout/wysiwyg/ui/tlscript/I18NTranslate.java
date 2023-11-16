@@ -32,28 +32,28 @@ public class I18NTranslate extends Translate {
 	/**
 	 * Creates a {@link I18NTranslate} expression.
 	 */
-	protected I18NTranslate(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected I18NTranslate(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new I18NTranslate(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new I18NTranslate(getName(), arguments);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self instanceof StructuredText) {
-			StructuredText text = (StructuredText) self;
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (arguments[0] instanceof StructuredText) {
+			StructuredText text = (StructuredText) arguments[0];
 
-			Object sourceArg = arguments[1];
+			Object sourceArg = arguments[2];
 			if (!TranslationService.isActive()) {
 				return text;
 			}
 
 			Locale sourceLang = sourceArg == null ? TLContext.getLocale()
 				: (AUTO_DETECT.equals(sourceArg) ? null : asLocale(sourceArg));
-			Locale targetLang = asLocale(arguments[0]);
+			Locale targetLang = asLocale(arguments[1]);
 
 			if (targetLang.equals(sourceLang)) {
 				return text;
@@ -64,7 +64,7 @@ public class I18NTranslate extends Translate {
 			String translation = translator.translate(text.getSourceCode(), sourceLang, targetLang);
 			return new StructuredText(translation, Collections.unmodifiableMap(text.getImages()));
 		}
-		return super.eval(self, arguments, definitions);
+		return super.eval(arguments, definitions);
 	}
 
 	/**
@@ -85,11 +85,11 @@ public class I18NTranslate extends Translate {
 		}
 
 		@Override
-		public I18NTranslate build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public I18NTranslate build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new I18NTranslate(getConfig().getName(), self, args);
+			return new I18NTranslate(getConfig().getName(), args);
 		}
-	}
 
+	}
 }
 

@@ -35,30 +35,30 @@ public class CalendarUpdate extends GenericMethod {
 	/**
 	 * Creates a {@link CalendarUpdate}.
 	 */
-	protected CalendarUpdate(String name, Field field, Op op, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected CalendarUpdate(String name, Field field, Op op, SearchExpression[] arguments) {
+		super(name, arguments);
 		_field = field;
 		_op = op;
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new CalendarUpdate(getName(), _field, _op, self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new CalendarUpdate(getName(), _field, _op, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.DATE_TIME_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		int amount = asInt(arguments[0]);
+		int amount = asInt(arguments[1]);
 
-		Calendar calendar = asCalendar(self);
+		Calendar calendar = asCalendar(arguments[0]);
 		Calendar result = (Calendar) calendar.clone();
 		_op.update(result, _field, amount);
 		return result;
@@ -148,15 +148,16 @@ public class CalendarUpdate extends GenericMethod {
 		}
 
 		@Override
-		public CalendarUpdate build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public CalendarUpdate build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
-			return new CalendarUpdate(getName(), _field, _op, self, args);
+			checkTwoArgs(expr, args);
+			return new CalendarUpdate(getName(), _field, _op, args);
 		}
 
 		@Override
 		public Object getId() {
 			return new Pair<>(_field, _op);
 		}
+
 	}
 }

@@ -28,23 +28,23 @@ public class Regex extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Regex}.
 	 */
-	protected Regex(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Regex(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Regex(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Regex(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		String pattern = asString(notNull(this, self));
+	public Object eval(Object[] arguments) {
+		String pattern = asString(notNull(getArguments()[0], arguments[0]));
 		return Pattern.compile(pattern);
 	}
 
@@ -60,9 +60,10 @@ public class Regex extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Regex build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new Regex(getConfig().getName(), self, args);
+		public Regex build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			checkSingleArg(expr, args);
+			return new Regex(getConfig().getName(), args);
 		}
+
 	}
 }

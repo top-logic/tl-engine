@@ -31,6 +31,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_TWO_ARGUMENTS_EXPECTED__CNT_EXPR;
 
+	/**
+	 * @en Three arguments expected but got {0} in: {1}
+	 */
+	public static ResKey2 ERROR_THREE_ARGUMENTS_EXPECTED__CNT_EXPR;
+
 	public static ResKey2 ERROR_AT_LEAST_ARGUMENTS_EXPECTED__CNT_EXPR;
 
 	public static ResKey2 ERROR_AT_MOST_ARGUMENTS_EXPECTED__CNT_EXPR;

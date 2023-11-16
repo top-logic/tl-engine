@@ -27,26 +27,26 @@ public class MessageFormatExpr extends GenericMethod {
 	/**
 	 * Creates a {@link MessageFormatExpr}.
 	 */
-	protected MessageFormatExpr(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected MessageFormatExpr(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new MessageFormatExpr(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new MessageFormatExpr(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		return new MessageFormat(asString(self), ThreadContext.getLocale());
+		return new MessageFormat(asString(arguments[0]), ThreadContext.getLocale());
 	}
 
 	/**
@@ -62,10 +62,10 @@ public class MessageFormatExpr extends GenericMethod {
 		}
 
 		@Override
-		public MessageFormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public MessageFormatExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new MessageFormatExpr(getName(), self, args);
+			checkSingleArg(expr, args);
+			return new MessageFormatExpr(getName(), args);
 		}
 
 	}

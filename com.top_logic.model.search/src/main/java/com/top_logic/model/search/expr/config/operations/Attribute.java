@@ -28,24 +28,24 @@ public class Attribute extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Attribute}.
 	 */
-	protected Attribute(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Attribute(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Attribute(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Attribute(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TlModelFactory.getTLPropertyType();
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (self instanceof TLStructuredType) {
-			return ((TLStructuredType) self).getPart(asString(arguments[0]));
+	public Object eval(Object[] arguments) {
+		if (arguments[0] instanceof TLStructuredType) {
+			return ((TLStructuredType) arguments[0]).getPart(asString(arguments[1]));
 		} else {
 			return null;
 		}
@@ -63,10 +63,11 @@ public class Attribute extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Attribute build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Attribute build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
-			return new Attribute(getConfig().getName(), self, args);
+			checkTwoArgs(expr, args);
+			return new Attribute(getConfig().getName(), args);
 		}
+
 	}
 }

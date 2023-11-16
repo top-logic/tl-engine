@@ -128,8 +128,8 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 	}
 
 	@Override
-	protected R composeGenericMethod(GenericMethod expr, A arg, R baseResult, List<R> argumentsResult) {
-		return compose(expr, arg, combine(baseResult, combine(argumentsResult)));
+	protected R composeGenericMethod(GenericMethod expr, A arg, List<R> argumentsResult) {
+		return compose(expr, arg, combine(argumentsResult));
 	}
 
 	@Override

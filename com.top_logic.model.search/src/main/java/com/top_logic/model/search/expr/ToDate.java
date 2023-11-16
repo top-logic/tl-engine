@@ -31,26 +31,26 @@ public class ToDate extends AbstractDateMethod {
 	/**
 	 * Creates a {@link ToDate}.
 	 */
-	protected ToDate(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToDate(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToDate(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToDate(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.DATE_TIME_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+	public Object eval(Object[] arguments) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		return asDate(self);
+		return asDate(arguments[0]);
 	}
 
 	/**
@@ -65,10 +65,11 @@ public class ToDate extends AbstractDateMethod {
 		}
 
 		@Override
-		public ToDate build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToDate build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToDate(getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToDate(getName(), args);
 		}
+
 	}
 }

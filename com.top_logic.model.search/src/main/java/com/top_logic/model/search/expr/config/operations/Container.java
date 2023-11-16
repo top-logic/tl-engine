@@ -26,23 +26,23 @@ public class Container extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link Container}.
 	 */
-	protected Container(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Container(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Container(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Container(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		TLObject object = asTLObject(self);
+	public Object eval(Object[] arguments) {
+		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
 			return object.tContainer();
 		} else {
@@ -62,10 +62,11 @@ public class Container extends SimpleGenericMethod {
 		}
 
 		@Override
-		public Container build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Container build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new Container(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new Container(getConfig().getName(), args);
 		}
+
 	}
 }

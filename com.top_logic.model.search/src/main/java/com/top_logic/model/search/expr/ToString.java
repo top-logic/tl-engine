@@ -29,60 +29,56 @@ public class ToString extends SimpleGenericMethod {
 	/** 
 	 * Creates a {@link ToString}.
 	 */
-	protected ToString(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToString(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToString(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToString(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (arguments.length > 0 || self instanceof Collection<?>) {
+	public Object eval(Object[] arguments) {
+		Object base = arguments[0];
+		if (arguments.length > 1 || base instanceof Collection<?>) {
 			StringBuilder result = new StringBuilder();
-			append(result, self);
 			for (Object arg : arguments) {
 				append(result, arg);
 			}
 			return result.toString();
 		} else {
-			return toString(self);
+			return toString(base);
 		}
 	}
 
-	private void append(StringBuilder result, Object self) {
-		if (self instanceof Collection<?>) {
-			for (Object element : (Collection<?>) self) {
+	private void append(StringBuilder result, Object arg) {
+		if (arg instanceof Collection<?>) {
+			for (Object element : (Collection<?>) arg) {
 				append(result, element);
 			}
 		} else {
-			result.append(toString(self));
+			result.append(toString(arg));
 		}
 	}
 
 	/**
 	 * Converts a value to a string / label.
 	 */
-	public static String toString(Object self) {
-		if (self == null) {
+	public static String toString(Object arg) {
+		if (arg == null) {
 			return "";
 		}
-		return MetaLabelProvider.INSTANCE.getLabel(self);
+		return MetaLabelProvider.INSTANCE.getLabel(arg);
 	}
 
 	@Override
-	public boolean canEvaluateAtCompileTime(Object self, Object[] arguments) {
-		if (!isPrimitive(self)) {
-			return false;
-		}
-
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
 		for (Object argument : arguments) {
 			if (!isPrimitive(argument)) {
 				return false;
@@ -113,8 +109,8 @@ public class ToString extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToString build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new ToString(getName(), self, args);
+		public ToString build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new ToString(getName(), args);
 		}
 
 	}

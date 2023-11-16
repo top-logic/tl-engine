@@ -87,9 +87,9 @@ public class DemoButtonComponent extends FormComponent {
 		});
 		grp.addMember(toggleMenuField);
 
-		CommandModel model1 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, "Kommando1");
-		CommandModel model2 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, "Kommando2");
-		CommandModel model3 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, "Kommando3");
+		CommandModel model1 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, ResKey.text("Kommando1"));
+		CommandModel model2 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, ResKey.text("Kommando2"));
+		CommandModel model3 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, ResKey.text("Kommando3"));
 		commands.add(model1);
 		addToogleCommandFields(grp, model1, I18NConstants.DEMO_BUTTON_COMPONENT_BUTTON1_NOT_EXECUTABLE);
 		commands.add(model2);

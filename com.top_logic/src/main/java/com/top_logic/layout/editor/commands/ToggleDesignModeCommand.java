@@ -14,8 +14,16 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.commandhandlers.ToggleCommandHandler;
 
 /**
- * Toggles the application (actually the {@link SubSessionContext}) between design mode and normal
- * mode.
+ * Toggles the application between design mode and normal mode.
+ * 
+ * <p>
+ * In design mode, the views of the application can be edited in a WYSIWYG manner. Tab bars get
+ * additional commands to add/delete or rearrange tabs. Component configurations can be edited with
+ * the context menu command {@link EditComponentCommand}. Views can be split to add new components
+ * with the {@link EditLayoutCommand}.
+ * </p>
+ * 
+ * @implNote The mode applies actually to the current {@link SubSessionContext}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

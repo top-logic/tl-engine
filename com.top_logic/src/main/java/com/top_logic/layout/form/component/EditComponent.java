@@ -16,6 +16,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -529,9 +530,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	}
 
 	/**
-     * The CancelCommand is the default "nothing" command. It switches the component into
-     * view mode.
-     */
+	 * Aborts the current edit operation, drops all changes and switches the component back to view
+	 * mode.
+	 */
+	@Label("Cancel")
     public static class CancelCommand extends AbstractCommandHandler {
     	
         public static final String COMMAND_ID = "nothing";

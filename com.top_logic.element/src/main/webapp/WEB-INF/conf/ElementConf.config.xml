@@ -944,7 +944,6 @@
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
 						clique="layout-editor-form"
 						group="System"
-						resourceKey="tl.command.configureFormDefinitionCommand"
 		            >
 						<executability>
 							<reference rule-id="InDesignModeExecutable" />
@@ -955,7 +954,6 @@
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
 						clique="layout-editor-form"
 						group="System"
-						resourceKey="tl.command.configureFormDefinitionCommand"
 		            >
 						<executability>
 							<reference rule-id="InDesignModeExecutable" />

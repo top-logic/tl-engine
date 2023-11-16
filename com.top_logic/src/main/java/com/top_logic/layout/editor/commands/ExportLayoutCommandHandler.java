@@ -7,7 +7,6 @@ package com.top_logic.layout.editor.commands;
 
 import static com.top_logic.layout.DisplayDimension.*;
 
-import java.nio.file.FileSystem;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +18,7 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KBUtils;
@@ -42,10 +42,18 @@ import com.top_logic.util.LayoutBasedSecurity;
 import com.top_logic.util.TLContext;
 
 /**
- * Exports the current personal layout to the {@link FileSystem}.
+ * Exports the in-app configured application views currently stored in the database to XML files in
+ * the development environment.
+ * 
+ * <p>
+ * Changes done in design-mode are stored in the application's database. While this is OK for pure
+ * in-app development, the designed application views can also be exported to a local development
+ * environment for a conventional build/deploy/release process.
+ * </p>
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
+@Label("Export layout")
 public class ExportLayoutCommandHandler extends ConfirmCommandHandler {
 
 	/**
@@ -185,11 +193,6 @@ public class ExportLayoutCommandHandler extends ConfirmCommandHandler {
 	protected ResKey getConfirmMessage(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> arguments) {
 		return I18NConstants.CONFIRM_EXPORT_LAYOUTS;
-	}
-
-	@Override
-	protected ResKey getDefaultI18NKey() {
-		return I18NConstants.EXPORT_LAYOUTS;
 	}
 
 	@Override

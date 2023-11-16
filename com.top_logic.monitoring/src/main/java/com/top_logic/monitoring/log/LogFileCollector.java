@@ -137,7 +137,7 @@ public class LogFileCollector extends AbstractConfiguredInstance<LogFileCollecto
 			String content = Files.readString(file, getEncoding());
 			return createLogFile(fileName, content);
 		} catch (IOException exception) {
-			ResKey uiMessage = I18NConstants.FAILED_TO_READ_FILE__NAME;
+			ResKey uiMessage = I18NConstants.FAILED_TO_READ_FILE__NAME.fill(fileName);
 			String logMessage = "Failed to read a log file: " + fileName;
 			InfoService.logError(uiMessage, logMessage, exception, LogParser.class);
 			return new LogFile(fileName, "");

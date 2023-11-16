@@ -24,22 +24,22 @@ public class Sleep extends GenericMethod {
 	/**
 	 * Creates a {@link Sleep}.
 	 */
-	protected Sleep(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Sleep(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Sleep(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Sleep(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		long sleepTime = asLong(arguments[0]);
 		try {
 			Thread.sleep(sleepTime);
@@ -72,15 +72,11 @@ public class Sleep extends GenericMethod {
 		}
 
 		@Override
-		public Sleep build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Sleep build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new Sleep(getConfig().getName(), self, args);
+			return new Sleep(getConfig().getName(), args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 }

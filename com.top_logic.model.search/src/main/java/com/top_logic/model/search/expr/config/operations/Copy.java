@@ -58,18 +58,18 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 	/**
 	 * Creates a {@link Copy} operation.
 	 */
-	protected Copy(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Copy(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Copy(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Copy(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -78,7 +78,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		OperationImpl outerOperation = (OperationImpl) definitions.getVarOrNull(COPY_OPERATION);
 
 		OperationImpl operation;
@@ -89,10 +89,10 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 		definitions.defineVar(COPY_OPERATION, operation);
 		try {
-			Object copyContext = arguments[0];
-			Object filterArgument = arguments[1];
-			Object constructor = arguments[2];
-			Boolean transientCopy = asBooleanOrNull(arguments[3]);
+			Object copyContext = arguments[1];
+			Object filterArgument = arguments[2];
+			Object constructor = arguments[3];
+			Boolean transientCopy = asBooleanOrNull(arguments[4]);
 
 			if (copyContext != null) {
 				operation.setContext(asTLObject(copyContext), null);
@@ -124,7 +124,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 
 			operation.setTransient(transientCopy);
 
-			Object result = evalPotentialFlatMap(definitions, self, operation);
+			Object result = evalPotentialFlatMap(definitions, arguments[0], operation);
 
 			operation.finish();
 			return result;
@@ -511,6 +511,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Copy> {
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("orig")
 			.optional("context")
 			.optional("filter")
 			.optional("constructor")
@@ -525,14 +526,15 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 
 		@Override
-		public Copy build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new Copy(getConfig().getName(), self, args);
+		public Copy build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new Copy(getConfig().getName(), args);
 		}
 
 		@Override
 		public ArgumentDescriptor descriptor() {
 			return DESCRIPTOR;
 		}
+
 	}
 
 }

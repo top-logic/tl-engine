@@ -17,6 +17,7 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
@@ -35,29 +36,29 @@ public class RegexReplace extends GenericMethod {
 	/**
 	 * Creates a {@link RegexReplace}.
 	 */
-	protected RegexReplace(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexReplace(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexReplace(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexReplace(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		Object input = arguments[0];
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Object input = arguments[1];
 		if (input == null) {
 			return null;
 		}
-		Pattern pattern = (Pattern) self;
+		Pattern pattern = (Pattern) arguments[0];
 		String text = asString(input);
-		Object replacement = arguments[1];
+		Object replacement = arguments[2];
 
 		Matcher matcher = pattern.matcher(text);
 		StringBuffer buffer = new StringBuffer();
@@ -82,6 +83,13 @@ public class RegexReplace extends GenericMethod {
 	 * {@link MethodBuilder} creating {@link RegexReplace}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<RegexReplace> {
+
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("pattern")
+			.optional("text")
+			.optional("replacement")
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -90,9 +98,15 @@ public class RegexReplace extends GenericMethod {
 		}
 
 		@Override
-		public RegexReplace build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			checkTwoArgs(expr, args);
-			return new RegexReplace(getConfig().getName(), self, args);
+		public RegexReplace build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			checkThreeArgs(expr, args);
+			return new RegexReplace(getConfig().getName(), args);
 		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
+		}
+
 	}
 }

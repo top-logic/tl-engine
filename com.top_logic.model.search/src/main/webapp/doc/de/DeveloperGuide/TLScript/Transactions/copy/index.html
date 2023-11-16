@@ -1,9 +1,10 @@
 <h2>Syntax</h2>
 
 <pre>
-<code>$object.copy()
+<code>$orig.copy()
 
-$object.copy(context: $context, 
+copy(orig: $orig,
+	context: $context, 
 	filter: $filter, 
 	constructor: $constructor, 
 	transient: false)</code>
@@ -11,7 +12,7 @@ $object.copy(context: $context,
 
 <h2>Beschreibung</h2>
 
-<p>Erstellt eine tiefe Kopie des Objektes bzw. eine einfache Kopie des Wertes <code class="hljs inlineCode">object</code>.</p>
+<p>Erstellt eine tiefe Kopie des Objektes bzw. eine einfache Kopie des Wertes <code class="hljs inlineCode">orig</code>.</p>
 
 <ul>
 </ul>
@@ -32,16 +33,16 @@ $object.copy(context: $context,
 	</thead>
 	<tbody>
 		<tr>
-			<td>object</td>
+			<td>orig</td>
 			<td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
-			<td>Das zu kopierende Objekt bzw der zu kopierende Wert.</td>
+			<td>Das zu kopierende Objekt bzw. der zu kopierende Wert.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
 		<tr>
 			<td>context</td>
 			<td>Fachobjekt</td>
-			<td>Das Context-Objekt, das bei der Anlage der top-level Kopie (von <code class="hljs inlineCode">object</code>) mitgegeben wird.</td>
+			<td>Das Kontext-Objekt, das bei der Anlage der top-level Kopie (von <code class="hljs inlineCode">orig</code>) mitgegeben wird.</td>
 			<td>nein</td>
 			<td>null</td>
 		</tr>
@@ -100,17 +101,16 @@ $object.copy(context: $context,
 <p>In Abhängigkeit vom Typen von <code class="hljs inlineCode">x</code> wird folgendes von der Funktion zurückgeliefert:</p>
 
 <ul>
-	<li><strong>Referenz auf ein Fachobjekt</strong>: eine tiefe Kopie dieses Objektes.</li>
+	<li><strong>Referenz auf ein Fachobjekt:</strong> eine tiefe Kopie dieses Objektes.</li>
 	<li><strong>Liste:</strong> eine Liste, in der alle Fachobjekte durch tiefe Kopien ersetzt sind.</li>
-	<li><strong>alle anderen Werte: </strong>der Wert selbst.</li>
+	<li><strong>alle anderen Werte:</strong> der Wert selbst.</li>
 </ul>
 
 <h2>Beispiele</h2>
 
 <h3>Objektkopie</h3>
 
-<pre>
-	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    $a.set(`my.module:MyClass#name`, "orig");
    b = $a.copy();
@@ -123,8 +123,7 @@ $object.copy(context: $context,
 
 <h3>Objektlistenkopie</h3>
 
-<pre>
-	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    b = new(`my.module:MyClass`);
    list = list($a, $b);
@@ -136,8 +135,7 @@ $object.copy(context: $context,
 
 <h3>Wertekopie</h3>
 
-<pre>
-	<code>{
+<pre><code>{
    a = 5;
    b = $a.copy();
    list($a, $b);

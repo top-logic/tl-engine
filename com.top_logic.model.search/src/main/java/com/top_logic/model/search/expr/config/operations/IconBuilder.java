@@ -28,22 +28,22 @@ public class IconBuilder extends GenericMethod {
 	/**
 	 * Creates a new {@link IconBuilder}.
 	 */
-	protected IconBuilder(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected IconBuilder(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new IconBuilder(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new IconBuilder(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.ICON_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return asImage(arguments[0]);
 	}
 
@@ -60,16 +60,12 @@ public class IconBuilder extends GenericMethod {
 		}
 
 		@Override
-		public IconBuilder build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public IconBuilder build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new IconBuilder(getConfig().getName(), self, args);
+			return new IconBuilder(getConfig().getName(), args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

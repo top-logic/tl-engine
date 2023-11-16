@@ -29,24 +29,24 @@ public class ParseExpr extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link ParseExpr}.
 	 */
-	protected ParseExpr(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ParseExpr(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ParseExpr(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ParseExpr(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		Format format = (Format) self;
-		String arg = asString(arguments[0]);
+	public Object eval(Object[] arguments) {
+		Format format = (Format) arguments[0];
+		String arg = asString(arguments[1]);
 		try {
 			return normalizeValue(format.parseObject(arg));
 		} catch (ParseException ex) {
@@ -68,10 +68,10 @@ public class ParseExpr extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ParseExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ParseExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
-			return new ParseExpr(getName(), self, args);
+			checkTwoArgs(expr, args);
+			return new ParseExpr(getName(), args);
 		}
 
 	}

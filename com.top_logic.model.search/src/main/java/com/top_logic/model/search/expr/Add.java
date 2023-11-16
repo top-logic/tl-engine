@@ -28,37 +28,37 @@ public class Add extends GenericMethod {
 	/**
 	 * Creates a {@link Add}.
 	 */
-	protected Add(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Add(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Add(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Add(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLStructuredTypePart part = asTypePart(getArguments()[0], arguments[0]);
-		TLObject obj = asTLObjectNonNull(self);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		TLObject obj = asTLObjectNonNull(arguments[0]);
+		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
 		List<?> oldValue = asList(obj.tValue(part));
 		int oldSize = oldValue.size();
 
 		int index;
 		Collection<?> insertion;
-		Object secondArg = arguments[1];
-		if (arguments.length < 3) {
+		Object secondArg = arguments[2];
+		if (arguments.length < 4) {
 			index = oldSize;
 			insertion = asCollection(secondArg);
 		} else {
 			index = asInt(secondArg);
-			insertion = asCollection(arguments[2]);
+			insertion = asCollection(arguments[3]);
 		}
 
 		int insertLength = insertion.size();
@@ -85,11 +85,11 @@ public class Add extends GenericMethod {
 		}
 
 		@Override
-		public Add build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Add build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 2);
-			checkMaxArgs(expr, args, 3);
-			return new Add(getConfig().getName(), self, args);
+			checkArgs(expr, args, 3, 4);
+			return new Add(getConfig().getName(), args);
 		}
+
 	}
 }

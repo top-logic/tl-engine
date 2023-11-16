@@ -37,29 +37,30 @@ public class ToSet extends SimpleGenericMethod {
 	/**
 	 * Creates a new {@link ToSet}.
 	 */
-	public ToSet(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public ToSet(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToSet(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToSet(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
+		Object base = arguments[0];
 		Set<?> result;
-		if (self == null) {
+		if (base == null) {
 			result = Collections.emptySet();
-		} else if (self instanceof Collection<?>) {
-			result = CollectionUtil.toSet((Collection<?>) self);
+		} else if (base instanceof Collection<?>) {
+			result = CollectionUtil.toSet((Collection<?>) base);
 		} else {
-			result = Collections.singleton(self);
+			result = Collections.singleton(base);
 		}
 		return result;
 	}
@@ -77,11 +78,12 @@ public class ToSet extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToSet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToSet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToSet(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToSet(getConfig().getName(), args);
 		}
+
 	}
 
 }

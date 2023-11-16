@@ -28,17 +28,17 @@ public class DynamicSet extends GenericMethod {
 	/**
 	 * Creates a new {@link DynamicSet}.
 	 */
-	public DynamicSet(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public DynamicSet(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DynamicSet(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DynamicSet(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
@@ -48,10 +48,10 @@ public class DynamicSet extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLObject obj = asTLObjectNonNull(self);
-		TLStructuredTypePart part = asTypePart(getArguments()[0], arguments[0]);
-		Object value = arguments[1];
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		TLObject obj = asTLObjectNonNull(arguments[0]);
+		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
+		Object value = arguments[2];
 		obj.tUpdate(part, value);
 		return null;
 	}
@@ -80,11 +80,12 @@ public class DynamicSet extends GenericMethod {
 		}
 
 		@Override
-		public DynamicSet build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicSet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkTwoArgs(expr, args);
-			return new DynamicSet(getConfig().getName(), self, args);
+			checkThreeArgs(expr, args);
+			return new DynamicSet(getConfig().getName(), args);
 		}
+
 	}
 
 }

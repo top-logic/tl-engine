@@ -24,25 +24,25 @@ public class SubList extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link SubList}.
 	 */
-	protected SubList(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected SubList(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new SubList(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new SubList(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		List<?> list = asList(self);
-		int beginIndex = index(list, arguments[0]);
-		int endIndex = arguments.length < 2 ? list.size() : index(list, arguments[1]);
+	public Object eval(Object[] arguments) {
+		List<?> list = asList(arguments[0]);
+		int beginIndex = index(list, arguments[1]);
+		int endIndex = arguments.length < 3 ? list.size() : index(list, arguments[2]);
 
 		// Special case for using the semantics "negative indices count from the end of the list".
 		// (Negative) zero means the end of the list, if the range would be invalid otherwise.
@@ -75,11 +75,11 @@ public class SubList extends SimpleGenericMethod {
 		}
 
 		@Override
-		public SubList build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public SubList build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
-			return new SubList("subList", self, args);
+			checkArgs(expr, args, 2, 3);
+			return new SubList("subList", args);
 		}
+
 	}
 }

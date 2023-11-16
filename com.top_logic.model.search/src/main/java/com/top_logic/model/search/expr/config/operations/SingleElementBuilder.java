@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class SingleElementBuilder extends NoArgMethodBuilder<SingleElement> {
+public class SingleElementBuilder extends SingleArgMethodBuilder<SingleElement> {
 
 	/**
 	 * Creates a {@link SingleElementBuilder}.
@@ -30,8 +30,8 @@ public class SingleElementBuilder extends NoArgMethodBuilder<SingleElement> {
 	}
 
 	@Override
-	protected SingleElement internalBuild(Expr expr, SearchExpression self) {
-		return singleElement(self);
+	protected SingleElement internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs) {
+		return singleElement(argument);
 	}
 
 }

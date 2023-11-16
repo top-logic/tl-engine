@@ -20,54 +20,71 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link AbstractListAccess}.
 	 */
-	protected AbstractListAccess(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected AbstractListAccess(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
-			return evalOnEmpty();
+	public Object eval(Object[] arguments) {
+		Object base = arguments[0];
+		if (base == null) {
+			return evalOnEmpty(arguments);
 		}
-		if (self instanceof List) {
-			List<?> list = (List<?>) self;
+		if (base instanceof List) {
+			List<?> list = (List<?>) base;
 			if (list.isEmpty()) {
-				return evalOnEmpty();
+				return evalOnEmpty(arguments);
 			}
 			return evalOnList(list, arguments);
-		} else if (self instanceof Iterable<?>) {
-			Iterator<?> iterator = ((Iterable<?>) self).iterator();
+		} else if (base instanceof Iterable<?>) {
+			Iterator<?> iterator = ((Iterable<?>) base).iterator();
 			if (!iterator.hasNext()) {
-				return evalOnEmpty();
+				return evalOnEmpty(arguments);
 			}
 			return evalOnIterator(iterator, arguments);
 		} else {
-			return evalOnSingleton(self, arguments);
+			return evalOnSingleton(base, arguments);
 		}
 	}
 
 	/**
 	 * Result for evaluation on an empty list.
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
-	protected abstract Object evalOnEmpty();
+	protected abstract Object evalOnEmpty(Object[] arguments);
 
 	/**
 	 * Result for evaluation on a singleton element (not a list at all).
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
 	protected abstract Object evalOnSingleton(Object self, Object[] arguments);
 
 	/**
 	 * Result for evaluation on an iterable value.
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
 	protected abstract Object evalOnIterator(Iterator<?> iterator, Object[] arguments);
 
 	/**
 	 * Result for evaluation on an true list value.
+	 * 
+	 * @param arguments
+	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
+	 *        the "list like" element.
 	 */
 	protected abstract Object evalOnList(List<?> list, Object[] arguments);
 

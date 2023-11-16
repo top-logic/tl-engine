@@ -18,6 +18,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -35,36 +36,37 @@ public class RegexGroup extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link RegexGroup}.
 	 */
-	protected RegexGroup(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexGroup(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexGroup(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexGroup(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+	public Object eval(Object[] arguments) {
+		Object match = arguments[0];
+		if (match == null) {
 			return null;
 		}
 
-		int groupId = arguments.length > 0 ? asInt(arguments[0]) : 0;
-		if (self instanceof Collection<?>) {
-			return ((Collection<?>) self).stream().map(m -> getGroup(m, groupId)).collect(Collectors.toList());
+		int groupId = asInt(arguments[1]);
+		if (match instanceof Collection<?>) {
+			return ((Collection<?>) match).stream().map(m -> getGroup(m, groupId)).collect(Collectors.toList());
 		} else {
-			return getGroup(self, groupId);
+			return getGroup(match, groupId);
 		}
 	}
 
-	private Object getGroup(Object self, int groupId) {
-		Match match = (Match) self;
+	private Object getGroup(Object base, int groupId) {
+		Match match = (Match) base;
 		return match.value(groupId);
 	}
 
@@ -72,6 +74,12 @@ public class RegexGroup extends SimpleGenericMethod {
 	 * {@link MethodBuilder} creating {@link RegexGroup}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<RegexGroup> {
+
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("match")
+			.optional("index", 0)
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -80,9 +88,14 @@ public class RegexGroup extends SimpleGenericMethod {
 		}
 
 		@Override
-		public RegexGroup build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			checkMaxArgs(expr, args, 1);
-			return new RegexGroup(getConfig().getName(), self, args);
+		public RegexGroup build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new RegexGroup(getConfig().getName(), args);
 		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
+		}
+
 	}
 }

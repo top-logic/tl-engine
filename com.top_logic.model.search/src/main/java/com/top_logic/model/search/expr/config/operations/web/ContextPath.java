@@ -28,22 +28,22 @@ public class ContextPath extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link ContextPath}.
 	 */
-	protected ContextPath(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ContextPath(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ContextPath(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ContextPath(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
 		return ServletContextService.getInstance().getServletContext().getContextPath();
 	}
 
@@ -59,12 +59,12 @@ public class ContextPath extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ContextPath build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ContextPath build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoTarget(expr, self);
 			checkNoArguments(expr, args);
-			return new ContextPath(getConfig().getName(), self, args);
+			return new ContextPath(getConfig().getName(), args);
 		}
+
 	}
 
 }

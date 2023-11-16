@@ -17,7 +17,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 /**
  * {@link MethodBuilder} creating {@link ResKeyArguments} expressions.
  * 
- * @see SearchExpressionFactory#reskeyArguments(SearchExpression, SearchExpression...)
+ * @see SearchExpressionFactory#reskeyArguments(SearchExpression...)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -30,9 +30,9 @@ public class ResKeyArgumentsBuilder extends AbstractSimpleMethodBuilder<ResKeyAr
 	}
 
 	@Override
-	public ResKeyArguments build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public ResKeyArguments build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
-		return reskeyArguments(self, args);
+		return reskeyArguments(args);
 	}
 
 }

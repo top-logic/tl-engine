@@ -29,26 +29,26 @@ public class ToMillis extends AbstractDateMethod {
 	/**
 	 * Creates a {@link ToMillis}.
 	 */
-	protected ToMillis(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToMillis(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToMillis(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToMillis(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.LONG_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+	public Object eval(Object[] arguments) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		return SearchExpression.toNumber(asDate(self).getTime());
+		return SearchExpression.toNumber(asDate(arguments[0]).getTime());
 	}
 
 	/**
@@ -63,10 +63,11 @@ public class ToMillis extends AbstractDateMethod {
 		}
 
 		@Override
-		public ToMillis build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToMillis build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToMillis(getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToMillis(getName(), args);
 		}
+
 	}
 }

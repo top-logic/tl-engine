@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.text.Format;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -29,25 +30,25 @@ public class FormatExpr extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link FormatExpr}.
 	 */
-	protected FormatExpr(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected FormatExpr(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new FormatExpr(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new FormatExpr(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		Format format = (Format) self;
-		if (arguments.length == 1) {
-			Object first = arguments[0];
+	public Object eval(Object[] arguments) {
+		Format format = (Format) arguments[0];
+		if (arguments.length == 2) {
+			Object first = arguments[1];
 			if (first instanceof Collection<?>) {
 				return format.format(((Collection<?>) first).toArray());
 			} else {
@@ -58,7 +59,7 @@ public class FormatExpr extends SimpleGenericMethod {
 				}
 			}
 		} else {
-			return format.format(arguments);
+			return format.format(Arrays.copyOfRange(arguments, 1, arguments.length));
 		}
 	}
 
@@ -75,9 +76,9 @@ public class FormatExpr extends SimpleGenericMethod {
 		}
 
 		@Override
-		public FormatExpr build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public FormatExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new FormatExpr(getName(), self, args);
+			return new FormatExpr(getName(), args);
 		}
 
 	}

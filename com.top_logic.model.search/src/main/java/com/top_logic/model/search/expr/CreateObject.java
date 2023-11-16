@@ -24,26 +24,23 @@ public class CreateObject extends AbstractObjectCreation {
 
 	/**
 	 * Creates a {@link CreateObject}.
-	 *
-	 * @param self
-	 *        The expression evaluating to the type to instantiate (usually a model type literal).
 	 * @param args
 	 *        The optional create context (at most a single argument).
 	 */
-	CreateObject(String name, SearchExpression self, SearchExpression[] args) {
-		super(name, self, args);
+	CreateObject(String name, SearchExpression[] args) {
+		super(name, args);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new CreateObject(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new CreateObject(getName(), arguments);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		TLClass type = (TLClass) asStructuredTypeNonNull(self, getSelf());
-		TLObject context = asTLObject(arguments[0]);
-		boolean transientObject = asBoolean(arguments[1]);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		TLClass type = (TLClass) asStructuredTypeNonNull(arguments[0], getArguments()[0]);
+		TLObject context = asTLObject(arguments[1]);
+		boolean transientObject = asBoolean(arguments[2]);
 		if (transientObject) {
 			return TransientObjectFactory.INSTANCE.createObject(type, context);
 		} else {
@@ -56,6 +53,7 @@ public class CreateObject extends AbstractObjectCreation {
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<CreateObject> {
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("type")
 			.optional("context")
 			.optional("transient", false)
 			.build();
@@ -68,15 +66,16 @@ public class CreateObject extends AbstractObjectCreation {
 		}
 
 		@Override
-		public CreateObject build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public CreateObject build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new CreateObject(getName(), self, args);
+			return new CreateObject(getName(), args);
 		}
 
 		@Override
 		public ArgumentDescriptor descriptor() {
 			return DESCRIPTOR;
 		}
+
 	}
 
 }

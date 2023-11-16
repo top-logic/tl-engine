@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class StringEndsWithBuilder extends TwoArgOptionalBooleanMethodBuilder<SearchExpression> {
+public class StringEndsWithBuilder extends ThreeArgsOptionalBooleanMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link StringEndsWithBuilder}.
@@ -30,10 +30,9 @@ public class StringEndsWithBuilder extends TwoArgOptionalBooleanMethodBuilder<Se
 		super(context, config);
 	}
 
-	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg1,
-			SearchExpression arg2) {
-		return ifElse(arg2, stringEndsWith(self, arg1, true), stringEndsWith(copy(self), copy(arg1), false));
+	@Override SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
+			SearchExpression arg2, SearchExpression[] allArgs) {
+		return ifElse(arg2, stringEndsWith(arg0, arg1, true), stringEndsWith(copy(arg0), copy(arg1), false));
 	}
 
 }

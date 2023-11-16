@@ -36,35 +36,35 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 	/** 
 	 * Creates a {@link Base64Decode}.
 	 */
-	protected Base64Decode(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Base64Decode(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Base64Decode(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Base64Decode(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, self, arguments);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		return evalPotentialFlatMap(definitions, null, arguments);
 	}
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object self, Object[] arguments) {
-		String input = asString(self);
+		String input = asString(arguments[0]);
 		if (input.isEmpty()) {
 			return null;
 		}
 
-		String name = asString(arguments[0]);
+		String name = asString(arguments[1]);
 
-		String specifiedContentType = asString(arguments[1]);
+		String specifiedContentType = asString(arguments[2]);
 		String contentType;
 		if (specifiedContentType == null) {
 			contentType = MimeTypesModule.getInstance().getMimeType(name);
@@ -129,6 +129,7 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 	public static class Builder extends AbstractSimpleMethodBuilder<Base64Decode> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("input")
 			.optional("name", "data")
 			.optional("contentType")
 			.build();
@@ -141,8 +142,8 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 		}
 
 		@Override
-		public Base64Decode build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new Base64Decode(getName(), self, args);
+		public Base64Decode build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new Base64Decode(getName(), args);
 		}
 
 		@Override

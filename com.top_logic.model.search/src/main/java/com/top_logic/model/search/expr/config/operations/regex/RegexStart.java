@@ -18,6 +18,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -33,31 +34,32 @@ public class RegexStart extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link RegexStart}.
 	 */
-	protected RegexStart(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RegexStart(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RegexStart(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RegexStart(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.INTEGER_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+	public Object eval(Object[] arguments) {
+		Object match = arguments[0];
+		if (match == null) {
 			return null;
 		}
 
-		int groupId = arguments.length > 0 ? asInt(arguments[0]) : 0;
-		if (self instanceof Collection<?>) {
-			return ((Collection<?>) self).stream().map(m -> getStart(m, groupId)).collect(Collectors.toList());
+		int groupId = asInt(arguments[1]);
+		if (match instanceof Collection<?>) {
+			return ((Collection<?>) match).stream().map(m -> getStart(m, groupId)).collect(Collectors.toList());
 		} else {
-			return getStart(self, groupId);
+			return getStart(match, groupId);
 		}
 	}
 
@@ -70,6 +72,12 @@ public class RegexStart extends SimpleGenericMethod {
 	 * {@link MethodBuilder} creating {@link RegexStart}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<RegexStart> {
+
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("match")
+			.optional("index", 0)
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -78,9 +86,14 @@ public class RegexStart extends SimpleGenericMethod {
 		}
 
 		@Override
-		public RegexStart build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			checkMaxArgs(expr, args, 1);
-			return new RegexStart(getConfig().getName(), self, args);
+		public RegexStart build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new RegexStart(getConfig().getName(), args);
 		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
+		}
+
 	}
 }

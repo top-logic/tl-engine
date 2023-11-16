@@ -25,8 +25,6 @@ public abstract class GenericMethod extends SearchExpression {
 
 	private final String _name;
 
-	private SearchExpression _self;
-
 	private SearchExpression[] _args;
 
 	/**
@@ -34,47 +32,28 @@ public abstract class GenericMethod extends SearchExpression {
 	 *
 	 * @param name
 	 *        See {@link #getName()}.
-	 * @param self
-	 *        See {@link #getSelf()}.
 	 * @param arguments
 	 *        See {@link #getArguments()}
 	 */
-	protected GenericMethod(String name, SearchExpression self, SearchExpression[] arguments) {
+	protected GenericMethod(String name, SearchExpression[] arguments) {
 		_name = name;
-		_self = self;
 		_args = arguments;
 	}
 
 	/**
-	 * Creates a {@link SearchExpression} implementing the same generic method but invoked on
-	 * another object with other arguments.
+	 * Creates a {@link SearchExpression} implementing the same generic method but invoked with
+	 * other arguments.
 	 * 
-	 * @param self
-	 *        Copy of the expression, on which the method is invoked.
 	 * @param arguments
 	 *        Copies of the argument expressions of the method.
 	 */
-	public abstract GenericMethod copy(SearchExpression self, SearchExpression[] arguments);
+	public abstract GenericMethod copy(SearchExpression[] arguments);
 
 	/**
 	 * The name of the method.
 	 */
 	public String getName() {
 		return _name;
-	}
-
-	/**
-	 * The expression delivering the object on which the method is invoked.
-	 */
-	public SearchExpression getSelf() {
-		return _self;
-	}
-
-	/**
-	 * @see #getSelf()
-	 */
-	public void setSelf(SearchExpression self) {
-		_self = self;
 	}
 
 	/**
@@ -98,15 +77,13 @@ public abstract class GenericMethod extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		Object self = eval(getSelf(), definitions);
-
 		SearchExpression[] argExprs = getArguments();
 		Object[] arguments = new Object[argExprs.length];
 		for (int n = 0, cnt = arguments.length; n < cnt; n++) {
 			arguments[n] = eval(argExprs[n], definitions);
 		}
 
-		return eval(self, arguments, definitions);
+		return eval(arguments, definitions);
 	}
 
 	private Object eval(SearchExpression expr, EvalContext definitions) {
@@ -115,17 +92,15 @@ public abstract class GenericMethod extends SearchExpression {
 
 	/**
 	 * Compute the type of the method result.
-	 *
-	 * @param selfType
-	 *        The type of the base object.
 	 * @param argumentTypes
 	 *        The types of the arguments.
+	 *
 	 * @return The type of the result.
 	 */
-	public abstract TLType getType(TLType selfType, List<TLType> argumentTypes);
+	public abstract TLType getType(List<TLType> argumentTypes);
 
 	/**
-	 * Whether the {@link #eval(Object, Object[], EvalContext)} implementation does not modify
+	 * Whether the {@link #eval(Object[], EvalContext)} implementation does not modify
 	 * state.
 	 * 
 	 * <p>
@@ -138,15 +113,13 @@ public abstract class GenericMethod extends SearchExpression {
 
 	/**
 	 * Performs the evaluation on concrete values computed from sub expressions.
-	 *
-	 * @param self
-	 *        The object on which to operate.
 	 * @param arguments
 	 *        The arguments to the method.
 	 * @param definitions
 	 *        See {@link SearchExpression#evalWith(EvalContext, Args)}.
+	 *
 	 * @return The result of the invocation.
 	 */
-	protected abstract Object eval(Object self, Object[] arguments, EvalContext definitions);
+	protected abstract Object eval(Object[] arguments, EvalContext definitions);
 
 }

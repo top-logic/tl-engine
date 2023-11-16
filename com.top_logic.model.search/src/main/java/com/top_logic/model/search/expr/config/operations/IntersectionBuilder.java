@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IntersectionBuilder extends SingleArgMethodBuilder<Intersection> {
+public class IntersectionBuilder extends TwoArgsMethodBuilder<Intersection> {
 
 	/**
 	 * Creates a {@link IntersectionBuilder}.
@@ -30,8 +30,8 @@ public class IntersectionBuilder extends SingleArgMethodBuilder<Intersection> {
 	}
 
 	@Override
-	protected Intersection internalBuild(Expr expr, SearchExpression self, SearchExpression arg) {
-		return intersection(self, arg);
+	protected Intersection internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
+		return intersection(arg0, arg1);
 	}
 
 }

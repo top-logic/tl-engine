@@ -29,23 +29,23 @@ public class ToLowerCase extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link ToLowerCase}.
 	 */
-	protected ToLowerCase(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToLowerCase(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToLowerCase(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToLowerCase(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		String str = asString(self);
+	public Object eval(Object[] arguments) {
+		String str = asString(arguments[0]);
 		return str.toLowerCase();
 	}
 
@@ -61,11 +61,12 @@ public class ToLowerCase extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToLowerCase build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToLowerCase build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToLowerCase(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToLowerCase(getConfig().getName(), args);
 		}
+
 	}
 
 }

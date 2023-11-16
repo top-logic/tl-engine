@@ -24,17 +24,17 @@ public class ElementAt extends AbstractListAccess {
 	/**
 	 * Creates a {@link ElementAt}.
 	 */
-	protected ElementAt(SearchExpression self, SearchExpression... arguments) {
-		super("elementAt", self, arguments);
+	protected ElementAt(SearchExpression... arguments) {
+		super("elementAt", arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ElementAt(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ElementAt(arguments);
 	}
 
 	@Override
-	protected Object evalOnEmpty() {
+	protected Object evalOnEmpty(Object[] arguments) {
 		return null;
 	}
 
@@ -80,7 +80,7 @@ public class ElementAt extends AbstractListAccess {
 	}
 
 	private int index(Object[] arguments) {
-		Object firstArg = arguments[0];
+		Object firstArg = arguments[1];
 		int index;
 		if (firstArg instanceof Number) {
 			index = ((Number) firstArg).intValue();
@@ -102,10 +102,10 @@ public class ElementAt extends AbstractListAccess {
 		}
 
 		@Override
-		public ElementAt build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ElementAt build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
-			return SearchExpressionFactory.elementAt(self, args[0]);
+			checkTwoArgs(expr, args);
+			return SearchExpressionFactory.elementAt(args);
 		}
 
 	}

@@ -31,26 +31,26 @@ public class SubString extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link SubString}.
 	 */
-	protected SubString(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected SubString(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new SubString(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new SubString(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		Object from = arguments[0];
-		Object to = arguments[1];
+	public Object eval(Object[] arguments) {
+		Object from = arguments[1];
+		Object to = arguments[2];
 
-		String str = asString(self);
+		String str = asString(arguments[0]);
 		int beginIndex = toIndex(str, asInt(from));
 		int endIndex = (to == null) ? str.length() : toIndex(str, asInt(to));
 
@@ -82,6 +82,7 @@ public class SubString extends SimpleGenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<SubString> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("string")
 			.optional("from", 0)
 			.optional("to")
 			.build();
@@ -99,10 +100,11 @@ public class SubString extends SimpleGenericMethod {
 		}
 
 		@Override
-		public SubString build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public SubString build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new SubString(getConfig().getName(), self, args);
+			return new SubString(getConfig().getName(), args);
 		}
+
 	}
 
 }

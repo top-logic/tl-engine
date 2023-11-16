@@ -26,32 +26,32 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 	/**
 	 * Creates a {@link DynamicAll}.
 	 */
-	public DynamicAll(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public DynamicAll(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new DynamicAll(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new DynamicAll(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (arguments[0] == null) {
 			return Collections.emptyList();
 		}
 
-		return evalPotentialFlatMap(definitions, self, null);
+		return evalPotentialFlatMap(definitions, arguments[0], null);
 	}
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
-		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getSelf());
+		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getArguments()[0]);
 
 		return All.all(this, type);
 	}
@@ -87,11 +87,12 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 		}
 
 		@Override
-		public DynamicAll build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public DynamicAll build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
-			return new DynamicAll(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new DynamicAll(getConfig().getName(), args);
 		}
+
 	}
 
 }

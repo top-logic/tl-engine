@@ -27,18 +27,18 @@ public class Throw extends GenericMethod {
 	/**
 	 * Creates a {@link Throw}.
 	 */
-	protected Throw(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected Throw(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new Throw(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new Throw(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return selfType;
+	public TLType getType(List<TLType> argumentTypes) {
+		return argumentTypes.get(0);
 	}
 
 	@Override
@@ -47,13 +47,13 @@ public class Throw extends GenericMethod {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		ResKey message = toResKey(self);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
 			TopLogicException problem = new ScriptAbort(message);
 			problem.initSeverity(ErrorSeverity.WARNING);
-			if (arguments.length > 0) {
-				ResKey details = toResKey(arguments[0]);
+			if (arguments.length > 1) {
+				ResKey details = toResKey(arguments[1]);
 				if (details != null) {
 					problem.initDetails(details);
 				}
@@ -86,11 +86,11 @@ public class Throw extends GenericMethod {
 		}
 
 		@Override
-		public Throw build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public Throw build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkHasTarget(expr, self);
-			checkMaxArgs(expr, args, 1);
-			return new Throw(getName(), self, args);
+			checkArgs(expr, args, 1, 2);
+			return new Throw(getName(), args);
 		}
+
 	}
 }

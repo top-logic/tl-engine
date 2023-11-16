@@ -24,17 +24,17 @@ public class LastElement extends AbstractListAccess {
 	/**
 	 * Creates a {@link LastElement}.
 	 */
-	protected LastElement(SearchExpression self, SearchExpression[] arguments) {
-		super("lastElement", self, arguments);
+	protected LastElement(SearchExpression[] arguments) {
+		super("lastElement", arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new LastElement(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return SearchExpressionFactory.lastElement(arguments);
 	}
 
 	@Override
-	protected Object evalOnEmpty() {
+	protected Object evalOnEmpty(Object[] arguments) {
 		return null;
 	}
 
@@ -70,10 +70,10 @@ public class LastElement extends AbstractListAccess {
 		}
 
 		@Override
-		public LastElement build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public LastElement build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return SearchExpressionFactory.lastElement(self);
+			checkSingleArg(expr, args);
+			return SearchExpressionFactory.lastElement(args);
 		}
 
 	}

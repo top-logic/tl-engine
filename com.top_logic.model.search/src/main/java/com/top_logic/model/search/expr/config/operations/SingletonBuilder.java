@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class SingletonBuilder extends NoArgMethodBuilder<Singleton> {
+public class SingletonBuilder extends SingleArgMethodBuilder<Singleton> {
 
 	/**
 	 * Creates a {@link SingletonBuilder}.
@@ -30,8 +30,8 @@ public class SingletonBuilder extends NoArgMethodBuilder<Singleton> {
 	}
 
 	@Override
-	protected Singleton internalBuild(Expr expr, SearchExpression self) {
-		return singleton(self);
+	protected Singleton internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs) {
+		return singleton(argument);
 	}
 
 }

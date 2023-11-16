@@ -31,23 +31,23 @@ public class RevisionForCommit extends GenericMethod {
 	/**
 	 * Creates a new {@link RevisionForCommit}.
 	 */
-	protected RevisionForCommit(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RevisionForCommit(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RevisionForCommit(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RevisionForCommit(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TlCoreFactory.getRevisionType();
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		long commitNumber = asLong(self);
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		long commitNumber = asLong(arguments[0]);
 		if (commitNumber < 0) {
 			throw new TopLogicException(I18NConstants.ERROR_NEGATIVE_COMMIT_NR__EXPR_COMMIT.fill(this, commitNumber));
 		} else if (commitNumber == 0) {
@@ -74,10 +74,10 @@ public class RevisionForCommit extends GenericMethod {
 		}
 
 		@Override
-		public RevisionForCommit build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public RevisionForCommit build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
-			return new RevisionForCommit(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new RevisionForCommit(getConfig().getName(), args);
 		}
 
 	}

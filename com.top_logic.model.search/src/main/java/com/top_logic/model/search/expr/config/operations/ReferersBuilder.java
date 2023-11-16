@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Literal;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ReferersBuilder extends SingleArgMethodBuilder<SearchExpression> {
+public class ReferersBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link ReferersBuilder}.
@@ -31,12 +31,12 @@ public class ReferersBuilder extends SingleArgMethodBuilder<SearchExpression> {
 	}
 
 	@Override
-	protected SearchExpression internalBuild(Expr expr, SearchExpression self, SearchExpression arg)
+	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs)
 			throws ConfigurationException {
-		if (arg instanceof Literal) {
-			return SearchExpressionFactory.referers(self, resolveReference(expr, arg));
+		if (arg1 instanceof Literal) {
+			return SearchExpressionFactory.referers(arg0, resolveReference(expr, arg1));
 		} else {
-			return new DynamicReferers(getName(), self, new SearchExpression[] { arg });
+			return new DynamicReferers(getName(), allArgs);
 		}
 	}
 

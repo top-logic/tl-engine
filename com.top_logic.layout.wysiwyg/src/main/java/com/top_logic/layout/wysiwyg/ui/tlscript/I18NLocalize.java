@@ -29,13 +29,13 @@ public class I18NLocalize extends Localize {
 	/**
 	 * Creates a new {@link I18NLocalize}.
 	 */
-	protected I18NLocalize(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected I18NLocalize(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new I18NLocalize(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new I18NLocalize(getName(), arguments);
 	}
 
 	@Override
@@ -68,10 +68,11 @@ public class I18NLocalize extends Localize {
 		}
 
 		@Override
-		public I18NLocalize build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public I18NLocalize build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new I18NLocalize(getConfig().getName(), self, args);
+			return new I18NLocalize(getConfig().getName(), args);
 		}
+
 	}
 
 }

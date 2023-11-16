@@ -37,22 +37,22 @@ public class ZipArchive extends GenericMethod {
 	/**
 	 * Creates a {@link ZipArchive}.
 	 */
-	public ZipArchive(String name, SearchExpression self, SearchExpression[] args) {
-		super(name, self, args);
+	public ZipArchive(String name, SearchExpression[] args) {
+		super(name, args);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ZipArchive(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ZipArchive(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.BINARY_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String name = asString(arguments[0]);
 		List<?> entries = asList(arguments[1]);
 		String comment = asString(arguments[2], null);
@@ -147,14 +147,10 @@ public class ZipArchive extends GenericMethod {
 		}
 
 		@Override
-		public ZipArchive build(Expr expr, SearchExpression self, SearchExpression[] args) throws ConfigurationException {
-			return new ZipArchive(getConfig().getName(), self, args);
+		public ZipArchive build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new ZipArchive(getConfig().getName(), args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

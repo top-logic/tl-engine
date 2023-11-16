@@ -28,22 +28,22 @@ public class AliasResolver extends GenericMethod {
 	/**
 	 * Creates a new {@link AliasResolver}.
 	 */
-	protected AliasResolver(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected AliasResolver(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new AliasResolver(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new AliasResolver(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String alias = asString(arguments[0]);
 		if (alias == null) {
 			return null;
@@ -64,17 +64,12 @@ public class AliasResolver extends GenericMethod {
 		}
 
 		@Override
-		public AliasResolver build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public AliasResolver build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new AliasResolver(getConfig().getName(), self, args);
+			return new AliasResolver(getConfig().getName(), args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
-
 }
 

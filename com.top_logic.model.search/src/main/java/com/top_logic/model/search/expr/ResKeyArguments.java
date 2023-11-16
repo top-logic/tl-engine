@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
@@ -26,34 +27,31 @@ public class ResKeyArguments extends SimpleGenericMethod {
 
 	/**
 	 * Creates a {@link ResKeyArguments}.
-	 * 
-	 * @param self
-	 *        See {@link #getSelf()}.
 	 * @param arguments
 	 *        The arguments to set on the {@link ResKey}, see {@link #getArguments()}.
 	 */
-	ResKeyArguments(SearchExpression self, SearchExpression[] arguments) {
-		super(METHOD_NAME, self, arguments);
+	ResKeyArguments(SearchExpression[] arguments) {
+		super(METHOD_NAME, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ResKeyArguments(self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return SearchExpressionFactory.reskeyArguments(arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		// No type.
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (!(self instanceof ResKey)) {
+	public Object eval(Object[] arguments) {
+		if (!(arguments[0] instanceof ResKey)) {
 			// Null, literal string?
-			return self;
+			return arguments[0];
 		}
-		return ResKey.message((ResKey) self, arguments);
+		return ResKey.message((ResKey) arguments[0], Arrays.copyOfRange(arguments, 1, arguments.length));
 	}
 
 }

@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class IsEmptyBuilder extends NoArgMethodBuilder<IsEmpty> {
+public class IsEmptyBuilder extends SingleArgMethodBuilder<IsEmpty> {
 
 	/**
 	 * Creates a {@link IsEmptyBuilder}.
@@ -30,8 +30,8 @@ public class IsEmptyBuilder extends NoArgMethodBuilder<IsEmpty> {
 	}
 
 	@Override
-	protected IsEmpty internalBuild(Expr expr, SearchExpression self) {
-		return isEmpty(self);
+	protected IsEmpty internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs) {
+		return isEmpty(argument);
 	}
 
 }

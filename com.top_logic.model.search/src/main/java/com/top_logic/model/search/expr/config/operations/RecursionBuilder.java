@@ -24,6 +24,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 public class RecursionBuilder extends AbstractSimpleMethodBuilder<Recursion> {
 
 	private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+		.mandatory("start")
 		.mandatory("fun")
 		.optional("minDepth", 0)
 		.optional("maxDepth", -1)
@@ -42,9 +43,9 @@ public class RecursionBuilder extends AbstractSimpleMethodBuilder<Recursion> {
 	}
 
 	@Override
-	public Recursion build(Expr expr, SearchExpression self, SearchExpression[] args)
+	public Recursion build(Expr expr, SearchExpression[] args)
 			throws ConfigurationException {
-		return SearchExpressions.recursion(self, args[0], args[1], args[2]);
+		return SearchExpressions.recursion(args[0], args[1], args[2], args[3]);
 	}
 
 }

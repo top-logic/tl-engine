@@ -30,22 +30,22 @@ public class ResourceBuilder extends GenericMethod {
 	/**
 	 * Creates a new {@link ResourceBuilder}.
 	 */
-	protected ResourceBuilder(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ResourceBuilder(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ResourceBuilder(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ResourceBuilder(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.RESOURCE_TYPE);
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		int numberArgs = arguments.length;
 
 		Object userObject = null;
@@ -133,15 +133,11 @@ public class ResourceBuilder extends GenericMethod {
 		}
 
 		@Override
-		public ResourceBuilder build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ResourceBuilder build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new ResourceBuilder(getConfig().getName(), self, args);
+			return new ResourceBuilder(getConfig().getName(), args);
 		}
 
-		@Override
-		public boolean hasSelf() {
-			return false;
-		}
 	}
 
 }

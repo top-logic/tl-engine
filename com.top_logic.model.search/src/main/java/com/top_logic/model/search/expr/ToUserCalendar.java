@@ -29,17 +29,17 @@ public class ToUserCalendar extends AbstractDateMethod {
 	/**
 	 * Creates a {@link ToUserCalendar}.
 	 */
-	protected ToUserCalendar(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToUserCalendar(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToUserCalendar(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToUserCalendar(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.DATE_TIME_TYPE);
 	}
 
@@ -49,12 +49,12 @@ public class ToUserCalendar extends AbstractDateMethod {
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		if (self == null) {
+	public Object eval(Object[] arguments) {
+		if (arguments[0] == null) {
 			return null;
 		}
 		Calendar result = CalendarUtil.createCalendarInUserTimeZone();
-		result.setTime(asDate(self));
+		result.setTime(asDate(arguments[0]));
 		return result;
 	}
 
@@ -70,10 +70,11 @@ public class ToUserCalendar extends AbstractDateMethod {
 		}
 
 		@Override
-		public ToUserCalendar build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToUserCalendar build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToUserCalendar(getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToUserCalendar(getName(), args);
 		}
+
 	}
 }

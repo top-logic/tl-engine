@@ -36,29 +36,30 @@ public class ToList extends SimpleGenericMethod {
 	/**
 	 * Creates a new {@link ToSet}.
 	 */
-	public ToList(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	public ToList(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToList(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToList(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
+	public Object eval(Object[] arguments) {
+		Object base = arguments[0];
 		List<?> result;
-		if (self == null) {
+		if (base == null) {
 			result = Collections.emptyList();
-		} else if (self instanceof Collection<?>) {
-			result = CollectionUtil.toList((Collection<?>) self);
+		} else if (base instanceof Collection<?>) {
+			result = CollectionUtil.toList((Collection<?>) base);
 		} else {
-			result = Collections.singletonList(self);
+			result = Collections.singletonList(base);
 		}
 		return result;
 	}
@@ -76,11 +77,12 @@ public class ToList extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToList build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToList build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToList(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToList(getConfig().getName(), args);
 		}
+
 	}
 
 }

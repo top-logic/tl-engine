@@ -601,41 +601,39 @@ public class SearchExpressionFactory {
 	/**
 	 * Creates a {@link FirstElement} expression.
 	 */
-	public static FirstElement firstElement(SearchExpression list) {
-		return new FirstElement(list, NO_ARGS);
+	public static FirstElement firstElement(SearchExpression[] list) {
+		return new FirstElement(list);
 	}
 
 	/**
 	 * Creates a {@link LastElement} expression.
 	 */
-	public static LastElement lastElement(SearchExpression list) {
-		return new LastElement(list, NO_ARGS);
+	public static LastElement lastElement(SearchExpression[] list) {
+		return new LastElement(list);
 	}
 
 	/**
 	 * Creates a {@link ElementAt} expression.
 	 */
-	public static ElementAt elementAt(SearchExpression list, SearchExpression index) {
-		return new ElementAt(list, index);
+	public static ElementAt elementAt(SearchExpression[] args) {
+		return new ElementAt(args);
 	}
 
 	/**
 	 * Creates a {@link ElementIndex} expression.
 	 */
-	public static ElementIndex elementIndex(SearchExpression list, SearchExpression element) {
-		return new ElementIndex(list, element);
+	public static ElementIndex elementIndex(SearchExpression[] args) {
+		return new ElementIndex(args);
 	}
 
 	/**
 	 * Creates a {@link ResKeyArguments} expression.
 	 *
-	 * @param self
-	 *        See {@link ResKeyArguments#getSelf()}.
 	 * @param arguments
 	 *        See {@link ResKeyArguments#getArguments()}.
 	 */
-	public static ResKeyArguments reskeyArguments(SearchExpression self, SearchExpression... arguments) {
-		return new ResKeyArguments(self, arguments);
+	public static ResKeyArguments reskeyArguments(SearchExpression... arguments) {
+		return new ResKeyArguments(arguments);
 	}
 
 	/**
@@ -678,8 +676,8 @@ public class SearchExpressionFactory {
 	 * 
 	 * @see Expr
 	 */
-	public static ReduceOperation reduce(SearchExpression self, SearchExpression... arguments) {
-		return new ReduceOperation(self, arguments);
+	public static ReduceOperation reduce(SearchExpression... arguments) {
+		return new ReduceOperation(arguments);
 	}
 
 }

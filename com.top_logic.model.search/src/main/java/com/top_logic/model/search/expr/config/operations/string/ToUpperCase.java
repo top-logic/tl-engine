@@ -29,23 +29,23 @@ public class ToUpperCase extends SimpleGenericMethod {
 	/**
 	 * Creates a {@link ToUpperCase}.
 	 */
-	protected ToUpperCase(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected ToUpperCase(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new ToUpperCase(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new ToUpperCase(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TLModelUtil.findType(TypeSpec.STRING_TYPE);
 	}
 
 	@Override
-	public Object eval(Object self, Object[] arguments) {
-		String str = asString(self);
+	public Object eval(Object[] arguments) {
+		String str = asString(arguments[0]);
 		return str.toUpperCase();
 	}
 
@@ -61,11 +61,12 @@ public class ToUpperCase extends SimpleGenericMethod {
 		}
 
 		@Override
-		public ToUpperCase build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public ToUpperCase build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, self, args);
-			return new ToUpperCase(getConfig().getName(), self, args);
+			checkSingleArg(expr, args);
+			return new ToUpperCase(getConfig().getName(), args);
 		}
+
 	}
 
 }

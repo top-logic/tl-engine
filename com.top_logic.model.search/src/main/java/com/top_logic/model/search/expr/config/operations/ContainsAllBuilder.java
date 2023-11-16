@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ContainsAllBuilder extends SingleArgMethodBuilder<ContainsAll> {
+public class ContainsAllBuilder extends TwoArgsMethodBuilder<ContainsAll> {
 
 	/**
 	 * Creates a {@link ContainsAllBuilder}.
@@ -30,8 +30,8 @@ public class ContainsAllBuilder extends SingleArgMethodBuilder<ContainsAll> {
 	}
 
 	@Override
-	protected ContainsAll internalBuild(Expr expr, SearchExpression self, SearchExpression arg) {
-		return containsAll(self, arg);
+	protected ContainsAll internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs) {
+		return containsAll(arg0, arg1);
 	}
 
 }

@@ -30,26 +30,26 @@ public class RevisionAt extends GenericMethod {
 	/**
 	 * Creates a new {@link RevisionAt}.
 	 */
-	protected RevisionAt(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected RevisionAt(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new RevisionAt(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new RevisionAt(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return TlCoreFactory.getRevisionType();
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self == null) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (arguments[0] == null) {
 			return null;
 		}
-		Date date = asDate(self);
+		Date date = asDate(arguments[0]);
 		Revision requestedRevision = HistoryUtils.getRevisionAt(date.getTime());
 		Revision sessionRevision = HistoryUtils.getSessionRevision();
 		if (requestedRevision.compareTo(sessionRevision) > 0) {
@@ -73,10 +73,10 @@ public class RevisionAt extends GenericMethod {
 		}
 
 		@Override
-		public RevisionAt build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public RevisionAt build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkNoArguments(expr, args);
-			return new RevisionAt(getConfig().getName(), self, args);
+			checkMaxArgs(expr, args, 1);
+			return new RevisionAt(getConfig().getName(), args);
 		}
 
 	}

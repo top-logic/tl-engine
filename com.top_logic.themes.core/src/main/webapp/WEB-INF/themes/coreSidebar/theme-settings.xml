@@ -21,13 +21,13 @@
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="36"
+		value="68"
+	/>
+	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
 	/>
 	<int name="TOOL_ROW_HEIGHT"
 		value="72"
-	/>
-	<int name="MAIN_TAB_BAR_HEIGHT"
-		value="52"
 	/>
 	<int name="LICENCE_EXPIRE_BAR_HEIGHT"
 		expr="34"
@@ -55,15 +55,6 @@
 	/>
 	<int name="MAINTAINANCE_BAR_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
-	/>
-	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
-		value="48px"
-	/>
-	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="40"
-	/>
-	<size name="tabbar-height"
-		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px"
 	/>
 	<icon name="HEADER_RIGHT_IMAGE"
 		value="/images/appLogo.svg"

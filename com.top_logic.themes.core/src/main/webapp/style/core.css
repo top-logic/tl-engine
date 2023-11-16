@@ -47,11 +47,6 @@ h1 {
 	letter-spacing: var(--heading-05-letter-spacing);
 }
 
-div.layoutHorizontalAdjustmentGrabber {
-  	background: var(--layer-selected);
-  	cursor: e-resize;
-}
-
 .structuredTextFullHeight {
     padding: 0 var(--spacing-03);
 }
@@ -79,7 +74,17 @@ i.yellow {
 }
 
 .layoutVerticalAdjustmentGrabber {
-    background: var(--border-strong);
+    cursor: n-resize;
+    background: var(--background);
+}
+
+.layoutHorizontalAdjustmentGrabber {
+  	cursor: e-resize;
+  	background: var(--background);
+}
+
+.fflCollapsed {
+	cursor: default;
 }
 
 /*
@@ -136,13 +141,13 @@ a.cmdLink:visited {
     background: var(--layer-selected);
 }
 
-/* Zeilenhöhe für den gesamten Ace Editor anpassen */
+/* Adjust line height for the entire Ace Editor */
 .ace_editor {
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 }
 
-/* Zeilenhöhe für den Textbereich des Editors anpassen */
+/* Adjust line height for the text area of the editor */
 .ace_content {
 	ffont-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
@@ -403,7 +408,7 @@ a.accEntry.accContainer.accSelected:hover .accIcon i {
   	position: absolute;
   	width: 100%;
   	height: 100%;
-  	background-color: #FFF;
+  	background-color: var(--background);
   	opacity: 0;
   	cursor: wait;
 }
@@ -904,7 +909,7 @@ div.dlgMaximized .input-image.dlgRestore {
 	height: 100%;
 	width: 100%;
 	cursor: wait;
-	background-image: var(--overlay);
+	background: var(--overlay);
 }
 
 .dlgTitleBar {
@@ -942,7 +947,6 @@ div.dlgMaximized .input-image.dlgRestore {
 	display: flex;
 	align-self: center;
 	gap: var(--spacing-02);
-	margin-right: var(--spacing-02);
 }
 
 .dlgToolbar a,
@@ -977,10 +981,6 @@ div.dlgMaximized .input-image.dlgRestore {
 	flex-direction: column;
 	flex-grow: 2;
 	justify-content: space-between;
-}
-
-.lcAuto {
-	overflow: auto
 }
 
 .dlgBorderNW, .dlgBorderSW {
@@ -1066,16 +1066,8 @@ div.dlgCapture {
 	left: 0;
 	width: 100%;
 	height: 100%;
-
-	/* Workaround: A div element only captures mouse events over iframe elements
-	 * in IE, if it has "some" background.
-	 */
-	background-color: #EEEEEE;
+	background-color: var(--layer);
 	filter: alpha(opacity=0);
-	-moz-opacity: 0;
-	/*
-	 * since Firefox 3.5
-	 */
 	opacity: 0;
 }
 
@@ -1246,66 +1238,68 @@ div.mboxInput {
 	padding-left: 10px;
 }
 
-/* ============================================ */
-/* ==== simpleajax network error box (sx) ===== */
-/* ============================================ */
-
+/*
+****										****
+****	simpleajax network error box (sx)	****
+****										****
+*/
 div.sxError {
-	font-size: large;
-	color: white;
 	position: absolute;
-	background: #EE3333;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	padding: 10px;
-	border: 3px solid #CC2222;
+	color: var(--text-primary);
+	padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
+	background: var(--notification-danger-background);
+	border: 1px solid var(--support-danger);
+	box-shadow: var(--shadow-menu);
 	cursor: default;
 }
 
 div.sxMessage,
 div.sxFailure {
-	margin: 10px;
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+	margin: var(--spacing-02);
 }
 
 div.sxButtons {
-	font-size: small;
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
 	text-align: right;
-	margin-top: 20px;
+	margin-top: var(--spacing-05);
 }
 
 div.sxFailure,
-div.sxButtons{
+div.sxButtons,
+div.sxRetry div.sxMessage {
 	display: none;	
 }
 
-div.sxRetry div.sxMessage {
-	display: none;
-}
-
 div.sxRetry div.sxFailure,
-div.sxRetry div.sxButtons 
-{
+div.sxRetry div.sxButtons {
 	display: block;
 }
 
 span.sxButton {
-	margin-left: 5px;
-	display: inline-block;
-	padding: 5px;
-	border: 1px solid #ffffff;
+	color: var(--text-on-color);
+	border: 1px solid var(--support-danger);
 	cursor: pointer;
 }
 
-span.sxButton:HOVER {
-	color: #EE3333;
-	background: white;
+span.sxButton:hover {
+	color: var(--text-on-color);
 }
 
-/* ==================================== */
-/* ==== layoutControl.cCollapsible styles (lc) ===== */
-/* ==================================== */
-
+/*
+****											****
+****	layoutControl.cCollapsible styles (lc)	****
+****											****
+*/
 div.lcViewport {
 	position: absolute;
 	top: 0px;
@@ -1492,10 +1486,6 @@ div.mcMinimized .accText {
 	max-width: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
-}
-
-.tl-info-service_pinned {
-	/* Marker class */
 }
 
 .tl-info-service-item__hide-info-service_animation {
@@ -2022,19 +2012,32 @@ h5.card-title a:focus {
 ****	Breadcrump syles	****
 ****						****
 */
-.lcAuto.lcNavigation {
+.Header {
+	display: flex;
+	height: var(--MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT);
 	overflow: hidden;
-	background: var(--layer);
+}
+
+.BreadCrumbOuter {
+    display: flex;
+    align-self: center;
+    background: var(--layer);
+    width: 100%;
 }
 
 .BreadCrumbOuter .Left {
-	float: left;
+	flex-grow: 2;
 	padding: var(--spacing-02);
 }
 
-.BreadCrumbOuter .Right {
-	float: right;
-	padding: .5rem;
+.breadCrumbRight {
+    flex-grow: 1;
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: var(--spacing-02);
+    padding: 0.5rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .breadcrumb {
@@ -2073,7 +2076,7 @@ h5.card-title a:focus {
 }
 
 /* 
-Is needes as long as the data-hover class exist.
+Is needes as long as the data-hover classes exist.
 If they're deleted, this can be deleted too
 */
 .breadcrumb span.hover,
@@ -2127,6 +2130,7 @@ If they're deleted, this can be deleted too
 ****					****
 */
 .treeBody {
+	height: 100%;
 	background-color: var(--layer);
 }
 
@@ -2207,7 +2211,7 @@ If they're deleted, this can be deleted too
 
 /*
 ****						****
-****	Toolrow syles		****
+****	Toolbar styles		****
 ****						****
 */
 .cCollapsibleHeader {
@@ -2215,7 +2219,7 @@ If they're deleted, this can be deleted too
 	flex-direction: row-reverse;
 	align-items: center;
 	justify-content: space-between;
-	background-color: var(--layer-accent);
+	background-color: var(--layer);
 	height: inherit;
 	gap: var(--spacing-02);
 }

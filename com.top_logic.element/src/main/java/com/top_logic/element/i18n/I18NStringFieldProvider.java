@@ -9,6 +9,7 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.constraints.StringLengthConstraint;
+import com.top_logic.model.annotate.AllLanguagesInViewMode;
 
 /**
  * {@link FieldProvider} for {@link I18NStringField}.
@@ -20,7 +21,13 @@ public class I18NStringFieldProvider extends I18NFieldProvider {
 	@Override
 	protected I18NStringField createField(EditContext editContext, String fieldName, boolean mandatory, boolean disabled,
 			boolean multiLine, Constraint constraint) {
-		return I18NStringField.newI18NStringField(fieldName, mandatory, disabled, multiLine, constraint);
+		I18NStringField field =
+			I18NStringField.newI18NStringField(fieldName, mandatory, disabled, multiLine, constraint);
+		AllLanguagesInViewMode annotation = editContext.getAnnotation(AllLanguagesInViewMode.class);
+		if (annotation != null && annotation.getValue()) {
+			field.set(I18NField.DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE, true);
+		}
+		return field;
 	}
 
 	@Override

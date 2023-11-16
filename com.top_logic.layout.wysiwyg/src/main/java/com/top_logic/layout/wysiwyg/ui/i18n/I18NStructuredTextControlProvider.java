@@ -7,10 +7,17 @@ package com.top_logic.layout.wysiwyg.ui.i18n;
 
 import java.util.List;
 
+import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.element.i18n.I18NField;
+import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringActiveLanguageControlRenderer;
 import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
+import com.top_logic.layout.CompositeControl;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.basic.ControlRenderer;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.ImmutablePropertyListener;
+import com.top_logic.layout.form.control.AbstractCompositeControl;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.OnVisibleControl;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -55,8 +62,38 @@ public class I18NStructuredTextControlProvider implements ControlProvider {
 					StructuredTextFieldTranslator.INSTANCE));
 			}
 		}
-		block.setRenderer(I18NStringControlRenderer.ABOVE_INSTANCE);
+		if (member.get(I18NField.DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE)) {
+			block.setRenderer(editModeRenderer());
+		} else {
+			ImmutablePropertyListener immutableListener = immutableListener(block);
+			member.addListener(FormField.IMMUTABLE_PROPERTY, immutableListener);
+			immutableListener.handleImmutableChanged(member, !member.isImmutable(), member.isImmutable());
+		}
 		return block;
+	}
+
+	private ImmutablePropertyListener immutableListener(AbstractCompositeControl<?> composite) {
+		return new ImmutablePropertyListener() {
+
+			@Override
+			public Bubble handleImmutableChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
+				ControlRenderer<CompositeControl> newRenderer;
+				if (newValue) {
+					// Display only the value for the current locale in view mode.
+					newRenderer = I18NStringActiveLanguageControlRenderer.INSTANCE;
+				} else {
+					// Display each value in edit mode.
+					newRenderer = editModeRenderer();
+				}
+				composite.setRenderer(newRenderer);
+				return Bubble.BUBBLE;
+			}
+		};
+
+	}
+
+	I18NStringControlRenderer editModeRenderer() {
+		return I18NStringControlRenderer.ABOVE_INSTANCE;
 	}
 
 }

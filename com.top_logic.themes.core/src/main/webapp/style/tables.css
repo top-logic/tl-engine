@@ -132,7 +132,6 @@ th.tblCounterNoBorder {
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
-	border-top: 1px solid var(--border-subtle);
 	white-space: nowrap;
     background-color: var(--layer-accent);
 }
@@ -146,9 +145,8 @@ th.tblCounterNoBorder {
 	color: var(--text-secondary);
     white-space: nowrap;
 	padding: 0px;
-	border-color: var(--border-subtle);
-    border-left: 0px solid var(--border-subtle);
-    border-bottom:  var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
+    border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
+    border-top: none;
 }
 
 th.tl-table__cell {
@@ -618,6 +616,8 @@ div.tl-table__filter-sort-container {
 	bottom: 0;
 	overflow-x: hidden;
 	overflow-y: auto;
+	background-color: var(--layer);
+    height: 100%;
 }
 
 .sidebarFilterContainer > div {
@@ -1467,7 +1467,7 @@ td.treeTableTdFirst span {
 }
 
 tr.treeSelected td.treeTableTdFirst {
-    white-space:  nowrap;     
+    white-space:  nowrap;
 }
 
 td.treeTableTd {

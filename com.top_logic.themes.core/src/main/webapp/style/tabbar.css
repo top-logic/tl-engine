@@ -3,10 +3,22 @@
 ****	Tabbar syles	****
 ****					****
 */
-.mainTabBar, .tabBar {
+.tlTabBar {
+	position: relative;
 	display: flex;
 	flex-wrap: nowrap;
-	margin-right: .625rem;
+}
+
+/* Simulates a border bottom line for the entire tab bar */
+.tlTabBar::before {
+	content: "";
+	position: absolute;
+  	bottom: 0;
+  	left: 0;
+  	right: 0;
+  	height: 2px;
+  	background-color: var(--border-subtle);
+	z-index: -1;
 }
 
 .tlTabScrollContainer {
@@ -38,9 +50,8 @@
   	height: var(--tabbar-height);
 }
 
-/* Line tabs */
-.mainTabBar .activeTab,
-.mainTabBar .tab {
+.tlTabBar .activeTab,
+.tlTabBar .tab {
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: center;
@@ -55,125 +66,40 @@
 	border-left: none;
 }
 
-.mainTabBar .activeTab {
+.tlTabBar .activeTab {
 	border-bottom: 2px solid var(--border-interactive);	
 }
 
-.mainTabBar .tab {
+.tlTabBar .tab {
 	border-bottom: 2px solid var(--border-subtle);
 }
 
-.mainTabBar .activeTabLabel {
+.tlTabBar .activeTabLabel {
 	color: var(--text-primary);
 	font-size: .875rem;
 	font-weight: 600;
 }
 
-.mainTabBar .tabLabel {
+.tlTabBar .tabLabel {
 	color: var(--text-secondary);
 	font-size: .875rem;
 	font-weight: 400;
 }
 
-.mainTabBar .activeTab:hover,
-.mainTabBar .tab:hover {
+.tlTabBar .activeTab:hover,
+.tlTabBar .tab:hover {
 	border-bottom: 2px solid var(--border-strong);
 }
 
-.mainTabBar .activeTab:focus,
-.mainTabBar .tab:focus {
+.tlTabBar .activeTab:focus,
+.tlTabBar .tab:focus {
 	box-shadow: inset 0 0 0 1px var(--focus);
 	border-bottom: 1px solid var(--focus);
 }
 
-.mainTabBar .activeTab:disabled,
-.mainTabBar .tab:disabled {
+.tlTabBar .activeTab:disabled,
+.tlTabBar .tab:disabled {
 	border-bottom: 2px solid var(--border-disabled);
 }
 
 
-/* Contained tabs */
-.tabBar .activeTab,
-.tabBar .tab {
-	display: flex;
-	flex-wrap: nowrap;
-	align-items: center;
-	flex-shrink: 0;
-	padding: var(--spacing-02) var(--spacing-03);
-	height: var(--tabbar-height);
-	border: none;
-	cursor: pointer;
-}
-
-.tabBar .activeTab{
-	background: var(--layer-selected);
-}
-
-.tabBar .tab {
-	background: var(--layer);
-}
-
-.tabBar .activeTabLabel {
-	color: var(--text-interactive);
-	font-size: .875rem;
-	font-weight: 600;
-}
-
-.tabBar .tabLabel {
-	color: var(--text-secondary);
-	font-size: .875rem;
-	font-weight: 400;
-}
-
-.tabIcon i {
-	color: var(--icon-secondary);
-	padding-left: var(--spacing-02);
-  	font-size: 1rem;
-}
-
-.tabBar .activeTab .tabIcon i {
-	color: var(--icon-interactive);
-}
-
-.tabBar .tab .tabIcon i {
-	color: var(--icon-secondary);
-}
-
-.tabBar .tab:not(:last-child) {
-	border-right: 1px solid var(--border-subtle);
-}
-
-.tabBar .activeTab:hover,
-.tabBar .tab:hover {
-	background: var(--layer-hover);
-}
-
-.tabBar .tab:focus {
-	box-shadow: inset 0 0 0 1px var(--focus);
-}
-
-.tabBar .activeTab:disabled,
-.tabBar .tab:disabled {
-	background: var(--layer-disabled);
-}
-
-.activeTab:hover .activeTabLabel,
-.tab:hover .tabLabel{
-	color: var(--text-primary);
-}
-
-.activeTab:hover .tabIcon i,
-.tab:hover .tabIcon i {
-	color: var(--icon-primary);
-}
-
-.activeTab:disabled .activeTabLabel,
-.tab:disabled .tabLabel {
-	color: var(--text-disabled);
-	font-weight: 400;
-}
-
-.activeTab:disabled .tabIcon i,
-.tab:disabled .tabIcon i {
-	color: var(--icon-disabled);
-}

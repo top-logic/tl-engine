@@ -1365,6 +1365,22 @@
 							<addResourcesToClasspath>false</addResourcesToClasspath>
 						</configuration>
 					</execution>
+					
+					<execution>
+						<id>migrate-ticket-27604</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<mainClass>com.top_logic.model.search.migrate.ticket27604.UpgradeGridCreateHandlerByExpression27604</mainClass>
+							
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>false</addResourcesToClasspath>
+						</configuration>
+					</execution>
 		        </executions>
 			</plugin>
 

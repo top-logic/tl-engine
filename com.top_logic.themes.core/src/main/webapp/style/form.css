@@ -884,12 +884,12 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_content,
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_container {
 	border: 1px dashed #7695C3;
-	background: #FAFCFE;
+	background: var(--layer);
 }
 
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
 	border: 1px dashed #7695C3;
-	background: #dceaf8;
+	background: var(--layer-accent);
 }
 
 /* do not mark locked areas */
@@ -912,7 +912,7 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 
 .rf_editor .cFormEditorPreview.rf_highlighted .cFormEditorElement.rf_dragged .rf_content {
 	border: 0px;
-	background: #FFF;
+	background: var(--background);
 }
 
 .rf_dropArea {
@@ -1318,13 +1318,14 @@ div.cal_zoom_inAnimation {
 	display: inline-flex;
 }
 
-.lFixedRight > :not(.cannot-edit),
+.lFixedRight,
 .cIntegerInput.num .lFixedRight {
 	display: inline-flex;
 	align-items: stretch;
 	color: var(--icon-primary);
 	background: var(--field);
 }
+
 .lFixedRight a:not(.lFlexible),
 .lFixedRight:not(.timePart) span:not(.lFlexible),
 .lFixedRight span span:not(.lFlexible),

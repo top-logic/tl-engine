@@ -73,7 +73,8 @@ div.cmdProgress img {
 .cDefaultButton button:disabled,
 .fltSubContent .cMenuButton.menuEntryEnabled,
 .fltSubContent .cMenuButton.menuEntryDisabled,
-.tlButtonScrollContainer .tlDropdownButton {
+.tlButtonScrollContainer .tlDropdownButton,
+.sxButtons .tlButton {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;

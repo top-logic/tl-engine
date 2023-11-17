@@ -51,6 +51,15 @@ public class ContainerReference extends SimpleGenericMethod {
 	}
 
 	/**
+	 * {@link ContainerReference} can not be evaluated at compile time, because the container of an
+	 * object and therefore the reference may have been changed.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[0] == null;
+	}
+
+	/**
 	 * {@link MethodBuilder} creating {@link ContainerReference}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<ContainerReference> {

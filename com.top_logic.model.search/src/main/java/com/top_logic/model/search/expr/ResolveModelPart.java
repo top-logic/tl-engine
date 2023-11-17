@@ -58,6 +58,15 @@ public class ResolveModelPart extends SimpleGenericMethod {
 	}
 
 	/**
+	 * The qualified name of a model element can represent different objects at different times
+	 * because the model part may have been deleted or newly created.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	/**
 	 * {@link MethodBuilder} creating {@link ResolveModelPart}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<ResolveModelPart> {

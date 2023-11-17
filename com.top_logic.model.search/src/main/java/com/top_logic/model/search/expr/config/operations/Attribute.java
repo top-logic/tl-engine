@@ -52,6 +52,15 @@ public class Attribute extends SimpleGenericMethod {
 	}
 
 	/**
+	 * {@link Attribute} can not be evaluated at compile time, because the attribute with the given
+	 * name could have been deleted or not yet created.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return !(arguments[0] instanceof TLStructuredType);
+	}
+
+	/**
 	 * {@link MethodBuilder} creating {@link Attribute}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Attribute> {

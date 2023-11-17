@@ -45,6 +45,15 @@ public class DateExpr extends SimpleGenericMethod {
 		return TLModelUtil.findType(TypeSpec.DATE_TYPE);
 	}
 
+	/**
+	 * {@link DateExpr} uses the system calendar, therefore it can not be evaluated at compile time,
+	 * because the system timezone may change.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
 	@Override
 	public Object eval(Object[] arguments) {
 		Calendar calendar = CalendarUtil.createCalendar();

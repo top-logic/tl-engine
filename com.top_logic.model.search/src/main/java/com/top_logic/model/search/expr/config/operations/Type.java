@@ -58,6 +58,15 @@ public class Type extends SimpleGenericMethod {
 	}
 
 	/**
+	 * The type of am object can not be changed, therefore {@link Type} can evaluated at compile
+	 * time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return true;
+	}
+
+	/**
 	 * {@link MethodBuilder} creating {@link Type}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Type> {

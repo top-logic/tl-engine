@@ -48,6 +48,14 @@ public class ContextPath extends SimpleGenericMethod {
 	}
 
 	/**
+	 * It may be that the {@link ServletContextService} is not yet started.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	/**
 	 * {@link MethodBuilder} creating {@link ContextPath}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<ContextPath> {

@@ -23,8 +23,6 @@ import com.top_logic.model.search.expr.SearchExpression;
  */
 public class SupplierSearchExpression extends GenericMethod {
 
-	private static final SearchExpression NO_SELF = null;
-
 	private static final SearchExpression[] NO_ARGUMENTS = new SearchExpression[0];
 
 	private final SupplierSearchExpressionBuilder _builder;

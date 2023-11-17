@@ -16,7 +16,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * Base class for custom expression implementations.
  * 
  * <p>
- * Note: Whenever possible, consider implementing {@link SimpleGenericMethod} instead to enable the
+ * Note: Whenever possible, consider implementing {@link GenericMethod} instead to enable the
  * constant folding optimization.
  * </p>
  *

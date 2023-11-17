@@ -12,7 +12,6 @@ import static com.top_logic.model.util.TLModelUtil.*;
 import java.util.List;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -23,6 +22,7 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.basic.LabelSorter;
+import com.top_logic.layout.editor.config.TypeWithReferenceTemplateParameters.MultipleReferencesOfType;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
@@ -31,7 +31,6 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
-import com.top_logic.model.util.AllReferenceAttributes;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -56,14 +55,23 @@ public class AttributeBasedCreateTypeOptions
 		/** Property name of {@link #getAttribute()}. */
 		String ATTRIBUTE = "attribute";
 
-		/** The type on which the {@link #getAttribute() attribute} is defined. */
+		/**
+		 * The type on which the {@link #getAttribute() attribute} is defined.
+		 * <p>
+		 * This can also be a super type of a type that defines the attribute. That makes it
+		 * possible to use this class in a layout template where the user specifies only a single
+		 * type and that type is also used for computing the table configuration.
+		 * </p>
+		 * 
+		 * @implNote This is used only for computing the options for {@link #getAttribute()}.
+		 */
 		@Mandatory
 		@Name(OWNER)
 		TLModelPartRef getOwner();
 
 		/** The attribute whose value type should be computed. */
 		@Mandatory
-		@Options(fun = AllReferenceAttributes.class, args = @Ref(OWNER), mapping = TLModelPartRef.PartMapping.class)
+		@Options(fun = MultipleReferencesOfType.class, args = @Ref(OWNER), mapping = TLModelPartRef.PartMapping.class)
 		@Name(ATTRIBUTE)
 		TLModelPartRef getAttribute();
 
@@ -74,10 +82,18 @@ public class AttributeBasedCreateTypeOptions
 	private final TLStructuredTypePart _attribute;
 
 	/** {@link TypedConfiguration} constructor for {@link AttributeBasedCreateTypeOptions}. */
-	public AttributeBasedCreateTypeOptions(InstantiationContext context, Config config) throws ConfigurationException {
+	public AttributeBasedCreateTypeOptions(InstantiationContext context, Config config) {
 		super(context, config);
-		_attributeOwner = getConfig().getOwner().resolveClass();
 		_attribute = resolveAttribute(context, config);
+		/* It is not possible to reuse the type specified in the configuration, as it might not
+		 * declare this attribute, as it might be declared on one of its subtypes. That makes it
+		 * possible to define a tree table with just one type parameter. Example: A table that
+		 * displays a tree. The table configuration needs to get the common super type of all types
+		 * that can appear in the table. But that common super type might not define the attribute
+		 * by which this tree is created. Because some types in the tree could be "leafs": They
+		 * should not have children nodes and therefore don't have the attribute that defines the
+		 * tree. Therefore, the common super type cannot have this attribute either. */
+		_attributeOwner = (TLClass) _attribute.getOwner();
 	}
 
 	private TLStructuredTypePart resolveAttribute(InstantiationContext context, Config config) {

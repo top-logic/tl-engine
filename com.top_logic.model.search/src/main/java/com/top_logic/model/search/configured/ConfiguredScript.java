@@ -12,11 +12,13 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.compile.transform.HasSideEffects;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptorBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ConfiguredMethodBuilder} that creates {@link SearchExpression} based on a configured
@@ -38,6 +40,8 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 
 	private QueryExecutor _executor;
 
+	private Boolean _hasSideEffect;
+
 	private final ArgumentDescriptor _descriptor;
 
 	/**
@@ -55,7 +59,17 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 
 	@Override
 	public void resolveExternalRelations() {
-		_executor = createQueryExecutor();
+		Expr expr = createBaseExpression();
+		if (ModelService.Module.INSTANCE.isActive()) {
+			_hasSideEffect = computeHasSideEffects(expr);
+		} else {
+			/* Computed lazy in #isSideEffectFree(). */
+		}
+		_executor = QueryExecutor.compile(expr);
+	}
+
+	private Boolean computeHasSideEffects(Expr expr) {
+		return QueryExecutor.compileExpr(expr).visit(HasSideEffects.INSTANCE, null);
 	}
 
 	private ArgumentDescriptor createArgumentDescriptor() {
@@ -79,7 +93,7 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 		}
 	}
 
-	private QueryExecutor createQueryExecutor() {
+	private Expr createBaseExpression() {
 		Expr expr = getConfig().getImplementation();
 
 		// Note: The last argument is passed to the innermost function. Therefore, the lambdas must
@@ -88,14 +102,23 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 		for (int n = parameters.size() - 1; n >= 0; n--) {
 			expr = Define.create(parameters.get(n).getName(), expr);
 		}
-		return QueryExecutor.compile(expr);
+		return expr;
 	}
 
 	@Override
 	public SearchExpression build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 		/* Note: The executor must not be used direct, because SearchExpression may be accessed,
 		 * before the Executor is resolved. */
-		return new QueryExecutorMethod(this::getExecutor, getConfig().getName(), args);
+		/* Note: "sideeffectfree" must not be used direct, because it needs the ModelService which
+		 * is eventually not yet started. */
+		return new QueryExecutorMethod(this::getExecutor, getConfig().getName(), args, this::isSideEffectFree);
+	}
+
+	private boolean isSideEffectFree() {
+		if (_hasSideEffect == null) {
+			_hasSideEffect = computeHasSideEffects(createBaseExpression());
+		}
+		return !_hasSideEffect.booleanValue();
 	}
 
 	private QueryExecutor getExecutor() {

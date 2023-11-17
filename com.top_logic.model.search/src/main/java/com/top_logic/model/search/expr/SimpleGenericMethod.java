@@ -8,11 +8,6 @@ package com.top_logic.model.search.expr;
 /**
  * {@link GenericMethod} that can {@link #eval(Object[]) be evaluated} without any context.
  * 
- * <p>
- * A {@link SimpleGenericMethod} take part in the constant folding optimization of the script
- * compiler.
- * </p>
- *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public abstract class SimpleGenericMethod extends GenericMethod {

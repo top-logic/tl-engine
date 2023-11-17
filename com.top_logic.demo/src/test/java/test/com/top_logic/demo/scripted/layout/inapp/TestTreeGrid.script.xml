@@ -177,26 +177,6 @@
 									<named-member name="modelBox0"/>
 									<named-member name="modelContent0"/>
 									<labeled-member label="Buttons"/>
-									<named-member name="add"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-										value="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-								<path>
-									<named-member name="modelBox0"/>
-									<named-member name="modelContent0"/>
-									<labeled-member label="Buttons"/>
 									<named-member name="content"/>
 									<object>
 										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
@@ -233,45 +213,6 @@
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 								value="css:fas fa-plus"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Typ"
-							>
-								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
-										ref="DemoTypes:DemoTypes.All"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-								<path>
-									<named-member name="modelBox0"/>
-									<named-member name="modelContent0"/>
-									<labeled-member label="Buttons"/>
-									<named-member name="content"/>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-											value="2"
-										/>
-									</object>
-									<labeled-member label="Neue Zeile"/>
-									<labeled-member label="Initialisierung"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="context->newObject->$context.add(`tl.element:StructuredElementContainer#children`, $newObject)"
 							/>
 						</action>
 						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"

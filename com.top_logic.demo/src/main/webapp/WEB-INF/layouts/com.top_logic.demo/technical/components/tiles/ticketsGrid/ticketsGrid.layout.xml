@@ -28,7 +28,6 @@
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
 				clique="create"
 				createContext="model->$model"
-				createType="test.tiles:Ticket"
 				group="Create"
 			>
 				<resourceKey key="dynamic.131b74af-d3cc-4c71-9762-500977778697">
@@ -41,6 +40,10 @@
     $product.add(`test.tiles:Product#tickets`, $ticket);
     $ticket.add(`test.tiles:Ticket#planedIn`, $release);
 }]]></initOperation>
+				<type-options class="com.top_logic.element.layout.create.ConstantCreateTypeOptions"
+					include-subtypes="false"
+					type="test.tiles:Ticket"
+				/>
 			</button>
 		</buttons>
 	</arguments>

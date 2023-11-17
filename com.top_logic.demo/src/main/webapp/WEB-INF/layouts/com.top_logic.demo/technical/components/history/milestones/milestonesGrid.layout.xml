@@ -32,7 +32,6 @@
 				clique="create"
 				confirm="false"
 				createContext="model->$model"
-				createType="test.history:Milestone"
 				disabledImage=""
 				group="Create"
 				image=""
@@ -44,6 +43,10 @@
 					<en>New milestone</en>
 					<de>Neuer Meilenstein</de>
 				</resourceKey>
+				<type-options class="com.top_logic.element.layout.create.ConstantCreateTypeOptions"
+					include-subtypes="false"
+					type="test.history:Milestone"
+				/>
 			</button>
 			<button id="ID_3c9d531b_ab63_4c7f_a900_10e04494ae66"
 				class="com.top_logic.layout.form.component.InvalidateCommand"

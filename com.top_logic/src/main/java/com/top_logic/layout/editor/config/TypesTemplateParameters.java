@@ -12,7 +12,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLTypeRefsFormat;
+import com.top_logic.model.util.TLModelPartRefsFormat;
 
 /**
  * Base interface for layout template parameter definitions to provide a types parameter.
@@ -31,7 +31,7 @@ public interface TypesTemplateParameters extends ConfigurationItem {
 	 */
 	@Name(TYPE)
 	@Mandatory
-	@Format(TLTypeRefsFormat.class)
+	@Format(TLModelPartRefsFormat.class)
 	List<TLModelPartRef> getTypes();
 
 	/**

@@ -34,7 +34,6 @@
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
 				clique="create"
 				createContext="model->$model"
-				createType="test.optionprovider:WithOptions"
 				group="Create"
 				image="colored:tl-icon row-top-add"
 			>
@@ -43,6 +42,10 @@
 					<de>Neue Zeile</de>
 				</resourceKey>
 				<checkScopeProvider class="com.top_logic.layout.basic.check.SelfCheckProvider"/>
+				<type-options class="com.top_logic.element.layout.create.ConstantCreateTypeOptions"
+					include-subtypes="false"
+					type="test.optionprovider:WithOptions"
+				/>
 			</button>
 			<button id="ID_a2e067b4_e232_4d66_bdf3_b41bf5f5f9d6"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"

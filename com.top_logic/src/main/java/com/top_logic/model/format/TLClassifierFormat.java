@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.BidiMap;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.BidiHashMap;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
@@ -190,12 +189,7 @@ public class TLClassifierFormat extends AbstractConfigurationValueProvider<FastL
 			// For legacy compatibility.
 			return FastList.getFastList(_typeName);
 		}
-
-		try {
-			return (TLEnumeration) getConfig().getType().resolveType();
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
-		}
+		return (TLEnumeration) getConfig().getType().resolveType();
 	}
 
 	/**

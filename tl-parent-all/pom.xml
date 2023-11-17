@@ -1365,6 +1365,22 @@
 							<addResourcesToClasspath>false</addResourcesToClasspath>
 						</configuration>
 					</execution>
+					
+					<execution>
+						<id>migrate-ticket</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<mainClass>${tl.migrationClass}</mainClass>
+							
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>false</addResourcesToClasspath>
+						</configuration>
+					</execution>
 		        </executions>
 			</plugin>
 

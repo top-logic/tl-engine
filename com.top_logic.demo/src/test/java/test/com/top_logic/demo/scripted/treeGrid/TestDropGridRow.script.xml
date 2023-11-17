@@ -571,172 +571,6 @@
 						</values>
 					</value>
 				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-						<path>
-							<named-member name="modelBox0"/>
-							<named-member name="modelContent0"/>
-							<labeled-member label="Buttons"/>
-							<named-member name="add"/>
-						</path>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-								value="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-						<path>
-							<named-member name="modelBox0"/>
-							<named-member name="modelContent0"/>
-							<labeled-member label="Buttons"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="1"
-								/>
-							</object>
-							<labeled-member label="Neue Zeile"/>
-							<labeled-member label="Beschriftung"/>
-							<labeled-member label="Deutsch"/>
-						</path>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="New row"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Typ erstellen"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
-								ref="TestGridDropSelection:GridRow"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-						<path>
-							<named-member name="modelBox0"/>
-							<named-member name="modelContent0"/>
-							<labeled-member label="Buttons"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="1"
-								/>
-							</object>
-							<labeled-member label="Neue Zeile"/>
-							<labeled-member label="Modell"/>
-							<named-member name="outerContainer"/>
-							<labeled-member label="Modell"/>
-						</path>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-								value="com.top_logic.layout.channel.linking.impl.DirectLinking"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-						<path>
-							<named-member name="modelBox0"/>
-							<named-member name="modelContent0"/>
-							<labeled-member label="Buttons"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="1"
-								/>
-							</object>
-							<labeled-member label="Neue Zeile"/>
-							<labeled-member label="Modell"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Komponente"/>
-							<named-member name="outerContainer"/>
-							<labeled-member label="Komponente"/>
-						</path>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-								value="com.top_logic.layout.channel.linking.ref.ComponentRelation"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Kanal"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="selection"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Typ erstellen"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
-								ref="TestGridDropSelection:GridRow"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Initialisierung"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="parent -> child -> $parent.add(`TestGridDropSelection:GridRowBase#children`, $child)"
-					/>
-				</action>
 				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
 					component-name="rootLayout#masterFrame"
 					label="Ok"
@@ -752,7 +586,7 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-					command-label="New row"
+					command-label="Neue Zeile"
 					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 					component-name="9946ef84-b4a9-433f-9f0f-6b5ad003026a.layout.xml#Grid"
 					user-id="root"
@@ -812,7 +646,7 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-					command-label="New row"
+					command-label="Neue Zeile"
 					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 					component-name="9946ef84-b4a9-433f-9f0f-6b5ad003026a.layout.xml#Grid"
 					user-id="root"
@@ -846,7 +680,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-					command-label="New row"
+					command-label="Neue Zeile"
 					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 					component-name="9946ef84-b4a9-433f-9f0f-6b5ad003026a.layout.xml#Grid"
 					user-id="root"

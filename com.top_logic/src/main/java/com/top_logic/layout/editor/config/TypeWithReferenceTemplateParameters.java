@@ -51,7 +51,7 @@ public interface TypeWithReferenceTemplateParameters extends TypeTemplateParamet
 	 *
 	 * @author <a href=mailto:sfo@top-logic.com>sfo</a>
 	 */
-	class MultipleReferencesOfType extends Function1<List<TLModelPart>, TLModelPartRef> {
+	public class MultipleReferencesOfType extends Function1<List<TLModelPart>, TLModelPartRef> {
 		@Override
 		public List<TLModelPart> apply(TLModelPartRef typeRef) {
 			if (typeRef == null) {

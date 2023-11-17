@@ -19,6 +19,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.element.layout.create.CreateTypeOptions;
+import com.top_logic.layout.basic.LabelSorter;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -105,7 +107,9 @@ public class CreateTypeOptionsByExpression<C extends CreateTypeOptionsByExpressi
 			for (TLClass direct : possibleTypes) {
 				result.addAll(TLModelUtil.getConcreteReflexiveTransitiveSpecializations(direct));
 			}
-			return new ArrayList<>(result);
+			List<TLClass> sortedResult = new ArrayList<>(result);
+			LabelSorter.sortByLabelInline(sortedResult, MetaLabelProvider.INSTANCE);
+			return sortedResult;
 		} else {
 			return FilterUtil.filterList(t -> !t.isAbstract(), possibleTypes);
 		}

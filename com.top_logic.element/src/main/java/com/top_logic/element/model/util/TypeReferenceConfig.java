@@ -7,6 +7,7 @@ package com.top_logic.element.model.util;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.element.meta.kbbased.AbstractWrapperResolver;
 import com.top_logic.element.model.DynamicModelService;
@@ -27,6 +28,9 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public interface TypeReferenceConfig extends ConfigurationItem {
 
+	/** Property name of {@link #getType()}. */
+	String TYPE = "type";
+
 	/** Structure name the {@link Wrapper} lives in. */
 	@Deprecated
 	String getStructure();
@@ -37,6 +41,7 @@ public interface TypeReferenceConfig extends ConfigurationItem {
 
 	/** Qualified type name of the {@link Wrapper} to be created. */
 	@Nullable
+	@Name(TYPE)
 	String getType();
 
 	/**

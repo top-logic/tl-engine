@@ -52,8 +52,12 @@
 			/>
 			<button id="createRow"
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-				createType="${type}"
-			/>
+			>
+				<type-options class="com.top_logic.element.layout.create.ConstantCreateTypeOptions"
+					include-subtypes="false"
+					type="${type}"
+				/>
+			</button>
 			<button id="deleteRow"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				target="selection(self())"

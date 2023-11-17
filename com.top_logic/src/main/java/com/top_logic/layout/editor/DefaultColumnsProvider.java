@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -43,16 +41,11 @@ public class DefaultColumnsProvider extends Function1<List<String>, TLModelPartR
 	}
 
 	private List<String> getDefaultColumnNames(TLModelPartRef typeRef) {
-		try {
-			TLType type = typeRef.resolveType();
+		TLType type = typeRef.resolveType();
 
-			if (type instanceof TLStructuredType) {
-				return getDefaultColumnNames((TLStructuredType) type);
-			}
-		} catch (ConfigurationException exception) {
-			throw new ConfigurationError(I18NConstants.MODEL_TYPE_NOT_RESOLVED_ERROR, exception);
+		if (type instanceof TLStructuredType) {
+			return getDefaultColumnNames((TLStructuredType) type);
 		}
-
 		return Collections.emptyList();
 	}
 

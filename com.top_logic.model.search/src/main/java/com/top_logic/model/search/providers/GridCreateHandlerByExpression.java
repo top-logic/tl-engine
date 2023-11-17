@@ -8,32 +8,25 @@ package com.top_logic.model.search.providers;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.layout.create.ConstantCreateTypeOptions;
+import com.top_logic.element.layout.create.CreateTypeOptions;
 import com.top_logic.element.layout.grid.AbstractGridCreateHandler;
 import com.top_logic.element.meta.gui.FormObjectCreation;
 import com.top_logic.layout.ContextPosition;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.CreateFunction;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
-import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLType;
-import com.top_logic.model.config.TLModelPartMapping;
-import com.top_logic.model.resources.TLPartScopedResourceProvider;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.AllClasses;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -58,26 +51,15 @@ public class GridCreateHandlerByExpression extends AbstractGridCreateHandler {
 		String CREATE_CONTEXT = "createContext";
 
 		/**
-		 * @see #getCreateType()
-		 */
-		String CREATE_TYPE = "createType";
-
-		/**
 		 * @see #getInitOperation()
 		 */
 		String INIT_OPERATION = "initOperation";
 
-		/**
-		 * Qualified name of the {@link TLType} to create.
-		 */
-		@Name(CREATE_TYPE)
-		@ControlProvider(SelectionControlProvider.class)
-		@RegexpConstraint(TLModelUtil.TYPE_NAME_PATTERN_SRC)
-		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
-		@OptionLabels(TLPartScopedResourceProvider.class)
-		@Nullable
-		@Mandatory
-		String getCreateType();
+		/** Computes the types that can be instantiated. */
+		@NonNullable
+		@ItemDefault
+		@ImplementationClassDefault(ConstantCreateTypeOptions.class)
+		PolymorphicConfiguration<CreateTypeOptions> getTypeOptions();
 
 		/**
 		 * Optional function linking the new object to its context.
@@ -147,11 +129,11 @@ public class GridCreateHandlerByExpression extends AbstractGridCreateHandler {
 		CommandGroupReference getGroup();
 	}
 
-	private TLClass _createType;
+	private final CreateTypeOptions _typeOptions;
 
-	private QueryExecutor _initOperation;
+	private final QueryExecutor _initOperation;
 
-	private QueryExecutor _container;
+	private final QueryExecutor _container;
 
 	/**
 	 * Creates a {@link GridCreateHandlerByExpression} from configuration.
@@ -164,15 +146,15 @@ public class GridCreateHandlerByExpression extends AbstractGridCreateHandler {
 	@CalledByReflection
 	public GridCreateHandlerByExpression(InstantiationContext context, Config config) {
 		super(context, config);
-		_createType = (TLClass) TLModelUtil.findType(config.getCreateType());
+		_typeOptions = context.getInstance(config.getTypeOptions());
 		Expr initOperation = config.getInitOperation();
 		_initOperation = QueryExecutor.compileOptional(initOperation);
 		_container = QueryExecutor.compileOptional(config.getCreateContext());
 	}
 
 	@Override
-	protected TLClass getCreateType() {
-		return _createType;
+	protected CreateTypeOptions getTypeOptions() {
+		return _typeOptions;
 	}
 
 	@Override

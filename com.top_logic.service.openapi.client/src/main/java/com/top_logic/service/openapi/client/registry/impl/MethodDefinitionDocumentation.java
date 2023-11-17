@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -197,12 +196,8 @@ public class MethodDefinitionDocumentation implements HTMLFragment {
 	}
 
 	private String getTypeName(TLModelPartRef type) {
-		try {
-			TLModelPart resolved = type.resolve();
-			return MetaLabelProvider.INSTANCE.getLabel(resolved);
-		} catch (ConfigurationException ex) {
-			return type.qualifiedName();
-		}
+		TLModelPart resolved = type.resolve();
+		return MetaLabelProvider.INSTANCE.getLabel(resolved);
 	}
 
 	private void writeTH(TagWriter out, Resources res, ResKey label) {

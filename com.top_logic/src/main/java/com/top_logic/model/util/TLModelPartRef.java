@@ -29,11 +29,11 @@ import com.top_logic.model.config.AbstractModelPartMapping;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
 
 /**
- * Textual reference to a {@link TLType} that can be safely used in configurations.
+ * Textual reference to a {@link TLModelPart} that can be safely used in configurations.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@Format(TLModelPartRef.TypePartRefValueProvider.class)
+@Format(TLModelPartRef.TLModelPartRefValueProvider.class)
 @ControlProvider(SelectionControlProvider.class)
 @Options(fun = AllClasses.class, mapping = TLModelPartRef.PartMapping.class)
 @OptionLabels(TLPartScopedResourceProvider.class)
@@ -80,21 +80,21 @@ public class TLModelPartRef {
 	/**
 	 * Resolves a referenced type.
 	 */
-	public TLModelPart resolve() throws ConfigurationException {
+	public TLModelPart resolve() {
 		return TLModelUtil.resolveModelPart(qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
-	public TLType resolveType() throws ConfigurationException {
+	public TLType resolveType() {
 		return TLModelUtil.findType(qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
-	public TLTypePart resolvePart() throws ConfigurationException {
+	public TLTypePart resolvePart() {
 		return TLModelUtil.findPart(qualifiedName());
 	}
 
@@ -136,17 +136,17 @@ public class TLModelPartRef {
 
 	/**
 	 * {@link ConfigurationValueProvider} for {@link TLModelPartRef}s referencing
-	 * {@link TLTypePart}s.
+	 * {@link TLModelPart}s.
 	 */
-	public static class TypePartRefValueProvider extends AbstractRefValueProvider {
+	public static class TLModelPartRefValueProvider extends AbstractRefValueProvider {
 
 		/**
-		 * Singleton {@link TypePartRefValueProvider} instance.
+		 * Singleton {@link TLModelPartRefValueProvider} instance.
 		 */
-		public static final TypePartRefValueProvider INSTANCE = new TypePartRefValueProvider();
+		public static final TLModelPartRefValueProvider INSTANCE = new TLModelPartRefValueProvider();
 
-		private TypePartRefValueProvider() {
-			super(Pattern.compile(TLModelUtil.TYPE_NAME_PATTERN_SRC),
+		private TLModelPartRefValueProvider() {
+			super(Pattern.compile(TLModelUtil.MODEL_PART_NAME_PATTERN_SRC),
 				I18NConstants.ERROR_INVALID_PART_REFERENCE__VALUE);
 		}
 
@@ -249,11 +249,7 @@ public class TLModelPartRef {
 			if (arg == null) {
 				return null;
 			}
-			try {
-				return arg.resolveType();
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError(ex);
-			}
+			return arg.resolveType();
 		}
 	}
 

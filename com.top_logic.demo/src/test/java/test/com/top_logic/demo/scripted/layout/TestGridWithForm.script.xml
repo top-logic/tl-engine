@@ -404,7 +404,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Typ erstellen"
+						label="Typ"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>

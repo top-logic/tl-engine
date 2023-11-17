@@ -481,40 +481,15 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Typ erstellen"
+						label="Typ"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-								table="MetaElement"
-							>
-								<branch config:interface=""/>
-								<revision config:interface=""/>
-								<attributes>
-									<attribute name="scope">
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-											table="TLModule"
-										>
-											<branch config:interface=""/>
-											<revision config:interface=""/>
-											<attributes>
-												<attribute name="name">
-													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-														value="DemoTypes"
-													/>
-												</attribute>
-											</attributes>
-										</value>
-									</attribute>
-									<attribute name="name">
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-									</attribute>
-								</attributes>
-							</value>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="DemoTypes:A"
+							/>
 						</values>
 					</value>
 				</action>

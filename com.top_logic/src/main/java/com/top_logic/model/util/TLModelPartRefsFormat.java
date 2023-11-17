@@ -6,21 +6,21 @@
 package com.top_logic.model.util;
 
 import com.top_logic.basic.config.ConfigurationValueProvider;
-import com.top_logic.model.TLType;
+import com.top_logic.model.TLModelPart;
 
 /**
- * {@link ConfigurationValueProvider} that resolves {@link TLType}s by comma separated full
+ * {@link ConfigurationValueProvider} that resolves {@link TLModelPart}s by comma separated full
  * qualified names.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public class TLTypeRefsFormat extends ListFormat<TLModelPartRef> {
+public class TLModelPartRefsFormat extends ListFormat<TLModelPartRef> {
 
 	/**
 	 * Creates a {@link ListFormat} for {@link TLModelPartRef}s.
 	 */
-	public TLTypeRefsFormat() {
-		super(TLModelPartRef.TypePartRefValueProvider.INSTANCE, ",");
+	public TLModelPartRefsFormat() {
+		super(TLModelPartRef.TLModelPartRefValueProvider.INSTANCE, ",");
 	}
 
 }

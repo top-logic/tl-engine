@@ -8,8 +8,6 @@ package com.top_logic.layout.form.model.utility;
 import java.util.Collections;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.model.TLType;
@@ -41,13 +39,8 @@ public class SimplePartAnnotationOptions extends Function1<OptionModel<Class<?>>
 			if (arg == null) {
 				return new DefaultListOptionModel<>(Collections.emptyList());
 			}
-
-			try {
-				TLType type = arg.resolveType();
-				return _delegate.apply(type);
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError(ex);
-			}
+			TLType type = arg.resolveType();
+			return _delegate.apply(type);
 		}
 
 	}

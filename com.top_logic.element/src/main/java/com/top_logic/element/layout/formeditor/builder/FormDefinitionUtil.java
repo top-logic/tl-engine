@@ -14,8 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
 import com.top_logic.element.layout.formeditor.definition.OtherAttributes;
@@ -80,17 +78,9 @@ public class FormDefinitionUtil {
 	public static Map<TLType, FormDefinition> createTypedFormMapping(Map<TLModelPartRef, TypedFormDefinition> forms) {
 		Map<TLType, FormDefinition> typedForms = new LinkedHashMap<>();
 		for (Entry<TLModelPartRef, TypedFormDefinition> entry : forms.entrySet()) {
-			TLType type;
-			try {
-				type = entry.getKey().resolveType();
+			TLType type = entry.getKey().resolveType();
 
-				typedForms.put(type, entry.getValue().getFormDefinition());
-			} catch (ConfigurationException ex) {
-				Logger.error(
-					"Cannot resolve the name '" + entry.getKey().qualifiedName() + "' to a TLType at '"
-							+ entry.getValue().location() + "'.",
-					ex, FormDefinitionUtil.class);
-			}
+			typedForms.put(type, entry.getValue().getFormDefinition());
 		}
 
 		return typedForms;

@@ -33,7 +33,6 @@ import com.top_logic.model.search.expr.Not;
 import com.top_logic.model.search.expr.Or;
 import com.top_logic.model.search.expr.Round;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.SingleElement;
 import com.top_logic.model.search.expr.Singleton;
 import com.top_logic.model.search.expr.Size;
@@ -325,29 +324,26 @@ public class ConstantFolding {
 		@Override
 		protected SearchExpression composeGenericMethod(GenericMethod expr, Void arg,
 				List<SearchExpression> argumentsResult) {
-			optimize:
-			if (expr instanceof SimpleGenericMethod) {
-				SimpleGenericMethod simpleExpr = (SimpleGenericMethod) expr;
-				if (!simpleExpr.isSideEffectFree()) {
-					break optimize;
-				}
-				for (SearchExpression argExpr : argumentsResult) {
-					if (!isLiteral(argExpr)) {
-						break optimize;
-					}
-				}
-
-				int size = argumentsResult.size();
-				Object[] arguments = new Object[size];
-				for (int n = 0; n < size; n++) {
-					arguments[n] = literalValue(argumentsResult.get(n));
-				}
-
-				if (simpleExpr.canEvaluateAtCompileTime(arguments)) {
-					return literal(simpleExpr.eval(arguments));
+			if (!expr.isSideEffectFree()) {
+				return super.composeGenericMethod(expr, arg, argumentsResult);
+			}
+			for (SearchExpression argExpr : argumentsResult) {
+				if (!isLiteral(argExpr)) {
+					return super.composeGenericMethod(expr, arg, argumentsResult);
 				}
 			}
-			return super.composeGenericMethod(expr, arg, argumentsResult);
+
+			int size = argumentsResult.size();
+			Object[] arguments = new Object[size];
+			for (int n = 0; n < size; n++) {
+				arguments[n] = literalValue(argumentsResult.get(n));
+			}
+
+			if (expr.canEvaluateAtCompileTime(arguments)) {
+				return literal(expr.evalAtCompileTime(arguments));
+			} else {
+				return super.composeGenericMethod(expr, arg, argumentsResult);
+			}
 		}
 
 		private static boolean isLiteral(SearchExpression result) {

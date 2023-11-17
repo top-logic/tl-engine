@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
@@ -145,5 +146,16 @@ public abstract class GenericMethod extends SearchExpression {
 	 * @return The result of the invocation.
 	 */
 	protected abstract Object eval(Object[] arguments, EvalContext definitions);
+
+	/**
+	 * Evaluates this method at compile time.
+	 * 
+	 * @param arguments
+	 *        Compile time arguments
+	 */
+	@FrameworkInternal
+	public final Object evalAtCompileTime(Object[] arguments) {
+		return eval(arguments, null);
+	}
 
 }

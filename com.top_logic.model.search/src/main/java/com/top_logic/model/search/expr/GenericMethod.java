@@ -112,7 +112,31 @@ public abstract class GenericMethod extends SearchExpression {
 	}
 
 	/**
+	 * Whether the {@link #eval(Object[], EvalContext)} can be evaluated during expression
+	 * compilation.
+	 * 
+	 * @implSpec An {@link GenericMethod} can be evaluated at compile time if it does not access
+	 *           data that are not specified in the arguments, e.g. "calculate the length of a
+	 *           {@link String}" can be evaluated at compile time because the string always has the
+	 *           same length, whereas "current timestamp" cannot be evaluated at compile time
+	 *           because if the expression is evaluated now , a different value will be returned
+	 *           returned, than if it is evaluated tomorrow.
+	 *           <p>
+	 *           <b>Note:</b> Implementations returning <code>true</code> must not access the
+	 *           {@link EvalContext context} in {@link #eval(Object[], EvalContext)} because there
+	 *           is no such context at compile time.
+	 *           </p>
+	 * 
+	 * @param arguments
+	 *        Arguments that would be given to {@link #eval(Object[], EvalContext)}
+	 */
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return true;
+	}
+
+	/**
 	 * Performs the evaluation on concrete values computed from sub expressions.
+	 * 
 	 * @param arguments
 	 *        The arguments to the method.
 	 * @param definitions

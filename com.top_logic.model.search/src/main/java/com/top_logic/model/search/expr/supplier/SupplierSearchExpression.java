@@ -53,4 +53,9 @@ public class SupplierSearchExpression extends GenericMethod {
 		return _builder.getValue();
 	}
 
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return _builder.canEvaluateAtCompileTime();
+	}
+
 }

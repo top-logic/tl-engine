@@ -56,6 +56,15 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 	}
 
 	/**
+	 * The value of an attribute can change over time, so that an evaluation at compile time is
+	 * generally not possible.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[1] == null;
+	}
+
+	/**
 	 * {@link AbstractSimpleMethodBuilder} creating {@link DynamicGet}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<DynamicGet> {

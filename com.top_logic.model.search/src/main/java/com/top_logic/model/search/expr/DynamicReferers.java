@@ -56,6 +56,15 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 		return evalPotentialFlatMap(definitions, arguments[0], part);
 	}
 
+	/**
+	 * The value of a reference can change over time, so that an evaluation at compile time is
+	 * generally not possible.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[1] == null;
+	}
+
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, TLReference reference) {
 		if (!(singletonValue instanceof TLObject)) {

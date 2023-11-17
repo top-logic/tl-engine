@@ -50,6 +50,14 @@ public class NumerFormatExpr extends GenericMethod {
 	}
 
 	/**
+	 * the format depends on the users locale, so evaluation at compile time is not possible.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[0] == null;
+	}
+
+	/**
 	 * {@link MethodBuilder} for {@link NumerFormatExpr}.
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<NumerFormatExpr> {

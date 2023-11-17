@@ -50,6 +50,15 @@ public class DateFormatExpr extends GenericMethod {
 	}
 
 	/**
+	 * {@link DateFormatExpr} creates an {@link DateFormat} which depends on the locale of the user,
+	 * so it can not evaluated at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	/**
 	 * {@link MethodBuilder} for {@link DateFormatExpr}.
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<DateFormatExpr> {

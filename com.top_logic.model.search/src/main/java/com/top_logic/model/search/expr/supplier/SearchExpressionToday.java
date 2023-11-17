@@ -53,4 +53,9 @@ public class SearchExpressionToday extends SupplierSearchExpressionBuilder {
 		return false;
 	}
 
+	@Override
+	public boolean canEvaluateAtCompileTime() {
+		return false;
+	}
+
 }

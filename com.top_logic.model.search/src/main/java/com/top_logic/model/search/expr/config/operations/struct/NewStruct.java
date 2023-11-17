@@ -51,11 +51,6 @@ public class NewStruct extends SimpleGenericMethod {
 	}
 
 	@Override
-	public boolean isSideEffectFree() {
-		return false;
-	}
-
-	@Override
 	public Object eval(Object[] arguments) {
 		if (!(arguments[0] instanceof StructType)) {
 			throw new TopLogicException(

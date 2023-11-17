@@ -11,9 +11,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Container extends SimpleGenericMethod {
+public class Container extends GenericMethod {
 
 	/**
 	 * Creates a {@link Container}.
@@ -41,7 +41,7 @@ public class Container extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
 			return object.tContainer();

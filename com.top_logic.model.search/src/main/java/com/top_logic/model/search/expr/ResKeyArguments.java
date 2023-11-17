@@ -18,7 +18,7 @@ import com.top_logic.model.TLType;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ResKeyArguments extends SimpleGenericMethod {
+public class ResKeyArguments extends GenericMethod {
 
 	/**
 	 * The method name that invokes {@link ResKeyArguments} from a search expression.
@@ -46,7 +46,7 @@ public class ResKeyArguments extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (!(arguments[0] instanceof ResKey)) {
 			// Null, literal string?
 			return arguments[0];

@@ -25,7 +25,7 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class FormatExpr extends SimpleGenericMethod {
+public class FormatExpr extends GenericMethod {
 
 	/**
 	 * Creates a {@link FormatExpr}.
@@ -45,7 +45,7 @@ public class FormatExpr extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Format format = (Format) arguments[0];
 		if (arguments.length == 2) {
 			Object first = arguments[1];

@@ -13,9 +13,9 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Attribute extends SimpleGenericMethod {
+public class Attribute extends GenericMethod {
 
 	/**
 	 * Creates a {@link Attribute}.
@@ -43,7 +43,7 @@ public class Attribute extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (arguments[0] instanceof TLStructuredType) {
 			return ((TLStructuredType) arguments[0]).getPart(asString(arguments[1]));
 		} else {

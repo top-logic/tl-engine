@@ -15,7 +15,7 @@ import com.top_logic.model.TLType;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractListAccess extends SimpleGenericMethod {
+public abstract class AbstractListAccess extends GenericMethod {
 
 	/**
 	 * Creates a {@link AbstractListAccess}.
@@ -30,7 +30,7 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object base = arguments[0];
 		if (base == null) {
 			return evalOnEmpty(arguments);
@@ -56,8 +56,8 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	 * Result for evaluation on an empty list.
 	 * 
 	 * @param arguments
-	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
-	 *        the "list like" element.
+	 *        All arguments given in {@link #eval(Object[], EvalContext)}. The first element of the
+	 *        arguments is the "list like" element.
 	 */
 	protected abstract Object evalOnEmpty(Object[] arguments);
 
@@ -65,8 +65,8 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	 * Result for evaluation on a singleton element (not a list at all).
 	 * 
 	 * @param arguments
-	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
-	 *        the "list like" element.
+	 *        All arguments given in {@link #eval(Object[], EvalContext)}. The first element of the
+	 *        arguments is the "list like" element.
 	 */
 	protected abstract Object evalOnSingleton(Object self, Object[] arguments);
 
@@ -74,8 +74,8 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	 * Result for evaluation on an iterable value.
 	 * 
 	 * @param arguments
-	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
-	 *        the "list like" element.
+	 *        All arguments given in {@link #eval(Object[], EvalContext)}. The first element of the
+	 *        arguments is the "list like" element.
 	 */
 	protected abstract Object evalOnIterator(Iterator<?> iterator, Object[] arguments);
 
@@ -83,8 +83,8 @@ public abstract class AbstractListAccess extends SimpleGenericMethod {
 	 * Result for evaluation on an true list value.
 	 * 
 	 * @param arguments
-	 *        All arguments given in {@link #eval(Object[])}. The first element of the arguments is
-	 *        the "list like" element.
+	 *        All arguments given in {@link #eval(Object[], EvalContext)}. The first element of the
+	 *        arguments is the "list like" element.
 	 */
 	protected abstract Object evalOnList(List<?> list, Object[] arguments);
 

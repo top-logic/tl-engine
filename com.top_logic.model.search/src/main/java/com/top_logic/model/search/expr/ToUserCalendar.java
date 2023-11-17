@@ -58,7 +58,7 @@ public class ToUserCalendar extends AbstractDateMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (arguments[0] == null) {
 			return null;
 		}

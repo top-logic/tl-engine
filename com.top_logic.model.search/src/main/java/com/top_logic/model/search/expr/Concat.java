@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Concat extends SimpleGenericMethod {
+public class Concat extends GenericMethod {
 
 	/**
 	 * Creates a {@link Concat}.
@@ -41,7 +41,7 @@ public class Concat extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		List<Object> result = new ArrayList<>();
 		for (Object arg : arguments) {
 			add(result, arg);

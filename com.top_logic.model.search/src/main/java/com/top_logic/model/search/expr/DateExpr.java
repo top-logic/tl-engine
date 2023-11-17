@@ -26,7 +26,7 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DateExpr extends SimpleGenericMethod {
+public class DateExpr extends GenericMethod {
 
 	/**
 	 * Creates a {@link DateExpr}.
@@ -55,7 +55,7 @@ public class DateExpr extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Calendar calendar = CalendarUtil.createCalendar();
 		setCalendarParts(this, calendar, arguments);
 		return calendar.getTime();

@@ -59,6 +59,15 @@ public class ModifiedRevision extends GenericMethod {
 	}
 
 	/**
+	 * Each time a value in an object is set, the modified revision changes, so the value can not be
+	 * determined at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[0] == null;
+	}
+
+	/**
 	 * {@link AbstractSimpleMethodBuilder} creating {@link ModifiedRevision}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<ModifiedRevision> {

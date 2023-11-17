@@ -39,4 +39,9 @@ public class SearchExpressionCurrentPerson extends SupplierSearchExpressionBuild
 		return false;
 	}
 
+	@Override
+	public boolean canEvaluateAtCompileTime() {
+		return false;
+	}
+
 }

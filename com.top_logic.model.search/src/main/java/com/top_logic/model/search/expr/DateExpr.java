@@ -26,7 +26,7 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DateExpr extends SimpleGenericMethod {
+public class DateExpr extends GenericMethod {
 
 	/**
 	 * Creates a {@link DateExpr}.
@@ -45,8 +45,17 @@ public class DateExpr extends SimpleGenericMethod {
 		return TLModelUtil.findType(TypeSpec.DATE_TYPE);
 	}
 
+	/**
+	 * {@link DateExpr} uses the system calendar, therefore it can not be evaluated at compile time,
+	 * because the system timezone may change.
+	 */
 	@Override
-	public Object eval(Object[] arguments) {
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	@Override
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Calendar calendar = CalendarUtil.createCalendar();
 		setCalendarParts(this, calendar, arguments);
 		return calendar.getTime();

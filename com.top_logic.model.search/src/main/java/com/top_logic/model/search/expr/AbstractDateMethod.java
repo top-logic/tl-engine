@@ -12,7 +12,7 @@ import java.util.Date;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractDateMethod extends SimpleGenericMethod {
+public abstract class AbstractDateMethod extends GenericMethod {
 
 	/**
 	 * Creates a {@link AbstractDateMethod}.

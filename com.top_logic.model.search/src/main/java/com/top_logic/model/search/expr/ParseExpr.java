@@ -24,7 +24,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ParseExpr extends SimpleGenericMethod {
+public class ParseExpr extends GenericMethod {
 
 	/**
 	 * Creates a {@link ParseExpr}.
@@ -44,7 +44,7 @@ public class ParseExpr extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Format format = (Format) arguments[0];
 		String arg = asString(arguments[1]);
 		try {

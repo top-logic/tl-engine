@@ -12,9 +12,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.model.TLType;
 import com.top_logic.model.core.TlCoreFactory;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 
@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CurrentRevision extends SimpleGenericMethod {
+public class CurrentRevision extends GenericMethod {
 
 	/**
 	 * Creates a new {@link CurrentRevision}.
@@ -43,7 +43,7 @@ public class CurrentRevision extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return Revision.CURRENT;
 	}
 

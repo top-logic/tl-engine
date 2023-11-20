@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
@@ -15,7 +16,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * Base class for custom expression implementations.
  * 
  * <p>
- * Note: Whenever possible, consider implementing {@link SimpleGenericMethod} instead to enable the
+ * Note: Whenever possible, consider implementing {@link GenericMethod} instead to enable the
  * constant folding optimization.
  * </p>
  *
@@ -112,7 +113,31 @@ public abstract class GenericMethod extends SearchExpression {
 	}
 
 	/**
+	 * Whether the {@link #eval(Object[], EvalContext)} can be evaluated during expression
+	 * compilation.
+	 * 
+	 * @implSpec An {@link GenericMethod} can be evaluated at compile time if it does not access
+	 *           data that are not specified in the arguments, e.g. "calculate the length of a
+	 *           {@link String}" can be evaluated at compile time because the string always has the
+	 *           same length, whereas "current timestamp" cannot be evaluated at compile time
+	 *           because if the expression is evaluated now , a different value will be returned
+	 *           returned, than if it is evaluated tomorrow.
+	 *           <p>
+	 *           <b>Note:</b> Implementations returning <code>true</code> must not access the
+	 *           {@link EvalContext context} in {@link #eval(Object[], EvalContext)} because there
+	 *           is no such context at compile time.
+	 *           </p>
+	 * 
+	 * @param arguments
+	 *        Arguments that would be given to {@link #eval(Object[], EvalContext)}
+	 */
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return true;
+	}
+
+	/**
 	 * Performs the evaluation on concrete values computed from sub expressions.
+	 * 
 	 * @param arguments
 	 *        The arguments to the method.
 	 * @param definitions
@@ -121,5 +146,16 @@ public abstract class GenericMethod extends SearchExpression {
 	 * @return The result of the invocation.
 	 */
 	protected abstract Object eval(Object[] arguments, EvalContext definitions);
+
+	/**
+	 * Evaluates this method at compile time.
+	 * 
+	 * @param arguments
+	 *        Compile time arguments
+	 */
+	@FrameworkInternal
+	public final Object evalAtCompileTime(Object[] arguments) {
+		return eval(arguments, null);
+	}
 
 }

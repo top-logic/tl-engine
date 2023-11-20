@@ -11,9 +11,9 @@ import java.util.regex.Pattern;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Regex extends SimpleGenericMethod {
+public class Regex extends GenericMethod {
 
 	/**
 	 * Creates a {@link Regex}.
@@ -43,7 +43,7 @@ public class Regex extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String pattern = asString(notNull(getArguments()[0], arguments[0]));
 		return Pattern.compile(pattern);
 	}

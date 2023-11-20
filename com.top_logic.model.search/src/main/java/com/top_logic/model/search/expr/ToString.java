@@ -24,7 +24,7 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ToString extends SimpleGenericMethod {
+public class ToString extends GenericMethod {
 
 	/** 
 	 * Creates a {@link ToString}.
@@ -44,7 +44,7 @@ public class ToString extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object base = arguments[0];
 		if (arguments.length > 1 || base instanceof Collection<?>) {
 			StringBuilder result = new StringBuilder();

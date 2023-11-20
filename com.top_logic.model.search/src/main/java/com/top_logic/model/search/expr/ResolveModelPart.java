@@ -25,7 +25,7 @@ import com.top_logic.util.model.ModelService;
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ResolveModelPart extends SimpleGenericMethod {
+public class ResolveModelPart extends GenericMethod {
 
 	/**
 	 * Creates a {@link ResolveModelPart}.
@@ -52,9 +52,18 @@ public class ResolveModelPart extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String qualifiedPartName = asString(arguments[0]);
 		return TLModelUtil.resolveModelPart(qualifiedPartName);
+	}
+
+	/**
+	 * The qualified name of a model element can represent different objects at different times
+	 * because the model part may have been deleted or newly created.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
 	}
 
 	/**

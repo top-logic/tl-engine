@@ -8,13 +8,6 @@
 			user-id="root"
 		>
 			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Modellbasierte Suche"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
-		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 				tab-path="Modellbasierte Suche > Expert"
 			/>
 		</action>
@@ -285,18 +278,20 @@
 								<value>resolveModelPart("NotExistingModule")</value>
 							</value>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 							comment="Not an existing module"
-							user-id="root"
-							validity="ERROR"
 						>
-							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Suchausdruck"
+							<expected-failure-message>Kein Modul mit dem Namen "NotExistingModule" gefunden.</expected-failure-message>
+							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+								command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+								command-label="Suchergebnisse aktualisieren"
+								command-name="refreshSearch"
+								component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+								component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+								user-id="root"
 							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Modellbasierte Suche > Expert"
-								/>
-							</model-name>
+								<arguments/>
+							</failure-action>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 							user-id="root"
@@ -312,18 +307,20 @@
 								<value>resolveModelPart("DemoTypes:NotExistingType")</value>
 							</value>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 							comment="Not an existing type"
-							user-id="root"
-							validity="ERROR"
 						>
-							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Suchausdruck"
+							<expected-failure-message>Kein solcher Typ "NotExistingType" in Modul "DemoTypes" definiert.</expected-failure-message>
+							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+								command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+								command-label="Suchergebnisse aktualisieren"
+								command-name="refreshSearch"
+								component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+								component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+								user-id="root"
 							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Modellbasierte Suche > Expert"
-								/>
-							</model-name>
+								<arguments/>
+							</failure-action>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 							user-id="root"
@@ -339,18 +336,20 @@
 								<value>resolveModelPart("DemoTypes:A#notExistingAttribute")</value>
 							</value>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 							comment="Not an existing attribute"
-							user-id="root"
-							validity="ERROR"
 						>
-							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Suchausdruck"
+							<expected-failure-message>Kein solcher Teil "DemoTypes:A" in Typ "notExistingAttribute".</expected-failure-message>
+							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+								command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+								command-label="Suchergebnisse aktualisieren"
+								command-name="refreshSearch"
+								component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+								component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+								user-id="root"
 							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Modellbasierte Suche > Expert"
-								/>
-							</model-name>
+								<arguments/>
+							</failure-action>
 						</action>
 					</actions>
 				</action>

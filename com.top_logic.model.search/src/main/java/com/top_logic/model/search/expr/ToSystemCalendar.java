@@ -48,8 +48,16 @@ public class ToSystemCalendar extends AbstractDateMethod {
 		return false;
 	}
 
+	/**
+	 * The user may change its timezone, so the expression must not be evaluated at compile time.
+	 */
 	@Override
-	public Object eval(Object[] arguments) {
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[0] == null;
+	}
+
+	@Override
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (arguments[0] == null) {
 			return null;
 		}

@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
@@ -51,5 +52,12 @@ public abstract class SupplierSearchExpressionBuilder extends AbstractSimpleMeth
 
 	/** Whether the {@link #getValue()} is a single value or a collection of values. */
 	public abstract boolean isMultiple();
+
+	/**
+	 * Whether {@link #getValue()} can be retrieved at compile time and reused later.
+	 * 
+	 * @see GenericMethod#canEvaluateAtCompileTime(Object[])
+	 */
+	public abstract boolean canEvaluateAtCompileTime();
 
 }

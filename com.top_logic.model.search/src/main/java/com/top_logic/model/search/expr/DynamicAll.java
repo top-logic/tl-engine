@@ -56,10 +56,12 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 		return All.all(this, type);
 	}
 
+	/**
+	 * Instances of the type may be created or deleted, so evaluation at compile time is not
+	 * possible.
+	 */
 	@Override
-	public boolean isSideEffectFree() {
-		// Not really a side-effect, but access to global state, therefore, must not do constant
-		// folding.
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
 		return false;
 	}
 

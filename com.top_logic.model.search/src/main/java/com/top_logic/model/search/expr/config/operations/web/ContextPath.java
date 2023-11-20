@@ -12,9 +12,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
@@ -23,7 +23,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Function retrieving the context path of the running application.
  */
-public class ContextPath extends SimpleGenericMethod {
+public class ContextPath extends GenericMethod {
 
 	/**
 	 * Creates a {@link ContextPath}.
@@ -43,8 +43,16 @@ public class ContextPath extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return ServletContextService.getInstance().getServletContext().getContextPath();
+	}
+
+	/**
+	 * It may be that the {@link ServletContextService} is not yet started.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
 	}
 
 	/**

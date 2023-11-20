@@ -73,6 +73,11 @@ public class Add extends GenericMethod {
 		return null;
 	}
 
+	@Override
+	public boolean isSideEffectFree() {
+		return false;
+	}
+
 	/**
 	 * {@link MethodBuilder} creating {@link Add}.
 	 */

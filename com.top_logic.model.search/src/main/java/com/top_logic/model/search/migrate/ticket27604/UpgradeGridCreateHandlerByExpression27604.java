@@ -162,7 +162,18 @@ public final class UpgradeGridCreateHandlerByExpression27604 extends DescendingD
 	}
 
 	private boolean isXmlFile(Path path, BasicFileAttributes attributes) {
-		return attributes.isRegularFile() && isRelevant(path.getFileName().toString());
+		// Note: This method is invoked from a parallel file system operation from within another
+		// thread. Ensure that the context class loader keeps the same.
+		Thread currentThread = Thread.currentThread();
+		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+		ClassLoader toolClassLoader = UpgradeGridCreateHandlerByExpression27604.class.getClassLoader();
+
+		currentThread.setContextClassLoader(toolClassLoader);
+		try {
+			return attributes.isRegularFile() && isRelevant(path.getFileName().toString());
+		} finally {
+			currentThread.setContextClassLoader(contextClassLoader);
+		}
 	}
 
 	private final boolean isRelevant(String fileName) {
@@ -172,13 +183,24 @@ public final class UpgradeGridCreateHandlerByExpression27604 extends DescendingD
 	}
 
 	private void rewriteFile(Path path) {
-		Document document = toDocument(path);
-		boolean changes = rewrite(document);
-		if (!changes) {
-			return;
+		// Note: This method is invoked from a parallel file system operation from within another
+		// thread. Ensure that the context class loader keeps the same.
+		Thread currentThread = Thread.currentThread();
+		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+		ClassLoader toolClassLoader = UpgradeGridCreateHandlerByExpression27604.class.getClassLoader();
+
+		currentThread.setContextClassLoader(toolClassLoader);
+		try {
+			Document document = toDocument(path);
+			boolean changes = rewrite(document);
+			if (!changes) {
+				return;
+			}
+			String xml = DOMUtil.toString(document);
+			writeBack(path, xml);
+		} finally {
+			currentThread.setContextClassLoader(contextClassLoader);
 		}
-		String xml = DOMUtil.toString(document);
-		writeBack(path, xml);
 	}
 
 	private Document toDocument(Path path) {

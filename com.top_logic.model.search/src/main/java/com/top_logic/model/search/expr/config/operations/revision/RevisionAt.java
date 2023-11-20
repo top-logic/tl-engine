@@ -61,6 +61,16 @@ public class RevisionAt extends GenericMethod {
 	}
 
 	/**
+	 * If the revision at the given time is larger than the session revision, the session revision
+	 * is returned. This revision depends on the current session, and therefore cannot be determined
+	 * at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[0] == null;
+	}
+
+	/**
 	 * {@link AbstractSimpleMethodBuilder} creating {@link RevisionAt}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<RevisionAt> {

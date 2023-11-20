@@ -23,7 +23,7 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CalendarField extends SimpleGenericMethod {
+public class CalendarField extends GenericMethod {
 
 	private Field _field;
 
@@ -120,7 +120,7 @@ public class CalendarField extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Calendar date = asCalendar(arguments[0]);
 		if (date == null) {
 			return null;

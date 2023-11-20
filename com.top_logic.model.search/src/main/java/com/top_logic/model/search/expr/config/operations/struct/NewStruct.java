@@ -11,9 +11,9 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
@@ -31,7 +31,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class NewStruct extends SimpleGenericMethod {
+public class NewStruct extends GenericMethod {
 
 	/**
 	 * Creates a {@link NewStruct}.
@@ -51,12 +51,7 @@ public class NewStruct extends SimpleGenericMethod {
 	}
 
 	@Override
-	public boolean isSideEffectFree() {
-		return false;
-	}
-
-	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (!(arguments[0] instanceof StructType)) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_STRUCT_TYPE_EXPECTED__VALUE_EXPR.fill(arguments[0], getArguments()[0]));

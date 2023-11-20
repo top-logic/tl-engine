@@ -14,9 +14,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.builtin.TLCore;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
@@ -29,7 +29,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class Average extends SimpleGenericMethod {
+public class Average extends GenericMethod {
 
 	/** Creates a {@link Average}. */
 	protected Average(String name, SearchExpression[] arguments) {
@@ -47,7 +47,7 @@ public class Average extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Double eval(Object[] arguments) {
+	protected Double eval(Object[] arguments, EvalContext definitions) {
 		int size = size(this, arguments);
 		if (size == 0) {
 			return null;

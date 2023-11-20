@@ -19,7 +19,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class SubList extends SimpleGenericMethod {
+public class SubList extends GenericMethod {
 
 	/**
 	 * Creates a {@link SubList}.
@@ -39,7 +39,7 @@ public class SubList extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		List<?> list = asList(arguments[0]);
 		int beginIndex = index(list, arguments[1]);
 		int endIndex = arguments.length < 3 ? list.size() : index(list, arguments[2]);

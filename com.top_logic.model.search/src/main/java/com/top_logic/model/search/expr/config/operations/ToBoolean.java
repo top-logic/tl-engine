@@ -11,9 +11,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SimpleGenericMethod;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -23,7 +23,7 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ToBoolean extends SimpleGenericMethod {
+public class ToBoolean extends GenericMethod {
 
 	/**
 	 * Creates a {@link ToBoolean}.
@@ -33,7 +33,7 @@ public class ToBoolean extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return asBoolean(arguments[0]);
 	}
 

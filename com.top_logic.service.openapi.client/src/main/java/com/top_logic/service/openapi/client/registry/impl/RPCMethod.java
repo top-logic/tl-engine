@@ -62,4 +62,20 @@ public class RPCMethod extends GenericMethod {
 		return getName();
 	}
 
+	/**
+	 * It might be, that the handler modifies global state.
+	 */
+	@Override
+	public boolean isSideEffectFree() {
+		return false;
+	}
+
+	/**
+	 * The call must be executed each time, not just at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
 }

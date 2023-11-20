@@ -64,6 +64,15 @@ public class PDFExportFunction extends GenericMethod {
 	}
 
 	/**
+	 * The content of the PDF bases on the the data of an {@link TLObject} which may change over
+	 * time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return arguments[0] == null;
+	}
+
+	/**
 	 * {@link MethodBuilder} creating {@link PDFExportFunction}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<PDFExportFunction> {

@@ -5,8 +5,6 @@
  */
 package com.top_logic.model.search.expr;
 
-import java.util.Collection;
-
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -17,15 +15,6 @@ import com.top_logic.model.TLStructuredTypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart> {
-
-	@Override
-	default Object evalPotentialFlatMap(EvalContext definitions, Object base, TLStructuredTypePart part) {
-		if (base instanceof Collection<?>) {
-			return evalFlatMap(definitions, (Collection<?>) base, part);
-		} else {
-			return evalDirect(definitions, base, part);
-		}
-	}
 
 	@Override
 	default Object evalDirect(EvalContext definitions, Object base, TLStructuredTypePart part) {

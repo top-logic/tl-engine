@@ -68,6 +68,14 @@ public class DateTimeExpr extends GenericMethod {
 	}
 
 	/**
+	 * The created date depends on the users timezone, so it can not be evaluated at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	/**
 	 * {@link MethodBuilder} creating {@link DateTimeExpr}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<DateTimeExpr> {

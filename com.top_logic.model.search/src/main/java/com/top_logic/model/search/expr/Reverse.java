@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Reverse extends SimpleGenericMethod {
+public class Reverse extends GenericMethod {
 
 	/**
 	 * Creates a {@link Reverse}.
@@ -41,7 +41,7 @@ public class Reverse extends SimpleGenericMethod {
 	}
 
 	@Override
-	public Object eval(Object[] arguments) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		List<?> list = asList(arguments[0]);
 		ArrayList<?> result = new ArrayList<>(list);
 		Collections.reverse(result);

@@ -23,8 +23,6 @@ import com.top_logic.model.search.expr.SearchExpression;
  */
 public class SupplierSearchExpression extends GenericMethod {
 
-	private static final SearchExpression NO_SELF = null;
-
 	private static final SearchExpression[] NO_ARGUMENTS = new SearchExpression[0];
 
 	private final SupplierSearchExpressionBuilder _builder;
@@ -53,6 +51,11 @@ public class SupplierSearchExpression extends GenericMethod {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		return _builder.getValue();
+	}
+
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return _builder.canEvaluateAtCompileTime();
 	}
 
 }

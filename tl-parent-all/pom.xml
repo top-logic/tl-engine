@@ -6,7 +6,7 @@
 
 	<groupId>com.top-logic</groupId>
 	<artifactId>tl-parent-all</artifactId>
-	<version>7.6.0</version>
+	<version>7.6.1-SNAPSHOT</version>
 
 	<name>${artifactId}</name>
 	<description>Aggregator module that builds the complete TopLogic application engine.</description>
@@ -32,7 +32,7 @@
 
 	<properties>
 		<tl.repository.url>https://github.com/top-logic/tl-engine/</tl.repository.url>
-		<tl.version>7.6.0</tl.version>
+		<tl.version>7.6.1-SNAPSHOT</tl.version>
 		<jetty.version>9.4.51.v20230217</jetty.version>
 		<poi.version>5.2.3</poi.version>
 		<kafka.version>2.1.1</kafka.version>

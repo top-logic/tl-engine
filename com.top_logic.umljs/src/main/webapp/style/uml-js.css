@@ -62,8 +62,12 @@ body,
   background-image: url('../images/icons/context-pad/goto-element.svg') !important;
 }
 
+.context-pad-icon-show {
+  background-image: url('../images/icons/context-pad/show-element.svg') !important;
+}
+
 .context-pad-icon-hide {
-  background-image: url('../images/icons/context-pad/eye-slash-regular.svg') !important;
+  background-image: url('../images/icons/context-pad/hide-element.svg') !important;
 }
 
 .context-pad-icon-delete {

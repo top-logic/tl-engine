@@ -69,7 +69,9 @@ public class TLTypeDrop implements GraphDropTarget {
 
 			LayoutContext context = graphComponent.getLayoutContext();
 
-			DefaultDiagramJSClassNode node = GraphModelUtil.createDiagramJSNode(labelProvider, graphModel, type);
+			DefaultDiagramJSClassNode node =
+				GraphModelUtil.createDiagramJSNode(labelProvider, graphModel, type, context.getHiddenElements(),
+					graphComponent.getInvisibleGraphParts());
 
 			GraphModelUtil.connectReferences(context, graphModel, node);
 

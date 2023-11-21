@@ -5,8 +5,13 @@
  */
 package com.top_logic.graph.diagramjs.server;
 
-import java.io.IOException;
+import static com.top_logic.ajax.shared.api.NamingConstants.*;
 
+import java.io.IOException;
+import java.util.Collection;
+
+import com.top_logic.ajax.server.util.JSControlUtil;
+import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graph.common.util.GraphControlCommon;
 import com.top_logic.graph.diagramjs.server.commands.CreateClassCommand;
@@ -15,6 +20,7 @@ import com.top_logic.graph.diagramjs.server.commands.CreateConnectionGraphComman
 import com.top_logic.graph.diagramjs.server.commands.CreateEnumerationCommand;
 import com.top_logic.graph.diagramjs.server.commands.DeleteGraphPartCommand;
 import com.top_logic.graph.diagramjs.server.commands.GoToDefinitionCommand;
+import com.top_logic.graph.diagramjs.server.commands.ToggleElementVisibilityCommand;
 import com.top_logic.graph.diagramjs.server.handler.DiagramHandler;
 import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
 import com.top_logic.graph.server.model.GraphData;
@@ -30,9 +36,12 @@ import com.top_logic.model.TLType;
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
-public class DiagramJSGraphControl extends AbstractGraphControl implements DiagramHandler {
+public class DiagramJSGraphControl extends AbstractGraphControl
+		implements DiagramHandler, DisplayHiddenElementsListener {
 
-	private DiagramHandler _diagramHandler;
+	private DiagramJSGraphComponent _diagramHandler;
+
+	private boolean _displayHiddenElements;
 
 	/**
 	 * Creates a {@link DiagramJSGraphControl} for the given {@link GraphData}.
@@ -40,17 +49,31 @@ public class DiagramJSGraphControl extends AbstractGraphControl implements Diagr
 	public DiagramJSGraphControl(GraphData data) {
 		super(data, createCommandMap(GRAPH_COMMANDS, CreateConnectionGraphCommand.INSTANCE,
 			CreateClassPropertyGraphCommand.INSTANCE, DeleteGraphPartCommand.INSTANCE, CreateClassCommand.INSTANCE,
-			CreateEnumerationCommand.INSTANCE, GoToDefinitionCommand.INSTANCE));
+			CreateEnumerationCommand.INSTANCE, GoToDefinitionCommand.INSTANCE, ToggleElementVisibilityCommand.INSTANCE));
 	}
 
 	/**
 	 * Creates a {@link DiagramJSGraphControl} for the given {@link GraphData} and
 	 * {@link DiagramHandler}.
 	 */
-	public DiagramJSGraphControl(GraphData data, DiagramHandler diagramHandler) {
+	public DiagramJSGraphControl(GraphData data, DiagramJSGraphComponent diagramHandler) {
 		this(data);
 
 		_diagramHandler = diagramHandler;
+	}
+
+	@Override
+	protected void internalAttach() {
+		super.internalAttach();
+
+		_diagramHandler.addListener(DiagramJSGraphComponent.SHOW_HIDDEN_ELEMENTS_EVENT, this);
+	}
+
+	@Override
+	protected void internalDetach() {
+		_diagramHandler.removeListener(DiagramJSGraphComponent.SHOW_HIDDEN_ELEMENTS_EVENT, this);
+
+		super.internalDetach();
 	}
 
 	@Override
@@ -63,6 +86,11 @@ public class DiagramJSGraphControl extends AbstractGraphControl implements Diagr
 		writeGraphInitScript(out, GraphControlCommon.DIAGRAMJS_GRAPH_CONTROL);
 
 		out.endTag(DIV);
+	}
+
+	@Override
+	protected void writeGraphInitScript(TagWriter out, String type) throws IOException {
+		JSControlUtil.writeCreateJSControlScript(out, type, getID(), retrieveStateAsJSON(), _displayHiddenElements);
 	}
 
 	@Override
@@ -93,6 +121,25 @@ public class DiagramJSGraphControl extends AbstractGraphControl implements Diagr
 	@Override
 	public void gotoDefinition(TLModelPart modelPart) {
 		_diagramHandler.gotoDefinition(modelPart);
+	}
+
+	@Override
+	public void setElementsVisibility(Collection<Object> graphPartModels, boolean isVisible) {
+		_diagramHandler.setElementsVisibility(graphPartModels, isVisible);
+	}
+
+	@Override
+	public void handleDisplayHiddenElements(Object sender, Boolean oldValue, Boolean newValue) {
+		_displayHiddenElements = newValue.booleanValue();
+
+		// is the control is invalid then it is repainted anyway..
+		if (!isInvalid()) {
+			// incremental update
+			String objectPath = SERVICE_NAMESPACE + "." + SERVICE_NAME;
+			String methodName = INVOKE;
+			getFrameScope().addClientAction(new JSFunctionCall(getID(), objectPath, methodName,
+				GraphControlCommon.SHOW_HIDDEN_ELEMENTS_COMMAND, newValue.toString()));
+		}
 	}
 
 }

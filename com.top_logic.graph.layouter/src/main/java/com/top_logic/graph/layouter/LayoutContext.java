@@ -5,6 +5,9 @@
  */
 package com.top_logic.graph.layouter;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 
@@ -15,27 +18,27 @@ import com.top_logic.layout.provider.MetaResourceProvider;
  */
 public class LayoutContext {
 
-	private LayoutDirection _direction;
+	private final LayoutDirection _direction;
 
-	private LabelProvider _labelProvider;
+	private final LabelProvider _labelProvider;
 
-	private boolean _showTableInterfaceTypes;
+	private final Collection<Object> _hiddenElements;
 
 	/**
 	 * Creates a {@link LayoutContext} with the {@link MetaResourceProvider} and
 	 * {@link LayoutDirection} vertical from sink as default.
 	 */
 	public LayoutContext() {
-		this(LayoutDirection.VERTICAL_FROM_SINK, MetaResourceProvider.INSTANCE, false);
+		this(LayoutDirection.VERTICAL_FROM_SINK, MetaResourceProvider.INSTANCE, Collections.emptySet());
 	}
 
 	/**
 	 * Creates a {@link LayoutContext} with the given arguments.
 	 */
-	public LayoutContext(LayoutDirection direction, LabelProvider labelProvider, boolean showTableInterfaceTypes) {
+	public LayoutContext(LayoutDirection direction, LabelProvider labelProvider, Collection<Object> hiddenElements) {
 		_direction = direction;
 		_labelProvider = labelProvider;
-		_showTableInterfaceTypes = showTableInterfaceTypes;
+		_hiddenElements = hiddenElements;
 	}
 
 	/**
@@ -46,13 +49,6 @@ public class LayoutContext {
 	}
 
 	/**
-	 * @see #getDirection()
-	 */
-	public void setDirection(LayoutDirection direction) {
-		_direction = direction;
-	}
-
-	/**
 	 * the label provider for resources.
 	 */
 	public LabelProvider getLabelProvider() {
@@ -60,24 +56,10 @@ public class LayoutContext {
 	}
 
 	/**
-	 * @see #getLabelProvider()
+	 * Collection of objects that should be hidden.
 	 */
-	public void setLabelProvider(LabelProvider labelProvider) {
-		_labelProvider = labelProvider;
-	}
-
-	/**
-	 * True if TableInterface types should be displayed, otherwise false.
-	 */
-	public boolean showTableInterfaceTypes() {
-		return _showTableInterfaceTypes;
-	}
-
-	/**
-	 * @see #showTableInterfaceTypes()
-	 */
-	public void setShowTableInterfaceTypes(boolean showTableInterfaceTypes) {
-		_showTableInterfaceTypes = showTableInterfaceTypes;
+	public Collection<Object> getHiddenElements() {
+		return _hiddenElements;
 	}
 
 }

@@ -34,7 +34,11 @@ public final class ElementFactory extends JavaScriptObject {
 	 * @see Canvas#setRootElement(Root)
 	 */
 	public native Root createRoot() /*-{
-		return this.createRoot();
+		var root = this.createRoot();
+
+		root.isVisible = true;
+
+		return root;
 	}-*/;
 
 	/**

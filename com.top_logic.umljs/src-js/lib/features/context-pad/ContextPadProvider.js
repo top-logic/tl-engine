@@ -1,4 +1,4 @@
-import { isShape, isLabel } from '../../util/ModelUtil';
+import { isShape, isLabel, isConnection } from '../../util/ModelUtil';
 
 import { assign } from 'min-dash';
 
@@ -46,12 +46,6 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
     eventBus.fire('create.class.property', event);
   }
 
-  function hide(event, element) {
-    modeling.hide(element);
-
-    contextPad.close();
-  }
-
   function getConnectionPadEntry(type, title) {
     return  {
       group: 'add',
@@ -91,15 +85,32 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
     };
   }
 
-  function getHidePadEntry() {
-    return {
-      group: 'admin',
-      className: 'context-pad-icon-hide',
-      title: 'Hide Part',
-      action: {
-        click: hide
-      }
-    };
+  function getToggleVisibilityPadEntry(element) {
+    if(element.isVisible) {
+	  return {
+	    group: 'admin',
+	    className: 'context-pad-icon-hide',
+	    title: 'Hide Part',
+	    action: {
+	      click: function(event, element) {
+    		  contextPad.close();
+	          modeling.toggleVisibility(element, false);
+          }
+	    }
+	  };
+    } else {
+      return {
+        group: 'admin',
+        className: 'context-pad-icon-show',
+        title: 'Show Part',
+        action: {
+          click: function(event, element) {
+			contextPad.close();
+            modeling.toggleVisibility(element, true);
+   		  }
+        }
+      };
+    }
   }
 
   function getGoToPadEntry() {
@@ -118,12 +129,12 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
       }
     };
   }
-
+  
   var contextPadEntries = {
     'delete': getRemoveShapePadEntry(),
-    'hide': getHidePadEntry()
+    'toggleVisibility': getToggleVisibilityPadEntry(element)
   };
-
+  
   if(isShape(element) && !isLabel(element)) {
     if(!('stereotypes' in element && element.stereotypes.indexOf('enumeration') != -1)) {
       assign(contextPadEntries, {

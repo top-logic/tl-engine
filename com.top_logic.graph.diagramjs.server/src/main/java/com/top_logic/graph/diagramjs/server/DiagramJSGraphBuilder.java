@@ -59,20 +59,23 @@ public class DiagramJSGraphBuilder implements GraphModelBuilder {
 
 	@Override
 	public SharedGraph getModel(Object businessModel, LayoutComponent component) {
+		DiagramJSGraphComponent graphComponent = (DiagramJSGraphComponent) component;
+
 		if (businessModel == null || !(businessModel instanceof TLModule)) {
 			return null;
 		}
 
 		TLModule module = (TLModule) businessModel;
 
-		LayoutContext context = getLayoutContext((DiagramJSGraphComponent) component);
+		LayoutContext context = getLayoutContext(graphComponent);
 
-		LayoutGraph graph = GraphModelUtil.createLayoutGraph(module, context.showTableInterfaceTypes());
+		LayoutGraph graph = GraphModelUtil.createLayoutGraph(module, context.getHiddenElements());
 
 		Sugiyama.INSTANCE.layout(context, graph);
 
 		SharedGraph graphModel =
-			GraphModelUtil.createDiagramJSSharedGraphModel(context.getLabelProvider(), graph, module);
+			GraphModelUtil.createDiagramJSSharedGraphModel(context.getLabelProvider(), graph, module,
+				context.getHiddenElements(), graphComponent.getInvisibleGraphParts());
 
 		return graphModel;
 	}

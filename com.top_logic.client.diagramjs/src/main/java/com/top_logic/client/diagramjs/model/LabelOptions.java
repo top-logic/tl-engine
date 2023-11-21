@@ -5,14 +5,12 @@
  */
 package com.top_logic.client.diagramjs.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 /**
  * Options for a {@link Label}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
-public final class LabelOptions extends JavaScriptObject {
+public final class LabelOptions extends GraphPartOptions {
 
 	/**
 	 * Creates a {@link Label}.

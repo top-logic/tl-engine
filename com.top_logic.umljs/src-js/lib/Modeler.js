@@ -14,6 +14,7 @@ import ResizeModule from 'diagram-js/lib/features/resize';
 import DirectEditingModule from 'diagram-js-direct-editing';
 
 import ConnectModule from './features/connect';
+import ConnectionPreviewModule from './features/connection-preview';
 import UmlModelingModule from './features/modeling';
 import PaletteProviderModule from './features/palette';
 import ContextPadProviderModule from './features/context-pad';
@@ -47,6 +48,7 @@ Modeler.prototype._modelingModules = [
   ChangeSupportModule,
   ResizeModule,
   DirectEditingModule,
+  ConnectionPreviewModule,
   BendpointsModule
 ];
 

@@ -5,7 +5,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2023-10-03
+ * Date: 2023-11-21
  */
 
 (function (global, factory) {
@@ -13581,6 +13581,303 @@
   };
 
   /**
+   * @typedef {import('../../model/Types').Element} Element
+   * @typedef {import('../../model/Types').Connection} Connection
+   * @typedef {import('../../model/Types').Shape} Shape
+   *
+   * @typedef {import('../../util/Types').Point} Point
+   *
+   * @typedef {import('didi').Injector} Injector
+   *
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/ElementFactory').default} ElementFactory
+   * @typedef {import('../../core/GraphicsFactory').default} GraphicsFactory
+   */
+
+  var MARKER_CONNECTION_PREVIEW = 'djs-connection-preview';
+
+  /**
+   * Draws connection preview. Optionally, this can use layouter and connection docking to draw
+   * better looking previews.
+   *
+   * @param {Injector} injector
+   * @param {Canvas} canvas
+   * @param {GraphicsFactory} graphicsFactory
+   * @param {ElementFactory} elementFactory
+   */
+  function ConnectionPreview(
+      injector,
+      canvas,
+      graphicsFactory,
+      elementFactory
+  ) {
+    this._canvas = canvas;
+    this._graphicsFactory = graphicsFactory;
+    this._elementFactory = elementFactory;
+
+    // optional components
+    this._connectionDocking = injector.get('connectionDocking', false);
+    this._layouter = injector.get('layouter', false);
+  }
+
+  ConnectionPreview.$inject = [
+    'injector',
+    'canvas',
+    'graphicsFactory',
+    'elementFactory'
+  ];
+
+  /**
+   * Draw connection preview.
+   *
+   * Provide at least one of <source, connectionStart> and <target, connectionEnd> to create a preview.
+   * In the clean up stage, call `connectionPreview#cleanUp` with the context to remove preview.
+   *
+   * @param {Object} context
+   * @param {Object|boolean} canConnect
+   * @param {Object} hints
+   * @param {Element} [hints.source] source element
+   * @param {Element} [hints.target] target element
+   * @param {Point} [hints.connectionStart] connection preview start
+   * @param {Point} [hints.connectionEnd] connection preview end
+   * @param {Point[]} [hints.waypoints] provided waypoints for preview
+   * @param {boolean} [hints.noLayout] true if preview should not be laid out
+   * @param {boolean} [hints.noCropping] true if preview should not be cropped
+   * @param {boolean} [hints.noNoop] true if simple connection should not be drawn
+   */
+  ConnectionPreview.prototype.drawPreview = function(context, canConnect, hints) {
+
+    hints = hints || {};
+
+    var connectionPreviewGfx = context.connectionPreviewGfx,
+        getConnection = context.getConnection,
+        source = hints.source,
+        target = hints.target,
+        waypoints = hints.waypoints,
+        connectionStart = hints.connectionStart,
+        connectionEnd = hints.connectionEnd,
+        noLayout = hints.noLayout,
+        noCropping = hints.noCropping,
+        noNoop = hints.noNoop,
+        connection;
+
+    var self = this;
+
+    if (!connectionPreviewGfx) {
+      connectionPreviewGfx = context.connectionPreviewGfx = this.createConnectionPreviewGfx();
+    }
+
+    clear(connectionPreviewGfx);
+
+    if (!getConnection) {
+      getConnection = context.getConnection = cacheReturnValues(function(canConnect, source, target) {
+        return self.getConnection(canConnect, source, target);
+      });
+    }
+
+    if (canConnect) {
+      connection = getConnection(canConnect, source, target);
+    }
+
+    if (!connection) {
+      !noNoop && this.drawNoopPreview(connectionPreviewGfx, hints);
+      return;
+    }
+    
+    if(context.connection) {
+    	connection.connectionType = context.connection.connectionType;
+    }
+
+    connection.waypoints = waypoints || [];
+
+    // optional layout
+    if (this._layouter && !noLayout) {
+      connection.waypoints = this._layouter.layoutConnection(connection, {
+        source: source,
+        target: target,
+        connectionStart: connectionStart,
+        connectionEnd: connectionEnd,
+        waypoints: hints.waypoints || connection.waypoints
+      });
+    }
+
+    // fallback if no waypoints were provided nor created with layouter
+    if (!connection.waypoints || !connection.waypoints.length) {
+      connection.waypoints = [
+        source ? getMid(source) : connectionStart,
+        target ? getMid(target) : connectionEnd
+      ];
+    }
+
+    // optional cropping
+    if (this._connectionDocking && (source || target) && !noCropping) {
+      connection.waypoints = this._connectionDocking.getCroppedWaypoints(connection, source, target);
+    }
+
+    this._graphicsFactory.drawConnection(connectionPreviewGfx, connection);
+  };
+
+  /**
+   * Draw simple connection between source and target or provided points.
+   *
+   * @param {SVGElement} connectionPreviewGfx container for the connection
+   * @param {Object} hints
+   * @param {Element} [hints.source] source element
+   * @param {Element} [hints.target] target element
+   * @param {Point} [hints.connectionStart] required if source is not provided
+   * @param {Point} [hints.connectionEnd] required if target is not provided
+   */
+  ConnectionPreview.prototype.drawNoopPreview = function(connectionPreviewGfx, hints) {
+    var source = hints.source,
+        target = hints.target,
+        start = hints.connectionStart || getMid(source),
+        end = hints.connectionEnd || getMid(target);
+
+    var waypoints = this.cropWaypoints(start, end, source, target);
+
+    var connection = this.createNoopConnection(waypoints[0], waypoints[1]);
+
+    append(connectionPreviewGfx, connection);
+  };
+
+  /**
+   * Return cropped waypoints.
+   *
+   * @param {Point} start
+   * @param {Point} end
+   * @param {Element} source
+   * @param {Element} target
+   *
+   * @return {Point[]}
+   */
+  ConnectionPreview.prototype.cropWaypoints = function(start, end, source, target) {
+    var graphicsFactory = this._graphicsFactory,
+        sourcePath = source && graphicsFactory.getShapePath(source),
+        targetPath = target && graphicsFactory.getShapePath(target),
+        connectionPath = graphicsFactory.getConnectionPath({ waypoints: [ start, end ] });
+
+    start = (source && getElementLineIntersection(sourcePath, connectionPath, true)) || start;
+    end = (target && getElementLineIntersection(targetPath, connectionPath, false)) || end;
+
+    return [ start, end ];
+  };
+
+  /**
+   * Remove connection preview container if it exists.
+   *
+   * @param {Object} [context]
+   * @param {SVGElement} [context.connectionPreviewGfx] preview container
+   */
+  ConnectionPreview.prototype.cleanUp = function(context) {
+    if (context && context.connectionPreviewGfx) {
+      remove$1(context.connectionPreviewGfx);
+    }
+  };
+
+  /**
+   * Get connection that connects source and target.
+   *
+   * @param {Object|boolean} canConnect
+   *
+   * @return {Connection}
+   */
+  ConnectionPreview.prototype.getConnection = function(canConnect) {
+    var attrs = ensureConnectionAttrs(canConnect);
+
+    return this._elementFactory.createConnection(attrs);
+  };
+
+
+  /**
+   * Add and return preview graphics.
+   *
+   * @return {SVGElement}
+   */
+  ConnectionPreview.prototype.createConnectionPreviewGfx = function() {
+    var gfx = create$1('g');
+
+    attr(gfx, {
+      pointerEvents: 'none'
+    });
+
+    classes(gfx).add('djs-connection').add(MARKER_CONNECTION_PREVIEW);
+
+    append(this._canvas.getActiveLayer(), gfx);
+
+    return gfx;
+  };
+
+  /**
+   * Create and return simple connection.
+   *
+   * @param {Point} start
+   * @param {Point} end
+   *
+   * @return {SVGElement}
+   */
+  ConnectionPreview.prototype.createNoopConnection = function(start, end) {
+    return createLine([ start, end ], {
+      'stroke': '#333',
+      'strokeDasharray': [ 1 ],
+      'strokeWidth': 2,
+      'pointer-events': 'none'
+    });
+  };
+
+  // helpers //////////
+
+  /**
+   * Returns function that returns cached return values referenced by stringified first argument.
+   *
+   * @param {Function} fn
+   *
+   * @return {Function}
+   */
+  function cacheReturnValues(fn) {
+    var returnValues = {};
+
+    /**
+     * Return cached return value referenced by stringified first argument.
+     *
+     * @return {*}
+     */
+    return function(firstArgument) {
+      var key = JSON.stringify(firstArgument);
+
+      var returnValue = returnValues[key];
+
+      if (!returnValue) {
+        returnValue = returnValues[key] = fn.apply(null, arguments);
+      }
+
+      return returnValue;
+    };
+  }
+
+  /**
+   * Ensure connection attributes is object.
+   *
+   * @param {Object|boolean} canConnect
+   *
+   * @return {Object}
+   */
+  function ensureConnectionAttrs(canConnect) {
+    if (isObject(canConnect)) {
+      return canConnect;
+    } else {
+      return {};
+    }
+  }
+
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var ConnectionPreviewModule = {
+    __init__: [ 'connectionPreview' ],
+    connectionPreview: [ 'type', ConnectionPreview ]
+  };
+
+  /**
    * @typedef {import('didi').Injector} Injector
    *
    * @typedef {import('../core/Types').ElementLike} ElementLike
@@ -15957,7 +16254,8 @@
    * @return {boolean}
    */
   function isShape(value) {
-    return isObject(value) && has$1(value, 'children');
+  	// TODO SFO.. use of !isConnection is not the cleanest way to implement this..
+    return isObject(value) && has$1(value, 'children') && !isConnection(value);
   }
 
   inherits(UmlUpdater, CommandInterceptor);
@@ -16223,97 +16521,11 @@
       }
     }};
 
-  HideElementHandler.$inject = [
-    'graphicsFactory',
-    'elementRegistry',
-    'selection'
-  ];
+  function VisibilityHandler() {
 
-  function HideElementHandler(graphicsFactory, elementRegistry, selection) {
-    this._graphicsFactory = graphicsFactory;
-    this._elementRegistry = elementRegistry;
-    this._selection = selection;
   }
-  HideElementHandler.prototype.execute = function(context) {
-    var element = context.element;
-
-    this.hide(element);
-
-    this._selection.deselect(element);
-  };
-
-  HideElementHandler.prototype.hide = function(element) {
-    element.hidden = true;
-
-    if(isShape(element)) {
-      if(isLabel(element)) {
-        this.hideLabel(element);
-      } else {
-        this.hideShape(element);
-      }
-    } else {
-      this.hideConnection(element);
-    }
-  };
-
-  HideElementHandler.prototype.hideLabel = function(label) {
-    this.hideChildren(label);
-
-    this.updateGfx(label, 'shape');
-  };
-
-  HideElementHandler.prototype.hideConnection = function(connection) {
-    this.hideChildren(connection);
-
-    this.updateGfx(connection, 'connection');
-  };
-
-  HideElementHandler.prototype.hideShape = function(shape) {
-    this.hideAttachedEdges(shape);
-    this.hideChildren(shape);
-
-    this.updateGfx(shape, 'shape');
-  };
-
-  HideElementHandler.prototype.hideAttachedEdges = function(shape) {
-    this.hideIncomingAttachedEdges(shape);
-    this.hideOutgoingAttachedEdges(shape);
-  };
-
-  HideElementHandler.prototype.hideIncomingAttachedEdges = function(shape) {
-    var hideElementHandler = this;
-
-    if('incoming' in shape) {
-      shape.incoming.forEach(function(edge) {
-        hideElementHandler.hide(edge);
-      });
-    }
-  };
-
-  HideElementHandler.prototype.hideOutgoingAttachedEdges = function(shape) {
-    var hideElementHandler = this;
-
-    if('outgoing' in shape) {
-      shape.outgoing.forEach(function(edge) {
-        hideElementHandler.hide(edge);
-      });
-    }
-  };
-
-  HideElementHandler.prototype.hideChildren = function(element) {
-    var hideElementHandler = this;
-
-    if('children' in element) {
-      element.children.forEach(function(child) {
-        hideElementHandler.hide(child);
-      });
-    }
-  };
-
-  HideElementHandler.prototype.updateGfx = function(element, type) {
-    var gfx = this._elementRegistry.getGraphics(element, false);
-
-    this._graphicsFactory.update(type, element, gfx);
+  VisibilityHandler.prototype.execute = function(context) {
+    
   };
 
   /**
@@ -19322,14 +19534,22 @@
   Modeling.$inject = [
     'eventBus',
     'elementFactory',
+    'elementRegistry',
     'commandStack',
     'textRenderer',
-    'canvas'
+    'canvas',
+    'selection',
+    'graphicsFactory',
+    'layouter'
   ];
 
-  function Modeling(eventBus, elementFactory, commandStack, textRenderer, canvas) {
+  function Modeling(eventBus, elementFactory, elementRegistry, commandStack, textRenderer, canvas, selection, graphicsFactory, layouter) {
     this.canvas = canvas;
     this._textRenderer = textRenderer;
+    this._graphicsFactory = graphicsFactory;
+    this._elementRegistry = elementRegistry;
+    this._selection = selection;
+    this._layouter = layouter;
 
     Modeling$1.call(this, eventBus, elementFactory, commandStack);
   }
@@ -19339,7 +19559,7 @@
 
     handlers['element.updateLabel'] = UpdateLabelHandler;
     handlers['layout.connection.labels'] = LayoutConnectionLabelsHandler;
-    handlers['element.hide'] = HideElementHandler;
+    handlers['elements.visibility'] = VisibilityHandler;
 
     return handlers;
   };
@@ -19357,12 +19577,168 @@
     }, attrs), source.parent);
   };
 
-  Modeling.prototype.hide = function(element) {
-    var context = {
-      element: element
+  Modeling.prototype.toggleVisibility = function(element, isVisible) {
+    this.handleVisibilityContext = {
+      elements: [],
+      visibility: isVisible
     };
+    
+    if(isVisible) {
+      this.showHiddenParents(element);
+    }
 
-    this._commandStack.execute('element.hide', context);
+    this.setVisibility(element, isVisible);
+    
+    if(isConnection(element)) {
+      if(isVisible) {
+        this.setVisibility(element.source, true);
+        this.setVisibility(element.target, true);
+      }
+    }
+    
+    this.handleVisibilityContext.elements.forEach(element => {
+      if(element.hidden) {
+        this._selection.deselect(element);
+      }
+    });
+
+    this._commandStack.execute('elements.visibility', this.handleVisibilityContext);
+  };
+
+  Modeling.prototype.showHiddenParents = function(element) {
+      var parent = element.parent;
+      
+      if(!parent.isVisible) {
+        if(isConnection(parent)) {
+          this._setVisibility( parent.source, true);
+          this.updateGraphics(parent.source, true);
+          this._setVisibility(parent.target, true);
+          this.updateGraphics(parent.target, true);
+        }
+        
+        this._setVisibility( parent, true);
+        this.updateGraphics(parent, true);
+      }
+  };
+
+  Modeling.prototype.setVisibility = function(element, isVisible) {
+    this._setVisibility(element, isVisible);
+    
+    element.hidden = !isVisible && !this._layouter.showHiddenElements;
+    
+    if(isShape(element)) {
+      if(isLabel(element)) {
+        this.setLabelVisibility(element, isVisible);
+      } else {
+        this.setShapeVisibility(element, isVisible);
+      }
+    } else {
+      this.setConnectionVisibility(element, isVisible);
+    }
+  };
+
+  Modeling.prototype._setVisibility = function(element, isVisible) {
+    if(element.isVisible !== isVisible) {
+      if(!this.handleVisibilityContext.elements.includes(element)) {
+        this.handleVisibilityContext.elements.push(element);
+      }
+      
+      element.isVisible = isVisible;
+    }
+  };
+
+  Modeling.prototype.setLabelVisibility = function(label, visibility) {
+    this.setChildrenVisibility(label, visibility);
+    
+    this.updateGraphics(label, false);
+  };
+
+  Modeling.prototype.setConnectionVisibility = function(connection, isVisible) {
+    this.setChildrenVisibility(connection, isVisible);
+
+    this.updateGraphics(connection, false);
+  };
+
+  Modeling.prototype.setShapeVisibility = function(shape, visibility) {
+    this.setAttachedEdgesVisibility(shape, visibility);
+    this.setChildrenVisibility(shape, visibility);
+
+    this.updateGraphics(shape, false);
+  };
+
+  Modeling.prototype.setAttachedEdgesVisibility = function(shape, visibility) {
+    this.setIncomingAttachedEdgesVisibility(shape, visibility);
+    this.setOutgoingAttachedEdgesVisibility(shape, visibility);
+  };
+
+  Modeling.prototype.setIncomingAttachedEdgesVisibility = function(shape, isVisible) {
+    var modeling = this;
+
+    if('incoming' in shape) {
+      shape.incoming.forEach(function(edge) {
+        if(isVisible) {
+          if(edge.source.isVisible) {
+            modeling.setVisibility(edge, isVisible);
+          }
+        } else {
+          modeling.setVisibility(edge, isVisible);
+        }
+      });
+    }
+  };
+
+  Modeling.prototype.setOutgoingAttachedEdgesVisibility = function(shape, isVisible) {
+    var modeling = this;
+
+    if('outgoing' in shape) {
+      shape.outgoing.forEach(function(edge) {
+        if(isVisible) {
+          if(edge.target.isVisible) {
+            modeling.setVisibility(edge, isVisible);
+          }
+        } else {
+          modeling.setVisibility(edge, isVisible);
+        }
+      });
+    }
+  };
+
+  Modeling.prototype.setChildrenVisibility = function(element, visibility) {
+    var modeling = this;
+
+    if('children' in element) {
+      element.children.forEach(function(child) {
+        modeling.setVisibility(child, visibility);
+      });
+    }
+  };
+
+  Modeling.prototype.updateGraphics = function(element, updateChildren) {
+    if(isConnection(element)) {
+      this.updateGfx(element, 'connection');
+    } else {
+      this.updateGfx(element, 'shape');
+    }
+    
+    if(updateChildren) {
+      this.updateGraphicChildren(element);
+    }
+  };
+
+  Modeling.prototype.updateGraphicChildren = function(element) {
+    var modeling = this;
+    
+    if('children' in element) {
+  	element.children.forEach(function(child) {
+  	  modeling.updateGraphics(child, false);
+  	});
+    }
+  };
+
+  Modeling.prototype.updateGfx = function(element, type) {
+    var gfx = this._elementRegistry.getGraphics(element, false);
+
+    this._graphicsFactory.update(type, element, gfx);
   };
 
   var UmlModelingModule = {
@@ -19759,12 +20135,6 @@
       eventBus.fire('create.class.property', event);
     }
 
-    function hide(event, element) {
-      modeling.hide(element);
-
-      contextPad.close();
-    }
-
     function getConnectionPadEntry(type, title) {
       return  {
         group: 'add',
@@ -19804,15 +20174,32 @@
       };
     }
 
-    function getHidePadEntry() {
-      return {
-        group: 'admin',
-        className: 'context-pad-icon-hide',
-        title: 'Hide Part',
-        action: {
-          click: hide
-        }
-      };
+    function getToggleVisibilityPadEntry(element) {
+      if(element.isVisible) {
+  	  return {
+  	    group: 'admin',
+  	    className: 'context-pad-icon-hide',
+  	    title: 'Hide Part',
+  	    action: {
+  	      click: function(event, element) {
+      		  contextPad.close();
+  	          modeling.toggleVisibility(element, false);
+            }
+  	    }
+  	  };
+      } else {
+        return {
+          group: 'admin',
+          className: 'context-pad-icon-show',
+          title: 'Show Part',
+          action: {
+            click: function(event, element) {
+  			contextPad.close();
+              modeling.toggleVisibility(element, true);
+     		  }
+          }
+        };
+      }
     }
 
     function getGoToPadEntry() {
@@ -19831,12 +20218,12 @@
         }
       };
     }
-
+    
     var contextPadEntries = {
       'delete': getRemoveShapePadEntry(),
-      'hide': getHidePadEntry()
+      'toggleVisibility': getToggleVisibilityPadEntry(element)
     };
-
+    
     if(isShape(element) && !isLabel(element)) {
       if(!('stereotypes' in element && element.stereotypes.indexOf('enumeration') != -1)) {
         assign$1(contextPadEntries, {
@@ -20578,6 +20965,8 @@
   }
   function getGroup(elements) {
       var group = create$1('g');
+      
+      classes(group).add('djs-visual');
 
       elements.forEach(function(element) {
           append(group, element);
@@ -20650,6 +21039,20 @@
     return componentsToPath(rectPath);
   }
 
+  function updateVisibility(parentGfx, element) {
+    var groupElement = parentGfx.closest('.djs-group');
+    
+    if(element.parent && element.parent.isVisible) {
+  	  if(element.isVisible) {
+  		groupElement.style.removeProperty('opacity');
+  	  } else {
+  		groupElement.style.setProperty('opacity', 0.3);
+  	  }
+    } else {
+        groupElement.style.removeProperty('opacity');
+    }
+  }
+
   function drawClass(parentGfx, element, textRenderer) {
     element.businessObject || {};
 
@@ -20674,7 +21077,7 @@
 
       centerLabelStyle.y += svgName.getBBox().height;
     }
-
+    
     var hasAttributes = element.labels.some(function(label) {
       return label.labelType === 'property' || label.labelType === 'classifier';
     });
@@ -20684,14 +21087,20 @@
         drawClassSeparator(parentGfx, element.width, centerLabelStyle.y);
       }
     }
+    
+    updateVisibility(parentGfx, element);
 
     return rectangle;
   }
   function drawLabel(parentGfx, element, textRenderer) {
-    return drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
+    var text = drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
+    
+    updateVisibility(parentGfx, element);
+    
+    return text;
   }
   function drawClassSeparator(parentGfx, width, y) {
-    drawLine(parentGfx, {
+    return drawLine(parentGfx, {
       x: 0,
       y: y
     }, {
@@ -20769,7 +21178,11 @@
   }
 
   function drawConnection(parentGfx, element, attributes) {
-    return drawPath(parentGfx, element.waypoints, attributes);
+    var connection = drawPath(parentGfx, element.waypoints, attributes);
+    
+    updateVisibility(parentGfx, element);
+    
+    return connection;
   }
 
   var associationMarker = {
@@ -20855,12 +21268,13 @@
 
   inherits(UmlRenderer, BaseRenderer);
 
-  UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer'];
+  UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer', 'layouter'];
 
-  function UmlRenderer(eventBus, canvas, textRenderer) {
+  function UmlRenderer(eventBus, canvas, textRenderer, layouter) {
     BaseRenderer.call(this, eventBus);
 
     this.textRenderer = textRenderer;
+    this._layouter = layouter;
 
     this.drawShapeHandlers = {
       "class": drawClass,
@@ -24665,6 +25079,7 @@
     ChangeSupportModule,
     ResizeModule,
     DirectEditingModule,
+    ConnectionPreviewModule,
     BendpointsModule
   ];
 

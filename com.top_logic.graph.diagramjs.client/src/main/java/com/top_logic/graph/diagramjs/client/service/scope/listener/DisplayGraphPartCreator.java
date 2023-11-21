@@ -297,7 +297,8 @@ public class DisplayGraphPartCreator {
 	 * Creates the display label.
 	 */
 	protected Label createDisplayLabel(DefaultDiagramJSLabel sharedLabel) {
-		Optional<LabelOptions> labelOptions = Optional.of(getLabelOptions(sharedLabel));
+		Optional<LabelOptions> labelOptions =
+			createLabelOptions(sharedLabel.getType(), sharedLabel, sharedLabel.isVisible());
 
 		Base labelOwner = getLabelOwner(sharedLabel);
 		String text = sharedLabel.getText();
@@ -384,15 +385,6 @@ public class DisplayGraphPartCreator {
 		return _diagram.getElementFactory().createLabel(attributes);
 	}
 
-	private LabelOptions getLabelOptions(DefaultDiagramJSLabel label) {
-		LabelOptions options = JavaScriptObject.createObject().cast();
-
-		options.setBusinessObject(label);
-		options.setType(label.getType());
-
-		return options;
-	}
-
 	private void putOptions(JavaScriptObject attributes, Optional<? extends JavaScriptObject> options) {
 		options.ifPresent(optionsObject -> JavaScriptObjectUtil.assign(attributes, optionsObject));
 	}
@@ -428,16 +420,17 @@ public class DisplayGraphPartCreator {
 	 * Creates the display node.
 	 */
 	protected Shape createDisplayNode(DefaultDiagramJSClassNode sharedNode) {
-		Optional<ShapeOptions> options = Optional.of(getShapeOptions(sharedNode));
+		Optional<ShapeOptions> options = Optional.of(createShapeOptions(sharedNode));
 
 		return createDisplayNode(getBounds(sharedNode), sharedNode.getClassName(), options);
 	}
 
-	private ShapeOptions getShapeOptions(DefaultDiagramJSClassNode node) {
+	private ShapeOptions createShapeOptions(DefaultDiagramJSClassNode node) {
 		ShapeOptions options = JavaScriptObject.createObject().cast();
 
 		options.setBusinessObject(node);
 		options.setImported(node.isImported());
+		options.setVisibility(node.isVisible());
 
 		setModifiers(node, options);
 		setStereotypes(node, options);
@@ -553,8 +546,9 @@ public class DisplayGraphPartCreator {
 	private ConnectionOptions getConnectionOptions(DefaultDiagramJSEdge edge) {
 		ConnectionOptions options = JavaScriptObject.createObject().cast();
 
-		options.setBusinessObject(edge);
+		options.setSharedGraphPart(edge);
 		options.setType(edge.getType());
+		options.setVisibility(edge.isVisible());
 		getEdgeWaypoints(edge).ifPresent(waypoints -> options.setWaypoints(waypoints));
 
 		return options;
@@ -563,8 +557,9 @@ public class DisplayGraphPartCreator {
 	private ConnectionOptions getRevConnectionOptions(DefaultDiagramJSEdge edge) {
 		ConnectionOptions options = JavaScriptObject.createObject().cast();
 
-		options.setBusinessObject(edge);
+		options.setSharedGraphPart(edge);
 		options.setType(edge.getType());
+		options.setVisibility(edge.isVisible());
 		getEdgeWaypoints(edge).ifPresent(waypoints -> options.setWaypoints(getReversedWaypoints(waypoints)));
 
 		return options;
@@ -636,10 +631,12 @@ public class DisplayGraphPartCreator {
 	}
 
 	private Label createDisplayEdgeLabel(String text, String type, Connection owner) {
-		return createDisplayLabel(getBounds(text), text, createDisplayLabelOptions(type, null), owner);
+		DefaultDiagramJSEdge sharedEdge = (DefaultDiagramJSEdge) owner.getSharedGraphPart();
+
+		return createDisplayLabel(getBounds(text), text, createLabelOptions(type, null, sharedEdge.isVisible()), owner);
 	}
 
-	private Optional<LabelOptions> createDisplayLabelOptions(String type, Object businessObject) {
+	private Optional<LabelOptions> createLabelOptions(String type, Object businessObject, boolean isVisible) {
 		LabelOptions options = JavaScriptObject.createObject().cast();
 
 		if (type != null && !type.isEmpty()) {
@@ -649,6 +646,8 @@ public class DisplayGraphPartCreator {
 		if (businessObject != null) {
 			options.setBusinessObject(businessObject);
 		}
+
+		options.setVisibility(isVisible);
 
 		return Optional.of(options);
 	}

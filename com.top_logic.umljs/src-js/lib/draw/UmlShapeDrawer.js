@@ -1,4 +1,4 @@
-import { drawRectangle, drawText, drawLine } from './SVGDrawUtil';
+import { drawRectangle, drawText, drawLine, updateVisibility } from './SVGDrawUtil';
 
 import {
   append as svgAppend,
@@ -36,26 +36,32 @@ export function drawClass(parentGfx, element, textRenderer) {
 
     centerLabelStyle.y += svgName.getBBox().height;
   }
-
+  
   var hasAttributes = element.labels.some(function(label) {
     return label.labelType === 'property' || label.labelType === 'classifier';
   });
 
   if(hasAttributes) {
     if('name' in element) {
-      drawClassSeparator(parentGfx, element.width, centerLabelStyle.y);
+      var separator = drawClassSeparator(parentGfx, element.width, centerLabelStyle.y);
     }
   }
+  
+  updateVisibility(parentGfx, element);
 
   return rectangle;
 };
 
 export function drawLabel(parentGfx, element, textRenderer) {
-  return drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
+  var text = drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
+  
+  updateVisibility(parentGfx, element);
+  
+  return text;
 };
 
 function drawClassSeparator(parentGfx, width, y) {
-  drawLine(parentGfx, {
+  return drawLine(parentGfx, {
     x: 0,
     y: y
   }, {

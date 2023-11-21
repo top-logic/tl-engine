@@ -26,12 +26,13 @@ import inherits from 'inherits';
 
 inherits(UmlRenderer, BaseRenderer);
 
-UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer'];
+UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer', 'layouter'];
 
-export default function UmlRenderer(eventBus, canvas, textRenderer) {
+export default function UmlRenderer(eventBus, canvas, textRenderer, layouter) {
   BaseRenderer.call(this, eventBus);
 
   this.textRenderer = textRenderer;
+  this._layouter = layouter;
 
   this.drawShapeHandlers = {
     "class": drawClass,

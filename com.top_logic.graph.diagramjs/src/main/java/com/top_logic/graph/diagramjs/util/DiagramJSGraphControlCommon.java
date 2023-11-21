@@ -43,4 +43,9 @@ public interface DiagramJSGraphControlCommon {
 	 */
 	public static final String GO_TO_DEFINITION_COMMAND = "gotoDefinition";
 
+	/**
+	 * Command ID to toggle an elements visibility.
+	 */
+	public static final String ELEMENT_VISIBILITY_COMMAND = "toggleVisibility";
+
 }

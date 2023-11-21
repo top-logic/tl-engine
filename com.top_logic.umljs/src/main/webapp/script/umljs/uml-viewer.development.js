@@ -5,7 +5,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2023-10-03
+ * Date: 2023-11-21
  */
 
 (function (global, factory) {
@@ -2338,6 +2338,8 @@
   }
   function getGroup(elements) {
       var group = create$1('g');
+      
+      classes(group).add('djs-visual');
 
       elements.forEach(function(element) {
           append(group, element);
@@ -2410,6 +2412,20 @@
     return componentsToPath(rectPath);
   }
 
+  function updateVisibility(parentGfx, element) {
+    var groupElement = parentGfx.closest('.djs-group');
+    
+    if(element.parent && element.parent.isVisible) {
+  	  if(element.isVisible) {
+  		groupElement.style.removeProperty('opacity');
+  	  } else {
+  		groupElement.style.setProperty('opacity', 0.3);
+  	  }
+    } else {
+        groupElement.style.removeProperty('opacity');
+    }
+  }
+
   function drawClass(parentGfx, element, textRenderer) {
     element.businessObject || {};
 
@@ -2434,7 +2450,7 @@
 
       centerLabelStyle.y += svgName.getBBox().height;
     }
-
+    
     var hasAttributes = element.labels.some(function(label) {
       return label.labelType === 'property' || label.labelType === 'classifier';
     });
@@ -2444,14 +2460,20 @@
         drawClassSeparator(parentGfx, element.width, centerLabelStyle.y);
       }
     }
+    
+    updateVisibility(parentGfx, element);
 
     return rectangle;
   }
   function drawLabel(parentGfx, element, textRenderer) {
-    return drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
+    var text = drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
+    
+    updateVisibility(parentGfx, element);
+    
+    return text;
   }
   function drawClassSeparator(parentGfx, width, y) {
-    drawLine(parentGfx, {
+    return drawLine(parentGfx, {
       x: 0,
       y: y
     }, {
@@ -2529,7 +2551,11 @@
   }
 
   function drawConnection(parentGfx, element, attributes) {
-    return drawPath(parentGfx, element.waypoints, attributes);
+    var connection = drawPath(parentGfx, element.waypoints, attributes);
+    
+    updateVisibility(parentGfx, element);
+    
+    return connection;
   }
 
   var associationMarker = {
@@ -2671,12 +2697,13 @@
 
   inherits(UmlRenderer, BaseRenderer);
 
-  UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer'];
+  UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer', 'layouter'];
 
-  function UmlRenderer(eventBus, canvas, textRenderer) {
+  function UmlRenderer(eventBus, canvas, textRenderer, layouter) {
     BaseRenderer.call(this, eventBus);
 
     this.textRenderer = textRenderer;
+    this._layouter = layouter;
 
     this.drawShapeHandlers = {
       "class": drawClass,

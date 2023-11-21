@@ -8,8 +8,6 @@ package com.top_logic.client.diagramjs.model;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 import com.top_logic.client.diagramjs.model.util.Waypoint;
 
 /**
@@ -17,7 +15,7 @@ import com.top_logic.client.diagramjs.model.util.Waypoint;
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
-public final class ConnectionOptions extends JavaScriptObject {
+public final class ConnectionOptions extends GraphPartOptions {
 
 	/**
 	 * Creates a {@link ConnectionOptions}.
@@ -29,15 +27,15 @@ public final class ConnectionOptions extends JavaScriptObject {
 	/**
 	 * Business object of this {@link Connection}.
 	 */
-	public native Object getBusinessObject() /*-{
+	public native Object getSharedGraphPart() /*-{
 		return this.sharedGraphPart;
 	}-*/;
 
 	/**
-	 * {@link #getBusinessObject()}
+	 * {@link #getSharedGraphPart()}
 	 */
-	public native void setBusinessObject(Object businessObject) /*-{
-		this.sharedGraphPart = businessObject;
+	public native void setSharedGraphPart(Object sharedGraphPart) /*-{
+		this.sharedGraphPart = sharedGraphPart;
 	}-*/;
 
 	/**
@@ -71,4 +69,5 @@ public final class ConnectionOptions extends JavaScriptObject {
 	public native void setWaypoints(Waypoint[] waypoints) /*-{
 		this.waypoints = waypoints;
 	}-*/;
+
 }

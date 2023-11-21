@@ -81,7 +81,7 @@ public class DisplayGraphUpdatePostProcesser {
 
 	private void selectGraphParts(Canvas canvas, Collection<? extends GraphPart> selectedGraphParts) {
 		Selection selection = _diagram.getSelection();
-
+		
 		if (!selectedGraphParts.isEmpty()) {
 			List<Base> selectedDiagrammParts = selectedGraphParts
 				.stream()

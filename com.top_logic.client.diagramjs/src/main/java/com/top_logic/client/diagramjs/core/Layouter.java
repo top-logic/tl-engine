@@ -31,4 +31,21 @@ public class Layouter extends JavaScriptObject {
 		return this.layoutConnection(connection);
 	}-*/;
 
+	/**
+	 * True if hidden diagram elements should be shown, otherwise false.
+	 */
+	public final native boolean showHiddenElements() /*-{
+		if (this.showHiddenElements) {
+			return this.showHiddenElements;
+		} else {
+			return false;
+		}
+	}-*/;
+
+	/**
+	 * @see #showHiddenElements()
+	 */
+	public final native void setShowHiddenElements(boolean showHiddenElements) /*-{
+		this.showHiddenElements = showHiddenElements;
+	}-*/;
 }

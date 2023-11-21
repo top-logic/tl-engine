@@ -1,6 +1,11 @@
 import {
-  drawPath
+  drawPath,
+  updateVisibility
 } from './SVGDrawUtil';
+
+import {
+  attr as svgAttr
+} from 'tiny-svg';
 
 export function drawAssociation(parentGfx, element) {
   var attributes = {
@@ -59,5 +64,9 @@ export function drawComposition(parentGfx, element) {
 }
 
 function drawConnection(parentGfx, element, attributes) {
-  return drawPath(parentGfx, element.waypoints, attributes);
+  var connection = drawPath(parentGfx, element.waypoints, attributes);
+  
+  updateVisibility(parentGfx, element);
+  
+  return connection;
 };

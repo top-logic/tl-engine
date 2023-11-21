@@ -5,6 +5,7 @@
  */
 package com.top_logic.graph.diagramjs.server;
 
+import java.util.Collection;
 import java.util.Collections;
 
 import com.top_logic.graph.common.model.Edge;
@@ -53,13 +54,13 @@ public class PostGraphPartCreationAction implements PostCreateAction {
 
 		DefaultDiagramJSGraphModel graph = getSharedGraphModel(graphComponent);
 
-		GraphPart createdPart = createGraphPart(component, getLabelProvider(graphComponent), newModel, graph);
+		GraphPart createdPart = createGraphPart(component, getLabelProvider(graphComponent), newModel, graph,
+			graphComponent.getHiddenGraphParts(), graphComponent.getInvisibleGraphParts());
 		graph.setSelectedGraphParts(Collections.singleton(createdPart));
 	}
 
 	private GraphPart createGraphPart(LayoutComponent component, LabelProvider labelProvider, Object newModel,
-			GraphModel graph) {
-
+			GraphModel graph, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
 		if (newModel instanceof TLClassProperty) {
 			TLClassProperty property = (TLClassProperty) newModel;
 
@@ -67,13 +68,16 @@ public class PostGraphPartCreationAction implements PostCreateAction {
 		} else if (newModel instanceof TLReference) {
 			return createReference(newModel, labelProvider, graph);
 		} else if (newModel instanceof TLClass) {
-			Node classNode = createNode(labelProvider, newModel, graph, component.get(CreateClassCommand.BOUNDS));
+			Node classNode =
+				createNode(labelProvider, newModel, graph, component.get(CreateClassCommand.BOUNDS), hiddenElements,
+					invisibleElements);
 
 			createEdgesForNewClassNode(classNode, labelProvider, graph);
 
 			return classNode;
 		} else if (newModel instanceof TLEnumeration) {
-			return createNode(labelProvider, newModel, graph, component.get(CreateEnumerationCommand.BOUNDS));
+			return createNode(labelProvider, newModel, graph, component.get(CreateEnumerationCommand.BOUNDS),
+				hiddenElements, invisibleElements);
 		} else {
 			throw new UnsupportedOperationException("diagram part for " + newModel + " could not be created.");
 		}
@@ -136,8 +140,10 @@ public class PostGraphPartCreationAction implements PostCreateAction {
 		return null;
 	}
 
-	private Node createNode(LabelProvider labelProvider, Object newModel, GraphModel graph, Bounds bounds) {
-		return GraphModelUtil.createDiagramJSNode(labelProvider, graph, (TLType) newModel, bounds);
+	private Node createNode(LabelProvider labelProvider, Object newModel, GraphModel graph, Bounds bounds,
+			Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
+		return GraphModelUtil.createDiagramJSNode(labelProvider, graph, (TLType) newModel, bounds, hiddenElements,
+			invisibleElements);
 	}
 
 	private DefaultDiagramJSGraphModel getSharedGraphModel(DiagramJSGraphComponent component) {

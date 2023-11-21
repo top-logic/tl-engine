@@ -41,7 +41,6 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.provider.LabelResourceProvider;
-import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -329,12 +328,12 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void renderItemIcon(DisplayContext context, TagWriter out, FormField dropdown, Object item, Flavor flavor)
 			throws IOException {
-		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
-		if (!(lprovider instanceof MetaResourceProvider)) {
+		LabelProvider labelProvider = SelectFieldUtils.getOptionLabelProvider(dropdown);
+		if (!(labelProvider instanceof ResourceProvider)) {
 			return;
 		}
-		MetaResourceProvider mrprovider = (MetaResourceProvider) lprovider;
-		ThemeImage icon = item == SelectField.NO_OPTION ? null : mrprovider.getImage(item, flavor);
+		ResourceProvider resourceProvider = (ResourceProvider) labelProvider;
+		ThemeImage icon = item == SelectField.NO_OPTION ? null : resourceProvider.getImage(item, flavor);
 		if (icon == null) {
 			return;
 		}
@@ -495,11 +494,6 @@ public class DropDownControl extends AbstractSelectControl {
 					}
 				}
 			}
-//			addUpdate(
-//				new JSFunctionCall(
-//					getInputId(),
-//					DROPDOWN_CONTROL_CLASS, "setSelectedLabel",
-//					getSelectionLabel(field)));
 			addUpdate(new ElementReplacement(getButtonContentID(), this::renderButtonContent));
 		}
 	}

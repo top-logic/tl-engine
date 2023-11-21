@@ -7733,6 +7733,7 @@ div.dirtyHandlingDialog .changes {
 	margin-right: 8px;
 	border: 1px solid var(--border-subtle);
 	border-radius: 4px;
+	padding-left: 4px;
 	height: 22px;
 	align-items: center;
 }

@@ -12,10 +12,15 @@
     display: none;
 }
 
+.cmdBody {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+}
+
 .tlButtonScrollContainer, .cmdButtons {
  	display: flex;
  	justify-content: flex-end;
- 	margin-top: var(--spacing-02);
 }
 
 .cmdButtons .cButton,

@@ -3325,10 +3325,8 @@ services.form = {
 			// Callback function to execute when mutations are observed
 			const callback = (mutationList) => {
 				mutationList.forEach((mutation) => {
-					switch (mutation.type) {
-						case "attributes":
-							this.buttonDrop(button);
-							break;
+					if (mutation.type === "attributes") {
+						this.buttonDrop(button);
 					}
 				});
 			};
@@ -3453,7 +3451,9 @@ services.form = {
 			let ddList = item.parentElement;
 			let previousActive = ddList.querySelector(":scope > ." + this.actItemCl);
 			if (previousActive) {
-				if (previousActive == item) return;
+				if (previousActive == item) {
+					return;
+				}
 				this.setItemInactive(previousActive);
 			}
 			item.classList.add(this.actItemCl);
@@ -3462,7 +3462,9 @@ services.form = {
 				item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
 			}
 			
-			if (mouse) return;
+			if (mouse) {
+				return;
+			}
 			const mouseoverEvent = new Event('mouseover', { 'bubbles': true });
 			item.dispatchEvent(mouseoverEvent);
 		},

@@ -52,7 +52,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class DeleteGraphPartCommand extends ControlCommand {
 
-	private static final String ID = "id";
+	/**
+	 * Graph part identifier.
+	 */
+	public static final String ID = "id";
 
 	/**
 	 * Singleton instance of {@link DeleteGraphPartCommand}.
@@ -135,7 +138,10 @@ public class DeleteGraphPartCommand extends ControlCommand {
 		};
 	}
 
-	private String getIDArgument(Map<String, Object> arguments) {
+	/**
+	 * Extract the graph part identifier from the given arguments.
+	 */
+	public static String getIDArgument(Map<String, Object> arguments) {
 		return (String) arguments.get(ID);
 	}
 
@@ -169,17 +175,20 @@ public class DeleteGraphPartCommand extends ControlCommand {
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	SharedGraph getSharedGraph(DiagramJSGraphControl graphControl) {
+	private static SharedGraph getSharedGraph(DiagramJSGraphControl graphControl) {
 		return graphControl.getModel().getGraph();
 	}
 
-	GraphPart getGraphPart(String id, DiagramJSGraphControl graphControl) {
+	/**
+	 * Returns the {@link GraphPart} from the graph of the given control.
+	 */
+	public static GraphPart getGraphPart(String id, DiagramJSGraphControl graphControl) {
 		ObjectScope objectScope = getObjectScope(graphControl);
 
 		return (GraphPart) objectScope.obj(id);
 	}
 
-	private ObjectScope getObjectScope(DiagramJSGraphControl graphControl) {
+	private static ObjectScope getObjectScope(DiagramJSGraphControl graphControl) {
 		return getSharedGraph(graphControl).data().scope();
 	}
 

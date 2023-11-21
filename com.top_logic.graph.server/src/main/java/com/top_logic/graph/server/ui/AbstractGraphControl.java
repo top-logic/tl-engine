@@ -146,16 +146,16 @@ public abstract class AbstractGraphControl extends AbstractControlBase implement
 	}
 
 	/**
-	 * Writes a script to create the client-side control for the given controlType.
+	 * Writes a script to create the client-side control for the given type.
 	 */
-	protected void writeGraphInitScript(TagWriter out, String controlType) throws IOException {
-		boolean isDropEnabled = _data.getDropTarget().dropEnabled(_data);
-		String state = retrieveStateAsJSON();
-
-		JSControlUtil.writeCreateJSControlScript(out, controlType, getID(), state, isDropEnabled);
+	protected void writeGraphInitScript(TagWriter out, String type) throws IOException {
+		JSControlUtil.writeCreateJSControlScript(out, type, getID(), retrieveStateAsJSON());
 	}
 
-	private String retrieveStateAsJSON() throws IOException {
+	/**
+	 * Graph state as json expression.
+	 */
+	protected String retrieveStateAsJSON() throws IOException {
 		if (!hasGraph()) {
 			return StringServices.EMPTY_STRING;
 		}

@@ -47,72 +47,70 @@ public class JSControlUtil {
 	 *
 	 * @param out
 	 *        The {@link TagWriter} creating the page output.
-	 * @param controlType
+	 * @param type
 	 *        The client-side control type to create.
 	 */
-	public static void writeCreateJSControlScript(TagWriter out, String controlType, String id, String state,
-			boolean isDropEnabled) throws IOException {
+	public static void writeCreateJSControlScript(TagWriter out, String type, String id, Object... args)
+			throws IOException {
 		out.beginScript();
 
 		if (out.getStack().contains(HTMLConstants.HTML)) {
-			writeGWTExecuteAfterLoadMethod(out, controlType, id, state, isDropEnabled);
+			writeExecuteAfterLoad(out, type, id, args);
 		} else {
-			writeAJAXExecuteAfterRenderingMethod(out, controlType, id, state, isDropEnabled);
+			writeExecuteAfterRendering(out, type, id, args);
 		}
 
 		out.endScript();
 	}
 
-	private static void writeAJAXExecuteAfterRenderingMethod(TagWriter out, String controlType, String id, String state,
-			boolean isDropEnabled) throws IOException {
+	private static void writeExecuteAfterRendering(TagWriter out, String type, String id, Object... args)
+			throws IOException {
 		out.append(SERVICES_AJAX_EXECUTE_AFTER_RENDERING_METHOD);
 		out.append(METHOD_BEGIN_ARGUMENTS);
 
 		out.write(WINDOW);
 		out.write(METHOD_ARGUMENT_SEPARATOR);
-		writeUIServiceInitCallback(out, controlType, id, state, isDropEnabled);
+		writeInit(out, type, id, args);
 
 		out.append(METHOD_END_ARGUMENTS);
 	}
 
-	private static void writeGWTExecuteAfterLoadMethod(TagWriter out, String controlType, String id, String state,
-			boolean isDropEnabled) throws IOException {
+	private static void writeExecuteAfterLoad(TagWriter out, String type, String id, Object... args)
+			throws IOException {
 		out.append(SERVICES_GWT_EXECUTE_AFTER_LOAD_METHOD);
 		out.append(METHOD_BEGIN_ARGUMENTS);
 
-		out.writeJsString(controlType);
+		out.writeJsString(type);
 		out.write(METHOD_ARGUMENT_SEPARATOR);
 		out.write(WINDOW);
 		out.write(METHOD_ARGUMENT_SEPARATOR);
-		writeUIServiceInitCallback(out, controlType, id, state, isDropEnabled);
+		writeInit(out, type, id, args);
 
 		out.append(METHOD_END_ARGUMENTS);
 	}
 
-	private static void writeUIServiceInitCallback(TagWriter out, String controlType, String id, String state, boolean isDropEnabled)
-			throws IOException {
+	private static void writeInit(TagWriter out, String type, String id, Object... args) throws IOException {
 		out.append(FUNCTION_BEGIN_DECLARATION);
 		
-		writeUIServiceInitMethodName(out);
-		writeUIServiceInitMethodArguments(out, controlType, id, state, isDropEnabled);
+		writeInitName(out);
+		writeInitArguments(out, type, id, args);
 
 		out.append(FUNCTION_END_DECLARATION);
 	}
 
-	private static void writeUIServiceInitMethodArguments(TagWriter out, String controlType, String id, String state,
-			boolean isDropEnabled) throws IOException {
+	private static void writeInitArguments(TagWriter out, String type, String id, Object... args) throws IOException {
 		out.write(METHOD_BEGIN_ARGUMENTS);
-		out.writeJsString(controlType);
+		out.writeJsLiteral(type);
 		out.write(METHOD_ARGUMENT_SEPARATOR);
-		out.writeJsString(id);
-		out.write(METHOD_ARGUMENT_SEPARATOR);
-		out.writeJsString(state);
-		out.write(METHOD_ARGUMENT_SEPARATOR);
-		out.write(Boolean.toString(isDropEnabled));
+		out.writeJsLiteral(id);
+		for (Object argument : args) {
+			out.write(METHOD_ARGUMENT_SEPARATOR);
+			out.writeJsLiteral(argument);
+		}
 		out.write(METHOD_END_ARGUMENTS);
 	}
 
-	private static void writeUIServiceInitMethodName(TagWriter out) throws IOException {
+	private static void writeInitName(TagWriter out) throws IOException {
 		out.write(SERVICE_NAMESPACE);
 		out.write(NAMESPACE_SEPARATOR);
 		out.write(SERVICE_NAME);

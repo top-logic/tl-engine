@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app-internal</artifactId>
-		<version>7.7.0-SNAPSHOT</version>
+		<version>7.7.0</version>
 		<relativePath>../tl-parent-app/internal</relativePath>
 	</parent>
 

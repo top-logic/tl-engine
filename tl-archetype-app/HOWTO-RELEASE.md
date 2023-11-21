@@ -56,7 +56,7 @@ release) using:
 
 ```
 cd ../tl-parent-all
-mvn  -P \!full-build -P maven-central
+mvn -P \!full-build -P maven-central clean install nexus-staging:deploy
 ```
 
 This results in a staging repository to be created at Sonatype:
@@ -96,7 +96,7 @@ To finally release the staged artifacty to Maven Central, you have to issue the 
 
 ```
 cd ../tl-parent-all
-mvn nexus-staging:release -P \!full-build -P maven-central
+mvn  -P \!full-build -P maven-central nexus-staging:release
 ```
 
 This releases the staged artifacts:

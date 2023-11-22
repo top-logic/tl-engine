@@ -8,9 +8,13 @@ package com.top_logic.graph.diagramjs.client.ajax;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import com.top_logic.ajax.client.compat.AJAXArguments;
+import com.top_logic.graph.diagramjs.client.service.event.ElementVisibilityEventHandler;
 
 /**
- * The arguments for the command to toggle an elements visibility.
+ * The arguments for the command that is executed when a collection of diagram elements have changed
+ * their visibility.
+ * 
+ * @see ElementVisibilityEventHandler
  * 
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */

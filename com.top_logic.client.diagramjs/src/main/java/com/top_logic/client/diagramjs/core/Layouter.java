@@ -32,14 +32,15 @@ public class Layouter extends JavaScriptObject {
 	}-*/;
 
 	/**
-	 * True if hidden diagram elements should be shown, otherwise false.
+	 * True if diagram elements that are not visible (i. e. <code>!element.isVisible</code>) should
+	 * be shown with a special styling in order to recognize them, otherwise false.
+	 * 
+	 * <p>
+	 * see SVGDrawUtil.js#setVisibilityStyles
+	 * </p>
 	 */
 	public final native boolean showHiddenElements() /*-{
-		if (this.showHiddenElements) {
-			return this.showHiddenElements;
-		} else {
-			return false;
-		}
+		return this.showHiddenElements;
 	}-*/;
 
 	/**

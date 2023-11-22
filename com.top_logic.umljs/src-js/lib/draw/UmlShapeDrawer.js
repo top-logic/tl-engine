@@ -1,4 +1,4 @@
-import { drawRectangle, drawText, drawLine, updateVisibility } from './SVGDrawUtil';
+import { drawRectangle, drawText, drawLine, setVisibilityStyles } from './SVGDrawUtil';
 
 import {
   append as svgAppend,
@@ -47,7 +47,7 @@ export function drawClass(parentGfx, element, textRenderer) {
     }
   }
   
-  updateVisibility(parentGfx, element);
+  setVisibilityStyles(parentGfx, element);
 
   return rectangle;
 };
@@ -55,7 +55,7 @@ export function drawClass(parentGfx, element, textRenderer) {
 export function drawLabel(parentGfx, element, textRenderer) {
   var text = drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
   
-  updateVisibility(parentGfx, element);
+  setVisibilityStyles(parentGfx, element);
   
   return text;
 };

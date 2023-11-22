@@ -19,10 +19,10 @@ import com.top_logic.model.annotate.AllLanguagesInViewMode;
 public class I18NStringFieldProvider extends I18NFieldProvider {
 
 	@Override
-	protected I18NStringField createField(EditContext editContext, String fieldName, boolean mandatory, boolean disabled,
-			boolean multiLine, Constraint constraint) {
+	protected I18NStringField createField(EditContext editContext, String fieldName, boolean mandatory,
+			boolean immutable, boolean multiLine, Constraint constraint) {
 		I18NStringField field =
-			I18NStringField.newI18NStringField(fieldName, mandatory, disabled, multiLine, constraint);
+			I18NStringField.newI18NStringField(fieldName, mandatory, immutable, multiLine, constraint);
 		AllLanguagesInViewMode annotation = editContext.getAnnotation(AllLanguagesInViewMode.class);
 		if (annotation != null && annotation.getValue()) {
 			field.set(I18NField.DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE, true);

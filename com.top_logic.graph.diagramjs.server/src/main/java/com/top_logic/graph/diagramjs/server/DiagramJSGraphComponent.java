@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import com.top_logic.basic.Log;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationException;
@@ -294,27 +292,6 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		} else {
 			graph.setSelectedGraphParts(Collections.emptyList());
 		}
-	}
-
-	private void deselectGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
-		Collection<? extends GraphPart> selection = graph.getSelectedGraphParts();
-
-		Set<GraphPart> newSelection = new HashSet<>(selection);
-		newSelection.removeAll(getGraphParts(graph, graphPartModels));
-
-		if (!CollectionUtils.isEqualCollection(selection, newSelection)) {
-			graph.setSelectedGraphParts(newSelection);
-		}
-	}
-
-	private Collection<GraphPart> getGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
-		Set<GraphPart> graphParts = new HashSet<>();
-
-		for (Object graphPartModel : graphPartModels) {
-			graphParts.add(graph.getGraphPart(graphPartModel));
-		}
-
-		return graphParts;
 	}
 
 	/**
@@ -608,6 +585,24 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		}
 	}
 
+	private void deselectGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
+		Set<GraphPart> newSelection = new HashSet<>(graph.getSelectedGraphParts());
+
+		if (newSelection.removeAll(getGraphParts(graph, graphPartModels))) {
+			graph.setSelectedGraphParts(newSelection);
+		}
+	}
+
+	private Collection<GraphPart> getGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
+		Set<GraphPart> graphParts = new HashSet<>();
+
+		for (Object graphPartModel : graphPartModels) {
+			graphParts.add(graph.getGraphPart(graphPartModel));
+		}
+
+		return graphParts;
+	}
+
 	@Override
 	protected boolean receiveMyModelChangeEvent(Object changedBy) {
 		if (((Config) getConfig()).useIncrementalUpdates()) {
@@ -632,7 +627,16 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * True if the diagrams hidden elements should be displayed.
+	 * True if the diagrams hidden elements, those that are not {@link GraphPart#isVisible()},
+	 * should be shown by using a special style, otherwise false.
+	 * 
+	 * <p>
+	 * When <code>false</code> is returned, a server {@link GraphModel} is created that does not
+	 * contain any {@link GraphPart} with a {@link GraphPart#getTag() business object} within
+	 * {@link #_hiddenGraphParts hidden graph part objects}.
+	 * </p>
+	 * 
+	 * @see GraphPart#isVisible()
 	 */
 	public boolean showHiddenElements() {
 		return get(SHOW_HIDDEN_ELEMENTS).booleanValue();

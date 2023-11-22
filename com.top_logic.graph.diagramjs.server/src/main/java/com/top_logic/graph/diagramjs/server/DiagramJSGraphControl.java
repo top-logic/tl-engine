@@ -39,7 +39,7 @@ import com.top_logic.model.TLType;
 public class DiagramJSGraphControl extends AbstractGraphControl
 		implements DiagramHandler, DisplayHiddenElementsListener {
 
-	private DiagramJSGraphComponent _diagramHandler;
+	private DiagramJSGraphComponent _graphComponent;
 
 	private boolean _showHiddenElements;
 
@@ -53,25 +53,24 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 	}
 
 	/**
-	 * Creates a {@link DiagramJSGraphControl} for the given {@link GraphData} and
-	 * {@link DiagramHandler}.
+	 * Creates a {@link DiagramJSGraphControl} for the given {@link DiagramJSGraphComponent}.
 	 */
-	public DiagramJSGraphControl(GraphData data, DiagramJSGraphComponent diagramHandler) {
-		this(data);
+	public DiagramJSGraphControl(DiagramJSGraphComponent graphComponent) {
+		this(graphComponent.getGraphData());
 
-		_diagramHandler = diagramHandler;
+		_graphComponent = graphComponent;
 	}
 
 	@Override
 	protected void internalAttach() {
 		super.internalAttach();
 
-		_diagramHandler.addListener(DiagramJSGraphComponent.SHOW_HIDDEN_ELEMENTS_EVENT, this);
+		_graphComponent.addListener(DiagramJSGraphComponent.SHOW_HIDDEN_ELEMENTS_EVENT, this);
 	}
 
 	@Override
 	protected void internalDetach() {
-		_diagramHandler.removeListener(DiagramJSGraphComponent.SHOW_HIDDEN_ELEMENTS_EVENT, this);
+		_graphComponent.removeListener(DiagramJSGraphComponent.SHOW_HIDDEN_ELEMENTS_EVENT, this);
 
 		super.internalDetach();
 	}
@@ -95,37 +94,37 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 
 	@Override
 	public void createReference(String type, TLType source, TLType target) {
-		_diagramHandler.createReference(type, source, target);
+		_graphComponent.createReference(type, source, target);
 	}
 
 	@Override
 	public void createInheritance(TLClass source, TLClass target) {
-		_diagramHandler.createInheritance(source, target);
+		_graphComponent.createInheritance(source, target);
 	}
 
 	@Override
 	public void createClassProperty(TLClass clazz) {
-		_diagramHandler.createClassProperty(clazz);
+		_graphComponent.createClassProperty(clazz);
 	}
 
 	@Override
 	public void createClass(Bounds bounds) {
-		_diagramHandler.createClass(bounds);
+		_graphComponent.createClass(bounds);
 	}
 
 	@Override
 	public void createEnumeration(Bounds bounds) {
-		_diagramHandler.createEnumeration(bounds);
+		_graphComponent.createEnumeration(bounds);
 	}
 
 	@Override
 	public void gotoDefinition(TLModelPart modelPart) {
-		_diagramHandler.gotoDefinition(modelPart);
+		_graphComponent.gotoDefinition(modelPart);
 	}
 
 	@Override
 	public void setElementsVisibility(Collection<Object> graphPartModels, boolean isVisible) {
-		_diagramHandler.setElementsVisibility(graphPartModels, isVisible);
+		_graphComponent.setElementsVisibility(graphPartModels, isVisible);
 	}
 
 	@Override

@@ -8,6 +8,7 @@ package com.top_logic.graph.diagramjs.client.service.event;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import com.top_logic.ajax.client.compat.AJAX;
@@ -38,6 +39,8 @@ public final class ElementVisibilityEventHandler implements EventHandler {
 	public void call(Event event) {
 		VisibilityCommandArguments arguments = JavaScriptObject.createObject().cast();
 
+		GWT.debugger();
+
 		Base[] elements = getElement(event);
 		List<String> ids = new ArrayList<>();
 		for(int i = 0; i < elements.length; i++) {
@@ -56,11 +59,11 @@ public final class ElementVisibilityEventHandler implements EventHandler {
 	}
 
 	private native Base[] getElement(Event event) /*-{
-		return event.context.elements;
+		return event.elements;
 	}-*/;
 
 	private native boolean getVisibility(Event event) /*-{
-		return event.context.visibility;
+		return event.visibility;
 	}-*/;
 
 }

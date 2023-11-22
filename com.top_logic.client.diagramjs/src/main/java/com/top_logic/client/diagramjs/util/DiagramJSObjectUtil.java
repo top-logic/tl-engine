@@ -37,7 +37,6 @@ public class DiagramJSObjectUtil {
 	 * Checks if the given {@link JavaScriptObject} is diagramJS Shape.
 	 */
 	public static boolean isShape(JavaScriptObject object) {
-		// TODO SFO .. connections could have children (labels..)
 		return JavaScriptObjectUtil.has(object, "children") && !isConnection(object);
 	}
 

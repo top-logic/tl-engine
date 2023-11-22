@@ -8,6 +8,9 @@ package com.top_logic.element.i18n;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -74,8 +77,6 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	private final FormField _proxyField;
 
-	private final Constraint _constraint;
-
 	private final Constraint _mandatoryConstraint;
 
 	private List<F> _languageFields;
@@ -87,9 +88,8 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 *           after creation, i.e. caller must either trigger {@link #initLanguageFields()} or
 	 *           add this note.
 	 */
-	protected I18NField(String fieldName, boolean isMandatory, boolean immutable, Constraint constraint, Constraint mandatoryConstraint) {
+	protected I18NField(String fieldName, boolean isMandatory, boolean immutable, Constraint mandatoryConstraint) {
 		super(fieldName, com.top_logic.layout.form.values.edit.editor.I18NConstants.LANGUAGE);
-		_constraint = constraint;
 		_mandatoryConstraint = mandatoryConstraint;
 		_proxyField = createProxyField(isMandatory, immutable);
 		addMember(_proxyField);
@@ -107,15 +107,8 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		if (_languageFields != null) {
 			return;
 		}
-		_languageFields = createLanguageFields(getProxy().isMandatory(), getProxy().isLocallyImmutable(), _constraint);
+		_languageFields = createLanguageFields(getProxy().isMandatory(), getProxy().isLocallyImmutable());
 		addListeners(_proxyField, _languageFields);
-	}
-
-	/**
-	 * Returns the constraint for the inner fields. May be <code>null</code>.
-	 */
-	public Constraint getConstraint() {
-		return _constraint;
 	}
 
 	@Override
@@ -197,13 +190,13 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		return field;
 	}
 
-	private List<F> createLanguageFields(boolean isMandatory, boolean immutable, Constraint constraint) {
+	private List<F> createLanguageFields(boolean isMandatory, boolean immutable) {
 		List<Locale> supportedLanguages = Resources.getInstance().getSupportedLocalesInDisplayOrder();
 		List<F> fields = new ArrayList<>(supportedLanguages.size());
 		I18NValueChangedListener listener = new I18NValueChangedListener();
 		for (Locale language : supportedLanguages) {
 			String innerFieldName = language.getLanguage();
-			F field = createLanguageSpecificField(innerFieldName, isMandatory, immutable, constraint, language);
+			F field = createLanguageSpecificField(innerFieldName, isMandatory, immutable, language);
 			field.set(LANGUAGE, language);
 			field.addValueListener(listener);
 			fields.add(field);
@@ -217,15 +210,13 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 * 
 	 * @param fieldName
 	 *        Never null.
-	 * @param constraint
-	 *        Null, if there is no constraint.
 	 * @param language
 	 *        Language to input in the resulting field. See
 	 *        {@link ResourcesModule#getSupportedLocales()}.
 	 * @return Is not allowed to be null.
 	 */
 	protected abstract F createLanguageSpecificField(String fieldName, boolean isMandatory, boolean isDisabled,
-			Constraint constraint, Locale language);
+			Locale language);
 
 	private void addListeners(final FormField proxyField, final List<F> fields) {
 		proxyField.addValueListener(new ValueListener() {
@@ -349,7 +340,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 *        Internal representation of the internationalized text value of this field. Null, if
 	 *        this {@link I18NField} has no value.
 	 * @return Value for the
-	 *         {@link #createLanguageSpecificField(String, boolean, boolean, Constraint, Locale)
+	 *         {@link #createLanguageSpecificField(String, boolean, boolean, Locale)
 	 *         language specific field} in the given locale. Null, if there is no value for the
 	 *         given {@link Locale}.
 	 */
@@ -368,6 +359,14 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 			throw new IllegalStateException("Field not initialized.");
 		}
 		return _languageFields;
+	}
+
+	/**
+	 * Gets the language fields indexed by their {@link Locale}.
+	 */
+	public Map<Locale, F> getLanguageFieldsByLocale() {
+		return getLanguageFields().stream()
+			.collect(Collectors.toMap(field -> field.get(LANGUAGE), Function.identity()));
 	}
 
 	/**

@@ -1899,21 +1899,21 @@ public class TestControlsForm extends FormComponent {
 	private void addI18NGroup(FormGroup controlsGroup) {
 		FormGroup group = new FormGroup("i18n", controlsGroup.getResources());
 
-		Constraint noConstraint = null;
 		FormField stringField = I18NStringField.newI18NStringField("i18nString", !FormFactory.MANDATORY,
-			!FormFactory.IMMUTABLE, false, noConstraint);
+			!FormFactory.IMMUTABLE, false);
 		stringField.setControlProvider(new I18NStringControlProvider(false, 0, TextInputControl.NO_COLUMNS));
 		group.addMember(stringField);
 
 		FormField stringFieldMulti = I18NStringField.newI18NStringField("i18nStringMultiLine", !FormFactory.MANDATORY,
-			!FormFactory.IMMUTABLE, true, noConstraint);
+			!FormFactory.IMMUTABLE, true);
 		stringFieldMulti.setControlProvider(
 			new I18NStringControlProvider(true, MultiLineText.DEFAULT_ROWS, TextInputControl.NO_COLUMNS));
 		group.addMember(stringFieldMulti);
 
 		List<String> defaultFeatureSet = null;
 		FormField structuredTextField =
-			I18NStructuredTextField.new18NStructuredTextField("i18nHTML", !FormFactory.MANDATORY, false, noConstraint, defaultFeatureSet);
+			I18NStructuredTextField.new18NStructuredTextField("i18nHTML", !FormFactory.MANDATORY, false,
+				defaultFeatureSet);
 		structuredTextField.setControlProvider(I18NStructuredTextControlProvider.INSTANCE);
 		group.addMember(structuredTextField);
 

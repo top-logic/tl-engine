@@ -12,7 +12,6 @@ import java.util.Locale;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
-import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.model.StringField;
@@ -28,8 +27,8 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	 * Creates a {@link I18NStringField}.
 	 */
 	public static I18NStringField newI18NStringField(String fieldName, boolean isMandatory, boolean immutable,
-			boolean isMultiLine, Constraint constraint) {
-		I18NStringField field = new I18NStringField(fieldName, isMandatory, immutable, isMultiLine, constraint);
+			boolean isMultiLine) {
+		I18NStringField field = new I18NStringField(fieldName, isMandatory, immutable, isMultiLine);
 		field.initLanguageFields();
 		return field;
 	}
@@ -43,9 +42,8 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	 *           after creation, i.e. caller must either trigger {@link #initLanguageFields()} or
 	 *           add this note.
 	 */
-	protected I18NStringField(String fieldName, boolean isMandatory, boolean immutable, boolean isMultiLine,
-			Constraint constraint) {
-		super(fieldName, isMandatory, immutable, constraint, GenericMandatoryConstraint.SINGLETON);
+	protected I18NStringField(String fieldName, boolean isMandatory, boolean immutable, boolean isMultiLine) {
+		super(fieldName, isMandatory, immutable, GenericMandatoryConstraint.SINGLETON);
 		_isMultiLine = isMultiLine;
 	}
 
@@ -58,8 +56,8 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 
 	@Override
 	protected StringField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean immutable,
-			Constraint constraint, Locale language) {
-		return newStringField(fieldName, StringField.EMPTY_STRING_VALUE, isMandatory, immutable, constraint);
+			Locale language) {
+		return newStringField(fieldName, StringField.EMPTY_STRING_VALUE, isMandatory, immutable, NO_CONSTRAINT);
 	}
 
 	@Override

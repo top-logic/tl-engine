@@ -254,10 +254,10 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		String id = getId();
 
 		addEventBusHandlers(eventBus, id);
-		addCommandStackHandlers(id);
+		addCommandStackHandlers();
 	}
 
-	private void addCommandStackHandlers(String id) {
+	private void addCommandStackHandlers() {
 		CommandStack commandStack = _diagram.getCommandStack();
 
 		commandStack.addCommandInterceptor(getUpdatedWaypointsEventNames(), CommandExecutionPhase.POST_EXECUTED,
@@ -266,8 +266,6 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 			new ShapeResizeEventHandler());
 		commandStack.addCommandInterceptor(ELEMENTS_MOVE_EVENT, CommandExecutionPhase.POST_EXECUTED,
 			new ElementsMoveEventHandler());
-		commandStack.addCommandInterceptor(ELEMENTS_VISIBILITY_EVENT, CommandExecutionPhase.POST_EXECUTED,
-			new ElementVisibilityEventHandler(id));
 	}
 
 	private void addEventBusHandlers(EventBus eventBus, String id) {
@@ -278,6 +276,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		eventBus.addEventHandler(CREATE_ENUMERATION_EVENT, new CreateEnumerationEventHandler(id));
 		eventBus.addEventHandler(DELETE_ELEMENT_EVENT, new DeleteGraphPartEventHandler(id));
 		eventBus.addEventHandler(ELEMENT_GOTO_EVENT, new GoToDefinitionEventHandler(id));
+		eventBus.addEventHandler(ELEMENTS_VISIBILITY_EVENT, new ElementVisibilityEventHandler(id));
 	}
 
 	private List<String> getUpdatedWaypointsEventNames() {

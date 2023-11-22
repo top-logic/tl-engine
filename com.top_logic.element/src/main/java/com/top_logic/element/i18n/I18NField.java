@@ -142,6 +142,34 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		return result;
 	}
 
+	@Override
+	public void check() {
+		for (F langField : getLanguageFields()) {
+			langField.check();
+		}
+		super.check();
+	}
+
+	@Override
+	public boolean checkConstraints() {
+		boolean result = true;
+		for (F langField : getLanguageFields()) {
+			result &= langField.checkConstraints();
+		}
+		result &= super.checkConstraints();
+		return result;
+	}
+
+	@Override
+	public boolean checkConstraints(Object value) {
+		boolean result = true;
+		for (F langField : getLanguageFields()) {
+			result &= langField.checkConstraints(value);
+		}
+		result &= super.checkConstraints(value);
+		return result;
+	}
+
 	private FormField createProxyField(boolean isMandatory, boolean immutable) {
 		FormField field = new I18NProxyField(PROFY_FIELD_SUFFIX);
 		field.setMandatory(isMandatory);

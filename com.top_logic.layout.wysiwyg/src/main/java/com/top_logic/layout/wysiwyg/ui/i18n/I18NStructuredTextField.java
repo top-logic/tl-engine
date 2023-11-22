@@ -67,8 +67,8 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 	 *        {@link StructuredTextConfigService#getI18nHTMLConfig(List, String)}
 	 */
 	public static I18NStructuredTextField new18NStructuredTextField(String fieldName, boolean mandatory,
-			boolean disabled, Constraint constraint, List<String> featureConfig) {
-		return new18NStructuredTextField(fieldName, mandatory, disabled, constraint, featureConfig, null, null);
+			boolean immutable, Constraint constraint, List<String> featureConfig) {
+		return new18NStructuredTextField(fieldName, mandatory, immutable, constraint, featureConfig, null, null);
 	}
 
 	/**
@@ -88,10 +88,10 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 	 *        Comma separated list of templates. If null only the default templates will be offered.
 	 */
 	public static I18NStructuredTextField new18NStructuredTextField(String fieldName, boolean mandatory,
-			boolean disabled, Constraint constraint, List<String> featureConfig, List<String> templateFiles, String templates) {
-		I18NStructuredTextField field =
-			new I18NStructuredTextField(fieldName, mandatory, disabled, constraint, featureConfig, templateFiles,
-				templates);
+			boolean immutable, Constraint constraint, List<String> featureConfig, List<String> templateFiles,
+			String templates) {
+		I18NStructuredTextField field = new I18NStructuredTextField(fieldName, mandatory, immutable, constraint,
+			featureConfig, templateFiles, templates);
 		field.initLanguageFields();
 		return field;
 	}
@@ -122,20 +122,20 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 	 * @param templates
 	 *        Comma separated list of templates. If null only the default templates will be offered.
 	 */
-	protected I18NStructuredTextField(String fieldName, boolean mandatory, boolean disabled,
+	protected I18NStructuredTextField(String fieldName, boolean mandatory, boolean immutable,
 			Constraint constraint, List<String> featureConfig, List<String> templateFiles, String templates) {
-		super(fieldName, mandatory, disabled, constraint, NOT_EMPTY_I18N_STRUCTURED_TEXT);
+		super(fieldName, mandatory, immutable, constraint, NOT_EMPTY_I18N_STRUCTURED_TEXT);
 		_featureConfig = unmodifiableList(list(featureConfig));
 		_templateFiles = unmodifiableList(list(templateFiles));
 		_templates = templates;
 	}
 
 	@Override
-	protected FormField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean isDisabled,
+	protected FormField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean immutable,
 			Constraint constraint, Locale language) {
 		HiddenField field = FormFactory.newHiddenField(fieldName);
 		field.setMandatory(isMandatory);
-		field.setDisabled(isDisabled);
+		field.setImmutable(immutable);
 		if (constraint != null) {
 			field.addConstraint(constraint);
 		}

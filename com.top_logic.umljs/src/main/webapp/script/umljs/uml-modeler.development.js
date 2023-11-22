@@ -5,7 +5,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2023-11-21
+ * Date: 2023-11-22
  */
 
 (function (global, factory) {
@@ -19591,8 +19591,10 @@
     
     if(isConnection(element)) {
       if(isVisible) {
-        this.setVisibility(element.source, true);
-        this.setVisibility(element.target, true);
+        this._setVisibility(element.source, true);
+        this.updateGraphics(element.source, true);
+        this._setVisibility(element.target, true);
+        this.updateGraphics(element.target, true);
       }
     }
     

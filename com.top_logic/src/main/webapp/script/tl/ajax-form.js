@@ -3470,14 +3470,12 @@ services.form = {
 		},
 		
 		setItemInactive: function(item) {
-			let tooltip = item.lastElementChild;
-			if (tooltip && tooltip.childElementCount > 0) {
-				tooltip.firstElementChild.scrollTop = 0;
-			}
 			item.classList.remove(this.actItemCl);
 			
 			const mouseleaveEvent = new Event('mouseleave', { 'bubbles': true });
 			item.dispatchEvent(mouseleaveEvent);
+			const mouseoutEvent = new Event('mouseout', { 'bubbles': true });
+			item.dispatchEvent(mouseoutEvent);
 		},
 
 		lostFocus: function() {
@@ -3681,6 +3679,7 @@ services.form = {
 					if (!sourceBtn) {
 						// set current item as selected
 						this.selectItem(activeItem);
+						event.stopImmediatePropagation();
 						return;
 					}
 					event.stopImmediatePropagation();

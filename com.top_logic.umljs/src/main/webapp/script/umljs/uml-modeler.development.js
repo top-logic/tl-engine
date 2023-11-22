@@ -16254,7 +16254,6 @@
    * @return {boolean}
    */
   function isShape(value) {
-  	// TODO SFO.. use of !isConnection is not the cleanest way to implement this..
     return isObject(value) && has$1(value, 'children') && !isConnection(value);
   }
 

@@ -5,8 +5,10 @@
 		interface="com.top_logic.mig.html.layout.MainLayout"
 		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
 	/>
+	<!-- Needs to be that high because every filter element is being used in an HTML element with the 
+			same css classes even when the layout for the page is totally different.  -->
 	<int name="FILTER_SINGLE_LINE_HEIGHT"
-		value="44"
+		value="64"
 	/>
 	<int name="STRUCTURE_DIALOG_HEIGHT"
 		value="500"
@@ -42,16 +44,19 @@
 		value="40px"
 	/>
 	<icon name="HEADER_RIGHT_IMAGE"
-		value="/images/appLogo.svg"
+		value="/images/TL_Logo_blue.svg"
 	/>
 	<icon name="IMAGES_APP_LOGO"
-		value="/images/appLogoSmall.svg"
+		value="/images/TL_App_icon_blue.svg"
 	/>
 	<icon name="IMAGES_APP_LOGO_MINIMIZED"
 		expr="%IMAGES_APP_LOGO%"
 	/>
 	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
-		value="48px"
+		value="56px"
+	/>
+	<int name="MAIN_LAYOUT_SIDE_BORDER"
+		value="32"
 	/>
 	<icon name="com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR"
 		value="css:bi bi-binoculars-fill"
@@ -96,6 +101,9 @@
 	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE"
 		value="16"
 	/>
+	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
+		value="300"
+	/>	
 	<dim name="MC_TOGGLE_HEIGHT"
 		value="50px"
 	/>
@@ -241,10 +249,10 @@
 		expr="%TREE_NEW_ELEMENT%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER"
-		value="css:bi bi bi-funnel-fill tablefilter"
+		value="css:bi bi-funnel-fill tablefilter"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED"
-		value="css:bi bi bi-funnel-fill"
+		value="css:bi bi-funnel-fill"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORTABLE"
 		value="css:bi bi-arrow-down-up"
@@ -262,16 +270,16 @@
 		expr="%com.top_logic.layout.table.renderer.Icons.SORT_DESC%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
-		value="css:bi bi bi-funnel"
+		value="css:bi bi-funnel"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FRAME"
 		expr="%com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE%"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE"
-		value="css: bi-fullscreen"
+		value="css:bi bi-fullscreen"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MINIMIZE"
-		value="css:bi bi-fullscreen-exit"
+		value="css:bi bi-arrows-collapse"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE"
 		value="css:bi bi-window-stack"
@@ -584,7 +592,7 @@
 		value="css:bi bi-search"
 	/>
 	<icon name="ICONS_EXPORT"
-		value="css: bi-file-arrow-down-fill"
+		value="css:bi-file-arrow-down-fill"
 	/>
 	<icon name="ICONS_EXPORT_DISABLED"
 		expr="%ICONS_EXPORT%"
@@ -923,7 +931,7 @@
 		expr="%com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR%"
 	/>
 	<icon name="IMAGE_BUTTONS_LOGOUT22"
-		value="css: bi bi-box-arrow-right"
+		value="css:bi bi-box-arrow-right"
 	/>
 	<icon name="IMAGE_BUTTONS_DOC"
 		value="css:bi bi-book"
@@ -964,9 +972,6 @@
 	<icon name="IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
 		value="css:bi bi-terminal-fill red"
 	/>
-	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
-		value="450"
-	/>	
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_OPTIONS"
 		value="css:bi bi-funnel-fill"
 	/>
@@ -1001,7 +1006,7 @@
 		value="/beacon/green.png"
 	/>
 	<icon name="ICONS_BUTTON_OK"
-		value="css: bi bi-check-lg"
+		value="css:bi bi-check-lg"
 	/>
 	<icon name="ICONS_BUTTON_OK_DISABLED"
 		expr="%ICONS_BUTTON_OK%"
@@ -1013,7 +1018,7 @@
 		expr="%mime.image/png%"
 	/>
 	<icon name="mime.image/png"
-		value="css: bi bi-image"
+		value="css:bi bi-image"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN"
 		expr="%ICONS_MOVE_ROW_DOWN%"
@@ -1261,7 +1266,7 @@
 		expr="%ICON_VALIDATE_PAGE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON"
-		value="css:bi bi bi-trash3"
+		value="css:bi bi-trash3"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH"
 		value="css:bi bi-search search"

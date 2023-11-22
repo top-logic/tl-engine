@@ -592,9 +592,9 @@ public class DateTimeField extends CompositeField {
 		FormField timeField = getTimeField();
 		
 		Object timeVal = valueOrRawValue(timeField);
-		String timeError = errorOrNull(timeField);
-		String dayError = errorOrNull(dayField);
 		if (timeVal instanceof String) {
+			String timeError = errorOrNull(timeField);
+			String dayError = errorOrNull(dayField);
 			getProxy().updateField(new DateTime(day, dayError, timeVal, timeError));
 			return;
 		}
@@ -616,6 +616,10 @@ public class DateTimeField extends CompositeField {
 				timeField.setMandatory(true);
 			}
 		}
+		/* Changing mandatory may change error state, so errors must be fetched after changing
+		 * mandatory. */
+		String timeError = errorOrNull(timeField);
+		String dayError = errorOrNull(dayField);
 		deliverDate(new DateTime(day, dayError, timeVal, timeError), dayField, oldDay);
 	}
 
@@ -624,9 +628,9 @@ public class DateTimeField extends CompositeField {
 		FormField dayField = getDayField();
 		
 		Object currentDay = valueOrRawValue(dayField);
-		String dayError = errorOrNull(dayField);
-		String timeError = errorOrNull(timeField);
 		if (currentDay instanceof String) {
+			String dayError = errorOrNull(dayField);
+			String timeError = errorOrNull(timeField);
 			getProxy().updateField(new DateTime(currentDay, dayError, time, timeError));
 			return;
 		}
@@ -648,6 +652,10 @@ public class DateTimeField extends CompositeField {
 				dayField.setMandatory(true);
 			}
 		}
+		/* Changing mandatory may change error state, so errors must be fetched after changing
+		 * mandatory. */
+		String dayError = errorOrNull(dayField);
+		String timeError = errorOrNull(timeField);
 		deliverDate(new DateTime(currentDay, dayError, time, timeError), timeField, oldTime);
 	}
 

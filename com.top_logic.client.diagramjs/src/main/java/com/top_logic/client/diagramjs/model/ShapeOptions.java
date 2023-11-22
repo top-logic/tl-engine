@@ -65,18 +65,4 @@ public final class ShapeOptions extends GraphPartOptions {
 		this.modifiers = modifiers;
 	}-*/;
 
-	/**
-	 * Business object of this {@link Shape}.
-	 */
-	public native Object getBusinessObject() /*-{
-		return this.sharedGraphPart;
-	}-*/;
-
-	/**
-	 * {@link #getBusinessObject()}
-	 */
-	public native void setBusinessObject(Object businessObject) /*-{
-		this.sharedGraphPart = businessObject;
-	}-*/;
-
 }

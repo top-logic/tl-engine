@@ -425,15 +425,15 @@ public class DisplayGraphPartCreator {
 		return createDisplayNode(getBounds(sharedNode), sharedNode.getClassName(), options);
 	}
 
-	private ShapeOptions createShapeOptions(DefaultDiagramJSClassNode node) {
+	private ShapeOptions createShapeOptions(DefaultDiagramJSClassNode sharedNode) {
 		ShapeOptions options = JavaScriptObject.createObject().cast();
 
-		options.setBusinessObject(node);
-		options.setImported(node.isImported());
-		options.setVisibility(node.isVisible());
+		options.setSharedGraphPart(sharedNode);
+		options.setImported(sharedNode.isImported());
+		options.setVisibility(sharedNode.isVisible());
 
-		setModifiers(node, options);
-		setStereotypes(node, options);
+		setModifiers(sharedNode, options);
+		setStereotypes(sharedNode, options);
 
 		return options;
 	}
@@ -543,24 +543,24 @@ public class DisplayGraphPartCreator {
 		}
 	}
 
-	private ConnectionOptions getConnectionOptions(DefaultDiagramJSEdge edge) {
+	private ConnectionOptions getConnectionOptions(DefaultDiagramJSEdge sharedEdge) {
 		ConnectionOptions options = JavaScriptObject.createObject().cast();
 
-		options.setSharedGraphPart(edge);
-		options.setType(edge.getType());
-		options.setVisibility(edge.isVisible());
-		getEdgeWaypoints(edge).ifPresent(waypoints -> options.setWaypoints(waypoints));
+		options.setSharedGraphPart(sharedEdge);
+		options.setType(sharedEdge.getType());
+		options.setVisibility(sharedEdge.isVisible());
+		getEdgeWaypoints(sharedEdge).ifPresent(waypoints -> options.setWaypoints(waypoints));
 
 		return options;
 	}
 
-	private ConnectionOptions getRevConnectionOptions(DefaultDiagramJSEdge edge) {
+	private ConnectionOptions getRevConnectionOptions(DefaultDiagramJSEdge sharedEdge) {
 		ConnectionOptions options = JavaScriptObject.createObject().cast();
 
-		options.setSharedGraphPart(edge);
-		options.setType(edge.getType());
-		options.setVisibility(edge.isVisible());
-		getEdgeWaypoints(edge).ifPresent(waypoints -> options.setWaypoints(getReversedWaypoints(waypoints)));
+		options.setSharedGraphPart(sharedEdge);
+		options.setType(sharedEdge.getType());
+		options.setVisibility(sharedEdge.isVisible());
+		getEdgeWaypoints(sharedEdge).ifPresent(waypoints -> options.setWaypoints(getReversedWaypoints(waypoints)));
 
 		return options;
 	}
@@ -636,15 +636,15 @@ public class DisplayGraphPartCreator {
 		return createDisplayLabel(getBounds(text), text, createLabelOptions(type, null, sharedEdge.isVisible()), owner);
 	}
 
-	private Optional<LabelOptions> createLabelOptions(String type, Object businessObject, boolean isVisible) {
+	private Optional<LabelOptions> createLabelOptions(String type, Object sharedLabel, boolean isVisible) {
 		LabelOptions options = JavaScriptObject.createObject().cast();
 
 		if (type != null && !type.isEmpty()) {
 			options.setType(type);
 		}
 
-		if (businessObject != null) {
-			options.setBusinessObject(businessObject);
+		if (sharedLabel != null) {
+			options.setSharedGraphPart(sharedLabel);
 		}
 
 		options.setVisibility(isVisible);

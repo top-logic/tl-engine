@@ -13,18 +13,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.element.i18n.I18NField;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.constraints.AbstractConstraint;
-import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.form.model.HiddenField;
-import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextField;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextFieldFactory;
 import com.top_logic.util.Resources;
 
 /**
@@ -44,6 +41,11 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 			I18NStructuredText i18nValue = (I18NStructuredText) value;
 			if (i18nValue.getEntries().isEmpty()) {
 				throw createNotEmptyException();
+			}
+			for (StructuredText html : i18nValue.getEntries().values()) {
+				if (!StructuredTextField.NOT_EMPTY_STRUCTURED_TEXT.check(html)) {
+					return false;
+				}
 			}
 			return true;
 		}
@@ -133,21 +135,14 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 	@Override
 	protected FormField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean immutable,
 			Constraint constraint, Locale language) {
-		HiddenField field = FormFactory.newHiddenField(fieldName);
+		FormField field =
+			StructuredTextFieldFactory.create(fieldName, null, getFeatureConfig(), getTemplateFiles(), getTemplates());
 		field.setMandatory(isMandatory);
 		field.setImmutable(immutable);
 		if (constraint != null) {
 			field.addConstraint(constraint);
 		}
-		field.setControlProvider(getStructuredTextControlProvider());
 		return field;
-	}
-
-	private ControlProvider getStructuredTextControlProvider() {
-		if (CollectionUtil.isEmptyOrNull(getFeatureConfig())) {
-			return new StructuredTextControlProvider(getTemplateFiles(), getTemplates());
-		}
-		return new StructuredTextControlProvider(getFeatureConfig(), getTemplateFiles(), getTemplates());
 	}
 
 	/**

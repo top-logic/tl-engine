@@ -71,10 +71,6 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	private static final String PROFY_FIELD_SUFFIX = "proxy";
 
-	private final boolean _isMandatory;
-
-	private final boolean _isDisabled;
-
 	private final FormField _proxyField;
 
 	private final Constraint _constraint;
@@ -90,13 +86,11 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 *           after creation, i.e. caller must either trigger {@link #initLanguageFields()} or
 	 *           add this note.
 	 */
-	protected I18NField(String fieldName, boolean isMandatory, boolean isDisabled, Constraint constraint, Constraint mandatoryConstraint) {
+	protected I18NField(String fieldName, boolean isMandatory, boolean immutable, Constraint constraint, Constraint mandatoryConstraint) {
 		super(fieldName, com.top_logic.layout.form.values.edit.editor.I18NConstants.LANGUAGE);
-		_isMandatory = isMandatory;
-		_isDisabled = isDisabled;
 		_constraint = constraint;
 		_mandatoryConstraint = mandatoryConstraint;
-		_proxyField = createProxyField(isMandatory, isDisabled);
+		_proxyField = createProxyField(isMandatory, immutable);
 		addMember(_proxyField);
 	}
 
@@ -112,7 +106,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		if (_languageFields != null) {
 			return;
 		}
-		_languageFields = createLanguageFields(_isMandatory, _isDisabled, _constraint);
+		_languageFields = createLanguageFields(getProxy().isMandatory(), getProxy().isLocallyImmutable(), _constraint);
 		addListeners(_proxyField, _languageFields);
 	}
 
@@ -148,10 +142,10 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		return result;
 	}
 
-	private FormField createProxyField(boolean isMandatory, boolean isDisabled) {
+	private FormField createProxyField(boolean isMandatory, boolean immutable) {
 		FormField field = new I18NProxyField(PROFY_FIELD_SUFFIX);
 		field.setMandatory(isMandatory);
-		field.setDisabled(isDisabled);
+		field.setImmutable(immutable);
 		addListener(FormMember.LABEL_PROPERTY, new LabelChangedListener() {
 
 			@Override
@@ -176,13 +170,13 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		return field;
 	}
 
-	private List<F> createLanguageFields(boolean isMandatory, boolean isDisabled, Constraint constraint) {
+	private List<F> createLanguageFields(boolean isMandatory, boolean immutable, Constraint constraint) {
 		List<Locale> supportedLanguages = Resources.getInstance().getSupportedLocalesInDisplayOrder();
 		List<F> fields = new ArrayList<>(supportedLanguages.size());
 		I18NValueChangedListener listener = new I18NValueChangedListener();
 		for (Locale language : supportedLanguages) {
 			String innerFieldName = language.getLanguage();
-			F field = createLanguageSpecificField(innerFieldName, isMandatory, isDisabled, constraint, language);
+			F field = createLanguageSpecificField(innerFieldName, isMandatory, immutable, constraint, language);
 			field.set(LANGUAGE, language);
 			field.addValueListener(listener);
 			fields.add(field);

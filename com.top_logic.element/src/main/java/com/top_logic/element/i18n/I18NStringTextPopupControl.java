@@ -52,8 +52,8 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 		}
 		String name = originalField.getName() + POPUP_SUFFIX;
 		boolean mandatory = originalField.isMandatory();
-		boolean disabled = originalField.isDisabled();
-		return I18NStringField.newI18NStringField(name, mandatory, disabled, multiline, constraint);
+		boolean immutable = originalField.isImmutable();
+		return I18NStringField.newI18NStringField(name, mandatory, immutable, multiline, constraint);
 	}
 
 	@Override

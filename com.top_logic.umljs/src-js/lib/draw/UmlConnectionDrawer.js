@@ -1,6 +1,6 @@
 import {
   drawPath,
-  updateVisibility
+  setVisibilityStyles
 } from './SVGDrawUtil';
 
 import {
@@ -66,7 +66,7 @@ export function drawComposition(parentGfx, element) {
 function drawConnection(parentGfx, element, attributes) {
   var connection = drawPath(parentGfx, element.waypoints, attributes);
   
-  updateVisibility(parentGfx, element);
+  setVisibilityStyles(parentGfx, element);
   
   return connection;
 };

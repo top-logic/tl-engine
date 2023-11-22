@@ -2412,17 +2412,23 @@
     return componentsToPath(rectPath);
   }
 
-  function updateVisibility(parentGfx, element) {
+  function addHiddenElementStyles(element) {
+    element.style.setProperty('opacity', 0.3);
+  }
+  function removeHiddenElementStyles(element) {
+    element.style.removeProperty('opacity');
+  }
+  function setVisibilityStyles(parentGfx, element) {
     var groupElement = parentGfx.closest('.djs-group');
     
     if(element.parent && element.parent.isVisible) {
   	  if(element.isVisible) {
-  		groupElement.style.removeProperty('opacity');
+  		removeHiddenElementStyles(groupElement);
   	  } else {
-  		groupElement.style.setProperty('opacity', 0.3);
+  		addHiddenElementStyles(groupElement);
   	  }
     } else {
-        groupElement.style.removeProperty('opacity');
+  	removeHiddenElementStyles(groupElement);
     }
   }
 
@@ -2461,14 +2467,14 @@
       }
     }
     
-    updateVisibility(parentGfx, element);
+    setVisibilityStyles(parentGfx, element);
 
     return rectangle;
   }
   function drawLabel(parentGfx, element, textRenderer) {
     var text = drawText(parentGfx, element.businessObject + '', getGeneralLabelStyle(), textRenderer);
     
-    updateVisibility(parentGfx, element);
+    setVisibilityStyles(parentGfx, element);
     
     return text;
   }
@@ -2553,7 +2559,7 @@
   function drawConnection(parentGfx, element, attributes) {
     var connection = drawPath(parentGfx, element.waypoints, attributes);
     
-    updateVisibility(parentGfx, element);
+    setVisibilityStyles(parentGfx, element);
     
     return connection;
   }

@@ -28,20 +28,20 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
-public class ElementVisibilityCommand extends ControlCommand {
+public class ElementsVisibilityCommand extends ControlCommand {
 
 	/**
-	 * Singleton instance of {@link ElementVisibilityCommand}.
+	 * Singleton instance of {@link ElementsVisibilityCommand}.
 	 */
-	public static final ElementVisibilityCommand INSTANCE = new ElementVisibilityCommand();
+	public static final ElementsVisibilityCommand INSTANCE = new ElementsVisibilityCommand();
 
-	private ElementVisibilityCommand() {
-		super(DiagramJSGraphControlCommon.ELEMENT_VISIBILITY_COMMAND);
+	private ElementsVisibilityCommand() {
+		super(DiagramJSGraphControlCommon.ELEMENTS_VISIBILITY_COMMAND);
 	}
 
 	@Override
 	public ResKey getI18NKey() {
-		return I18NConstants.ELEMENT_VISIBILITY_COMMAND;
+		return I18NConstants.ELEMENTS_VISIBILITY_COMMAND;
 	}
 
 	@Override

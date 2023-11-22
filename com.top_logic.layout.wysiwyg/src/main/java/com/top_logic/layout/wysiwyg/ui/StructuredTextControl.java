@@ -276,44 +276,49 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 
 	@Override
 	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
-		String controlId = getID();
-		String contentId = controlId + CONTENT_SUFFIX;
-
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 
 		out.writeAttribute(DATA_UPLOAD_ATTRIBUTE, createUploadURL(context));
 
 		out.endBeginTag();
-		{
-			out.beginBeginTag(DIV);
-			out.writeAttribute(ID_ATTR, contentId);
-			out.endBeginTag();
-			{
-				writeContents(context, out, false);
-			}
-			out.endTag(DIV);
-
-			HTMLUtil.beginScriptAfterRendering(out);
-
-			out.append(WYSIWYG_INIT_METHOD_BEGIN);
-			out.writeJsString(controlId);
-			out.append(METHOD_ARGUMENT_SEPARATOR);
-			out.writeJsString(contentId);
-			out.append(METHOD_ARGUMENT_SEPARATOR);
-			out.writeJsString(getEditorModeConfig());
-			out.append(METHOD_ARGUMENT_SEPARATOR);
-			out.writeJsString(TLObjectLinkUtil.TL_OBJECT);
-			out.append(METHOD_ARGUMENT_SEPARATOR);
-			out.writeJsString(TLObjectLinkUtil.TL_OBJECT_WRAPPER);
-			out.append(METHOD_ARGUMENT_SEPARATOR);
-			out.writeJsLiteral(_useComponentScrollPosition);
-			out.append(METHOD_END);
-
-			HTMLUtil.endScriptAfterRendering(out);
-		}
-
+		writeEditableContent(context, out);
 		out.endTag(DIV);
+	}
+
+	/**
+	 * Writes the content in edit mode, the whole content in the root tag of the control.
+	 */
+	protected void writeEditableContent(DisplayContext context, TagWriter out) throws IOException {
+		String controlId = getID();
+		String contentId = controlId + CONTENT_SUFFIX;
+
+		out.beginBeginTag(DIV);
+		out.writeAttribute(ID_ATTR, contentId);
+		out.writeAttribute(CLASS_ATTR, "CONTENT");
+		out.endBeginTag();
+		{
+			writeContents(context, out, false);
+		}
+		out.endTag(DIV);
+
+		HTMLUtil.beginScriptAfterRendering(out);
+
+		out.append(WYSIWYG_INIT_METHOD_BEGIN);
+		out.writeJsString(controlId);
+		out.append(METHOD_ARGUMENT_SEPARATOR);
+		out.writeJsString(contentId);
+		out.append(METHOD_ARGUMENT_SEPARATOR);
+		out.writeJsString(getEditorModeConfig());
+		out.append(METHOD_ARGUMENT_SEPARATOR);
+		out.writeJsString(TLObjectLinkUtil.TL_OBJECT);
+		out.append(METHOD_ARGUMENT_SEPARATOR);
+		out.writeJsString(TLObjectLinkUtil.TL_OBJECT_WRAPPER);
+		out.append(METHOD_ARGUMENT_SEPARATOR);
+		out.writeJsLiteral(_useComponentScrollPosition);
+		out.append(METHOD_END);
+
+		HTMLUtil.endScriptAfterRendering(out);
 	}
 
 	/**

@@ -24,7 +24,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
-import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructureTextTagProvider.StructuredTextFieldTranslator;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextTagProvider.StructuredTextFieldTranslator;
 
 /**
  * {@link ControlProvider} creating a suitable {@link Control} for a

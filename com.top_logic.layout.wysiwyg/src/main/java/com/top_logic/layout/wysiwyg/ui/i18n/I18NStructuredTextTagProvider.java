@@ -22,7 +22,7 @@ import com.top_logic.layout.wysiwyg.ui.StructuredText;
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
-public class I18NStructureTextTagProvider implements DisplayProvider {
+public class I18NStructuredTextTagProvider implements DisplayProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {

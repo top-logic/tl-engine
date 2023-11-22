@@ -56,7 +56,7 @@
 							<sortKeyProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLTextExtractor" />
 						</column-info>
 						<field-provider impl="com.top_logic.model.wysiwyg.fieldprovider.I18NStructureTextFieldProvider"/>
-						<tag-provider impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructureTextTagProvider"/>
+						<tag-provider impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextTagProvider"/>
 						<pdf-renderer impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPDFRenderer"/>
 					</attribute-setting>
 

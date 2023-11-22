@@ -191,15 +191,15 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	/**
 	 * {@link EventType} type for changing {@link #SHOW_HIDDEN_ELEMENTS} property.
 	 * 
-	 * @see DisplayHiddenElementsListener
+	 * @see HiddenElementsVisibilityListener
 	 */
-	public static final EventType<DisplayHiddenElementsListener, Object, Boolean> SHOW_HIDDEN_ELEMENTS_EVENT =
+	public static final EventType<HiddenElementsVisibilityListener, Object, Boolean> SHOW_HIDDEN_ELEMENTS_EVENT =
 		new NoBubblingEventType<>("showHiddenElements") {
 
 			@Override
-			protected void internalDispatch(DisplayHiddenElementsListener listener, Object sender, Boolean oldValue,
+			protected void internalDispatch(HiddenElementsVisibilityListener listener, Object sender, Boolean oldValue,
 					Boolean newValue) {
-				listener.handleDisplayHiddenElements(sender, oldValue, newValue);
+				listener.handleHiddenElementsVisibility(sender, oldValue, newValue);
 			}
 		};
 

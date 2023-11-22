@@ -85,7 +85,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
     };
   }
 
-  function getToggleVisibilityPadEntry(element) {
+  function setVisibilityPadEntry(element) {
     if(element.isVisible) {
 	  return {
 	    group: 'admin',
@@ -94,7 +94,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
 	    action: {
 	      click: function(event, element) {
     		  contextPad.close();
-	          modeling.toggleVisibility(element, false);
+	          modeling.setVisibility(element, false);
           }
 	    }
 	  };
@@ -106,7 +106,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
         action: {
           click: function(event, element) {
 			contextPad.close();
-            modeling.toggleVisibility(element, true);
+            modeling.setVisibility(element, true);
    		  }
         }
       };
@@ -132,7 +132,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
   
   var contextPadEntries = {
     'delete': getRemoveShapePadEntry(),
-    'toggleVisibility': getToggleVisibilityPadEntry(element)
+    'visibility': setVisibilityPadEntry(element)
   };
   
   if(isShape(element) && !isLabel(element)) {

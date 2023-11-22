@@ -26,14 +26,15 @@ import com.top_logic.layout.form.DisabledPropertyListener;
 import com.top_logic.layout.form.ErrorChangedListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.FormMemberVisitor;
 import com.top_logic.layout.form.ImmutablePropertyListener;
 import com.top_logic.layout.form.LabelChangedListener;
 import com.top_logic.layout.form.MandatoryChangedListener;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.constraints.AbstractConstraint;
+import com.top_logic.layout.form.model.AbstractFormField;
 import com.top_logic.layout.form.model.CompositeField;
 import com.top_logic.layout.form.model.FormFieldInternals;
-import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -171,9 +172,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	}
 
 	private FormField createProxyField(boolean isMandatory, boolean immutable) {
-		FormField field = new I18NProxyField(PROFY_FIELD_SUFFIX);
-		field.setMandatory(isMandatory);
-		field.setImmutable(immutable);
+		FormField field = new I18NProxyField(PROFY_FIELD_SUFFIX, isMandatory, immutable);
 		addListener(FormMember.LABEL_PROPERTY, new LabelChangedListener() {
 
 			@Override
@@ -354,50 +353,28 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 * Updates the error of the proxy field with the errors of the language fields.
 	 */
 	protected void transportErrors() {
-		FormField proxy = getProxy();
-		Resources res = Resources.getInstance();
-		StringBuilder sb = new StringBuilder();
-		boolean hasError = false;
-		for (F field : getLanguageFields()) {
-			if (field.hasError()) {
-				if (hasError) {
-					sb.append(StringServices.LINE_BREAK);
-				}
-				Locale language = field.get(LANGUAGE);
-				sb.append(InternationalizationEditor.translateLanguageName(res, language) + ": " + field.getError());
-				hasError = true;
-			}
-		}
+		ValueWithError proxyValue = createProxyValue();
+		updateProxyIgnoreVeto(getProxy(), proxyValue);
+	}
+
+	void updateProxyIgnoreVeto(FormField proxy, ValueWithError proxyValue) {
 		proxy.set(LISTENER_DISABLED, Boolean.TRUE);
-		if (hasError) {
-			proxy.setError(sb.toString());
-		} else {
-			proxy.clearError();
+		try {
+			FormFieldInternals.updateFieldNoClientUpdate(proxy, proxyValue);
+		} catch (VetoException ex) {
+			// Ignore
+		} finally {
+			proxy.reset(LISTENER_DISABLED);
 		}
-		proxy.reset(LISTENER_DISABLED);
 	}
 
 	/**
 	 * Updates the value of the proxy field with the values of the language fields.
 	 */
 	protected void transportValues(FormField sender, Object formerValue) {
+		ValueWithError proxyValue = createProxyValue();
 		FormField proxy = getProxy();
-		B builder = createValueBuilder();
-
-		for (F field : getLanguageFields()) {
-			if (field.hasValue()) {
-				Locale locale = field.get(LANGUAGE);
-				addValueToBuilder(builder, proxy, locale, field);
-			} else {
-				// Some of the fields have an error. This error is also transported, so in the end,
-				// the proxy has also an error.
-				return;
-			}
-				
-		}
-
 		proxy.set(LISTENER_DISABLED, Boolean.TRUE);
-		Object proxyValue = buildValue(builder);
 		try {
 			FormFieldInternals.updateFieldNoClientUpdate(proxy, proxyValue);
 		} catch (VetoException ex) {
@@ -410,8 +387,9 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 					handleVetoInProxy(proxy, proxyValue, sender, formerValue, ex);
 				}
 			});
+		} finally {
+			proxy.reset(LISTENER_DISABLED);
 		}
-		proxy.reset(LISTENER_DISABLED);
 	}
 
 	/**
@@ -422,22 +400,46 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 * sets the proxy value again.
 	 * </p>
 	 */
-	void handleVetoInProxy(FormField proxy, Object dateTime, FormField changedField, Object formerValue,
+	void handleVetoInProxy(FormField proxy, ValueWithError proxyValue, FormField changedField, Object formerValue,
 			VetoException ex) {
 		changedField.setValue(formerValue);
 		ex.setContinuationCommand(new Command() {
 
 			@Override
 			public HandlerResult executeCommand(DisplayContext continuationContext) {
-				try {
-					FormFieldInternals.updateFieldNoClientUpdate(proxy, dateTime);
-				} catch (VetoException ignoredEx) {
-					// ignore
-				}
+				updateProxyIgnoreVeto(proxy, proxyValue);
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		});
 		ex.process(DefaultDisplayContext.getDisplayContext().getWindowScope());
+	}
+
+	/**
+	 * Creates the "client side" value of the proxy field from the values and errors of the language
+	 * fields.
+	 */
+	protected ValueWithError createProxyValue() {
+		FormField proxy = getProxy();
+		B builder = createValueBuilder();
+
+		Resources res = Resources.getInstance();
+		StringBuilder sb = new StringBuilder();
+		boolean hasError = false;
+		for (F field : getLanguageFields()) {
+			if (field.hasValue()) {
+				Locale locale = field.get(LANGUAGE);
+				addValueToBuilder(builder, proxy, locale, field);
+			}
+			if (field.hasError()) {
+				if (hasError) {
+					sb.append(StringServices.LINE_BREAK);
+				}
+				Locale language = field.get(LANGUAGE);
+				sb.append(InternationalizationEditor.translateLanguageName(res, language) + ": " + field.getError());
+				hasError = true;
+			}
+		}
+		return new ValueWithError(buildValue(builder), sb);
 	}
 
 	/**
@@ -532,18 +534,42 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	}
 
+	static class ValueWithError {
+
+		private Object _value;
+
+		private StringBuilder _error;
+
+		/**
+		 * Creates a {@link I18NField.ValueWithError}.
+		 *
+		 */
+		public ValueWithError(Object value, StringBuilder error) {
+			_value = value;
+			_error = error;
+		}
+
+		Object value() throws CheckException {
+			if (_error != null && _error.length() > 0) {
+				throw new CheckException(_error.toString());
+			}
+			return _value;
+		}
+
+	}
+
 	/**
 	 * Proxy field for {@link I18NField}.
 	 * 
 	 * @see I18NField#getProxy()
 	 */
-	public class I18NProxyField extends HiddenField {
+	public class I18NProxyField extends AbstractFormField {
 
 		/**
 		 * Creates a new {@link I18NProxyField}.
 		 */
-		protected I18NProxyField(String name) {
-			super(name);
+		protected I18NProxyField(String name, boolean mandatory, boolean immutable) {
+			super(name, mandatory, immutable, NORMALIZE, NO_CONSTRAINT);
 		}
 
 		/**
@@ -567,6 +593,32 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		@Override
 		protected Constraint mandatoryConstraint() {
 			return _mandatoryConstraint;
+		}
+
+		@Override
+		public <R, A> R visit(FormMemberVisitor<R, A> v, A arg) {
+			return v.visitFormField(this, arg);
+		}
+
+		@Override
+		protected Object parseRawValue(Object aRawValue) throws CheckException {
+			if (aRawValue == null) {
+				return null;
+			}
+			return ((ValueWithError) aRawValue).value();
+		}
+
+		@Override
+		protected Object unparseValue(Object aValue) {
+			if (aValue == null) {
+				return null;
+			}
+			return new ValueWithError(aValue, null);
+		}
+
+		@Override
+		protected Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
+			return aValue;
 		}
 
 	}

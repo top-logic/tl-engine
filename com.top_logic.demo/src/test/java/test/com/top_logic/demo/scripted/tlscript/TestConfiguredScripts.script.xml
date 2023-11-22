@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:demo/create-B.xml"
+			template-name-comment="Create B"
+		>
+			<parameters>
+				<parameter name="Name"
+					value="Test ConfiguredScripts Root"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Script Konsole"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  parent = `DemoTypes:BNotUnderA`.demoElementsWithName("Test ConfiguredScripts Root").singleElement();
+  demoNewA("Created A", parent: $parent);
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen und Änderungen speichern"
+			command-name="updateSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			comment="Test that Test ConfiguredScripts Root has a child Created A"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="Test ConfiguredScripts Root > Created A"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="Test ConfiguredScripts Root"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+			command-label="Löschen..."
+			command-name="elementRemove"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

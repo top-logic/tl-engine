@@ -11,7 +11,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -114,7 +113,7 @@ public class ServiceMethodBuilderByExpression extends AbstractConfiguredInstance
 		// Note: The last argument is passed to the innermost function. Therefore, the lambdas must
 		// be constructed in reverse order.
 		for (int n = parameters.size() - 1; n >= 0; n--) {
-			expr = lambda(parameters.get(n), expr);
+			expr = Define.create(parameters.get(n), expr);
 		}
 
 		QueryExecutor operation;
@@ -127,13 +126,6 @@ public class ServiceMethodBuilderByExpression extends AbstractConfiguredInstance
 		boolean transaction = getConfig().isTransaction();
 
 		return new ServiceMethodByExpression(path, parameters, transaction, operation);
-	}
-
-	private static Expr lambda(String param, Expr expr) {
-		Define result = TypedConfiguration.newConfigItem(Define.class);
-		result.setName(param);
-		result.setExpr(expr);
-		return result;
 	}
 
 }

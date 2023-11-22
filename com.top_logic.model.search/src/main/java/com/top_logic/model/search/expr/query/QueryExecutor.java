@@ -27,11 +27,12 @@ import com.top_logic.util.model.ModelService;
 public abstract class QueryExecutor {
 
 	/**
-	 * Creates a {@link QueryExecutor} form the textual XML representation of a search expression.
+	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
 	 * 
 	 * @param expr
 	 *        The textual XML representation of the search, or <code>null</code>.
-	 * @return The {@link QueryExecutor} that can execute the search, or <code>null</code>, if the argument was null.
+	 * @return The {@link QueryExecutor} that can execute the search, or <code>null</code>, if the
+	 *         argument was null.
 	 * 
 	 * @see #compile(Expr)
 	 */
@@ -43,7 +44,7 @@ public abstract class QueryExecutor {
 	}
 	
 	/**
-	 * Creates a {@link QueryExecutor} form the textual XML representation of a search expression.
+	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
 	 * 
 	 * @param expr
 	 *        The textual XML representation of the search.
@@ -61,7 +62,7 @@ public abstract class QueryExecutor {
 	}
 
 	/**
-	 * Creates a {@link QueryExecutor} form the textual XML representation of a search expression.
+	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
 	 * 
 	 * @param kb
 	 *        The {@link KnowledgeBase} to execute in.
@@ -110,7 +111,7 @@ public abstract class QueryExecutor {
 	}
 
 	/**
-	 * Creates a {@link SearchExpression} form the textual XML representation of a search
+	 * Creates a {@link SearchExpression} from the textual XML representation of a search
 	 * expression.
 	 * 
 	 * @param expr
@@ -128,21 +129,21 @@ public abstract class QueryExecutor {
 	}
 
 	/**
-	 * Builds and optimizes a {@link SearchExpression} form the given {@link Expr}.
+	 * Builds and optimizes a {@link SearchExpression} from the given {@link Expr}.
 	 */
 	public static SearchExpression compileExpr(Expr expr) {
 		return compileExpr(model(), expr);
 	}
 
 	/**
-	 * Builds and optimizes a {@link SearchExpression} form the given {@link Expr}.
+	 * Builds and optimizes a {@link SearchExpression} from the given {@link Expr}.
 	 */
 	public static SearchExpression compileExpr(TLModel model, Expr expr) {
 		return compileExpr(kb(), model, expr);
 	}
 
 	/**
-	 * Builds and optimizes a {@link SearchExpression} form the given {@link Expr}.
+	 * Builds and optimizes a {@link SearchExpression} from the given {@link Expr}.
 	 */
 	public static SearchExpression compileExpr(KnowledgeBase kb, TLModel model, Expr expr) {
 		return compileExpr(kb, model, SearchBuilder.toSearchExpression(model, expr));

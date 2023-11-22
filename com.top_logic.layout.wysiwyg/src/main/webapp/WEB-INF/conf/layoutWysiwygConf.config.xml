@@ -389,6 +389,53 @@
 	</services>
 	
 	<configs>
+		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
+			<customizations>
+				<type name="com.top_logic.html.i18n.HtmlResKey">
+					<annotations>
+						<item-display value="monomorphic"/>
+						<property-editor value="com.top_logic.layout.wysiwyg.ui.tlscript.HtmlResKeyEditor"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.html.i18n.HtmlResKey1">
+					<annotations>
+						<item-display value="monomorphic"/>
+						<property-editor value="com.top_logic.layout.wysiwyg.ui.tlscript.HtmlResKeyEditor"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.html.i18n.HtmlResKey2">
+					<annotations>
+						<item-display value="monomorphic"/>
+						<property-editor value="com.top_logic.layout.wysiwyg.ui.tlscript.HtmlResKeyEditor"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.html.i18n.HtmlResKey3">
+					<annotations>
+						<item-display value="monomorphic"/>
+						<property-editor value="com.top_logic.layout.wysiwyg.ui.tlscript.HtmlResKeyEditor"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.html.i18n.HtmlResKey4">
+					<annotations>
+						<item-display value="monomorphic"/>
+						<property-editor value="com.top_logic.layout.wysiwyg.ui.tlscript.HtmlResKeyEditor"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.html.i18n.HtmlResKey5">
+					<annotations>
+						<item-display value="monomorphic"/>
+						<property-editor value="com.top_logic.layout.wysiwyg.ui.tlscript.HtmlResKeyEditor"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.html.i18n.HtmlResKeyN">
+					<annotations>
+						<item-display value="monomorphic"/>
+						<property-editor value="com.top_logic.layout.wysiwyg.ui.tlscript.HtmlResKeyEditor"/>
+					</annotations>
+				</type>
+			</customizations>
+		</config>
+		
 		<config config:interface="com.top_logic.element.layout.formeditor.DisplayFormEditorBuilder$GlobalConfig">
 			<buttons>
 				<button value="com.top_logic.layout.wysiwyg.ui.formeditor.implementation.StaticHTML" />

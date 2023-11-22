@@ -69,7 +69,7 @@ public class HtmlResKeyEditor extends AbstractEditor {
 	protected FormField addField(EditorFactory editorFactory, FormContainer container, ValueModel model,
 			String fieldName) {
 
-		I18NStructuredTextField field = I18NStructuredTextField.new18NStructuredTextField(fieldName, false, false, null, null);
+		I18NStructuredTextField field = I18NStructuredTextField.new18NStructuredTextField(fieldName, false, false, null);
 		field.setControlProvider(I18NStructuredTextControlProvider.INSTANCE);
 		container.addMember(field);
 

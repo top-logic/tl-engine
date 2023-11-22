@@ -22,6 +22,20 @@ public abstract class GraphPartOptions extends JavaScriptObject {
 	}
 
 	/**
+	 * Business object of this {@link Connection}.
+	 */
+	public final native Object getSharedGraphPart() /*-{
+		return this.sharedGraphPart;
+	}-*/;
+
+	/**
+	 * {@link #getSharedGraphPart()}
+	 */
+	public final native void setSharedGraphPart(Object sharedGraphPart) /*-{
+		this.sharedGraphPart = sharedGraphPart;
+	}-*/;
+
+	/**
 	 * Returns true if the given graph part is visible.
 	 */
 	public final native boolean isVisible() /*-{

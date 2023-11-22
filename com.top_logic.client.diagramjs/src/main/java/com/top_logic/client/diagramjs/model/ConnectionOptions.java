@@ -25,20 +25,6 @@ public final class ConnectionOptions extends GraphPartOptions {
 	}
 
 	/**
-	 * Business object of this {@link Connection}.
-	 */
-	public native Object getSharedGraphPart() /*-{
-		return this.sharedGraphPart;
-	}-*/;
-
-	/**
-	 * {@link #getSharedGraphPart()}
-	 */
-	public native void setSharedGraphPart(Object sharedGraphPart) /*-{
-		this.sharedGraphPart = sharedGraphPart;
-	}-*/;
-
-	/**
 	 * Type of this {@link Connection}.
 	 */
 	public native String getType() /*-{

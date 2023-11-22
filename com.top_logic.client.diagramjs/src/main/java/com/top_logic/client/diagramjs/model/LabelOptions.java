@@ -33,18 +33,4 @@ public final class LabelOptions extends GraphPartOptions {
 		this.labelType = type;
 	}-*/;
 
-	/**
-	 * Business object of this {@link Label}.
-	 */
-	public native Object getBusinessObject() /*-{
-		return this.sharedGraphPart;
-	}-*/;
-
-	/**
-	 * {@link #getBusinessObject()}
-	 */
-	public native void setBusinessObject(Object businessObject) /*-{
-		this.sharedGraphPart = businessObject;
-	}-*/;
-
 }

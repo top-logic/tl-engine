@@ -1,5 +1,5 @@
 <h2>Syntax</h2>
-<pre>	<code>revisionAt($date)</code>
+<pre>	<code>revisionAt($dateTime)</code>
 </pre>
 <h2>Description</h2>
 <p>Determines the revision that was valid at the given time, i.e. the latest revision created not later than the given date.</p>
@@ -16,7 +16,7 @@
  </thead>
  <tbody>
   <tr>
-   <td>date</td>
+   <td>dateTime</td>
    <td>Time</td>
    <td>The time at which the revision should be determined.</td>
    <td>yes</td>
@@ -29,8 +29,79 @@
 <p>The revision that was current at the given time.</p>
 <h2>Examples</h2>
 <h3>Example 1</h3>
-<pre>	<code>revisionAt(date(2023,2,6))</code>
+<pre>
+	<code>revisionAt(dateTime(2023,8,28,12))</code>
 </pre>
-<p><span style="color:#3498db"><strong>Output:</strong></span> r245</p>
-<p>Here, the revision that was current at the time March 6, 2023 is determined. In this example r245.</p>
+<p><span style="color:#3498db"><strong>Output:</strong></span></p>
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Date</th>
+			<th>Author</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>6.040</td>
+			<td>28.09.2023, 10:40:15</td>
+			<td>Clever, Fred</td>
+		</tr>
+	</tbody>
+</table>
+<p>This determines the revision that was current at 12 noon on September 28, 2023. In this example revision 6040.</p>
+
+<h3>Example 2</h3>
+
+<pre>
+	<code>revisionAt(dateTime(2023,8,28))</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span></p>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Date</th>
+			<th>Author</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>6.004</td>
+			<td>27.09.2023, 14:56:54</td>
+			<td>Super, Administrator</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>This determines the revision that was current on September 28, 2023 at midnight. In this example revision 6004.</p>
+
+<h3>Example 3</h3>
+
+<pre>
+	<code>revisionAt(now())</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span></p>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Date</th>
+			<th>Author</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>7.989</td>
+			<td>21.11.2023, 07:58:10</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><code>now()</code> is used to determine the revision that is current at the time of execution. In this example revision 7989.</p>
 <p></p>

@@ -20,7 +20,7 @@ import com.top_logic.graph.diagramjs.server.commands.CreateConnectionGraphComman
 import com.top_logic.graph.diagramjs.server.commands.CreateEnumerationCommand;
 import com.top_logic.graph.diagramjs.server.commands.DeleteGraphPartCommand;
 import com.top_logic.graph.diagramjs.server.commands.GoToDefinitionCommand;
-import com.top_logic.graph.diagramjs.server.commands.ToggleElementVisibilityCommand;
+import com.top_logic.graph.diagramjs.server.commands.ElementVisibilityCommand;
 import com.top_logic.graph.diagramjs.server.handler.DiagramHandler;
 import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
 import com.top_logic.graph.server.model.GraphData;
@@ -49,7 +49,7 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 	public DiagramJSGraphControl(GraphData data) {
 		super(data, createCommandMap(GRAPH_COMMANDS, CreateConnectionGraphCommand.INSTANCE,
 			CreateClassPropertyGraphCommand.INSTANCE, DeleteGraphPartCommand.INSTANCE, CreateClassCommand.INSTANCE,
-			CreateEnumerationCommand.INSTANCE, GoToDefinitionCommand.INSTANCE, ToggleElementVisibilityCommand.INSTANCE));
+			CreateEnumerationCommand.INSTANCE, GoToDefinitionCommand.INSTANCE, ElementVisibilityCommand.INSTANCE));
 	}
 
 	/**

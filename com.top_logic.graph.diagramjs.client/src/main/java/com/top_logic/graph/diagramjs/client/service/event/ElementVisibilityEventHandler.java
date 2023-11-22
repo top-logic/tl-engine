@@ -42,7 +42,7 @@ public final class ElementVisibilityEventHandler implements EventHandler {
 		arguments.setVisibility(getVisibility(event));
 		arguments.setIDs(getGraphPartIDs(getElements(event)));
 		arguments.setControlID(_controlID);
-		arguments.setControlCommand(DiagramJSGraphControlCommon.ELEMENT_VISIBILITY_COMMAND);
+		arguments.setControlCommand(DiagramJSGraphControlCommon.ELEMENTS_VISIBILITY_COMMAND);
 
 		AJAX.execute("dispatchControlCommand", arguments);
 	}

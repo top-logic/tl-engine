@@ -37,7 +37,7 @@ import com.top_logic.model.TLType;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class DiagramJSGraphControl extends AbstractGraphControl
-		implements DiagramHandler, DisplayHiddenElementsListener {
+		implements DiagramHandler, HiddenElementsVisibilityListener {
 
 	private DiagramJSGraphComponent _graphComponent;
 
@@ -132,7 +132,7 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 	}
 
 	@Override
-	public void handleDisplayHiddenElements(Object sender, Boolean oldValue, Boolean newValue) {
+	public void handleHiddenElementsVisibility(Object sender, Boolean oldValue, Boolean newValue) {
 		_showHiddenElements = newValue.booleanValue();
 
 		if (!isInvalid()) {

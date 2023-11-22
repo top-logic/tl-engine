@@ -149,7 +149,7 @@ a.cmdLink:visited {
 
 /* Adjust line height for the text area of the editor */
 .ace_content {
-	ffont-size: var(--body-02-font-size);
+	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 }
 
@@ -176,10 +176,6 @@ div.ace_tooltip>code.inlineCode {
 /* =============================================== */
 /* ================ Sidebar Design =============== */
 /* =============================================== */
-.sblLogo {
-	background: var(--layer);
-}
-
 .mcMinimized .sblLogo .frmBody {
     padding: var(--spacing-01) var(--spacing-03) 0 var(--spacing-03);
 }
@@ -221,6 +217,18 @@ div.mcMinimized .sblTitle img {
 
 .sblAccordion {
 	margin-bottom: var(--spacing-06);
+  	padding-top: var(--spacing-05);
+  	position: relative; /* for the positioning of the border */
+}
+
+.sblAccordion::before {
+  	content: "";
+  	position: absolute;
+  	top: calc(var(--spacing-05) / 2);
+  	left: 50%; /* center horizontally in the middle of the parent element */
+  	transform: translateX(-50%); /* center horizontally */
+  	width: 80%;
+  	border-top: 2px solid var(--border-subtle);
 }
 
 .cMinimizable:not(.mcMinimized) .tabbarPopup {
@@ -241,9 +249,17 @@ div.mcMinimized .sblTitle img {
 	border: 1px solid var(--border-subtle);
 }
 
+.quickSearch .cTextInput {
+	flex-grow: 2;
+	border: 1px solid var(--border-subtle);
+}
+
 .quickSearchTitle.accText .quickSearch .cButton.quickSearchButton {
     background: transparent;
     box-shadow: none;
+    border-top: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .quickSearchTitle.accText .quickSearch .cButton.quickSearchButton a {
@@ -337,7 +353,8 @@ div.sblButtons .tlUser i {
 	font-size: var(--body-02-font-size);
 }
 
-a.accEntry:hover {
+a.accEntry:hover,
+.sblButtons .mtbGroup .cButton:not(.cmdLinkDisabled) a:hover {
 	background: var(--layer-hover);
 	text-decoration: none;
 }
@@ -397,7 +414,7 @@ a.accEntry.accContainer.accSelected:hover .accIcon i {
 	 *
 	 * Details: https://developer.mozilla.org/en-US/docs/Web/CSS/z-index
 	 */
-	z-index: 2;
+	z-index: 5;
 }
 
 #pdlgPopupDialogs {
@@ -471,6 +488,16 @@ a.accEntry.accContainer.accSelected:hover .accIcon i {
 .fltGlobalContainer {
 	width: 100%;
 	height: 100%;
+	background: var(--layer);
+}
+
+.fltGlobalContainer input,
+.fltGlobalContainer .cTextInput input {
+	background: var(--background);
+}
+
+.fltGlobalContainer .cTextInput input {
+	margin-bottom: var(--spacing-03);
 }
 
 div.fltHeader {
@@ -480,7 +507,6 @@ div.fltHeader {
 
 .fltSettings {
 	position: relative;
-	overflow: auto;
 	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
 	max-width: 100%;
 	padding: 0 var(--spacing-03);
@@ -489,44 +515,21 @@ div.fltHeader {
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
-}
-
-.fltButtons {
-	display: flex;
-	justify-content: space-around;
-	margin: var(--spacing-02) 0;
-}
-
-.fltButtons .cButton {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	flex-shrink: 0;
-	gap: var(--spacing-02);
-	height: 1.3rem;
-	padding: var(--spacing-01) var(--spacing-01);
-	border-radius: .25rem;
+	padding: var(--spacing-03) var(--spacing-01);
 }
 
 .fltMenu {
 	position: relative;
-	width: 100%;
 	overflow: hidden;
 }
 
 .fltSubContent {
 	margin: 0px;
 	overflow: auto;
-	padding: var(--spacing-03) 0 var(--spacing-02) var(--spacing-01);
+	padding-top: var(--spacing-02);
 }
 
-.fltMenu.fltSubContent {
-	margin: 0px;
-	overflow: auto;
-	padding: 0 var(--spacing-02) var(--spacing-02) var(--spacing-01);
-}
-
-.fltSubContent > hr {
+hr {
 	border-top: 1px solid var(--border-subtle);
 	margin: var(--spacing-03) 0;
 }
@@ -535,6 +538,32 @@ div.fltHeader {
 .sidebarFilterContainer .fToggle:focus,
 .sidebarFilterContainer .fToggle:hover {
 	color: var(--icon-primary);
+}
+
+.sidebarFilterContainer .fltSubContent {
+	margin: 0px;
+	overflow: auto;
+	padding: var(--spacing-03) var(--spacing-03);
+}
+
+.sidebarFilterContainer .fltSubContent.fltMenu {
+	margin: 0px;
+	overflow: auto;
+	padding: 0 var(--spacing-03);
+}
+
+.sidebarFilterContainer input,
+.sidebarFilterContainer .cTextInput input,
+.sidebarFilterContainer .cDateInput input,
+.sidebarFilterContainer .cDateInput .lFixedRight,
+.sidebarFilterContainer .cTimeInput input,
+.sidebarFilterContainer .cTimeInput .lFixedRight,
+.sidebarFilterContainer .ddwttDropBtn {
+	background: var(--background);
+}
+
+.sidebarFilterContainer .cTextInput input {
+	margin-bottom: var(--spacing-03);
 }
 
 ul.fltList {
@@ -696,6 +725,18 @@ div.fltList {
 
 .sidebarFilterContainer .checkboxMultiSelectContainer {
 	max-height: none;
+}
+
+.sidebarFilterEntry.collapsibleFilterEntry {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-01);
+    background: var(--layer-accent);
+    padding: 0 var(--spacing-03);
+}
+
+.sidebarFilterEntry.collapsibleFilterEntry {
+	background: var(--layer-accent);
 }
 
 .sidebarFilterEntry.collapsibleFilterEntry:hover {
@@ -2124,6 +2165,12 @@ If they're deleted, this can be deleted too
 	color: var(--icon-primary);
 }
 
+.breadcrumbNodeText {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 /*
 ****					****
 ****	Tree syles		****
@@ -2132,6 +2179,10 @@ If they're deleted, this can be deleted too
 .treeBody {
 	height: 100%;
 	background-color: var(--layer);
+}
+
+.tcrNode {
+	background-color: var(--layer)
 }
 
 .treeBody a:hover {
@@ -2304,7 +2355,7 @@ If they're deleted, this can be deleted too
 	color: var(--text-secondary);
 	text-align: right;
 	padding-right: var(--spacing-03);
-	background: var(--layer-accent);
+	background: var(--layer);
 }
 
 /*

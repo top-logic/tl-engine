@@ -12,15 +12,11 @@
     display: none;
 }
 
-.cmdBody {
-	display: flex;
-	flex-direction: row-reverse;
-	align-items: center;
-}
-
-.tlButtonScrollContainer, .cmdButtons {
+.tlButtonScrollContainer, 
+.cmdButtons {
  	display: flex;
  	justify-content: flex-end;
+    padding-top: var(--spacing-01);
 }
 
 .cmdButtons .cButton,
@@ -76,8 +72,6 @@ div.cmdProgress img {
 .cButton.cmdButtonDisabled,
 .cDefaultButton button,
 .cDefaultButton button:disabled,
-.fltSubContent .cMenuButton.menuEntryEnabled,
-.fltSubContent .cMenuButton.menuEntryDisabled,
 .tlButtonScrollContainer .tlDropdownButton,
 .sxButtons .tlButton {
 	display: inline-flex;
@@ -90,15 +84,36 @@ div.cmdProgress img {
 	border-radius: .25rem;
 }
 
-
 .fltSubContent .cMenuButton.menuEntryEnabled,
 .fltSubContent .cMenuButton.menuEntryDisabled {
-	margin: var(--spacing-02) var(--spacing-01);
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-02);
+	height: 1.3rem;
+	border-radius: .25rem;
+	margin: var(--spacing-01);
 	padding: var(--spacing-02);
+	width: -webkit-fill-available;
+}
+
+.fltButtons {
+	display: flex;
+	justify-content: space-around;
+	padding: var(--spacing-02) 0;
+}
+
+.fltButtons .cButton {
+	height: 1.8rem; /* 36.8px height */
+	padding: var(--spacing-01) var(--spacing-01);
 }
 
 .fltSubContent .menuEntryCell {
 	padding: 0;
+    font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
 }
 
 .fltSubContent .menuEntryCell:first-child, 

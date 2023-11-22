@@ -846,6 +846,10 @@ table td span.downloadControl {
 	height: 100%;
 }
 
+table td span.cDecoratedCell {
+	gap: var(--spacing-02);
+}
+
 table td span.cExpandableTextInput,
 table td span.cTextInput {
 	white-space: break-spaces;
@@ -1164,16 +1168,16 @@ div.dirtyHandlingDialog .changes {
 }
 
 .placeholder {
-  display: inline-block;
-  min-height: 1em;
-  vertical-align: middle;
-  cursor: wait;
-  background-color: currentcolor;
-  opacity: 0.5;
+	display: inline-block;
+  	min-height: 1em;
+  	vertical-align: middle;
+  	cursor: wait;
+  	background-color: currentcolor;
+  	opacity: 0.5;
 }
 
 .placeholder-glow .placeholder {
-  animation: placeholder-glow 2s ease-in-out infinite;
+  	animation: placeholder-glow 2s ease-in-out infinite;
 }
 
 @keyframes placeholder-glow {
@@ -1183,16 +1187,20 @@ div.dirtyHandlingDialog .changes {
 }
 
 .h-100 {
-  height: 100% !important;
+  	height: 100% !important;
 }
 
 .w-100 {
-  width: 100% !important;
+  	width: 100% !important;
 }
 
 .px-1 {
-  padding-right: 0.25rem !important;
-  padding-left: 0.25rem !important;
+  	padding-right: 0.25rem !important;
+  	padding-left: 0.25rem !important;
+}
+
+.px-1 .tl-radio-checkbox-container {
+	display: flex;
 }
 
 .tl-table__content-container {

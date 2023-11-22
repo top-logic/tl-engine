@@ -59,9 +59,9 @@
 	gap: var(--spacing-02);
 	cursor: pointer;
   	height: var(--tabbar-height);
-	padding: var(--spacing-02) var(--spacing-03);
-	background: transparent;
 	width: auto;
+	background: transparent;
+	padding: var(--spacing-02) var(--spacing-03);
 	border-top: none;
 	border-right: none;
 	border-left: none;

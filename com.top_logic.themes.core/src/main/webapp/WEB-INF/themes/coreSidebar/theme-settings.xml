@@ -5,23 +5,11 @@
 		interface="com.top_logic.mig.html.layout.MainLayout"
 		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
 	/>
-	<int name="FILTER_SINGLE_LINE_HEIGHT"
-		value="44"
-	/>
-	<int name="STRUCTURE_DIALOG_HEIGHT"
-		value="500"
-	/>
-	<int name="STRUCTURE_DIALOG_WIDTH"
-		value="680"
-	/>
-	<int name="CHANGE_PASSWORD_DIAGLOG_HEIGHT"
-		value="300"
-	/>
 	<string name="MAIN_TAB_BAR_CSS"
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="68"
+		value="66"
 	/>
 	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
@@ -33,7 +21,7 @@
 		expr="34"
 	/>
 	<int name="QUICK_SEARCH_HEIGHT"
-		value="120"
+		value="140"
 	/>
 	<boolean name="QUICK_SEARCH_ENABLED"
 		value="true"
@@ -53,17 +41,14 @@
 	<dim name="SIDEBAR_WIDTH_MINIMIZED"
 		value="40px"
 	/>
+	<int name="SIDEBAR_LAYOUT_LEFT_SIDE_BORDER"
+		value="16"
+	/>
+	<int name="SIDEBAR_LAYOUT_TOP_BORDER"
+		value="16"
+	/>
 	<int name="MAINTAINANCE_BAR_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
-	/>
-	<icon name="HEADER_RIGHT_IMAGE"
-		value="/images/appLogo.svg"
-	/>
-	<icon name="IMAGES_APP_LOGO"
-		value="/images/appLogoSmall.svg"
-	/>
-	<icon name="IMAGES_APP_LOGO_MINIMIZED"
-		expr="%IMAGES_APP_LOGO%"
 	/>
 	<int name="VERSION_ROW_HEIGHT"
 		value="21"

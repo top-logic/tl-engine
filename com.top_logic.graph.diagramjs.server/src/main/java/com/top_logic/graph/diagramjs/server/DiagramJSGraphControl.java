@@ -87,6 +87,10 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 		out.endTag(DIV);
 	}
 
+	/**
+	 * These are the arguments that are received by the <code>DiagramJSGraphControl#init</code> of
+	 * the client graph control.
+	 */
 	@Override
 	protected void writeGraphInitScript(TagWriter out, String type) throws IOException {
 		JSControlUtil.writeCreateJSControlScript(out, type, getID(), retrieveStateAsJSON(), _showHiddenElements);

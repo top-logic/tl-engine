@@ -122,6 +122,10 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		return id + GRAPH_SUFFIX;
 	}
 
+	/**
+	 * These are the arguments that are sent by the
+	 * <code>DiagramJSGraphControl#writeGraphInitScript</code> of the server graph control.
+	 */
 	@Override
 	public void init(Object[] args) {
 		checkArguments(args);

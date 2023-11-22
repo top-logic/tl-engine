@@ -40,6 +40,7 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -82,6 +83,7 @@ import com.top_logic.service.openapi.common.authentication.AuthenticationConfigs
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceExtensionPoint(SearchBuilder.Module.class)
+@Label("TL-Script functions for external APIs")
 public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodRegistry.Config<?>>
 		implements MethodResolver {
 

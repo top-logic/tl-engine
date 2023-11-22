@@ -15,6 +15,12 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
+import com.top_logic.basic.util.ResKey5;
+import com.top_logic.basic.util.ResKeyN;
 import com.top_logic.basic.util.ResourcesModule;
 
 /**
@@ -54,25 +60,54 @@ public class I18NConstantsChecker implements I18NChecker {
 				continue;
 			}
 			for (Field field : i18NClass.getFields()) {
-				if (field.getType() != ResKey.class) {
-					continue;
-				}
-
 				if (skipFieldCheck(field)) {
 					continue;
 				}
-
-				try {
-					ResKey key = (ResKey) field.get(null);
-					// Add key to missing resources file, or log failure, if the application is
-					// configured to do so.
-					checkingBundle.getString(key);
-				} catch (IllegalArgumentException | IllegalAccessException ex) {
-					Logger.error("Error accessing I18N constant.", ex, I18NConstantsChecker.class);
-				}
+				checkField(field, checkingBundle);
 			}
 		}
 		Logger.info("Checking resource keys done.", I18NConstantsChecker.class);
+	}
+
+	/**
+	 * Checks the given field
+	 *
+	 * @param field
+	 *        The field holding the value to check.
+	 * @param checkingBundle
+	 *        The bundle in which the value must occur.
+	 */
+	protected void checkField(Field field, I18NBundle checkingBundle) {
+		Class<?> type = field.getType();
+		if (type != ResKey.class &&
+			type != ResKey1.class &&
+			type != ResKey2.class &&
+			type != ResKey3.class &&
+			type != ResKey4.class &&
+			type != ResKey5.class &&
+			type != ResKeyN.class) {
+			return;
+		}
+
+		try {
+			/* NOTE: Also if the type is ResKey1, ResKey2, ResKey3, ResKey4, ResKey5, or ResKeyN,
+			 * the cast to ResKey is correct, as actually ResKey is the single implementation of
+			 * these interfaces. */
+			ResKey key = (ResKey) field.get(null);
+			// Add key to missing resources file, or log failure, if the application is
+			// configured to do so.
+			checkingBundle.getString(key);
+		} catch (IllegalArgumentException | IllegalAccessException ex) {
+			Logger.error("Error accessing I18N constant '" + qName(field) + "'.", ex, I18NConstantsChecker.class);
+		}
+	}
+
+
+	/**
+	 * Qualified name of a {@link Field}.
+	 */
+	protected static String qName(Field field) {
+		return field.getDeclaringClass().getName() + "." + field.getName();
 	}
 
 	/**

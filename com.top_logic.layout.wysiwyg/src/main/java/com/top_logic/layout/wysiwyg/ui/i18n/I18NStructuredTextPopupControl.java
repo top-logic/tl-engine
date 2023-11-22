@@ -5,7 +5,11 @@
  */
 package com.top_logic.layout.wysiwyg.ui.i18n;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
@@ -13,7 +17,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.i18n.I18NField;
 import com.top_logic.element.i18n.I18NStringTextPopupControl;
 import com.top_logic.layout.Control;
-import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.PopupEditControl;
@@ -39,19 +42,30 @@ public class I18NStructuredTextPopupControl extends I18NStringTextPopupControl {
 		String name = originalField.getName() + POPUP_SUFFIX;
 		boolean mandatory = originalField.isMandatory();
 		boolean immutable = originalField.isImmutable();
-		Constraint constraint = getConstraint(originalField);
 		List<String> featureConfig = getFeatureConfig(originalField);
 		List<String> templateFiles = getTemplateFiles(originalField);
 		String templates = getTemplates(originalField);
-		return I18NStructuredTextField.new18NStructuredTextField(name, mandatory, immutable, constraint, featureConfig,
-			templateFiles, templates);
+		I18NStructuredTextField copy = I18NStructuredTextField.new18NStructuredTextField(name, mandatory, immutable,
+			featureConfig, templateFiles, templates);
+		copyConstraints(copy, getLanguageFields(originalField));
+		return copy;
 	}
 
-	private Constraint getConstraint(FormField originalField) {
+	private Map<Locale, ? extends FormField> getLanguageFields(FormField originalField) {
 		if (originalField instanceof I18NField) {
-			return ((I18NField<?, ?, ?>) originalField).getConstraint();
+			return ((I18NField<?, ?, ?>) originalField).getLanguageFieldsByLocale();
 		}
-		return null;
+		return Collections.emptyMap();
+	}
+
+	private void copyConstraints(I18NField<?, ?, ?> copy, Map<Locale, ? extends FormField> baseFields) {
+		for (Entry<Locale, ? extends FormField> field : copy.getLanguageFieldsByLocale().entrySet()) {
+			FormField baseField = baseFields.get(field.getKey());
+			if (baseField != null) {
+				baseField.getConstraints().forEach(field.getValue()::addConstraint);
+				baseField.getWarningConstraints().forEach(field.getValue()::addWarningConstraint);
+			}
+		}
 	}
 
 	private List<String> getFeatureConfig(FormField originalField) {

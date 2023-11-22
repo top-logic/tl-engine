@@ -8,14 +8,19 @@ package com.top_logic.element.i18n;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.DisplayUnit.*;
 
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.Control;
-import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.PopupEditControl;
+import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.structure.DefaultLayoutData;
@@ -44,17 +49,29 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 
 	@Override
 	protected FormField createEditField(FormField originalField) {
-		Constraint constraint = null;
 		boolean multiline = false;
+		Map<Locale, StringField> baseFields = Collections.emptyMap();
 		if (originalField instanceof I18NStringField) {
 			I18NStringField i18nField = (I18NStringField) originalField;
-			constraint = i18nField.getConstraint();
+			baseFields = i18nField.getLanguageFieldsByLocale();
 			multiline = i18nField.isMultiline();
 		}
 		String name = originalField.getName() + POPUP_SUFFIX;
 		boolean mandatory = originalField.isMandatory();
 		boolean immutable = originalField.isImmutable();
-		return I18NStringField.newI18NStringField(name, mandatory, immutable, multiline, constraint);
+		I18NStringField copy = I18NStringField.newI18NStringField(name, mandatory, immutable, multiline);
+		copyConstraints(copy, baseFields);
+		return copy;
+	}
+
+	private void copyConstraints(I18NField<?, ?, ?> copy, Map<Locale, ? extends FormField> baseFields) {
+		for (Entry<Locale, ? extends FormField> field : copy.getLanguageFieldsByLocale().entrySet()) {
+			FormField baseField = baseFields.get(field.getKey());
+			if (baseField != null) {
+				baseField.getConstraints().forEach(field.getValue()::addConstraint);
+				baseField.getWarningConstraints().forEach(field.getValue()::addWarningConstraint);
+			}
+		}
 	}
 
 	@Override

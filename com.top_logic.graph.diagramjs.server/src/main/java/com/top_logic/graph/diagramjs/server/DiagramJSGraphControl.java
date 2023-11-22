@@ -41,7 +41,7 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 
 	private DiagramJSGraphComponent _diagramHandler;
 
-	private boolean _displayHiddenElements;
+	private boolean _showHiddenElements;
 
 	/**
 	 * Creates a {@link DiagramJSGraphControl} for the given {@link GraphData}.
@@ -90,7 +90,7 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 
 	@Override
 	protected void writeGraphInitScript(TagWriter out, String type) throws IOException {
-		JSControlUtil.writeCreateJSControlScript(out, type, getID(), retrieveStateAsJSON(), _displayHiddenElements);
+		JSControlUtil.writeCreateJSControlScript(out, type, getID(), retrieveStateAsJSON(), _showHiddenElements);
 	}
 
 	@Override
@@ -130,11 +130,9 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 
 	@Override
 	public void handleDisplayHiddenElements(Object sender, Boolean oldValue, Boolean newValue) {
-		_displayHiddenElements = newValue.booleanValue();
+		_showHiddenElements = newValue.booleanValue();
 
-		// is the control is invalid then it is repainted anyway..
 		if (!isInvalid()) {
-			// incremental update
 			String objectPath = SERVICE_NAMESPACE + "." + SERVICE_NAME;
 			String methodName = INVOKE;
 			getFrameScope().addClientAction(new JSFunctionCall(getID(), objectPath, methodName,

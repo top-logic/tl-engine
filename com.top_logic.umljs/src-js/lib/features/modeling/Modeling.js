@@ -72,8 +72,10 @@ Modeling.prototype.toggleVisibility = function(element, isVisible) {
   
   if(isConnection(element)) {
     if(isVisible) {
-      this.setVisibility(element.source, true);
-      this.setVisibility(element.target, true);
+      this._setVisibility(element.source, true);
+      this.updateGraphics(element.source, true);
+      this._setVisibility(element.target, true);
+      this.updateGraphics(element.target, true);
     }
   }
   

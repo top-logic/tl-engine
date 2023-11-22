@@ -57,7 +57,7 @@ public abstract class I18NFieldProvider extends AbstractFieldProvider {
 	 * @return Is not allowed to be null.
 	 */
 	protected abstract FormMember createField(EditContext editContext, String fieldName, boolean isMandatory,
-			boolean isDisabled, boolean isMultiLine, Constraint constraint);
+			boolean immutable, boolean isMultiLine, Constraint constraint);
 
 	/**
 	 * Creates an implementation-specific {@link Constraint} for the field created in

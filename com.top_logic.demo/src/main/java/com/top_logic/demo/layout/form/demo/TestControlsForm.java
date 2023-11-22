@@ -1885,12 +1885,13 @@ public class TestControlsForm extends FormComponent {
 		FormGroup group = new FormGroup("i18n", controlsGroup.getResources());
 
 		Constraint noConstraint = null;
-		FormField stringField = I18NStringField.newI18NStringField("i18nString", !FormFactory.MANDATORY, false, false, noConstraint);
+		FormField stringField = I18NStringField.newI18NStringField("i18nString", !FormFactory.MANDATORY,
+			!FormFactory.IMMUTABLE, false, noConstraint);
 		stringField.setControlProvider(new I18NStringControlProvider(false, 0, TextInputControl.NO_COLUMNS));
 		group.addMember(stringField);
 
 		FormField stringFieldMulti = I18NStringField.newI18NStringField("i18nStringMultiLine", !FormFactory.MANDATORY,
-			false, true, noConstraint);
+			!FormFactory.IMMUTABLE, true, noConstraint);
 		stringFieldMulti.setControlProvider(
 			new I18NStringControlProvider(true, MultiLineText.DEFAULT_ROWS, TextInputControl.NO_COLUMNS));
 		group.addMember(stringFieldMulti);

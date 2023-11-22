@@ -11,8 +11,18 @@
 .structuredTextFullHeight,
 .structuredTextFullHeight .cke_inner,
 .structuredTextFullHeight .cke,
-.cStructuredText {
+.cStructuredText,
+.cStructuredTextWithButton {
 	height: 100%;
+}
+
+.cStructuredTextWithButton.active {
+	display: flex;
+}
+
+.cStructuredTextWithButton.active > .cke {
+	box-sizing: border-box;
+	width: 100%;
 }
 
 .cke_editable {

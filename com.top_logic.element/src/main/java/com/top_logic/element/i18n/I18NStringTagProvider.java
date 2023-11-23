@@ -6,6 +6,7 @@
 package com.top_logic.element.i18n;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.tag.DisplayProvider;
 import com.top_logic.layout.Control;
@@ -27,7 +28,7 @@ public class I18NStringTagProvider implements DisplayProvider {
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
 		I18NStringField i18n = (I18NStringField) member;
-		int rows = rows(editContext, i18n.isMultiline());
+		int rows = rows(editContext);
 		int columns = columns(editContext);
 		return newControl(i18n, rows, columns);
 	}
@@ -35,18 +36,18 @@ public class I18NStringTagProvider implements DisplayProvider {
 	@Override
 	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
 		I18NStringField i18n = (I18NStringField) member;
-		int rows = rows(editContext, i18n.isMultiline());
+		int rows = rows(editContext);
 		int columns = columns(editContext);
 		return newControl(i18n, rows, columns);
 	}
 
-	private int columns(EditContext editContext) {
+	static int columns(EditContext editContext) {
 		return DisplayAnnotations.inputSize(editContext, TextInputControl.NO_COLUMNS);
 	}
 
-	private int rows(EditContext editContext, boolean multiline) {
+	static int rows(EditContext editContext) {
 		int rows;
-		if (multiline) {
+		if (AttributeOperations.isMultiline(editContext) && !editContext.isSearchUpdate()) {
 			MultiLine annotation = editContext.getAnnotation(MultiLine.class);
 			if (annotation != null) {
 				rows = annotation.getRows();

@@ -33,8 +33,6 @@ import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil.StringVa
  */
 public class I18NStringControlProvider implements ControlProvider {
 
-	private boolean _multiline;
-
 	private int _rows;
 
 	private int _columns;
@@ -42,17 +40,15 @@ public class I18NStringControlProvider implements ControlProvider {
 	/**
 	 * This constructor creates a new {@link I18NStringControlProvider}.
 	 * 
-	 * @param multiline
-	 *        Whether the field should be displayed in multi-line mode.
 	 * @param rows
-	 *        If <code>multiline</code>, the number of rows to display.
+	 *        The number of rows to display. If 0, then the field is not rendered in multi-line
+	 *        mode.
 	 * @param columns
 	 *        Number of columns to display.
 	 * 
 	 * @see TextInputControl#NO_COLUMNS
 	 */
-	public I18NStringControlProvider(boolean multiline, int rows, int columns) {
-		_multiline = multiline;
+	public I18NStringControlProvider(int rows, int columns) {
 		_rows = rows;
 		_columns = columns;
 	}
@@ -76,13 +72,14 @@ public class I18NStringControlProvider implements ControlProvider {
 	}
 
 	private Control createControl(I18NStringField member) {
+		boolean multiline = multiline();
 		OnVisibleControl block = new OnVisibleControl(member);
 		List<StringField> languageFields = member.getLanguageFields();
 		for (FormField field : languageFields) {
 			TextInputControl control = new TextInputControl(field);
-			control.setMultiLine(_multiline);
+			control.setMultiLine(multiline);
 			control.setColumns(_columns);
-			if (_multiline) {
+			if (multiline) {
 				control.setRows(_rows);
 			}
 			block.addChild(control);
@@ -102,6 +99,10 @@ public class I18NStringControlProvider implements ControlProvider {
 			immutableListener.handleImmutableChanged(member, !member.isImmutable(), member.isImmutable());
 		}
 		return block;
+	}
+
+	private boolean multiline() {
+		return _rows > 0;
 	}
 
 	private <I extends AbstractCompositeControl<?>> ImmutablePropertyListener immutableListener(
@@ -127,7 +128,7 @@ public class I18NStringControlProvider implements ControlProvider {
 
 	ControlRenderer<CompositeControl> editModeRenderer() {
 		ControlRenderer<CompositeControl> newRenderer;
-		if (_multiline) {
+		if (multiline()) {
 			newRenderer = I18NStringControlRenderer.ABOVE_INSTANCE;
 		} else {
 			newRenderer = I18NStringControlRenderer.INSTANCE;

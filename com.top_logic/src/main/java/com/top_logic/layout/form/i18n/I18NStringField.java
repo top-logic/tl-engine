@@ -26,14 +26,11 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	/**
 	 * Creates a {@link I18NStringField}.
 	 */
-	public static I18NStringField newI18NStringField(String fieldName, boolean isMandatory, boolean immutable,
-			boolean isMultiLine) {
-		I18NStringField field = new I18NStringField(fieldName, isMandatory, immutable, isMultiLine);
+	public static I18NStringField newI18NStringField(String fieldName, boolean isMandatory, boolean immutable) {
+		I18NStringField field = new I18NStringField(fieldName, isMandatory, immutable);
 		field.initLanguageFields();
 		return field;
 	}
-
-	private final boolean _isMultiLine;
 
 	/**
 	 * Creates a {@link I18NStringField}.
@@ -42,16 +39,8 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	 *           after creation, i.e. caller must either trigger {@link #initLanguageFields()} or
 	 *           add this note.
 	 */
-	protected I18NStringField(String fieldName, boolean isMandatory, boolean immutable, boolean isMultiLine) {
+	protected I18NStringField(String fieldName, boolean isMandatory, boolean immutable) {
 		super(fieldName, isMandatory, immutable, GenericMandatoryConstraint.SINGLETON);
-		_isMultiLine = isMultiLine;
-	}
-
-	/**
-	 * Whether multi-line text is accepted by this field.
-	 */
-	public boolean isMultiline() {
-		return _isMultiLine;
 	}
 
 	@Override

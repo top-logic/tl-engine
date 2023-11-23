@@ -7,10 +7,13 @@ package com.top_logic.element.i18n;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.element.meta.AttributeUpdate;
+import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.PopupEditControl;
+import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.i18n.I18NStringTextPopupControl;
 import com.top_logic.layout.form.template.ControlProvider;
 
@@ -43,7 +46,18 @@ public class I18NStringTextPopupControlProvider extends PopupEditControl.CP {
 
 	@Override
 	protected Control createInput(FormMember member) {
-		return new I18NStringTextPopupControl(getSettings(), (FormField) member);
+		FormField field = (FormField) member;
+		AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(field);
+		int rows;
+		int columns;
+		if (update != null) {
+			rows = I18NStringTagProvider.rows(update);
+			columns = I18NStringTagProvider.columns(update);
+		} else {
+			rows = 0;
+			columns = TextInputControl.NO_COLUMNS;
+		}
+		return new I18NStringTextPopupControl(getSettings(), field, rows, columns);
 	}
 
 }

@@ -14,7 +14,6 @@ import com.top_logic.layout.form.control.PopupEditControl.Settings;
 import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.control.TextInputWithButtonControl;
 import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil;
 
 /**
@@ -30,27 +29,26 @@ public class I18NActiveLanguageControlProvider implements ControlProvider {
 	private int _columns;
 
 	/**
-	 * Creates a {@link I18NActiveLanguageControlProvider} with default rows and columns value.
+	 * Creates a single line {@link I18NActiveLanguageControlProvider} with default columns value.
 	 * 
-	 * @see MultiLineText#DEFAULT_ROWS
 	 * @see TextInputControl#NO_COLUMNS
 	 */
 	public I18NActiveLanguageControlProvider() {
-		this(MultiLineText.DEFAULT_ROWS, TextInputControl.NO_COLUMNS);
+		this(0, TextInputControl.NO_COLUMNS);
 	}
 
 	/**
 	 * Creates a {@link I18NActiveLanguageControlProvider}.
-	 *
+	 * 
 	 * @param rows
-	 *        Number of written rows. Just relevant when {@link I18NStringField#isMultiline()}.
+	 *        Number of written rows. If <code>&gt;0</code> a multi-line input field is rendered.
 	 * @param columns
 	 *        Number of columns in the input fields.
 	 */
 	public I18NActiveLanguageControlProvider(int rows, int columns) {
 		super();
-		this._rows = rows;
-		this._columns = columns;
+		_rows = rows;
+		_columns = columns;
 	}
 
 	@Override
@@ -59,9 +57,9 @@ public class I18NActiveLanguageControlProvider implements ControlProvider {
 		FormField sourceField = I18NTranslationUtil.getSourceField(i18n.getLanguageFields());
 		TextInputWithButtonControl sourceControl =
 			new TextInputWithButtonControl(sourceField, openPopup(i18n));
-		sourceControl.setMultiLine(i18n.isMultiline());
+		sourceControl.setMultiLine(multiline());
 		sourceControl.setColumns(_columns);
-		if (i18n.isMultiline()) {
+		if (multiline()) {
 			sourceControl.setRows(_rows);
 		}
 		OnVisibleControl block = new OnVisibleControl(i18n);
@@ -69,10 +67,14 @@ public class I18NActiveLanguageControlProvider implements ControlProvider {
 		return block;
 	}
 
+	private boolean multiline() {
+		return _rows > 0;
+	}
+
 	private HTMLFragment openPopup(I18NStringField i18n) {
 		Settings settings = new Settings()
 			.setFirstLineRenderer(EmptyRenderer.getInstance());
-		return new I18NStringTextPopupControl(settings, i18n);
+		return new I18NStringTextPopupControl(settings, i18n, _rows, _columns);
 	}
 
 }

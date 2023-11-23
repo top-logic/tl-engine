@@ -17,7 +17,6 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.PopupEditControl;
 import com.top_logic.layout.form.model.StringField;
-import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.structure.Scrolling;
@@ -29,11 +28,17 @@ import com.top_logic.layout.structure.Scrolling;
  */
 public class I18NStringTextPopupControl extends PopupEditControl {
 
+	private int _rows;
+
+	private int _columns;
+
 	/**
 	 * Creates a new {@link I18NStringTextPopupControl}.
 	 */
-	public I18NStringTextPopupControl(Settings settings, FormField model) {
+	public I18NStringTextPopupControl(Settings settings, FormField model, int rows, int columns) {
 		super(settings, model);
+		_rows = rows;
+		_columns = columns;
 	}
 
 	@Override
@@ -44,17 +49,15 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 
 	@Override
 	protected FormField createEditField(FormField originalField) {
-		boolean multiline = false;
 		Map<Locale, StringField> baseFields = Collections.emptyMap();
 		if (originalField instanceof I18NStringField) {
 			I18NStringField i18nField = (I18NStringField) originalField;
 			baseFields = i18nField.getLanguageFieldsByLocale();
-			multiline = i18nField.isMultiline();
 		}
 		String name = originalField.getName() + POPUP_SUFFIX;
 		boolean mandatory = originalField.isMandatory();
 		boolean immutable = originalField.isImmutable();
-		I18NStringField copy = I18NStringField.newI18NStringField(name, mandatory, immutable, multiline);
+		I18NStringField copy = I18NStringField.newI18NStringField(name, mandatory, immutable);
 		copyConstraints(copy, baseFields);
 		return copy;
 	}
@@ -71,25 +74,12 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 
 	@Override
 	protected HTMLFragment createEditFragment(FormField editField) {
-		// Default values are copied from MetaInputTag.initDefaultValues()
-		int rows;
-		int columns;
-		boolean multiline;
-		if (editField instanceof I18NStringField && ((I18NStringField) editField).isMultiline()) {
-			columns = 50;
-			rows = MultiLineText.DEFAULT_ROWS;
-			multiline = true;
-		} else {
-			columns = 30;
-			rows = 0;
-			multiline = false;
-		}
-		return new I18NStringControlProvider(multiline, rows, columns).createFragment(editField);
+		return new I18NStringControlProvider(_rows, _columns).createFragment(editField);
 	}
 
 	@Override
 	protected LayoutData getDialogLayout(FormField editField) {
-		if (editField instanceof I18NStringField && ((I18NStringField) editField).isMultiline()) {
+		if (_rows > 0) {
 			return new DefaultLayoutData(dim(720, PIXEL), 100, dim(300, PIXEL), 100, Scrolling.AUTO);
 		}
 		return new DefaultLayoutData(dim(400, PIXEL), 100, dim(150, PIXEL), 100, Scrolling.AUTO);

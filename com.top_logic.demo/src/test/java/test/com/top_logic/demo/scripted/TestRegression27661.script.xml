@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.InvalidateCommand"
+			command-label="Aktualisieren"
+			command-name="invalidate"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+					<path>
+						<labeled-member label="Alle einfachen form controls"/>
+						<labeled-member label="i18n"/>
+						<labeled-member label="i18nString"/>
+						<labeled-member label="Deutsch"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+					<path>
+						<labeled-member label="Alle einfachen form controls"/>
+						<labeled-member label="i18n"/>
+						<labeled-member label="i18nString"/>
+						<labeled-member label="Englisch"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleMandatory"
+			command-name="toggleMandatory"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+			user-id="root"
+		>
+			<arguments/>
+			<command-label>Schalte "Mandatory" um</command-label>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FormFieldMandatoryNaming$FormFieldMandatoryName">
+				<form-member config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+					<path>
+						<labeled-member label="Alle einfachen form controls"/>
+						<labeled-member label="i18n"/>
+						<labeled-member label="i18nString"/>
+						<labeled-member label="Deutsch"/>
+					</path>
+				</form-member>
+			</actual-value>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</constraint>
+			</constraints>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FormFieldMandatoryNaming$FormFieldMandatoryName">
+				<form-member config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+					<path>
+						<labeled-member label="Alle einfachen form controls"/>
+						<labeled-member label="i18n"/>
+						<labeled-member label="i18nString"/>
+						<labeled-member label="Englisch"/>
+					</path>
+				</form-member>
+			</actual-value>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</constraint>
+			</constraints>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$CheckAll"
+			command-label="Check"
+			command-name="checkAll"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+			error="Eingabe darf nicht leer sein."
+			error-pattern=""
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+			error="Eingabe darf nicht leer sein."
+			error-pattern=""
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="deutsch"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+			error="Eingabe darf nicht leer sein."
+			error-pattern=""
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="english"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+			error="Eingabe darf nicht leer sein."
+			error-pattern=""
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$CheckAll"
+			command-label="Check"
+			command-name="checkAll"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleMandatory"
+			command-name="toggleMandatory"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+			user-id="root"
+		>
+			<arguments/>
+			<command-label>Schalte "Mandatory" um</command-label>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+					<path>
+						<labeled-member label="Alle einfachen form controls"/>
+						<labeled-member label="i18n"/>
+						<labeled-member label="i18nString"/>
+						<labeled-member label="Deutsch"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Deutsch"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+					<path>
+						<labeled-member label="Alle einfachen form controls"/>
+						<labeled-member label="i18n"/>
+						<labeled-member label="i18nString"/>
+						<labeled-member label="Englisch"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="english"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+				<path>
+					<labeled-member label="Alle einfachen form controls"/>
+					<labeled-member label="i18n"/>
+					<labeled-member label="i18nString"/>
+					<labeled-member label="Englisch"/>
+				</path>
+			</model-name>
+		</action>
+	</actions>
+</action>

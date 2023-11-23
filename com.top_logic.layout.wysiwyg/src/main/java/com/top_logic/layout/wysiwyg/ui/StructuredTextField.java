@@ -19,7 +19,11 @@ import com.top_logic.util.Resources;
  */
 public class StructuredTextField extends HiddenField {
 
-	private static final Constraint NOT_EMPTY_STRUCTURED_TEXT = new AbstractConstraint() {
+	/**
+	 * Constraint that checks that a given {@link StructuredText} value is not <code>null</code> and
+	 * has a non empty {@link StructuredText#getSourceCode() source code}.
+	 */
+	public static final Constraint NOT_EMPTY_STRUCTURED_TEXT = new AbstractConstraint() {
 
 		@Override
 		public boolean check(Object value) throws CheckException {

@@ -43,10 +43,10 @@ public final class IntField extends AbstractSingleValueField {
 	}
 	
 	@Override
-	protected Object narrowValue(Object aValue) {
+	protected Object narrowValue(Object value) {
 		// The casted value must be assigned to a local variable to a void an
 		// "unnecessary cast" warning.
-		Integer integerValue = (Integer) aValue;
+		Integer integerValue = (Integer) value;
 		
 		return integerValue;
 	}

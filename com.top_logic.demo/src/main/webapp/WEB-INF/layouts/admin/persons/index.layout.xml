@@ -13,7 +13,6 @@
 	>
 		<components>
 			<layout-reference resource="admin/persons/accounts/tabLayout.layout.xml"/>
-			<layout-reference resource="687eeb45-175f-4ef7-b98b-1cc9accd393f.layout.xml"/>
 			<layout-reference resource="admin/persons/roleManagement/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml"/>

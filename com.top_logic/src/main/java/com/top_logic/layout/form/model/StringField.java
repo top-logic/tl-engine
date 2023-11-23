@@ -38,11 +38,11 @@ public class StringField extends AbstractFormField implements SingleValueField {
 	}
 
 	@Override
-	protected Object narrowValue(Object aValue) {
+	protected Object narrowValue(Object value) {
 		// Local temporary variable prevents the "unnecessary" cast warning.
-		String result = (String) aValue;
+		String result = (String) value;
 		
-		if (aValue == null) { 
+		if (value == null) { 
 			// throw new IllegalArgumentException("The value of a string field may not be null. Use the empty string instead.");
 			result = EMPTY_STRING_VALUE;
 		}
@@ -51,21 +51,21 @@ public class StringField extends AbstractFormField implements SingleValueField {
 	}
 
 	@Override
-	protected Object parseRawValue(Object aRawValue) throws CheckException {
-		if (aRawValue == NO_RAW_VALUE) {
+	protected Object parseRawValue(Object rawValue) throws CheckException {
+		if (rawValue == NO_RAW_VALUE) {
 			return EMPTY_STRING_VALUE;
 		} else {
 			// Note: Cast to string to assert that the provided raw value is a string. 
 			// To avoid warnings about unnecessary cast, assign casted value to
 			// local variable.
-			String stringValue = (String) aRawValue;
+			String stringValue = (String) rawValue;
 			return stringValue;
 		}
 	}
 
 	@Override
-	protected Object unparseValue(Object aValue) {
-		String stringValue = (String) aValue;
+	protected Object unparseValue(Object value) {
+		String stringValue = (String) value;
 		if (stringValue == null) {
 			return NO_RAW_VALUE;
 		}

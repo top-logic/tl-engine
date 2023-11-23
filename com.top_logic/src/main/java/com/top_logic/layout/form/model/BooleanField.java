@@ -71,14 +71,14 @@ public class BooleanField extends AbstractSingleValueField implements Comparable
 	}
 	
 	@Override
-	protected Object parseRawValue(Object aRawValue) throws CheckException {
-		if (aRawValue instanceof Boolean) {
+	protected Object parseRawValue(Object rawValue) throws CheckException {
+		if (rawValue instanceof Boolean) {
 			// For convenience, a boolean field can also be updated with a
 			// native JS boolean value.
-			aRawValue = aRawValue.toString();
+			rawValue = rawValue.toString();
 		}
 
-		return super.parseRawValue(aRawValue);
+		return super.parseRawValue(rawValue);
 	}
 
 	@Override
@@ -103,9 +103,9 @@ public class BooleanField extends AbstractSingleValueField implements Comparable
 	}
 
 	@Override
-	protected Object narrowValue(Object aValue) {
+	protected Object narrowValue(Object value) {
 		// Local temporary variable prevents the "unnecessary" cast warning.
-		Boolean result = (Boolean) aValue;
+		Boolean result = (Boolean) value;
 		if (result == null) {
 			return null;
 		}

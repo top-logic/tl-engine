@@ -16,7 +16,6 @@ import com.top_logic.layout.form.i18n.I18NField;
 import com.top_logic.layout.form.i18n.I18NStringField;
 import com.top_logic.model.annotate.AllLanguagesInViewMode;
 import com.top_logic.model.annotate.TLSize;
-import com.top_logic.model.annotate.ui.MultiLine;
 
 /**
  * {@link FieldProvider} for {@link I18NStringField}.
@@ -29,9 +28,7 @@ public class I18NStringFieldProvider extends AbstractFieldProvider {
 	public FormMember getFormField(EditContext editContext, String fieldName) {
 		boolean mandatory = editContext.isMandatory();
 		boolean immutable = editContext.isDisabled();
-		boolean multiLine = AttributeOperations.isMultiline(editContext.getAnnotation(MultiLine.class));
-
-		I18NStringField field = I18NStringField.newI18NStringField(fieldName, mandatory, immutable, multiLine);
+		I18NStringField field = I18NStringField.newI18NStringField(fieldName, mandatory, immutable);
 		AllLanguagesInViewMode annotation = editContext.getAnnotation(AllLanguagesInViewMode.class);
 		if (annotation != null && annotation.getValue()) {
 			field.set(I18NField.DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE, true);

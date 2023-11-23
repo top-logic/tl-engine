@@ -1900,14 +1900,14 @@ public class TestControlsForm extends FormComponent {
 		FormGroup group = new FormGroup("i18n", controlsGroup.getResources());
 
 		FormField stringField = I18NStringField.newI18NStringField("i18nString", !FormFactory.MANDATORY,
-			!FormFactory.IMMUTABLE, false);
-		stringField.setControlProvider(new I18NStringControlProvider(false, 0, TextInputControl.NO_COLUMNS));
+			!FormFactory.IMMUTABLE);
+		stringField.setControlProvider(new I18NStringControlProvider(0, TextInputControl.NO_COLUMNS));
 		group.addMember(stringField);
 
 		FormField stringFieldMulti = I18NStringField.newI18NStringField("i18nStringMultiLine", !FormFactory.MANDATORY,
-			!FormFactory.IMMUTABLE, true);
+			!FormFactory.IMMUTABLE);
 		stringFieldMulti.setControlProvider(
-			new I18NStringControlProvider(true, MultiLineText.DEFAULT_ROWS, TextInputControl.NO_COLUMNS));
+			new I18NStringControlProvider(MultiLineText.DEFAULT_ROWS, TextInputControl.NO_COLUMNS));
 		group.addMember(stringFieldMulti);
 
 		List<String> defaultFeatureSet = null;

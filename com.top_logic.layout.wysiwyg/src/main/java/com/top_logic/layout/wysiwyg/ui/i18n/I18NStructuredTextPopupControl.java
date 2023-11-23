@@ -19,6 +19,7 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.PopupEditControl;
+import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.i18n.I18NField;
 import com.top_logic.layout.form.i18n.I18NStringTextPopupControl;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -35,7 +36,7 @@ public class I18NStructuredTextPopupControl extends I18NStringTextPopupControl {
 	 * Creates a new {@link I18NStructuredTextPopupControl}.
 	 */
 	public I18NStructuredTextPopupControl(Settings settings, FormField model) {
-		super(settings, model);
+		super(settings, model, 0, TextInputControl.NO_COLUMNS);
 	}
 
 	@Override

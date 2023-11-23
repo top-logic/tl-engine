@@ -9,10 +9,10 @@ import java.util.List;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.element.i18n.I18NField;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.i18n.I18NField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextControl;

@@ -23,6 +23,7 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.tooltip.HtmlToolTip;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -44,7 +45,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 	protected static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		new ControlCommand[] { ValueChange.INSTANCE });
 
-	private Object _option;
+	private LayoutComponent _option;
 
 	private SelectField _megaMenu;
 
@@ -58,7 +59,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 	 * @param popupDialog
 	 *        to be able to close the popup window after a option was selected.
 	 */
-	public MegaMenuOptionControl(Object option, SelectField megaMenu, PopupDialogControl popupDialog) {
+	public MegaMenuOptionControl(LayoutComponent option, SelectField megaMenu, PopupDialogControl popupDialog) {
 		super(COMMANDS);
 		_option = option;
 		_megaMenu = megaMenu;
@@ -86,10 +87,11 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 		out.writeAttribute(HTMLConstants.ONCONTEXTMENU_ATTR, "return false;");
 		out.endBeginTag();
 
+		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
 		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
 		ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
-		String tooltip = optionResourceProvider.getTooltip(_option);
-		String optionLabel = optionLabelProvider.getLabel(_option);
+		String tooltip = optionResourceProvider.getTooltip(currOption);
+		String optionLabel = optionLabelProvider.getLabel(currOption);
 
 		out.beginBeginTag(HTMLConstants.SPAN);
 		out.writeAttribute(HTMLConstants.CLASS_ATTR, "strong");

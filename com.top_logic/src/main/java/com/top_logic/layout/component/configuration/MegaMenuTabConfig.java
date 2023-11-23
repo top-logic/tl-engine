@@ -52,7 +52,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * Navigation (main tabbar) button as mega menu button.
+ * Navigation button which shows the labels and tooltips of the first tab bar's tabs.
  * 
  * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
  *
@@ -195,7 +195,7 @@ public class MegaMenuTabConfig
 						out.endBeginTag();
 
 						for (int i = 0; i < nbrOfOptionElements; i++) {
-							Object currOption = mainTabList.get(i).getConfig().getTabInfo().getLabel();
+							LayoutComponent currOption = mainTabList.get(i);
 							MegaMenuOptionControl option = new MegaMenuOptionControl(currOption, megaMenu, popupDialog);
 							option.write(context1, out);
 						}

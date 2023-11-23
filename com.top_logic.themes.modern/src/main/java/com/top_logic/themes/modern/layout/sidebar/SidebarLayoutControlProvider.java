@@ -222,11 +222,11 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 						
 						// Establish initial selection.
 						Node root = tree.getRoot();
-						Node innermostSelected = tree.innermostSelected(tree.getRoot());
+						Node innermostSelected = tree.innermostSelected(root);
 						if (root == innermostSelected) {
 							tree.setSelection(null);
 						} else {
-							tree.setSelection(tree.innermostSelected(tree.getRoot()));
+							tree.setSelection(tree.innermostSelected(root));
 						}
 
 						// Add component validator.
@@ -332,7 +332,7 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 			if (result) {
 				// Update initial state.
 				Node nodeSelected = getRoot();
-				Node innermostSelected = innermostSelected(getRoot());
+				Node innermostSelected = innermostSelected(nodeSelected);
 				if (nodeSelected == innermostSelected) {
 					setSelection(null);
 				} else {

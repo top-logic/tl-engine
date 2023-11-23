@@ -13,12 +13,12 @@
 					>
 						<column-info>
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer"/>
-							<editControlProvider class="com.top_logic.element.i18n.I18NStringTextPopupControl$CP"/>
+							<editControlProvider class="com.top_logic.element.i18n.I18NStringTextPopupControlProvider"/>
 							<sortKeyProvider class="com.top_logic.layout.provider.ResKeyResourceProvider"/>
 						</column-info>
 						<field-provider impl="com.top_logic.element.i18n.I18NStringFieldProvider"/>
 						<tag-provider impl="com.top_logic.element.i18n.I18NStringTagProvider"/>
-						<pdf-renderer impl="com.top_logic.element.i18n.I18NPDFRenderer"/>
+						<pdf-renderer impl="com.top_logic.layout.form.i18n.I18NPDFRenderer"/>
 					</attribute-setting>
 				</attribute-settings>
 			</instance>

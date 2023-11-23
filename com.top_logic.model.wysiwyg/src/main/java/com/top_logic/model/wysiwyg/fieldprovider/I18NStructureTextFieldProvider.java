@@ -5,11 +5,11 @@
  */
 package com.top_logic.model.wysiwyg.fieldprovider;
 
-import com.top_logic.element.i18n.I18NField;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.i18n.I18NField;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextField;
 import com.top_logic.model.annotate.AllLanguagesInViewMode;
 import com.top_logic.model.wysiwyg.annotation.StructuredTextEditorConfig;

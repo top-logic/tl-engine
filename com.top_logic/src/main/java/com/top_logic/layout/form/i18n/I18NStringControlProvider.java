@@ -3,15 +3,13 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.i18n;
+package com.top_logic.layout.form.i18n;
 
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.translation.TranslationService;
-import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringActiveLanguageControlRenderer;
-import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
 import com.top_logic.layout.CompositeControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.ControlRenderer;

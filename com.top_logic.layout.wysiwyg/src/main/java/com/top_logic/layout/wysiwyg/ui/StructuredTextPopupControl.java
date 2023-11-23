@@ -9,11 +9,11 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.HTMLFragmentProvider;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.element.i18n.I18NStringTextPopupControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.PopupEditControl;
+import com.top_logic.layout.form.i18n.I18NStringTextPopupControl;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.template.ControlProvider;
 

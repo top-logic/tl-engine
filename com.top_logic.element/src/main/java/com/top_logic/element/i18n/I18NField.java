@@ -153,22 +153,22 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	@Override
 	public boolean checkConstraints() {
-		boolean result = true;
 		for (F langField : getLanguageFields()) {
-			result &= langField.checkConstraints();
+			if (!langField.checkConstraints()) {
+				return false;
+			}
 		}
-		result &= super.checkConstraints();
-		return result;
+		return super.checkConstraints();
 	}
 
 	@Override
 	public boolean checkConstraints(Object value) {
-		boolean result = true;
 		for (F langField : getLanguageFields()) {
-			result &= langField.checkConstraints(value);
+			if (!langField.checkConstraints(value)) {
+				return false;
+			}
 		}
-		result &= super.checkConstraints(value);
-		return result;
+		return super.checkConstraints(value);
 	}
 
 	private FormField createProxyField(boolean isMandatory, boolean immutable) {

@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -210,13 +209,8 @@ public class RenderedObjectsTemplateProvider
 	/**
 	 * Creates a new {@link ForeignObjectsTemplateProvider}.
 	 */
-	public RenderedObjectsTemplateProvider(InstantiationContext context, Config<?> config)
-			throws ConfigurationException {
+	public RenderedObjectsTemplateProvider(InstantiationContext context, Config<?> config) {
 		super(context, config);
-
-		// TODO: Does not work because form definitions are instantiated lately.
-		// context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c ->
-		// _component = c);
 
 		_component =
 			DefaultDisplayContext.getDisplayContext().getSubSessionContext().getLayoutContext().getMainLayout();

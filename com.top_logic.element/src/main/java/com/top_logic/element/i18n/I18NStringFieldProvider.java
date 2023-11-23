@@ -12,6 +12,8 @@ import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.StringLengthConstraint;
+import com.top_logic.layout.form.i18n.I18NField;
+import com.top_logic.layout.form.i18n.I18NStringField;
 import com.top_logic.model.annotate.AllLanguagesInViewMode;
 import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.ui.MultiLine;

@@ -14,12 +14,13 @@ import java.util.Map.Entry;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.element.i18n.I18NField;
-import com.top_logic.element.i18n.I18NStringTextPopupControl;
+import com.top_logic.element.i18n.I18NStringTextPopupControlProvider;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.PopupEditControl;
+import com.top_logic.layout.form.i18n.I18NField;
+import com.top_logic.layout.form.i18n.I18NStringTextPopupControl;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.structure.LayoutData;
 
@@ -102,7 +103,7 @@ public class I18NStructuredTextPopupControl extends I18NStringTextPopupControl {
 	/**
 	 * {@link ControlProvider} creating {@link I18NStringTextPopupControl}s.
 	 */
-	public static class CP extends I18NStringTextPopupControl.CP {
+	public static class CP extends I18NStringTextPopupControlProvider {
 
 		/**
 		 * Creates a {@link CP} from configuration.

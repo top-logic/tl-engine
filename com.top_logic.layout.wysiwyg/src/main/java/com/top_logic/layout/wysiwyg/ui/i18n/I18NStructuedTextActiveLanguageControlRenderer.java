@@ -8,9 +8,9 @@ package com.top_logic.layout.wysiwyg.ui.i18n;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.element.i18n.I18NField;
-import com.top_logic.element.i18n.I18NStringTagProvider.I18NFieldActiveLanguageControlRenderer;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.i18n.I18NField;
+import com.top_logic.layout.form.i18n.I18NFieldActiveLanguageControlRenderer;
 import com.top_logic.layout.provider.LabelProviderService;
 
 /**

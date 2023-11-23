@@ -9,8 +9,6 @@ import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.listener.EventType.Bubble;
-import com.top_logic.element.i18n.I18NField;
-import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
 import com.top_logic.layout.CompositeControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.ControlRenderer;
@@ -20,6 +18,8 @@ import com.top_logic.layout.form.ImmutablePropertyListener;
 import com.top_logic.layout.form.control.AbstractCompositeControl;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.OnVisibleControl;
+import com.top_logic.layout.form.i18n.I18NField;
+import com.top_logic.layout.form.i18n.I18NStringControlRenderer;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil;

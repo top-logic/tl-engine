@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.i18n;
+package com.top_logic.layout.form.i18n;
 
 import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import static com.top_logic.layout.form.model.FormFactory.*;

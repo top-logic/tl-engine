@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.top_logic.element.i18n.I18NField;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.constraints.AbstractConstraint;
+import com.top_logic.layout.form.i18n.I18NField;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextField;

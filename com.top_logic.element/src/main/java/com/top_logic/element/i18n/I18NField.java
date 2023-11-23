@@ -601,24 +601,24 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		}
 
 		@Override
-		protected Object parseRawValue(Object aRawValue) throws CheckException {
-			if (aRawValue == null) {
+		protected Object parseRawValue(Object rawValue) throws CheckException {
+			if (rawValue == NO_RAW_VALUE) {
 				return null;
 			}
-			return ((ValueWithError) aRawValue).value();
+			return ((ValueWithError) rawValue).value();
 		}
 
 		@Override
-		protected Object unparseValue(Object aValue) {
-			if (aValue == null) {
+		protected Object unparseValue(Object value) {
+			if (value == null) {
 				return null;
 			}
-			return new ValueWithError(aValue, null);
+			return new ValueWithError(value, null);
 		}
 
 		@Override
-		protected Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
-			return aValue;
+		protected Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException {
+			return value;
 		}
 
 	}

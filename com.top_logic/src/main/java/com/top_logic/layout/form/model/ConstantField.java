@@ -41,26 +41,26 @@ public abstract class ConstantField extends AbstractFormField {
 	}
 
 	@Override
-	protected final Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
-		return aValue;
+	protected final Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException {
+		return value;
 	}
 
 	@Override
-	protected final Object parseRawValue(Object aRawValue) throws CheckException {
+	protected final Object parseRawValue(Object rawValue) throws CheckException {
 		// This field may never receive input directly from the client. The only
 		// way to modify its value by modifying its list and selection models.
 		// Those changes are reflected at the GUI automatically, if this field
 		// is displayed by a list control.
-		return aRawValue;
+		return rawValue;
 	}
 
 	@Override
-	protected final Object unparseValue(Object aValue) {
+	protected final Object unparseValue(Object value) {
 		// The form field life cycle requests to provide a client-side view of
 		// any server-side values set into a field, even if those values are never
 		// communicated to the client. Therefore, this field must produce a
 		// client-side a legal client-side representation of set values.
-		return aValue;
+		return value;
 	}
 
 }

@@ -197,25 +197,25 @@ public class DateTimeField extends CompositeField {
 		}
 
 		@Override
-		protected Object unparseValue(Object aValue) {
-			if (aValue == null) {
+		protected Object unparseValue(Object value) {
+			if (value == null) {
 				return null;
 			}
-			Date date = (Date) aValue;
+			Date date = (Date) value;
 			return new DateTime(toDay(date), null, toTime(date), null);
 		}
 
 		@Override
-		protected Object parseRawValue(Object aRawValue) throws CheckException {
-			if (aRawValue == null) {
+		protected Object parseRawValue(Object rawValue) throws CheckException {
+			if (rawValue == null) {
 				return null;
 			}
-			return ((DateTime) aRawValue).toDate();
+			return ((DateTime) rawValue).toDate();
 		}
 
 		@Override
-		protected Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
-			Date dateTime = (Date) aValue;
+		protected Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException {
+			Date dateTime = (Date) value;
 			return dateTime;
 		}
 

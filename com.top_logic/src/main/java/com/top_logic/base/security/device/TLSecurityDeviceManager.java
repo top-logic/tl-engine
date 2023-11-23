@@ -29,6 +29,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.license.LicenseTool;
 
 /**
@@ -291,8 +292,9 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	}
 
 	/**
-	 * the AuthenticationDevice with the given ID or null
-	 * if no such device exists
+	 * the AuthenticationDevice with the given ID or null if no such device exists
+	 * 
+	 * @see Person#getAuthenticationDevice()
 	 */
 	public AuthenticationDevice getAuthenticationDevice(String deviceID){
 		return _authenticationDevices.get(deviceID);

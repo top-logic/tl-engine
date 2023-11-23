@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
@@ -465,13 +464,12 @@ public class LoginPageServlet extends NoContextServlet {
 		String userName = aRequest.getParameter(Login.USER_NAME);
 		try{
 			Person account = Person.byName(userName);
-			String deviceId = account.getAuthenticationDeviceID();
-			if (StringServices.isEmpty(deviceId)) {
+			AuthenticationDevice device = account.getAuthenticationDevice();
+			if (device == null) {
 				// No password change possible, cannot request for a password update.
 				return true;
 			}
 
-			AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(deviceId);
 			if (!device.allowPwdChange()) {
 				// No password change possible, cannot request for a password update.
 				return true;
@@ -512,8 +510,7 @@ public class LoginPageServlet extends NoContextServlet {
 	    }else{
 			Person account = Person.byName(username);
 			char[] newPassword = pwd1.toCharArray();
-			AuthenticationDevice device =
-				TLSecurityDeviceManager.getInstance().getAuthenticationDevice(account.getAuthenticationDeviceID());
+			AuthenticationDevice device = account.getAuthenticationDevice();
 
 			try (Transaction tx = account.tHandle().getKnowledgeBase().beginTransaction()) {
 				device.setPassword(account, newPassword);

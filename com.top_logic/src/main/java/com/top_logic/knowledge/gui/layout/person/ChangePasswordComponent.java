@@ -8,7 +8,6 @@ package com.top_logic.knowledge.gui.layout.person;
 import java.util.Map;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.basic.Logger;
@@ -153,7 +152,7 @@ public class ChangePasswordComponent extends FormComponent {
 	}
 
 	private PasswordValidator getPasswordValidator() {
-		return getAuthenticationDevice(getCurrentPerson()).getPasswordValidator();
+		return getCurrentPerson().getAuthenticationDevice().getPasswordValidator();
 	}
 
 	private Person getCurrentPerson() {
@@ -169,8 +168,7 @@ public class ChangePasswordComponent extends FormComponent {
 	 */
 	protected boolean allowPwdChange(Person aPerson) {
 		{
-			String theID = aPerson.getAuthenticationDeviceID();
-			AuthenticationDevice theDevice = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(theID);
+			AuthenticationDevice theDevice = aPerson.getAuthenticationDevice();
 			boolean hasChangeAccess = ((EditPersonComponent) getDialogParent()).hasDeleteAccess(aPerson);
 
 			return (theDevice != null)
@@ -203,7 +201,7 @@ public class ChangePasswordComponent extends FormComponent {
 			FormComponent form = (FormComponent) aComponent;
 			FormContext formContext = form.getFormContext();
 
-			AuthenticationDevice device = getAuthenticationDevice(account);
+			AuthenticationDevice device = account.getAuthenticationDevice();
 			if (formContext.hasMember(OLD_PASSWORD)) {
 				char[] oldPassword = ((String) formContext.getField(OLD_PASSWORD).getValue()).toCharArray();
 
@@ -285,7 +283,7 @@ public class ChangePasswordComponent extends FormComponent {
 			if (person == null) {
 				return ExecutableState.NOT_EXEC_HIDDEN;
 			}
-			AuthenticationDevice device = getAuthenticationDevice(person);
+			AuthenticationDevice device = person.getAuthenticationDevice();
 			if (device == null) {
 				return NO_EXEC_NO_DEVICE;
 			}
@@ -294,14 +292,5 @@ public class ChangePasswordComponent extends FormComponent {
 			}
 			return ExecutableState.EXECUTABLE;
 		}
-
 	}
-
-	static AuthenticationDevice getAuthenticationDevice(Person person) {
-		String authDevice;
-		authDevice = person.getAuthenticationDeviceID();
-		AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(authDevice);
-		return device;
-	}
-
 }

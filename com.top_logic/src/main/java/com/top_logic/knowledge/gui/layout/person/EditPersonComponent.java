@@ -416,8 +416,7 @@ public class EditPersonComponent extends EditComponent {
     }
 
 	private static boolean noDataStorage(Person account) {
-		String deviceId = account.getAuthenticationDeviceID();
-		AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(deviceId);
+		AuthenticationDevice device = account.getAuthenticationDevice();
 		if (device == null) {
 			return true;
 		}

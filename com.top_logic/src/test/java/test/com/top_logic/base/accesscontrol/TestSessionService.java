@@ -27,7 +27,6 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
-import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.event.bus.Bus;
@@ -68,7 +67,7 @@ public class TestSessionService extends BasicTestCase {
 					SecureRandomService.getInstance().getRandomString().toCharArray())) {
 
 				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-					PasswordManager.getInstance().setPassword(login);
+					login.getPerson().getAuthenticationDevice().setPassword(login.getPerson(), login.getPassword());
 					tx.commit();
 				}
 

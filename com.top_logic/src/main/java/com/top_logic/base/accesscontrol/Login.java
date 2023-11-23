@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.basic.Logger;
@@ -346,25 +345,15 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	private AuthenticationDevice getAuthenticationDevice(LoginCredentials credentials)
 			throws LoginDeniedException, LoginFailedException {
-		String theAuthenticationDeviceId = getAuthenticationDeviceId(credentials);
-		if (StringServices.isEmpty(theAuthenticationDeviceId)) {
+		AuthenticationDevice authenticationDevice = credentials.getPerson().getAuthenticationDevice();
+		if (authenticationDevice == null) {
 			// Person has no device to authenticate against
 			throw new LoginDeniedException(FailedLogin.REASON_NO_AUTH_DEVICE);
 		}
-		AuthenticationDevice theDevice =
-			TLSecurityDeviceManager.getInstance().getAuthenticationDevice(theAuthenticationDeviceId);
-		if (theDevice == null) {
-			String message = "Authentication device '" + theAuthenticationDeviceId + "' cannot be found.";
-			throw new LoginFailedException(message);
-		}
-		return theDevice;
+		return authenticationDevice;
 	}
 
-	private String getAuthenticationDeviceId(LoginCredentials credentials) {
-		return credentials.getPerson().getAuthenticationDeviceID();
-	}
-
-    /**
+	/**
 	 * Attempt to login the specified user.
 	 *
 	 * @param aRequest
@@ -383,20 +372,13 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	public boolean login(HttpServletRequest aRequest, HttpServletResponse response, LoginCredentials login)
 			throws InMaintenanceModeException, MaxUsersExceededException {
 		Person person = login.getPerson();
-		String theAuthDevice = person.getAuthenticationDeviceID();
-		if (StringServices.isEmpty(theAuthDevice)) {
+		AuthenticationDevice authDevice = person.getAuthenticationDevice();
+		if (authDevice == null) {
 			// Person has no device to authenticate against
 			return noLogin(person, aRequest, FailedLogin.REASON_NO_AUTH_DEVICE);
 		}
 		try {
-			AuthenticationDevice theDevice =
-				TLSecurityDeviceManager.getInstance().getAuthenticationDevice(theAuthDevice);
-
-			if (theDevice == null) {
-				Logger.error("Authentication device '" + theAuthDevice + "' cannot be found.", this);
-				return noLogin(person, aRequest, FailedLogin.REASON_AUTH_DEVICE_NOT_FOUND);
-			}
-			boolean authenticated = theDevice.authentify(login);
+			boolean authenticated = authDevice.authentify(login);
 			if (authenticated) {
 				checkAllowedGroups(person);
 				HttpSession loginUser = SessionService.getInstance().loginUser(aRequest, response, person);

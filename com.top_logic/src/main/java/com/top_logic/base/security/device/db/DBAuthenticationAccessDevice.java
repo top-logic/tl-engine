@@ -146,19 +146,6 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 		return true;
 	}
 
-	/**
-	 * Updates the password for the given account.
-	 * 
-	 * @param login
-	 *        The {@link LoginCredentials} defining the new login.
-	 * 
-	 * @throws TopLogicException
-	 *         If password does not match the configured criteria.
-	 */
-	public void setPassword(LoginCredentials login) {
-		setPassword(login.getPerson(), login.getPassword());
-	}
-
 	@Override
 	public void setPassword(Person account, char[] password) {
 		ValidationResult validationResult = _validator.validatePassword(account, password);

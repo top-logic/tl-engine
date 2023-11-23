@@ -12,7 +12,6 @@ import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.TestFactoryProxy;
 import test.com.top_logic.basic.ThreadContextSetup;
 
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -52,9 +51,7 @@ public class TestPersonSetup extends ThreadContextSetup {
 		{
 			PersonManager r = PersonManager.getManager();
 			_testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), USER_ID, "dbSecurity");
-
-			TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity").setPassword(_testPerson,
-				USER_PASSWORD.toCharArray());
+			_testPerson.getAuthenticationDevice().setPassword(_testPerson, USER_PASSWORD.toCharArray());
 			tx.commit();
 		}
 	}

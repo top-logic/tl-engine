@@ -3471,10 +3471,9 @@ services.form = {
 		
 		setItemInactive: function(item) {
 			item.classList.remove(this.actItemCl);
-			
 			const mouseleaveEvent = new Event('mouseleave', { 'bubbles': true });
-			item.dispatchEvent(mouseleaveEvent);
 			const mouseoutEvent = new Event('mouseout', { 'bubbles': true });
+			item.dispatchEvent(mouseleaveEvent);
 			item.dispatchEvent(mouseoutEvent);
 		},
 

@@ -1000,7 +1000,7 @@ public class EditorFactory implements AnnotationCustomizations {
 
 		private PropertyDescriptor searchPropertyByNormalizedName(String searchedName) {
 			for (PropertyDescriptor property : _descriptor.getProperties()) {
-				if (normalizeFieldName(property.getPropertyName()).equals(searchedName)) {
+				if (fieldName(property).equals(searchedName)) {
 					return property;
 				}
 			}

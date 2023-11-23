@@ -1178,7 +1178,7 @@ public class Fields {
 	 */
 	public static FormGroup group(FormContainer parent, AnnotationCustomizations annotationCustomizations,
 			PropertyDescriptor property) {
-		FormGroup group = group(parent, normalizeFieldName(property.getPropertyName()));
+		FormGroup group = group(parent, fieldName(property));
 		boolean displayMinimized = displayMinimized(annotationCustomizations, property);
 		group.setCollapsed(displayMinimized);
 		return group;
@@ -1593,6 +1593,14 @@ public class Fields {
 		} else {
 			return annotation.value();
 		}
+	}
+
+	/**
+	 * Determines the default {@link FormField#getName() name} for a field holding the value for the
+	 * given {@link PropertyDescriptor}.
+	 */
+	public static String fieldName(PropertyDescriptor property) {
+		return normalizeFieldName(property.getPropertyName());
 	}
 
 	/** {@link FormMember} don't allow the dot in their name. */

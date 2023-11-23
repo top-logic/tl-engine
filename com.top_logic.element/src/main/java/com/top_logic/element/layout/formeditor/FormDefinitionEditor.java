@@ -56,7 +56,7 @@ public class FormDefinitionEditor implements Editor {
 		ConfigurationItem configItem = model.getModel();
 		PropertyDescriptor typeProperty = getTypeProperty(configItem, property);
 		
-		CommandField commandField = new CommandField(normalizeFieldName(property.getPropertyName())) {
+		CommandField commandField = new CommandField(fieldName(property)) {
 
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {

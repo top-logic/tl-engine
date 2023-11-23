@@ -6,14 +6,13 @@
 package com.top_logic.element.i18n;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.tag.DisplayProvider;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.TextInputControl;
-import com.top_logic.layout.form.i18n.I18NStringControlProvider;
-import com.top_logic.layout.form.template.FormTemplateConstants;
+import com.top_logic.layout.form.i18n.I18NActiveLanguageControlProvider;
+import com.top_logic.layout.form.i18n.I18NStringField;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.MultiLine;
@@ -27,33 +26,41 @@ public class I18NStringTagProvider implements DisplayProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
-		return cp(editContext).createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+		I18NStringField i18n = (I18NStringField) member;
+		int rows = rows(editContext, i18n.isMultiline());
+		int columns = columns(editContext);
+		return newControl(i18n, rows, columns);
 	}
 
 	@Override
 	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		return cp(editContext).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
+		I18NStringField i18n = (I18NStringField) member;
+		int rows = rows(editContext, i18n.isMultiline());
+		int columns = columns(editContext);
+		return newControl(i18n, rows, columns);
 	}
 
-	private I18NStringControlProvider cp(EditContext editContext) {
+	private int columns(EditContext editContext) {
+		return DisplayAnnotations.inputSize(editContext, TextInputControl.NO_COLUMNS);
+	}
+
+	private int rows(EditContext editContext, boolean multiline) {
 		int rows;
-		boolean multiline;
-		if (AttributeOperations.isMultiline(editContext) && !editContext.isSearchUpdate()) {
+		if (multiline) {
 			MultiLine annotation = editContext.getAnnotation(MultiLine.class);
 			if (annotation != null) {
 				rows = annotation.getRows();
 			} else {
 				rows = MultiLineText.DEFAULT_ROWS;
 			}
-
-			multiline = true;
 		} else {
 			rows = 0;
-			multiline = false;
 		}
-		I18NStringControlProvider i18nStringControlProvider = new I18NStringControlProvider(multiline, rows,
-			DisplayAnnotations.inputSize(editContext, TextInputControl.NO_COLUMNS));
-		return i18nStringControlProvider;
+		return rows;
+	}
+
+	private Control newControl(I18NStringField i18n, int rows, int columns) {
+		return new I18NActiveLanguageControlProvider(rows, columns).createControl(i18n);
 	}
 
 }

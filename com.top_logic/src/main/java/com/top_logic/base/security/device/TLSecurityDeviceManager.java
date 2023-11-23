@@ -200,7 +200,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 			String id = entry.getKey();
 			SecurityDevice device = entry.getValue();
 
-			SecurityDevice.Config deviceConfig = device.getConfig();
+			SecurityDevice.Config<?> deviceConfig = device.getConfig();
 			if (deviceConfig.isDisabled()) {
 				continue;
 			}
@@ -210,9 +210,6 @@ public class TLSecurityDeviceManager extends ManagedClass {
 			}
 
 			result.put(id, (PersonDataAccessDevice) device);
-		}
-		if (result.isEmpty()) {
-			log.error("No data access device configured.");
 		}
 		return result;
 	}

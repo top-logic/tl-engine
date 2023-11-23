@@ -10,12 +10,17 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.tag.DisplayProvider;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.EmptyRenderer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.template.FormTemplateConstants;
+import com.top_logic.layout.form.control.OnVisibleControl;
+import com.top_logic.layout.form.control.PopupEditControl.Settings;
+import com.top_logic.layout.form.i18n.I18NField;
+import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil;
 import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil.AbstractFieldTranslator;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextWithButtonControl;
 
 /**
  * {@link DisplayProvider} for I18N HTML attributes.
@@ -26,14 +31,27 @@ public class I18NStructuredTextTagProvider implements DisplayProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
-		return I18NStructuredTextControlProvider.INSTANCE.createControl(member,
-			FormTemplateConstants.STYLE_DIRECT_VALUE);
+		return newControl((I18NStructuredTextField) member);
 	}
 
 	@Override
 	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		return I18NStructuredTextControlProvider.INSTANCE.createFragment(member,
-			FormTemplateConstants.STYLE_DIRECT_VALUE);
+		return newControl((I18NStructuredTextField) member);
+	}
+
+	private Control newControl(I18NStructuredTextField i18n) {
+		FormField sourceField = I18NTranslationUtil.getSourceField(i18n.getLanguageFields());
+		StructuredTextWithButtonControl sourceControl = new StructuredTextWithButtonControl(sourceField);
+		sourceControl.setButton(openPopup(i18n));
+		OnVisibleControl block = new OnVisibleControl(i18n);
+		block.addChild(sourceControl);
+		return block;
+	}
+
+	private HTMLFragment openPopup(I18NField<?, ?, ?> i18n) {
+		Settings settings = new Settings()
+			.setFirstLineRenderer(EmptyRenderer.getInstance());
+		return new I18NStructuredTextPopupControl(settings, i18n);
 	}
 
 	/**

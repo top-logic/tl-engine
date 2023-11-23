@@ -237,33 +237,27 @@ div.mcMinimized .sblTitle img {
 	right: 5px;
 }
 
-.quickSearchTitle.accText {
-	margin-top: var(--spacing-03);
-}
-
-.quickSearchTitle.accText .quickSearch input {
-	border-right: 1px solid var(--border-subtle);
-}
-
-.quickSearchTitle.accText .quickSearch {
-	border: 1px solid var(--border-subtle);
-}
-
 .quickSearch .cTextInput {
 	flex-grow: 2;
+}
+
+.quickSearch {
 	border: 1px solid var(--border-subtle);
 }
 
-.quickSearchTitle.accText .quickSearch .cButton.quickSearchButton {
-    background: transparent;
-    box-shadow: none;
-    border-top: 1px solid var(--border-subtle);
-    border-right: 1px solid var(--border-subtle);
-    border-bottom: 1px solid var(--border-subtle);
+.quickSearch .cButton.quickSearchButton a.input-image {
+    border-radius: 0;
 }
 
-.quickSearchTitle.accText .quickSearch .cButton.quickSearchButton a {
-    border-radius: 0;
+.quickSearch .cButton.quickSearchButton {
+    background: transparent;
+    box-shadow: none;
+	border-radius: 0;
+    border-left: 1px solid var(--border-subtle);
+}
+
+.quickSearchTitle.accText {
+	margin-top: var(--spacing-03);
 }
 
 div.licenseView {
@@ -2192,19 +2186,9 @@ If they're deleted, this can be deleted too
 .tcrNode .treeNode {
 	display: flex;
 	align-items: center;
-	position: relative;
 	min-height: 2rem;
 	padding-right: var(--spacing-03);
 	padding-left: var(--spacing-03);
-}
-
-.tcrNode .treeNode::after,
-.tcrNode .treeNode.treeSelected::after {
-	height: 100%;
-	content: "";
-    position: absolute;
-    transform: translateX(-100%);
-    width: 100%;
 }
 
 .treeChildren {
@@ -2218,13 +2202,13 @@ If they're deleted, this can be deleted too
 	letter-spacing: var(--body-01-letter-spacing);
 	color: var(--text-secodnary);
 	word-break: break-all;
+	margin-left: var(--spacing-02);
 }
 
 .treeNode .fToggle,
 .fToggle.tcrToggle, .tlLeafIcon,
 .tcrNode .treeNode span {
 	color: var(--icon-secondary);
-	margin-right: var(--spacing-02);
 }
 
 .treeNode .input-image.fToggle.disabled {

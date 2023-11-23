@@ -1789,10 +1789,14 @@ span.bcc-option, .cChoice-option {
 	cursor: default;
 }
 
-.fltSubContent .cSelectOption,
-.fltSubContent .cCheckbox {
+.cSelectOption,
+.cCheckbox {
 	display: inline-flex;
 	align-items: center;
+}
+
+.fltSubContent .cSelectOption,
+.fltSubContent .cCheckbox {
   	padding: 0;
   	vertical-align: middle;
 }

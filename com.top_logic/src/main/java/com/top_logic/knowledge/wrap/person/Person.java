@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.services.InitialGroupManager;
@@ -235,6 +236,17 @@ public class Person extends AbstractBoundWrapper implements Author {
 	public String getAuthenticationDeviceID() {
 		return tGetDataString(Person.AUTHENTICATION_DEVICE_ID);
     }
+
+	/**
+	 * The {@link AuthenticationDevice} responsible for authenticating this {@link Person}.
+	 */
+	public AuthenticationDevice getAuthenticationDevice() {
+		String authDevice = getAuthenticationDeviceID();
+		if (StringServices.isEmpty(authDevice)) {
+			return null;
+		}
+		return TLSecurityDeviceManager.getInstance().getAuthenticationDevice(authDevice);
+	}
 
 	/**
 	 * The ID of the {@link PersonDataAccessDevice} that created this account.

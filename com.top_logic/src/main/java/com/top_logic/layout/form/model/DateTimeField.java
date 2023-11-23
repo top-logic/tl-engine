@@ -759,20 +759,24 @@ public class DateTimeField extends CompositeField {
 
 	@Override
 	public boolean checkConstraints() {
-		boolean result = true;
-		result &= getDayField().checkConstraints();
-		result &= getTimeField().checkConstraints();
-		result &= super.checkConstraints();
-		return result;
+		if (!getDayField().checkConstraints()) {
+			return false;
+		}
+		if (!getTimeField().checkConstraints()) {
+			return false;
+		}
+		return super.checkConstraints();
 	}
 
 	@Override
 	public boolean checkConstraints(Object value) {
-		boolean result = true;
-		result &= getDayField().checkConstraints(value);
-		result &= getTimeField().checkConstraints(value);
-		result &= super.checkConstraints(value);
-		return result;
+		if (!getDayField().checkConstraints(value)) {
+			return false;
+		}
+		if (!getTimeField().checkConstraints(value)) {
+			return false;
+		}
+		return super.checkConstraints(value);
 	}
 
 	@Override

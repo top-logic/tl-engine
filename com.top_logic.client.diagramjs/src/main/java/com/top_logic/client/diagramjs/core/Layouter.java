@@ -36,7 +36,7 @@ public class Layouter extends JavaScriptObject {
 	 * be shown with a special styling in order to recognize them, otherwise false.
 	 * 
 	 * <p>
-	 * see SVGDrawUtil.js#setVisibilityStyles
+	 * see <code>SVGDrawUtil.js#setVisibilityStyles</code>
 	 * </p>
 	 */
 	public final native boolean showHiddenElements() /*-{

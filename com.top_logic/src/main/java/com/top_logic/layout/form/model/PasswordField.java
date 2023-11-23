@@ -38,25 +38,25 @@ public class PasswordField extends AbstractFormField {
 	}
 
 	@Override
-	protected Object narrowValue(Object aValue) {
+	protected Object narrowValue(Object value) {
 		// Local temporary variable prevents the "unnecessary" cast warning.
-		Password result = (Password) aValue;
+		Password result = (Password) value;
 		return result;
 	}
 
 	@Override
-	protected Object parseRawValue(Object aRawValue) throws CheckException {
-		if (aRawValue == NO_RAW_VALUE) {
+	protected Object parseRawValue(Object rawValue) throws CheckException {
+		if (rawValue == NO_RAW_VALUE) {
 			return null;
 		} else {
-			String plainText = (String) aRawValue;
+			String plainText = (String) rawValue;
 			return Password.fromPlainText(plainText);
 		}
 	}
 
 	@Override
-	protected Object unparseValue(Object aValue) {
-		if (aValue == null) {
+	protected Object unparseValue(Object value) {
+		if (value == null) {
 			return NO_RAW_VALUE;
 		}
 		return Password.PASSWORD_REPLACEMENT;

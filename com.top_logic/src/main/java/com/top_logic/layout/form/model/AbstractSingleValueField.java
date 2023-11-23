@@ -38,11 +38,11 @@ public abstract class AbstractSingleValueField extends AbstractFormField impleme
 	 * @see AbstractFormField#parseRawValue(Object)
 	 */
 	@Override
-	protected Object parseRawValue(Object aRawValue) throws CheckException {
-		if (aRawValue == NO_RAW_VALUE) {
+	protected Object parseRawValue(Object rawValue) throws CheckException {
+		if (rawValue == NO_RAW_VALUE) {
 			return EMPTY_INPUT;
 		} else {
-			return parseString((String) aRawValue);
+			return parseString((String) rawValue);
 		}
 	}
 
@@ -57,8 +57,8 @@ public abstract class AbstractSingleValueField extends AbstractFormField impleme
 	 * @see AbstractFormField#parseRawValue(Object)
 	 */
 	@Override
-	protected final Object unparseValue(Object aValue) {
-		return unparseString(aValue);
+	protected final Object unparseValue(Object value) {
+		return unparseString(value);
 	}
 	
 	@Override

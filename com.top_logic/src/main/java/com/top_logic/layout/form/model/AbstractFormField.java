@@ -52,7 +52,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     /** 
 	 * Constant that represents "no input" from the client-side.
 	 * 
-	 * @see #rawValue
+	 * @see #_rawValue
 	 */
 	public static final Object NO_RAW_VALUE = null;
 
@@ -141,7 +141,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     private boolean normalizeInput;
     
     /** The original value transmitted from the client-side view of this {@link FormField}. */
-    private Object rawValue = NO_RAW_VALUE;
+    private Object _rawValue = NO_RAW_VALUE;
 	
     /** 
      * The default value of this field. 
@@ -149,7 +149,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 * <p>
 	 * A field with a default value can be reset to this value with a call 
 	 * to {@link #reset()}. The default value is also the value to which the 
-	 * current value (see {@link #value}) is compared by {@link #isChanged()}. 
+	 * current value (see {@link #_value}) is compared by {@link #isChanged()}. 
 	 * </p>
      */
     private Object defaultValue;
@@ -157,14 +157,14 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     /** 
 	 * The application value of this field. 
 	 * 
-	 * As opposed to the {@link #rawValue raw input value}, the application 
+	 * As opposed to the {@link #_rawValue raw input value}, the application 
 	 * value is an application object that is parsed by this field from the 
 	 * user's input (see {@link #parseRawValue(Object)} ).
 	 */
-    private Object value;
+    private Object _value;
 
     /** 
-	 * An optional application value (of the same type as {@link #value}) 
+	 * An optional application value (of the same type as {@link #_value}) 
 	 * that can be used to construct those error messages that help the user to 
 	 * format its input in a way that can be parsed by this field. 
 	 */
@@ -198,7 +198,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     
     /**
 	 * Set of {@link AbstractFormField}s with fields that must be
-	 * {@link #check() re-checked}, if the {@link #value} of this field
+	 * {@link #check() re-checked}, if the {@link #_value} of this field
 	 * changes.
 	 * 
 	 * <p>
@@ -459,7 +459,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		if (!hasValue()) {
 			return narrowValue(null);
 		}
-    	return this.value;
+    	return this._value;
     }
 
 	/**
@@ -468,7 +468,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 * @see #getValue()
 	 */
 	protected final Object getStoredValue() {
-		return this.value;
+		return this._value;
 	}
 
     @Override
@@ -568,7 +568,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 
     @Override
 	public final Object getRawValue() {
-        return rawValue;
+        return _rawValue;
     }
 
     @Override
@@ -784,7 +784,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 * A normalizing field overwrites the user's input with a (re-)formatted 
 	 * version, after the input was accepted by the field. The user input is accepted
 	 * by this field, if the input could be parsed to an application value (see 
-	 * {@link #value}). The normalization occurs during the process of checking the 
+	 * {@link #_value}). The normalization occurs during the process of checking the 
 	 * input value (see {@link #check()}. Invalid input (which could not be parsed) 
 	 * is never overwritten.
 	 * </p>
@@ -815,7 +815,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		// is inactive.
     	assert listensForUpdate() : "!listensForUpdate()";
     	
-    	if (! Utils.equals(rawValue, newRawValue)) {
+    	if (! Utils.equals(_rawValue, newRawValue)) {
     		processInput(newRawValue, false);
     	}
     }
@@ -828,7 +828,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     	try {
     		// Again parse the current raw value, but pretending that this is a
 			// programmatic update.
-			processInput(this.rawValue, true);
+			processInput(this._rawValue, true);
 		} catch (VetoException ex) {
 			// New value was rejected even if the update was flagged as 
 			// programmatic update.
@@ -890,9 +890,9 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 * Entry point of the parse chain for this field.
 	 * 
 	 * <p>
-	 * The parsing algorithm (which transforms the {@link #rawValue raw value}
+	 * The parsing algorithm (which transforms the {@link #_rawValue raw value}
 	 * feed from the user interface into this field to an
-	 * {@link #value application value}) is formulated in terms of the abstract
+	 * {@link #_value application value}) is formulated in terms of the abstract
 	 * methods {@link #parseRawValue(Object)} and
 	 * {@link #unparseValue(Object)}.
 	 * </p>
@@ -971,7 +971,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 				throw ex;
 			}
 			
-			if (!Utils.equals(rawValue, newRawValue)) {
+			if (!Utils.equals(_rawValue, newRawValue)) {
 				// A value listener has updated the value in a recursive call. Do not revert its
 				// changes.
 				return;
@@ -1021,9 +1021,9 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 */
     private final void locallyCheck() {
 		try {
-			if (checkValue(value)) {
+			if (checkValue(_value)) {
 				setState(VALID_STATE);
-				internalSetWarnings(checkWarnings(value));
+				internalSetWarnings(checkWarnings(_value));
 			} else {
 				setState(WAIT_STATE);
 			}
@@ -1114,7 +1114,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 */
 	private void fireValueChanged(Object oldValue) {
 		if (oldValue != VALUE_UNCHANGED) {
-			fireValueChanged(oldValue, this.value);
+			fireValueChanged(oldValue, this._value);
 		}
 	}
 
@@ -1136,7 +1136,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 * @see #fireValueChanged(Object)
 	 */
 	private final Object storeValue(Object newValue, boolean programmaticUpdate) throws VetoException {
-		Object oldValue = this.value;
+		Object oldValue = this._value;
 
 		if (Utils.equals(oldValue, newValue)) {
 			return VALUE_UNCHANGED;
@@ -1149,7 +1149,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		recordFieldInput(newValue, programmaticUpdate);
 
 		boolean changed = isChanged();
-		this.value = newValue;
+		this._value = newValue;
 		checkChanged(changed);
 		
 		return oldValue;
@@ -1167,8 +1167,8 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 * Stores the given value as new "raw value" and returns the old "raw value".
 	 */
 	protected final Object storeRawValue(Object newRawValue) {
-		Object oldRawValue = this.rawValue;
-    	this.rawValue = newRawValue;
+		Object oldRawValue = this._rawValue;
+    	this._rawValue = newRawValue;
 		return oldRawValue;
 	}
 
@@ -1179,27 +1179,27 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	}
 
 	/**
-	 * Parses the given {@link #rawValue raw input value} into an
-	 * {@link #value application object} that is type compatible (see
+	 * Parses the given {@link #_rawValue raw input value} into an
+	 * {@link #_value application object} that is type compatible (see
 	 * {@link #narrowValue(Object)} with this field. E.g. an {@link IntField}
 	 * would return an {@link Integer}, while a {@link ComplexField} defines
 	 * its type by its associated {@link Format}.
 	 * 
-	 * @param aRawValue
+	 * @param rawValue
 	 *     The new raw input value.
 	 * @return The new application object.
 	 * 
 	 * @throws CheckException
 	 *     If parsing fails due to illegal input.
 	 */
-    protected abstract Object parseRawValue(Object aRawValue) throws CheckException;
+    protected abstract Object parseRawValue(Object rawValue) throws CheckException;
 
     /**
 	 * Transforms the given application object back into a raw value that can
 	 * be passed to the user interface (the client-side representation of this
 	 * form field).
 	 * 
-	 * @param aValue
+	 * @param value
 	 *     The application value to unparse.
 	 * @return The (normalized) raw value that would be parsed to the given
 	 *     application object, when passed to
@@ -1207,7 +1207,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 *     
 	 * @see #parseRawValue(Object) for the inverse operation.
 	 */
-    protected abstract Object unparseValue(Object aValue);
+    protected abstract Object unparseValue(Object value);
 
     /**
 	 * Checks the given value for type compatibility with this field.
@@ -1227,12 +1227,12 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 * programmatically set on this field.
 	 * </p>
 	 * 
-	 * @param aValue
+	 * @param value
 	 *     An application value
 	 * @return
 	 *     The given value or a normalized version of it.
 	 */
-    protected abstract Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException;
+    protected abstract Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException;
 
 	/**
 	 * Sets the {@link #setDefaultValue(Object) default value} of this field and {@link #reset()
@@ -1274,7 +1274,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		 * Can not access '#getValue()' as the field may be in an invalid state. As events are fired
 		 * at each time the pointer 'value' is assigned, it makes sense to check that value.
 		 */
-		Object currentValue = this.value;
+		Object currentValue = this._value;
 		Object currentDefault = getDefaultValue();
 
 		return !CollectionUtil.equals(currentDefault, currentValue);

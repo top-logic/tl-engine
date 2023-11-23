@@ -516,10 +516,4 @@ public class RenderedObjectsTemplateProvider
 		return Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none()).setCssClass("locked");
 	}
 
-	@Override
-	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext)
-			throws IOException {
-		writeContents(context, out, renderContext);
-	}
-
 }

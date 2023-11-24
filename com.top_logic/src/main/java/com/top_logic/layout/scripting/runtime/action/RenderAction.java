@@ -34,11 +34,11 @@ public class RenderAction extends AbstractApplicationActionOp<ApplicationAction>
 		if (testSession != null) {
 			SubsessionHandler layoutContext = (SubsessionHandler) context.getDisplayContext().getLayoutContext();
 
-			boolean updatesEnabled = layoutContext.isInCommandPhase();
+			boolean before = layoutContext.enableUpdate(false);
 			try {
 				testSession.render();
 			} finally {
-				layoutContext.enableUpdate(updatesEnabled);
+				layoutContext.enableUpdate(before);
 			}
 		}
 		return argument;

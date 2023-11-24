@@ -24,7 +24,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonBinding;
 import com.top_logic.basic.config.json.JsonValueBinding;
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 
@@ -81,7 +80,7 @@ public interface WithSecurity extends ConfigurationItem {
 
 		@Override
 		protected String getSpecificationNonNull(Map<String, List<String>> configValue) {
-			StringW out = new StringW();
+			StringBuilder out = new StringBuilder();
 			try (JsonWriter w = new JsonWriter(out)) {
 				SecurityJsonBinding.saveSecurityConfig(w, configValue);
 			} catch (IOException ex) {

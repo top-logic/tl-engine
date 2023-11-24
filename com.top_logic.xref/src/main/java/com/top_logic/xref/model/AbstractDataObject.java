@@ -5,7 +5,6 @@ package com.top_logic.xref.model;
 
 import java.io.IOException;
 
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 
@@ -94,7 +93,7 @@ abstract class AbstractDataObject {
 	public abstract void writeTo(JsonWriter out) throws IOException;
 
 	private String toJson() {
-		StringW out = new StringW();
+		StringBuilder out = new StringBuilder();
 		try {
 			writeTo(new JsonWriter(out));
 		} catch (IOException ex) {

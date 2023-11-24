@@ -17,7 +17,6 @@ import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.common.remote.shared.ObjectScope;
@@ -160,7 +159,7 @@ public abstract class AbstractGraphControl extends AbstractControlBase implement
 		if (!hasGraph()) {
 			return StringServices.EMPTY_STRING;
 		}
-		StringW buffer = new StringW();
+		StringBuilder buffer = new StringBuilder();
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			getGraphScope().writeTo(json);
 		}

@@ -20,8 +20,6 @@ import org.apache.commons.io.function.IOConsumer;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
-import com.top_logic.basic.shared.io.W;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.common.json.gstream.MalformedJsonException;
@@ -242,7 +240,7 @@ public class JsonUtilities {
 	 * @return The serialized content.
 	 */
 	public static String writeJSONContent(IOConsumer<JsonWriter> content) {
-		W out = new StringW();
+		StringBuilder out = new StringBuilder();
 		try (JsonWriter json = new JsonWriter(out)) {
 			content.accept(json);
 		} catch (IOException ex) {

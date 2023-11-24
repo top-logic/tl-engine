@@ -48,7 +48,6 @@ import javax.tools.JavaFileManager.Location;
 import javax.tools.StandardLocation;
 
 import com.top_logic.common.json.adapt.ReaderR;
-import com.top_logic.common.json.adapt.WriterW;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.xref.model.AnnotationInfo;
@@ -167,7 +166,7 @@ public final class TypeIndexer extends AbstractProcessor
 
 				FileObject resource = filer.createResource(location, pkg, indexName);
 				try (Writer writer = resource.openWriter()) {
-					typeIndex.writeContent(new JsonWriter(new WriterW(writer)));
+					typeIndex.writeContent(new JsonWriter(writer));
 				}
 			}
 

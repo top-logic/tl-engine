@@ -34,7 +34,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.character.CharacterContent;
-import com.top_logic.basic.io.rw.ReaderR;
+import com.top_logic.common.json.adapt.ReaderR;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonToken;
 

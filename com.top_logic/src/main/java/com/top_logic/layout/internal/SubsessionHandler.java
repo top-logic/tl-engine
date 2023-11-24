@@ -202,7 +202,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 				}
 				gotoArguments.remove(ContentHandlersRegistry.LAYOUT_PARAMETER);
 				if (!gotoArguments.isEmpty()) {
-					enableUpdate(true);
+					boolean before = enableUpdate(true);
 					try {
 						try {
 							CommandHandlerUtil.handleCommand(handler, context, mainLayout, gotoArguments);
@@ -212,7 +212,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 						}
 						mainLayout.globallyValidateModel(context);
 					} finally {
-						enableUpdate(false);
+						enableUpdate(before);
 					}
 				}
 			}
@@ -264,7 +264,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	}
 
 	private void validateMainLayout(DisplayContext context, MainLayout mainLayout) {
-		enableUpdate(true);
+		boolean before = enableUpdate(true);
 		try {
 			/* Ensure that the MainLayout is context component, because the request is actually
 			 * processed by MainLayout. */
@@ -287,7 +287,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 		} catch (Throwable ex) {
 			InfoService.logError(context, I18NConstants.ERROR_VIEW_CREATION, ex, SubsessionHandler.class);
 		} finally {
-			enableUpdate(false);
+			enableUpdate(before);
 		}
 	}
 

@@ -12,7 +12,6 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.config.json.JsonValueBinding;
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 
@@ -40,7 +39,7 @@ public class SchemaJsonBinding implements JsonValueBinding<String> {
 
 	@Override
 	public String loadConfigItem(PropertyDescriptor property, JsonReader in, String baseValue) throws IOException, ConfigurationException {
-		StringW out = new StringW();
+		StringBuilder out = new StringBuilder();
 		try (JsonWriter w = new JsonWriter(out)) {
 			JsonUtilities.copyNextJsonElement(in, w);
 		}

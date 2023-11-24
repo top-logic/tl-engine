@@ -8,7 +8,6 @@ package com.top_logic.common.remote.update;
 import java.io.IOException;
 
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 
@@ -30,7 +29,7 @@ public class ChangeIO {
 	 * @return Never null.
 	 */
 	public static String writeChanges(Changes changes) {
-		StringW buffer = new StringW();
+		StringBuilder buffer = new StringBuilder();
 		try (JsonWriter jsonWriter = new JsonWriter(buffer)) {
 			changes.writeTo(jsonWriter);
 		} catch (IOException ex) {

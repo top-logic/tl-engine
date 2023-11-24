@@ -423,7 +423,9 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	}
 
 	private final void checkUpdateDisabled() {
-		assert !this.updateEnabled : "Must have updates disabled.";
+		if (this.updateEnabled) {
+			throw new IllegalStateException("Must have updates disabled.");
+		}
 	}
 
 	private synchronized void finishLogin(DisplayContext displayContext) {

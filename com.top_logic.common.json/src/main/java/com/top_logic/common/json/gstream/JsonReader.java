@@ -17,7 +17,6 @@
 package com.top_logic.common.json.gstream;
 
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
@@ -1454,7 +1453,7 @@ public class JsonReader implements Closeable {
       }
     }
     if (throwOnEof) {
-      throw new EOFException("End of input" + locationString());
+      throw new IOException("End of input" + locationString());
     } else {
       return -1;
     }

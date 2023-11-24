@@ -669,6 +669,9 @@ public class AJAXServlet extends TopLogicServlet {
         // a logging request modifies the client document.
 		if (mustRunSingleThreaded(ajaxRequest)) {
 			validate(context, rootHandler, mainLayout, writer, processExternalModelEvents);
+		} else {
+			// everyone mentions it is valid
+			rootHandler.enableUpdate(false);
         }
 	}
 

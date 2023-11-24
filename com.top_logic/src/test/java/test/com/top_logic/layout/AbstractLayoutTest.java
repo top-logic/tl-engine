@@ -9,6 +9,8 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.junit.Assert;
+
 import test.com.top_logic.ComponentTestUtils;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -79,7 +81,12 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		
 		ContentHandlersRegistry urlContext = new ContentHandlersRegistry();
 		WindowId windowId = new WindowId("test");
-		SubsessionHandler layoutContext = new SubsessionHandler(urlContext, windowId, null, null);
+		SubsessionHandler layoutContext = new SubsessionHandler(urlContext, windowId, null, null) {
+			@Override
+			protected void errorStateModification() {
+				Assert.fail("State modification during rendering.");
+			}
+		};
 		TLContextManager.initLayoutContext(subSession, layoutContext);
 
 		// Simulate initial rendering to set up URL contexts.

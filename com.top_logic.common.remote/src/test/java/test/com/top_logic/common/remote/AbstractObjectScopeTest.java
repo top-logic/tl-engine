@@ -10,8 +10,6 @@ import java.io.IOException;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
-import com.top_logic.basic.shared.io.W;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.common.remote.shared.ObjectScope;
@@ -62,7 +60,7 @@ public abstract class AbstractObjectScopeTest extends TestCase {
 	 * Transports changes from the source scope into the destination scope.
 	 */
 	protected void transport(ObjectScope src, ObjectScope dest) throws IOException {
-		W buffer = new StringW();
+		StringBuilder buffer = new StringBuilder();
 		src.popChanges().writeTo(new JsonWriter(buffer));
 
 		Changes changes = Changes.loadChanges(new JsonReader(new StringR(buffer.toString())));

@@ -30,8 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
-import com.top_logic.basic.shared.io.W;
-
 /**
  * Writes a JSON (<a href="http://www.ietf.org/rfc/rfc7159.txt">RFC 7159</a>)
  * encoded value to a stream, one token at a time. The stream includes both
@@ -167,7 +165,7 @@ public class JsonWriter implements Closeable, Flushable {
   }
 
   /** The JSON output destination */
-  private final W out;
+  private final Appendable out;
 
   private int[] stack = new int[32];
   private int stackSize = 0;
@@ -199,7 +197,7 @@ public class JsonWriter implements Closeable, Flushable {
    * For best performance, ensure {@link Writer} is buffered; wrapping in
    * {@link java.io.BufferedWriter BufferedWriter} if necessary.
    */
-  public JsonWriter(W out) {
+  public JsonWriter(Appendable out) {
     this.out = Objects.requireNonNull(out, "out == null");
   }
 
@@ -324,7 +322,7 @@ public class JsonWriter implements Closeable, Flushable {
   private JsonWriter open(int empty, char openBracket) throws IOException {
     beforeValue();
     push(empty);
-    out.write(openBracket);
+    out.append(openBracket);
     return this;
   }
 
@@ -346,7 +344,7 @@ public class JsonWriter implements Closeable, Flushable {
     if (context == nonempty) {
       newline();
     }
-    out.write(closeBracket);
+    out.append(closeBracket);
     return this;
   }
 
@@ -433,7 +431,7 @@ public class JsonWriter implements Closeable, Flushable {
     }
     writeDeferredName();
     beforeValue();
-	out.write(value);
+	out.append(value);
     return this;
   }
 
@@ -452,7 +450,7 @@ public class JsonWriter implements Closeable, Flushable {
       }
     }
     beforeValue();
-    out.write("null");
+    out.append("null");
     return this;
   }
 
@@ -464,7 +462,7 @@ public class JsonWriter implements Closeable, Flushable {
   public JsonWriter value(boolean value) throws IOException {
     writeDeferredName();
     beforeValue();
-    out.write(value ? "true" : "false");
+    out.append(value ? "true" : "false");
     return this;
   }
 
@@ -480,7 +478,7 @@ public class JsonWriter implements Closeable, Flushable {
     }
     writeDeferredName();
     beforeValue();
-    out.write(value ? "true" : "false");
+    out.append(value ? "true" : "false");
     return this;
   }
 
@@ -501,7 +499,7 @@ public class JsonWriter implements Closeable, Flushable {
       throw new IllegalArgumentException("Numeric values must be finite, but was " + value);
     }
     beforeValue();
-	out.write(Float.toString(value));
+	out.append(Float.toString(value));
     return this;
   }
 
@@ -520,7 +518,7 @@ public class JsonWriter implements Closeable, Flushable {
       throw new IllegalArgumentException("Numeric values must be finite, but was " + value);
     }
     beforeValue();
-	out.write(Double.toString(value));
+	out.append(Double.toString(value));
     return this;
   }
 
@@ -532,7 +530,7 @@ public class JsonWriter implements Closeable, Flushable {
   public JsonWriter value(long value) throws IOException {
     writeDeferredName();
     beforeValue();
-    out.write(Long.toString(value));
+    out.append(Long.toString(value));
     return this;
   }
 
@@ -578,7 +576,7 @@ public class JsonWriter implements Closeable, Flushable {
     }
 
     beforeValue();
-	out.write(string);
+	out.append(string);
     return this;
   }
 
@@ -590,7 +588,9 @@ public class JsonWriter implements Closeable, Flushable {
     if (stackSize == 0) {
       throw new IllegalStateException("JsonWriter is closed.");
     }
-    out.flush();
+    if (out instanceof Flushable) {
+      ((Flushable) out).flush();
+    }
   }
 
   /**
@@ -599,7 +599,9 @@ public class JsonWriter implements Closeable, Flushable {
    * @throws IOException if the JSON document is incomplete.
    */
   @Override public void close() throws IOException {
-    out.close();
+    if (out instanceof Closeable) {
+      ((Closeable) out).close();
+    }
 
     int size = stackSize;
     if (size > 1 || size == 1 && stack[size - 1] != NONEMPTY_DOCUMENT) {
@@ -610,7 +612,7 @@ public class JsonWriter implements Closeable, Flushable {
 
   private void string(String value) throws IOException {
     String[] replacements = htmlSafe ? HTML_SAFE_REPLACEMENT_CHARS : REPLACEMENT_CHARS;
-    out.write('\"');
+    out.append('\"');
     int last = 0;
     int length = value.length();
     for (int i = 0; i < length; i++) {
@@ -629,15 +631,15 @@ public class JsonWriter implements Closeable, Flushable {
         continue;
       }
       if (last < i) {
-        out.write(value, last, i - last);
+        out.append(value, last, i - last);
       }
-      out.write(replacement);
+      out.append(replacement);
       last = i + 1;
     }
     if (last < length) {
-      out.write(value, last, length - last);
+      out.append(value, last, length - last);
     }
-    out.write('\"');
+    out.append('\"');
   }
 
   private void newline() throws IOException {
@@ -645,9 +647,9 @@ public class JsonWriter implements Closeable, Flushable {
       return;
     }
 
-    out.write('\n');
+    out.append('\n');
     for (int i = 1, size = stackSize; i < size; i++) {
-      out.write(indent);
+      out.append(indent);
     }
   }
 
@@ -658,7 +660,7 @@ public class JsonWriter implements Closeable, Flushable {
   private void beforeName() throws IOException {
     int context = peek();
     if (context == NONEMPTY_OBJECT) { // first in object
-      out.write(',');
+      out.append(',');
     } else if (context != EMPTY_OBJECT) { // not in an object!
       throw new IllegalStateException("Nesting problem.");
     }
@@ -690,12 +692,12 @@ public class JsonWriter implements Closeable, Flushable {
       break;
 
     case NONEMPTY_ARRAY: // another in array
-      out.write(',');
+      out.append(',');
       newline();
       break;
 
     case DANGLING_NAME: // value for name
-      out.write(separator);
+      out.append(separator);
       replaceTop(NONEMPTY_OBJECT);
       break;
 

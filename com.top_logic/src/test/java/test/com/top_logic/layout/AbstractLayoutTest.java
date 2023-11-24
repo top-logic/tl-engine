@@ -97,6 +97,8 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		DefaultDisplayContext.teardownDisplayContext(null, initialDisplayContext);
 		
 		_displayContext  = createDisplayContext(subSession, component);
+
+		enableUpdates();
 	}
 
 	private AbstractDisplayContext createDisplayContext(TLSubSessionContext subSession, LayoutComponent component) {
@@ -109,19 +111,25 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		return displayContext;
 	}
 
-	protected void enableUpdates() {
-		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
-		layoutContext.enableUpdate(true);
+	protected boolean enableUpdates() {
+		return enableUpdates(true);
 	}
 
-	protected void disableUpdates() {
+	protected boolean enableUpdates(boolean enabled) {
+		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
+		return layoutContext.enableUpdate(enabled);
+	}
+
+	protected void disableUpdates(boolean before) {
 		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
 		layoutContext.processActions();
-		layoutContext.enableUpdate(false);
+		layoutContext.enableUpdate(before);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
+		disableUpdates(false);
+
 		DefaultDisplayContext.teardownDisplayContext(null, _displayContext);
 		_displayContext = null;
 		super.tearDown();

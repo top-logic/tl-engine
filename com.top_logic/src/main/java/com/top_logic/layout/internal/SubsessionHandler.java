@@ -386,10 +386,22 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	public final void checkUpdate(Object updater) {
 		if (!this.updateEnabled) {
 			if (updater != this.lastIllegalUpdateBy) {
-				Logger.error("State modification during rendering.", new Exception("Stack trace."), MainLayout.class);
+				errorStateModification();
 			}
 			this.lastIllegalUpdateBy = updater;
 		}
+	}
+
+	/**
+	 * Reports a state modification error.
+	 * 
+	 * <p>
+	 * A state modification is only allowed during the command phase of an interaction. This is
+	 * necessary to ensure that updates have a chance to be transported back to the client.
+	 * </p>
+	 */
+	protected void errorStateModification() {
+		Logger.error("State modification during rendering.", new Exception("Stack trace."), MainLayout.class);
 	}
 
 	/**

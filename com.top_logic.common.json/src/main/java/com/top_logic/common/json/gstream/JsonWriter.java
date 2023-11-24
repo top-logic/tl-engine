@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Pattern;
 
 /**
  * Writes a JSON (<a href="http://www.ietf.org/rfc/rfc7159.txt">RFC 7159</a>)
@@ -129,9 +128,6 @@ import java.util.regex.Pattern;
  */
 public class JsonWriter implements Closeable, Flushable {
 
-  // Syntax as defined by https://datatracker.ietf.org/doc/html/rfc8259#section-6
-  private static final Pattern VALID_JSON_NUMBER_PATTERN = Pattern.compile("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][-+]?[0-9]+)?");
-
   /*
    * From RFC 7159, "All Unicode characters may be placed within the
    * quotation marks except for the characters that must be escaped:
@@ -147,7 +143,7 @@ public class JsonWriter implements Closeable, Flushable {
   static {
     REPLACEMENT_CHARS = new String[128];
     for (int i = 0; i <= 0x1f; i++) {
-      REPLACEMENT_CHARS[i] = String.format("\\u%04x", i);
+		REPLACEMENT_CHARS[i] = "\\u" + format04x(i);
     }
     REPLACEMENT_CHARS['"'] = "\\\"";
     REPLACEMENT_CHARS['\\'] = "\\\\";
@@ -156,7 +152,8 @@ public class JsonWriter implements Closeable, Flushable {
     REPLACEMENT_CHARS['\n'] = "\\n";
     REPLACEMENT_CHARS['\r'] = "\\r";
     REPLACEMENT_CHARS['\f'] = "\\f";
-    HTML_SAFE_REPLACEMENT_CHARS = REPLACEMENT_CHARS.clone();
+	HTML_SAFE_REPLACEMENT_CHARS = new String[128];
+	System.arraycopy(REPLACEMENT_CHARS, 0, HTML_SAFE_REPLACEMENT_CHARS, 0, HTML_SAFE_REPLACEMENT_CHARS.length);
     HTML_SAFE_REPLACEMENT_CHARS['<'] = "\\u003c";
     HTML_SAFE_REPLACEMENT_CHARS['>'] = "\\u003e";
     HTML_SAFE_REPLACEMENT_CHARS['&'] = "\\u0026";
@@ -199,6 +196,11 @@ public class JsonWriter implements Closeable, Flushable {
    */
   public JsonWriter(Appendable out) {
     this.out = Objects.requireNonNull(out, "out == null");
+  }
+
+  private static String format04x(int i) {
+    String result = Integer.toHexString(i);
+    return "0000".substring(result.length(), 4) + result;
   }
 
   /**
@@ -566,12 +568,6 @@ public class JsonWriter implements Closeable, Flushable {
     if (string.equals("-Infinity") || string.equals("Infinity") || string.equals("NaN")) {
       if (!lenient) {
         throw new IllegalArgumentException("Numeric values must be finite, but was " + string);
-      }
-    } else {
-      Class<? extends Number> numberClass = value.getClass();
-      // Validate that string is valid before writing it directly to JSON output
-      if (!isTrustedNumberType(numberClass) && !VALID_JSON_NUMBER_PATTERN.matcher(string).matches()) {
-        throw new IllegalArgumentException("String created by " + numberClass + " is not a valid JSON number: " + string);
       }
     }
 

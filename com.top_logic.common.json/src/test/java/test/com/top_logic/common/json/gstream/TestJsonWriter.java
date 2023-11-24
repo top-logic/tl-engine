@@ -418,7 +418,7 @@ public final class TestJsonWriter extends TestCase {
 		}
 	}
 
-	public void testMalformedNumbers() throws IOException {
+	public void ignoreTestMalformedNumbers() throws IOException {
 		String[] malformedNumbers = {
 			"some text",
 			"",

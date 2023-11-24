@@ -94,9 +94,7 @@ public class TestDefaultTreeTableModel extends AbstractTreeTableModelTest<Defaul
 		});
 		assertTrue(table.getRowOfObject(child2) < table.getRowOfObject(child1));
 		assertTrue(table.getRowOfObject(child3) < table.getRowOfObject(child2));
-		enableUpdates();
 		rootNode.removeChild(rootNode.getIndex(child2));
-		disableUpdates();
 		assertEquals(-1, table.getRowOfObject(child2));
 	}
 
@@ -157,12 +155,10 @@ public class TestDefaultTreeTableModel extends AbstractTreeTableModelTest<Defaul
 		assertEquals(3, table.getRowOfObject(c1));
 		assertEquals(4, table.getRowOfObject(c2));
 
-		enableUpdates();
 		bObj.delete();
 		cObj.delete();
 		root.removeChild(root.getIndex(b));
 		root.removeChild(root.getIndex(c));
-		disableUpdates();
 
 		assertEquals(1, table.getDisplayedRows().size());
 	}

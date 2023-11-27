@@ -8,7 +8,6 @@ package com.top_logic.graph.diagramjs.server.commands;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.DisplayUnit.*;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import com.top_logic.graph.common.model.GraphPart;
 import com.top_logic.graph.common.model.Label;
 import com.top_logic.graph.common.model.Node;
 import com.top_logic.graph.common.model.impl.SharedGraph;
-import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.server.DiagramJSGraphControl;
 import com.top_logic.graph.diagramjs.server.I18NConstants;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
@@ -124,16 +122,7 @@ public class DeleteGraphPartCommand extends ControlCommand {
 		return new Command() {
 			@Override
 			public HandlerResult executeCommand(DisplayContext anInnerContext) {
-				DiagramJSGraphModel graphModel = (DiagramJSGraphModel) graph;
-				Collection<? extends GraphPart> selectedGraphParts = graphModel.getSelectedGraphParts();
-
-				HandlerResult handlerResult = removePersistentGraphPart(anInnerContext, control, tag);
-
-				if (handlerResult.isSuccess()) {
-					GraphModelUtil.removeGraphParts(graphModel, selectedGraphParts);
-				}
-
-				return handlerResult;
+				return removePersistentGraphPart(anInnerContext, control, tag);
 			}
 		};
 	}

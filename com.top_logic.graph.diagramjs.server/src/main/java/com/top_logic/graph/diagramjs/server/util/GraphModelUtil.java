@@ -30,7 +30,6 @@ import com.top_logic.graph.common.model.LabelOwner;
 import com.top_logic.graph.common.model.Node;
 import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.model.DiagramJSEdge;
-import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.model.DiagramJSLabel;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSClassNode;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSEdge;
@@ -153,6 +152,81 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return graphModel;
 	}
 
+	/**
+	 * Creates a {@link GraphPart} into the given {@link GraphModel}.
+	 * @param graph
+	 *        {@link GraphModel} which contains the created part.
+	 * @param newModel
+	 *        Business model of this graph part.
+	 * @param labelProvider
+	 *        Provider to determine labels when this graph part is displayed.
+	 * @param hiddenElements
+	 *        Collection of business objects that are hidden.
+	 * @param invisibleElements
+	 *        Collection of business objects that are invisible.
+	 */
+	public static GraphPart createGraphPart(GraphModel graph, Object newModel,
+			LabelProvider labelProvider, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
+		if (newModel instanceof TLClassProperty) {
+			TLClassProperty property = (TLClassProperty) newModel;
+
+			return createClassProperty(labelProvider, graph.getNode(property.getOwner()), property);
+		} else if (newModel instanceof TLReference) {
+			return createReference(newModel, labelProvider, graph);
+		} else if (newModel instanceof TLClass) {
+			Node node = createDiagramJSNode(labelProvider, graph, (TLType) newModel, hiddenElements, invisibleElements);
+
+			createEdgesForNewClassNode(node, labelProvider, graph);
+
+			return node;
+		} else if (newModel instanceof TLEnumeration) {
+			return createDiagramJSNode(labelProvider, graph, (TLType) newModel, hiddenElements, invisibleElements);
+		} else {
+			throw new UnsupportedOperationException("diagram part for " + newModel + " could not be created.");
+		}
+	}
+
+	private static GraphPart createReference(Object newModel, LabelProvider labelProvider, GraphModel graph) {
+		TLReference reference = (TLReference) newModel;
+
+		if (GraphModelUtil.isBackReference(reference)) {
+			return createSourceNameLabel(labelProvider, graph, reference);
+		} else {
+			return createDiagramJSEdge(labelProvider, graph, reference);
+		}
+	}
+
+	private static Label createSourceNameLabel(LabelProvider labelProvider, GraphModel graphModel,
+			TLReference reference) {
+		GraphPart graphPart = getForwardReferenceEdge(graphModel, reference);
+
+		return createSourceNameLabel(labelProvider, (Edge) graphPart, reference);
+	}
+
+	private static GraphPart getForwardReferenceEdge(GraphModel graphModel, TLReference reference) {
+		GraphPart graphPart = graphModel.getGraphPart(TLModelUtil.getForeignName(reference));
+
+		if (graphPart instanceof Label) {
+			graphPart = ((Label) graphPart).getOwner();
+		}
+
+		return graphPart;
+	}
+
+	private static void createEdgesForNewClassNode(Node node, LabelProvider labelProvider, GraphModel graph) {
+		TLClass clazz = (TLClass) node.getTag();
+
+		for (TLClass generalization : clazz.getGeneralizations()) {
+			Node target = graph.getNode(generalization);
+
+			if (target != null) {
+				TLInheritance inheritance = new TLInheritanceImpl(clazz, generalization);
+
+				createDiagramJSEdge(labelProvider, graph, inheritance, node, target);
+			}
+		}
+	}
+
 	private static void createDiagramJSNodes(LabelProvider labelProvider, LayoutGraph graph,
 			DefaultDiagramJSGraphModel graphModel,
 			Map<LayoutNode, Node> nodeCorrespondence, Collection<Object> hiddenElements,
@@ -186,13 +260,9 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	/**
-	 * @see #createDiagramJSNode(LabelProvider, GraphModel, TLType, Collection, Collection)
+	 * Sets the nodes bounds (i. e. position and dimension) of the given node.
 	 */
-	public static DefaultDiagramJSClassNode createDiagramJSNode(LabelProvider labelProvider, GraphModel graphModel,
-			TLType type, Bounds bounds, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
-		DefaultDiagramJSClassNode node =
-			createDiagramJSNode(labelProvider, graphModel, type, hiddenElements, invisibleElements);
-
+	public static void applyBounds(Node node, Bounds bounds) {
 		Position position = bounds.getPosition();
 		Dimension dimension = bounds.getDimension();
 
@@ -200,8 +270,6 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		node.setY(position.getY());
 		node.setWidth(dimension.getWidth());
 		node.setHeight(dimension.getHeight());
-
-		return node;
 	}
 
 	/**
@@ -615,10 +683,19 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	/**
-	 * Removed the graph parts from the given {@link SharedGraph}.
+	 * Removed the graph parts from the given {@link GraphModel}.
 	 */
-	public static void removeGraphParts(DiagramJSGraphModel graphModel, Collection<? extends GraphPart> graphParts) {
+	public static void removeGraphParts(GraphModel graphModel, Collection<? extends GraphPart> graphParts) {
 		for (GraphPart graphPart : graphParts) {
+			removeGraphPart(graphModel, graphPart);
+		}
+	}
+
+	/**
+	 * Removed the graph part from the given {@link GraphModel}.
+	 */
+	public static void removeGraphPart(GraphModel graphModel, GraphPart graphPart) {
+		if (graphPart != null) {
 			if (graphPart instanceof Label) {
 				removeLabel(graphModel, graphPart);
 			} else {

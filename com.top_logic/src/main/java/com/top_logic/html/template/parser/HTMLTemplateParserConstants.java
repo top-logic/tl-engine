@@ -26,33 +26,33 @@ public interface HTMLTemplateParserConstants {
   /** RegularExpression Id. */
   int EMBEDD = 5;
   /** RegularExpression Id. */
-  int TAG_START = 6;
+  int IF_TAG = 6;
   /** RegularExpression Id. */
-  int END_TAG = 7;
+  int IF_END = 7;
   /** RegularExpression Id. */
-  int TAG_NAME = 8;
+  int CHOOSE_TAG = 8;
   /** RegularExpression Id. */
-  int IF_TAG = 9;
+  int WHEN_END = 9;
   /** RegularExpression Id. */
-  int IF_END = 10;
+  int OTHERWISE_END = 10;
   /** RegularExpression Id. */
-  int CHOOSE_TAG = 11;
+  int FOREACH_TAG = 11;
   /** RegularExpression Id. */
-  int WHEN_END = 12;
+  int FOREACH_END = 12;
   /** RegularExpression Id. */
-  int OTHERWISE_END = 13;
+  int WITH_TAG = 13;
   /** RegularExpression Id. */
-  int FOREACH_TAG = 14;
+  int WITH_END = 14;
   /** RegularExpression Id. */
-  int FOREACH_END = 15;
+  int TEXT_TAG = 15;
   /** RegularExpression Id. */
-  int WITH_TAG = 16;
+  int TEXT_END = 16;
   /** RegularExpression Id. */
-  int WITH_END = 17;
+  int TAG_START = 17;
   /** RegularExpression Id. */
-  int TEXT_TAG = 18;
+  int END_TAG = 18;
   /** RegularExpression Id. */
-  int TEXT_END = 19;
+  int TAG_NAME = 19;
   /** RegularExpression Id. */
   int TEXT_CONTENT = 20;
   /** RegularExpression Id. */
@@ -154,69 +154,75 @@ public interface HTMLTemplateParserConstants {
   /** RegularExpression Id. */
   int TAG_NL = 69;
   /** RegularExpression Id. */
-  int ATTRIBUTE_NAME = 70;
+  int IF_ATTR = 70;
   /** RegularExpression Id. */
-  int IF_ATTR = 71;
+  int FOREACH_ATTR = 71;
   /** RegularExpression Id. */
-  int FOREACH_ATTR = 72;
+  int ATTRIBUTE_EQ = 72;
   /** RegularExpression Id. */
-  int ATTRIBUTE_EQ = 73;
+  int QUOT_START = 73;
   /** RegularExpression Id. */
-  int QUOT_START = 74;
+  int TAG_END = 74;
   /** RegularExpression Id. */
-  int TAG_END = 75;
+  int END_EMPTY_TAG = 75;
   /** RegularExpression Id. */
-  int END_EMPTY_TAG = 76;
+  int ATTRIBUTE_NAME = 76;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_SPACE = 77;
+  int AttributeNameStartChar = 77;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_TAB = 78;
+  int AttributeNameChar = 78;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_CR = 79;
+  int AttributeName = 79;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_NL = 80;
+  int SPECIAL_ATTR_SPACE = 80;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_EQ = 81;
+  int SPECIAL_ATTR_TAB = 81;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_VALUE = 82;
+  int SPECIAL_ATTR_CR = 82;
   /** RegularExpression Id. */
-  int SPECIAL_SPACE = 83;
+  int SPECIAL_ATTR_NL = 83;
   /** RegularExpression Id. */
-  int SPECIAL_TAB = 84;
+  int SPECIAL_ATTR_EQ = 84;
   /** RegularExpression Id. */
-  int SPECIAL_CR = 85;
+  int SPECIAL_ATTR_VALUE = 85;
   /** RegularExpression Id. */
-  int SPECIAL_NL = 86;
+  int SPECIAL_SPACE = 86;
   /** RegularExpression Id. */
-  int TEST_ATTR = 87;
+  int SPECIAL_TAB = 87;
   /** RegularExpression Id. */
-  int ELEMENTS_ATTR = 88;
+  int SPECIAL_CR = 88;
   /** RegularExpression Id. */
-  int DEF_ATTR = 89;
+  int SPECIAL_NL = 89;
   /** RegularExpression Id. */
-  int SPECIAL_EQ = 90;
+  int TEST_ATTR = 90;
   /** RegularExpression Id. */
-  int SPECIAL_VALUE_START = 91;
+  int ELEMENTS_ATTR = 91;
   /** RegularExpression Id. */
-  int SPECIAL_CLOSE = 92;
+  int DEF_ATTR = 92;
   /** RegularExpression Id. */
-  int EMBEDD_ATTR = 93;
+  int SPECIAL_EQ = 93;
   /** RegularExpression Id. */
-  int QUOT_END = 94;
+  int SPECIAL_VALUE_START = 94;
   /** RegularExpression Id. */
-  int ATTRIBUTE_TEXT = 95;
+  int SPECIAL_CLOSE = 95;
   /** RegularExpression Id. */
-  int ATTRIBUTE_EntityRef = 96;
+  int EMBEDD_ATTR = 96;
   /** RegularExpression Id. */
-  int ATTRIBUTE_CharRef = 97;
+  int QUOT_END = 97;
   /** RegularExpression Id. */
-  int ATTRIBUTE_CharRefHex = 98;
+  int ATTRIBUTE_TEXT = 98;
   /** RegularExpression Id. */
-  int ATTRIBUTE_NameStartChar = 99;
+  int ATTRIBUTE_EntityRef = 99;
   /** RegularExpression Id. */
-  int ATTRIBUTE_NameChar = 100;
+  int ATTRIBUTE_CharRef = 100;
   /** RegularExpression Id. */
-  int ATTRIBUTE_Name = 101;
+  int ATTRIBUTE_CharRefHex = 101;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_NameStartChar = 102;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_NameChar = 103;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_Name = 104;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -241,9 +247,6 @@ public interface HTMLTemplateParserConstants {
     "\"<!--\"",
     "<XML_COMMENT>",
     "\"{\"",
-    "<TAG_START>",
-    "<END_TAG>",
-    "<TAG_NAME>",
     "\"<tl:if\"",
     "\"</tl:if>\"",
     "\"<tl:choose>\"",
@@ -255,6 +258,9 @@ public interface HTMLTemplateParserConstants {
     "\"</tl:with>\"",
     "\"<tl:text>\"",
     "\"</tl:text>\"",
+    "<TAG_START>",
+    "<END_TAG>",
+    "<TAG_NAME>",
     "<TEXT_CONTENT>",
     "<WS>",
     "<WS_OPT>",
@@ -305,13 +311,16 @@ public interface HTMLTemplateParserConstants {
     "\"\\t\"",
     "\"\\r\"",
     "\"\\n\"",
-    "<ATTRIBUTE_NAME>",
     "\"tl:if\"",
     "\"tl:foreach\"",
     "\"=\"",
     "\"\\\"\"",
     "\">\"",
     "\"/>\"",
+    "<ATTRIBUTE_NAME>",
+    "<AttributeNameStartChar>",
+    "<AttributeNameChar>",
+    "<AttributeName>",
     "\" \"",
     "\"\\t\"",
     "\"\\r\"",

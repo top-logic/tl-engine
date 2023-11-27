@@ -8,18 +8,12 @@ package com.top_logic.html.template.parser;
 
 import java.util.List;
 
-import com.top_logic.html.template.ConditionalTemplate;
-import com.top_logic.html.template.EmptyTemplate;
-import com.top_logic.html.template.HTMLTemplateFactory;
-import com.top_logic.html.template.RawTemplateFragment;
-import com.top_logic.html.template.StartTagTemplate;
-import com.top_logic.html.template.TagAttributeTemplate;
-import com.top_logic.html.template.TemplateExpression;
+import com.top_logic.html.template.*;
 
 /**
  * Parser for html template expressions.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class HTMLTemplateParser implements HTMLTemplateParserConstants {
 
@@ -40,13 +34,13 @@ public class HTMLTemplateParser implements HTMLTemplateParserConstants {
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case EMBEDD:
-      case TAG_START:
-      case END_TAG:
       case IF_TAG:
       case CHOOSE_TAG:
       case FOREACH_TAG:
       case WITH_TAG:
       case TEXT_TAG:
+      case TAG_START:
+      case END_TAG:
       case TEXT_CONTENT:
       case EntityRef:
       case CharRef:
@@ -69,12 +63,12 @@ public class HTMLTemplateParser implements HTMLTemplateParserConstants {
   TemplateExpression expr;
   RawTemplateFragment result;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case TAG_START:
     case IF_TAG:
     case CHOOSE_TAG:
     case FOREACH_TAG:
     case WITH_TAG:
     case TEXT_TAG:
+    case TAG_START:
       result = startTag();
       break;
     case TEXT_CONTENT:
@@ -413,9 +407,9 @@ public class HTMLTemplateParser implements HTMLTemplateParserConstants {
       label_6:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case ATTRIBUTE_NAME:
         case IF_ATTR:
         case FOREACH_ATTR:
+        case ATTRIBUTE_NAME:
           ;
           break;
         default:
@@ -651,16 +645,16 @@ public class HTMLTemplateParser implements HTMLTemplateParserConstants {
       jj_la1_init_3();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x3954ae0,0x3954ae0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x54a40,0x0,0x0,};
+      jj_la1_0 = new int[] {0x396a960,0x396a960,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2a940,0x0,0x0,};
    }
    private static void jj_la1_init_1() {
       jj_la1_1 = new int[] {0x0,0x0,0x10000,0x8000,0x1000,0x800,0x3f00000,0x3f00000,0xc000000,0xc000000,0x70000000,0x70000000,0x88086700,0x80006700,0x0,0x0,0x0,0x4,0x8,0x0,0x0,0x0,};
    }
    private static void jj_la1_init_2() {
-      jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2,0x2,0x1c0,0x1c0,0x1800,0x0,0x0,0x0,0xa0000000,0xa0000000,};
+      jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2,0x2,0x10c0,0x10c0,0xc00,0x0,0x0,0x0,0x0,0x0,};
    }
    private static void jj_la1_init_3() {
-      jj_la1_3 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x7,0x7,};
+      jj_la1_3 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3d,0x3d,};
    }
 
   /** Constructor with InputStream. */
@@ -770,14 +764,14 @@ public class HTMLTemplateParser implements HTMLTemplateParserConstants {
       return (jj_ntk = jj_nt.kind);
   }
 
-	private java.util.List<int[]> jj_expentries = new java.util.ArrayList<>();
+  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<>();
   private int[] jj_expentry;
   private int jj_kind = -1;
 
   /** Generate ParseException. */
   public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[102];
+    boolean[] la1tokens = new boolean[105];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
@@ -800,7 +794,7 @@ public class HTMLTemplateParser implements HTMLTemplateParserConstants {
         }
       }
     }
-    for (int i = 0; i < 102; i++) {
+    for (int i = 0; i < 105; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

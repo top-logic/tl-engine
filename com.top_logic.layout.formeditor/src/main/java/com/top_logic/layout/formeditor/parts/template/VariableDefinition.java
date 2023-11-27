@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.formeditor.parts.template;
 
+import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -15,13 +16,13 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Algorithm defining the value of a template variable.
  */
-public interface VariableDefinition {
+public interface VariableDefinition<C extends VariableDefinition.Config<?>> extends ConfiguredInstance<C> {
 
 	/**
 	 * The configuration of a {@link VariableDefinition}.
 	 */
 	@Abstract
-	interface Config<I extends VariableDefinition> extends PolymorphicConfiguration<I> {
+	interface Config<I extends VariableDefinition<?>> extends PolymorphicConfiguration<I> {
 		/**
 		 * @see #getName()
 		 */
@@ -34,6 +35,13 @@ public interface VariableDefinition {
 		@Mandatory
 		String getName();
 
+	}
+
+	/**
+	 * The name of the variable being defined.
+	 */
+	default String getName() {
+		return getConfig().getName();
 	}
 
 	/**

@@ -21,14 +21,13 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -46,8 +45,6 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
-import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
-import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -60,9 +57,7 @@ import com.top_logic.layout.formeditor.parts.template.VariableDefinition.EvalRes
 import com.top_logic.layout.formeditor.parts.template.VariableDefinition.EvalResult.InvalidateListener;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
-import com.top_logic.layout.template.WithProperties;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -74,8 +69,6 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
-import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -91,54 +84,18 @@ public class RenderedObjectsTemplateProvider
 	@TagName("rendered-objects")
 	@DisplayInherited(DisplayStrategy.PREPEND)
 	@DisplayOrder({
-		Config.ITEMS,
-		Config.LIST_TEMPLATE,
+		Config.TEMPLATE,
+		Config.VARIABLES,
 		Config.VALUE_TEMPLATES,
 	})
-	public interface Config<I extends RenderedObjectsTemplateProvider> extends FormElement<I>, TypeTemplateParameters {
-
-		/** @see #getItems() */
-		String ITEMS = "items";
-
-		/** @see #getListTemplate() */
-		String LIST_TEMPLATE = "list-template";
+	public interface Config<I extends RenderedObjectsTemplateProvider> extends FormElement<I>, TemplateConfig {
 
 		/** @see #getValueTemplates() */
 		String VALUE_TEMPLATES = "value-templates";
 
 		/**
-		 * Function computing the objects to display.
-		 * 
-		 * <p>
-		 * The function expects the component's model as single argument. The
-		 * {@link #getListTemplate()} is responsible for rendering the objects.
-		 * </p>
-		 */
-		@Name(ITEMS)
-		@ItemDisplay(ItemDisplayType.VALUE)
-		@Mandatory
-		@Label("Displayed objects")
-		Expr getItems();
-
-		/**
-		 * HTML template that renders the {@link #getItems() objects to display}.
-		 * 
-		 * <p>
-		 * The only property that can be accessed is <code>{items}</code> which renders all elements
-		 * to display. Separate templates can be provided for each type of rendered object in the
-		 * {@link #getValueTemplates()} section.
-		 * </p>
-		 */
-		@Name(LIST_TEMPLATE)
-		@ControlProvider(CodeEditorControl.CPHtml.class)
-		@ItemDisplay(ItemDisplayType.VALUE)
-		@FormattedDefault("<div>{items}</div>")
-		HTMLTemplateFragment getListTemplate();
-
-		/**
 		 * Templates for additional object types that are rendered.
 		 */
-		@DefaultContainer
 		@Name(VALUE_TEMPLATES)
 		@Key(TypeTemplate.TYPE)
 		Map<TLModelPartRef, TypeTemplate> getValueTemplates();
@@ -151,52 +108,60 @@ public class RenderedObjectsTemplateProvider
 			TypeTemplate.TEMPLATE,
 			TypeTemplate.VARIABLES,
 		})
-		interface TypeTemplate extends ConfigurationItem {
-
+		interface TypeTemplate extends TemplateConfig {
 			/**
 			 * @see #getType()
 			 */
 			String TYPE = "type";
 
 			/**
-			 * @see #getTemplate()
-			 */
-			String TEMPLATE = "template";
-
-			/**
-			 * @see #getVariables()
-			 */
-			String VARIABLES = "variables";
-
-			/**
 			 * The type that uses the given {@link #getTemplate()}.
 			 */
 			@Name(TYPE)
 			TLModelPartRef getType();
-
-			/**
-			 * The template to expand for objects of the given {@link #getType()}.
-			 */
-			@Name(TEMPLATE)
-			@ControlProvider(CodeEditorControl.CPHtml.class)
-			@ItemDisplay(ItemDisplayType.VALUE)
-			@Format(HTMLTagFormat.class)
-			HTMLTemplateFragment getTemplate();
-
-			/**
-			 * Additional variables to bind for the template evaluation.
-			 * 
-			 * <p>
-			 * By default, all attributes of the rendered object are available as expressions in the
-			 * template.
-			 * </p>
-			 */
-			@Name(VARIABLES)
-			@Key(VariableDefinition.Config.NAME)
-			@DefaultContainer
-			Map<String, VariableDefinition.Config<?>> getVariables();
-
 		}
+	}
+
+	/**
+	 * Options for defining a template.
+	 */
+	@Abstract
+	public interface TemplateConfig extends ConfigurationItem {
+		/**
+		 * @see #getTemplate()
+		 */
+		String TEMPLATE = "template";
+
+		/**
+		 * @see #getVariables()
+		 */
+		String VARIABLES = "variables";
+
+		/**
+		 * The template to expand for object being rendered.
+		 * 
+		 * <p>
+		 * The template has access to the {@link #getVariables()} defined below.
+		 * </p>
+		 */
+		@Name(TEMPLATE)
+		@ControlProvider(CodeEditorControl.CPHtml.class)
+		@ItemDisplay(ItemDisplayType.VALUE)
+		@Format(HTMLTagFormat.class)
+		HTMLTemplateFragment getTemplate();
+
+		/**
+		 * Additional variables to bind for the template evaluation.
+		 * 
+		 * <p>
+		 * By default, all attributes of the rendered object are available as expressions in the
+		 * template.
+		 * </p>
+		 */
+		@Name(VARIABLES)
+		@Key(VariableDefinition.Config.NAME)
+		@DefaultContainer
+		Map<String, VariableDefinition.Config<?>> getVariables();
 	}
 
 	private static final ImageProvider IMAGE_PROVIDER =
@@ -206,6 +171,8 @@ public class RenderedObjectsTemplateProvider
 
 	private LayoutComponent _component;
 
+	private Template _template;
+
 	/**
 	 * Creates a new {@link ForeignObjectsTemplateProvider}.
 	 */
@@ -214,6 +181,8 @@ public class RenderedObjectsTemplateProvider
 
 		_component =
 			DefaultDisplayContext.getDisplayContext().getSubSessionContext().getLayoutContext().getMainLayout();
+
+		_template = new Template(context, config);
 
 		for (TypeTemplate typeTemplate : config.getValueTemplates().values()) {
 			TLType type = typeTemplate.getType().resolveType();
@@ -266,35 +235,19 @@ public class RenderedObjectsTemplateProvider
 
 	private void writeContents(DisplayContext displayContext, TagWriter out, FormEditorContext form)
 			throws IOException {
-		Config<?> config = getConfig();
-		HTMLTemplateFragment listTemplate = config.getListTemplate();
-
-		WithProperties properties = new WithProperties() {
-			@Override
-			public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
-				switch (propertyName) {
-					case "items":
-						QueryExecutor itemsExpr = QueryExecutor.compile(config.getItems());
-						Object result = itemsExpr.execute(form.getModel());
-						return toFragment(result);
-				}
-
-				return WithProperties.super.getPropertyValue(propertyName);
-			}
-		};
-		listTemplate.write(displayContext, out, properties);
+		new TLObjectFragment(_template, form.getModel()).write(displayContext, out);
 	}
 
 	private static class Template {
 	
 		private final HTMLTemplateFragment _fragment;
 	
-		private final Map<String, VariableDefinition> _params;
+		private final Map<String, VariableDefinition<?>> _params;
 	
 		/**
 		 * Creates a {@link RenderedObjectsTemplateProvider.Template}.
 		 */
-		public Template(InstantiationContext context, TypeTemplate config) {
+		public Template(InstantiationContext context, TemplateConfig config) {
 			HTMLTemplateFragment template = config.getTemplate();
 
 			_fragment = template;
@@ -369,53 +322,58 @@ public class RenderedObjectsTemplateProvider
 
 		@Override
 		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
-			VariableDefinition variableDefinition = _template._params.get(propertyName);
+			VariableDefinition<?> variableDefinition = _template._params.get(propertyName);
 			if (variableDefinition != null) {
 				// Could be passed through the WithProperties API in the future.
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 
 				Object value = eval(displayContext, variableDefinition);
-				ExpressionTemplate.renderValue(context, out, value);
+				render(context, out, value);
 				return;
 			}
 
 			TLStructuredTypePart part = _obj.tType().getPart(propertyName);
 			if (part != null) {
 				Object value = _obj.tValue(part);
-				if (value instanceof TLObject || value instanceof Collection<?>) {
-					ExpressionTemplate.renderValue(context, out, toFragment(value));
-					return;
-				}
-				ExpressionTemplate.renderValue(context, out, value);
+				render(context, out, value);
 				return;
 			}
 
 			super.renderProperty(context, out, propertyName);
 		}
 
+		private void render(DisplayContext context, TagWriter out, Object value) throws IOException {
+			ExpressionTemplate.renderValue(context, out, wrap(value));
+		}
+
 		@Override
 		public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
-			VariableDefinition variableDefinition = _template._params.get(propertyName);
+			VariableDefinition<?> variableDefinition = _template._params.get(propertyName);
 			if (variableDefinition != null) {
 				// Could be passed through the WithProperties API in the future.
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 
-				return eval(displayContext, variableDefinition);
+				return wrap(eval(displayContext, variableDefinition));
 			}
 
 			TLStructuredTypePart part = _obj.tType().getPart(propertyName);
 			if (part != null) {
 				Object value = _obj.tValue(part);
-				if (value instanceof TLObject || value instanceof Collection<?>) {
-					return toFragment(value);
-				}
-				return value;
+				return wrap(value);
 			}
 
 			return super.getPropertyValue(propertyName);
 		}
 
-		private Object eval(DisplayContext displayContext, VariableDefinition variableDefinition) {
+		private Object wrap(Object value) {
+			if (value instanceof TLObject || value instanceof Collection<?>) {
+				return toFragment(value);
+			} else {
+				return value;
+			}
+		}
+
+		private Object eval(DisplayContext displayContext, VariableDefinition<?> variableDefinition) {
 			EvalResult result = variableDefinition.eval(displayContext, _component, _obj);
 			if (result.addInvalidateListener(this)) {
 				_observedValues.add(result);
@@ -493,15 +451,7 @@ public class RenderedObjectsTemplateProvider
 	}
 
 	private HTMLTemplateFragment designTemplate() {
-		Config<?> config = getConfig();
-		TLClass targetType = OptionalTypeTemplateParameters.resolve(config);
-
-		HTMLTemplateFragment legend;
-		if (targetType != null) {
-			legend = resource(I18NConstants.FOREIGN_OBJECTS_LEGEND_KEY_PREVIEW__TYPE.fill(targetType));
-		} else {
-			legend = empty();
-		}
+		HTMLTemplateFragment legend = resource(I18NConstants.HTML_TEMPLATE);
 		HTMLTemplateFragment contentTemplate;
 		contentTemplate = resource(I18NConstants.RENDERED_OBJECTS_LABEL);
 

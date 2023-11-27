@@ -14,7 +14,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DispatchingRenderer;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.template.WithProperties;
-import com.top_logic.model.TLObject;
 
 /**
  * {@link HTMLTemplateFragment} that renders a {@link TemplateExpression template-computed value}.
@@ -56,9 +55,14 @@ public class ExpressionTemplate implements RawTemplateFragment {
 			throws IOException {
 		if (value == null) {
 			return;
+		} else if (value instanceof String || value instanceof Number || value instanceof Boolean) {
+			// Do not use label provider for simple types, since primitive values such as numbers
+			// must not be rendered in an internationalized way but for technical interpretation of
+			// the browser.
+			out.append(value.toString());
 		} else if (value instanceof HTMLFragment) {
 			((HTMLFragment) value).write(context, out);
-		} else if (value instanceof TLObject) {
+		} else {
 			switch (out.getState()) {
 				case ELEMENT_CONTENT:
 					DispatchingRenderer.INSTANCE.write(context, out, value);
@@ -68,11 +72,6 @@ public class ExpressionTemplate implements RawTemplateFragment {
 					out.append(MetaLabelProvider.INSTANCE.getLabel(value));
 					break;
 			}
-		} else {
-			// Do not use label provider for simple types, since primitive values such as numbers
-			// must not be rendered in an internationalized way but for technical interpretation of
-			// the browser.
-			out.append(value.toString());
 		}
 	}
 

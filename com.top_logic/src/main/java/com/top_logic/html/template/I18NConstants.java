@@ -71,9 +71,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 NO_VALID_VOID_ELEMENT__NAME_LINE_COL;
 
 	/**
+	 * @en Tag "{0}" at line {1}, column {2} is a HTML 5 void element and must be empty.
+	 * 
+	 * @see HTMLConstants#VOID_ELEMENTS
+	 */
+	public static ResKey3 MUST_BE_VOID_ELEMENT__NAME_LINE_COL;
+
+	/**
 	 * @en Reading template ''{0}'' failed.
 	 */
 	public static ResKey1 ERROR_TEMPLATE_READING_FAILED__NAME;
+
+	/**
+	 * @en Namespace attributes must be constant at line {1}, column {2}.
+	 */
+	public static ResKey2 ERROR_NAMESPACE_MUST_BE_CONSTANT__LINE_COL;
 
 	static {
 		initConstants(I18NConstants.class);

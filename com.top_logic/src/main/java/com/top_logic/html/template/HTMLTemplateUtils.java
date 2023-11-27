@@ -9,8 +9,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -128,6 +131,14 @@ public class HTMLTemplateUtils {
 
 		private final List<HTMLTemplateFragment> _contents = new ArrayList<>();
 
+		private String _defaultNamespace;
+
+		private Map<String, String> _namespaces = Collections.emptyMap();
+
+		private String _namespace;
+
+		private TagContext _parent;
+
 		/**
 		 * Creates a {@link HTMLTemplateUtils.TagContext}.
 		 */
@@ -166,6 +177,70 @@ public class HTMLTemplateUtils {
 
 			_contents.add(template);
 		}
+
+		public TagContext init(TagContext parent) {
+			_parent = parent;
+			_defaultNamespace = parent._defaultNamespace;
+			Map<String, String> namespaces = null;
+			for (TagAttributeTemplate attribute : _start.getAttributes()) {
+				String name = attribute.getName();
+				if (name.equals("xmlns")) {
+					String value = getConstantValue(attribute);
+					_defaultNamespace = value;
+				} else if (name.startsWith("xmlns:")) {
+					String prefix = name.substring("xmlns:".length());
+					String value = getConstantValue(attribute);
+					if (namespaces == null) {
+						namespaces = new HashMap<>();
+					}
+					namespaces.put(prefix, value);
+				}
+			}
+			if (namespaces != null) {
+				_namespaces = namespaces;
+			}
+
+			String name = _start.getName();
+			int nsSep = name.indexOf(':');
+			if (nsSep < 0) {
+				_namespace = _defaultNamespace;
+			} else {
+				String prefix = name.substring(0, nsSep);
+				_namespace = getNameSpace(prefix);
+			}
+
+			return this;
+		}
+
+		protected String getNameSpace(String prefix) {
+			String result = _namespaces.get(prefix);
+			if (result != null) {
+				return result;
+			}
+
+			return _parent == null ? null : _parent.getNameSpace(prefix);
+		}
+
+		/**
+		 * The namespace of this element.
+		 */
+		public String getNamespace() {
+			return _namespace;
+		}
+
+		private String getConstantValue(TagAttributeTemplate attribute) {
+			HTMLTemplateFragment content = attribute.getContent();
+			String value;
+			if (content instanceof StringLiteral) {
+				value = ((StringLiteral) content).getText();
+			} else if (content instanceof EmptyTemplate) {
+				value = "";
+			} else {
+				throw new TopLogicException(I18NConstants.ERROR_NAMESPACE_MUST_BE_CONSTANT__LINE_COL
+					.fill(attribute.getLine(), attribute.getColumn()));
+			}
+			return value;
+		}
 	}
 
 	/**
@@ -185,11 +260,21 @@ public class HTMLTemplateUtils {
 
 		@Override
 		public Void visit(StartTagTemplate template, Stack<TagContext> stack) {
-			processStart(template, stack);
+			TagContext context = processStart(template, stack);
 
-			if (template.isEmpty() && !HTMLConstants.VOID_ELEMENTS.contains(template.getName())) {
-				throw new TopLogicException(I18NConstants.NO_VALID_VOID_ELEMENT__NAME_LINE_COL
-					.fill(template.getName(), template.getLine(), template.getColumn()));
+			if (context.getNamespace() == null) {
+				// Looks like HTML.
+				if (template.isEmpty()) {
+					if (!HTMLConstants.VOID_ELEMENTS.contains(template.getName())) {
+						throw new TopLogicException(I18NConstants.NO_VALID_VOID_ELEMENT__NAME_LINE_COL
+							.fill(template.getName(), template.getLine(), template.getColumn()));
+					}
+				} else {
+					if (HTMLConstants.VOID_ELEMENTS.contains(template.getName())) {
+						throw new TopLogicException(I18NConstants.MUST_BE_VOID_ELEMENT__NAME_LINE_COL
+							.fill(template.getName(), template.getLine(), template.getColumn()));
+					}
+				}
 			}
 
 			return null;
@@ -208,9 +293,9 @@ public class HTMLTemplateUtils {
 			return null;
 		}
 
-		private void processStart(StartTagTemplate template, Stack<TagContext> stack) {
+		private TagContext processStart(StartTagTemplate template, Stack<TagContext> stack) {
 			processAttributes(template);
-			push(stack, template);
+			return push(stack, template);
 		}
 
 		private void processAttributes(StartTagTemplate template) {
@@ -233,12 +318,14 @@ public class HTMLTemplateUtils {
 			}
 		}
 
-		private void push(Stack<TagContext> stack, StartTagTemplate template) {
+		private TagContext push(Stack<TagContext> stack, StartTagTemplate template) {
+			TagContext context = new TagContext(template).init(stack.peek());
 			if (template.isEmpty()) {
 				append(stack, template);
 			} else {
-				stack.push(new TagContext(template));
+				stack.push(context);
 			}
+			return context;
 		}
 
 		@Override

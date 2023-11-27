@@ -43,12 +43,12 @@ import java.util.concurrent.atomic.AtomicLong;
  *   <li>To write <strong>arrays</strong>, first call {@link #beginArray()}.
  *       Write each of the array's elements with the appropriate {@link #value}
  *       methods or by nesting other arrays and objects. Finally close the array
- *       using {@link #endArray()}.
+ *       using {@link #endArray()}.</li>
  *   <li>To write <strong>objects</strong>, first call {@link #beginObject()}.
  *       Write each of the object's properties by alternating calls to
  *       {@link #name} with the property's value. Write property values with the
  *       appropriate {@link #value} method or by nesting other objects or arrays.
- *       Finally close the object using {@link #endObject()}.
+ *       Finally close the object using {@link #endObject()}.</li>
  * </ul>
  *
  * <h2>Example</h2>
@@ -121,7 +121,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p>Each {@code JsonWriter} may be used to write a single JSON stream.
  * Instances of this class are not thread safe. Calls that would result in a
- * malformed JSON string will fail with an {@link IllegalStateException}.
+ * malformed JSON string will fail with an {@link IllegalStateException}.</p>
  *
  * @author Jesse Wilson
  * @since 1.6
@@ -228,7 +228,7 @@ public class JsonWriter implements Closeable, Flushable {
    * to lenient permits the following:
    * <ul>
    *   <li>Numbers may be {@link Double#isNaN() NaNs} or {@link
-   *       Double#isInfinite() infinities}.
+   *       Double#isInfinite() infinities}.</li>
    * </ul>
    */
   public final void setLenient(boolean lenient) {

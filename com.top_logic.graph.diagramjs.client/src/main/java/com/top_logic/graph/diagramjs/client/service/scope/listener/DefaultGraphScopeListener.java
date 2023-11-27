@@ -125,9 +125,7 @@ public class DefaultGraphScopeListener implements ScopeListener {
 		Object object = event.getObj();
 
 		if (object instanceof GraphPart) {
-			GraphPart graphPart = (GraphPart) object;
-
-			createDisplayGraphPart(graphPart);
+			createDisplayGraphPart((GraphPart) object);
 		}
 	}
 

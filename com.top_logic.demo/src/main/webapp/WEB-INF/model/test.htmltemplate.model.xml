@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.htmltemplate">
+		<class name="Tank">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<group>
+							<field
+								attribute="name"
+								fullQualifiedName="test.htmltemplate:Tank#name"
+								type="tl.core:String"
+							>
+								<annotations>
+									<render-whole-line/>
+									<label-position value="hide-label"/>
+								</annotations>
+							</field>
+							<label key="dynamic.bcef6eff-b1f0-4401-a0d3-d182e05e67ce">
+								<en>Name</en>
+								<de>Name</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="capacity"
+								fullQualifiedName="test.htmltemplate:Tank#capacity"
+								type="tl.core:Double"
+							/>
+							<field
+								attribute="level"
+								fullQualifiedName="test.htmltemplate:Tank#level"
+								type="tl.core:Double"
+							/>
+							<label key="dynamic.67975a45-1cf4-46be-9781-2303050ca500">
+								<en>Properties</en>
+								<de>Eigenschaften</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="minLevel"
+								fullQualifiedName="test.htmltemplate:Tank#minLevel"
+								type="tl.core:Double"
+							/>
+							<field
+								attribute="maxLevel"
+								fullQualifiedName="test.htmltemplate:Tank#maxLevel"
+								type="tl.core:Double"
+							/>
+							<label key="dynamic.59d3dc9c-120a-4d9e-8899-04584fa283b8">
+								<en>Filling limits</en>
+								<de>Füllgrenzen</de>
+							</label>
+						</group>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="capacity"
+					mandatory="true"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format="# l"/>
+						<constraints>
+							<constraint-by-expression>
+								<check>value -&gt; $value &gt; 0.0 || #("Die Tankkapazität muss positiv sein"@de, "The capacity must be positive"@en)</check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="level"
+					mandatory="true"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<default-value>
+							<double value="0.0"/>
+						</default-value>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[level -> t -> {
+    $level >= 0 && $level <= $t.get(`test.htmltemplate:Tank#capacity`)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="minLevel"
+					type="tl.core:Double"
+				/>
+				<property name="maxLevel"
+					type="tl.core:Double"
+				/>
+				<property name="hasWarning"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[t -> {
+   min = $t.get(`test.htmltemplate:Tank#minLevel`);
+   max = $t.get(`test.htmltemplate:Tank#maxLevel`);
+   level = $t.get(`test.htmltemplate:Tank#level`);
+   
+   $level < $min || $level > $max
+}]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="fillRatio"
+					mandatory="true"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[t -> {
+    $t.get(`test.htmltemplate:Tank#level`) / $t.get(`test.htmltemplate:Tank#capacity`)
+}]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

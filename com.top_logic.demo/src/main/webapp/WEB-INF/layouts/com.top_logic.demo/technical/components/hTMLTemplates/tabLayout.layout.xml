@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_a9f9c80c_643d_4506_a811_036f5d82b2b5">
+		<tabLabel key="dynamic.b1966f91-b6c3-456d-97b8-09c4a5cd9faa">
+			<en>HTML Templates</en>
+			<de>HTML Templates</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

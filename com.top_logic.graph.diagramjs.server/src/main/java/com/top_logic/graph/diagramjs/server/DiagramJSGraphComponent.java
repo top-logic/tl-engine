@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -68,10 +69,14 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassProperty;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
@@ -729,4 +734,66 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 			return Collections.emptySet();
 		}
 	}
+
+	@Override
+	protected void handleTLObjectCreations(Stream<? extends TLObject> created) {
+		if (hasGraphModel()) {
+			created.forEach(object -> {
+				if (isSupportedObject(object)) {
+					createGraphPart(object);
+				}
+			});
+		}
+	}
+
+	@Override
+	protected void handleTLObjectDeletions(Stream<? extends TLObject> deleted) {
+		if (hasGraphModel()) {
+			SharedGraph graphModel = getGraphModel();
+
+			deleted.forEach(object -> {
+				GraphModelUtil.removeGraphPart(graphModel, graphModel.getGraphPart(object));
+			});
+		}
+	}
+
+	/**
+	 * Creates a part into the underlying {@link GraphModel} of this component.
+	 * 
+	 * <p>
+	 * If a graph part with the given business object exist then return the found part.
+	 * </p>
+	 */
+	public GraphPart createGraphPart(Object object) {
+		SharedGraph graph = getGraphModel();
+
+		GraphPart graphPart = graph.getGraphPart(object);
+
+		if (graphPart != null) {
+			return graphPart;
+		} else {
+			GraphPart part = GraphModelUtil.createGraphPart(graph, object, getLabelProvider(), getHiddenGraphParts(),
+				getInvisibleGraphParts());
+
+			graph.setSelectedGraphParts(Collections.singleton(part));
+
+			return part;
+		}
+	}
+
+	private boolean isSupportedObject(TLObject object) {
+		return isPartOfDisplayedModule(object) && isSupportedObjectType(object);
+	}
+
+	private boolean isPartOfDisplayedModule(TLObject object) {
+		return GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule;
+	}
+
+	private boolean isSupportedObjectType(TLObject object) {
+		return object instanceof TLEnumeration ||
+			(object instanceof TLClass && !(object instanceof TLAssociation)) ||
+			object instanceof TLClassProperty ||
+			object instanceof TLReference;
+	}
+
 }

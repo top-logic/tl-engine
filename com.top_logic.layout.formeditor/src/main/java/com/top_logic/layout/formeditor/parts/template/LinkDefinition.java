@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 /**
  * Definition of a script that jumps to a certain object.
  */
-public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Config> implements VariableDefinition {
+public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Config> implements VariableDefinition<LinkDefinition.Config> {
 
 	private QueryExecutor _targetObject;
 

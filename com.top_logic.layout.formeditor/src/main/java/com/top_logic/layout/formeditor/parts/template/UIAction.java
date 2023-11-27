@@ -30,7 +30,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Definition of a {@link PostCreateAction} to be invoked by an <code>onclick</code> handler.
  */
-public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implements VariableDefinition {
+public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implements VariableDefinition<UIAction.Config> {
 
 	private QueryExecutor _targetObject;
 

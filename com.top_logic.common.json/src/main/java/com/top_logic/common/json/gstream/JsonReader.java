@@ -37,29 +37,29 @@ import com.top_logic.basic.shared.io.R;
  * an entry point method that creates a {@code JsonReader}.
  *
  * <p>Next, create handler methods for each structure in your JSON text. You'll
- * need a method for each object type and for each array type.
+ * need a method for each object type and for each array type.</p>
  * <ul>
  *   <li>Within <strong>array handling</strong> methods, first call {@link
  *       #beginArray} to consume the array's opening bracket. Then create a
  *       while loop that accumulates values, terminating when {@link #hasNext}
  *       is false. Finally, read the array's closing bracket by calling {@link
- *       #endArray}.
+ *       #endArray}.</li>
  *   <li>Within <strong>object handling</strong> methods, first call {@link
  *       #beginObject} to consume the object's opening brace. Then create a
  *       while loop that assigns values to local variables based on their name.
  *       This loop should terminate when {@link #hasNext} is false. Finally,
- *       read the object's closing brace by calling {@link #endObject}.
+ *       read the object's closing brace by calling {@link #endObject}.</li>
  * </ul>
  * <p>When a nested object or array is encountered, delegate to the
- * corresponding handler method.
+ * corresponding handler method.</p>
  *
  * <p>When an unknown name is encountered, strict parsers should fail with an
  * exception. Lenient parsers should call {@link #skipValue()} to recursively
- * skip the value's nested tokens, which may otherwise conflict.
+ * skip the value's nested tokens, which may otherwise conflict.</p>
  *
  * <p>If a value may be null, you should first check using {@link #peek()}.
  * Null literals can be consumed using either {@link #nextNull()} or {@link
- * #skipValue()}.
+ * #skipValue()}.</p>
  *
  * <h2>Example</h2>
  * Suppose we'd like to parse a stream of messages such as the following: <pre> {@code
@@ -180,10 +180,10 @@ import com.top_logic.basic.shared.io.R;
  * by {@code <script>} tags, disarming the attack. Since the prefix is malformed
  * JSON, strict parsing fails when it is encountered. This class permits the
  * non-execute prefix when {@link #setLenient(boolean) lenient parsing} is
- * enabled.
+ * enabled.</p>
  *
  * <p>Each {@code JsonReader} may be used to read a single JSON stream. Instances
- * of this class are not thread safe.
+ * of this class are not thread safe.</p>
  *
  * @author Jesse Wilson
  * @since 1.6
@@ -298,35 +298,35 @@ public class JsonReader implements Closeable {
    *
    * <ul>
    *   <li>Streams that start with the <a href="#nonexecuteprefix">non-execute
-   *       prefix</a>, <code>")]}'\n"</code>.
+   *       prefix</a>, <code>")]}'\n"</code>.</li>
    *   <li>Streams that include multiple top-level values. With strict parsing,
-   *       each stream must contain exactly one top-level value.
+   *       each stream must contain exactly one top-level value.</li>
    *   <li>Numbers may be {@link Double#isNaN() NaNs} or {@link
-   *       Double#isInfinite() infinities}.
+   *       Double#isInfinite() infinities}.</li>
    *   <li>End of line comments starting with {@code //} or {@code #} and
-   *       ending with a newline character.
+   *       ending with a newline character.</li>
    *   <li>C-style comments starting with {@code /*} and ending with
-   *       {@code *}{@code /}. Such comments may not be nested.
-   *   <li>Names that are unquoted or {@code 'single quoted'}.
-   *   <li>Strings that are unquoted or {@code 'single quoted'}.
-   *   <li>Array elements separated by {@code ;} instead of {@code ,}.
+   *       {@code *}{@code /}. Such comments may not be nested.</li>
+   *   <li>Names that are unquoted or {@code 'single quoted'}.</li>
+   *   <li>Strings that are unquoted or {@code 'single quoted'}.</li>
+   *   <li>Array elements separated by {@code ;} instead of {@code ,}</li>.
    *   <li>Unnecessary array separators. These are interpreted as if null
-   *       was the omitted value.
+   *       was the omitted value.</li>
    *   <li>Names and values separated by {@code =} or {@code =>} instead of
-   *       {@code :}.
-   *   <li>Name/value pairs separated by {@code ;} instead of {@code ,}.
+   *       {@code :}.</li>
+   *   <li>Name/value pairs separated by {@code ;} instead of {@code ,}.</li>
    * </ul>
    *
    * <p>Note: Even in strict mode there are slight derivations from the JSON
-   * specification:
+   * specification:</p>
    * <ul>
    *   <li>JsonReader allows the literals {@code true}, {@code false} and {@code null}
-   *       to have any capitalization, for example {@code fAlSe}
-   *   <li>JsonReader supports the escape sequence {@code \'}, representing a {@code '}
+   *       to have any capitalization, for example {@code fAlSe}</li>
+   *   <li>JsonReader supports the escape sequence {@code \'}, representing a {@code '}</li>
    *   <li>JsonReader supports the escape sequence <code>\<i>LF</i></code> (with {@code LF}
    *       being the Unicode character U+000A), resulting in a {@code LF} within the
-   *       read JSON string
-   *   <li>JsonReader allows unescaped control characters (U+0000 through U+001F)
+   *       read JSON string</li>
+   *   <li>JsonReader allows unescaped control characters (U+0000 through U+001F)</li>
    * </ul>
    */
   public final void setLenient(boolean lenient) {
@@ -1236,7 +1236,7 @@ public class JsonReader implements Closeable {
    * Skips the next value recursively. This method is intended for use when
    * the JSON token stream contains unrecognized or unhandled values.
    *
-   * <p>The behavior depends on the type of the next JSON token:
+   * <p>The behavior depends on the type of the next JSON token:</p>
    * <ul>
    *   <li>Start of a JSON array or object: It and all of its nested values are skipped.</li>
    *   <li>Primitive value (for example a JSON number): The primitive value is skipped.</li>
@@ -1549,14 +1549,14 @@ public class JsonReader implements Closeable {
    * Returns a <a href="https://goessner.net/articles/JsonPath/">JSONPath</a>
    * in <i>dot-notation</i> to the previous (or current) location in the JSON document:
    * <ul>
-   *   <li>For JSON arrays the path points to the index of the previous element.<br>
+   *   <li>For JSON arrays the path points to the index of the previous element.<br/>
    *   If no element has been consumed yet it uses the index 0 (even if there are no elements).</li>
    *   <li>For JSON objects the path points to the last property, or to the current
    *   property if its name has already been consumed.</li>
    * </ul>
    *
    * <p>This method can be useful to add additional context to exception messages
-   * <i>after</i> a value has been consumed.
+   * <i>after</i> a value has been consumed.</p>
    */
   public String getPreviousPath() {
     return getPath(true);
@@ -1574,7 +1574,7 @@ public class JsonReader implements Closeable {
    *
    * <p>This method can be useful to add additional context to exception messages
    * <i>before</i> a value is consumed, for example when the {@linkplain #peek() peeked}
-   * token is unexpected.
+   * token is unexpected.</p>
    */
   public String getPath() {
     return getPath(false);

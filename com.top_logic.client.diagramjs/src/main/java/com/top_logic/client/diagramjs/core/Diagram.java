@@ -35,6 +35,13 @@ public final class Diagram extends JavaScriptObject {
 	}
 
 	/**
+	 * The {@link ElementRegistry} to keep track of the {@link Diagram} elements.
+	 */
+	public ElementRegistry getElementRegistry() {
+		return getModule(ModuleNames.ELEMENT_REGISTRY_MODULE).cast();
+	}
+
+	/**
 	 * The {@link Canvas} to add components to.
 	 */
 	public Canvas getCanvas() {

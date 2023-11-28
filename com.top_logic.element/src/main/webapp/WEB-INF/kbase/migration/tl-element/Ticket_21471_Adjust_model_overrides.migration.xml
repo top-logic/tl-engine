@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_21471_Adjust_model_overrides"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
+			module="tl"
+		/>
+		<dependency name="Ticket_25835_Rename_RenderInputBeforeLabelAnnotation"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<update-association-end name="tl.doc:Page$children#self"
+			mandatory="false"
+			composite="false"
+			aggregate="true"
+			multiple="false"
+			bag="false"
+			ordered="false"
+			navigate="false"
+		/>
+		
+		<update-association-end name="tl.doc:Page$children#parent" 
+			new-name="tl.doc:Page$children#children"
+			mandatory="false"
+			composite="true"
+			aggregate="false"
+			multiple="true"
+			bag="false"
+			ordered="true"
+			navigate="false"
+		/>
+		
+		<!-- tl.doc:Page#parent is now a backwards reference -->
+		<update-reference name="tl.doc:Page#parent"
+			new-end="tl.doc:Page$children#self"
+		/>
+		
+		<delete-property name="tl.doc:Page$parent#parent" />
+		<delete-property name="tl.doc:Page$parent#self" />
+		
+		<delete-class name="tl.doc:Page$parent"/>
+	
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_21471_Adjust_model_overrides.model.transform.xslt"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

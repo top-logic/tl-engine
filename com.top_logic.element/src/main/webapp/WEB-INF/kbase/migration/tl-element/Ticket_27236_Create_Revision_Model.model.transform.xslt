@@ -103,12 +103,20 @@
 			</attributes>
 		</class>
 	</xsl:template>
+	
 	<xsl:template match="/config//module[@name='tl.accounts']//class[@name='Person']/generalizations">
-		<generalizations>
-			<generalization type="tl.core:Author"/>
-		</generalizations>
-	</xsl:template>
-
+		<!-- drop if exists -->
+    </xsl:template>
+    <xsl:template match="/config//module[@name='tl.accounts']//class[@name='Person']">
+         <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <generalizations>
+                <generalization type="tl.core:Author"/>
+            </generalizations>
+            <xsl:apply-templates select="node()"/>
+          </xsl:copy>
+    </xsl:template>
+    
 	<xsl:template match="/config//module[@name='tl.accounts']//class[@name='Person']//property[@name='name']">
 		 <xsl:copy>
 			<xsl:attribute name="override">

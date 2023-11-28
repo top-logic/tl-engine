@@ -107,6 +107,11 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 		@Hidden
 		@Derived(fun = AlwaysFalse.class, args = {})
 		boolean isInverse();
+
+		/**
+		 * Name of the new reference association end.
+		 */
+		QualifiedPartName getNewEnd();
 	}
 
 	/**
@@ -168,6 +173,13 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 			newType = Util.getTLTypeOrFail(connection, getConfig().getNewType());
 		}
 
+		TypePart newEnd;
+		if (getConfig().getNewEnd() == null) {
+			newEnd = null;
+		} else {
+			newEnd = Util.getTLTypePartOrFail(connection, getConfig().getNewEnd());
+		}
+
 		QualifiedPartName newName = getConfig().getNewName();
 		String newReferenceName;
 		if (newName == null || referenceName.getPartName().equals(newName.getPartName())) {
@@ -188,7 +200,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				newReferenceName, getConfig().isMandatory(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
-				getConfig().isOrdered(), getConfig().canNavigate(), getConfig());
+				getConfig().isOrdered(), getConfig().canNavigate(), getConfig(), newEnd);
 			log.info("Updated reference " + Util.qualifiedName(referenceName));
 		} else {
 			Util.updateInverseReference(connection,
@@ -196,7 +208,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				newReferenceName, getConfig().isMandatory(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
-				getConfig().isOrdered(), getConfig().canNavigate(), getConfig());
+				getConfig().isOrdered(), getConfig().canNavigate(), getConfig(), newEnd);
 			log.info("Updated inverse reference " + Util.qualifiedName(referenceName));
 		}
 

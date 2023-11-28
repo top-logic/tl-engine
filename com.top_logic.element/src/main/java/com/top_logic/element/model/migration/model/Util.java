@@ -2162,7 +2162,7 @@ public class Util {
 			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, XMLStreamException {
 		updateTLStructuredTypePart(con, part, newType, newOwner, newName, mandatory, null, null, multiple, bag,
-			ordered, null, toString(annotations));
+			ordered, null, toString(annotations), null);
 	}
 
 	/**
@@ -2174,13 +2174,18 @@ public class Util {
 	 * </p>
 	 * 
 	 * @see #updateTLReference(PooledConnection, Reference, Type, Type, String, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, Boolean, AnnotatedConfig)
+	 *      Boolean, Boolean, Boolean, Boolean, Boolean, AnnotatedConfig, TypePart)
 	 */
 	public static void updateInverseReference(PooledConnection con, Reference inverseReference,
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			Boolean ordered, Boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException, XMLStreamException {
-		TLID endID = inverseReference.getEndID();
+		TLID endID = null;
+		if (newEnd != null) {
+			endID = newEnd.getID();
+		} else {
+			endID = inverseReference.getEndID();
+		}
 		if (endID == null) {
 			throw new IllegalStateException("Reference " + toString(inverseReference) + " has no end id.");
 		}
@@ -2190,24 +2195,28 @@ public class Util {
 
 		updateTLStructuredTypePart(con, associationEnd, null, null, null,
 			mandatory, composite, aggregate, multiple, bag, ordered, navigate,
-			null);
+			null, null);
 		updateTLStructuredTypePart(con, inverseReference, null, null, newName,
 			null, null, null, null, null, null, null,
-			toString(annotations));
+			toString(annotations), newEnd);
 	}
 
 	/**
 	 * Updates a {@link TLReference}.
 	 * 
 	 * @see #updateInverseReference(PooledConnection, Reference, String, Boolean, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, AnnotatedConfig)
+	 *      Boolean, Boolean, Boolean, Boolean, AnnotatedConfig, TypePart)
 	 */
 	public static void updateTLReference(PooledConnection con, Reference reference, Type newType, Type newOwner,
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			Boolean ordered, Boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException, XMLStreamException, MigrationException {
-
-		TLID endID = reference.getEndID();
+		TLID endID = null;
+		if (newEnd != null) {
+			endID = newEnd.getID();
+		} else {
+			endID = reference.getEndID();
+		}
 		if (endID == null) {
 			throw new IllegalStateException("Reference " + toString(reference) + " has no end id.");
 		}
@@ -2218,10 +2227,10 @@ public class Util {
 		// Name of the association end is the name as the reference.
 		updateTLStructuredTypePart(con, associationEnd, newType, null, newName,
 			mandatory, composite, aggregate, multiple, bag, ordered, navigate,
-			null);
+			null, null);
 		updateTLStructuredTypePart(con, reference, null, newOwner, newName,
 			null, null, null, null, null, null, null,
-			toString(annotations));
+			toString(annotations), newEnd);
 
 		if (newOwner != null || newType != null || newName != null) {
 			Type associationType = getTLTypeOrFail(con, reference.getOwner().getModule(),
@@ -2256,7 +2265,7 @@ public class Util {
 				// type
 				// of the other end.
 				updateTLStructuredTypePart(con, otherPart, newOwner, null, null, null, null, null, null, null, null,
-					null, null);
+					null, null, null);
 			}
 			if (newType != null) {
 				// new type is the new owner of the inverse reference, if exists.
@@ -2290,7 +2299,7 @@ public class Util {
 	 */
 	public static void updateTLStructuredTypePart(PooledConnection con, BranchIdType part, Type newType, Type newOwner,
 			String name, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, String annotations) throws SQLException {
+			Boolean ordered, Boolean navigate, String annotations, TypePart newEnd) throws SQLException {
 		List<Parameter> parameterDefs = new ArrayList<>();
 		List<String> columns = new ArrayList<>();
 		List<SQLExpression> parameters = new ArrayList<>();
@@ -2369,6 +2378,12 @@ public class Util {
 			columns.add(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE));
 			parameters.add(parameter(DBType.STRING, "annotations"));
 			arguments.add(annotations);
+		}
+		if (newEnd != null) {
+			parameterDefs.add(parameterDef(DBType.ID, "endID"));
+			columns.add(refID(PersistentReference.END_ATTR));
+			parameters.add(parameter(DBType.ID, "endID"));
+			arguments.add(newEnd.getID());
 		}
 		if (columns.isEmpty()) {
 			return;

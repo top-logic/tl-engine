@@ -6,12 +6,13 @@
 package com.top_logic.element.layout.formeditor.definition;
 
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.element.layout.formeditor.FormTypeProperty;
 import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -19,7 +20,10 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.form.definition.FormContextDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelPartRef.BuildRef;
 
 /**
  * {@link TLTypeAnnotation} to annotate an {@link FormDefinition} when exporting the edited type as
@@ -32,7 +36,7 @@ import com.top_logic.model.form.definition.FormDefinition;
 @TagName("export-definition")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
 @InApp
-public interface PDFExportAnnotation extends TLTypeAnnotation {
+public interface PDFExportAnnotation extends TLTypeAnnotation, FormContextDefinition {
 
 	/**
 	 * Property name {@link #getEditedType()}
@@ -42,9 +46,12 @@ public interface PDFExportAnnotation extends TLTypeAnnotation {
 	/**
 	 * The export {@link FormDefinition form} of the annotated type.
 	 */
-	@FormTypeProperty(EDITED_TYPE)
 	@ItemDisplay(ItemDisplayType.VALUE)
 	FormDefinition getExportForm();
+
+	@Override
+	@Derived(fun = BuildRef.class, args = @Ref(EDITED_TYPE))
+	TLModelPartRef getFormContextType();
 
 	/**
 	 * @see #getExportForm()

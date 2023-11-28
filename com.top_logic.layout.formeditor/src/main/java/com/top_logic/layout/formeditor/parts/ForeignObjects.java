@@ -7,22 +7,24 @@ package com.top_logic.layout.formeditor.parts;
 
 import java.util.List;
 
+import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.element.layout.formeditor.FormTypeProperty;
 import com.top_logic.element.layout.meta.HideActiveIf;
 import com.top_logic.layout.editor.config.ButtonTemplateParameters;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.model.form.definition.FormContextDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 
@@ -42,7 +44,8 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 })
 @TagName("foreign-objects")
 public interface ForeignObjects
-		extends FormElement<ForeignObjectsTemplateProvider>, TypeTemplateParameters, ButtonTemplateParameters {
+		extends FormElement<ForeignObjectsTemplateProvider>, TypeTemplateParameters, ButtonTemplateParameters,
+		FormContextDefinition {
 
 	/** Configuration name for {@link #getItems()}. */
 	String ITEMS = "items";
@@ -79,9 +82,12 @@ public interface ForeignObjects
 	 * Definition of the layout that is used to display the single objects.
 	 */
 	@Name(LAYOUT)
-	@FormTypeProperty(TYPE)
 	@ItemDisplay(ItemDisplayType.VALUE)
 	FormDefinition getLayout();
+
+	@Override
+	@DerivedRef(TYPE)
+	TLModelPartRef getFormContextType();
 
 	/**
 	 * Expression that is used for each of the items to compute, whether the form elements must be

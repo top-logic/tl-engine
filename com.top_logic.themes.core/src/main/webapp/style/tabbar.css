@@ -3,6 +3,12 @@
 ****	Tabbar syles	****
 ****					****
 */
+.tlTabbarContainer {
+	display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .tlTabBar {
 	position: relative;
 	display: flex;
@@ -102,5 +108,223 @@
 .tlTabBar .tab:disabled {
 	border-bottom: 2px solid var(--border-disabled);
 }
+
+
+/* =============================================== */
+/* ================ Sidebar Design =============== */
+/* =============================================== */
+.mcMinimized .sblLogo .frmBody {
+    padding: var(--spacing-01) var(--spacing-03) 0 var(--spacing-03);
+}
+
+.mcMinimized .sblLogo .frmBody {
+    padding: var(--spacing-01) var(--spacing-01) 0 var(--spacing-01);
+}
+
+.sblTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.accText.sblTitleContent {
+	display: flex;
+	flex-direction: column;
+}
+
+div.mcMinimized .sblTitle img {
+	max-width: 28px;
+}
+
+.sblTitleName {
+	color: var(--text-primary);
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+}
+
+.sblTitleVersion {
+	color: var(--text-secondary);
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+}
+
+.sblAccordion {
+	margin-bottom: var(--spacing-06);
+  	padding-top: var(--spacing-05);
+  	position: relative; /* for the positioning of the border */
+}
+
+.sblAccordion::before {
+  	content: "";
+  	position: absolute;
+  	top: calc(var(--spacing-05) / 2);
+  	left: 50%; /* center horizontally in the middle of the parent element */
+  	transform: translateX(-50%); /* center horizontally */
+  	width: 80%;
+  	border-top: 2px solid var(--border-subtle);
+}
+
+.cMinimizable:not(.mcMinimized) .tabbarPopup {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+}
+
+.quickSearch {
+	border: 1px solid var(--border-subtle);
+}
+
+.quickSearch .cTextInput {
+	flex-grow: 2;
+}
+
+.quickSearch .cTextInput input {
+	border: none;
+}
+
+.quickSearch .cButton.quickSearchButton {
+	box-shadow: none;
+	background: var(--field);
+}
+
+.quickSearch .cButton.quickSearchButton a.input-image {
+    border-radius: 0;
+}
+
+.quickSearchTitle.accText {
+	margin-top: var(--spacing-03);
+}
+
+div.licenseView {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	padding: 0px;
+}
+
+.licenseContent {
+	color: var(--support-danger);
+}
+
+/* =============================================== */
+/* ====== AccordionControl (prefix is 'acc') ===== */
+/* =============================================== */
+div.accRoot {
+	background: transparent;
+}
+
+div.accChildren {
+	margin-left: var(--ACCORDION_INDENT);
+}
+
+div.accNode a.accEntry,
+a.accEntry,
+a.accEntry:link,
+a.accEntry:visited,
+a.accEntry:active {
+	display: block;
+	padding: var(--spacing-02) var(--spacing-03);
+	white-space: nowrap;
+	overflow-x: hidden;
+}
+
+a.accEntry span.accEntryContent {
+	padding: 0px;
+}
+
+a.accEntry span.accLabel {
+	color: var(--text-secondary);
+	display: table-cell;
+	width: 100%;
+	line-height: 2rem;
+}
+
+a.accEntry img.accMarker {
+	width: 22px;
+	padding-right: 7px;
+}
+
+div.accChildren > div.accNode > a.accEntry {
+	border-top-left-radius: var(--ACCORDION_BORDER_RADIUS);
+	border-bottom-left-radius: var(--ACCORDION_BORDER_RADIUS);
+}
+
+div.accChildren > div.accNode:first-child > a.accEntry {
+	border-top-left-radius: 0px;
+}
+
+span.accIcon.input-image,
+span.accIcon.input-image i {
+	color: var(--icon-secondary);
+}
+
+span.accIcon.input-image,
+span.accIcon.input-image i,
+img.accIcon {
+	padding-right: var(--spacing-02);	
+}
+
+div.accRoot ul.mtbGroup,
+div.accRoot ul.mtbGroup li {
+	display: block;
+	padding: 0px;
+	margin: 0px;
+}
+
+div.sblButtons .tlUser,
+div.sblButtons .mtbGroup .cButton {
+	background: transparent;
+	box-shadow: none;
+	font-size: var(--body-02-font-size);
+}
+
+div.sblButtons .tlUser i,
+div.sblButtons .mtbGroup .cButton i {
+	font-size: var(--body-02-font-size);
+}
+
+a.accEntry:hover,
+.sblButtons .mtbGroup .cButton:not(.cmdLinkDisabled) a:hover {
+	background: var(--layer-hover);
+	text-decoration: none;
+	box-shadow: none;
+}
+
+a.accEntry.accSelected, 
+div.accSelected a.accEntry,
+div.accNode.tlPopupOpen a.accEntry,
+a.accEntry.accContainer.accSelected {
+	background: var(--layer);
+	border-left: 3px solid var(--border-interactive);
+}
+
+a.accEntry.accSelected:hover, 
+div.accSelected a.accEntry:hover,
+div.accNode.tlPopupOpen a.accEntry:hover,
+a.accEntry.accContainer.accSelected:hover {
+	border-left: 3px solid var(--border-strong);
+}
+
+a.accEntry.accSelected .accLabel, 
+div.accSelected a.accEntry .accLabel,
+div.accNode.tlPopupOpen a.accEntry .accLabel,
+a.accEntry.accContainer.accSelected .accLabel{
+	color: var(--text-primary);
+	font-size: .875rem;
+    font-weight: 600;
+}
+
+a.accEntry.accSelected .accIcon i, 
+div.accSelected a.accEntry .accIcon i,
+div.accNode.tlPopupOpen a.accEntry .accIcon i,
+a.accEntry.accContainer.accSelected .accIcon i {
+	color: var(--icon-primary);
+}
+
 
 

@@ -35,10 +35,10 @@
 		value="72"
 	/>
 	<int name="MAIN_TAB_BAR_HEIGHT"
-		value="52"
+		value="56"
 	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="52"
+		value="56"
 	/>
 	<size name="tabbar-height"
 		value="40px"

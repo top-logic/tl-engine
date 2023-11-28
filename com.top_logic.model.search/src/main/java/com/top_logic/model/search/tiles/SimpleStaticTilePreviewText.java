@@ -14,8 +14,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 
 /**
  * {@link TilePreviewPartProvider.Text} computing the text using an configured {@link ResKey}.
@@ -42,7 +40,6 @@ public class SimpleStaticTilePreviewText extends AbstractConfiguredInstance<Simp
 		 * </p>
 		 */
 		@Mandatory
-		@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 		ResKey1 getText();
 		
 	}

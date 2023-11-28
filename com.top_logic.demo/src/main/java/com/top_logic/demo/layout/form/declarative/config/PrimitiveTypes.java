@@ -207,14 +207,12 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	 * An internationalized string.
 	 */
 	@Name(RESKEY_PRIMITIVE)
-	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	ResKey getResKeyPrimitive();
 
 	/**
 	 * An internationalized multi-line text.
 	 */
 	@Name(RESKEY_MULTILINE_PRIMITIVE)
-	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	@ControlProvider(MultiLineText.class)
 	ResKey getResKeyMultilinePrimitive();
 

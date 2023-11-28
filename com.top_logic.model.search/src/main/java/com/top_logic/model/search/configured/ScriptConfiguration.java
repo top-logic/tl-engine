@@ -19,8 +19,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor.WithTooltipConfiguration;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
@@ -66,7 +64,6 @@ public interface ScriptConfiguration extends NamedConfigMandatory {
 	 */
 	@Name(LABEL)
 	@Nullable
-	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	@WithTooltipConfiguration(false)
 	ResKey getLabel();
 

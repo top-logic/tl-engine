@@ -29,8 +29,6 @@
 			type="ResKey"
 		>
 			<mandatory/>
-			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
-			<item-display value="monomorphic"/>
 		</property>
 		<property name="data"
 			type="com.top_logic.model.search.expr.config.dom.Expr"

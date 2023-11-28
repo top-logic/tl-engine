@@ -11,8 +11,6 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ModelSpec;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 
 /**
  * Configuration options of {@link LayoutComponent} that are displayed in simplified templates for
@@ -37,7 +35,6 @@ public interface LayoutComponentUIOptions extends ConfigurationItem {
 	 */
 	@Label("Title")
 	@Name(TITLE_KEY)
-	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	@InstanceFormat
 	ResKey getTitleKey();
 

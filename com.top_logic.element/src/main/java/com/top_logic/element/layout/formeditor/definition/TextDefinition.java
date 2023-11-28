@@ -7,12 +7,9 @@ package com.top_logic.element.layout.formeditor.definition;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
-import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
-import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.model.form.definition.FormElement;
 
 /**
@@ -32,8 +29,6 @@ public interface TextDefinition extends ConfigurationItem {
 	 * @return The label of the group.
 	 */
 	@Name(LABEL)
-	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
-	@Binding(ResKey.ValueBinding.class)
 	ResKey getLabel();
 
 	/**

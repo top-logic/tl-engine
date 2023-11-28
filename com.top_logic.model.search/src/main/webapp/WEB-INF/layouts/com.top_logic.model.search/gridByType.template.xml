@@ -21,8 +21,6 @@
 			type="ResKey"
 		>
 			<mandatory/>
-			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
-			<item-display value="monomorphic"/>
 		</property>
 		<property name="defaultColumns"
 			element-type="String"

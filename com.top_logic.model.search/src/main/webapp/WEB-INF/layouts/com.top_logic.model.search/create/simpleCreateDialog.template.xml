@@ -10,8 +10,6 @@
 			type="ResKey"
 		>
 			<formatted-default value="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"/>
-			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
-			<item-display value="monomorphic"/>
 		</property>
 		<property name="openerIcon"
 			type="com.top_logic.layout.basic.ThemeImage"

@@ -9,8 +9,6 @@
 			type="ResKey"
 		>
 			<mandatory/>
-			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
-			<item-display value="monomorphic"/>
 		</property>
 		<property name="preview"
 			instance-type="com.top_logic.mig.html.layout.tiles.component.TilePreview"

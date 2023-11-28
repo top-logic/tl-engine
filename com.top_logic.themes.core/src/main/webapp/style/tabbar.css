@@ -174,21 +174,15 @@ div.mcMinimized .sblTitle img {
 	right: 5px;
 }
 
-.quickSearch {
-	border: 1px solid var(--border-subtle);
-}
-
 .quickSearch .cTextInput {
 	flex-grow: 2;
 }
 
-.quickSearch .cTextInput input {
-	border: none;
-}
-
 .quickSearch .cButton.quickSearchButton {
-	box-shadow: none;
-	background: var(--field);
+    box-shadow: none;
+    background: var(--field);
+    border: none;
+    border-radius: unset;
 }
 
 .quickSearch .cButton.quickSearchButton a.input-image {

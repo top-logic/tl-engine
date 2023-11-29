@@ -2,6 +2,18 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="test.htmltemplate">
+		<annotations>
+			<singletons>
+				<singleton name="TANKS"
+					type="TankFarm"
+				/>
+			</singletons>
+		</annotations>
+		<enum name="ContentType">
+			<classifier name="FUEL"/>
+			<classifier name="WATER"/>
+			<classifier name="WASTE_OIL"/>
+		</enum>
 		<class name="Tank">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -26,6 +38,11 @@
 							</label>
 						</group>
 						<group>
+							<field
+								attribute="content"
+								fullQualifiedName="test.htmltemplate:Tank#content"
+								type="test.htmltemplate:ContentType"
+							/>
 							<field
 								attribute="capacity"
 								fullQualifiedName="test.htmltemplate:Tank#capacity"
@@ -70,7 +87,6 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format="# l"/>
 						<constraints>
 							<constraint-by-expression>
 								<check>value -&gt; $value &gt; 0.0 || #("Die Tankkapazität muss positiv sein"@de, "The capacity must be positive"@en)</check>
@@ -132,6 +148,26 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<reference name="content"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="ContentType"
+				/>
+			</attributes>
+		</class>
+		<class name="TankFarm">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="tanks"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Tank"
+				/>
 			</attributes>
 		</class>
 	</module>

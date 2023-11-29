@@ -23,6 +23,8 @@
 			</resourceKey>
 		</open-handler>
 		<typeOptions type="test.htmltemplate:Tank"/>
-		<create-handler id="ID_091e23bc_5882_4959_a07c_02af9f7ebaa5"/>
+		<create-handler id="ID_091e23bc_5882_4959_a07c_02af9f7ebaa5"
+			linkOperation="farm -> tank -> $farm.add(`test.htmltemplate:TankFarm#tanks`, $tank)"
+		/>
 	</arguments>
 </config:template-call>

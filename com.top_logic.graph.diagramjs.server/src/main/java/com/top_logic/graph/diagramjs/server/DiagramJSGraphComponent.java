@@ -586,16 +586,9 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 			_hiddenGraphParts.addAll(graphPartModels);
 
 			if (!showHiddenElements()) {
-				deselectGraphParts(getGraphModel(), graphPartModels);
+				SharedGraph graph = getGraphModel();
+				GraphModelUtil.removeGraphParts(graph, getGraphParts(graph, graphPartModels));
 			}
-		}
-	}
-
-	private void deselectGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
-		Set<GraphPart> newSelection = new HashSet<>(graph.getSelectedGraphParts());
-
-		if (newSelection.removeAll(getGraphParts(graph, graphPartModels))) {
-			graph.setSelectedGraphParts(newSelection);
 		}
 	}
 
@@ -753,7 +746,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 			SharedGraph graphModel = getGraphModel();
 
 			deleted.forEach(object -> {
-				GraphModelUtil.removeGraphPart(graphModel, graphModel.getGraphPart(object));
+				GraphModelUtil.removeGraphParts(graphModel, Collections.singleton(graphModel.getGraphPart(object)));
 			});
 		}
 	}

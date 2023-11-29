@@ -7,6 +7,7 @@ package com.top_logic.model.form.implementation;
 
 import java.util.function.Function;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
@@ -23,6 +24,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
+@Label("Form part")
 public interface FormElementTemplateProvider {
 
 	/**
@@ -93,7 +95,9 @@ public interface FormElementTemplateProvider {
 	 * @param context
 	 *        Context information for label creation.
 	 */
-	ResKey getLabel(FormEditorContext context);
+	default ResKey getLabel(FormEditorContext context) {
+		return ResKey.forClass(this.getClass());
+	}
 
 	/**
 	 * The name for the label.

@@ -328,7 +328,9 @@
   `test.htmltemplate:ContentType#WASTE_OIL`: "#806600";
 }]]></function>
 								</value-computation>
-								<link-definition name="openProperties"/>
+								<link-definition name="openProperties"
+									target-component="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/propertiesForm.layout.xml#Form"
+								/>
 								<variable class="com.top_logic.layout.formeditor.parts.template.FormFragment"
 									name="titleform"
 								>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments defaultFor="test.htmltemplate:Tank">
+		<name key="dynamic.63700165-d755-44a3-84ba-8250a053abc7">
+			<en>Properties</en>
+			<de>Eigenschaften</de>
+		</name>
+		<buttons>
+			<button id="ID_81c9d18b_6d4f_4f2b_813d_53a71d51e77b"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

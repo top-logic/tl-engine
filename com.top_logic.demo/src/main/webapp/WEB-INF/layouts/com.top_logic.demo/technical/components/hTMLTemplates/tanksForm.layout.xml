@@ -20,13 +20,20 @@
 		</buttons>
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/newTank/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/dialog.layout.xml"/>
 		</dialogs>
 		<forms>
 			<form type="test.htmltemplate:TankFarm">
 				<formDefinition>
 					<rendered-objects>
 						<template><![CDATA[<h1>{title}</h1>
-<div style="display: flex; flex-wrap: wrap;">{tanks}</div>]]></template>
+<tl:if test="tanks">
+<div style="display: flex; flex-wrap: wrap;">{tanks}</div>
+</tl:if>
+<tl:if test="!tanks">
+<div>Keine Tanks vorhanden. Drücke den Plus-Knopf um den ersten Tank anzulegen.</div>
+</tl:if>
+]]></template>
 						<value-computation name="tanks"
 							function="farm -> $farm.get(`test.htmltemplate:TankFarm#tanks`)"
 						/>
@@ -39,6 +46,8 @@
 						<value-templates>
 							<value-template type="test.htmltemplate:Tank">
 								<template><![CDATA[<div style="max-width: 400px; margin: 32px; background-color: #EEEEEE; border-radius: 8px; padding:8px;">
+<div style="font-weight: bold;">{titleform}</div>
+<div onclick="{openProperties}" style="cursor:pointer;">
 <svg
    id="Kraftstofftanks"
    viewBox="0 0 341.67999 302.01999"
@@ -290,6 +299,8 @@
        sodipodi:nodetypes="cccc" />
   </g>
 </svg>
+</div>
+
 <div>{form}</div>
 </div>
 ]]></template>
@@ -298,9 +309,9 @@
 								>
 									<formDefinition columns="ONE">
 										<field
-											attribute="name"
-											fullQualifiedName="test.htmltemplate:Tank#name"
-											type="tl.core:String"
+											attribute="capacity"
+											fullQualifiedName="test.htmltemplate:Tank#capacity"
+											type="tl.core:Double"
 											visibility="read-only"
 										/>
 										<field
@@ -317,6 +328,23 @@
   `test.htmltemplate:ContentType#WASTE_OIL`: "#806600";
 }]]></function>
 								</value-computation>
+								<link-definition name="openProperties"/>
+								<variable class="com.top_logic.layout.formeditor.parts.template.FormFragment"
+									name="titleform"
+								>
+									<formDefinition>
+										<field
+											attribute="name"
+											fullQualifiedName="test.htmltemplate:Tank#name"
+											type="tl.core:String"
+											visibility="read-only"
+										>
+											<annotations>
+												<label-position value="hide-label"/>
+											</annotations>
+										</field>
+									</formDefinition>
+								</variable>
 							</value-template>
 						</value-templates>
 					</rendered-objects>

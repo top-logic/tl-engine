@@ -12,9 +12,10 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -66,7 +67,7 @@ public class ValueComputation extends AbstractConfiguredInstance<ValueComputatio
 	}
 
 	@Override
-	public EvalResult eval(DisplayContext displayContext, LayoutComponent component, Object model) {
-		return new ResultValue(_function.execute(displayContext, null, model));
+	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
+		return _function.executeWith(Args.some(model));
 	}
 }

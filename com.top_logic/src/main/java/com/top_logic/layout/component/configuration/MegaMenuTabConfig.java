@@ -52,7 +52,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * Navigation button which shows the labels and tooltips of the first tab bar's tabs.
+ * Navigation button that displays the labels and tooltips of all tabs in a tab bar.
  * 
  * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
  *

@@ -841,6 +841,7 @@ table td span.cTextInput,
 table td .cDataItem,
 table td span.downloadControl {
 	display: flex;
+	flex-wrap: nowrap;
 	align-items: center;
 	width: 100%;
 	height: 100%;
@@ -951,6 +952,22 @@ table td span.lFlexible > input {
 	text-align: inherit;
 }
 
+table td .cDatetime .lFlexible {
+	width: fit-content !important;
+}
+
+table td .cDatetime .cDateInput input {
+	width: 6.5rem !important;
+}
+
+table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
+	width: fit-content !important;
+}
+
+.cTimeInput input {
+	width: 4.5rem !important;
+}
+
 table td span.lFlexible > input:not([type="image"]) {
 	width: 100%;
 }
@@ -959,10 +976,6 @@ table td span.lFlexible > input:not([type="image"]) {
  frozen tables (e.g. needed for gallery edit dialog). */
 .tl-table__title span.lFlexible input {
 	width: auto;
-}
-
-table td span.cDatetime span.timePart {
-	min-width: 5em;
 }
 
 /* Use default display for span in title of

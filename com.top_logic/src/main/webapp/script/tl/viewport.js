@@ -812,16 +812,22 @@ services.viewport = {
 		const elementID = element.id;
 		const tabLayout = document.getElementById(elementID);
 		const tabContainer = tabLayout.querySelector('.tlTabScrollContainer');
-		const activeTab = tabContainer.querySelector('.activeTab');
-  		const containerWidth = tabContainer.clientWidth;
-  		const tabLeftEnd = activeTab.offsetLeft;
-  		const tabRightEnd = tabLeftEnd + activeTab.clientWidth;
-
-  		if (tabLeftEnd < tabContainer.scrollLeft) {
-    		tabContainer.scrollLeft = tabLeftEnd;
-  		} else if (tabRightEnd > tabContainer.scrollLeft + containerWidth) {
-    		tabContainer.scrollLeft = tabRightEnd - containerWidth;
-  		}
+		const activeTab = tabContainer.querySelector('.activeTab'); 
+		/* 
+		*	It does not matter if no tab has been selected from a container.
+		*	This happens if you go to administration in the non-sidebar theme.
+		*	None of the tabs from the first tab bar are selected.
+		*/
+		if(activeTab) {
+			const containerWidth = tabContainer.clientWidth;
+  			const tabLeftEnd = activeTab.offsetLeft;
+  			const tabRightEnd = tabLeftEnd + activeTab.clientWidth;
+  			if (tabLeftEnd < tabContainer.scrollLeft) {
+    			tabContainer.scrollLeft = tabLeftEnd;
+  			} else if (tabRightEnd > tabContainer.scrollLeft + containerWidth) {
+    			tabContainer.scrollLeft = tabRightEnd - containerWidth;
+  			}
+		}
 	},
 	
 	/* 

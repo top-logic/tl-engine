@@ -25,5 +25,9 @@
       <groupId>com.top-logic</groupId>
       <artifactId>ext-com-inter-fonts</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-google-fonts</artifactId>
+    </dependency>
   </dependencies>
 </project>

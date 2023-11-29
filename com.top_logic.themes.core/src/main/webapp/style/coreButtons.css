@@ -12,6 +12,12 @@
     display: none;
 }
 
+.cmdBody {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
 .tlButtonScrollContainer, 
 .cmdButtons {
  	display: flex;

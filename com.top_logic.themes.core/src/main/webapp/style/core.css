@@ -409,7 +409,6 @@ div.fltList {
 .pullUpForeground, 
 .pullUpBackground {
 	display: inline-flex;
-	flex-direction: row-reverse;
 	align-items: center;
 	gap: var(--spacing-01);
 }
@@ -489,6 +488,16 @@ div.fltList {
 
 .defaultFilterContainer .cDateInput input {
 	width: 100px;
+}
+
+.defaultFilterContainer input,
+.defaultFilterContainer .cTextInput input,
+.defaultFilterContainer .cDateInput input,
+.defaultFilterContainer .cDateInput .lFixedRight,
+.defaultFilterContainer .cTimeInput input,
+.defaultFilterContainer .cTimeInput .lFixedRight,
+.defaultFilterContainer .ddwttDropBtn {
+	background: var(--background);
 }
 
 .defaultFilterContainer .lFlexible > input {
@@ -1142,20 +1151,18 @@ div.lcHidden {
 div.mcToggle {
 	position: absolute;
 	cursor: pointer;
-	width: var(--MC_TOGGLE_WIDTH);
-	height: var(--MC_TOGGLE_HEIGHT);
-	right: 0px;
-	
-	/* Duplicate defintion for legacy compatibility. */
-	top: 50%;
-	top: calc(50% - var(--MC_TOGGLE_HEIGHT) / 2);
-	
-	background: var(--MC_MINIMIZE_ICON);
-	visibility: hidden;
+	width: 2rem;
+	height: 4rem;
+	right: 0;
+	top: calc(50% - 4rem / 2);
+	background: var(--MC_MINIMIZE_ICON) no-repeat;
+	box-shadow: var(--shadow-menu);
+	visibility: hidden
 }
 
 div.mcMinimized > div.mcToggle {
-	background: var(--MC_NORMALIZE_ICON);
+	right:0;
+	background: var(--MC_NORMALIZE_ICON) no-repeat;
 }
 
 div.cMinimizable:HOVER > div.mcToggle {
@@ -1186,8 +1193,8 @@ div.mcMinimized .accText {
 ****					****
 */
 .tooltipCaption {
-	color: var(--text-secondary);
-	background: var(--layer);
+	color: var(--text-on-color);
+	background-color: var(--background-inverse);
 	padding: calc(var(--ttPadding) / 2) 12px;
 	line-height: 1.5 !important;
 }
@@ -1195,7 +1202,7 @@ div.mcMinimized .accText {
 .tooltip {
 	max-width: 500px;
 	max-height: calc(100vh - (var(--ttPadding) * 2));
-	background-color: var(--layer);
+	background-color: var(--background-inverse);
 	position: fixed;
 	filter: drop-shadow(var(--shadow-menu));
 	z-index: 9999999999999999;
@@ -1216,7 +1223,7 @@ div.mcMinimized .accText {
 	height: var(--ttArrow-dim);
 	top: var(--ttArrow-top);
 	transform: var(--ttArrow-trans);
-	background-color: var(--layer);
+	background-color: var(--background-inverse);
 	--ttArrow-dim: 18px;
 }
 
@@ -1259,7 +1266,7 @@ div.mcMinimized .accText {
 	overflow-wrap: break-word;
 	padding: var(--ttPadding) 12px;
 	line-height: 1.5 !important;
-	color: var(--text-secondary);
+	color: var(--text-on-color);
 	text-align: left;
 	font-size: 12px;
 	cursor: text;
@@ -1267,7 +1274,7 @@ div.mcMinimized .accText {
 
 .tooltipContent * {
 	margin: 0;
-	color: var(--text-secondary);
+	color: var(--text-on-color);
 	line-height: 1.5 !important;
 	padding: 0 !important;
 }
@@ -1780,8 +1787,8 @@ h5.card-title a:focus {
 .mtbGroup .cButton:not(.cmdLinkDisabled) a:hover,
 .mtbGroup .trbEntry a:not(.disabled):hover,
 .cButton:not(.cmdLinkDisabled) a:hover[alt="Administration"] {
-	background: var(--background-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--background-hover);
+	background: var(--field-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--field-hover);
 }
 
 .quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:focus,
@@ -2040,6 +2047,11 @@ If they're deleted, this can be deleted too
 	background-color: var(--layer);
 	height: inherit;
 	gap: var(--spacing-02);
+	overflow: hidden;
+}
+
+.cCollapsibleToolbar {
+	white-space: nowrap;
 }
 
 .cCollapsibleTitle {

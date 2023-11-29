@@ -1,33 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <settings>
-	<type name="MAIN_LAYOUT_CLASS"
-		interface="com.top_logic.mig.html.layout.MainLayout"
-		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
-	/>
 	<string name="MAIN_TAB_BAR_CSS"
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
 		value="66"
 	/>
-	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
-	/>
-	<int name="TOOL_ROW_HEIGHT"
-		value="72"
-	/>
 	<int name="LICENCE_EXPIRE_BAR_HEIGHT"
 		expr="34"
 	/>
 	<int name="QUICK_SEARCH_HEIGHT"
 		value="140"
-	/>
-	<boolean name="QUICK_SEARCH_ENABLED"
-		value="true"
-	/>
-	<int name="QUICK_SEARCH_MAX_RESULTS"
-		value="40"
 	/>
 	<boolean name="SBL_ACCORDION"
 		value="false"
@@ -46,34 +30,6 @@
 	/>
 	<int name="SIDEBAR_LAYOUT_TOP_BORDER"
 		value="16"
-	/>
-	<int name="MAINTAINANCE_BAR_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
-	/>
-	<int name="VERSION_ROW_HEIGHT"
-		value="21"
-	/>
-	<type name="VERSION_RENDERER_CLASS"
-		interface="com.top_logic.layout.Renderer"
-		value="com.top_logic.themes.modern.layout.DefaultVersionRenderer"
-	/>
-	<boolean name="BREADCRUMB_ROOT_VISIBLE"
-		value="true"
-	/>
-	<icon name="BREADCRUMB_ROOT_ICON"
-		value="css:bi bi-house"
-	/>
-	<icon name="READ_ONLY_NAVIGATION_SEPARATOR_ICON"
-		expr="%ICONS_MOVE_ROW_RIGHT%"
-	/>
-	<string name="READ_ONLY_NAVIGATION_SEPARATOR_LABEL"
-		value=""
-	/>
-	<string name="BREADCRUMB_SEPARATOR_LABEL"
-		value=""
-	/>
-	<boolean name="LOGOUT_TIMER"
-		value="true"
 	/>
 </settings>
 

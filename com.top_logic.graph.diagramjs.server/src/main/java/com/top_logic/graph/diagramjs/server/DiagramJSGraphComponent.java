@@ -70,14 +70,15 @@ import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLAssociation;
+import com.top_logic.model.TLAssociationPart;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLClassProperty;
-import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
+import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 import com.top_logic.util.error.TopLogicException;
@@ -739,8 +740,8 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	protected void handleTLObjectCreations(Stream<? extends TLObject> created) {
 		if (hasGraphModel()) {
 			created.forEach(object -> {
-				if (isSupportedObject(object)) {
-					createGraphPart(object);
+				if (belongsToDisplayedModule(object) && isSupportedObject(object)) {
+					getOrCreateGraphPart(object);
 				}
 			});
 		}
@@ -758,13 +759,10 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * Creates a part into the underlying {@link GraphModel} of this component.
-	 * 
-	 * <p>
-	 * If a graph part with the given business object exist then return the found part.
-	 * </p>
+	 * Returns the {@link GraphPart} with the given business object. If no graph part is found, a
+	 * new {@link GraphPart} is created into the underlying {@link GraphModel} of this component.
 	 */
-	public GraphPart createGraphPart(Object object) {
+	public GraphPart getOrCreateGraphPart(Object object) {
 		SharedGraph graph = getGraphModel();
 
 		GraphPart graphPart = graph.getGraphPart(object);
@@ -772,28 +770,31 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		if (graphPart != null) {
 			return graphPart;
 		} else {
-			GraphPart part = GraphModelUtil.createGraphPart(graph, object, getLabelProvider(), getHiddenGraphParts(),
+			return GraphModelUtil.createGraphPart(graph, object, getLabelProvider(), getHiddenGraphParts(),
 				getInvisibleGraphParts());
-
-			graph.setSelectedGraphParts(Collections.singleton(part));
-
-			return part;
 		}
 	}
 
-	private boolean isSupportedObject(TLObject object) {
-		return isPartOfDisplayedModule(object) && isSupportedObjectType(object);
-	}
-
-	private boolean isPartOfDisplayedModule(TLObject object) {
+	private boolean belongsToDisplayedModule(TLObject object) {
 		return GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule;
 	}
 
-	private boolean isSupportedObjectType(TLObject object) {
-		return object instanceof TLEnumeration ||
-			(object instanceof TLClass && !(object instanceof TLAssociation)) ||
-			object instanceof TLClassProperty ||
-			object instanceof TLReference;
+	/**
+	 * Only a {@link GraphPart} for a {@link TLReference} business object is build.
+	 */
+	private boolean isSupportedObject(TLObject object) {
+		return !(object instanceof TLAssociation || object instanceof TLAssociationPart);
 	}
 
+	@Override
+	protected Set<? extends TLStructuredType> getTypesToObserve() {
+		Set<TLStructuredType> typesToObserve = new HashSet<>();
+
+		typesToObserve.add(TlModelFactory.getTLClassType());
+		typesToObserve.add(TlModelFactory.getTLEnumerationType());
+		typesToObserve.add(TlModelFactory.getTLReferenceType());
+		typesToObserve.add(TlModelFactory.getTLPropertyType());
+
+		return typesToObserve;
+	}
 }

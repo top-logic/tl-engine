@@ -8,9 +8,11 @@ package com.top_logic.layout.formeditor.parts.template;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
+import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -365,16 +367,20 @@ public class RenderedObjectsTemplateProvider
 
 	/**
 	 * {@link HTMLFragment} displaying a collection of values by rendering the elements one after
-	 * the other..
+	 * the other.
+	 * 
+	 * <p>
+	 * Note: Implement {@link Collection} to decide whether it is empty in boolean expressions.
+	 * </p>
 	 */
-	private final class CollectionFragment implements HTMLFragment {
+	private final class CollectionFragment extends AbstractCollection<Object> implements HTMLFragment {
 
-		private Collection<?> _collection;
+		private Collection<Object> _collection;
 
 		/**
 		 * Creates a {@link CollectionFragment}.
 		 */
-		public CollectionFragment(Collection<?> collection) {
+		public CollectionFragment(Collection<Object> collection) {
 			_collection = collection;
 		}
 
@@ -387,6 +393,16 @@ public class RenderedObjectsTemplateProvider
 					ResourceRenderer.INSTANCE.write(context, out, element);
 				}
 			}
+		}
+
+		@Override
+		public Iterator<Object> iterator() {
+			return _collection.iterator();
+		}
+
+		@Override
+		public int size() {
+			return _collection.size();
 		}
 	}
 

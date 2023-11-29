@@ -218,7 +218,7 @@ public class DropDownControl extends AbstractSelectControl {
 					label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
 				}
 			}
-			out.write(label);
+			out.writeText(label);
 		}
 		out.endTag(SPAN);
 	}

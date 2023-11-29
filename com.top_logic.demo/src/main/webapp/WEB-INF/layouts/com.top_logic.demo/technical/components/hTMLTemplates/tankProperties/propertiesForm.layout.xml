@@ -5,7 +5,7 @@
 	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments defaultFor="test.htmltemplate:Tank">
+	<arguments>
 		<name key="dynamic.63700165-d755-44a3-84ba-8250a053abc7">
 			<en>Properties</en>
 			<de>Eigenschaften</de>

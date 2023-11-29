@@ -652,7 +652,7 @@ public abstract class ResKey {
 	 * Derives a suffix key form this {@link ResKey}
 	 * 
 	 * @param suffix
-	 *        The suffix to appen to the internal representation.
+	 *        The suffix to append to the internal representation.
 	 * @return The new key.
 	 */
 	public final ResKey suffix(String suffix) {

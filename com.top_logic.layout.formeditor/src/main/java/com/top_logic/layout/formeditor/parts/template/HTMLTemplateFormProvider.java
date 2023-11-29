@@ -40,9 +40,9 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.AbstractVisibleControl;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
+import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -175,8 +175,6 @@ public class HTMLTemplateFormProvider
 
 	private Map<TLType, Template> _templateByType = new HashMap<>();
 
-	private LayoutComponent _component;
-
 	private Template _template;
 
 	/**
@@ -184,9 +182,6 @@ public class HTMLTemplateFormProvider
 	 */
 	public HTMLTemplateFormProvider(InstantiationContext context, Config<?> config) {
 		super(context, config);
-
-		_component =
-			DefaultDisplayContext.getDisplayContext().getSubSessionContext().getLayoutContext().getMainLayout();
 
 		_template = new Template(context, config);
 
@@ -278,7 +273,8 @@ public class HTMLTemplateFormProvider
 						_params.put(varName, wrap(form, value));
 					}
 				} else {
-					Object value = varDef.eval(_component, form, model);
+					LayoutComponent component = FormComponent.componentForMember(form.getFormContext());
+					Object value = varDef.eval(component, form, model);
 					_params.put(varName, wrap(form, value));
 				}
 			}

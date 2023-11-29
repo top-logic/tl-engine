@@ -69,7 +69,7 @@ public class DiagramJSGraphBuilder implements GraphModelBuilder {
 
 		LayoutContext context = getLayoutContext(graphComponent);
 
-		LayoutGraph graph = GraphModelUtil.createLayoutGraph(module, context.getHiddenElements());
+		LayoutGraph graph = GraphModelUtil.createLayoutGraph(module, context);
 
 		Sugiyama.INSTANCE.layout(context, graph);
 

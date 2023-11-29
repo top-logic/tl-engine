@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -422,17 +423,19 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	 * selected diagram parts.
 	 */
 	public void resetGraphModel() {
-		Collection<? extends GraphPart> oldSelectedGraphParts = getGraphModel().getSelectedGraphParts();
+		Collection<Object> oldSelectedGraphPartModels = getGraphPartModels(getGraphModel().getSelectedGraphParts());
 
 		SharedGraph newGraph = createSharedGraphModel(_currentDisplayedModule);
 
-		newGraph.setSelectedGraphParts(oldSelectedGraphParts
-			.stream()
-			.filter(part -> newGraph.getGraphPart(part.getTag()) != null)
-			.collect(Collectors.toSet())
-		);
+		newGraph.setSelectedGraphParts(getGraphParts(newGraph, oldSelectedGraphPartModels));
 
 		setGraphModel(newGraph);
+	}
+
+	private Collection<Object> getGraphPartModels(Collection<? extends GraphPart> graphParts) {
+		return graphParts.stream()
+			.map(graphPart -> graphPart.getTag())
+			.collect(Collectors.toSet());
 	}
 
 	@Override
@@ -592,14 +595,11 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		}
 	}
 
-	private Collection<GraphPart> getGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
-		Set<GraphPart> graphParts = new HashSet<>();
-
-		for (Object graphPartModel : graphPartModels) {
-			graphParts.add(graph.getGraphPart(graphPartModel));
-		}
-
-		return graphParts;
+	private Collection<? extends GraphPart> getGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
+		return graphPartModels.stream()
+			.map(graphPartModel -> graph.getGraphPart(graphPartModel))
+			.filter(Objects::nonNull)
+			.collect(Collectors.toSet());
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.values.edit.FormBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -114,6 +115,11 @@ public class EditFormBuilder extends ConfiguredDynamicFormBuilder {
 		}
 
 		AttributeFormContext formContext = new AttributeFormContext(component.getResPrefix());
+
+		// Note: Early initialize the form context to allow access to the component while building
+		// the form.
+		FormComponent.initFormContext(component, (FormHandler) component, formContext);
+
 		TLObject object = (TLObject) businessModel;
 		setDisplayedTypedForm(TypedForm.lookup(getConfiguredForms(), object));
 

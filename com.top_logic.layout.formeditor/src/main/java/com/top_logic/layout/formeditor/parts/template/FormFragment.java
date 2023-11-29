@@ -73,9 +73,15 @@ public class FormFragment extends AbstractConfiguredInstance<FormFragment.Config
 
 			FormContainer contentGroup = editorContext.getContentGroup();
 
-			FormContainer innerGroup = new FormGroup("formFragment-" + itemID, ResPrefix.NONE);
-			innerGroup.setStableIdSpecialCaseMarker(item);
-			contentGroup.addMember(innerGroup);
+			FormContainer innerGroup;
+			String groupName = "formFragment-" + itemID;
+			if (contentGroup.hasMember(groupName)) {
+				innerGroup = (FormContainer) contentGroup.getMember(groupName);
+			} else {
+				innerGroup = new FormGroup(groupName, ResPrefix.NONE);
+				innerGroup.setStableIdSpecialCaseMarker(item);
+				contentGroup.addMember(innerGroup);
+			}
 
 			FormEditorContext innerContext = new FormEditorContext.Builder(editorContext)
 				.formType(getConfig().getFormContextType().resolveClass())

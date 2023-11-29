@@ -10,6 +10,7 @@ import java.io.IOException;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.html.template.config.HTMLTemplateFragmentFormat;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -20,6 +21,9 @@ import com.top_logic.layout.template.WithProperties;
 
 /**
  * Template for rendering an arbitrary object to HTML.
+ * 
+ * @implNote To use HTML templates as part of configurations, use {@link HTMLTemplate} as type for
+ *           the configuration property.
  */
 @Label("HTML Template")
 @RenderWholeLine

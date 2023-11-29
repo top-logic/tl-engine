@@ -247,6 +247,8 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	
 	private Collection<Object> _hiddenGraphParts = new HashSet<>();
 
+	private Collection<TLType> _technicalGeneralizations = new HashSet<>();
+
 	/**
 	 * Creates an {@link DiagramJSGraphComponent} instance.
 	 * 
@@ -259,6 +261,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		super(context, config);
 
 		_graphData.setDropTarget(context.getInstance(config.getGraphDrop()));
+		_technicalGeneralizations.add(TLModelUtil.findType("tl.model:TLObject"));
 	}
 
 	@Override
@@ -674,7 +677,16 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	 *         {@link LabelProvider} for {@link TLModelPart}s.
 	 */
 	public LayoutContext getLayoutContext() {
-		return new LayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), getHiddenElements());
+		return new LayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), getHiddenElements(),
+			getHiddenGeneralizations());
+	}
+
+	private Collection<TLType> getHiddenGeneralizations() {
+		if (showTechnicalGeneralizations()) {
+			return Collections.emptySet();
+		} else {
+			return getTechnicalGeneralizations();
+		}
 	}
 
 	/**
@@ -688,16 +700,27 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		return MetaResourceProvider.INSTANCE;
 	}
 
-	private Collection<Object> getHiddenElements() {
-		Set<Object> hiddenElements = new HashSet<>();
+	/**
+	 * Set of technical generalizations.
+	 * 
+	 * <p>
+	 * The user could hide technical generalizations in the diagram by using the
+	 * {@link #SHOW_TECHNICAL_GENERALIZATIONS} property.
+	 * </p>
+	 */
+	public Collection<TLType> getTechnicalGeneralizations() {
+		return _technicalGeneralizations;
+	}
 
-		if (!showTechnicalGeneralizations()) {
-			hiddenElements.add(TLModelUtil.findType("tl.model:TLObject"));
+	/**
+	 * Returns the collection of graph part models that should not be displayed in a diagram.
+	 */
+	public Collection<Object> getHiddenElements() {
+		if (showHiddenElements()) {
+			return Collections.emptySet();
+		} else {
+			return _hiddenGraphParts;
 		}
-
-		hiddenElements.addAll(getHiddenGraphParts());
-
-		return hiddenElements;
 	}
 
 	@Override
@@ -705,17 +728,6 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		setGraphModel(GraphModelUtil.getEnclosingModule(modelPart));
 
 		selectGraphPart(getGraphModel(), modelPart);
-	}
-
-	/**
-	 * Returns the collection of graph part models that should no be displayed in a diagram.
-	 */
-	public Collection<Object> getHiddenGraphParts() {
-		if (showHiddenElements()) {
-			return Collections.emptySet();
-		} else {
-			return _hiddenGraphParts;
-		}
 	}
 
 	/**
@@ -763,7 +775,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		if (graphPart != null) {
 			return graphPart;
 		} else {
-			return GraphModelUtil.createGraphPart(graph, object, getLabelProvider(), getHiddenGraphParts(),
+			return GraphModelUtil.createGraphPart(graph, object, getLabelProvider(), getHiddenElements(),
 				getInvisibleGraphParts());
 		}
 	}

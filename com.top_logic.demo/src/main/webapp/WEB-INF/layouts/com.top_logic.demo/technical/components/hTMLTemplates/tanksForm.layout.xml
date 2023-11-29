@@ -11,7 +11,7 @@
 			<de>Tanks</de>
 		</name>
 		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
-			<script expr="new(`tl.model:TLObject`, transient: true)"/>
+			<script expr="`test.htmltemplate#TANKS`"/>
 		</model>
 		<buttons>
 			<button id="ID_2033cd00_1435_4a72_8ee2_7b5caf0e870b"
@@ -22,20 +22,23 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/newTank/dialog.layout.xml"/>
 		</dialogs>
 		<forms>
-			<form type="tl.model:TLObject">
+			<form type="test.htmltemplate:TankFarm">
 				<formDefinition>
 					<rendered-objects>
-						<template><![CDATA[<h1>{heading}</h1>
+						<template><![CDATA[<h1>{title}</h1>
 <div style="display: flex; flex-wrap: wrap;">{tanks}</div>]]></template>
 						<value-computation name="tanks"
-							function="all(`test.htmltemplate:Tank`)"
+							function="farm -> $farm.get(`test.htmltemplate:TankFarm#tanks`)"
 						/>
-						<value-computation name="heading">
-							<function>#("Übersicht Tanklager"@de, "Tank farm overview"@en)</function>
-						</value-computation>
+						<i18n name="title">
+							<text key="dynamic.e48d11f9-f7ff-4cb4-9bf6-039277fee1b8">
+								<en>Tank farm overview</en>
+								<de>Tanklager Übersicht</de>
+							</text>
+						</i18n>
 						<value-templates>
 							<value-template type="test.htmltemplate:Tank">
-								<template><![CDATA[<div>
+								<template><![CDATA[<div style="max-width: 400px; margin: 32px; background-color: #EEEEEE; border-radius: 8px; padding:8px;">
 <svg
    id="Kraftstofftanks"
    viewBox="0 0 341.67999 302.01999"
@@ -61,15 +64,15 @@
      fit-margin-right="20"
      fit-margin-top="20"
      fit-margin-bottom="20"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="200.11122"
-     inkscape:cy="105.35891"
-     inkscape:window-width="2560"
-     inkscape:window-height="1372"
+     inkscape:zoom="8"
+     inkscape:cx="238.5"
+     inkscape:cy="97.625"
+     inkscape:window-width="1920"
+     inkscape:window-height="1012"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="Kraftstofftanks" />
+     inkscape:current-layer="icon_kraftstofftanks" />
   <defs
      id="defs881">
     <style
@@ -95,83 +98,84 @@
        style="fill:#68f362;fill-opacity:1;stroke:none;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
        id="fill-level"
        width="30.981804"
-       height="{156.67084 * fillRatio}"
+       height="{149.72948 * fillRatio}"
        x="269.95258"
-       y="{116.15147 + 156.67084 * (1 - fillRatio)}"
+       y="{119.09282 + 149.72948 * (1 - fillRatio)}"
        rx="0"
        ry="0" />
     <g
-       id="g3096">
+       id="g3096"
+       transform="matrix(1,0,0,1.1737666,0,-38.228685)"
+       style="stroke-width:0.923016">
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,149.65389 h 8.35593"
          id="path2847" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,141.65389 h 8.35593"
          id="path2962" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,133.65389 h 8.35593"
          id="path2964" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
-         d="m 292.71444,125.65389 h 8.35593"
-         id="path2966" />
-      <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,157.65389 h 8.35593"
          id="path3050" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
-         d="m 292.71444,165.65389 h 8.35593"
-         id="path3052" />
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 284.71444,165.65389 h 16.35593"
+         id="path3052"
+         sodipodi:nodetypes="cc" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,173.65389 h 8.35593"
          id="path3054" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,181.65389 h 8.35593"
          id="path3056" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,189.65389 h 8.35593"
          id="path3058" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
-         d="m 292.71444,197.65389 h 8.35593"
-         id="path3060" />
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 284.71444,197.65389 h 16.35593"
+         id="path3060"
+         sodipodi:nodetypes="cc" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,205.65389 h 8.35593"
          id="path3062" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,213.65389 h 8.35593"
          id="path3064" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,221.65389 h 8.35593"
          id="path3066" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
-         d="m 292.71444,229.65389 h 8.35593"
-         id="path3068" />
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 284.71444,229.65389 h 16.35593"
+         id="path3068"
+         sodipodi:nodetypes="cc" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,237.65389 h 8.35593"
          id="path3070" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,245.65389 h 8.35593"
          id="path3072" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,253.65389 h 8.35593"
          id="path3074" />
       <path
-         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
          d="m 292.71444,261.65389 h 8.35593"
          id="path3076" />
     </g>
@@ -179,7 +183,8 @@
        id="tank_body"
        style="fill:#ffffff;fill-opacity:1;stroke-width:1.99937;stroke-miterlimit:4;stroke-dasharray:none"
        class="cls-1"
-       d="m 76.419922,101.89062 c -1.108,0 -2,0.892 -2,2 v 196.99024 c 0,1.108 0.892,2 2,2 H 324.36914 c 1.108,0 2,-0.892 2,-2 V 103.89062 c 0,-1.108 -0.892,-2 -2,-2 z m 202.906248,13.14454 h 12.57031 c 5.09951,0 9.20508,16.70086 9.20508,37.44726 v 82.89063 c 0,20.7464 -4.10557,37.44922 -9.20508,37.44922 h -12.57031 c -5.0995,0 -9.20508,-16.70282 -9.20508,-37.44922 v -82.89063 c 0,-20.7464 4.10558,-37.44726 9.20508,-37.44726 z" />
+       d="m 76.419922,101.89062 c -1.108,0 -2,0.892 -2,2 v 196.99024 c 0,1.108 0.892,2 2,2 H 324.36914 c 1.108,0 2,-0.892 2,-2 V 103.89062 c 0,-1.108 -0.892,-2 -2,-2 z m 202.906248,17.14454 h 12.57031 c 5.09951,0 9.20508,16.70086 9.20508,37.44726 v 74.89063 c 0,20.7464 -4.10557,37.44922 -9.20508,37.44922 h -12.57031 c -5.0995,0 -9.20508,-16.70282 -9.20508,-37.44922 v -74.89063 c 0,-20.7464 4.10558,-37.44726 9.20508,-37.44726 z"
+       sodipodi:nodetypes="ssssssssssssssssss" />
     <g
        id="top_cap">
       <path
@@ -207,6 +212,7 @@
       <path
          id="oil_drop_body"
          class="cls-1"
+         style="fill:{color};fill-opacity:1"
          d="m 238.82,220.08 c 0,21.16 -17.16,38.32 -38.32,38.32 -21.16,0 -38.32,-17.16 -38.32,-38.32 0,-38.72 38.32,-87.45 38.32,-87.45 0,0 38.32,48.73 38.32,87.45 z" />
       <path
          id="specular_highlight"
@@ -270,18 +276,47 @@
          d="m 630.09438,-364.43955 5.08475,77.9661 84.45496,-1.69492 -1.90054,-78.87378 z"
          style="opacity:1;fill:#dd1515;fill-opacity:1;stroke:none;stroke-width:84.2468;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
+    <path
+       transform="translate(0 {-149.72948 * (minLevel || 0) / capacity})"
+       style="{minLevel ? '' : 'display: none;'} fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="m 305.27569,268.91771 8.63778,-0.0527 v 7.78736 z"
+       id="lower-limit"
+       sodipodi:nodetypes="cccc" />
+    <path
+       transform="translate(0 {149.72948 * (1 - (maxLevel || 0) / capacity)})"
+       style="{maxLevel ? '' : 'display: none;'} fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="m 305.27569,119.04757 8.63778,-6.88854 0,6.87969 z"
+       id="upper-limit"
+       sodipodi:nodetypes="cccc" />
   </g>
 </svg>
-
-<div>{name}: {level}/{capacity}</div>
-<tl:if test="minLevel">
-<div>Minimum: {minLevel}</div>
-</tl:if>
-<tl:if test="maxLevel">
-<div>Mayimum: {maxLevel}</div>
-</tl:if>
+<div>{form}</div>
 </div>
 ]]></template>
+								<variable class="com.top_logic.layout.formeditor.parts.template.FormFragment"
+									name="form"
+								>
+									<formDefinition columns="ONE">
+										<field
+											attribute="name"
+											fullQualifiedName="test.htmltemplate:Tank#name"
+											type="tl.core:String"
+											visibility="read-only"
+										/>
+										<field
+											attribute="level"
+											fullQualifiedName="test.htmltemplate:Tank#level"
+											type="tl.core:Double"
+										/>
+									</formDefinition>
+								</variable>
+								<value-computation name="color">
+									<function><![CDATA[t -> switch ($t.get(`test.htmltemplate:Tank#content`)) {
+  `test.htmltemplate:ContentType#FUEL`: "#FFCC00";
+  `test.htmltemplate:ContentType#WATER`: "#0000FF";
+  `test.htmltemplate:ContentType#WASTE_OIL`: "#806600";
+}]]></function>
+								</value-computation>
 							</value-template>
 						</value-templates>
 					</rendered-objects>

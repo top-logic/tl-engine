@@ -15,5 +15,6 @@
 		<style name="/style/mdtimepicker.css"/>
 		<style name="/style/bootstrap-icons.css"/>
 		<style name="/style/interFonts.css"/>
+		<style name="/style/importGoogleFonts.css"/>
 	</styles>
 </theme>

@@ -23,7 +23,7 @@
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="68"
+		value="66"
 	/>
 	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
@@ -53,7 +53,7 @@
 		expr="%IMAGES_APP_LOGO%"
 	/>
 	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
-		value="56px"
+		value="64px"
 	/>
 	<int name="MAIN_LAYOUT_SIDE_BORDER"
 		value="32"
@@ -96,7 +96,7 @@
 		value="true"
 	/>
 	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE"
-		value="0"
+		value="16"
 	/>
 	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE"
 		value="16"
@@ -104,25 +104,16 @@
 	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
 		value="300"
 	/>	
-	<dim name="MC_TOGGLE_HEIGHT"
-		value="50px"
-	/>
-	<dim name="MC_TOGGLE_WIDTH"
-		value="8px"
-	/>
 	<string name="MC_MINIMIZE_ICON"
-		value="url(/icons/minimizeNormal.png)"
+		value="url(/icons/minimizeNormal.svg)"
 	/>
 	<string name="MC_NORMALIZE_ICON"
-		value="url(/icons/minimizeMinimized.png)"
+		value="url(/icons/minimizeMinimized.svg)"
 	/>
 	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID"
 		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID_DISABLED"
-		expr="%ICONS_EXPORT_GRID%"
-	/>
-	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
 		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<size name="TABLE_TITLE_HEIGHT"
@@ -471,12 +462,6 @@
 	<icon name="com.top_logic.layout.form.control.Icons.TODAY"
 		value="css:bi bi-calendar-check"
 	/>
-	<icon name="mime.Clipboard"
-		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
-	/>
-	<icon name="mime.Clipboard.large"
-		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
-	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD"
 		expr="%ICONS_UPLOAD%"
 	/>
@@ -572,6 +557,9 @@
 	/>
 	<icon name="USER_MENU_ICON"
 		value="css:bi bi-person-fill"
+	/>
+	<icon name="USER_MENU_ICON_HOVER"
+		expr="%USER_MENU_ICON%"
 	/>
 	<icon name="ICONS_DOWNLOAD60"
 		value="css:bi bi-download"
@@ -1019,6 +1007,72 @@
 	/>
 	<icon name="mime.image/png"
 		value="css:bi bi-image"
+	/>
+	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
+		expr="%USER_MENU_ICON%"
+	/>
+	<icon name="MIMETYPES_PERSON_CONTACT_16"
+		expr="%USER_MENU_ICON%"
+	/>
+	<icon name="mime.tl.accounts.Person"
+		expr="%USER_MENU_ICON%"
+	/>
+	<icon name="mime.tl.accounts.Person.large"
+		expr="%USER_MENU_ICON%"
+	/>
+	<icon name="mime.ClassificationMetaAttribute"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.FloatMetaAttribute"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.Link"
+		expr="%ICONS_OPEN_SELECTOR%"
+	/>
+	<icon name="mime.Project"
+		value="css:bi bi-hdd-network-fill"
+	/>
+	<icon name="mime.Project.large"
+		value="css:bi bi-hdd-rack-fill"
+	/>
+	<icon name="mime.RoleRule"
+		value="css:bi bi-person-badge-fill"
+	/>
+	<icon name="mime.SearchExpressionTable"
+		expr="%ICONS_BUTTON_SEARCH%"
+	/>
+	<icon name="mime.WebFolderMetaAttribute"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.application/zip.large"
+		expr="%ICONS_EXPORT_ZIP%"
+	/>
+	<icon name="mime.text/plain.large"
+		value="css:bi bi-file-earmark-text-fill"
+	/>
+	<icon name="mime.tl.accounts.Role"
+		expr="%IMAGE_BUTTONS_PERSONAL_SETTINGS22%"
+	/>
+	<icon name="mime.tl.folder.Document"
+		value="css:bi bi-file-earmark-fill"
+	/>
+	<icon name="mime.tl.folder.DocumentVersion"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.tl.accounts.Group"
+		value="css:bi bi-people-fill"
+	/>
+	<icon name="mime.tl.accounts.Group.large"
+		expr="%mime.tl.accounts.Group%"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
+		expr="%ICONS_EXPORT_GRID%"
+	/>
+	<icon name="mime.Clipboard"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
+	/>
+	<icon name="mime.Clipboard.large"
+		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN"
 		expr="%ICONS_MOVE_ROW_DOWN%"
@@ -1487,14 +1541,22 @@
 	<icon name="ICONS_BUTTON_UNGROUP_DISABLED"
 		expr="%ICONS_BUTTON_UNGROUP%"
 	/>
+	
+	
+	<!-- No Bootstrap Icons found for these -->
+	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
+		expr=""
+		value="colored:tl-icon selection-invert"
+	/>
+	<icon name="mime.TLEnumeration"
+		expr=""
+		value="colored:tl-icon chain"
+	/>
 
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->
 	<color name="background"
 		value="#ffffff"
-	/>
-	<color name="background-hover"
-		value="#d3d5d9"
 	/>
 	<color name="background-active"
 		value="#a7abb2"
@@ -1507,6 +1569,9 @@
 	/>
 	<color name="background-brand"
 		value="#2968c8"
+	/>
+	<color name="background-inverse"
+		value="#393C40"
 	/>
 	<color name="text-primary"
 		value="#101113"

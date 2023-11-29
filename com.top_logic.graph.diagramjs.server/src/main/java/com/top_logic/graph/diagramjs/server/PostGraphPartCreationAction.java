@@ -35,7 +35,7 @@ public class PostGraphPartCreationAction implements PostCreateAction {
 	public void handleNew(LayoutComponent component, Object newModel) {
 		DiagramJSGraphComponent graphComponent = getDiagramJSGraphComponent(component);
 
-		GraphPart newPart = graphComponent.createGraphPart(newModel);
+		GraphPart newPart = graphComponent.getOrCreateGraphPart(newModel);
 
 		if (newPart instanceof Node) {
 			GraphModelUtil.applyBounds((Node) newPart, getCreatedBounds(component));

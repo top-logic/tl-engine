@@ -249,7 +249,17 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 
 	/**
 	 * Suffix of the {@link FormMember}'s resource key that builds the resource key for the tool-tip
+	 * to be displayed.
+	 * 
+	 * @see #TOOLTIP_CAPTION_SUFFIX
+	 */
+	String TOOLTIP_SUFFIX = "tooltip";
+
+	/**
+	 * Suffix of the {@link FormMember}'s resource key that builds the resource key for the tool-tip
 	 * caption to be displayed.
+	 * 
+	 * @see #TOOLTIP_SUFFIX
 	 */
 	String TOOLTIP_CAPTION_SUFFIX = "tooltipCaption";
 

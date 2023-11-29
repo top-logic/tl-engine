@@ -29,6 +29,7 @@ import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.layout.resources.DefaultResourceView;
 import com.top_logic.layout.resources.NestedResourceView;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -472,9 +473,15 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 			return this.tooltip;
 		}
 
-		return this.getResources().getStringResource("tooltip", null);
+		// The tooltip of a form member is defined by its parent.
+		FormContainer myParent = getParent();
+		if (myParent != null) {
+			String toolKey = getName() + DefaultResourceView.KEY_SEPARATOR + TOOLTIP_SUFFIX;
+			return myParent.getResources().getStringResource(toolKey, null);
+		}
+		return null;
 	}
-    
+
 	@Override
 	public void setTooltip(String newTooltip) {
 	    String oldTooltip = this.tooltip;
@@ -490,9 +497,15 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 			return this.tooltipCaption;
 		}
 		
-		return this.getResources().getStringResource(TOOLTIP_CAPTION_SUFFIX, null);
+		// The tooltip caption of a form member is defined by its parent.
+		FormContainer myParent = getParent();
+		if (myParent != null) {
+			String toolCaptionKey = getName() + DefaultResourceView.KEY_SEPARATOR + TOOLTIP_CAPTION_SUFFIX;
+			return myParent.getResources().getStringResource(toolCaptionKey, null);
+		}
+		return null;
 	}
-	
+
 	@Override
 	public void setTooltipCaption(String aTooltipCaption) {
 		this.tooltipCaption = aTooltipCaption;

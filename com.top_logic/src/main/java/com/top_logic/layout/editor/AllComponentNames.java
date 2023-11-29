@@ -41,7 +41,9 @@ public class AllComponentNames extends Function0<OptionModel<ComponentName>> {
 
 	@Override
 	public OptionModel<ComponentName> apply() {
-		return new DefaultTreeOptionModel<>(createTreeModel());
+		DefaultTreeOptionModel<ComponentName> result = new DefaultTreeOptionModel<>(createTreeModel());
+		result.setShowRoot(false);
+		return result;
 	}
 
 	private BusinessObjectTreeModel<ComponentName> createTreeModel() {

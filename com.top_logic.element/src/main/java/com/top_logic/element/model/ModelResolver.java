@@ -480,8 +480,54 @@ public class ModelResolver {
 			public void run() {
 				TLReference reference = (TLReference) type.getPart(referenceConfig.getName());
 				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(reference.getEnd());
+				String otherEndName = otherEnd.getName();
 
-				createBackwardsRef(type, referenceConfig, otherEnd.getName()).run();
+				TLType sourceType;
+				try {
+					sourceType = lookupAttributeType(type, referenceConfig);
+				} catch (ConfigurationException ex) {
+					log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
+					return;
+				}
+
+				String associationName = syntheticAssociationName(type.getName(), otherEndName);
+				TLModule module = type.getModule();
+
+				TLType associationType = module.getType(associationName);
+				TLAssociationEnd sourceEnd;
+				if (associationType == null) {
+					TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
+
+					// Add source end
+					TLAssociationEnd targetEnd = TLModelUtil.addEnd(association, otherEndName, type);
+					targetEnd.setMultiple(true);
+
+					// Create destination end
+					sourceEnd = TLModelUtil.addEnd(association, SELF_ASSOCIATION_END_NAME, sourceType);
+				} else {
+					List<TLAssociationEnd> ends = TLModelUtil.getEnds((TLAssociation) associationType);
+					if (ends.isEmpty()) {
+						log().error("No ends found for " + associationType);
+					}
+
+					TLAssociationEnd end = ends.get(0);
+					if (SELF_ASSOCIATION_END_NAME.equals(end.getName())) {
+						sourceEnd = end;
+					} else {
+						sourceEnd = TLModelUtil.getOtherEnd(end);
+					}
+				}
+
+				try {
+					addReference(type, referenceConfig, sourceEnd);
+				} catch (IllegalArgumentException ex) {
+					log().error(
+						"In back reference '" + referenceConfig.getName()
+							+ "', associtiation end could not be implemented by reference in type '"
+							+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
+						ex);
+					return;
+				}
 			}
 		};
 	}

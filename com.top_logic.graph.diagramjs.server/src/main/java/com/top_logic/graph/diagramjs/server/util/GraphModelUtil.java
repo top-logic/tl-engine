@@ -29,6 +29,10 @@ import com.top_logic.graph.common.model.GraphPart;
 import com.top_logic.graph.common.model.Label;
 import com.top_logic.graph.common.model.LabelOwner;
 import com.top_logic.graph.common.model.Node;
+import com.top_logic.graph.common.model.impl.DefaultEdge;
+import com.top_logic.graph.common.model.impl.DefaultLabel;
+import com.top_logic.graph.common.model.impl.DefaultLabelOwner;
+import com.top_logic.graph.common.model.impl.DefaultNode;
 import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.model.DiagramJSEdge;
 import com.top_logic.graph.diagramjs.model.DiagramJSLabel;
@@ -694,24 +698,37 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	/**
-	 * Removed the graph parts from the given {@link GraphModel}.
+	 * Removed the given graph parts from the given {@link GraphModel}.
+	 * 
+	 * <p>
+	 * Only parts that are part of the given graph model are removed. The model itself also has a
+	 * supporting delete function. If a node is removed, all its attached edges and labels are also
+	 * deleted.
+	 * </p>
+	 * 
+	 * @param graphModel
+	 *        Graph to remove graph parts from. Has to be not <code>null</code>.
+	 * @param graphParts
+	 *        Collection of graph parts that should be removed.
+	 * 
+	 * @see DefaultLabel#onDelete
+	 * @see DefaultLabelOwner#onDelete
+	 * @see DefaultEdge#onDelete
+	 * @see DefaultNode#onDelete
 	 */
 	public static void removeGraphParts(GraphModel graphModel, Collection<? extends GraphPart> graphParts) {
 		for (GraphPart graphPart : graphParts) {
-			removeGraphPart(graphModel, graphPart);
+			if (graphPart != null && graphPart.getGraph() == graphModel) {
+				removeGraphPart(graphModel, graphPart);
+			}
 		}
 	}
 
-	/**
-	 * Removed the graph part from the given {@link GraphModel}.
-	 */
-	public static void removeGraphPart(GraphModel graphModel, GraphPart graphPart) {
-		if (graphPart != null) {
-			if (graphPart instanceof Label) {
-				removeLabel(graphModel, graphPart);
-			} else {
-				graphModel.removeGraphPart(graphPart);
-			}
+	private static void removeGraphPart(GraphModel graphModel, GraphPart graphPart) {
+		if (graphPart instanceof Label) {
+			removeLabel(graphModel, graphPart);
+		} else {
+			graphModel.removeGraphPart(graphPart);
 		}
 	}
 
@@ -726,11 +743,11 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		}
 	}
 
-	private static void removeEdgeLabel(GraphModel model, DiagramJSLabel part, LabelOwner owner) {
-		if (isForwardReferenceEdgeLabel(part)) {
+	private static void removeEdgeLabel(GraphModel model, DiagramJSLabel label, LabelOwner owner) {
+		if (isForwardReferenceEdgeLabel(label)) {
 			removeEdgeContainer(model, owner);
 		} else {
-			model.removeGraphPart(part);
+			model.removeGraphPart(label);
 		}
 	}
 

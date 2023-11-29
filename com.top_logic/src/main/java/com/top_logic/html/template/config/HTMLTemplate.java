@@ -9,15 +9,24 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.HTMLTemplateUtils;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.template.WithProperties;
 
 /**
  * {@link HTMLTemplateFragment} that remembers its source code with all formatting.
  */
+@Label("HTML Template")
+@RenderWholeLine
+@Format(HTMLTemplateFragmentFormat.class)
+@ControlProvider(MultiLineText.class)
 public class HTMLTemplate implements HTMLTemplateFragment {
 
 	private final HTMLTemplateFragment _template;

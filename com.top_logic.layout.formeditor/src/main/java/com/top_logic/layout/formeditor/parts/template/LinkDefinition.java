@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -41,6 +42,7 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 	@DisplayOrder({
 		Config.NAME,
 		Config.TARGET_OBJECT,
+		Config.TARGET_COMPONENT,
 	})
 	@TagName("link-definition")
 	public interface Config extends VariableDefinition.Config<LinkDefinition> {
@@ -49,6 +51,11 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 		 * @see #getTargetObject()
 		 */
 		String TARGET_OBJECT = "target-object";
+
+		/**
+		 * @see #getTargetComponent()
+		 */
+		String TARGET_COMPONENT = "target-component";
 
 		/**
 		 * Function taking the rendered object as argument and computing the object that should be
@@ -60,6 +67,16 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 		 */
 		@Name(TARGET_OBJECT)
 		Expr getTargetObject();
+
+		/**
+		 * The component to show the clicked object in.
+		 * 
+		 * <p>
+		 * If not given, the default view of the clicked object is shown.
+		 * </p>
+		 */
+		@Name(TARGET_COMPONENT)
+		ComponentName getTargetComponent();
 	}
 
 	/**
@@ -79,22 +96,26 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
-		return new GotoFragment(_targetObject != null ? _targetObject.execute(model) : model);
+		return new GotoFragment(_targetObject != null ? _targetObject.execute(model) : model,
+			getConfig().getTargetComponent());
 	}
 
 	private static final class GotoFragment implements HTMLFragment {
-		private Object _model;
+		private final Object _model;
+
+		private final ComponentName _commentName;
 
 		/**
 		 * Creates a {@link GotoFragment}.
 		 */
-		public GotoFragment(Object model) {
+		public GotoFragment(Object model, ComponentName commentName) {
 			_model = model;
+			_commentName = commentName;
 		}
 
 		@Override
 		public void write(DisplayContext context, TagWriter out) throws IOException {
-			GotoHandler.appendJSCallStatement(context, out, _model, null);
+			GotoHandler.appendJSCallStatement(context, out, _model, _commentName);
 		}
 	}
 

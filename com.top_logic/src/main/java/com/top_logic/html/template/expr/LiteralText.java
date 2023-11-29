@@ -5,27 +5,29 @@
  */
 package com.top_logic.html.template.expr;
 
+import java.io.IOException;
+
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.html.template.LiteralTemplate;
 import com.top_logic.html.template.RawTemplateFragment;
-import com.top_logic.html.template.TemplateExpression;
 import com.top_logic.html.template.TemplateNode;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.template.WithProperties;
 
 /**
  * A string literal in a {@link HTMLTemplateFragment}.
  */
-public class StringLiteral extends TemplateNode implements TemplateExpression {
+public class LiteralText extends TemplateNode implements RawTemplateFragment, LiteralTemplate {
 
 	private String _text;
 
 	/**
-	 * Creates a {@link StringLiteral}.
+	 * Creates a {@link LiteralText}.
 	 *
 	 * @param text
 	 *        The literal text to render.
 	 */
-	public StringLiteral(int line, int column, String text) {
+	public LiteralText(int line, int column, String text) {
 		super(line, column);
 		_text = text;
 	}
@@ -45,17 +47,13 @@ public class StringLiteral extends TemplateNode implements TemplateExpression {
 	}
 
 	@Override
-	public Object eval(DisplayContext context, WithProperties properties) {
-		return _text;
+	public void write(DisplayContext context, TagWriter out) throws IOException {
+		out.write(_text);
 	}
 
 	@Override
-	public RawTemplateFragment toFragment() {
-		return new LiteralText(getLine(), getColumn(), getText());
-	}
-
-	@Override
-	public <R, A> R visit(TemplateExpression.Visitor<R, A> visitor, A arg) {
+	public <R, A> R visit(RawTemplateFragment.Visitor<R, A> visitor, A arg) {
 		return visitor.visit(this, arg);
 	}
+
 }

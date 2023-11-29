@@ -25,6 +25,7 @@ import com.top_logic.html.template.expr.EqExpression;
 import com.top_logic.html.template.expr.GeExpression;
 import com.top_logic.html.template.expr.GtExpression;
 import com.top_logic.html.template.expr.LiteralExpression;
+import com.top_logic.html.template.expr.LiteralText;
 import com.top_logic.html.template.expr.ModExpression;
 import com.top_logic.html.template.expr.MulExpression;
 import com.top_logic.html.template.expr.NegExpression;
@@ -109,7 +110,7 @@ public class HTMLTemplateFactory {
 			stop--;
 		}
 		if (start == 0 && stop == length) {
-			return new StringLiteral(text.beginLine, text.beginColumn, chars);
+			return new LiteralText(text.beginLine, text.beginColumn, chars);
 		} else {
 			StringBuilder buffer = new StringBuilder();
 			if (start > 0) {
@@ -119,7 +120,7 @@ public class HTMLTemplateFactory {
 			if (stop < length) {
 				buffer.append(" ");
 			}
-			return new StringLiteral(text.beginLine, text.beginColumn, buffer.toString());
+			return new LiteralText(text.beginLine, text.beginColumn, buffer.toString());
 		}
 	}
 
@@ -129,7 +130,7 @@ public class HTMLTemplateFactory {
 	public RawTemplateFragment rawText(Token text) {
 		String chars = text.image;
 		chars = unquote(chars);
-		return new StringLiteral(text.beginLine, text.beginColumn, chars);
+		return new LiteralText(text.beginLine, text.beginColumn, chars);
 	}
 
 	private String unquote(String chars) {
@@ -140,31 +141,31 @@ public class HTMLTemplateFactory {
 	/**
 	 * Creates a literal text fragment from a character reference.
 	 */
-	public StringLiteral charRef(Token text) {
+	public LiteralText charRef(Token text) {
 		String ref = text.image;
 		int codePoint = Integer.parseInt(ref, 2, ref.length() - 1, 10);
-		return new StringLiteral(text.beginLine, text.beginColumn, Character.toString(codePoint));
+		return new LiteralText(text.beginLine, text.beginColumn, Character.toString(codePoint));
 	}
 
 	/**
 	 * Creates a literal text fragment from a hexadecimal character reference.
 	 */
-	public StringLiteral charRefHex(Token text) {
+	public LiteralText charRefHex(Token text) {
 		String ref = text.image;
 		int codePoint = Integer.parseInt(ref, 3, ref.length() - 1, 16);
-		return new StringLiteral(text.beginLine, text.beginColumn, Character.toString(codePoint));
+		return new LiteralText(text.beginLine, text.beginColumn, Character.toString(codePoint));
 	}
 
 	/**
 	 * Creates a literal text fragment form a HTML5 entity reference.
 	 */
-	public StringLiteral entityRef(Token text) {
+	public LiteralText entityRef(Token text) {
 		String ref = text.image;
 		String chars = ENTITIES.get(ref);
 		if (chars == null) {
 			chars = ref;
 		}
-		return new StringLiteral(text.beginLine, text.beginColumn, chars);
+		return new LiteralText(text.beginLine, text.beginColumn, chars);
 	}
 
 	/**

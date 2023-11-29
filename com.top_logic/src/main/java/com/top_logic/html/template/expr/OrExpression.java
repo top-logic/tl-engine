@@ -13,26 +13,25 @@ import com.top_logic.layout.template.WithProperties;
  * Boolean {@link TemplateExpression} combining the result of tow other {@link TemplateExpression}s
  * with <code>or</code>.
  */
-public class OrExpression implements TemplateExpression {
-
-	private TemplateExpression _leftExpression;
-
-	private TemplateExpression _rightExpression;
+public class OrExpression extends BinaryExpression {
 
 	/**
 	 * Creates a {@link OrExpression}.
 	 */
-	public OrExpression(TemplateExpression leftExpression, TemplateExpression rightExpression) {
-		_leftExpression = leftExpression;
-		_rightExpression = rightExpression;
+	public OrExpression(TemplateExpression left, TemplateExpression right) {
+		super(left, right);
 	}
 
 	@Override
 	public Object eval(DisplayContext context, WithProperties properties) {
 		// Note: Allow expressions such as "{attr} || '---'" to produce a string constant, if a
 		// value is null.
-		Object leftValue = _leftExpression.eval(context, properties);
-		return !TestExpression.isTrue(leftValue) ? _rightExpression.eval(context, properties) : leftValue;
+		Object leftValue = getLeft().eval(context, properties);
+		return !TestExpression.isTrue(leftValue) ? getRight().eval(context, properties) : leftValue;
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 }

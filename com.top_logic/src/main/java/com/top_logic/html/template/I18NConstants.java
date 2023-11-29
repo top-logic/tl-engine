@@ -44,9 +44,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 ERROR_NO_MATCHING_OPENING_TAG__NAME_LINE_COL;
 
 	/**
-	 * @en No tag structure inside attribute "{0}" allowed at line {1}, column {2}.
+	 * @en No tag structure inside attribute allowed at line {1}, column {2}.
 	 */
-	public static ResKey3 ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__NAME_LINE_COL;
+	public static ResKey2 ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__LINE_COL;
 
 	/**
 	 * @en Missing end tag "{0}" for start tag at line {1}, column {2}.

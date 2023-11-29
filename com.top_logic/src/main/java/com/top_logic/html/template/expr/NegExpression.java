@@ -12,25 +12,28 @@ import com.top_logic.layout.template.WithProperties;
 /**
  * A negation.
  */
-public class NegExpression implements TemplateExpression {
-
-	private final TemplateExpression _expr;
+public class NegExpression extends UnaryExpression {
 
 	/**
 	 * Creates a {@link NegExpression}.
 	 */
 	public NegExpression(TemplateExpression expr) {
-		_expr = expr;
+		super(expr);
 	}
 
 	@Override
 	public Object eval(DisplayContext context, WithProperties properties) {
-		Number num = NumericExpression.toNumber(_expr.eval(context, properties));
+		Number num = NumericExpression.toNumber(getExpr().eval(context, properties));
 		if (num instanceof Integer || num instanceof Long) {
 			return Long.valueOf(-num.longValue());
 		} else {
 			return Double.valueOf(-num.doubleValue());
 		}
+	}
+
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
 	}
 
 }

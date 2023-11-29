@@ -12,20 +12,22 @@ import com.top_logic.layout.template.WithProperties;
 /**
  * Boolean {@link TemplateExpression} negating the result of another {@link TemplateExpression}.
  */
-public class NotExpression implements TemplateExpression {
-
-	private final TemplateExpression _expression;
+public class NotExpression extends UnaryExpression {
 
 	/**
 	 * Creates a {@link NotExpression}.
 	 */
-	public NotExpression(TemplateExpression expression) {
-		_expression = expression;
+	public NotExpression(TemplateExpression expr) {
+		super(expr);
 	}
 
 	@Override
 	public Object eval(DisplayContext context, WithProperties properties) {
-		return !TestExpression.isTrue(_expression.eval(context, properties));
+		return !TestExpression.isTrue(getExpr().eval(context, properties));
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 }

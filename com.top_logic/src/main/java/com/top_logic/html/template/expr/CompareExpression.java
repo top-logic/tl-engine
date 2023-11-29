@@ -8,9 +8,9 @@ package com.top_logic.html.template.expr;
 import com.top_logic.html.template.TemplateExpression;
 
 /**
- * {@link BinaryExpression} comparing tow values.
+ * {@link StrictBinaryExpression} comparing tow values.
  */
-public abstract class CompareExpression extends BinaryExpression {
+public abstract class CompareExpression extends StrictBinaryExpression {
 
 	/**
 	 * Creates a {@link CompareExpression}.

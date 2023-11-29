@@ -32,6 +32,13 @@ public class VariableExpression extends TemplateNode implements TemplateExpressi
 		_name = name;
 	}
 
+	/**
+	 * The name of the accessed variable.
+	 */
+	public String getName() {
+		return _name;
+	}
+
 	@Override
 	public Object eval(DisplayContext context, WithProperties properties) {
 		try {
@@ -46,4 +53,8 @@ public class VariableExpression extends TemplateNode implements TemplateExpressi
 		return new VariableTemplate(_name);
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 }

@@ -6,27 +6,46 @@
 package com.top_logic.html.template.config;
 
 import java.io.IOException;
+import java.util.Set;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.html.template.HTMLTemplateUtils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.template.WithProperties;
 
 /**
  * {@link HTMLTemplateFragment} that remembers its source code with all formatting.
  */
-public class ConfiguredTemplate implements HTMLTemplateFragment {
+public class HTMLTemplate implements HTMLTemplateFragment {
 
 	private final HTMLTemplateFragment _template;
+
+	private Set<String> _variables;
 
 	private final String _html;
 
 	/**
-	 * Creates a {@link ConfiguredTemplate}.
+	 * Creates a {@link HTMLTemplate}.
+	 * 
+	 * <p>
+	 * Internal API that should only be called from template parser, see
+	 * {@link HTMLTemplateUtils#parse(String, String)}.
+	 * </p>
 	 */
-	public ConfiguredTemplate(HTMLTemplateFragment template, String html) {
+	@FrameworkInternal
+	public HTMLTemplate(HTMLTemplateFragment template, Set<String> variables, String html) {
 		_template = template;
+		_variables = variables;
 		_html = html;
+	}
+
+	/**
+	 * The template content.
+	 */
+	public HTMLTemplateFragment getTemplate() {
+		return _template;
 	}
 
 	/**
@@ -34,6 +53,13 @@ public class ConfiguredTemplate implements HTMLTemplateFragment {
 	 */
 	public String getHtml() {
 		return _html;
+	}
+
+	/**
+	 * Names of all accessed variables.
+	 */
+	public Set<String> getVariables() {
+		return _variables;
 	}
 
 	@Override

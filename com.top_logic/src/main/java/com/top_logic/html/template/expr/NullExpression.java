@@ -35,4 +35,8 @@ public class NullExpression implements TemplateExpression {
 		return EmptyTemplate.INSTANCE;
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 }

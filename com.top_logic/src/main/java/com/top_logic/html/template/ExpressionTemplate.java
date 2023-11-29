@@ -32,6 +32,13 @@ public class ExpressionTemplate implements RawTemplateFragment {
 		_expression = expression;
 	}
 
+	/**
+	 * The expression to evaluate and render its result.
+	 */
+	public TemplateExpression getExpression() {
+		return _expression;
+	}
+
 	@Override
 	public void write(DisplayContext context, TagWriter out, WithProperties properties) throws IOException {
 		Object value;

@@ -13,7 +13,7 @@ import com.top_logic.html.template.HTMLTemplateUtils;
 /**
  * {@link AbstractConfigurationValueProvider} for {@link HTMLTemplateFragment}s.
  */
-public class HTMLTemplateFragmentFormat extends AbstractConfigurationValueProvider<HTMLTemplateFragment> {
+public class HTMLTemplateFragmentFormat extends AbstractConfigurationValueProvider<HTMLTemplate> {
 
 	/**
 	 * Creates a {@link HTMLTemplateFragmentFormat}.
@@ -23,19 +23,15 @@ public class HTMLTemplateFragmentFormat extends AbstractConfigurationValueProvid
 	}
 
 	@Override
-	protected HTMLTemplateFragment getValueNonEmpty(String propertyName, CharSequence propertyValue)
+	protected HTMLTemplate getValueNonEmpty(String propertyName, CharSequence propertyValue)
 			throws ConfigurationException {
 		String html = propertyValue.toString();
-		HTMLTemplateFragment template = HTMLTemplateUtils.parse(propertyName, html);
-		return new ConfiguredTemplate(template, html);
+		return HTMLTemplateUtils.parse(propertyName, html);
 	}
 
 	@Override
-	protected String getSpecificationNonNull(HTMLTemplateFragment configValue) {
-		if (configValue instanceof ConfiguredTemplate) {
-			return ((ConfiguredTemplate) configValue).getHtml();
-		}
-		throw new IllegalArgumentException("Only ConfiguredTemplate instances can be used as configuration values.");
+	protected String getSpecificationNonNull(HTMLTemplate configValue) {
+		return configValue.getHtml();
 	}
 
 }

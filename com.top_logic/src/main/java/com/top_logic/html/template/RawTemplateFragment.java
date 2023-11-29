@@ -5,7 +5,7 @@
  */
 package com.top_logic.html.template;
 
-import com.top_logic.html.template.expr.StringLiteral;
+import com.top_logic.html.template.expr.LiteralText;
 import com.top_logic.html.template.parser.HTMLTemplateParser;
 
 /**
@@ -45,9 +45,9 @@ public interface RawTemplateFragment extends HTMLTemplateFragment {
 		R visit(TemplateSequence template, A arg);
 
 		/**
-		 * Visit case for {@link StringLiteral}.
+		 * Visit case for {@link LiteralText}.
 		 */
-		R visit(StringLiteral template, A arg);
+		R visit(LiteralText template, A arg);
 
 		/**
 		 * Visit case for {@link EmptyTemplate}.

@@ -40,5 +40,9 @@ public class SubExpression extends NumericExpression {
 		return leftNum - rightNum;
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 
 }

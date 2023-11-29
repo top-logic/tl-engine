@@ -17,6 +17,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
@@ -77,11 +78,11 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 	}
 
 	@Override
-	public EvalResult eval(DisplayContext displayContext, LayoutComponent component, Object model) {
+	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
 		return new GotoFragment(_targetObject != null ? _targetObject.execute(model) : model);
 	}
 
-	private static final class GotoFragment extends ConstantEvalResult implements HTMLFragment {
+	private static final class GotoFragment implements HTMLFragment {
 		private Object _model;
 
 		/**
@@ -89,11 +90,6 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 		 */
 		public GotoFragment(Object model) {
 			_model = model;
-		}
-
-		@Override
-		public Object getValue(DisplayContext displayContext) {
-			return this;
 		}
 
 		@Override

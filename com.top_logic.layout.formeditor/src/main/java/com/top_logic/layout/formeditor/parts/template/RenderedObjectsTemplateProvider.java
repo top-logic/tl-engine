@@ -8,21 +8,18 @@ package com.top_logic.layout.formeditor.parts.template;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.base.services.simpleajax.RangeReplacement;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
@@ -36,6 +33,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.ExpressionTemplate;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.config.HTMLTagFormat;
+import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
@@ -43,7 +41,6 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ResourceRenderer;
-import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.Templates;
@@ -53,8 +50,6 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
 import com.top_logic.layout.formeditor.parts.ForeignObjectsTemplateProvider;
 import com.top_logic.layout.formeditor.parts.I18NConstants;
 import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.Config.TypeTemplate;
-import com.top_logic.layout.formeditor.parts.template.VariableDefinition.EvalResult;
-import com.top_logic.layout.formeditor.parts.template.VariableDefinition.EvalResult.InvalidateListener;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -62,13 +57,12 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.form.definition.FormContextDefinition;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
-import com.top_logic.model.listen.ModelChangeEvent;
-import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -119,6 +113,10 @@ public class RenderedObjectsTemplateProvider
 			 */
 			@Name(TYPE)
 			TLModelPartRef getType();
+
+			@Override
+			@DerivedRef(TYPE)
+			TLModelPartRef getFormContextType();
 		}
 	}
 
@@ -126,7 +124,7 @@ public class RenderedObjectsTemplateProvider
 	 * Options for defining a template.
 	 */
 	@Abstract
-	public interface TemplateConfig extends ConfigurationItem {
+	public interface TemplateConfig extends FormContextDefinition {
 		/**
 		 * @see #getTemplate()
 		 */
@@ -148,7 +146,7 @@ public class RenderedObjectsTemplateProvider
 		@ControlProvider(CodeEditorControl.CPHtml.class)
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Format(HTMLTagFormat.class)
-		HTMLTemplateFragment getTemplate();
+		HTMLTemplate getTemplate();
 
 		/**
 		 * Additional variables to bind for the template evaluation.
@@ -230,27 +228,22 @@ public class RenderedObjectsTemplateProvider
 	}
 
 	private HTMLTemplateFragment displayTemplate(FormEditorContext form) {
-		return contentBox(htmlTemplate((displayContext, out) -> writeContents(displayContext, out, form)));
-	}
+		TLObjectFragment objectFragment = new TLObjectFragment(form, _template, form.getModel());
 
-	private void writeContents(DisplayContext displayContext, TagWriter out, FormEditorContext form)
-			throws IOException {
-		new TLObjectFragment(_template, form.getModel()).write(displayContext, out);
+		return contentBox(htmlTemplate((displayContext, out) -> objectFragment.write(displayContext, out)));
 	}
 
 	private static class Template {
 	
-		private final HTMLTemplateFragment _fragment;
-	
-		private final Map<String, VariableDefinition<?>> _params;
-	
+		private HTMLTemplate _fragment;
+
+		private HashMap<String, VariableDefinition<?>> _params;
+
 		/**
 		 * Creates a {@link RenderedObjectsTemplateProvider.Template}.
 		 */
 		public Template(InstantiationContext context, TemplateConfig config) {
-			HTMLTemplateFragment template = config.getTemplate();
-
-			_fragment = template;
+			_fragment = config.getTemplate();
 			_params = new HashMap<>();
 			for (VariableDefinition.Config<?> entry : config.getVariables().values()) {
 				_params.put(entry.getName(), context.getInstance(entry));
@@ -261,19 +254,50 @@ public class RenderedObjectsTemplateProvider
 	/**
 	 * {@link HTMLFragment} displaying a {@link TLObject} using a {@link HTMLTemplateFragment}.
 	 */
-	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener, InvalidateListener {
+	private final class TLObjectFragment extends AbstractVisibleControl {
 		private final TLObject _obj;
 
-		private final Template _template;
+		private final HTMLTemplate _fragment;
 
-		private final List<EvalResult> _observedValues = new ArrayList<>();
+		private final Map<String, Object> _params = new HashMap<>();
 
 		/**
 		 * Creates a {@link TLObjectFragment}.
 		 */
-		private TLObjectFragment(Template template, TLObject obj) {
-			_obj = obj;
-			_template = template;
+		public TLObjectFragment(FormEditorContext form, Template template, TLObject model) {
+			_fragment = template._fragment;
+			for (String varName : _fragment.getVariables()) {
+				VariableDefinition<?> varDef = template._params.get(varName);
+				if (varDef == null) {
+					TLStructuredTypePart part = model.tType().getPart(varName);
+					if (part != null) {
+						Object value = model.tValue(part);
+						_params.put(varName, wrap(form, value));
+					}
+				} else {
+					Object value = varDef.eval(_component, form, model);
+					_params.put(varName, wrap(form, value));
+				}
+			}
+			_obj = model;
+		}
+
+		private Object wrap(FormEditorContext form, Object value) {
+			if (value instanceof TLObject) {
+				TLObject obj = (TLObject) value;
+				TLStructuredType valueType = obj.tType();
+				Template valueTemplate = _templateByType.get(valueType);
+				if (valueTemplate != null) {
+					return new TLObjectFragment(form, valueTemplate, obj);
+				} else {
+					return value;
+				}
+			} else if (value instanceof Collection<?>) {
+				return new CollectionFragment(
+					((Collection<?>) value).stream().map(e -> wrap(form, e)).collect(Collectors.toList()));
+			} else {
+				return value;
+			}
 		}
 
 		@Override
@@ -282,60 +306,15 @@ public class RenderedObjectsTemplateProvider
 		}
 
 		@Override
-		protected void attachRevalidated() {
-			super.attachRevalidated();
-
-			getScope().getFrameScope().getModelScope().addModelListener(_obj, this);
-		}
-
-		@Override
-		protected void detachInvalidated() {
-			getScope().getFrameScope().getModelScope().removeModelListener(_obj, this);
-
-			for (EvalResult result : _observedValues) {
-				result.removeInvalidateListener(this);
-			}
-			_observedValues.clear();
-
-			super.detachInvalidated();
-		}
-
-		@Override
-		public void notifyChange(ModelChangeEvent change) {
-			switch (change.getChange(_obj)) {
-				case CREATED:
-				case UPDATED:
-					requestRepaint();
-					break;
-				case DELETED:
-					String id = getID();
-					addUpdate(new RangeReplacement(id, id, Fragments.empty()));
-					break;
-				case NONE:
-			}
-		}
-
-		@Override
 		protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-			_template._fragment.write(context, out, this);
+			_fragment.write(context, out, this);
 		}
 
 		@Override
 		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
-			VariableDefinition<?> variableDefinition = _template._params.get(propertyName);
-			if (variableDefinition != null) {
-				// Could be passed through the WithProperties API in the future.
-				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-
-				Object value = eval(displayContext, variableDefinition);
-				render(context, out, value);
-				return;
-			}
-
-			TLStructuredTypePart part = _obj.tType().getPart(propertyName);
-			if (part != null) {
-				Object value = _obj.tValue(part);
-				render(context, out, value);
+			Object varValue = _params.get(propertyName);
+			if (varValue != null) {
+				render(context, out, varValue);
 				return;
 			}
 
@@ -343,55 +322,30 @@ public class RenderedObjectsTemplateProvider
 		}
 
 		private void render(DisplayContext context, TagWriter out, Object value) throws IOException {
-			ExpressionTemplate.renderValue(context, out, wrap(value));
+			ExpressionTemplate.renderValue(context, out, value);
 		}
 
 		@Override
 		public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
-			VariableDefinition<?> variableDefinition = _template._params.get(propertyName);
-			if (variableDefinition != null) {
-				// Could be passed through the WithProperties API in the future.
-				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-
-				return wrap(eval(displayContext, variableDefinition));
+			Object varValue = _params.get(propertyName);
+			if (varValue != null) {
+				return varValue;
 			}
 
 			TLStructuredTypePart part = _obj.tType().getPart(propertyName);
 			if (part != null) {
 				Object value = _obj.tValue(part);
-				return wrap(value);
+				return value;
 			}
 
 			return super.getPropertyValue(propertyName);
-		}
-
-		private Object wrap(Object value) {
-			if (value instanceof TLObject || value instanceof Collection<?>) {
-				return toFragment(value);
-			} else {
-				return value;
-			}
-		}
-
-		private Object eval(DisplayContext displayContext, VariableDefinition<?> variableDefinition) {
-			EvalResult result = variableDefinition.eval(displayContext, _component, _obj);
-			if (result.addInvalidateListener(this)) {
-				_observedValues.add(result);
-			}
-
-			return result.getValue(displayContext);
-		}
-
-		@Override
-		public void handleValueInvalidation(EvalResult variable) {
-			requestRepaint();
 		}
 
 		@Override
 		public Optional<Collection<String>> getAvailableProperties() {
 			Optional<Collection<String>> superProperties = super.getAvailableProperties();
 			HashSet<String> result = superProperties.isEmpty() ? new HashSet<>() : new HashSet<>(superProperties.get());
-			result.addAll(_template._params.keySet());
+			result.addAll(_params.keySet());
 			result.addAll(_obj.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.toList()));
 			return Optional.of(result);
 		}
@@ -427,26 +381,12 @@ public class RenderedObjectsTemplateProvider
 		@Override
 		public void write(DisplayContext context, TagWriter out) throws IOException {
 			for (Object element : _collection) {
-				toFragment(element).write(context, out);
+				if (element instanceof HTMLFragment) {
+					((HTMLFragment) element).write(context, out);
+				} else {
+					ResourceRenderer.INSTANCE.write(context, out, element);
+				}
 			}
-		}
-
-	}
-
-	private HTMLFragment toFragment(Object value) {
-		if (value instanceof TLObject) {
-			TLObject obj = (TLObject) value;
-			TLStructuredType valueType = obj.tType();
-			Template valueTemplate = _templateByType.get(valueType);
-			if (valueTemplate != null) {
-				return new TLObjectFragment(valueTemplate, obj);
-			} else {
-				return Fragments.rendered(ResourceRenderer.INSTANCE, value);
-			}
-		} else if (value instanceof Collection<?>) {
-			return new CollectionFragment(((Collection<?>) value));
-		} else {
-			return Fragments.rendered(ResourceRenderer.INSTANCE, value);
 		}
 	}
 

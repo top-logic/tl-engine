@@ -31,7 +31,7 @@
 <div style="display: flex; flex-wrap: wrap;">{tanks}</div>
 </tl:if>
 <tl:if test="!tanks">
-<div>Keine Tanks vorhanden. Drücke den Plus-Knopf um den ersten Tank anzulegen.</div>
+<div>{emptyNote}</div>
 </tl:if>
 ]]></template>
 						<value-computation name="tanks"
@@ -41,6 +41,12 @@
 							<text key="dynamic.e48d11f9-f7ff-4cb4-9bf6-039277fee1b8">
 								<en>Tank farm overview</en>
 								<de>Tanklager Übersicht</de>
+							</text>
+						</i18n>
+						<i18n name="emptyNote">
+							<text key="dynamic.1fe33179-7090-4f0a-bbef-23de37b0c39c">
+								<en>No tanks available. Press the plus button to create the first tank.</en>
+								<de>Keine Tanks vorhanden. Drücke den Plus-Knopf um den ersten Tank anzulegen.</de>
 							</text>
 						</i18n>
 						<value-templates>

@@ -192,7 +192,7 @@ public class DropDownControl extends AbstractSelectControl {
 		{
 			out.beginTag(SPAN);
 			{
-				out.write(getSelectionLabel(dropdown));
+				out.writeText(getSelectionLabel(dropdown));
 			}
 			out.endTag(SPAN);
 		}

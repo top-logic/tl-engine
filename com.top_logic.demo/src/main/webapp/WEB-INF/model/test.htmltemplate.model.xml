@@ -49,17 +49,6 @@
 								type="tl.core:Double"
 							/>
 							<field
-								attribute="level"
-								fullQualifiedName="test.htmltemplate:Tank#level"
-								type="tl.core:Double"
-							/>
-							<label key="dynamic.67975a45-1cf4-46be-9781-2303050ca500">
-								<en>Properties</en>
-								<de>Eigenschaften</de>
-							</label>
-						</group>
-						<group>
-							<field
 								attribute="minLevel"
 								fullQualifiedName="test.htmltemplate:Tank#minLevel"
 								type="tl.core:Double"
@@ -69,9 +58,20 @@
 								fullQualifiedName="test.htmltemplate:Tank#maxLevel"
 								type="tl.core:Double"
 							/>
-							<label key="dynamic.59d3dc9c-120a-4d9e-8899-04584fa283b8">
-								<en>Filling limits</en>
-								<de>Füllgrenzen</de>
+							<label key="dynamic.67975a45-1cf4-46be-9781-2303050ca500">
+								<en>Properties</en>
+								<de>Eigenschaften</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="level"
+								fullQualifiedName="test.htmltemplate:Tank#level"
+								type="tl.core:Double"
+							/>
+							<label key="dynamic.49f94865-c0b3-46b2-92ac-39e617772635">
+								<en>State</en>
+								<de>Zustand</de>
 							</label>
 						</group>
 					</form>

@@ -6,6 +6,54 @@
 	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
 >
 	<arguments>
+		<forms>
+			<form type="test.htmltemplate:Tank">
+				<formDefinition>
+					<group>
+						<field
+							attribute="name"
+							fullQualifiedName="test.htmltemplate:Tank#name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="hide-label"/>
+							</annotations>
+						</field>
+						<label key="dynamic.bcef6eff-b1f0-4401-a0d3-d182e05e67ce">
+							<en>Name</en>
+							<de>Name</de>
+						</label>
+					</group>
+					<group>
+						<field
+							attribute="content"
+							fullQualifiedName="test.htmltemplate:Tank#content"
+							type="test.htmltemplate:ContentType"
+						/>
+						<field
+							attribute="capacity"
+							fullQualifiedName="test.htmltemplate:Tank#capacity"
+							type="tl.core:Double"
+						/>
+						<field
+							attribute="minLevel"
+							fullQualifiedName="test.htmltemplate:Tank#minLevel"
+							type="tl.core:Double"
+						/>
+						<field
+							attribute="maxLevel"
+							fullQualifiedName="test.htmltemplate:Tank#maxLevel"
+							type="tl.core:Double"
+						/>
+						<label key="dynamic.67975a45-1cf4-46be-9781-2303050ca500">
+							<en>Properties</en>
+							<de>Eigenschaften</de>
+						</label>
+					</group>
+				</formDefinition>
+			</form>
+		</forms>
 		<title>
 			<title key="dynamic.0d6d236d-aaac-435d-8003-b7769c47233a">
 				<en>New tank</en>

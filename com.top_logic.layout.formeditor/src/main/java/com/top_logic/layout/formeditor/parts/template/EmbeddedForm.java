@@ -7,7 +7,6 @@ package com.top_logic.layout.formeditor.parts.template;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.IdentifierUtil;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -34,8 +33,7 @@ import com.top_logic.model.util.TLModelPartRef;
 /**
  * {@link VariableDefinition} for a HTML template that embeds a form into the custom rendering.
  */
-public class EmbeddedForm extends AbstractConfiguredInstance<EmbeddedForm.Config>
-		implements VariableDefinition<EmbeddedForm.Config> {
+public class EmbeddedForm extends AbstractVariableDefinition<EmbeddedForm.Config> {
 
 	private FormDefinitionTemplateProvider _formDefinition;
 

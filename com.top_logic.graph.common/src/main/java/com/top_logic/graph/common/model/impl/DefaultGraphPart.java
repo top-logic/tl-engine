@@ -119,4 +119,12 @@ public abstract class DefaultGraphPart extends DefaultSharedObject implements Gr
 		_builder = builder;
 	}
 
+	@Override
+	protected boolean isTransient(String property) {
+		if (TAG.equals(property)) {
+			return true;
+		}
+
+		return super.isTransient(property);
+	}
 }

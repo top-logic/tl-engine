@@ -5,7 +5,10 @@
 	final="true"
 	template="com.top_logic/dialog.template.xml"
 >
-	<arguments helpID="ID_9975a769_5afe_4fc4_9a91_1ee551cf55b5">
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_9975a769_5afe_4fc4_9a91_1ee551cf55b5"
+	>
 		<title>
 			<title key="dynamic.983646b6-9bb9-4340-a390-85a3c32b24d8">
 				<en>Tank properties</en>

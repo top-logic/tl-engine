@@ -28,22 +28,23 @@ public class HTMLTagFormat extends HTMLTemplateFragmentFormat {
 		new ExpressionTemplate(new VariableExpression(0, 0, Control.ID)));
 
 	@Override
-	protected HTMLTemplateFragment getValueNonEmpty(String propertyName, CharSequence propertyValue)
+	protected HTMLTemplate getValueNonEmpty(String propertyName, CharSequence propertyValue)
 			throws ConfigurationException {
 		String html = propertyValue.toString();
-		HTMLTemplateFragment template = HTMLTemplateUtils.parse(propertyName, html);
+		HTMLTemplate template = HTMLTemplateUtils.parse(propertyName, html);
+		HTMLTemplateFragment fragment = template.getTemplate();
 
-		if (template instanceof TagTemplate) {
-			StartTagTemplate start = ((TagTemplate) template).getStart();
+		if (fragment instanceof TagTemplate) {
+			StartTagTemplate start = ((TagTemplate) fragment).getStart();
 			start.getAttributes().removeIf(a -> a.getName().equals(HTMLConstants.ID_ATTR));
 			start.getAttributes().add(ID_ATTR);
 		} else {
 			StartTagTemplate start = new StartTagTemplate(1, 1, HTMLConstants.DIV);
 			start.addAttribute(ID_ATTR);
-			template = new TagTemplate(start, template);
+			fragment = new TagTemplate(start, fragment);
 		}
 
-		return new ConfiguredTemplate(template, html);
+		return new HTMLTemplate(fragment, template.getVariables(), template.getHtml());
 	}
 
 }

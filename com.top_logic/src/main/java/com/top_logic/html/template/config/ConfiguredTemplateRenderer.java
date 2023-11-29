@@ -13,13 +13,13 @@ import com.top_logic.layout.Renderer;
 import com.top_logic.layout.form.control.ButtonControl;
 
 /**
- * {@link Renderer} for {@link ConfiguredTemplate}s displaying a button that shows the template
+ * {@link Renderer} for {@link HTMLTemplate}s displaying a button that shows the template
  * source in a pop-up.
  */
-public class ConfiguredTemplateRenderer implements Renderer<ConfiguredTemplate> {
+public class ConfiguredTemplateRenderer implements Renderer<HTMLTemplate> {
 
 	@Override
-	public void write(DisplayContext context, TagWriter out, ConfiguredTemplate value) throws IOException {
+	public void write(DisplayContext context, TagWriter out, HTMLTemplate value) throws IOException {
 		new ButtonControl(new DisplayTemplateCodeCommand(value)).write(context, out);
 	}
 

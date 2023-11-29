@@ -10,9 +10,9 @@ import com.top_logic.html.template.TemplateExpression;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link BinaryExpression} operating on numbers.
+ * {@link StrictBinaryExpression} operating on numbers.
  */
-public abstract class NumericExpression extends BinaryExpression {
+public abstract class NumericExpression extends StrictBinaryExpression {
 
 	/**
 	 * Creates a {@link NumericExpression}.

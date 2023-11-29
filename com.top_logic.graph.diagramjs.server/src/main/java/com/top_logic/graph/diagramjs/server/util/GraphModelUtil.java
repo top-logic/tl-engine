@@ -90,31 +90,31 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	/**
 	 * Creates a {@link LayoutGraph} for the given {@link TLModule}.
 	 */
-	public static LayoutGraph createLayoutGraph(TLModule module, Collection<Object> hiddenElements) {
+	public static LayoutGraph createLayoutGraph(TLModule module, LayoutContext context) {
 		LayoutGraph graph = new LayoutGraph();
 		Map<TLType, LayoutNode> mapping = new LinkedHashMap<>();
 
-		List<TLType> moduleTypes = getSupportedTypes(module, hiddenElements);
+		List<TLType> moduleTypes = getSupportedTypes(module);
 
 		createLayoutNodes(graph, mapping, moduleTypes);
-		createLayoutEdges(graph, mapping, moduleTypes, hiddenElements);
+		createLayoutEdges(graph, mapping, moduleTypes, context);
 
-		connectTypes(graph, mapping, getOutsideModuleTLTypes(mapping, moduleTypes), hiddenElements);
+		connectTypes(graph, mapping, getOutsideModuleTLTypes(mapping, moduleTypes), context);
 
 		return graph;
 	}
 
 	private static void connectTypes(LayoutGraph graph, Map<TLType, LayoutNode> mapping, Set<TLType> types,
-			Collection<Object> hiddenElements) {
+			LayoutContext context) {
 		types.stream().forEach(type -> {
 			LayoutNode node = mapping.get(type);
 
 			if (type.getModelKind() == ModelKind.CLASS) {
-				connectGeneralizations(graph, mapping, node, hiddenElements);
-				connectSpecializations(graph, mapping, node, hiddenElements);
+				connectGeneralizations(graph, mapping, node, context);
+				connectSpecializations(graph, mapping, node, context);
 			}
 
-			connectReferences(graph, mapping, node, hiddenElements);
+			connectReferences(graph, mapping, node, context.getHiddenElements());
 		});
 	}
 
@@ -122,13 +122,12 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return CollectionUtilShared.difference(mapping.keySet(), new HashSet<>(moduleTypes));
 	}
 
-	private static List<TLType> getSupportedTypes(TLModule module, Collection<Object> hiddenElements) {
-		return getSupportedNodeTypesStream(module, hiddenElements).sorted(getTLTypeNameComparator())
-			.collect(Collectors.toList());
+	private static List<TLType> getSupportedTypes(TLModule module) {
+		return getSupportedNodeTypesStream(module).sorted(getTLTypeNameComparator()).collect(Collectors.toList());
 	}
 
-	private static Stream<TLType> getSupportedNodeTypesStream(TLModule module, Collection<Object> hiddenElements) {
-		return getModuleTypes(module).stream().filter(type -> isSupportedNodeType(type, hiddenElements));
+	private static Stream<TLType> getSupportedNodeTypesStream(TLModule module) {
+		return getModuleTypes(module).stream().filter(type -> isSupportedNodeType(type));
 	}
 
 	private static Collection<TLType> getModuleTypes(TLModule module) {
@@ -566,12 +565,8 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		}
 	}
 
-	private static boolean isSupportedNodeType(TLType type, Collection<Object> hiddenElements) {
+	private static boolean isSupportedNodeType(TLType type) {
 		ModelKind modelKind = type.getModelKind();
-
-		if (hiddenElements.contains(type)) {
-			return false;
-		}
 
 		return modelKind == ModelKind.CLASS || modelKind == ModelKind.ENUMERATION;
 	}
@@ -586,15 +581,15 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	private static void createLayoutEdges(LayoutGraph graph, Map<TLType, LayoutNode> mapping, List<TLType> types,
-			Collection<Object> hiddenElements) {
+			LayoutContext context) {
 		for (TLType type : types) {
 			LayoutNode node = mapping.get(type);
 
 			if (type.getModelKind() == ModelKind.CLASS) {
-				createInheritanceEdges(graph, mapping, (TLClass) type, node, hiddenElements);
+				createInheritanceEdges(graph, mapping, (TLClass) type, node, context);
 			}
 
-			createReferenceEdges(graph, mapping, (TLStructuredType) type, node, hiddenElements);
+			createReferenceEdges(graph, mapping, (TLStructuredType) type, node, context.getHiddenElements());
 		}
 	}
 
@@ -604,7 +599,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			if (part.getModelKind() == ModelKind.REFERENCE) {
 				TLType partType = part.getType();
 
-				if (isSupportedNodeType(partType, hiddenElements)) {
+				if (isSupportedNodeType(partType) && !hiddenElements.contains(partType)) {
 					if (!hiddenElements.contains(part)) {
 						LayoutNode target = makeNode(graph, mapping, partType);
 
@@ -665,12 +660,12 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	private static void createInheritanceEdges(LayoutGraph graph, Map<TLType, LayoutNode> mapping, TLClass clazz,
-			LayoutNode classNode, Collection<Object> hiddenElements) {
+			LayoutNode classNode, LayoutContext context) {
 		for (TLClass generalization : clazz.getGeneralizations()) {
-			if (isSupportedNodeType(generalization, hiddenElements)) {
-				TLInheritanceImpl edge = new TLInheritanceImpl(clazz, generalization);
+			TLInheritanceImpl edge = new TLInheritanceImpl(clazz, generalization);
 
-				if (!hiddenElements.contains(edge)) {
+			if (isSupportedNodeType(generalization) && !isInheritanceHidden(context, edge)) {
+				if (!context.getHiddenElements().contains(edge)) {
 					LayoutNode generalizationNode = makeNode(graph, mapping, generalization);
 
 					LayoutEdge inheritance = graph.connect(classNode, generalizationNode, edge);
@@ -791,13 +786,13 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			TLClass clazz = (TLClass) tag;
 
 			for (TLClass specialization : clazz.getSpecializations()) {
-				if (isSupportedNodeType(specialization, context.getHiddenElements())) {
+				TLInheritanceImpl inheritance = new TLInheritanceImpl(specialization, clazz);
+
+				if (isSupportedNodeType(specialization) && !isInheritanceHidden(context, inheritance)) {
 					GraphPart specializationNode = graphModel.getGraphPart(specialization);
 
 					if (specializationNode instanceof Node) {
 						if (!hasEdge((Node) specializationNode, node, TLInheritance.class)) {
-							TLInheritanceImpl inheritance = new TLInheritanceImpl(specialization, clazz);
-
 							if (isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
 								inheritance.getTarget())) {
 								GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, inheritance,
@@ -817,14 +812,16 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * It is assumed that the user object of every {@link LayoutNode} is a {@link TLClass}.
 	 */
 	private static void connectSpecializations(LayoutGraph graph, Map<TLType, LayoutNode> nodeMapping,
-			LayoutNode node, Collection<Object> hiddenElements) {
+			LayoutNode node, LayoutContext context) {
 		Object tag = node.getUserObject();
 
 		if (tag instanceof TLClass) {
 			TLClass clazz = (TLClass) tag;
 
 			for (TLClass specialization : clazz.getSpecializations()) {
-				if (isSupportedNodeType(specialization, hiddenElements)) {
+				TLInheritanceImpl inheritance = new TLInheritanceImpl(specialization, clazz);
+
+				if (isSupportedNodeType(specialization) && !isInheritanceHidden(context, inheritance)) {
 					LayoutNode specializationNode = nodeMapping.get(specialization);
 
 					if (specializationNode != null) {
@@ -834,9 +831,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 							.collect(Collectors.toSet());
 
 						if (collect.isEmpty()) {
-							TLInheritanceImpl inheritance = new TLInheritanceImpl(specialization, clazz);
-
-							if (!hiddenElements.contains(inheritance)) {
+							if (!context.getHiddenElements().contains(inheritance)) {
 								LayoutEdge inheritanceEdge = graph.connect(specializationNode, node, inheritance);
 								inheritanceEdge.setPriority(EDGE_HIGH_PRIORITY);
 							}
@@ -845,6 +840,18 @@ public class GraphModelUtil implements GraphLayoutConstants {
 				}
 			}
 		}
+	}
+
+	private static boolean isInheritanceHidden(LayoutContext context, TLInheritance inheritance) {
+		return isInheritanceEndHidden(context, inheritance.getSource())
+			|| isInheritanceEndHidden(context, inheritance.getTarget());
+	}
+
+	private static boolean isInheritanceEndHidden(LayoutContext context, TLClass inheritanceEnd) {
+		Collection<Object> hiddenElements = context.getHiddenElements();
+		Collection<TLType> hiddenGeneralizations = context.getHiddenGeneralizations();
+
+		return hiddenElements.contains(inheritanceEnd) || hiddenGeneralizations.contains(inheritanceEnd);
 	}
 
 	/**
@@ -860,13 +867,13 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			TLClass clazz = (TLClass) tag;
 
 			for (TLClass generalization : clazz.getGeneralizations()) {
-				if (isSupportedNodeType(generalization, context.getHiddenElements())) {
+				TLInheritanceImpl inheritance = new TLInheritanceImpl(clazz, generalization);
+
+				if (isSupportedNodeType(generalization) && !isInheritanceHidden(context, inheritance)) {
 					GraphPart generalizationNode = graphModel.getGraphPart(generalization);
 
 					if (generalizationNode instanceof Node) {
 						if (!hasEdge(node, (Node) generalizationNode, TLInheritance.class)) {
-							TLInheritanceImpl inheritance = new TLInheritanceImpl(clazz, generalization);
-
 							if (isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
 								inheritance.getTarget())) {
 								GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, inheritance,
@@ -892,14 +899,16 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * It is assumed that the user object of every {@link LayoutNode} is a {@link TLClass}.
 	 */
 	private static void connectGeneralizations(LayoutGraph graph, Map<TLType, LayoutNode> nodeMapping,
-			LayoutNode node, Collection<Object> hiddenElements) {
+			LayoutNode node, LayoutContext context) {
 		Object tag = node.getUserObject();
 
 		if (tag instanceof TLClass) {
 			TLClass clazz = (TLClass) tag;
 
 			for (TLClass generalization : clazz.getGeneralizations()) {
-				if (isSupportedNodeType(generalization, hiddenElements)) {
+				TLInheritanceImpl inheritance = new TLInheritanceImpl(clazz, generalization);
+
+				if (isSupportedNodeType(generalization) && !isInheritanceHidden(context, inheritance)) {
 					LayoutNode generalizationNode = nodeMapping.get(generalization);
 
 					if (generalizationNode != null) {
@@ -909,9 +918,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 							.collect(Collectors.toSet());
 
 						if (collect.isEmpty()) {
-							TLInheritanceImpl inheritance = new TLInheritanceImpl(clazz, generalization);
-
-							if (!hiddenElements.contains(inheritance)) {
+							if (!context.getHiddenElements().contains(inheritance)) {
 								LayoutEdge inheritanceEdge = graph.connect(node, generalizationNode, inheritance);
 								inheritanceEdge.setPriority(EDGE_HIGH_PRIORITY);
 							}
@@ -989,7 +996,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		for (TLStructuredTypePart part : clazz.getLocalParts()) {
 			if (part.getModelKind() == ModelKind.REFERENCE) {
 				TLType partType = part.getType();
-				if (isSupportedNodeType(partType, context.getHiddenElements())) {
+				if (isSupportedNodeType(partType) && !context.getHiddenElements().contains(partType)) {
 					TLType targetType = expectedTargetType.orElse(partType);
 
 					if (partType == targetType) {
@@ -1017,7 +1024,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		for (TLStructuredTypePart part : type.getLocalParts()) {
 			if (part.getModelKind() == ModelKind.REFERENCE) {
 				TLType partType = part.getType();
-				if (isSupportedNodeType(partType, hiddenElements)) {
+				if (isSupportedNodeType(partType) && !hiddenElements.contains(partType)) {
 					TLType targetType = expectedTargetType.orElse(partType);
 					
 					if (partType == targetType) {

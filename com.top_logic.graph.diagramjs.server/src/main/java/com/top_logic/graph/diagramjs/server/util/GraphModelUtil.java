@@ -7,6 +7,7 @@ package com.top_logic.graph.diagramjs.server.util;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -154,6 +155,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 	/**
 	 * Creates a {@link GraphPart} into the given {@link GraphModel}.
+	 * 
 	 * @param graph
 	 *        {@link GraphModel} which contains the created part.
 	 * @param newModel
@@ -166,6 +168,15 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 *        Collection of business objects that are invisible.
 	 */
 	public static GraphPart createGraphPart(GraphModel graph, Object newModel,
+			LabelProvider labelProvider, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
+		GraphPart part = createGraphPartInternal(graph, newModel, labelProvider, hiddenElements, invisibleElements);
+
+		graph.setSelectedGraphParts(Collections.singleton(part));
+
+		return part;
+	}
+
+	private static GraphPart createGraphPartInternal(GraphModel graph, Object newModel,
 			LabelProvider labelProvider, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
 		if (newModel instanceof TLClassProperty) {
 			TLClassProperty property = (TLClassProperty) newModel;

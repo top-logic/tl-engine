@@ -25,7 +25,7 @@
 		<forms>
 			<form type="test.htmltemplate:TankFarm">
 				<formDefinition>
-					<rendered-objects>
+					<html-template>
 						<template><![CDATA[<h1>{title}</h1>
 <tl:if test="tanks">
 <div style="display: flex; flex-wrap: wrap;">{tanks}</div>
@@ -310,10 +310,8 @@
 <div>{form}</div>
 </div>
 ]]></template>
-								<variable class="com.top_logic.layout.formeditor.parts.template.FormFragment"
-									name="form"
-								>
-									<formDefinition columns="ONE">
+								<embedded-form name="form">
+									<form columns="ONE">
 										<field
 											attribute="capacity"
 											fullQualifiedName="test.htmltemplate:Tank#capacity"
@@ -325,8 +323,8 @@
 											fullQualifiedName="test.htmltemplate:Tank#level"
 											type="tl.core:Double"
 										/>
-									</formDefinition>
-								</variable>
+									</form>
+								</embedded-form>
 								<value-computation name="color">
 									<function><![CDATA[t -> switch ($t.get(`test.htmltemplate:Tank#content`)) {
   `test.htmltemplate:ContentType#FUEL`: "#FFCC00";
@@ -337,10 +335,8 @@
 								<link-definition name="openProperties"
 									target-component="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/propertiesForm.layout.xml#Form"
 								/>
-								<variable class="com.top_logic.layout.formeditor.parts.template.FormFragment"
-									name="titleform"
-								>
-									<formDefinition>
+								<embedded-form name="titleform">
+									<form>
 										<field
 											attribute="name"
 											fullQualifiedName="test.htmltemplate:Tank#name"
@@ -351,11 +347,11 @@
 												<label-position value="hide-label"/>
 											</annotations>
 										</field>
-									</formDefinition>
-								</variable>
+									</form>
+								</embedded-form>
 							</value-template>
 						</value-templates>
-					</rendered-objects>
+					</html-template>
 				</formDefinition>
 			</form>
 		</forms>

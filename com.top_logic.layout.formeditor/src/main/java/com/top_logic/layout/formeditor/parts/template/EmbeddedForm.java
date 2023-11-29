@@ -10,8 +10,10 @@ import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.ResPrefix;
@@ -20,7 +22,7 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.template.model.internal.TemplateControl;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
-import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.TemplateConfig;
+import com.top_logic.layout.formeditor.parts.template.HTMLTemplateFormProvider.TemplateConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.definition.FormContextDefinition;
@@ -32,15 +34,16 @@ import com.top_logic.model.util.TLModelPartRef;
 /**
  * {@link VariableDefinition} for a HTML template that embeds a form into the custom rendering.
  */
-public class FormFragment extends AbstractConfiguredInstance<FormFragment.Config>
-		implements VariableDefinition<FormFragment.Config> {
+public class EmbeddedForm extends AbstractConfiguredInstance<EmbeddedForm.Config>
+		implements VariableDefinition<EmbeddedForm.Config> {
 
 	private FormDefinitionTemplateProvider _formDefinition;
 
 	/**
-	 * Configuration options for {@link FormFragment}.
+	 * Configuration options for {@link EmbeddedForm}.
 	 */
-	public interface Config extends VariableDefinition.Config<FormFragment>, FormContextDefinition {
+	@TagName("embedded-form")
+	public interface Config extends VariableDefinition.Config<EmbeddedForm>, FormContextDefinition {
 
 		/** Configuration name for the value of the {@link #getFormDefinition()}. */
 		String FORM_DEFINITION_NAME = "formDefinition";
@@ -48,6 +51,7 @@ public class FormFragment extends AbstractConfiguredInstance<FormFragment.Config
 		/** The form to render. */
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Name(FORM_DEFINITION_NAME)
+		@DefaultContainer
 		FormDefinition getFormDefinition();
 
 		@Override
@@ -57,9 +61,9 @@ public class FormFragment extends AbstractConfiguredInstance<FormFragment.Config
 	}
 
 	/**
-	 * Creates a {@link FormFragment}.
+	 * Creates a {@link EmbeddedForm}.
 	 */
-	public FormFragment(InstantiationContext context, Config config) {
+	public EmbeddedForm(InstantiationContext context, Config config) {
 		super(context, config);
 
 		_formDefinition = context.getInstance(config.getFormDefinition());

@@ -30,7 +30,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.ExpressionTemplate;
 import com.top_logic.html.template.HTMLTemplateFragment;
@@ -51,7 +50,7 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.formeditor.parts.ForeignObjectsTemplateProvider;
 import com.top_logic.layout.formeditor.parts.I18NConstants;
-import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.Config.TypeTemplate;
+import com.top_logic.layout.formeditor.parts.template.HTMLTemplateFormProvider.Config.TypeTemplate;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -68,23 +67,24 @@ import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
- * {@link FormElementTemplateProvider} creating a custom rendering for a list of objects.
+ * {@link FormElementTemplateProvider} creating a custom rendering using a HTML template with
+ * arbitrary embedded contents.
  */
-@Label("Rendered objects")
-public class RenderedObjectsTemplateProvider
-		extends AbstractFormElementProvider<RenderedObjectsTemplateProvider.Config<?>> {
+@Label("HTML template")
+public class HTMLTemplateFormProvider
+		extends AbstractFormElementProvider<HTMLTemplateFormProvider.Config<?>> {
 
 	/**
-	 * Configuration options for {@link RenderedObjectsTemplateProvider}.
+	 * Configuration options for {@link HTMLTemplateFormProvider}.
 	 */
-	@TagName("rendered-objects")
+	@TagName("html-template")
 	@DisplayInherited(DisplayStrategy.PREPEND)
 	@DisplayOrder({
 		Config.TEMPLATE,
 		Config.VARIABLES,
 		Config.VALUE_TEMPLATES,
 	})
-	public interface Config<I extends RenderedObjectsTemplateProvider> extends FormElement<I>, TemplateConfig {
+	public interface Config<I extends HTMLTemplateFormProvider> extends FormElement<I>, TemplateConfig {
 
 		/** @see #getValueTemplates() */
 		String VALUE_TEMPLATES = "value-templates";
@@ -138,10 +138,16 @@ public class RenderedObjectsTemplateProvider
 		String VARIABLES = "variables";
 
 		/**
-		 * The template to expand for object being rendered.
+		 * The HTML template for the rendered object.
 		 * 
 		 * <p>
-		 * The template has access to the {@link #getVariables()} defined below.
+		 * The template has access to all properties of the rendered object and the additional
+		 * {@link #getVariables()} defined below.
+		 * </p>
+		 * 
+		 * <p>
+		 * To access a property or variable named <code>var</code> use the template expression
+		 * <code>{var}</code>.
 		 * </p>
 		 */
 		@Name(TEMPLATE)
@@ -176,7 +182,7 @@ public class RenderedObjectsTemplateProvider
 	/**
 	 * Creates a new {@link ForeignObjectsTemplateProvider}.
 	 */
-	public RenderedObjectsTemplateProvider(InstantiationContext context, Config<?> config) {
+	public HTMLTemplateFormProvider(InstantiationContext context, Config<?> config) {
 		super(context, config);
 
 		_component =
@@ -216,11 +222,6 @@ public class RenderedObjectsTemplateProvider
 	}
 
 	@Override
-	public ResKey getLabel(FormEditorContext context) {
-		return I18NConstants.RENDERED_OBJECTS_LABEL;
-	}
-
-	@Override
 	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		if (context.getFormMode() == FormMode.DESIGN) {
 			return designTemplate();
@@ -242,7 +243,7 @@ public class RenderedObjectsTemplateProvider
 		private HashMap<String, VariableDefinition<?>> _params;
 
 		/**
-		 * Creates a {@link RenderedObjectsTemplateProvider.Template}.
+		 * Creates a {@link HTMLTemplateFormProvider.Template}.
 		 */
 		public Template(InstantiationContext context, TemplateConfig config) {
 			_fragment = config.getTemplate();
@@ -409,7 +410,7 @@ public class RenderedObjectsTemplateProvider
 	private HTMLTemplateFragment designTemplate() {
 		HTMLTemplateFragment legend = resource(I18NConstants.HTML_TEMPLATE);
 		HTMLTemplateFragment contentTemplate;
-		contentTemplate = resource(I18NConstants.RENDERED_OBJECTS_LABEL);
+		contentTemplate = resource(I18NConstants.RENDERED_OBJECTS_PREVIEW);
 
 		/* Lock content of the preview fieldset box. It must not be possible to drop elements in the
 		 * box. */

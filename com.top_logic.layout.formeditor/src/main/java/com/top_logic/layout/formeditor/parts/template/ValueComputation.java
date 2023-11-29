@@ -40,9 +40,9 @@ public class ValueComputation extends AbstractConfiguredInstance<ValueComputatio
 		String FUNCTION = "function";
 
 		/**
-		 * Function taking the currently rendered object as first argument and the additionally
-		 * specified input model (if one is given) as second argument. The value computed can be
-		 * accessed from the template through the variable with the given {@link #getName()}.
+		 * Function taking the currently rendered object as single argument and computing a value.
+		 * The value computed can be accessed from the template through the variable with the given
+		 * {@link #getName()}.
 		 */
 		@Name(FUNCTION)
 		@Mandatory

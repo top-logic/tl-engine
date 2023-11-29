@@ -13,7 +13,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
-import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.TemplateConfig;
+import com.top_logic.layout.formeditor.parts.template.HTMLTemplateFormProvider.TemplateConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.form.implementation.FormEditorContext;
 
@@ -28,6 +28,9 @@ public interface VariableDefinition<C extends VariableDefinition.Config<?>> exte
 	@Abstract
 	interface Config<I extends VariableDefinition<?>> extends PolymorphicConfiguration<I>, ConfigPart {
 
+		/**
+		 * @see #getVariableOwner()
+		 */
 		String VARIABLE_OWNER = "variable-owner";
 
 		/**
@@ -35,6 +38,9 @@ public interface VariableDefinition<C extends VariableDefinition.Config<?>> exte
 		 */
 		String NAME = "name";
 
+		/**
+		 * The template defining this variable.
+		 */
 		@Container
 		@Hidden
 		@Name(VARIABLE_OWNER)
@@ -58,6 +64,7 @@ public interface VariableDefinition<C extends VariableDefinition.Config<?>> exte
 
 	/**
 	 * Computes the value of the template variable.
+	 * 
 	 * @param component
 	 *        The context component.
 	 * @param editorContext

@@ -37,6 +37,7 @@ public interface FormElement<T extends FormElementTemplateProvider>
 	 * The context in which this {@link FormElement} is defined.
 	 */
 	@Container
+	@Hidden
 	@Name(FORM_CONTEXT_DEFINITION)
 	FormContextDefinition getFormContextDefinition();
 

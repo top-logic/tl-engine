@@ -23,6 +23,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -88,12 +89,12 @@ public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implem
 	}
 
 	@Override
-	public EvalResult eval(DisplayContext displayContext, LayoutComponent component, Object model) {
+	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
 		Object target = _targetObject != null ? _targetObject.execute(model) : model;
 		return new LinkFragment(component, target);
 	}
 
-	private final class LinkFragment extends ConstantEvalResult implements HTMLFragment, Command {
+	private final class LinkFragment implements HTMLFragment, Command {
 		private final LayoutComponent _component;
 
 		private final Object _target;
@@ -104,11 +105,6 @@ public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implem
 		private LinkFragment(LayoutComponent component, Object target) {
 			_component = component;
 			_target = target;
-		}
-
-		@Override
-		public Object getValue(DisplayContext displayContext) {
-			return this;
 		}
 
 		@Override

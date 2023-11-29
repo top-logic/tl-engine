@@ -43,9 +43,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey HTML_TEMPLATE;
 
 	/**
-	 * @en Rendered objects
+	 * @en Double-click to edit template contents.
 	 */
-	public static ResKey RENDERED_OBJECTS_LABEL;
+	public static ResKey RENDERED_OBJECTS_PREVIEW;
 
 	static {
 		initConstants(I18NConstants.class);

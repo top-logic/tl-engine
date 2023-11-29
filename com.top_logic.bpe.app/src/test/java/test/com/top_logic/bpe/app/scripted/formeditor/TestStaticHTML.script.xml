@@ -134,7 +134,7 @@
 					tab-path="Administration > Development > Prozess Editor"
 				/>
 			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.ConfigurationItemNaming$Name">
+			<value config:interface="com.top_logic.model.form.definition.FormDefinitionNaming$Name">
 				<item config:interface="com.top_logic.model.form.definition.FormDefinition"
 					class="com.top_logic.model.form.implementation.FormDefinitionTemplateProvider"
 				>

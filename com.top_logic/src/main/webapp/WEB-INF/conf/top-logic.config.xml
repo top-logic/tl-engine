@@ -1742,6 +1742,7 @@
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.UniqueDownloadNamingScheme"/>
 
+					<scheme class="com.top_logic.model.form.definition.FormDefinitionNaming"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ConfigurationItemNaming"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ui.form.ListFieldIndexNaming"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming" priority="preferred" />

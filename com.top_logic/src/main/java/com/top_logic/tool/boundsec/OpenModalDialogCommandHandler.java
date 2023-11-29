@@ -38,7 +38,7 @@ import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.ComponentLabelProvider;
+import com.top_logic.layout.provider.ComponentNameLabelProvider;
 import com.top_logic.mig.html.layout.AbstractWindowInfo;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.DialogInfo;
@@ -99,7 +99,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		 */
 		@Name(DIALOG_NAME_PROPERTY)
 		@Options(fun = AllDialogNames.class)
-		@OptionLabels(ComponentLabelProvider.class)
+		@OptionLabels(ComponentNameLabelProvider.class)
 		ComponentName getDialogName();
 
 		/**

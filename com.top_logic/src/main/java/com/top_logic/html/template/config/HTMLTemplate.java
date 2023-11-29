@@ -76,4 +76,22 @@ public class HTMLTemplate implements HTMLTemplateFragment {
 		_template.write(context, out, properties);
 	}
 
+	@Override
+	public int hashCode() {
+		return _html.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+
+		HTMLTemplate other = (HTMLTemplate) obj;
+		return _html.equals(other._html);
+	}
+
 }

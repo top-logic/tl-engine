@@ -70,6 +70,13 @@ public class MenuVariable extends AbstractVariableDefinition<MenuVariable.Config
 			.collect(Collectors.toList());
 	}
 
+	/**
+	 * All commands in the menu.
+	 */
+	public List<CommandHandler> getCommands() {
+		return _commands;
+	}
+
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
 		Map<String, Object> args = ContextMenuUtil.createArguments(model);

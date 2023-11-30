@@ -63,6 +63,13 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 		_command = CommandHandlerFactory.getInstance().getCommand(context, config.getButton());
 	}
 
+	/**
+	 * The {@link CommandHandler} to invoke.
+	 */
+	public CommandHandler getCommand() {
+		return _command;
+	}
+
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
 		Map<String, Object> args = ContextMenuUtil.createArguments(model);

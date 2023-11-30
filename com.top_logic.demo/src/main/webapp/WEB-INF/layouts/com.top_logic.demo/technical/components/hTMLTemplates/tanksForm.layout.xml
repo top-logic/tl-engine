@@ -370,8 +370,8 @@
 								<variable class="com.top_logic.layout.formeditor.parts.template.MenuVariable"
 									name="menuButton"
 								>
-									<button>
-										<entry id="ID_7e2c6afa_02fd_495f_ac0d_07b53a30e129"
+									<buttons>
+										<button id="ID_7e2c6afa_02fd_495f_ac0d_07b53a30e129"
 											class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 											image="css:fas fa-fill"
 											operation="tank -> $tank.set(`test.htmltemplate:Tank#level`, $tank.get(`test.htmltemplate:Tank#capacity`))"
@@ -387,8 +387,8 @@
 													visibility="HIDDEN"
 												/>
 											</executability>
-										</entry>
-										<entry id="ID_d41d307a_7bef_45bc_8b4b_b5a0d068af4b"
+										</button>
+										<button id="ID_d41d307a_7bef_45bc_8b4b_b5a0d068af4b"
 											class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 											image="css:fas fa-sign-out-alt"
 											operation="tank -> $tank.set(`test.htmltemplate:Tank#level`, 0)"
@@ -404,8 +404,8 @@
 													visibility="HIDDEN"
 												/>
 											</executability>
-										</entry>
-										<entry id="ID_c97b3ada_4db1_4c8f_a828_87a7086440cc"
+										</button>
+										<button id="ID_c97b3ada_4db1_4c8f_a828_87a7086440cc"
 											class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 											clique="settings"
 											group="Write"
@@ -418,8 +418,8 @@
 											<executability>
 												<rule class="com.top_logic.tool.execution.InViewModeExecutable"/>
 											</executability>
-										</entry>
-									</button>
+										</button>
+									</buttons>
 								</variable>
 							</value-template>
 						</value-templates>

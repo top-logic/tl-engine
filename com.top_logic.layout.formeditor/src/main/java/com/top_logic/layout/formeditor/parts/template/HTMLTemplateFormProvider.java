@@ -64,6 +64,8 @@ import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
+import com.top_logic.model.listen.ModelChangeEvent;
+import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -252,33 +254,46 @@ public class HTMLTemplateFormProvider
 	/**
 	 * {@link HTMLFragment} displaying a {@link TLObject} using a {@link HTMLTemplateFragment}.
 	 */
-	private final class TLObjectFragment extends AbstractVisibleControl {
-		private final TLObject _obj;
+	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener {
+
+		private final FormEditorContext _form;
+
+		private final HashMap<String, VariableDefinition<?>> _vars;
 
 		private final HTMLTemplate _fragment;
 
-		private final Map<String, Object> _params = new HashMap<>();
+		private final TLObject _model;
+
+		private Map<String, Object> _args;
 
 		/**
 		 * Creates a {@link TLObjectFragment}.
 		 */
 		public TLObjectFragment(FormEditorContext form, Template template, TLObject model) {
+			_form = form;
 			_fragment = template._fragment;
+			_vars = template._params;
+			_model = model;
+
+			computeTemplateArguments();
+		}
+
+		private void computeTemplateArguments() {
+			_args = new HashMap<>();
 			for (String varName : _fragment.getVariables()) {
-				VariableDefinition<?> varDef = template._params.get(varName);
+				VariableDefinition<?> varDef = _vars.get(varName);
 				if (varDef == null) {
-					TLStructuredTypePart part = model.tType().getPart(varName);
+					TLStructuredTypePart part = _model.tType().getPart(varName);
 					if (part != null) {
-						Object value = model.tValue(part);
-						_params.put(varName, wrap(form, value));
+						Object value = _model.tValue(part);
+						_args.put(varName, wrap(_form, value));
 					}
 				} else {
-					LayoutComponent component = FormComponent.componentForMember(form.getFormContext());
-					Object value = varDef.eval(component, form, model);
-					_params.put(varName, wrap(form, value));
+					LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());
+					Object value = varDef.eval(component, _form, _model);
+					_args.put(varName, wrap(_form, value));
 				}
 			}
-			_obj = model;
 		}
 
 		private Object wrap(FormEditorContext form, Object value) {
@@ -301,7 +316,7 @@ public class HTMLTemplateFormProvider
 
 		@Override
 		public Object getModel() {
-			return _obj;
+			return _model;
 		}
 
 		@Override
@@ -310,8 +325,28 @@ public class HTMLTemplateFormProvider
 		}
 
 		@Override
+		protected void attachRevalidated() {
+			super.attachRevalidated();
+
+			getScope().getFrameScope().getModelScope().addModelListener(_model, this);
+		}
+
+		@Override
+		protected void detachInvalidated() {
+			getScope().getFrameScope().getModelScope().removeModelListener(_model, this);
+
+			super.detachInvalidated();
+		}
+
+		@Override
+		public void notifyChange(ModelChangeEvent change) {
+			computeTemplateArguments();
+			requestRepaint();
+		}
+
+		@Override
 		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
-			Object varValue = _params.get(propertyName);
+			Object varValue = _args.get(propertyName);
 			if (varValue != null) {
 				render(context, out, varValue);
 				return;
@@ -326,14 +361,14 @@ public class HTMLTemplateFormProvider
 
 		@Override
 		public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
-			Object varValue = _params.get(propertyName);
+			Object varValue = _args.get(propertyName);
 			if (varValue != null) {
 				return varValue;
 			}
 
-			TLStructuredTypePart part = _obj.tType().getPart(propertyName);
+			TLStructuredTypePart part = _model.tType().getPart(propertyName);
 			if (part != null) {
-				Object value = _obj.tValue(part);
+				Object value = _model.tValue(part);
 				return value;
 			}
 
@@ -344,8 +379,8 @@ public class HTMLTemplateFormProvider
 		public Optional<Collection<String>> getAvailableProperties() {
 			Optional<Collection<String>> superProperties = super.getAvailableProperties();
 			HashSet<String> result = superProperties.isEmpty() ? new HashSet<>() : new HashSet<>(superProperties.get());
-			result.addAll(_params.keySet());
-			result.addAll(_obj.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.toList()));
+			result.addAll(_args.keySet());
+			result.addAll(_model.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.toList()));
 			return Optional.of(result);
 		}
 
@@ -353,12 +388,12 @@ public class HTMLTemplateFormProvider
 		public RuntimeException errorNoSuchProperty(String propertyName) {
 			throw new IllegalArgumentException(
 				"No such property '" + propertyName + "' in '" + this + "', available model properties: "
-					+ _obj.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.joining(", ")));
+					+ _model.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.joining(", ")));
 		}
 
 		@Override
 		public String toString() {
-			return "Object of type '" + _obj.tType() + "'";
+			return "Object of type '" + _model.tType() + "'";
 		}
 	}
 

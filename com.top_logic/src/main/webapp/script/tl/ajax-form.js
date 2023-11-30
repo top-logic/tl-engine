@@ -28,6 +28,14 @@ services.form = {
 		});
 	},
 	
+	callback: function(ctrlId, ...parameters) {
+		services.ajax.execute("dispatchControlCommand", {
+			controlCommand: "callback",
+			controlID: ctrlId, 
+			args: parameters.length == 1 ? parameters[0] : parameters
+		});
+	},
+	
 	installKeyEventHandler : function(windowId) {
 		BAL.installKeyBindingHandler(
 			function(event) {

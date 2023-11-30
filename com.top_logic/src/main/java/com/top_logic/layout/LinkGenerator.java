@@ -52,20 +52,17 @@ public class LinkGenerator {
 
 	}
 
-	static final class CommandExecution implements CommandListener, Handle, UpdateListener {
+	public static abstract class Callback implements CommandListener, Handle, UpdateListener {
 
 		private final String _id;
-
-		private final Command _command;
 
 		private final ControlScope _scope;
 
 		private boolean _disabled;
 
-		CommandExecution(ControlScope scope, Command command) {
+		protected Callback(ControlScope scope) {
 			_scope = scope;
 			_id = scope.getFrameScope().createNewID();
-			_command = command;
 		}
 
 		@Override
@@ -88,14 +85,11 @@ public class LinkGenerator {
 			return _id;
 		}
 
-		@Override
-		public HandlerResult executeCommand(DisplayContext context, String commandName, Map<String, Object> arguments) {
-			if (_disabled) {
-				// Skip.
-				return HandlerResult.DEFAULT_RESULT;
-			}
-			context.set(COMMAND_ARGUMENTS, arguments);
-			return _command.executeCommand(context);
+		/**
+		 * Whether this command temporarily cannot be executed.
+		 */
+		public boolean isDisabled() {
+			return _disabled;
 		}
 
 		@Override
@@ -112,6 +106,27 @@ public class LinkGenerator {
 		public void revalidate(DisplayContext context, UpdateQueue actions) {
 			// Ignore.
 		}
+	}
+
+	static final class CommandExecution extends Callback {
+
+		private final Command _command;
+
+		CommandExecution(ControlScope scope, Command command) {
+			super(scope);
+			_command = command;
+		}
+
+		@Override
+		public HandlerResult executeCommand(DisplayContext context, String commandName, Map<String, Object> arguments) {
+			if (isDisabled()) {
+				// Skip.
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			context.set(COMMAND_ARGUMENTS, arguments);
+			return _command.executeCommand(context);
+		}
+
 	}
 
 	/**

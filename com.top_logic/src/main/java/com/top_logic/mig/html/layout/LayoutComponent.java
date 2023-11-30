@@ -3442,7 +3442,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			return null;
 		}
 
-		return res.getString(labelKey.tooltip(), null);
+		return res.getString(labelKey.tooltipOptional());
 	}
 
 	public static ResKey createCommandLabel(LayoutComponent targetComponent, CommandHandler command) {

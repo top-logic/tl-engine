@@ -201,8 +201,7 @@ public class TabContent implements WithProperties {
 		if (cardInfo instanceof TabInfo) {
 			ResKey labelKey = ((TabInfo) cardInfo).getLabelKey();
 			if (labelKey != null) {
-				String tooltip = Resources.getInstance().getString(labelKey.tooltip(),
-					StringServices.EMPTY_STRING);
+				String tooltip = Resources.getInstance().getString(labelKey.tooltipOptional());
 				if (!StringServices.isEmpty(tooltip)) {
 					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context,
 						out, tooltip);

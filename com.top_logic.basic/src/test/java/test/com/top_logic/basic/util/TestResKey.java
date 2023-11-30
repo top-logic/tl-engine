@@ -74,6 +74,9 @@ public class TestResKey extends TestCase {
 		map.put("testFallbackWithFallbackSuffix.2.suffix.3", "Translation of: testFallbackWithFallbackSuffix.2.suffix.3");
 		map.put("testFallbackWithFallbackSuffix.3.suffix.3", "Translation of: testFallbackWithFallbackSuffix.3.suffix.3");
 		map.put("testSuffixOfLiteralTextWithFallback.1.suffix.2", "Translation of: testSuffixOfLiteralTextWithFallback.1.suffix.2");
+		map.put("testTooltip.keyWithTooltip", "Translation of: testTooltip.keyWithTooltip");
+		map.put("testTooltip.keyWithTooltip.tooltip", "Translation of: testTooltip.keyWithTooltip.tooltip");
+		map.put("testTooltip.keyWithoutTooltip", "Translation of: testTooltip.keyWithoutTooltip");
 
 		_bundle = new BundleForTest(map, Locale.ENGLISH);
 	}
@@ -412,6 +415,18 @@ public class TestResKey extends TestCase {
 	public void testLiteralKeyUnknown() {
 		ResKey literal = ResKey.literal(ch("bar"), en("foo"));
 		assertEquals("[#(\"foo\"@en, \"bar\"@zh)]", literal.unknown(_bundle));
+	}
+
+	public void testTooltip() {
+		ResKey key1 = ResKey.internalCreate("testTooltip.keyWithTooltip");
+		assertResolve("Translation of: testTooltip.keyWithTooltip", key1);
+		assertResolve("Translation of: testTooltip.keyWithTooltip.tooltip", key1.tooltip());
+		assertResolve("Translation of: testTooltip.keyWithTooltip.tooltip", key1.tooltipOptional());
+
+		ResKey key2 = ResKey.internalCreate("testTooltip.keyWithoutTooltip");
+		assertResolve("Translation of: testTooltip.keyWithoutTooltip", key2);
+		assertResolve("[testTooltip.keyWithoutTooltip.tooltip]", key2.tooltip());
+		assertResolve(null, key2.tooltipOptional());
 	}
 
 	private static LangString en(String value) {

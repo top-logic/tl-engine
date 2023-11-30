@@ -321,7 +321,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		ResKey resKey = aAttributeUpdate.getLabelKey();
 		Resources resources = Resources.getInstance();
 		result.setLabel(resources.getString(resKey));
-		result.setTooltip(resources.getString(resKey.tooltip(), null));
+		result.setTooltip(resources.getString(resKey.tooltipOptional()));
 		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
 		
 		if (AttributeOperations.isReadOnly(aAttributeUpdate.getAttribute())) {

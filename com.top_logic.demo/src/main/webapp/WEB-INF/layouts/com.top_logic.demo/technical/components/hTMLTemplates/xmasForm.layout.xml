@@ -13,6 +13,18 @@
 		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
 			<script expr="`test.htmltemplate#TREE`"/>
 		</model>
+		<buttons>
+			<button id="ID_46f8c4a7_8447_4e27_8a8d_8e67527fb17a"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				image="css:fas fa-wind"
+				operation="tree -> $tree.get(`test.htmltemplate:XmasTree#candles`).foreach(c -> $c.set(`test.htmltemplate:Candle#lighned`, false))"
+			>
+				<resourceKey key="dynamic.b560099c-19ce-47fe-a615-54be47542c43">
+					<en>Blow out all candles</en>
+					<de>Alle Kerzen auspusten</de>
+				</resourceKey>
+			</button>
+		</buttons>
 		<forms>
 			<form type="test.htmltemplate:XmasTree">
 				<formDefinition>
@@ -155,6 +167,21 @@
 								<ui-callback name="toggleCandle"
 									action="candle -> $candle.set(`test.htmltemplate:Candle#lighned`, !$candle.get(`test.htmltemplate:Candle#lighned`))"
 								/>
+								<variable class="com.top_logic.layout.formeditor.parts.template.MenuVariable"
+									name="deleteCandle"
+								>
+									<buttons>
+										<button id="ID_cf5446ed_7e27_4ef7_b43e_90779b94109c"
+											class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+											confirm="false"
+										>
+											<resourceKey key="dynamic.7dd96c62-aa74-4392-9c64-543fec1cce5d">
+												<en>Remove candle</en>
+												<de>Kerze abnehmen</de>
+											</resourceKey>
+										</button>
+									</buttons>
+								</variable>
 							</value-template>
 						</value-templates>
 					</html-template>

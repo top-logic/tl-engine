@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Simon Haneke. All Rights Reserved
+ * Copyright (c) 2023 Simon Haneke. All Rights Reserved
  */
 package com.top_logic.services.jms.ibmmq;
 

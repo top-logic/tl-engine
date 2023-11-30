@@ -28,22 +28,22 @@ public class JMSReceive extends GenericMethod {
 	/**
 	 * Creates a {@link JMSReceive} expression.
 	 */
-	protected JMSReceive(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected JMSReceive(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new JMSReceive(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new JMSReceive(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (!JMSService.Module.INSTANCE.isActive()) {
 			throw new TopLogicException(I18NConstants.ERROR_JMS_SERVICE_NOT_STARTED__EXPR.fill(this));
 		}
@@ -87,14 +87,9 @@ public class JMSReceive extends GenericMethod {
 		}
 
 		@Override
-		public JMSReceive build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public JMSReceive build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new JMSReceive(getConfig().getName(), self, args);
-		}
-
-		@Override
-		public boolean hasSelf() {
-			return false;
+			return new JMSReceive(getConfig().getName(), args);
 		}
 	}
 

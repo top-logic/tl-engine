@@ -6,6 +6,7 @@ package com.top_logic.services.jms.script;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
@@ -35,22 +36,22 @@ public class JMSSend extends GenericMethod {
 	/**
 	 * Creates a {@link JMSSend} expression.
 	 */
-	protected JMSSend(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, self, arguments);
+	protected JMSSend(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
-	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new JMSSend(getName(), self, arguments);
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new JMSSend(getName(), arguments);
 	}
 
 	@Override
-	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
+	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (!JMSService.Module.INSTANCE.isActive()) {
 			throw new TopLogicException(I18NConstants.ERROR_JMS_SERVICE_NOT_STARTED__EXPR.fill(this));
 		}
@@ -74,6 +75,8 @@ public class JMSSend extends GenericMethod {
 			producer.send(sw.toString());
 		} else if (rawData instanceof BinaryDataSource) {
 			producer.send((BinaryDataSource) rawData);
+		} else if (rawData instanceof Map) {
+			producer.send((Map) rawData);
 		} else {
 			producer.send(ToString.toString(rawData));
 		}
@@ -110,14 +113,9 @@ public class JMSSend extends GenericMethod {
 		}
 
 		@Override
-		public JMSSend build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public JMSSend build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new JMSSend(getConfig().getName(), self, args);
-		}
-
-		@Override
-		public boolean hasSelf() {
-			return false;
+			return new JMSSend(getConfig().getName(), args);
 		}
 	}
 

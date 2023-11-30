@@ -16,7 +16,9 @@ import com.top_logic.services.jms.JMSClient;
 import jakarta.jms.ConnectionFactory;
 
 /**
+ * Configuration class for a connection to an ActiveMQ MQ System.
  * 
+ * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
 public class ActiveMQClient extends JMSClient {
 

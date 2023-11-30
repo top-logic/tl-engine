@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.control;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -18,7 +19,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -33,8 +33,6 @@ import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlCommandModel;
 import com.top_logic.layout.basic.ResourceText;
-import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.layout.basic.fragments.Tag;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
@@ -50,16 +48,12 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
-import com.top_logic.layout.renderers.ButtonComponentButtonRenderer;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.gui.FieldCopier;
 import com.top_logic.layout.structure.DefaultDialogModel;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DialogWindowControl;
-import com.top_logic.layout.structure.FixedFlowLayoutControl;
-import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutData;
-import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -67,7 +61,7 @@ import com.top_logic.util.Resources;
 /**
  * Control displaying a value with a popup button opening a popup dialog for editing this value.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F?rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class PopupEditControl extends AbstractFormFieldControl {
 
@@ -392,29 +386,30 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 		DefaultDialogModel dialogModel = new DefaultDialogModel(getDialogLayout(editField),
 			getDialogTitle(editField), true, true, null);
-		DialogWindowControl dialogControl = new DialogWindowControl(dialogModel);
-		FixedFlowLayoutControl layout = new FixedFlowLayoutControl(Orientation.VERTICAL);
+		Command applyCommand = getApplyCommand(originalField, editField);
+		CommandModel okModel = createOkModel(dialogModel, applyCommand);
+		CommandModel closeModel = createCancelModel(dialogModel);
+		DialogWindowControl dialog =
+			MessageBox.createDialog(dialogModel, editFragment, Arrays.asList(okModel, closeModel));
 
-		LayoutControlAdapter editlayout = new LayoutControlAdapter(editFragment);
-		editlayout.setConstraint(
-			new DefaultLayoutData(
-				DisplayDimension.percent(100), 100,
-				DisplayDimension.percent(100), 100, Scrolling.AUTO));
-		layout.addChild(editlayout);
-
-		Command closeAction = dialogModel.getCloseAction();
-		CommandChain apply = new CommandChain(getApplyCommand(originalField, editField), closeAction);
-		dialogModel.setDefaultCommand(apply);
-		LayoutControlAdapter buttonsLayout = new LayoutControlAdapter(getButtonsTag(apply, closeAction));
-		buttonsLayout.setConstraint(
-			new DefaultLayoutData(
-				DisplayDimension.percent(100), 100,
-				DisplayDimension.px(40), 100, Scrolling.NO));
-		layout.addChild(buttonsLayout);
-
-		dialogControl.setChildControl(layout);
-		commandContext.getWindowScope().openDialog(dialogControl);
+		commandContext.getWindowScope().openDialog(dialog);
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private CommandModel createOkModel(DefaultDialogModel dialogModel, Command applyCommand) {
+		Command closeAction = dialogModel.getCloseAction();
+		CommandChain apply = new CommandChain(applyCommand, closeAction);
+		dialogModel.setDefaultCommand(apply);
+		CommandModel okModel = MessageBox.button(ButtonType.OK, apply);
+		ScriptingRecorder.annotateAsDontRecord(okModel);
+		return okModel;
+	}
+
+	private CommandModel createCancelModel(DefaultDialogModel dialogModel) {
+		Command closeAction = dialogModel.getCloseAction();
+		CommandModel cancelModel = MessageBox.button(ButtonType.CANCEL, closeAction);
+		ScriptingRecorder.annotateAsDontRecord(cancelModel);
+		return cancelModel;
 	}
 
 	private FormField createEditFieldInternal(FormField originalField) {
@@ -522,33 +517,6 @@ public class PopupEditControl extends AbstractFormFieldControl {
 				};
 			}
 		};
-	}
-
-	/**
-	 * Gets the apply button as {@link HTMLFragment}.
-	 */
-	protected HTMLFragment getApplyButton(Command apply) {
-		CommandModel okModel = MessageBox.button(ButtonType.OK, apply);
-		ScriptingRecorder.annotateAsDontRecord(okModel);
-		return new ButtonControl(okModel, ButtonComponentButtonRenderer.INSTANCE);
-	}
-
-	/**
-	 * Gets the cancel button as {@link HTMLFragment}.
-	 */
-	protected HTMLFragment getCancelButton(Command cancel) {
-		CommandModel cancelModel = MessageBox.button(ButtonType.CANCEL, cancel);
-		ScriptingRecorder.annotateAsDontRecord(cancelModel);
-		return new ButtonControl(cancelModel, ButtonComponentButtonRenderer.INSTANCE);
-	}
-
-	/**
-	 * Gets the buttons as {@link HTMLFragment}.
-	 */
-	protected Tag getButtonsTag(Command apply, Command cancel) {
-		HTMLFragment applyButton = getApplyButton(apply);
-		HTMLFragment cancelButton = getCancelButton(cancel);
-		return Fragments.div(ButtonComponent.DEFAULT_CSS_CLASS, applyButton, cancelButton);
 	}
 
 	/**

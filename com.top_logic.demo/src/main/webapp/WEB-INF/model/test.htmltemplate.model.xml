@@ -7,6 +7,9 @@
 				<singleton name="TANKS"
 					type="TankFarm"
 				/>
+				<singleton name="TREE"
+					type="XmasTree"
+				/>
 			</singletons>
 		</annotations>
 		<enum name="ContentType">
@@ -14,6 +17,24 @@
 			<classifier name="WATER"/>
 			<classifier name="WASTE_OIL"/>
 		</enum>
+		<class name="Candle">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="x"
+					mandatory="true"
+					type="tl.core:Double"
+				/>
+				<property name="y"
+					mandatory="true"
+					type="tl.core:Double"
+				/>
+				<property name="lighned"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
 		<class name="Tank">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -167,6 +188,20 @@
 					multiple="true"
 					navigate="true"
 					type="Tank"
+				/>
+			</attributes>
+		</class>
+		<class name="XmasTree">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="candles"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Candle"
 				/>
 			</attributes>
 		</class>

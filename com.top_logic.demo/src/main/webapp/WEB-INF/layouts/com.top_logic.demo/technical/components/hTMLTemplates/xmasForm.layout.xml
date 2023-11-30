@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.552a592d-2951-4591-b813-52ac3a52f4e2">
+			<en>Xmas</en>
+			<de>Xmas</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="`test.htmltemplate#TREE`"/>
+		</model>
+		<forms>
+			<form type="test.htmltemplate:XmasTree">
+				<formDefinition>
+					<html-template>
+						<template><![CDATA[<h1>{title}</h1>
+<p>{description}</p>
+<div>
+<svg
+   onclick="services.form.callback({placeCandle}, window.event.pageX, window.event.pageY, this.getBoundingClientRect());"
+   width="365.40695"
+   height="401.31503"
+   viewBox="0 0 96.68059 106.18127"
+   version="1.1"
+   id="svg5557"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="xmas-tree.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview5559"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     fit-margin-top="10"
+     fit-margin-left="10"
+     fit-margin-right="10"
+     fit-margin-bottom="10"
+     lock-margins="true"
+     inkscape:zoom="2.1946698"
+     inkscape:cx="287.97043"
+     inkscape:cy="212.33263"
+     inkscape:window-width="2560"
+     inkscape:window-height="1372"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     units="px" />
+  <defs
+     id="defs5554" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-23.840422,-89.498171)">
+    <g
+       id="xmas-tree">
+      <rect
+         style="fill:#76561c;fill-opacity:1;stroke:#1d1d1b;stroke-width:0.529;stroke-linecap:square;paint-order:markers fill stroke"
+         id="rect6670"
+         width="11.796116"
+         height="12.053552"
+         x="66.394531"
+         y="173.36139" />
+      <path
+         style="fill:#009b08;fill-opacity:1;stroke:#1d1d1b;stroke-width:0.529;stroke-linecap:square;paint-order:markers fill stroke"
+         d="m 73.883818,100.16433 c -6.612416,13.20647 -14.417108,21.4612 -23.175068,25.75684 4.091708,2.48829 8.115199,5.45505 12.606583,5.14 -5.689551,7.27193 -11.585292,10.56909 -17.515115,13.20926 4.012578,1.86165 7.843979,3.94765 13.037315,4.34722 -6.091696,7.23078 -14.413426,11.9306 -24.356298,14.7905 31.485009,19.8234 54.31911,13.18135 75.396805,1.16599 -9.24291,-3.1209 -17.758142,-7.05908 -22.369734,-15.38165 8.610802,-3.13507 11.08332,-5.27372 12.167698,-7.18702 -5.799545,-1.59126 -11.526459,-4.5061 -17.091816,-10.36504 6.806613,-1.15203 9.075143,-3.86751 12.350658,-6.23606 -11.994943,-5.55175 -17.28572,-14.95743 -21.051028,-25.24004 z"
+         id="path5663"
+         sodipodi:nodetypes="cccccccccccc" />
+    </g>
+  </g>
+  {candles}
+</svg>
+</div>]]></template>
+						<ui-callback name="placeCandle">
+							<action><![CDATA[tree -> args -> {
+    x = $args[0];
+    y = $args[1];
+    top = $args[2]["top"];
+    left = $args[2]["left"];
+    
+    candleHeight=77.133621;
+    candleWidth=23.32206;
+
+    svgWidth=365.40695;
+    svgHeight=401.31503;
+    viewWidth = 96.68059;
+    viewHeight = 106.18127;
+    fx = $viewWidth / $svgWidth;
+    fy = $viewHeight / $svgHeight;
+    
+    candle = new(`test.htmltemplate:Candle`);
+    $candle.set(`test.htmltemplate:Candle#x`, $fx*($x - $left - $candleWidth/2));
+    $candle.set(`test.htmltemplate:Candle#y`, $fy*($y - $top - $candleHeight));
+    $tree.add(`test.htmltemplate:XmasTree#candles`, $candle)
+}]]></action>
+						</ui-callback>
+						<i18n name="title">
+							<text key="dynamic.aed3284b-50dc-4b4e-b699-805b8dfa3212">
+								<en>Decorate the Christmas tree</en>
+								<de>Schmücke den Weihnachtsbaum</de>
+							</text>
+						</i18n>
+						<i18n name="description">
+							<text key="dynamic.140514a5-9c48-4948-8118-9e8a0d5b5714">
+								<en>Click on the tree to place candles. Click on a candle to light it or blow it out.</en>
+								<de>Klicke auf den Baum, um Kerzen zu platzieren. Klicke auf eine Kerze um sie anzuzünden oder auszublasen.</de>
+							</text>
+						</i18n>
+						<value-templates>
+							<value-template type="test.htmltemplate:Candle">
+								<template><![CDATA[<g transform="translate({x},{y})"
+   onclick="services.form.callback({toggleCandle}); window.event.stopPropagation(); return false;"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="{!lighned ? 'display:none;' } fill:#f3e42f;fill-opacity:1;stroke:#1d1d1b;stroke-width:0.529;stroke-linecap:square;paint-order:markers fill stroke"
+       d="m 2.5839096,9.1631948 c -0.92331,-0.66031 -2.25895698,-1.21353 -1.98942998,-2.930336 0.32193998,-2.05055 1.48265998,-3.7034 3.49704998,-5.81285006 1.10786,1.38276006 2.4806,3.36240006 1.55491,5.92032006 -0.44795,1.237796 -1.6454,2.089876 -3.06253,2.822866 z"
+       id="candle-light"
+       sodipodi:nodetypes="cscsc" ></path>
+    <g
+       id="candle-body"
+       transform="translate(-99.954363,-146.23527)">
+      <rect
+         style="fill:#e42929;fill-opacity:1;stroke:#1d1d1b;stroke-width:0.529;stroke-linecap:square;paint-order:markers fill stroke"
+         id="rect7998"
+         width="4.7066727"
+         height="10.795992"
+         x="100.26273"
+         y="155.60181" ></rect>
+      <path
+         style="fill:#f3e42f;fill-opacity:1;stroke:#1d1d1b;stroke-width:0.529;stroke-linecap:square;paint-order:markers fill stroke"
+         d="m 102.53827,155.39847 c -0.0703,-1.28351 0.13424,-2.15789 0.45774,-2.85526"
+         id="path10560"
+         sodipodi:nodetypes="cc" ></path>
+    </g>
+  </g>]]></template>
+								<ui-callback name="toggleCandle"
+									action="candle -> $candle.set(`test.htmltemplate:Candle#lighned`, !$candle.get(`test.htmltemplate:Candle#lighned`))"
+								/>
+							</value-template>
+						</value-templates>
+					</html-template>
+					<field
+						attribute="candles"
+						fullQualifiedName="test.htmltemplate:XmasTree#candles"
+						type="test.htmltemplate:Candle"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

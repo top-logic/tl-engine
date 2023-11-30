@@ -8,6 +8,9 @@
 	<arguments>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/tanksForm.layout.xml">
+				<layoutInfo size="75%"/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/xmasForm.layout.xml">
 				<layoutInfo/>
 			</layout-reference>
 		</components>

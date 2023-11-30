@@ -10,7 +10,6 @@ import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -31,7 +30,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Definition of a {@link PostCreateAction} to be invoked by an <code>onclick</code> handler.
  */
-public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implements VariableDefinition<UIAction.Config> {
+public class UIAction extends AbstractVariableDefinition<UIAction.Config> {
 
 	private QueryExecutor _targetObject;
 

@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.formeditor.parts.template;
 
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
@@ -17,8 +16,7 @@ import com.top_logic.model.form.implementation.FormEditorContext;
  * {@link VariableDefinition} for a static internationalized text within a HTML template.
  */
 @Label("Internationalized text")
-public class I18NTextVariable extends AbstractConfiguredInstance<I18NTextVariable.Config>
-		implements VariableDefinition<I18NTextVariable.Config> {
+public class I18NTextVariable extends AbstractVariableDefinition<I18NTextVariable.Config> {
 
 	/**
 	 * Configuration options for {@link I18NTextVariable}.

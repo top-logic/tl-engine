@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -26,7 +25,7 @@ import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 /**
  * Definition of a script that jumps to a certain object.
  */
-public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Config> implements VariableDefinition<LinkDefinition.Config> {
+public class LinkDefinition extends AbstractVariableDefinition<LinkDefinition.Config> {
 
 	private QueryExecutor _targetObject;
 

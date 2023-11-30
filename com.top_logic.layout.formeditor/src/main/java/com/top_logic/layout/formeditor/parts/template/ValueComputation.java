@@ -6,7 +6,6 @@
 package com.top_logic.layout.formeditor.parts.template;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -22,8 +21,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * {@link VariableDefinition} that computes the variable's value through a <i>TL-Script</i>
  * function.
  */
-public class ValueComputation extends AbstractConfiguredInstance<ValueComputation.Config>
-		implements VariableDefinition<ValueComputation.Config> {
+public class ValueComputation extends AbstractVariableDefinition<ValueComputation.Config> {
 
 	/**
 	 * Definition of a local template variable.

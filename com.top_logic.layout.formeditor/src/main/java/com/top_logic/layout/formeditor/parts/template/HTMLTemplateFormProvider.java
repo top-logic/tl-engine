@@ -9,13 +9,17 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
 import java.util.AbstractCollection;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
@@ -33,14 +37,28 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.ExpressionTemplate;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.html.template.StartTagTemplate;
+import com.top_logic.html.template.TagAttributeTemplate;
+import com.top_logic.html.template.TagTemplate;
+import com.top_logic.html.template.TemplateSequence;
 import com.top_logic.html.template.config.HTMLTagFormat;
 import com.top_logic.html.template.config.HTMLTemplate;
+import com.top_logic.html.template.expr.LiteralText;
+import com.top_logic.html.template.expr.VariableExpression;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AbstractVisibleControl;
+import com.top_logic.layout.basic.ComponentCommandModel;
+import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ResourceRenderer;
+import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
+import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
+import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
+import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.Icons;
@@ -53,6 +71,7 @@ import com.top_logic.layout.formeditor.parts.I18NConstants;
 import com.top_logic.layout.formeditor.parts.template.HTMLTemplateFormProvider.Config.TypeTemplate;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -67,6 +86,7 @@ import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link FormElementTemplateProvider} creating a custom rendering using a HTML template with
@@ -235,26 +255,80 @@ public class HTMLTemplateFormProvider
 
 	private static class Template {
 	
+		private static final TagAttributeTemplate CONTEXT_MENU_ATTR =
+			new TagAttributeTemplate(0, 0, HTMLConstants.TL_CONTEXT_MENU_ATTR,
+				new ExpressionTemplate(new VariableExpression(0, 0, Control.ID)));
+
 		private HTMLTemplate _fragment;
 
 		private HashMap<String, VariableDefinition<?>> _params;
+
+		private List<CommandHandler> _contextMenuCommands;
 
 		/**
 		 * Creates a {@link HTMLTemplateFormProvider.Template}.
 		 */
 		public Template(InstantiationContext context, TemplateConfig config) {
-			_fragment = config.getTemplate();
+			HTMLTemplate template = config.getTemplate();
 			_params = new HashMap<>();
 			for (VariableDefinition.Config<?> entry : config.getVariables().values()) {
 				_params.put(entry.getName(), context.getInstance(entry));
 			}
+
+			_contextMenuCommands = _params.values().stream()
+				.flatMap(v -> v instanceof MenuVariable ? ((MenuVariable) v).getCommands().stream()
+					: (v instanceof ButtonVariable
+						? Collections.singletonList(((ButtonVariable) v).getCommand()).stream()
+						: Collections.<CommandHandler> emptyList().stream()))
+				.collect(Collectors.toList());
+
+			if (!_contextMenuCommands.isEmpty()) {
+				HTMLTemplateFragment fragment = template.getTemplate();
+
+				if (fragment instanceof TagTemplate) {
+					TagTemplate tag = (TagTemplate) fragment;
+					StartTagTemplate start = tag.getStart();
+					
+					StartTagTemplate enhancedStart = new StartTagTemplate(start.getLine(), start.getColumn(), start.getName());
+					enhancedStart.addAttribute(CONTEXT_MENU_ATTR);
+					boolean hasClass = false;
+					for (var attr : start.getAttributes()) {
+						if (attr.getName().equals(HTMLConstants.TL_CONTEXT_MENU_ATTR)) {
+							continue;
+						} else if (attr.getName().equals(HTMLConstants.CLASS_ATTR)) {
+							hasClass = true;
+							TagAttributeTemplate classAttr =
+								new TagAttributeTemplate(attr.getLine(), attr.getColumn(), attr.getName(),
+									new TemplateSequence(
+										Arrays.asList(
+											new LiteralText(0, 0, AbstractControlBase.IS_CONTROL_CSS_CLASS),
+											new LiteralText(0, 0, " "),
+											attr.getContent())));
+							enhancedStart.addAttribute(classAttr);
+						} else {
+							enhancedStart.addAttribute(attr);
+						}
+					}
+					if (!hasClass) {
+						enhancedStart.addAttribute(new TagAttributeTemplate(0, 0, HTMLConstants.CLASS_ATTR,
+							new LiteralText(0, 0, AbstractControlBase.IS_CONTROL_CSS_CLASS)));
+					}
+					
+					template = new HTMLTemplate(
+						new TagTemplate(enhancedStart, tag.getContent()), template.getVariables(), template.getHtml());
+				}
+			}
+
+			_fragment = template;
 		}
 	}
+
+	private static Map<String, ControlCommand> COMMANDS = TLObjectFragment.createCommandMap(ContextMenuOpener.INSTANCE);
 
 	/**
 	 * {@link HTMLFragment} displaying a {@link TLObject} using a {@link HTMLTemplateFragment}.
 	 */
-	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener {
+	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener, ContextMenuOwner {
 
 		private final FormEditorContext _form;
 
@@ -266,16 +340,29 @@ public class HTMLTemplateFormProvider
 
 		private Map<String, Object> _args;
 
+		private List<CommandHandler> _contextMenuCommands;
+
 		/**
 		 * Creates a {@link TLObjectFragment}.
 		 */
 		public TLObjectFragment(FormEditorContext form, Template template, TLObject model) {
+			super(COMMANDS);
 			_form = form;
 			_fragment = template._fragment;
 			_vars = template._params;
+			_contextMenuCommands = template._contextMenuCommands;
 			_model = model;
 
 			computeTemplateArguments();
+		}
+
+		@Override
+		public Menu createContextMenu(String contextInfo) {
+			LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());
+			Map<String, Object> args = ContextMenuUtil.createArguments(_model);
+			Stream<ComponentCommandModel> buttonsStream =
+				ContextMenuUtil.toButtonsStream(component, args, _contextMenuCommands);
+			return ContextMenuUtil.toContextMenu(buttonsStream);
 		}
 
 		private void computeTemplateArguments() {

@@ -33,7 +33,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
-import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey.Builder;
@@ -42,7 +41,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
@@ -56,16 +54,12 @@ import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
-import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
-import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil.FieldTranslator;
-import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil.StringValuedFieldTranslator;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -136,11 +130,11 @@ public class InternationalizationEditor implements Editor {
 
 	private static final String DISPLAY_DERIVED_FIELD = "displayDerived";
 
-	private static com.top_logic.layout.form.template.ControlProvider templateDefinition(FormMember i18n,
+	private static com.top_logic.layout.form.template.ControlProvider templateDefinition(FormGroup i18n,
 			HTMLFragment displayValue, boolean initiallyCollapsed, List<String> languages,
 			List<String> additionals) {
 
-		TranslateButtonCP cp = new TranslateButtonCP(additionals);
+		TranslateButtonCP cp = new TranslateButtonCP(i18n::getFields, additionals);
 		List<HTMLTemplateFragment> contentTemplates = new ArrayList<>();
 		contentTemplates.add(css(ITEM_CONTENT_CSS_CLASS));
 		int numberAdditionals = additionals.size();
@@ -370,64 +364,6 @@ public class InternationalizationEditor implements Editor {
 	public static String translateLanguageName(I18NBundle res, Locale language) {
 		return res.getString(I18NConstants.LANGUAGE.key(language.getLanguage()),
 			language.getDisplayLanguage(res.getLocale()));
-	}
-
-	/**
-	 * {@link ControlProvider} that renders a translate button for the given {@link FormField}.
-	 */
-	private static class TranslateButtonCP extends AbstractFormFieldControlProvider {
-
-		private List<String> _additionals;
-
-		TranslateButtonCP(List<String> additionals) {
-			_additionals = additionals;
-		}
-
-		@Override
-		protected Control createInput(FormMember member) {
-			FormField field = (FormField) member;
-
-			Locale fieldLanguage = I18NTranslationUtil.getLocaleFromField(field);
-			if (I18NTranslationUtil.equalLanguage(fieldLanguage, I18NTranslationUtil.getSourceLanguage())) {
-				return null;
-			}
-			if (!TranslationService.getInstance().isSupported(fieldLanguage)) {
-				return null;
-			}
-
-			return I18NTranslationUtil.getTranslateControl(field, member.getParent()::getFields,
-				new MultiFieldTranslator(_additionals));
-		}
-
-	}
-
-	private static class MultiFieldTranslator implements FieldTranslator {
-
-		private List<String> _additionals;
-
-		MultiFieldTranslator(List<String> additionals) {
-			_additionals = additionals;
-		}
-
-		@Override
-		public String translate(FormField source, FormField target) {
-			StringValuedFieldTranslator dispatch = StringValuedFieldTranslator.INSTANCE;
-			String result = dispatch.translate(source, target);
-			if (!_additionals.isEmpty()) {
-				String sourceLang = source.get(LOCALE).getLanguage();
-				String targetLang = target.get(LOCALE).getLanguage();
-				FormContainer container = source.getParent();
-				for (String additional : _additionals) {
-					FormMember derivedSource = container.getMember(suffixFieldName(sourceLang, additional));
-					FormMember derivedTarget = container.getMember(suffixFieldName(targetLang, additional));
-					if (derivedSource.isVisible() && derivedTarget.isVisible()) {
-						dispatch.translate((FormField) derivedSource, (FormField) derivedTarget);
-					}
-				}
-			}
-			return result;
-		}
-
 	}
 
 	/**

@@ -8,6 +8,7 @@ import java.io.Closeable;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 
 import jakarta.jms.Destination;
 import jakarta.jms.JMSConsumer;
@@ -20,18 +21,23 @@ import jakarta.jms.Topic;
  * 
  * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
-public abstract class Consumer extends AbstractConfiguredInstance<Consumer.Config<?>> implements Closeable {
+public abstract class Consumer<C extends Consumer.Config<?>> extends AbstractConfiguredInstance<C>
+		implements Closeable {
 
 	private JMSConsumer _consumer;
 
 	private String _name;
 
+	private volatile boolean _closed = false;
+
 	/**
 	 * Configuration options for {@link Consumer}.
 	 */
-	public interface Config<I extends Consumer> extends ClientConfig<I> {
+	public interface Config<I extends Consumer<?>> extends ClientConfig<I> {
 		/**
 		 * Implemented / extended by each unique consumer type.
+		 * 
+		 * @see com.top_logic.services.jms.ConsumerByExpression
 		 */
 	}
 
@@ -41,7 +47,7 @@ public abstract class Consumer extends AbstractConfiguredInstance<Consumer.Confi
 	 * @param config
 	 *        The config for the connection to the queue
 	 */
-	public Consumer(InstantiationContext instContext, Config<?> config) {
+	public Consumer(InstantiationContext instContext, C config) {
 		super(instContext, config);
 		_name = config.getName();
 	}
@@ -68,14 +74,21 @@ public abstract class Consumer extends AbstractConfiguredInstance<Consumer.Confi
 	 * Fetches a message from the given queue.
 	 */
 	public void receive() {
-		try {
-			while (true) {
+		while (!_closed) {
+			try {
 				Message message = _consumer.receive();
-				processMessage(message);
+				ThreadContextManager.inInteraction(Consumer.class.getName(), () -> processMessage(message));
+			} catch (Throwable ex) {
+				if (_closed) {
+					return;
+				}
+				Logger.error(I18NConstants.ERROR_RECEIVING_MSG__NAME.fill(_name) + " " + ex.getMessage(), ex, this);
+				if (ex instanceof InterruptedException || ex instanceof ThreadDeath) {
+					Logger.info("Stopping consumer " + _name + ".", Consumer.class);
+					close();
+					return;
+				}
 			}
-		} finally {
-			Logger.info("Stopping consumer " + _name + ".", Consumer.class);
-			_consumer.close();
 		}
 	}
 
@@ -89,6 +102,7 @@ public abstract class Consumer extends AbstractConfiguredInstance<Consumer.Confi
 
 	@Override
 	public void close() {
+		_closed = true;
 		_consumer.close();
 	}
 }

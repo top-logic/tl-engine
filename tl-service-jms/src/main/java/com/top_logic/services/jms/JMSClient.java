@@ -106,8 +106,8 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 	}
 
 	/**
-	 * This method starts creates a {@link JMSContext} and stores it to be accessible for creation
-	 * of {@link Producer}s and {@link Consumer}s.
+	 * This method creates a {@link JMSContext} and stores it to be accessible for creation of
+	 * {@link Producer}s and {@link Consumer}s.
 	 * 
 	 * @throws JMSException
 	 *         Exception if something is not JMS conform

@@ -23,6 +23,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.event.infoservice.InfoService;
 
+import jakarta.jms.JMSContext;
 import jakarta.jms.JMSException;
 
 /**
@@ -69,19 +70,21 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	}
 
 	/**
-	 * The configuration for the System behind the Message Queue that runs the Queue Manager.
+	 * The configuration for the system behind the message queue that runs the queue manager.
 	 */
 	public interface MQSystemClient {
 		/**
-		 * 
+		 * Creates a {@link JMSContext} and stores it to be accessible for creation of
+		 * {@link Producer}s and {@link Consumer}s.
 		 */
 		public void setupMQConnection() throws JMSException, NamingException;
 
 		/**
-		 * 
+		 * Should be overwritten if the MQ System defines a custom charset property, so it returns
+		 * the name of it.
 		 */
 		default String getCharsetProperty() {
-			return "charset";
+			return null;
 		}
 
 		/**

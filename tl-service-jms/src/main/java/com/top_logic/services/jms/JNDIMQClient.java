@@ -15,7 +15,7 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 
 /**
- * 
+ * Configuration class for a connection to a MQ System defined in JNDI.
  * 
  * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */

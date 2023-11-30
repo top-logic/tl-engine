@@ -1718,7 +1718,7 @@ input[type="checkbox"]:checked::before {
 	font-size: .8rem;
 	display: inline-grid;
     place-content: center;
-	color: white;
+	color: var(--background);
 	background-color: var(--icon-primary);
 	transform: scaleX(1);
 }
@@ -1856,6 +1856,13 @@ div.cColorPalette span.cColorDisplay {
 	height: 30px;
 	padding: 0px;
 	margin: 2px;
+}
+
+span.colorDisplay {
+	display: inline-block;
+	border: 1px solid var(--border-subtle);
+	width: 1rem;
+	height: 1rem;
 }
 
 /* ColorChooserSelectionControl */
@@ -2191,6 +2198,9 @@ a.input-image.tristate . bi bi-info-square{
 	color: var(--support-info);
 }
 
+a.input-image.tristate.tBoolean {
+	color: var(--icon-primary)
+}
 
 /* ============================================= */
 /* ========== DropDown with Tooltip  =========== */

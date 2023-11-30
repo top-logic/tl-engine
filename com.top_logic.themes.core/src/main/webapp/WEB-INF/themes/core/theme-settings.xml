@@ -1239,28 +1239,28 @@
 		value="90px"
 	/>
 	<icon name="com.top_logic.layout.form.boxes.tag.Icons.NULL"
-		value="css:bi bi-slash-circle"
+		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
 	/>
 	<icon name="com.top_logic.layout.provider.Icons.NULL_DISABLED"
-		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
-	/>
+		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
+	/>	
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL"
-		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
+		value="css: bi bi-slash-square-fill"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL_DISABLED"
-		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
+		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL"
-		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
+		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL_DISABLED"
-		expr="%com.top_logic.layout.form.boxes.tag.Icons.NULL%"
+		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
-		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
+		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE_DISABLED"
-		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
+		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
 		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
@@ -1269,13 +1269,13 @@
 		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE"
-		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
+		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE_DISABLED"
-		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
+		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TRUE_DISABLED"
-		expr="%layouts.themes.default.toolrow.designModeButton.ReleaseLayout%"
+		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE"
 		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
@@ -1284,7 +1284,7 @@
 		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
 	/>
 	<icon name="com.top_logic.layout.provider.Icons.FALSE_DISABLED"
-		value="css:bi bi-dash-lg"
+		value="css: bi bi-dash-square-fill"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRANSPARENT_BACKGROUND"
 		value="/colorchooser/transparentBackground.png"
@@ -1378,6 +1378,9 @@
 	/>
 	<int name="com.top_logic.layout.form.selection.Icons.SELECTION_CONTROL_FIELD_HEIGHT"
 		value="40"
+	/>
+	<icon name="com.top_logic.layout.renderers.Icons.STACKTRACE"
+		value="css:bi bi-code-slash"
 	/>
 	<box name="GROUP_COLLAPSED_RADIUS"
 		value="5px 5px 0px 0px"

@@ -16,6 +16,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_ESTABLISH_CONNECTION__NAME;
 
+	/**
+	 * @en Error sending a message by producer {0}.
+	 */
+	public static ResKey1 ERROR_SENDING_MSG__NAME;
+
+	/**
+	 * @en Error receiving a message by consumer {0}.
+	 */
+	public static ResKey1 ERROR_RECEIVING_MSG__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

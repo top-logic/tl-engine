@@ -6,6 +6,7 @@ package com.top_logic.services.jms;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
@@ -13,6 +14,7 @@ import javax.activation.MimeTypeParseException;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.event.infoservice.InfoService;
 
 import jakarta.jms.BytesMessage;
 import jakarta.jms.Destination;
@@ -31,6 +33,8 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 	private JMSProducer _producer;
 
 	private JMSContext _context;
+
+	private String _name;
 
 	private String _charsetProperty;
 
@@ -54,6 +58,7 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 	 */
 	public Producer(InstantiationContext instContext, Config<?> config) {
 		super(instContext, config);
+		_name = config.getName();
 	}
 
 	/**
@@ -121,19 +126,34 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 				}
 			}
 		};
+
+		try {
+			if (_charsetProperty != null) {
+				message.setStringProperty(_charsetProperty,
+					new MimeType(data.getContentType()).getParameter("charset"));
+			}
+			message.setStringProperty("FileName", data.getName());
+			message.setStringProperty("ContentType", data.getContentType());
+		} catch (JMSException | MimeTypeParseException ex) {
+			InfoService.logError(I18NConstants.ERROR_SENDING_MSG__NAME.fill(_name), ex.getMessage(), ex, this);
+		}
+
 		try {
 			data.deliverTo(out);
 		} catch (IOException ex) {
 			throw new IOError(ex);
 		}
-		try {
-			message.setStringProperty(_charsetProperty,
-				new MimeType(data.getContentType()).getParameter("charset"));
-		} catch (JMSException ex) {
-			ex.printStackTrace();
-		} catch (MimeTypeParseException ex) {
-			ex.printStackTrace();
-		}
+
 		_producer.send(_destination, message);
+	}
+
+	/**
+	 * Method to send a map message to a queue or a topic.
+	 * 
+	 * @param map
+	 *        The map to be sent in the message
+	 */
+	public void send(Map map) {
+		_producer.send(_destination, map);
 	}
 }

@@ -20,7 +20,9 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.JMSException;
 
 /**
+ * Configuration class for a connection to an IMB MQ System.
  * 
+ * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
 public class IBMMQClient extends JMSClient {
 

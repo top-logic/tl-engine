@@ -285,6 +285,7 @@ div.fltHeader {
 
 .fltSettings {
 	position: relative;
+	overflow: auto;
 	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
 	max-width: 100%;
 	padding: 0 var(--spacing-03);
@@ -1931,8 +1932,8 @@ If they're deleted, this can be deleted too
 
 .breadcrumbMenuVisible {
 	background: var(--layer-accent);
-	border: 1px solid var(--border-subtle);	
-	z-index: 2;
+	border: 1px solid var(--border-subtle);
+	z-index: 5;
 }
 
 /* class of the lines which contains the nodes in the menu */

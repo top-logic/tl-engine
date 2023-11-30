@@ -11,10 +11,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.component.TabComponent;
-import com.top_logic.layout.tabbar.TabSwitchCommandModel;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
+import com.top_logic.layout.tabbar.TabSwitchCommandModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
 
@@ -86,7 +87,10 @@ public class TabSwitchCommandModelConfiguration<C extends TabSwitchCommandModelC
 
 	private void applyTabInfo(TabSwitchCommandModel command, TabConfig tabInfo) {
 		command.setImage(tabInfo.getImage());
-		command.setLabel(Resources.getInstance().getString(tabInfo.getLabel()));
+		Resources resources = Resources.getInstance();
+		ResKey label = tabInfo.getLabel();
+		command.setLabel(resources.getString(label));
+		command.setTooltip(resources.getString(label.tooltipOptional()));
 		command.setActiveImage(tabInfo.getImageSelected());
 	}
 

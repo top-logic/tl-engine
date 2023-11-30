@@ -190,7 +190,7 @@ public class DynamicComponentDefinition {
 			if (object == null) {
 				return null;
 			}
-			return Resources.getInstance().getString(resourceKey(object).tooltip(), null);
+			return Resources.getInstance().getString(resourceKey(object).tooltipOptional());
 		}
 
 		private ResKey resourceKey(Object object) {

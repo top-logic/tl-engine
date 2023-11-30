@@ -169,7 +169,7 @@ public class ButtonTag extends AbstractFormTag {
 		if (this.reskey != null) {
 			Resources resources = Resources.getInstance();
 			labelOverride = resources.getString(reskey);
-			tooltipOverride = resources.getString(reskey.tooltip(), null);
+			tooltipOverride = resources.getString(reskey.tooltipOptional());
         } else {
 			labelOverride = null;
 			tooltipOverride = null;

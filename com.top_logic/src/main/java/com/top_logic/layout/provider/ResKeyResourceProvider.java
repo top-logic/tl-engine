@@ -41,7 +41,7 @@ public class ResKeyResourceProvider extends AbstractResourceProvider {
 		if (object == null) {
 			return null;
 		}
-		return resources().getString(key(object).tooltip(), null);
+		return resources().getString(key(object).tooltipOptional());
 	}
 
 	private Resources resources() {

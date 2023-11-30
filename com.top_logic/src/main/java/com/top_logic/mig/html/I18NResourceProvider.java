@@ -160,7 +160,7 @@ public class I18NResourceProvider extends DefaultResourceProvider
 			return null;
 		}
 
-		return resolveOptional(key.tooltip());
+		return resolve(key.tooltipOptional());
 	}
 
 	private ResKey toKey(Object aObject) {
@@ -196,10 +196,6 @@ public class I18NResourceProvider extends DefaultResourceProvider
 
 	private static String resolve(ResKey aKey) {
 		return Resources.getInstance().getString(aKey);
-	}
-
-	private static String resolveOptional(ResKey aKey) {
-		return Resources.getInstance().getString(aKey, null);
 	}
 
 }

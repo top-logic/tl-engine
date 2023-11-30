@@ -110,7 +110,7 @@ public class MemoryObserverModelPreparation extends AbstractModelPreparationBuil
 
 			@Override
 			public String getTooltip(Object object) {
-				return resources.getString(key(object).tooltip(), null);
+				return resources.getString(key(object).tooltipOptional());
 			}
 
 			private ResKey key(Object object) {

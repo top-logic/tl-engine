@@ -84,7 +84,7 @@ public class I18NRuntimeException extends RuntimeException implements I18NFailur
 	 * A detail message explaining the problem.
 	 */
 	public ResKey getDetails() {
-		return _details != null ? _details : ResKey.fallback(_errorTitle.tooltip(), ResKey.text(null));
+		return _details != null ? _details : _errorTitle.tooltipOptional();
 	}
 
 	/**

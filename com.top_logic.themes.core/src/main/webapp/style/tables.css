@@ -858,7 +858,11 @@ table td span.cTextInput {
     word-break: break-word;
 }
 
-table td span.cTextPopup span.content,
+table td span.cTextPopup span.content {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 table td .cDataItem span.lFlexible span.content,
 table td span.downloadControl span.content {
 	display: block;
@@ -930,11 +934,8 @@ table td a.cDownload {
 
 table.tl-table td span.lFlexible,
 table.tl-table td span.lFlexibleCustom {
-	display: table-cell;
-	/*
-	position:relative;
-	*/
-	width: 100%;
+	display: inline-flex;
+	overflow: hidden;
 }
 
 table td span.lFlexible > select {

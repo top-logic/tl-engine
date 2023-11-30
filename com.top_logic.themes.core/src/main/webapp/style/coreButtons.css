@@ -90,6 +90,11 @@ div.cmdProgress img {
 	border-radius: .25rem;
 }
 
+.cImageLinkButton {
+	display: flex;
+	gap: var(--spacing-02);
+}
+
 .fltSubContent .cMenuButton.menuEntryEnabled,
 .fltSubContent .cMenuButton.menuEntryDisabled {
 	display: inline-flex;
@@ -534,7 +539,9 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .dfListCommands .cmdLink,
 .dfListCommands .cmdLinkDisabled,
 .px-1 .cmdLink,
-.px-1 .cmdLinkDisabled {
+.px-1 .cmdLinkDisabled,
+.cTextPopup .lFixedLeft .cmdLink,
+.cTextPopup .lFixedLeft .cmdLinkDisabled {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
@@ -555,7 +562,9 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .dfListCommands .cmdLink, 
 .dfListCommands .cmdLinkDisabled, 
 .px-1 .cmdLink,
-.px-1 .cmdLinkDisabled {
+.px-1 .cmdLinkDisabled,
+.cTextPopup .lFixedLeft .cmdLink,
+.cTextPopup .lFixedLeft .cmdLinkDisabled {
 	height: .5rem;
 	width: .5rem;
 }
@@ -563,7 +572,8 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .tlAdditionalRightContent .cImageButton a,
 .sblLogo .cImageButton a,
 .dfListCommands .cmdLink a,
-.px-1 .cmdLink a {
+.px-1 .cmdLink a,
+.cTextPopup .lFixedLeft .cmdLink a {
 	padding: inherit;
 	color: var(--icon-on-color);
 }
@@ -571,7 +581,8 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .tlAdditionalRightContent .cImageButton:hover,
 .sblLogo .cImageButton:hover,
 .dfListCommands .cmdLink:hover,
-.px-1 .cmdLink:hover {
+.px-1 .cmdLink:hover,
+.cTextPopup .lFixedLeft .cmdLink:hover {
 	background: var(--button-primary-hover);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
 }
@@ -579,28 +590,32 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .tlAdditionalRightContent .cImageButton:focus,
 .sblLogo .cImageButton:focus,
 .dfListCommands .cmdLink:focus,
-.px-1 .cmdLink:focus {
+.px-1 .cmdLink:focus,
+.cTextPopup .lFixedLeft:focus {
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
 .tlAdditionalRightContent .cImageButton a:focus,
 .sblLogo .cImageButton a:focus,
 .dfListCommands .cmdLink a:focus,
-.px-1 .cmdLink a:focus {
+.px-1 .cmdLink a:focus,
+.cTextPopup .lFixedLeft .cmdLink a:focus {
 	box-shadow: none;
 }
 
 .tlAdditionalRightContent .cImageButton:active,
 .sblLogo .cImageButton:active,
 .dfListCommands .cmdLink:active,
-.px-1 .cmdLink:active {
+.px-1 .cmdLink:active,
+.cTextPopup .lFixedLeft:active {
 	background: var(--button-primary-active);
 }
 
 .tlAdditionalRightContent .cImageButton.cmdButtonDisabled,
 .sblLogo .cImageButton.cmdButtonDisabled,
 .dfListCommands .cmdLinkDisabled,
-.px-1 .cmdLinkDisabled {
+.px-1 .cmdLinkDisabled,
+.cTextPopup .lFixedLeft .cmdLinkDisabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
 	cursor: default;
@@ -609,7 +624,8 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .tlAdditionalRightContent .cImageButton.cmdButtonDisabled a,
 .sblLogo .cImageButton.cmdButtonDisabled a,
 .dfListCommands .cmdLinkDisabled a,
-.px-1 .cmdLinkDisabled a {
+.px-1 .cmdLinkDisabled a,
+.cTextPopup .lFixedLeft .cmdLinkDisabled a {
 	color: var(--icon-on-color-disabled);
 	cursor: default;
 }

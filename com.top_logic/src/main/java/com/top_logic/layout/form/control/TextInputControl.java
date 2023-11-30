@@ -157,7 +157,7 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
     
 	/** Undo {@link #setColumns(int) setting the columns property}. */
     public void resetColumns() {
-		setColumns(0);
+		setColumns(NO_COLUMNS);
     }
     
     /**

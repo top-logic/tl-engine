@@ -655,9 +655,24 @@ public abstract class ResKey {
 	 * Derives a "tooltip" key form this {@link ResKey}.
 	 * 
 	 * @return A {@link ResKey} which {@link #suffix(String) suffixed} with {@value #TOOLTIP}.
+	 * 
+	 * @see #tooltipOptional() Key that resolves to <code>null</code> if no tooltip can be found.
 	 */
 	public final ResKey tooltip() {
-		return suffix(".tooltip");
+		return suffix(TOOLTIP);
+	}
+
+	/**
+	 * Derives an optional "tooltip" key form this {@link ResKey}, i.e. if no value is given for the
+	 * tooltip, the key resolves to <code>null</code>.
+	 * 
+	 * @return A {@link ResKey} which {@link #suffix(String) suffixed} with {@value #TOOLTIP} and
+	 *         <code>text(null)</code> as fallback.
+	 * 
+	 * @see #tooltip()
+	 */
+	public final ResKey tooltipOptional() {
+		return tooltip().fallback(text(null));
 	}
 
 	/**

@@ -30,8 +30,8 @@ public class FastListElementResourceProvider extends DefaultResourceProvider {
     @Override
 	public String getTooltip(Object anObject) {
 		if (anObject instanceof TLClassifier) {
-			ResKey theName = FastListElementLabelProvider.labelKey((TLClassifier) anObject).tooltip();
-			return (Resources.getInstance().getString(theName, null));
+			ResKey theName = FastListElementLabelProvider.labelKey((TLClassifier) anObject).tooltipOptional();
+			return (Resources.getInstance().getString(theName));
         }
         return super.getTooltip(anObject);
     }

@@ -284,8 +284,7 @@ public class TextPopupControl extends PopupEditControl {
 		return apply;
 	}
 
-	@Override
-	protected HTMLFragment getCancelButton(Command cancel) {
+	private HTMLFragment getCancelButton(Command cancel) {
 		CommandModel cancelModel = MessageBox.button(ButtonType.CANCEL, cancel);
 		ScriptingRecorder.annotateAsDontRecord(cancelModel);
 		return new ButtonControl(cancelModel, ButtonComponentButtonRenderer.INSTANCE);
@@ -297,8 +296,7 @@ public class TextPopupControl extends PopupEditControl {
 		return new ButtonControl(closeModel, ButtonComponentButtonRenderer.INSTANCE);
 	}
 
-	@Override
-	protected HTMLFragment getApplyButton(final Command apply) {
+	private HTMLFragment getApplyButton(final Command apply) {
 		CommandModel okModel = MessageBox.button(ButtonType.OK, apply);
 		ScriptingRecorder.annotateAsDontRecord(okModel);
 		return new ButtonControl(okModel, ButtonComponentButtonRenderer.INSTANCE);

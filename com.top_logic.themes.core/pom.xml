@@ -29,5 +29,13 @@
       <groupId>com.top-logic</groupId>
       <artifactId>ext-com-google-fonts</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-fontawesome</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-icons</artifactId>
+    </dependency>
   </dependencies>
 </project>

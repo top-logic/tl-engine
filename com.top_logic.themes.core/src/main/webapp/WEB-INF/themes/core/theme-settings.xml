@@ -1074,6 +1074,12 @@
 	<icon name="mime.Clipboard.large"
 		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
+	<icon name="com.top_logic.layout.table.control.Icons.ADD_ROW"
+		expr="%ICON_PLUS%"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.ADD_ROW_DISABLED"
+		expr="%com.top_logic.layout.table.control.Icons.ADD_ROW%"
+	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN"
 		expr="%ICONS_MOVE_ROW_DOWN%"
 	/>

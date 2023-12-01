@@ -36,7 +36,6 @@ import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.util.Utils;
-import com.top_logic.common.json.adapt.WriterW;
 import com.top_logic.common.json.gstream.JsonWriter;
 
 /**
@@ -55,7 +54,7 @@ public class JsonConfigurationWriter {
 	 *        The writer to write the generated JSON to.
 	 */
 	public JsonConfigurationWriter(Writer writer) {
-		this(new JsonWriter(new WriterW(writer)));
+		this(new JsonWriter(writer));
 	}
 
 	/**

@@ -33,7 +33,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
-import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
@@ -235,16 +234,6 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     @Override
 	public void setName(String aName) {
         this.setValue(NAME_ATTRIBUTE, aName);
-    }
-
-    @Override
-	public String getName() throws WrapperRuntimeException {
-        try {
-            return super.getName();
-        }
-        catch (WrapperRuntimeException e) {
-            return "???";
-        }
     }
 
     /**

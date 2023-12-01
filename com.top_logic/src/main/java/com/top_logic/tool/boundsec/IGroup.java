@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec;
 
 import java.util.Collection;
 
+import com.top_logic.basic.Named;
 import com.top_logic.basic.TLID;
 
 /**
@@ -14,20 +15,14 @@ import com.top_logic.basic.TLID;
  * 
  * @author    <a href="mailto:kbu@top-logic.com>Karschten Busch</a>
  */
-public interface IGroup {
-    /**
-     * Get the ID of this group
-     * @return the ID of this group,
-     *         <code>null</code> if ID could not be retrieved
-     */
+public interface IGroup extends Named {
+
+	/**
+	 * Get the ID of this group
+	 * 
+	 * @return the ID of this group, <code>null</code> if ID could not be retrieved
+	 */
     public TLID getID();
-    
-    /**
-     * The name of the group.
-     * 
-     * @return the name of the group.
-     */
-    public String getName();
     
     /**
      * Get all the members of this Group
@@ -35,6 +30,5 @@ public interface IGroup {
      * @return the members. May be empty but not <code>null</code>
      */
     public Collection getMembers();
-
 
 }

@@ -39,7 +39,6 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
@@ -148,15 +147,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	public void setName(String aName) {
         this.setValue(NAME_ATTRIBUTE, aName);
     }    
-
-    @Override
-	public String getName() throws WrapperRuntimeException {
-        try {
-            return super.getName();
-        } catch (WrapperRuntimeException e) {
-            return "???";
-        }
-    }
 
     /**
      * Create a new BoundedRole with the specified name.

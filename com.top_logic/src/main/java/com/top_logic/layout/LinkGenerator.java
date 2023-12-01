@@ -52,6 +52,22 @@ public class LinkGenerator {
 
 	}
 
+	/**
+	 * Pseudo control to handle requests from the browser client to actions that have no direct
+	 * {@link Control}-representation on the UI.
+	 * 
+	 * <p>
+	 * To activate a {@link Callback}, the instance must be added as {@link UpdateListener} to the
+	 * {@link ControlScope} (see {@link ControlScope#addUpdateListener(UpdateListener)}). The action
+	 * can then be triggered from within <em>JavaScript</em> by invoking the {@link DispatchAction}
+	 * passing the {@link #getID()} of the {@link Callback} as control ID.
+	 * </p>
+	 * 
+	 * <p>
+	 * The server-side operation is specified by implementing the method
+	 * {@link CommandListener#executeCommand(DisplayContext, String, Map)}.
+	 * </p>
+	 */
 	public static abstract class Callback implements CommandListener, Handle, UpdateListener {
 
 		private final String _id;
@@ -60,6 +76,12 @@ public class LinkGenerator {
 
 		private boolean _disabled;
 
+		/**
+		 * Creates a {@link Callback}.
+		 *
+		 * @param scope
+		 *        The {@link ControlScope} to listen to.
+		 */
 		protected Callback(ControlScope scope) {
 			_scope = scope;
 			_id = scope.getFrameScope().createNewID();

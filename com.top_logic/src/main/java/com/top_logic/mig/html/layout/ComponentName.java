@@ -15,7 +15,7 @@ import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.ComponentLabelProvider;
+import com.top_logic.layout.provider.ComponentNameLabelProvider;
 
 /**
  * Name of a {@link LayoutComponent}.
@@ -25,7 +25,7 @@ import com.top_logic.layout.provider.ComponentLabelProvider;
 @Format(ComponentNameFormat.class)
 @ControlProvider(SelectionControlProvider.class)
 @Options(fun = AllComponents.class, mapping = ComponentNameMapping.class)
-@OptionLabels(ComponentLabelProvider.class)
+@OptionLabels(ComponentNameLabelProvider.class)
 public abstract class ComponentName {
 
 	/** Separator used to separate between the scope and the local name if there is a scope. */

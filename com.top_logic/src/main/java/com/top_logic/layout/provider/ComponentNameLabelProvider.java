@@ -7,7 +7,6 @@ package com.top_logic.layout.provider;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.provider.label.TypeSafeLabelProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
@@ -22,7 +21,7 @@ import com.top_logic.mig.html.layout.MainLayout;
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public class ComponentNameLabelProvider extends TypeSafeLabelProvider<ComponentName> {
+public class ComponentNameLabelProvider implements LabelProvider {
 
 	/**
 	 * Singleton {@link ComponentNameLabelProvider} instance.
@@ -30,14 +29,25 @@ public class ComponentNameLabelProvider extends TypeSafeLabelProvider<ComponentN
 	public static final ComponentNameLabelProvider INSTANCE = new ComponentNameLabelProvider();
 
 	@Override
-	protected Class<ComponentName> getObjectType() {
-		return ComponentName.class;
+	public String getLabel(Object object) {
+		if (object instanceof ComponentName) {
+			return labelNonEmpty((ComponentName) object);
+		}
+		if (object instanceof LayoutComponent) {
+			return labelNonEmpty((LayoutComponent) object);
+		}
+		return null;
 	}
 
-	@Override
-	protected String getNonNullLabel(ComponentName name) {
-		String result = getLabel(name);
+	private String labelNonEmpty(ComponentName name) {
+		return nonEmpty(name, label(name));
+	}
 
+	private String labelNonEmpty(LayoutComponent component) {
+		return nonEmpty(component.getName(), label(component));
+	}
+
+	private String nonEmpty(ComponentName name, String result) {
 		if (StringServices.isEmpty(result)) {
 			return MetaResourceProvider.INSTANCE.getLabel(name);
 		}
@@ -45,17 +55,21 @@ public class ComponentNameLabelProvider extends TypeSafeLabelProvider<ComponentN
 		return result;
 	}
 
-	private String getLabel(ComponentName name) {
-		LayoutComponent component = getComponent(name);
+	private String label(ComponentName name) {
+		LayoutComponent component = lookupComponent(name);
 
 		if (component == null) {
 			return "UNRESOLVED: " + name;
 		}
 
+		return label(component);
+	}
+
+	private String label(LayoutComponent component) {
 		return LayoutUtils.getLabel(component);
 	}
 
-	private LayoutComponent getComponent(ComponentName name) {
+	private LayoutComponent lookupComponent(ComponentName name) {
 		return MainLayout.getDefaultMainLayout().getComponentByName(name);
 	}
 

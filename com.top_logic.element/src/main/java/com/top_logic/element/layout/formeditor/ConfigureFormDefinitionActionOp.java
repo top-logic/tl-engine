@@ -35,7 +35,7 @@ public class ConfigureFormDefinitionActionOp extends AbstractApplicationActionOp
 
 	@Override
 	protected Object processInternal(ActionContext context, Object argument) throws Throwable {
-		FormDefinition formDefinition = getConfig().getFormDefinition();
+		FormDefinition formDefinition = TypedConfiguration.copy(getConfig().getFormDefinition());
 		LayoutComponent componentRoot = context.getMainLayout();
 		LayoutComponent component =
 			ComponentBasedNamingScheme.locateComponent(getConfig(), componentRoot, getConfig().getLayoutComponent());

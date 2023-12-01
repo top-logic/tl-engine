@@ -14,12 +14,12 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.element.meta.kbbased.AttributedWrapper;
-import com.top_logic.model.TLClass;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.state.State;
 
 /**
@@ -71,11 +71,6 @@ public class PersistentWrapperWorkItem extends AttributedWrapper implements Work
         catch (NoSuchAttributeException e) {
             throw new ConfigurationError("Attribute " + attribute + " not found.", e);
         }
-    }
-
-    @Override
-	public String getName() {
-        return (String) this.getValue(NAME_ATTRIBUTE);
     }
 
     @Override

@@ -7,6 +7,7 @@ package com.top_logic.base.workItem;
 
 import java.util.Collection;
 
+import com.top_logic.basic.Named;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.state.State;
 
@@ -15,9 +16,7 @@ import com.top_logic.tool.state.State;
  * 
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public interface WorkItem {
-
-    public String     getName();
+public interface WorkItem extends Named {
 
     public Object     getSubject();
 

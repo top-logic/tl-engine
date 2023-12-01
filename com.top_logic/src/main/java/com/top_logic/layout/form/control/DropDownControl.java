@@ -315,7 +315,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.endAttribute();
 		out.endBeginTag();
 		{
-			out.write(getItemLabel(dropdown, item));
+			out.writeText(getItemLabel(dropdown, item));
 		}
 		out.endTag(SPAN);
 	}
@@ -348,7 +348,7 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTooltip(context, out, dropdown, selectedItem);
 				out.endBeginTag();
 				{
-					out.write(getItemLabel(dropdown, selectedItem));
+					out.writeText(getItemLabel(dropdown, selectedItem));
 
 					renderXButton(context, out, itemID);
 				}
@@ -437,7 +437,7 @@ public class DropDownControl extends AbstractSelectControl {
 		renderTooltip(context, out, dropdown, item);
 		out.endBeginTag();
 		{
-			out.write(getItemLabel(dropdown, item));
+			out.writeText(getItemLabel(dropdown, item));
 		}
 		out.endTag(SPAN);
 	}

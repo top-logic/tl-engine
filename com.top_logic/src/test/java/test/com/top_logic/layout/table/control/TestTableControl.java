@@ -154,9 +154,9 @@ public class TestTableControl extends TestControl {
 
 		tableData.setTableModel(null);
 
-		boolean before = enableUpdates(false);
+		boolean before = setUpdatesEnabled(false);
 		writeControl(tableTestStructure.tableControl);
-		disableUpdates(before);
+		resetUpdatesEnabled(before);
 
 		tableData.setTableModel(oldViewModel);
 		writeControl(tableTestStructure.tableControl);

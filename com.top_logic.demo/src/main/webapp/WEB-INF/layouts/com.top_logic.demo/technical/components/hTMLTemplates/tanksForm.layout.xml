@@ -408,8 +408,10 @@
 										<button id="ID_c97b3ada_4db1_4c8f_a828_87a7086440cc"
 											class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 											clique="settings"
+											dialog-name="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/dialog.layout.xml#Dialog"
 											group="Write"
 											image="css:fas fa-cog"
+											targetComponent="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/propertiesForm.layout.xml#Form"
 										>
 											<resourceKey key="dynamic.5a6b4f17-6d2d-42e5-8c3e-ad8fabc47093">
 												<en>Properties...</en>

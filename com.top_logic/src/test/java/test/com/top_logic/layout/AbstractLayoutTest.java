@@ -111,16 +111,38 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		return displayContext;
 	}
 
+	/**
+	 * Enables model updates in the session.
+	 *
+	 * @return The state before, should be passed to {@link #resetUpdatesEnabled(boolean)} later on
+	 *         (ideally in a finally clause).
+	 */
 	protected boolean enableUpdates() {
-		return enableUpdates(true);
+		return setUpdatesEnabled(true);
 	}
 
-	protected boolean enableUpdates(boolean enabled) {
+	/**
+	 * Sets the "updates-enabled" state of the session.
+	 *
+	 * @param enabled
+	 *        Whether updates should be enabled.
+	 * @return The session state before. Must be passed to {@link #resetUpdatesEnabled(boolean)}
+	 *         later on (ideally in a finally clause).
+	 */
+	protected boolean setUpdatesEnabled(boolean enabled) {
 		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
 		return layoutContext.enableUpdate(enabled);
 	}
 
-	protected void disableUpdates(boolean before) {
+	/**
+	 * Resets the "updates-enabled" state of the session.
+	 * 
+	 * @param before
+	 *        The value returned from {@link #setUpdatesEnabled(boolean)} called before.
+	 * 
+	 * @see #setUpdatesEnabled(boolean)
+	 */
+	protected void resetUpdatesEnabled(boolean before) {
 		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
 		layoutContext.processActions();
 		layoutContext.enableUpdate(before);
@@ -128,7 +150,7 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		disableUpdates(false);
+		resetUpdatesEnabled(false);
 
 		DefaultDisplayContext.teardownDisplayContext(null, _displayContext);
 		_displayContext = null;

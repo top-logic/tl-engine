@@ -6,6 +6,7 @@
 package com.top_logic.model.form.definition;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
@@ -57,12 +58,14 @@ public class FormDefinitionNaming extends AbstractModelNamingScheme<FormDefiniti
 
 	@Override
 	protected void initName(Name name, FormDefinition model) {
-		name.setItem(model);
+		// Note: FormDefinition are config parts and cannot be linked to multiple containers.
+		name.setItem(TypedConfiguration.copy(model));
 	}
 
 	@Override
 	public FormDefinition locateModel(ActionContext context, Name name) {
-		return name.getItem();
+		// Note: FormDefinition are config parts and cannot be linked to multiple containers.
+		return TypedConfiguration.copy(name.getItem());
 	}
 
 }

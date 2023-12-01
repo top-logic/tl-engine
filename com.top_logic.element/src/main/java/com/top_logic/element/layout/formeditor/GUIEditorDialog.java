@@ -35,6 +35,7 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolBarGroup;
 import com.top_logic.mig.html.layout.Layout.LayoutResizeMode;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -59,11 +60,18 @@ public class GUIEditorDialog extends AbstractFormDialogBase {
 
 	private List<CommandModel> _additionalCommands = new ArrayList<>();
 
+	private final LayoutComponent _contextComponent;
+
 	/**
-	 * Creates a new {@link GUIEditorDialog} with default behaviour.
+	 * Creates a new {@link GUIEditorDialog} with default behavior.
+	 * 
+	 * @param contextComponent
+	 *        The component for which a from is currently edited, <code>null</code> if the edited
+	 *        form does not belong to a unique component.
 	 */
-	public GUIEditorDialog() {
+	public GUIEditorDialog(LayoutComponent contextComponent) {
 		super(DefaultDialogModel.dialogModel(I18NConstants.FORM_EDITOR_DIALOG, DisplayDimension.FIFTY_PERCENT, DisplayDimension.FIFTY_PERCENT));
+		_contextComponent = contextComponent;
 		// Open the dialog maximized
 		getDialogModel().setMaximized(true);
 	}
@@ -72,7 +80,7 @@ public class GUIEditorDialog extends AbstractFormDialogBase {
 	protected void fillFormContext(FormContext context) {
 		FormDefinition formDefinition = getFormDefinition();
 		Objects.requireNonNull(formDefinition, "No FormDefinition to edit given.");
-		DisplayFormEditorBuilder formBuilder = new DisplayFormEditorBuilder();
+		DisplayFormEditorBuilder formBuilder = new DisplayFormEditorBuilder(_contextComponent);
 		formBuilder.setInEditMode(openInEditMode());
 		formBuilder.setTemplateProvider(getTemplateProvider());
 		formBuilder.fillFormContext(getType(), I18NConstants.FORM_EDITOR_DIALOG, context, formDefinition);

@@ -13,6 +13,7 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -122,14 +123,17 @@ public interface FormElementTemplateProvider {
 	/**
 	 * Creates the {@link CreateConfigurationDialog} for configuring the {@link FormElement}
 	 * configuration.
-	 *
+	 * 
+	 * @param contextComponent
+	 *        The component for which a from is currently edited, <code>null</code> if the edited
+	 *        form does not belong to a unique component.
 	 * @param dialogTitle
 	 *        The dialog title to display.
 	 * @param okHandle
 	 *        Function that is called with the created configuration.
 	 */
-	CreateConfigurationDialog<? extends FormElement<?>> createConfigDialog(ResKey dialogTitle,
-			Function<? super FormElement<?>, HandlerResult> okHandle);
+	CreateConfigurationDialog<? extends FormElement<?>> createConfigDialog(LayoutComponent contextComponent,
+			ResKey dialogTitle, Function<? super FormElement<?>, HandlerResult> okHandle);
 
 	/**
 	 * The identifier between server and client elements.

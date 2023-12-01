@@ -60,7 +60,7 @@ public abstract class FormDefinitionFieldProvider extends AbstractFieldProvider 
 			public HandlerResult internalExecuteCommand(DisplayContext context) {
 				FormDefinition formDefinitionOrigin = (FormDefinition) field.getValue();
 
-				GUIEditorDialog guiEditorDialog = new GUIEditorDialog();
+				GUIEditorDialog guiEditorDialog = new GUIEditorDialog(null);
 				// setting of a FormDefinition is recorded as block
 				ScriptingRecorder.annotateAsDontRecord(guiEditorDialog.getDialogModel());
 				guiEditorDialog.setFormDefinitionCopy(formDefinitionOrigin);

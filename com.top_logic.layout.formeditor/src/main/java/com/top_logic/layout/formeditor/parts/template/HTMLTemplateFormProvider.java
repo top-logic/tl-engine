@@ -63,6 +63,7 @@ import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.Templates;
+import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -189,6 +190,7 @@ public class HTMLTemplateFormProvider
 		@Name(VARIABLES)
 		@Key(VariableDefinition.Config.NAME)
 		@DefaultContainer
+		@CollapseEntries
 		Map<String, VariableDefinition.Config<?>> getVariables();
 	}
 

@@ -29,6 +29,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.ModelBuilder;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.definition.FormElement;
@@ -87,6 +88,18 @@ public class DisplayFormEditorBuilder {
 
 	private Supplier<? extends List<FormDefinitionTemplate>> _templateProvider = () -> Collections.emptyList();
 
+	private final LayoutComponent _contextComponent;
+
+	/**
+	 * Creates a {@link DisplayFormEditorBuilder}.
+	 * 
+	 * @param contextComponent
+	 *        The component for which a from is currently edited, <code>null</code> if the edited
+	 *        form does not belong to a unique component.
+	 */
+	public DisplayFormEditorBuilder(LayoutComponent contextComponent) {
+		_contextComponent = contextComponent;
+	}
 
 	/**
 	 * Fills the {@link FormContext} to edit the given {@link FormDefinition} for the given
@@ -122,7 +135,8 @@ public class DisplayFormEditorBuilder {
 		editorFormContext.setControlProvider(new ControlProvider() {
 			@Override
 			public Control createControl(Object model, String style) {
-				return new FormEditorPreviewControl(formDefinition, type, resPrefix, isInEditMode(), formEditorMapping);
+				return new FormEditorPreviewControl(_contextComponent, formDefinition, type, resPrefix, isInEditMode(),
+					formEditorMapping);
 			}
 		});
 

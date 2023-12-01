@@ -19,6 +19,7 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.editor.ComponentConfigurationDialogBuilder;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.BooleanField;
@@ -33,6 +34,7 @@ import com.top_logic.layout.scripting.action.ValueModelUpdate;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.form.definition.FormContextDefinition;
@@ -62,7 +64,9 @@ public class FormDefinitionEditor implements Editor {
 				TLStructuredType type = resolveFormType();
 				FormDefinition formDefinitionOrigin = (FormDefinition) model.getValue();
 
-				GUIEditorDialog guiEditorDialog = new GUIEditorDialog();
+				LayoutComponent contextComponent =
+					editorFactory.getSettings().get(ComponentConfigurationDialogBuilder.COMPONENT);
+				GUIEditorDialog guiEditorDialog = new GUIEditorDialog(contextComponent);
 				// setting of a FormDefinition is recorded as block
 				ScriptingRecorder.annotateAsDontRecord(guiEditorDialog.getDialogModel());
 				guiEditorDialog.setFormDefinitionCopy(formDefinitionOrigin);

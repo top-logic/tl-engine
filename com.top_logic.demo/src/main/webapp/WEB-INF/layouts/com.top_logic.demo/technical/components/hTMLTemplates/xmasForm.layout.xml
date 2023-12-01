@@ -93,7 +93,7 @@
          sodipodi:nodetypes="cccccccccccc" />
     </g>
   </g>
-  {candles}
+  {candlesSorted}
 </svg>
 </div>]]></template>
 						<ui-callback name="placeCandle">
@@ -131,6 +131,9 @@
 								<de>Klicke auf den Baum, um Kerzen zu platzieren. Klicke auf eine Kerze um sie anzuzünden oder auszublasen.</de>
 							</text>
 						</i18n>
+						<value-computation name="candlesSorted"
+							function="tree -> $tree.get(`test.htmltemplate:XmasTree#candles`).sort( comparator(c -> $c.get(`test.htmltemplate:Candle#y`)))"
+						/>
 						<value-templates>
 							<value-template type="test.htmltemplate:Candle">
 								<template><![CDATA[<g transform="translate({x},{y})"

@@ -118,20 +118,30 @@ public class DropDownControl extends AbstractSelectControl {
 		return _idBuilder.getObjectById(id);
 	}
 
+	private void writeItem(TagWriter out, FormField dropdown, Object item) {
+		out.writeText(getItemLabel(dropdown, item));
+	}
+
 	private String getItemLabel(FormField dropdown, Object item) {
-		if (item != null) {
-			return SelectFieldUtils.getOptionLabel(dropdown, item);
+		if (item == null) {
+			return "";
 		}
-		return "";
+
+		String label = SelectFieldUtils.getOptionLabel(dropdown, item);
+		if (label == null) {
+			return "<without-label>";
+		}
+
+		return label;
 	}
 
 	private String getSelectionLabel(FormField dropdown) {
-		List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
-		if (selection.size() <= 0) {
+		if (isMultiple()) {
 			return SelectFieldUtils.getEmptySelectionLabel(dropdown);
 		}
-		if (isMultiple()) {
-			return SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
+		List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
+		if (selection.isEmpty()) {
+			return SelectFieldUtils.getEmptySelectionLabel(dropdown);
 		}
 		return getItemLabel(dropdown, selection.get(0));
 	}
@@ -315,7 +325,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.endAttribute();
 		out.endBeginTag();
 		{
-			out.writeText(getItemLabel(dropdown, item));
+			writeItem(out, dropdown, item);
 		}
 		out.endTag(SPAN);
 	}
@@ -348,7 +358,7 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTooltip(context, out, dropdown, selectedItem);
 				out.endBeginTag();
 				{
-					out.writeText(getItemLabel(dropdown, selectedItem));
+					writeItem(out, dropdown, selectedItem);
 
 					renderXButton(context, out, itemID);
 				}
@@ -437,7 +447,7 @@ public class DropDownControl extends AbstractSelectControl {
 		renderTooltip(context, out, dropdown, item);
 		out.endBeginTag();
 		{
-			out.writeText(getItemLabel(dropdown, item));
+			writeItem(out, dropdown, item);
 		}
 		out.endTag(SPAN);
 	}

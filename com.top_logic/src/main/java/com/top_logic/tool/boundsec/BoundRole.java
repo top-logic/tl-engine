@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.boundsec;
 
+import com.top_logic.basic.Named;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.model.TLModule;
@@ -15,17 +16,12 @@ import com.top_logic.model.TLModule;
  * @author <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
  */
 @Label("role")
-public interface BoundRole {
+public interface BoundRole extends Named {
     
     /**
 	 * The ID of this role
 	 */
     public TLID getID();
-    
-    /**
-     * The name of the role.
-     */
-    public String getName();
     
     /**
 	 * Binds this role to the given scope.

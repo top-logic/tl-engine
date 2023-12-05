@@ -29,12 +29,4 @@ public abstract class WrapperTLElement extends AbstractBoundWrapper implements S
         super(ko);
     }
 
-    /**
-     * @see com.top_logic.knowledge.wrap.Wrapper#getName()
-     */
-    @Override
-	public String getName() {
-		return (this.getString(NAME_ATTRIBUTE));
-    }
-
 }

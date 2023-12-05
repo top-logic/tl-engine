@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.services.jms;
 
@@ -11,7 +13,7 @@ import com.top_logic.basic.config.annotation.Name;
 /**
  * Base configuration interface for all Clients ({@link Producer} and {@link Consumer}).
  * 
- * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
+ * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */
 public interface ClientConfig<I> extends PolymorphicConfiguration<I>, NamedConfigMandatory {
 	/**

@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.services.jms.script;
 
@@ -29,7 +31,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * {@link GenericMethod} sending a message to a JMS Message Queue System.
  * 
- * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
+ * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */
 public class JMSSend extends GenericMethod {
 

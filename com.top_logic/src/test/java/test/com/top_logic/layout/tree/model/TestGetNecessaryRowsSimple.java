@@ -147,9 +147,7 @@ public class TestGetNecessaryRowsSimple extends TreeTableGetNecessaryRowsTest {
 
 	public void testOnlySyntheticAncestors() {
 		setFilter(FilterFactory.falseFilter());
-		enableUpdates();
 		DefaultTreeTableNode child = getRoot().createChild(-1);
-		disableUpdates();
 		DefaultTreeTableNode grandchild = child.createChild(-1);
 		DefaultTreeTableNode grandgrandchild = grandchild.createChild(-1);
 

@@ -57,9 +57,9 @@ public class TLServiceResourceProvider extends AbstractResourceProvider {
 	public String getTooltip(Object object) {
 		Class<?> implementationClass = implementationClass(object);
 		if (implementationClass != null) {
-			ResKey tooltip = ResKey.forClass(implementationClass).tooltip();
+			ResKey tooltip = ResKey.forClass(implementationClass).tooltipOptional();
 
-			return Resources.getInstance().getString(tooltip, null);
+			return Resources.getInstance().getString(tooltip);
 		}
 		return super.getTooltip(object);
 	}

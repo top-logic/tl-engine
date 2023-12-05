@@ -39,7 +39,7 @@ public class CommandGroupResourceProvider extends DefaultResourceProvider {
 		BoundCommandGroup group = (BoundCommandGroup) object;
 		String groupId = group.getID();
 		Resources resources = Resources.getInstance();
-		return resources.getString(I18NConstants.COMMAND_GROUP_NAMES.key(groupId).tooltip(), null);
+		return resources.getString(I18NConstants.COMMAND_GROUP_NAMES.key(groupId).tooltipOptional());
 	}
 
 }

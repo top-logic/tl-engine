@@ -10,9 +10,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.client.diagramjs.core.Diagram;
+import com.top_logic.client.diagramjs.core.ElementRegistry;
 import com.top_logic.client.diagramjs.model.Base;
 import com.top_logic.client.diagramjs.model.Label;
 import com.top_logic.client.diagramjs.model.Shape;
+import com.top_logic.client.diagramjs.util.DiagramJSObjectUtil;
 import com.top_logic.common.remote.shared.ScopeEvent;
 import com.top_logic.common.remote.shared.ScopeListener;
 import com.top_logic.graph.common.model.GraphPart;
@@ -87,7 +89,24 @@ public class DefaultGraphScopeListener implements ScopeListener {
 	private void postProcess() {
 		_postProcesser.finish(_drawingNewGraphParts, _selectedGraphParts);
 
+		handleResizedShapes();
+		
 		_drawingNewGraphParts = new HashSet<>();
+	}
+
+	private void handleResizedShapes() {
+		ElementRegistry elementRegistry = _diagram.getElementRegistry();
+		Base[] elements = elementRegistry.getAllElements();
+		for (int i = 0; i < elements.length; i++) {
+			Base element = elements[i];
+			if(DiagramJSObjectUtil.isShape(element)) {
+				Shape shape = ((Shape) element);
+				
+				if(shape.isResized()) {
+					_diagram.getModeler().resizeShape(shape, shape.getBounds());
+				}
+			}
+		}
 	}
 
 	private void updateDisplayGraphPart(ScopeEvent event) {

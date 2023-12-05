@@ -224,10 +224,12 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				if (!Utils.getbooleanValue(field.get(LISTENER_DISABLED))) {
 					V i18nValue = toI18NValue(newValue);
+					boolean mandatory = proxyField.isMandatory() && !fulfilsMandatoryConstraint(newValue);
 					for (F langField : fields) {
 						langField.set(LISTENER_DISABLED, Boolean.TRUE);
 						Locale locale = langField.get(LANGUAGE);
 						langField.setValue(localize(locale, i18nValue));
+						langField.setMandatory(mandatory);
 						langField.set(LISTENER_DISABLED, null);
 					}
 				}
@@ -276,8 +278,19 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		addListener(MANDATORY_PROPERTY, new MandatoryChangedListener() {
 			@Override
 			public Bubble handleMandatoryChanged(FormField sender, Boolean oldValue, Boolean newValue) {
+				boolean mandatory;
+				if (!newValue) {
+					mandatory = false;
+				} else {
+					if (proxyField.hasValue()) {
+						mandatory = !fulfilsMandatoryConstraint(proxyField.getValue());
+					} else {
+						// Proxy has no value: The language fields must be completed
+						mandatory = true;
+					}
+				}
 				for (F field : fields) {
-					field.setMandatory(newValue);
+					field.setMandatory(mandatory);
 				}
 				return Bubble.BUBBLE;
 			}
@@ -292,6 +305,23 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 			}
 		});
 		new I18NValueErrorWarningsUpdater(fields).attach();
+	}
+
+	boolean fulfilsMandatoryConstraint(Object proxyValue) {
+		try {
+			if (_mandatoryConstraint.check(proxyValue)) {
+				// Proxy is filled with non "null" value.
+				return true;
+			} else {
+				// It can not be checked whether the value fulfils the mandatory
+				// constraint. Better treat as not fulfilled.
+				return false;
+			}
+		} catch (CheckException ex) {
+			// Value is not value to fulfil mandatory constraint, e.g. null or empty
+			// string.
+			return false;
+		}
 	}
 
 	/**
@@ -419,16 +449,22 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 */
 	protected ValueWithError createProxyValue() {
 		FormField proxy = getProxy();
-		B builder = createValueBuilder();
+		V newProxyValue = createValueForProxy(proxy);
+		if (proxy.isMandatory()) {
+			boolean mandatory = !fulfilsMandatoryConstraint(newProxyValue);
+			for (FormField field : getLanguageFields()) {
+				field.setMandatory(mandatory);
+			}
+		}
+		StringBuilder sb = createErrorForProxy();
+		return new ValueWithError(newProxyValue, sb);
+	}
 
+	private StringBuilder createErrorForProxy() {
 		Resources res = Resources.getInstance();
 		StringBuilder sb = new StringBuilder();
 		boolean hasError = false;
 		for (F field : getLanguageFields()) {
-			if (field.hasValue()) {
-				Locale locale = field.get(LANGUAGE);
-				addValueToBuilder(builder, proxy, locale, field);
-			}
 			if (field.hasError()) {
 				if (hasError) {
 					sb.append(StringServices.LINE_BREAK);
@@ -438,7 +474,18 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 				hasError = true;
 			}
 		}
-		return new ValueWithError(buildValue(builder), sb);
+		return sb;
+	}
+
+	private V createValueForProxy(FormField proxy) {
+		B builder = createValueBuilder();
+		for (F field : getLanguageFields()) {
+			if (field.hasValue()) {
+				Locale locale = field.get(LANGUAGE);
+				addValueToBuilder(builder, proxy, locale, field);
+			}
+		}
+		return buildValue(builder);
 	}
 
 	/**

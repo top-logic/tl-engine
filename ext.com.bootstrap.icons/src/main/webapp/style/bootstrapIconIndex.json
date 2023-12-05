@@ -1,4 +1,54 @@
 {
+    "0-circle": {
+        "label": "0-circle",
+        "search": {
+            "terms": [
+                "0",
+                "circle"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "0-circle-fill": {
+        "label": "0-circle-fill",
+        "search": {
+            "terms": [
+                "0",
+                "circle",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "0-square": {
+        "label": "0-square",
+        "search": {
+            "terms": [
+                "0",
+                "square"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "0-square-fill": {
+        "label": "0-square-fill",
+        "search": {
+            "terms": [
+                "0",
+                "square",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "1-circle": {
         "label": "1-circle",
         "search": {
@@ -598,11 +648,56 @@
             ""
         ]
     },
+    "alphabet": {
+        "label": "alphabet",
+        "search": {
+            "terms": [
+                "alphabet"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "alphabet-uppercase": {
+        "label": "alphabet-uppercase",
+        "search": {
+            "terms": [
+                "alphabet",
+                "uppercase"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "alt": {
         "label": "alt",
         "search": {
             "terms": [
                 "alt"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "amazon": {
+        "label": "amazon",
+        "search": {
+            "terms": [
+                "amazon"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "amd": {
+        "label": "amd",
+        "search": {
+            "terms": [
+                "amd"
             ]
         },
         "styles": [
@@ -1507,6 +1602,17 @@
             ""
         ]
     },
+    "arrows": {
+        "label": "arrows",
+        "search": {
+            "terms": [
+                "arrows"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "arrows-angle-contract": {
         "label": "arrows-angle-contract",
         "search": {
@@ -1545,12 +1651,38 @@
             ""
         ]
     },
+    "arrows-collapse-vertical": {
+        "label": "arrows-collapse-vertical",
+        "search": {
+            "terms": [
+                "arrows",
+                "collapse",
+                "vertical"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "arrows-expand": {
         "label": "arrows-expand",
         "search": {
             "terms": [
                 "arrows",
                 "expand"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "arrows-expand-vertical": {
+        "label": "arrows-expand-vertical",
+        "search": {
+            "terms": [
+                "arrows",
+                "expand",
+                "vertical"
             ]
         },
         "styles": [
@@ -1575,6 +1707,18 @@
             "terms": [
                 "arrows",
                 "move"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "arrows-vertical": {
+        "label": "arrows-vertical",
+        "search": {
+            "terms": [
+                "arrows",
+                "vertical"
             ]
         },
         "styles": [
@@ -1656,6 +1800,98 @@
         "search": {
             "terms": [
                 "back"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack": {
+        "label": "backpack",
+        "search": {
+            "terms": [
+                "backpack"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack-fill": {
+        "label": "backpack-fill",
+        "search": {
+            "terms": [
+                "backpack",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack2": {
+        "label": "backpack2",
+        "search": {
+            "terms": [
+                "backpack2"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack2-fill": {
+        "label": "backpack2-fill",
+        "search": {
+            "terms": [
+                "backpack2",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack3": {
+        "label": "backpack3",
+        "search": {
+            "terms": [
+                "backpack3"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack3-fill": {
+        "label": "backpack3-fill",
+        "search": {
+            "terms": [
+                "backpack3",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack4": {
+        "label": "backpack4",
+        "search": {
+            "terms": [
+                "backpack4"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "backpack4-fill": {
+        "label": "backpack4-fill",
+        "search": {
+            "terms": [
+                "backpack4",
+                "fill"
             ]
         },
         "styles": [
@@ -2198,6 +2434,29 @@
             ""
         ]
     },
+    "ban": {
+        "label": "ban",
+        "search": {
+            "terms": [
+                "ban"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "ban-fill": {
+        "label": "ban-fill",
+        "search": {
+            "terms": [
+                "ban",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "bandaid": {
         "label": "bandaid",
         "search": {
@@ -2510,6 +2769,17 @@
         "search": {
             "terms": [
                 "bicycle"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "bing": {
+        "label": "bing",
+        "search": {
+            "terms": [
+                "bing"
             ]
         },
         "styles": [
@@ -3544,6 +3814,17 @@
             ""
         ]
     },
+    "brilliance": {
+        "label": "brilliance",
+        "search": {
+            "terms": [
+                "brilliance"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "broadcast": {
         "label": "broadcast",
         "search": {
@@ -3695,11 +3976,321 @@
             ""
         ]
     },
+    "building-add": {
+        "label": "building-add",
+        "search": {
+            "terms": [
+                "building",
+                "add"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-check": {
+        "label": "building-check",
+        "search": {
+            "terms": [
+                "building",
+                "check"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-dash": {
+        "label": "building-dash",
+        "search": {
+            "terms": [
+                "building",
+                "dash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-down": {
+        "label": "building-down",
+        "search": {
+            "terms": [
+                "building",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-exclamation": {
+        "label": "building-exclamation",
+        "search": {
+            "terms": [
+                "building",
+                "exclamation"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill": {
+        "label": "building-fill",
+        "search": {
+            "terms": [
+                "building",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-add": {
+        "label": "building-fill-add",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "add"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-check": {
+        "label": "building-fill-check",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "check"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-dash": {
+        "label": "building-fill-dash",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "dash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-down": {
+        "label": "building-fill-down",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-exclamation": {
+        "label": "building-fill-exclamation",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "exclamation"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-gear": {
+        "label": "building-fill-gear",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "gear"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-lock": {
+        "label": "building-fill-lock",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "lock"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-slash": {
+        "label": "building-fill-slash",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-up": {
+        "label": "building-fill-up",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-fill-x": {
+        "label": "building-fill-x",
+        "search": {
+            "terms": [
+                "building",
+                "fill",
+                "x"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-gear": {
+        "label": "building-gear",
+        "search": {
+            "terms": [
+                "building",
+                "gear"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-lock": {
+        "label": "building-lock",
+        "search": {
+            "terms": [
+                "building",
+                "lock"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-slash": {
+        "label": "building-slash",
+        "search": {
+            "terms": [
+                "building",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-up": {
+        "label": "building-up",
+        "search": {
+            "terms": [
+                "building",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "building-x": {
+        "label": "building-x",
+        "search": {
+            "terms": [
+                "building",
+                "x"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "buildings": {
+        "label": "buildings",
+        "search": {
+            "terms": [
+                "buildings"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "buildings-fill": {
+        "label": "buildings-fill",
+        "search": {
+            "terms": [
+                "buildings",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "bullseye": {
         "label": "bullseye",
         "search": {
             "terms": [
                 "bullseye"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "bus-front": {
+        "label": "bus-front",
+        "search": {
+            "terms": [
+                "bus",
+                "front"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "bus-front-fill": {
+        "label": "bus-front-fill",
+        "search": {
+            "terms": [
+                "bus",
+                "front",
+                "fill"
             ]
         },
         "styles": [
@@ -3745,6 +4336,52 @@
         "search": {
             "terms": [
                 "square",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "cake": {
+        "label": "cake",
+        "search": {
+            "terms": [
+                "cake"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "cake-fill": {
+        "label": "cake-fill",
+        "search": {
+            "terms": [
+                "cake",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "cake2": {
+        "label": "cake2",
+        "search": {
+            "terms": [
+                "cake2"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "cake2-fill": {
+        "label": "cake2-fill",
+        "search": {
+            "terms": [
+                "cake2",
                 "fill"
             ]
         },
@@ -7416,6 +8053,28 @@
             ""
         ]
     },
+    "cookie": {
+        "label": "cookie",
+        "search": {
+            "terms": [
+                "cookie"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "copy": {
+        "label": "copy",
+        "search": {
+            "terms": [
+                "copy"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "cpu": {
         "label": "cpu",
         "search": {
@@ -7523,6 +8182,28 @@
         "search": {
             "terms": [
                 "crop"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "crosshair": {
+        "label": "crosshair",
+        "search": {
+            "terms": [
+                "crosshair"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "crosshair2": {
+        "label": "crosshair2",
+        "search": {
+            "terms": [
+                "crosshair2"
             ]
         },
         "styles": [
@@ -7801,6 +8482,279 @@
                 "dash",
                 "square",
                 "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database": {
+        "label": "database",
+        "search": {
+            "terms": [
+                "database"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-add": {
+        "label": "database-add",
+        "search": {
+            "terms": [
+                "database",
+                "add"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-check": {
+        "label": "database-check",
+        "search": {
+            "terms": [
+                "database",
+                "check"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-dash": {
+        "label": "database-dash",
+        "search": {
+            "terms": [
+                "database",
+                "dash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-down": {
+        "label": "database-down",
+        "search": {
+            "terms": [
+                "database",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-exclamation": {
+        "label": "database-exclamation",
+        "search": {
+            "terms": [
+                "database",
+                "exclamation"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill": {
+        "label": "database-fill",
+        "search": {
+            "terms": [
+                "database",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-add": {
+        "label": "database-fill-add",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "add"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-check": {
+        "label": "database-fill-check",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "check"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-dash": {
+        "label": "database-fill-dash",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "dash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-down": {
+        "label": "database-fill-down",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-exclamation": {
+        "label": "database-fill-exclamation",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "exclamation"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-gear": {
+        "label": "database-fill-gear",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "gear"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-lock": {
+        "label": "database-fill-lock",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "lock"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-slash": {
+        "label": "database-fill-slash",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-up": {
+        "label": "database-fill-up",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-fill-x": {
+        "label": "database-fill-x",
+        "search": {
+            "terms": [
+                "database",
+                "fill",
+                "x"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-gear": {
+        "label": "database-gear",
+        "search": {
+            "terms": [
+                "database",
+                "gear"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-lock": {
+        "label": "database-lock",
+        "search": {
+            "terms": [
+                "database",
+                "lock"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-slash": {
+        "label": "database-slash",
+        "search": {
+            "terms": [
+                "database",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-up": {
+        "label": "database-up",
+        "search": {
+            "terms": [
+                "database",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "database-x": {
+        "label": "database-x",
+        "search": {
+            "terms": [
+                "database",
+                "x"
             ]
         },
         "styles": [
@@ -8332,6 +9286,29 @@
             ""
         ]
     },
+    "duffle": {
+        "label": "duffle",
+        "search": {
+            "terms": [
+                "duffle"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "duffle-fill": {
+        "label": "duffle-fill",
+        "search": {
+            "terms": [
+                "duffle",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "ear": {
         "label": "ear",
         "search": {
@@ -8518,6 +9495,31 @@
             ""
         ]
     },
+    "emoji-astonished": {
+        "label": "emoji-astonished",
+        "search": {
+            "terms": [
+                "emoji",
+                "astonished"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-astonished-fill": {
+        "label": "emoji-astonished-fill",
+        "search": {
+            "terms": [
+                "emoji",
+                "astonished",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "emoji-dizzy": {
         "label": "emoji-dizzy",
         "search": {
@@ -8586,6 +9588,56 @@
             "terms": [
                 "emoji",
                 "frown",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-grimace": {
+        "label": "emoji-grimace",
+        "search": {
+            "terms": [
+                "emoji",
+                "grimace"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-grimace-fill": {
+        "label": "emoji-grimace-fill",
+        "search": {
+            "terms": [
+                "emoji",
+                "grimace",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-grin": {
+        "label": "emoji-grin",
+        "search": {
+            "terms": [
+                "emoji",
+                "grin"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-grin-fill": {
+        "label": "emoji-grin-fill",
+        "search": {
+            "terms": [
+                "emoji",
+                "grin",
                 "fill"
             ]
         },
@@ -8774,6 +9826,56 @@
             ""
         ]
     },
+    "emoji-surprise": {
+        "label": "emoji-surprise",
+        "search": {
+            "terms": [
+                "emoji",
+                "surprise"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-surprise-fill": {
+        "label": "emoji-surprise-fill",
+        "search": {
+            "terms": [
+                "emoji",
+                "surprise",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-tear": {
+        "label": "emoji-tear",
+        "search": {
+            "terms": [
+                "emoji",
+                "tear"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "emoji-tear-fill": {
+        "label": "emoji-tear-fill",
+        "search": {
+            "terms": [
+                "emoji",
+                "tear",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "emoji-wink": {
         "label": "emoji-wink",
         "search": {
@@ -8804,6 +9906,85 @@
         "search": {
             "terms": [
                 "envelope"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "envelope-arrow-down": {
+        "label": "envelope-arrow-down",
+        "search": {
+            "terms": [
+                "envelope",
+                "arrow",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "envelope-arrow-down-fill": {
+        "label": "envelope-arrow-down-fill",
+        "search": {
+            "terms": [
+                "envelope",
+                "arrow",
+                "down",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "envelope-arrow-up": {
+        "label": "envelope-arrow-up",
+        "search": {
+            "terms": [
+                "envelope",
+                "arrow",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "envelope-arrow-up-fill": {
+        "label": "envelope-arrow-up-fill",
+        "search": {
+            "terms": [
+                "envelope",
+                "arrow",
+                "up",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "envelope-at": {
+        "label": "envelope-at",
+        "search": {
+            "terms": [
+                "envelope",
+                "at"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "envelope-at-fill": {
+        "label": "envelope-at-fill",
+        "search": {
+            "terms": [
+                "envelope",
+                "at",
+                "fill"
             ]
         },
         "styles": [
@@ -9144,6 +10325,31 @@
             ""
         ]
     },
+    "ev-front": {
+        "label": "ev-front",
+        "search": {
+            "terms": [
+                "ev",
+                "front"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "ev-front-fill": {
+        "label": "ev-front-fill",
+        "search": {
+            "terms": [
+                "ev",
+                "front",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "ev-station": {
         "label": "ev-station",
         "search": {
@@ -9351,6 +10557,17 @@
             ""
         ]
     },
+    "exposure": {
+        "label": "exposure",
+        "search": {
+            "terms": [
+                "exposure"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "eye": {
         "label": "eye",
         "search": {
@@ -9516,6 +10733,28 @@
                 "fast",
                 "forward",
                 "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "feather": {
+        "label": "feather",
+        "search": {
+            "terms": [
+                "feather"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "feather2": {
+        "label": "feather2",
+        "search": {
+            "terms": [
+                "feather2"
             ]
         },
         "styles": [
@@ -11942,6 +13181,52 @@
             ""
         ]
     },
+    "floppy": {
+        "label": "floppy",
+        "search": {
+            "terms": [
+                "floppy"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "floppy-fill": {
+        "label": "floppy-fill",
+        "search": {
+            "terms": [
+                "floppy",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "floppy2": {
+        "label": "floppy2",
+        "search": {
+            "terms": [
+                "floppy2"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "floppy2-fill": {
+        "label": "floppy2-fill",
+        "search": {
+            "terms": [
+                "floppy2",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "flower1": {
         "label": "flower1",
         "search": {
@@ -12331,6 +13616,18 @@
             ""
         ]
     },
+    "gender-neuter": {
+        "label": "gender-neuter",
+        "search": {
+            "terms": [
+                "gender",
+                "neuter"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "gender-trans": {
         "label": "gender-trans",
         "search": {
@@ -12436,11 +13733,74 @@
             ""
         ]
     },
+    "gitlab": {
+        "label": "gitlab",
+        "search": {
+            "terms": [
+                "gitlab"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "globe": {
         "label": "globe",
         "search": {
             "terms": [
                 "globe"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "globe-americas": {
+        "label": "globe-americas",
+        "search": {
+            "terms": [
+                "globe",
+                "americas"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "globe-asia-australia": {
+        "label": "globe-asia-australia",
+        "search": {
+            "terms": [
+                "globe",
+                "asia",
+                "australia"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "globe-central-south-asia": {
+        "label": "globe-central-south-asia",
+        "search": {
+            "terms": [
+                "globe",
+                "central",
+                "south",
+                "asia"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "globe-europe-africa": {
+        "label": "globe-europe-africa",
+        "search": {
+            "terms": [
+                "globe",
+                "europe",
+                "africa"
             ]
         },
         "styles": [
@@ -13213,6 +14573,28 @@
             ""
         ]
     },
+    "highlighter": {
+        "label": "highlighter",
+        "search": {
+            "terms": [
+                "highlighter"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "highlights": {
+        "label": "highlights",
+        "search": {
+            "terms": [
+                "highlights"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "hospital": {
         "label": "hospital",
         "search": {
@@ -13294,6 +14676,81 @@
             ""
         ]
     },
+    "house-add": {
+        "label": "house-add",
+        "search": {
+            "terms": [
+                "house",
+                "add"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-add-fill": {
+        "label": "house-add-fill",
+        "search": {
+            "terms": [
+                "house",
+                "add",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-check": {
+        "label": "house-check",
+        "search": {
+            "terms": [
+                "house",
+                "check"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-check-fill": {
+        "label": "house-check-fill",
+        "search": {
+            "terms": [
+                "house",
+                "check",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-dash": {
+        "label": "house-dash",
+        "search": {
+            "terms": [
+                "house",
+                "dash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-dash-fill": {
+        "label": "house-dash-fill",
+        "search": {
+            "terms": [
+                "house",
+                "dash",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "house-door": {
         "label": "house-door",
         "search": {
@@ -13319,11 +14776,86 @@
             ""
         ]
     },
+    "house-down": {
+        "label": "house-down",
+        "search": {
+            "terms": [
+                "house",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-down-fill": {
+        "label": "house-down-fill",
+        "search": {
+            "terms": [
+                "house",
+                "down",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-exclamation": {
+        "label": "house-exclamation",
+        "search": {
+            "terms": [
+                "house",
+                "exclamation"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-exclamation-fill": {
+        "label": "house-exclamation-fill",
+        "search": {
+            "terms": [
+                "house",
+                "exclamation",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "house-fill": {
         "label": "house-fill",
         "search": {
             "terms": [
                 "house",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-gear": {
+        "label": "house-gear",
+        "search": {
+            "terms": [
+                "house",
+                "gear"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-gear-fill": {
+        "label": "house-gear-fill",
+        "search": {
+            "terms": [
+                "house",
+                "gear",
                 "fill"
             ]
         },
@@ -13349,6 +14881,129 @@
             "terms": [
                 "house",
                 "heart",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-lock": {
+        "label": "house-lock",
+        "search": {
+            "terms": [
+                "house",
+                "lock"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-lock-fill": {
+        "label": "house-lock-fill",
+        "search": {
+            "terms": [
+                "house",
+                "lock",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-slash": {
+        "label": "house-slash",
+        "search": {
+            "terms": [
+                "house",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-slash-fill": {
+        "label": "house-slash-fill",
+        "search": {
+            "terms": [
+                "house",
+                "slash",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-up": {
+        "label": "house-up",
+        "search": {
+            "terms": [
+                "house",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-up-fill": {
+        "label": "house-up-fill",
+        "search": {
+            "terms": [
+                "house",
+                "up",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-x": {
+        "label": "house-x",
+        "search": {
+            "terms": [
+                "house",
+                "x"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "house-x-fill": {
+        "label": "house-x-fill",
+        "search": {
+            "terms": [
+                "house",
+                "x",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "houses": {
+        "label": "houses",
+        "search": {
+            "terms": [
+                "houses"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "houses-fill": {
+        "label": "houses-fill",
+        "search": {
+            "terms": [
+                "houses",
                 "fill"
             ]
         },
@@ -14472,6 +16127,29 @@
             ""
         ]
     },
+    "luggage": {
+        "label": "luggage",
+        "search": {
+            "terms": [
+                "luggage"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "luggage-fill": {
+        "label": "luggage-fill",
+        "search": {
+            "terms": [
+                "luggage",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "lungs": {
         "label": "lungs",
         "search": {
@@ -14540,11 +16218,35 @@
             ""
         ]
     },
+    "mailbox-flag": {
+        "label": "mailbox-flag",
+        "search": {
+            "terms": [
+                "mailbox",
+                "flag"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "mailbox2": {
         "label": "mailbox2",
         "search": {
             "terms": [
                 "mailbox"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "mailbox2-flag": {
+        "label": "mailbox2-flag",
+        "search": {
+            "terms": [
+                "mailbox2",
+                "flag"
             ]
         },
         "styles": [
@@ -14591,6 +16293,18 @@
             "terms": [
                 "markdown",
                 "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "marker-tip": {
+        "label": "marker-tip",
+        "search": {
+            "terms": [
+                "marker",
+                "tip"
             ]
         },
         "styles": [
@@ -15214,6 +16928,18 @@
             ""
         ]
     },
+    "noise-reduction": {
+        "label": "noise-reduction",
+        "search": {
+            "terms": [
+                "noise",
+                "reduction"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "nut": {
         "label": "nut",
         "search": {
@@ -15230,6 +16956,40 @@
         "search": {
             "terms": [
                 "nut",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "nvidia": {
+        "label": "nvidia",
+        "search": {
+            "terms": [
+                "nvidia"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "nvme": {
+        "label": "nvme",
+        "search": {
+            "terms": [
+                "nvme"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "nvme-fill": {
+        "label": "nvme-fill",
+        "search": {
+            "terms": [
+                "nvme",
                 "fill"
             ]
         },
@@ -15266,6 +17026,17 @@
             "terms": [
                 "octagon",
                 "half"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "opencollective": {
+        "label": "opencollective",
+        "search": {
+            "terms": [
+                "opencollective"
             ]
         },
         "styles": [
@@ -15449,6 +17220,29 @@
         "search": {
             "terms": [
                 "pass",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "passport": {
+        "label": "passport",
+        "search": {
+            "terms": [
+                "passport"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "passport-fill": {
+        "label": "passport-fill",
+        "search": {
+            "terms": [
+                "passport",
                 "fill"
             ]
         },
@@ -15725,6 +17519,32 @@
             ""
         ]
     },
+    "pci-card-network": {
+        "label": "pci-card-network",
+        "search": {
+            "terms": [
+                "pci",
+                "card",
+                "network"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "pci-card-sound": {
+        "label": "pci-card-sound",
+        "search": {
+            "terms": [
+                "pci",
+                "card",
+                "sound"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "peace": {
         "label": "peace",
         "search": {
@@ -15886,6 +17706,31 @@
             ""
         ]
     },
+    "person-add": {
+        "label": "person-add",
+        "search": {
+            "terms": [
+                "person",
+                "add"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-arms-up": {
+        "label": "person-arms-up",
+        "search": {
+            "terms": [
+                "person",
+                "arms",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "person-badge": {
         "label": "person-badge",
         "search": {
@@ -15986,12 +17831,178 @@
             ""
         ]
     },
+    "person-down": {
+        "label": "person-down",
+        "search": {
+            "terms": [
+                "person",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-exclamation": {
+        "label": "person-exclamation",
+        "search": {
+            "terms": [
+                "person",
+                "exclamation"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "person-fill": {
         "label": "person-fill",
         "search": {
             "terms": [
                 "person",
                 "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-add": {
+        "label": "person-fill-add",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "add"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-check": {
+        "label": "person-fill-check",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "check"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-dash": {
+        "label": "person-fill-dash",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "dash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-down": {
+        "label": "person-fill-down",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-exclamation": {
+        "label": "person-fill-exclamation",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "exclamation"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-gear": {
+        "label": "person-fill-gear",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "gear"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-lock": {
+        "label": "person-fill-lock",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "lock"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-slash": {
+        "label": "person-fill-slash",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-up": {
+        "label": "person-fill-up",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-fill-x": {
+        "label": "person-fill-x",
+        "search": {
+            "terms": [
+                "person",
+                "fill",
+                "x"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-gear": {
+        "label": "person-gear",
+        "search": {
+            "terms": [
+                "person",
+                "gear"
             ]
         },
         "styles": [
@@ -16035,6 +18046,18 @@
             ""
         ]
     },
+    "person-lock": {
+        "label": "person-lock",
+        "search": {
+            "terms": [
+                "person",
+                "lock"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "person-plus": {
         "label": "person-plus",
         "search": {
@@ -16060,6 +18083,19 @@
             ""
         ]
     },
+    "person-raised-hand": {
+        "label": "person-raised-hand",
+        "search": {
+            "terms": [
+                "person",
+                "raised",
+                "hand"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "person-rolodex": {
         "label": "person-rolodex",
         "search": {
@@ -16072,12 +18108,86 @@
             ""
         ]
     },
+    "person-slash": {
+        "label": "person-slash",
+        "search": {
+            "terms": [
+                "person",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "person-square": {
         "label": "person-square",
         "search": {
             "terms": [
                 "person",
                 "square"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-standing": {
+        "label": "person-standing",
+        "search": {
+            "terms": [
+                "person",
+                "standing"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-standing-dress": {
+        "label": "person-standing-dress",
+        "search": {
+            "terms": [
+                "person",
+                "standing",
+                "dress"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-up": {
+        "label": "person-up",
+        "search": {
+            "terms": [
+                "person",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-vcard": {
+        "label": "person-vcard",
+        "search": {
+            "terms": [
+                "person",
+                "vcard"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-vcard-fill": {
+        "label": "person-vcard-fill",
+        "search": {
+            "terms": [
+                "person",
+                "vcard",
+                "fill"
             ]
         },
         "styles": [
@@ -16114,6 +18224,30 @@
             "terms": [
                 "person",
                 "video"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-walking": {
+        "label": "person-walking",
+        "search": {
+            "terms": [
+                "person",
+                "walking"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "person-wheelchair": {
+        "label": "person-wheelchair",
+        "search": {
+            "terms": [
+                "person",
+                "wheelchair"
             ]
         },
         "styles": [
@@ -17041,6 +19175,17 @@
             ""
         ]
     },
+    "radar": {
+        "label": "radar",
+        "search": {
+            "terms": [
+                "radar"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "radioactive": {
         "label": "radioactive",
         "search": {
@@ -17259,6 +19404,17 @@
             ""
         ]
     },
+    "regex": {
+        "label": "regex",
+        "search": {
+            "terms": [
+                "regex"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "repeat": {
         "label": "repeat",
         "search": {
@@ -17407,6 +19563,54 @@
         "search": {
             "terms": [
                 "robot"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "rocket": {
+        "label": "rocket",
+        "search": {
+            "terms": [
+                "rocket"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "rocket-fill": {
+        "label": "rocket-fill",
+        "search": {
+            "terms": [
+                "rocket",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "rocket-takeoff": {
+        "label": "rocket-takeoff",
+        "search": {
+            "terms": [
+                "rocket",
+                "takeoff"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "rocket-takeoff-fill": {
+        "label": "rocket-takeoff-fill",
+        "search": {
+            "terms": [
+                "rocket",
+                "takeoff",
+                "fill"
             ]
         },
         "styles": [
@@ -17573,6 +19777,17 @@
             ""
         ]
     },
+    "scooter": {
+        "label": "scooter",
+        "search": {
+            "terms": [
+                "scooter"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "screwdriver": {
         "label": "screwdriver",
         "search": {
@@ -17662,6 +19877,60 @@
         "search": {
             "terms": [
                 "send"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "send-arrow-down": {
+        "label": "send-arrow-down",
+        "search": {
+            "terms": [
+                "send",
+                "arrow",
+                "down"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "send-arrow-down-fill": {
+        "label": "send-arrow-down-fill",
+        "search": {
+            "terms": [
+                "send",
+                "arrow",
+                "down",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "send-arrow-up": {
+        "label": "send-arrow-up",
+        "search": {
+            "terms": [
+                "send",
+                "arrow",
+                "up"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "send-arrow-up-fill": {
+        "label": "send-arrow-up-fill",
+        "search": {
+            "terms": [
+                "send",
+                "arrow",
+                "up",
+                "fill"
             ]
         },
         "styles": [
@@ -17833,6 +20102,17 @@
         "search": {
             "terms": [
                 "server"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "shadows": {
+        "label": "shadows",
+        "search": {
+            "terms": [
+                "shadows"
             ]
         },
         "styles": [
@@ -18127,6 +20407,332 @@
             ""
         ]
     },
+    "sign-dead-end": {
+        "label": "sign-dead-end",
+        "search": {
+            "terms": [
+                "sign",
+                "dead",
+                "end"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-dead-end-fill": {
+        "label": "sign-dead-end-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "dead",
+                "end",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-do-not-enter": {
+        "label": "sign-do-not-enter",
+        "search": {
+            "terms": [
+                "sign",
+                "do",
+                "not",
+                "enter"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-do-not-enter-fill": {
+        "label": "sign-do-not-enter-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "do",
+                "not",
+                "enter",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection": {
+        "label": "sign-intersection",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection-fill": {
+        "label": "sign-intersection-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection-side": {
+        "label": "sign-intersection-side",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection",
+                "side"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection-side-fill": {
+        "label": "sign-intersection-side-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection",
+                "side",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection-t": {
+        "label": "sign-intersection-t",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection",
+                "t"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection-t-fill": {
+        "label": "sign-intersection-t-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection",
+                "t",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection-y": {
+        "label": "sign-intersection-y",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection",
+                "y"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-intersection-y-fill": {
+        "label": "sign-intersection-y-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "intersection",
+                "y",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-merge-left": {
+        "label": "sign-merge-left",
+        "search": {
+            "terms": [
+                "sign",
+                "merge",
+                "left"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-merge-left-fill": {
+        "label": "sign-merge-left-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "merge",
+                "left",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-merge-right": {
+        "label": "sign-merge-right",
+        "search": {
+            "terms": [
+                "sign",
+                "merge",
+                "right"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-merge-right-fill": {
+        "label": "sign-merge-right-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "merge",
+                "right",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-no-left-turn": {
+        "label": "sign-no-left-turn",
+        "search": {
+            "terms": [
+                "sign",
+                "no",
+                "left",
+                "turn"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-no-left-turn-fill": {
+        "label": "sign-no-left-turn-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "no",
+                "left",
+                "turn",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-no-parking": {
+        "label": "sign-no-parking",
+        "search": {
+            "terms": [
+                "sign",
+                "no",
+                "parking"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-no-parking-fill": {
+        "label": "sign-no-parking-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "no",
+                "parking",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-no-right-turn": {
+        "label": "sign-no-right-turn",
+        "search": {
+            "terms": [
+                "sign",
+                "no",
+                "right",
+                "turn"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-no-right-turn-fill": {
+        "label": "sign-no-right-turn-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "no",
+                "right",
+                "turn",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-railroad": {
+        "label": "sign-railroad",
+        "search": {
+            "terms": [
+                "sign",
+                "railroad"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sign-railroad-fill": {
+        "label": "sign-railroad-fill",
+        "search": {
+            "terms": [
+                "sign",
+                "railroad",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "sign-stop": {
         "label": "sign-stop",
         "search": {
@@ -18415,6 +21021,43 @@
             "terms": [
                 "sim",
                 "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sim-slash": {
+        "label": "sim-slash",
+        "search": {
+            "terms": [
+                "sim",
+                "slash"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sim-slash-fill": {
+        "label": "sim-slash-fill",
+        "search": {
+            "terms": [
+                "sim",
+                "slash",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "sina-weibo": {
+        "label": "sina-weibo",
+        "search": {
+            "terms": [
+                "sina",
+                "weibo"
             ]
         },
         "styles": [
@@ -19090,6 +21733,17 @@
             ""
         ]
     },
+    "sourceforge": {
+        "label": "sourceforge",
+        "search": {
+            "terms": [
+                "sourceforge"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "speaker": {
         "label": "speaker",
         "search": {
@@ -19448,6 +22102,39 @@
             ""
         ]
     },
+    "stripe": {
+        "label": "stripe",
+        "search": {
+            "terms": [
+                "stripe"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "subscript": {
+        "label": "subscript",
+        "search": {
+            "terms": [
+                "subscript"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "substack": {
+        "label": "substack",
+        "search": {
+            "terms": [
+                "substack"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "subtract": {
         "label": "subtract",
         "search": {
@@ -19559,6 +22246,77 @@
             ""
         ]
     },
+    "suitcase": {
+        "label": "suitcase",
+        "search": {
+            "terms": [
+                "suitcase"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "suitcase-fill": {
+        "label": "suitcase-fill",
+        "search": {
+            "terms": [
+                "suitcase",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "suitcase-lg": {
+        "label": "suitcase-lg",
+        "search": {
+            "terms": [
+                "suitcase",
+                "lg"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "suitcase-lg-fill": {
+        "label": "suitcase-lg-fill",
+        "search": {
+            "terms": [
+                "suitcase",
+                "lg",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "suitcase2": {
+        "label": "suitcase2",
+        "search": {
+            "terms": [
+                "suitcase2"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "suitcase2-fill": {
+        "label": "suitcase2-fill",
+        "search": {
+            "terms": [
+                "suitcase2",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "sun": {
         "label": "sun",
         "search": {
@@ -19633,6 +22391,17 @@
             "terms": [
                 "sunset",
                 "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "superscript": {
+        "label": "superscript",
+        "search": {
+            "terms": [
+                "superscript"
             ]
         },
         "styles": [
@@ -19761,6 +22530,31 @@
         "search": {
             "terms": [
                 "tags",
+                "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "taxi-front": {
+        "label": "taxi-front",
+        "search": {
+            "terms": [
+                "taxi",
+                "front"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "taxi-front-fill": {
+        "label": "taxi-front-fill",
+        "search": {
+            "terms": [
+                "taxi",
+                "front",
                 "fill"
             ]
         },
@@ -19950,6 +22744,18 @@
             ""
         ]
     },
+    "tencent-qq": {
+        "label": "tencent-qq",
+        "search": {
+            "terms": [
+                "tencent",
+                "qq"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "terminal": {
         "label": "terminal",
         "search": {
@@ -20094,6 +22900,18 @@
             ""
         ]
     },
+    "text-wrap": {
+        "label": "text-wrap",
+        "search": {
+            "terms": [
+                "text",
+                "wrap"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "textarea": {
         "label": "textarea",
         "search": {
@@ -20193,6 +23011,29 @@
             "terms": [
                 "thermometer",
                 "sun"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "threads": {
+        "label": "threads",
+        "search": {
+            "terms": [
+                "threads"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "threads-fill": {
+        "label": "threads-fill",
+        "search": {
+            "terms": [
+                "threads",
+                "fill"
             ]
         },
         "styles": [
@@ -20513,6 +23354,17 @@
             ""
         ]
     },
+    "transparency": {
+        "label": "transparency",
+        "search": {
+            "terms": [
+                "transparency"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "trash": {
         "label": "trash",
         "search": {
@@ -20599,6 +23451,17 @@
             "terms": [
                 "tree",
                 "fill"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "trello": {
+        "label": "trello",
+        "search": {
+            "terms": [
+                "trello"
             ]
         },
         "styles": [
@@ -20779,6 +23642,18 @@
             ""
         ]
     },
+    "twitter-x": {
+        "label": "twitter-x",
+        "search": {
+            "terms": [
+                "twitter",
+                "x"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "type": {
         "label": "type",
         "search": {
@@ -20829,6 +23704,42 @@
         "search": {
             "terms": [
                 "type"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "type-h4": {
+        "label": "type-h4",
+        "search": {
+            "terms": [
+                "type",
+                "h4"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "type-h5": {
+        "label": "type-h5",
+        "search": {
+            "terms": [
+                "type",
+                "h5"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "type-h6": {
+        "label": "type-h6",
+        "search": {
+            "terms": [
+                "type",
+                "h6"
             ]
         },
         "styles": [
@@ -21286,6 +24197,17 @@
             ""
         ]
     },
+    "vignette": {
+        "label": "vignette",
+        "search": {
+            "terms": [
+                "vignette"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
     "vimeo": {
         "label": "vimeo",
         "search": {
@@ -21604,6 +24526,17 @@
             "terms": [
                 "wifi",
                 "off"
+            ]
+        },
+        "styles": [
+            ""
+        ]
+    },
+    "wikipedia": {
+        "label": "wikipedia",
+        "search": {
+            "terms": [
+                "wikipedia"
             ]
         },
         "styles": [

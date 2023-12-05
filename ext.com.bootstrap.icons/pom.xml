@@ -9,8 +9,8 @@
   </parent>
   <artifactId>ext-com-bootstrap-icons</artifactId>
   
-  <description>Bootstrap Icon Font version 1.9.1</description>
-  <url>https://github.com/twbs/icons/releases/tag/v1.9.1</url>
+  <description>Bootstrap Icon Font version 1.11.2</description>
+  <url>https://github.com/twbs/icons/releases/tag/v1.11.2</url>
   
   <licenses>
   	<license>

@@ -217,7 +217,7 @@ public class InternationalizationEditor implements Editor {
 
 				ResKey i18N = derivedKeyDefinitions.get(keySuffix);
 				suffixField.setLabel(resources.getString(i18N));
-				suffixField.setTooltip(resources.getString(i18N.tooltip(), null));
+				suffixField.setTooltip(resources.getString(i18N.tooltipOptional()));
 				suffixField.set(LOCALE, locale);
 				suffixField.set(SUFFIX, keySuffix);
 
@@ -300,11 +300,11 @@ public class InternationalizationEditor implements Editor {
 				if (_membersVisible) {
 					button.setImage(Icons.HIDE_DERIVED_RESOURCES);
 					button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltip(), null));
+					button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
 				} else {
 					button.setImage(Icons.DISPLAY_DERIVED_RESOURCES);
 					button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltip(), null));
+					button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
 				}
 				PersonalConfiguration.getPersonalConfiguration().setBooleanValue(configKey.get(), _membersVisible);
 				return HandlerResult.DEFAULT_RESULT;
@@ -320,10 +320,10 @@ public class InternationalizationEditor implements Editor {
 		Resources resources = Resources.getInstance();
 		if (initiallyVisible) {
 			button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
-			button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltip(), null));
+			button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
 		} else {
 			button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
-			button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltip(), null));
+			button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
 		}
 
 	}

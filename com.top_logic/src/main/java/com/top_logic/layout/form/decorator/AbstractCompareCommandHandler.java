@@ -156,8 +156,8 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 	private String getDeactivatedTooltip(Resources res, LayoutComponent targetComponent) {
 		String deactivated = ".deactivated";
 		ResKey componentInfoKey =
-			targetComponent.getResPrefix().append(getID()).key(deactivated).tooltip();
-		String componentInfoValue = res.getString(componentInfoKey, null);
+			targetComponent.getResPrefix().append(getID()).key(deactivated).tooltipOptional();
+		String componentInfoValue = res.getString(componentInfoKey);
 		if (componentInfoValue != null) {
 			return componentInfoValue;
 		}
@@ -168,8 +168,8 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 			return null;
 		}
 
-		ResKey defaultInfoKey = defaultLabelKey.tooltip();
-		return res.getString(defaultInfoKey, null);
+		ResKey defaultInfoKey = defaultLabelKey.tooltipOptional();
+		return res.getString(defaultInfoKey);
 
 	}
 

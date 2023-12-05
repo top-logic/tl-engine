@@ -145,7 +145,7 @@ public class MapFormGroupBuilder extends FormGroupBuilder {
 		ResKey baseKey = Labels.propertyLabelKey(getValueModel().getProperty()).suffix(name);
 
 		field.setLabel(resources.getStringWithDefaultKey(baseKey, defaultLabelKey));
-		field.setTooltip(resources.getString(baseKey.tooltip(), null));
+		field.setTooltip(resources.getString(baseKey.tooltipOptional()));
 	}
 
 	private FormField createValueFieldInternal(FormGroup contentGroup) {

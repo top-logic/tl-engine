@@ -52,7 +52,7 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 		}
 		Resources resources = Resources.getInstance();
 		setLabel(resources.getString(label));
-		setTooltip(resources.getString(label.tooltip(), null));
+		setTooltip(resources.getString(label.tooltipOptional()));
 		setImage(command.getImage(component));
 		setNotExecutableImage(command.getNotExecutableImage(component));
 		setCssClasses(command.getCssClasses(component));

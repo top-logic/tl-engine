@@ -448,7 +448,7 @@ public class Column {
 		if (labelKey != null) {
 			// Note: the key is an absolute resource name and must not be
 			// passed to the getColumnHeaderText() processing.
-			String result = Resources.getInstance().getString(labelKey.tooltip(), null);
+			String result = Resources.getInstance().getString(labelKey.tooltipOptional());
 			if (result != null) {
 				return result;
 			}

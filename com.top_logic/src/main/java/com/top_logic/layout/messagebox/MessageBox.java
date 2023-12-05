@@ -590,7 +590,7 @@ public class MessageBox extends MessageBoxShortcuts {
 		CommandModel result = CommandModelFactory.commandModel(continuation);
 		Resources resources = Resources.getInstance();
 		result.setLabel(resources.getString(labelKey));
-		result.setTooltip(resources.getString(labelKey.tooltip(), null));
+		result.setTooltip(resources.getString(labelKey.tooltipOptional()));
 		result.setImage(image);
 		result.setNotExecutableImage(disabledImage);
 		return result;

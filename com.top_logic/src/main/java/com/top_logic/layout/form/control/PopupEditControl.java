@@ -415,6 +415,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 	private FormField createEditFieldInternal(FormField originalField) {
 		FormField editField = createEditField(originalField);
 		editField.setLabel(originalField.getLabel());
+		editField.setDefaultValue(originalField.getDefaultValue());
 		editField.setValue(originalField.getValue());
 		editField.setControlProvider(originalField.getControlProvider());
 		copyFieldConstraints(originalField, editField);

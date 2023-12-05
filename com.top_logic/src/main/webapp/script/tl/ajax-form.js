@@ -3251,7 +3251,7 @@ services.form = {
 		buttonDrop: function(button) {
 			const ddBoxOriginal = button.nextElementSibling;
 			let ddBox = this.getDDBox();
-
+			
 			const onGlobalChange = function() {
 				if (ddBox.contains(document.activeElement)) {
 					services.form.DropDownControl.buttonDrop(button);
@@ -3260,7 +3260,6 @@ services.form = {
 
 			let prevActive = button.parentElement.classList.contains(this.activeCl);
 			button.parentElement.classList.toggle(this.activeCl);
-			
 
 			if (prevActive) {
 				this.closeDD(button, ddBox);
@@ -3309,13 +3308,15 @@ services.form = {
 			PlaceDialog.closeCurrentTooltip(document.body.firstElementChild);
 
 			this.cancelScrollEvents(button);
-
-			if (ddBox.contains(document.activeElement)) {
-				button.focus();
-			}
 			
+			let ddBoxAct = ddBox.contains(document.activeElement);
+
 			// hide DropDown
 			ddBox.remove();
+			
+			if (ddBoxAct) {
+				button.focus();
+			}
 		},
 		
 		setMutationObserver: function(dialog, button) {
@@ -3488,9 +3489,6 @@ services.form = {
 					for (item of itemList) {
 						if (item.classList.contains(this.actItemCl)) {
 							this.setItemInactive(item);
-							let tooltip = item.lastElementChild;
-							tooltip.style.display = "";
-							tooltip.style.width = "";
 						}
 					}
 					if (button.parentElement.classList.contains(this.activeCl)) {
@@ -3678,7 +3676,8 @@ services.form = {
 					if (!sourceBtn) {
 						// set current item as selected
 						this.selectItem(activeItem);
-						event.stopImmediatePropagation();
+						event.preventDefault();
+						event.stopPropagation();
 						return;
 					}
 					event.stopImmediatePropagation();
@@ -3691,6 +3690,13 @@ services.form = {
 					}
 					this.buttonDrop(button);
 					event.stopImmediatePropagation();
+					return;
+					
+				// [TAB] was pressed
+				case "Tab":
+					if (multi || !sourceBtn) {
+						this.buttonDrop(button);
+					}
 					return;
 
 				// [Control|Ctrl|Ctl|STRG] + [C] was pressed

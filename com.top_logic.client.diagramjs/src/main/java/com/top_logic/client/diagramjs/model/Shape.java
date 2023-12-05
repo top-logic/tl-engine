@@ -105,4 +105,18 @@ public class Shape extends Base {
 			y : this.y
 		}
 	}-*/;
+
+	/**
+	 * Whether this object is resized.
+	 */
+	public final native boolean isResized() /*-{
+		return this.isResized;
+	}-*/;
+
+	/**
+	 * @see #isResized()
+	 */
+	public final native void setIsResized(boolean isResized) /*-{
+		this.isResized = isResized;
+	}-*/;
 }

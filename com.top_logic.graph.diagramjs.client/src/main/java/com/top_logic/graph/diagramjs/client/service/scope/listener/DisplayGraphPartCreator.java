@@ -314,8 +314,17 @@ public class DisplayGraphPartCreator {
 		label.setX(clazz.getX() + 5);
 		label.setY(y);
 
-		clazz.setHeight(Math.max(clazz.getHeight(), getRelativeYCoordinate(clazz, label) + label.getHeight()));
-		clazz.setWidth(Math.max(clazz.getWidth(), 5 + label.getWidth()));
+		double newHeight = getRelativeYCoordinate(clazz, label) + label.getHeight();
+		if (newHeight > clazz.getHeight()) {
+			clazz.setHeight(newHeight);
+			clazz.setIsResized(true);
+		}
+
+		double newWidth = 5 + label.getWidth();
+		if (newWidth > clazz.getWidth()) {
+			clazz.setWidth(newWidth);
+			clazz.setIsResized(true);
+		}
 	}
 
 	private double getRelativeYCoordinate(Shape parent, Label child) {

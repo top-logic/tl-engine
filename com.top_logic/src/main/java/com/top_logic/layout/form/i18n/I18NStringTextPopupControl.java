@@ -7,19 +7,35 @@ package com.top_logic.layout.form.i18n;
 
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.DisplayUnit.*;
+import static com.top_logic.layout.form.template.model.Templates.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.gui.ThemeFactory;
+import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.layout.Control;
+import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.PopupEditControl;
+import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.model.StringField;
+import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.layout.form.template.model.MemberStyle;
+import com.top_logic.layout.form.template.model.Templates;
+import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.values.edit.editor.TranslateButtonCP;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.LayoutData;
+import com.top_logic.layout.structure.MediaQueryControl;
 import com.top_logic.layout.structure.Scrolling;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link PopupEditControl} for I18n attributes.
@@ -74,15 +90,62 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 
 	@Override
 	protected HTMLFragment createEditFragment(FormField editField) {
-		return new I18NStringControlProvider(_rows, _columns).createFragment(editField);
+		I18NStringField i18nField = (I18NStringField) editField;
+		TranslateButtonCP cp = new TranslateButtonCP(i18nField.getLanguageFields());
+		List<HTMLTemplateFragment> contentTemplates = new ArrayList<>();
+		ControlProvider languageFieldCP = null;
+		if (_rows > 0) {
+			languageFieldCP = MultiLineText.newInstance(_rows, _columns);
+		} else if (_columns != TextInputControl.NO_COLUMNS){
+			languageFieldCP = textInputWithColumns(_columns);
+		}
+		for (StringField languageField : i18nField.getLanguageFields()) {
+			HTMLTemplateFragment self;
+			if (languageFieldCP != null) {
+				self = Templates.self(MemberStyle.NONE, languageFieldCP);
+			} else {
+				self = Templates.self();
+			}
+			contentTemplates.add(member(languageField,
+				descriptionBox(
+					fragment(labelWithColon(), direct(cp), error()),
+					self, LabelPosition.DEFAULT, LabelPlacement.ABOVE)));
+		}
+		template(i18nField, div(contentTemplates));
+		return new MediaQueryControl(i18nField.getControlProvider().createFragment(i18nField));
+	}
+
+	private ControlProvider textInputWithColumns(int columns) {
+		return new ControlProvider() {
+
+			@Override
+			public Control createControl(Object model, String style) {
+				TextInputControl textInput = new TextInputControl((FormField) model);
+				textInput.setColumns(columns);
+				return textInput;
+			}
+
+		};
 	}
 
 	@Override
 	protected LayoutData getDialogLayout(FormField editField) {
+		I18NStringField i18nField = (I18NStringField) editField;
+		int numberFields = i18nField.getLanguageFields().size();
+		float height = 30 * numberFields; // Labels
 		if (_rows > 0) {
-			return new DefaultLayoutData(dim(720, PIXEL), 100, dim(300, PIXEL), 100, Scrolling.AUTO);
+			int inputHeight = (15 * _rows) + 20;
+			height += inputHeight * numberFields;// Input fields
+		} else {
+			int inputHeight = 30;
+			height += inputHeight * numberFields;// Input fields
 		}
-		return new DefaultLayoutData(dim(400, PIXEL), 100, dim(150, PIXEL), 100, Scrolling.AUTO);
+		DisplayDimension titleBarHeight =
+			ThemeFactory.getTheme().getValue(com.top_logic.layout.structure.Icons.DIALOG_TITLE_HEIGHT);
+		DisplayDimension buttonBarHeight =
+			ThemeFactory.getTheme().getValue(com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT);
+		height += titleBarHeight.getValue() + buttonBarHeight.getValue();
+		return new DefaultLayoutData(dim(720, PIXEL), 100, dim(height, PIXEL), 100, Scrolling.AUTO);
 	}
 
 }

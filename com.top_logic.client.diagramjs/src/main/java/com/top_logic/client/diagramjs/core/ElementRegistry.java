@@ -2,6 +2,8 @@ package com.top_logic.client.diagramjs.core;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import com.top_logic.client.diagramjs.model.Base;
+
 /**
  * Registry to keep track of {@link Diagram} elements.
  * 
@@ -26,9 +28,14 @@ public class ElementRegistry extends JavaScriptObject {
 			return element.sharedGraphPart == businessObject;
 		});
 
-		console.log(filteredElements);
-
 		return filteredElements.length != 0;
+	}-*/;
+
+	/**
+	 * Returns all diagram elements.
+	 */
+	public final native Base[] getAllElements() /*-{
+		return this.getAll();
 	}-*/;
 
 }

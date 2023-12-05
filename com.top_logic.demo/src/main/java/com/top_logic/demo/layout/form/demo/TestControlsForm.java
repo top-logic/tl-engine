@@ -81,6 +81,8 @@ import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey.Builder;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.demo.chart.DemoChartProducer;
@@ -288,6 +290,7 @@ import com.top_logic.util.error.TopLogicException;
 @SuppressWarnings("javadoc")
 public class TestControlsForm extends FormComponent {
 
+	private static final String I18N_GROUP_NAME = "i18n";
 	private static final String COLUMN_EXTERNAL_LINK = "link";
 
 	public interface Config extends FormComponent.Config {
@@ -904,8 +907,34 @@ public class TestControlsForm extends FormComponent {
 								cal.set(Calendar.MILLISECOND, 0);
 
 								dateTime.setValue(cal.getTime());
+							} else if (member instanceof I18NStringField) {
+								I18NStringField i18n = (I18NStringField) member;
+								if (i18n.hasValue()) {
+									ResKey resKey = (ResKey) i18n.getValue();
+									Builder builder = ResKey.builder();
+									List<Locale> locales = ResourcesModule.getInstance().getSupportedLocales();
+									for (Locale locale : locales) {
+										String localeValue;
+										if (resKey == null) {
+											localeValue = "Hello World";
+										} else {
+											localeValue = Resources.getInstance(locale).getString(resKey) + "!";
+										}
+
+										builder.add(locale, localeValue);
+									}
+									i18n.setValue(builder.build());
+								}
+							} else if (I18N_GROUP_NAME.equals(member.getName())) {
+								descend(member, arg);
 							}
 							return null;
+						}
+
+						private void descend(FormContainer member, Void arg) {
+							for (Iterator<? extends FormField> fields = member.getFields(); fields.hasNext();) {
+								fields.next().visit(this, arg);
+							}
 						}
 
 						@Override
@@ -1897,7 +1926,7 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addI18NGroup(FormGroup controlsGroup) {
-		FormGroup group = new FormGroup("i18n", controlsGroup.getResources());
+		FormGroup group = new FormGroup(I18N_GROUP_NAME, controlsGroup.getResources());
 
 		FormField stringField = I18NStringField.newI18NStringField("i18nString", !FormFactory.MANDATORY,
 			!FormFactory.IMMUTABLE);

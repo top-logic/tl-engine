@@ -5,10 +5,10 @@
  */
 package com.top_logic.client.diagramjs.model;
 
-import java.util.Arrays;
-import java.util.List;
+import com.google.gwt.core.client.JavaScriptObject;
 
 import com.top_logic.client.diagramjs.model.util.Waypoint;
+import com.top_logic.client.diagramjs.util.DiagramJSObjectUtil;
 
 /**
  * Options for a {@link Connection}.
@@ -41,19 +41,16 @@ public final class ConnectionOptions extends GraphPartOptions {
 	/**
 	 * @see Connection#getWaypoints()
 	 */
-	public List<Waypoint> getWaypoints() {
-		return Arrays.asList(getWaypointsInternal());
-	}
-
-	private native Waypoint[] getWaypointsInternal() /*-{
+	public native Waypoint[] getWaypoints() /*-{
 		return this.waypoints;
 	}-*/;
 
 	/**
 	 * @see #getWaypoints()
+	 * @see DiagramJSObjectUtil#setWaypoints(JavaScriptObject, Waypoint[])
 	 */
-	public native void setWaypoints(Waypoint[] waypoints) /*-{
-		this.waypoints = waypoints;
-	}-*/;
+	public void setWaypoints(Waypoint[] waypoints) {
+		DiagramJSObjectUtil.setWaypoints(this, waypoints);
+	}
 
 }

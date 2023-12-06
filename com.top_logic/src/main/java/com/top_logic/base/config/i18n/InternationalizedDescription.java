@@ -9,7 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.i18n.I18NMultiline;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor.WithTooltipConfiguration;
 
@@ -29,7 +29,7 @@ public interface InternationalizedDescription extends ConfigurationItem {
 	@Name(DESCRIPTION)
 	@Nullable
 	@WithTooltipConfiguration(false)
-	@ControlProvider(MultiLineText.class)
+	@ControlProvider(I18NMultiline.class)
 	ResKey getDescription();
 
 	/**

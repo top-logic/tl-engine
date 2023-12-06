@@ -165,7 +165,7 @@ with hard coded popup window dimension
 .fltSubContent .cMenuButton.menuEntryEnabled,
 .cDefaultButton button {
 	background: transparent;
-	box-shadow: inset 0px 0px 0px 1px var(--button-secondary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
 }
 
 .tlButton 
@@ -184,7 +184,7 @@ with hard coded popup window dimension
 .fltSubContent .cMenuButton.menuEntryEnabled:hover,
 .cDefaultButton button:hover {
 	background: var(--button-secondary-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
 }
 
 .tlButton:hover .tlButtonLabel,
@@ -203,7 +203,7 @@ with hard coded popup window dimension
 .tlButton:focus,
 .fltSubContent .cMenuButton.menuEntryEnabled:focus,
 .cDefaultButton button:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	background: var(--button-secondary-hover);
 }
 
@@ -224,7 +224,7 @@ with hard coded popup window dimension
 .fltSubContent .cMenuButton.menuEntryEnabled:active {
 	text-decoration: none;
 	background: var(--button-secondary-active);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlButton:active .tlButtonLabel,
@@ -243,12 +243,12 @@ with hard coded popup window dimension
 .cDefaultButton button:disabled {
 	cursor: default;
 	background: none;
-	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	text-decoration: none;
 }
 
 .tlButton.cmdButtonDisabled:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 }
 
 .tlButton.cmdButtonDisabled .tlButtonLabel,
@@ -262,7 +262,7 @@ with hard coded popup window dimension
 
 .tlButton.tlPrimaryButton {
 	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
 }
 
 .tlButton.tlPrimaryButton .tlButtonLabel {
@@ -275,11 +275,11 @@ with hard coded popup window dimension
 
 .tlButton.tlPrimaryButton:hover {
 	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 }
 
 .tlButton.tlPrimaryButton:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlButton.tlPrimaryButton:active {
@@ -288,7 +288,7 @@ with hard coded popup window dimension
 
 .tlButton.tlPrimaryButton.cmdButtonDisabled {
 	background: var(--button-disabled);
-	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 }
 
 .tlButton.tlPrimaryButton.cmdButtonDisabled .tlButtonLabel {
@@ -301,7 +301,7 @@ with hard coded popup window dimension
 
 .tlButton.tlGhostButton {
 	background: transparent;
-	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus-inset);
 }
 
 .tlButton.tlGhostButton .tlButtonLabel {
@@ -314,7 +314,7 @@ with hard coded popup window dimension
 
 .tlButton.tlGhostButton:hover {
 	background: var(--layer-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--layer-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--layer-hover);
 }
 
 .tlButton.tlGhostButton:hover .tlButtonLabel {
@@ -326,13 +326,13 @@ with hard coded popup window dimension
 }
 
 .tlButton.tlGhostButton:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	background: transparent;
 }
 
 .tlButton.tlGhostButton:active {
 	background: var(--background-active);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlButton.tlGhostButton.cmdButtonDisabled {
@@ -349,7 +349,7 @@ with hard coded popup window dimension
 }
 
 .tlButton.tlDangerButtonPrimary {
-	box-shadow: inset 0px 0px 0px 1px var(--button-danger);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger);
 	background: var(--button-danger);
 }
 
@@ -363,21 +363,21 @@ with hard coded popup window dimension
 
 .tlButton.tlDangerButtonPrimary:hover {
 	background: var(--button-danger-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--button-danger-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
 }
 
 .tlButton.tlDangerButtonPrimary:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlButton.tlDangerButtonPrimary:active {
 	background: var(--button-danger-active);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlButton.tlDangerButtonPrimary.cmdButtonDisabled {
 	background: var(--button-disabled);
-	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 }
 
 .tlButton.tlDangerButtonPrimary.cmdButtonDisabled:focus {
@@ -394,7 +394,7 @@ with hard coded popup window dimension
 
 .tlButton.tlDangerButtonSecondary {
 	background: transparent;
-	box-shadow: inset 0px 0px 0px 1px var(--button-danger);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger);
 	border: none;
 }
 
@@ -408,7 +408,7 @@ with hard coded popup window dimension
 
 .tlButton.tlDangerButtonSecondary:hover {
 	background: var(--button-danger-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--button-danger-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
 }
 
 .tlButton.tlDangerButtonSecondary:hover .tlButtonLabel {
@@ -420,12 +420,12 @@ with hard coded popup window dimension
 }
 
 .tlButton.tlDangerButtonSecondary:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlButton.tlDangerButtonSecondary:active {
 	background: var(--button-danger-active);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlButton.tlDangerButtonSecondary:active .tlButtonLabel {
@@ -438,7 +438,7 @@ with hard coded popup window dimension
 
 .tlButton.tlDangerButtonSecondary.cmdButtonDisabled {
 	background: none;
-	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 }
 
 .tlButton.tlDangerButtonSecondary.cmdButtonDisabled .tlButtonLabel {
@@ -541,14 +541,15 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .px-1 .cmdLink,
 .px-1 .cmdLinkDisabled,
 .cTextPopup .lFixedLeft .cmdLink,
-.cTextPopup .lFixedLeft .cmdLinkDisabled {
+.cTextPopup .lFixedLeft .cmdLinkDisabled,
+.breadCrumbRight .Right span a  {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
 	padding: var(--spacing-02) var(--spacing-02);
 	border-radius: .25rem;
 	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
 }
 
 .tlAdditionalRightContent .cImageButton,
@@ -578,13 +579,19 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 	color: var(--icon-on-color);
 }
 
+.breadCrumbRight .Right span a {
+	color: var(--icon-on-color);
+	height: .1rem;
+	width: .1rem;
+}
+
 .tlAdditionalRightContent .cImageButton:hover,
 .sblLogo .cImageButton:hover,
 .dfListCommands .cmdLink:hover,
 .px-1 .cmdLink:hover,
 .cTextPopup .lFixedLeft .cmdLink:hover {
 	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 }
 
 .tlAdditionalRightContent .cImageButton:focus,
@@ -592,7 +599,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .dfListCommands .cmdLink:focus,
 .px-1 .cmdLink:focus,
 .cTextPopup .lFixedLeft:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tlAdditionalRightContent .cImageButton a:focus,
@@ -617,7 +624,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .px-1 .cmdLinkDisabled,
 .cTextPopup .lFixedLeft .cmdLinkDisabled {
 	background: var(--button-disabled);
-	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	cursor: default;
 }
 

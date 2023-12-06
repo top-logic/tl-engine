@@ -121,7 +121,7 @@
 
 .tlTabBar .activeTab:focus, 
 .tlTabBar .tab:focus {
-	box-shadow: inset 0 0 0 1px var(--focus);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	border-bottom: 1px solid var(--focus);
 }
 
@@ -158,29 +158,36 @@
 	gap: var(--spacing-03);
 }
 
-.accText.sblTitleContent {
+.sblTitleContent {
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
 }
 
 div.mcMinimized .sblTitle img {
-	max-width: 28px;
+	max-width: 2rem;
 }
 
 .sblTitleName {
-	color: var(--text-primary);
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
+	color: var(--text-primary);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 .sblTitleVersion {
-	color: var(--text-secondary);
 	font-family: 'Inter-Regular';
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secondary);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 .sblAccordion {
@@ -326,14 +333,14 @@ div.accSelected a.accEntry,
 div.accNode.tlPopupOpen a.accEntry,
 a.accEntry.accContainer.accSelected {
 	background: var(--layer);
-	border-left: 3px solid var(--border-interactive);
+	box-shadow: inset 4px 0 0 0 var(--border-interactive);
 }
 
 a.accEntry.accSelected:hover, 
 div.accSelected a.accEntry:hover,
 div.accNode.tlPopupOpen a.accEntry:hover,
 a.accEntry.accContainer.accSelected:hover {
-	border-left: 3px solid var(--border-strong);
+	box-shadow: inset 4px 0 0 0 var(--border-strong);
 }
 
 a.accEntry.accSelected .accLabel, 

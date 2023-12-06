@@ -19,4 +19,7 @@
 	<icon name="model.DemoTypes.A"
 		value="css:bi bi-alarm-fill"
 	/>
+	<icon name="ICON_CHART_JS"
+		value="css:bi bi-pie-chart-fill"
+	/>
 </settings>

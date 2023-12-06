@@ -142,4 +142,7 @@
 	<icon name="model.DemoTypes.A"
 		value="css:fas fa-beer"
 	/>
+	<icon name="ICON_CHART_JS"
+		value="css:fas fa-chart-bar"
+	/>
 </settings>

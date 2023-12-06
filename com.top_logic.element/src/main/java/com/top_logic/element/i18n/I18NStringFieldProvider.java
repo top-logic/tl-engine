@@ -35,13 +35,12 @@ public class I18NStringFieldProvider extends AbstractFieldProvider {
 		}
 		if (!editContext.isDerived()) {
 			TLSize size = editContext.getAnnotation(TLSize.class);
-			int minLength = AttributeOperations.getLowerBound(size);
-			if (mandatory) {
-				minLength = Math.max(minLength, 1);
+			if (size != null) {
+				int minLength = AttributeOperations.getLowerBound(size);
+				int maxLength = AttributeOperations.getUpperBound(size);
+				Constraint constraint = new StringLengthConstraint(minLength, maxLength);
+				field.getLanguageFields().forEach(languageField -> languageField.addConstraint(constraint));
 			}
-			int maxLength = AttributeOperations.getUpperBound(size);
-			Constraint constraint = new StringLengthConstraint(minLength, maxLength);
-			field.getLanguageFields().forEach(languageField -> languageField.addConstraint(constraint));
 		}
 
 		return field;

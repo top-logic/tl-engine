@@ -15,6 +15,18 @@
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>ext-com-bootstrap-icons</artifactId>
     </dependency>
     <dependency>

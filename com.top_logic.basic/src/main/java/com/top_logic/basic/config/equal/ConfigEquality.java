@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.equal.ArrayEqualitySpecification;
@@ -280,6 +281,16 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 				return true;
 			}
 			default: {
+				if (valueLeft instanceof Pattern) {
+					// Pattern have no equal. Compare by string representation.
+					if (!(valueRight instanceof Pattern)) {
+						return false;
+					} else {
+						Pattern p1 = (Pattern) valueLeft;
+						Pattern p2 = (Pattern) valueRight;
+						return p1.flags() == p2.flags() && p1.pattern().equals(p2.pattern());
+					}
+				}
 				return ArrayEqualitySpecification.INSTANCE.equals(valueLeft, valueRight);
 			}
 		}
@@ -409,6 +420,11 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 				return result;
 			}
 			default: {
+				if (value instanceof Pattern) {
+					// Pattern have no hashCode. Hash of string representation.
+					Pattern p = (Pattern) value;
+					return (p.pattern().hashCode() * 98179 + p.flags()) * 96553;
+				}
 				return ArrayEqualitySpecification.INSTANCE.hashCode(value);
 			}
 		}

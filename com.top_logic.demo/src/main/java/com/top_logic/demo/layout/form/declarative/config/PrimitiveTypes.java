@@ -23,7 +23,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.i18n.I18NMultiline;
 import com.top_logic.layout.form.values.edit.annotation.AcceptedTypes;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -213,7 +213,7 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	 * An internationalized multi-line text.
 	 */
 	@Name(RESKEY_MULTILINE_PRIMITIVE)
-	@ControlProvider(MultiLineText.class)
+	@ControlProvider(I18NMultiline.class)
 	ResKey getResKeyMultilinePrimitive();
 
 	/**

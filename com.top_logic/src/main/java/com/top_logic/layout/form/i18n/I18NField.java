@@ -226,8 +226,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 					V i18nValue = toI18NValue(newValue);
 					for (F langField : fields) {
 						langField.set(LISTENER_DISABLED, Boolean.TRUE);
-						Locale locale = langField.get(LANGUAGE);
-						langField.setValue(localize(locale, i18nValue));
+						localizeValue(langField, i18nValue);
 						langField.set(LISTENER_DISABLED, null);
 					}
 				}
@@ -241,7 +240,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 				StringBuilder sb = new StringBuilder();
 				for (F field : fields) {
 					if (field.hasWarnings()) {
-						Locale language = field.get(LANGUAGE);
+						Locale language = language(field);
 						if (sb.length() > 0) {
 							sb.append(StringServices.LINE_BREAK);
 						}
@@ -346,6 +345,24 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 */
 	protected abstract Object localize(Locale locale, V i18nValue);
 
+	/**
+	 * Localizes the given I18N value for the given language field and sets it as
+	 * {@link FormField#getDefaultValue()}.
+	 */
+	protected void localizeDefaultValue(F langField, V i18nValue) {
+		Locale locale = language(langField);
+		langField.setDefaultValue(localize(locale, i18nValue));
+	}
+
+	/**
+	 * Localizes the given I18N value for the given language field and sets it as
+	 * {@link FormField#getValue()}.
+	 */
+	protected void localizeValue(F langField, V i18nValue) {
+		Locale locale = language(langField);
+		langField.setValue(localize(locale, i18nValue));
+	}
+
 	@Override
 	protected FormField getProxy() {
 		return _proxyField;
@@ -366,7 +383,14 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 */
 	public Map<Locale, F> getLanguageFieldsByLocale() {
 		return getLanguageFields().stream()
-			.collect(Collectors.toMap(field -> field.get(LANGUAGE), Function.identity()));
+			.collect(Collectors.toMap(this::language, Function.identity()));
+	}
+
+	/**
+	 * Determines the language for which the given field was created.
+	 */
+	protected Locale language(F langField) {
+		return langField.get(LANGUAGE);
 	}
 
 	/**
@@ -467,7 +491,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 				if (hasError) {
 					sb.append(StringServices.LINE_BREAK);
 				}
-				Locale language = field.get(LANGUAGE);
+				Locale language = language(field);
 				sb.append(InternationalizationEditor.translateLanguageName(res, language) + ": " + field.getError());
 				hasError = true;
 			}
@@ -616,8 +640,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 				V i18nValue = toI18NValue(defaultValue);
 				for (F langField : getLanguageFields()) {
 					langField.set(LISTENER_DISABLED, Boolean.TRUE);
-					Locale locale = langField.get(LANGUAGE);
-					langField.setDefaultValue(localize(locale, i18nValue));
+					localizeDefaultValue(langField, i18nValue);
 					langField.set(LISTENER_DISABLED, null);
 				}
 			}

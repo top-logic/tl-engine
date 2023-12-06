@@ -151,6 +151,7 @@
 				<form:group name="i18n">
 					<form:inputCell name="i18nString"/>
 					<form:inputCell name="i18nStringMultiLine"/>
+					<form:inputCell name="i18nStringWithTooltip"/>
 					<form:inputCell name="i18nHTML"/>
 				</form:group>
 

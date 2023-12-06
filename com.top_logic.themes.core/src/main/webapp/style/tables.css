@@ -163,7 +163,7 @@ td.tl-table__cell {
 }
 
 .tl-table__row.header .tl-table__cell:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .tl-table__row.header .tl-table__cell:active {

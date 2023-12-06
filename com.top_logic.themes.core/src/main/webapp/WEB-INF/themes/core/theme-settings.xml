@@ -23,7 +23,7 @@
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="66"
+		value="64"
 	/>
 	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
@@ -42,6 +42,9 @@
 	/>
 	<size name="tabbar-height"
 		value="40px"
+	/>
+	<icon name="com.top_logic.layout.Icons.APP_LOGO"
+		value="/images/appLogo.svg"
 	/>
 	<icon name="HEADER_RIGHT_IMAGE"
 		value="/images/TL_Logo_blue.svg"
@@ -296,9 +299,6 @@
 	<!-- Tree -->
 	<icon name="com.top_logic.layout.tree.renderer.Icons.L"
 		value="/tree/l.png"
-	/>
-	<icon name="com.top_logic.layout.tree.renderer.Icons.REFRESH_SMALL"
-		value="colored:tl-icon reload icon-red"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.S"
 		value="/tree/s.png"
@@ -565,7 +565,7 @@
 		value="css:bi bi-download"
 	/>
 	<icon name="ICON_PASSWORD"
-		value="css:bi-lock-fill"
+		value="css:bi bi-lock-fill"
 	/>
 	<icon name="ICON_HOME"
 		expr="%BREADCRUMB_ROOT_ICON%"
@@ -580,7 +580,7 @@
 		value="css:bi bi-search"
 	/>
 	<icon name="ICONS_EXPORT"
-		value="css:bi-file-arrow-down-fill"
+		value="css:bi bi-file-arrow-down-fill"
 	/>
 	<icon name="ICONS_EXPORT_DISABLED"
 		expr="%ICONS_EXPORT%"
@@ -682,7 +682,7 @@
 		value="css:bi bi-globe"
 	/>
 	<icon name="ICONS_BUTTON_REFRESH"
-		value="css:bi-arrow-repeat"
+		value="css:bi bi-arrow-repeat"
 	/>
 	<icon name="ICONS_BUTTON_REFRESH_DISABLED"
 		expr="%ICONS_BUTTON_REFRESH%"
@@ -1378,6 +1378,9 @@
 	/>
 	<int name="com.top_logic.layout.form.selection.Icons.SELECTION_CONTROL_FIELD_HEIGHT"
 		value="40"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.REFRESH_SMALL"
+		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="com.top_logic.layout.renderers.Icons.STACKTRACE"
 		value="css:bi bi-code-slash"

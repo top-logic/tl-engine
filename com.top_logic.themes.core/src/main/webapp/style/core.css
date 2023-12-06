@@ -10,6 +10,9 @@ body {
 	letter-spacing: var(--body-02-letter-spacing);
 	outline: none;
 	margin: 0;
+	width: 100vw;
+	height: 100vh;
+	background: var(--background);
 }
 
 h5 {
@@ -113,7 +116,7 @@ a:not(.disabled):active {
 
 a:not(.disabled):focus {
     color: var(--link-primary-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 a:visited, a.gotoLink:visited,
@@ -618,7 +621,7 @@ div.fltList {
 
 .popupMenu a:focus {
 	color: var(--text-primary);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .popupMenu a:active {
@@ -779,10 +782,13 @@ div.dlgMaximized .input-image.dlgRestore {
 }
 
 .dlgToolbar a,
-.dlgToolbar a:hover,
+.dlgToolbar a:hover {
+	color: var(--icon-primary);
+	box-shadow: none;
+}
+
 .dlgToolbar a:focus {
 	color: var(--icon-primary);
-	box-shaodw: none;
 }
 
 .dlgBorderNE.dlgResizeNE {
@@ -1773,7 +1779,6 @@ h5.card-title a:focus {
 
 .mtbGroup .cButton {
 	background: transparent;
-	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
 }
 
 .quickSearch .cButton.quickSearchButton a,
@@ -1796,7 +1801,7 @@ h5.card-title a:focus {
 .mtbGroup .cButton:not(.cmdLinkDisabled) a:focus,
 .mtbGroup .trbEntry:not(.disabled) a:focus,
 .cButton:not(.cmdLinkDisabled) a:focus[alt="Administration"] {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	background: transparent;
 }
 
@@ -1805,7 +1810,7 @@ h5.card-title a:focus {
 .mtbGroup .trbEntry:not(.disabled) a:active,
 .cButton:not(.cmdLinkDisabled) a:active[alt="Administration"] {
 	background: var(--background-active);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 /* ACTIVE STATES */
@@ -1898,7 +1903,7 @@ h5.card-title a:focus {
 .breadcrumb .treeSelected .tcrLink:focus,
 .breadcrumb .hover:focus {
     color: var(--link-primary-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 /* 
@@ -1977,9 +1982,9 @@ If they're deleted, this can be deleted too
 .tcrNode .treeNode {
 	display: flex;
 	align-items: center;
-	min-height: 2rem;
-	padding-right: var(--spacing-03);
-	padding-left: var(--spacing-03);
+	gap: var(--spacing-01);
+	height: 2rem;
+	padding: 0 var(--spacing-03);
 }
 
 .treeChildren {
@@ -2032,7 +2037,7 @@ If they're deleted, this can be deleted too
 }
 
 .tcrNode .treeNode a:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 /*
@@ -2060,6 +2065,7 @@ If they're deleted, this can be deleted too
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
+	font-weight: 600;
 	color: var(--text-primary);
 	padding-left: var(--spacing-03);
 	overflow: hidden;
@@ -2105,7 +2111,6 @@ If they're deleted, this can be deleted too
 .cCollapsibleButtons a:focus,
 .tl-table__title-toolbar a:focus {
 	color: var(--icon-primary);
-	box-shadow: none;
 }
 
 .cCollapsibleToolbar, .cToolbar, 

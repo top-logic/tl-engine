@@ -221,7 +221,7 @@ a.is-action {
 }
 
 .frmGroupExpand a {
-	color: var(--icon);
+	color: var(--icon-primary);
 }
 
 .frmGroupExpand a:hover {
@@ -1377,7 +1377,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 
 .lFixedRight a:focus-within,
 .lFixedRight .button_minus:focus-within::after {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	border-left: none;
 }
 
@@ -1561,7 +1561,7 @@ textarea:focus,
 .warning .ace_editor textarea:focus,
 .error-annotation .ace_editor textarea:focus,
 .warning-annotation .ace_editor textarea:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	outline: none;
 }
 
@@ -1570,7 +1570,7 @@ textarea:focus,
 .cIntegerInput.num.error-annotation input:focus {
 	outline: none;
 	border: none;
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .cTextInput.disabled input,
@@ -2116,7 +2116,7 @@ div.sizeContainer, div.imageContainer {
 }
 
 .cDataItem label:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .cDataItem label:active {
@@ -2194,7 +2194,7 @@ a.input-image.tristate .bi-exclamation-triangle-fill {
 }
 
 a.input-image.tristate .bi-info-circle-fill,
-a.input-image.tristate . bi bi-info-square{
+a.input-image.tristate .bi-info-square {
 	color: var(--support-info);
 }
 
@@ -2264,7 +2264,7 @@ span.disabled .ddwttDropBtn {
 
 .ddwttDropBtn:focus,
 .error.ddwttDropBtnActive .ddwttDropBtn{
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .fptSubtitleContent .ddwttDropBtn {
@@ -2344,7 +2344,7 @@ span.disabled .ddwttChevron::after {
 
 .ddwttSearch:focus-visible {
 	color: var(--text-primary);
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	outline: none;
 }
 
@@ -2371,7 +2371,7 @@ span.disabled .ddwttChevron::after {
 }
 
 .ddwttActiveItem:focus{
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .ddwttImmutableItem {

@@ -2148,43 +2148,36 @@
 			<customizations>
 				<type name="com.top_logic.basic.util.ResKey">
 					<annotations>
-						<item-display value="monomorphic"/>
 						<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.basic.util.ResKey1">
 					<annotations>
-						<item-display value="monomorphic"/>
 						<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.basic.util.ResKey2">
 					<annotations>
-						<item-display value="monomorphic"/>
 						<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.basic.util.ResKey3">
 					<annotations>
-						<item-display value="monomorphic"/>
 						<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.basic.util.ResKey4">
 					<annotations>
-						<item-display value="monomorphic"/>
 						<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.basic.util.ResKey5">
 					<annotations>
-						<item-display value="monomorphic"/>
 						<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.basic.util.ResKeyN">
 					<annotations>
-						<item-display value="monomorphic"/>
 						<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 					</annotations>
 				</type>

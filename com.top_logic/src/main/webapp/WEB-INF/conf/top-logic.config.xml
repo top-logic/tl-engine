@@ -1082,6 +1082,8 @@
 						</cliques>
 					</group>
 
+					<!-- Clique to display a command in the toolbar of a dialog. -->
+					<clique name="dialog-toolbar" display="commands"/>
 					<clique name="debugButtons" display="menu"
 						cssClasses="tlInApp"
 					/>

@@ -52,9 +52,11 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.gui.FieldCopier;
 import com.top_logic.layout.structure.DefaultDialogModel;
 import com.top_logic.layout.structure.DefaultLayoutData;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.DialogWindowControl;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.structure.Scrolling;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -384,8 +386,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		FormContext context = new FormContext(editField.getName() + "_formContext", ResPrefix.GLOBAL);
 		context.addMember(editField);
 
-		DefaultDialogModel dialogModel = new DefaultDialogModel(getDialogLayout(editField),
-			getDialogTitle(editField), true, true, null);
+		DialogModel dialogModel = createDialogModel(editField);
 		Command applyCommand = getApplyCommand(originalField, editField);
 		CommandModel okModel = createOkModel(dialogModel, applyCommand);
 		CommandModel closeModel = createCancelModel(dialogModel);
@@ -396,7 +397,28 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private CommandModel createOkModel(DefaultDialogModel dialogModel, Command applyCommand) {
+	/**
+	 * Creates the {@link DialogModel} for the dialog to open.
+	 * 
+	 * @param editField
+	 *        The edit copy of the base field to display.
+	 */
+	protected DialogModel createDialogModel(FormField editField) {
+		return new DefaultDialogModel(getDialogLayout(editField), getDialogTitle(editField), true, true, null,
+			getConfigKey(editField));
+	}
+
+	/**
+	 * {@link ConfigKey} for the edit field to store personal settings.
+	 *
+	 * @param editField
+	 *        The field that is edited.
+	 */
+	protected ConfigKey getConfigKey(FormField editField) {
+		return ConfigKey.field(editField);
+	}
+
+	private CommandModel createOkModel(DialogModel dialogModel, Command applyCommand) {
 		Command closeAction = dialogModel.getCloseAction();
 		CommandChain apply = new CommandChain(applyCommand, closeAction);
 		dialogModel.setDefaultCommand(apply);
@@ -405,7 +427,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		return okModel;
 	}
 
-	private CommandModel createCancelModel(DefaultDialogModel dialogModel) {
+	private CommandModel createCancelModel(DialogModel dialogModel) {
 		Command closeAction = dialogModel.getCloseAction();
 		CommandModel cancelModel = MessageBox.button(ButtonType.CANCEL, closeAction);
 		ScriptingRecorder.annotateAsDontRecord(cancelModel);

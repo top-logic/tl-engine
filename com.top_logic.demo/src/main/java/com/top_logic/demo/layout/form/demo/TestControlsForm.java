@@ -176,6 +176,7 @@ import com.top_logic.layout.form.control.TextPopupControl;
 import com.top_logic.layout.form.control.ValueDisplayControl.ValueDisplay;
 import com.top_logic.layout.form.format.ColorFormat;
 import com.top_logic.layout.form.format.ThemeImageFormat;
+import com.top_logic.layout.form.i18n.I18NActiveLanguageControlProvider;
 import com.top_logic.layout.form.i18n.I18NStringControlProvider;
 import com.top_logic.layout.form.i18n.I18NStringField;
 import com.top_logic.layout.form.model.AbstractFormMemberVisitor;
@@ -1938,6 +1939,27 @@ public class TestControlsForm extends FormComponent {
 		stringFieldMulti.setControlProvider(
 			new I18NStringControlProvider(MultiLineText.DEFAULT_ROWS, TextInputControl.NO_COLUMNS));
 		group.addMember(stringFieldMulti);
+
+		I18NStringField i18n = I18NStringField.newI18NStringField("i18nStringWithTooltip", !FormFactory.MANDATORY,
+			!FormFactory.IMMUTABLE);
+		i18n.enableDerivedResources(Collections.singletonMap(ResKey.TOOLTIP.substring(1),
+			com.top_logic.layout.form.values.edit.editor.I18NConstants.DERIVED_RESOURCE_TOOLTIP));
+		i18n.setControlProvider(new I18NActiveLanguageControlProvider());
+		i18n.addValueListener(new ValueListener() {
+
+			@Override
+			public void valueChanged(FormField field, Object oldValue, Object newValue) {
+				ResKey newKey = (ResKey) newValue;
+				if (newKey == null) {
+					i18n.setLabel(null);
+					i18n.setTooltip(null);
+				} else {
+					i18n.setLabel(Resources.getInstance().getString(newKey));
+					i18n.setTooltip(Resources.getInstance().getString(newKey.tooltipOptional()));
+				}
+			}
+		});
+		group.addMember(i18n);
 
 		List<String> defaultFeatureSet = null;
 		FormField structuredTextField =

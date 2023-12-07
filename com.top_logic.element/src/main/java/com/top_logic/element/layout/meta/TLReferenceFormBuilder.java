@@ -10,6 +10,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
@@ -18,6 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.Function2;
+import com.top_logic.basic.shared.string.StringServicesShared;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.ReferenceConfig;
@@ -34,8 +37,10 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.config.TLModelPartMapping;
 import com.top_logic.model.util.AllTypes;
@@ -58,6 +63,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		ReferenceModel.OVERRIDE,
 		ReferenceModel.TYPE_SPEC,
 		ReferenceModel.KIND,
+		ReferenceModel.FORWARDS_REFERENCE,
 
 		ReferenceModel.MANDATORY,
 		ReferenceModel.MULTIPLE_PROPERTY,
@@ -75,6 +81,11 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		ReferenceModel.ANNOTATIONS,
 	})
 	public interface ReferenceModel extends PartModel, ReferenceConfig {
+
+		/**
+		 * Configuration name for {@link #getForwardsReference()}.
+		 */
+		String FORWARDS_REFERENCE = "forwards-reference";
 
 		@Override
 		@Options(fun = AllReferenceTypes.class, mapping = TLModelPartMapping.class)
@@ -131,6 +142,17 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		@Override
 		@Hidden
 		String getInverseReference();
+
+		/**
+		 * If this reference is a
+		 * {@link com.top_logic.element.config.ReferenceConfig.ReferenceKind#BACKWARDS backwards}
+		 * reference, then this is the corresponding forwards reference.
+		 */
+		@DynamicMode(fun = HideIfNotBackwards.class, args = @Ref(KIND))
+		@Derived(fun = ForwardsRefComputation.class, args = { @Ref(TYPE_SPEC), @Ref(INVERSE_REFERENCE) })
+		@Name(FORWARDS_REFERENCE)
+		@InstanceFormat
+		TLTypePart getForwardsReference();
 
 		@Override
 		@Hidden
@@ -193,6 +215,46 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 			}
 
 		}
+
+		/**
+		 * Function returning {@link FieldMode#IMMUTABLE} for
+		 * {@link com.top_logic.element.config.ReferenceConfig.ReferenceKind#BACKWARDS} and
+		 * {@link FieldMode#INVISIBLE} otherwise.
+		 * 
+		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+		 */
+		class HideIfNotBackwards extends Function1<FieldMode, ReferenceKind> {
+
+			@Override
+			public FieldMode apply(ReferenceKind arg) {
+				if (arg == ReferenceKind.BACKWARDS) {
+					return FieldMode.IMMUTABLE;
+				}
+				return FieldMode.INVISIBLE;
+			}
+		}
+
+		/**
+		 * Function computing the forwards reference for a backwards reference.
+		 * 
+		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+		 */
+		class ForwardsRefComputation extends Function2<TLTypePart, String, String> {
+
+			@Override
+			public TLTypePart apply(String typeSpec, String partSpec) {
+				if (StringServicesShared.isEmpty(typeSpec) || StringServicesShared.isEmpty(partSpec)) {
+					return null;
+				}
+				TLType type = TLModelUtil.findType(typeSpec);
+				if (!(type instanceof TLStructuredType)) {
+					return null;
+				}
+				return ((TLStructuredType) type).getPart(partSpec);
+			}
+
+		}
+
 	}
 
 	/**

@@ -9,10 +9,10 @@
 	<component class="%MAIN_LAYOUT_CLASS%"
 		closeDialogOnBackgroundClick="${closeDialogOnBackgroundClick}"
 		horizontal="false"
-		icon="/images/shortcut.ico"
+		icon="/images/favicon.png"
 		name="masterFrame"
 		resizable="false"
-		shortcutIcon="/images/shortcut.ico"
+		shortcutIcon="/images/favicon.png"
 		titleKey="tl.title"
 	>
 		<component-resolvers>

@@ -9,11 +9,11 @@
 	<component class="%MAIN_LAYOUT_CLASS%"
 		closeDialogOnBackgroundClick="${closeDialogOnBackgroundClick}"
 		horizontal="false"
-		icon="/images/shortcut.ico"
+		icon="/images/favicon.png"
 		layoutFactory="com.top_logic.themes.modern.layout.sidebar.SidebarLayoutControlFactory"
 		name="masterFrame"
 		resizable="false"
-		shortcutIcon="/images/shortcut.ico"
+		shortcutIcon="/images/favicon.png"
 		titleKey="tl.title"
 	>
 		<component-resolvers>

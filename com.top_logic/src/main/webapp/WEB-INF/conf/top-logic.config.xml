@@ -10,7 +10,6 @@
 				   <module key="com.top_logic.base.time.TimeRangeService$Module" value="true"/>
 				   <module key="com.top_logic.basic.io.BasicFileLog$Module" value="true"/>
 				   <module key="com.top_logic.util.CachePolicy$Module" value="true"/>
-				   <module key="com.top_logic.base.mail.MailHelper$Module" value="true"/>
 				   <module key="com.top_logic.layout.scripting.recorder.ScriptingRecorder$Module" value="true"/>
 				   <module key="com.top_logic.base.accesscontrol.Login$Module" value="true"/>
 			       <module key="com.top_logic.common.webfolder.ui.WebFolderUIFactory$Module" value="true" />
@@ -38,7 +37,6 @@
 			       <module key="com.top_logic.knowledge.journal.JournalManager$Module" value="true"/>
 			       <module key="com.top_logic.event.logEntry.LogEntryConfiguration$Module" value="true"/>
 			       <module key="com.top_logic.base.administration.LoggerAdminBean$Module" value="true"/>
-			       <module key="com.top_logic.base.mail.MailSenderService$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.wrap.person.PersonManager$Module" value="true"/>
 			       <module key="com.top_logic.util.sched.Scheduler$Module" value="true"/>
 				   <module key="com.top_logic.tool.export.ExportHandlerRegistry$Module" value="false"/>
@@ -84,10 +82,6 @@
 				enabled="%tl_enable_scripting%"
 				recordImplementationDetails="true"
 			/>
-		</config>
-		
-		<config service-class="com.top_logic.base.mail.MailHelper">
-			<instance class="com.top_logic.base.mail.MailHelper"/>
 		</config>
 		
 		<config service-class="com.top_logic.base.accesscontrol.SessionService">
@@ -400,32 +394,6 @@
 			<instance class="com.top_logic.knowledge.wrap.WebFolderFactory"
 				create-physical-resource="immediate"
 			/>
-		</config>
-	
-		<config service-class="com.top_logic.base.mail.MailSenderService">
-			<instance class="com.top_logic.base.mail.MailSenderService"
-				startup-notification-receivers=""
-				startup-notification-subject=""
-				startup-notification-body=""
-				
-				activated="%SMTP_ACTIVE%"
-				
-				server="%SMTP_SERVER%"
-				lookup-mx-record="%SMTP_LOOKUP_MX%"
-				port="%SMTP_PORT%"
-				user="%SMTP_USER%"
-				password="%SMTP_PASS%"
-				
-				mail-domain="%MAIL_DOMAIN%"
-				from-address="%MAIL_SENDER%"
-			>
-				<options>
-					<option name="mail.transport.protocol" value="%SMTP_PROTOCOL%" />
-					<option name="mail.smtp.starttls.enable" value="%SMTP_STARTTLS%" />
-					<option name="mail.smtp.timeout" value="%SMTP_TIMEOUT%" />
-					<option name="mail.smtp.connectiontimeout" value="%SMTP_CONNECTION_TIMEOUT%" />
-				</options>
-			</instance>
 		</config>
 	
 		<config service-class="com.top_logic.tool.export.ExportQueueManager">

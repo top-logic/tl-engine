@@ -87,49 +87,13 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 
 		if (configKey != null) {
 			PersonalConfiguration personalConfiguration = PersonalConfiguration.getPersonalConfiguration();
-<<<<<<< Upstream, based on origin/master
 
 			try {
 				List<?> sizeConfig = (List<?>) personalConfiguration.getJSONValue(configKey);
-=======
->>>>>>> 70337a6 Ticket #27199: Merge conflict prevention.
 
-<<<<<<< Upstream, based on origin/master
-			if (sizeConfig != null) {
-<<<<<<< Upstream, based on origin/master
-				double configFormatVersion = ((List<Number>) ((List<Object>) sizeConfig).get(0)).get(0).doubleValue();
-				
 				if (sizeConfig != null) {
 					double configFormatVersion = ((Number) ((List<?>) sizeConfig.get(0)).get(0)).doubleValue();
 
-=======
-				double configFormatVersion = ((List<Double>) ((List<Object>) sizeConfig).get(0)).get(0);
-=======
-			try {
-				List<?> sizeConfig = (List<?>) personalConfiguration.getJSONValue(configKey);
->>>>>>> 70337a6 Ticket #27199: Merge conflict prevention.
-
-<<<<<<< Upstream, based on origin/master
-				if (Logger.isDebugEnabled(TableViewModel.class)) {
-					Logger.debug("Load tables height configuration from personal configuration. " +
-						"Configuration format version '" + configFormatVersion +
-						"' found.", TableViewModel.class);
-				}
->>>>>>> 9a673af Ticket #27199: Changes to avoid merge conflict
-=======
-				if (sizeConfig != null) {
-					double configFormatVersion = ((Number) ((List<?>) sizeConfig.get(0)).get(0)).doubleValue();
->>>>>>> 70337a6 Ticket #27199: Merge conflict prevention.
-
-<<<<<<< Upstream, based on origin/master
-				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
-					return ((List<Double>) ((List<Object>) sizeConfig).get(1)).get(0);
-				} else {
-				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
-					return ((List<Number>) ((List<Object>) sizeConfig).get(1)).get(0).doubleValue();
-				} else {
-=======
->>>>>>> 70337a6 Ticket #27199: Merge conflict prevention.
 					if (Logger.isDebugEnabled(TableViewModel.class)) {
 						Logger.debug("Load tables height configuration from personal configuration. " +
 							"Configuration format version '" + configFormatVersion +

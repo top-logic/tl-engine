@@ -632,20 +632,20 @@ div.fltList {
 }
 
 a.cMenuButton.menuEntryDisabled {
-	color: var(--text-disabled);
+	color: var(--text-on-color-disabled);
 }
 
 a.cMenuButton.menuEntryDisabled i {
-	color: var(--icon-disabled);
+	color: var(--icon-on-color-disabled);
 }
 
 a.cMenuButton.menuEntryDisabled:hover {
-	color: var(--text-disabled);
+	color: var(--text-on-color-disabled);
 	background: var(--layer);
 }
 
 a.cMenuButton.menuEntryDisabled:hover i {
-	color: var(--icon-disabled);
+	color: var(--icon-on-color-disabled);
 	background: var(--layer);
 }
 

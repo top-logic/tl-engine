@@ -13,6 +13,7 @@ body {
 	width: 100vw;
 	height: 100vh;
 	background: var(--background);
+	color: var(--text-primary);
 }
 
 h5 {
@@ -264,6 +265,15 @@ div.ace_tooltip>code.inlineCode {
 	text-overflow: ellipsis;
 	padding: 0 3px;
 	align-self: center;
+}
+
+.cTextPopupEditor {
+	margin: 0 var(--spacing-02);
+}
+
+.cTextPopupEditor .cTextInput .lFlexible textarea {
+	height: 3rem;
+	margin-top: var(--spacing-02);
 }
 
 .fltGlobalContainer {
@@ -601,14 +611,6 @@ div.fltList {
 	color: var(--icon-secondary);
 }
 
-.popupMenu a.tlInApp {
-	background-color: var(--debug);
-}
-
-.popupMenu a.tlInApp:hover {
-	background-color: var(--debug-hover);
-}
-
 .popupMenu a:hover {
 	color: var(--text-primary);
 	text-decoration: none;
@@ -649,6 +651,23 @@ a.cMenuButton.menuEntryDisabled:hover i {
 
 a.cMenuButton.menuEntryDisabled:focus {
 	box-shadow: none;
+}
+
+.popupMenu a.tlInApp {
+	background-color: var(--debug);
+}
+
+.popupMenu a.tlInApp:hover {
+	background-color: var(--debug-hover);
+}
+
+.popupMenu a.tlInApp.menuEntryDisabled {
+	background-color: var(--debug-disabled);
+}
+
+.popupMenu a.tlInApp.menuEntryDisabled:hover,
+.popupMenu a.tlInApp.menuEntryDisabled:hover i {
+	background-color: var(--debug-disabled);
 }
 
 /* ============================================= */
@@ -1200,7 +1219,7 @@ div.mcMinimized .accText {
 ****					****
 */
 .tooltipCaption {
-	color: var(--text-on-color);
+	color: var(--text-inverse);
 	background-color: var(--background-inverse);
 	padding: calc(var(--ttPadding) / 2) 12px;
 	line-height: 1.5 !important;
@@ -1273,7 +1292,7 @@ div.mcMinimized .accText {
 	overflow-wrap: break-word;
 	padding: var(--ttPadding) 12px;
 	line-height: 1.5 !important;
-	color: var(--text-on-color);
+	color: var(--text-inverse);
 	text-align: left;
 	font-size: 12px;
 	cursor: text;
@@ -1281,7 +1300,7 @@ div.mcMinimized .accText {
 
 .tooltipContent * {
 	margin: 0;
-	color: var(--text-on-color);
+	color: var(--text-inverse);
 	line-height: 1.5 !important;
 	padding: 0 !important;
 }
@@ -1996,7 +2015,7 @@ If they're deleted, this can be deleted too
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
-	color: var(--text-secodnary);
+	color: var(--text-secondary);
 	word-break: break-all;
 	margin-left: var(--spacing-02);
 }
@@ -2007,19 +2026,20 @@ If they're deleted, this can be deleted too
 	color: var(--icon-secondary);
 }
 
+.treeNode.treeSelected .fToggle.tcrToggle, .tlLeafIcon,
+.tcrNode .treeNode.treeSelected span {
+	color: var(--icon-primary);
+}
+
 .treeNode .input-image.fToggle.disabled {
 	height: 1rem;
 	width: 1rem;
 }
 
 .treeSelected .tcrLink {
-	color: var(--interactive);
+	color: var(--text-primary);
 }
 
-.tcrNode .treeSelected .fToggle.tcrToggle,
-.tcrNode .treeNode.treeSelected span {
-	color: var(--icon-interactive);
-}
 
 .tcrNode .treeNode:hover,
 .tcrNode .treeNode:hover::after {

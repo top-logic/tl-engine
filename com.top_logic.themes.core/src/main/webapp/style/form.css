@@ -659,8 +659,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .fltContent .rf_groupCell {
     border-top:1px solid var(--background);
     border-right:1px solid var(--background);
-    border-bottom:1px solid var(--text-interactive);
-    border-left:1px solid var(--text-interactive); 
+    border-bottom:1px solid var(--button-secondary);
+    border-left:1px solid var(--button-secondary); 
 	border-radius: 0px;
     position:relative;
     padding: 0.5em;
@@ -2467,12 +2467,12 @@ span.disabled .ddwttChevron::after {
 	--ttPadding: var(--spacing-02);;
 	padding: var(--ttPadding) 12px;
 	line-height: 1.5 !important;
-	color: var(--text-secondary);
+	color: var(--text-inverse);
 }
 
 .ddwttTooltipContent * {
 	margin: 0;
-	color: var(--text-secondary);
+	color: var(--text-inverse);
 	line-height: 1.5 !important;
 	padding: 0 !important;
 }

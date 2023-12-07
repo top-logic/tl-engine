@@ -264,7 +264,7 @@
 		expr="%com.top_logic.layout.table.renderer.Icons.SORT_DESC%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
-		value="css:bi bi-funnel"
+		expr="%com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FRAME"
 		expr="%com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE%"
@@ -1554,7 +1554,6 @@
 		expr="%ICONS_BUTTON_UNGROUP%"
 	/>
 	
-	
 	<!-- No Bootstrap Icons found for these -->
 	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
 		expr=""
@@ -1606,8 +1605,8 @@
 	<color name="text-helper"
 		value="#676b72"
 	/>
-	<color name="text-interactive"
-		value="#2968c8"
+	<color name="text-inverse"
+		value="#ffffff"
 	/>
 	<color name="link-primary"
 		value="#2968c8"
@@ -1718,10 +1717,13 @@
 		value="#2968c8"
 	/>
 	<color name="debug"
+		value="#D6E3F7"
+	/>
+	<color name="debug-disabled"
 		value="#ecf1fa"
 	/>
 	<color name="debug-hover"
-		value="#d0ddf1"
+		value="#BFD3F3"
 	/>
 	<color name="interactive"
 		value="#2968c8"

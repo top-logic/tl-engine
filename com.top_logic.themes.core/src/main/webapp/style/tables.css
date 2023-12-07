@@ -167,12 +167,12 @@ td.tl-table__cell {
 }
 
 .tl-table__row.header .tl-table__cell:active {
-	background: var(--layer-accent-active);
+	background: var(--layer-selected);
 }
 
 .tl-table__row.header .tl-table__cell:hover {
 	color: var(--text-primary);
-	background: var(--layer-accent-hover);
+	background: var(--layer-hover);
 }
 
 .tl-table__row.header .tl-table__cell:hover span.activeFilter {
@@ -217,12 +217,12 @@ th.tblTHRight {
 }
 
 tr.tl-table__row {
-	background-color: transparent;
+	background-color: var(--background);
 }
 
 /* Note: Order matters: Must appear below `tl-table__row` to override styles. */
 tr.tblEven {
-	background-color:var(--TABLE_ROW_EVEN_BACKGROUND_COLOR);
+	background-color: var(--background);
 }
 
 /* Note: Order matters: Must appear below `tblEven` to override styles. */
@@ -411,7 +411,7 @@ table.regTable {
 }
 
 th.regTitle {
-	background-color: var(--FRAME_BACK);
+	background-color: var(--layer-accent);
 	color:            var(--text-primary);
 	font-size:        13px;
 	font-weight:      normal;
@@ -555,7 +555,7 @@ div.movingheader{
 	border-left-width:   0px;
 	border-top-width:    0px;
 	color:               black;
-	background-color:    var(--layer);
+	background-color:    var(--layer-accent);
 }
 
 th.insertRight{
@@ -1215,6 +1215,7 @@ div.dirtyHandlingDialog .changes {
 
 .px-1 .tl-radio-checkbox-container {
 	display: flex;
+	justify-content: center;
 }
 
 .tl-table__content-container {
@@ -1301,7 +1302,7 @@ div.dirtyHandlingDialog .changes {
 	background-clip: padding-box !important;
 	position: relative;
 	box-sizing: border-box;
-	background-color: var(--TABLE_CELL_BACKGROUND_COLOR);
+	background-color: var(--background);
 }
 
 .tl-table__cell:not(:last-child),

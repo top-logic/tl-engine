@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <settings>
+	<boolean name="com.top_logic.layout.Icons.HIDE_APP_TITLE_ON_LOGIN_PAGE"
+		value="true"
+	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
 		value="css:bi bi-info-square"
 	/>

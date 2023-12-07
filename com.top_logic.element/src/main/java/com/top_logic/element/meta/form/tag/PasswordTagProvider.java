@@ -37,12 +37,6 @@ public class PasswordTagProvider implements DisplayProvider, ControlProvider {
 	}
 
 	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		int columns = DisplayAnnotations.inputSize(editContext, 0);
-		return PasswordInputControlProvider.createPasswordControl((FormField) member, 0, 0, columns);
-	}
-
-	@Override
 	public Control createControl(Object model, String style) {
 		return new PasswordInputControlProvider(0, 0, 0).createControl(model, style);
 	}

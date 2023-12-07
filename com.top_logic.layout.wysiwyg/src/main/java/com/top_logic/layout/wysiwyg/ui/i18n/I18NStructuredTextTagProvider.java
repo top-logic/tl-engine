@@ -34,11 +34,6 @@ public class I18NStructuredTextTagProvider implements DisplayProvider {
 		return newControl((I18NStructuredTextField) member);
 	}
 
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		return newControl((I18NStructuredTextField) member);
-	}
-
 	private Control newControl(I18NStructuredTextField i18n) {
 		FormField sourceField = I18NTranslationUtil.getSourceField(i18n.getLanguageFields());
 		StructuredTextWithButtonControl sourceControl = new StructuredTextWithButtonControl(sourceField);

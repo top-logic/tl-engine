@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.element.meta.AttributeSettings;
 import com.top_logic.element.meta.AttributeUpdate;
@@ -51,21 +50,4 @@ public final class MetaControlProvider implements ControlProvider {
 		return DefaultFormFieldControlProvider.INSTANCE.createControl(model, style);
 	}
 
-	@Override
-	public HTMLFragment createFragment(Object model, String style) {
-		if (style == null || style.equals(FormTemplateConstants.STYLE_DIRECT_VALUE)) {
-			FormMember member = (FormMember) model;
-			AttributeUpdate update = DefaultAttributeFormFactory.getAttributeUpdate(member);
-			if (update != null) {
-				TagProviderAnnotation annotation =
-					update.getAttribute().getAnnotation(TagProviderAnnotation.class);
-				if (annotation != null) {
-					DisplayProvider tagProvider = TypedConfigUtil.createInstance(annotation.getImpl());
-					HTMLFragment control = tagProvider.createDisplayFragment(update, member);
-					return control;
-				}
-			}
-		}
-		return DefaultFormFieldControlProvider.INSTANCE.createFragment(model, style);
-	}
 }

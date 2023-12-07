@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -61,11 +60,6 @@ public class CustomInputTagProvider extends AbstractConfiguredInstance<CustomInp
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
 		return cp(member).createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
-	}
-
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		return cp(member).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
 	}
 
 	private ControlProvider cp(FormMember member) {

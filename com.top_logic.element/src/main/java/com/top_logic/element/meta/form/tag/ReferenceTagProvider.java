@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
@@ -35,15 +34,6 @@ public class ReferenceTagProvider extends AbstractReferenceTagProvider {
 		}
 
 		return getReferenceDisplay(editContext, member);
-	}
-
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		if (AttributeOperations.isComposition(editContext)) {
-			return DefaultFormFieldControlProvider.INSTANCE.createFragment(member);
-		}
-
-		return getReferenceDisplayFragment(editContext, member);
 	}
 
 }

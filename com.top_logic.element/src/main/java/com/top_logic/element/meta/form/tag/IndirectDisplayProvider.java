@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;
@@ -39,11 +38,6 @@ public abstract class IndirectDisplayProvider implements DisplayProvider {
 	@Override
 	public final Control createDisplay(EditContext editContext, FormMember member) {
 		return getControlProvider(editContext).createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
-	}
-
-	@Override
-	public final HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		return getControlProvider(editContext).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
 	}
 
 }

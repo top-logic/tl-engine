@@ -16,7 +16,7 @@
 	box-sizing: border-box;
 }
 
-html, body {
+body {
 	font-family: 'Inter-Regular';
 	font-size: .875rem;
 	line-height: 1.125rem;
@@ -25,14 +25,11 @@ html, body {
 	margin: 0;
 	width: 100vw;
 	height: 100vh;
-	background: #ffffff;
-}
-
-body {
 	background-image: url(../images/login/login-background.jpg);
 	background-size: cover;
 	background-position: center;
 }
+
 
 form {
 	margin: 0 auto;
@@ -56,7 +53,8 @@ label {
 	margin-top: .5rem;
 }
 
-input[type="text"], input[type="password"] {
+input[type="text"],
+input[type="password"] {
 	color: #101113;
 	background-color: #f0f1f2;
 	border-color: #c4c7cc;
@@ -68,6 +66,12 @@ input[type="text"], input[type="password"] {
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+	box-shadow: inset 0px 0px 0px 2px #2968c8,inset 0px 0px 0px 3px #ffffff;
+	outline: none;
 }
 
 input[type="text"]:-webkit-autofill {
@@ -85,6 +89,10 @@ input[type="text"]:-webkit-autofill {
 }
 
 input[type="submit"] {
+	font-family: 'Inter-SemiBold';
+	font-size: .875rem;
+	line-height: 1.125rem;
+	letter-spacing: .15px;
 	height: 2.3rem; /* 36.8px height */
 	padding: .5rem 1rem;
 	border-radius: .25rem;
@@ -93,6 +101,7 @@ input[type="submit"] {
 	color: #ffffff;
 	cursor: pointer;
 	border: none;
+	margin-top: 1rem;
 }
 
 input[type="submit"]:hover {
@@ -101,7 +110,7 @@ input[type="submit"]:hover {
 }
 
 input[type="submit"]:focus {
-	box-shadow: inset 0px 0px 0px 1px #2968C8,inset 0px 0px 0px 2px #ffffff;
+	box-shadow: inset 0px 0px 0px 2px #2968C8, inset 0px 0px 0px 3px #ffffff;
 }
 
 .disabled, input[type="submit"][disabled] {
@@ -111,7 +120,7 @@ input[type="submit"]:focus {
 
 div.container {
 	position:relative;
-	background-color: #f0f1f2;
+	background: #ffffff;
 	padding: 1rem 1.5rem;
 	border-radius: 0.25rem;
 	border: 1px solid #c4c7cc;

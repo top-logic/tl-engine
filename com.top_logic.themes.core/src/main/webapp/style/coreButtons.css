@@ -25,6 +25,11 @@
     padding-top: var(--spacing-01);
 }
 
+.cTextPopupEditor .cmdButtons {
+    margin: var(--spacing-02) 0;
+    padding-top: 0;
+}
+
 .cmdButtons .cButton,
 .tlButtonScrollContainer .cButton {
 	margin-right: 0.5rem;
@@ -42,7 +47,7 @@
 
 .cButton:hover, 
 .tlButton:hover {
-	text-decoration: none;
+	text-decoration: none !important;
 }
 
 div.cmdProgress {
@@ -120,11 +125,12 @@ div.cmdProgress img {
 }
 
 .fltSubContent .menuEntryCell {
-	padding: 0;
     font-family: 'Inter-SemiBold';
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
+	padding: 0;
+    color: var(--button-secondary);
 }
 
 .fltSubContent .menuEntryCell:first-child, 
@@ -171,13 +177,13 @@ with hard coded popup window dimension
 .tlButton 
 .fltSubContent .cMenuButton.menuEntryEnabled,
 .tlButtonLabel, .cDefaultButton button {
-	color: var(--text-interactive);
+	color: var(--button-secondary);
 }
 
 .tlButton .cmdImg,
 .fltSubContent .menuEntryCell:first-child, 
 .fltSubContent .menuEntryCell img.menuEntryImage {
-	color: var(--icon-interactive);
+	color: var(--button-secondary);
 }
 
 .tlButton:hover,
@@ -554,8 +560,8 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton,
 .tlAdditionalRightContent .cImageButton.cmdButtonDisabled {
-	height: 1.5rem;
-	width: 1.5rem;
+	height: 1.25rem;
+	width: 1.25rem;
 }
 
 .sblLogo .cImageButton, 

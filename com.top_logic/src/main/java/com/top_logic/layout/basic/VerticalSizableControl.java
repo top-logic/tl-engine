@@ -92,14 +92,24 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 				List<?> sizeConfig = (List<?>) personalConfiguration.getJSONValue(configKey);
 
 			if (sizeConfig != null) {
+<<<<<<< Upstream, based on origin/master
 				double configFormatVersion = ((List<Number>) ((List<Object>) sizeConfig).get(0)).get(0).doubleValue();
 				
 				if (sizeConfig != null) {
 					double configFormatVersion = ((Number) ((List<?>) sizeConfig.get(0)).get(0)).doubleValue();
 
+=======
+				double configFormatVersion = ((List<Double>) ((List<Object>) sizeConfig).get(0)).get(0);
+
+				if (Logger.isDebugEnabled(TableViewModel.class)) {
+					Logger.debug("Load tables height configuration from personal configuration. " +
+						"Configuration format version '" + configFormatVersion +
+						"' found.", TableViewModel.class);
+				}
+>>>>>>> 9a673af Ticket #27199: Changes to avoid merge conflict
 
 				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
-					return ((List<Number>) ((List<Object>) sizeConfig).get(1)).get(0).doubleValue();
+					return ((List<Double>) ((List<Object>) sizeConfig).get(1)).get(0);
 				} else {
 				if (configFormatVersion == VERTICAL_SIZE_FORMAT_VERSION) {
 					return ((List<Number>) ((List<Object>) sizeConfig).get(1)).get(0).doubleValue();

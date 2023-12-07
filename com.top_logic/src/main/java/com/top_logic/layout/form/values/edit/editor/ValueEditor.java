@@ -121,7 +121,12 @@ public class ValueEditor extends AbstractEditor {
 				}
 				if (!hasOptionProvider) {
 					if (isEnum) {
-						options(select, Arrays.asList(property.getElementType().getEnumConstants()));
+						List<?> opts = Arrays.asList(property.getElementType().getEnumConstants());
+						if (optionLabels != null) {
+							options(select, opts, optionLabels);
+						} else {
+							options(select, opts);
+						}
 						select.setOptionComparator(Equality.INSTANCE);
 					}
 				}

@@ -339,7 +339,7 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 							comment="Not an existing attribute"
 						>
-							<expected-failure-message>Kein solcher Teil "DemoTypes:A" in Typ "notExistingAttribute".</expected-failure-message>
+							<expected-failure-message>Kein solcher Teil "notExistingAttribute" in Typ "DemoTypes:A".</expected-failure-message>
 							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 								command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
 								command-label="Suchergebnisse aktualisieren"

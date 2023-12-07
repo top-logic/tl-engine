@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -69,17 +68,6 @@ public class StringTagProvider extends AbstractConfiguredInstance<StringTagProvi
 		if (member instanceof SelectField) {
 			// A primitive type with an options annotation is somewhat like an enumeration.
 			return EnumerationTagProvider.INSTANCE.createDisplay(editContext, member);
-		}
-
-		return textInput(editContext, member);
-	}
-
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		// Note: With an options annotation, a select field is created instead of a string field.
-		if (member instanceof SelectField) {
-			// A primitive type with an options annotation is somewhat like an enumeration.
-			return EnumerationTagProvider.INSTANCE.createDisplayFragment(editContext, member);
 		}
 
 		return textInput(editContext, member);

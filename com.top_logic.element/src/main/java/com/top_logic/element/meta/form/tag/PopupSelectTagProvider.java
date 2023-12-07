@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.Control;
@@ -52,20 +51,4 @@ public final class PopupSelectTagProvider implements DisplayProvider {
 		}
 	}
 
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		Renderer<Object> optionRenderer = MetaResourceProvider.DEFAULT_RENDERER;
-
-		if (ThemeFactory.getTheme().getValue(com.top_logic.layout.Icons.POPUP_TEXT_SELECT_VIEW)) {
-			SelectTextControl result = new SelectTextControl((FormField) member);
-			result.setSelectionRenderer(optionRenderer);
-			return result;
-		} else {
-			SelectionControl result = new SelectionControl((SelectField) member);
-			result.setColumns(DisplayAnnotations.inputSize(editContext, PopupSelectTag.NO_COLUMNS));
-			result.setClearButton(!editContext.isMandatory());
-			result.setOptionRenderer(optionRenderer);
-			return result;
-		}
-	}
 }

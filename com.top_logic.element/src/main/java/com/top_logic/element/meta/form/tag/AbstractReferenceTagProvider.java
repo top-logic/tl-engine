@@ -31,13 +31,6 @@ public abstract class AbstractReferenceTagProvider implements DisplayProvider {
 	}
 
 	/**
-	 * Creates a tag where elements are selected in a popup dialog.
-	 */
-	protected HTMLFragment createPopupDisplayFragment(EditContext editContext, FormMember member) {
-		return PopupSelectTagProvider.INSTANCE.createDisplayFragment(editContext, member);
-	}
-
-	/**
 	 * Creates a choice display with the given {@link Orientation}.
 	 */
 	protected ChoiceControl createChoiceDisplay(FormMember member, Orientation orientation) {
@@ -83,33 +76,6 @@ public abstract class AbstractReferenceTagProvider implements DisplayProvider {
 					return createPopupDisplay(editContext, member);
 				}
 				return createTableDisplay(member);
-			}
-			default:
-				throw ReferencePresentation.unknownPresentation(presentation);
-		}
-	}
-
-	/**
-	 * Creates a reference display according to the given {@link ReferencePresentation}.
-	 */
-	protected HTMLFragment getReferenceDisplayFragment(EditContext editContext, FormMember member) {
-		ReferencePresentation presentation = AttributeOperations.getPresentation(editContext);
-		switch (presentation) {
-			case DROP_DOWN: {
-				return SelectTagProvider.INSTANCE.createDisplayFragment(editContext, member);
-			}
-			case RADIO:
-				return createChoiceDisplay(member, Orientation.VERTICAL);
-			case RADIO_INLINE:
-				return createChoiceDisplay(member, Orientation.HORIZONTAL);
-			case POP_UP: {
-				return createPopupDisplayFragment(editContext, member);
-			}
-			case TABLE: {
-				if (editContext.inTableContext()) {
-					return createPopupDisplayFragment(editContext, member);
-				}
-				return createTableDisplayFragment(member);
 			}
 			default:
 				throw ReferencePresentation.unknownPresentation(presentation);

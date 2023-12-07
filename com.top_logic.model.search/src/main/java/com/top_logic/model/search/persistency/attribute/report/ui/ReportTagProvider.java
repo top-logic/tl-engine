@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.search.persistency.attribute.report.ui;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.ConstantProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.tag.DisplayProvider;
@@ -29,11 +28,6 @@ public class ReportTagProvider implements DisplayProvider {
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
 		return createControlProvider(editContext).createControl(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
-	}
-
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		return createControlProvider(editContext).createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
 	}
 
 	/**

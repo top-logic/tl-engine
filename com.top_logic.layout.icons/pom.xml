@@ -10,7 +10,7 @@
 
   <artifactId>tl-layout-icons</artifactId>
   <description>The TopLogic icon font.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

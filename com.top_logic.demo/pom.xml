@@ -10,7 +10,7 @@
 
   <artifactId>tl-demo</artifactId>
   <description>The technical TopLogic demo "kitchen sink".</description>
-  <url>${tl.repository.url}</url>
+  <url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

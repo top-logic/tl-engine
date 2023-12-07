@@ -10,7 +10,7 @@
 
   <artifactId>tl-kafka-demo</artifactId>
   <description>Technical demo for Kafka bus communication.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>
 		<dependency-check.skip>true</dependency-check.skip>

@@ -10,7 +10,7 @@
 
   <artifactId>tl-graph-server</artifactId>
   <description>Base functionality for rendering TopLogic models as graphs.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

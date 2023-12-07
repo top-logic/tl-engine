@@ -10,7 +10,7 @@
 
   <artifactId>tl-security-auth-pac4j</artifactId>
   <description>Single-sign-on through OpenID connect.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

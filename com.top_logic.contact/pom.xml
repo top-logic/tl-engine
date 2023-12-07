@@ -10,7 +10,7 @@
 
   <artifactId>tl-contact</artifactId>
   <description>TopLogic model for contacts.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

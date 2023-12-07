@@ -10,7 +10,7 @@
 
   <artifactId>tl-layout-themeedit</artifactId>
   <description>In-app theme editor.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

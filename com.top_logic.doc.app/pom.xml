@@ -10,7 +10,7 @@
 
   <artifactId>tl-doc-app</artifactId>
   <description>The TopLogic documentation wiki.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

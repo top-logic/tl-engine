@@ -10,7 +10,7 @@
 
   <artifactId>tl-common-remote</artifactId>
   <description>Shared library between server and GWT-based client code realizing collectively shared objects.</description>
-  <url>${tl.repository.url}</url>
+  <url>https://github.com/top-logic/tl-engine/</url>
 
   <properties>
 		<!-- gwt does not full understand Java 11 syntax. -->		

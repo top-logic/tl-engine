@@ -10,7 +10,7 @@
 
 	<artifactId>tl-bpe-app</artifactId>
 	<description>Business process engine application for executing BPMN configurable workflows.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<dependencies>
 		<dependency>

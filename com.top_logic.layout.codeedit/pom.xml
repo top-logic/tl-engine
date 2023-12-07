@@ -10,7 +10,7 @@
 
   <artifactId>tl-layout-codeedit</artifactId>
   <description>In-app code editor based on ace library.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

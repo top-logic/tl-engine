@@ -10,7 +10,7 @@
 
   <artifactId>tl-element</artifactId>
   <description>The TopLogic dynamic model implementation.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

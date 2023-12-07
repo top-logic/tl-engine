@@ -10,7 +10,7 @@
 
   <artifactId>tl-reporting</artifactId>
   <description>Legacy module for report generation.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

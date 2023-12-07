@@ -10,7 +10,7 @@
 
   <artifactId>tl-themes-core</artifactId>
   <description>TopLogic theme "core".</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine</url>
 	
   <dependencies>
     <dependency>

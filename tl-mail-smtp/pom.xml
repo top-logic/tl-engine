@@ -11,7 +11,7 @@
   <artifactId>tl-mail-smtp</artifactId>
   
   <description>The TopLogic mail sender service.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

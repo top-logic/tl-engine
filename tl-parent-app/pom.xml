@@ -97,7 +97,7 @@
 			    <dependency>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-license-professional</artifactId>
-					<version>${tl.version}</version>
+					<version>7.8.0-SNAPSHOT</version>
 			    </dependency>
 	  		</dependencies>
 	  	</profile>

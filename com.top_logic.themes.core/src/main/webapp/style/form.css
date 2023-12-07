@@ -741,26 +741,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	margin-bottom: 10px;	
 }
 
-/* Form editor */
-/*
-MAYBE DELETE
-.cFormEditorElement .rf_columnsLayout,
-.cFormEditorElement .rf_columnsLayout.rf_line,
-.cFormEditorElement .rf_content {
-	margin-left: 0px;
-}
-
-.cFormEditorElement .rf_columnsLayout > *:not(body),
-.cFormEditorElement .rf_content > *:not(body) {
-	margin-left: 0px;
-  	padding-right: 0px;
-}
-
-.cFormEditorElement .rf_columnsLayout > .rf_groupCell {
-  	margin-left: -2px; /* 2px for the border */
-} 
-*/
-
 .cFormEditorDisplay .hidden, 
 .hidden { 
 	display: none; 

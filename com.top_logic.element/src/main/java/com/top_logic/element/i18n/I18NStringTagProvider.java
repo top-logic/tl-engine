@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.i18n;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.tag.DisplayProvider;
@@ -27,14 +26,6 @@ public class I18NStringTagProvider implements DisplayProvider {
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
-		I18NStringField i18n = (I18NStringField) member;
-		int rows = rows(editContext);
-		int columns = columns(editContext);
-		return newControl(i18n, rows, columns);
-	}
-
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
 		I18NStringField i18n = (I18NStringField) member;
 		int rows = rows(editContext);
 		int columns = columns(editContext);

@@ -29,11 +29,6 @@ public class IconInputTagProvider implements DisplayProvider, ControlProvider {
 	}
 
 	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		return createFragment(member, FormTemplateConstants.STYLE_DIRECT_VALUE);
-	}
-
-	@Override
 	public Control createControl(Object model, String style) {
 		if (style == null || FormTemplateConstants.STYLE_DIRECT_VALUE.equals(style)) {
 			return new IconInputControl((FormField) model);

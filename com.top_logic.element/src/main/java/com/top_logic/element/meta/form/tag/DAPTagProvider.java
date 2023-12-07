@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.layout.Control;
@@ -42,16 +41,4 @@ public class DAPTagProvider extends AbstractReferenceTagProvider {
 		}
 	}
 
-	@Override
-	public HTMLFragment createDisplayFragment(EditContext editContext, FormMember member) {
-		ReferencePresentation presentation = AttributeOperations.getPresentation(editContext);
-		switch (presentation) {
-			case RADIO:
-				return createChoiceDisplay(member, Orientation.VERTICAL);
-			case RADIO_INLINE:
-				return createChoiceDisplay(member, Orientation.HORIZONTAL);
-			default:
-				return createPopupDisplayFragment(editContext, member);
-		}
-	}
 }

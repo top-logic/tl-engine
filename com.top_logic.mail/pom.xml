@@ -10,7 +10,7 @@
 
   <artifactId>tl-mail</artifactId>
   <description>TopLogic e-mail connectivity.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

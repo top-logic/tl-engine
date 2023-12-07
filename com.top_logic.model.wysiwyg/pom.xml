@@ -10,7 +10,7 @@
 
   <artifactId>tl-model-wysiwyg</artifactId>
   <description>HTML typed model attributes.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

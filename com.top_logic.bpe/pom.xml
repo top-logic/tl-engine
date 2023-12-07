@@ -10,7 +10,7 @@
 
   <artifactId>tl-bpe</artifactId>
   <description>Business process engine.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

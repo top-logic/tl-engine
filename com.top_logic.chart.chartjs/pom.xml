@@ -10,7 +10,7 @@
 
   <artifactId>tl-chart-chartjs</artifactId>
   <description>Integration of model-based charts using the chartjs library.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

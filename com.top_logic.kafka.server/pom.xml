@@ -10,7 +10,7 @@
 
   <artifactId>tl-kafka-server</artifactId>
   <description>Code for bootstrapping an Apache Kafka server for testing.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>
 		<dependency-check.skip>true</dependency-check.skip>

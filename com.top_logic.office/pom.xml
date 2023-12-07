@@ -10,7 +10,7 @@
 
   <artifactId>tl-office</artifactId>
   <description>Interfaces for office formats.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

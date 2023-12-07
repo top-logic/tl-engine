@@ -10,7 +10,7 @@
 
   <artifactId>tl-graph-diagramjs</artifactId>
   <description>Code shared between server and GWT-based client library for displaying the TopLogic model as UML diagram through diagramjs.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

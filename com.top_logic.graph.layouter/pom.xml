@@ -10,7 +10,7 @@
 
   <artifactId>tl-graph-layouter</artifactId>
   <description>Algorithms for automatic graph layout.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

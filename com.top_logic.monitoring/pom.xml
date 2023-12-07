@@ -10,7 +10,7 @@
 
   <artifactId>tl-monitoring</artifactId>
   <description>TopLogic monitoring components.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

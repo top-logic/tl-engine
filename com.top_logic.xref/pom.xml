@@ -10,7 +10,7 @@
 
   <artifactId>tl-xref</artifactId>
   <description>The TopLogic cross-reference index for classes and configurations.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>
 		<!-- For framework modules, combine all JavaDoc to its deploy location. -->

@@ -1180,7 +1180,7 @@ public class TLModelUtil {
 			}
 		}
 		throw new TopLogicException(
-			I18NConstants.ERROR_NO_SUCH_PART_IN_TYPE__TYPE_NAME.fill(partName, qualifiedName(type)));
+			I18NConstants.ERROR_NO_SUCH_PART_IN_TYPE__TYPE_NAME.fill(qualifiedName(type), partName));
 	}
 
 	/**

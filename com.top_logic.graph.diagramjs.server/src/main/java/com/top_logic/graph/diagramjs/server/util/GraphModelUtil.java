@@ -200,13 +200,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 */
 	public static GraphPart createGraphPart(GraphModel graph, Object newModel,
 			LabelProvider labelProvider, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
-		// create only if for this element does not exist..
-		// is visible (not hidden and included in invisible elements
-		// if reference ends have to be exist..
-		// for a label owner have to be exist..
 		GraphPart part = createGraphPartInternal(graph, newModel, labelProvider, hiddenElements, invisibleElements);
-
-		// set visibility..
 
 		graph.setSelectedGraphParts(Collections.singleton(part));
 

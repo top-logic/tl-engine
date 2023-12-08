@@ -11,12 +11,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.Log;
+import com.top_logic.basic.col.ListBuilder;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.NoBubblingEventType;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.remote.listener.AttributeListener;
 import com.top_logic.element.layout.meta.TLEnumerationFormBuilder;
@@ -601,7 +602,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	private Collection<? extends GraphPart> getGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
 		return graphPartModels.stream()
 			.map(graphPartModel -> graph.getGraphPart(graphPartModel))
-			.filter(Objects::nonNull)
+			.filter(model -> model != null)
 			.collect(Collectors.toSet());
 	}
 
@@ -744,11 +745,26 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	@Override
 	protected void handleTLObjectCreations(Stream<? extends TLObject> created) {
 		if (hasGraphModel()) {
-			created.forEach(object -> {
-				if (belongsToDisplayedModule(object) && isSupportedObject(object)) {
-					getOrCreateGraphPart(object);
+			List<? extends TLObject> creations =
+				created.filter(object -> belongsToDisplayedModule(object) && isSupportedObject(object))
+				.sorted(TLTypesFirstComparator.INSTANCE)
+				.collect(Collectors.toList());
+
+			int firstNonClassIndex = creations.size();
+			for (int i = 0; i < creations.size(); i++) {
+				if(!(creations.get(i) instanceof TLClass)) {
+					firstNonClassIndex = i;
+					break;
 				}
-			});
+			}
+
+			List<TLClass> classObjects = (List<TLClass>) creations.subList(0, firstNonClassIndex);
+			List<TLClass> orderedClasses =
+				CollectionUtilShared.topsort(clazz -> clazz.getGeneralizations(), classObjects, false);
+			ListBuilder<TLObject> builder = new ListBuilder();
+			builder.addAll(orderedClasses);
+			builder.addAll(creations.subList(firstNonClassIndex, creations.size()));
+			builder.toList().forEach(object -> getOrCreateGraphPart(object));
 		}
 	}
 

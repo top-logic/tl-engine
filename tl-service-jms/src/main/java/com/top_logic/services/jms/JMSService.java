@@ -30,7 +30,7 @@ import jakarta.jms.JMSException;
 
 /**
  * The TopLogic Service to set the config for a connection and establish this connection to a JMS
- * Message System. In this case the connection is tuned to the IBM MQ system.
+ * Message System.
  * 
  * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */

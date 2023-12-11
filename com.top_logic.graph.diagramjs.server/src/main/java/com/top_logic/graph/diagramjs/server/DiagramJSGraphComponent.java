@@ -776,12 +776,13 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
 	private List<TLClass> getTLClasses(Map<ModelKind, List<TLModelPart>> partsByKind) {
 		if (partsByKind.containsKey(ModelKind.CLASS)) {
 			List<TLClass> classes = new ArrayList<>();
 
-			classes.addAll((Collection<? extends TLClass>) partsByKind.get(ModelKind.CLASS));
+			for (TLModelPart clazz : partsByKind.get(ModelKind.CLASS)) {
+				classes.add((TLClass) clazz);
+			}
 
 			return classes;
 		} else {

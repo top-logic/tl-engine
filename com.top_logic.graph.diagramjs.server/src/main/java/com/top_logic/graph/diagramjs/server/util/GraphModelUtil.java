@@ -254,6 +254,10 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			return insertNodeIntoGraph(graph, (TLType) newModel, context, invisibleElements);
 		} else if (newModel instanceof TLEnumeration) {
 			return insertNodeIntoGraph(graph, (TLType) newModel, context, invisibleElements);
+		} else if (newModel instanceof TLClassifier) {
+			TLClassifier classifier = (TLClassifier) newModel;
+
+			return createClassifier(context.getLabelProvider(), graph.getNode(classifier.getOwner()), classifier);
 		} else {
 			throw new UnsupportedOperationException("diagram part for " + newModel + " could not be created.");
 		}
@@ -401,8 +405,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		}
 	}
 
-	private static Label createClassifier(LabelProvider labelProvider, DefaultDiagramJSClassNode node,
-			TLClassifier classifier) {
+	private static Label createClassifier(LabelProvider labelProvider, Node node, TLClassifier classifier) {
 		return createDiagramJSLabel(node, classifier, LayoutGraphUtil.getLabel(labelProvider, classifier),
 			LABEL_CLASSIFIER_TYPE);
 	}

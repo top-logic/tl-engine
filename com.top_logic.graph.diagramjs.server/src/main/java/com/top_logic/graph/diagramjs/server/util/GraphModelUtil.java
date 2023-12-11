@@ -109,7 +109,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			nodes.add(type);
 
 			if (isModelClass(type)) {
-				TLModelUtil.getAllReferences((TLClass) type).stream()
+				TLModelUtil.getLocalReferences((TLClass) type).stream()
 					.filter(reference -> !context.getHiddenElements().contains(reference))
 					.forEach(reference -> {
 						nodes.add(reference.getType());
@@ -143,7 +143,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			if (isModelClass(type)) {
 				TLClass clazz = (TLClass) type;
 
-				TLModelUtil.getAllReferences(clazz).forEach(reference -> {
+				TLModelUtil.getLocalReferences(clazz).forEach(reference -> {
 					if (nodes.contains(reference.getType())) {
 						edges.add(reference);
 					}

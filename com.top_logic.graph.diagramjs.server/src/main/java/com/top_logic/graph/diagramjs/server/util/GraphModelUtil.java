@@ -67,7 +67,6 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -136,7 +135,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	/**
-	 * Whether the given object could be displayed in the diagram (representation of one model
+	 * Whether the given model part could be displayed in the diagram (representation of one model
 	 * module).
 	 * 
 	 * <ul>
@@ -149,23 +148,21 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * 
 	 * All other {@link TLModelPart}'s are not displayed.
 	 */
-	public static boolean isValidModelDiagramObject(TLObject object) {
-		if (object instanceof TLModelPart) {
-			ModelKind kind = ((TLModelPart) object).getModelKind();
+	public static boolean isValidModelDiagramObject(TLModelPart part) {
+		ModelKind kind = part.getModelKind();
 
-			if (ModelKind.CLASS.equals(kind) || ModelKind.ENUMERATION.equals(kind)) {
-				return TLModelUtil.isGlobal((TLType) object);
-			}
+		if (ModelKind.CLASS.equals(kind) || ModelKind.ENUMERATION.equals(kind)) {
+			return TLModelUtil.isGlobal((TLType) part);
+		}
 
-			if (ModelKind.CLASSIFIER.equals(kind) || ModelKind.PROPERTY.equals(kind)) {
-				return TLModelUtil.isGlobal(((TLTypePart) object).getOwner());
-			}
+		if (ModelKind.CLASSIFIER.equals(kind) || ModelKind.PROPERTY.equals(kind)) {
+			return TLModelUtil.isGlobal(((TLTypePart) part).getOwner());
+		}
 
-			if (ModelKind.REFERENCE.equals(kind)) {
-				TLReference reference = (TLReference) object;
+		if (ModelKind.REFERENCE.equals(kind)) {
+			TLReference reference = (TLReference) part;
 
-				return TLModelUtil.isGlobal(reference.getOwner()) && TLModelUtil.isGlobal(reference.getType());
-			}
+			return TLModelUtil.isGlobal(reference.getOwner()) && TLModelUtil.isGlobal(reference.getType());
 		}
 
 		return false;

@@ -246,7 +246,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 
 	private final GraphData _graphData = new DefaultGraphData(null);
 	
-	private Collection<Object> _hiddenGraphParts = new HashSet<>();
+	private Set<Object> _hiddenGraphParts = new HashSet<>();
 
 	private Collection<TLType> _technicalGeneralizations = new HashSet<>();
 
@@ -716,7 +716,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	/**
 	 * Returns the collection of graph part models that should not be displayed in a diagram.
 	 */
-	public Collection<Object> getHiddenElements() {
+	public Set<Object> getHiddenElements() {
 		if (showHiddenElements()) {
 			return Collections.emptySet();
 		} else {
@@ -734,7 +734,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	/**
 	 * Returns a collection of diagram elements that are rendered but marked as invisible.
 	 */
-	public Collection<Object> getInvisibleGraphParts() {
+	public Set<Object> getInvisibleGraphParts() {
 		if (showHiddenElements()) {
 			return _hiddenGraphParts;
 		} else {
@@ -745,8 +745,8 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	@Override
 	protected void handleTLObjectCreations(Stream<? extends TLObject> created) {
 		if (hasGraphModel()) {
-			List<? extends TLObject> creations =
-				created.filter(object -> belongsToDisplayedModule(object) && isSupportedObject(object))
+			List<? extends TLObject> creations = created.filter(object -> GraphModelUtil.isValidModelDiagramObject(object))
+				.filter(object -> belongsToDisplayedModule(object))
 				.sorted(TLTypesFirstComparator.INSTANCE)
 				.collect(Collectors.toList());
 
@@ -791,8 +791,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		if (graphPart != null) {
 			return graphPart;
 		} else {
-			return GraphModelUtil.createGraphPart(graph, object, getLabelProvider(), getHiddenElements(),
-				getInvisibleGraphParts());
+			return GraphModelUtil.createGraphPart(graph, object, getLayoutContext(), getInvisibleGraphParts());
 		}
 	}
 

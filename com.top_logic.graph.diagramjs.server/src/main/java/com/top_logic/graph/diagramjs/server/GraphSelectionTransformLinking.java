@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritance;
 import com.top_logic.layout.channel.BidirectionalTransformLinking;
 import com.top_logic.layout.channel.linking.impl.AbstractTransformLinking;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
@@ -67,15 +68,17 @@ public class GraphSelectionTransformLinking extends BidirectionalTransformLinkin
 	}
 
 	private Object getMetaElementTreeObject(Object value) {
-		if (value instanceof TLType || value instanceof TLModule) {
-			return value;
-		} else if (value instanceof TLTypePart) {
-			return ((TLTypePart) value).getOwner();
-		} else if (value instanceof TLInheritance) {
-			return ((TLInheritance) value).getSource();
-		} else {
-			return value;
+		if (value instanceof TLModelPart && ((TLModelPart) value).tValid()) {
+			if (value instanceof TLType || value instanceof TLModule) {
+				return value;
+			} else if (value instanceof TLTypePart) {
+				return ((TLTypePart) value).getOwner();
+			} else if (value instanceof TLInheritance) {
+				return ((TLInheritance) value).getSource();
+			}
 		}
+
+		return value;
 	}
 
 }

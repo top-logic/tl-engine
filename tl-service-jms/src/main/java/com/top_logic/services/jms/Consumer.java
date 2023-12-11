@@ -19,7 +19,7 @@ import jakarta.jms.Message;
 import jakarta.jms.Topic;
 
 /**
- * Base class for a jms consumer (fetches messages from a queue).
+ * Base class for a JMS Consumer (fetches messages from a queue).
  * 
  * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */

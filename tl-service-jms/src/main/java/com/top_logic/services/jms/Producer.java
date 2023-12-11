@@ -26,7 +26,7 @@ import jakarta.jms.JMSProducer;
 import jakarta.jms.TextMessage;
 
 /**
- * Class for a jms producer (sends messages to a queue).
+ * Class for a JMS Producer (sends messages to a queue).
  * 
  * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */

@@ -7,7 +7,6 @@ package com.top_logic.graph.diagramjs.server.util;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -235,11 +234,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 */
 	public static GraphPart createGraphPart(GraphModel graph, Object newModel, LayoutContext context,
 			Set<Object> invisibleElements) {
-		GraphPart part = createGraphPartInternal(graph, newModel, context, invisibleElements);
-
-		graph.setSelectedGraphParts(Collections.singleton(part));
-
-		return part;
+		return createGraphPartInternal(graph, newModel, context, invisibleElements);
 	}
 
 	private static GraphPart createGraphPartInternal(GraphModel graph, Object newModel, LayoutContext context,

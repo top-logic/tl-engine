@@ -65,7 +65,10 @@ import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -126,10 +129,47 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		});
 
 		return nodes.stream()
-			.filter(node -> isSupportedNodeType(node))
+			.filter(node -> isValidModelDiagramObject(node))
 			.filter(node -> !context.getHiddenElements().contains(nodes))
 			.sorted(getTLTypeNameComparator())
 			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Whether the given object could be displayed in the diagram (representation of one model
+	 * module).
+	 * 
+	 * <ul>
+	 * <li>Only for gobal {@link TLType}'s (classes and enumerations) are nodes created</li>
+	 * <li>Only for {@link TLProperty}'s and {@link TLClassifier}'s, whose owner is valid, are
+	 * labels created</li>
+	 * <li>Only for {@link TLReference}'s, whose source and target are valid nodes, edges are
+	 * created</li>
+	 * </ul>
+	 * 
+	 * All other {@link TLModelPart}'s are not displayed.
+	 */
+	public static boolean isValidModelDiagramObject(TLObject object) {
+		if (object instanceof TLModelPart) {
+			ModelKind kind = ((TLModelPart) object).getModelKind();
+
+			if (ModelKind.CLASS.equals(kind) || ModelKind.ENUMERATION.equals(kind)) {
+				return TLModelUtil.isGlobal((TLType) object);
+			}
+
+			if (ModelKind.CLASSIFIER.equals(kind) || ModelKind.PROPERTY.equals(kind)) {
+				return TLModelUtil.isGlobal(((TLTypePart) object).getOwner());
+			}
+
+			if (ModelKind.REFERENCE.equals(kind)) {
+				TLReference reference = (TLReference) object;
+
+				return TLModelUtil.isGlobal(reference.getOwner()) && TLModelUtil.isGlobal(reference.getType());
+			}
+		}
+
+		return false;
+
 	}
 
 	private static boolean isModelClass(TLType type) {
@@ -191,38 +231,32 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 *        {@link GraphModel} which contains the created part.
 	 * @param newModel
 	 *        Business model of this graph part.
-	 * @param labelProvider
-	 *        Provider to determine labels when this graph part is displayed.
-	 * @param hiddenElements
-	 *        Collection of business objects that are hidden.
+	 * @param context
+	 *        Context for the graph layouting (label provider, collection of hidden elements).
 	 * @param invisibleElements
 	 *        Collection of business objects that are invisible.
 	 */
-	public static GraphPart createGraphPart(GraphModel graph, Object newModel,
-			LabelProvider labelProvider, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
-		GraphPart part = createGraphPartInternal(graph, newModel, labelProvider, hiddenElements, invisibleElements);
+	public static GraphPart createGraphPart(GraphModel graph, Object newModel, LayoutContext context,
+			Set<Object> invisibleElements) {
+		GraphPart part = createGraphPartInternal(graph, newModel, context, invisibleElements);
 
 		graph.setSelectedGraphParts(Collections.singleton(part));
 
 		return part;
 	}
 
-	private static GraphPart createGraphPartInternal(GraphModel graph, Object newModel,
-			LabelProvider labelProvider, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
+	private static GraphPart createGraphPartInternal(GraphModel graph, Object newModel, LayoutContext context,
+			Set<Object> invisibleElements) {
 		if (newModel instanceof TLClassProperty) {
 			TLClassProperty property = (TLClassProperty) newModel;
 
-			return createClassProperty(labelProvider, graph.getNode(property.getOwner()), property);
+			return createClassProperty(context.getLabelProvider(), graph.getNode(property.getOwner()), property);
 		} else if (newModel instanceof TLReference) {
-			return createReference(newModel, labelProvider, graph);
+			return insertEdgeIntoGraph(graph, (TLReference) newModel, context, invisibleElements);
 		} else if (newModel instanceof TLClass) {
-			Node node = createDiagramJSNode(labelProvider, graph, (TLType) newModel, hiddenElements, invisibleElements);
-
-			createEdgesForNewClassNode(node, labelProvider, graph);
-
-			return node;
+			return insertNodeIntoGraph(graph, (TLType) newModel, context, invisibleElements);
 		} else if (newModel instanceof TLEnumeration) {
-			return createDiagramJSNode(labelProvider, graph, (TLType) newModel, hiddenElements, invisibleElements);
+			return insertNodeIntoGraph(graph, (TLType) newModel, context, invisibleElements);
 		} else {
 			throw new UnsupportedOperationException("diagram part for " + newModel + " could not be created.");
 		}
@@ -253,20 +287,6 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		}
 
 		return graphPart;
-	}
-
-	private static void createEdgesForNewClassNode(Node node, LabelProvider labelProvider, GraphModel graph) {
-		TLClass clazz = (TLClass) node.getTag();
-
-		for (TLClass generalization : clazz.getGeneralizations()) {
-			Node target = graph.getNode(generalization);
-
-			if (target != null) {
-				TLInheritance inheritance = new TLInheritanceImpl(clazz, generalization);
-
-				createDiagramJSEdge(labelProvider, graph, inheritance, node, target);
-			}
-		}
 	}
 
 	private static void createDiagramJSNodes(LabelProvider labelProvider, LayoutGraph graph,
@@ -597,12 +617,6 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return nodeByBusinessObject;
 	}
 
-	private static boolean isSupportedNodeType(TLType type) {
-		ModelKind modelKind = type.getModelKind();
-
-		return modelKind == ModelKind.CLASS || modelKind == ModelKind.ENUMERATION;
-	}
-
 	private static LayoutNode createLayoutNode(LayoutGraph graph, TLType type) {
 		LayoutNode node = graph.newNode(type);
 
@@ -788,7 +802,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			for (TLClass specialization : clazz.getSpecializations()) {
 				TLInheritanceImpl inheritance = new TLInheritanceImpl(specialization, clazz);
 
-				if (isSupportedNodeType(specialization) && !isInheritanceHidden(context, inheritance)) {
+				if (isValidModelDiagramObject(specialization) && !isInheritanceHidden(context, inheritance)) {
 					GraphPart specializationNode = graphModel.getGraphPart(specialization);
 
 					if (specializationNode instanceof Node) {
@@ -832,7 +846,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			for (TLClass generalization : clazz.getGeneralizations()) {
 				TLInheritanceImpl inheritance = new TLInheritanceImpl(clazz, generalization);
 
-				if (isSupportedNodeType(generalization) && !isInheritanceHidden(context, inheritance)) {
+				if (isValidModelDiagramObject(generalization) && !isInheritanceHidden(context, inheritance)) {
 					GraphPart generalizationNode = graphModel.getGraphPart(generalization);
 
 					if (generalizationNode instanceof Node) {
@@ -853,6 +867,46 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return source.getOutgoingEdges().stream().anyMatch(edge -> {
 			return edge.getDestination() == target && clazz.isInstance(edge.getTag());
 		});
+	}
+
+	/**
+	 * Inserts an {@link Edge} into the given {@link GraphModel} and creating all necessary graph
+	 * nodes.
+	 */
+	public static GraphPart insertEdgeIntoGraph(GraphModel graph, TLReference reference, LayoutContext context,
+			Set<Object> invisibleElements) {
+		GraphPart source = graph.getGraphPart(reference.getOwner());
+		if (source == null) {
+			insertNodeIntoGraph(graph, reference.getOwner(), context, invisibleElements);
+		}
+
+		GraphPart target = graph.getGraphPart(reference.getType());
+		if (target == null) {
+			insertNodeIntoGraph(graph, reference.getType(), context, invisibleElements);
+		}
+
+		return createReference(reference, context.getLabelProvider(), graph);
+	}
+
+	/**
+	 * Inserts a node into the given {@link GraphModel} and create all necessary edges
+	 * (generalizations and references) to already existing graph nodes.
+	 */
+	public static Node insertNodeIntoGraph(GraphModel graph, TLType type, LayoutContext context,
+			Set<Object> invisibleParts) {
+		LabelProvider labelProvider = context.getLabelProvider();
+
+		Node node = GraphModelUtil.createDiagramJSNode(labelProvider, graph, type, context.getHiddenElements(),
+			invisibleParts);
+
+		GraphModelUtil.connectReferences(context, graph, node);
+
+		if (type.getModelKind() == ModelKind.CLASS) {
+			GraphModelUtil.connectGeneralizations(context, graph, node);
+			GraphModelUtil.connectSpecializations(context, graph, node);
+		}
+
+		return node;
 	}
 
 	/**
@@ -896,7 +950,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		for (TLStructuredTypePart part : clazz.getLocalParts()) {
 			if (part.getModelKind() == ModelKind.REFERENCE) {
 				TLType partType = part.getType();
-				if (isSupportedNodeType(partType) && !context.getHiddenElements().contains(partType)) {
+				if (isValidModelDiagramObject(partType) && !context.getHiddenElements().contains(partType)) {
 					TLType targetType = expectedTargetType.orElse(partType);
 
 					if (partType == targetType) {

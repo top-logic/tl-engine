@@ -5,18 +5,19 @@
  */
 package com.top_logic.graph.diagramjs.server;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.Log;
-import com.top_logic.basic.col.ListBuilder;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -71,6 +72,7 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationPart;
 import com.top_logic.model.TLClass;
@@ -743,29 +745,53 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	@Override
-	protected void handleTLObjectCreations(Stream<? extends TLObject> created) {
+	protected void handleTLObjectCreations(Stream<? extends TLObject> creations) {
 		if (hasGraphModel()) {
-			List<? extends TLObject> creations = created.filter(object -> GraphModelUtil.isValidModelDiagramObject(object))
-				.filter(object -> belongsToDisplayedModule(object))
-				.sorted(TLTypesFirstComparator.INSTANCE)
-				.collect(Collectors.toList());
-
-			int firstNonClassIndex = creations.size();
-			for (int i = 0; i < creations.size(); i++) {
-				if(!(creations.get(i) instanceof TLClass)) {
-					firstNonClassIndex = i;
-					break;
-				}
-			}
-
-			List<TLClass> classObjects = (List<TLClass>) creations.subList(0, firstNonClassIndex);
-			List<TLClass> orderedClasses =
-				CollectionUtilShared.topsort(clazz -> clazz.getGeneralizations(), classObjects, false);
-			ListBuilder<TLObject> builder = new ListBuilder();
-			builder.addAll(orderedClasses);
-			builder.addAll(creations.subList(firstNonClassIndex, creations.size()));
-			builder.toList().forEach(object -> getOrCreateGraphPart(object));
+			getOrderedModelPartCreations(getDiagramRelevantObjects(creations)).forEach(object -> getOrCreateGraphPart(object));
 		}
+	}
+
+	private Stream<TLModelPart> getDiagramRelevantObjects(Stream<? extends TLObject> objects) {
+		return objects.filter(object -> isValidDiagramObject(object)).map(TLModelPart.class::cast);
+	}
+
+	private boolean isValidDiagramObject(TLObject object) {
+		boolean isModelPart = object instanceof TLModelPart;
+		boolean belongsToDisplayedModule = belongsToDisplayedModule(object);
+		boolean isValidModelDiagramObject = GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
+
+		return isModelPart && belongsToDisplayedModule && isValidModelDiagramObject;
+	}
+
+	private List<TLModelPart> getOrderedModelPartCreations(Stream<? extends TLModelPart> creations) {
+		Map<ModelKind, List<TLModelPart>> partsByKind = getPartsByKind(creations);
+
+		List<TLModelPart> result = new ArrayList<>();
+
+		result.addAll(CollectionUtilShared.topsort(TLClass::getGeneralizations, getTLClasses(partsByKind), false));
+		result.addAll(partsByKind.getOrDefault(ModelKind.ENUMERATION, Collections.emptyList()));
+		result.addAll(partsByKind.getOrDefault(ModelKind.CLASSIFIER, Collections.emptyList()));
+		result.addAll(partsByKind.getOrDefault(ModelKind.PROPERTY, Collections.emptyList()));
+		result.addAll(partsByKind.getOrDefault(ModelKind.REFERENCE, Collections.emptyList()));
+
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<TLClass> getTLClasses(Map<ModelKind, List<TLModelPart>> partsByKind) {
+		if (partsByKind.containsKey(ModelKind.CLASS)) {
+			List<TLClass> classes = new ArrayList<>();
+
+			classes.addAll((Collection<? extends TLClass>) partsByKind.get(ModelKind.CLASS));
+
+			return classes;
+		} else {
+			return Collections.emptyList();
+		}
+	}
+
+	private Map<ModelKind, List<TLModelPart>> getPartsByKind(Stream<? extends TLModelPart> parts) {
+		return parts.collect(Collectors.groupingBy(TLModelPart::getModelKind));
 	}
 
 	@Override

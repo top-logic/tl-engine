@@ -758,9 +758,8 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	private boolean isValidDiagramObject(TLObject object) {
 		boolean isModelPart = object instanceof TLModelPart;
 		boolean belongsToDisplayedModule = belongsToDisplayedModule(object);
-		boolean isValidModelDiagramObject = GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
 
-		return isModelPart && belongsToDisplayedModule && isValidModelDiagramObject;
+		return isModelPart && belongsToDisplayedModule && GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
 	}
 
 	private List<TLModelPart> getOrderedModelPartCreations(Stream<? extends TLModelPart> creations) {

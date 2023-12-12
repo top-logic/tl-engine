@@ -39,6 +39,9 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 	 */
 	public interface Config extends Consumer.Config<ConsumerByExpression> {
 
+		/**
+		 * Defines if the processing function needs a transaction.
+		 */
 		boolean getTransaction();
 
 		/**

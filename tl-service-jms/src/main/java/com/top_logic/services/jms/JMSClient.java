@@ -129,7 +129,7 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 	 *         Exception if something is not JMS conform
 	 * @throws NamingException
 	 *         Exception if something went wrong with the JNDI lookup
-	 * @return the ConnectionFactory
+	 * @return the <code>ConnectionFactory</code>
 	 */
 	abstract protected ConnectionFactory setupConnectionFactory() throws JMSException, NamingException;
 

@@ -36,7 +36,7 @@ public class JNDIMQClient extends JMSClient {
 		String CONNECTION_FACTORY = "connection-factory";
 
 		/**
-		 * The JNDI name of the ConnectionFactory.
+		 * The JNDI name of the <code>ConnectionFactory</code>.
 		 */
 		@Mandatory
 		@Name(CONNECTION_FACTORY)

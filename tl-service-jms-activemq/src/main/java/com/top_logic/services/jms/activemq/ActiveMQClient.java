@@ -18,7 +18,7 @@ import com.top_logic.services.jms.JMSClient;
 import jakarta.jms.ConnectionFactory;
 
 /**
- * Configuration class for a connection to an ActiveMQ MQ System.
+ * Configuration class for a connection to an <code>ActiveMQ MQ System</code>.
  * 
  * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */
@@ -97,26 +97,26 @@ public class ActiveMQClient extends JMSClient {
 	}
 
 	/**
-	 * The type of the destination, that can be a queue or a topic.
+	 * The URI scheme that is used in the link to the destination.
 	 */
 	public enum URLScheme {
 		/**
-		 * 
+		 * tcp scheme
 		 */
 		TCP,
 
 		/**
-		 * 
+		 * udp scheme
 		 */
 		UDP,
 
 		/**
-		 * 
+		 * vm scheme
 		 */
 		VM,
 
 		/**
-		 * 
+		 * jgroups scheme
 		 */
 		JGROUPS;
 	}
@@ -132,7 +132,7 @@ public class ActiveMQClient extends JMSClient {
 	}
 
 	/**
-	 * Setup for a connection with an ActiveMQ.
+	 * Setup for a connection with an <code>ActiveMQ</code>.
 	 * 
 	 * @return the connection factory
 	 */

@@ -63,15 +63,13 @@ a.accEntry:hover,
 .menuEntryImage,
 .TitleTop .TitleName,
 .cMenuButton i,
-.cMenuButton.menuEntryHover i,
 .breadcrumb .breadcrumbNodeIcon,
 .breadcrumb .breadcrumbNodeText
 {
     color: var(--ICON_COLOR_BASIC);
 }
 
-.cMenuButton i span:after,
-.cMenuButton.menuEntryHover i span:after {
+.cMenuButton i span:after {
 	color: var(--ICON_COLOR_HIGHLIGHT);
 }
 

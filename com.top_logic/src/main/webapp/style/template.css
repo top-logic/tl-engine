@@ -1761,8 +1761,8 @@ a.input-image {
 	color: graytext;
 }
 
-.cMenuButton.menuEntryHover i,
-.cMenuButton.menuEntryHover i span:after {
+.cMenuButton:hover i,
+.cMenuButton:hover i span:after {
 	color: black;
 }
 
@@ -2919,7 +2919,7 @@ th.cal_title {
 	text-align:		  center;
 }
 
-td.cal_cell:HOVER {
+td.cal_cell:hover {
 	background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
 }
 
@@ -2952,7 +2952,7 @@ th.cal_wn {
 }
 
 /* Modifier for cal_cell */
-td.cal_wn, td.cal_wn:HOVER {
+td.cal_wn, td.cal_wn:hover {
 	background-color: var(--CALENDAR_WEEKNO_COLOR);
 	color: var(--CALENDAR_BACKGROUND_COLOR);
 	cursor: auto;
@@ -4465,7 +4465,7 @@ a.menuEntryDisabled span.menuEntryCell,
 	vertical-align: middle;
 }
 
-.menuEntryHover {
+.menuEntryEnabled:hover {
 	color:            var(--BUTTON_COLOR);
 	background-color: var(--BUTTON_BACKCOLOR);
 	cursor: pointer;
@@ -5645,7 +5645,7 @@ span.sxButton {
 	cursor: pointer;
 }
 
-span.sxButton:HOVER {
+span.sxButton:hover {
 	color: #EE3333;
 	background: white;
 }
@@ -5693,7 +5693,7 @@ div.mcMinimized > div.mcToggle {
 	background: var(--MC_NORMALIZE_ICON);
 }
 
-div.cMinimizable:HOVER > div.mcToggle {
+div.cMinimizable:hover > div.mcToggle {
 	visibility: visible;
 }
 

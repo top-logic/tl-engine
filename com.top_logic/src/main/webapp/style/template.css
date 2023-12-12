@@ -2598,13 +2598,6 @@ td.cmdButtonCell {
 
 td.cmdButton,
 a.cmdButton, 
-a.cmdButton:link, 
-a.cmdButton:visited, 
-a.cmdButton:active, 
-a.cmdButtonHover,
-a.cmdButtonHover:link,
-a.cmdButtonHover:visited,
-a.cmdButtonHover:active,
 a.cmdButtonDisabled, 
 a.cmdButtonDisabled:link, 
 a.cmdButtonDisabled:visited, 
@@ -2637,17 +2630,12 @@ a.cmdButtonDisabled:active,
 }
 
 td.cmdButton,
-a.cmdButton,
-a.cmdButtonHover
+a.cmdButton
 {
 	cursor:           pointer;
 }
 
-a.cmdButtonHover,
-a.cmdButtonHover:link,
-a.cmdButtonHover:visited,
-a.cmdButtonHover:active,
-a.cmdButtonHover:hover,
+a.cmdButton:hover,
 .cDataItem .cmdButton:hover,
 div.cFormEditorToolbox [data-tool=true] > .attribute:hover
 {
@@ -2665,8 +2653,8 @@ a.cmdButtonDisabled:hover,
 	color:            var(--BUTTON_DISABLED_COLOR);
 }
 
-span.containerButton a.cmdButtonHover span.cmdLabel, 
-div.fltButtons       a.cmdButtonHover span.cmdLabel,
+span.containerButton a.cmdButton:hover span.cmdLabel, 
+div.fltButtons       a.cmdButton:hover span.cmdLabel,
 .cDataItem .cmdButton:hover span.cmdLabel,
 .cFormEditorToolbox [data-tool=true] > .attribute:hover
 {
@@ -2683,7 +2671,7 @@ img.cmdImg, img.type-image {
 }
 
 a.cmdButton span.cmdImg,
-a.cmdButtonHover span.cmdImg,
+a.cmdButton:hover span.cmdImg,
 a.cmdButtonDisabled span.cmdImg,
 .cmdButton span.cmdImg,
 .cmdButtonDisabled span.cmdImg,
@@ -2694,7 +2682,7 @@ a.cmdButtonDisabled span.cmdImg,
 }
 
 a.cmdButton img.cmdImg,
-a.cmdButtonHover img.cmdImg,
+a.cmdButton:hover img.cmdImg,
 a.cmdButtonDisabled img.cmdImg {
 	width: var(--BUTTON_IMGSIZE);
 }
@@ -4446,7 +4434,7 @@ input.tristate {
 	background: var(--INAPP_COMMAND_BACKGROUND);
 }
 
-.popupMenu a.menuEntryHover {
+.popupMenu a:hover {
 	background: var(--POPUPMENU_ENTRYHOVER_BACKGROUND);
 	color: #fff;
 }

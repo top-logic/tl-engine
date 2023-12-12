@@ -430,7 +430,6 @@ span.accIcon.input-image span::after {
 }
 
 a.cmdButton i,
-a.cmdButtonHover i,
 .fptIconOverlay i,
 .cFormEditorToolbox [data-tool=true] > .attribute i,
 .cDataItem label i {
@@ -438,7 +437,6 @@ a.cmdButtonHover i,
 }
 
 a.cmdButton i[class*=" overlay-"] span::before,
-a.cmdButtonHover i[class*=" overlay-"] span::before,
 .fptIconOverlay i[class*=" overlay-"] span::before,
 .cFormEditorToolbox [data-tool=true] > .attribute i[class*=" overlay-"] span::before,
 .cDataItem label i[class*=" overlay-"] span::before {
@@ -446,7 +444,6 @@ a.cmdButtonHover i[class*=" overlay-"] span::before,
 }
 
 a.cmdButton i span:after,
-a.cmdButtonHover i span:after,
 .fptIconOverlay i span:after,
 .cFormEditorToolbox [data-tool=true] > .attribute i span:after,
 .cDataItem label i[class*=" overlay-"] span::after {

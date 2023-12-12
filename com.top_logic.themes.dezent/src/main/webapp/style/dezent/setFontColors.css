@@ -12,7 +12,7 @@ div.cCollapsibleToolbar .input-image,
 div.cCollapsibleHorizontal div.cCollapsibleHeader,
 div.fptTitle,
 div.fptTitleContent,
-div.fltButtons a.cmdButtonHover span.cmdLabel,
+div.fltButtons a.cmdButton:hover span.cmdLabel,
 div.folderView .breadcrumb .treeNode a.selectableNode,
 
 th.tl-table__cell,
@@ -26,20 +26,12 @@ td.fhrMiddle,
 td.fhrLeft,
 td.fhrRight,
 
-a.cmdButtonHover,
-a.cmdButtonHover:link,
-a.cmdButtonHover:visited,
-a.cmdButtonHover:active,
-
 a.cmdButton,
-a.cmdButton:link,
-a.cmdButton:visited,
-a.cmdButton:active,
 
 a.tcrLink > span,
 .tl-table__title .breadcrumb .breadcrumbNodeText,
 
-span.containerButton a.cmdButtonHover span.cmdLabel
+span.containerButton a.cmdButton:hover span.cmdLabel
 {
     color: var(--TL-white-grey);
 }
@@ -114,7 +106,7 @@ div.BreadCrumbOuter
 
 .cButton.cmdLink span::before,
 .cButton .cmdImg span::before,
-.cmdButtonHover span::before,
+.cmdButton:hover span::before,
 .cImageButton .input-image span::before,
 .cDownload .input-image span::before,
 .rf_groupCell .rf_header .cButton span::before,
@@ -125,7 +117,6 @@ div.BreadCrumbOuter
 
 .cButton.cmdLink i[class*=" overlay-"] span::before,
 .cButton .cmdImg i[class*=" overlay-"] span::before,
-.cmdButtonHover i[class*=" overlay-"] span::before,
 .cImageButton .input-image i[class*=" overlay-"] span::before,
 .cDownload .input-image i[class*=" overlay-"] span::before,
 .rf_groupCell .rf_header .cButton i[class*=" overlay-"] span::before,
@@ -136,7 +127,7 @@ div.BreadCrumbOuter
 
 .cButton.cmdLink:hover i[class*=" overlay-"] span::before,
 .cButton:hover .cmdImg i[class*=" overlay-"] span::before,
-.cmdButtonHover:hover i[class*=" overlay-"] span::before,
+.cmdButton:hover i[class*=" overlay-"] span::before,
 .cImageButton:hover .input-image i[class*=" overlay-"] span::before,
 .cDataItem:hover .input-image i[class*=" overlay-"] span::before,
 .rf_groupCell .rf_header .cButton:hover i[class*=" overlay-"] span::before,
@@ -147,7 +138,7 @@ div.BreadCrumbOuter
 
 .cButton.cmdLink span::after,
 .cButton .cmdImg span::after,
-.cmdButtonHover span::after,
+.cmdButton:hover span::after,
 .cImageButton .input-image span::after,
 .cDownload .input-image span::after,
 .rf_groupCell .rf_header .cButton span::after,

@@ -27,7 +27,7 @@
 					<de>Persönliche Konfiguration zurücksetzen</de>
 				</resourceKey>
 				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
-					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`).singleElement()"
 					input="model(self())"
 				/>
 				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">

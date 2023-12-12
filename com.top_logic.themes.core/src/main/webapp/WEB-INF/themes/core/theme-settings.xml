@@ -5,11 +5,6 @@
 		interface="com.top_logic.mig.html.layout.MainLayout"
 		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
 	/>
-	<!-- Needs to be that high because every filter element is being used in an HTML element with the 
-			same css classes even when the layout for the page is totally different.  -->
-	<int name="FILTER_SINGLE_LINE_HEIGHT"
-		value="64"
-	/>
 	<int name="STRUCTURE_DIALOG_HEIGHT"
 		value="500"
 	/>
@@ -42,6 +37,14 @@
 	/>
 	<size name="tabbar-height"
 		value="40px"
+	/>
+	<!-- Needs to be that high because every filter element is being used in an HTML element with the 
+			same css classes even when the layout for the page is totally different.  -->
+	<int name="FILTER_SINGLE_LINE_HEIGHT"
+		value="72"
+	/>
+	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
+		value="72"
 	/>
 	<icon name="com.top_logic.layout.Icons.APP_LOGO"
 		value="/images/appLogo.svg"
@@ -1245,7 +1248,7 @@
 		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
 	/>	
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL"
-		value="css: bi bi-slash-square-fill"
+		value="css:bi bi bi-square"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL_DISABLED"
 		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"

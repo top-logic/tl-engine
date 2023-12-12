@@ -239,10 +239,36 @@ div.mcMinimized .sblTitle img {
 	border-radius: 0.25rem;
 }
 
-.licenseContent {
+/* Is needed for the sidebar theme */
+.licenseView .licenseContent {
 	font-weight: 600;
 	color: var(--text-on-color);
 }
+
+.licenseContent {
+	font-weight: 600;
+	color: var(--support-danger);
+}
+
+span.cLogoutTimer {
+	display: none;
+	font-weight: bold;
+	color: var(--support-danger);
+}
+
+span.cLogoutTimer input {
+	vertical-align: sub;
+	display: none;
+}
+
+span.ltcCounting {
+	display: block;
+}
+
+.header-logo img {
+	max-height: 50px;
+}
+
 
 /* =============================================== */
 /* ====== AccordionControl (prefix is 'acc') ===== */

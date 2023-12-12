@@ -25,9 +25,10 @@
 }
 
 .rf_header > .rf_menu, .dfModeFull .dfListCommands {
+	display: flex;
+	gap: var(--spacing-01);
 	margin-left: auto;
 	padding-right: var(--spacing-03);
-	display: flex;
 }
 
 .dfListCommands .cOnExpandedControl {

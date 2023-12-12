@@ -28,7 +28,7 @@
 				tableName="LogEntryTable"
 				toolbar="false"
 			>
-				<layoutInfo size="34px"/>
+				<layoutInfo size="%EVENTLOG_SHARED_FILTER_HEIGHT%"/>
 				<tables>
 					<table name="LogEntryTable"
 						defaultSortOrder="date:descending"

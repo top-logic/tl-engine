@@ -124,6 +124,9 @@
 	<dim name="BOX_VSPACE_SIZE"
 		value="8px"
 	/>
+	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
+		value="34"
+	/>
 	<color name="BREADCRUMB_ALINK_COLOR"
 		value="#000000"
 	/>

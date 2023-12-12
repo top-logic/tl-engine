@@ -141,12 +141,26 @@ th.tblCounterNoBorder {
 	color: var(--icon-primary);
 }
 
+.tl-table__footer-pager .ddwttDropBtn {
+	font-family: 'Inter-Regular';
+    font-size: var(--body-01-font-size);
+    line-height: var(--body-0-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
+}
+
+td.tl-table__cell {
+	border-bottom-style: solid;
+	border-bottom-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+}
+
 .tl-table__cell {
 	color: var(--text-secondary);
     white-space: nowrap;
 	padding: 0px;
-    border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
-    border-top: none;
+	border-color: var(--border-subtle);
+    border-left: 0px solid var(--border-subtle);
+	border-left-color: var(--border-subtle);
+	border-bottom: 0px solid var(--border-subtle);
 }
 
 th.tl-table__cell {
@@ -155,7 +169,15 @@ th.tl-table__cell {
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: 600;
     background: var(--layer);
+    border-bottom-color: var(--border-subtle);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-top-width: 0px;
+    border-top-style: none;
+    border-right-style: none;
+    border-color: var(--border-subtle);
 }
 
 td.tl-table__cell {
@@ -606,6 +628,7 @@ div.tl-table__filter-sort-container {
 	min-width: 1.5em;
 	display: flex;
 	align-items: center;
+	gap: var(--spacing-01);
 }
 
 .sidebarFilterContainer {
@@ -1250,7 +1273,6 @@ div.dirtyHandlingDialog .changes {
 	border-collapse: separate !important;
 	border-spacing: 0px;
 	margin: 0px;
-	border-top: solid 1px var(--border-strong);
 }
 
 .tl-table--fixed {
@@ -1410,8 +1432,8 @@ div.dirtyHandlingDialog .changes {
 
 .tl-table-overlay__column-placeholder-content {
 	box-sizing: border-box;
-	border: 2px dashed #cbd5e0;
-	background-color: #edf2f7;
+	border: 2px dashed var(--border-strong);
+	background-color: var(--layer-grid-interactive);
 	height: 100%;
 }
 
@@ -1443,7 +1465,7 @@ div.dirtyHandlingDialog .changes {
 
 .tl-table-overlay__scroller-icon {
 	font-size: 25px;
-	color: #bbbaba;
+	color: var(--icon-primary);
 }
 
 .tl-flex--fill {

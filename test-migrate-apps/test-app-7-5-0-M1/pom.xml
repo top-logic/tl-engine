@@ -9,7 +9,7 @@
 	</parent>
 	
 	<artifactId>test-app-7-5-0-M1</artifactId>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>

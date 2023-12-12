@@ -10,7 +10,7 @@
 
   <artifactId>tl-dob</artifactId>
   <description>Library for modeling database schemas.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

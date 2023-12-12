@@ -10,7 +10,7 @@
 
   <artifactId>tl-convert</artifactId>
   <description>Utilities for format conversion.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

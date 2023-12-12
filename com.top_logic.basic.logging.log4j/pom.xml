@@ -10,7 +10,7 @@
 
   <artifactId>tl-basic-logging-log4j</artifactId>
   <description>Adaptor of log4j to the TopLogic logging abstraction layer.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

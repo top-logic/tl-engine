@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>tl-archetype-deploy</artifactId>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<organization>
 		<name>Business Operation Systems GmbH</name>

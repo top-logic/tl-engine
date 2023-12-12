@@ -10,7 +10,7 @@
 
   <artifactId>tl-layout-formeditor</artifactId>
   <description>In-app editor for formulars.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

@@ -20,7 +20,7 @@
 		A TopLogic fragment module is not a runnable application by itself but can only be used from other fragment 
 		modules and applications.
 	</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<organization>
 		<name>Business Operation Systems GmbH</name>

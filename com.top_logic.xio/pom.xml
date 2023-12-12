@@ -10,7 +10,7 @@
 
   <artifactId>tl-xio</artifactId>
   <description>Library for configurable XML import.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

@@ -10,7 +10,7 @@
 
   <artifactId>tl-dsa</artifactId>
   <description>Services and interfaces for accessing data sources.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

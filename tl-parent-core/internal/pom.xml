@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>tl-parent-core-internal</artifactId>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<description>
 		Parent module for TopLogic framework modules. 

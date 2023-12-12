@@ -117,6 +117,10 @@
 			</resourceKey>
 		</open-handler>
 		<typeOptions type="Contacts:PersonContact"/>
-		<create-handler id="ID_8b03c0a2_b364_436e_bdc6_5355faa14390"/>
+		<create-handler id="ID_8b03c0a2_b364_436e_bdc6_5355faa14390">
+			<postCreateActions>
+				<setModel target="selection(dialogParent())"/>
+			</postCreateActions>
+		</create-handler>
 	</arguments>
 </config:template-call>

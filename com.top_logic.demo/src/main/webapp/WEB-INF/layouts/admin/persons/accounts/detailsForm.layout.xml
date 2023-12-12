@@ -28,12 +28,36 @@
 				</executability>
 				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
 					<en>Are you sure they want to delete {0}'s personal settings?</en>
-					<de>Sind Sie sicher, dass die die persönlichen Einstellungen von {0} löschen wollen?</de>
+					<de>Sind Sie sicher, dass Sie die persönlichen Einstellungen von {0} löschen wollen?</de>
+				</confirmMessage>
+			</button>
+			<button id="ID_d9a27df8_9c83_4318_9d56_53c2185a9543"
+				class="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+				target="model(self())"
+			/>
+			<button id="ID_2fa7a149_7d10_46c9_90e1_b5e4db8b1378"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+			>
+				<resourceKey key="dynamic.debe8eb3-9a0a-4f33-9fcc-e8489d704213">
+					<en>Delete Account</en>
+					<de>Zugang Löschen</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="model -> $model.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="account -> $account != null"/>
+				</executability>
+				<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
+					<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>
+					<de>Möchten Sie den Zugang "{0}" wirklich löschen? "{0}" kann sich dann nicht mehr einloggen.</de>
 				</confirmMessage>
 			</button>
 		</buttons>
 		<dialogs>
 			<layout-reference resource="admin/persons/accounts/changePassword/dialog.layout.xml"/>
+			<layout-reference resource="admin/persons/accounts/newAccount2/dialog.layout.xml"/>
 		</dialogs>
 		<forms>
 			<form type="Contacts:PersonContact">
@@ -90,13 +114,13 @@
 								attribute="authDeviceID"
 								fullQualifiedName="tl.accounts:Person#authDeviceID"
 								type="tl.core:String"
-								visibility="read-only"
+								visibility="editable"
 							/>
 							<field
 								attribute="dataDeviceID"
 								fullQualifiedName="tl.accounts:Person#dataDeviceID"
 								type="tl.core:String"
-								visibility="read-only"
+								visibility="editable"
 							/>
 							<field
 								attribute="groups"

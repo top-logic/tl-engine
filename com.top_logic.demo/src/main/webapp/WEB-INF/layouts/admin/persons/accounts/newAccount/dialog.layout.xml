@@ -17,7 +17,7 @@
 		</title>
 		<open-handler id="ID_f3c05b49_379d_4d78_be3f_b2f0f2f8b352"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
-			group="Write"
+			group="Create"
 			image="colored:fas fa-user tl-create"
 			targetComponent="admin/persons/accounts/newAccount/dialog.layout.xml#Form"
 		>
@@ -179,7 +179,9 @@
 				<en>New Account</en>
 				<de>Neuer Zugang</de>
 			</resourceKey>
-			<postCreateActions/>
+			<postCreateActions>
+				<setModel target="selection(dialogParent())"/>
+			</postCreateActions>
 			<operation><![CDATA[form -> {
     contact = $form.copy(null, true, x->new(`Contacts:PersonContact`));
     login = $form.get(`tl.contact.ui:CreateAccount#login`);
@@ -188,6 +190,7 @@
         $account.set(`tl.accounts:Person#name`, $login);
         $account.set(`tl.accounts:Person#contact`, $contact);
     });
+    $contact;
 }]]></operation>
 		</transactionHandler>
 	</arguments>

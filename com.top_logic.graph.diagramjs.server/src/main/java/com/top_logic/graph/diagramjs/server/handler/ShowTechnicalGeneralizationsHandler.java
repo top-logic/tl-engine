@@ -6,6 +6,7 @@
 package com.top_logic.graph.diagramjs.server.handler;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.graph.diagramjs.server.DiagramJSGraphComponent;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -16,6 +17,7 @@ import com.top_logic.tool.boundsec.commandhandlers.ToggleCommandHandler;
  * 
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
+@Label("Show technical generalizations")
 public class ShowTechnicalGeneralizationsHandler extends ToggleCommandHandler {
 
 	/**

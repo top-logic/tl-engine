@@ -1508,21 +1508,6 @@ p.tl-info-service-item__details-message-no-bottom {
     to {opacity: 0;}
 }
 
-span.cLogoutTimer {
-	display: none;
-	font-weight: bold;
-	color: red;
-}
-
-span.cLogoutTimer input {
-	vertical-align: sub;
-	display: none;
-}
-
-span.ltcCounting {
-	display: block;
-}
-
 span.ltcCounting input {
 	display: inline;
 }

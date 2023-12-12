@@ -195,7 +195,8 @@ with hard coded popup window dimension
 
 .tlButton:hover .tlButtonLabel,
 .fltSubContent .cMenuButton.menuEntryEnabled:hover,
-.cDefaultButton button:hover {
+.cDefaultButton button:hover,
+.fltSubContent .cMenuButton.menuEntryEnabled:hover .menuEntryCell {
 	color: var(--text-on-color);
 	text-decoration: none;
 }
@@ -215,7 +216,8 @@ with hard coded popup window dimension
 
 .tlButton:focus .tlButtonLabel,
 .cDefaultButton button:focus,
-.fltSubContent .cMenuButton.menuEntryEnabled:focus {
+.fltSubContent .cMenuButton.menuEntryEnabled:focus,
+.fltSubContent .cMenuButton.menuEntryEnabled:focus .menuEntryCell {
 	color: var(--text-on-color);
 }
 
@@ -234,7 +236,8 @@ with hard coded popup window dimension
 }
 
 .tlButton:active .tlButtonLabel,
-.cDefaultButton button:active {
+.cDefaultButton button:active,
+.fltSubContent .cMenuButton.menuEntryEnabled:active .menuEntryCell {
 	color: var(--text-on-color);
 }
 
@@ -547,8 +550,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .px-1 .cmdLink,
 .px-1 .cmdLinkDisabled,
 .cTextPopup .lFixedLeft .cmdLink,
-.cTextPopup .lFixedLeft .cmdLinkDisabled,
-.breadCrumbRight .Right span a  {
+.cTextPopup .lFixedLeft .cmdLinkDisabled {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
@@ -586,7 +588,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 }
 
 .breadCrumbRight .Right span a {
-	color: var(--icon-on-color);
+	color: var(--icon-primary);
 	height: .1rem;
 	width: .1rem;
 }

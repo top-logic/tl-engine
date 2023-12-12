@@ -27,6 +27,7 @@
 						</view>
 					</componentControlProvider>
 				</layoutControl>
+				
 				<include name="templates/navigationComponent.xml"
 					componentName="mainNavigationComponent"
 				>
@@ -34,6 +35,7 @@
 						<layoutInfo size="%MAIN_NAVIGATION_BAR_HEIGHT%"/>
 					</inject>
 				</include>
+				
 				<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 					<layoutInfo
 						scrolleable="false"
@@ -41,17 +43,21 @@
 					/>
 					<componentControlProvider class="com.top_logic.layout.tabbar.TabBarControlProvider"/>
 				</layoutControl>
+				
 				<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 					<layoutInfo size="100%"/>
 					<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
 				</layoutControl>
+				
 				${mainTabbar}
+				
 				<component class="com.top_logic.themes.modern.layout.ModernStatusLineComponent"
 					name="mainStatusLineComponent"
 					versionRendererClass="%VERSION_RENDERER_CLASS%"
 				>
 					<layoutInfo size="%VERSION_ROW_HEIGHT%"/>
 				</component>
+				
 			</components>
 		</layout>
 		

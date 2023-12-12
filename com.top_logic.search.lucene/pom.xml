@@ -10,7 +10,7 @@
 
   <artifactId>tl-search-lucene</artifactId>
   <description>Integration of the Lucene full-text search engine.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

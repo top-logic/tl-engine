@@ -10,7 +10,7 @@
 
   <artifactId>tl-storage-azure</artifactId>
   <description>Adapter for storing documents in the Azure blob store.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

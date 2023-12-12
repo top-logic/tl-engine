@@ -24,7 +24,7 @@
 		metaConf.txt of dependent modules are composed from their modular version to a single deployable monolithic 
 		resource.  
 	</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 	
 	<organization>
 		<name>Business Operation Systems GmbH</name>

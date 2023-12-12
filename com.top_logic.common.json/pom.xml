@@ -10,7 +10,7 @@
 
   <artifactId>tl-common-json</artifactId>
   <description>Port of the gstream JSON library to GWT.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>
 		<!-- For framework modules, combine all JavaDoc to its deploy location. -->

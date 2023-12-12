@@ -15,7 +15,7 @@
 	<artifactId>tl-parent-engine</artifactId>
 	
 	<description>Aggregator module that builds all projects of the TopLogice application engine runtime.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<organization>
 		<name>Business Operation Systems GmbH</name>

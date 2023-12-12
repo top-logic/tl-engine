@@ -10,7 +10,7 @@
 
   <artifactId>tl-themes-dezent</artifactId>
   <description>TopLogic theme "dezent".</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

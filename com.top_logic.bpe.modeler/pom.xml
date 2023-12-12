@@ -10,7 +10,7 @@
 
   <artifactId>tl-bpe-modeler</artifactId>
   <description>In-app editor for BPMN diagrams.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

@@ -10,7 +10,7 @@
 
   <artifactId>tl-ajax-server</artifactId>
   <description>Server-side utilities for interacting with GWT-based client code.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

@@ -10,7 +10,7 @@
 
   <artifactId>tl-client-diagramjs</artifactId>
   <description>GWT-adapter to diagramjs.</description>
-	<url>${tl.repository.url}</url>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>

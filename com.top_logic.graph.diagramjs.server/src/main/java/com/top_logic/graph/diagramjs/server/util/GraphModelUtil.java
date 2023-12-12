@@ -802,7 +802,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 					if (specializationNode instanceof Node) {
 						if (!hasEdge((Node) specializationNode, node, TLInheritance.class)) {
-							if (isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
+							if (!isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
 								inheritance.getTarget())) {
 								GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, inheritance,
 									(Node) specializationNode, node);
@@ -846,7 +846,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 					if (generalizationNode instanceof Node) {
 						if (!hasEdge(node, (Node) generalizationNode, TLInheritance.class)) {
-							if (isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
+							if (!isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
 								inheritance.getTarget())) {
 								GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, inheritance,
 									node, (Node) generalizationNode);

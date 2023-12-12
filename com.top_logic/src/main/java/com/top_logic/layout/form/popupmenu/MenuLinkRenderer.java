@@ -29,8 +29,6 @@ public class MenuLinkRenderer implements LinkRenderer {
 	 */
 	public static final MenuLinkRenderer INSTANCE = new MenuLinkRenderer();
 
-	private static final String MENU_ENTRY_HOVER_CLASS = "menuEntryHover";
-
 	private static final String MENU_ENTRY_CELL_CLASS = "menuEntryCell";
 
 	private static final String MENU_ENTRY_DISABLED_CLASS = "menuEntryDisabled";
@@ -58,12 +56,6 @@ public class MenuLinkRenderer implements LinkRenderer {
 				button.getTooltipCaption());
 
 			if (!button.isDisabled()) {
-				out.beginCssClasses(TL_HOVER_CLASS_ATTR);
-				{
-					button.writeCssClassesContent(out);
-					out.append(MENU_ENTRY_HOVER_CLASS);
-				}
-				out.endCssClasses();
 				out.writeAttribute(ONCLICK_ATTR, button.getOnclick());
 			}
 			out.endBeginTag();

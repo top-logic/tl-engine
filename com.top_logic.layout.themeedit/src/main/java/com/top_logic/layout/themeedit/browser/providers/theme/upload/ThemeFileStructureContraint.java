@@ -34,6 +34,7 @@ import com.google.common.base.Charsets;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.gui.ThemeUtil;
 import com.top_logic.gui.config.ThemeConfig;
 import com.top_logic.layout.form.CheckException;
@@ -67,7 +68,14 @@ public class ThemeFileStructureContraint extends AbstractConstraint {
 			try {
 				Optional<ThemeConfig> themeConfig = readThemeConfig(item);
 
-				checkValidThemeStructure(item, themeConfig);
+				if (themeConfig.isPresent()) {
+					ThemeConfig config = themeConfig.get();
+
+					checkBaseThemeExistence(config);
+					checkValidThemeStructure(item, config);
+				} else {
+					throw createErrorException(I18NConstants.NO_THEME_CONFIGURATION_FILE_IN_ZIP);
+				}
 			} catch (IOException exception) {
 				throw new IOError(exception);
 			}
@@ -76,15 +84,19 @@ public class ThemeFileStructureContraint extends AbstractConstraint {
 		return true;
 	}
 
-	private void checkValidThemeStructure(BinaryData item, Optional<ThemeConfig> themeConfig) throws CheckException, IOException {
-		if (themeConfig.isPresent()) {
-			String id = themeConfig.get().getId();
-
-			Pattern pattern = createThemeFileStructureRegexPattern(id);
-			checkValidThemeZip(item, pattern, id);
-		} else {
-			throw createErrorException(I18NConstants.NO_THEME_CONFIGURATION_FILE_IN_ZIP);
+	private void checkBaseThemeExistence(ThemeConfig themeConfig) throws CheckException {
+		for (String baseThemeId : themeConfig.getExtends()) {
+			if (ThemeFactory.getInstance().getTheme(baseThemeId) == null) {
+				throw createErrorException(I18NConstants.BASE_THEME_NOT_EXISTING_ERROR__BASE_THEME.fill(baseThemeId));
+			}
 		}
+	}
+
+	private void checkValidThemeStructure(BinaryData item, ThemeConfig themeConfig) throws CheckException, IOException {
+		String id = themeConfig.getId();
+
+		Pattern pattern = createThemeFileStructureRegexPattern(id);
+		checkValidThemeZip(item, pattern, id);
 	}
 
 	private CheckException createErrorException(ResKey resKey) {

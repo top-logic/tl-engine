@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<version name="Ticket_21471_Adjust_model_overrides"
-		module="tl-element"
+		module="tl-search-lucene"
 	/>
 	<dependencies>
 		<dependency name="Ticket_27205_KeyAttributes_for_Association"
@@ -13,9 +13,15 @@
 		<dependency name="Ticket_25835_Rename_RenderInputBeforeLabelAnnotation"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
 	</dependencies>
 	<processors>
-		<update-association-end name="tl.doc:Page$children#self"
+		<update-association-end name="tl.doc:Page$parent#self"
 			mandatory="false"
 			composite="false"
 			aggregate="true"
@@ -25,7 +31,7 @@
 			navigate="false"
 		/>
 		
-		<update-association-end name="tl.doc:Page$children#parent" 
+		<update-association-end name="tl.doc:Page$parent#parent" 
 			new-name="tl.doc:Page$children#children"
 			mandatory="false"
 			composite="true"
@@ -47,7 +53,7 @@
 		<delete-class name="tl.doc:Page$parent"/>
 	
 		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
-			transform="/WEB-INF/kbase/migration/tl-element/Ticket_21471_Adjust_model_overrides.model.transform.xslt"
+			transform="/WEB-INF/kbase/migration/tl-search-lucene/Ticket_21471_Adjust_model_overrides.model.transform.xslt"
 		/>
 	</processors>
 	<migration>

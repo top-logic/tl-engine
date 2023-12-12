@@ -14,13 +14,6 @@
 		</reference>
 	</xsl:template>
 	
-	<!-- add backwards kind to parent reference -->
-	<xsl:template match="/config//module[@name='projElement']//class[@name='Project']//reference[@name='parent']">
-		<reference kind="backwards">
-			<xsl:apply-templates select="@*|node()"/>
-		</reference>
-	</xsl:template>
-	
 	<!-- standard copy template -->
 	<xsl:template match="@*|node()">
 		<xsl:copy>

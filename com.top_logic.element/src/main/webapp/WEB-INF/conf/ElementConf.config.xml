@@ -238,6 +238,9 @@
 					<generator 
 						name="empty" 
 						impl="com.top_logic.element.meta.kbbased.filtergen.EmptyGenerator" />
+					<generator 
+						name="authenticationDevices" 
+						impl="com.top_logic.element.meta.kbbased.filtergen.AuthenticationDeviceGenerator" />
 				</generators>				
 			</instance>
 		</config>

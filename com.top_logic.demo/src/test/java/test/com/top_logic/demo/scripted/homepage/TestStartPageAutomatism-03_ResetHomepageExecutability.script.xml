@@ -62,7 +62,7 @@
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent$ResetStartPageCommandHandler"
+					command-implementation-comment="com.top_logic.contact.layout.person.related.ResetStartPageCommandHandler"
 					command-label="Startseite zurücksetzen"
 					command-name="resetStartPage"
 					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
@@ -142,7 +142,7 @@
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent$ResetStartPageCommandHandler"
+					command-implementation-comment="com.top_logic.contact.layout.person.related.ResetStartPageCommandHandler"
 					command-label="Startseite zurücksetzen"
 					command-name="resetStartPage"
 					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"

@@ -139,7 +139,7 @@
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>
-		            <handler id="resetStartPage" class="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent$ResetStartPageCommandHandler"
+		            <handler id="resetStartPage" class="com.top_logic.contact.layout.person.related.ResetStartPageCommandHandler"
 		            	group="System"
 		            	image="theme:ICON_RESET_STARTPAGE" 
 		            />

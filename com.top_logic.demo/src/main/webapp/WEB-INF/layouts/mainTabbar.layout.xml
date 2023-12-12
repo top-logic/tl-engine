@@ -6,6 +6,9 @@
 	template="com.top_logic/maintabbar.template.xml"
 >
 	<arguments>
+		<dialogs>
+			<layout-reference resource="admin/persons/accounts/userSettings/dialog.layout.xml"/>
+		</dialogs>
 		<components>
 			<layout-reference resource="com.top_logic.demo/structure/index.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/table/index.layout.xml"/>

@@ -11,7 +11,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.file.Path;
@@ -271,6 +270,10 @@ public class ConfigLoaderTestUtil {
 	private void addToMetaConf(List<String> additionalFiles) throws IOException {
 		File topMetaConf = FileManager.getInstance().getIDEFile(ModuleLayoutConstants.META_CONF_RESOURCE);
 		File metaConfDir = topMetaConf.getParentFile();
+		if (!metaConfDir.exists()) {
+			// Ensure that storing metaConf.txt does not fail because of missing parent directory.
+			metaConfDir.mkdirs();
+		}
 		_metaConfFile = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME);
 		_metaConfCopy = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME + ".orig");
 		if (_metaConfCopy.exists()) {
@@ -280,9 +283,8 @@ public class ConfigLoaderTestUtil {
 		if (_metaConfFile.exists()) {
 			_metaConfFile.renameTo(_metaConfCopy);
 		} else {
-			try (OutputStream out = new FileOutputStream(_metaConfCopy)) {
-				// Only touch file.
-			}
+			// Only touch file.
+			_metaConfCopy.createNewFile();
 		}
 		try (PrintWriter out =
 			new PrintWriter(new OutputStreamWriter(new FileOutputStream(_metaConfFile), charsetName))) {

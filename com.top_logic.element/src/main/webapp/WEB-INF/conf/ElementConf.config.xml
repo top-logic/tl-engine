@@ -480,6 +480,18 @@
 						<tag-provider impl="com.top_logic.element.meta.form.tag.SelectTagProvider"/>
 					</attribute-setting>
 
+					<attribute-setting
+						config-name="TIMEZONE"
+						legacy-type-code="17"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.ComplexFieldProvider">
+								<option-provider class="com.top_logic.element.meta.complex.TimeZoneOptionProvider"/>
+							</impl>
+						</field-provider>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.SelectTagProvider"/>
+					</attribute-setting>
+
 					<attribute-setting config-name="WRAPPER">
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
 						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>

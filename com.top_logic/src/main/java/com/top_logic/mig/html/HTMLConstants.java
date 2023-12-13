@@ -1011,12 +1011,6 @@ public interface HTMLConstants {
 	 */
 	@FrameworkInternal
 	public static final String TL_TOOLTIP_ATTR = DATA_ATTRIBUTE_PREFIX + "tooltip";
-
-	/**
-	 * Special attribute annotating a CSS class to be set on its element, if the mouse hovers over
-	 * the element.
-	 */
-	public static final String TL_HOVER_CLASS_ATTR = DATA_ATTRIBUTE_PREFIX + "hover";
 	
 	/**
 	 * The attribute value is a reference to the javascript object where the

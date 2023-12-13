@@ -4356,7 +4356,7 @@ input.tristate {
 	padding-right: 0.5em;
 }
 
-.breadcrumb .hover .menu {
+.breadcrumb .treeNode:hover .menu {
     background-color: var(--BREADCRUMB_HOVER_MENU_BACKGROUND);
     cursor: pointer;
 }
@@ -4369,7 +4369,7 @@ input.tristate {
 	border-radius: 0.5em;
 }
 
-.breadcrumb .hover .selectableNode {
+.breadcrumb .treeNode:hover .selectableNode {
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5) 70%);
     color: var(--BREADCRUMB_HOVER_SELECTABLENODE_COLOR);
 }
@@ -6489,16 +6489,16 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	min-height: 24px;
 }
 
-.rf_highlighted .rf_frameBorder.hover .rf_frame,
-.rf_highlighted .rf_frame.hover,
-.rf_highlighted .rf_wrapper.hover .rf_container {
+.rf_highlighted .rf_frameBorder:hover .rf_frame,
+.rf_highlighted .rf_frame:hover,
+.rf_highlighted .rf_wrapper:hover .rf_container {
 	margin-left: 20px;
 	margin-right: 20px;
 	min-width: calc(100% - 40px);
 }
 
-.rf_highlighted .rf_frameBorder.hover,
-.rf_highlighted .rf_wrapper.hover  {
+.rf_highlighted .rf_frameBorder:hover,
+.rf_highlighted .rf_wrapper:hover  {
 	background-image: var(--FORM_EDITOR_BUTTON_INSERT_LEFT), var(--FORM_EDITOR_BUTTON_INSERT_RIGHT);
 	background-repeat: no-repeat;
 	background-position: left center, right center; 
@@ -6527,14 +6527,14 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	background-color: var(--BUTTON_COLOR_HOVER);
 }
 
-.cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover > .rf_frame,
-.cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover > .rf_container {
+.cFormEditorDisplay.edit .rf_frameBorder:hover > .rf_frame,
+.cFormEditorDisplay.edit .rf_wrapper:hover > .rf_container {
 	margin-left: 20px;
 	min-width: calc(100% - 20px);
 }
 
-.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover,
-.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover {
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:hover,
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:hover {
 	background-image: var(--FORM_EDITOR_BUTTON_MOVE);
 	background-repeat: no-repeat;
 	background-position: left center; 

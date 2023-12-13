@@ -6,7 +6,7 @@
 .tabBar .tab:hover,
 
 .breadcrumb .selectableNode,
-.breadcrumb .hover .selectableNode,
+.breadcrumb .treeNode:hover .selectableNode,
 
 .rf_hr.visible,
 

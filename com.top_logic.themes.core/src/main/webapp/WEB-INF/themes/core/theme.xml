@@ -6,6 +6,7 @@
 	state="enabled"
 >
 	<styles>
+		<style name="/style/normalize.css"/>
 		<style name="/style/core.css"/>
 		<style name="/style/coreButtons.css"/>
 		<style name="/style/tabbar.css"/>

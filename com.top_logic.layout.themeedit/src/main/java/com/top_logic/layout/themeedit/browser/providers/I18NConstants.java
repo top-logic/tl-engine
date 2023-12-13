@@ -129,7 +129,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey NO_THEME_CONFIGURATION_FILE_IN_ZIP;
 
 	/**
-	 * Error message if a base theme this theme extends do not exist.
+	 * Error message if a base theme that this theme extends does not exist.
 	 */
 	public static ResKey1 BASE_THEME_NOT_EXISTING_ERROR__BASE_THEME;
 

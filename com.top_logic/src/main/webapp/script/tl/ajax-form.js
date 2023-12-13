@@ -3930,7 +3930,7 @@ services.form = {
 			});
 		},
 		
-		submit: function(controlID, uploadFieldID, uploadUrl, validFileIds, waitImage, waitMessage) {
+		submit: function(controlID, uploadFieldID, uploadUrl, validFileIds) {
 			var fileupload = document.getElementById(uploadFieldID);
 			
 			services.ajax.showWaitPane();
@@ -3954,27 +3954,6 @@ services.form = {
 				controlCommand : "uploadPerformed",
 				controlID : controlID
 			});
-		},
-
-		showWaitDiv: function(placeElement, waitImage, waitMessage) {
-			var splashDiv = document.createElement("div");
-			splashDiv.id = "splashImage";
-			BAL.DOM.addClass(splashDiv, "uploadSplash");
-			document.body.appendChild(splashDiv);
-
-			var innerHTML = "<img src='" + waitImage + "' alt='wait image'><span style='margin-left:2px;font-weight:bold'>" + waitMessage + "</span></img>";
-			splashDiv.innerHTML = innerHTML;
-			
-			splashDiv.style.visibility = 'visible';
-			var removeFunction = function() {
-				document.body.removeChild(splashDiv);
-			};
-			placeElement.removeWaitFunction = createHideWaitpaneOnClickFunction(removeFunction);
-			PlaceDialog.placeDialog({
-				element: placeElement, 
-				content: splashDiv
-			});
-			showClickResponsiveWaitpane(placeElement.removeWaitFunction);
 		}
 
 	},

@@ -1,0 +1,389 @@
+/*
+****					****
+****	Tabbar syles	****
+****					****
+*/
+.tlTabbarContainer {
+	display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.tlTabBar {
+	position: relative;
+	display: flex;
+	flex-wrap: nowrap;
+}
+
+/* Simulates a border bottom line for the entire tab bar */
+.tlTabBar::before {
+	content: "";
+	position: absolute;
+  	bottom: 0;
+  	left: 0;
+  	right: 0;
+  	height: 2px;
+  	background-color: var(--border-subtle);
+	z-index: -1;
+}
+
+.tlTabScrollContainer {
+	display: flex;
+	flex-wrap: nowrap;
+	height: var(--tabbar-height);
+  	overflow-x: auto;
+	scrollbar-width: none;	/* Hides the scrollbar. */
+}
+
+/* Hides the scrollbar in Chrome, Safari, and Opera */
+.tlTabScrollContainer::-webkit-scrollbar {
+  	display: none;
+}
+
+.tlTabScrollContainer.scrolling .tab,
+.tlTabScrollContainer.scrolling .activeTab {
+	pointer-events: none;
+}
+
+.tlTabScrollLeft, .tlTabScrollRight {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	cursor: pointer;
+	font-size: 1rem;
+	width: var(--tabbar-height);
+	height: var(--tabbar-height);
+}
+
+.tlTabBar .activeTab,
+.tlTabBar .tab {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	flex-shrink: 0;
+	gap: var(--spacing-02);
+	cursor: pointer;
+	height: var(--tabbar-height);
+	width: auto;
+	background: transparent;
+	padding: var(--spacing-02) var(--spacing-03);
+	border-top: none;
+	border-right: none;
+	border-left: none;
+}
+
+.tlTabBar .activeTab {
+	border-bottom: 2px solid var(--border-interactive);	
+}
+
+.tlTabBar .tab {
+	border-bottom: 2px solid var(--border-subtle);
+}
+
+.tlTabBar .activeTabLabel {
+	color: var(--text-primary);
+	font-size: .875rem;
+	font-weight: 600;
+}
+
+.tlTabBar .tabLabel {
+	color: var(--text-secondary);
+	font-size: .875rem;
+	font-weight: 400;
+}
+
+.tlTabBar .tabIcon i {
+	padding-left: var(--spacing-02);
+  	font-size: 1rem;
+}
+
+.tlTabBar .activeTab .tabIcon i {
+	color: var(--icon-primary);
+}
+
+.tlTabBar .tab .tabIcon i {
+	color: var(--icon-secondary);
+}
+
+.tlTabBar .activeTab:hover,
+.tlTabBar .tab:hover {
+	border-bottom: 2px solid var(--border-strong);
+}
+
+.tab:hover .tabLabel {
+	color: var(--text-primary);
+}
+
+.tab:hover .tabIcon i {
+	color: var(--icon-primary);
+}
+
+.tlTabBar .activeTab:focus, 
+.tlTabBar .tab:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	border-bottom: 1px solid var(--focus);
+}
+
+.tlTabBar .activeTab:disabled,
+.tlTabBar .tab:disabled {
+	border-bottom: 2px solid var(--border-disabled);
+}
+
+.activeTab:disabled .activeTabLabel,
+.tab:disabled .tabLabel {
+	color: var(--text-disabled);
+	font-weight: 400;
+}
+
+.activeTab:disabled .tabIcon i,
+.tab:disabled .tabIcon i {
+	color: var(--icon-disabled);
+}
+
+/* =============================================== */
+/* ================ Sidebar Design =============== */
+/* =============================================== */
+.mcMinimized .sblLogo .frmBody {
+    padding: var(--spacing-01) var(--spacing-03) 0 var(--spacing-03);
+}
+
+.mcMinimized .sblLogo .frmBody {
+    padding: var(--spacing-01) var(--spacing-01) 0 var(--spacing-01);
+}
+
+.sblTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.sblTitleContent {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+div.mcMinimized .sblTitle img {
+	max-width: 2rem;
+}
+
+.sblTitleName {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+	color: var(--text-primary);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.sblTitleVersion {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secondary);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.sblAccordion {
+	margin-bottom: var(--spacing-06);
+  	padding-top: var(--spacing-05);
+  	position: relative; /* for the positioning of the border */
+}
+
+.sblAccordion::before {
+  	content: "";
+  	position: absolute;
+  	top: calc(var(--spacing-05) / 2);
+  	left: 50%; /* center horizontally in the middle of the parent element */
+  	transform: translateX(-50%); /* center horizontally */
+  	width: 80%;
+  	border-top: 2px solid var(--border-subtle);
+}
+
+.cMinimizable:not(.mcMinimized) .tabbarPopup {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+}
+
+.quickSearch .cTextInput {
+	flex-grow: 2;
+}
+
+.quickSearch .cButton.quickSearchButton {
+    box-shadow: none;
+    background: var(--field);
+    border: none;
+    border-radius: unset;
+}
+
+.quickSearch .cButton.quickSearchButton a.input-image {
+    border-radius: 0;
+}
+
+.quickSearchTitle.accText {
+	margin-top: var(--spacing-03);
+}
+
+.licenseView {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: var(--support-danger);
+	border-radius: 0.25rem;
+}
+
+/* Is needed for the sidebar theme */
+.licenseView .licenseContent {
+	font-weight: 600;
+	color: var(--text-on-color);
+}
+
+.licenseContent {
+	font-weight: 600;
+	color: var(--support-danger);
+}
+
+span.cLogoutTimer {
+	display: none;
+	font-weight: bold;
+	color: var(--support-danger);
+}
+
+span.cLogoutTimer input {
+	vertical-align: sub;
+	display: none;
+}
+
+span.ltcCounting {
+	display: block;
+}
+
+.header-logo img {
+	max-height: 50px;
+}
+
+
+/* =============================================== */
+/* ====== AccordionControl (prefix is 'acc') ===== */
+/* =============================================== */
+div.accRoot {
+	background: transparent;
+}
+
+div.accChildren {
+	margin-left: var(--ACCORDION_INDENT);
+}
+
+div.accNode a.accEntry,
+a.accEntry,
+a.accEntry:link,
+a.accEntry:visited,
+a.accEntry:active {
+	display: block;
+	padding: var(--spacing-02) var(--spacing-03);
+	white-space: nowrap;
+	overflow-x: hidden;
+}
+
+a.accEntry span.accEntryContent {
+	padding: 0px;
+}
+
+a.accEntry span.accLabel {
+	color: var(--text-secondary);
+	display: table-cell;
+	width: 100%;
+	line-height: 2rem;
+}
+
+a.accEntry img.accMarker {
+	width: 22px;
+	padding-right: 7px;
+}
+
+div.accChildren > div.accNode > a.accEntry {
+	border-top-left-radius: var(--ACCORDION_BORDER_RADIUS);
+	border-bottom-left-radius: var(--ACCORDION_BORDER_RADIUS);
+}
+
+div.accChildren > div.accNode:first-child > a.accEntry {
+	border-top-left-radius: 0px;
+}
+
+span.accIcon.input-image,
+span.accIcon.input-image i {
+	color: var(--icon-secondary);
+}
+
+span.accIcon.input-image,
+span.accIcon.input-image i,
+img.accIcon {
+	padding-right: var(--spacing-02);	
+}
+
+div.accRoot ul.mtbGroup,
+div.accRoot ul.mtbGroup li {
+	display: block;
+	padding: 0px;
+	margin: 0px;
+}
+
+div.sblButtons .tlUser,
+div.sblButtons .mtbGroup .cButton {
+	background: transparent;
+	box-shadow: none;
+	font-size: var(--body-02-font-size);
+}
+
+div.sblButtons .tlUser i,
+div.sblButtons .mtbGroup .cButton i {
+	font-size: var(--body-02-font-size);
+}
+
+a.accEntry:hover,
+.sblButtons .mtbGroup .cButton:not(.cmdLinkDisabled) a:hover {
+	background: var(--layer-hover);
+	text-decoration: none;
+	box-shadow: none;
+}
+
+a.accEntry.accSelected, 
+div.accSelected a.accEntry,
+div.accNode.tlPopupOpen a.accEntry,
+a.accEntry.accContainer.accSelected {
+	background: var(--layer);
+	box-shadow: inset 4px 0 0 0 var(--border-interactive);
+}
+
+a.accEntry.accSelected:hover, 
+div.accSelected a.accEntry:hover,
+div.accNode.tlPopupOpen a.accEntry:hover,
+a.accEntry.accContainer.accSelected:hover {
+	box-shadow: inset 4px 0 0 0 var(--border-strong);
+}
+
+a.accEntry.accSelected .accLabel, 
+div.accSelected a.accEntry .accLabel,
+div.accNode.tlPopupOpen a.accEntry .accLabel,
+a.accEntry.accContainer.accSelected .accLabel{
+	color: var(--text-primary);
+	font-size: .875rem;
+    font-weight: 600;
+}
+
+a.accEntry.accSelected .accIcon i, 
+div.accSelected a.accEntry .accIcon i,
+div.accNode.tlPopupOpen a.accEntry .accIcon i,
+a.accEntry.accContainer.accSelected .accIcon i {
+	color: var(--icon-primary);
+}
+
+
+

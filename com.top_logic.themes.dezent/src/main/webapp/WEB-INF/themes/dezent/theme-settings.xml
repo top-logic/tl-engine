@@ -503,6 +503,9 @@
 		expr=""
 		value="colored:tl-icon dashboard"
 	/>
+	<icon name="IMAGE_DEBUG_22"
+		value="css:fas fa-bug"
+	/>
 	<icon name="IMAGE_BUTTONS_GUI_INSPECTOR22"
 		expr=""
 		value="colored:tl-icon pointer-chevron"
@@ -1091,10 +1094,6 @@
 	<icon name="com.top_logic.layout.form.control.Icons.URL_LINK"
 		expr=""
 		value="colored:tl-icon arrow-top-right-square"
-	/>
-	<img name="com.top_logic.layout.form.control.Icons.WAIT_IMAGE"
-		expr=""
-		value="/animation/hourglass.svg"
 	/>
 	<icon name="com.top_logic.layout.form.decorator.Icons.CHANGED"
 		expr=""

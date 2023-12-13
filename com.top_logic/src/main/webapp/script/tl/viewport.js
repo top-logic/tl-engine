@@ -704,5 +704,223 @@ services.viewport = {
 	
 	getSpaceHolderContainer: function(viewportReferences) {
 		return document.getElementById(viewportReferences.buttonSpaceHolderContainer);
+	},
+	
+	/* 
+	*	Makes Tabbar scrollable with mouse drag and drop, 
+	*	gui-arrows on each end of the tabbar and keyword 
+	*	shift or ctrl + mouse wheel
+	*	Parameter: TabBarControl.
+	*/
+	tabScrollBehaviour: function(element) {
+		const elementID = element.id;
+		const tabLayout = document.getElementById(elementID);
+		const scrollContainer = tabLayout.querySelector('.tlTabScrollContainer');
+		const tabBar = scrollContainer.parentElement;
+		const scrollLeftButton = tabLayout.querySelector('.tlTabScrollLeft');
+		const scrollRightButton = tabLayout.querySelector('.tlTabScrollRight');
+		let isScrolling = false;
+		const scrollAmount = 70;
+		 
+		if (tabBar.clientWidth > scrollContainer.scrollWidth || 
+				scrollContainer.scrollWidth < scrollContainer.clientWidth) {
+	        scrollLeftButton.style.display = 'none';
+	        scrollRightButton.style.display = 'none';
+	    } else {
+	        scrollLeftButton.style.display = 'flex';
+	        scrollRightButton.style.display = 'flex';
+	    }
+	    
+		function scrollLeft() {
+			scrollContainer.scrollBy({
+				left: -scrollAmount,
+				behavior: 'smooth'
+			});
+			if (isScrolling) {
+				setTimeout(scrollLeft, 100);
+			}
+		}
+		
+		function scrollRight() {
+			scrollContainer.scrollBy({
+				left: scrollAmount,
+				behavior: 'smooth'
+			});
+			if (isScrolling) {
+				setTimeout(scrollRight, 100);
+			}
+		}
+	    	    
+	    scrollLeftButton.addEventListener('mousedown', function() {
+	    	isScrolling = true;
+	    	scrollLeft();
+		});
+		
+		scrollRightButton.addEventListener('mousedown', function() {
+			isScrolling = true;
+			scrollRight();
+		});
+		
+		scrollLeftButton.addEventListener('mouseup', function() {
+			isScrolling = false;
+		});
+		
+		scrollRightButton.addEventListener('mouseup', function() {
+			isScrolling = false;
+		});
+		
+		scrollContainer.addEventListener("mousedown", function(e) {
+			isScrolling = true;
+	        const initialX = e.clientX;
+	        
+	        const moveHandler = function(e) {
+	        	if (!isScrolling) return;
+	        	if (Math.abs(initialX - e.clientX) > 5) {
+	        		scrollContainer.classList.add("scrolling");
+	        		scrollContainer.scrollLeft -= e.movementX;
+	        	}
+	        };
+	
+	        const upHandler = function() {
+	        	isScrolling = false;
+	        	scrollContainer.classList.remove("scrolling");
+	            document.removeEventListener("mousemove", moveHandler);
+	            document.removeEventListener("mouseup", upHandler);
+	        };
+	
+	        document.addEventListener("mousemove", moveHandler);
+	        document.addEventListener("mouseup", upHandler);
+	    });
+		
+		// Makes scolling with CTRL or SHIFT + mouse wheel possible.
+		scrollContainer.addEventListener('wheel', function(event) {
+        	if (event.ctrlKey) {
+            	scrollContainer.scrollLeft += event.deltaY;
+            	// Prevents the default browser action (e.g. zooming)
+            	event.preventDefault();
+       		}
+        });
+        
+	},
+	
+	/* 
+	*	Ensures that the selected tab is being displayed in the tab container
+	*	and not hidden outside the tab bar scope.
+	*	Parameter: TabBarControl.
+	*/
+	ensureTabVisible: function(element) {
+		const elementID = element.id;
+		const tabLayout = document.getElementById(elementID);
+		const tabContainer = tabLayout.querySelector('.tlTabScrollContainer');
+		const activeTab = tabContainer.querySelector('.activeTab'); 
+		/* 
+		*	It does not matter if no tab has been selected from a container.
+		*	This happens if you go to administration in the non-sidebar theme.
+		*	None of the tabs from the first tab bar are selected.
+		*/
+		if(activeTab) {
+			const containerWidth = tabContainer.clientWidth;
+  			const tabLeftEnd = activeTab.offsetLeft;
+  			const tabRightEnd = tabLeftEnd + activeTab.clientWidth;
+  			if (tabLeftEnd < tabContainer.scrollLeft) {
+    			tabContainer.scrollLeft = tabLeftEnd;
+  			} else if (tabRightEnd > tabContainer.scrollLeft + containerWidth) {
+    			tabContainer.scrollLeft = tabRightEnd - containerWidth;
+  			}
+		}
+	},
+	
+	/* 
+	*	Hides buttons that are no longer visible in the browser or exceeds the width 
+	*	of the container, and makes them visible again if the container gets wider again.
+	*	Hidden buttons will be displayed in a dropdown button.
+	*	Parameter: Button component element.
+	*/
+	buttonComponentResizing: function(element) {
+		const elementID = element.id;
+	  	const buttonComponentParent = document.getElementById(elementID);
+		const buttonScrollContainer = buttonComponentParent.querySelector('.tlButtonScrollContainer');
+		const buttons = Array.from(buttonScrollContainer.querySelectorAll('.containerButton:not(.tlDropdownContent .containerButton)'));
+		const buttonsSize = buttons.length;
+		let buttonsClone = [];
+	  	let currButton;
+	  	let dropdown = buttonScrollContainer.querySelector('.tlDropdown');
+	  	let dropdownButton = buttonScrollContainer.querySelector('.tlDropdownButton');
+	  	let dropdownContent = buttonScrollContainer.querySelector('.tlDropdownContent');
+	  	let dropdownHtml = '';
+	  	dropdown.style.display = 'none';
+	  	dropdownContent.style.display = 'none';
+	  	for (let i = 0; i < buttonsSize; i++) {
+	    	buttonsClone[i] = buttons[i].cloneNode(true);
+	    	buttons[i].style.display = 'inline-block';
+	  	}
+	  	
+	  	// Migrates the hidden buttons into the dropdown content.
+	  	for (let i = 0; i < buttonsSize; i++) {
+	    	if(buttons[i].offsetLeft < 1) {
+	    		dropdown.style.display = 'inline-block';
+	      		currButton = buttonsClone[i].firstElementChild;
+	      		currButton.classList = "tlInDropdown"
+	      		dropdownHtml += currButton.outerHTML;
+	      		buttons[i].style.display = 'none';
+	    	}
+	  	}
+	  	dropdownContent.innerHTML = dropdownHtml;
+	},
+	
+	/* 
+	*	Opens the dropdown with all the hidden buttons.
+	*
+	*	Parameter: Dropdown button.
+	*/
+	openButtonComponentsDropdown: function(dropdownButton) {
+		const dropdownContent = dropdownButton.nextElementSibling;
+	  	if (dropdownContent.style.display === 'none') {
+	    	dropdownContent.style.display = 'block';
+	    	// Finds the button with the biggest width. Dropdown content's width depends on that,
+	    	// because normally an element grows in the right direction but this dropdown menu has 
+	    	// to grow in the left direction.
+	    	let maxWidth = 0;
+	    	const labels = dropdownContent.querySelectorAll('a .tlButtonLabel');
+			for (let i = 0; i < labels.length; i++) {
+				const label = labels[i];
+			  	let width = label.getBoundingClientRect().width;
+			  	const nextSibling = label.nextElementSibling;
+  			  	if (nextSibling) {
+					width += nextSibling.getBoundingClientRect().width;
+				  	width += parseFloat(getComputedStyle(nextSibling).getPropertyValue('padding-right'));
+  			  	}
+			  	maxWidth = Math.max(maxWidth, width);
+			}
+			const anchors = dropdownContent.querySelectorAll('a');
+			const buttonPadding = getComputedStyle(anchors[0]);
+			const paddingLeft = parseFloat(buttonPadding.getPropertyValue('padding-left'));
+			const paddingRight = parseFloat(buttonPadding.getPropertyValue('padding-right'));
+			dropdownContent.style.width = `${maxWidth + paddingLeft + paddingRight}px`;
+			const ancestorWithLcHidden = this.findAncestorWithClass(dropdownButton, 'lcHidden', 5);
+	        if (ancestorWithLcHidden) {
+	            ancestorWithLcHidden.style.overflow = 'visible';
+	        }
+	  	} else {
+	    	dropdownContent.style.display = 'none';
+	    	const ancestorWithLcHidden = this.findAncestorWithClass(dropdownButton, 'lcHidden', 5);
+	        if (ancestorWithLcHidden) {
+	            ancestorWithLcHidden.style.overflow = 'hidden';
+	        }
+	  	}
+	  	// Closes dropdown when user clicks somewhere else outside the dropdown.
+	  	document.addEventListener('click', function(event) {
+	    	if (!dropdownButton.contains(event.target) && !dropdownContent.contains(event.target)) {
+	      		dropdownContent.style.display = 'none';
+	    	}
+	  	});
+	},
+	
+	findAncestorWithClass: function(element, cssClass, maxHops) {
+		let hops = 0;
+	    while ((element = element.parentElement) && !element.classList.contains(cssClass) && hops < maxHops) {
+	        hops++;
+	    }
+	    return element.classList.contains(cssClass) ? element : null;
 	}
 };

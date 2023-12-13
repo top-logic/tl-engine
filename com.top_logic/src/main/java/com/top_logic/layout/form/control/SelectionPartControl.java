@@ -147,6 +147,11 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		out.endTag(SPAN);
 	}
 
+	@Override
+	protected String getTypeCssClass() {
+		return "tl-radio-checkbox-container";
+	}
+
 	private void writeOnChange(DisplayContext context, TagWriter out) throws IOException {
 		if (context.getUserAgent().is_ie()) {
 			// Workaround for IE bug: onchange events for select input

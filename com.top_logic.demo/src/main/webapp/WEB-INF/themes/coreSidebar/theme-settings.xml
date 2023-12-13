@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<boolean name="com.top_logic.layout.Icons.HIDE_APP_TITLE_ON_LOGIN_PAGE"
+		value="true"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
+		value="css:bi bi-info-square"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_INFORMATION"
+		value="css:bi bi-info-circle-fill"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
+		value="css:bi bi-exclamation-triangle-fill"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_ERROR"
+		value="css:bi bi-x-octagon-fill"
+	/>
+	<icon name="layouts.demo.tlHome"
+		value="css:bi bi-house-fill"
+	/>
+	<icon name="model.DemoTypes.A"
+		value="css:bi bi-alarm-fill"
+	/>
+</settings>

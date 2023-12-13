@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.8.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-themes-core</artifactId>
+  <description>TopLogic theme "core".</description>
+	<url>https://github.com/top-logic/tl-engine</url>
+	
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-bootstrap-icons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-inter-fonts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-google-fonts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-fontawesome</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-icons</artifactId>
+    </dependency>
+  </dependencies>
+</project>

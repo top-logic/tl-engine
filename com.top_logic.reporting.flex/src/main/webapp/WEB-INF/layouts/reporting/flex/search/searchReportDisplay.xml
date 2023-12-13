@@ -35,10 +35,10 @@
 				<layout name="${namePrefix}SaveDialog">
 					<dialogInfo
 						defaultI18n="reporting.flex.chart.displayDialog_NewStoredReportDialog"
-						disabledImage="icons/buttonSaveDisabled.png"
+						disabledImage="theme:ICONS_BUTTON_SAVE_DISABLED"
 						executability="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent$CanSaveSettings"
 						height="220"
-						image="icons/buttonSave.png"
+						image="theme:ICONS_BUTTON_SAVE"
 						openButtonSecComp="${namePrefix}Configurator"
 						openHandlerClass="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent$SaveAs"
 						openerClique="save"

@@ -17,7 +17,25 @@ try {
     <title>TL logout screen</title>
 	
     <style>
+    	@font-face {
+			font-family: "Inter-Regular";
+			src: url("../../themes/default/fonts/Inter-Regular.otf") format("otf"),
+				 url("../../themes/default/fonts/Inter-Regular.woff") format("woff"),
+				 url("../../themes/default/fonts/Inter-Regular.ttf") format("truetype");
+		}
+		
+		@font-face {
+			font-family: "Inter-SemiBold";
+			src: url("../../themes/default/fonts/Inter-SemiBold.otf") format("otf"),
+				 url("../../themes/default/fonts/Inter-SemiBold.woff") format("woff"),
+				 url("../../themes/default/fonts/Inter-SemiBold.ttf") format("truetype");
+		}
+
         body {
+        	font-family: 'Inter-Regular';
+			font-size: .875rem;
+			line-height: 1.125rem;
+			letter-spacing: .15px;
             overflow: hidden;
             background: transparent;
             height: 100vh;
@@ -33,9 +51,7 @@ try {
 
         .caption {
             margin: 0 auto;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            font-size: 1rem;
-            color: #000;
+            color: #101113;
             text-align: center;
             margin-bottom: 24px;
         }
@@ -54,22 +70,27 @@ try {
         }
 
         button {
-            /* display + box model */
-            min-width: 120px;
-            padding-left: 20px;
-            padding-right: 20px;
-            height: 2.5rem;
+        	font-family: 'Inter-SemiBold';
+			font-size: .875rem;
+			line-height: 1.125rem;
+			letter-spacing: .15px;
+            padding: .5rem 1rem;
+            height: 2rem;
             border-radius: .25rem;
-            /* color */
-            background-color: #0090b8;
-            color: white;
-            /* text label */
-            font-weight: 600;
-            letter-spacing: 1px;
+            cursor: pointer;
+			border: none;
+            background-color: #2968c8;
+            box-shadow: inset 0px 0px 0px 1px #2968c8;
+            color: #ffffff;
    		}
 
         button:hover {
-            background-color: #0078a3;
+            background: #245db2;
+            box-shadow: inset 0px 0px 0px 1px #245db2;
+        }
+        
+        button:focus {
+            box-shadow: inset 0px 0px 0px 2px #2968C8, inset 0px 0px 0px 3px #ffffff;
         }
 
         /** TL Logo Settings **/

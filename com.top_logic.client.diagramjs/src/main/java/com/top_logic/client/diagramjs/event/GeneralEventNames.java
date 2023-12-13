@@ -109,6 +109,11 @@ public interface GeneralEventNames extends CommonEventNames {
 	public static final String ELEMENTS_MOVE_EVENT = "elements.move";
 
 	/**
+	 * DiagramJS {@link Event} name when diagram elements have changed their visibility.
+	 */
+	public static final String ELEMENTS_VISIBILITY_EVENT = "elements.visibility";
+
+	/**
 	 * DiagramJS {@link Event} name for updating waypoints of a connection.
 	 */
 	public static final String UPDATET_WAYPOINTS_EVENT = "connection.updateWaypoints";

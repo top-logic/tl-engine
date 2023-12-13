@@ -26,6 +26,11 @@ public interface ModuleNames {
 	public static final String ELEMENT_FACTORY_MODULE = "elementFactory";
 
 	/**
+	 * @see ElementRegistry
+	 */
+	public static final String ELEMENT_REGISTRY_MODULE = "elementRegistry";
+
+	/**
 	 * @see Canvas
 	 */
 	public static final String CANVAS_MODULE = "canvas";

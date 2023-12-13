@@ -391,11 +391,12 @@ public class LayoutGraphUtil implements LayoutGraphUtilConstants {
 	/**
 	 * Stream of {@link TLTypePart} attributes for the given node.
 	 */
-	public static Stream<? extends TLTypePart> getNodeAttributesStream(TLType type) {
+	public static Stream<? extends TLTypePart> getNodeAttributesStream(TLType type, Collection<Object> hiddenElements) {
 		if (type instanceof TLClass) {
-			return ((TLClass) type).getLocalClassParts().stream().filter(part -> isTLProperty(part));
+			return ((TLClass) type).getLocalClassParts().stream()
+				.filter(part -> isTLProperty(part) && !hiddenElements.contains(part));
 		} else if (type instanceof TLEnumeration) {
-			return ((TLEnumeration) type).getClassifiers().stream();
+			return ((TLEnumeration) type).getClassifiers().stream().filter(part -> !hiddenElements.contains(part));
 		} else {
 			return null;
 		}
@@ -406,11 +407,11 @@ public class LayoutGraphUtil implements LayoutGraphUtilConstants {
 	}
 
 	private static Stream<Double> getNodeAttributesHeightStream(LayoutContext context, TLType type) {
-		return getNodeAttributesStream(type).map(AttributeHeightCalculater(context));
+		return getNodeAttributesStream(type, context.getHiddenElements()).map(AttributeHeightCalculater(context));
 	}
 
 	private static Stream<Double> getNodeAttributesWidthStream(LayoutContext context, TLType type) {
-		return getNodeAttributesStream(type).map(NodeAttributeWidthCalculater(context));
+		return getNodeAttributesStream(type, context.getHiddenElements()).map(NodeAttributeWidthCalculater(context));
 	}
 
 	private static Function<? super TLTypePart, ? extends Double> AttributeHeightCalculater(LayoutContext context) {

@@ -5,13 +5,17 @@
  */
 package com.top_logic.graph.diagramjs.server;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -22,6 +26,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.listener.EventType;
+import com.top_logic.basic.listener.NoBubblingEventType;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.remote.listener.AttributeListener;
 import com.top_logic.element.layout.meta.TLEnumerationFormBuilder;
@@ -65,11 +72,17 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLAssociation;
+import com.top_logic.model.TLAssociationPart;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
+import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 import com.top_logic.util.error.TopLogicException;
@@ -175,13 +188,39 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		boolean useIncrementalUpdates();
 	}
 
+	private static final String SHOW_TECHNICAL_GENERALIZATIONS_PROPERTY_NAME = "showTechnicalGeneralizations";
+
 	private static final String SHOW_TECHNICAL_NAMES_PROPERTY_NAME = "showTechnicalNames";
 
-	private static final String SHOW_TABLE_INTERFACE_TYPES_PROPERTY_NAME = "showTableInterfaceTypes";
+	private static final String SHOW_HIDDEN_ELEMENTS_PROPERTY_NAME = "showHiddenElements";
+
+	private static final Property<Boolean> SHOW_TECHNICAL_GENERALIZATIONS = getShowTechnicalGeneralizationsProperty();
 
 	private static final Property<Boolean> SHOW_TECHNICAL_NAMES = getShowTechnicalNamesProperty();
 
-	private static final Property<Boolean> SHOW_TABLE_INTERFACE_TYPES = getShowTableInterfacesTypesProperty();
+	/**
+	 * {@link EventType} type for changing {@link #SHOW_HIDDEN_ELEMENTS} property.
+	 * 
+	 * @see HiddenElementsVisibilityListener
+	 */
+	public static final EventType<HiddenElementsVisibilityListener, Object, Boolean> SHOW_HIDDEN_ELEMENTS_EVENT =
+		new NoBubblingEventType<>("showHiddenElements") {
+
+			@Override
+			protected void internalDispatch(HiddenElementsVisibilityListener listener, Object sender, Boolean oldValue,
+					Boolean newValue) {
+				listener.handleHiddenElementsVisibility(sender, oldValue, newValue);
+			}
+		};
+
+	private static final Property<Boolean> SHOW_HIDDEN_ELEMENTS = getShowHiddenElementsProperty();
+
+	/**
+	 * Component property for flagging if technical generalizations should be displayed.
+	 */
+	private static Property<Boolean> getShowTechnicalGeneralizationsProperty() {
+		return TypedAnnotatable.property(Boolean.class, SHOW_TECHNICAL_GENERALIZATIONS_PROPERTY_NAME, Boolean.FALSE);
+	}
 
 	/**
 	 * Component property for flagging if technical names should be displayed.
@@ -191,10 +230,10 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * Component property for flagging if table interface types should be displayed.
+	 * Component property for flagging if hidden elements should be displayed.
 	 */
-	private static Property<Boolean> getShowTableInterfacesTypesProperty() {
-		return TypedAnnotatable.property(Boolean.class, SHOW_TABLE_INTERFACE_TYPES_PROPERTY_NAME, Boolean.FALSE);
+	private static Property<Boolean> getShowHiddenElementsProperty() {
+		return TypedAnnotatable.property(Boolean.class, SHOW_HIDDEN_ELEMENTS_PROPERTY_NAME, Boolean.FALSE);
 	}
 
 	private static final ComponentChannel.ChannelListener SELECTION_LISTENER = new ComponentChannel.ChannelListener() {
@@ -205,10 +244,14 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		}
 	};
 
-	TLModule _currentDisplayedModule;
+	private TLModule _currentDisplayedModule;
 
-	GraphData _graphData = new DefaultGraphData(null);
+	private final GraphData _graphData = new DefaultGraphData(null);
 	
+	private Set<Object> _hiddenGraphParts = new HashSet<>();
+
+	private Collection<TLType> _technicalGeneralizations = new HashSet<>();
+
 	/**
 	 * Creates an {@link DiagramJSGraphComponent} instance.
 	 * 
@@ -221,6 +264,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		super(context, config);
 
 		_graphData.setDropTarget(context.getInstance(config.getGraphDrop()));
+		_technicalGeneralizations.add(TLModelUtil.findType("tl.model:TLObject"));
 	}
 
 	@Override
@@ -230,22 +274,17 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		selectionChannel().addListener(SELECTION_LISTENER);
 	}
 
-	final void onSelectionChange(Object newValue) {
-		if (!isGraphValid(newValue)) {
-			TLModule enclosingModule = GraphModelUtil.getEnclosingModule(newValue);
-			setModel(enclosingModule);
-			setGraphModel(createSharedGraphModel(enclosingModule));
-
-			_currentDisplayedModule = enclosingModule;
+	final void onSelectionChange(Object graphPartModel) {
+		if (!isDisplayedInDiagram(graphPartModel)) {
+			setGraphModel(GraphModelUtil.getEnclosingModule(graphPartModel));
 		}
 
 		DiagramJSGraphModel graphModel = (DiagramJSGraphModel) getGraphModel();
 		if (graphModel != null) {
-			if (!isGraphPartWithSameModelSelected(graphModel, newValue)) {
-				selectGraphPart(graphModel, newValue);
+			if (!isGraphPartWithSameModelSelected(graphModel, graphPartModel)) {
+				selectGraphPart(graphModel, graphPartModel);
 			}
 		}
-
 	}
 
 	private boolean isGraphPartWithSameModelSelected(DiagramJSGraphModel graphModel, Object newValue) {
@@ -258,8 +297,8 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		return false;
 	}
 
-	private void selectGraphPart(SharedGraph graph, Object businessModel) {
-		GraphPart graphPart = graph.getGraphPart(businessModel);
+	private void selectGraphPart(SharedGraph graph, Object graphPartModel) {
+		GraphPart graphPart = graph.getGraphPart(graphPartModel);
 
 		if (graphPart != null) {
 			graph.setSelectedGraphParts(Collections.singleton(graphPart));
@@ -278,6 +317,33 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		}
 
 		return _graphData.getGraph();
+	}
+
+	private void setGraphModel(TLModule module) {
+		boolean newModelSet = setModel(module);
+
+		if (newModelSet) {
+			setGraphModel(createSharedGraphModel(module));
+
+			_currentDisplayedModule = module;
+
+			showAllElements();
+		}
+	}
+
+	/**
+	 * Clears the collection of hidden diagram elements.
+	 */
+	public void showAllElements() {
+		_hiddenGraphParts = new HashSet<>();
+	}
+
+	private void setGraphModel(SharedGraph sharedGraph) {
+		_graphData.setGraph(sharedGraph);
+
+		if (sharedGraph != null) {
+			addGraphPartAttributeListeners(sharedGraph);
+		}
 	}
 
 	private SharedGraph createSharedGraphModel(TLModule module) {
@@ -306,17 +372,6 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		return _graphData;
 	}
 
-	/**
-	 * @see #getGraphModel()
-	 */
-	public void setGraphModel(SharedGraph sharedGraph) {
-		_graphData.setGraph(sharedGraph);
-
-		if (sharedGraph != null) {
-			addGraphPartAttributeListeners(sharedGraph);
-		}
-	}
-
 	private void addGraphPartAttributeListeners(SharedGraph sharedGraph) {
 		sharedGraph.addAttributeListener(DefaultDiagramJSGraphModel.SELECTED_GRAPH_PARTS, new AttributeListener() {
 
@@ -330,7 +385,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 				if (tlGraphParts.isEmpty()) {
 					Object selected = getSelected();
 
-					if (isInvalid(selected) || hasGraphPart(graphModel, selected)) {
+					if (isInvalid(selected) || graphModel.getGraphPart(selected) != null) {
 						setSelected(_currentDisplayedModule);
 					}
 				} else if (tlGraphParts.size() == 1) {
@@ -359,28 +414,10 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		});
 	}
 
-	private boolean isGraphValid(Object model) {
-		boolean displayedModuleValid = isDisplayedModuleValid(model);
-
-		if (model instanceof TLModule) {
-			return displayedModuleValid;
-		}
-
-		return hasGraphPart(model);
-	}
-
-	private boolean hasGraphPart(Object object) {
+	private boolean isDisplayedInDiagram(Object graphPartModel) {
 		SharedGraph graph = _graphData.getGraph();
 
-		return graph != null && hasGraphPart(graph, object);
-	}
-
-	boolean hasGraphPart(GraphModel model, Object object) {
-		return model.getGraphPart(object) != null;
-	}
-
-	private boolean isDisplayedModuleValid(Object model) {
-		return _currentDisplayedModule != null && _currentDisplayedModule == GraphModelUtil.getEnclosingModule(model);
+		return graph != null && (graph.getTag() == graphPartModel || graph.getGraphPart(graphPartModel) != null);
 	}
 
 	private boolean hasGraphModel() {
@@ -388,10 +425,23 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * Delete the current {@link SharedGraph} and create a new one.
+	 * Delete the current {@link SharedGraph} and create a new one. Maintain the collection of
+	 * selected diagram parts.
 	 */
 	public void resetGraphModel() {
-		setGraphModel(createSharedGraphModel(_currentDisplayedModule));
+		Collection<Object> oldSelectedGraphPartModels = getGraphPartModels(getGraphModel().getSelectedGraphParts());
+
+		SharedGraph newGraph = createSharedGraphModel(_currentDisplayedModule);
+
+		newGraph.setSelectedGraphParts(getGraphParts(newGraph, oldSelectedGraphPartModels));
+
+		setGraphModel(newGraph);
+	}
+
+	private Collection<Object> getGraphPartModels(Collection<? extends GraphPart> graphParts) {
+		return graphParts.stream()
+			.map(graphPart -> graphPart.getTag())
+			.collect(Collectors.toSet());
 	}
 
 	@Override
@@ -538,12 +588,40 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	@Override
+	public void setElementsVisibility(Collection<Object> graphPartModels, boolean isVisible) {
+		if (isVisible) {
+			_hiddenGraphParts.removeAll(graphPartModels);
+		} else {
+			_hiddenGraphParts.addAll(graphPartModels);
+
+			if (!showHiddenElements()) {
+				SharedGraph graph = getGraphModel();
+				GraphModelUtil.removeGraphParts(graph, getGraphParts(graph, graphPartModels));
+			}
+		}
+	}
+
+	private Collection<? extends GraphPart> getGraphParts(SharedGraph graph, Collection<Object> graphPartModels) {
+		return graphPartModels.stream()
+			.map(graphPartModel -> graph.getGraphPart(graphPartModel))
+			.filter(model -> model != null)
+			.collect(Collectors.toSet());
+	}
+
+	@Override
 	protected boolean receiveMyModelChangeEvent(Object changedBy) {
 		if (((Config) getConfig()).useIncrementalUpdates()) {
 			return true;
 		} else {
 			return super.receiveMyModelChangeEvent(changedBy);
 		}
+	}
+
+	/**
+	 * True, if technical generalizations should be displayed, otherwise false.
+	 */
+	public boolean showTechnicalGeneralizations() {
+		return get(SHOW_TECHNICAL_GENERALIZATIONS).booleanValue();
 	}
 
 	/**
@@ -554,10 +632,26 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * True, if table interface types should be displayed, otherwise false.
+	 * True if the diagrams hidden elements, those that are not {@link GraphPart#isVisible()},
+	 * should be shown by using a special style, otherwise false.
+	 * 
+	 * <p>
+	 * When <code>false</code> is returned, a server {@link GraphModel} is created that does not
+	 * contain any {@link GraphPart} with a {@link GraphPart#getTag() business object} within
+	 * {@link #_hiddenGraphParts hidden graph part objects}.
+	 * </p>
+	 * 
+	 * @see GraphPart#isVisible()
 	 */
-	public boolean showTableInterfaceTypes() {
-		return get(SHOW_TABLE_INTERFACE_TYPES).booleanValue();
+	public boolean showHiddenElements() {
+		return get(SHOW_HIDDEN_ELEMENTS).booleanValue();
+	}
+
+	/**
+	 * @see #showTechnicalGeneralizations()
+	 */
+	public Object setShowTechnicalGeneralizations(boolean newValue) {
+		return set(SHOW_TECHNICAL_GENERALIZATIONS, Boolean.valueOf(newValue));
 	}
 
 	/**
@@ -568,10 +662,17 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * @see #showTableInterfaceTypes()
+	 * @see #showHiddenElements()
 	 */
-	public Object setShowTableInterfaceTypes(boolean newValue) {
-		return set(SHOW_TABLE_INTERFACE_TYPES, Boolean.valueOf(newValue));
+	public void setShowHiddenElements(boolean value) {
+		Boolean oldValue = get(SHOW_HIDDEN_ELEMENTS);
+		Boolean newValue = Boolean.valueOf(value);
+
+		set(SHOW_HIDDEN_ELEMENTS, newValue);
+
+		resetGraphModel();
+
+		firePropertyChanged(SHOW_HIDDEN_ELEMENTS_EVENT, this, oldValue, newValue);
 	}
 
 	/**
@@ -579,7 +680,16 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	 *         {@link LabelProvider} for {@link TLModelPart}s.
 	 */
 	public LayoutContext getLayoutContext() {
-		return new LayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), showTableInterfaceTypes());
+		return new LayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), getHiddenElements(),
+			getHiddenGeneralizations());
+	}
+
+	private Collection<TLType> getHiddenGeneralizations() {
+		if (showTechnicalGeneralizations()) {
+			return Collections.emptySet();
+		} else {
+			return getTechnicalGeneralizations();
+		}
 	}
 
 	/**
@@ -593,20 +703,144 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		return MetaResourceProvider.INSTANCE;
 	}
 
-	@Override
-	public void gotoDefinition(TLModelPart modelPart) {
-		TLModule enclosingModule = GraphModelUtil.getEnclosingModule(modelPart);
+	/**
+	 * Set of technical generalizations.
+	 * 
+	 * <p>
+	 * The user could hide technical generalizations in the diagram by using the
+	 * {@link #SHOW_TECHNICAL_GENERALIZATIONS} property.
+	 * </p>
+	 */
+	public Collection<TLType> getTechnicalGeneralizations() {
+		return _technicalGeneralizations;
+	}
 
-		boolean newModelSet = setModel(enclosingModule);
-
-		if (newModelSet) {
-			SharedGraph graph = createSharedGraphModel(enclosingModule);
-
-			selectGraphPart(graph, modelPart);
-			setGraphModel(graph);
-
-			_currentDisplayedModule = enclosingModule;
+	/**
+	 * Returns the collection of graph part models that should not be displayed in a diagram.
+	 */
+	public Set<Object> getHiddenElements() {
+		if (showHiddenElements()) {
+			return Collections.emptySet();
+		} else {
+			return _hiddenGraphParts;
 		}
 	}
 
+	@Override
+	public void gotoDefinition(TLModelPart modelPart) {
+		setGraphModel(GraphModelUtil.getEnclosingModule(modelPart));
+
+		selectGraphPart(getGraphModel(), modelPart);
+	}
+
+	/**
+	 * Returns a collection of diagram elements that are rendered but marked as invisible.
+	 */
+	public Set<Object> getInvisibleGraphParts() {
+		if (showHiddenElements()) {
+			return _hiddenGraphParts;
+		} else {
+			return Collections.emptySet();
+		}
+	}
+
+	@Override
+	protected void handleTLObjectCreations(Stream<? extends TLObject> creations) {
+		if (hasGraphModel()) {
+			getOrderedModelPartCreations(getDiagramRelevantObjects(creations)).forEach(object -> getOrCreateGraphPart(object));
+		}
+	}
+
+	private Stream<TLModelPart> getDiagramRelevantObjects(Stream<? extends TLObject> objects) {
+		return objects.filter(object -> isValidDiagramObject(object)).map(TLModelPart.class::cast);
+	}
+
+	private boolean isValidDiagramObject(TLObject object) {
+		boolean isModelPart = object instanceof TLModelPart;
+		boolean belongsToDisplayedModule = belongsToDisplayedModule(object);
+
+		return isModelPart && belongsToDisplayedModule && GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
+	}
+
+	private List<TLModelPart> getOrderedModelPartCreations(Stream<? extends TLModelPart> creations) {
+		Map<ModelKind, List<TLModelPart>> partsByKind = getPartsByKind(creations);
+
+		List<TLModelPart> result = new ArrayList<>();
+
+		result.addAll(CollectionUtilShared.topsort(TLClass::getGeneralizations, getTLClasses(partsByKind), false));
+		result.addAll(partsByKind.getOrDefault(ModelKind.ENUMERATION, Collections.emptyList()));
+		result.addAll(partsByKind.getOrDefault(ModelKind.CLASSIFIER, Collections.emptyList()));
+		result.addAll(partsByKind.getOrDefault(ModelKind.PROPERTY, Collections.emptyList()));
+		result.addAll(partsByKind.getOrDefault(ModelKind.REFERENCE, Collections.emptyList()));
+
+		return result;
+	}
+
+	private List<TLClass> getTLClasses(Map<ModelKind, List<TLModelPart>> partsByKind) {
+		if (partsByKind.containsKey(ModelKind.CLASS)) {
+			List<TLClass> classes = new ArrayList<>();
+
+			for (TLModelPart clazz : partsByKind.get(ModelKind.CLASS)) {
+				classes.add((TLClass) clazz);
+			}
+
+			return classes;
+		} else {
+			return Collections.emptyList();
+		}
+	}
+
+	private Map<ModelKind, List<TLModelPart>> getPartsByKind(Stream<? extends TLModelPart> parts) {
+		return parts.collect(Collectors.groupingBy(TLModelPart::getModelKind));
+	}
+
+	@Override
+	protected void handleTLObjectDeletions(Stream<? extends TLObject> deleted) {
+		if (hasGraphModel()) {
+			SharedGraph graphModel = getGraphModel();
+
+			deleted.forEach(object -> {
+				GraphModelUtil.removeGraphParts(graphModel, Collections.singleton(graphModel.getGraphPart(object)));
+			});
+		}
+	}
+
+	/**
+	 * Returns the {@link GraphPart} with the given business object. If no graph part is found, a
+	 * new {@link GraphPart} is created into the underlying {@link GraphModel} of this component.
+	 */
+	public GraphPart getOrCreateGraphPart(Object object) {
+		SharedGraph graph = getGraphModel();
+
+		GraphPart graphPart = graph.getGraphPart(object);
+
+		if (graphPart != null) {
+			return graphPart;
+		} else {
+			return GraphModelUtil.createGraphPart(graph, object, getLayoutContext(), getInvisibleGraphParts());
+		}
+	}
+
+	private boolean belongsToDisplayedModule(TLObject object) {
+		return GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule;
+	}
+
+	/**
+	 * Only a {@link GraphPart} for a {@link TLReference} business object is build.
+	 */
+	private boolean isSupportedObject(TLObject object) {
+		return !(object instanceof TLAssociation || object instanceof TLAssociationPart);
+	}
+
+	@Override
+	protected Set<? extends TLStructuredType> getTypesToObserve() {
+		Set<TLStructuredType> typesToObserve = new HashSet<>();
+
+		typesToObserve.add(TlModelFactory.getTLClassType());
+		typesToObserve.add(TlModelFactory.getTLEnumerationType());
+		typesToObserve.add(TlModelFactory.getTLReferenceType());
+		typesToObserve.add(TlModelFactory.getTLPropertyType());
+
+		return typesToObserve;
+	}
 }

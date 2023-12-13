@@ -9,6 +9,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 import com.top_logic.client.diagramjs.core.ElementFactory;
 import com.top_logic.client.diagramjs.model.util.Waypoint;
+import com.top_logic.client.diagramjs.util.DiagramJSObjectUtil;
 
 /**
  * Connection between {@link Shape}s.
@@ -34,10 +35,11 @@ public final class Connection extends Base {
 
 	/**
 	 * @see #getWaypoints()
+	 * @see DiagramJSObjectUtil#setWaypoints(JavaScriptObject, Waypoint[])
 	 */
-	public native void setWaypoints(Waypoint[] waypoints) /*-{
-		this.waypoints = waypoints;
-	}-*/;
+	public void setWaypoints(Waypoint[] waypoints) {
+		DiagramJSObjectUtil.setWaypoints(this, waypoints);
+	}
 
 	/**
 	 * Type of this Edge, for example inheritance, aggregation, etc.

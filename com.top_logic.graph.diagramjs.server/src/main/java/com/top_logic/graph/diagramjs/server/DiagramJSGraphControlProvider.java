@@ -7,8 +7,6 @@ package com.top_logic.graph.diagramjs.server;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.graph.diagramjs.server.handler.DiagramHandler;
-import com.top_logic.graph.server.model.GraphData;
 import com.top_logic.layout.structure.ContentLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -41,15 +39,7 @@ public class DiagramJSGraphControlProvider<C extends DiagramJSGraphControlProvid
 
 	@Override
 	protected HTMLFragment createView(LayoutComponent component) {
-		GraphData graphData = getGraphData(component);
-
-		return new DiagramJSGraphControl(graphData, (DiagramHandler) component);
-	}
-
-	private GraphData getGraphData(LayoutComponent component) {
-		DiagramJSGraphComponent graphComponent = (DiagramJSGraphComponent) component;
-
-		return graphComponent.getGraphData();
+		return new DiagramJSGraphControl((DiagramJSGraphComponent) component);
 	}
 
 }

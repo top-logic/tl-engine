@@ -7680,7 +7680,7 @@ div.dirtyHandlingDialog .changes {
 }
 
 .ddwttSearch {
-	border: none;
+	border: none !important;
 	border-radius: initial;
 }
 

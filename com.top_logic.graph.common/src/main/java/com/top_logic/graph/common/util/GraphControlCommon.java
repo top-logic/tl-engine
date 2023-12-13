@@ -47,6 +47,11 @@ public class GraphControlCommon {
 	public static final String RIGHT_CLICK_COMMAND = "rightClick";
 
 	/**
+	 * Command ID of the graph control to display hidden elements.
+	 */
+	public static final String SHOW_HIDDEN_ELEMENTS_COMMAND = "showHiddenElements";
+
+	/**
 	 * The id of the div that is given to yFiles to display the graph.
 	 * 
 	 * @param controlId

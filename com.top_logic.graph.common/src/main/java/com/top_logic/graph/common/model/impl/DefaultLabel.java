@@ -46,6 +46,7 @@ public class DefaultLabel extends DefaultGraphPart implements Label {
 	@Override
 	protected void onDelete() {
 		clearOwner();
+		getGraph().removeInternal(this);
 	}
 
 	@Override

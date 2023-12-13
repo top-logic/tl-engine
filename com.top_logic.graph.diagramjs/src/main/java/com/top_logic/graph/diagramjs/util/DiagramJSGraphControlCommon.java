@@ -43,4 +43,9 @@ public interface DiagramJSGraphControlCommon {
 	 */
 	public static final String GO_TO_DEFINITION_COMMAND = "gotoDefinition";
 
+	/**
+	 * Command ID to handle client diagram element visibility changes.
+	 */
+	public static final String ELEMENTS_VISIBILITY_COMMAND = "handleElementsVisibility";
+
 }

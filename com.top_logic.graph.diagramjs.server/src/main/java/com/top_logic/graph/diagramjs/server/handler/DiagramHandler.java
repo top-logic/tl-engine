@@ -12,6 +12,6 @@ package com.top_logic.graph.diagramjs.server.handler;
  */
 public interface DiagramHandler
 		extends CreateClassHandler, CreateClassPropertyHandler, CreateConnectionHandler, CreateEnumerationHandler,
-		GoToDefinitionHandler {
+		GoToDefinitionHandler, ElementsVisibilityHandler {
 	// Pure sum interface.
 }

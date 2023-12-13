@@ -277,4 +277,11 @@ public abstract class ObjectData extends AbstractAttributeObservable {
 	 */
 	protected abstract void onDelete();
 
+	/**
+	 * Whether the given property have to be shared.
+	 */
+	protected boolean isTransient(String property) {
+		return false;
+	}
+
 }

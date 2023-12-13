@@ -36,7 +36,6 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.event.infoservice.InfoService;
-import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.knowledge.service.binary.FileItemBinaryData;
 import com.top_logic.layout.AbstractDisplayValue;
@@ -700,10 +699,6 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 					TagUtil.writeJsString(out, uploadURL(context).getURL());
 					out.append(",");
 					JSON.write(out, validFileIds);
-					out.append(",'");
-					ThemeFactory.getTheme().getValue(Icons.WAIT_IMAGE).appendUrl(context, out);
-					out.append("',");
-					TagUtil.writeJsString(out, context.getResources().getString(I18NConstants.UPLOAD_IN_PROGRESS));
 					out.append(");");
 				}
 			}));

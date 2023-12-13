@@ -124,6 +124,9 @@
 	<dim name="BOX_VSPACE_SIZE"
 		value="8px"
 	/>
+	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
+		value="34"
+	/>
 	<color name="BREADCRUMB_ALINK_COLOR"
 		value="#000000"
 	/>
@@ -783,6 +786,12 @@
 	/>
 	<icon name="ICONS_BUTTON_IDE_EXTRACT_DISABLED"
 		value="css:fas fa-hdd"
+	/>
+	<icon name="ICON_SHOW_INHERITED_VARIABLES"
+		value="css:fas fa-arrow-alt-circle-up"
+	/>
+	<icon name="ICON_SHOW_INHERITED_VARIABLES_ACTIVE"
+		value="css:fas fa-arrow-alt-circle-up"
 	/>
 	<icon name="ICONS_BUTTON_NEW_ELEMENT"
 		value="/icons/buttonNewElement.png"
@@ -2482,9 +2491,6 @@
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.URL_LINK"
 		value="colored:tl-icon arrow-top-right-square"
-	/>
-	<img name="com.top_logic.layout.form.control.Icons.WAIT_IMAGE"
-		value="/animation/hourglass.png"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.WARN"
 		value="/icons/warn.png"

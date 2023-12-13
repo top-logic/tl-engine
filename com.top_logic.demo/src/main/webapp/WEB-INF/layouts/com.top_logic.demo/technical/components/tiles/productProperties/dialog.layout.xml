@@ -19,7 +19,7 @@
 			confirm="false"
 			disabledImage=""
 			group=""
-			image="css:fas fa-cog"
+			image="theme:TILES_CONFIGURE_GROUP_ICON"
 			securityObject=""
 			target="selection(com.top_logic.demo/technical/components/tiles/productsTileLayout.layout.xml#List)"
 			targetComponent="com.top_logic.demo/technical/components/tiles/productProperties/dialog.layout.xml#Dialog"

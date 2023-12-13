@@ -1,0 +1,2175 @@
+/* Style-sheet for the TopLogic core theme. */
+:focus-visible {
+    outline: -webkit-focus-ring-color auto 0;
+}
+
+body {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+	outline: none;
+	margin: 0;
+	width: 100vw;
+	height: 100vh;
+	background: var(--background);
+	color: var(--text-primary);
+}
+
+h5 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-01-font-size);
+	line-height: var(--heading-compact-01-line-height);
+	letter-spacing: var(--heading-compact-01-letter-spacing);
+}
+
+h4 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+}
+
+h3 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+}
+
+h2 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+}
+
+h1 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-05-font-size);
+	line-height: var(--heading-05-line-height);
+	letter-spacing: var(--heading-05-letter-spacing);
+}
+
+.structuredTextFullHeight {
+    padding: 0 var(--spacing-03);
+}
+
+.margin5 {
+    margin-top: 0.5rem;
+}
+
+.noSelection {
+	position: relative; 
+	top: 40%; 
+	text-align: center
+}
+
+i.red {
+	color: var(--support-danger);
+}
+
+i.green {
+	color: var(--support-success);
+}
+
+i.yellow {
+	color: var(--support-warning);
+}
+
+.layoutVerticalAdjustmentGrabber {
+    cursor: n-resize;
+    background: var(--background);
+}
+
+.layoutHorizontalAdjustmentGrabber {
+  	cursor: e-resize;
+  	background: var(--background);
+}
+
+.fflCollapsed {
+	cursor: default;
+}
+
+/*
+****					****
+****	Anchor syles	****
+****					****
+*/
+a {
+	color: var(--link-primary);
+}
+
+a, a:link {
+	cursor: pointer;
+	text-decoration: none;
+}
+
+a:not(.disabled):hover {
+	color: var(--link-primary-hover);
+	text-decoration: underline;
+}
+
+a:not(.disabled):active {
+	color: var(--text-primary);
+	text-decoration: underline;
+}
+
+a:not(.disabled):focus {
+    color: var(--link-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+a:visited, a.gotoLink:visited,
+a.cmdLink:visited {
+    /* color: var(--link-primary); */
+}
+
+.cmdLinkDisabled {
+    text-decoration: none;
+    cursor: default;
+    color: var(--text-disabled);
+}
+
+/*
+****					      ****
+****	Code-Editor Styles	  ****
+****					      ****
+*/
+.ace-eclipse .ace_active-line {
+    background: var(--layer-selected);
+	border: 1px solid var(--border-subtle);
+}
+
+.ace-eclipse .ace_marker-layer .ace_selection {
+    background: var(--layer-selected);
+}
+
+/* Adjust line height for the entire Ace Editor */
+.ace_editor {
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+}
+
+/* Adjust line height for the text area of the editor */
+.ace_content {
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+}
+
+/* Styles for display help for TLScript.*/
+div.tlScriptDoc {
+	max-width: 500px;
+	overflow: auto;
+}
+
+div.ace_tooltip {
+	white-space: normal;
+	max-height: 50vh;
+	overflow: auto;
+}
+
+div.ace_tooltip>code {
+	white-space: pre;
+}
+
+div.ace_tooltip>code.inlineCode {
+	white-space: normal;
+}
+
+/*
+****					****
+****	Popup Styles	****
+****					****
+*/
+.pdlgWindow, .dlgWindow ,.dlgBackground, #pdlgPopupDialogPane, #waitPane, #pdlgPopupDialogs {
+	/*
+	 * Popup dialogs has to be stacked upon the current view. Because the table header has z-index 1, 
+	 * the popup dialogs should have at least z-index 2 to be stacked upon table headers.
+	 *
+	 * z-index kann only be set on positioned elements.
+	 *
+	 * This cause not a problem for nesting (popup)-dialogs, because setting a z-index
+	 * sets the stack level of this element in the current stacking context. It also
+	 * establishes a local stacking context. This means that the z-indexes of descendants are not compared 
+	 * to the z-indexes of elements outside this element.
+	 *
+	 * Details: https://developer.mozilla.org/en-US/docs/Web/CSS/z-index
+	 */
+	z-index: 5;
+}
+
+#pdlgPopupDialogs {
+	position: relative;
+}
+
+.pdlgPopupDialogPane_visible {
+  	position: absolute;
+  	width: 100%;
+  	height: 100%;
+  	background-color: var(--background);
+  	opacity: 0;
+  	cursor: wait;
+}
+
+.pdlgWindow {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	border-top-style: none;
+	overflow: hidden;
+	box-shadow: var(--shadow-menu);
+}
+
+.pdlgContent {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	background-color: var(--background);
+}
+
+.pdlgTitleBar {
+	position: relative;
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: space-between;
+	height: var(--POPUP_TITLE_HEIGHT);
+	padding-left: 2px;
+	background-color: var(--layer-accent);
+}
+
+.pdlgToolbar {
+	display: flex;
+	align-self: center;
+	cursor: pointer;
+}
+
+.pdlgToolbar > span {
+	display: flex;
+	align-self: center;
+	gap: var(--spacing-02);
+	margin-right: var(--spacing-02);
+}
+
+.pdlgToolbar a {
+	color: var(--icon-primary);
+}
+
+.pdlgToolbar a:hover {
+	color: var(--icon-primary);
+}
+
+.pdlgTitle {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding: 0 3px;
+	align-self: center;
+}
+
+.cTextPopupEditor {
+	margin: 0 var(--spacing-02);
+}
+
+.cTextPopupEditor .cTextInput .lFlexible textarea {
+	height: 3rem;
+	margin-top: var(--spacing-02);
+}
+
+.fltGlobalContainer {
+	width: 100%;
+	height: 100%;
+	background: var(--layer);
+}
+
+.fltGlobalContainer input,
+.fltGlobalContainer .cTextInput input {
+	background: var(--background);
+}
+
+.fltGlobalContainer .cTextInput input {
+	margin-bottom: var(--spacing-03);
+}
+
+div.fltHeader {
+	margin: 3px;
+	font-weight: bold;
+}
+
+.fltSettings {
+	position: relative;
+	overflow: auto;
+	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
+	max-width: 100%;
+	padding: 0 var(--spacing-03);
+}
+
+.fltCommandContent {
+	text-align: center;
+	box-sizing: border-box;
+	padding: var(--spacing-03) var(--spacing-01);
+}
+
+.fltMenu {
+	position: relative;
+	overflow: hidden;
+}
+
+.fltSubContent {
+	margin: 0px;
+	overflow: auto;
+	padding-top: var(--spacing-02);
+}
+
+hr {
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-03) 0;
+}
+
+.sidebarFilterContainer .fToggle,
+.sidebarFilterContainer .fToggle:focus,
+.sidebarFilterContainer .fToggle:hover {
+	color: var(--icon-primary);
+}
+
+.sidebarFilterContainer .fltSubContent {
+	margin: 0px;
+	overflow: auto;
+	padding: var(--spacing-03) var(--spacing-03);
+}
+
+.sidebarFilterContainer .fltSubContent.fltMenu {
+	margin: 0px;
+	overflow: auto;
+	padding: 0 var(--spacing-03);
+}
+
+.sidebarFilterContainer input,
+.sidebarFilterContainer .cTextInput input,
+.sidebarFilterContainer .cDateInput input,
+.sidebarFilterContainer .cDateInput .lFixedRight,
+.sidebarFilterContainer .cTimeInput input,
+.sidebarFilterContainer .cTimeInput .lFixedRight,
+.sidebarFilterContainer .ddwttDropBtn {
+	background: var(--background);
+}
+
+.sidebarFilterContainer .cTextInput input {
+	margin-bottom: var(--spacing-03);
+}
+
+ul.fltList {
+	list-style-type : none;
+	margin: 3px;
+	padding: 0px;
+}
+
+div.fltList {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+.fltList > div {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-02);
+}
+
+.fltList span {
+	margin-left: 0 !important;
+}
+
+.fltList div .cLabel {
+	padding-left: 0;
+}
+
+.fltList .cLabel {
+	padding: 0 var(--spacing-02);
+}
+
+.filterBox {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-01);
+	margin: var(--spacing-01) 0;
+}
+
+.operatorBox {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+
+.patternBox {
+	display: inline-flex;
+	align-items: center;
+	flex-direction: column;
+}
+
+.patternBoxExpanded {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-03);
+}
+
+.firstPattern, 
+.secondPattern, 
+.pushDownForeground, 
+.pushDownBackground, 
+.pullUpForeground, 
+.pullUpBackground {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-01);
+}
+
+.pushDownForeground, 
+.pushDownBackground, 
+.pullUpForeground, 
+.pullUpBackground {
+	animation-duration: 0.3s;
+	animation-direction: reverse;
+}
+
+.pushDownForeground {
+	animation-name: reversePushDownForeground;
+}
+
+.pushDownBackground {
+	animation-name: reversePushDownBackground;
+}
+
+.pullUpForeground {
+	animation-name: reversePullUpForeground;
+}
+
+.pullUpBackground {
+	animation-name: reversePullUpBackground;
+}
+
+@keyframes reversePushDownForeground {
+    0%   {z-index: 1;}
+    50%  {z-index: 3; transform: scale(1.1)}
+    100% {z-index: 1; top: 0; left: 0}
+}
+
+@keyframes reversePushDownBackground {
+    50%  {transform: scale(0.9)}
+    100% {top: 0; left: 0}
+}
+
+@keyframes reversePullUpForeground {
+    0%   {z-index: 1;}
+    50%  {z-index: 3; transform: scale(1.1)}
+    100% {z-index: 1; top: 25px; left: 0}
+}
+
+@keyframes reversePullUpBackground {
+    50%  {transform: scale(0.9)}
+    100% {top: 25px; left: 0}
+}
+
+.filterGroupTitle {
+	margin: 2px 2px 5px;
+	font-weight: bold;
+}
+
+.defaultFilterContainer {
+	margin-top: var(--spacing-02);
+}
+
+.defaultFilterContainer .cPopupSelect,
+.defaultFilterContainer .cTextSelect,
+.defaultFilterContainer .cExpandableTextInput,
+.defaultFilterContainer .cTextInput,
+.defaultFilterContainer .cDatetime,
+.defaultFilterContainer .cDateInput,
+.defaultFilterContainer .cIntegerInput,
+.defaultFilterContainer .cTimeInput {
+	width: 100%;
+	white-space: break-spaces;
+	word-wrap: break-word;
+	word-break: break-word;
+}
+
+.defaultFilterContainer .cDatetime input {
+	width: 65px;
+}
+
+.defaultFilterContainer .cDateInput input {
+	width: 100px;
+}
+
+.defaultFilterContainer input,
+.defaultFilterContainer .cTextInput input,
+.defaultFilterContainer .cDateInput input,
+.defaultFilterContainer .cDateInput .lFixedRight,
+.defaultFilterContainer .cTimeInput input,
+.defaultFilterContainer .cTimeInput .lFixedRight,
+.defaultFilterContainer .ddwttDropBtn {
+	background: var(--background);
+}
+
+.defaultFilterContainer .lFlexible > input {
+	box-sizing: border-box;
+}
+
+.defaultFilterContainer span.cError img {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+.sidebarFilterContainer .checkboxMultiSelectContainer {
+	max-height: none;
+}
+
+.sidebarFilterEntry.collapsibleFilterEntry {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-01);
+    background: var(--layer-accent);
+    padding: 0 var(--spacing-03);
+}
+
+.sidebarFilterEntry.collapsibleFilterEntry {
+	background: var(--layer-accent);
+}
+
+.sidebarFilterEntry.collapsibleFilterEntry:hover {
+	background: var(--layer-hover);
+}
+
+.checkboxMultiSelectEntry {
+	display: flex;
+    gap: var(--spacing-02);
+	cursor: default;
+	margin: 0 0 var(--spacing-01) 0;
+	padding: 0;
+}
+
+.checkboxMultiSelectNoEntries {
+    font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
+    text-align: center;
+    white-space: nowrap;
+    margin-bottom: var(--spacing-03);
+}
+
+.popupMenu {
+	border-collapse: collapse;
+	width: 100%;
+	display: table;
+}
+
+.popupMenu ~ .popupMenu {
+	border-top: 1px solid var(--border-subtle);
+}
+
+.cMenuButton {
+	line-height: 2em;
+	display: table-row;
+}
+
+.cMenuButton i {
+	padding-left: 1px;
+	padding-right: 1px;
+	font-size: 20px;
+}
+
+.menuEntryEnabled, .menuEntryDisabled {
+	padding-top: 1px;
+	padding-bottom: 1px;
+}
+
+.menuEntryCell:first-child, .menuEntryCell img.menuEntryImage {
+	width: 27px;
+}
+
+.menuEntryCell {
+	padding: 0.2em;
+	white-space: nowrap;
+	display: table-cell;
+}
+
+.menuEntryImage {
+	vertical-align: middle;
+}
+
+.popupMenu a {
+	color: var(--text-secondary);
+	background-color: var(--layer);
+}
+
+.popupMenu a .menuEntryCell .menuEntryImage {
+	color: var(--icon-secondary);
+}
+
+.popupMenu a:hover {
+	color: var(--text-primary);
+	text-decoration: none;
+	background-color: var(--layer-hover);
+}
+
+.popupMenu a:hover .menuEntryCell .menuEntryImage {
+	color: var(--icon-primary);
+}
+
+.popupMenu a:focus {
+	color: var(--text-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.popupMenu a:active {
+	color: var(--text-primary);
+	text-decoration: none;
+}
+
+a.cMenuButton.menuEntryDisabled {
+	color: var(--text-on-color-disabled);
+}
+
+a.cMenuButton.menuEntryDisabled i {
+	color: var(--icon-on-color-disabled);
+}
+
+a.cMenuButton.menuEntryDisabled:hover {
+	color: var(--text-on-color-disabled);
+	background: var(--layer);
+}
+
+a.cMenuButton.menuEntryDisabled:hover i {
+	color: var(--icon-on-color-disabled);
+	background: var(--layer);
+}
+
+a.cMenuButton.menuEntryDisabled:focus {
+	box-shadow: none;
+}
+
+.popupMenu a.tlInApp {
+	background-color: var(--debug);
+}
+
+.popupMenu a.tlInApp:hover {
+	background-color: var(--debug-hover);
+}
+
+.popupMenu a.tlInApp.menuEntryDisabled {
+	background-color: var(--debug-disabled);
+}
+
+.popupMenu a.tlInApp.menuEntryDisabled:hover,
+.popupMenu a.tlInApp.menuEntryDisabled:hover i {
+	background-color: var(--debug-disabled);
+}
+
+/* ============================================= */
+/* ====== Styles for AJAX command handling ===== */
+/* ============================================= */
+
+#waitPane {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+}
+
+#waitPane {
+	visibility: hidden;
+}
+
+#waitPane.waiting {
+	visibility: visible;
+}
+
+/* Dialog Window Styles */
+#dlgDialogs {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 0;
+}
+
+#dlgDialogs.dialogOpened {
+	width: 100%;
+	height: 100%;
+}
+
+#dlgDialogs.noDialogOpened {
+	width: 0;
+	height: 0;
+}
+
+.dlgDialog {
+	visibility: hidden;
+}
+
+div.dlgWindow {
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	width: 600px;
+	height: 400px;
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+	background-color: var(--background);
+	box-shadow: var(--shadow-menu);
+}
+
+div.dlgMaximized {
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+div.dlgMaximized .dlgBorder,
+div.dlgMaximized .dlgResizeNW,
+div.dlgMaximized .dlgResizeNE,
+div.dlgMaximized .input-image.dlgMaximize {
+	display: none;
+}
+
+div.dlgMaximized span.dlgTitle, div.dlgMaximized span.dlgToolbar {
+	padding-left: 5px;
+	padding-right: 3px;
+}
+
+.dlgToolbar .input-image.dlgRestore {
+	display: none;
+}
+
+div.dlgMaximized .input-image.dlgRestore {
+	display: inline-block;
+}
+
+.dlgBackground {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	cursor: wait;
+	background: var(--overlay);
+}
+
+.dlgTitleBar {
+	position: absolute;
+	display: flex;
+	width: 100%;
+	cursor: move;
+	height: var(--DIALOG_TITLE_HEIGHT);
+	background-color: var(--layer-accent);
+}
+
+.dlgBorderNW.dlgResizeNW {
+	order: 1;
+}
+
+.tlDlgToolbarContainer {
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: space-between;
+	align-self: center;
+	flex-grow: 2;
+	order: 2;
+	overflow: hidden;
+}
+
+.dlgTitle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: flex;
+	align-self: center;
+}
+
+.dlgToolbar {
+	display: flex;
+	align-self: center;
+	gap: var(--spacing-02);
+}
+
+.dlgToolbar a,
+.dlgToolbar a:hover {
+	color: var(--icon-primary);
+	box-shadow: none;
+}
+
+.dlgToolbar a:focus {
+	color: var(--icon-primary);
+}
+
+.dlgBorderNE.dlgResizeNE {
+	order: 3;
+}
+
+.tlDlgContent {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 2;
+}
+
+.dlgContent {
+	display: flex;
+	flex-grow: 2;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+.dlgContent > div:first-child {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 2;
+	justify-content: space-between;
+}
+
+.dlgBorderNW, .dlgBorderSW {
+	float: left;
+}
+
+.dlgBorderNE, .dlgBorderSE {
+	float: right;
+}
+
+.dlgBorderNW, .dlgBorderSW, .dlgBorderNE, .dlgBorderSE {
+	width: 10px;
+	height: 10px;
+
+	/* For debugging:
+	background-color: red;
+	*/
+}
+
+.dlgResizeNW {
+	cursor: nw-resize;
+}
+.dlgResizeNE {
+	cursor: ne-resize;
+}
+.dlgResizeSW {
+	cursor: sw-resize;
+}
+.dlgResizeSE {
+	cursor: se-resize;
+}
+.dlgResizeW {
+	cursor: w-resize;
+	width: 10px;
+}
+.dlgResizeE {
+	cursor: e-resize;
+	width: 10px;
+}
+.dlgResizeS {
+	cursor: s-resize;
+	height: 10px;
+}
+
+.dlgRightBorder {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+}
+
+.dlgLeftBorder {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+.dlgBottomBorder {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 100%;
+	height: var(--DIALOG_BOTTOM_BORDER_HEIGHT);
+	font-size: 1px
+}
+
+div.dlgMinimized {
+	display: none;
+}
+
+iframe.dlgContent {
+	width: 100%;
+	height: 100%;
+}
+
+/*
+ * Element covering the whole viewport. This is neccessary to capture all
+ * mouse events even from frame and iframe regions.
+ */
+div.dlgCapture {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: var(--layer);
+	filter: alpha(opacity=0);
+	opacity: 0;
+}
+
+/*
+****						****
+****	Selector Styles		****
+****						****
+*/
+.updating {
+	background: var(--overlay);
+}
+
+.tl-field-label span.can-edit {
+	display: block;
+}
+
+div.selectbox {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+    background-color: var(--background);
+    border: 1px solid var(--border-strong);
+}
+
+div.selectbox ul {
+	display: table;
+	width: 100%;
+    margin: 0;
+    padding-left: 0;
+}
+
+div.cListControl li,
+div.selectbox li,
+div.selectbox .treeNode {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+div.selectbox li {
+	display: table-row;
+}
+
+div.selectbox li > span,
+div.selectbox li > a {
+	padding: 0 var(--spacing-02);
+}
+
+div.cListControl li span,
+div.cListControl li a,
+div.selectbox li span,
+div.selectbox li a {
+	text-decoration: none;
+}
+
+div.cListControl li.selected,
+div.cListControl .fixed,
+div.selectbox li.selected,
+div.selectbox .fixed,
+div.selectbox .treeNode.treeSelected,
+div.selectbox .treeNode.treeNodeReferencedSelected {
+    cursor: default;
+	text-decoration: none;
+}
+
+div.cListControl li.selected span,
+div.cListControl li.selected a,
+div.selectbox li.selected, 
+div.selectbox li.selected span,
+div.selectbox li.selected a,
+div.selectbox .treeNode.treeSelected, 
+div.selectbox .treeNode.treeSelected a,
+div.selectbox .treeNode.treeSelected span {
+	color: var(--text-primary);
+	cursor: default;
+	text-decoration: none;
+}
+
+div.cListControl li.selected span,
+div.cListControl li.selected a,
+div.selectbox li.selected, 
+div.selectbox li.selected span,
+div.selectbox li.selected a,
+div.cListControl li.selected.fixedSelectable span,
+div.cListControl li.selected.fixedSelectable a,
+div.selectbox li.selected.fixedSelectable, 
+div.selectbox li.selected.fixedSelectable span,
+div.selectbox li.selected.fixedSelectable a,
+div.selectbox .treeNode.treeNodeReferencedSelected {
+    background-color: var(--layer-selected);
+}
+
+div.selectbox li.tableSeparator {
+	font-size: 5px;
+	background-color: #ccc;
+}
+
+div.selectbox li.tableSeparator.selected, 
+div.selectbox li.tableSeparator.selected a {
+	background-color: #666;
+}
+
+.selectbox .treeBody {
+	height: 100%;
+}
+
+td.leftList {
+    vertical-align: top;
+    padding-right: var(--spacing-02);
+}
+
+td.rightList {
+    vertical-align: top;
+    padding-left: var(--spacing-02);
+}
+
+.fixed,
+.fixedSelectable a:link {
+    color: var(--text-disabled);
+}
+
+.cDefaultButton button {
+	border: none;
+	border-radius: .25rem;
+	cursor: pointer;
+}
+
+button.moveOption {
+	width: 100%;
+}
+
+/*
+****							****
+****	Message Boxes Styles	****
+****							****
+*/
+div.mboxImage img,
+div.mboxImage i {
+	margin-right: 5px; 
+	margin-bottom: 5px;
+}
+
+div.mboxImage i {
+	font-size: 32px; 
+}
+
+div.mboxImage {
+	float: left; 
+}
+
+div.mboxContent {
+	margin: 5px;
+}
+
+div.mboxHeader {
+    font-weight: bold; 
+    font-size: larger;
+}
+
+div.mboxMessage {
+	margin-top: 5px;
+}
+
+div.mboxInput {
+	margin-top: 5px;
+	padding-left: 10px;
+}
+
+/*
+****										****
+****	simpleajax network error box (sx)	****
+****										****
+*/
+div.sxError {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: var(--text-primary);
+	padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
+	background: var(--notification-danger-background);
+	border: 1px solid var(--support-danger);
+	box-shadow: var(--shadow-menu);
+	cursor: default;
+}
+
+div.sxMessage,
+div.sxFailure {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+	margin: var(--spacing-02);
+}
+
+div.sxButtons {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	text-align: right;
+	margin-top: var(--spacing-05);
+}
+
+div.sxFailure,
+div.sxButtons,
+div.sxRetry div.sxMessage {
+	display: none;	
+}
+
+div.sxRetry div.sxFailure,
+div.sxRetry div.sxButtons {
+	display: block;
+}
+
+span.sxButton {
+	color: var(--text-on-color);
+	border: 1px solid var(--support-danger);
+	cursor: pointer;
+}
+
+span.sxButton:hover {
+	color: var(--text-on-color);
+}
+
+/*
+****											****
+****	layoutControl.cCollapsible styles (lc)	****
+****											****
+*/
+div.lcViewport {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	bottom: 0px;
+	right: 0px;
+}
+
+div.lcAuto {
+	overflow: auto;
+}
+
+div.lcScroll {
+	overflow: scroll;
+}
+
+div.lcHidden {
+	overflow: hidden;
+}
+
+div.mcToggle {
+	position: absolute;
+	cursor: pointer;
+	width: 2rem;
+	height: 4rem;
+	right: 0;
+	top: calc(50% - 4rem / 2);
+	background: var(--MC_MINIMIZE_ICON) no-repeat;
+	box-shadow: var(--shadow-menu);
+	visibility: hidden
+}
+
+div.mcMinimized > div.mcToggle {
+	right:0;
+	background: var(--MC_NORMALIZE_ICON) no-repeat;
+}
+
+div.cMinimizable:HOVER > div.mcToggle {
+	visibility: visible;
+}
+
+div.mcMinimized.frmBody, 
+div.mcMinimized div.frmBody {
+	overflow: hidden;
+}
+
+div.mcMinimized .accText {
+	display: none;
+}
+
+.mcMinimized .sidebar-max,
+.sidebar-min {
+	display: none;	
+}
+
+.mcMinimized .sidebar-min {
+	display: initial;	
+}
+
+/*
+****					****
+****	Tooltip Styles	****
+****					****
+*/
+.tooltipCaption {
+	color: var(--text-inverse);
+	background-color: var(--background-inverse);
+	padding: calc(var(--ttPadding) / 2) 12px;
+	line-height: 1.5 !important;
+}
+
+.tooltip {
+	max-width: 500px;
+	max-height: calc(100vh - (var(--ttPadding) * 2));
+	background-color: var(--background-inverse);
+	position: fixed;
+	filter: drop-shadow(var(--shadow-menu));
+	z-index: 9999999999999999;
+	--ttPadding: var(--spacing-02);
+	font-weight: normal;
+	cursor: default;
+	display: flex;
+	flex-direction: column;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Tooltip Arrow */
+.tooltip::after {
+	content: '';
+	position: absolute;
+	width: var(--ttArrow-dim);
+	height: var(--ttArrow-dim);
+	top: var(--ttArrow-top);
+	transform: var(--ttArrow-trans);
+	background-color: var(--background-inverse);
+	--ttArrow-dim: 18px;
+}
+
+.ttVerticalArrowBottom::after {
+	bottom: 2px;
+	--ttArrow-trans: translate(0%, 50%);
+	clip-path: polygon(0% 50%, 100% 50%, 50% 100%);
+}
+
+.ttVerticalArrowTop::after {
+	top: 2px;
+	--ttArrow-trans: translate(0%, -50%);
+	clip-path: polygon(0% 50%, 100% 50%, 50% 0%);
+}
+
+.ttVerticalArrowLeft::after {
+	left: calc(var(--ttArrow-dim) / 2);
+}
+
+.ttVerticalArrowRight::after {
+	right: calc(var(--ttArrow-dim) / 2);
+}
+
+.ttHorizontalArrowLeft::after {
+	left: 2px;
+	--ttArrow-trans: translate(-50%, -50%);
+	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
+}
+
+.ttHorizontalArrowRight::after {
+	right: 2px;
+	--ttArrow-trans: translate(50%, -50%);
+	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
+}
+
+/* Tooltip Content */
+.tooltipContent {
+	overflow-y: auto;
+	white-space: normal;
+	overflow-wrap: break-word;
+	padding: var(--ttPadding) 12px;
+	line-height: 1.5 !important;
+	color: var(--text-inverse);
+	text-align: left;
+	font-size: 12px;
+	cursor: text;
+}
+
+.tooltipContent * {
+	margin: 0;
+	color: var(--text-inverse);
+	line-height: 1.5 !important;
+	padding: 0 !important;
+}
+
+.tooltipContent :is(h1, h2, h3, h4, h5, h6) {
+	clear: both;
+	margin-bottom: var(--spacing-01);
+}
+
+/*
+****					****
+****	Error Styles	****
+****					****
+*/
+.errorFragmentContainer {
+	cursor: default;
+	padding: var(--spacing-01) var(--spacing-02);
+	color: var(--support-danger);
+	border: 1px solid var(--support-danger);
+	background-color: var(--background);
+	display: inline-block;
+	align-self: center;
+}
+
+.errorFragmentImage {
+	padding-right: var(--spacing-02);
+}
+
+.tl-info-service {
+	position: absolute;
+	top: var(--spacing-03);
+	right: var(--spacing-03);
+	width: 25rem;
+	max-height: 100%;
+	max-width: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.tl-info-service-item__hide-info-service_animation {
+	animation-name: hideInfoService;
+	animation-duration: 1s;
+}
+
+.tl-info-service-item {
+	position: relative;
+	margin: var(--spacing-02) var(--spacing-01) 0 0;
+	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
+	border-radius: 10px;
+	box-shadow: var(--shadow-menu);
+	overflow-y: hidden;
+	overflow-x: auto;
+}
+
+.tl-info-service-item.tl-info-service-item__error {
+	background-color: var(--notification-danger-background);
+}
+
+.tl-info-service-item.tl-info-service-item__warning {
+	background-color: var(--notification-warning-background);
+}
+
+.tl-info-service-item.tl-info-service-item__info {
+	background-color: var(--notification-info-background);
+}
+
+.tl-info-service-item__error .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
+	color: var(--support-danger);
+}
+
+.tl-info-service-item__warning .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
+	color: var(--support-warning);
+}
+
+.tl-info-service-item__info .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
+	color: var(--support-info);
+}
+
+.tl-info-service-item__header {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	justify-content: flex-end;
+	margin-top: var(--spacing-02);
+}
+
+.tl-info-service-item__header-message:not(.tl-info-service-item .tl-info-service-item__header .tl-info-service-item__header-message) {
+	display: flex;
+	flex-grow: 2;
+	align-items: center;
+	margin-top: var(--spacing-02);
+}
+
+.tl-info-service-item__header-message {
+  	display: flex;
+  	flex-grow: 2;
+  	justify-content: space-between;
+}
+
+.tl-info-service-item__header-message span i {
+  	display: flex;
+  	align-items: center;
+}
+
+.tl-info-service-item__header-message-text {
+	display: flex;
+	flex-grow: 2;
+	justify-content: space-between;
+	padding-left: var(--spacing-02);
+	line-break: anywhere;
+}
+
+.tl-info-service-item__header-type-message {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	margin-left: var(--spacing-02);
+}
+
+.tl-info-service-item__header-message .tl-info-service-item__error-icon {
+	display: block;
+	align-self: center;
+}
+
+.tl-info-service-item__header-message .tl-info-service-item__error-icon span {
+	display: inline-block
+}
+
+.tl-info-service-item__message p {
+	margin: 0;
+}
+
+.tl-info-service-item__message {
+	max-height: 400px;
+	overflow-y: auto;
+	word-break: break-word;
+	margin: var(--spacing-02) 0;
+}
+
+.tl-info-service-item__log-time {
+	color: var(--text-helper);
+	padding-left: var(--spacing-02);
+	white-space: nowrap;
+}
+
+.tl-info-service-item__details summary,
+.tl-info-service-item__close-button {
+	cursor: pointer;
+}
+
+.tl-info-service-item__close-button {
+	padding-left: var(--spacing-03);
+}
+
+.tl-info-service-item__details {
+	overflow-x: auto;
+	margin-top: var(--spacing-03);
+}
+
+.tl-info-service-item__details-message {
+	padding-top: var(--spacing-02);
+}
+
+p.tl-info-service-item__details-message-no-bottom {
+	margin-bottom: 0px;
+}
+
+.infoServiceItem:last-child {
+	margin-bottom: var(--spacing-01);
+}
+
+.tl-info-service-item__show-info_animation {
+	animation-name: tl-info-service-item__show-info_animation;
+	animation-duration: 0.2s;
+}
+
+.tl-info-service-item__show-pinned-info_animation {
+	animation-name: tl-info-service-item__show-pinned-info_animation;
+	animation-duration: 0.2s;
+}
+
+.tl-info-service_pinned .tl-info-service-item__hide-info_animation {
+	animation-name: tl-info-service-item__hide-info_animation;
+	animation-duration: 0.2s;
+}
+
+@keyframes tl-info-service-item__show-info_animation {
+    0% {opacity: 0;}
+    100% {opacity: 0.9; margin-top: 3px;}
+}
+
+@keyframes tl-info-service-item__show-pinned-info_animation {
+    0% {opacity: 0;}
+    100% {opacity: 1; margin-top: 3px;}
+}
+
+@keyframes tl-info-service-item__hide-info_animation {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+@keyframes tl-info-service-item__hide-info-service_animation {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
+span.ltcCounting input {
+	display: inline;
+}
+
+@keyframes showInfoServiceItem {
+    0% {opacity: 0;}
+    100% {opacity: 0.9; margin-top: 3px;}
+}
+
+@keyframes showPinnedInfoServiceItem {
+    0% {opacity: 0;}
+    100% {opacity: 1; margin-top: 3px;}
+}
+
+@keyframes hideInfoServiceItem {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+@keyframes hideInfoService {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
+@keyframes pinnedInfoServiceItem {
+    from {border-color: rgba(247, 223, 68, 0);}
+    to {border-color: rgba(247, 223, 68, 1);}
+}
+
+@keyframes showInfoServiceItemDetailMessage {
+    0% {height: 0;}
+    100% {height: auto;}
+}
+
+@keyframes hideInfoServiceItemDetailMessage {
+    0% {height: auto;}
+    100% {height: 0;}
+}
+
+@keyframes rotatedInfoServiceItemDetailExpandButton {
+    from {transform: rotateZ(0deg);}
+    to {transform: rotateZ(90deg);}
+}
+
+@keyframes regularInfoServiceItemDetailExpandButton {
+    from {transform: rotateZ(90deg);}
+    to {transform: rotateZ(0deg);}
+}
+
+/*
+****					****
+****	Tiles Styles	****
+****					****
+*/
+.tileRow {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	background: var(--layer);
+	border: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-03);
+	padding-bottom: var(--spacing-03);
+	min-width: 0px;
+	background-clip: border-box;
+	border-radius: .25rem;
+	height: 20rem;
+	width: 16rem;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.card:hover {
+	box-shadow: var(--shadow-menu);
+	background-color: var(--layer-active);
+}
+
+.card:hover .previewBoxOuter {
+	background-color: var(--background-active);
+}
+
+.card:hover {
+	box-shadow: var(--shadow-menu);
+	background-color: var(--layer-active);
+}
+
+.card:hover h5.card-title,
+.card:hover .card-text {
+	background-color: var(--layer-active);
+}
+
+.previewBoxOuter {
+    order: 1;
+    width: 100%;
+    height: 0;
+    padding-bottom: 75%;
+    position: relative;
+    overflow: hidden;
+    background: var(--background);
+}
+
+.previewBoxOuter .previewBoxInner {
+	position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.previewBoxOuter .previewBoxInner img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	background: transparent;
+}
+
+h5.card-title {
+	order: 2;
+	flex-shrink: 0;
+	padding: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
+	background: var(--layer);
+	margin: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+h5.card-title a {
+	color: var(--text-primary);
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+}
+
+h5.card-title a:hover {
+	color: var(--text-primary);
+	text-decoration: none;
+}
+
+h5.card-title a:focus {
+	color: var(--text-primary);
+	box-shadow: none;
+}
+
+.card-text {
+	order: 3;
+	color: var(--text-primary);
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	background: var(--layer);
+	padding: 0 var(--spacing-03);
+	margin: 0;
+}
+
+.card-text p {
+	margin: 0;
+}
+
+/*
+****					****
+****	Toolrow styles	****
+****					****
+*/
+.ToolBarContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    height: inherit;
+}
+
+.ToolContainer {
+	display: flex;
+}
+
+.ToolBarContainer .IconContainer {
+	display: flex;
+	margin-right: var(--spacing-02);
+}
+
+.ToolBarContainer .IconContainer ul {
+	display: flex;
+	align-items: center;
+	list-style-type: none;
+	margin: 0;
+	padding-inline-start: 0px;
+}
+
+.ToolBarContainer .IconContainer > ul > li {
+	padding-left: var(--spacing-03);
+}
+
+.ToolContainerRight {
+    display: flex;
+}
+
+.system_message {
+	display: flex;
+	flex-direction: column;
+}
+
+.ToolBarContainer .IconContainer .cButton,
+.ToolBarContainer .IconContainer .trbEntry {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	height: 2.5rem;
+	width: 2.5rem;
+	border-radius: .25rem;
+}
+
+.tlUser a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--icon-on-color);
+	height: inherit;
+	width: inherit;
+}
+
+.tlUser a:hover,
+.tlUser a:active,
+.tlUser a:focus {
+	color: var(--icon-on-color);
+	text-decoration: none;
+}
+
+.tlUser a i {
+	font-size: 1.5rem;
+}
+
+.ToolBarContainer .IconContainer .cButton a,
+.ToolBarContainer .IconContainer .trbEntry a,
+.quickSearch .cButton a {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	height: 2.5rem;
+	width: 2.5rem;
+	border-radius: .25rem;
+}
+
+.ToolBarContainer .IconContainer .cButton a i,
+.ToolBarContainer .IconContainer .trbEntry a i {
+	font-size: 1.5rem;
+}
+
+.quickSearch {
+	display: flex;
+	align-items: center;
+}
+
+.quickSearch .cButton.quickSearchButton {
+	height: 2rem;
+    width: 2rem;
+}
+
+.quickSearch .cButton.quickSearchButton a {
+	height: 2rem;
+    width: 2rem;
+}
+
+.quickSearch .cButton.quickSearchButton a i {
+	font-size: 1rem;
+}
+
+.mtbGroup .cButton {
+	background: transparent;
+}
+
+.quickSearch .cButton.quickSearchButton a,
+.mtbGroup .cButton a,
+.mtbGroup .trbEntry a,
+.cButton a[alt="Administration"] {
+	color: var(--icon-secondary);
+	padding: inherit;
+}
+
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:hover,
+.mtbGroup .cButton:not(.cmdLinkDisabled) a:hover,
+.mtbGroup .trbEntry a:not(.disabled):hover,
+.cButton:not(.cmdLinkDisabled) a:hover[alt="Administration"] {
+	background: var(--field-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--field-hover);
+}
+
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:focus,
+.mtbGroup .cButton:not(.cmdLinkDisabled) a:focus,
+.mtbGroup .trbEntry:not(.disabled) a:focus,
+.cButton:not(.cmdLinkDisabled) a:focus[alt="Administration"] {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	background: transparent;
+}
+
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:active,
+.mtbGroup .cButton:not(.cmdLinkDisabled) a:active,
+.mtbGroup .trbEntry:not(.disabled) a:active,
+.cButton:not(.cmdLinkDisabled) a:active[alt="Administration"] {
+	background: var(--background-active);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+/* ACTIVE STATES */
+.mtbGroup .cButton.cmdLinkActive,
+.cButton.cmdLinkActive [alt="Administration"] {
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.mtbGroup .cButton.cmdLinkActive a:hover,
+.cButton.cmdLinkActive a:hover[alt="Administration"]{
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.mtbGroup .cButton.cmdLinkActive a:focus,
+.cButton.cmdLinkActive a:focus[alt="Administration"]{
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.mtbGroup .cButton.cmdLinkActive a,
+.cButton.cmdLinkActive a[alt="Administration"] {
+	color: var(--text-on-color);
+}
+
+
+/*
+****						****
+****	Breadcrump syles	****
+****						****
+*/
+.Header {
+	display: flex;
+	height: var(--MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT);
+	overflow: hidden;
+}
+
+.BreadCrumbOuter {
+    display: flex;
+    align-self: center;
+    background: var(--layer);
+    width: 100%;
+}
+
+.BreadCrumbOuter .Left {
+	flex-grow: 2;
+	padding: var(--spacing-02);
+}
+
+.breadCrumbRight {
+    flex-grow: 1;
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: var(--spacing-02);
+    padding: 0.5rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.breadcrumb {
+	display: flex;
+	padding: 0 var(--spacing-02);
+	gap: var(--spacing-02);
+}
+
+.breadcrumb .treeNode, .breadcrumb .hover,
+.breadcrumb .treeNode a, .breadcrumb .hover a {
+	display: flex;
+	gap: var(--spacing-02);
+	align-items: center;
+}
+
+.breadcrumb .treeSelected .tcrLink {
+    color: var(--link-primary);
+}
+
+.breadcrumb .treeSelected .tcrLink:hover,
+.breadcrumb .hover {
+    color: var(--link-primary-hover);
+	text-decoration: underline;
+}
+
+.breadcrumb .treeSelected .tcrLink:active,
+.breadcrumb .hover:active {
+    color: var(--text-primary);
+	text-decoration: underline;
+}
+
+.breadcrumb .treeSelected .tcrLink:focus,
+.breadcrumb .hover:focus {
+    color: var(--link-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+/* 
+Is needes as long as the data-hover classes exist.
+If they're deleted, this can be deleted too
+*/
+.breadcrumb span.hover,
+.breadcrumb span.hover:active {
+	color: var(--text-primary);
+	text-decoration: none;
+	cursor: default;
+}
+
+/* Disable the anchor effects of the last (active) breadcrumb */
+.breadcrumb > span .selectableNode.tcrLink:last-child:hover {
+	text-decoration: none;
+	cursor: default;
+}
+
+.breadcrumb > span .selectableNode.tcrLink:last-child:focus {
+	box-shadow: none;
+}
+
+.breadcrumbMenu {
+	display: none;
+}
+
+.tl-table__title-label .breadcrumb {
+	gap: 0;
+}
+
+.breadcrumbMenuVisible {
+	background: var(--layer-accent);
+	border: 1px solid var(--border-subtle);
+	z-index: 5;
+}
+
+/* class of the lines which contains the nodes in the menu */
+.breadcrumbMenuNode, .breadcrumbMenuNode_hover {
+	cursor: pointer;
+	padding: var(--spacing-01);
+}
+
+.breadcrumbMenuNode_hover {
+	background-color: var(--layer-accent-hover);
+}
+
+.breadcrumbNodeSeparator i {
+	color: var(--icon-primary);
+}
+
+.breadcrumbNodeText {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/*
+****					****
+****	Tree syles		****
+****					****
+*/
+.treeBody {
+	height: 100%;
+	background-color: var(--layer);
+}
+
+.tcrNode {
+	background-color: var(--layer)
+}
+
+.treeBody a:hover {
+	text-decoration: none;
+}
+
+.tcrNode .treeNode {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+}
+
+.treeChildren {
+	padding-left: var(--spacing-03);
+}
+
+.tcrLink {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secondary);
+	word-break: break-all;
+	margin-left: var(--spacing-02);
+}
+
+.treeNode .fToggle,
+.fToggle.tcrToggle, .tlLeafIcon,
+.tcrNode .treeNode span {
+	color: var(--icon-secondary);
+}
+
+.treeNode.treeSelected .fToggle.tcrToggle, .tlLeafIcon,
+.tcrNode .treeNode.treeSelected span {
+	color: var(--icon-primary);
+}
+
+.treeNode .input-image.fToggle.disabled {
+	height: 1rem;
+	width: 1rem;
+}
+
+.treeSelected .tcrLink {
+	color: var(--text-primary);
+}
+
+
+.tcrNode .treeNode:hover,
+.tcrNode .treeNode:hover::after {
+	background: var(--layer-hover);
+}
+
+.tcrNode .treeNode.treeSelected,
+.tcrNode .treeNode.treeSelected::after{
+	background: var(--layer-selected);
+}
+
+.tcrNode .treeNode.treeSelected:hover,
+.tcrNode .treeNode.treeSelected:hover::after{
+	background: var(--layer-selected-hover);
+}
+
+.tcrNode .treeNode a:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+/*
+****						****
+****	Toolbar styles		****
+****						****
+*/
+.cCollapsibleHeader {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	justify-content: space-between;
+	background-color: var(--layer);
+	height: inherit;
+	gap: var(--spacing-02);
+	overflow: hidden;
+}
+
+.cCollapsibleToolbar {
+	white-space: nowrap;
+}
+
+.cCollapsibleTitle {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	font-weight: 600;
+	color: var(--text-primary);
+	padding-left: var(--spacing-03);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cCollapsibleHorizontal .cCollapsibleHeader {
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: unset;
+}
+
+.cCollapsibleHorizontal .cCollapsibleTitle {
+	display: block;
+	transform: rotate(90deg);
+	overflow: visible;
+	padding-left: var(--spacing-01);
+}
+
+.cCollapsibleHorizontal .cCollapsibleToolbar {
+	padding-top: var(--spacing-03);
+    justify-content: center;
+    align-items: center;
+}
+
+.cCollapsibleHorizontal .cCollapsibleButtons {
+    padding-right: 0;
+}
+
+.cCollapsibleToolbar a:hover,
+.cToolbar a:hover,
+.cCollapsibleToolbar .tbGroup a:hover,
+.cCollapsibleButtons a:hover,
+.tl-table__title-toolbar a:hover {
+	color: var(--icon-primary);
+	text-decoration: none;
+}
+
+.cCollapsibleToolbar a:focus,
+.cToolbar a:focus,
+.cCollapsibleToolbar .tbGroup a:focus,
+.cCollapsibleButtons a:focus,
+.tl-table__title-toolbar a:focus {
+	color: var(--icon-primary);
+}
+
+.cCollapsibleToolbar, .cToolbar, 
+.cCollapsibleToolbar .tbGroup, .cCollapsibleButtons,
+.tl-table__title-toolbar {
+	display: flex;
+	gap: var(--spacing-02);
+}
+
+.cToolbar {
+	margin-right: var(--spacing-02);
+}
+
+.cCollapsibleButtons {
+	padding-right: var(--spacing-03);
+}
+
+.cCollapsibleToolbar a,
+.tl-table__title-toolbar a {
+	color: var(--icon-primary);
+}
+
+.Footer {
+	font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secondary);
+	text-align: right;
+	padding-right: var(--spacing-03);
+	background: var(--layer);
+}
+
+/*
+****								****
+****	Assistent progress syles	****
+****								****
+*/
+.assistantContent {
+	margin-top: var(--spacing-02);
+	background-color: var(--background);
+}
+
+.assistantList {
+	display: flex;
+	justify-content: center;
+	gap: var(--spacing-03);
+	margin: 0;
+	padding: 0;
+}
+
+.assistantElement {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	color: var(--text-primary);
+}
+

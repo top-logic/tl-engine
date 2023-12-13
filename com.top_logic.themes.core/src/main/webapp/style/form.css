@@ -1,0 +1,2467 @@
+/*
+****					****
+****	Form styles		****
+****					****
+*/
+.frmBody h1 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+}
+
+.rf_header,
+.dfEntryTitle {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+}
+
+.dfItemTitle {
+    text-overflow: ellipsis;
+    white-space: initial;
+    overflow: hidden;
+}
+
+.rf_header > .rf_menu, .dfModeFull .dfListCommands {
+	display: flex;
+	gap: var(--spacing-01);
+	margin-left: auto;
+	padding-right: var(--spacing-03);
+}
+
+.dfListCommands .cOnExpandedControl {
+	padding: 0;
+}
+
+div.fptPage {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
+}
+
+div.fptBody {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 78px;
+    bottom: 0px;
+}
+
+div.fptBodyContent {
+	position: absolute;
+	overflow: auto;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+}
+
+div.fptTitle {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    height: 53px;
+    background-color: transparent;
+}
+
+div.fptTitleContent, div.fptSubtitleContent {
+    position: absolute;
+    overflow: hidden;
+    left: 0px;
+    right: 110px;
+    top: 0px;
+    bottom: 0px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+}
+
+div.fptTitleContent {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03);
+}
+
+div.fptTitleContent, div.fptTitle input.is-input, div.fptTitle select.is-input {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+}
+
+div.fptSubtitle {
+    position: absolute;
+    top: 53px;
+    left: 0px;
+    right: 0px;
+    height: 25px;
+    overflow: hidden;
+}
+
+div.fptSubtitleContent {
+    padding-left: var(--spacing-03);
+    display: flex;
+    align-items: center;
+}
+
+.fptIcon, .fptIconWithOverlay, .fptIconOverlay {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+div.fptIconBar > span.fptIcon, div.fptIconBar > span.fptIconWithOverlay {
+    font-size: 32px;
+}
+
+.fptIconOverlay {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    height: 48px;
+}
+
+.fptIconOverlay i {
+    position: absolute;
+    top: 0px;
+    right: 5px;
+    border-radius: 30px;
+    font-size: 30px;
+    padding: 4px;
+}
+
+div.fptIconBar > span.fptIconOverlay > i {
+    color: black;
+}
+
+.rf_label .cLabel label {
+	color: var(--text-secondary);
+	word-break: break-all;
+	white-space: nowrap;
+}
+
+.rf_label {
+	margin: var(--spacing-02) 0;
+	word-break: break-all;
+	white-space: nowrap;
+}
+
+.rf_label .cLabel label.disabled,
+label.disabled  {
+	color: var(--text-disabled);
+}
+
+.mandatory.can-edit label:after {
+    content: "*";
+}
+
+.is-tooltip {
+	display: none;
+}
+
+.config {
+    display: none;
+}
+
+.mulitLines .rf_label span.can-edit {
+	/* labels are rendered over more than one line if needed */
+	white-space: pre-line;
+}
+
+span.can-edit {
+	width: inherit;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/*
+ * Functional styles. No configuration!
+ */
+
+.invisible {
+	display: none;
+}
+
+.can-edit .is-display {
+	display: none;
+}
+
+.cannot-edit .is-input {
+	display: none;
+}
+
+.cannot-edit .is-input,
+.cannot-edit .is-upload {
+	display: none;
+}
+
+.disabled .is-action {
+	display: none;
+}
+
+.cannot-edit .is-action {
+	display: none;
+}
+
+input.is-action,
+a.is-action {
+	margin-left: 2px;
+}
+
+/*.is-onerror*/.no-error .is-error {
+	display: none;
+}
+
+.dragImage ul {
+	list-style-type: none;	
+}
+
+.frmGroupExpand a {
+	color: var(--icon-primary);
+}
+
+.frmGroupExpand a:hover {
+	text-decoration: none;
+}
+
+.frmBody {
+	padding: 0 var(--spacing-03);
+	margin: var(--spacing-03) 0;
+}
+
+div.frmBody > div.dropPane {
+	display: none;
+}
+
+.fhrContainer {
+	background-color: var(--layer-accent);
+}
+
+.rf_content.rf_dropTarget > :not(.fhrContainer) {
+	/*
+	Needs more stylings, because this makes the grid in forms too long and creates other problems.
+	padding: var(--spacing-02) 20% 0 3rem;
+	*/
+}
+
+/* ================================= */
+/* ==== responsive form layout ===== */
+/* ================================= */
+
+.rf_content {
+	display: grid;
+	grid-column: 1;
+	grid-row: 2;
+	grid-auto-flow: row;
+	grid-auto-rows: max-content;
+	grid: auto / auto-flow / max-content;
+	gap: var(--RF_VERTICAL_GAP_CELLS) var(--RF_HORIZONTAL_GAP_CELLS);
+	padding: 15px 10px 10px 10px;
+	line-height: 1.5rem;
+	border-radius: 0 0 3px 3px;
+}
+
+.rf_content .rf_header {
+	line-height: normal;
+}
+
+.rf_columnsLayout,
+div.rf_buttons {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.rf_columnsLayout {
+    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+}
+
+.rf_columnsLayout.keep {
+	display: table;
+	width: 100%;
+}
+
+div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
+	display: table-cell;
+	padding-right: 5px;
+	padding-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.rf_columnsLayout.keep > * > * {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.keep, .rf_cell {
+	width: 100%;
+}
+
+/* Margin left for all children of .rf_columnsLayout. */
+.rf_columnsLayout > *:not(body) {
+  	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+/* Invert margin left .rf_columnsLayout itself as workaround not to margin the first column. */
+.rf_columnsLayout {
+    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+}
+
+.rf_columnsLayout > .rf_groupCell {
+  	margin-left: calc(var(--RF_HORIZONTAL_GAP_COLUMNS) - 2px); /* 2px for the border */
+}
+
+.dflSize0 .rf_cellSmall,
+.dflSize1 .rf_cellSmall {
+	width: 100% !important;
+}
+
+.rf_columnsLayout .inputCell,
+.rf_inputCell {
+    line-height: 1.5rem;
+}
+
+/* even empty cells have a height */
+.rf_cell {
+    min-height: 1.5rem;
+    margin: var(--spacing-02) 0;
+  	word-wrap: break-word;
+  	box-sizing: border-box
+}
+
+/* columns layout */
+.rf_columnsLayout .rf_content > * > .rf_line:not(.dfList) {
+	min-width: 100%;
+  	width: -moz-fit-content;
+  	width: fit-content;
+  	box-sizing: border-box;
+}
+
+.rf_columnsLayout .rf_line.dfList {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	/* width: calc(100% - 25px); */
+  	box-sizing: border-box;
+}
+
+.rf_columnsLayout > .rf_line,
+.cMediaQuery.dflSize0 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_cell .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols1 > *:not(.rf_line) {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
+  	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
+  	box-sizing: border-box;
+ }	
+
+.cMediaQuery.dflSize1 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery.dflSize2 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols2 > *:not(.rf_line) { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.cMediaQuery.dflSize3 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize4, .dflSize5) .rf_columnsLayout.cols3 > *:not(.rf_line) { 
+  	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.cMediaQuery.dflSize4 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize5) .rf_columnsLayout.cols4 > *:not(.rf_line) { 
+  	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.cMediaQuery.dflSize5 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery .rf_columnsLayout.cols5 > *:not(.rf_line) { 
+  	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+/* content of a group */
+.dflSize0 .rf_content {
+	/* avoid creating more columns than possible, use cols classes manually in those cases */
+	grid-template-columns: repeat(1, 1fr); 
+}
+
+.dflSize1 .rf_content,
+.dflSize2 .rf_content {
+	grid-template-columns: repeat(2, 1fr); 
+}
+
+.dflSize3 .rf_content {
+	grid-template-columns: repeat(3, 1fr); 
+}
+
+.dflSize4 .rf_content {
+	grid-template-columns: repeat(4, 1fr);   
+}
+  
+.dflSize5 .rf_content {	
+	grid-template-columns: repeat(5, 1fr); 
+} 
+
+
+/* in lists */
+.dfEntryTitle.colored {
+	grid-row: 1;
+    grid-column: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	height: 2.5rem;
+	background: var(--layer-accent);
+	padding: 0 0 0 var(--spacing-03);
+	white-space: nowrap;
+}
+
+.dfEntryTitle.colored a {
+	color: var(--text-primary);
+}
+
+.dfEntryTitle.colored:hover {
+	background: var(--layer-accent-hover);
+}
+
+.cOnExpandedControl {
+	padding: 0 0 0 var(--spacing-03);
+}
+
+.dfListContent > .rf_columnsLayout {
+	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+}
+
+.dfListContent > .rf_columnsLayout > *:not(body) {
+	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY);
+}
+
+.cMediaQuery.dflSize0 .dfListContent .rf_columnsLayout > .dfListEntry,
+.cMediaQuery.dflSize1 .dfListContent .rf_columnsLayout > .dfListEntry,
+.cMediaQuery.dflSize3 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.cMediaQuery.dflSize4 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.cMediaQuery.dflSize5 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.dfListContent .rf_columnsLayout > .dfListEntry {
+ 	min-width: 100px;
+ 	width: 100%;
+  	box-sizing: border-box;
+}
+
+/* filter */
+.fltContent .rf_groupCell.collapsed {
+	height: 2rem;
+}
+
+.fltContent .rf_columnsLayout > .rf_line,
+.fltContent .rf_columnsLayout.cols1 > *:not(body),
+.cMediaQuery.dflSize0 .fltContent .rf_columnsLayout > *:not(body),
+.cMediaQuery.dflSize1 .fltContent .rf_columnsLayout > *:not(body),
+.dflSize2 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
+.dflSize3 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
+.dflSize4 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
+.dflSize5 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body) {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
+  	width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
+  	box-sizing: border-box;
+ }
+ 
+.cMediaQuery.dflSize2 .fltContent .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
+.layoutControl .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line),
+.cMediaQuery.dflSize1 .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line) { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+ 
+.cMediaQuery.dflSize3 .fltContent .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+  	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+.cMediaQuery .fltContent .rf_columnsLayout.cols4 > *:not(.rf_line) { 
+  	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+.cMediaQuery .fltContent .rf_columnsLayout.cols5 > *:not(.rf_line) { 
+  	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+/* 2 columns in dialogs */
+.dlgDialog .layoutControl.dflColumns.dflColumns0 .rf_content {
+	grid-template-columns: repeat(1, 1fr); 
+}
+.dlgDialog .layoutControl.dflColumns.dflColumns1 .rf_content,
+.dlgDialog .layoutControl.dflColumns.dflColumns2 .rf_content,
+.dlgDialog .layoutControl.dflColumns.dflColumns3 .rf_content {
+	grid-template-columns: repeat(2, 1fr); 
+}
+
+.dlgDialog .dflColumns.dflColumns1 .rf_labelInFrontOfInput .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.dlgDialog .dflColumns:not(.dflColumns0) .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+*:not(.rf_content) > .rf_inputCell,
+*:not(.rf_content) > .rf_columnsLayout:not(.keep) {
+	margin-bottom: .25rem;
+}
+
+.rf_content .pre {
+	white-space: pre-wrap;
+}
+
+.rf_line,
+.cMediaQuery, .layoutControl.dflColumns .rf_groupCell .rf_content .rf_groupCell {
+	/* groupCells in groupCells are rendered over the whole line per default */
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-column: 1 / -1;
+}
+
+.rf_spanRow1 { grid-row-end: span 1; }
+.rf_spanRow2 { grid-row-end: span 2; }
+.rf_spanRow3 { grid-row-end: span 3; }
+.rf_spanRow4 { grid-row-end: span 4; }
+.rf_spanRow5 { grid-row-end: span 5; }
+.rf_spanRow6 { grid-row-end: span 6; }
+.rf_spanRow7 { grid-row-end: span 7; }
+.rf_spanRow8 { grid-row-end: span 8; }
+.rf_spanRow9 { grid-row-end: span 9; }
+.rf_spanRow10 { grid-row-end: span 10; }
+
+.rf_spanCol1 { grid-col-end: span 1; }
+.rf_spanCol2 { grid-col-end: span 2; }
+.rf_spanCol3 { grid-col-end: span 3; }
+.rf_spanCol4 { grid-col-end: span 4; }
+
+.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
+	display: grid;
+	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
+	grid-gap: .5rem .5rem;
+}
+
+.rf_inputCell > div:nth-child(1) {
+	grid-row:1; 
+	grid-column:1; 
+}
+
+.rf_inputCell > div:nth-child(2) {
+	grid-row:1; 
+	grid-column:2; 
+}
+
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline)                  > div:nth-child(2),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
+.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > div:nth-child(2) {
+	grid-row:2; 
+	grid-column:1; 
+}
+
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
+	display: grid;
+	grid-template-columns: minmax(0px, 1fr);
+	grid-template-rows: 24px 1fr;
+	line-height: 24px;
+}
+
+/* indent all lines but the first */
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline)                  > :nth-child(n+2),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
+.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > :nth-child(n+2)  {
+	padding-left: 5px;
+}
+
+.rf_inputCell .ace_editor div,
+.rf_inputCell .ace_editor {
+	line-height: 24px;
+}
+
+.rf_invisible {
+	display: none;	
+}
+
+.i18nStringTable p {
+	margin-top: 0px;
+}
+
+.rf_content table.schedulingAlgorithm {
+	width: calc(100% - 60px);
+}
+
+*:not(.sizeSet) > .rf_cell .cIntegerInput > .cTextInput:not(.searchIrrelevant) .is-input {
+	width: auto;
+}
+
+.rf_firstColumn .is-radio,
+.rf_firstColumn .is-checkbox,
+.rf_firstColumn input.tristate {
+	margin-left: 0px;
+	margin-right: 5px;
+}
+
+.fltContent .rf_label {
+	font-weight:normal;
+}
+
+.rf_inputCell .rightAlign {
+	text-align: right;
+	padding-right: 5px;
+}
+
+.rf_groupCell {
+	display: grid;
+	grid-template-columns: 100%;
+	grid-template-rows: minmax(22px, max-content) 1fr;
+	grid-gap: 0px;
+	border: 1px solid var(--border-subtle);
+	margin-top: var(--spacing-02);
+    min-width: -moz-min-content;    /* Firefox */
+    min-width: -webkit-min-content; /* Chrome */
+    min-width: min-content;
+}
+
+.rf_groupCell > .rf_header {
+	border-top: none;
+}
+
+.rf_groupCell.noLegend {
+	grid-template-rows: 1fr;
+}
+
+.rf_groupCell.noBorder {
+	border: 0px;
+}
+
+.fltContent .rf_groupCell {
+    border-top:1px solid var(--background);
+    border-right:1px solid var(--background);
+    border-bottom:1px solid var(--button-secondary);
+    border-left:1px solid var(--button-secondary); 
+	border-radius: 0px;
+    position:relative;
+    padding: 0.5em;
+}
+
+.rf_groupCell .rf_header {
+    grid-row: 1;
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-03);
+    background: var(--layer-accent);
+    padding: var(--spacing-02) var(--spacing-03);
+    white-space: nowrap;
+}
+
+.rf_groupCell .rf_header:hover {
+	background: var(--layer-hover);
+}
+
+.rf_groupCell .rf_header a:hover {
+	text-decoration: none;
+}
+
+.rf_groupCell.noLegend > .rf_header,
+.fltContent .rf_groupCell .rf_header {
+	background: transparent;
+}
+
+.rf_groupCell .rf_header select,
+.rf_groupCell .rf_header label {
+	color: var(--GROUP_LABEL_COLOR);
+    font-weight: bold;
+    margin-bottom: 0px;
+}
+
+.rf_inputCell label {
+	padding-right: 4px;
+}
+
+.rf_descriptionCell {
+	display: table;
+	padding-top: 8px;
+	grid-column: 1 / -1;
+}
+
+.rf_label .cCheckbox,
+.rf_label .cIconSelect {
+	display: inline-block;
+	width: 20px;
+	vertical-align: middle;
+} 
+
+.rf_hr {
+	height: 0px;
+	grid-column: 1 / -1;
+    margin-top: 5px;
+}
+
+.rf_hr.visible {
+	border-top: 1px solid #F6F7F8; 
+    border-bottom: 1px solid #E2E5E9; 
+    margin-bottom: 10px;
+}
+
+.rf_descriptionContainer {
+	display: grid;
+	grid-auto-flow: row;
+	grid-gap: 4px 5px;
+	grid-auto-rows: minmax(24px, max-content);
+}
+
+.rf_keepInline {
+	display: inline;
+}
+
+.rf_inputCell.keepInline {
+	margin-bottom: 10px;	
+}
+
+.cFormEditorDisplay .hidden, 
+.hidden { 
+	display: none; 
+}
+
+.cFormEditorPreview .rf_dropTarget { 
+	height: calc(100% - 20px);
+}
+
+.rf_editor, .cFormEditorPreview.rf_dropTarget { 
+	height: 100%;
+}
+
+.rf_dropTarget { 
+	min-height: 24px;
+}
+
+.rf_dropTarget > .cFormEditorDisplay,
+.rf_dropTarget > .cFormEditorToolbar { 
+	padding: 10px;
+	height: calc(100% - 20px);
+}
+
+.cFormEditorPreview.rf_highlighted [data-type = 'columns'] .rf_groupCell,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCell,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+	background: rgba(255,255,255,0.6);
+	border-radius: 0px
+}
+
+.rf_frame {
+	min-height: 24px;
+}
+
+.rf_highlighted .rf_frameBorder.hover .rf_frame,
+.rf_highlighted .rf_frame.hover,
+.rf_highlighted .rf_wrapper.hover .rf_container {
+	margin-left: 20px;
+	margin-right: 20px;
+	min-width: calc(100% - 40px);
+}
+
+.rf_highlighted .rf_frameBorder.hover,
+.rf_highlighted .rf_wrapper.hover  {
+	background-image: var(--FORM_EDITOR_BUTTON_INSERT_LEFT), var(--FORM_EDITOR_BUTTON_INSERT_RIGHT);
+	background-repeat: no-repeat;
+	background-position: left center, right center; 
+}
+
+div.cFormEditorToolbox [data-tool=true] > .attribute {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	/* width: 100px; */
+	box-sizing: border-box;
+}
+
+/* form editor icons */
+[data-tool=true] > .attribute .type-image > .tool {
+	background-color: var(--BUTTON_COLOR);
+	width: 10px;
+	height: 10px;
+	display: inline-block;
+}
+
+[data-tool=true] > .attribute:hover .type-image > .tool {
+	background-color: var(--BUTTON_COLOR_HOVER);
+}
+
+.cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover > .rf_frame,
+.cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover > .rf_container {
+	margin-left: 20px;
+	min-width: calc(100% - 20px);
+}
+
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover,
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover {
+	background-image: var(--FORM_EDITOR_BUTTON_MOVE);
+	background-repeat: no-repeat;
+	background-position: left center; 
+}
+
+.rf_frame.showBorder {
+	border: 1px solid #DFE6F0;
+}
+
+.cFormEditorPreview.rf_highlighted .rf_inputCell,  
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+	border: 1px dotted grey;
+}
+
+/* disable default drag and drop for images because icons and labels can be splitted in this case */
+.rf_dropTarget img {
+	user-drag: none; 
+	-webkit-user-drag: none;
+}
+
+.rf_dropTarget img, .cFormEditorDisplay.edit {
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	/*-ms-user-select: none;*/
+}
+
+.cFormEditorDisplay .rf_dragElement,
+.cFormEditorDisplay .rf_dragElement label,
+.cFormEditorDisplay .rf_dragElement input,
+.cFormEditorDisplay .rf_dragElement textarea,
+.cFormEditorElement label,
+.cFormEditorElement input,
+.cFormEditorElement textarea,
+*[draggable=true] {
+	cursor: pointer;
+	cursor: grab;
+}
+
+.cFormEditorDisplay .rf_dragElement.rf_dragged {
+	cursor: move;
+	cursor: grabbing;
+}
+
+.cFormEditorDisplay .input-image {
+	cursor: pointer;
+}
+
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_content,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_container {
+	border: 1px dashed #7695C3;
+	background: var(--layer);
+}
+
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
+	border: 1px dashed #7695C3;
+	background: var(--layer-accent);
+}
+
+/* do not mark locked areas */
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_content,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_container,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_dropTarget.rf_parent,
+.rf_highlighted .rf_dragged .locked .rf_container,
+.rf_dropArea .locked,
+.cFormEditorPreview.rf_highlighted .locked .rf_inputCell,  
+.cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
+	border: inherit;
+	background: var(--background);
+}
+
+.rf_highlighted .rf_dragged .rf_container/*,
+.cFormEditorDisplay.edit .rf_container:hover*/ {
+	border: 1px solid #DFE6F0;
+	border-radius: var(--GROUP_RADIUS);
+}
+
+.rf_editor .cFormEditorPreview.rf_highlighted .cFormEditorElement.rf_dragged .rf_content {
+	border: 0px;
+	background: var(--background);
+}
+
+.rf_dropArea {
+	border: 1px dashed #7695C3;
+	box-sizing: border-box;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: rgba(250, 252, 254, .5);
+}
+
+.rf_dropText {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.cFormEditorToolbar .cFormEditorElement.rf_dragElement.rf_line {
+	width: auto;
+}
+
+/* for demo: display number of columns */
+.dflSize0 .show-columns:after { content: "0"; }
+.dflSize1 .show-columns:after { content: "1"; }
+.dflSize2 .show-columns:after { content: "2"; }
+.dflSize3 .show-columns:after { content: "3"; }
+.show-columns { line-height: 24px; }
+
+.rf_infoBox {
+	border: 1px solid grey;
+	margin-bottom: 10px;
+	padding: 4px;
+}
+
+.cFormEditorToolbox [data-tool=true].rf_dragElement {
+	display: inline-block;
+	line-height: 12px;
+	margin-bottom: 5px;
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute {
+	padding: 2px 8px 3px 4px;
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute > .type-image {
+	display: inline-block;
+	width: 20px;
+}
+
+.rf_emptyCell {
+	min-height: 24px;
+}
+
+.rf_table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+	margin-bottom: 5px;
+}
+
+.rf_table th, .rf_table td {
+	border: 1px solid #DFE6F0;
+}
+
+/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
+.additional-resource .rf_label {
+	padding-left: 7px;
+	box-sizing: border-box;
+}
+
+/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
+.additional-resource.with-spacing div:last-child {
+	margin-bottom: 20px;
+}
+
+/* Reactive forms for Internet Explorer support */
+@media (-ms-high-contrast: active), (-ms-high-contrast: none) {
+
+  .rf_content {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+  
+  .rf_content {
+    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+  }
+  
+  .rf_content > *:not(body) {
+    margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+  }
+  
+  .rf_content > .rf_columnsLayout {
+    margin-left: 0px;
+  }
+    
+  .rf_line,
+  .cMediaQuery .rf_groupCell .rf_content .rf_groupCell:not(.cols5),
+  .rf_columnsLayout .rf_content > * > .rf_line, 
+  .rf_columnsLayout .rf_line, 
+  .rf_columnsLayout .rf_groupCell .rf_groupCell, 
+  .rf_content > *:not(body),
+   .cMediaQuery .rf_content.cols1 > *:not(body),
+  .cMediaQuery .rf_content .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5) > *:not(.rf_line):not(.dfListEntry),
+  .cMediaQuery .rf_columnsLayout .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5) > *:not(.rf_line):not(.dfListEntry),
+  .dflSize0 .rf_content > *:not(.rf_line),
+  .dflSize1 .rf_content > *:not(.rf_line),
+  .dflSize2 .maxCols1 .rf_content > *:not(.rf_line):not(.rf_groupCell),
+  .dflSize3 .maxCols1 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+	/* avoid creating more columns than possible, use cols classes manually in those cases */ 
+    min-width: 100px;
+    width: 100%;
+  }
+  
+  .cMediaQuery:not(.dflSize0):not(.dflSize1) .rf_content.cols2 > *:not(.rf_line):not(.rf_groupCell),
+  .dflSize2 .rf_content > *:not(.rf_line):not(.rf_groupCell),
+  .cMediaQuery.dflSize3 .maxCols2 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+    min-width: calc(50% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(50% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+
+  .cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2) .rf_content.cols3 > *:not(.rf_line):not(.rf_groupCell),
+  .dflSize3 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+    min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(33.3% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+
+  .cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2) .rf_content.cols4 > *:not(.rf_line):not(.rf_groupCell),
+  .cMediaQuery.dflSize3 .maxCols4 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+    min-width: calc(25% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(25% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+  
+  .cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2) .rf_content.cols5 > *:not(.rf_line):not(.rf_groupCell),
+  .dflSize3 .maxCols5 .rf_content > *:not(.rf_line):not(.rf_groupCell) {	
+    min-width: calc(20% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(20% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }  
+  
+  .cMediaQuery.dflSize0 .dfListContent .rf_columnsLayout > .dfListEntry,
+  .cMediaQuery.dflSize1 .dfListContent .rf_columnsLayout > .dfListEntry,
+  .cMediaQuery.dflSize3 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+  .dfListContent .rf_columnsLayout > .dfListEntry {
+ 	min-width: 100px;
+ 	width: 100%;
+  }
+  
+    /* flexboxes are not working correctly inside table/table-cells */
+  .frmBody div.fltArea,
+  .frmBody div.fltContainer {
+	display: block;
+  }
+     
+  .rf_descriptionCell {
+  	border: 1px solid rgba(0,0,0,0.0); /* trick to make a wordwrap  */
+  } 
+  
+  .cMediaQuery.dflSize1 .rf_inputCell > :nth-child(n+2),
+  .rf_inputCell.rf_line > :nth-child(n+2) {
+	padding-left: 5px;
+  }
+
+  .rf_hr {
+    margin-bottom: 20px;
+  }
+
+  .rf_inputCell, .rf_line {
+	margin-bottom: 4px;	
+  }
+}
+
+/*
+****					****
+****	Input styles	****
+****					****
+*/
+/* Calendar styles */
+div.cal_root {
+	/* Viewport for animations. */
+	overflow: hidden;	
+}
+
+div.cal_root, div.cal_view {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	right:  0px;
+	display: flex;
+	flex-direction: column;
+}
+
+.cal_titlebar {
+	display: flex;
+	justify-content: space-around;
+}
+
+.cal_titlebar a {
+	color: var(--icon-primary);
+}
+
+.cal_titlebar a:hover {
+	text-decoration: none;
+}
+
+.cal_leftNav {
+	order: 1;
+	align-self: center;
+}
+
+.cal_header {
+	order: 2;
+	align-self: center;
+}
+
+.cal_rightNav {
+	order: 3;
+	align-self: center;
+}
+
+div.cal_content, table.cal_fixed {
+	height: 100%;
+}
+
+.cCalendar {
+	background-color: var(--layer); 
+}
+
+div.cal_content {
+	background: var(--layer);
+}
+
+table.cal_table {
+	border-width: 0px;
+	width: 100%;
+}
+
+td.cal_cell {
+	vertical-align: middle;
+	text-align: center;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+}
+
+td.cal_cell:hover {
+	background-color: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+td.cal_cell a {
+	/* Without display block, tab navigation through `cal_range` tables does not work. */
+	display: block;
+	color: inherit;
+}
+
+td.cal_cell a:hover {
+	text-decoration: none;
+}
+
+/* Weekday */
+td.cal_wd {	
+	color: var(--text-primary);
+}
+
+/* Selected day */
+td.cal_sel {
+	background-color: var(--background-brand);
+  	color: var(--text-on-color);
+}
+
+/* Weekends */
+td.cal_we {
+	color: var(--text-placeholder);
+}
+
+/* Number of Week */
+td.cal_wn, td.cal_wn:hover {
+	background-color: var(--layer-accent-active);
+	color: var(--text-on-color);
+}
+
+/* Days of past or next month */
+td.cal_om {
+	color: var(--text-placeholder);
+}
+
+span.cal_range {
+	display: table;
+	margin: auto;
+}
+
+span.cal_rangePart {
+	display: table-row;
+	text-align: left;
+}
+
+div.cal_animation {
+	display: none;
+}
+
+div.cal_nextAnimation, div.cal_previousAnimation {
+    -webkit-animation: cal_slideAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_slideAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_slideAnimationFrames {
+	0% {
+	}
+    100% {
+    	left: 0px;
+    }
+}
+
+@-webkit-keyframes cal_slideAnimationFrames {
+	0% {
+	}
+    100% {
+    	left: 0px;
+    }
+}
+
+div.cal_zoom_outAnimation {
+    -webkit-animation: cal_zoom_outAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_zoom_outAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_zoom_outAnimationFrames {
+	0% {
+	}
+    100% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+    }
+}
+
+@-webkit-keyframes cal_zoom_outAnimationFrames {
+	0% {
+	}
+    100% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+    }
+}
+
+div.cal_zoom_inAnimation {
+    -webkit-animation: cal_zoom_inAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_zoom_inAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_zoom_inAnimationFrames {
+	0% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+	}
+    100% {
+    	transform: scale(1, 1);
+    	opacity: 1.0;
+    }
+}
+
+@-webkit-keyframes cal_zoom_inAnimationFrames {
+	0% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+	}
+    100% {
+    	transform: scale(1, 1);
+    	opacity: 1.0;
+    }
+}
+
+.cDateInput, .cTimeInput {
+	display: inline-flex;
+	align-items: center;
+}
+
+.cDatetime {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.cIntegerInput.num {
+	display: inline-flex;
+	align-items: stretch;
+}
+
+.cDecoratedCell,
+.cExpandableTextInput,
+.cBlockTextInput,
+.cPopupSelect {
+	display: inline-flex;
+}
+
+.cDecoratedCell a.input-image,
+.cDecoratedCell a.input-image:hover,
+.cDecoratedCell a.input-image:focus {
+	color: var(--icon-secondary);
+}
+
+td.tl-table__cell--selected .cDecoratedCell a.input-image,
+td.tl-table__cell--selected .cDecoratedCell a.input-image:hover,
+td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
+	color: var(--icon-secondary);
+}
+
+.lFixedRight,
+.cIntegerInput.num .lFixedRight {
+	display: inline-flex;
+	align-items: stretch;
+	color: var(--icon-primary);
+	background: var(--field);
+}
+
+.lFixedRight a:not(.lFlexible),
+.lFixedRight:not(.timePart) span:not(.lFlexible),
+.lFixedRight span span:not(.lFlexible),
+.lFixedRight .fChoose:not(.lFlexible) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--icon-primary);
+    height: 2rem;
+    width: 2rem;
+}
+
+.lFixedRight .button_minus {
+	position: relative;
+}
+
+.lFixedRight .button_minus::after {
+	content: "";
+	position: absolute;
+	top: 0.5;
+	left: 0;
+	height: 50%;
+	border-left: 1px solid var(--border-subtle);
+}
+
+.lFixedRight a:hover {
+	background: var(--field-hover);
+	text-decoration: none;
+}
+
+.lFixedRight a:focus-within,
+.lFixedRight .button_minus:focus-within::after {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	border-left: none;
+}
+
+.lFixedRight a.disabled,
+.lFixedRight .fChoose.disabled,
+.lFixedRight span.disabled,
+.lFixedRight span span.disabled,
+span.cIconSelect .input-image.cannot-edit i {
+	color: var(--icon-disabled);
+}
+
+.lFixedRight a.disabled:hover {
+	background: none;
+}
+
+.lFixedRight a.disabled:focus,
+.lFixedRight .button_minus:focus::after {
+	box-shadow: none;
+}
+
+.cTextInput input,
+.cTextInput textarea,
+.cIntegerInput.num input,
+.cExpandableTextInput input,
+.cBlockTextInput input,
+.cPopupSelect input,
+.cDateInput input,
+.cTimeInput input {
+	color: var(--text-primary);
+	background: var(--field);
+	border: none;
+	padding: 0 var(--spacing-03);
+	height: 2rem;
+	box-sizing: border-box;
+	max-width: 100%;
+	white-space: break-spaces;
+	word-wrap: break-word;
+	word-break: break-word;
+}
+
+.cTextPopup {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: var(--spacing-02);
+}
+
+.cTextInput textarea {
+	padding-top: var(--spacing-02);
+	padding-bottom: var(--spacing-02);
+}
+
+.cTextInput input::placeholder,
+.cTextInput textarea::placeholder,
+.cExpandableTextInput input::placeholder,
+.cBlockTextInput input::placeholder,
+.cPopupSelect input::placeholder {
+	color: var(--text-placeholder);
+}
+
+.cError .error i,
+.cError .error-annotation i {
+	color: var(--support-danger);
+}
+
+.error input.is-input, 
+.error-annotation input.is-input, 
+.error input.is-popup, 
+.error-annotation input.is-popup, 
+.error input.is-upload, 
+.error-annotation input.is-upload, 
+.error button.ColorChooser,
+.error-annotation button.ColorChooser,
+.error.active input.tristate,
+.error-annotation.active input.tristate,
+.error.active input.is-checkbox,
+.error-annotation.active input.is-checkbox,
+.error.active input.is-radio,
+.error-annotation.active input.is-radio,
+.error.active.cBeacon, /* AND selector --> .error AND .cBeacon */
+.error-annotation.active.cBeacon, /* AND selector --> .error-annotation AND .cBeacon */
+.error.cDataItem iframe, /* AND selector --> .error AND .cDataItem */
+.error-annotation.cDataItem iframe, /* AND selector --> .error-annotation AND .cDataItem */
+.error select, 
+.error-annotation select, 
+.error textarea,
+.error-annotation textarea,
+.error .ace_editor,
+.error-annotation .ace_editor,
+.error .ace_editor textarea,
+.error-annotation .ace_editor textarea {
+	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.warning input.is-input, 
+.warning-annotation input.is-input, 
+.warning input.is-popup,
+.warning-annotation input.is-popup,
+.warning input.is-upload,
+.warning-annotation input.is-upload,
+.warning button.ColorChooser,
+.warning-annotation button.ColorChooser,
+.warning.active input.tristate,
+.warning-annotation.active input.tristate,
+.warning.active input.is-checkbox,
+.warning-annotation.active input.is-checkbox,
+.warning.active input.is-radio,
+.warning-annotation.active input.is-radio,
+.warning.active.cBeacon,
+.warning-annotation.active.cBeacon,
+.warning.cDataItem iframe,
+.warning-annotation.cDataItem iframe,
+.warning select, 
+.warning-annotation select, 
+.warning textarea,
+.warning-annotation textarea,
+.warning .ace_editor,
+.warning-annotation .ace_editor,
+.warning .ace_editor textarea, 
+.warning-annotation .ace_editor textarea {
+	box-shadow: inset 0px 0px 0px 1px var(--support-warning),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+input.is-input:focus, 
+.error input.is-input:focus, 
+.warning input.is-input:focus, 
+.error-annotation input.is-input:focus, 
+.warning-annotation input.is-input:focus, 
+input.is-popup:focus, 
+.error input.is-popup:focus, 
+.warning input.is-popup:focus, 
+.error-annotation input.is-popup:focus, 
+.warning-annotation input.is-popup:focus, 
+input.is-upload:focus,
+.error input.is-upload:focus, 
+.warning input.is-upload:focus, 
+.error-annotation input.is-upload:focus, 
+.warning-annotation input.is-upload:focus, 
+button.ColorChooser:focus,
+.error button.ColorChooser:focus,
+.warning button.ColorChooser:focus,
+.error-annotation button.ColorChooser:focus,
+.warning-annotation button.ColorChooser:focus,
+input.tristate:focus,
+.error.active input.tristate:focus,
+.warning.active input.tristate:focus,
+.error-annotation.active input.tristate:focus,
+.warning-annotation.active input.tristate:focus,
+input.is-checkbox:focus,
+.error.active input.is-checkbox:focus,
+.warning.active input.is-checkbox:focus,
+.error-annotation.active input.is-checkbox:focus,
+.warning-annotation.active input.is-checkbox:focus,
+input.is-radio:focus,
+.error.active input.is-radio:focus,
+.warning.active input.is-radio:focus,
+.error-annotation.active input.is-radio:focus,
+.warning-annotation.active input.is-radio:focus,
+.cBeacon:focus,
+.error.active.cBeacon:focus,
+.warning.active.cBeacon:focus,
+.error-annotation.active.cBeacon:focus,
+.warning-annotation.active.cBeacon:focus,
+cDataItem iframe:focus,
+.error.cDataItem iframe:focus,
+.warning.cDataItem iframe:focus,
+.error-annotation.cDataItem iframe:focus,
+.warning-annotation.cDataItem iframe:focus,
+select:focus,
+.error select:focus, 
+.warning select:focus, 
+.error-annotation select:focus, 
+.warning-annotation select:focus, 
+textarea:focus,
+.error textarea:focus,
+.warning textarea:focus,
+.error-annotation textarea:focus,
+.warning-annotation textarea:focus,
+.ace_editor textarea:focus,
+.error .ace_editor textarea:focus,
+.warning .ace_editor textarea:focus,
+.error-annotation .ace_editor textarea:focus,
+.warning-annotation .ace_editor textarea:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+.cIntegerInput.num input:focus,
+.cIntegerInput.num.error input:focus,
+.cIntegerInput.num.error-annotation input:focus {
+	outline: none;
+	border: none;
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.cTextInput.disabled input,
+.cTextInput.disabled textarea,
+.cIntegerInput.num.disabled input,
+.cExpandableTextInput.disabled input,
+.cBlockTextInput.disabled input,
+.cPopupSelect.disabled input,
+.cDropdownSelect.disabled select,
+.cDateInput.disabled input,
+.cTimeInput.disabled input {
+	color: var(--text-disabled);
+}
+
+.cTextInput.disabled input::placeholder,
+.cTextInput.disabled textarea::placeholder,
+.cExpandableTextInput.disabled input:placeholder,
+.cBlockTextInput.disabled input:placeholder,
+.cPopupSelect.disabled input::placeholder {
+	color: var(--text-disabled);
+}
+
+select:not([multiple="multiple"]) {
+	-webkit-appearance: none;
+	appearance: none;
+	color: var(--text-primary);
+	padding-left: var(--spacing-03);
+	padding-right: var(--spacing-06);
+	height: 2rem;
+	max-width: 100%;
+	box-sizing: border-box;
+	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
+    background-position: calc(100% - 10px) center, calc(100% - 5px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    border: none;
+}
+
+select:not([multiple="multiple"]):disabled {
+    background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
+    background-position: calc(100% - 10px) center, calc(100% - 5px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+
+.rf_header select,
+select:focus:not( [multiple="multiple"] ) {
+	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
+}
+
+span.disabled > span.lFlexible > select:not( [multiple="multiple"] ) {
+	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
+}
+
+.cPopupSelect .lFlexible, 
+.cPopupSelect .is-popup:not([size]), 
+.cIntegerInput .lFlexible, 
+.cIntegerInput .is-input:not([size]), 
+.cExpandableTextInput .lFlexible, 
+.cExpandableTextInput .is-input:not([size]), 
+.cTextInput:not(.searchIrrelevant) .is-input:not([size]), 
+.cBlockTextInput .lFlexible, 
+.cBlockTextInput .is-input:not([size]), 
+.dfList .dfListEntry .cTextInput:not(.searchIrrelevant) textarea.is-input {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+/* 		Radio Buttons styles	*/
+/* Resets browser's default radio style. */
+input[type="radio"] {
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+input[type="radio"] {
+	align-self: center;
+	display: inline-grid;
+	place-content: center;
+	position: relative;
+	height: 1rem;
+	width: 1rem;
+	border-radius: 50%;
+	border: 1px solid var(--icon-primary);
+}
+
+input[type="radio"]::before {
+ 	content: '';
+ 	position: absolute;
+ 	top: 50%;
+ 	left: 50%;
+ 	height: 0.5rem;
+ 	width: 0.5rem;
+ 	border-radius: 50%;
+ 	background-color: var(--background);
+	transform: scale(0);
+}
+
+input[type="radio"]:checked::before {
+ 	background-color: var(--icon-primary);
+	transform: scale(1) translate(-50%, -50%);
+}
+
+input[type="radio"]:focus {
+	box-shadow: inset 0 0 0 1px var(--focus);;
+}
+
+/* 		Check Box styles	*/
+/* Resets browser's default checkbox styling. */
+input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+input[type="checkbox"] {
+    display: inline-grid;
+    place-content: center;
+    position: relative;
+    height: 1rem;
+    width: 1rem;
+    border-radius: 1px;
+    border: 1px solid var(--icon-primary);
+}
+
+input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    transform: translateY(-50%);
+    height: 100%;
+    width: 100%;
+    border-radius: 1px;
+    background-color: var(--background);
+    transform: scaleX(0);
+}
+
+input[type="checkbox"]:checked::before {
+	content: '\f633';
+	font-family: "bootstrap-icons";
+	font-size: .8rem;
+	display: inline-grid;
+    place-content: center;
+	color: var(--background);
+	background-color: var(--icon-primary);
+	transform: scaleX(1);
+}
+
+input[type="checkbox"]:checked:focus::before {
+	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
+}
+
+input[type="checkbox"]:focus {
+	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
+}
+
+/*
+****										****
+****	ChoiceControl, bbc-option styles	****
+****										****
+*/
+.cBooleanChoice, .cChoice-horizontal {
+    display: inline-flex;
+    gap: var(--spacing-03);
+}
+
+span.bcc-option, .cChoice-option {
+    display: inline-flex;
+    gap: var(--spacing-02);
+}
+
+.cChoice-vertical {
+	display: inline-flex;
+	flex-direction: column;
+	gap: var(--spacing-02);
+}
+
+.cChoice-option label {
+	color: var(--text-primary);
+	cursor: pointer;
+}
+
+.cChoice-horizontal.disabled label,
+.cChoice-vertical.disabled label{
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+.cChoice-horizontal.disabled, .cChoice-vertical.disabled {
+	color: var(--text-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="radio"], 
+.cChoice-vertical.disabled input[type="radio"],
+.cBooleanChoice.disabled input[type="radio"] {
+	border: 1px solid  var(--icon-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="radio"]:checked::before,
+.cChoice-vertical.disabled input[type="radio"]:checked::before,
+.cBooleanChoice.disabled input[type="radio"]:checked::before {
+	background-color: var(--icon-disabled);
+}
+
+.cChoice-horizontal.disabled, .cChoice-vertical.disabled,
+.cBooleanChoice.disabled {
+	color: var(--text-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="checkbox"], 
+.cChoice-vertical.disabled input[type="checkbox"],
+.cCheckbox.cannot-edit input[type="checkbox"] {
+	border: 1px solid  var(--icon-disabled);
+	cursor: default;
+}
+
+.cChoice-horizontal.disabled input[type="checkbox"]:checked::before,
+.cChoice-vertical.disabled input[type="checkbox"]:checked::before {
+	background-color: var(--icon-disabled);
+	cursor: default;
+}
+
+.cSelectOption,
+.cCheckbox {
+	display: inline-flex;
+	align-items: center;
+}
+
+.fltSubContent .cSelectOption,
+.fltSubContent .cCheckbox {
+  	padding: 0;
+  	vertical-align: middle;
+}
+
+/* ==================================== */
+/* ======    Color Chooser css    ===== */
+/* ==================================== */
+.ColorChooser {
+	height: 1.5rem;
+	width: 1.5rem;
+	padding: 0;
+	border: 1px solid var(--border-strong);
+	border-radius: .25rem;
+}
+
+span.cColorDisplay {
+	border-style: solid;
+	border-color: black;
+	border-width: 1px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 40px;
+}
+
+span.cColorDisplay.noColor {
+	background-image: var(--COLORCHOOSER_NO_COLOR);	
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+span.cColorDisplay.canDrag {
+	cursor: pointer;
+}
+
+div.DNDmouseMarker span.cColorDisplay {
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 20px;
+}
+
+div.cColorPalette div.row {
+	clear: both;	
+}
+
+div.cColorPalette span.cColorDisplay {
+	display: block;
+	float: left;
+	width: 30px;
+	height: 30px;
+	padding: 0px;
+	margin: 2px;
+}
+
+span.colorDisplay {
+	display: inline-block;
+	border: 1px solid var(--border-subtle);
+	width: 1rem;
+	height: 1rem;
+}
+
+/* ColorChooserSelectionControl */
+
+div.cColorComposer td {
+	vertical-align: top;
+}
+
+div.cColorComposer tr.spacer {
+	height: 3px;
+}
+
+.colorDialog {
+	padding: 3px;
+}
+
+.colorCell {
+    cursor:pointer;
+    height:30px;
+    width:30px;
+}
+
+.mandatory > .ColorChooser {
+	border:thick solid var(--MANDATORY_FIELD_BG);
+}
+
+.cBeacon {
+	display: inline-flex;
+	flex-direction: row;
+	height: 100%;
+}
+
+.cBeacon > span{
+	display: inline-flex;
+	align-items: center;
+}
+
+.cBeacon input {
+	width: 16px;
+	height: 16px;
+}
+
+div.sizeContainer, div.imageContainer {
+  position: absolute;
+  text-align: center;
+  left: 2px;
+  top: 2px;
+  right: 2px;
+  bottom: 2px;
+}
+
+/* ==================================== */
+/* ======    Icon Chooser css     ===== */
+/* ==================================== */
+.cIconChooser div.header .searchTextField input.is-input {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+	width: calc(96% - 67px);
+	padding-left: 23px;
+	height: 22px;
+}
+
+.cIconChooser div.header .expertTextField input.is-input {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+	width: calc(96% - 67px);
+	height: 22px;
+}
+
+.cIconChooser div.header a {
+	border: 0px;
+}
+
+.cIconChooser div.header .inputfield {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+}
+
+.cIconChooser div.header .resetButton,
+.cIconChooser div.header .okButton {
+	position: absolute;
+	bottom: 5px;
+	right: 35px;
+}
+
+.cIconChooser div.header .toggleExpertButton {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+}
+
+.cIconChooser .searchTextField .search {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	color: var(--icon-secondary);
+}
+
+.cIconChooser .fptBodyContent .displayedIcons {
+	position: relative;
+	display: inline-block;
+    margin-bottom: 5px;
+    margin-right: 5px;
+	width: 30px;
+	height: 30px;
+	border: 1px solid var(--border-subtle);
+}
+
+.cIconChooser a,
+.cIconChooser .input-image {
+	display: table-cell;
+	text-align: center;	
+	vertical-align: middle;
+}
+
+.cIconChooser div.header .toggleExpertButton a,
+.cIconChooser div.header .resetButton a,
+.cIconChooser div.header .okButton a,
+.cIconChooser .fptBodyContent .displayedIcons a {
+	width: 30px;
+	height: 30px;
+}
+
+.cIconChooser .fptBodyContent input {
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    transform: translate(50%,-50%);
+	max-width: 30px;
+	max-height: 30px;
+}
+
+.cIconChooser .fptBodyContent .displayedIcons {
+	background-color: var(--layer-accent);
+}
+
+.cIconChooser .fptBodyContent .displayedIcons.selected {
+	background-color: var(--layer-accent-selected);
+}
+
+.cIconChooser .fptBodyContent .displayedIcons:hover {
+	background-color: var(--layer-accent-hover);
+}
+
+.cIconChooser i {
+    font-size: 1rem;
+    color: var(--icon-primary);
+}
+
+.cIconChooser div.header {
+	position: absolute;
+	left: 0px; 
+	top: 0px; 
+	height: 42px;
+	width: 100%;
+}
+
+.cIconChooser div.fptBody {
+ 	position: absolute; 
+	left: 0px; 
+	right: 0px; 
+	bottom: 0px; 
+	top: 42px;
+	bottom: 0px; 
+}
+
+.cIconChooser div.fptBodyContent {
+	padding-top: 0px;
+}
+
+.cIconChooser .cannot-edit .is-input, 
+.cIconChooser .disabled .is-input {
+	display: inline-block;
+}
+
+.cIconChooser .input-image {
+	height: 1.5rem;
+	width: 1.5rem;
+	padding: 0;
+	border: 1px solid var(--border-strong);
+	border-radius: .25rem;
+	background-color: var(--layer-accent);
+}
+
+.cIconChooser .input-image:hover {
+	background-color: var(--layer-accent-hover);
+}
+
+.cIconChooser .input-image.disabled,
+.cIconChooser .input-image.disabled:hover {
+	color: var(--icon-disabled);
+	background-color: none;
+}
+
+.cIconChooser, 
+.cIconChooser img {
+	display: inline-block;
+	min-height: 20px;
+	min-width: 20px;
+}
+
+.cIconChooser input.is-action {
+	margin: 0px;
+}
+
+/* ==================================== */
+/* ======     DataItemControl     ===== */
+/* ==================================== */
+
+.cDataItem input {
+	margin-left: 2px;
+}
+
+.cDataItem input.first {
+	margin-left: 0px;
+}
+
+.cDataItem input {
+    background-color: var(--background);
+}
+
+.cDataItem input[type="file"] {
+	display: none;
+}
+
+.cDataItem label {
+	display: inline-block;
+	cursor: pointer;
+	color: var(--text-on-color);
+	padding-left: var(--spacing-02);
+	border-radius: .25rem;
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+}
+
+.cDataItem label .cmdImg {
+	padding-right: var(--spacing-02);
+}
+
+.cDataItem label .cmdLabel {
+	padding-right: var(--spacing-03);
+}
+
+.cDataItem label:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
+}
+
+.cDataItem label:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.cDataItem label:active {
+	background: var(--button-primary-active);
+}
+
+.cDataItem label.cmdButtonDisabled {
+	background: var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+}
+
+.cDataItem label.cmdButtonDisabled .cmdLabel {
+	color: var(--text-on-color-disabled);
+}
+
+.cDataItem label.cmdButtonDisabled .cmdImg {
+	color: var(--icon-on-color-disabled);
+}
+
+/* Display inline when shown in a table cell. */
+td.tl-table__cell .cDataItem ul,
+td.tl-table__cell .cDataItem li {
+	display: inline;
+}
+
+/* Display as table when multiple files are uploaded. */
+.cDataItem ul {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	margin-left: 2px;
+	padding: 0;
+	
+	display: table;
+	border-spacing: 0px;
+}
+
+.cDataItem li {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	
+	display: table-row-group;
+}
+
+.cDataItem li .cDownload {
+	display: table-row;
+}
+
+.cDataItem li .cDownload .lFlexible,
+.cDataItem li .cDownload .lFixedRight  {
+	display: table-cell;
+	padding-bottom: 8px;
+	padding-right: 8px;
+}
+
+/* ==================================== */
+/* ======     DownloadControl     ===== */
+/* ==================================== */
+
+.downloadControl input {
+	margin-left: 2px;
+}
+
+.downloadControl input.first {
+	margin-left: 0px;
+}
+
+.downloadControl input {
+    background-color: var(--background);
+}
+
+a.input-image.tristate .bi-x-octagon-fill,
+a.input-image.tristate .bi-exclamation-triangle-fill {
+	color: var(--support-danger);
+}
+
+a.input-image.tristate .bi-info-circle-fill,
+a.input-image.tristate .bi-info-square {
+	color: var(--support-info);
+}
+
+a.input-image.tristate.tBoolean {
+	color: var(--icon-primary)
+}
+
+/* ============================================= */
+/* ========== DropDown with Tooltip  =========== */
+/* ============================================= */
+
+/* 	The CSS-Class prefix "ddwtt" uniquely identifies elements from DropDownControl.
+	The prefix stands for "DropDown With ToolTip". */
+.ddwttContainer {
+	position: relative;
+	text-align: center;
+	cursor: default;
+	margin: 0 !important;
+}
+
+.dfContent .ddwttContainer::before, .dfContent .ddwttContainer::after {
+	content: " ";
+}
+
+.rf_header .ddwttDropBtn {
+	background-color: unset;
+	border: none;
+	color: var(--GROUP_LABEL_COLOR);
+	height: 20px;
+}
+
+.rf_header .ddwttChevron::after {
+	color: var(--GROUP_LABEL_COLOR);
+}
+
+.ddwttDropBtn {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+	width: fit-content;
+	max-width: 100%;
+	height: 2rem;
+	border: none;
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-primary);
+	background: var(--field);
+	padding: 0 var(--spacing-03);
+}
+
+.ddwttDropBtn > span {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	
+}
+
+span.disabled .ddwttDropBtn {
+	background: var(--field);
+	color: var(--text-disabled);
+}
+
+.ddwttContainer.error .ddwttDropBtn {
+	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.ddwttDropBtn:focus,
+.error.ddwttDropBtnActive .ddwttDropBtn{
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.fptSubtitleContent .ddwttDropBtn {
+	height: 1.4rem;
+}
+
+.ddwttChevron::after {
+	border-style: solid;
+	border-width: 0.2em 0.2em 0 0;
+	content: '';
+	position: relative;
+	display: inline-block;
+	height: 0.5em;
+	width: 0.5em;
+	transform: rotate(45deg);
+	margin-left: var(--spacing-03);
+	color: var(--icon-primary);
+	flex-shrink: 0;
+}
+
+.ddwttChevron.up:after {
+	top: 0.125em;
+	transform: rotate(-45deg);
+}
+
+.ddwttChevron.down:after {
+	top: -0.125em;
+	transform: rotate(135deg);
+}
+
+span.disabled .ddwttChevron::after {
+	color: var(--icon-disabled);
+}
+
+/* DropDown */
+.ddwttDDBox {
+	display: inline-flex;
+	flex-direction: column;
+	margin: 0;
+	position: fixed;
+	width: fit-content;
+	z-index: 10;
+	background-color: var(--field);
+	border: 1px solid var(--border-subtle);
+	color: var(--text-secondary);
+	box-sizing: border-box;
+	box-shadow: var(--shadow-menu);
+}
+
+.ddwttDDBox span {
+	margin: 0;
+	line-height: 2rem;
+}
+
+.ddwttContainer .ddwttDDBox {
+	display: none;
+}
+
+.ddwttDDList {
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--focus);
+}
+
+.ddwttSearch {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+	height: 2rem;
+	border: none;
+	border-radius: initial;
+	background: var(--field);
+	padding: 0 var(--spacing-03);
+}
+
+.ddwttSearch:focus-visible {
+	color: var(--text-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+.ddwttHide {
+	position: absolute;
+	clip-path: circle(0);
+	top: 0;
+	left: 0;
+}
+
+.ddwttSelectedItem {
+	display: none;
+}
+
+.ddwttItem {
+	position: relative;
+	text-align: left;
+}
+
+.ddwttActiveItem {
+	color: var(--text-primary);
+	background-color: var(--layer-hover);
+	outline: none;
+}
+
+.ddwttActiveItem:focus{
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.ddwttImmutableItem {
+	display: inline;
+	text-align: left;
+}
+
+.ddwttItemLabel {
+	display: block;
+	padding: 0 var(--spacing-03);
+}
+
+/* Tags */
+.ddwttTagLoc, .ddwttTag {
+	display: inline-flex;
+	width: fit-content;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-02);
+}
+
+.ddwttTag {
+	border: 1px solid var(--border-subtle);
+	transition: 0.3s;
+	gap: var(--spacing-01);
+	padding: 0 var(--spacing-02);
+	height: 2rem;
+	margin-right: var(--spacing-02);
+}
+
+.ddwttTag:hover {
+	text-decoration: line-through var(--border-strong) 1px;
+}
+
+.ddwttTagX {
+	width: .875rem;
+	height: 0.875rem;
+	/* Style from .fClear */
+	transform: scale(0.8);
+	display: inline-flex;
+	align-items: center;
+}
+
+.ddwttTagX i {
+	color: var(--icon-primary);
+}
+
+/* Tooltip */
+.ddwttTooltip {
+	min-width: 200px;
+	max-width: 500px;
+	background-color: var(--layer);
+	position: fixed;
+	filter: drop-shadow(var(--shadow-menu));
+	display: none;
+	z-index: 9999999999999999;
+}
+
+.ddwttActiveItem .ddwttTooltip {
+	display: flex;
+	flex-direction: column;
+}
+
+/* tooltip Arrow */
+.ddwttTooltip::after {
+	content: '';
+	position: absolute;
+	width: var(--ttArrow-dim);
+	height: var(--ttArrow-dim);
+	top: var(--ttArrow-top);
+	transform: var(--ttArrow-trans);
+	background-color: var(--layer);
+	--ttArrow-dim: 18px;
+}
+
+.ddwttTtArrowLeft::after {
+	left: 2px;
+	--ttArrow-trans: translate(-50%, -50%);
+	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
+}
+
+.ddwttTtArrowRight::after {
+	right: 2px;
+	--ttArrow-trans: translate(50%, -50%);
+	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
+}
+
+.ddwttTooltipContent {
+	overflow-y: auto;
+	white-space: normal;
+	overflow-wrap: break-word;
+	max-height: calc(100vh - (var(--ttPadding) * 4));
+	--ttPadding: var(--spacing-02);;
+	padding: var(--ttPadding) 12px;
+	line-height: 1.5 !important;
+	color: var(--text-inverse);
+}
+
+.ddwttTooltipContent * {
+	margin: 0;
+	color: var(--text-inverse);
+	line-height: 1.5 !important;
+	padding: 0 !important;
+}
+
+.ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
+    clear: both;
+	margin-bottom: var(--spacing-01);
+}
+
+
+

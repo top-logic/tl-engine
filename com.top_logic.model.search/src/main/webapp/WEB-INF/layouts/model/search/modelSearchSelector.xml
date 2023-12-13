@@ -12,9 +12,9 @@
 	<dialogs>
 		<layout name="SaveSearchAs">
 			<dialogInfo
-				disabledImage="icons/buttonSaveDisabled.png"
+				disabledImage="theme:ICONS_BUTTON_SAVE_DISABLED"
 				height="220px"
-				image="icons/buttonSave.png"
+				image="theme:ICONS_BUTTON_SAVE"
 				openHandlerClass="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsOpenDialogCommand"
 				openerClique="save"
 				openerCommandGroup="Create"

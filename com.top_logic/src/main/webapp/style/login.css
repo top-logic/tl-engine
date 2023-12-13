@@ -1,22 +1,35 @@
+@font-face {
+	font-family: "Inter-Regular";
+	src: url("../themes/default/fonts/Inter-Regular.otf") format("otf"),
+		 url("../themes/default/fonts/Inter-Regular.woff") format("woff"),
+		 url("../themes/default/fonts/Inter-Regular.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Inter-SemiBold";
+	src: url("../themes/default/fonts/Inter-SemiBold.otf") format("otf"),
+		 url("../themes/default/fonts/Inter-SemiBold.woff") format("woff"),
+		 url("../themes/default/fonts/Inter-SemiBold.ttf") format("truetype");
+}
+
 * {
 	box-sizing: border-box;
 }
 
-html, body {
-	font-family: "Trebuchet MS", Helvetica, sans-serif;
-	font-size: 16px;
-	margin:0;
-	padding: 0;
+body {
+	font-family: 'Inter-Regular';
+	font-size: .875rem;
+	line-height: 1.125rem;
+	letter-spacing: .15px;
+	outline: none;
+	margin: 0;
 	width: 100vw;
 	height: 100vh;
-	background-color: #0090b8;
-}
-
-body {
-	background-image: url("../images/login/login-background.jpg");
+	background-image: url(../images/login/login-background.jpg);
 	background-size: cover;
 	background-position: center;
 }
+
 
 form {
 	margin: 0 auto;
@@ -30,63 +43,87 @@ div {
 }
 
 input, label {
-	margin-bottom: 0.4rem;
-	width: 100%;
 	display: inline-block;
+	margin-bottom: .5rem;
+	width: 100%;
 }
 
 label {
-	margin-top: 0.4rem;
+	color: #676b72;
+	margin-top: .5rem;
 }
 
-input[type="text"], input[type="password"], input[type="submit"] {
-	border-radius: 0.3rem;
-	border-width: 1px;
-	border-style: solid;
+input[type="text"],
+input[type="password"] {
+	color: #101113;
+	background-color: #f0f1f2;
+	border-color: #c4c7cc;
+	padding: 0 1rem;
+	height: 2rem;
+	border: none;
+	box-sizing: border-box;
+	max-width: 100%;
+	white-space: break-spaces;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
-input[type="text"], input[type="password"] {
-	background-color: #f8fafc;
-	border-color: #dfe3e9;
-	font-size: 1.4rem;
-	padding: 0.35rem 0.45rem;
+input[type="text"]:focus,
+input[type="password"]:focus {
+	box-shadow: inset 0px 0px 0px 2px #2968c8,inset 0px 0px 0px 3px #ffffff;
+	outline: none;
 }
 
 input[type="text"]:-webkit-autofill {
-	background-color: #f8fafc;
-	border-color: #dfe3e9;
-	font-size: 1.4rem;
-	padding: 0.35rem 0.45rem;
+	color: #101113;
+	background-color: #f0f1f2;
+	border-color: #c4c7cc;
+	padding: 0 1rem;
+	height: 2rem;
+	border: none;
+	box-sizing: border-box;
+	max-width: 100%;
+	white-space: break-spaces;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
 input[type="submit"] {
-	margin-top: 0.8rem;
-	background-color: #0090b8;
-	border-color: #0078a3;
-	color: #efefef;
-	font-size: 1.2rem;
-	padding: 0.5rem 0.65rem;
+	font-family: 'Inter-SemiBold';
+	font-size: .875rem;
+	line-height: 1.125rem;
+	letter-spacing: .15px;
+	height: 2.3rem; /* 36.8px height */
+	padding: .5rem 1rem;
+	border-radius: .25rem;
+	background: #2968c8;
+	box-shadow: inset 0px 0px 0px 1px #2968c8;
+	color: #ffffff;
+	cursor: pointer;
+	border: none;
+	margin-top: 1rem;
 }
 
 input[type="submit"]:hover {
-	cursor: pointer;
-	background-color: #0078a3;
+	background: #245db2;
+	box-shadow: inset 0px 0px 0px 1px #245db2;
+}
+
+input[type="submit"]:focus {
+	box-shadow: inset 0px 0px 0px 2px #2968C8, inset 0px 0px 0px 3px #ffffff;
 }
 
 .disabled, input[type="submit"][disabled] {
-	color: #a8aaac;
-	background-color: #e2e6ea;
-	border-color: #d2d6da;
+	color: #878d96;
+	box-shadow: inset 0px 0px 0px 1px #e1e2e5;
 }
 
 div.container {
 	position:relative;
-	background-color: #efefef;
-	padding: 0.8rem 1.2rem;
-	border-radius: 0.6rem;
-	border-width: 1px;
-	border-style: solid;
-	border-color: #d2d6da;
+	background: #ffffff;
+	padding: 1rem 1.5rem;
+	border-radius: 0.25rem;
+	border: 1px solid #c4c7cc;
 }
 
 .logodiv {
@@ -119,23 +156,40 @@ div.container {
 }
 
 .messageField, .messageContainer {
-	color: #e4246f;
+	color: #D3181B;
 	font-style: italic;
-	padding: 0.2rem 0;
-	min-height: 1.6rem;
+	padding: 0.25rem 0;
+	min-height: 2rem;
 }
 
 .tlLink {
 	margin-bottom: 1rem;
-	font-size: small;
+	font-family: 'Inter-Regular';
+	font-size: .75rem;
+	line-height: 1rem;
+	letter-spacing: .15px;
 	text-align: center;
 }
 
-.tlLink a {
-	color: #0090b8;
+.tlLink a, .tlLink a:link {
+	color: #2968c8;
 	text-decoration: none;
+	cursor: pointer;
 }
 
+.tlLink a:hover {
+	color: #245db2;
+	text-decoration: underline;
+}
+
+.tlLink a:active {
+	color: #101113;
+	text-decoration: underline;
+}
+
+.tlLink a:focus {
+    color: #245db2;
+}
 
 img.hidden {
 	display:none;

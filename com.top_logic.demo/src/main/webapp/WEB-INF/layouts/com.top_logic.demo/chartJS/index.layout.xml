@@ -6,7 +6,7 @@
 >
 	<arguments
 		securityDomain=""
-		tabIcon="css:fas fa-chart-bar"
+		tabIcon="theme:ICON_CHART_JS"
 	>
 		<tabLabel key="dynamic.9520df82-0419-4d4f-9fd5-9d31e3668cef">
 			<en>ChartJS</en>

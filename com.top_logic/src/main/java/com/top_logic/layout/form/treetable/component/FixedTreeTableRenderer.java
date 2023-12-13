@@ -313,8 +313,10 @@ public class FixedTreeTableRenderer extends ThemeTreeTableRenderer {
 		out.endTag(DIV);
 
 		String treeBodyID = tree.getID() + (fixedPart ? "_bodyFix" : "_bodyFlex");
+		String treeBodyClass = fixedPart ? "bodyFix" : "bodyFlex";
 		out.beginBeginTag(DIV);
 		out.writeAttribute(ID_ATTR, treeBodyID);
+		out.writeAttribute(CLASS_ATTR, treeBodyClass);
 		out.endBeginTag();
 		
 		// Render viewport container

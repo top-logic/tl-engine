@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<settings>
+	<string name="MAIN_TAB_BAR_CSS"
+		value="mainTabBar"
+	/>
+	<int name="LICENCE_EXPIRE_BAR_HEIGHT"
+		expr="34"
+	/>
+	<int name="QUICK_SEARCH_HEIGHT"
+		value="140"
+	/>
+	<boolean name="SBL_ACCORDION"
+		value="false"
+	/>
+	<boolean name="SIDEBAR_RESIZABLE"
+		value="true"
+	/>
+	<dim name="SIDEBAR_WIDTH"
+		value="200px"
+	/>
+	<dim name="SIDEBAR_WIDTH_MINIMIZED"
+		value="40px"
+	/>
+	<int name="SIDEBAR_LAYOUT_LEFT_SIDE_BORDER"
+		value="16"
+	/>
+	<int name="SIDEBAR_LAYOUT_TOP_BORDER"
+		value="16"
+	/>
+	<icon name="com.top_logic.layout.Icons.APP_LOGO"
+		value="/images/appLogo.svg"
+	/>
+</settings>
+

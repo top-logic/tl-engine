@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.selection;
 
+import com.top_logic.gui.ThemeFactory;
 
 /**
  * Algorithm for constructing the template of a single select dialog.
@@ -108,7 +109,8 @@ public class SingleSelectTemplateBuilder extends SelectTemplateBuilder {
 
 	private void appendPageField() {
 		if (isLarge()) {
-			layoutVerticalPixel(25);
+			int height = ThemeFactory.getTheme().getValue(Icons.SELECTION_CONTROL_FIELD_HEIGHT);
+			layoutVerticalPixel(height);
 			{
 				field(SelectorContext.PAGE_FIELD_NAME);
 			}

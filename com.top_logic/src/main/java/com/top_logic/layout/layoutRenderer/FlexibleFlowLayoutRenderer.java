@@ -38,8 +38,6 @@ public class FlexibleFlowLayoutRenderer extends FlowLayoutRenderer {
 		// Singleton constructor.
 	}
 
-	private static final int SEPARATOR_PIXEL_WIDTH = 5;
-
 	@Override
 	protected void writeLayoutChildren(DisplayContext context, TagWriter out, ContainerControl container)
 			throws IOException {
@@ -69,6 +67,8 @@ public class FlexibleFlowLayoutRenderer extends FlowLayoutRenderer {
 
 	private void writeSeparatorElement(TagWriter out, FlexibleFlowLayoutControl self, Orientation orientation,
 			int separatorID, boolean collapsed) throws IOException {
+		int collapsedSize = Icons.LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE.get();
+		int expandedSize = Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE.get();
 		out.beginBeginTag(DIV);
 		
 		out.beginAttribute(ID_ATTR);
@@ -77,8 +77,8 @@ public class FlexibleFlowLayoutRenderer extends FlowLayoutRenderer {
 
 		out.writeAttribute(CLASS_ATTR, separatorClass(orientation, collapsed));
 		writeOnMouseDown(out, self, separatorID, orientation);
-		writeLayoutConstraintInformation(SEPARATOR_PIXEL_WIDTH, DisplayUnit.PIXEL, out);
-		writeLayoutCollapsedProperty(out, 1);
+		writeLayoutConstraintInformation(expandedSize, DisplayUnit.PIXEL, out);
+		writeLayoutCollapsedProperty(out, collapsedSize);
 		writeCollapsedProperty(out, collapsed);
 		writeLayoutInformationAttribute(orientation, 100, out);
 		out.endBeginTag();

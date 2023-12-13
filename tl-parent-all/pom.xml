@@ -578,6 +578,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-themes-core</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-umljs</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -701,6 +706,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>ext-com-google-fonts</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>ext-com-inter-fonts</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

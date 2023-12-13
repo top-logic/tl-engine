@@ -35,6 +35,18 @@ public class Icons extends IconsBase {
 	public static ThemeVar<String> MAINLAYOUT_CSS_CLASS;
 
 	/**
+	 * Sets the collapsed size of a vertical adjustment grabber.
+	 */
+	@DefaultValue("1")
+	public static ThemeVar<Integer> LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE;
+
+	/**
+	 * Sets the collapsed size of a vertical adjustment grabber.
+	 */
+	@DefaultValue("5")
+	public static ThemeVar<Integer> LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE;
+
+	/**
 	 * Template for rendering a component with a collapse/expand button to temporarily hide a region
 	 * of the application.
 	 */

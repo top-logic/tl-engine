@@ -1,0 +1,319 @@
+/* Time input control */
+/*!Don't remove this!
+ * jQuery MDTimePicker v1.0 plugin
+ * 
+ * Author: Dionlee Uy
+ * Email: dionleeuy@gmail.com
+ *
+ * Date: Tuesday, August 28 2017
+ */
+
+.mdtimepicker {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	width: 240px;
+	height: 240px;
+	box-shadow: var(--shadow-menu);
+	border: 1px solid var(--border-subtle);
+    background-color: var(--layer);
+    z-index: 100000;
+}
+
+.mdtimepicker.hidden { display: none; }
+.mdtimepicker.animate { background-color: transparent; }
+.mdtp__wrapper {
+	position: absolute;
+	top: 0px;
+	display: flex;
+	flex-direction: column;
+	min-width: 240px;
+	opacity: 1;
+	user-select: none;
+	transform: scale(1);
+	transition: transform .28s ease, opacity .28s ease;
+	overflow: hidden;
+}
+
+.mdtp__wrapper.animate {
+	transform: translateX(-50%) scale(1);
+	opacity: 0;
+}
+
+.mdtp__time_holder {
+	height: 30px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	color: var(--text-primary);
+	text-align: center;
+	background: var(--layer-accent);
+	background-position-x: 0%;
+	background-position-y: 0%;
+	background-repeat: repeat;
+	background-attachment: scroll;
+	background-image: var(--layer-accent);
+	background-size: auto auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+}
+
+.mdtp__time_holder > span {
+	display: inline-block;
+	line-height: 48px;
+	cursor: default;
+}
+
+.mdtp__time_holder > span:not(.mdtp__timedots):not(.mdtp__ampm) {
+	cursor: pointer;
+	margin: 0 4px;
+}
+
+.mdtp__time_holder .mdtp__time_h.active, .mdtp__time_holder .mdtp__time_m.active { color: var(--background); }
+.mdtp__time_holder .mdtp__ampm { font-size: 12px; }
+.mdtp__clock_holder {
+	position: relative;
+	background-color: var(--layer);
+}
+
+.mdtp__clock_holder .mdtp__clock {
+    position: relative;
+    left: calc(50% - 100px);
+    width: 200px;
+    height: 200px;
+    margin-top: 4px;
+    border-radius: 50%;
+    background-color: var(--background);
+    border: 1px solid var(--border-subtle);
+}
+
+.mdtp__time_holder .mdtp__am, .mdtp__time_holder .mdtp__pm {
+	display: block;
+	position: absolute;
+	top: 0px;
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	text-align: center;
+	font-weight: bold;
+	cursor: pointer;
+	border: 1px solid var(--border-subtle);
+	transition: background-color .2s ease, color .2s;
+	z-index: 3;
+}
+
+.mdtp__time_holder .mdtp__am { left: 0px; }
+.mdtp__time_holder .mdtp__pm { right: 0px; }
+.mdtp__time_holder .mdtp__am:hover, .mdtp__time_holder .mdtp__pm:hover { background-color: rgba(0,0,0,.1); }
+.mdtp__time_holder .mdtp__am.active, .mdtp__time_holder .mdtp__pm.active {
+	color: var(--background);
+	background: rgba(0,0,0,.1);
+}
+	
+.mdtp__clock .mdtp__clock_dot {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	padding: 4px;
+	background-color: var(--layer-accent);
+	border-radius: 50%;
+}
+
+.mdtp__clock .mdtp__hour_holder,
+.mdtp__clock .mdtp__minute_holder {
+	width: 100%;
+	height: 100%;
+	opacity: 1;
+	transform: scale(1);
+	transition: transform .35s cubic-bezier(0.4, 0.0, 0.2, 1), opacity .35s ease;
+	overflow: hidden;
+}
+
+.mdtp__clock .mdtp__hour_holder.animate {
+	transform: scale(1.2);
+	opacity: 0;
+}
+
+.mdtp__clock .mdtp__minute_holder.animate {
+	transform: scale(.8);
+	opacity: 0;
+}
+
+.mdtp__clock .mdtp__hour_holder.hidden, .mdtp__clock .mdtp__minute_holder.hidden { display: none; }
+.mdtp__clock .mdtp__digit {
+	position: absolute;
+	width: calc(50% - 1px);
+	top: 50%;
+	left: 0;
+	margin-left: 1px;
+	margin-top: -16px;
+	transform-origin: right center;
+	z-index: 1;
+}
+	
+.mdtp__clock .mdtp__digit .outer,
+.mdtp__clock .mdtp__digit .inner,
+.mdtp__clock .mdtp__digit span {
+	display: inline-block;
+	width: 29px;
+	height: 29px;
+	line-height: 29px;
+	margin-left: 0px;
+	text-align: center;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color .28s, color .14s;
+}
+
+.mdtp__clock .mdtp__digit .inner {
+	font-size: 10px;
+}
+	
+.mdtp__digit .outer.active,
+.mdtp__digit .inner.active,
+.mdtp__digit.active .hour,
+.mdtp__digit.active .minute,
+.mdtp__clock .mdtp__digit span:hover {
+	background: var(--layer-hover);
+	background-position-x: 0%;
+	background-position-y: 0%;
+	background-repeat: repeat;
+	background-attachment: scroll;
+	background-image: var(--layer-hover);
+	background-size: auto auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+	color: var(--text-primary);
+	z-index: 2;
+}
+
+.mdtp__digit .minute:not(.minute_small) {
+    z-index: 3;
+}
+
+.mdtp__digit .minute.minute_small {
+    z-index: 2;
+    opacity: 0;
+    padding: 0px;
+}
+
+.mdtp__digit .minute_small:hover {
+	opacity: 1;
+  	width: 12px;
+	height: 12px;
+	line-height: 12px;
+	margin-left: 0px;
+	text-align: left;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color .28s, color .14s;
+}	
+
+.mdtp__digit.active > .minute_small {
+	opacity: 1;
+}
+	
+.mdtp__digit.active:before {
+	content: '';
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	right: 0;
+	height: 2px;
+	width: calc(100% - 29px);
+	background-color: var(--layer-accent);
+	z-index: -1;
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit { font-size: 12px; }
+.mdtp__clock .mdtp__minute_holder .mdtp__digit:not(.marker) {
+	margin-top: -6px;
+	height: 12px;
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit:not(.marker) span {
+	width: 12px;
+	height: 12px;
+	line-height: 14px;
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit .minute {
+	margin-left: 16px;	
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit:not(.marker).active:before { width: calc(100% - 26px); }
+
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit.marker { margin-top: -12px; }
+.mdtp__clock .mdtp__minute_holder .mdtp__digit.marker.active:before { width: calc(100% - 34px); }
+.mdtp__clock .mdtp__minute_holder .mdtp__digit.marker span {
+	width: 24px;
+	height: 24px;
+	line-height: 24px;
+	margin-left: 10px;	
+}
+
+.mdtp__digit.rotate-6 { transform: rotate(6deg); } .mdtp__digit.rotate-6 span { transform: rotate(-6deg); }
+.mdtp__digit.rotate-12 { transform: rotate(12deg); } .mdtp__digit.rotate-12 span { transform: rotate(-12deg); }
+.mdtp__digit.rotate-18 { transform: rotate(18deg); } .mdtp__digit.rotate-18 span { transform: rotate(-18deg); }
+.mdtp__digit.rotate-24 { transform: rotate(24deg); } .mdtp__digit.rotate-24 span { transform: rotate(-24deg); }
+.mdtp__digit.rotate-30 { transform: rotate(30deg); } .mdtp__digit.rotate-30 span { transform: rotate(-30deg); }
+.mdtp__digit.rotate-36 { transform: rotate(36deg); } .mdtp__digit.rotate-36 span { transform: rotate(-36deg); }
+.mdtp__digit.rotate-42 { transform: rotate(42deg); } .mdtp__digit.rotate-42 span { transform: rotate(-42deg); }
+.mdtp__digit.rotate-48 { transform: rotate(48deg); } .mdtp__digit.rotate-48 span { transform: rotate(-48deg); }
+.mdtp__digit.rotate-54 { transform: rotate(54deg); } .mdtp__digit.rotate-54 span { transform: rotate(-54deg); }
+.mdtp__digit.rotate-60 { transform: rotate(60deg); } .mdtp__digit.rotate-60 span { transform: rotate(-60deg); }
+.mdtp__digit.rotate-66 { transform: rotate(66deg); } .mdtp__digit.rotate-66 span { transform: rotate(-66deg); }
+.mdtp__digit.rotate-72 { transform: rotate(72deg); } .mdtp__digit.rotate-72 span { transform: rotate(-72deg); }
+.mdtp__digit.rotate-78 { transform: rotate(78deg); } .mdtp__digit.rotate-78 span { transform: rotate(-78deg); }
+.mdtp__digit.rotate-84 { transform: rotate(84deg); } .mdtp__digit.rotate-84 span { transform: rotate(-84deg); }
+.mdtp__digit.rotate-90 { transform: rotate(90deg); } .mdtp__digit.rotate-90 span { transform: rotate(-90deg); }
+.mdtp__digit.rotate-96 { transform: rotate(96deg); } .mdtp__digit.rotate-96 span { transform: rotate(-96deg); }
+.mdtp__digit.rotate-102 { transform: rotate(102deg); } .mdtp__digit.rotate-102 span { transform: rotate(-102deg); }
+.mdtp__digit.rotate-108 { transform: rotate(108deg); } .mdtp__digit.rotate-108 span { transform: rotate(-108deg); }
+.mdtp__digit.rotate-114 { transform: rotate(114deg); } .mdtp__digit.rotate-114 span { transform: rotate(-114deg); }
+.mdtp__digit.rotate-120 { transform: rotate(120deg); } .mdtp__digit.rotate-120 span { transform: rotate(-120deg); }
+.mdtp__digit.rotate-126 { transform: rotate(126deg); } .mdtp__digit.rotate-126 span { transform: rotate(-126deg); }
+.mdtp__digit.rotate-132 { transform: rotate(132deg); } .mdtp__digit.rotate-132 span { transform: rotate(-132deg); }
+.mdtp__digit.rotate-138 { transform: rotate(138deg); } .mdtp__digit.rotate-138 span { transform: rotate(-138deg); }
+.mdtp__digit.rotate-144 { transform: rotate(144deg); } .mdtp__digit.rotate-144 span { transform: rotate(-144deg); }
+.mdtp__digit.rotate-150 { transform: rotate(150deg); } .mdtp__digit.rotate-150 span { transform: rotate(-150deg); }
+.mdtp__digit.rotate-156 { transform: rotate(156deg); } .mdtp__digit.rotate-156 span { transform: rotate(-156deg); }
+.mdtp__digit.rotate-162 { transform: rotate(162deg); } .mdtp__digit.rotate-162 span { transform: rotate(-162deg); }
+.mdtp__digit.rotate-168 { transform: rotate(168deg); } .mdtp__digit.rotate-168 span { transform: rotate(-168deg); }
+.mdtp__digit.rotate-174 { transform: rotate(174deg); } .mdtp__digit.rotate-174 span { transform: rotate(-174deg); }
+.mdtp__digit.rotate-180 { transform: rotate(180deg); } .mdtp__digit.rotate-180 span { transform: rotate(-180deg); }
+.mdtp__digit.rotate-186 { transform: rotate(186deg); } .mdtp__digit.rotate-186 span { transform: rotate(-186deg); }
+.mdtp__digit.rotate-192 { transform: rotate(192deg); } .mdtp__digit.rotate-192 span { transform: rotate(-192deg); }
+.mdtp__digit.rotate-198 { transform: rotate(198deg); } .mdtp__digit.rotate-198 span { transform: rotate(-198deg); }
+.mdtp__digit.rotate-204 { transform: rotate(204deg); } .mdtp__digit.rotate-204 span { transform: rotate(-204deg); }
+.mdtp__digit.rotate-210 { transform: rotate(210deg); } .mdtp__digit.rotate-210 span { transform: rotate(-210deg); }
+.mdtp__digit.rotate-216 { transform: rotate(216deg); } .mdtp__digit.rotate-216 span { transform: rotate(-216deg); }
+.mdtp__digit.rotate-222 { transform: rotate(222deg); } .mdtp__digit.rotate-222 span { transform: rotate(-222deg); }
+.mdtp__digit.rotate-228 { transform: rotate(228deg); } .mdtp__digit.rotate-228 span { transform: rotate(-228deg); }
+.mdtp__digit.rotate-234 { transform: rotate(234deg); } .mdtp__digit.rotate-234 span { transform: rotate(-234deg); }
+.mdtp__digit.rotate-240 { transform: rotate(240deg); } .mdtp__digit.rotate-240 span { transform: rotate(-240deg); }
+.mdtp__digit.rotate-246 { transform: rotate(246deg); } .mdtp__digit.rotate-246 span { transform: rotate(-246deg); }
+.mdtp__digit.rotate-252 { transform: rotate(252deg); } .mdtp__digit.rotate-252 span { transform: rotate(-252deg); }
+.mdtp__digit.rotate-258 { transform: rotate(258deg); } .mdtp__digit.rotate-258 span { transform: rotate(-258deg); }
+.mdtp__digit.rotate-264 { transform: rotate(264deg); } .mdtp__digit.rotate-264 span { transform: rotate(-264deg); }
+.mdtp__digit.rotate-270 { transform: rotate(270deg); } .mdtp__digit.rotate-270 span { transform: rotate(-270deg); }
+.mdtp__digit.rotate-276 { transform: rotate(276deg); } .mdtp__digit.rotate-276 span { transform: rotate(-276deg); }
+.mdtp__digit.rotate-282 { transform: rotate(282deg); } .mdtp__digit.rotate-282 span { transform: rotate(-282deg); }
+.mdtp__digit.rotate-288 { transform: rotate(288deg); } .mdtp__digit.rotate-288 span { transform: rotate(-288deg); }
+.mdtp__digit.rotate-294 { transform: rotate(294deg); } .mdtp__digit.rotate-294 span { transform: rotate(-294deg); }
+.mdtp__digit.rotate-300 { transform: rotate(300deg); } .mdtp__digit.rotate-300 span { transform: rotate(-300deg); }
+.mdtp__digit.rotate-306 { transform: rotate(306deg); } .mdtp__digit.rotate-306 span { transform: rotate(-306deg); }
+.mdtp__digit.rotate-312 { transform: rotate(312deg); } .mdtp__digit.rotate-312 span { transform: rotate(-312deg); }
+.mdtp__digit.rotate-318 { transform: rotate(318deg); } .mdtp__digit.rotate-318 span { transform: rotate(-318deg); }
+.mdtp__digit.rotate-324 { transform: rotate(324deg); } .mdtp__digit.rotate-324 span { transform: rotate(-324deg); }
+.mdtp__digit.rotate-330 { transform: rotate(330deg); } .mdtp__digit.rotate-330 span { transform: rotate(-330deg); }
+.mdtp__digit.rotate-336 { transform: rotate(336deg); } .mdtp__digit.rotate-336 span { transform: rotate(-336deg); }
+.mdtp__digit.rotate-342 { transform: rotate(342deg); } .mdtp__digit.rotate-342 span { transform: rotate(-342deg); }
+.mdtp__digit.rotate-348 { transform: rotate(348deg); } .mdtp__digit.rotate-348 span { transform: rotate(-348deg); }
+.mdtp__digit.rotate-354 { transform: rotate(354deg); } .mdtp__digit.rotate-354 span { transform: rotate(-354deg); }
+.mdtp__digit.rotate-360 { transform: rotate(360deg); } .mdtp__digit.rotate-360 span { transform: rotate(-360deg); }
+

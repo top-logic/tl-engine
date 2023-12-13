@@ -171,7 +171,7 @@ services.AJAXServiceClass = function() {
 			    services.i18n.NETWORK_ERROR_RECONNECT_FAILED + 
 			    '</div>' + 
 			    '<div class="sxButtons">' + 
-			      '<span class="sxButton">' +
+			      '<span class="tlButton tlDangerButtonPrimary sxButton">' +
 			      services.i18n.NETWORK_ERROR_RETRY + 
 			      '</span>' + 
 			    '</div>' + 
@@ -194,7 +194,7 @@ services.AJAXServiceClass = function() {
 						services.i18n.SETTION_TIMEOUT_FAILURE + 
 					'</div>' + 
 					'<div class="sxButtons">' + 
-						'<span class="sxButton">' +
+						'<span class="tlButton tlDangerButtonPrimary sxButton">' +
 							services.i18n.SETTION_TIMEOUT_LOGIN + 
 						'</span>' + 
 					'</div>' + 

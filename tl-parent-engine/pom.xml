@@ -108,6 +108,7 @@
 		<module>../com.top_logic.template</module>
 		<module>../com.top_logic.themes.dezent</module>
 		<module>../com.top_logic.themes.modern</module>
+		<module>../com.top_logic.themes.core</module>
 		<module>../com.top_logic.umljs</module>
 		<module>../com.top_logic.xio</module>
 		<module>../com.top_logic.xref</module>
@@ -129,6 +130,7 @@
 		<module>../ext.com.ckeditor</module>
 		<module>../ext.com.fontawesome</module>
 		<module>../ext.com.google.fonts</module>
+		<module>../ext.com.inter.fonts</module>
 		<module>../ext.com.meterware.httpunit</module>
 		<module>../ext.io.bpmn.bpmn-js</module>
 		<module>../ext.io.c9.ace</module>

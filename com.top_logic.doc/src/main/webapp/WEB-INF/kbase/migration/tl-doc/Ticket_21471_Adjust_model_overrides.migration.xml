@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<version name="Ticket_21471_Adjust_model_overrides"
-		module="tl-search-lucene"
+		module="tl-doc"
 	/>
 	<dependencies>
 		<dependency name="Ticket_27205_KeyAttributes_for_Association"
@@ -53,7 +53,7 @@
 		<delete-class name="tl.doc:Page$parent"/>
 	
 		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
-			transform="/WEB-INF/kbase/migration/tl-search-lucene/Ticket_21471_Adjust_model_overrides.model.transform.xslt"
+			transform="/WEB-INF/kbase/migration/tl-doc/Ticket_21471_Adjust_model_overrides.model.transform.xslt"
 		/>
 	</processors>
 	<migration>

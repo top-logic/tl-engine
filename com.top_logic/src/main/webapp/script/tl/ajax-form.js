@@ -3434,7 +3434,8 @@ services.form = {
 			let search = ddBox.querySelector(":scope > ." + this.searchCl),
 				ddList = ddBox.querySelector(":scope > ." + this.listCl),
 				incrWidth = window.getComputedStyle(ddBox).getPropertyValue("width");
-				
+			
+			ddBox.style.removeProperty("right");
 			ddBox.style.setProperty("left", btnPos.left + "px");
 			ddBox.style.setProperty("min-width", btnPos.width + "px");
 			ddBox.style.setProperty("max-height", ddMaxHeight + "px");
@@ -3443,8 +3444,14 @@ services.form = {
 			if (btnPos.width < (parseFloat(incrWidth) + scrollbarW)) {
 				incrWidth = parseFloat(incrWidth) + scrollbarW + "px";
 				ddList.style.setProperty("width", incrWidth);
+				if (parseFloat(incrWidth) > (window.innerWidth - btnPos.left)) {
+					ddBox.style.removeProperty("left");
+					ddBox.style.setProperty("right", (window.innerWidth - btnPos.right) + "px");
+				}
 			}
-			search.style.setProperty("width", incrWidth);
+			
+			let searchW = ddList.getBoundingClientRect().width + "px";
+			search.style.setProperty("width", searchW);
 			search.focus();
 		},
 

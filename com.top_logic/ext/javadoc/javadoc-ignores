@@ -331,21 +331,6 @@ com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com
 com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com.top_logic.base.dsa.ldap.ServiceProviderInfo.createFromConfig
 com.top_logic.base.locking.handler.LockHandler.java: Invalid camel case word 'TokenContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.locking.service.ConfiguredLockService.java: Missing documentation: com.top_logic.base.locking.service.ConfiguredLockService.Config.TypeConfig.StrategyContainerConfig
-com.top_logic.base.mail.FileItemDataSource.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.FileItemDataSource.java: Invalid camel case word 'FileItem', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.FileItemDataSource.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.FileItemDataSource.java: Invalid camel case word 'MultiPart', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.FileItemDataSource.java: Invalid camel case word 'MultiPartDataSource', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.Mail.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.Mail.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.MailHelper.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.base.mail.MailHelper.SendMailResult
-com.top_logic.base.mail.MailHelper.java: Invalid camel case word 'MailHelper', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.MailHelper.java: Invalid camel case word 'SendMailResult', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.MailHelper.java: Missing documentation: com.top_logic.base.mail.MailHelper.extractEmailAddress
-com.top_logic.base.mail.NoSessionFoundException.java: Invalid camel case word 'NoSessionFoundException', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.UserMailBatch.java: Invalid camel case word 'UserInterface', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.UserMailBatch.java: Invalid camel case word 'UserInterfaces', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.mail.UserMailBatch.java: Invalid camel case word 'userList', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.merge.CommitTask.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.merge.DeleteWrapperTask.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.merge.DeleteWrapperTask.java: Invalid camel case word 'deleteKnowledgeObject', this may only be used within JavaDoc links or HTML code tags.

@@ -175,12 +175,12 @@ div.folderView .breadcrumb .treeNode img {
     color: var(--FOLDERVIEW_COLOR);
 }
 
-div.folderView .breadcrumb .hover .selectableNode,
-div.folderView .breadcrumb .hover a,
-div.folderView .breadcrumb .hover img,
-div.folderView .breadcrumb .hover a.selectableNode,
-div.folderView .breadcrumb .hover span.selectableNode,
-div.folderView .breadcrumb .hover span.menu {
+div.folderView .breadcrumb .treeNode:hover .selectableNode,
+div.folderView .breadcrumb .treeNode:hover a,
+div.folderView .breadcrumb .treeNode:hover img,
+div.folderView .breadcrumb .treeNode:hover a.selectableNode,
+div.folderView .breadcrumb .treeNode:hover span.selectableNode,
+div.folderView .breadcrumb .treeNode:hover span.menu {
 	background-color: transparent;
 }
 

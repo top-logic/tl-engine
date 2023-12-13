@@ -237,7 +237,7 @@ select {
 	font-size: var(--FONT_SIZE_BREADCRUMB);
 }
 
-.breadcrumb .hover .selectableNode {
+.breadcrumb .treeNode:hover .selectableNode {
 	background: transparent;
 	padding-top: 1px;
 	padding-bottom: 1px;

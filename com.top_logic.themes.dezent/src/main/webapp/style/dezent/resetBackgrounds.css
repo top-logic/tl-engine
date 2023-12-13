@@ -17,7 +17,7 @@
 .fChoose.input-image:hover,
 .fChoose.input-image.disabled
 .breadcrumb .selectableNode,
-.breadcrumb .hover .selectableNode,
+.breadcrumb .treeNode:hover .selectableNode,
 .fChoose.input-image.disabled,
 .Footer,
 .Footer .FooterStatus,

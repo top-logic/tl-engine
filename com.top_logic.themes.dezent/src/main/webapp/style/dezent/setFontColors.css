@@ -3,7 +3,7 @@
 .mainTabBar .activeTab,
 .adjustableColumn,
 .sidebarFilterEntry,
-.breadcrumb .hover .selectableNode,
+.breadcrumb .treeNode:hover .selectableNode,
 
 div.fltContainer td.fhrMiddle,
 div.tblMandatory .tl-table__title,

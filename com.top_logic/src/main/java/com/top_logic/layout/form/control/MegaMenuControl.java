@@ -17,6 +17,7 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ControlCommand;
@@ -57,11 +58,11 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 
 	private static final String MEGAMENU_BUTTONCONTROL = "services.form.MegaMenuButtonControl";
 
-	private PopupDialogControl megaMenu;
+	private PopupDialogControl _megaMenuPopupDialogControl;
 
-	private ThemeImage noOptionIcon = com.top_logic.layout.table.renderer.Icons.SORT_DESC_SMALL;
+	private ThemeImage _noOptionIcon = com.top_logic.layout.table.renderer.Icons.SORT_DESC_SMALL;
 
-	private ThemeImage defaultIcon = com.top_logic.layout.tabbar.Icons.TAB_RIGHT_SCROLL_BUTTON;
+	private ThemeImage _defaultIcon = com.top_logic.layout.tabbar.Icons.TAB_RIGHT_SCROLL_BUTTON;
 
 	/**
 	 * @param model
@@ -121,6 +122,49 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 	}
 
 	/**
+	 * Creates the pop up dialog for a mega menu.
+	 *
+	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
+	 */
+	public static class MegaMenuPopupDialogHelper {
+
+		/**
+		 * Creates the dialog and layout for the pop up window.
+		 * 
+		 * @param context
+		 *        from {@link #openPopUp}.
+		 * @param frameScope
+		 *        the control's {@link FrameScope}.
+		 * @param id
+		 *        the control's id.
+		 * @return {@link PopupDialogControl}.
+		 */
+		public static PopupDialogControl createPopupDialog(DisplayContext context, int optionElementCount,
+				FrameScope frameScope, String id) {
+			boolean isGridNeeded = optionElementCount > 4;
+			int width;
+			String CssClass;
+			if (isGridNeeded) {
+				width = 600;
+				CssClass = "megaMenuGridContainer";
+			} else {
+				width = 300;
+				CssClass = "megaMenuFlexContainer";
+			}
+			int borderWidth = Icons.MEGA_MENU_BORDER_WIDTH.get();
+
+			DefaultLayoutData popupLayout =
+				new DefaultLayoutData(DisplayDimension.dim(width, DisplayUnit.PIXEL), 100, DisplayDimension.dim(0,
+					DisplayUnit.PIXEL), 100, Scrolling.AUTO);
+			DefaultPopupDialogModel defaultPopupModel =
+				new DefaultPopupDialogModel(null, popupLayout, borderWidth, CssClass);
+
+			PopupDialogControl popupDialogControl = new PopupDialogControl(frameScope, defaultPopupModel, id);
+			return popupDialogControl;
+		}
+	}
+
+	/**
 	 * Opens a pop up window.
 	 * 
 	 * @param context
@@ -134,24 +178,15 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		int nbrOfOptionElements = megaMenuSelectField.getOptionCount();
 		boolean isGridNeeded = nbrOfOptionElements > 4;
 		boolean hasListIcons = doesListHaveIcons(megaMenuSelectField, options, nbrOfOptionElements);
+		_megaMenuPopupDialogControl =
+			MegaMenuPopupDialogHelper.createPopupDialog(context, nbrOfOptionElements, getFrameScope(), getID());
 
-		if (isGridNeeded) {
-			megaMenu = createMegaMenuPopUpDialogWindow(context, 600, Scrolling.AUTO);
-		} else {
-			megaMenu = createMegaMenuPopUpDialogWindow(context, 300, Scrolling.AUTO);
-		}
-
-		megaMenu.setContent(new HTMLFragment() {
+		_megaMenuPopupDialogControl.setContent(new HTMLFragment() {
 			@Override
 			public void write(DisplayContext context1, TagWriter out) throws IOException {
 				LabelProvider optionLabelProvider = megaMenuSelectField.getOptionLabelProvider();
 				ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
 				out.beginBeginTag(HTMLConstants.DIV);
-				if (isGridNeeded) {
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuGridContainer");
-				} else {
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuFlexContainer");
-				}
 				out.endBeginTag();
 
 				// User should not be able to choose the no option option if field is mandatory
@@ -232,11 +267,11 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 				if (hasListIcons) {
 					XMLTag icon;
 					if (noOptionIsCallingThisMethod) {
-						icon = noOptionIcon.toIcon();
+						icon = _noOptionIcon.toIcon();
 					} else if (image != null) {
 						icon = image.toIcon();
 					} else {
-						icon = defaultIcon.toIcon();
+						icon = _defaultIcon.toIcon();
 					}
 					out.beginBeginTag(HTMLConstants.DIV);
 					out.writeAttribute(HTMLConstants.CLASS_ATTR, "itemContainer");
@@ -286,7 +321,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 			}
 
 		});
-		getWindowScope().openPopupDialog(megaMenu);
+		getWindowScope().openPopupDialog(_megaMenuPopupDialogControl);
 	}
 
 	private boolean doesListHaveIcons(SelectField megaMenuSelectField, List<?> options, int nbrOfOptionElements) {
@@ -304,29 +339,6 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Creates the dialog and layout for the pop up window.
-	 * 
-	 * @param context
-	 *        from {@link #openPopUp}.
-	 * @param aWidth
-	 *        value for {@link DefaultLayoutData#getWidth()}.
-	 * @param aScrollable
-	 *        value of {@link DefaultLayoutData#getScrollable()}.
-	 * @return {@link PopupDialogControl}.
-	 */
-	public PopupDialogControl createMegaMenuPopUpDialogWindow(DisplayContext context, int aWidth,
-			Scrolling aScrollable) {
-		int borderWidth = Icons.MEGA_MENU_BORDER_WIDTH.get();
-		DefaultLayoutData popupLayout =
-			new DefaultLayoutData(DisplayDimension.dim(aWidth, DisplayUnit.PIXEL), 100, DisplayDimension.dim(0,
-				DisplayUnit.PIXEL), 100, aScrollable);
-		DefaultPopupDialogModel defaultPopupModel = new DefaultPopupDialogModel(null, popupLayout, borderWidth);
-
-		PopupDialogControl popupDialogControl = new PopupDialogControl(getFrameScope(), defaultPopupModel, getID());
-		return popupDialogControl;
 	}
 
 	private void writeOnClick(TagWriter out, String methodName) throws IOException {
@@ -468,7 +480,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 	}
 
 	/**
-	 * Class for closing the pop up window and update values.
+	 * Class for closing the pop up window and updating values.
 	 * 
 	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
 	 *
@@ -491,9 +503,10 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 				Object newValue, Map<String, Object> arguments) {
 			super.updateValue(commandContext, formFieldControl, newValue, arguments);
 			MegaMenuControl megaMenuControlField = (MegaMenuControl) formFieldControl;
-			megaMenuControlField.megaMenu.getModel().getCloseAction().executeCommand(commandContext);
+			megaMenuControlField._megaMenuPopupDialogControl.getModel().getCloseAction().executeCommand(commandContext);
 		}
 	}
+
 
 	/**
 	 * Class used as a link between the jsp file of the page where the mega menu is to be displayed

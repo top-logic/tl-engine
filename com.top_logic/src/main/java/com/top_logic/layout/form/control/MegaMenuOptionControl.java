@@ -17,12 +17,12 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.AbstractConstantControl;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.tooltip.HtmlToolTip;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -69,50 +69,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		List<?> selection = SelectFieldUtils.getSelectionList(_megaMenu);
-
-		out.beginBeginTag(HTMLConstants.ANCHOR);
-		out.writeAttribute(HTMLConstants.HREF_ATTR, HTMLConstants.HREF_EMPTY_LINK);
-
-		writeOnClick(out);
-
-		if (selection.contains(_option)) {
-			out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuItem megaMenuItemSelected");
-		} else {
-			out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuItem");
-		}
-
-		out.writeAttribute(HTMLConstants.DATA_ATTRIBUTE_PREFIX + "value",
-			_megaMenu.getOptionID(_option));
-		out.writeAttribute(HTMLConstants.ONCONTEXTMENU_ATTR, "return false;");
-		out.endBeginTag();
-
-		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
-		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
-		ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
-		String tooltip = optionResourceProvider.getTooltip(currOption);
-		String optionLabel = optionLabelProvider.getLabel(currOption);
-
-		out.beginBeginTag(HTMLConstants.SPAN);
-		out.writeAttribute(HTMLConstants.CLASS_ATTR, "strong");
-		out.endBeginTag();
-		out.writeText(optionLabel);
-		out.endTag(HTMLConstants.SPAN);
-		out.emptyTag(HTMLConstants.BR);
-		out.beginTag(HTMLConstants.SPAN);
-
-		// Using something else and not writeContent() would lead to tooltip
-		// being displayed together with HTML tags written as text,
-		// f.e: "Test <strong>tooltip</strong>"
-		if (tooltip != null) {
-			String saveTooltip = HtmlToolTip.ensureSafeHTMLTooltip(tooltip);
-			out.writeContent(saveTooltip);
-		}
-		out.endTag(HTMLConstants.SPAN);
-		out.emptyTag(HTMLConstants.BR);
-
-		out.endTag(HTMLConstants.ANCHOR);
-
+		Icons.MEGA_MENU_OPTION_TEMPLATE.get().write(context, out, this);
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider optionLabelProvider) {
@@ -125,11 +82,49 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 		return optionResourceProvider;
 	}
 
-	private void writeOnClick(TagWriter out) throws IOException {
-		out.beginAttribute(HTMLConstants.ONCLICK_ATTR);
+	/** CSS class for the option. */
+	@TemplateVariable("isSelected")
+	public boolean writeTabbarContainerClass() {
+		List<?> selection = SelectFieldUtils.getSelectionList(_megaMenu);
+		return selection.contains(_option);
+	}
+
+	/** Selects the option. */
+	@TemplateVariable("onclick")
+	public void writeOnClick(TagWriter out) throws IOException {
 		out.append("return ");
 		ValueChange.INSTANCE.writeInvokeExpression(out, this);
-		out.endAttribute();
+	}
+
+	/** Selects the option. */
+	@TemplateVariable("dataValue")
+	public void writeDataValue(TagWriter out) throws IOException {
+		out.append(_megaMenu.getOptionID(_option));
+	}
+
+	/** Name of the option. */
+	@TemplateVariable("label")
+	public void writeLabel(TagWriter out) throws IOException {
+		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
+		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
+		String optionLabel = optionLabelProvider.getLabel(currOption);
+		out.append(optionLabel);
+	}
+
+	/** Tooltip of the option. */
+	@TemplateVariable("tooltip")
+	public void writeTooltip(TagWriter out) throws IOException {
+		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
+		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
+		ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
+		String tooltip = optionResourceProvider.getTooltip(currOption);
+		// Using something else and not writeContent() would lead to tooltip
+		// being displayed together with HTML tags written as text,
+		// f.e: "Test <strong>tooltip</strong>"
+		if (tooltip != null) {
+			String saveTooltip = HtmlToolTip.ensureSafeHTMLTooltip(tooltip);
+			out.writeContent(saveTooltip);
+		}
 	}
 
 	/**

@@ -241,6 +241,9 @@
 					<generator 
 						name="authenticationDevices" 
 						impl="com.top_logic.element.meta.kbbased.filtergen.AuthenticationDeviceGenerator" />
+					<generator 
+						name="supportedLocales" 
+						impl="com.top_logic.element.meta.kbbased.filtergen.SupportedLocalesGenerator" />
 				</generators>				
 			</instance>
 		</config>

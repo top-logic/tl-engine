@@ -173,6 +173,11 @@
 								fullQualifiedName="tl.accounts:Person#country"
 								type="tl.util:Country"
 							/>
+							<field
+								attribute="language"
+								fullQualifiedName="tl.accounts:Person#language"
+								type="tl.util:Country"
+							/>
 						</layout>
 					</foreign-objects>
 					<other-attributes/>

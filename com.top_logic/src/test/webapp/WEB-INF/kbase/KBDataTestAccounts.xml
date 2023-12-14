@@ -5,6 +5,7 @@
 	<ko_attribute att_name="name" att_value="guest_en"/>
 	<ko_attribute att_name="locale" att_value="en_EN_dynamic"/>
 	<ko_attribute att_name="country" att_value="EN"/>
+	<ko_attribute att_name="language" att_value="en"/>
 	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
 	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
 </knowledgeobject>
@@ -23,6 +24,7 @@
 	<ko_attribute att_name="name" att_value="dau"/>
 	<ko_attribute att_name="locale" att_value="de_DE_dynamic"/>
 	<ko_attribute att_name="country" att_value="DE"/>
+	<ko_attribute att_name="language" att_value="de"/>
 	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
 	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
 </knowledgeobject>
@@ -41,6 +43,7 @@
 	<ko_attribute att_name="name" att_value="dummy"/>
 	<ko_attribute att_name="locale" att_value="en_EN_dynamic"/>
 	<ko_attribute att_name="country" att_value="EN"/>
+	<ko_attribute att_name="language" att_value="en"/>
 	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
 	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
 </knowledgeobject>
@@ -59,6 +62,7 @@
 	<ko_attribute att_name="name" att_value="guest_de"/>
 	<ko_attribute att_name="locale" att_value="de_DE_dynamic"/>
 	<ko_attribute att_name="country" att_value="DE"/>
+	<ko_attribute att_name="language" att_value="de"/>
 	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
 </knowledgeobject>
 

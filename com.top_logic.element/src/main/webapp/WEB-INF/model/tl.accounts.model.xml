@@ -200,6 +200,19 @@
 						<delete-protected/>
 					</annotations>
 				</property>
+				<property name="language"
+					type="tl.util:Language"
+				>
+					<annotations>
+						<delete-protected/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.DefaultLocaleDefault"/>
+						</default-value>
+						<options>
+							<config-reference name="supportedLocales"/>
+						</options>
+					</annotations>
+				</property>
 				<property name="country"
 					type="tl.util:Country"
 				>

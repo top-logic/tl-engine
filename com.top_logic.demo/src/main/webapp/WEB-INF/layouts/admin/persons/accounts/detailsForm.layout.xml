@@ -135,6 +135,12 @@
 								visibility="editable"
 							/>
 							<field
+								attribute="language"
+								fullQualifiedName="tl.accounts:Person#language"
+								type="tl.util:Country"
+								visibility="editable"
+							/>
+							<field
 								attribute="groups"
 								fullQualifiedName="tl.accounts:Person#groups"
 								type="tl.accounts:Group"

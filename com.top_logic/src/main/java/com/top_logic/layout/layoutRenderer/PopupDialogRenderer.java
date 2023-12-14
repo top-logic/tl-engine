@@ -52,6 +52,7 @@ public class PopupDialogRenderer extends DefaultControlRenderer<PopupDialogContr
 	public void appendControlCSSClasses(Appendable out, PopupDialogControl control) throws IOException {
 		super.appendControlCSSClasses(out, control);
 		HTMLUtil.appendCSSClass(out, "pdlgWindow");
+		HTMLUtil.appendCSSClass(out, control.getModel().getCssClass());
 	}
 
 	@Override

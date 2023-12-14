@@ -1055,6 +1055,127 @@ button.moveOption {
 	width: 100%;
 }
 
+/* ====================================== */
+/* ======    Styles for mega menu   ===== */
+/* ====================================== */
+
+.megaMenuButton {
+	font-family: 'Inter-Regular';
+	font-size: .875rem;
+	font-weight: 400;
+	color: var(--button-secondary);
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	display: inline-flex;
+	gap: var(--spacing-02);
+	justify-content: center;
+	align-items: center;
+	height: 2.3rem; /* 36.8px height */
+	padding: var(--spacing-02) var(--spacing-03);
+	border-radius: .25rem;
+	border: none;
+	padding: var(--spacing-03) var(--spacing-02);
+	/* creates the arrow */
+	margin: 0;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	background-image: linear-gradient(45deg, transparent 49%, var(--icon-interactive) 50%), linear-gradient(135deg, var(--icon-interactive) 49%, transparent 50%);
+	background-position: calc(100% - 10px) center, calc(100% - 5px) center;
+	background-size: 5px 5px, 5px 5px;
+	background-repeat: no-repeat;
+}
+
+.megaMenuGridContainer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.megaMenuFlexContainer {
+	display: flex;
+	flex-direction: column;
+}
+
+.megaMenuGridContainer, .megaMenuFlexContainer {
+	overflow: auto;
+    position: relative;
+    max-height: 90vh;
+}
+
+.tl-megaMenu__option {
+	cursor: pointer;
+	padding: 5px;
+	line-break: anywhere;
+}
+
+.tl-megaMenu__option a {
+    width: 100%;
+    height: 100%;
+    float: left;
+    text-decoration: none;
+}
+
+.tl-megaMenu__option a:hover {
+    color: var(--NORMAL_TEXT);
+}
+
+.tl-megaMenu__option:hover {
+    color: var(--NORMAL_TEXT);
+    background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
+}
+
+.tl-megaMenu__option--selected {
+    color: var(--NORMAL_TEXT);
+    background-color: var(--CALENDAR_SELECTED_BACKGROUND_COLOR);
+}
+
+.tl-megaMenu__option--selected a:hover {
+    color: var(--NORMAL_TEXT);
+}
+
+.megaMenuImmutableLabel {
+	font-weight: normal;
+}
+
+.megaMenuFixedItem {
+	cursor: default;
+	padding: 5px;	
+}
+
+.megaMenuFlexContainer .megaMenuFixedItem,
+.megaMenuGridContainer .megaMenuFixedItem {
+	color: graytext;
+}
+
+.itemContainer {
+	display: flex;
+	justify-content: flex-start;
+}
+
+.megaMenuIconContainer {
+	align-self: flex-start;
+	flex-shrink: 0;	
+	display: flex;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0 10px 0 10px;
+}
+
+.megaMenuIcon {
+	font-size: 21px;
+}
+
+.megaMenuFixedItem .itemContainer .megaMenuIconContainer .megaMenuIcon,
+.megaMenuFixedItem .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
+	color: graytext;
+}
+
+.tl-megaMenu__option .itemContainer .megaMenuIconContainer .megaMenuIcon,
+.tl-megaMenu__option .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
+	color: #000;
+}
+
 /*
 ****							****
 ****	Message Boxes Styles	****

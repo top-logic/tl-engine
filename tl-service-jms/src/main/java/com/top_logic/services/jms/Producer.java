@@ -36,7 +36,7 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 
 	private JMSContext _context;
 
-	private String _name;
+	private final String _name;
 
 	private String _charsetProperty;
 
@@ -142,6 +142,7 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 
 		try {
 			data.deliverTo(out);
+			out.close();
 		} catch (IOException ex) {
 			throw new IOError(ex);
 		}

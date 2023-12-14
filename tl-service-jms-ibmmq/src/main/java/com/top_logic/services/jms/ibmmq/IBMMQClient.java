@@ -31,14 +31,16 @@ public class IBMMQClient extends JMSClient {
 	/**
 	 * Configuration options for {@link IBMMQClient}.
 	 */
-	@DisplayOrder({ Config.HOST,
+	@DisplayOrder({
+		Config.HOST,
 		Config.PORT,
 		Config.USER,
 		Config.PASSWORD,
 		Config.CHANNEL,
 		Config.QUEUE_MANAGER,
 		Config.PRODUCER_CONFIGS,
-		Config.CONSUMER_CONFIGS })
+		Config.CONSUMER_CONFIGS
+	})
 	public interface Config<I extends IBMMQClient> extends JMSClient.Config<I> {
 
 		/**

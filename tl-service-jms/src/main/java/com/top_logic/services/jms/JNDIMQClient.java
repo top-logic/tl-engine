@@ -26,9 +26,11 @@ public class JNDIMQClient extends JMSClient {
 	/**
 	 * Configuration options for {@link JNDIMQClient}.
 	 */
-	@DisplayOrder({ Config.CONNECTION_FACTORY,
+	@DisplayOrder({
+		Config.CONNECTION_FACTORY,
 		Config.PRODUCER_CONFIGS,
-		Config.CONSUMER_CONFIGS })
+		Config.CONSUMER_CONFIGS
+	})
 	public interface Config<I extends JNDIMQClient> extends JMSClient.Config<I> {
 		/**
 		 * Configuration name for {@link #getConnectionFactory()}.
@@ -81,7 +83,6 @@ public class JNDIMQClient extends JMSClient {
 	public ConnectionFactory setupConnectionFactory() throws NamingException {
 		Config<?> config = (Config<?>) getConfig();
 		InitialContext jndi = new InitialContext();
-		ConnectionFactory cf = (ConnectionFactory) jndi.lookup(config.getConnectionFactory());
-		return cf;
+		return (ConnectionFactory) jndi.lookup(config.getConnectionFactory());
 	}
 }

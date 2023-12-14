@@ -141,13 +141,7 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 					consThread.start();
 					_consumers.put(cconfig.getName(), new Pair<>(cons, consThread));
 				}
-			} catch (JMSException ex) {
-				InfoService.logError(I18NConstants.ERROR_ESTABLISH_CONNECTION__NAME.fill(config.getName()),
-					ex.getMessage(), ex, JMSService.class);
-			} catch (NamingException ex) {
-				InfoService.logError(I18NConstants.ERROR_ESTABLISH_CONNECTION__NAME.fill(config.getName()),
-					ex.getMessage(), ex, JMSService.class);
-			} catch (RuntimeException ex) {
+			} catch (JMSException | NamingException | RuntimeException ex) {
 				InfoService.logError(I18NConstants.ERROR_ESTABLISH_CONNECTION__NAME.fill(config.getName()),
 					ex.getMessage(), ex, JMSService.class);
 			}
@@ -156,7 +150,6 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
 	@Override
 	protected void shutDown() {
-		_producers.clear();
 		_producers = null;
 		for (Pair<Consumer, Thread> pair : _consumers.values()) {
 			Consumer cons = pair.getFirst();
@@ -165,7 +158,6 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 			Logger.info("Interrupted consumer thread " + thread.getName() + ".", JMSService.class);
 			cons.close();
 		}
-		_consumers.clear();
 		_consumers = null;
 		super.shutDown();
 	}

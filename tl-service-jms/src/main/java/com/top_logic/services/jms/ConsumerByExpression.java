@@ -96,17 +96,13 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 	}
 
 	private void internalProcess(Message message) throws JMSException {
-		Map<String, Object> properties = new HashMap<>();
-		Enumeration<String> propertyNames = message.getPropertyNames();
-		while (propertyNames.hasMoreElements()) {
-			String key = propertyNames.nextElement();
-			properties.put(key, message.getObjectProperty(key));
-		}
+		Map<String, Object> properties = getProperties(message);
 
 		if (message instanceof TextMessage) {
 			String msg = message.getBody(String.class);
 			properties.put("message-type", "String");
 			_processing.execute(msg, properties);
+			
 		} else if (message instanceof BytesMessage) {
 			String contentType = (String) properties.get("ContentType");
 			String fileName = (String) properties.get("FileName");
@@ -114,6 +110,7 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 				BinaryDataFactory.createBinaryData(message.getBody(byte[].class), contentType, fileName);
 			properties.put("message-type", "Binary");
 			_processing.execute(msg, properties);
+			
 		} else if (message instanceof MapMessage) {
 			MapMessage mMessage = (MapMessage) message;
 			Map<String, Object> msg = new HashMap<>();
@@ -125,5 +122,15 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 			properties.put("message-type", "Map");
 			_processing.execute(msg, properties);
 		}
+	}
+
+	private Map<String, Object> getProperties(Message message) throws JMSException {
+		Map<String, Object> properties = new HashMap<>();
+		Enumeration<String> propertyNames = message.getPropertyNames();
+		while (propertyNames.hasMoreElements()) {
+			String key = propertyNames.nextElement();
+			properties.put(key, message.getObjectProperty(key));
+		}
+		return properties;
 	}
 }

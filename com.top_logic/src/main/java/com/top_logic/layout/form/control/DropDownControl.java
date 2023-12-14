@@ -22,11 +22,13 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
@@ -105,6 +107,10 @@ public class DropDownControl extends AbstractSelectControl {
 		_preventClear = preventClear;
 	}
 
+	private String getButtonContentID() {
+		return getID() + "-ButtonContent";
+	}
+
 	private String getItemIdPrefix() {
 		return getID() + "-Item";
 	}
@@ -123,17 +129,6 @@ public class DropDownControl extends AbstractSelectControl {
 			return SelectFieldUtils.getOptionLabel(dropdown, item);
 		}
 		return "";
-	}
-
-	private String getSelectionLabel(FormField dropdown) {
-		List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
-		if (selection.size() <= 0) {
-			return SelectFieldUtils.getEmptySelectionLabel(dropdown);
-		}
-		if (isMultiple()) {
-			return SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
-		}
-		return getItemLabel(dropdown, selection.get(0));
 	}
 
 	private String getTagLocID() {
@@ -172,14 +167,14 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTags(context, out);
 			}
 			
-			renderDropDownButton(out, dropdown);
+			renderDropDownButton(context, out, dropdown);
 
 			renderDropDownBox(context, out, dropdown);
 		}
 		out.endTag(SPAN);
 	}
 
-	private void renderDropDownButton(TagWriter out, FormField dropdown) throws IOException {
+	private void renderDropDownButton(DisplayContext context, TagWriter out, FormField dropdown) throws IOException {
 		out.beginBeginTag(BUTTON);
 		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn ddwttChevron");
 		if (dropdown.isDisabled()) {
@@ -190,11 +185,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.writeAttribute(ID, getInputId());
 		out.endBeginTag();
 		{
-			out.beginTag(SPAN);
-			{
-				out.write(getSelectionLabel(dropdown));
-			}
-			out.endTag(SPAN);
+			renderButtonContent(context, out);
 		}
 		out.endTag(BUTTON);
 	}
@@ -206,6 +197,30 @@ public class DropDownControl extends AbstractSelectControl {
 		out.beginAttribute(ONKEYDOWN_ATTR);
 		addJSFunction(out, "keyPressed", "event, " + isMultiple());
 		out.endAttribute();
+	}
+
+	private void renderButtonContent(DisplayContext context, TagWriter out) throws IOException {
+		FormField dropdown = getFieldModel();
+
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(ID, getButtonContentID());
+		out.endBeginTag();
+		{
+			String label;
+			List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
+			if (isMultiple()) {
+				label = SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
+			} else {
+				if (selection.size() > 0) {
+					label = getItemLabel(dropdown, selection.get(0));
+					renderItemIcon(context, out, dropdown, selection.get(0), Flavor.DEFAULT);
+				} else {
+					label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
+				}
+			}
+			out.write(label);
+		}
+		out.endTag(SPAN);
 	}
 
 	private void renderSearch(TagWriter out) throws IOException {
@@ -269,7 +284,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private boolean isInfiniteTree(OptionModel<?> _optionModel) {
 		if (_optionModel instanceof TreeOptionModel) {
-			return !((TreeOptionModel) _optionModel).getBaseModel().isFinite();
+			return !((TreeOptionModel<?>) _optionModel).getBaseModel().isFinite();
 		}
 		return false;
 	}
@@ -290,6 +305,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.writeAttribute(TABINDEX_ATTR, "-1");
 		out.endBeginTag();
 		{
+			renderItemIcon(context, out, dropdown, item, Flavor.DEFAULT);
 			renderItemLabel(out, dropdown, item);
 		}
 		out.endTag(SPAN);
@@ -297,7 +313,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addItemEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "setItemActive", "this, true");
+		addJSFunction(out, "setItemActive", "this, true, true");
 		out.endAttribute();
 		out.beginAttribute(ONFOCUSOUT_ATTR);
 		addJSFunction(out, "lostFocus", null);
@@ -305,14 +321,29 @@ public class DropDownControl extends AbstractSelectControl {
 		out.beginAttribute(ONKEYDOWN_ATTR);
 		addJSFunction(out, "keyPressed", "event, " + isMultiple());
 		out.endAttribute();
+		out.beginAttribute(ONCLICK_ATTR);
+		addJSFunction(out, "selectItem", "this");
+		out.endAttribute();
 	}
 
-	private void renderItemLabel(TagWriter out, FormField dropdown, Object item) throws IOException {
+	private void renderItemIcon(DisplayContext context, TagWriter out, FormField dropdown, Object item, Flavor flavor)
+			throws IOException {
+		LabelProvider labelProvider = SelectFieldUtils.getOptionLabelProvider(dropdown);
+		if (!(labelProvider instanceof ResourceProvider)) {
+			return;
+		}
+		ResourceProvider resourceProvider = (ResourceProvider) labelProvider;
+		ThemeImage icon = item == SelectField.NO_OPTION ? null : resourceProvider.getImage(item, flavor);
+		if (icon == null) {
+			return;
+		}
+		icon.writeWithCss(context, out, "ddwttItemIcon");
+	}
+
+	private void renderItemLabel(TagWriter out, FormField dropdown, Object item)
+			throws IOException {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "ddwttItemLabel");
-		out.beginAttribute(ONCLICK_ATTR);
-		addJSFunction(out, "selectItem", "this.parentElement");
-		out.endAttribute();
 		out.endBeginTag();
 		{
 			out.write(getItemLabel(dropdown, item));
@@ -348,7 +379,8 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTooltip(context, out, dropdown, selectedItem);
 				out.endBeginTag();
 				{
-					out.write(getItemLabel(dropdown, selectedItem));
+					renderItemIcon(context, out, dropdown, selectedItem, Flavor.DEFAULT);
+					renderItemLabel(out, dropdown, selectedItem);
 
 					renderXButton(context, out, itemID);
 				}
@@ -428,16 +460,9 @@ public class DropDownControl extends AbstractSelectControl {
 			throws IOException {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "ddwttImmutableItem");
-		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "setItemActive", "this, false");
-		out.endAttribute();
-		out.beginAttribute(ONMOUSEOUT_ATTR);
-		addJSFunction(out, "setItemInactive", "this");
-		out.endAttribute();
-		renderTooltip(context, out, dropdown, item);
 		out.endBeginTag();
 		{
-			out.write(getItemLabel(dropdown, item));
+			SelectFieldUtils.getOptionRenderer(dropdown).write(context, out, item);
 		}
 		out.endTag(SPAN);
 	}
@@ -469,11 +494,7 @@ public class DropDownControl extends AbstractSelectControl {
 					}
 				}
 			}
-			addUpdate(
-				new JSFunctionCall(
-					getInputId(),
-					DROPDOWN_CONTROL_CLASS, "setSelectedLabel",
-					getSelectionLabel(field)));
+			addUpdate(new ElementReplacement(getButtonContentID(), this::renderButtonContent));
 		}
 	}
 

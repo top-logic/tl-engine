@@ -3473,38 +3473,44 @@ div.pdlgContent {
 
 .megaMenuGridContainer, .megaMenuFlexContainer {
 	overflow: auto;
-    position: relative;
-    max-height: 90vh;
+	position: relative;
+	max-height: 90vh;
 }
 
-.megaMenuItem {
+.tl-megaMenu__option {
+	display: flex;
+	flex-direction: column;
 	cursor: pointer;
 	padding: 5px;
 	line-break: anywhere;
 }
 
-.megaMenuItem a {
+.tl-megaMenu__option a {
     width: 100%;
     height: 100%;
     float: left;
     text-decoration: none;
 }
 
-.megaMenuItem a:hover {
+.tl-megaMenu__option-label {
+  	font-weight: bold
+}
+
+.tl-megaMenu__option a:hover {
     color: var(--NORMAL_TEXT);
 }
 
-.megaMenuItem:hover {
+.tl-megaMenu__option:hover {
     color: var(--NORMAL_TEXT);
     background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
 }
 
-.megaMenuItemSelected {
+.tl-megaMenu__option--selected {
     color: var(--NORMAL_TEXT);
-    background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
+    background-color: var(--CALENDAR_SELECTED_BACKGROUND_COLOR);
 }
 
-.megaMenuItemSelected a:hover {
+.tl-megaMenu__option--selected a:hover {
     color: var(--NORMAL_TEXT);
 }
 
@@ -3546,8 +3552,8 @@ div.pdlgContent {
 	color: graytext;
 }
 
-.megaMenuItem .itemContainer .megaMenuIconContainer .megaMenuIcon,
-.megaMenuItem .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
+.tl-megaMenu__option .itemContainer .megaMenuIconContainer .megaMenuIcon,
+.tl-megaMenu__option .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
 	color: #000;
 }
 

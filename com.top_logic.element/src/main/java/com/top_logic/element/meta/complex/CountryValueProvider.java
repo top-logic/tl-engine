@@ -5,8 +5,6 @@
  */
 package com.top_logic.element.meta.complex;
 
-import com.top_logic.basic.config.AbstractConfigurationValueProvider;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.element.meta.ComplexValueProvider;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.util.Country;
@@ -17,17 +15,12 @@ import com.top_logic.util.Country;
  *
  * @author    <a href="mailto:jco@top-logic.com">jco</a>
  */
-public class CountryValueProvider extends AbstractConfigurationValueProvider<Country> implements
-		ComplexValueProvider<Country> {
+public class CountryValueProvider implements ComplexValueProvider<Country> {
 
 	/**
 	 * Singleton {@link CountryValueProvider} instance.
 	 */
 	public static final CountryValueProvider INSTANCE = new CountryValueProvider();
-
-	private CountryValueProvider() {
-		super(Country.class);
-	}
 
 	@Override
 	public Class<Country> getApplicationType() {
@@ -65,9 +58,6 @@ public class CountryValueProvider extends AbstractConfigurationValueProvider<Cou
         return null;
     }
 
-    /**
-     * @see com.top_logic.element.meta.ComplexValueProvider#getOptionProvider()
-     */
     @Override
 	public OptionProvider getOptionProvider() {
         return CountryOptionProvider.INSTANCE;
@@ -75,22 +65,7 @@ public class CountryValueProvider extends AbstractConfigurationValueProvider<Cou
 
 	@Override
 	public boolean isCompatible(Object businessObject) {
-		return isLegalValue(businessObject);
-	}
-
-	@Override
-	public boolean isLegalValue(Object value) {
-		return value == null || value instanceof Country;
-	}
-
-	@Override
-	public Country getValueNonEmpty(String propertyName, CharSequence propertyValue) throws ConfigurationException {
-		return new Country(propertyValue.toString());
-	}
-
-	@Override
-	public String getSpecificationNonNull(Country configValue) {
-		return configValue.getCode();
+		return businessObject == null || businessObject instanceof Country;
 	}
 
 }

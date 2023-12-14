@@ -98,7 +98,12 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 		Constraint mandatoryChecker = isMandatory ? GenericMandatoryConstraint.SINGLETON
 			: null;
 
-		OptionModel<?> options = getConfig().getOptionProvider().getOptions(editContext);
+		OptionModel<?> options;
+		if (editContext.getOptions() != null) {
+			options = editContext.getOptions().generate(editContext);
+		} else {
+			options = getConfig().getOptionProvider().getOptions(editContext);
+		}
 		options = filterOptions(options, editContext);
 		SelectField selectField =
 			newSelectField(fieldName, options, editContext.isMultiple(), false, isSearch, isMandatory,

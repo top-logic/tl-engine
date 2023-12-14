@@ -3245,11 +3245,13 @@ services.form = {
 		itemCl: "ddwttItem",
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
+		itemLabelCl: "ddwttItemLabel",
+		mutObserver: null,
 
 		buttonDrop: function(button) {
 			const ddBoxOriginal = button.nextElementSibling;
 			let ddBox = this.getDDBox();
-
+			
 			const onGlobalChange = function() {
 				if (ddBox.contains(document.activeElement)) {
 					services.form.DropDownControl.buttonDrop(button);
@@ -3261,6 +3263,10 @@ services.form = {
 
 			if (prevActive) {
 				this.closeDD(button, ddBox);
+				if (this.mutObserver) {
+					this.mutObserver.disconnect();
+					this.mutObserver = null;
+				}
 			} else {
 				const outerDocument = document.body.firstElementChild;
 				ddBox = ddBoxOriginal.cloneNode(true);
@@ -3270,8 +3276,13 @@ services.form = {
 
 				this.positionDD(button, ddBox);
 				if (activeItem) {
-					this.setItemActive(activeItem, true);
+					this.setItemActive(activeItem, true, false);
 					this.addScrollEvents(button, onGlobalChange);
+				}
+				
+				let dialog = button.closest(".dlgWindow");
+				if (dialog) {
+					this.setMutationObserver(dialog, button);
 				}
 			}
 		},
@@ -3297,13 +3308,31 @@ services.form = {
 			PlaceDialog.closeCurrentTooltip(document.body.firstElementChild);
 
 			this.cancelScrollEvents(button);
-
-			if (ddBox.contains(document.activeElement)) {
-				button.focus();
-			}
 			
+			let ddBoxAct = ddBox.contains(document.activeElement);
+
 			// hide DropDown
 			ddBox.remove();
+			
+			if (ddBoxAct) {
+				button.focus();
+			}
+		},
+		
+		setMutationObserver: function(dialog, button) {
+			// Options for the observer (which mutations to observe)
+			const config = {attributeFilter: ["style"], attributeOldValue: true};
+			
+			// Callback function to execute when mutations are observed
+			const callback = (mutationList) => {
+				mutationList.forEach((mutation) => {
+					if (mutation.type === "attributes") {
+						this.buttonDrop(button);
+					}
+				});
+			};
+			this.mutObserver = new MutationObserver(callback);
+			this.mutObserver.observe(dialog, config);
 		},
 
 		cancelScrollEvents: function(button) {
@@ -3364,7 +3393,7 @@ services.form = {
 				}
 			}
 		},
-
+		
 		positionDD: function(button, ddBox) {
 			ddBox.style.left = 0;
 			ddBox.style.top = 0;
@@ -3402,19 +3431,37 @@ services.form = {
 		},
 
 		setDimensions: function(btnPos, ddBox, ddMaxHeight) {
+			let search = ddBox.querySelector(":scope > ." + this.searchCl),
+				ddList = ddBox.querySelector(":scope > ." + this.listCl),
+				incrWidth = window.getComputedStyle(ddBox).getPropertyValue("width");
+			
+			ddBox.style.removeProperty("right");
 			ddBox.style.setProperty("left", btnPos.left + "px");
 			ddBox.style.setProperty("min-width", btnPos.width + "px");
 			ddBox.style.setProperty("max-height", ddMaxHeight + "px");
-			let search = ddBox.querySelector(":scope > ." + this.searchCl);
-			search.style.setProperty("width", window.getComputedStyle(ddBox).getPropertyValue("width"));
+			
+			let scrollbarW = ddList.offsetWidth - ddList.clientWidth;
+			if (btnPos.width < (parseFloat(incrWidth) + scrollbarW)) {
+				incrWidth = parseFloat(incrWidth) + scrollbarW + "px";
+				ddList.style.setProperty("width", incrWidth);
+				if (parseFloat(incrWidth) > (window.innerWidth - btnPos.left)) {
+					ddBox.style.removeProperty("left");
+					ddBox.style.setProperty("right", (window.innerWidth - btnPos.right) + "px");
+				}
+			}
+			
+			let searchW = ddList.getBoundingClientRect().width + "px";
+			search.style.setProperty("width", searchW);
 			search.focus();
 		},
 
-		setItemActive: function(item, scroll) {
+		setItemActive: function(item, scroll, mouse) {
 			let ddList = item.parentElement;
 			let previousActive = ddList.querySelector(":scope > ." + this.actItemCl);
 			if (previousActive) {
-				if (previousActive == item) return;
+				if (previousActive == item) {
+					return;
+				}
 				this.setItemInactive(previousActive);
 			}
 			item.classList.add(this.actItemCl);
@@ -3423,19 +3470,19 @@ services.form = {
 				item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
 			}
 			
+			if (mouse) {
+				return;
+			}
 			const mouseoverEvent = new Event('mouseover', { 'bubbles': true });
 			item.dispatchEvent(mouseoverEvent);
 		},
 		
 		setItemInactive: function(item) {
-			let tooltip = item.lastElementChild;
-			if (tooltip && tooltip.childElementCount > 0) {
-				tooltip.firstElementChild.scrollTop = 0;
-			}
 			item.classList.remove(this.actItemCl);
-			
 			const mouseleaveEvent = new Event('mouseleave', { 'bubbles': true });
+			const mouseoutEvent = new Event('mouseout', { 'bubbles': true });
 			item.dispatchEvent(mouseleaveEvent);
+			item.dispatchEvent(mouseoutEvent);
 		},
 
 		lostFocus: function() {
@@ -3449,9 +3496,6 @@ services.form = {
 					for (item of itemList) {
 						if (item.classList.contains(this.actItemCl)) {
 							this.setItemInactive(item);
-							let tooltip = item.lastElementChild;
-							tooltip.style.display = "";
-							tooltip.style.width = "";
 						}
 					}
 					if (button.parentElement.classList.contains(this.activeCl)) {
@@ -3505,7 +3549,7 @@ services.form = {
 						return;
 					} else {
 						// set previous item active
-						this.setItemActive(previous, true);
+						this.setItemActive(previous, true, false);
 						break;
 					}
 
@@ -3533,7 +3577,7 @@ services.form = {
 						return;
 					} else {
 						// set next item active
-						this.setItemActive(next, true);
+						this.setItemActive(next, true, false);
 						break;
 					}
 
@@ -3549,7 +3593,7 @@ services.form = {
 						return;
 					} else {
 						// set first item active
-						this.setItemActive(first, true);
+						this.setItemActive(first, true, false);
 						break;
 					}
 
@@ -3609,7 +3653,7 @@ services.form = {
 						return;
 					} else {
 						ddList.scrollBy({ top: scrollH, behavior: "smooth" });
-						this.setItemActive(activeItem, false);
+						this.setItemActive(activeItem, false, false);
 						return;
 					}
 
@@ -3630,7 +3674,7 @@ services.form = {
 						return;
 					} else {
 						// set last item active
-						this.setItemActive(last, true);
+						this.setItemActive(last, true, false);
 						break;
 					}
 
@@ -3639,6 +3683,8 @@ services.form = {
 					if (!sourceBtn) {
 						// set current item as selected
 						this.selectItem(activeItem);
+						event.preventDefault();
+						event.stopPropagation();
 						return;
 					}
 					event.stopImmediatePropagation();
@@ -3651,6 +3697,13 @@ services.form = {
 					}
 					this.buttonDrop(button);
 					event.stopImmediatePropagation();
+					return;
+					
+				// [TAB] was pressed
+				case "Tab":
+					if (multi || !sourceBtn) {
+						this.buttonDrop(button);
+					}
 					return;
 
 				// [Control|Ctrl|Ctl|STRG] + [C] was pressed
@@ -3698,7 +3751,7 @@ services.form = {
 				this.setItemInactive(item);
 				item.style.display = "";
 				if (this.isDisplayedItem(item)) {
-					let label = item.firstElementChild.textContent.toLowerCase();
+					let label = item.querySelector("." + this.itemLabelCl).textContent.toLowerCase();
 					if (label.includes(inputStr)) {
 						if (!firstItem) {
 							firstItem = item;
@@ -3709,7 +3762,7 @@ services.form = {
 				}
 			}
 			if (firstItem) {
-				this.setItemActive(firstItem, true);
+				this.setItemActive(firstItem, true, false);
 			}
 		},
 

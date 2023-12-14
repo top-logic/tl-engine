@@ -7674,13 +7674,13 @@ div.dirtyHandlingDialog .changes {
 }
 
 .ddwttDDList {
-	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
+	overflow-y: auto;
 }
 
 .ddwttSearch {
-	border: none;
+	border: none !important;
 	border-radius: initial;
 }
 
@@ -7698,6 +7698,8 @@ div.dirtyHandlingDialog .changes {
 .ddwttItem {
 	position: relative;
 	text-align: left;
+	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
+	padding: 0.2em 8px;
 }
 
 .ddwttActiveItem {
@@ -7710,20 +7712,33 @@ div.dirtyHandlingDialog .changes {
 	text-align: left;
 }
 
-.ddwttItemLabel {
-	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
-	padding: 0.2em 8px;
-	display: block;
+.ddwttItemIcon {
+	margin-right: 8px !important;
+	padding-left: 3px;
+}
+
+.ddwttItem .ddwttItemLabel {
+	display: inline-block;
+	cursor: default;
 }
 
 /* Tags */
 .ddwttTagLoc, .ddwttTag {
-	display: inline-block;
+	display: inline-flex;
 	width: fit-content;
 	text-align: left;
 }
 
-.ddwttTagX {
+.ddwttTag {
+	margin-right: 8px;
+	border: 1px solid var(--border-subtle);
+	border-radius: 4px;
+	padding-left: 4px;
+	height: 22px;
+	align-items: center;
+}
+
+.ddwttTag .ddwttTagX {
 	padding: 0;
 	/* Style from .input-image */
 	display: inline-block;
@@ -7735,9 +7750,7 @@ div.dirtyHandlingDialog .changes {
 	height: var(--ICON_SIZE_NORMAL);
 	/* Style from .fClear */
 	transform: scale(0.7);
-	margin-right: 5px;
-	margin-left: -2px;
-	margin-top: -2px;
+	margin: 0;
 }
 
 .ddwttTagX i {

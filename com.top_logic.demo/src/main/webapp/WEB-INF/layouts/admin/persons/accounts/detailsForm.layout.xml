@@ -123,6 +123,12 @@
 								visibility="editable"
 							/>
 							<field
+								attribute="timezone"
+								fullQualifiedName="tl.accounts:Person#timeZone"
+								type="tl.util:TimeZone"
+								visibility="editable"
+							/>
+							<field
 								attribute="groups"
 								fullQualifiedName="tl.accounts:Person#groups"
 								type="tl.accounts:Group"

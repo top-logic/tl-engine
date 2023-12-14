@@ -27,13 +27,15 @@ public class ActiveMQClient extends JMSClient {
 	/**
 	 * Configuration options for {@link ActiveMQClient}.
 	 */
-	@DisplayOrder({ Config.URL_SCHEME,
+	@DisplayOrder({
+		Config.URL_SCHEME,
 		Config.HOST,
 		Config.PORT,
 		Config.USER,
 		Config.PASSWORD,
 		Config.PRODUCER_CONFIGS,
-		Config.CONSUMER_CONFIGS })
+		Config.CONSUMER_CONFIGS
+	})
 	public interface Config<I extends ActiveMQClient> extends JMSClient.Config<I> {
 
 		/**

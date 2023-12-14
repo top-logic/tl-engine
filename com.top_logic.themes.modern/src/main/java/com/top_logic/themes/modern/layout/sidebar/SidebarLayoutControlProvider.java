@@ -226,7 +226,7 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 						if (root == innermostSelected) {
 							tree.setSelection(null);
 						} else {
-							tree.setSelection(tree.innermostSelected(root));
+							tree.setSelection(innermostSelected);
 						}
 
 						// Add component validator.
@@ -387,7 +387,7 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 			if (innermostSelected instanceof TabBarNode && innermostSelected == selection) {
 				setSelection(null);
 			} else {
-				setSelection(innermostSelected(selection));
+				setSelection(innermostSelected);
 			}
 		}
 

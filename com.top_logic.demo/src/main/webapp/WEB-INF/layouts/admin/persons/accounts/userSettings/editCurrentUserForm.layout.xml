@@ -168,6 +168,11 @@
 								fullQualifiedName="tl.accounts:Person#locale"
 								type="tl.core:String"
 							/>
+							<field
+								attribute="country"
+								fullQualifiedName="tl.accounts:Person#country"
+								type="tl.util:Country"
+							/>
 						</layout>
 					</foreign-objects>
 					<other-attributes/>

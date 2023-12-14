@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Neues Modul..."
+			command-name="displayDialog_CreateModuleLayout"
+			component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="test_27695"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.TLModuleCreateHandler"
+			command-label="Anlegen"
+			command-name="createModule"
+			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+					path="Test 27695"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check no creation of module with existing module name."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Neues Modul..."
+					command-name="displayDialog_CreateModuleLayout"
+					component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="test_27695"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+					error="Ein Modul mit dem Namen 'test_27695' existiert bereits."
+					error-pattern=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Neuer Fachobjekttyp..."
+			command-name="displayDialog_CreateLayout"
+			component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="ID"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="A"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+			command-label="Anlegen"
+			command-name="createType"
+			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check no creation of enumeration or class with existing name."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Neuer Fachobjekttyp..."
+					command-name="displayDialog_CreateLayout"
+					component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="A"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+					error="Ein Typ mit dem Namen 'A' existiert bereits im Modul 'Test 27695'."
+					error-pattern=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Neue Aufzählung..."
+					command-name="displayDialog_CreateEnumerationLayout"
+					component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateEnumerationForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="A"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateEnumerationForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+					error="Ein Typ mit dem Namen 'A' existiert bereits im Modul 'Test 27695'."
+					error-pattern=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateEnumerationForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateEnumerationForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor > Attribute"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+			command-label="Neue Eigenschaft..."
+			command-name="displayDialog_createPropertyTypePartDialog"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="ID"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="name"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Typ"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="tl.core:String"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+			command-label="Erstellen"
+			command-name="createPart"
+			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Neuer Fachobjekttyp..."
+			command-name="displayDialog_CreateLayout"
+			component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="ID"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="B"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+			command-label="Anlegen"
+			command-name="createType"
+			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check no creation of part with existing name in generalization."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+					command-label="Neue Eigenschaft..."
+					command-name="displayDialog_createPropertyTypePartDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="name"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+					error="Ein Typteil mit dem Namen 'name' existiert bereits in der Generalisierung 'A'."
+					error-pattern=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check override of part is possible."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+					command-label="Neue Überschreibung..."
+					command-name="displayDialog_createOverrideTypePartDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="name"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Typ"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="tl.core:String"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+					command-label="Erstellen"
+					command-name="createPart"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+					path="Test 27695 > A"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check no creation of part with existing name in same type."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+					command-label="Neue Referenz..."
+					command-name="displayDialog_createReferenceTypePartDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="name"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+					error="Ein Typteil mit dem Namen 'name' existiert bereits in 'A'."
+					error-pattern=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+							tab-path=""
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+					path="Test 27695"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+			command-label="Löschen..."
+			command-name="deleteTLModelPart"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/moduleEditor.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

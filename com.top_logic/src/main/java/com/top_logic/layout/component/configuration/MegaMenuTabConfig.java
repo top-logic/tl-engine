@@ -16,11 +16,10 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.DisplayDimension;
-import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
@@ -33,16 +32,13 @@ import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ButtonRenderer;
 import com.top_logic.layout.form.control.IButtonRenderer;
-import com.top_logic.layout.form.control.Icons;
+import com.top_logic.layout.form.control.MegaMenuControl.MegaMenuPopupDialogHelper;
 import com.top_logic.layout.form.control.MegaMenuOptionControl;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.DefaultPopupDialogModel;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.structure.PopupDialogControl.HorizontalPopupPosition;
 import com.top_logic.layout.structure.PopupDialogControl.VerticalPopupPosition;
-import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -87,6 +83,7 @@ public class MegaMenuTabConfig
 		 * The {@link IButtonRenderer} to create the visual representation.
 		 */
 		@Name(RENDERER)
+		@InstanceDefault(ButtonRenderer.class)
 		@InstanceFormat
 		IButtonRenderer getRenderer();
 
@@ -126,12 +123,7 @@ public class MegaMenuTabConfig
 	public MegaMenuTabConfig(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_componentName = config.getComponent();
-
-		if (config.getRenderer() == null) {
-			_renderer = ButtonRenderer.INSTANCE;
-		} else {
-			_renderer = config.getRenderer();
-		}
+		_renderer = config.getRenderer();
 	}
 
 	@Override
@@ -144,7 +136,7 @@ public class MegaMenuTabConfig
 		TabConfig tabInfo = tabComponent.getParent().getConfig().getTabInfo();
 		ThemeImage tabImage = tabInfo.getImage();
 
-		ArrayList<LayoutComponent> mainTabList = addChildren(tabComponent);
+		ArrayList<LayoutComponent> mainTabList = new ArrayList<>(tabComponent.getChildList());
 		SelectField megaMenu = FormFactory.newSelectField("navigationButton", mainTabList, false, false);
 		megaMenu.setMandatory(true);
 
@@ -158,14 +150,6 @@ public class MegaMenuTabConfig
 		return mainTabbarField;
 	}
 
-	private ArrayList<LayoutComponent> addChildren(TabComponent tabComponent) {
-		ArrayList<LayoutComponent> mainTabList = new ArrayList<>();
-		for (LayoutComponent child : tabComponent.getChildList()) {
-			mainTabList.add(child);
-		}
-		return mainTabList;
-	}
-
 	private AbstractCommandModel createCommandToWritePopup(LayoutComponent layoutComponent,
 			ArrayList<LayoutComponent> mainTabList, SelectField megaMenu) {
 		return new AbstractCommandModel() {
@@ -173,25 +157,20 @@ public class MegaMenuTabConfig
 			@Override
 			protected HandlerResult internalExecuteCommand(DisplayContext context) {
 				ButtonControl buttonControl = context.get(Command.EXECUTING_CONTROL);
-				PopupDialogControl popupDialog;
-				int nbrOfOptionElements = mainTabList.size();
-				boolean isGridNeeded = nbrOfOptionElements > 4;
-				if (isGridNeeded) {
-					popupDialog = createPopUpDialogWindow(context, 600, Scrolling.AUTO);
-				} else {
-					popupDialog = createPopUpDialogWindow(context, 300, Scrolling.AUTO);
-				}
+				String buttonControlID = buttonControl.getID();
 
+				int nbrOfOptionElements = mainTabList.size();
+
+				PopupDialogControl popupDialog =
+					MegaMenuPopupDialogHelper.createPopupDialog(context, nbrOfOptionElements,
+						buttonControl.getFrameScope(), buttonControlID);
+
+				boolean isGridNeeded = nbrOfOptionElements > 4;
 				popupDialog.setContent(new HTMLFragment() {
 
 					@Override
 					public void write(DisplayContext context1, TagWriter out) throws IOException {
 						out.beginBeginTag(HTMLConstants.DIV);
-						if (isGridNeeded) {
-							out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuGridContainer");
-						} else {
-							out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuFlexContainer");
-						}
 						out.endBeginTag();
 
 						for (int i = 0; i < nbrOfOptionElements; i++) {
@@ -202,27 +181,8 @@ public class MegaMenuTabConfig
 						out.endTag(HTMLConstants.DIV);
 					}
 				});
-				buttonControl.getWindowScope().openPopupDialog(popupDialog);
+				context.getWindowScope().openPopupDialog(popupDialog);
 				return HandlerResult.DEFAULT_RESULT;
-			}
-
-			private PopupDialogControl createPopUpDialogWindow(DisplayContext context, int aWidth,
-					Scrolling aScrollable) {
-				int borderWidth = Icons.MEGA_MENU_BORDER_WIDTH.get();
-				DefaultLayoutData popupLayout =
-					new DefaultLayoutData(DisplayDimension.dim(aWidth, DisplayUnit.PIXEL), 100, DisplayDimension.dim(0,
-						DisplayUnit.PIXEL), 100, aScrollable);
-				DefaultPopupDialogModel defaultPopupModel = new DefaultPopupDialogModel(null, popupLayout, borderWidth);
-
-				ButtonControl buttonControl = context.get(Command.EXECUTING_CONTROL);
-				String buttonControlID = buttonControl.getID();
-				HorizontalPopupPosition horizontalPosition = getConfig().getHorizontalPosition();
-				VerticalPopupPosition verticalPosition = getConfig().getVerticalPosition();
-
-				PopupDialogControl popupDialogControl =
-					new PopupDialogControl(buttonControl.getFrameScope(), defaultPopupModel,
-						buttonControlID, horizontalPosition, verticalPosition);
-				return popupDialogControl;
 			}
 
 			@Override

@@ -318,7 +318,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en No selection
-	 * @tooltip This resets the set selection.
+	 * @tooltip Resets the selection.
 	 */
 	public static ResKey MEGAMENU_NO_OPTION_LABEL;
 
@@ -330,7 +330,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en No selection available
-	 * @tooltip This field is mandatory, but the list is empty. Selection options should be added
+	 * @tooltip This field is mandatory, but the list is empty.
 	 */
 	public static ResKey MANDATORY_EMPTY_SINGLE_SELECTION_WITH_NO_OPTIONS_MEGA_MENU;
 

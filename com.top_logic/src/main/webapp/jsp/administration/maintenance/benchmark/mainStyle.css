@@ -336,7 +336,7 @@ a.s15      {font-style:italic;background-color:#99EEFF;color:black;}
 /* Styles for Buttons, especially BoundButtonInfo */
 
 td.cmdButtonCell {
-	/* need this empyt style otherwise the default(s) kills us ? */
+	/* need this empty style otherwise the default(s) kills us ? */
 }
 
 a.cmdButton {
@@ -354,7 +354,7 @@ a.cmdButton {
 }
 
 /* a.cmdButton:hover	does not work when onMouseOver is used  */
-a.cmdButtonHover {	
+a.cmdButton:hover {	
 	font-family:Arial,Helvetica,sans-serif;
 	font-size:9pt;
 	font-weight:bold;

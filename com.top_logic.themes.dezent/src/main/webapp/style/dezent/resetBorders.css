@@ -6,19 +6,12 @@
 .tabBar .tab:hover,
 
 .breadcrumb .selectableNode,
-.breadcrumb .hover .selectableNode,
+.breadcrumb .treeNode:hover .selectableNode,
 
 .rf_hr.visible,
 
 td.cmdButton,
 a.cmdButton,
-a.cmdButton:link,
-a.cmdButton:visited,
-a.cmdButton:active,
-a.cmdButtonHover,
-a.cmdButtonHover:link,
-a.cmdButtonHover:visited,
-a.cmdButtonHover:active,
 a.cmdButtonDisabled,
 a.cmdButtonDisabled:link,
 a.cmdButtonDisabled:visited,

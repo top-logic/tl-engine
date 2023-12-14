@@ -65,6 +65,12 @@ public class JMSSend extends GenericMethod {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_CONNECTION__NAME_EXPR.fill(connectionName, this));
 		}
 		Object rawData = arguments[1];
+		send(producer, rawData);
+
+		return null;
+	}
+
+	private void send(Producer producer, Object rawData) {
 		if (rawData instanceof HTMLFragment) {
 			StringWriter sw = new StringWriter();
 			TagWriter tw = new TagWriter(sw);
@@ -82,8 +88,6 @@ public class JMSSend extends GenericMethod {
 		} else {
 			producer.send(ToString.toString(rawData));
 		}
-
-		return null;
 	}
 
 	@Override

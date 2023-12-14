@@ -28,7 +28,7 @@ public abstract class Consumer<C extends Consumer.Config<?>> extends AbstractCon
 
 	private JMSConsumer _consumer;
 
-	private String _name;
+	private final String _name;
 
 	private volatile boolean _closed = false;
 

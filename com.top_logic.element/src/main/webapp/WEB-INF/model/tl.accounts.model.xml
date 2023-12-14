@@ -200,6 +200,16 @@
 						<delete-protected/>
 					</annotations>
 				</property>
+				<property name="country"
+					type="tl.util:Country"
+				>
+					<annotations>
+						<delete-protected/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.DefaultCountryDefault"/>
+						</default-value>
+					</annotations>
+				</property>
 				<property name="timezone"
 					type="tl.util:TimeZone"
 				>

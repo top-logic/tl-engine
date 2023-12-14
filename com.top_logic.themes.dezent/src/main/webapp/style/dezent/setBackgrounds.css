@@ -63,7 +63,6 @@ div.accSelected a.accEntry
 .mainTabBar,
 .tabBar .tab:hover,
 .mainTabBar .tab:hover,
-table.popupMenu > tbody > tr.menuEntryHover,
 div.ToolContainer div.IconContainer .input-image:not(.disabled):hover,
 div.fptSubtitle,
 td.treeTableTdFirst,
@@ -94,7 +93,7 @@ span.disabled > span > input:not(.input-image):not(.fltButton):not(#quickSearch-
 .cIconChooser .fptBodyContent .displayedIcons:hover,
 
 div.cCollapsibleToolbar .input-image:hover,
-div.fltButtons a.cmdButtonHover,
+div.fltButtons a.cmdButton:hover,
 
 th.tl-table__cell,
 
@@ -108,10 +107,7 @@ span.cPopupSelect .input-image:hover,
 span.cTextSelect .input-image:hover,
 span.cImageLinkButton .input-image:hover,
 
-a.cmdButtonHover,
-a.cmdButtonHover:link,
-a.cmdButtonHover:visited,
-a.cmdButtonHover:active
+a.cmdButton:hover
 
 {
     background-color: var(--TL-atoll);
@@ -121,7 +117,6 @@ a.cmdButtonHover:active
 .fChoose.input-image.disabled,
 .cIconChooser .fptBodyContent .displayedIcons,
 
-div.folderView .breadcrumb .hover .treeNode a.selectableNode,
 div.cCollapsibleToolbar .input-image.disabled,
 div.layoutHorizontalAdjustmentGrabber,
 div.layoutVerticalAdjustmentGrabber,

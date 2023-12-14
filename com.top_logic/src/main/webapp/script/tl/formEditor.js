@@ -148,9 +148,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 		  	moveMember(controlId, event.target, siblingID, parentID);
 		}
 
-		removeHover(event.target);
 		removeClass("rf_parent");
-		removeClass("hover");
 	  	highlightEditor(false);
 		triggerEvent("removeDropArea");
 	}
@@ -188,7 +186,6 @@ FormEditor.init = function(controlId, putElementBackText) {
 		var dragged = getDragged();
 		var displayedInForm = window.displayedInForm;
 		var last = window.lastTarget;
-		removeHover(event.target);
 		
 		if(mouseMoved(event) && dragged) {
 						
@@ -199,7 +196,6 @@ FormEditor.init = function(controlId, putElementBackText) {
 			if(isInEditor) { 
 				// make element visible (can be invisible when not in editor)
 				dragged.style.display = window.draggedDisplay;
-				addHover(event.target);
 				
 				if(isDropTarget(event.target)) {
 					if(!isDescendant(dragged, event.target)) {
@@ -574,34 +570,6 @@ FormEditor.init = function(controlId, putElementBackText) {
 			} else {
 				node.className = (className.replace(/ rf_highlighted/gi, ""));
 			}
-		}
-	}
-	
-
-	function removeHover(node) {
-		if(document.getElementById(window.lasttarget)) {
-			if(document.getElementById(window.lasttarget).classList) {
-				var frame = findFrame(node);
-				
-				if(frame) {
-					if(window.lasttarget != frame.id) {
-						document.getElementById(window.lasttarget).classList.remove("hover");
-						window.lasttarget = null;
-					}
-				} else {
-					document.getElementById(window.lasttarget).classList.remove("hover");
-					window.lasttarget = null;
-				}
-			}	
-		}
-	}
-	
-	function addHover(node) {
-		var frame = findFrame(node);
-		
-		if(frame && frame.id != window.lasttarget) {
-			frame.classList.add("hover");
-			window.lasttarget = frame.id;
 		}
 	}
 	

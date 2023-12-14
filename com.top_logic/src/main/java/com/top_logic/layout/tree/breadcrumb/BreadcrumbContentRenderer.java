@@ -47,7 +47,6 @@ import com.top_logic.util.css.CssUtil;
 public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<BreadcrumbContentRenderer.Config>
 		implements HTMLConstants {
 
-	private static final String NODE_HOVER_CSS = "hover";
 	private static final String MENU_NODE_CSS = "breadcrumbMenuNode";
 	/** CSS-Class of the menu nodes if the mouse currently points to it */
 	private static final String MENU_NODE_HOVER_CSS = "breadcrumbMenuNode_hover";
@@ -194,7 +193,6 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 	 */
 	public void writeNodeTagAttributes(DisplayContext context, TagWriter out, BreadcrumbControl breadcrumb, Object currentNode) throws IOException {
 		writeNodeClasses(out, breadcrumb, currentNode);
-		out.writeAttribute(TL_HOVER_CLASS_ATTR, NODE_HOVER_CSS);
 	}
 
 	/**
@@ -506,7 +504,6 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 				out.beginBeginTag(DIV);
 				out.writeAttribute(ID_ATTR, menuID + breadcrumb.getNodeId(child));
 				out.writeAttribute(CLASS_ATTR, MENU_NODE_CSS);
-				out.writeAttribute(TL_HOVER_CLASS_ATTR, MENU_NODE_HOVER_CSS);
 				out.endBeginTag();
 				{
 					writeMenuNode(context, out, breadcrumb, child);

@@ -127,14 +127,6 @@ BAL.addEventListener(document, "mouseover", function(evt) {
 				tooltip = false;
 			}
 		}
-
-		{
-			var attributeValue = BAL.DOM.getNonStandardAttribute(target, 'data-hover');
-			if (attributeValue != null && attributeValue.length > 0) {
-                target.plainClassArray = BAL.DOM.getClassesArray(target);
-                target.className = attributeValue;
-			}
-		}
 		
 		target = target.parentNode;
 	}
@@ -154,16 +146,6 @@ BAL.addEventListener(document, "mouseout", function(evt) {
 		if (openTimeout) {
 			clearTimeout(openTimeout);
 			target.removeAttribute("data-ttOpen");
-		}
-		
-		{
-			var attributeValue = BAL.DOM.getNonStandardAttribute(target, 'data-hover');
-			if (attributeValue != null && attributeValue.length > 0) {
-                if (typeof(target.plainClassArray) != 'undefined') {
-                    BAL.DOM.setClassesArray(target, target.plainClassArray);
-                    BAL.DOM.removeNonStandardAttribute(target, "plainClassArray");
-                }
-			}
 		}
 
 		target = target.parentNode;

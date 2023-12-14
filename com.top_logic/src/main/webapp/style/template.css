@@ -1761,8 +1761,8 @@ a.input-image {
 	color: graytext;
 }
 
-.cMenuButton.menuEntryHover i,
-.cMenuButton.menuEntryHover i span:after {
+.cMenuButton:hover i,
+.cMenuButton:hover i span:after {
 	color: black;
 }
 
@@ -2598,13 +2598,6 @@ td.cmdButtonCell {
 
 td.cmdButton,
 a.cmdButton, 
-a.cmdButton:link, 
-a.cmdButton:visited, 
-a.cmdButton:active, 
-a.cmdButtonHover,
-a.cmdButtonHover:link,
-a.cmdButtonHover:visited,
-a.cmdButtonHover:active,
 a.cmdButtonDisabled, 
 a.cmdButtonDisabled:link, 
 a.cmdButtonDisabled:visited, 
@@ -2637,17 +2630,12 @@ a.cmdButtonDisabled:active,
 }
 
 td.cmdButton,
-a.cmdButton,
-a.cmdButtonHover
+a.cmdButton
 {
 	cursor:           pointer;
 }
 
-a.cmdButtonHover,
-a.cmdButtonHover:link,
-a.cmdButtonHover:visited,
-a.cmdButtonHover:active,
-a.cmdButtonHover:hover,
+a.cmdButton:hover,
 .cDataItem .cmdButton:hover,
 div.cFormEditorToolbox [data-tool=true] > .attribute:hover
 {
@@ -2665,8 +2653,8 @@ a.cmdButtonDisabled:hover,
 	color:            var(--BUTTON_DISABLED_COLOR);
 }
 
-span.containerButton a.cmdButtonHover span.cmdLabel, 
-div.fltButtons       a.cmdButtonHover span.cmdLabel,
+span.containerButton a.cmdButton:hover span.cmdLabel, 
+div.fltButtons       a.cmdButton:hover span.cmdLabel,
 .cDataItem .cmdButton:hover span.cmdLabel,
 .cFormEditorToolbox [data-tool=true] > .attribute:hover
 {
@@ -2683,7 +2671,7 @@ img.cmdImg, img.type-image {
 }
 
 a.cmdButton span.cmdImg,
-a.cmdButtonHover span.cmdImg,
+a.cmdButton:hover span.cmdImg,
 a.cmdButtonDisabled span.cmdImg,
 .cmdButton span.cmdImg,
 .cmdButtonDisabled span.cmdImg,
@@ -2694,7 +2682,7 @@ a.cmdButtonDisabled span.cmdImg,
 }
 
 a.cmdButton img.cmdImg,
-a.cmdButtonHover img.cmdImg,
+a.cmdButton:hover img.cmdImg,
 a.cmdButtonDisabled img.cmdImg {
 	width: var(--BUTTON_IMGSIZE);
 }
@@ -2931,7 +2919,7 @@ th.cal_title {
 	text-align:		  center;
 }
 
-td.cal_cell:HOVER {
+td.cal_cell:hover {
 	background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
 }
 
@@ -2964,7 +2952,7 @@ th.cal_wn {
 }
 
 /* Modifier for cal_cell */
-td.cal_wn, td.cal_wn:HOVER {
+td.cal_wn, td.cal_wn:hover {
 	background-color: var(--CALENDAR_WEEKNO_COLOR);
 	color: var(--CALENDAR_BACKGROUND_COLOR);
 	cursor: auto;
@@ -4368,7 +4356,7 @@ input.tristate {
 	padding-right: 0.5em;
 }
 
-.breadcrumb .hover .menu {
+.breadcrumb .treeNode:hover .menu {
     background-color: var(--BREADCRUMB_HOVER_MENU_BACKGROUND);
     cursor: pointer;
 }
@@ -4381,7 +4369,7 @@ input.tristate {
 	border-radius: 0.5em;
 }
 
-.breadcrumb .hover .selectableNode {
+.breadcrumb .treeNode:hover .selectableNode {
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5) 70%);
     color: var(--BREADCRUMB_HOVER_SELECTABLENODE_COLOR);
 }
@@ -4446,7 +4434,7 @@ input.tristate {
 	background: var(--INAPP_COMMAND_BACKGROUND);
 }
 
-.popupMenu a.menuEntryHover {
+.popupMenu a:hover {
 	background: var(--POPUPMENU_ENTRYHOVER_BACKGROUND);
 	color: #fff;
 }
@@ -4477,7 +4465,7 @@ a.menuEntryDisabled span.menuEntryCell,
 	vertical-align: middle;
 }
 
-.menuEntryHover {
+.menuEntryEnabled:hover {
 	color:            var(--BUTTON_COLOR);
 	background-color: var(--BUTTON_BACKCOLOR);
 	cursor: pointer;
@@ -5657,7 +5645,7 @@ span.sxButton {
 	cursor: pointer;
 }
 
-span.sxButton:HOVER {
+span.sxButton:hover {
 	color: #EE3333;
 	background: white;
 }
@@ -5705,7 +5693,7 @@ div.mcMinimized > div.mcToggle {
 	background: var(--MC_NORMALIZE_ICON);
 }
 
-div.cMinimizable:HOVER > div.mcToggle {
+div.cMinimizable:hover > div.mcToggle {
 	visibility: visible;
 }
 
@@ -6501,16 +6489,16 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	min-height: 24px;
 }
 
-.rf_highlighted .rf_frameBorder.hover .rf_frame,
-.rf_highlighted .rf_frame.hover,
-.rf_highlighted .rf_wrapper.hover .rf_container {
+.rf_highlighted .rf_frameBorder:hover .rf_frame,
+.rf_highlighted .rf_frame:hover,
+.rf_highlighted .rf_wrapper:hover .rf_container {
 	margin-left: 20px;
 	margin-right: 20px;
 	min-width: calc(100% - 40px);
 }
 
-.rf_highlighted .rf_frameBorder.hover,
-.rf_highlighted .rf_wrapper.hover  {
+.rf_highlighted .rf_frameBorder:hover,
+.rf_highlighted .rf_wrapper:hover  {
 	background-image: var(--FORM_EDITOR_BUTTON_INSERT_LEFT), var(--FORM_EDITOR_BUTTON_INSERT_RIGHT);
 	background-repeat: no-repeat;
 	background-position: left center, right center; 
@@ -6539,14 +6527,14 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	background-color: var(--BUTTON_COLOR_HOVER);
 }
 
-.cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover > .rf_frame,
-.cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover > .rf_container {
+.cFormEditorDisplay.edit .rf_frameBorder:hover > .rf_frame,
+.cFormEditorDisplay.edit .rf_wrapper:hover > .rf_container {
 	margin-left: 20px;
 	min-width: calc(100% - 20px);
 }
 
-.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover,
-.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover {
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:hover,
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:hover {
 	background-image: var(--FORM_EDITOR_BUTTON_MOVE);
 	background-repeat: no-repeat;
 	background-position: left center; 

@@ -200,6 +200,16 @@
 						<delete-protected/>
 					</annotations>
 				</property>
+				<property name="timezone"
+					type="tl.util:TimeZone"
+				>
+					<annotations>
+						<delete-protected/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.UserTimeZoneDefault"/>
+						</default-value>
+					</annotations>
+				</property>
 				<property name="unusedNotified"
 					type="tl.core:Boolean"
 				>

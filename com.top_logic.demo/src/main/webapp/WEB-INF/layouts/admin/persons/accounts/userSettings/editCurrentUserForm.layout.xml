@@ -125,7 +125,6 @@
 					<foreign-objects
 						items="contact -> $contact.get(`Contacts:PersonContact#account`)"
 						label="`tl.accounts:Person`.toString()"
-						read-only="true"
 						type="tl.accounts:Person"
 					>
 						<layout>
@@ -133,29 +132,39 @@
 								attribute="name"
 								fullQualifiedName="tl.accounts:Person#name"
 								type="tl.core:String"
+								visibility="read-only"
 							/>
 							<field
 								attribute="authDeviceID"
 								fullQualifiedName="tl.accounts:Person#authDeviceID"
 								type="tl.core:String"
+								visibility="read-only"
 							/>
 							<field
 								attribute="dataDeviceID"
 								fullQualifiedName="tl.accounts:Person#dataDeviceID"
 								type="tl.core:String"
+								visibility="read-only"
 							/>
 							<field
 								attribute="groups"
 								fullQualifiedName="tl.accounts:Person#groups"
 								type="tl.accounts:Group"
+								visibility="read-only"
 							/>
 							<field
 								attribute="admin"
 								fullQualifiedName="tl.accounts:Person#admin"
 								type="tl.core:Boolean"
+								visibility="read-only"
 							/>
 							<field
 								attribute="locale"
+								fullQualifiedName="tl.accounts:Person#locale"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="timezone"
 								fullQualifiedName="tl.accounts:Person#locale"
 								type="tl.core:String"
 							/>

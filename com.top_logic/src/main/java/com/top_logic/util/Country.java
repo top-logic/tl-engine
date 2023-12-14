@@ -7,6 +7,7 @@ package com.top_logic.util;
 
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -17,11 +18,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationValueProvider;
+import com.top_logic.basic.func.Function0;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+
 /**
  * Country identified by the ISO country code.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@com.top_logic.basic.config.annotation.Format(Country.Format.class)
+@Options(fun = Country.AllCountries.class)
 public class Country implements Comparable {
 
 	/** The sorted list of all countries. */
@@ -286,4 +295,51 @@ public class Country implements Comparable {
 		return this.code.hashCode();
 	}
 
+	/**
+	 * All known {@link Country countries}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static class AllCountries extends Function0<List<Country>> {
+
+		@Override
+		public List<Country> apply() {
+			return Arrays.asList(Country.getCountryList());
+		}
+
+	}
+
+	/**
+	 * {@link ConfigurationValueProvider} for {@link Country}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static class Format extends AbstractConfigurationValueProvider<Country> {
+
+		/** Singleton {@link Country.Format} instance. */
+		public static final Country.Format INSTANCE = new Country.Format();
+
+		/**
+		 * Creates a new {@link Country.Format}.
+		 */
+		protected Format() {
+			super(Country.class);
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			return value == null || value instanceof Country;
+		}
+
+		@Override
+		public Country getValueNonEmpty(String propertyName, CharSequence propertyValue) throws ConfigurationException {
+			return new Country(propertyValue.toString());
+		}
+
+		@Override
+		public String getSpecificationNonNull(Country configValue) {
+			return configValue.getCode();
+		}
+
+	}
 }

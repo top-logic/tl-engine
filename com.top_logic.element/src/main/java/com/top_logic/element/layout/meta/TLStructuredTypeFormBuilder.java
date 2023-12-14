@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.top_logic.base.config.i18n.Internationalized;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,6 +24,10 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency2;
+import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
@@ -251,6 +256,7 @@ public class TLStructuredTypeFormBuilder
 		@Override
 		@DynamicMode(fun = ActiveIf.class, args = @Ref(CREATE))
 		@RegexpConstraint(value = PartNameConstraints.RECOMMENDED_TYPE_NAME_PATTERN, errorKey = PartNameConstraints.RecommendedTypeNameKey.class, asWarning = true)
+		@Constraint(value = TypeNotExistsConstraint.class, args = { @Ref(MODULE), @Ref(CREATE) })
 		String getName();
 
 		/**
@@ -375,6 +381,47 @@ public class TLStructuredTypeFormBuilder
 			public Collection<TLModule> apply() {
 				return ModelService.getApplicationModel().getModules();
 			}
+		}
+		
+		/**
+		 * {@link ValueConstraint} that checks that no {@link TLType} with the configured name
+		 * exists in the given {@link TLModule}.
+		 * 
+		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+		 */
+		class TypeNotExistsConstraint extends GenericValueDependency2<String, TLModule, Boolean> {
+
+			/**
+			 * Creates a {@link TypeNotExistsConstraint}.
+			 */
+			public TypeNotExistsConstraint() {
+				super(String.class, TLModule.class, Boolean.class);
+			}
+
+			@Override
+			protected void checkValue(PropertyModel<String> propertyModel, PropertyModel<TLModule> moduleModel,
+					PropertyModel<Boolean> createModel) {
+				Boolean isCreate = createModel.getValue();
+				if (isCreate == null || !isCreate.booleanValue()) {
+					return;
+				}
+				String newTypeName = propertyModel.getValue();
+				if (StringServices.isEmpty(newTypeName)) {
+					return;
+				}
+				TLModule module = moduleModel.getValue();
+				if (module == null) {
+					return;
+				}
+				TLType existingType = module.getType(newTypeName);
+				if (existingType != null) {
+					propertyModel
+						.setProblemDescription(
+							I18NConstants.ERROR_TYPE_WITH_NAME_EXISTS__NAME_MODULE.fill(newTypeName, module));
+				}
+
+			}
+
 		}
 
 	}

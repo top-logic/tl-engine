@@ -49,6 +49,26 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey FORM_EDITOR__NO_ATTRIBUTED_OBJECT;
 
+	/**
+	 * @en A module with name ''{0}'' already exists.
+	 */
+	public static ResKey1 ERROR_MODULE_WITH_NAME_EXISTS__NAME;
+
+	/**
+	 * @en A type with name ''{0}'' already exists in module ''{1}''.
+	 */
+	public static ResKey2 ERROR_TYPE_WITH_NAME_EXISTS__NAME_MODULE;
+
+	/**
+	 * @en A type part with name ''{0}'' already exists in ''{1}''.
+	 */
+	public static ResKey2 ERROR_PART_WITH_NAME_EXISTS__NAME_TYPE;
+
+	/**
+	 * @en A type part with name ''{0}'' already exists in the generalization ''{1}''.
+	 */
+	public static ResKey2 ERROR_PART_WITH_NAME_EXISTS__NAME_GENERALIZATION;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

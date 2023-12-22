@@ -5,6 +5,8 @@
  */
 package com.top_logic.gui;
 
+import static com.top_logic.mig.html.HTMLConstants.*;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -23,6 +25,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.FileCompiler;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
@@ -78,6 +81,11 @@ public final class JSFileCompiler extends FileCompiler {
     private static final char NEWLINE = '\n';
 
 	private Map<String, String> _typeByAdditionalFiles;
+
+	/**
+	 * ES6 module specifier mapped to a resource that can be dynamically loaded.
+	 */
+	private Map<String, String> _importMap;
     
      /**
 	 * Creates a new {@link JSFileCompiler} from the given configuration.
@@ -105,12 +113,18 @@ public final class JSFileCompiler extends FileCompiler {
 
 	private void resolveAdditionalFilesReferences(InstantiationContext context) {
 		_typeByAdditionalFiles = new LinkedHashMap<>();
+		_importMap = new LinkedHashMap<>();
 
 		for (ScriptResourceDeclaration resourceDeclaration : config().getAdditionalFiles()) {
 			String resourcePath = resolveResourcePath(context, resourceDeclaration);
 
 			if (isAccessable(context, resourcePath)) {
-				_typeByAdditionalFiles.put(resourcePath, resourceDeclaration.getType());
+				String specifier = resourceDeclaration.getAs();
+				if (specifier == null) {
+					_typeByAdditionalFiles.put(resourcePath, resourceDeclaration.getType());
+				} else {
+					_importMap.put(specifier, resourcePath);
+				}
 			}
 		}
 	}
@@ -118,6 +132,7 @@ public final class JSFileCompiler extends FileCompiler {
 	@Override
 	protected void shutDown() {
 		_typeByAdditionalFiles = null;
+		_importMap = null;
 		super.shutDown();
 	}
 
@@ -393,6 +408,41 @@ public final class JSFileCompiler extends FileCompiler {
 		} else {
 			HTMLUtil.writeJavaScriptRef(out, aContextpath, getTarget(), reloadSuffix);
         }
+
+		// <script type="importmap">
+		// {
+		//   "imports": {
+		//     "lodash/": "/node_modules/lodash-es/"
+		//   }
+		// }
+		// </script>		
+		if (!_importMap.isEmpty()) {
+			out.beginBeginTag(SCRIPT);
+			out.writeAttribute(TYPE_ATTR, "importmap");
+			out.endBeginTag();
+			
+			// Do not close to prevent closing the underlying writer.
+			@SuppressWarnings("resource")
+			JsonWriter json = new JsonWriter(out);
+			{
+				json.beginObject();
+				{
+					json.name("imports");
+					json.beginObject();
+					{
+						for (Entry<String, String> entry : _importMap.entrySet()) {
+							json.name(entry.getKey());
+							json.value(aContextpath + entry.getValue());
+						}
+					}
+					json.endObject();
+				}
+				json.endObject();
+			}
+			
+			out.endTag(SCRIPT);
+		}
+
 		for (Entry<String, String> typeByAdditionalFile : _typeByAdditionalFiles.entrySet()) {
 			HTMLUtil.writeJavaScriptRef(out, aContextpath, typeByAdditionalFile.getKey(), reloadSuffix,
 				typeByAdditionalFile.getValue());

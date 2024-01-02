@@ -30,7 +30,7 @@ public class SafeHTML extends ManagedClass {
 	public static final String TYPE_ATTR = "type";
 
 	/**
-	 * Type of a {@link #SCRIPT_TAG} that marks it to contain TLScript (those tags are rendered to
+	 * Type of a {@link #SCRIPT_TAG} that marks it to contain TL-Script (those tags are rendered to
 	 * the UI only for editing them in the HTML editor, not for executing them).
 	 */
 	public static final String TEXT_TLSSCRIPT_TYPE = "text/tlscript";

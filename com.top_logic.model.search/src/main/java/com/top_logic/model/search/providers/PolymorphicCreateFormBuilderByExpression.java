@@ -12,7 +12,7 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * {@link CreateFormBuilder} that can be parameterized with a <em>TLScript</em> initializer
+ * {@link CreateFormBuilder} that can be parameterized with a <em>TL-Script</em> initializer
  * function.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

@@ -6,14 +6,14 @@
 package com.top_logic.model.search.ui;
 
 /**
- * TLScript specific constants used by the TLScript auto completion.
+ * TL-Script specific constants used by the TL-Script auto completion.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 public interface TLScriptConstants {
 
 	/**
-	 * Encloses model constants in TLScript.
+	 * Encloses model constants in TL-Script.
 	 */
 	public static final String MODEL_SCOPE_SEPARATOR = "`";
 

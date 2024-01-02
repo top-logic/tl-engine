@@ -1,7 +1,7 @@
 ace.define('ace/mode/tlscript', function(require, exports, module) {
 	var langTools = require('../ext/language_tools');
 	
-	// Completer object for TLScript.
+	// Completer object for TL-Script.
 	var tlScriptCompleter = {
 			
 			/**
@@ -9,7 +9,7 @@ ace.define('ace/mode/tlscript', function(require, exports, module) {
 			 */
 			getCompletions: function(editor, session, pos, prefix, callback) {
 				if (editor.session.$modeId != "ace/mode/tlscript") {
-					// Not a TLScript editor.
+					// Not a TL-Script editor.
 					return;
 				}
 				ace.tlscriptCompletionCallback = callback;
@@ -54,7 +54,7 @@ ace.define('ace/mode/tlscript', function(require, exports, module) {
 });
 
 /**
- * ACE Module for TLScript syntax highlighting.
+ * ACE Module for TL-Script syntax highlighting.
  */
 ace.define('ace/mode/tlscript_highlight_rules', function(require, exports, module) {
 	var oop = require("ace/lib/oop");
@@ -66,7 +66,7 @@ ace.define('ace/mode/tlscript_highlight_rules', function(require, exports, modul
 	var identifierRegEx = "[a-zA-Z][a-zA-Z0-9]*";
 	
 	/** 
-	 * TLScript specific highlighting rules.
+	 * TL-Script specific highlighting rules.
 	 * 
 	 * The names of the JSON object this.$rules defining modes. For instance: "start", "function", etc.
 	 * "start" is the entry point for the syntax highlighting.

@@ -25,7 +25,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.util.model.ModelService;
 
 /**
- * TLScript function generating a PDF from an object.
+ * TL-Script function generating a PDF from an object.
  * 
  * <p>
  * The function uses the export definition for the object to render the object to PDF.

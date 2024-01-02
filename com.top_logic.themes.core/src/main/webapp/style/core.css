@@ -157,7 +157,7 @@ a.cmdLink:visited {
 	line-height: var(--body-02-line-height);
 }
 
-/* Styles for display help for TLScript.*/
+/* Styles for display help for TL-Script.*/
 div.tlScriptDoc {
 	max-width: 500px;
 	overflow: auto;

@@ -18,7 +18,7 @@ public enum SearchType {
 	NORMAL,
 
 	/**
-	 * Created in the expert TLScript ACE editor.
+	 * Created in the expert TL-Script ACE editor.
 	 */
 	EXPERT
 

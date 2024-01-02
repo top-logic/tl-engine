@@ -17,7 +17,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en No search expression selected. */
 	public static ResKey ERROR_NO_SEARCH_EXPRESSION;
 
-	/** @en Not valid TLScript expression */
+	/** @en Not valid TL-Script expression */
 	public static ResKey MODEL_SEARCH_PARSE_ERROR;
 
 	/** @en Error when executing the script. */

@@ -34,7 +34,7 @@ import com.top_logic.util.regex.TLRegexBuilder;
 /**
  * {@link CodeEditorControl} for editing {@link Expr TL-Script expressions}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class TLScriptCodeEditorControl extends CodeEditorControl implements TLScriptConstants {
 
@@ -44,7 +44,7 @@ public class TLScriptCodeEditorControl extends CodeEditorControl implements TLSc
 	public static final String TLSCRIPT_CSS_CLASS = "tlscript";
 
 	/**
-	 * Language mode for TLScript.
+	 * Language mode for TL-Script.
 	 */
 	public static final String MODE_TL_SCRIPT = "ace/mode/tlscript";
 

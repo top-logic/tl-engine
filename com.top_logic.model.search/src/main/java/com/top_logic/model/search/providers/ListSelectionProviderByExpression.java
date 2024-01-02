@@ -20,7 +20,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * {@link ListSelectionProvider} that can be parameterized with a <i>TLScript</i> expression.
+ * {@link ListSelectionProvider} that can be parameterized with a <i>TL-Script</i> expression.
  */
 @InApp
 public class ListSelectionProviderByExpression extends

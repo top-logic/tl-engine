@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping;
 
 /**
- * Test case for TLScript expressions that perform HTML rendering.
+ * Test case for TL-Script expressions that perform HTML rendering.
  */
 @SuppressWarnings("javadoc")
 public class TestHtmlMacroExpansion extends AbstractSearchExpressionTest {

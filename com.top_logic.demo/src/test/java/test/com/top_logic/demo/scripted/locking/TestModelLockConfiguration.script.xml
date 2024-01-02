@@ -363,7 +363,7 @@
 							value="4"
 						/>
 					</object>
-					<labeled-member label="Sperrstrategie über TL-Skript"/>
+					<labeled-member label="Sperrstrategie über TL-Script"/>
 					<labeled-member label="Aspekt"/>
 				</path>
 			</field>
@@ -384,7 +384,7 @@
 							value="4"
 						/>
 					</object>
-					<labeled-member label="Sperrstrategie über TL-Skript"/>
+					<labeled-member label="Sperrstrategie über TL-Script"/>
 					<labeled-member label="Art"/>
 				</path>
 			</field>

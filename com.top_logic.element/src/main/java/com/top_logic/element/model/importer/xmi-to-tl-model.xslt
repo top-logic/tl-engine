@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!--Transformation from XMI/UML to Top-Logic 7 Model XML -->
+<!--Transformation from XMI/UML to TopLogic 7 Model XML -->
 <xsl:stylesheet version="1.0"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
 	xmlns:xmi='http://www.omg.org/spec/XMI/20131001'

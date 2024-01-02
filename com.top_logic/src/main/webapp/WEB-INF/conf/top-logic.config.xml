@@ -1889,7 +1889,7 @@
                 If no configuration is given, the normative default URLs are used. To use local references,
                 the configured values must point to a DTD relatively to the applications context path.
 
-                Changing this configuration is only necessary, if the clients accessing a Top-Logic system
+                Changing this configuration is only necessary, if the clients accessing a TopLogic system
                 have no connection to the internet or/and lack a local XML catalog for resolving system
                 identifiers based on the XHTML public identifiers.
 

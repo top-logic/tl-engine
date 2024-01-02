@@ -18,7 +18,7 @@ import com.top_logic.basic.tools.NameBuilder;
  * </p>
  * <p>
  * Using the Log4j <code>org.apache.logging.log4j.Level</code> type or even just referencing it and
- * its constants is not possible, as Top-Logic can be used without Log4j and therefore must not have
+ * its constants is not possible, as TopLogic can be used without Log4j and therefore must not have
  * any compile time dependencies to it.
  * </p>
  * <p>
@@ -44,7 +44,7 @@ public class LogLineSeverity implements Comparable<LogLineSeverity> {
 	/** {@link Level#DEBUG} */
 	public static final LogLineSeverity DEBUG = new LogLineSeverity("DEBUG", 2000);
 
-	/** Not used in Top-Logic, but one of the official Log4j log levels. */
+	/** Not used in TopLogic, but one of the official Log4j log levels. */
 	public static final LogLineSeverity TRACE = new LogLineSeverity("TRACE", 1000);
 
 	/** The standard log severities as defined by Log4j. */

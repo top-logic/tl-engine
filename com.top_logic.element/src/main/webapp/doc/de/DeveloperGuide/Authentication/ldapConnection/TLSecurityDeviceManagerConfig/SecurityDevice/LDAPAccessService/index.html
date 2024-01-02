@@ -153,12 +153,12 @@
 <pre><code>(&amp;(objectClass=Person)(samAccountName=*))</code></pre>
 <p>Alle Einträge der Objektklasse <code class="hljs inlineCode">Person</code>, deren Loginname nicht leer ist und die zur Benutzergruppe <code class="hljs inlineCode">top-logic</code> gehören (siehe base-dn für die Beschreibung der Abkürzungen):</p>
 <pre><code>(&amp;(objectClass=Person)(samAccountName=*)(memberOf=CN=top-logic,OU=BOS,DC=BOS,DC=local))</code></pre>
-<p><strong>Hinweis: </strong>Es ist üblich, Benutzergruppen mit Hilfe des Filters und des Attributs <code class="hljs inlineCode">memberOf</code> zu filtern. In Top-Logic gibt es jedoch noch die Alternative, <code class="hljs inlineCode">access-groups</code> zu verwenden.</p>
+<p><strong>Hinweis: </strong>Es ist üblich, Benutzergruppen mit Hilfe des Filters und des Attributs <code class="hljs inlineCode">memberOf</code> zu filtern. In TopLogic gibt es jedoch noch die Alternative, <code class="hljs inlineCode">access-groups</code> zu verwenden.</p>
 <h2>access-groups</h2>
 <p><strong>Typ: </strong><code class="hljs inlineCode">List&lt;NamedConfigMandatory&gt;</code></p>
-<p><code class="hljs inlineCode">access-groups</code> sind eine Konfiguration des <code class="hljs inlineCode">PersonLDAPAccessService</code>s und definieren die Benutzergruppen, die zum Importieren von Benutzern in Top-Logic berücksichtigt werden sollen. Sie bilden eine Alternative zu der Option, Benutzergruppen mit <code class="hljs inlineCode">memberOf</code> bereits im Filter abzufragen.</p>
+<p><code class="hljs inlineCode">access-groups</code> sind eine Konfiguration des <code class="hljs inlineCode">PersonLDAPAccessService</code>s und definieren die Benutzergruppen, die zum Importieren von Benutzern in TopLogic berücksichtigt werden sollen. Sie bilden eine Alternative zu der Option, Benutzergruppen mit <code class="hljs inlineCode">memberOf</code> bereits im Filter abzufragen.</p>
 <p>Wenn keine <code class="hljs inlineCode">access-groups</code> angegeben werden, wird auschschließlich der Filter verwendet, um Benutzereinträge zu ermitteln.</p>
-<p>Es empfiehlt sich pro Benutzergruppe ein <a class="tlObject" data-custom="false" href="?page=SecurityDevice&amp;uuid=47187a0f-0c55-47b2-afbe-a75b9e77440b">SecurityDevice</a> zu konfigurieren. Dadurch können pro Benutzergruppe eigene Konfigurationen vorgenommen und auch nach dem Import in Top-Logic Benutzer den ursprünglichen Benutzergruppen zugeordnet werden.</p>
+<p>Es empfiehlt sich pro Benutzergruppe ein <a class="tlObject" data-custom="false" href="?page=SecurityDevice&amp;uuid=47187a0f-0c55-47b2-afbe-a75b9e77440b">SecurityDevice</a> zu konfigurieren. Dadurch können pro Benutzergruppe eigene Konfigurationen vorgenommen und auch nach dem Import in TopLogic Benutzer den ursprünglichen Benutzergruppen zugeordnet werden.</p>
 <h3>Beispiele</h3>
 <p>Benutzer der Gruppe top-logic:</p>
 <pre><code>CN=top-logic,OU=BOS,DC=BOS,DC=local</code></pre>

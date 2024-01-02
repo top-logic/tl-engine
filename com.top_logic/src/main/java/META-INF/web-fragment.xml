@@ -136,7 +136,7 @@
     </error-page>
 
     <jsp-config>
-        <!-- Top-Logic basic tag library descriptor -->
+        <!-- TopLogic basic tag library descriptor -->
         <taglib>
             <taglib-uri>basic</taglib-uri>
             <taglib-location>/WEB-INF/tlds/basic.tld</taglib-location>

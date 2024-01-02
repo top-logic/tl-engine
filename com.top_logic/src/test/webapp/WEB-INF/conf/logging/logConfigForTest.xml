@@ -7,7 +7,7 @@
 >
 	<Properties>
 		<!--
-			The Top-Logic alias LOG_PATH is defined in the application configuration.
+			The TopLogic alias LOG_PATH is defined in the application configuration.
 			Both occurrences (here and there) have to be changed in the same way.
 		-->
 		<Property name="log.directory">%LOG_PATH%</Property>

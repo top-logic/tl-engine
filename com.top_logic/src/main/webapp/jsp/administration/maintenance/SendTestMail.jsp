@@ -45,9 +45,9 @@ private static final Property<Object> PROPERTY_SUBJECT = TypedAnnotatable.proper
 private static final Property<Object> PROPERTY_CONTENT = TypedAnnotatable.property(Object.class, "ADMINJSP_SendTestMail_Content");
 private static final Property<Object> PROPERTY_HTML = TypedAnnotatable.property(Object.class, "ADMINJSP_SendTestMail_HTML");
 private static final String DEFAULT_RECIPIENT = null;
-private static final String DEFAULT_SUBJECT = "Top-Logic Test-Mail";
-private static final String DEFAULT_CONTENT = "<h1>Top-Logic Test-Mail</h1>"
-+"<p>Hallo!</p><p><font color=\"#0000FF\">Wenn Sie diese E-Mail erhalten, ist die E-Mail-Anbindung in <i>Top-Logic</i> richtig konfiguriert.</font></p><p>Mit freundlichen Grüßen,<br/>Ihr Top-Logic Team";
+private static final String DEFAULT_SUBJECT = "TopLogic Test-Mail";
+private static final String DEFAULT_CONTENT = "<h1>TopLogic Test-Mail</h1>"
++"<p>Hallo!</p><p><font color=\"#0000FF\">Wenn Sie diese E-Mail erhalten, ist die E-Mail-Anbindung in <i>TopLogic</i> richtig konfiguriert.</font></p><p>Mit freundlichen Grüßen,<br/>Ihr TopLogic Team";
 private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 %>
 

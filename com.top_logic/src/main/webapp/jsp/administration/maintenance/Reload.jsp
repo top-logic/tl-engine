@@ -90,7 +90,7 @@
 			else {
 				%>
 				<p>
-					This page allows you to reload different modules in Top-Logic.
+					This page allows you to reload different modules in TopLogic.
 				</p>
 				<form method="POST">
 					<table summary="List of Things you can reload">

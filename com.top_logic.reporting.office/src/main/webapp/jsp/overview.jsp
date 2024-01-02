@@ -13,7 +13,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 		</h2>
 		This overview serves as an entrypoint for the
 		tutorial. It delivers help about certain aspect of the Layout Framework as used
-		by any Top-Logic application based on the Top-Logic Version 5 or higher.
+		by any TopLogic application based on the TopLogic Version 5 or higher.
 		<h2>
 			Howto use the Framework
 		</h2>

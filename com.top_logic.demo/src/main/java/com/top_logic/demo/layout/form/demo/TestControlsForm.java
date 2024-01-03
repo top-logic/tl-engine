@@ -3374,7 +3374,7 @@ public class TestControlsForm extends FormComponent {
 				megaMenuOption(I18NConstants.MONITOR, I18NConstants.MONITOR));
 		SelectField megaMenuOptionsBiggest =
 			FormFactory.newSelectField("smallestMegaMenuOptions", megaMenuSelectListSmallest, false, false);
-		megaMenuOptionsBiggest.setEmptySelectionMegaMenu(I18NConstants.CUSTOMIZED_NO_OPTION_MEGAMENU);
+		SelectFieldUtils.setEmptySelectionMegaMenu(megaMenuOptionsBiggest, I18NConstants.CUSTOMIZED_NO_OPTION_MEGAMENU);
 
 		megaMenuGroup.addMember(megaMenuOptionsBiggest);
 	}

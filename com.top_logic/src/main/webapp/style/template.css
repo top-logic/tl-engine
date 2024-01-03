@@ -3433,133 +3433,126 @@ div.pdlgContent {
 /* ======    Styles for mega menu   ===== */
 /* ====================================== */
 
-.mandatory .megaMenuButton {
+.mandatory .tl-mega-menu-button {
 	border: 1px solid var(--ACCORDION_HOVER_BACKGROUND_COLOR)
 }
 
-.megaMenuButton {
-	padding-right: 0;
+.tl-mega-menu-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
 	border-radius: 4px;
-	border-width: 1px;
-	border-style: solid;
-	border-color: var(--NORMAL_TEXT);
+	border: 1px solid var(--NORMAL_TEXT);
 	font-size: 12px;
 	font-family: 'Open Sans', Geneva, sans-serif;
 	font-weight: normal;
-	background-color: var(--IMAGE_BUTTON_BACKGROUND_HOVER_BOXSHADOW);
-	/* creates the arrow */
-	line-height: 1.3;
-  	padding: .2em 1.9em .2em .6em;
-  	margin: 0;
-  	-moz-appearance: none;
-  	-webkit-appearance: none;
-  	appearance: none;
-  	background-image: linear-gradient(45deg, transparent 49%, var(--ACCORDION_HOVER_BACKGROUND_COLOR) 50%), linear-gradient(135deg, var(--ACCORDION_HOVER_BACKGROUND_COLOR) 49%, transparent 50%);
-  	background-position: calc(100% - 10px) center, calc(100% - 5px) center;
-  	background-size: 5px 5px, 5px 5px;
-  	background-repeat: no-repeat;
-  	background-color: var(--MANDATORY_FIELD_BG);
 }
 
-.megaMenuGridContainer {
+.tl-mega-menu-button-arrow-down {
+	font-size: 10px;
+	padding-left: 3px;
+}
+
+.tl-mega-menu-grid-container .tl-mega-menu-container {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.megaMenuFlexContainer {
+.tl-mega-menu-flex-container .tl-mega-menu-container {
 	display: flex;
 	flex-direction: column;
 }
 
-.megaMenuGridContainer, .megaMenuFlexContainer {
+.tl-mega-menu-container {
 	overflow: auto;
 	position: relative;
 	max-height: 90vh;
 }
 
-.tl-megaMenu__option {
+.tl-mega-menu__option,
+.tl-mega-menu__option--fixed {
 	display: flex;
 	flex-direction: column;
 	cursor: pointer;
 	padding: 5px;
-	line-break: anywhere;
 }
 
-.tl-megaMenu__option a {
+.tl-mega-menu__option a {
     width: 100%;
     height: 100%;
     float: left;
     text-decoration: none;
 }
 
-.tl-megaMenu__option-label {
+.tl-mega-menu__option-label {
   	font-weight: bold
 }
 
-.tl-megaMenu__option a:hover {
+.tl-mega-menu__option a:hover,
+.tl-mega-menu__option a:focus {
     color: var(--NORMAL_TEXT);
 }
 
-.tl-megaMenu__option:hover {
+.tl-mega-menu__option:hover,
+.tl-mega-menu__option:focus {
     color: var(--NORMAL_TEXT);
     background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
 }
 
-.tl-megaMenu__option--selected {
+.tl-mega-menu__option--selected {
     color: var(--NORMAL_TEXT);
     background-color: var(--CALENDAR_SELECTED_BACKGROUND_COLOR);
 }
 
-.tl-megaMenu__option--selected a:hover {
+.tl-mega-menu__option--selected a:hover {
     color: var(--NORMAL_TEXT);
 }
 
-.megaMenuImmutableLabel {
+.tl-mega-menu__option-icon--immutable {
+	padding-right: 5px;
+}
+
+.tl-mega-menu__option-label--immutable {
 	font-weight: normal;
 }
 
-.megaMenuFixedItem {
+.tl-mega-menu__option--fixed {
 	cursor: default;
-	padding: 5px;	
 }
 
-.megaMenuFlexContainer .megaMenuFixedItem,
-.megaMenuGridContainer .megaMenuFixedItem {
+.tl-mega-menu-flex-container .tl-mega-menu__option--fixed,
+.tl-mega-menu-grid-container .tl-mega-menu__option--fixed {
 	color: graytext;
 }
 
-.itemContainer {
+.tl-mega-menu__option-container {
 	display: flex;
 	justify-content: flex-start;
 }
 
-.megaMenuIconContainer {
-	align-self: flex-start;
-	flex-shrink: 0;	
+.tl-mega-menu__option-icon-container {
 	display: flex;
+	flex-shrink: 0;
 	justify-content: center;
+	align-self: flex-start;
 	width: 22px;
 	height: 22px;
 	padding: 0 10px 0 10px;
 }
 
-.megaMenuIcon {
+.tl-mega-menu__option-icon {
 	font-size: 21px;
 }
 
-.megaMenuFixedItem .itemContainer .megaMenuIconContainer .megaMenuIcon,
-.megaMenuFixedItem .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
-	color: graytext;
-}
-
-.tl-megaMenu__option .itemContainer .megaMenuIconContainer .megaMenuIcon,
-.tl-megaMenu__option .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
-	color: #000;
+.tl-mega-menu__option-text-container {
+	display: flex;
+	flex-direction: column;
 }
 
 /* ====================================== */
 /* ====== Styles for legacy dialogs ===== */
 /* ====================================== */
+
 div.splashScreen {
 	position:		absolute;
 	top:			0px;
@@ -3575,6 +3568,7 @@ div.splashScreen {
 	border:none;
 	text-align:left;
 }
+
 div.dialog {
 	position:			absolute;
 	max-width:			640px;
@@ -3585,9 +3579,11 @@ div.dialog {
 	border-width:		4px;
 	border-color:		var(--FRAME_BACK);
 }
+
 .dialogTitleBar {
 	background-color:	var(--FRAME_BACK);
 }
+
 td.dialogTitleBar {
 	color:				var(--INVERT_TEXT);
 	font-size:			var(--FONT_SIZE);

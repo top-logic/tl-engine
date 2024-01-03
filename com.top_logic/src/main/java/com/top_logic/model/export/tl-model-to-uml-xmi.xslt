@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
- *	Transformation from Top-Logic 6 Model specification to XMI/UML
+ *	Transformation from TopLogic 6 Model specification to XMI/UML
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  -->
@@ -18,7 +18,7 @@
 		<XMI xmi.version='1.2' timestamp='Wed Jan 13 12:51:00 CET 2010'>
 			<XMI.header>
 				<XMI.documentation>
-					<XMI.exporter>Top-Logic Model Export</XMI.exporter>
+					<XMI.exporter>TopLogic Model Export</XMI.exporter>
 				</XMI.documentation>
 				<XMI.metamodel xmi.name="UML" xmi.version="1.4" />
 			</XMI.header>

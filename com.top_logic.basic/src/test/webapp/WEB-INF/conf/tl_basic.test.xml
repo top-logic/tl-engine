@@ -213,7 +213,7 @@
 	        <entry name = "UserMonitor" value = ""/>
 	    </section>
 
-        <section name="WebCMS" comment="Settings for Top-Logic WebCMS (aka Web Content Assistant aka Content Assistant Extension)">
+        <section name="WebCMS" comment="Settings for TopLogic WebCMS (aka Web Content Assistant aka Content Assistant Extension)">
             <entry name="CollectionManagerImpl"     value="com.top_logic.base.cms.pool.xmlpool.XmlCollectionManager" />
             <entry name="cms.layoutlocation"        value="cms://layouts" />
             <entry name="cms.inputlocation"         value="cms://inputs"  />

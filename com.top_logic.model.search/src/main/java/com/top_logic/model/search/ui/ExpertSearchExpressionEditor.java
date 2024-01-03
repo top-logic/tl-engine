@@ -30,9 +30,9 @@ import com.top_logic.model.search.ui.selector.SearchType;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Code editor to create TLScript based {@link SearchExpression}s.
+ * Code editor to create TL-Script based {@link SearchExpression}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class ExpertSearchExpressionEditor extends FormComponent implements SearchExpressionEditor {
 

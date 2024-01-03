@@ -1,4 +1,4 @@
-<p>Die Nutzer-Authentifizierung in einer Top-Logic-Anwendung kann über ein externes System erfolgen. Hierfür muss in der Anwendung Single-Sign-On aktiviert werden.</p>
+<p>Die Nutzer-Authentifizierung in einer TopLogic-Anwendung kann über ein externes System erfolgen. Hierfür muss in der Anwendung Single-Sign-On aktiviert werden.</p>
 <p><a href="http://openid.net/specs/openid-connect-core-1_0.html" target="_blank">​OpenID Connect</a> ist ein offenes Protokoll, mit dem die Nutzer-Authentifizierung in einer Web-Anwendung an einen externen Provider ausgelagert werden kann. Um Login über OpenID Connect zu aktivieren müssen die folgenden Schritte durchgeführt werden.</p>
 <h3>Einbinden des Moduls <code class="hljs inlineCode">com.top_logic.security.auth.pac4j</code></h3>
 <pre><code class="language-xml">&lt;classpath&gt;
@@ -17,7 +17,7 @@
     &lt;entry name="%PAC_SECRET%" value="..." /&gt;
   &lt;/alias&gt;
 &lt;/root&gt;</code></pre>
-<p>Hierbei wird die <code class="hljs inlineCode">PAC_CLIENT_ID</code> und <code class="hljs inlineCode">PAC_SECRET</code> vom OpenID-Provider zur Verfügung gestellt. Die <code class="hljs inlineCode">PAC_DOMAIN</code> muss mit dem Domain-Eintrag des Top-Logic-Sercurity-Devices übereinstimmen, welches die Nutzer enthält, die sich über den Provider einloggen können. Wenn die Nutzer über LDAP in die Anwendung geladen werden, muss diese Domain mit der LDAP-Domain übereinstimmen.</p>
+<p>Hierbei wird die <code class="hljs inlineCode">PAC_CLIENT_ID</code> und <code class="hljs inlineCode">PAC_SECRET</code> vom OpenID-Provider zur Verfügung gestellt. Die <code class="hljs inlineCode">PAC_DOMAIN</code> muss mit dem Domain-Eintrag des TopLogic-Sercurity-Devices übereinstimmen, welches die Nutzer enthält, die sich über den Provider einloggen können. Wenn die Nutzer über LDAP in die Anwendung geladen werden, muss diese Domain mit der LDAP-Domain übereinstimmen.</p>
 <p>Wenn der App-Server seinen eigenen Host-Namen nicht auflösen kann, oder dieser hinter einer Fassade steht, kann es notwendig sein, die öffentliche Adresse zu konfigurieren, an die der Nutzer vom OpenID-Provider zurückverwiesen wird:</p>
 <pre><code class="language-xml">&lt;entry name="%PAC_CALLBACK_URL%" value="https://my-host-name/my-app/servlet/callback" /&gt;
 &lt;entry name="%PAC_CALLBACK_ABSOLUTE%" value="true" /&gt;</code></pre>

@@ -19,7 +19,7 @@ import com.top_logic.model.util.Pointer;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Executor of a <i>TLScript</i> expression that traces all accesses done by the script.
+ * Executor of a <i>TL-Script</i> expression that traces all accesses done by the script.
  * 
  * <p>
  * Tracing the evaluation can be used to observe a script result for change. If the script has no

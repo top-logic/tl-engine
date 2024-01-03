@@ -17,9 +17,9 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.interpreter.TypeResolver;
 
 /**
- * Utilities for the TLScript search.
+ * Utilities for the TL-Script search.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class SearchUtil {
 

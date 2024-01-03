@@ -37,6 +37,7 @@ import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.I18NConstants;
+import com.top_logic.layout.form.control.MegaMenuControl;
 import com.top_logic.layout.form.control.SelectionControl;
 import com.top_logic.layout.form.model.SelectField.Config;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
@@ -274,10 +275,10 @@ public class SelectFieldUtils {
 	 * 
 	 * @param field
 	 *        {@link FormField} of which you want to receive the empty selection.
-	 * @return {@link SelectField#EMPTY_LABEL_PROPERTY_MEGAMENU}.
+	 * @return {@link MegaMenuControl#EMPTY_LABEL_PROPERTY_MEGAMENU}.
 	 */
 	public static ResKey getEmptySelectionMegaMenu(FormField field) {
-		return field.get(SelectField.EMPTY_LABEL_PROPERTY_MEGAMENU);
+		return field.get(MegaMenuControl.EMPTY_LABEL_PROPERTY_MEGAMENU);
 	}
 
 	/**
@@ -286,10 +287,11 @@ public class SelectFieldUtils {
 	 * @param field
 	 *        {@link FormField} of which the empty selection should be changed.
 	 * @param label
-	 *        new {@link ResKey} for replacing {@link SelectField#EMPTY_LABEL_PROPERTY_MEGAMENU}.
+	 *        new {@link ResKey} for replacing
+	 *        {@link MegaMenuControl#EMPTY_LABEL_PROPERTY_MEGAMENU}.
 	 */
 	public static void setEmptySelectionMegaMenu(FormField field, ResKey label) {
-		field.set(SelectField.EMPTY_LABEL_PROPERTY_MEGAMENU, label);
+		field.set(MegaMenuControl.EMPTY_LABEL_PROPERTY_MEGAMENU, label);
 	}
 
 	/**

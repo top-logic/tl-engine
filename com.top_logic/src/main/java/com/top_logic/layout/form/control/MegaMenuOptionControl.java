@@ -18,21 +18,19 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.AbstractConstantControl;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.TemplateVariable;
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.SelectFieldUtils;
-import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.provider.LabelResourceProvider;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.tooltip.HtmlToolTip;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Is one single option for a mega menu popup window.
- * 
- * <p>
- * Being used to display a option for a mega menu in {@MegaMenuTabConfig} which acts as a navigation
- * bar button (main tab bar button).
- * </p>
+ * An option for a mega menu popup window.
  * 
  * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
  *
@@ -77,7 +75,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 		if (optionLabelProvider instanceof ResourceProvider) {
 			optionResourceProvider = (ResourceProvider) optionLabelProvider;
 		} else {
-			optionResourceProvider = MetaResourceProvider.INSTANCE;
+			optionResourceProvider = LabelResourceProvider.toResourceProvider(optionLabelProvider);
 		}
 		return optionResourceProvider;
 	}
@@ -96,10 +94,35 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 		ValueChange.INSTANCE.writeInvokeExpression(out, this);
 	}
 
-	/** Selects the option. */
+	/** The option's ID value. */
 	@TemplateVariable("dataValue")
 	public void writeDataValue(TagWriter out) throws IOException {
 		out.append(_megaMenu.getOptionID(_option));
+	}
+
+	/** Icon of the option. */
+	@TemplateVariable("icon")
+	public void writeIcon(DisplayContext context, TagWriter out) throws IOException {
+		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
+		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
+		ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
+		ThemeImage image = optionResourceProvider.getImage(currOption, null);
+		XMLTag icon;
+		if (image != null) {
+			icon = image.toIcon();
+			out.beginBeginTag(HTMLConstants.DIV);
+			out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-icon-container");
+			out.endBeginTag();
+
+			icon.beginBeginTag(context, out);
+			out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-icon");
+			icon.endBeginTag(context, out);
+			icon.endTag(context, out);
+			out.endTag(HTMLConstants.DIV);
+
+			out.endTag(HTMLConstants.DIV);
+		}
+
 	}
 
 	/** Name of the option. */

@@ -25,7 +25,7 @@
 </index>
 	</metaobject>
 
-	<!-- a special association to connect a PersonContact to a (Top-Logic) Person -->
+	<!-- a special association to connect a PersonContact to a (TopLogic) Person -->
 	<association super_class="Association" object_name="representsUser" db_name="REPRESENTS_USER">
 		<attributes>
 			<source

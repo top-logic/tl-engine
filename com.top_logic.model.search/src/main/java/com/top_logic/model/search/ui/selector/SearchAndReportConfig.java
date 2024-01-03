@@ -41,7 +41,7 @@ public interface SearchAndReportConfig extends SearchPart {
 	void setSearch(Search search);
 
 	/**
-	 * TLScript search expression.
+	 * TL-Script search expression.
 	 */
 	Expr getExpertSearch();
 

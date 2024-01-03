@@ -60,7 +60,7 @@ public class TLScriptAutoCompletionCommand extends ControlCommand implements TLS
 
 	@Override
 	public ResKey getI18NKey() {
-		return ResKey.text("TLScript Autocompletion");
+		return ResKey.text("TL-Script Autocompletion");
 	}
 
 	@Override

@@ -60,7 +60,7 @@
 						</list>
 					</property>
 					
-					<!-- Note: Must be formulated in object syntax, since it is extended on the client with a rule to allow TLScript content. -->
+					<!-- Note: Must be formulated in object syntax, since it is extended on the client with a rule to allow TL-Script content. -->
 					<property key="extraAllowedContent">
 						<struct>
 							<property key="a">

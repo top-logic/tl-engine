@@ -1,14 +1,14 @@
 <p>Dieser Abschnitt gibt eine knappe Einführung in TL-Script. Die Details mit einer kompletten Funktionsreferenz können in den nachfolgenden Kapiteln nachgelesen werden.</p>
-<p>Die TL-Skript-Ausdrücke in diesem Abschnitt können im Experten-Modus der Suchkomponente in einer Top-Logic Applikation ("Modellbasierte Suche") ausgewertet werden:</p>
+<p>Die TL-Script-Ausdrücke in diesem Abschnitt können im Experten-Modus der Suchkomponente in einer TopLogic Applikation ("Modellbasierte Suche") ausgewertet werden:</p>
 <p><img src="ref:image_81025.png" style="opacity:1"></p>
 <h2>Rechnen mit Zahlen</h2>
-<p>In TL-Script ist alles eine Formel, die ein Ergebnis berechnet. Alles, was man in einen Taschenrechner oder in die Zelle einer Tabellenkalkulation als Formel eintragen kann, ist ein TL-Skript:</p>
+<p>In TL-Script ist alles eine Formel, die ein Ergebnis berechnet. Alles, was man in einen Taschenrechner oder in die Zelle einer Tabellenkalkulation als Formel eintragen kann, ist ein TL-Script:</p>
 <pre><code>1 + 2
 
 3 * (5 + 9 / 3)</code></pre>
 <p>Die obigen beiden "Skripte" liefern <code class="hljs inlineCode">3</code> bzw. <code class="hljs inlineCode">24</code> als Ergebnis. Siehe auch <a class="tlObject" data-custom="false" href="?page=ArithmeticOperations&amp;uuid=4cea9b35-54a8-47fe-aed3-b0637cf4c040">Arithmetische Operationen</a>.</p>
 <h2>Rechnen mit Text</h2>
-<p>Texte bzw. Zeichenketten sind neben Zahlen ein wichiger Datentyp in Anwendungen. TL-Skript bietet eine Vielzahl von Möglichkeiten für die Manipulation von Zeichenketten.</p>
+<p>Texte bzw. Zeichenketten sind neben Zahlen ein wichiger Datentyp in Anwendungen. TL-Script bietet eine Vielzahl von Möglichkeiten für die Manipulation von Zeichenketten.</p>
 <pre><code>toUpperCase("Hello world!")
 
 toString("Hello", " ", "world", "!")</code></pre>
@@ -40,9 +40,9 @@ toString("Hello", " ", "world", "!")</code></pre>
   .map(x -&gt; $x + 2)</code></pre>
 <p>Obiger Ausdruck kombiniert beide Berechnungen von oben und liefert direkt die Ergebnisliste <code class="hljs inlineCode">7, 13, 9, 10</code>, die durch Filterung und anschließender Abbildung der Eingabeliste entsteht. Details zu Listen und Mengen liefert der Abschnitt <a class="tlObject" data-custom="false" href="?page=ListAndSet&amp;uuid=1b70e76c-45d3-4501-b8e6-6c1c0254cd48">Listen und Mengen</a>.</p>
 <h2>Interaktion mit Anwendungsdaten</h2>
-<p>Die wichtigste Funktion von TL-Skript ist der Zugriff auf das Anwendungsmodell und die Suche und Auswertung von Anwendungsdaten. Nehmen wir an, das folgende einfache Modell eines Bestellsystems sei gegeben. Hier besteht eine Bestellung aus mehreren Positionen, die jeweils aus einer Anzahl und einem ausgewählten Produkt bestehen.</p>
+<p>Die wichtigste Funktion von TL-Script ist der Zugriff auf das Anwendungsmodell und die Suche und Auswertung von Anwendungsdaten. Nehmen wir an, das folgende einfache Modell eines Bestellsystems sei gegeben. Hier besteht eine Bestellung aus mehreren Positionen, die jeweils aus einer Anzahl und einem ausgewählten Produkt bestehen.</p>
 <p><img src="ref:image_89345.png" style="opacity:1"></p>
-<p>Alle diese Typen sind im Modul <code class="hljs inlineCode">tl.tutorial.order</code> definiert. Alle Modellelemente (Module, Typen und ihre Eigenschaften) können in TL-Script direkt benannt werden. Hierfür wird der der vollqualifizierte Name des Modellelements in "<code class="hljs inlineCode">`</code>"-Zeichen eingeschlossen. Da Modellelemente in Top-Logic ganz normale Objekte sind, können diese auch als Suchergebnisse dargestellt werden.</p>
+<p>Alle diese Typen sind im Modul <code class="hljs inlineCode">tl.tutorial.order</code> definiert. Alle Modellelemente (Module, Typen und ihre Eigenschaften) können in TL-Script direkt benannt werden. Hierfür wird der der vollqualifizierte Name des Modellelements in "<code class="hljs inlineCode">`</code>"-Zeichen eingeschlossen. Da Modellelemente in TopLogic ganz normale Objekte sind, können diese auch als Suchergebnisse dargestellt werden.</p>
 <pre><code>`tl.tutorial.order`</code></pre>
 <p>Obiger Ausdruck liefert das Modul <code class="hljs inlineCode">tl.tutorial.order</code> als Ergebnis. Genauso erhält man Zugriff auf den Typ von Bestellungen bzw. das Anzahl-Attribut einer Bestellposition über die folgenden Ausdrücke:</p>
 <pre><code>`tl.tutorial.order:Order`

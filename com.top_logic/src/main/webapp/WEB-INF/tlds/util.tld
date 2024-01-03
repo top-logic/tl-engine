@@ -20,7 +20,7 @@
     <shortname>util</shortname>
   
 <!-- General information about this tag library -->
-    <info>Defines tags for better handling inside Top-Logic</info>
+    <info>Defines tags for better handling inside TopLogic</info>
 
 
 <!-- Generates an I18N output for the given key. -->

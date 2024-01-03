@@ -1,5 +1,5 @@
 <p>This section gives a concise introduction to TL-Script. The details with a complete function reference can be found in the following chapters.</p>
-<p>The TL-Script expressions in this section can be evaluated in the expert mode of the search component in a Top-Logic application ("Model-based search"):</p>
+<p>The TL-Script expressions in this section can be evaluated in the expert mode of the search component in a TopLogic application ("Model-based search"):</p>
 <p><img src="ref:image_81025.png" style="opacity:1"></p>
 <h2>Calculating with numbers</h2>
 <p>In TL-Script, everything is a formula that calculates a result. Anything that can be entered into a calculator or into a spreadsheet cell as a formula is a TL-Script:</p>
@@ -42,7 +42,7 @@ toString("Hello", " ", "world", "!")</code></pre>
 <h2>Interaction with application data</h2>
 <p>The most important function of TL script is to access the application model and search and evaluate application data. Suppose the following simple model of an ordering system is given. Here, an order consists of several items, each consisting of a quantity and a selected product.</p>
 <p><img src="ref:image_89345.png" style="opacity:1"></p>
-<p>All these types are defined in the module <code class="hljs inlineCode">tl.tutorial.order</code>. All model elements (modules, types and their properties) can be named directly in TL-Script. For this purpose the fully qualified name of the model element is enclosed in "<code class="hljs inlineCode">`</code>" characters. Since model elements are normal objects in Top-Logic, they can also be displayed as search results.</p>
+<p>All these types are defined in the module <code class="hljs inlineCode">tl.tutorial.order</code>. All model elements (modules, types and their properties) can be named directly in TL-Script. For this purpose the fully qualified name of the model element is enclosed in "<code class="hljs inlineCode">`</code>" characters. Since model elements are normal objects in TopLogic, they can also be displayed as search results.</p>
 <pre><code>`tl.tutorial.order`</code></pre>
 <p>The above expression returns the module <code class="hljs inlineCode">tl.tutorial.order</code> as a result. In the same way, you can access the type of orders or the number attribute of an order item using the following expressions:</p>
 <pre><code>`tl.tutorial.order:Order`

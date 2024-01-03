@@ -28,7 +28,7 @@ com.top_logic.basic.ReloadableManager"
 				Reload I18N
 			</h1>
 			<p>
-				This page allowes you to reload I18N in Top-Logic.
+				This page allowes you to reload I18N in TopLogic.
 			</p>
 			<%
 			if (request.getParameter ("RELOAD") != null) {

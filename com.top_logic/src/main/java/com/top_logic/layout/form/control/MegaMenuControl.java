@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -28,7 +31,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.provider.LabelResourceProvider;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
 import com.top_logic.layout.structure.PopupDialogControl;
@@ -56,13 +59,19 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		AbstractFormFieldControlBase.COMMANDS,
 		new ControlCommand[] { OpenPopUpCommand.INSTANCE, MegaMenuSelectionChanged.INSTANCE });
 
-	private static final String MEGAMENU_BUTTONCONTROL = "services.form.MegaMenuButtonControl";
+	private static final String MEGAMENU_BUTTONCONTROL = "services.form.MegaMenuControl.MegaMenuButtonControl";
 
 	private PopupDialogControl _megaMenuPopupDialogControl;
 
 	private ThemeImage _noOptionIcon = com.top_logic.layout.table.renderer.Icons.SORT_DESC_SMALL;
 
 	private ThemeImage _defaultIcon = com.top_logic.layout.tabbar.Icons.TAB_RIGHT_SCROLL_BUTTON;
+
+	/**
+	 * ResKey for storing an explicit empty label for the mega menu.
+	 */
+	public static final Property<ResKey> EMPTY_LABEL_PROPERTY_MEGAMENU =
+		TypedAnnotatable.property(ResKey.class, "noOptionSelectedLabelMegaMenu");
 
 	/**
 	 * @param model
@@ -84,7 +93,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		out.endBeginTag();
 		out.beginBeginTag(HTMLConstants.BUTTON);
 		writeInputIdAttr(out);
-		out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuButton");
+		out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu-button");
 		if (megaMenuSelectField.isDisabled()) {
 			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
 		}
@@ -96,17 +105,35 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		} else {
 			LabelProvider optionLabelProvider = megaMenuSelectField.getOptionLabelProvider();
 			ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
-
 			String tooltip = optionResourceProvider.getTooltip(singleSelection);
+
 			if (tooltip != null) {
 				// add tooltip caption for the mouse hover effect.
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
 			}
 			out.endBeginTag();
+
+			ThemeImage image = optionResourceProvider.getImage(singleSelection, null);
+			if (image != null) {
+				XMLTag icon = image.toIcon();
+				icon.beginBeginTag(context, out);
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu-button-icon");
+				icon.endBeginTag(context, out);
+				icon.endTag(context, out);
+			}
+
+			out.beginBeginTag(HTMLConstants.SPAN);
+			out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu-button-label");
+			out.endBeginTag();
 			String optionLabel = optionLabelProvider.getLabel(singleSelection);
 			out.writeText(optionLabel);
-
+			out.endTag(HTMLConstants.SPAN);
 		}
+		XMLTag arrowDownIcon = com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN.toIcon();
+		arrowDownIcon.beginBeginTag(context, out);
+		out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu-button-arrow-down");
+		arrowDownIcon.endBeginTag(context, out);
+		arrowDownIcon.endTag(context, out);
 		out.endTag(HTMLConstants.BUTTON);
 		out.endTag(HTMLConstants.SPAN);
 	}
@@ -116,52 +143,9 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		if (optionLabelProvider instanceof ResourceProvider) {
 			optionResourceProvider = (ResourceProvider) optionLabelProvider;
 		} else {
-			optionResourceProvider = MetaResourceProvider.INSTANCE;
+			optionResourceProvider = LabelResourceProvider.toResourceProvider(optionLabelProvider);
 		}
 		return optionResourceProvider;
-	}
-
-	/**
-	 * Creates the pop up dialog for a mega menu.
-	 *
-	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
-	 */
-	public static class MegaMenuPopupDialogHelper {
-
-		/**
-		 * Creates the dialog and layout for the pop up window.
-		 * 
-		 * @param context
-		 *        from {@link #openPopUp}.
-		 * @param frameScope
-		 *        the control's {@link FrameScope}.
-		 * @param id
-		 *        the control's id.
-		 * @return {@link PopupDialogControl}.
-		 */
-		public static PopupDialogControl createPopupDialog(DisplayContext context, int optionElementCount,
-				FrameScope frameScope, String id) {
-			boolean isGridNeeded = optionElementCount > 4;
-			int width;
-			String CssClass;
-			if (isGridNeeded) {
-				width = 600;
-				CssClass = "megaMenuGridContainer";
-			} else {
-				width = 300;
-				CssClass = "megaMenuFlexContainer";
-			}
-			int borderWidth = Icons.MEGA_MENU_BORDER_WIDTH.get();
-
-			DefaultLayoutData popupLayout =
-				new DefaultLayoutData(DisplayDimension.dim(width, DisplayUnit.PIXEL), 100, DisplayDimension.dim(0,
-					DisplayUnit.PIXEL), 100, Scrolling.AUTO);
-			DefaultPopupDialogModel defaultPopupModel =
-				new DefaultPopupDialogModel(null, popupLayout, borderWidth, CssClass);
-
-			PopupDialogControl popupDialogControl = new PopupDialogControl(frameScope, defaultPopupModel, id);
-			return popupDialogControl;
-		}
 	}
 
 	/**
@@ -176,10 +160,10 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		List<?> options = megaMenuSelectField.getOptions();
 		List<?> selection = SelectFieldUtils.getSelectionList(getFieldModel());
 		int nbrOfOptionElements = megaMenuSelectField.getOptionCount();
-		boolean isGridNeeded = nbrOfOptionElements > 4;
 		boolean hasListIcons = doesListHaveIcons(megaMenuSelectField, options, nbrOfOptionElements);
+		boolean isGridNeeded = nbrOfOptionElements > 4;
 		_megaMenuPopupDialogControl =
-			MegaMenuPopupDialogHelper.createPopupDialog(context, nbrOfOptionElements, getFrameScope(), getID());
+			MegaMenuPopupDialogCreater.createPopupDialog(context, isGridNeeded, getFrameScope(), getID());
 
 		_megaMenuPopupDialogControl.setContent(new HTMLFragment() {
 			@Override
@@ -187,6 +171,8 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 				LabelProvider optionLabelProvider = megaMenuSelectField.getOptionLabelProvider();
 				ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
 				out.beginBeginTag(HTMLConstants.DIV);
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu-container");
+				writeOnKeyDown(isGridNeeded, out);
 				out.endBeginTag();
 
 				// User should not be able to choose the no option option if field is mandatory
@@ -201,22 +187,20 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 						displayOption(out, emptyLabel, null, null, true);
 					}
 				}
-				if (megaMenuSelectField.getFixedOptions() == null) {
-					for (int i = 0; i < nbrOfOptionElements; i++) {
-						Object currOption = options.get(i);
-						String tooltip = optionResourceProvider.getTooltip(currOption);
-						String optionLabel = optionLabelProvider.getLabel(currOption);
+				
+				Filter fixedOptions = megaMenuSelectField.getFixedOptions();
+				for (int i = 0; i < nbrOfOptionElements; i++) {
+					Object currOption = options.get(i);
+					String tooltip = optionResourceProvider.getTooltip(currOption);
+					String optionLabel = optionLabelProvider.getLabel(currOption);
+					if (fixedOptions != null && fixedOptions.accept(currOption)) {
+						displayFixedOption(out, optionLabel, tooltip, currOption);
+					} else {
 						displayOption(out, optionLabel, tooltip, currOption, false);
 					}
-				} else {
-					// Displays a mega menu which has fixed options.
-					for (int i = 0; i < nbrOfOptionElements; i++) {
-						Object currOption = options.get(i);
-						String tooltip = optionResourceProvider.getTooltip(currOption);
-						String optionLabel = optionLabelProvider.getLabel(currOption);
-						displayFixedOption(out, optionLabel, tooltip, currOption, false);
-					}
+					
 				}
+				
 				out.endTag(HTMLConstants.DIV);
 			}
 
@@ -226,29 +210,24 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 				out.beginBeginTag(HTMLConstants.ANCHOR);
 				out.writeAttribute(HTMLConstants.HREF_ATTR, HTMLConstants.HREF_EMPTY_LINK);
 				writeOnClick(out, "handleOnOptionClick");
+				writeOnMouseOver(out);
 				// First condition checks if no option is calling this method and if it
 				// is the currently selected value, which is the case if selection is empty.
 				if ((noOptionIsCallingThisMethod && selection.isEmpty()) || selection.contains(currOption)) {
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuItem megaMenuItemSelected");
+					out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option tl-mega-menu__option--selected");
 				} else {
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuItem");
+					out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option");
 				}
 				displayOptionContainer(out, optionLabel, tooltip, currOption, noOptionIsCallingThisMethod);
 				out.endTag(HTMLConstants.ANCHOR);
 			}
 
 			private void displayFixedOption(TagWriter out, String optionLabel, String tooltip,
-					Object currOption, boolean noOptionIsCallingThisMethod) throws IOException {
-				// Display the fixed option gray and unable to be chosen, else display option as
-				// usual.
-				if (megaMenuSelectField.getFixedOptions().accept(currOption)) {
-					out.beginBeginTag(HTMLConstants.SPAN);
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuFixedItem");
-					displayOptionContainer(out, optionLabel, tooltip, currOption, noOptionIsCallingThisMethod);
-					out.endTag(HTMLConstants.SPAN);
-				} else {
-					displayOption(out, optionLabel, tooltip, currOption, noOptionIsCallingThisMethod);
-				}
+					Object currOption) throws IOException {
+				out.beginBeginTag(HTMLConstants.SPAN);
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option--fixed");
+				displayOptionContainer(out, optionLabel, tooltip, currOption, false);
+				out.endTag(HTMLConstants.SPAN);
 			}
 
 			private void displayOptionContainer(TagWriter out, String optionLabel,
@@ -274,24 +253,11 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 						icon = _defaultIcon.toIcon();
 					}
 					out.beginBeginTag(HTMLConstants.DIV);
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "itemContainer");
+					out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-container");
 					out.endBeginTag();
 
-					out.beginBeginTag(HTMLConstants.DIV);
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuIconContainer");
-					out.endBeginTag();
-
-					icon.beginBeginTag(context, out);
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuIcon");
-					icon.endBeginTag(context, out);
-					icon.endTag(context, out);
-					out.endTag(HTMLConstants.DIV);
-
-					out.beginBeginTag(HTMLConstants.DIV);
-					out.writeAttribute(HTMLConstants.CLASS_ATTR, "textContainer");
-					out.endBeginTag();
+					displayOptionIcon(context, out, icon);
 					displayOptionText(out, optionLabel, tooltip);
-					out.endTag(HTMLConstants.DIV);
 
 					out.endTag(HTMLConstants.DIV);
 				} else {
@@ -300,15 +266,29 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 
 			}
 
+			private void displayOptionIcon(DisplayContext context, TagWriter out, XMLTag icon) throws IOException {
+				out.beginBeginTag(HTMLConstants.DIV);
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-icon-container");
+				out.endBeginTag();
+				icon.beginBeginTag(context, out);
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-icon");
+				icon.endBeginTag(context, out);
+				icon.endTag(context, out);
+				out.endTag(HTMLConstants.DIV);
+			}
+
 			private void displayOptionText(TagWriter out, String optionLabel, String tooltip) throws IOException {
+				out.beginBeginTag(HTMLConstants.DIV);
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-text-container");
+				out.endBeginTag();
 				out.beginBeginTag(HTMLConstants.SPAN);
-				out.writeAttribute(HTMLConstants.CLASS_ATTR, "strong");
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "strong tl-mega-menu__option-label");
 				out.endBeginTag();
 				out.writeText(optionLabel);
 				out.endTag(HTMLConstants.SPAN);
-				out.emptyTag(HTMLConstants.BR);
-				out.beginTag(HTMLConstants.SPAN);
-
+				out.beginBeginTag(HTMLConstants.SPAN);
+				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-tooltip");
+				out.endBeginTag();
 				// Using something else and not writeContent() would lead to tooltip
 				// being displayed together with HTML tags written as text,
 				// f.e: "Test <strong>tooltip</strong>"
@@ -317,7 +297,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 					out.writeContent(saveTooltip);
 				}
 				out.endTag(HTMLConstants.SPAN);
-				out.emptyTag(HTMLConstants.BR);
+				out.endTag(HTMLConstants.DIV);
 			}
 
 		});
@@ -341,9 +321,21 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		return false;
 	}
 
+	private void writeOnKeyDown(boolean isGridNeeded, TagWriter out) throws IOException {
+		out.beginAttribute(HTMLConstants.ONKEYDOWN_ATTR);
+		out.write("services.form.MegaMenuControl.handleArrowKeyNavigation(event, " + isGridNeeded + ")");
+		out.endAttribute();
+	}
+
 	private void writeOnClick(TagWriter out, String methodName) throws IOException {
 		out.beginAttribute(HTMLConstants.ONCLICK_ATTR);
 		writeJSAction(out, MEGAMENU_BUTTONCONTROL, methodName, this, null);
+		out.endAttribute();
+	}
+
+	private void writeOnMouseOver(TagWriter out) throws IOException {
+		out.beginAttribute(HTMLConstants.ONMOUSEOVER_ATTR);
+		out.write("this.focus();");
 		out.endAttribute();
 	}
 
@@ -367,7 +359,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 
 	private ResKey getEmptyLabelResKey() {
 		SelectField megaMenuSelectField = (SelectField) getModel();
-		ResKey noOptionResKey = megaMenuSelectField.getEmptySelectionMegaMenu();
+		ResKey noOptionResKey = SelectFieldUtils.getEmptySelectionMegaMenu(megaMenuSelectField);
 		if (noOptionResKey == null && !megaMenuSelectField.isMandatory()) {
 			noOptionResKey = megaMenuSelectField.getOptionCount() == 0
 				? I18NConstants.EMPTY_SINGLE_SELECTION_WITH_NO_OPTIONS_MEGA_MENU
@@ -398,13 +390,25 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
 		SelectField megaMenuSelectField = (SelectField) getModel();
 		LabelProvider optionLabelProvider = megaMenuSelectField.getOptionLabelProvider();
+		ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
+		Object singleSelection = megaMenuSelectField.getSingleSelection();
+
 		out.beginBeginTag(SPAN);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
+
+		ThemeImage image = optionResourceProvider.getImage(singleSelection, null);
+		if (image != null) {
+			XMLTag icon = image.toIcon();
+			icon.beginBeginTag(context, out);
+			out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-icon--immutable");
+			icon.endBeginTag(context, out);
+			icon.endTag(context, out);
+		}
+
 		out.beginBeginTag(SPAN);
-		out.writeAttribute(HTMLConstants.CLASS_ATTR, "megaMenuImmutableLabel");
+		out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-label--immutable");
 		out.endBeginTag();
-		Object singleSelection = megaMenuSelectField.getSingleSelection();
 		String labelToDisplay;
 		if (singleSelection != null) {
 			labelToDisplay = optionLabelProvider.getLabel(singleSelection);
@@ -412,6 +416,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 			labelToDisplay = SelectFieldUtils.getOptionLabel(getFieldModel(), SelectField.NO_OPTION);
 		}
 		out.writeText(labelToDisplay);
+
 		out.endTag(SPAN);
 		out.endTag(SPAN);
 	}
@@ -433,7 +438,49 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cMegaMenu";
+		return "tl-mega-menu";
+	}
+
+	/**
+	 * Creates the pop up dialog for a mega menu.
+	 *
+	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
+	 */
+	public static class MegaMenuPopupDialogCreater {
+
+		/**
+		 * Creates the dialog and layout for the pop up window.
+		 * 
+		 * @param context
+		 *        from {@link #openPopUp}.
+		 * @param frameScope
+		 *        the control's {@link FrameScope}.
+		 * @param id
+		 *        the control's id.
+		 * @return {@link PopupDialogControl}.
+		 */
+		public static PopupDialogControl createPopupDialog(DisplayContext context, boolean isGridNeeded,
+				FrameScope frameScope, String id) {
+			int width;
+			String CssClass;
+			if (isGridNeeded) {
+				width = 600;
+				CssClass = "tl-mega-menu-grid-container";
+			} else {
+				width = 300;
+				CssClass = "tl-mega-menu-flex-container";
+			}
+			int borderWidth = Icons.MEGA_MENU_BORDER_WIDTH.get();
+
+			DefaultLayoutData popupLayout =
+				new DefaultLayoutData(DisplayDimension.dim(width, DisplayUnit.PIXEL), 100, DisplayDimension.dim(0,
+					DisplayUnit.PIXEL), 100, Scrolling.AUTO);
+			DefaultPopupDialogModel defaultPopupModel =
+				new DefaultPopupDialogModel(null, popupLayout, borderWidth, CssClass);
+
+			PopupDialogControl popupDialogControl = new PopupDialogControl(frameScope, defaultPopupModel, id);
+			return popupDialogControl;
+		}
 	}
 
 	/**
@@ -452,20 +499,16 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		/**
 		 * INSTANCE for {@link #COMMANDS}.
 		 */
-		public static final OpenPopUpCommand INSTANCE = new OpenPopUpCommand(COMMAND_ID);
+		public static final OpenPopUpCommand INSTANCE = new OpenPopUpCommand();
 
 		/**
-		 * @param aCommand
-		 *        instantiation of an {@link OpenPopUpCommand} object with
-		 *        {@link OpenPopUpCommand#COMMAND_ID} "megaMenuActive". Clicking on the mega menu
-		 *        button triggers a JS Method which leads back to {@link OpenPopUpCommand#execute},
-		 *        because of this command.
+		 * Constructor for opening the pop up window command.
 		 */
-		public OpenPopUpCommand(String aCommand) {
-			super(aCommand);
+		public OpenPopUpCommand() {
+			super(COMMAND_ID);
 		}
 
-		// Called from file: ajax-form.js - MegaMenuButtonControl: handleClick
+		// Called from file: ajax-form.js - MegaMenuButtonControl: handleButtonClick
 		@Override
 		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
 			MegaMenuControl megaMenuControl = (MegaMenuControl) control;
@@ -509,8 +552,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 
 
 	/**
-	 * Class used as a link between the jsp file of the page where the mega menu is to be displayed
-	 * and the select field that is to be converted into a mega menu.
+	 * {@link ControlProvider} to instantiate a {@link MegaMenuControl} for a {@link SelectField}.
 	 * 
 	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
 	 *

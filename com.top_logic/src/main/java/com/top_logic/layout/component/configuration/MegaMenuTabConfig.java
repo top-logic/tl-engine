@@ -32,7 +32,7 @@ import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ButtonRenderer;
 import com.top_logic.layout.form.control.IButtonRenderer;
-import com.top_logic.layout.form.control.MegaMenuControl.MegaMenuPopupDialogHelper;
+import com.top_logic.layout.form.control.MegaMenuControl.MegaMenuPopupDialogCreater;
 import com.top_logic.layout.form.control.MegaMenuOptionControl;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
@@ -161,16 +161,21 @@ public class MegaMenuTabConfig
 
 				int nbrOfOptionElements = mainTabList.size();
 
+				boolean isGridNeeded = nbrOfOptionElements > 4;
 				PopupDialogControl popupDialog =
-					MegaMenuPopupDialogHelper.createPopupDialog(context, nbrOfOptionElements,
+					MegaMenuPopupDialogCreater.createPopupDialog(context, isGridNeeded,
 						buttonControl.getFrameScope(), buttonControlID);
 
-				boolean isGridNeeded = nbrOfOptionElements > 4;
 				popupDialog.setContent(new HTMLFragment() {
 
 					@Override
 					public void write(DisplayContext context1, TagWriter out) throws IOException {
 						out.beginBeginTag(HTMLConstants.DIV);
+						out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu-container");
+						out.beginAttribute(HTMLConstants.ONKEYDOWN_ATTR);
+						out.write(
+							"services.form.MegaMenuControl.handleArrowKeyNavigation(event, " + isGridNeeded + ")");
+						out.endAttribute();
 						out.endBeginTag();
 
 						for (int i = 0; i < nbrOfOptionElements; i++) {

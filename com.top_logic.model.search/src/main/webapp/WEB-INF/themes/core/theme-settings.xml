@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="mime.SearchExpressionTable"
+		value="/mimetypes/tl/StoredQuery.png"
+	/>
+	<icon name="tl-model-search.command.updateSearchConsole"
+		value="css:bi bi-database-down"
+	/>
+	<icon name="tl-model-search.command.executeSearchConsole"
+		value="css:bi bi-play-fill"
+	/>
+</settings>

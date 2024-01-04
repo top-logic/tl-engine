@@ -168,7 +168,7 @@
 		value="css:bi bi-menu-button-wide"
 	/>
 	<icon name="com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_DELETE_MENU%"
 	/>
 	<icon name="com.top_logic.layout.Icons.ADD_DIALOG_COMMAND"
 		expr="%ICONS_LOGIN_MESSAGE_BUTTON%"
@@ -203,24 +203,6 @@
 	<img name="com.top_logic.layout.image.gallery.Icons.NO_PREVIEW_IMAGE"
 		value="/images/noPreviewImage.png"
 	/>
-	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL"
-		value="css:bi bi-pencil-square"
-	/>
-	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL_DISABLED"
-		value="css:bi bi-pencil-square"
-	/>
-	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
-		expr="%ICONS_BUTTON_SAVE%"
-	/>
-	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
-		expr="%ICONS_BUTTON_SAVE%"
-	/>
-	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_MODIFIED"
-		expr="%SAVE_SERVICE_CONFIGURATION%"
-	/>
-	<icon name="com.top_logic.element.layout.meta.search.quick.Icons.SEARCH"
-		expr="%ICONS_BUTTON_SEARCH%"
-	/>
 	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
 		value="css:bi bi-list"
 	/>
@@ -237,10 +219,10 @@
 		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL"
-		expr="%ICONS_BUTTON_SEARCH%"
+		expr="%IMAGE_BUTTONS_SEARCH22%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL_ACTIVE"
-		expr="%ICONS_BUTTON_SEARCH%"
+		expr="%IMAGE_BUTTONS_SEARCH22%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.LOAD_NAMED_TABLE_SETTINGS"
 		expr="%TREE_NEW_ELEMENT%"
@@ -269,9 +251,6 @@
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
 		expr="%com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED%"
 	/>
-	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FRAME"
-		expr="%com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE%"
-	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE"
 		value="css:bi bi-fullscreen"
 	/>
@@ -281,6 +260,21 @@
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE"
 		value="css:bi bi-window-stack"
 	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__EXPERT_MODE_BUTTON"
+		value="css:bi bi-keyboard-fill"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__OK_BUTTON"
+		expr="%ICON_VALIDATE_PAGE%"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON"
+		value="css:bi bi-trash3"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH"
+		value="css:bi bi-search search"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH_MODE_BUTTON"
+		expr="%IMAGE_BUTTONS_SEARCH22%"
+	/>	
 	<icon name="com.top_logic.layout.tabbar.Icons.TAB_BAR_COMMANDS_MENU"
 		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
@@ -579,9 +573,6 @@
 	<icon name="ICON_RESET_PERSONAL_CONFIGURATION"
 		value="css:bi bi-person-fill-lock"
 	/>
-	<icon name="ICONS_BUTTON_SEARCH"
-		value="css:bi bi-search"
-	/>
 	<icon name="ICONS_EXPORT"
 		value="css:bi bi-file-arrow-down-fill"
 	/>
@@ -676,7 +667,7 @@
 		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="ICONS_CANCEL_BUTTON"
-		value="css:bi bi-x-lg"
+		value="css:bi bi-x-square-fill"
 	/>
 	<icon name="ICONS_CANCEL_BUTTON_DISABLED"
 		expr="%ICONS_CANCEL_BUTTON%"
@@ -766,19 +757,22 @@
 		expr="%ICONS_MOVE_ROW_TO_TOP%"
 	/>
 	<icon name="ICONS_DELETE_TOOLBAR"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_DELETE_MENU%"
 	/>
 	<icon name="ICONS_DELETE_TOOLBAR_DISABLED"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_DELETE_MENU%"
 	/>
 	<icon name="ICONS_DELETE_MENU"
-		expr="%ICONS_CANCEL_BUTTON%"
+		value="css:bi bi-trash3-fill"
 	/>
 	<icon name="ICONS_DELETE_MENU_DISABLED"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_DELETE_MENU%"
 	/>
 	<icon name="ICONS_BUTTON_CLOSE"
-		expr="%ICONS_CANCEL_BUTTON%"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_BUTTON_CLOSE_DISABLED"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<icon name="ICONS_BUTTON_CLEAR"
 		expr="%ICONS_CANCEL_BUTTON%"
@@ -804,16 +798,10 @@
 	<icon name="ICON_VALIDATE_ALL_PAGES"
 		value="css:bi bi-check-all"
 	/>
-	<icon name="ICONS_BUTTON_EXPERT"
-		expr="%ICONS_GEAR%"
-	/>
 	<icon name="ICONS_GRID_CANCEL"
 		expr="%ICON_UNDO%"
 	/>
 	<icon name="ICONS_GRID_CANCEL_DISABLED"
-		expr="%ICON_UNDO%"
-	/>
-	<icon name="ICONS_BUTTON_CANCEL"
 		expr="%ICON_UNDO%"
 	/>
 	<icon name="EDIT_SECURITY_PROFILES_IMPORT_ICON"
@@ -892,13 +880,13 @@
 		value="css:bi bi-bar-chart-steps"
 	/>
 	<icon name="IMAGES_CLOSE_BTN"
-		value="/images/close_btn.png"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<icon name="IMAGE_BUTTONS_ADMINISTRATION22"
 		expr="%ICONS_GEAR%"
 	/>
 	<icon name="IMAGE_BUTTONS_SEARCH22"
-		expr="%ICONS_BUTTON_SEARCH%"
+		value="css:bi bi-search"
 	/>
 	<icon name="IMAGE_BUTTONS_RESULT"
 		value="css:bi bi-file-text-fill"
@@ -1002,6 +990,48 @@
 	<icon name="ICONS_BUTTON_OK_DISABLED"
 		expr="%ICONS_BUTTON_OK%"
 	/>
+	<icon name="ICONS_BUTTON_CONTINUE"
+		value="css:bi bi-play-fill"
+	/>
+	<icon name="ICONS_BUTTON_CONTINUE_DISABLED"
+		expr="%ICONS_BUTTON_CONTINUE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_OK_IMAGE"
+		expr="%ICONS_BUTTON_SAVE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_OK_IMAGE_DISABLED"
+		expr="%com.top_logic.layout.messagebox.Icons.BUTTON_OK_IMAGE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_YES_IMAGE"
+		expr="%ICONS_BUTTON_OK%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_YES_IMAGE_DISABLED"
+		expr="%ICONS_BUTTON_OK_DISABLED%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_CONTINUE_IMAGE"
+		expr="%ICONS_BUTTON_CONTINUE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_CONTINUE_IMAGE_DISABLED"
+		expr="%com.top_logic.layout.messagebox.Icons.BUTTON_CONTINUE_IMAGE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_CANCEL_IMAGE"
+		expr="%com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_CANCEL_IMAGE_DISABLED"
+		expr="%com.top_logic.layout.messagebox.Icons.BUTTON_CANCEL_IMAGE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_NO_IMAGE"
+		expr="%ICONS_CANCEL_BUTTON%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_NO_IMAGE_DISABLED"
+		expr="%com.top_logic.layout.messagebox.Icons.BUTTON_NO_IMAGE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_CLOSE_IMAGE"
+		expr="%ICONS_BUTTON_CLOSE%"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_CLOSE_IMAGE_DISABLED"
+		expr="%com.top_logic.layout.messagebox.Icons.BUTTON_CLOSE_IMAGE%"
+	/>
 	<icon name="mime.image/bmp"
 		expr="%mime.image/png%"
 	/>
@@ -1042,7 +1072,7 @@
 		value="css:bi bi-person-badge-fill"
 	/>
 	<icon name="mime.SearchExpressionTable"
-		expr="%ICONS_BUTTON_SEARCH%"
+		expr="%IMAGE_BUTTONS_SEARCH22%"
 	/>
 	<icon name="mime.WebFolderMetaAttribute"
 		expr="%mime.tl.folder.Document%"
@@ -1147,7 +1177,7 @@
 		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>	
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_DELETE_MENU%"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_LEFT"
 		expr="%ICONS_MOVE_ROW_LEFT%"
@@ -1168,22 +1198,22 @@
 		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_REMOVE%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_REMOVE%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_DELETE_MENU%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR_DISABLED"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_DELETE_MENU%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
 		expr="%IMAGE_BUTTONS_SCRIPT_RECORDER22%"
@@ -1222,7 +1252,7 @@
 		value="10px"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.CLOSE_DIALOG"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
 		value="50px"
@@ -1322,21 +1352,6 @@
 	<icon name="com.top_logic.layout.form.control.Icons.EMPTY_ICON"
 		value="css:"
 	/>
-	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__EXPERT_MODE_BUTTON"
-		value="css:bi bi-keyboard-fill"
-	/>
-	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__OK_BUTTON"
-		expr="%ICON_VALIDATE_PAGE%"
-	/>
-	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON"
-		value="css:bi bi-trash3"
-	/>
-	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH"
-		value="css:bi bi-search search"
-	/>
-	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH_MODE_BUTTON"
-		expr="%ICONS_BUTTON_SEARCH%"
-	/>
 	<icon name="layouts.themes.default.toolrow.ExportLayout"
 		value="css:bi bi-box-arrow-right"
 	/>
@@ -1365,7 +1380,7 @@
 		expr="%ICONS_DIALOG_QUESTION%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.CLOSE_INFO_SERVICE_ITEM"
-		expr="%ICONS_CANCEL_BUTTON%"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_ERROR"
 		expr="%com.top_logic.util.error.Icons.ERROR%"
@@ -1514,6 +1529,9 @@
 	<icon name="ICONS_SELECT_ALL_CHECKBOXES_DISABLED"
 		expr="%ICONS_SELECT_ALL_CHECKBOXES%"
 	/>
+	<icon name="ICONS_REMOVE"
+		value="css:bi bi-dash-square-fill"
+	/>
 	<icon name="ICONS_REMOVE_CHECKBOX"
 		value="css:bi bi-square"
 	/>
@@ -1568,6 +1586,69 @@
 	<icon name="mime.TLEnumeration"
 		expr=""
 		value="colored:tl-icon chain"
+	/>
+	<icon name="ICONS_FORM_WHITE"
+		value="colored:tl-icon form"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__ADD"
+		value="css:far fa-plus-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__BINARY"
+		value="css:far fa-file"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__BOOLEAN"
+		value="css:far fa-dot-circle"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__COLUMNS"
+		value="colored:tl-icon columns"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__CUSTOM"
+		value="css:fas fa-star"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__DATE"
+		value="css:far fa-calendar-alt"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__EMPTY_CELL"
+		value="colored:tl-icon square-dashed"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FLOAT"
+		value="/icons/inputfield.svg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FRAME"
+		expr="%com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE%"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__GROUP"
+		value="colored:tl-icon fieldset"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__INT"
+		value="/icons/inputfield.svg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__LIST"
+		value="css:far fa-list-alt"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__NO_ICON"
+		value="css:fas fa-wrench"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__REFERENCE"
+		value="css:fas fa-external-link-square-alt"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__SEPARATOR"
+		value="colored:tl-icon separator"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__STRING"
+		value="/icons/inputfield.svg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__STRING_MULTILINE"
+		value="/icons/textarea.svg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__TABLE"
+		value="colored:tl-icon table"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__TITLE"
+		value="css:fas fa-heading"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__TRISTATE"
+		value="css:far fa-check-square"
 	/>
 
 	<!-- Style Tokens -->

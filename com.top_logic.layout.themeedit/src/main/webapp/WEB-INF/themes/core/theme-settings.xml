@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_FILE_IMPORT"
+		value="css:bi bi-file-arrow-up-fill"
+	/>
+	<icon name="ICON_PLUS"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="THEME_EXPORT"
+		value="css:bi bi-upload"
+	/>
+	<icon name="THEME_IMPORT"
+		value="css:bi bi-download"
+	/>
+	<icon name="com.top_logic.layout.themeedit.browser.providers.resources.Icons.FONT"
+		value="css:bi bi-fonts"
+	/>
+</settings>

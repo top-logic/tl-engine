@@ -136,6 +136,17 @@ a.cmdLink:visited {
 ****	Code-Editor Styles	  ****
 ****					      ****
 */
+.fullSize .ace_editor {
+	position: absolute;
+	margin: 0;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	border: none;
+	height: auto;
+}
+
 .ace-eclipse .ace_active-line {
     background: var(--layer-selected);
 	border: 1px solid var(--border-subtle);
@@ -2284,9 +2295,12 @@ If they're deleted, this can be deleted too
 	color: var(--icon-primary);
 }
 
-.cCollapsibleToolbar, .cToolbar, 
-.cCollapsibleToolbar .tbGroup, .cCollapsibleButtons,
-.tl-table__title-toolbar {
+.cCollapsibleToolbar,
+.cToolbar, 
+.cCollapsibleToolbar .tbGroup,
+.cCollapsibleButtons,
+.tl-table__title-toolbar,
+.tbGroup {
 	display: flex;
 	gap: var(--spacing-02);
 }

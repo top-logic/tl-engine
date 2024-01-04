@@ -1329,6 +1329,10 @@ div.cal_zoom_inAnimation {
 	display: inline-flex;
 }
 
+.cPopupSelect {
+	width: 100%;
+}
+
 .cDecoratedCell a.input-image,
 .cDecoratedCell a.input-image:hover,
 .cDecoratedCell a.input-image:focus {
@@ -1403,7 +1407,6 @@ span.cIconSelect .input-image.cannot-edit i {
 }
 
 .cTextInput input,
-.cTextInput textarea,
 .cIntegerInput.num input,
 .cExpandableTextInput input,
 .cBlockTextInput input,
@@ -1430,8 +1433,16 @@ span.cIconSelect .input-image.cannot-edit i {
 }
 
 .cTextInput textarea {
-	padding-top: var(--spacing-02);
-	padding-bottom: var(--spacing-02);
+	color: var(--text-primary);
+	background: var(--field);
+	border: none;
+	height: 6rem;
+	padding: var(--spacing-02) var(--spacing-03);
+	box-sizing: border-box;
+	max-width: 100%;
+	white-space: break-spaces;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
 .cTextInput input::placeholder,

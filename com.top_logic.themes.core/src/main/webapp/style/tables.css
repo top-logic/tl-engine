@@ -874,6 +874,14 @@ table td span.cDecoratedCell {
 	gap: var(--spacing-02);
 }
 
+table.i18nStringTable td span.cDecoratedCell {
+	gap: 0;
+}
+
+table.i18nStringTable td {
+	padding-bottom: var(--spacing-02);
+}
+
 table td span.cExpandableTextInput,
 table td span.cTextInput {
 	white-space: break-spaces;
@@ -959,6 +967,7 @@ table.tl-table td span.lFlexible,
 table.tl-table td span.lFlexibleCustom {
 	display: inline-flex;
 	overflow: hidden;
+	width: 100%;
 }
 
 table td span.lFlexible > select {

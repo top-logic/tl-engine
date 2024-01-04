@@ -407,7 +407,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-template-columns: repeat(5, 1fr); 
 } 
 
-
 /* in lists */
 .dfEntryTitle.colored {
 	grid-row: 1;
@@ -427,6 +426,16 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .dfEntryTitle.colored:hover {
 	background: var(--layer-accent-hover);
+}
+
+.dfEntryTitle.colored .lFixedRight,
+.dfEntryTitle.colored:hover .lFixedRight a {
+	background: none;
+}
+
+.dfEntryTitle.colored .lFixedRight a:hover {
+	background: none;
+	color: var(--link-primary-hover);
 }
 
 .cOnExpandedControl {
@@ -791,11 +800,44 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	background-position: left center, right center; 
 }
 
-div.cFormEditorToolbox [data-tool=true] > .attribute {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	/* width: 100px; */
+.cFormEditorToolbox [data-tool=true].rf_dragElement {
+    display: inline-block;
+    line-height: 12px;
+    overflow: hidden;
+    width: 100%;
+    margin-bottom: var(--spacing-02);
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	height: 2.3rem; /* 36.8px height */
+	border-radius: .25rem;
+	color: var(--button-secondary);
+	background: var(--background);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	white-space: nowrap;
+	width: 100%;
 	box-sizing: border-box;
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute:hover {
+	color: var(--text-on-color);
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute > .type-image {
+	display: inline-block;
+}
+
+.cFormEditorDisplay [data-tool=false] > .attribute {
+	color: var(--text-secondary);
+}
+
+.cFormEditorDisplay [data-tool=false] > .attribute:hover {
+	color: var(--text-primary);
 }
 
 /* form editor icons */
@@ -918,10 +960,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	transform: translate(-50%, -50%);
 }
 
-.cFormEditorToolbar .cFormEditorElement.rf_dragElement.rf_line {
-	width: auto;
-}
-
 /* for demo: display number of columns */
 .dflSize0 .show-columns:after { content: "0"; }
 .dflSize1 .show-columns:after { content: "1"; }
@@ -933,21 +971,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	border: 1px solid grey;
 	margin-bottom: 10px;
 	padding: 4px;
-}
-
-.cFormEditorToolbox [data-tool=true].rf_dragElement {
-	display: inline-block;
-	line-height: 12px;
-	margin-bottom: 5px;
-}
-
-.cFormEditorToolbox [data-tool=true] > .attribute {
-	padding: 2px 8px 3px 4px;
-}
-
-.cFormEditorToolbox [data-tool=true] > .attribute > .type-image {
-	display: inline-block;
-	width: 20px;
 }
 
 .rf_emptyCell {

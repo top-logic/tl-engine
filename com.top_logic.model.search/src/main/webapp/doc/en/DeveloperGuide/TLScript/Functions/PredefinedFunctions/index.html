@@ -1,29 +1,85 @@
-<p>A predefined function in TL-Script has a specific name which is globally known in all scripts. A predefined function is called directly by its name without assigning it to a variable first. All predefined functions are described in detail here and you get context help for the function when typing in an editor for TL-Script expressions.</p>
-<p>For example, the length of a string can be determined using the function <code class="hljs inlineCode">length</code> (see <a class="tlObject" data-custom="true" href="?page=length&amp;uuid=c196210d-a043-4235-a5d8-cf28727c43aa">Length</a>). For predefined functions a number of special rules, when called</p>
+<p>A predefined function in TL-Script has a specific name that is known globally in all scripts. A predefined function is called directly by its name without first assigning it to a variable. All predefined functions are described in detail here and context help is provided for the function when typing in an editor for TL-Script expressions.</p>
+
+<p>The length of a character string can be determined using the <code class="hljs inlineCode">length</code> function, for example (see <a class="tlObject" data-custom="false" href="?page=length&amp;uuid=c196210d-a043-4235-a5d8-cf28727c43aa">Length</a>). A number of special rules for predefined functions, when calling</p>
+
 <h3>Normal function call</h3>
-<p>In a normal function call, all parameters are specified in the function parenthesis. If there are multiple parameters, the arguments are separated by commas.</p>
-<pre><code>length("Hello world!")
+
+<p>In a normal function call, all parameters are specified in the function brackets. If there are several parameters, the arguments are separated by commas.</p>
+
+<pre>
+<code>length("Hello world!")
 subString("Hello world!", 6, 11)</code></pre>
+
 <h3>Chained function call</h3>
-<p>Function calls can be concatenated without having to nest the calls deeply. The first argument may be placed before the function name. In this notation, it is easy to build a chain of processing steps in which the result of the last processing step serves as input for the next step.</p>
-<pre><code>"Hello world!".substring(6, 11).length()</code></pre>
-<p>Especially with long processing chains the overview can be kept well in such a way, if each processing step is written into a new line:</p>
-<pre><code>"Hello world!"
+
+<p>Function calls can be chained without having to nest the calls deep inside each other. The first argument can be placed before the function name. In this notation, a chain of processing steps can be easily constructed in which the result of the last processing step serves as input for the next step.</p>
+
+<pre>
+<code>"Hello world!".substring(6, 11).length()</code></pre>
+
+<p>Especially with long processing chains, it is easy to maintain an overview if each processing step is written in a new line:</p>
+
+<pre>
+<code>"Hello world!"
     .substring(6, 11)
     .length()</code></pre>
-<p>Here, <code class="hljs inlineCode">"Hello world!"</code> first calculates the characters between the <code class="hljs inlineCode">6</code>. and <code class="hljs inlineCode">11</code>. (<code class="hljs inlineCode">"world"</code>) and from this result determines the length (<code class="hljs inlineCode">5</code>).</p>
-<p>Even without forming a chain, the first argument may always precede the function name, e.g., in:</p>
-<pre><code>"Hello world!".length()</code></pre>
+
+<p>Here, <code class="hljs inlineCode">"Hello world!"</code> first calculates the characters between the <code class="hljs inlineCode">6</code>. and <code class="hljs inlineCode">11</code>. (<code class="hljs inlineCode">"world"</code>) and determines the length from this result (<code class="hljs inlineCode">5</code>).</p>
+
+<p>Even without forming a chain, the first argument may always precede the function name, e.g. in:</p>
+
+<pre>
+<code>"Hello world!".length()</code></pre>
+
 <p>This notation is equivalent to:</p>
-<pre><code>length("Hello world!")</code></pre>
-<h3>Call with named arguments (as of 7.6.0).</h3>
-<p>Some functions with many parameters support the call with named arguments. The problem with the normal function call is that it is not easy to see at the call what the single argument means. So in <code class="hljs inlineCode">subString("Hello world!", 6, 11)</code> it is not clear what exactly <code class="hljs inlineCode">6</code> and <code class="hljs inlineCode">11</code> mean. Therefore you can name the passed arguments:</p>
-<pre><code>subString("Hello world!", from: 6, to: 11)</code></pre>
-<p>With this call form, you can omit any optional arguments. With a normal function call you may only omit arguments after the last specified argument.</p>
-<pre><code>subString("Hello world!", from: 6)</code></pre>
-<p>Here only the starting point is specified, the end is implicitly the end of the string. The result is <code class="hljs inlineCode">"world!"</code>.</p>
-<pre><code>subString("Hello world!", to: 11)</code></pre>
-<p>Here the start point is omitted, which is implicitly the beginning of the string. The result is <code class="hljs inlineCode">"Hello world"</code>.</p>
-<p>In contrast, with normal calling, only optional arguments can be omitted at the end, since the position of the arguments defines their assignment to the function parameters. With normal function call in this case one can describe thus only sections starting from a certain character (<code class="hljs inlineCode">substring("Hello world!", 6)</code>) but not up to a certain character.</p>
-<p>The call style can be mixed in one call. The first parameters can be specified by positional arguments and all others by named arguments. Thus, in the above example, the string from which the clipping is to be made is not named, but only the arguments defining the clipping positions. It is important to note that after the first named argument, all further arguments must also be named. For this reason, functions that support an arbitrary number of arguments (such as <a class="tlObject" data-custom="true" href="?page=toString&amp;uuid=9a7817e1-0bc2-44fa-a265-9fef44285edb">Convert to String</a>) cannot be called with named arguments.</p>
-<p></p>
+
+<pre>
+<code>length("Hello world!")</code></pre>
+
+<h3>Call with explicit chaining</h3>
+
+<p>A chain of function calls as above can only be formed if the last function called returns the appropriate result for the next call. This is not the case for <a class="tlObject" href="?page=new&amp;uuid=c24d295c-433b-4ac6-9e90-0f8427b399e6">object creation</a> and initialization in particular. For example, the <code class="hljs inlineCode">set</code> and <code class="hljs inlineCode">add</code> function (see Insert <a class="tlObject" href="?page=add&amp;uuid=d43ca331-eea9-4611-ab8a-a4f74813f8d9">in attribute value</a>) does not return a result. With a normal function call, a temporary variable would have to be inserted in order to create and initialize an object and then add it to a reference:</p>
+
+<pre>
+<code>{
+  obj = new(`MyType`);
+  $obj.set(`MyType#myProp1`, $myValue1);
+  $obj.set(`MyType#myProp2`, $myValue2);
+
+  $otherObj.add(`OtherType#myRef`, $obj);
+}</code></pre>
+
+<p>With explicit concatenation, however, object creation and initialization, for example, can also be expressed as one expression without an imperative statement list:</p>
+
+<pre>
+<code>$otherObj.add(`OtherType#myRef`, 
+  new(`MyType`)
+    ..set(`MyType#myProp1`, $myValue1)
+    ..set(`MyType#myProp2`, $myValue2));</code></pre>
+
+<p>The "<code class="hljs inlineCode">..</code>" operator ensures that the result of the function call is always the input value (on the left-hand side), regardless of what the function returns. Thus, the result of <code class="hljs inlineCode">new(`MyType`)..set(`MyType#myProp1`, $myValue1)</code> is the new object (and not the return value of <code class="hljs inlineCode">set</code>). The next initialization can then be carried out on this object and the final result (still the new object) can be inserted into a reference.</p>
+
+<h3>Call with named arguments (from 7.6.0)</h3>
+
+<p>Some functions with many parameters support the call with named arguments. The problem with normal function calls is that it is no longer easy to see what the individual argument means when it is called. In <code class="hljs inlineCode">subString("Hello world!", 6, 11)</code>, for example, it is not clear what exactly <code class="hljs inlineCode">6</code> and <code class="hljs inlineCode">11</code> mean. Therefore, you can name the arguments passed:</p>
+
+<pre>
+<code>subString("Hello world!", from: 6, to: 11)</code></pre>
+
+<p>With this form of call, you can omit any optional arguments. In a normal function call, you can only omit arguments after the last specified argument.</p>
+
+<pre>
+<code>subString("Hello world!", from: 6)</code></pre>
+
+<p>Only the starting point is specified here, the end is implicitly the end of the string. The result is <code class="hljs inlineCode">"world!"</code>.</p>
+
+<pre>
+<code>subString("Hello world!", to: 11)</code></pre>
+
+<p>Here, the starting point is omitted, which is implicitly at the beginning of the string. The result is <code class="hljs inlineCode">"Hello world"</code>.</p>
+
+<p>In contrast, only optional arguments can be omitted at the end of a normal call, as the position of the arguments defines their assignment to the function parameters. In this case, normal function calls can only describe sections from a certain character (<code class="hljs inlineCode">substring("Hello world!", 6)</code>) but not up to a certain character.</p>
+
+<p>The call style can be mixed in one call. The first parameters can be specified using positional arguments and all others using named arguments. In the example above, the character string from which the cut is to be made is not named, but only the arguments that define the cut positions. It is important to note that after the first named argument, all further arguments must also be named. For this reason, functions that support any number of arguments (such as <a class="tlObject" data-custom="false" href="?page=toString&amp;uuid=9a7817e1-0bc2-44fa-a265-9fef44285edb">Convert to string</a>) cannot be called with named arguments.</p>
+
+<p> </p>

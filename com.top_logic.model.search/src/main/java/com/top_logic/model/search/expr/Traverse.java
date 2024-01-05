@@ -122,11 +122,15 @@ public class Traverse extends GenericMethod {
 		}
 
 		SearchExpression descend = asSearchExpression(arguments[1]);
-		SearchExpression mapping = asSearchExpression(arguments[2]);
-		SearchExpression compose = asSearchExpression(arguments[3]);
+		SearchExpression mapping = asSearchExpressionOptional(arguments[2]);
+		SearchExpression compose = asSearchExpressionOptional(arguments[3]);
 
 		Traversal traversal = new Traversal(definitions, mapping, descend, compose);
 		return traversal.descend(null, root);
+	}
+
+	private SearchExpression asSearchExpressionOptional(Object object) {
+		return object == null ? null : asSearchExpression(object);
 	}
 
 	static class Traversal {

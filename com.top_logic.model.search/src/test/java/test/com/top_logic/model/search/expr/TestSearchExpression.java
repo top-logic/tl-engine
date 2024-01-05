@@ -625,14 +625,15 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	private void update(TLObject d, double base) throws ParseException {
-		update("d -> x -> {" +
-			"$d.set(`TestSearchExpression:D#double`, $x / 2); " +
-			"$d.set(`TestSearchExpression:D#int`, $x / 2); " +
-			"$d.set(`TestSearchExpression:D#byte`, $x / 2); " +
-			"$d.set(`TestSearchExpression:D#short`, $x / 2); " +
-			"$d.set(`TestSearchExpression:D#long`, $x / 2); " +
-			"$d.set(`TestSearchExpression:D#float`, $x / 2); " +
-			"}", d, base);
+		Object result = update("d -> x -> $d" +
+			"..set(`TestSearchExpression:D#double`, $x / 2) " +
+			"..set(`TestSearchExpression:D#int`, $x / 2) " +
+			"..set(`TestSearchExpression:D#byte`, $x / 2) " +
+			"..set(`TestSearchExpression:D#short`, $x / 2) " +
+			"..set(`TestSearchExpression:D#long`, $x / 2) " +
+			"..set(`TestSearchExpression:D#float`, $x / 2) ", d, base);
+
+		assertEquals(d, result);
 	}
 
 	private Object update(String expr, Object... args) throws ParseException {
@@ -1271,7 +1272,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testBulkDelete() throws ParseException {
 		List<?> search = (List<?>) execute(search(
-			"list('a1', 'a2').map(n -> {x=new(`TestSearchExpression:A`); $x.set(`TestSearchExpression:A#name`, $n); $x})"));
+			"list('a1', 'a2').map(n -> new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, $n))"));
 		assertNotNull(search);
 		assertEquals(2, search.size());
 
@@ -1287,7 +1288,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testCreateWithContext() throws ParseException {
 		Object context = execute(search(
-			"{result = new(`TestSearchExpression:DefaultProvidingContext`); $result.set(`TestSearchExpression:DefaultProvidingContext#contextValue`, 'my-context'); $result}"));
+			"new(`TestSearchExpression:DefaultProvidingContext`)..set(`TestSearchExpression:DefaultProvidingContext#contextValue`, 'my-context')"));
 		assertNotNull(context);
 
 		Object withDefault =
@@ -1344,11 +1345,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					(TLObject) execute(search(
 						"x -> $x.copy(null, true, "  + 
 							"orig -> if ($orig.instanceOf(`TestSearchExpression:B`), " +
-								"{" + 
-									"result = new(`TestSearchExpression:C`); " + 
-									"$result.set(`TestSearchExpression:C#orig`, $orig); " + 
-									"$result" + 
-								"}))"),
+								"new(`TestSearchExpression:C`) " + 
+							"..set(`TestSearchExpression:C#orig`, $orig) " +
+							"))"),
 						orig);
 
 				assertEquals(value(orig, "b", "contents", 0), value(copy, "b", "contents", 0, "orig"));
@@ -1404,12 +1403,12 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testAdd() throws ParseException {
 		TLObject a = (TLObject) executeCompiled(search(
-			"{a = new(`TestSearchExpression:A`); a1=new(`TestSearchExpression:A`); a2=new(`TestSearchExpression:A`); $a.set(`TestSearchExpression:A#list`, list($a1, $a2)); $a; }"));
+			"new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#list`, list(new(`TestSearchExpression:A`), new(`TestSearchExpression:A`)))"));
 		List<?> list = (List<?>) value(a, "list");
 		assertEquals(2, list.size());
 
 		executeCompiled(search(
-			"a -> {a3=new(`TestSearchExpression:A`); $a3.set(`TestSearchExpression:A#name`, 'A3'); $a.add(`TestSearchExpression:A#list`, $a3); }"),
+			"a -> $a.add(`TestSearchExpression:A#list`, new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, 'A3'))"),
 			a);
 		List<?> list1 = (List<?>) value(a, "list");
 		assertEquals(3, list1.size());
@@ -1417,7 +1416,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("A3", value(a3, "name"));
 
 		executeCompiled(search(
-			"a -> {a4=new(`TestSearchExpression:A`); a5=new(`TestSearchExpression:A`); $a4.set(`TestSearchExpression:A#name`, 'A4'); $a5.set(`TestSearchExpression:A#name`, 'A5'); $a.add(`TestSearchExpression:A#list`, 1, list($a4, $a5)); }"),
+			"a -> $a.add(`TestSearchExpression:A#list`, 1, list("
+				+ "new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, 'A4'), "
+				+ "new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, 'A5')))"),
 			a);
 		List<?> list2 = (List<?>) value(a, "list");
 		assertEquals(5, list2.size());
@@ -1432,7 +1433,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	public void testAssign() throws ParseException {
 		Object search1 = execute(
 			search(
-				"{a=new(`TestSearchExpression:A`); b=new(`TestSearchExpression:A`); $a.set(`TestSearchExpression:A#name`, 'Hello world!'); $b.set(`TestSearchExpression:A#name`, 'Other object'); $a.set(`TestSearchExpression:A#other`, $b); $a; }"));
+				"new(`TestSearchExpression:A`)" +
+					"..set(`TestSearchExpression:A#name`, 'Hello world!')" +
+					"..set(`TestSearchExpression:A#other`, new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, 'Other object'))"));
 		assertNotNull(search1);
 		assertEquals("TestSearchExpression:A", ((TLObject) search1).tType().toString());
 		assertEquals("Hello world!", ((TLObject) search1).tValueByName("name"));
@@ -1537,8 +1540,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	public void testCreateReduce() throws ParseException {
 		TLObject a = (TLObject) execute(
 			search(
-				"{l=list(3, 7, 30, 2); a=new(`TestSearchExpression:A`); others=$l.map(val -> {other=new(`TestSearchExpression:A`); $other.set(`TestSearchExpression:A#int`, $val); $other; }); $a.set(`TestSearchExpression:A#others`, $others); $a; }"));
-		assertEquals(4, ((Collection<?>) a.tValueByName("others")).size());
+				"{l=list(3, 7, 30, 2); a=new(`TestSearchExpression:A`); others=$l.map(val -> new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#int`, $val)); $a.set(`TestSearchExpression:A#others`, $others); $a; }"));
+		Collection<?> others = (Collection<?>) a.tValueByName("others");
+		assertEquals(4, others.size());
+		assertNotNull(((TLObject) others.iterator().next()).tValueByName("int"));
 
 		Object result = execute(search(
 			"a -> $a.get(`TestSearchExpression:A#others`).map(o -> $o.get(`TestSearchExpression:A#int`)).reduce(0, x -> y -> $x + $y)"),

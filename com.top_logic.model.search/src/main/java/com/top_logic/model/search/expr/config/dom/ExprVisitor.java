@@ -5,7 +5,7 @@
  */
 package com.top_logic.model.search.expr.config.dom;
 
-import com.top_logic.model.search.expr.config.dom.Expr.Method;
+import com.top_logic.model.search.expr.config.dom.Expr.Access;
 import com.top_logic.model.search.expr.config.dom.Expr.Add;
 import com.top_logic.model.search.expr.config.dom.Expr.And;
 import com.top_logic.model.search.expr.config.dom.Expr.Apply;
@@ -14,6 +14,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.At;
 import com.top_logic.model.search.expr.config.dom.Expr.Attribute;
 import com.top_logic.model.search.expr.config.dom.Expr.AttributeContents;
 import com.top_logic.model.search.expr.config.dom.Expr.Block;
+import com.top_logic.model.search.expr.config.dom.Expr.Chain;
 import com.top_logic.model.search.expr.config.dom.Expr.Cmp;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.config.dom.Expr.Div;
@@ -22,6 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.EndTag;
 import com.top_logic.model.search.expr.config.dom.Expr.Eq;
 import com.top_logic.model.search.expr.config.dom.Expr.False;
 import com.top_logic.model.search.expr.config.dom.Expr.Html;
+import com.top_logic.model.search.expr.config.dom.Expr.Method;
 import com.top_logic.model.search.expr.config.dom.Expr.Mod;
 import com.top_logic.model.search.expr.config.dom.Expr.ModuleLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Mul;
@@ -179,5 +181,11 @@ public interface ExprVisitor<R, A, E extends Throwable> {
 
 	/** Visits {@link Method}. */
 	R visit(Method expr, A arg) throws E;
+
+	/** Visits {@link Access}. */
+	R visit(Access expr, A arg) throws E;
+
+	/** Visits {@link Chain}. */
+	R visit(Chain expr, A arg) throws E;
 
 }

@@ -75,6 +75,8 @@ TOKEN :
 | < SWITCH : "switch" >
 | < DEFAULT_KEYWORRD : "default" >
 | < NAME : [ "A"-"Z", "a"-"z", "_" ] ([ "A"-"Z", "a"-"z", "_", "0"-"9"])* >
+| < CHAIN : ".." >
+| < ACCESS : "." >
 | < VAR : "$" < NAME > > 
 | < STRING : "'" (~[ "'", "\\" ] | < QUOTE > )* "'" | "\"" (~[ "\"", "\\" ] | < QUOTE > )* "\"" >
 | < RESKEY : "#" < STRING > > 
@@ -297,10 +299,16 @@ Expr accessExpr() :
 {
   expr=atomicExpr()
   (
-    "." n=< NAME >
+    < ACCESS > n=< NAME >
     (
       "(" a=args() ")"
-      { expr=_f.method(n.image, expr, a); }
+      { expr=_f.access(expr, _f.method(n.image, a)); }
+    )
+  |
+    < CHAIN > n=< NAME >
+    (
+      "(" a=args() ")"
+      { expr=_f.chain(expr, _f.method(n.image, a)); }
     )
   | "("
     arg=expr()

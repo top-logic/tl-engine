@@ -48,93 +48,97 @@ public interface SearchExpressionParserConstants {
   /** RegularExpression Id. */
   int NAME = 16;
   /** RegularExpression Id. */
-  int VAR = 17;
+  int CHAIN = 17;
   /** RegularExpression Id. */
-  int STRING = 18;
+  int ACCESS = 18;
   /** RegularExpression Id. */
-  int RESKEY = 19;
+  int VAR = 19;
   /** RegularExpression Id. */
-  int LANGTAG = 20;
+  int STRING = 20;
   /** RegularExpression Id. */
-  int QUOTE = 21;
+  int RESKEY = 21;
   /** RegularExpression Id. */
-  int INT = 22;
+  int LANGTAG = 22;
   /** RegularExpression Id. */
-  int NUM = 23;
+  int QUOTE = 23;
   /** RegularExpression Id. */
-  int FLOAT = 24;
+  int INT = 24;
   /** RegularExpression Id. */
-  int MODEL_NAME = 25;
+  int NUM = 25;
   /** RegularExpression Id. */
-  int MODULE = 26;
+  int FLOAT = 26;
   /** RegularExpression Id. */
-  int TYPE = 27;
+  int MODEL_NAME = 27;
   /** RegularExpression Id. */
-  int PART = 28;
+  int MODULE = 28;
   /** RegularExpression Id. */
-  int SINGLETON = 29;
+  int TYPE = 29;
   /** RegularExpression Id. */
-  int BLOCK_START = 30;
+  int PART = 30;
   /** RegularExpression Id. */
-  int BLOCK_END = 31;
+  int SINGLETON = 31;
   /** RegularExpression Id. */
-  int SCRIPT_END = 32;
+  int BLOCK_START = 32;
   /** RegularExpression Id. */
-  int HTML_START = 33;
+  int BLOCK_END = 33;
   /** RegularExpression Id. */
-  int JSP_COMMENT_START = 34;
+  int SCRIPT_END = 34;
   /** RegularExpression Id. */
-  int JSP_COMMENT = 35;
+  int HTML_START = 35;
   /** RegularExpression Id. */
-  int XML_COMMENT_START = 36;
+  int JSP_COMMENT_START = 36;
   /** RegularExpression Id. */
-  int XML_COMMENT = 37;
+  int JSP_COMMENT = 37;
   /** RegularExpression Id. */
-  int EMBEDD = 38;
+  int XML_COMMENT_START = 38;
   /** RegularExpression Id. */
-  int SCRIPT = 39;
+  int XML_COMMENT = 39;
   /** RegularExpression Id. */
-  int TAG_START = 40;
+  int EMBEDD = 40;
   /** RegularExpression Id. */
-  int END_TAG = 41;
+  int SCRIPT = 41;
   /** RegularExpression Id. */
-  int TAG_NAME = 42;
+  int TAG_START = 42;
   /** RegularExpression Id. */
-  int HTML_STOP = 43;
+  int END_TAG = 43;
   /** RegularExpression Id. */
-  int TEXT_CONTENT = 44;
+  int TAG_NAME = 44;
   /** RegularExpression Id. */
-  int WS = 45;
+  int HTML_STOP = 45;
   /** RegularExpression Id. */
-  int WS_OPT = 46;
+  int TEXT_CONTENT = 46;
   /** RegularExpression Id. */
-  int TEXT_EMBEDD = 47;
+  int WS = 47;
   /** RegularExpression Id. */
-  int PLAIN_TEXT = 48;
+  int WS_OPT = 48;
   /** RegularExpression Id. */
-  int TAG_SPACE = 49;
+  int TEXT_EMBEDD = 49;
   /** RegularExpression Id. */
-  int TAG_TAB = 50;
+  int PLAIN_TEXT = 50;
   /** RegularExpression Id. */
-  int TAG_CR = 51;
+  int TAG_SPACE = 51;
   /** RegularExpression Id. */
-  int TAG_NL = 52;
+  int TAG_TAB = 52;
   /** RegularExpression Id. */
-  int ATTRIBUTE_NAME = 53;
+  int TAG_CR = 53;
   /** RegularExpression Id. */
-  int EQ = 54;
+  int TAG_NL = 54;
   /** RegularExpression Id. */
-  int QUOT_START = 55;
+  int ATTRIBUTE_NAME = 55;
   /** RegularExpression Id. */
-  int TAG_END = 56;
+  int EQ = 56;
   /** RegularExpression Id. */
-  int END_EMPTY_TAG = 57;
+  int QUOT_START = 57;
   /** RegularExpression Id. */
-  int EMBEDD_ATTR = 58;
+  int TAG_END = 58;
   /** RegularExpression Id. */
-  int QUOT_END = 59;
+  int END_EMPTY_TAG = 59;
   /** RegularExpression Id. */
-  int ATTRIBUTE_TEXT = 60;
+  int EMBEDD_ATTR = 60;
+  /** RegularExpression Id. */
+  int QUOT_END = 61;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_TEXT = 62;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -166,6 +170,8 @@ public interface SearchExpressionParserConstants {
     "\"switch\"",
     "\"default\"",
     "<NAME>",
+    "\"..\"",
+    "\".\"",
     "<VAR>",
     "<STRING>",
     "<RESKEY>",
@@ -225,7 +231,6 @@ public interface SearchExpressionParserConstants {
     "\"/\"",
     "\"%\"",
     "\"!\"",
-    "\".\"",
     "\"(\"",
     "\")\"",
     "\",\"",

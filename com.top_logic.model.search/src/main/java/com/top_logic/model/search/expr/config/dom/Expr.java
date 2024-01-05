@@ -1438,6 +1438,44 @@ public interface Expr extends ConfigurationItem {
 	}
 
 	/**
+	 * Base type for appying a method to an expression.
+	 */
+	@Abstract
+	public interface AccessLike extends Expr {
+		/**
+		 * The arguments to pass to the invocation.
+		 */
+		Expr getExpr();
+
+		/** @see #getExpr() */
+		void setExpr(Expr value);
+
+		/**
+		 * The method to invoke.
+		 */
+		Method getMethod();
+
+		/** @see #getMethod() */
+		void setMethod(Method method);
+	}
+
+	/**
+	 * {@link Expr} invoking a method on a value and returning the method result.
+	 */
+	@TagName("access")
+	public interface Access extends AccessLike {
+		// Pure marker.
+	}
+
+	/**
+	 * {@link Expr} performing an arbitrary operation on a value and returning the same value.
+	 */
+	@TagName("chain")
+	public interface Chain extends AccessLike {
+		// Pure marker.
+	}
+
+	/**
 	 * A qualified (dot-separated) name.
 	 */
 	public static class QName extends ArrayList<String> {

@@ -1272,6 +1272,20 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		execute(search("null.delete()"));
 	}
 
+	public void testCreateSwitch() throws ParseException {
+		Object result = execute(search(
+			"x -> switch($x) {" +
+				"'A': new(`TestSearchExpression:A`);" +
+				"'B': new(`TestSearchExpression:B`);" +
+			"}" + 
+			"..set(`TestSearchExpression:A#name`, 'foo')" +
+			"..map(y -> if ($y.instanceOf(`TestSearchExpression:B`), $y.set(`TestSearchExpression:B#name`, 'foo-b')))"
+		), "B");
+
+		assertNotNull(result);
+		assertEquals("foo-b", ((TLObject) result).tValueByName("name"));
+	}
+
 	public void testBulkDelete() throws ParseException {
 		List<?> search = (List<?>) execute(search(
 			"list('a1', 'a2').map(n -> new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, $n))"));

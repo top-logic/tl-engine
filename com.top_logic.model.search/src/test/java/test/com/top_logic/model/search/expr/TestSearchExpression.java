@@ -13,8 +13,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -1017,6 +1019,21 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		Object search1 = execute(
 			search("{\"v\": 5}.recursion(x -> $x[\"v\"] > 0 ? {\"v\": $x[\"v\"] - 1} : {\"v\": $x[\"v\"]})"));
 		assertEquals(6, ((Collection<?>) search1).size());
+	}
+
+	public void testTraversal() throws ParseException {
+		SearchExpression treeSum =
+			search("r -> $r.traverse(n -> $n['children'], n -> $n['value'], n -> r -> $n + $r.sum())");
+		assertEquals(5.0, execute(treeSum, node(5)));
+		assertEquals(11.0, execute(treeSum, node(5, node(3), node(2, node(1)))));
+	}
+
+	@SafeVarargs
+	private static Map<String, Object> node(int value, Map<String, Object>... children) {
+		HashMap<String, Object> result = new HashMap<>();
+		result.put("value", value);
+		result.put("children", children);
+		return result;
 	}
 
 	public void testGeneration() throws ParseException {

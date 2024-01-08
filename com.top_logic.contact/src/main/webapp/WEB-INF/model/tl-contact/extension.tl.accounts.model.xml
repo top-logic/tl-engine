@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<module name="tl.accounts">
+		<class name="Person">
+			<attributes>
+				<reference name="contact"
+					config:position="before"
+					config:reference="groups"
+					inverse-reference="account"
+					kind="forwards"
+					mandatory="true"
+					type="Contacts:PersonContact"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="contact"
+								storage-type="Person"
+							/>
+						</storage-algorithm>
+						<delete-protected/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

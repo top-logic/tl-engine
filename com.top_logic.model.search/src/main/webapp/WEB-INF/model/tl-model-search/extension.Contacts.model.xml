@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="Contacts">
+		<class name="PersonContact">
+			<annotations>
+				<dynamic-icon>
+					<icon-by-expression>
+						<icon>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, icon("css:far fa-user"))</icon>
+					</icon-by-expression>
+				</dynamic-icon>
+			</annotations>
+		</class>
+	</module>
+</model>

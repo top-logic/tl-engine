@@ -56,7 +56,10 @@ public class DefaultCountryDefault extends DefaultValueProvider implements Defau
 		return defaultCountry();
 	}
 
-	private Object defaultCountry() {
+	/**
+	 * The {@link Country} delivered by {@link DefaultCountryDefault}.
+	 */
+	public Country defaultCountry() {
 		return new Country(ResourcesModule.getInstance().getDefaultLocale().getCountry());
 	}
 

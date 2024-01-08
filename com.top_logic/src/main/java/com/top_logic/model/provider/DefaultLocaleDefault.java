@@ -55,7 +55,10 @@ public class DefaultLocaleDefault extends DefaultValueProvider implements Defaul
 		return defaultLocale();
 	}
 
-	private Object defaultLocale() {
+	/**
+	 * The {@link Locale} delivered by the {@link DefaultLocaleDefault}.
+	 */
+	public Locale defaultLocale() {
 		return ResourcesModule.getInstance().getDefaultLocale();
 	}
 

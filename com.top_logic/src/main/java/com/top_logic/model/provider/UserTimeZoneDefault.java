@@ -53,7 +53,10 @@ public class UserTimeZoneDefault extends DefaultValueProvider implements Default
 		return defaultUserTimeZone();
 	}
 
-	private Object defaultUserTimeZone() {
+	/**
+	 * The {@link TimeZone} delivered by this {@link UserTimeZoneDefault}.
+	 */
+	public TimeZone defaultUserTimeZone() {
 		return TimeZones.defaultUserTimeZone();
 	}
 

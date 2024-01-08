@@ -43,6 +43,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.RefreshUsersTask;
 import com.top_logic.knowledge.wrap.person.RefreshUsersTask.Config;
+import com.top_logic.util.Country;
 
 /**
  * {@link TestCase} for {@link PersonManager}
@@ -138,7 +139,8 @@ public class TestTLPersonManager extends BasicTestCase {
 		assertNull(Person.byName(firstNodeKnowledgeBase, fooUser.getUserName()));
 		Transaction tx = firstNodeKnowledgeBase.beginTransaction();
 		Person fooPerson = Person.create(firstNodeKnowledgeBase, fooUser.getUserName(), AUTHENTICATION_DEVICE_ID);
-		fooPerson.setLocale(Locale.CHINA);
+		fooPerson.setLanguage(Locale.CHINESE);
+		fooPerson.setCountry(new Country(Locale.CHINA.getCountry()));
 		tx.commit();
 	}
 

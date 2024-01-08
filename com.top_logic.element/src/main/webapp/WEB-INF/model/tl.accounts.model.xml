@@ -198,6 +198,13 @@
 				>
 					<annotations>
 						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.knowledge.wrap.person.Person#computeLocale()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
 					</annotations>
 				</property>
 				<property name="language"

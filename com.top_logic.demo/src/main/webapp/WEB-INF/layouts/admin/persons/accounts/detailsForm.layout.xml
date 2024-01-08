@@ -96,11 +96,6 @@
 								visibility="read-only"
 							/>
 							<field
-								attribute="locale"
-								fullQualifiedName="tl.accounts:Person#locale"
-								type="tl.core:String"
-							/>
-							<field
 								attribute="admin"
 								fullQualifiedName="tl.accounts:Person#admin"
 								type="tl.core:Boolean"
@@ -137,7 +132,7 @@
 							<field
 								attribute="language"
 								fullQualifiedName="tl.accounts:Person#language"
-								type="tl.util:Country"
+								type="tl.util:Language"
 								visibility="editable"
 							/>
 							<field

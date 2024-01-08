@@ -5,9 +5,6 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
-import static com.top_logic.basic.shared.string.StringServicesShared.*;
-
-import java.util.Locale;
 import java.util.TimeZone;
 
 import com.top_logic.base.user.UserInterface;
@@ -110,7 +107,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
      * @param    aCountry     The new country, may be <code>null</code> or empty.
      */
 	public void updateLocale(Person aPerson, String aLanguage, String aCountry) {
-		aPerson.setLocale(new Locale(nonNull(aLanguage), nonNull(aCountry)));
+		throw new UnsupportedOperationException("call Person#setLanguage and Person#setCountry");
     }
 
     /**

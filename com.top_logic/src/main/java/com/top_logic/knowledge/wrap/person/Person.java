@@ -16,6 +16,7 @@ import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.user.UserInterface;
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -24,7 +25,6 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
-import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dsa.DataAccessProxy;
@@ -43,10 +43,14 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.core.Author;
+import com.top_logic.model.provider.DefaultCountryDefault;
+import com.top_logic.model.provider.DefaultLocaleDefault;
+import com.top_logic.model.provider.UserTimeZoneDefault;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
+import com.top_logic.util.Country;
 import com.top_logic.util.Utils;
 
 /**
@@ -81,6 +85,12 @@ public class Person extends AbstractBoundWrapper implements Author {
 
 	/** The attribute "locale". */
 	public static final String LOCALE = "locale";
+
+	/** The attribute "language". */
+	public static final String LANGUAGE_ATTR = "language";
+
+	/** The attribute "country". */
+	public static final String COUNTRY_ATTR = "country";
 
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
@@ -196,27 +206,89 @@ public class Person extends AbstractBoundWrapper implements Author {
 	}
 
 	/**
-     * Get the locale of the person.
-     * 
-     * @return the locale of the person.
-     */
+	 * Get the locale of the person.
+	 * 
+	 * @return the locale of the person.
+	 * 
+	 * @implNote The {@link Person#tType() type} of a {@link Person} does not exist in tl-core,
+	 *           therefore the access must happen over the KB attribute.
+	 */
 	public Locale getLocale() {
-		return Utils.parseLocale(tGetDataString(Person.LOCALE));
+		return Utils.parseLocale(computeLocale());
     }
     
-    /**
-	 * Sets the locale of the person.
+	/**
+	 * Computes the String representation of the {@link #getLocale()} based on the
+	 * {@link #getLanguage() language} and {@link #getCountry() country} of this {@link Person}.
 	 * 
-	 * @param locale
-	 *        The new {@link Locale}.
+	 * @implNote This is the implementation of the attribute `tl.accounts:Person#locale`.
 	 */
-	public void setLocale(Locale locale) {
-		if (locale == null) {
-			tSetData(Person.LOCALE, null);
+	@CalledByReflection
+	public final String computeLocale() {
+		Locale language = getLanguage();
+		Country country = getCountry();
+		if (language == null) {
+			if (country == null) {
+				return null;
+			} else {
+				return "_" + country.getCode();
+			}
 		} else {
-			tSetData(Person.LOCALE, Utils.formatLocale(locale));
+			if (country == null) {
+				return language.getLanguage();
+			} else {
+				return language.getLanguage() + "_" + country.getCode();
+			}
 		}
-    }
+	}
+
+	/**
+	 * Access to the attribute {@link #LANGUAGE_ATTR} of type {@link Person}.
+	 * 
+	 * @implNote The {@link Person#tType() type} of a {@link Person} does not exist in tl-core,
+	 *           therefore the access must happen over the KB attribute.
+	 */
+	public Locale getLanguage() {
+		return Utils.parseLocale(tGetDataString(LANGUAGE_ATTR));
+	}
+
+	/**
+	 * Setter for {@link #getLanguage()}.
+	 * 
+	 * @implNote The {@link Person#tType() type} of a {@link Person} does not exist in tl-core,
+	 *           therefore the access must happen over the KB attribute.
+	 */
+	public void setLanguage(Locale newValue) {
+		tSetData(LANGUAGE_ATTR, Utils.formatLocale(newValue));
+	}
+
+	/**
+	 * Access to the attribute {@link #COUNTRY_ATTR} of type {@link Person}.
+	 * 
+	 * @implNote The {@link Person#tType() type} of a {@link Person} does not exist in tl-core,
+	 *           therefore the access must happen over the KB attribute.
+	 */
+	public Country getCountry() {
+		String countryString = tGetDataString(COUNTRY_ATTR);
+		if (StringServices.isEmpty(countryString)) {
+			return null;
+		}
+		return new Country(countryString);
+	}
+
+	/**
+	 * Setter for {@link #getCountry()}.
+	 * 
+	 * @implNote The {@link Person#tType() type} of a {@link Person} does not exist in tl-core,
+	 *           therefore the access must happen over the KB attribute.
+	 */
+	public void setCountry(Country newValue) {
+		if (newValue == null) {
+			tSetData(COUNTRY_ATTR, null);
+		} else {
+			tSetData(COUNTRY_ATTR, newValue.getCode());
+		}
+	}
 
     /**
      * returns a PersonalConfiguration for this Person
@@ -540,7 +612,9 @@ public class Person extends AbstractBoundWrapper implements Author {
 		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, userName);
 		Person result = handle.getWrapper();
 		result.setAuthenticationDeviceID(authenticationDeviceID);
-		result.setLocale(ResourcesModule.getInstance().getDefaultLocale());
+		result.setCountry(DefaultCountryDefault.INSTANCE.defaultCountry());
+		result.setLanguage(DefaultLocaleDefault.INSTANCE.defaultLocale());
+		result.setTimeZone(UserTimeZoneDefault.INSTANCE.defaultUserTimeZone());
 
 		Group representativeGroup = Group.createGroup(result.getName());
 		representativeGroup.setIsSystem(true);

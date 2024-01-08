@@ -36,6 +36,7 @@ import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.wrap.Group;
+import com.top_logic.util.Country;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -86,7 +87,8 @@ public class TestPerson extends BasicTestCase {
 		try {
 			Locale noCountry = Locale.ITALIAN;
 			assertEquals("Test needs locale without country.", StringServices.EMPTY_STRING, noCountry.getCountry());
-			person.setLocale(noCountry);
+			person.setCountry(null);
+			person.setLanguage(noCountry);
 			assertEquals("Country should not be added", StringServices.EMPTY_STRING, person.getLocale().getCountry());
 
 		} finally {
@@ -97,9 +99,8 @@ public class TestPerson extends BasicTestCase {
 	public void testSetLocaleWithoutLanguage() throws Throwable {
 		Person person = createPerson("person");
 		try {
-			Locale noLanguage = new Locale("", Locale.GERMANY.getCountry());
-			assertEquals("Test needs locale without language.", StringServices.EMPTY_STRING, noLanguage.getLanguage());
-			person.setLocale(noLanguage);
+			person.setLanguage(null);
+			person.setCountry(new Country(Locale.GERMANY.getCountry()));
 			assertEquals("Language should not be added", StringServices.EMPTY_STRING, person.getLocale().getLanguage());
 		} finally {
 			deletePersonAndUser(person);
@@ -114,7 +115,7 @@ public class TestPerson extends BasicTestCase {
 		Person creator = createPerson("creator");
 		try {
 			session.setPerson(creator);
-			creator.setLocale(null);
+			setLanguageAndCountry(creator, null);
 			Person newPerson = createPerson("newPerson");
 			try {
 				Locale defaultLocale = Locale.GERMANY;
@@ -150,13 +151,23 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	private void testLocalEquality(final Person creator, Locale locale) {
-		creator.setLocale(locale);
+		setLanguageAndCountry(creator, locale);
 		Person newPerson = createPerson("newPerson");
 		try {
 			assertEquals("Created person does not have locale of creator.", creator.getLocale(),
 				newPerson.getLocale());
 		} finally {
 			deletePersonAndUser(newPerson);
+		}
+	}
+
+	private void setLanguageAndCountry(Person p, Locale locale) {
+		if (locale == null) {
+			p.setLanguage(null);
+			p.setCountry(null);
+		} else {
+			p.setLanguage(locale);
+			p.setCountry(new Country(locale.getCountry()));
 		}
 	}
 
@@ -179,12 +190,12 @@ public class TestPerson extends BasicTestCase {
 		Locale previousLocale = root.getLocale();
     	// Modify back and forth.
 		Transaction modifyTx = kb.beginTransaction();
-		root.setLocale(Locale.TRADITIONAL_CHINESE);
+		setLanguageAndCountry(root, Locale.TRADITIONAL_CHINESE);
 		modifyTx.commit();
 		assertNotEquals(previousLocale, root.getLocale());
     	
 		Transaction modifyBackTx = kb.beginTransaction();
-		root.setLocale(previousLocale);
+		setLanguageAndCountry(root, previousLocale);
 		modifyBackTx.commit();
 		assertEquals(previousLocale, root.getLocale());
     }

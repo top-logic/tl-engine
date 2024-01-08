@@ -107,7 +107,7 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 			newTimeZone = null;
 		} else {
 			newContextId = TLSessionContext.contextId(person);
-			newLocale = findBestLocale(person);
+			newLocale = Resources.findBestLocale(person);
 			newTimeZone = person.getTimeZone();
 		}
 		resetPersonalConfiguration();
@@ -126,10 +126,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 
 	private void internalSetContextId(String contextID) {
 		super.setContextId(contextID);
-	}
-
-	private Locale findBestLocale(Person person) {
-		return Resources.findBestLocale(person.tHandle());
 	}
 
 	@Override

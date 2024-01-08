@@ -101,7 +101,7 @@ public class MailUnusedAccountCheck extends UnusedAccountCheck {
 		String emailAdress = user.getEMail();
         if (!StringServices.isEmpty(emailAdress)) try {
 				int deleteDayCount = getConfig().getDeleteDayCount();
-            Locale locale = Resources.findBestLocale(person.tHandle());
+				Locale locale = Resources.findBestLocale(person);
             String filename = "/WEB-INF/reportTemplates/html/";
             if (deleteAccount) {
                 filename += "DeleteAccountTemplate";

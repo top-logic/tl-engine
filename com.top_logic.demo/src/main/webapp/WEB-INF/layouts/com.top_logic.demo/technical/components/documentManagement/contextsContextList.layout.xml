@@ -5,7 +5,7 @@
 	final="true"
 	template="com.top_logic/tileList.template.xml"
 >
-	<arguments helpID="ID_26253828_0ca5_452c_97af_d572c42a616d">
+	<arguments>
 		<name key="dynamic.cda3a696-3f02-4304-ad76-1e60059bb988">
 			<en>Contexts</en>
 			<de>Kontexte</de>

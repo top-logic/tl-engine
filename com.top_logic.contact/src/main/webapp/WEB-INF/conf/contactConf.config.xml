@@ -93,6 +93,7 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/tl.contact.external.model.xml"/>
 					<declaration file="/WEB-INF/model/Contacts.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-contact/extension.tl.accounts.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="Contacts">

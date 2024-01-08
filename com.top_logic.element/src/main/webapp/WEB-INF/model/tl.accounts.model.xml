@@ -292,22 +292,6 @@
 						<delete-protected/>
 					</annotations>
 				</reference>
-				<reference name="contact"
-					inverse-reference="account"
-					kind="forwards"
-					mandatory="true"
-					type="Contacts:PersonContact"
-				>
-					<annotations>
-						<storage-algorithm>
-							<foreign-key-storage
-								storage-attribute="contact"
-								storage-type="Person"
-							/>
-						</storage-algorithm>
-						<delete-protected/>
-					</annotations>
-				</reference>
 				<reference name="groups"
 					inverse-reference="members"
 					kind="forwards"
@@ -322,33 +306,15 @@
 								table="hasGroup"
 							/>
 						</storage-algorithm>
-						<default-value>
-							<default-by-expression
-								in-transaction="true"
-								value="all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#defaultGroup`))"
-							/>
-						</default-value>
 						<create-visibility value="hidden"/>
 					</annotations>
 				</reference>
 				<property name="firstName"
 					type="tl.core:String"
-				>
-					<annotations>
-						<storage-algorithm>
-							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#firstname`)"/>
-						</storage-algorithm>
-					</annotations>
-				</property>
+				/>
 				<property name="lastName"
 					type="tl.core:String"
-				>
-					<annotations>
-						<storage-algorithm>
-							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#name`)"/>
-						</storage-algorithm>
-					</annotations>
-				</property>
+				/>
 			</attributes>
 		</class>
 		<class name="Role">

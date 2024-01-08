@@ -333,11 +333,6 @@
 				<table name="Contact"/>
 				<implementation-binding class-name="com.top_logic.contact.business.PersonContact"/>
 				<main-properties properties="name,email,phone,phone_mobile"/>
-				<dynamic-icon>
-					<icon-by-expression>
-						<icon>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, icon("css:far fa-user"))</icon>
-					</icon-by-expression>
-				</dynamic-icon>
 			</annotations>
 			<attributes>
 				<reference name="account"

@@ -2398,6 +2398,7 @@ span.disabled .ddwttChevron::after {
 .ddwttItemLabel {
 	display: block;
 	padding: 0 var(--spacing-03);
+	cursor: default;
 }
 
 /* Tags */

@@ -13,7 +13,6 @@ com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentat
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_ICON_CONTAINER
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_MENU
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_MENU_CONTAINER
-com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_OUTER_CONTAINER
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_TAB_BAR_CONTROL_TAG
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_TAB_BAR_SPACER
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_TAB_LEVEL_1
@@ -28,9 +27,6 @@ com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentat
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_TOOL_CONTAINER
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.CSS_CLASS_TOOL_CONTAINER_RIGHT
 com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.MAPPING_KEY_HEADER_RIGHT_IMAGE
-com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.MAPPING_KEY_HEADER_RIGHT_IMAGE_HEIGHT
-com.top_logic.themes.modern.layout.ModernThemeConstants.java: Missing documentation: com.top_logic.themes.modern.layout.ModernThemeConstants.MAPPING_KEY_HEADER_RIGHT_IMAGE_WIDTH
-com.top_logic.themes.modern.layout.renderer.ModernMainLayoutControlProvider.java: Missing documentation: com.top_logic.themes.modern.layout.renderer.ModernMainLayoutControlProvider
 com.top_logic.themes.modern.layout.renderer.MultiViewRenderer.java: Missing documentation: com.top_logic.themes.modern.layout.renderer.MultiViewRenderer
 com.top_logic.themes.modern.layout.sidebar.TitleButtonsViewProvider.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.themes.modern.layout.sidebar.TitleButtonsViewProvider.Config
 com.top_logic.themes.modern.layout.structure.ConditionalViewLayout.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.themes.modern.layout.structure.ConditionalViewLayout.Config

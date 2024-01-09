@@ -189,9 +189,9 @@ public class TestRequestLock extends AbstractLayoutTest {
         assertSame(write4, requestsInOrder.get(3));
         
         write1.throwCaught();
-        write1.throwCaught();
-        write1.throwCaught();
-        write1.throwCaught();
+		write2.throwCaught();
+		write3.throwCaught();
+		write4.throwCaught();
 
         assertFalse(hasTimedOut(lock));
     }
@@ -552,6 +552,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 			}
 		}
 		assertTrue(maxNumberExceptions);
+		assertTrue("Some write request timed out during processing of request.", writeRequest._timeout);
 	}
 
 	public void testAllowDefinedMaxNumberOfWriters() throws InterruptedException {
@@ -639,6 +640,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 
 		assertInstanceof(errorWriter.getProblem(), RequestTimeoutException.class);
 		assertInstanceof(errorWriter2.getProblem(), RequestTimeoutException.class);
+		assertTrue(writeRequest._timeout);
 		
 		nextSequenceNumber = lock.reset();
 
@@ -980,6 +982,8 @@ public class TestRequestLock extends AbstractLayoutTest {
      * Simulate a WriteRequest against the RequestLock.
      */
     protected class WriteRequest extends TestRequest {
+
+		protected boolean _timeout;
         
     	public WriteRequest(int key) {
     		this(key, null, -1);
@@ -1010,7 +1014,7 @@ public class TestRequestLock extends AbstractLayoutTest {
                 	
                 	assertEquals(0, reading);
                 } finally {
-                	lock.exitWriter(key);
+					_timeout = lock.exitWriter(key);
                 }
             }
             catch (Exception ex) {

@@ -310,7 +310,7 @@ public class AJAXServlet extends TopLogicServlet {
 					store.acknowledge(ajaxRequest.getAcks());
 				}
 
-				Response handle = store.createResponse(rxSequence);
+				try (Response handle = store.createResponse(rxSequence)) {
 				TagWriter out = handle.open(displayContext);
 				UpdateWriter writer = new UpdateWriter(displayContext, out, encoding, rxSequence, sourceReference);
 				boolean processExternalModelEvents = false;
@@ -363,9 +363,9 @@ public class AJAXServlet extends TopLogicServlet {
 				addInfoServiceItems(displayContext, writer);
 				writer.endResponse();
 				out.flushBuffer();
-				handle.close();
+				}
 			} finally {
-				unlock(lock, key, ajaxRequest, rootHandler);
+				unlock(lock, key, ajaxRequest, rxSequence, rootHandler, sessionId, userAgent);
 			}
 		} catch (FatalXMLError ex) {
 			Logger.error("IOException or TagException during evaluating result actions. (session: " + sessionId
@@ -376,12 +376,8 @@ public class AJAXServlet extends TopLogicServlet {
             // ParserConfigurationException
             // SAXException
             if (ajaxRequest != null) {
-                Logger.error(
-                        "Error in AJAX command. (command: '" + ajaxRequest.getCommand() + "', arguments: '" + logArguments(ajaxRequest) + 
-						"', sourceComponent: '" + ajaxRequest.getSource() +
-                        "', targetComponent: '" + ajaxRequest.getTargetComponentID() + 
-							"', session: " + sessionId + ',' + userAgent + ')', ex, AJAXServlet.class);
-
+				Logger.error(enhanceLogMessage("Error in AJAX command.", ajaxRequest, rxSequence, sessionId, userAgent),
+					ex, AJAXServlet.class);
                 ajaxRequest = null;
             }
             else {
@@ -437,38 +433,84 @@ public class AJAXServlet extends TopLogicServlet {
 			out.flushBuffer();
 			return null;
 		} catch (AJAXOutOfSequenceException ex) {
-			Logger.warn("Received AJAX command out of sequence. (command: '" + ajaxRequest.getCommand()
-				+ "', sequence: '" + rxSequence + "', arguments: '" + logArguments(ajaxRequest)
-				+ "', session: "
-				+ sessionId + ',' + userAgent + ')', ex, AJAXServlet.class);
+			Logger.warn(enhanceLogMessage("Received AJAX command out of sequence.", ajaxRequest, rxSequence, sessionId,
+				userAgent), ex, AJAXServlet.class);
 			TagWriter out = MainLayout.getTagWriter(request, response);
 			UpdateWriter writer = newUpdateWriter(rxSequence, out, encoding);
 			notifyRequestDropped(writer, I18NConstants.INCONSISTENT_SERVER_REPIES, true);
 			out.flushBuffer();
 			return null;
 		} catch (RequestTimeoutException ex) {
-			Logger.warn("Request canceled after timeout. (command: '" + ajaxRequest.getCommand()
-				+ "', sequence: '"
-				+ rxSequence + "', arguments: '" + logArguments(ajaxRequest) + "', session: " + sessionId
-				+ ','
-				+ userAgent + ')', ex, AJAXServlet.class);
+			Logger.warn(enhanceLogMessage("Request canceled after timeout.", ajaxRequest, rxSequence, sessionId,
+				userAgent), ex, AJAXServlet.class);
 			TagWriter out = MainLayout.getTagWriter(request, response);
 			UpdateWriter writer = newUpdateWriter(rxSequence, out, encoding);
 			notifyRequestDropped(writer, I18NConstants.REQUEST_TIMEOUT_RELOAD_REQUIRED, true);
 			out.flushBuffer();
 			return null;
 		} catch (MaxRequestNumberException ex) {
-			Logger.warn("Received too many AJAX requests. (command: '" + ajaxRequest.getCommand()
-				+ "', sequence: '"
-				+ rxSequence + "', arguments: '" + logArguments(ajaxRequest) + "', session: " + sessionId
-				+ ','
-				+ userAgent + ')', ex, AJAXServlet.class);
+			Logger.warn(enhanceLogMessage("Received too many AJAX requests.", ajaxRequest, rxSequence, sessionId,
+				userAgent), ex, AJAXServlet.class);
 			TagWriter out = MainLayout.getTagWriter(request, response);
 			UpdateWriter writer = newUpdateWriter(rxSequence, out, encoding);
 			notifyRequestDropped(writer, I18NConstants.MAX_NUMBER_REQUESTS_RECEIVED, false);
 			out.flushBuffer();
 			return null;
 		}
+	}
+
+	private String enhanceLogMessage(String message, AJAXRequest ajaxRequest, Integer rxSequence, String sessionId,
+			UserAgent userAgent) {
+		StringBuilder enhanced = new StringBuilder();
+		enhanced.append(message);
+		enhanced.append(' ');
+		appendCommands(enhanced, ajaxRequest, rxSequence, sessionId, userAgent);
+		return enhanced.toString();
+	}
+
+	private static void appendCommands(StringBuilder out, AJAXRequest ajaxRequest, Integer rxSequence, String sessionId,
+			UserAgent userAgent) {
+		out.append("(commands: ");
+		ComponentName commonSource = ajaxRequest.getSource();
+		ComponentName commonTarget = ajaxRequest.getTargetComponentID();
+		for (CommandRequest command : ajaxRequest.getCommands()) {
+			out.append("[");
+			appendCommandRequest(out, command, commonSource, commonTarget);
+			out.append("]");
+		}
+		if (rxSequence != NO_SEQUENCE) {
+			out.append(", sequence: '");
+			out.append(rxSequence);
+			out.append("'");
+		}
+		out.append(", sourceComponent: '");
+		out.append(commonSource);
+		out.append(", targetComponent: '");
+		out.append(commonTarget);
+		out.append("', session: ");
+		out.append(sessionId);
+		out.append(',');
+		out.append(userAgent);
+		out.append(')');
+	}
+
+	private static void appendCommandRequest(StringBuilder out, CommandRequest command, ComponentName commonSource,
+			ComponentName commonTarget) {
+		out.append("command: '");
+		out.append(command.getCommand());
+		out.append("', arguments: '");
+		out.append(logArguments(command));
+		ComponentName localSource = command.getContextComponentID();
+		if (!Utils.equals(localSource, commonSource)) {
+			out.append("', commandLocalSource: '");
+			out.append(localSource);
+		}
+		ComponentName localTarget = command.getTargetComponentID();
+		if (!Utils.equals(localTarget, commonTarget)) {
+			out.append("', commandLocalTarget: '");
+			out.append(localTarget);
+		}
+		out.append("'");
 	}
 
 	/**
@@ -478,7 +520,7 @@ public class AJAXServlet extends TopLogicServlet {
 	 * No sensitive information (such as arbitrary user input) must be written to the log.
 	 * </p>
 	 */
-	private String logArguments(CommandRequest command) {
+	private static String logArguments(CommandRequest command) {
 		final Map<String, Object> rawArguments = command.getArguments();
 
 		final StringBuilder buffer = new StringBuilder();
@@ -518,11 +560,17 @@ public class AJAXServlet extends TopLogicServlet {
 		writer.endResponse();
 	}
 
-	private void unlock(RequestLock lock, Integer key, AJAXRequest ajaxRequest, SubsessionHandler rootHandler) {
+	private void unlock(RequestLock lock, Integer key, AJAXRequest ajaxRequest, Integer rxSequence,
+			SubsessionHandler rootHandler, String sessionId, UserAgent userAgent) {
 		if (mustRunSingleThreaded(ajaxRequest)) {
 			rootHandler.enableUpdate(false);
 
-			lock.exitWriter(key);
+			boolean timeout = lock.exitWriter(key);
+			if (timeout) {
+				Logger.warn(enhanceLogMessage(
+					"A different request was canceled after timeout when executing writer with key '" + key + "'.",
+					ajaxRequest, rxSequence, sessionId, userAgent), AJAXServlet.class);
+			}
 		} else {
 			lock.exitReader(key, ajaxRequest.getSource());
 		}

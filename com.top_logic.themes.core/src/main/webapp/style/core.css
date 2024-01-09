@@ -77,6 +77,17 @@ i.yellow {
 	color: var(--support-warning);
 }
 
+/* Overlay styles are needed as long as the old icons with an overlay are not removed completely */
+i[class*=" overlay-"] span::before {
+	margin-left: -0.8em;
+	color: var(--background);
+}
+
+.overlay-add span::before {
+	content: "\e9cf";
+	margin-left: -1em;
+}
+
 .layoutVerticalAdjustmentGrabber {
     cursor: n-resize;
     background: var(--background);
@@ -2179,7 +2190,6 @@ If they're deleted, this can be deleted too
 	letter-spacing: var(--body-01-letter-spacing);
 	color: var(--text-secondary);
 	word-break: break-all;
-	margin-left: var(--spacing-02);
 }
 
 .treeNode .fToggle,
@@ -2188,38 +2198,56 @@ If they're deleted, this can be deleted too
 	color: var(--icon-secondary);
 }
 
-.treeNode.treeSelected .fToggle.tcrToggle, .tlLeafIcon,
+.treeNode.treeSelected .fToggle.tcrToggle,
+.tlLeafIcon,
 .tcrNode .treeNode.treeSelected span {
 	color: var(--icon-primary);
 }
 
+.treeNode:hover .fToggle.tcrToggle,
+.tlLeafIcon:hover {
+	color: var(--icon-primary);
+}
+
 .treeNode .input-image.fToggle.disabled {
-	height: 1rem;
-	width: 1rem;
+	color: var(--icon-disabled);
 }
 
 .treeSelected .tcrLink {
 	color: var(--text-primary);
 }
 
-
-.tcrNode .treeNode:hover,
-.tcrNode .treeNode:hover::after {
+.tcrNode .treeNode:hover {
+	color: var(--text-primary);
 	background: var(--layer-hover);
 }
 
-.tcrNode .treeNode.treeSelected,
-.tcrNode .treeNode.treeSelected::after{
+.tcrNode .treeNode:hover .tcrLink {
+	color: var(--text-primary);
+}
+
+.tcrNode .treeNode.treeSelected {
+	color: var(--interactive);
 	background: var(--layer-selected);
 }
 
-.tcrNode .treeNode.treeSelected:hover,
-.tcrNode .treeNode.treeSelected:hover::after{
+.tcrNode .treeNode.treeSelected:hover {
+	color: var(--interactive);
 	background: var(--layer-selected-hover);
 }
 
+.tcrNode .treeNode.treeSelected:hover .tcrLink {
+	color: var(--interactive);
+}
+
+.treeNode.treeSelected:hover .fToggle.tcrToggle,
+.tcrNode .treeNode.treeSelected:hover span,
+.tlLeafIcon:hover {
+	color: var(--icon-interactive);
+}
+
 .tcrNode .treeNode a:focus {
-	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	box-shadow: none;
 }
 
 /*

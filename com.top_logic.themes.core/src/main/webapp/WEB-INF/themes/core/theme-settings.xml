@@ -41,10 +41,10 @@
 	<!-- Needs to be that high because every filter element is being used in an HTML element with the 
 			same css classes even when the layout for the page is totally different.  -->
 	<int name="FILTER_SINGLE_LINE_HEIGHT"
-		value="72"
+		value="64"
 	/>
 	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
-		value="72"
+		value="64"
 	/>
 	<icon name="com.top_logic.layout.Icons.APP_LOGO"
 		value="/images/appLogo.svg"
@@ -655,7 +655,7 @@
 		expr="%ICONS_ADD_BUTTON%"
 	/>
 	<icon name="ICONS_BUTTON_SAVE"
-		value="css:bi bi-save2-fill"
+		value="css:bi bi-floppy2-fill"
 	/>
 	<icon name="ICONS_BUTTON_SAVE_DISABLED"
 		expr="%ICONS_BUTTON_SAVE%"
@@ -1562,23 +1562,42 @@
 	<icon name="ICONS_BUTTON_CUT_DISABLED"
 		expr="%ICONS_BUTTON_CUT%"
 	/>
+	<icon name="ICONS_BUTTON_NEW_ELEMENT"
+		value="css:bi bi-file-plus-fill"
+	/>
+	<icon name="ICONS_BUTTON_NEW_ELEMENT_DISABLED"
+		expr="%ICONS_BUTTON_NEW_ELEMENT%"
+	/>
+	
+	<!-- No Bootstrap Icons found for these -->
+	<!-- START: These two are in the theme-settings.xml in com.top_logic.layout.scripting.template project -->
+	<icon name="SAVE_SCRIPT"
+		value="css:fas fa-save"
+	/>
+	<icon name="SAVE_SCRIPT_AS"
+		value="colored:fas fa-save overlay-add"
+	/>
+	<!-- END -->
 	<icon name="ICONS_BUTTON_GROUP"
-		value="css:bi bi-stack"
+		value="colored:tl-icon text-arrow-right"
 	/>
 	<icon name="ICONS_BUTTON_GROUP_DISABLED"
 		expr="%ICONS_BUTTON_GROUP%"
 	/>
 	<icon name="ICONS_BUTTON_UNGROUP"
-		value="css:bi bi-layers-half"
+		value="colored:tl-icon text-arrow-left"
 	/>
 	<icon name="ICONS_BUTTON_UNGROUP_DISABLED"
 		expr="%ICONS_BUTTON_UNGROUP%"
 	/>
+<<<<<<< Upstream, based on origin/master
 	<int name="com.top_logic.layout.form.control.Icons.MEGA_MENU_BORDER_WIDTH"
 		value="1"
 	/>
 	
 	<!-- No Bootstrap Icons found for these -->
+=======
+>>>>>>> ef15482 Ticket #27692: Changed interactive state designs of trees and added and adjusted icons to the theme.
 	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
 		expr=""
 		value="colored:tl-icon selection-invert"

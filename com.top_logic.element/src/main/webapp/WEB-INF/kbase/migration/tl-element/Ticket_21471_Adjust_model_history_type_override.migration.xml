@@ -14,9 +14,11 @@
 			module="tl-element"
 		/>
 	</dependencies>
-	<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
-		transform="/WEB-INF/kbase/migration/tl-element/Ticket_21471_Adjust_model_history_type_override.transform.xslt"
-	/>
+	<processors>
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_21471_Adjust_model_history_type_override.transform.xslt"
+		/>
+	</processors>
 	<migration>
 		<type-mapping class=""/>
 	</migration>

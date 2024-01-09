@@ -602,8 +602,10 @@ public class ModelResolver {
 			TLType targetType;
 			try {
 				targetType = lookupAttributeType(type, referenceConfig);
-			} catch (ConfigurationException ex) {
-				log().error("Unable to determine target type for reference: " + ex.getMessage(), ex);
+			} catch (ConfigurationException | TopLogicException ex) {
+				log().error("Unable to determine target type " + referenceConfig.getTypeSpec() + " for reference "
+						+ TLModelUtil.qualifiedTypePartName(type, referenceConfig.getName()),
+					ex);
 				return;
 			}
 			TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceConfig.getName(), targetType);

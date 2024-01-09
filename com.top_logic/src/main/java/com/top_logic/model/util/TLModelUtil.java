@@ -1668,6 +1668,14 @@ public class TLModelUtil {
 	}
 
 	/**
+	 * The fully qualified name of the part with given name of the given {@link TLType type} (No
+	 * matter whether it exist).
+	 */
+	public static String qualifiedTypePartName(TLType type, String partName) {
+		return qualifiedName(type) + QUALIFIED_NAME_PART_SEPARATOR + partName;
+	}
+
+	/**
 	 * The fully qualified name of a {@link TLType} type.
 	 * 
 	 * @return Null, if there is no name. (The {@link TLModel} itself has no name.)

@@ -302,6 +302,7 @@ div.ace_tooltip>code.inlineCode {
 	width: 100%;
 	height: 100%;
 	background: var(--layer);
+	overflow: auto;
 }
 
 .fltGlobalContainer input,
@@ -321,7 +322,6 @@ div.fltHeader {
 .fltSettings {
 	position: relative;
 	overflow: auto;
-	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
 	max-width: 100%;
 	padding: 0 var(--spacing-03);
 }
@@ -329,7 +329,7 @@ div.fltHeader {
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
-	padding: var(--spacing-03) var(--spacing-01);
+	padding: var(--spacing-03) var(--spacing-01) var(--spacing-02) var(--spacing-01);
 }
 
 .fltMenu {
@@ -1069,7 +1069,7 @@ td.rightList {
 
 .cDefaultButton button {
 	border: none;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	cursor: pointer;
 }
 
@@ -1754,7 +1754,7 @@ span.ltcCounting input {
 	padding-bottom: var(--spacing-03);
 	min-width: 0px;
 	background-clip: border-box;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	height: 20rem;
 	width: 16rem;
 	overflow: hidden;
@@ -1910,7 +1910,7 @@ h5.card-title a:focus {
 	flex-shrink: 0;
 	height: 2.5rem;
 	width: 2.5rem;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 }
 
 .tlUser a {
@@ -1942,7 +1942,7 @@ h5.card-title a:focus {
 	flex-shrink: 0;
 	height: 2.5rem;
 	width: 2.5rem;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 }
 
 .ToolBarContainer .IconContainer .cButton a i,

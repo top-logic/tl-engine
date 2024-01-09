@@ -84,15 +84,18 @@ div.cmdProgress img {
 .cDefaultButton button,
 .cDefaultButton button:disabled,
 .tlButtonScrollContainer .tlDropdownButton,
-.sxButtons .tlButton {
+.sxButtons .tlButton,
+.cButton.bcPopup,
+.fltSubContent .cMenuButton.menuEntryEnabled,
+.fltSubContent .cMenuButton.menuEntryDisabled {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
 	flex-shrink: 0;
 	gap: var(--spacing-02);
-	height: 1.3rem; /* 36.8px height */
-	padding: var(--spacing-02) var(--spacing-03);
-	border-radius: .25rem;
+	height: 2rem; /* 32px height */
+	padding: 0 var(--spacing-03);
+	border-radius: var(--corner-radius);
 }
 
 .cImageLinkButton {
@@ -102,26 +105,19 @@ div.cmdProgress img {
 
 .fltSubContent .cMenuButton.menuEntryEnabled,
 .fltSubContent .cMenuButton.menuEntryDisabled {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	gap: var(--spacing-02);
-	height: 1.3rem;
-	border-radius: .25rem;
-	margin: var(--spacing-01);
-	padding: var(--spacing-02);
+    margin: var(--spacing-01);
 	width: -webkit-fill-available;
 }
 
 .fltButtons {
+	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
 	display: flex;
 	justify-content: space-around;
-	padding: var(--spacing-02) 0;
+    align-items: center;
 }
 
 .fltButtons .cButton {
-	height: 1.8rem; /* 36.8px height */
-	padding: var(--spacing-01) var(--spacing-01);
+	padding: 0 var(--spacing-01);
 }
 
 .fltSubContent .menuEntryCell {
@@ -138,19 +134,7 @@ div.cmdProgress img {
 	width: 100%;
 }
 
-.cButton.bcPopup {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	flex-shrink: 0;
-	gap: .5rem;
-	height: 1.5rem; /* 36.8px height */
-	padding: var(--spacing-02) var(--spacing-03);
-	border-radius: .25rem;
-}
-
 .cDefaultButton button {
-	height: 2.3rem; /* 36.8px height */
 	cursor: pointer;
 }
 
@@ -555,7 +539,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 	justify-content: center;
 	align-items: center;
 	padding: var(--spacing-02) var(--spacing-02);
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
 }

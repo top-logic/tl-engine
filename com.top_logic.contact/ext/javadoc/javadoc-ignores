@@ -47,7 +47,6 @@ com.top_logic.contact.business.ContactFactory.java: Invalid camel case word 'Com
 com.top_logic.contact.business.ContactFactory.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.contact.business.ContactFactory.java: Invalid camel case word 'PersonContact', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.contact.business.ContactFactory.java: Invalid camel case word 'getAllContacts', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.contact.business.ContactFactory.java: Missing documentation: com.top_logic.contact.business.ContactFactory.deleteContact
 com.top_logic.contact.business.ContactFactory.java: Missing documentation: com.top_logic.contact.business.ContactFactory.getAllContacts
 com.top_logic.contact.business.ContactFactory.java: Missing documentation: com.top_logic.contact.business.ContactFactory.getAllContactsUnsorted
 com.top_logic.contact.business.ContactFactory.java: Missing documentation: com.top_logic.contact.business.ContactFactory.getInstance
@@ -65,22 +64,15 @@ com.top_logic.contact.business.POIExcelImporter.java: Missing documentation: com
 com.top_logic.contact.business.POIExcelImporter.java: Missing documentation: com.top_logic.contact.business.POIExcelImporter.setError
 com.top_logic.contact.business.PersonContact.java: Invalid camel case word 'PersonContact', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.contact.business.PersonContact.java: Invalid camel case word 'PersonContacts', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ASS_NAME_TO_PERSON
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_BOSS
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_COMPANY
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_FAX
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_FIRSTNAME
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_FULLNAME
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_MAIL
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_PHONE_MOBILE
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_PHONE_OFFICE
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_PHONE_PRIVATE
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_POSITION
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.ATT_TITLE
+com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.BOSS
+com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.COMPANY
+com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.FAX
+com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.FULLNAME
 com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.META_ELEMENT
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.copyPersonAttributesToContact
+com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.PHONE_MOBILE
+com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.PHONE_PRIVATE
+com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.POSITION
 com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.getCurrentPersonContact
-com.top_logic.contact.business.PersonContact.java: Missing documentation: com.top_logic.contact.business.PersonContact.getFirstName
 com.top_logic.contact.business.importer.GenericPersonContactCreateHandler.java: Missing documentation: com.top_logic.contact.business.importer.GenericPersonContactCreateHandler
 com.top_logic.contact.business.importer.PersonContactByPersonIDMapping.java: Missing documentation: com.top_logic.contact.business.importer.PersonContactByPersonIDMapping
 com.top_logic.contact.business.importer.PersonContactsByPersonIDMapping.java: Missing documentation: com.top_logic.contact.business.importer.PersonContactsByPersonIDMapping
@@ -163,10 +155,6 @@ com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler.java: Mi
 com.top_logic.contact.layout.company.CompanyContactModelBuilder.java: Invalid camel case word 'PersonContact', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.contact.layout.company.CompanyContactModelBuilder.java: Missing documentation: com.top_logic.contact.layout.company.CompanyContactModelBuilder
 com.top_logic.contact.layout.company.EditCompanyContactComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.contact.layout.company.EditCompanyContactComponent
-com.top_logic.contact.layout.person.ContactPersonManager.java: Invalid camel case word 'PersonContact', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.contact.layout.person.ContactPersonManager.java: Invalid camel case word 'PersonContacts', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.contact.layout.person.ContactPersonManager.java: Invalid camel case word 'TLPersonManager', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.contact.layout.person.ContactPersonManager.java: Missing documentation: com.top_logic.contact.layout.person.ContactPersonManager.copyContactAttributesToPerson
 com.top_logic.contact.layout.person.CreatePersonContactComponent.java: Invalid camel case word 'CreateComponent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.contact.layout.person.EditPersonContactComponent.java: Invalid camel case word 'PersonContact', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.contact.layout.person.EditPersonContactComponent.java: Invalid camel case word 'PersonContacts', this may only be used within JavaDoc links or HTML code tags.
@@ -476,10 +464,6 @@ com.top_logic.contact.mandatoraware.layout.COSPersonContactModelBuilder.java: Mi
 com.top_logic.contact.mandatoraware.layout.I18NConstants.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.contact.mandatoraware.layout.I18NConstants
 com.top_logic.contact.orgunit.OrgStructureFactory.java: Missing documentation: com.top_logic.contact.orgunit.OrgStructureFactory.getStructureName
 com.top_logic.contact.orgunit.OrgUnitFactory.java: Missing documentation: com.top_logic.contact.orgunit.OrgUnitFactory.getStructureName
-com.top_logic.contact.reminder.AbstractReminder.java: Missing documentation: com.top_logic.contact.reminder.AbstractReminder
-com.top_logic.contact.reminder.AbstractReminder.java: Missing documentation: com.top_logic.contact.reminder.AbstractReminder.getAllReceivers
-com.top_logic.contact.reminder.AbstractReminder.java: Missing documentation: com.top_logic.contact.reminder.AbstractReminder.getConfiguration
-com.top_logic.contact.reminder.AbstractReminder.java: Missing documentation: com.top_logic.contact.reminder.AbstractReminder.getTokens
 com.top_logic.contact.search.ContactSearchComponent.java: Missing documentation: com.top_logic.contact.search.ContactSearchComponent
 com.top_logic.contact.search.ContactSearchComponent.java: Missing documentation: com.top_logic.contact.search.ContactSearchComponent.getMandatorAttribute
 com.top_logic.contact.search.ContactSearchFieldSupport.java: Missing documentation: com.top_logic.contact.search.ContactSearchFieldSupport

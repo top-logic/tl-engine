@@ -236,7 +236,7 @@ div.mcMinimized .sblTitle img {
 	justify-content: center;
 	align-items: center;
 	background: var(--support-danger);
-	border-radius: 0.25rem;
+	border-radius: var(--corner-radius);
 }
 
 /* Is needed for the sidebar theme */

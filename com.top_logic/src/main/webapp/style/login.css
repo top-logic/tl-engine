@@ -93,8 +93,10 @@ input[type="submit"] {
 	font-size: .875rem;
 	line-height: 1.125rem;
 	letter-spacing: .15px;
-	height: 2.3rem; /* 36.8px height */
-	padding: .5rem 1rem;
+	display: inline-flex;
+    justify-content: center;
+    align-items: center;
+	height: 2rem; /* 32px height */
 	border-radius: .25rem;
 	background: #2968c8;
 	box-shadow: inset 0px 0px 0px 1px #2968c8;

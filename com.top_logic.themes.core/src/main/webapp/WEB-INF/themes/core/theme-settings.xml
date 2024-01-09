@@ -1255,7 +1255,7 @@
 		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
-		value="50px"
+		value="62px"
 	/>
 	
 	<!-- Form spacings  -->
@@ -1949,6 +1949,9 @@
 	/>
 	<string name="shadow-menu"
 		value=" 0 2px 6px 0 rgba(0,0,0,0.32)"
+	/>
+	<string name="corner-radius"
+		value="0.25rem"
 	/>
 </settings>
 

@@ -813,8 +813,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
-	height: 2.3rem; /* 36.8px height */
-	border-radius: .25rem;
+	height: 2rem; /* 32px height */
+	border-radius: var(--corner-radius);
 	color: var(--button-secondary);
 	background: var(--background);
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
@@ -1833,7 +1833,7 @@ span.bcc-option, .cChoice-option {
 	width: 1.5rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 }
 
 span.cColorDisplay {
@@ -2063,7 +2063,7 @@ div.sizeContainer, div.imageContainer {
 	width: 1.5rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	background-color: var(--layer-accent);
 }
 
@@ -2113,7 +2113,7 @@ div.sizeContainer, div.imageContainer {
 	cursor: pointer;
 	color: var(--text-on-color);
 	padding-left: var(--spacing-02);
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
 }

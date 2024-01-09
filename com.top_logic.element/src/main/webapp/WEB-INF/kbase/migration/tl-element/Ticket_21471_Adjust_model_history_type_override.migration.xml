@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_21471_Adjust_model_history_type_override"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
+			module="tl"
+		/>
+		<dependency name="Ticket_25835_Rename_RenderInputBeforeLabelAnnotation"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+		transform="/WEB-INF/kbase/migration/tl-element/Ticket_21471_Adjust_model_history_type_override.transform.xslt"
+	/>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

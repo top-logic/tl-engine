@@ -4,12 +4,8 @@
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	version="1.0"
 >
-	<!-- add backwards kind to parent reference -->
-	<xsl:template match="/config//module[@name='tl.doc']//class[@name='Page']//reference[@name='parent']">
-		<reference kind="backwards">
-			<xsl:apply-templates select="@*|node()"/>
-		</reference>
-	</xsl:template>
+	<!--  remove history override attribute -->
+	<xsl:template match="/config//module[@name='tl.model']//class[@name='TLReference']//property[@name='historyType']/@override"/>
 	
 	<!-- standard copy template -->
 	<xsl:template match="@*|node()">

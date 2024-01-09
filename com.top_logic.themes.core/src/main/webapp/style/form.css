@@ -58,6 +58,7 @@ div.fptBodyContent {
 	right: 0px;
 	top: 0px;
 	bottom: 0px;
+    padding: 0 var(--spacing-03);
 }
 
 div.fptTitle {
@@ -231,7 +232,6 @@ a.is-action {
 
 .frmBody {
 	padding: 0 var(--spacing-03);
-	margin: var(--spacing-03) 0;
 }
 
 div.frmBody > div.dropPane {
@@ -278,6 +278,7 @@ div.rf_buttons {
 
 .rf_columnsLayout {
     margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+    margin-top: var(--spacing-03);
 }
 
 .rf_columnsLayout.keep {

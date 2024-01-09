@@ -12,6 +12,7 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Environment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -22,6 +23,7 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.RegExpValueProvider;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -30,6 +32,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
+import com.top_logic.util.AbstractStartStopListener;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.license.LicenseTool;
 
 /**
@@ -217,23 +221,51 @@ public class PersonManager extends ManagedClass {
 
 		String loginName = getSuperUserName();
 		Person existingAccount = Person.byName(loginName);
-		if (existingAccount != null) {
+		if (existingAccount == null) {
+			try (Transaction tx = kb.beginTransaction()) {
+				AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
+				String deviceID = device.getDeviceID();
+				Person root = Person.create(kb, loginName, deviceID);
+				root.setAdmin(true);
+
+				setupRootPassword(root, loginName);
+
+				tx.commit();
+			}
+		} else {
+			boolean passwordReset =
+				Environment.getSystemPropertyOrEnvironmentVariable("tl_reset_password", null) != null;
+			if (passwordReset) {
+				try (Transaction tx = kb.beginTransaction()) {
+					setupRootPassword(existingAccount, loginName);
+					tx.commit();
+				}
+			}
+		}
+
+	}
+
+	private void setupRootPassword(Person root, String loginName) {
+		AuthenticationDevice device = root.getAuthenticationDevice();
+		if (!device.allowPwdChange()) {
+			Logger.info("No password setting for root user allowed.", PersonManager.class);
 			return;
 		}
+		String initialPassword =
+			Environment.getSystemPropertyOrEnvironmentVariable("tl_initial_password", null);
 
-		try (Transaction tx = kb.beginTransaction()) {
-			AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
-			String deviceID = device.getDeviceID();
-			Person root = Person.create(kb, loginName, deviceID);
-			root.setAdmin(true);
-
-			if (device.allowPwdChange()) {
-				device.setPassword(root, "root1234".toCharArray());
-			} else {
-				Logger.info("No password setting for root user allowed.", PersonManager.class);
-			}
-			tx.commit();
+		String message;
+		if (initialPassword == null) {
+			initialPassword = SecureRandomService.getInstance().getRandomString();
+			message = "Initial password for '" + loginName + "': " + initialPassword;
+			Logger.info(message, PersonManager.class);
+		} else {
+			message = "Initial password for '" + loginName + "' set up from environment variable.";
+			Logger.info(message, PersonManager.class);
 		}
+		TLContext.getContext().set(AbstractStartStopListener.PASSWORD_INITIALIZATION_MESSAGE, message);
+
+		device.setPassword(root, initialPassword.toCharArray());
 	}
 
 	private void internalStartUp() {

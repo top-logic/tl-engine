@@ -1805,10 +1805,10 @@ span.ltcCounting input {
 	background: transparent;
 }
 
-.previewBoxInner {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
+.previewBoxOuter:not(.galleryPreview) .previewBoxInner {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .card-img-top i {

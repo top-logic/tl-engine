@@ -5,15 +5,11 @@
  */
 package com.top_logic.model.form.implementation;
 
-import java.util.function.Function;
-
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
-import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -21,7 +17,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Implementation of a {@link FormElement} creating a corresponding template for rendering.
  * 
- * @see #createDisplayTemplate(FormEditorContext)
+ * @see #createTemplate(FormEditorContext)
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
@@ -29,48 +25,14 @@ import com.top_logic.tool.boundsec.HandlerResult;
 public interface FormElementTemplateProvider {
 
 	/**
-	 * Entry point for template creation.
-	 * 
-	 * <p>
-	 * Dispatches to either {@link #createDesignTemplate(FormEditorContext)} or
-	 * {@link #createDisplayTemplate(FormEditorContext)} depending on the {@link FormMode} of the
-	 * given {@link FormEditorContext}, see {@link FormEditorContext#getFormMode()}.
-	 * </p>
+	 * Creates the actual template.
 	 * 
 	 * @param context
 	 *        Context information for template creation.
 	 * 
 	 * @return The template for rendering this form element.
 	 */
-	default HTMLTemplateFragment createTemplate(FormEditorContext context) {
-		if (context.getFormMode() == FormMode.DESIGN) {
-			return createDesignTemplate(context);
-		} else {
-			return createDisplayTemplate(context);
-		}
-	}
-
-	/**
-	 * Creates a {@link HTMLTemplateFragment} for elements of a form. The template defines how the
-	 * elements are visually represented at the GUI.
-	 * 
-	 * @param context
-	 *        The {@link FormEditorContext} to create the template.
-	 * 
-	 * @return The created template.
-	 */
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context);
-
-	/**
-	 * Creates a {@link HTMLTemplateFragment} for elements of a form inside of a form editor. The
-	 * template creates a wrapper to hold all information necessary for the form editor.
-	 * 
-	 * @param context
-	 *        The {@link FormEditorContext} to create the template.
-	 * 
-	 * @return The {@link HTMLTemplateFragment} for this element and all its children.
-	 */
-	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context);
+	HTMLTemplateFragment createTemplate(FormEditorContext context);
 
 	/**
 	 * Whether the element is rendered over the entire line.

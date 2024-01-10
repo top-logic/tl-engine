@@ -140,27 +140,6 @@ public class FormEditorAttributesControl extends FormEditorDisplayControl {
 			Comparator.comparing(MetaResourceProvider.INSTANCE::getLabel, String.CASE_INSENSITIVE_ORDER);
 		Collections.sort(attributes, sortByLabel);
 
-		for (TLStructuredTypePart attribute : attributes) {
-			if (!fieldNames.contains(attribute.getName())) {
-				createFormElement(context, formFieldTemplates, type, attribute);
-			}
-		}
-
-		return verticalBox(formFieldTemplates);
-	}
-
-	// Creates {@link FieldDefinition}s for an attribute and its mapping.
-	private void createFormElement(AttributeFormContext context, List<HTMLTemplateFragment> formFieldTemplates,
-			TLStructuredType type, TLStructuredTypePart attribute) {
-		// create ConfigItem and mapping
-		FieldDefinition item = TypedConfiguration.newConfigItem(FieldDefinition.class);
-		item.setAttribute(attribute.getName());
-		item.setTypeSpec(TLModelUtil.qualifiedName(attribute.getType()));
-		item.setFullQualifiedName(TLModelUtil.qualifiedName(attribute));
-
-		// create formElement
-		FormElementTemplateProvider fieldProvider = TypedConfigUtil.createInstance(item);
-
 		FormEditorContext formContext = new FormEditorContext.Builder()
 			.formMode(FormMode.DESIGN)
 			.formType(type)
@@ -171,6 +150,26 @@ public class FormEditorAttributesControl extends FormEditorDisplayControl {
 			.editMode(_isInEditMode)
 			.build();
 
-		formFieldTemplates.add(fieldProvider.createDesignTemplate(formContext));
+		for (TLStructuredTypePart attribute : attributes) {
+			if (!fieldNames.contains(attribute.getName())) {
+				FormElementTemplateProvider fieldProvider = createTemplateProvider(attribute);
+				formFieldTemplates.add(fieldProvider.createTemplate(formContext));
+			}
+		}
+
+		return verticalBox(formFieldTemplates);
+	}
+
+	/** Creates {@link FieldDefinition}s for an attribute and its mapping. */
+	private FormElementTemplateProvider createTemplateProvider(TLStructuredTypePart attribute) {
+		// create ConfigItem and mapping
+		FieldDefinition item = TypedConfiguration.newConfigItem(FieldDefinition.class);
+		item.setAttribute(attribute.getName());
+		item.setTypeSpec(TLModelUtil.qualifiedName(attribute.getType()));
+		item.setFullQualifiedName(TLModelUtil.qualifiedName(attribute));
+
+		// create formElement
+		FormElementTemplateProvider fieldProvider = TypedConfigUtil.createInstance(item);
+		return fieldProvider;
 	}
 }

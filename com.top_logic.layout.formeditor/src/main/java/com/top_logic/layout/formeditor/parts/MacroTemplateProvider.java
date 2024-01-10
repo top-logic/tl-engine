@@ -83,7 +83,7 @@ public class MacroTemplateProvider extends AbstractFormElementProvider<MacroPart
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		Expr expression = getConfig().getExpr();
 		if (expression != null) {
 			if (context.getFormMode() == FormMode.DESIGN) {

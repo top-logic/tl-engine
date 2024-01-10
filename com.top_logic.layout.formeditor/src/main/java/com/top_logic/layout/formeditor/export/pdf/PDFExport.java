@@ -315,7 +315,7 @@ public class PDFExport {
 	protected void renderContent(DisplayContext context, TagWriter out, FormElementTemplateProvider exportDescription,
 			FormEditorContext renderContext) throws IOException {
 
-		HTMLTemplateFragment template = exportDescription.createDisplayTemplate(renderContext);
+		HTMLTemplateFragment template = exportDescription.createTemplate(renderContext);
 		TemplateControl control =
 			new TemplateControl(renderContext.getContentGroup(), MetaControlProvider.INSTANCE, template);
 		control.write(context, out);

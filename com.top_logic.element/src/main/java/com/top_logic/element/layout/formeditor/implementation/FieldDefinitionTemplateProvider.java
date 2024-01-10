@@ -156,7 +156,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		TLStructuredType type = context.getFormType();
 		TLStructuredTypePart part = attribute(context);
 		if (part != null) {

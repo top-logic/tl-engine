@@ -67,12 +67,7 @@ public class TabbarDefinitionTemplateProvider extends AbstractFormElementProvide
 	}
 
 	@Override
-	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
-		return super.createDesignTemplate(context);
-	}
-
-	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		TabbarDefinition config = getConfig();
 
 		String deckName = config.getUUID();

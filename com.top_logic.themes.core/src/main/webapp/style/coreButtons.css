@@ -109,17 +109,6 @@ div.cmdProgress img {
 	width: -webkit-fill-available;
 }
 
-.fltButtons {
-	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
-	display: flex;
-	justify-content: space-around;
-    align-items: center;
-}
-
-.fltButtons .cButton {
-	padding: 0 var(--spacing-01);
-}
-
 .fltSubContent .menuEntryCell {
     font-family: 'Inter-SemiBold';
     font-size: var(--heading-compact-02-font-size);

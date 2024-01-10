@@ -2260,7 +2260,7 @@ If they're deleted, this can be deleted too
 	flex-direction: row-reverse;
 	align-items: center;
 	justify-content: space-between;
-	background-color: var(--layer);
+	background-color: var(--layer-accent);
 	height: inherit;
 	gap: var(--spacing-02);
 	overflow: hidden;

@@ -1982,17 +1982,18 @@ services.form = {
 					controlCommand : "megaMenuActive",
 					controlID : controlID
 				}, true);
-			}, 
-			
-			handleOnOptionClick : function(optionElement, controlID, showWait) {
-				var optionValue = BAL.DOM.getNonStandardAttribute(optionElement, "data-value");
-				var selectionArray = [];
-				selectionArray.push(optionValue);
-				
-				services.form.sendValueUpdate(optionElement, controlID, selectionArray, showWait);
 			}
+
 		},
 		
+		handleOnOptionClick : function(optionElement, controlID, showWait) {
+			var optionValue = BAL.DOM.getNonStandardAttribute(optionElement, "data-value");
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand: "megaMenuOptionSelected",
+				controlID: controlID,
+				dataValue: optionValue
+			});
+		},
 		
 		handleArrowKeyNavigation: function(event, isGridLayout) {
 			const key = event.key;

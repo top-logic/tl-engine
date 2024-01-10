@@ -70,16 +70,6 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 		Icons.MEGA_MENU_OPTION_TEMPLATE.get().write(context, out, this);
 	}
 
-	private ResourceProvider toResourceProvider(LabelProvider optionLabelProvider) {
-		ResourceProvider optionResourceProvider;
-		if (optionLabelProvider instanceof ResourceProvider) {
-			optionResourceProvider = (ResourceProvider) optionLabelProvider;
-		} else {
-			optionResourceProvider = LabelResourceProvider.toResourceProvider(optionLabelProvider);
-		}
-		return optionResourceProvider;
-	}
-
 	/** CSS class for the option. */
 	@TemplateVariable("isSelected")
 	public boolean writeTabbarContainerClass() {
@@ -105,7 +95,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 	public void writeIcon(DisplayContext context, TagWriter out) throws IOException {
 		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
 		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
-		ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
+		ResourceProvider optionResourceProvider = LabelResourceProvider.toResourceProvider(optionLabelProvider);
 		ThemeImage image = optionResourceProvider.getImage(currOption, null);
 		XMLTag icon;
 		if (image != null) {
@@ -139,7 +129,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 	public void writeTooltip(TagWriter out) throws IOException {
 		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
 		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
-		ResourceProvider optionResourceProvider = toResourceProvider(optionLabelProvider);
+		ResourceProvider optionResourceProvider = LabelResourceProvider.toResourceProvider(optionLabelProvider);
 		String tooltip = optionResourceProvider.getTooltip(currOption);
 		// Using something else and not writeContent() would lead to tooltip
 		// being displayed together with HTML tags written as text,

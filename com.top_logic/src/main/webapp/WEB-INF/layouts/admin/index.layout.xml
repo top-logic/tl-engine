@@ -2,11 +2,12 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	template="com.top_logic/legacyTabbar.hidefirstlevel.template.xml"
+	template="com.top_logic/legacyTabbar.template.xml"
 >
 	<arguments
 		tabIcon="theme:IMAGE_BUTTONS_ADMINISTRATION22"
 		tabVisible="false"
+		tabbarControlProvider="com.top_logic.layout.structure.DeckPaneControlProvider"
 		z_legacy_componentName="adminView"
 		z_legacy_tabBarName="adminView_tabBar"
 		z_legacy_tabId="adminView"

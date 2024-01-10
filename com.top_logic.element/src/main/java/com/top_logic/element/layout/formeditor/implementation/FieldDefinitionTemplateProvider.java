@@ -151,11 +151,6 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public String getName() {
-		return getConfig().getAttribute();
-	}
-
-	@Override
 	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		TLStructuredType type = context.getFormType();
 		TLStructuredTypePart part = attribute(context);

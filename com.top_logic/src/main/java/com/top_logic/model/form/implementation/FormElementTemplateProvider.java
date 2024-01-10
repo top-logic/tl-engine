@@ -63,11 +63,6 @@ public interface FormElementTemplateProvider {
 	}
 
 	/**
-	 * The name for the label.
-	 */
-	String getName();
-
-	/**
 	 * The class of the {@link FormElement} configuration created by this provider.
 	 */
 	Class<? extends FormElement<?>> getFormElementType();

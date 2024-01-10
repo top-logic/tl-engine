@@ -29,8 +29,6 @@ public class FormEditorElementTemplateProvider {
 		arguments.set(FormEditorElementProperties.FORM_EDITOR_IS_TOOL, formElement.getIsTool());
 		arguments.set(FormEditorElementProperties.FORM_EDITOR_FIRST_ELEMENT_HIDDEN, editorContext.isAttributeHidden());
 		arguments.set(FormEditorElementProperties.FORM_EDITOR_LABEL, formElement.getLabel(editorContext));
-		if (formElement.getName() != null)
-			arguments.set(FormEditorElementProperties.FORM_EDITOR_NAME, formElement.getName());
 		arguments.set(FormEditorElementProperties.FORM_EDITOR_CONTROL, editorContext.getFormEditorControl());
 		arguments.set(FormEditorElementProperties.FORM_EDITOR_IMAGE_PROVIDER, formElement.getImageProvider());
 

@@ -136,11 +136,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	}
 
 	@Override
-	public String getName() {
-		return null;
-	}
-
-	@Override
 	public String getID() {
 		return _id;
 	}

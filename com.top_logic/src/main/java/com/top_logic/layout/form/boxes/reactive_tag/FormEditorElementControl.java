@@ -43,8 +43,6 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 
 	private boolean _draggable = false;
 
-	private String _name;
-
 	private boolean _wholeLine = false;
 
 	private boolean _isTool = false;
@@ -73,7 +71,6 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 			writeControlAttributes(context, out);
 			out.writeAttribute(DRAGGABLE_ATTR, isDraggable());
 			out.writeAttribute(DATA_ATTRIBUTE_PREFIX + "id", _id);
-			out.writeAttribute(DATA_ATTRIBUTE_PREFIX + "name", getName());
 			out.writeAttribute(DATA_ATTRIBUTE_PREFIX + "tool", getIsTool());
 			if (isDraggable()) {
 				out.writeAttribute(ONDBLCLICK_ATTR,
@@ -197,17 +194,6 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 
 	private String getFormEditorControl() {
 		return _formEditorControl;
-	}
-
-	/**
-	 * Sets the name of the attribute.
-	 */
-	public void setName(String name) {
-		_name = name;
-	}
-
-	private String getName() {
-		return _name;
 	}
 
 	/**

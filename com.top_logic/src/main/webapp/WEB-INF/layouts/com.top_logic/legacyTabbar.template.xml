@@ -79,10 +79,10 @@
 		helpIDLegacy="${helpIDLegacy}"
 		tabIcon="${tabIcon}"
 		tabVisible="${tabVisible}"
+		tabbarControlProvider="${tabbarControlProvider}"
 		z_legacy_componentName="${z_legacy_componentName}"
 		z_legacy_tabBarName="${z_legacy_tabBarName}"
 		z_legacy_tabId="${z_legacy_tabId}"
 		z_legacy_tabLabel="${z_legacy_tabLabel}"
-		tabbarControlProvider="${tabbarControlProvider}"
 	/>
 </config:template>

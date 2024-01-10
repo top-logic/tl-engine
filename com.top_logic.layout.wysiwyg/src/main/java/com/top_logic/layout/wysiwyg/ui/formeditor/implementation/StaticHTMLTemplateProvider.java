@@ -66,7 +66,7 @@ public class StaticHTMLTemplateProvider extends AbstractFormElementProvider<Stat
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		String content = getConfig().getContent();
 		boolean wholeLine = getWholeLine(context.getFormType());
 

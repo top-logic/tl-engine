@@ -99,7 +99,7 @@ public class FormEditorToolboxControl extends FormEditorDisplayControl {
 				.editMode(_isInEditMode)
 				.build();
 
-			formFieldTemplates.add(templateProvider.createDesignTemplate(formContext));
+			formFieldTemplates.add(templateProvider.createTemplate(formContext));
 		}
 
 		FormEditorUtil.template(fc,

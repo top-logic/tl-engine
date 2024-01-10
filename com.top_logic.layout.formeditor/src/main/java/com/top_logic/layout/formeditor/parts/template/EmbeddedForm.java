@@ -28,6 +28,7 @@ import com.top_logic.model.form.definition.FormContextDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
+import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -86,12 +87,13 @@ public class EmbeddedForm extends AbstractVariableDefinition<EmbeddedForm.Config
 			}
 
 			FormEditorContext innerContext = new FormEditorContext.Builder(editorContext)
+				.formMode(FormMode.EDIT)
 				.formType(getConfig().getFormContextType().resolveClass())
 				.concreteType(null)
 				.model((TLObject) model)
 				.contentGroup(innerGroup)
 				.build();
-			HTMLTemplateFragment template = _formDefinition.createDisplayTemplate(innerContext);
+			HTMLTemplateFragment template = _formDefinition.createTemplate(innerContext);
 			return new TemplateControl(innerContext.getContentGroup(), MetaControlProvider.INSTANCE, template);
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError(ex);

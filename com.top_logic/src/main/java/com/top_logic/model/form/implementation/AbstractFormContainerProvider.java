@@ -38,7 +38,7 @@ public abstract class AbstractFormContainerProvider<T extends ContainerDefinitio
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		return decorateContainer(createContentTemplate(context), context);
 	}
 
@@ -54,15 +54,6 @@ public abstract class AbstractFormContainerProvider<T extends ContainerDefinitio
 	 * @return The created {@link HTMLTemplateFragment}.
 	 */
 	public abstract HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context);
-
-	@Override
-	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
-		setID(context.getFrameScope().createNewID());
-		context.getFormEditorMapping().putMapping(getID(), getConfig());
-		HTMLTemplateFragment formTemplate = decorateContainer(createContentTemplate(context), context);
-		// puts the created form template in a form editor element to display inside a form editor
-		return FormEditorElementTemplateProvider.wrapFormEditorElement(formTemplate, this, context);
-	}
 
 	/**
 	 * Create a {@link HTMLTemplateFragment} for the content of a

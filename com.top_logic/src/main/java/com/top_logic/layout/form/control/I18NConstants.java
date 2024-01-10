@@ -29,6 +29,15 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DD_ITEM_SELECTED;
 
 	/**
+	 * Command to save selected option from a mega menu.
+	 * 
+	 * @see MegaMenuControl
+	 * 
+	 * @en element from mega menu list is selected.
+	 */
+	public static ResKey MEGAMENU_OPTION_SELECTED;
+
+	/**
 	 * @en Upload completed callback
 	 */
 	public static ResKey UPLOAD_COMPLETED_COMMAND;

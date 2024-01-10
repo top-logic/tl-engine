@@ -72,7 +72,7 @@
 	/>
 	<color name="ACTIVE_ELEMENT_BORDER_COLOR"
 		value="#000000"
-	/>	
+	/>
 	<string name="ACTIVE_ELEMENT_BORDER_STYLE"
 		value="dashed"
 	/>
@@ -1236,7 +1236,7 @@
 	/>
 	<string name="IMAGE_BUTTON_BORDER_HOVER"
 		value="0"
-	/>	
+	/>
 	<icon name="IMAGES_APP_LOGO"
 		value="/images/appLogoSmall.svg"
 	/>
@@ -3491,7 +3491,7 @@
 	<string name="BREADCRUMB_SEPARATOR_LABEL"
 		value=""
 	/>
-	
+
 	<color name="border-strong"
 		value="#878D96FF"
 	/>

@@ -61,8 +61,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	/** The context of the form. */
 	private InstantiationContext _context;
 
-	private boolean _isInEditMode;
-
 	private String _id;
 
 	/** Prefix for UUID for ResKeys. */
@@ -155,7 +153,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 
 	@Override
 	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
-		_isInEditMode = context.isInEditMode();
 		setID(context.getFrameScope().createNewID());
 		context.getFormEditorMapping().putMapping(getID(), getConfig());
 		HTMLTemplateFragment formTemplate = createDisplayTemplate(context);
@@ -182,15 +179,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 */
 	public InstantiationContext getContext() {
 		return _context;
-	}
-
-	/**
-	 * Returns whether the editor is in edit mode.
-	 * 
-	 * @return Whether the editor is in edit mode.
-	 */
-	protected boolean isInEditMode() {
-		return _isInEditMode;
 	}
 
 	@Override

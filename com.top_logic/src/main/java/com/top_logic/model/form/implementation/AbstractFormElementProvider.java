@@ -10,6 +10,7 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.function.Function;
 
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
@@ -152,12 +153,48 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	}
 
 	@Override
-	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
-		setID(context.getFrameScope().createNewID());
-		context.getFormEditorMapping().putMapping(getID(), getConfig());
-		HTMLTemplateFragment formTemplate = createDisplayTemplate(context);
+	public HTMLTemplateFragment createTemplate(FormEditorContext context) {
+		FormMode formMode = context.getFormMode();
+		if (formMode == null) {
+			// No explicit mode required. Assume it is for display.
+			return createDisplayTemplate(context);
+		}
+		switch (formMode) {
+			case DESIGN:
+				setID(context.getFrameScope().createNewID());
+				context.getFormEditorMapping().putMapping(getID(), getConfig());
+				HTMLTemplateFragment formTemplate = createDesignTemplate(context);
 
-		return FormEditorElementTemplateProvider.wrapFormEditorElement(formTemplate, this, context);
+				return FormEditorElementTemplateProvider.wrapFormEditorElement(formTemplate, this, context);
+			case CREATE:
+			case EDIT:
+				return createDisplayTemplate(context);
+		}
+		throw new UnreachableAssertion("Uncovered mode " + formMode);
+	}
+
+	/**
+	 * Creates a {@link HTMLTemplateFragment} for elements of a form. The template defines how the
+	 * elements are visually represented at the GUI.
+	 * 
+	 * @param context
+	 *        The {@link FormEditorContext} to create the template.
+	 * 
+	 * @return The created template.
+	 */
+	protected abstract HTMLTemplateFragment createDisplayTemplate(FormEditorContext context);
+
+	/**
+	 * Creates a {@link HTMLTemplateFragment} for elements of a form inside of a form editor. The
+	 * template creates a wrapper to hold all information necessary for the form editor.
+	 * 
+	 * @param context
+	 *        The {@link FormEditorContext} to create the template.
+	 * 
+	 * @return The {@link HTMLTemplateFragment} for this element and all its children.
+	 */
+	protected HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
+		return createDisplayTemplate(context);
 	}
 
 	/**

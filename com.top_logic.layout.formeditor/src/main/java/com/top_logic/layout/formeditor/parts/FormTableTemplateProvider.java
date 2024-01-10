@@ -152,7 +152,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		TLObject model = context.getModel();
 		String fieldName = fieldName();
 		FormContainer contentGroup = context.getContentGroup();

@@ -5,7 +5,10 @@
  */
 package com.top_logic.layout.form.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.layout.ResPrefix;
@@ -25,6 +28,9 @@ public class FormContext extends FormGroup {
 
 	private static final Property<FormHandler> PROPERTY_CONTEXT_HANDLER =
 		TypedAnnotatable.property(FormHandler.class, "contextHandler");
+
+	private static final Property<List<FormContextStoreAlgorithm>> PROPERTY_STORE_ALGORITHMS =
+		TypedAnnotatable.propertyList("storeAlgorithms");
 
 	/**
 	 * Constant for the convenience constructor
@@ -107,6 +113,36 @@ public class FormContext extends FormGroup {
 	}
 
 	/**
+	 * Registers the given {@link FormContextStoreAlgorithm} to perform during {@link #store() store
+	 * operation}.
+	 */
+	public void addStoreAlgorithm(FormContextStoreAlgorithm algorithm) {
+		Objects.requireNonNull(algorithm, "Store algorithm must not be null.");
+		List<FormContextStoreAlgorithm> algorithms;
+		if (isSet(PROPERTY_STORE_ALGORITHMS)) {
+			algorithms = get(PROPERTY_STORE_ALGORITHMS);
+		} else {
+			algorithms = new ArrayList<>();
+			set(PROPERTY_STORE_ALGORITHMS, algorithms);
+		}
+		algorithms.add(algorithm);
+	}
+
+	/**
+	 * Removes a formerly added {@link FormContextStoreAlgorithm}.
+	 * 
+	 * @return Whether the given algorithm was registered before.
+	 * 
+	 * @see #addStoreAlgorithm(FormContextStoreAlgorithm)
+	 */
+	public boolean removeStoreAlgorithm(FormContextStoreAlgorithm algorithm) {
+		if (isSet(PROPERTY_STORE_ALGORITHMS)) {
+			return get(PROPERTY_STORE_ALGORITHMS).remove(algorithm);
+		}
+		return false;
+	}
+
+	/**
 	 * Transfers all values in this {@link FormContext} to the underlying model.
 	 * 
 	 * <p>
@@ -115,7 +151,11 @@ public class FormContext extends FormGroup {
 	 * </p>
 	 */
 	public void store() {
-		// Hook for subclasses.
+		get(PROPERTY_STORE_ALGORITHMS).forEach(this::runStoreAlgorithm);
+	}
+
+	private void runStoreAlgorithm(FormContextStoreAlgorithm algorithm) {
+		algorithm.store(this);
 	}
 
 }

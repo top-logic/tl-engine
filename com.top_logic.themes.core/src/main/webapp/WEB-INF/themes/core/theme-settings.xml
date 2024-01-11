@@ -166,6 +166,9 @@
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.EDIT_TILE_PREVIEW_ICON"
 		expr="%ICONS_BUTTON_EDIT%"
 	/>
+	<icon name="com.top_logic.model.form.implementation.Icons.FORM_EDITOR_TOOL_CODE_ELEMENT"
+		value="css:bi bi-braces"
+	/>
 	<icon name="com.top_logic.layout.Icons.DELETE_COMPONENT_COMMAND"
 		expr="%com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON%"
 	/>

@@ -1062,6 +1062,7 @@
 				<button value="com.top_logic.element.layout.formeditor.definition.TitleDefinition" />
 				<button value="com.top_logic.model.form.definition.SeparatorDefinition" />
 				<button value="com.top_logic.model.form.definition.EmptyCellDefinition" />
+				<button value="com.top_logic.model.form.implementation.ProgrammaticFormDefinitionProvider$Config" />
 			</buttons>			
 		</config>
 		

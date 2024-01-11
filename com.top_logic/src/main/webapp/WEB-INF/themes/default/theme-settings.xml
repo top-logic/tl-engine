@@ -1382,6 +1382,9 @@
 	<string name="com.top_logic.mig.html.layout.Icons.META_VIEWPORT"
 		value=""
 	/>
+	<icon name="com.top_logic.model.form.implementation.Icons.FORM_EDITOR_TOOL_CODE_ELEMENT"
+		value="css:fas fa-code"
+	/>
 	<icon name="MIMETYPES_GROUP_16"
 		value="/mimetypes/Group-16.png"
 	/>

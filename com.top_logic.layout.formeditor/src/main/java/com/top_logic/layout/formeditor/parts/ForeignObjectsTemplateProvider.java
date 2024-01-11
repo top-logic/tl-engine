@@ -86,12 +86,12 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 	}
 
 	@Override
-	public DisplayDimension getDialogWidth() {
+	protected DisplayDimension getDialogWidth() {
 		return DisplayDimension.dim(650, DisplayUnit.PIXEL);
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return DisplayDimension.dim(650, DisplayUnit.PIXEL);
 	}
 

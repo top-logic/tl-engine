@@ -76,7 +76,7 @@ public class TitleDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 }

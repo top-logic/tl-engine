@@ -328,12 +328,12 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public DisplayDimension getDialogWidth() {
+	protected DisplayDimension getDialogWidth() {
 		return WIDTH;
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

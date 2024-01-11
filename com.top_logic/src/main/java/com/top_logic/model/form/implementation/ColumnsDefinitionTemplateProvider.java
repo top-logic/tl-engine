@@ -106,7 +106,7 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

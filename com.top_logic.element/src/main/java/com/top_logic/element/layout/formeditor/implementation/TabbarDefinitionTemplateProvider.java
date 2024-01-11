@@ -173,7 +173,7 @@ public class TabbarDefinitionTemplateProvider extends AbstractFormElementProvide
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return DisplayDimension.dim(80, DisplayUnit.PERCENT);
 	}
 

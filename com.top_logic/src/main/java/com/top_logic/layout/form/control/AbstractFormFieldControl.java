@@ -125,7 +125,7 @@ public abstract class AbstractFormFieldControl extends AbstractFormFieldControlB
 	}
 
 	/**
-	 * Optional tab index value.
+	 * Tab index value if the control has one.
 	 */
 	@TemplateVariable("tabindex")
 	public final Integer tabIndex() {

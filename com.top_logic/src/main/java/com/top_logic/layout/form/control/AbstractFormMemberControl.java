@@ -74,7 +74,7 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	}
 
 	/**
-	 * Whether a context menu can be opened on this control.
+	 * Whether a control has a context menu.
 	 */
 	@TemplateVariable("hasContextMenu")
 	public boolean hasContextMenu() {

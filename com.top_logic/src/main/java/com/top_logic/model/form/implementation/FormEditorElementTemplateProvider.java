@@ -20,7 +20,7 @@ import com.top_logic.model.form.definition.FormElement;
  */
 public class FormEditorElementTemplateProvider {
 
-	private static TypedAnnotatable createArgumentsFormEditor(FormElementTemplateProvider formElement, FormEditorContext editorContext) {
+	private static TypedAnnotatable createArgumentsFormEditor(FormEditorTemplateProvider formElement, FormEditorContext editorContext) {
 		TypedAnnotatable arguments = new LazyTypedAnnotatable();
 		arguments.set(FormEditorElementProperties.FORM_EDITOR_DRAGGABLE, isDraggable(editorContext));
 		arguments.set(FormEditorElementProperties.FORM_EDITOR_WHOLE_LINE,
@@ -39,12 +39,12 @@ public class FormEditorElementTemplateProvider {
 	 * Creates a template for a form editor element. As content it takes the specific
 	 * {@link FormElement} element template. It also creates an arguments mapping.
 	 * 
-	 * @see #createArgumentsFormEditor(FormElementTemplateProvider, FormEditorContext)
+	 * @see #createArgumentsFormEditor(FormEditorTemplateProvider, FormEditorContext)
 	 * 
 	 * @return The {@link HTMLTemplateFragment} for this form editor element.
 	 */
 	public static HTMLTemplateFragment wrapFormEditorElement(HTMLTemplateFragment formTemplate,
-			FormElementTemplateProvider formElement,
+			FormEditorTemplateProvider formElement,
 			FormEditorContext editorContext) {
 		TypedAnnotatable arguments = createArgumentsFormEditor(formElement, editorContext);
 		return formEditorElement(formTemplate, arguments);

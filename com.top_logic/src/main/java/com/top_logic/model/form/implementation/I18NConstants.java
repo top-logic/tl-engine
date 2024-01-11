@@ -20,6 +20,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey FORM_DEFINITION_LABEL;
 
+	/**
+	 * @en Field without implementation.
+	 */
+	public static ResKey FIELD_WITHOUT_IMPLEMENTATION;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

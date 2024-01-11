@@ -15,7 +15,7 @@ import com.top_logic.basic.func.And;
 import com.top_logic.element.layout.meta.ActiveIf;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.model.form.definition.ContainerProperties;
-import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.model.form.implementation.FormEditorTemplateProvider;
 
 /**
  * Configuration options of a {@link GroupDefinition}.
@@ -23,7 +23,7 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 @Abstract
-public interface GroupProperties<T extends FormElementTemplateProvider> extends TextDefinition, ContainerProperties<T> {
+public interface GroupProperties<T extends FormEditorTemplateProvider> extends TextDefinition, ContainerProperties<T> {
 
 	/** Configuration name for the value of the {@link #getCssClass()}. */
 	String CSS_CLASS = "cssClass";

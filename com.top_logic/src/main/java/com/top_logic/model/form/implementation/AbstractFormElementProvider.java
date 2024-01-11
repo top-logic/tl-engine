@@ -35,7 +35,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public abstract class AbstractFormElementProvider<T extends FormElement<?>> extends AbstractConfiguredInstance<T>
-		implements FormElementTemplateProvider {
+		implements FormEditorTemplateProvider {
 
 	/**
 	 * Default dialog width of the configuration dialog of a {@link FormElementTemplateProvider}.

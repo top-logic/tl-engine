@@ -257,9 +257,25 @@ public class Icons extends IconsBase {
 	 * @see #TEXT_INPUT_EDIT_SINGLE_TEMPLATE
 	 * @see DateInputControl
 	 * @see TimeInputControl
+	 * @see ExpandableTextInputControl
 	 */
 	@TemplateType(TextInputControl.class)
 	public static ThemeVar<HTMLTemplateFragment> TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE;
+
+	/**
+	 * The template to render values that consist of a textarea input and one or more appended
+	 * buttons.
+	 * 
+	 * <p>
+	 * Available properties are all of TEXT_INPUT_EDIT_MULTI_TEMPLATE with an additional
+	 * {@value TextInputControl#BUTTONS_PROPERTY} property that renders the additional buttons.
+	 * </p>
+	 * 
+	 * @see #TEXT_INPUT_EDIT_MULTI_TEMPLATE
+	 * @see ExpandableTextInputControl
+	 */
+	@TemplateType(TextInputControl.class)
+	public static ThemeVar<HTMLTemplateFragment> TEXT_INPUT_WITH_BUTTONS_EDIT_MULTI_TEMPLATE;
 
 	/**
 	 * The template to render password input fields in edit mode.

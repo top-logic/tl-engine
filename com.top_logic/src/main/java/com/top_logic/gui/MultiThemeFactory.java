@@ -37,7 +37,6 @@ import com.top_logic.gui.config.ThemeSetting;
 import com.top_logic.gui.config.ThemeSettings;
 import com.top_logic.gui.config.ThemeState;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
-import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -262,16 +261,6 @@ public class MultiThemeFactory extends ThemeFactory {
 	}
 
 	/**
-	 * The {@link Theme#getThemeID()} stored as default for the given user configuration.
-	 * 
-	 * @param pc
-	 *        The user configuration.
-	 */
-	public static String getPersonalThemeId(PersonalConfigurationWrapper pc) {
-		return (String) pc.getValue(PERSONAL_THEME_KEY);
-	}
-
-	/**
 	 * Sets the given {@link Theme#getThemeID()} as default for the given user configuration.
 	 * 
 	 * @param pc
@@ -280,18 +269,6 @@ public class MultiThemeFactory extends ThemeFactory {
 	 *        The theme ID to use.
 	 */
 	public static void setPersonalThemeId(PersonalConfiguration pc, String themeId) {
-		pc.setValue(PERSONAL_THEME_KEY, themeId);
-	}
-
-	/**
-	 * Sets the given {@link Theme#getThemeID()} as default for the given user configuration.
-	 * 
-	 * @param pc
-	 *        The user configuration.
-	 * @param themeId
-	 *        The theme ID to use.
-	 */
-	public static void setPersonalThemeId(PersonalConfigurationWrapper pc, String themeId) {
 		pc.setValue(PERSONAL_THEME_KEY, themeId);
 	}
 

@@ -922,9 +922,6 @@ table td span.cTextPopup span.content {
 
 table td .cDataItem span.lFlexible span.content,
 table td span.downloadControl span.content {
-	display: block;
-	position: absolute;
-	top: 0px;
 	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;

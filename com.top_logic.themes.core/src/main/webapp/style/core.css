@@ -2184,18 +2184,18 @@ If they're deleted, this can be deleted too
 }
 
 .tcrLink {
-	font-family: 'Inter-Regular';
-	font-size: var(--body-01-font-size);
-	line-height: var(--body-01-line-height);
-	letter-spacing: var(--body-01-letter-spacing);
 	color: var(--text-secondary);
-	word-break: break-all;
+	overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .treeNode .fToggle,
-.fToggle.tcrToggle, .tlLeafIcon,
+.fToggle.tcrToggle, 
+.tlLeafIcon,
 .tcrNode .treeNode span {
 	color: var(--icon-secondary);
+	width: 15px;
 }
 
 .treeNode.treeSelected .fToggle.tcrToggle,
@@ -2205,7 +2205,8 @@ If they're deleted, this can be deleted too
 }
 
 .treeNode:hover .fToggle.tcrToggle,
-.tlLeafIcon:hover {
+.tlLeafIcon:hover,
+.treeNode:hover span {
 	color: var(--icon-primary);
 }
 
@@ -2227,26 +2228,19 @@ If they're deleted, this can be deleted too
 }
 
 .tcrNode .treeNode.treeSelected {
-	color: var(--interactive);
 	background: var(--layer-selected);
 }
 
+.tcrNode .treeNode.treeSelected .tcrLink {
+	color: var(--text-primary);
+}
+
 .tcrNode .treeNode.treeSelected:hover {
-	color: var(--interactive);
 	background: var(--layer-selected-hover);
 }
 
-.tcrNode .treeNode.treeSelected:hover .tcrLink {
-	color: var(--interactive);
-}
-
-.treeNode.treeSelected:hover .fToggle.tcrToggle,
-.tcrNode .treeNode.treeSelected:hover span,
-.tlLeafIcon:hover {
-	color: var(--icon-interactive);
-}
-
 .tcrNode .treeNode a:focus {
+	color: var(--icon-secondary);
 	box-shadow: none;
 }
 

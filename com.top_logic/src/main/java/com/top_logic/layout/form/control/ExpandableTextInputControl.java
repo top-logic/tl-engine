@@ -97,7 +97,11 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 
 	@Override
 	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
-		Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE.get().write(context, out, this);
+		if (this.isMultiLine()) {
+			Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_MULTI_TEMPLATE.get().write(context, out, this);
+		} else {
+			Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE.get().write(context, out, this);
+		}
 	}
     
 	@TemplateVariable("buttons")
@@ -105,10 +109,6 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		String anId = getOpenButtonID();
 		ControlCommand aCommand = getToggleFieldModeCommand();
 
-		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
-		out.endBeginTag();
-        
         /* 2. Render the dialog popup button. */
 		String buttonTooltip = Resources.getInstance().getString(TOGGLE_BUTTON_TOOLTIP);
 		
@@ -125,8 +125,6 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		writeOnClick(out, aCommand);
 
 		tag.endEmptyTag(context, out);
-
-		out.endTag(SPAN);
     }
 
 	private XMLTag getButton() {

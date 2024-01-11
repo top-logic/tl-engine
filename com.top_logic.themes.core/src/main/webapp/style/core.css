@@ -16,6 +16,13 @@ body {
 	color: var(--text-primary);
 }
 
+code {
+	font-family: 'Inter-Regular';
+    font-size: var(--body-02-font-size);
+    line-height: var(--body-02-line-height);
+    letter-spacing: var(--body-02-letter-spacing);
+}
+
 h5 {
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-compact-01-font-size);

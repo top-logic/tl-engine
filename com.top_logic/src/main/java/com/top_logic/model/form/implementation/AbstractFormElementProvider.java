@@ -24,7 +24,6 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -222,11 +221,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	@Override
 	public boolean openDialog() {
 		return false;
-	}
-
-	@Override
-	public boolean isVisible(TLStructuredType type, FormMode formMode) {
-		return true;
 	}
 
 }

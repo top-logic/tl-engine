@@ -450,16 +450,6 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		addDisabledUpdate(newValue.booleanValue());
 	}
 
-	/**
-	 * We have to do this otherwise the mega menu button won't get updated with the selected option.
-	 * The problem lies in this method: {@link AbstractFormFieldControlBase#valueChanged},
-	 * variables: current raw value and last raw value. Both variables are equal in the if condition
-	 * while in reality they are not equal.
-	 */
-//	@Override
-//	protected void updateRawValue(Object nextRawValue) {
-//	}
-
 	@Override
 	protected String getTypeCssClass() {
 		return "tl-mega-menu";
@@ -537,31 +527,6 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 		@Override
 		public ResKey getI18NKey() {
 			return I18NConstants.OPEN_MEGA_MENU;
-		}
-	}
-
-	/**
-	 * Class for closing the pop up window and updating values.
-	 * 
-	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
-	 *
-	 */
-	protected static class MegaMenuSelectionChanged extends ValueChanged {
-
-		/** INSTANCE for {@link #COMMANDS}. */
-		public static final MegaMenuControl.MegaMenuSelectionChanged INSTANCE =
-			new MegaMenuControl.MegaMenuSelectionChanged();
-
-		/** Singleton constructor. */
-		public MegaMenuSelectionChanged() {
-		}
-
-		@Override
-		protected void updateValue(DisplayContext commandContext, AbstractFormFieldControlBase formFieldControl,
-				Object newValue, Map<String, Object> arguments) {
-			super.updateValue(commandContext, formFieldControl, newValue, arguments);
-			MegaMenuControl megaMenuControlField = (MegaMenuControl) formFieldControl;
-			megaMenuControlField._megaMenuPopupDialogControl.getModel().getCloseAction().executeCommand(commandContext);
 		}
 	}
 

@@ -1643,6 +1643,10 @@
 						<version>4.8.3</version>
 					</dependency>
 				</dependencies> -->
+				<configuration>
+					<includeFilterFile>spotbugs/spotbugs-include.xml</includeFilterFile>
+					<excludeFilterFile>spotbugs/spotbugs-exclude.xml</excludeFilterFile>
+				</configuration>
 				<executions>
 					<execution>
 						<id>spotbugs-integration</id>

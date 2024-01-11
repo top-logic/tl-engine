@@ -416,12 +416,12 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	@Override
-	public DisplayDimension getDialogWidth() {
+	protected DisplayDimension getDialogWidth() {
 		return WIDTH;
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

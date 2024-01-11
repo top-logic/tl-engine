@@ -70,7 +70,7 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

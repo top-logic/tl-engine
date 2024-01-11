@@ -149,7 +149,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

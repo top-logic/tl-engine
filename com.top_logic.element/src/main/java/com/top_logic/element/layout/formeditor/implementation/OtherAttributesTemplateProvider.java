@@ -190,7 +190,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return GroupDefinitionTemplateProvider.HEIGHT;
 	}
 

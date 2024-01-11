@@ -7,7 +7,6 @@ package com.top_logic.model.form.implementation;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.model.TLStructuredType;
@@ -61,21 +60,6 @@ public interface FormElementTemplateProvider {
 	default ResKey getLabel(FormEditorContext context) {
 		return ResKey.forClass(this.getClass());
 	}
-
-	/**
-	 * The class of the {@link FormElement} configuration created by this provider.
-	 */
-	Class<? extends FormElement<?>> getFormElementType();
-
-	/**
-	 * Returns the width of the dialog to edit the attributes.
-	 */
-	DisplayDimension getDialogWidth();
-
-	/**
-	 * Returns the height of the dialog to edit the attributes.
-	 */
-	DisplayDimension getDialogHeight();
 
 	/**
 	 * Creates the {@link CreateConfigurationDialog} for configuring the {@link FormElement}

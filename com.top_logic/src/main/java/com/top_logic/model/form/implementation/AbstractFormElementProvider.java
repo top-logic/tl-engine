@@ -77,13 +77,17 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 		_context = context;
 	}
 	
-	@Override
-	public DisplayDimension getDialogWidth() {
+	/**
+	 * Returns the width of the dialog to edit the attributes.
+	 */
+	protected DisplayDimension getDialogWidth() {
 		return DIALOG_WIDTH;
 	}
 
-	@Override
-	public DisplayDimension getDialogHeight() {
+	/**
+	 * Returns the height of the dialog to edit the attributes.
+	 */
+	protected DisplayDimension getDialogHeight() {
 		return DIALOG_HEIGHT;
 	}
 
@@ -128,8 +132,10 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 		// Hook for subclasses.
 	}
 
-	@Override
-	public Class<T> getFormElementType() {
+	/**
+	 * The class of the {@link FormElement} configuration created by this provider.
+	 */
+	protected Class<T> getFormElementType() {
 		@SuppressWarnings("unchecked")
 		Class<T> result = (Class<T>) getConfig().getConfigurationInterface();
 		return result;

@@ -39,8 +39,17 @@ public interface FormElementTemplateProvider {
 	boolean getWholeLine(TLStructuredType modelType);
 
 	/**
-	 * Returns whether the {@link FormElementTemplateProvider} is visible. By default it is <code>true</code>.
+	 * Determines whether the {@link FormElementTemplateProvider} is visible.
+	 * 
+	 * @param type
+	 *        Context type in which this {@link FormElementTemplateProvider} is evaluated.
+	 * @param formMode
+	 *        The mode how the in-app form is displayed.
+	 * 
+	 * @implSpec By default it is <code>true</code>.
 	 */
-	boolean isVisible(TLStructuredType type, FormMode formMode);
+	default boolean isVisible(TLStructuredType type, FormMode formMode) {
+		return true;
+	}
 
 }

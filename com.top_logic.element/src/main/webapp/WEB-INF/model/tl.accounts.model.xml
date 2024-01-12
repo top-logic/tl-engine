@@ -252,9 +252,6 @@
 				>
 					<annotations>
 						<delete-protected/>
-						<options>
-							<config-reference name="authenticationDevices"/>
-						</options>
 					</annotations>
 				</property>
 				<property name="restrictedUser"

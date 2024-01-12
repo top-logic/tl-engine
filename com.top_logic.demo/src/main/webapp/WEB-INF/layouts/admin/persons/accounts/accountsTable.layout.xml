@@ -12,7 +12,6 @@
 	>
 		<dialogs>
 			<layout-reference resource="admin/persons/accounts/newAccount/dialog.layout.xml"/>
-			<layout-reference resource="admin/persons/accounts/createAccount/dialog.layout.xml"/>
 			<layout-reference resource="admin/persons/accounts/createContact/dialog.layout.xml"/>
 		</dialogs>
 		<name key="dynamic.98c36f50-b5a8-410c-a520-3803367d8868">

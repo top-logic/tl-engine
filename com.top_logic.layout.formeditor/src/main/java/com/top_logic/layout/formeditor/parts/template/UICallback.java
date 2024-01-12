@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -24,7 +25,11 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.CombinedExecutabilityRule;
+import com.top_logic.tool.execution.ExecutabilityRule;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Definition of a callback function that receives data from the UI.
@@ -32,7 +37,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
 @Label("UI callback")
 public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 
-	private QueryExecutor _action;
+	private final ExecutabilityRule _executability;
+
+	private final QueryExecutor _action;
 
 	/**
 	 * Definition of a callback from the UI.
@@ -60,7 +67,7 @@ public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 		Config.ACTION,
 	})
 	@TagName("ui-callback")
-	public interface Config extends VariableDefinition.Config<UICallback> {
+	public interface Config extends VariableDefinition.Config<UICallback>, ExecutabilityConfig {
 
 		/**
 		 * @see #getAction()
@@ -100,12 +107,14 @@ public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 	public UICallback(InstantiationContext context, Config config) {
 		super(context, config);
 
+		_executability =
+			CombinedExecutabilityRule.combine(TypedConfiguration.getInstanceList(context, config.getExecutability()));
 		_action = QueryExecutor.compileOptional(config.getAction());
 	}
 
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
-		return new CallbackFragment(_action, model);
+		return new CallbackFragment(_executability, _action, component, model);
 	}
 
 	private static final class CallbackFragment implements HTMLFragment {
@@ -114,8 +123,15 @@ public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 
 		private Object _model;
 
-		public CallbackFragment(QueryExecutor action, Object model) {
+		private ExecutabilityRule _executability;
+
+		private LayoutComponent _component;
+
+		public CallbackFragment(ExecutabilityRule executability, QueryExecutor action, LayoutComponent component,
+				Object model) {
+			_executability = executability;
 			_action = action;
+			_component = component;
 			_model = model;
 		}
 
@@ -131,6 +147,12 @@ public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 				@Override
 				public HandlerResult executeCommand(DisplayContext execContext, String commandName,
 						Map<String, Object> arguments) {
+					ExecutableState state = _executability.isExecutable(_component, _model, arguments);
+					if (!state.isExecutable()) {
+						// There is no possibility to disable the command at the UI, just ignore
+						// non-executable callbacks.
+						return HandlerResult.DEFAULT_RESULT;
+					}
 
 					try (var tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 						_action.execute(_model, arguments.get("args"));

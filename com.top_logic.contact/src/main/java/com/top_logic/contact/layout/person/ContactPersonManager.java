@@ -27,7 +27,7 @@ public class ContactPersonManager extends TLPersonManager {
 	@Override
 	public void initUser(Person account) {
 		String loginName = account.getName();
-		PersonContact user = ContactFactory.getInstance().createNewPersonContact(loginName, loginName);
+		PersonContact user = ContactFactory.getInstance().createNewPersonContact(loginName, null);
 		account.setUser(user);
 	}
 

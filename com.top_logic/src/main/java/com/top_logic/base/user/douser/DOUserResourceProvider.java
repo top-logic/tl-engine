@@ -5,19 +5,20 @@
  */
 package com.top_logic.base.user.douser;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.xml.TagUtil;
+import com.top_logic.layout.ResourceProvider;
 import com.top_logic.mig.html.DefaultResourceProvider;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
+ * 
+ * {@link ResourceProvider} for {@link DOUser}s.
+ * 
+ * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class DOUserResourceProvider extends DefaultResourceProvider {
 
-
-    /**
-     * @see com.top_logic.layout.ResourceProvider#getTooltip(java.lang.Object)
-     */
     @Override
 	public String getTooltip(Object aObject) {
         if (aObject instanceof DOUser) {
@@ -26,8 +27,11 @@ public class DOUserResourceProvider extends DefaultResourceProvider {
             buffer.append("Name:");
 			TagUtil.beginTag(buffer, HTMLConstants.BOLD);
 			TagUtil.writeText(buffer, theUser.getName());
-			buffer.append(", ");
-			TagUtil.writeText(buffer, theUser.getFirstName());
+			String firstName = theUser.getFirstName();
+			if (!StringServices.isEmpty(firstName)) {
+				buffer.append(", ");
+				TagUtil.writeText(buffer, firstName);
+			}
 			buffer.append(" (");
 			TagUtil.writeText(buffer, theUser.getUserName());
 			buffer.append(")");
@@ -39,14 +43,18 @@ public class DOUserResourceProvider extends DefaultResourceProvider {
         return super.getTooltip(aObject);
     }
 
-    /**
-     * @see com.top_logic.layout.LabelProvider#getLabel(java.lang.Object)
-     */
     @Override
 	public String getLabel(Object aObject) {
         if (aObject instanceof DOUser) {
             DOUser theUser = (DOUser) aObject;
-            return theUser.getName() + ", " + theUser.getFirstName() + " (" + theUser.getUserName() + ")"; 
+			StringBuilder label = new StringBuilder();
+			label.append(theUser.getName());
+			String firstName = theUser.getFirstName();
+			if (!StringServices.isEmpty(firstName)) {
+				label.append(", ").append(firstName);
+			}
+			label.append(" (").append(theUser.getUserName()).append(")");
+			return label.toString();
         }
         return super.getLabel(aObject);
     }

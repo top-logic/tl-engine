@@ -68,18 +68,22 @@ public class ContactFactory extends AbstractWrapperResolver {
     }
 
     /**
-     * Factory method to create a new PersonContact.
-     *
-     * @param aName the name of the new PersonContact
-     * @param aFirstname the first name of the new PersonContact
-     * @return the created PersonContact
-     */
+	 * Factory method to create a new {@link PersonContact}.
+	 *
+	 * @param aName
+	 *        The name of the new {@link PersonContact}.
+	 * @param aFirstname
+	 *        The first name of the new {@link PersonContact}. May be <code>null</code>.
+	 * @return The created {@link PersonContact}.
+	 */
     public PersonContact createNewPersonContact (String aName, String aFirstname) {
-        if (aName == null || aFirstname == null) {
-            throw new IllegalArgumentException ("Name and firstname must not be null.");
+		if (aName == null) {
+			throw new IllegalArgumentException("Name must not be null.");
         }
         PersonContact theContact = (PersonContact)createNewContact(aName, PERSON_TYPE);
-        theContact.setValue(PersonContact.FIRST_NAME, aFirstname);
+		if (aFirstname != null) {
+			theContact.setFirstName(aFirstname);
+		}
         return theContact;
     }   
 

@@ -78,7 +78,6 @@
 										accessor="com.top_logic.knowledge.gui.layout.person.PersonTableComponent$LastLoginAccessor"
 										filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
 									/>
-									<column name="dataDeviceID"/>
 									<column name="authDeviceID"/>
 									<column name="restrictedUser"
 										filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"

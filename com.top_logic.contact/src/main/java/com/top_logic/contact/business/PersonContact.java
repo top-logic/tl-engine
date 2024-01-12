@@ -77,7 +77,7 @@ public class PersonContact extends AbstractContact implements UserInterface {
     
     @Override
 	protected String toStringValues() {
-		return super.toStringValues() + ", firstName: " + getFirstName();
+		return super.toStringValues() + ", firstName: " + StringServices.nonNull(getFirstName());
     }
     
     /** 
@@ -118,8 +118,11 @@ public class PersonContact extends AbstractContact implements UserInterface {
             theResult.append(theTitle).append(' ');
         }
 
-        theResult.append((String) this.getValue(FIRST_NAME)).append(' ')
-                 .append((String) this.getValue(NAME_ATTRIBUTE));
+		String firstName = this.getString(FIRST_NAME);
+		if (!StringServices.isEmpty(firstName)) {
+			theResult.append(firstName).append(' ');
+		}
+		theResult.append((String) this.getValue(NAME_ATTRIBUTE));
 
         return (theResult.toString());
     }

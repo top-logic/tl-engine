@@ -5,11 +5,13 @@
  */
 package com.top_logic.base.security.device.ldap;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.naming.AuthenticationException;
 import javax.naming.NamingException;
@@ -24,6 +26,7 @@ import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.base.user.UserInterface;
+import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -31,6 +34,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.dob.DataObject;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -188,12 +194,42 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 
 	@Override
 	public List<UserInterface> getAllUserData() {
-		return this.las.getAllUserData();
+		return this.las.getAllUserData().stream().map(DOUser::getInstance).collect(Collectors.toList());
 	}
 
 	@Override
 	public UserInterface getUserData(String aName) {
 		return this.las.getUserData(aName);
+	}
+
+	@Override
+	public List<Person> synchronizeUsers(KnowledgeBase kb) {
+		String authenticationDeviceID = getAuthenticationDeviceID();
+		List<Person> existingPersons = new ArrayList<>();
+		for (DataObject user : las.getAllUserData()) {
+			String userName = (String) user.getAttributeValue(UserInterface.USER_NAME);
+			if (StringServices.isEmpty(userName)) {
+				Logger.warn("Encountered empty username in '" + getDeviceID() + "' - entry ignored.",
+					this);
+				continue;
+			}
+
+			Person account = Person.byName(userName);
+			if (account == null) {
+				account =
+					Person.create(PersistencyLayer.getKnowledgeBase(), userName, authenticationDeviceID);
+			}
+			existingPersons.add(account);
+			UserInterface localUser = account.getUser();
+			if (localUser != null) {
+				localUser.setName((String) user.getAttributeValue(UserInterface.NAME));
+				localUser.setFirstName((String) user.getAttributeValue(UserInterface.FIRST_NAME));
+				localUser.setTitle((String) user.getAttributeValue(UserInterface.TITLE));
+				localUser.setPhone((String) user.getAttributeValue(UserInterface.PHONE));
+				localUser.setEMail((String) user.getAttributeValue(UserInterface.EMAIL));
+			}
+		}
+		return existingPersons;
 	}
 
 	/**

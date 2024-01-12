@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -456,13 +455,13 @@ public class LDAPAccessService {
 	/**
 	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#getAllUserData()
 	 */
-	public List<UserInterface> getAllUserData() {
+	public Set<DataObject> getAllUserData() {
 		// clear cache before all entries are queried- this is to ensure update of changed attributes
 		// cache will be (re-)filled automatically by the following call
 		// in effect that disables the cache for this getAllUserData() call while leaving it in place for more specific getUserData(aName) calls
 		userDObyDN.clear();
 		Set<DataObject> memberDOs = getAllGroupMembers(true);
-		return memberDOs.stream().map(DOUser::getInstance).collect(Collectors.toList());
+		return memberDOs;
 	}
 
 	/**

@@ -173,6 +173,24 @@
 								fullQualifiedName="tl.accounts:Person#language"
 								type="tl.util:Language"
 							/>
+							<group>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+								</code>
+								<label key="dynamic.55779d47-a87c-4b68-b48b-f8f890161dcd">
+									<en>Personal settings</en>
+									<de>Persönliche Einstellungen</de>
+								</label>
+							</group>
 						</layout>
 					</foreign-objects>
 					<other-attributes/>

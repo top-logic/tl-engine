@@ -8,6 +8,7 @@
 	<arguments>
 		<dialogs>
 			<layout-reference resource="admin/persons/accounts/userSettings/dialog.layout.xml"/>
+			<layout-reference resource="admin/persons/accounts/defaultFor/dialog.layout.xml"/>
 		</dialogs>
 		<components>
 			<layout-reference resource="com.top_logic.demo/structure/index.layout.xml"/>

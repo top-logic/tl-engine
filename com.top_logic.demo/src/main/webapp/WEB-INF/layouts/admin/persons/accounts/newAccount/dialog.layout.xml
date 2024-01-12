@@ -193,6 +193,7 @@
         account = new(`tl.accounts:Person`);
         $account.set(`tl.accounts:Person#name`, $login);
         $account.set(`tl.accounts:Person#contact`, $contact);
+        $account.set(`tl.accounts:Person#authDeviceID`, "dbSecurity");
     });
     $contact;
 }]]></operation>

@@ -109,7 +109,7 @@
 								attribute="authDeviceID"
 								fullQualifiedName="tl.accounts:Person#authDeviceID"
 								type="tl.core:String"
-								visibility="editable"
+								visibility="read-only"
 							/>
 							<field
 								attribute="timezone"

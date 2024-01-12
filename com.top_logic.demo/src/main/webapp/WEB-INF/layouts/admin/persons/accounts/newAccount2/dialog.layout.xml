@@ -46,6 +46,7 @@
     login = $form.get(`tl.contact.ui:CreateLogin#login`);
     account = new(`tl.accounts:Person`);
     $account.set(`tl.accounts:Person#name`, $login);
+    $account.set(`tl.accounts:Person#authDeviceID`, "dbSecurity");
     $account.set(`tl.accounts:Person#contact`, $contact);
 }]]></operation>
 		</transactionHandler>

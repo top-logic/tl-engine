@@ -140,6 +140,24 @@
 								fullQualifiedName="tl.accounts:Person#groups"
 								type="tl.accounts:Group"
 							/>
+							<group>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+								</code>
+								<label key="dynamic.f6711e1e-a18a-405e-8f18-b1b737d7ba8d">
+									<en>Personal settings</en>
+									<de>Persönliche Einstellungen</de>
+								</label>
+							</group>
 						</layout>
 					</foreign-objects>
 					<group>

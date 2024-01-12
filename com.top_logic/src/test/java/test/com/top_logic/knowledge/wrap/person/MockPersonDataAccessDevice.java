@@ -18,6 +18,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
@@ -133,6 +134,11 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public List<Person> synchronizeUsers(KnowledgeBase kb) {
+		throw new UnsupportedOperationException("Method is not implemented");
 	}
 
 	@Override

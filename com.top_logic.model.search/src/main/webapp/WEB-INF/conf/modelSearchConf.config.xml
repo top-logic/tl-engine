@@ -391,6 +391,7 @@
 					<method name="all" class="com.top_logic.model.search.expr.config.operations.AllBuilder"/>
 					<method name="none" class="com.top_logic.model.search.expr.config.operations.EmptySetBuilder"/>
 					<method name="recursion" class="com.top_logic.model.search.expr.config.operations.RecursionBuilder"/>
+					<method name="traverse" class="com.top_logic.model.search.expr.Traverse$Builder"/>
 					<method name="sort" class="com.top_logic.model.search.expr.config.operations.SortBuilder"/>
 					<method name="comparator" class="com.top_logic.model.search.expr.config.operations.ComparatorBuilder"/>
 					<method name="desc" class="com.top_logic.model.search.expr.config.operations.DescBuilder"/>

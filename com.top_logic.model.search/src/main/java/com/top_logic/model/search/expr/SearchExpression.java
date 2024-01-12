@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -188,8 +189,12 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return (Collection<?>) value;
 		} else if (value instanceof Map<?, ?>) {
 			return ((Map<?, ?>) value).entrySet();
+		} else if (value == null) {
+			return Collections.emptyList();
+		} else if (value.getClass().isArray()) {
+			return Arrays.asList((Object[]) value);
 		} else {
-			return CollectionUtilShared.singletonOrEmptyList(value);
+			return Collections.singletonList(value);
 		}
 	}
 

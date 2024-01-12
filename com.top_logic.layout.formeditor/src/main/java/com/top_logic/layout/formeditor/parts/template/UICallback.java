@@ -64,6 +64,7 @@ public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 	 */
 	@DisplayOrder({
 		Config.NAME,
+		Config.EXECUTABILITY_PROPERTY,
 		Config.ACTION,
 	})
 	@TagName("ui-callback")

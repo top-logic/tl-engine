@@ -1,0 +1,50 @@
+<div>Durchläuft und optional transformiert einen Graphen.
+<pre>
+<code>$root.traverse(
+    descend: node -&gt; parent -&gt; lastResult -&gt; { ... }, 
+    mapping: node -&gt; parent -&gt; lastResult -&gt; { ... }, 
+    compose: result -&gt; childResults -&gt; node -&gt; parent -&gt; { ... }
+)</code></pre>
+
+<p>Die Durchquerung erfolgt in der folgenden Reihenfolge:</p>
+
+<ol>
+	<li>Der Wurzelknoten wird besucht, indem die Funktion <code class="hljs inlineCode">mapping</code> auf ihn angewendet wird. Das Ergebnis des Besuchs wird in Schritt 4 verwendet.</li>
+	<li>Es werden die nächsten zu besuchenden Knoten berechnet, indem die Funktion <code class="hljs inlineCode">descend</code> auf den aktuellen Knoten angewendet wird.</li>
+	<li>Alle folgenden Knoten werden auf die gleiche Weise rekursiv verarbeitet.</li>
+	<li>Wenn die Rekursion zurückkehrt, wird die optionale Funktion <code class="hljs inlineCode">compose</code> auf die Ergebnisse angewendet, die für den aktuellen Knoten und alle seine Kindknoten erzeugt wurden. Das Ergebnis von <code class="hljs inlineCode">compose</code>  liefert das Endergebnis von <code class="hljs inlineCode">traverse</code>. Wird keine Funktion <code class="hljs inlineCode">compose</code> angegeben, ist das Ergebnis von <code class="hljs inlineCode">traverse</code> das Ergebnis, das durch die <code class="hljs inlineCode">mapping</code> Funktion für den Wurzelknoten erzeugt wurde.</li>
+</ol>
+
+<h3>Parameter <code>root</code></h3>
+
+<p><strong>Typ:</strong> Beliebiges Objekt.</p>
+
+<p>Die Durchquerung des Graphen startet mit diesem Objekt.</p>
+
+<h3>Parameter <code class="hljs inlineCode">descend</code> (obligatorisch)</h3>
+
+<p><strong>Typ:</strong> Funktion mit bis zu drei Argumenten (<code class="hljs inlineCode">node,</code> <code class="hljs inlineCode">parent,</code> <code class="hljs inlineCode">lastResult</code>).</p>
+
+<p>Der Abstieg im Graphen wird durch die Funktion <code class="hljs inlineCode">descend</code> spezifiziert, die die nächsten zu besuchenden Knoten nach dem aktuellen Knoten berechnet. Die Funktion <code class="hljs inlineCode">descend</code> akzeptiert den aktuellen Knoten und optional den übergeordneten Knoten sowie das letzte Ergebnis des Besuchs (<code class="hljs inlineCode">lastResult</code>). Das letzte Ergebnis ist die Rückgabe der Funktion <code class="hljs inlineCode">mapping</code>, wenn ein Knoten mehr als einmal gefunden wird (ansonsten <code class="hljs inlineCode">null</code>). Das Argument <code class="hljs inlineCode">lastResult</code> kann verwendet werden, um den Besuch zu stoppen, um eine endlose Rekursion zu verhindern, wenn ein zyklischer Graph durchlaufen wird (oder den Besuch abzukürzen, wenn ein gerichteter azyklischer Graph durchsucht wird).</p>
+
+<h3>Parameter <code class="hljs inlineCode">mapping</code> (obligatorisch)</h3>
+
+<p><strong>Typ:</strong> Funktion mit bis zu drei Argumenten<code> (<code class="hljs inlineCode">node</code></code>, <code class="hljs inlineCode">parent</code>, <code class="hljs inlineCode">lastResult</code>).</p>
+
+<p>Die Abbildung erzeugt das Ergebnis des Besuchs eines Knotens. Wenn <code class="hljs inlineCode">traverse</code> in einer Transaktion verwendet wird, kann hier Operation auf einem Knoten ausgeführt werden.Wenn <code class="hljs inlineCode">mapping</code> nicht angegeben wird, ist das Ergebnis des Besuchs der besuchte Knoten selbst.</p>
+
+<h3>Parameter <code class="hljs inlineCode">compose</code> (optional)</h3>
+
+<p><strong>Typ:</strong> Funktion mit bis zu vier Argumenten<code> (<code class="hljs inlineCode">result</code></code>, <code class="hljs inlineCode">childResults</code>, <code class="hljs inlineCode">node</code>, <code class="hljs inlineCode">parent</code>).</p>
+
+<p>Die Funktion erzeugt das endgültige Ergebnis von <code class="hljs inlineCode">traverse</code>, nachdem das Abbildungsergebnis eines Knotens und seiner Kinder verfügbar ist. Wenn <code class="hljs inlineCode">compose</code> nicht angegeben wird, ist das Ergebnis der Transformationsoperation das Ergebnis der auf den Wurzelknoten angewandten Abbildungsfunktion.</p>
+
+<p>Die Parameter von <code class="hljs inlineCode">compose</code> sind:</p>
+
+<ul>
+	<li><code>result</code>: Das Ergebnis, das von der Funktion <code class="hljs inlineCode">mapping</code> für den aktuellen Knoten erzeugt wurde.</li>
+	<li><code>childResults</code>: Eine Liste mit den Ergebnissen, die für jedes besuchte Kind des aktuellen Knotens erzeugt wurden.</li>
+	<li><code>node</code>: Der aktuelle Knoten.</li>
+	<li><code>parent</code>: Der übergeordnete Knoten des aktuellen Knotens.</li>
+</ul>
+</div>

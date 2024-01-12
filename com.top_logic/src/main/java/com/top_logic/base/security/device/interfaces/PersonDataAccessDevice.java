@@ -10,6 +10,8 @@ import java.util.List;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Used to access a persons userdata according to PersonAttributes.
@@ -122,5 +124,20 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * The authentication device to use for accounts created by this device.
 	 */
 	public String getAuthenticationDeviceID();
+
+	/**
+	 * Synchronises the user in this {@link PersonDataAccessDevice} with the users in the given
+	 * {@link KnowledgeBase}.
+	 * 
+	 * <p>
+	 * If one {@link Person} is missing, it is created. No {@link Person}s are deleted.
+	 * </p>
+	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} to create new {@link Person} or fetch existing.
+	 * 
+	 * @return {@link Person}s in this {@link PersonDataAccessDevice}.
+	 */
+	List<Person> synchronizeUsers(KnowledgeBase kb);
 	
 }

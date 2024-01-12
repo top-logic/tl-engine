@@ -11,10 +11,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -92,26 +89,8 @@ public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends Stat
 					.collect(Collectors.toSet());
 
 			for (PersonDataAccessDevice device : devices) {
-				String authenticationDeviceID = device.getAuthenticationDeviceID();
-
-				for (UserInterface user : device.getAllUserData()) {
-					String userName = user.getUserName();
-					if (StringServices.isEmpty(userName)) {
-						Logger.warn("Encountered empty username in '" + device.getDeviceID() + "' - entry ignored.",
-							this);
-						continue;
-					}
-
-					Person account = Person.byName(userName);
-					if (account != null) {
-						deletedRemoteAccounts.remove(account);
-					} else {
-						account =
-							Person.create(PersistencyLayer.getKnowledgeBase(), userName, authenticationDeviceID);
-					}
-
-					account.getUser();
-				}
+				List<Person> synchronizedUsers = device.synchronizeUsers(kb);
+				deletedRemoteAccounts.removeAll(synchronizedUsers);
 			}
 
 			int cleanupLimit = getConfig().getAccountCleanupLimit();

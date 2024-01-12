@@ -6,6 +6,7 @@
 package com.top_logic.layout.formeditor.parts.template;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -25,16 +26,22 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.CombinedExecutabilityRule;
+import com.top_logic.tool.execution.ExecutabilityRule;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Definition of a {@link PostCreateAction} to be invoked by an <code>onclick</code> handler.
  */
 public class UIAction extends AbstractVariableDefinition<UIAction.Config> {
 
-	private QueryExecutor _targetObject;
+	private final QueryExecutor _targetObject;
 
-	private List<PostCreateAction> _actions;
+	private final List<PostCreateAction> _actions;
+
+	private final ExecutabilityRule _executability;
 
 	/**
 	 * Definition of an <code>onclick</code> script that jumps to an object or opens a dialog for an
@@ -48,10 +55,12 @@ public class UIAction extends AbstractVariableDefinition<UIAction.Config> {
 	@DisplayOrder({
 		Config.NAME,
 		Config.TARGET_OBJECT,
+		Config.EXECUTABILITY_PROPERTY,
 		Config.POST_CREATE_ACTIONS
 	})
 	@TagName("ui-action")
-	public interface Config extends VariableDefinition.Config<UIAction>, WithPostCreateActions.Config {
+	public interface Config
+			extends VariableDefinition.Config<UIAction>, ExecutabilityConfig, WithPostCreateActions.Config {
 
 		/**
 		 * @see #getTargetObject()
@@ -83,6 +92,8 @@ public class UIAction extends AbstractVariableDefinition<UIAction.Config> {
 	public UIAction(InstantiationContext context, Config config) {
 		super(context, config);
 
+		_executability =
+			CombinedExecutabilityRule.combine(TypedConfiguration.getInstanceList(context, config.getExecutability()));
 		_targetObject = QueryExecutor.compileOptional(config.getTargetObject());
 		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 	}
@@ -113,7 +124,12 @@ public class UIAction extends AbstractVariableDefinition<UIAction.Config> {
 
 		@Override
 		public HandlerResult executeCommand(DisplayContext context) {
-			WithPostCreateActions.processCreateActions(_actions, _component, _target);
+			ExecutableState state = _executability.isExecutable(_component, _target, Collections.emptyMap());
+			// Simply ignore non-executable callbacks, since there is no way to disable them at the
+			// UI.
+			if (state.isExecutable()) {
+				WithPostCreateActions.processCreateActions(_actions, _component, _target);
+			}
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

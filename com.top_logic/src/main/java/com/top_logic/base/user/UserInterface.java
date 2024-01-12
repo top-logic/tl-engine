@@ -10,6 +10,8 @@ import java.text.Collator;
 import java.util.Comparator;
 import java.util.Locale;
 
+import com.top_logic.basic.col.NullSafeComparator;
+
 /**
  * Additional account information.
  *
@@ -95,10 +97,12 @@ public interface UserInterface {
 	 */
 	public static Comparator<? super UserInterface> comparator(Locale l) {
 		Collator collator = Collator.getInstance(l);
+		Comparator<String> nullSafe = new NullSafeComparator<>(collator, false);
+
 		return Comparator
 			.comparing(UserInterface::getName, collator)
-			.thenComparing(UserInterface::getFirstName, collator)
-			.thenComparing(UserInterface::getTitle, collator);
+			.thenComparing(UserInterface::getFirstName, nullSafe)
+			.thenComparing(UserInterface::getTitle, nullSafe);
 	}
 
 }

@@ -112,12 +112,6 @@
 								visibility="editable"
 							/>
 							<field
-								attribute="dataDeviceID"
-								fullQualifiedName="tl.accounts:Person#dataDeviceID"
-								type="tl.core:String"
-								visibility="editable"
-							/>
-							<field
 								attribute="timezone"
 								fullQualifiedName="tl.accounts:Person#timeZone"
 								type="tl.util:TimeZone"

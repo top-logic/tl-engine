@@ -9,7 +9,6 @@
 
 <knowledgeobject object_type="Person" object_name="fcl">
 	<ko_attribute att_name="name" att_value="fcl"/>
-	<ko_attribute att_name="dataDeviceID" att_value="dbSecurity"/>
 	<ko_attribute att_name="authDeviceID" att_value="dbSecurity"/>		
 </knowledgeobject>
 

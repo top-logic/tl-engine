@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.wrap.person;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,18 +78,27 @@ public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends Stat
 		Transaction tx = kb.beginTransaction();
 		try {
 			TLSecurityDeviceManager deviceManager = TLSecurityDeviceManager.getInstance();
-			Set<String> deviceIds = deviceManager.getConfiguredDataAccessDeviceIDs();
+			List<PersonDataAccessDevice> devices =
+				deviceManager.getConfiguredDataAccessDeviceIDs().stream()
+					.map(deviceManager::getDataAccessDevice)
+					.collect(Collectors.toList());
+			Set<String> authenticationDeviceIDs =
+				devices.stream()
+					.map(PersonDataAccessDevice::getAuthenticationDeviceID)
+					.collect(Collectors.toSet());
 			Set<Person> deletedRemoteAccounts =
-				Person.all().stream().filter(p -> deviceIds.contains(p.getDataDeviceId())).collect(Collectors.toSet());
+				Person.all().stream()
+					.filter(p -> authenticationDeviceIDs.contains(p.getAuthenticationDeviceID()))
+					.collect(Collectors.toSet());
 
-			for (String deviceId : deviceIds) {
-				PersonDataAccessDevice device = deviceManager.getDataAccessDevice(deviceId);
+			for (PersonDataAccessDevice device : devices) {
 				String authenticationDeviceID = device.getAuthenticationDeviceID();
 
 				for (UserInterface user : device.getAllUserData()) {
 					String userName = user.getUserName();
 					if (StringServices.isEmpty(userName)) {
-						Logger.warn("Encountered empty username in '" + deviceId + "' - entry ignored.", this);
+						Logger.warn("Encountered empty username in '" + device.getDeviceID() + "' - entry ignored.",
+							this);
 						continue;
 					}
 
@@ -98,7 +108,6 @@ public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends Stat
 					} else {
 						account =
 							Person.create(PersistencyLayer.getKnowledgeBase(), userName, authenticationDeviceID);
-						account.setDataDeviceId(deviceId);
 					}
 
 					account.getUser();

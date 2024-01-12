@@ -13,7 +13,6 @@ import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
@@ -77,11 +76,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * @see #getAuthenticationDeviceID()
 	 **/
 	public static final String AUTHENTICATION_DEVICE_ID = "authDeviceID";
-
-	/**
-	 * @see #getDataDeviceId()
-	 */
-	public static final String DATA_DEVICE_ID = "dataDeviceID";
 
 	/** The attribute "locale". */
 	public static final String LOCALE = "locale";
@@ -318,20 +312,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 			return null;
 		}
 		return TLSecurityDeviceManager.getInstance().getAuthenticationDevice(authDevice);
-	}
-
-	/**
-	 * The ID of the {@link PersonDataAccessDevice} that created this account.
-	 */
-	public String getDataDeviceId() {
-		return tGetDataString(DATA_DEVICE_ID);
-	}
-
-	/**
-	 * @see #getDataDeviceId()
-	 */
-	public void setDataDeviceId(String value) {
-		tSetData(DATA_DEVICE_ID, value);
 	}
 
     /**

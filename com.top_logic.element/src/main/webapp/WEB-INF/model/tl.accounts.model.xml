@@ -247,13 +247,6 @@
 						<delete-protected/>
 					</annotations>
 				</property>
-				<property name="dataDeviceID"
-					type="tl.core:String"
-				>
-					<annotations>
-						<delete-protected/>
-					</annotations>
-				</property>
 				<property name="authDeviceID"
 					type="tl.core:String"
 				>

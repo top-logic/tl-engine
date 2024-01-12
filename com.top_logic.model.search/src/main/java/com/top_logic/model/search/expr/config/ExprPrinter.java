@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 
 import com.top_logic.basic.util.ResKey.LangString;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.dom.Expr.Access;
 import com.top_logic.model.search.expr.config.dom.Expr.Add;
 import com.top_logic.model.search.expr.config.dom.Expr.And;
 import com.top_logic.model.search.expr.config.dom.Expr.Apply;
@@ -22,6 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Attribute;
 import com.top_logic.model.search.expr.config.dom.Expr.AttributeContent;
 import com.top_logic.model.search.expr.config.dom.Expr.AttributeContents;
 import com.top_logic.model.search.expr.config.dom.Expr.Block;
+import com.top_logic.model.search.expr.config.dom.Expr.Chain;
 import com.top_logic.model.search.expr.config.dom.Expr.Cmp;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.config.dom.Expr.Div;
@@ -301,6 +303,16 @@ public class ExprPrinter implements ExprVisitor<Appendable, Appendable, IOExcept
 			@Override
 			public Boolean visit(Var expr, Integer arg) throws RuntimeException {
 				return false;
+			}
+
+			@Override
+			public Boolean visit(Access expr, Integer arg) throws RuntimeException {
+				return arg > ACCESS;
+			}
+
+			@Override
+			public Boolean visit(Chain expr, Integer arg) throws RuntimeException {
+				return arg > ACCESS;
 			}
 
 			@Override
@@ -667,18 +679,28 @@ public class ExprPrinter implements ExprVisitor<Appendable, Appendable, IOExcept
 	}
 
 	@Override
+	public Appendable visit(Access expr, Appendable arg) throws IOException {
+		descend(expr.getExpr(), arg, ACCESS);
+		arg.append(".");
+		descend(expr.getMethod(), arg, ACCESS);
+		return arg;
+	}
+
+	@Override
+	public Appendable visit(Chain expr, Appendable arg) throws IOException {
+		descend(expr.getExpr(), arg, ACCESS);
+		arg.append("..");
+		descend(expr.getMethod(), arg, ACCESS);
+		return arg;
+	}
+
+	@Override
 	public Appendable visit(Method expr, Appendable arg) throws IOException {
 		List<Arg> args = expr.getArgs();
-		boolean withContext = false;
-		if (!args.isEmpty() && args.get(0).getName() == null) {
-			descend(args.get(0).getValue(), arg, ACCESS);
-			arg.append(".");
-			withContext = true;
-		}
 		arg.append(expr.getName());
 		arg.append("(");
 		boolean first = true;
-		for (int i = withContext ? 1 : 0; i < args.size(); i++) {
+		for (int i = 0; i < args.size(); i++) {
 			Arg argument = args.get(i);
 			if (first) {
 				first = false;

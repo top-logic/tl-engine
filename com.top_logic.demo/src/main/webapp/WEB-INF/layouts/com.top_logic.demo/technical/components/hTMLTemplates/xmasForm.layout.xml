@@ -97,6 +97,12 @@
 </svg>
 </div>]]></template>
 						<ui-callback name="placeCandle">
+							<executability>
+								<rule class="com.top_logic.tool.execution.EditorExecutabilityRule"
+									mode="EDIT_MODE"
+									visibility="HIDDEN"
+								/>
+							</executability>
 							<action><![CDATA[tree -> args -> {
     x = $args[0];
     y = $args[1];
@@ -169,7 +175,14 @@
   </g>]]></template>
 								<ui-callback name="toggleCandle"
 									action="candle -> $candle.set(`test.htmltemplate:Candle#lighned`, !$candle.get(`test.htmltemplate:Candle#lighned`))"
-								/>
+								>
+									<executability>
+										<rule class="com.top_logic.tool.execution.EditorExecutabilityRule"
+											mode="EDIT_MODE"
+											visibility="HIDDEN"
+										/>
+									</executability>
+								</ui-callback>
 								<variable class="com.top_logic.layout.formeditor.parts.template.MenuVariable"
 									name="deleteCandle"
 								>
@@ -182,6 +195,12 @@
 												<en>Remove candle</en>
 												<de>Kerze abnehmen</de>
 											</resourceKey>
+											<executability>
+												<rule class="com.top_logic.tool.execution.EditorExecutabilityRule"
+													mode="EDIT_MODE"
+													visibility="HIDDEN"
+												/>
+											</executability>
 										</button>
 									</buttons>
 								</variable>

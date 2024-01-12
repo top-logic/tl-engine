@@ -20,7 +20,6 @@
 	<mo_attribute att_name="language" att_type="String" 	mandatory="false" />
 	<mo_attribute att_name="timezone" att_type="String" 	mandatory="false" />
 	<mo_attribute att_name="unusedNotified" att_type="Boolean"  mandatory="false" />
-	<mo_attribute att_name="dataDeviceID" att_type="String" mandatory="false" />
 	<mo_attribute att_name="authDeviceID" att_type="String" mandatory="false" />	
 	<mo_attribute att_name="restrictedUser" att_type="Boolean" mandatory="false" />	
 	<mo_attribute att_name="admin" att_type="Boolean" mandatory="false" />	

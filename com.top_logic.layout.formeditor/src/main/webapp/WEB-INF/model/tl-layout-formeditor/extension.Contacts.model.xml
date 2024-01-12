@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="Contacts">
+		<class name="PersonContact">
+			<annotations>
+				<dynamic-icon>
+					<icon-by-expression>
+						<icon>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, icon("css:far fa-user"))</icon>
+					</icon-by-expression>
+				</dynamic-icon>
+				<form-definition>
+					<form>
+						<group>
+							<field
+								attribute="firstname"
+								fullQualifiedName="Contacts:Contact.Person#firstname"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="name"
+								fullQualifiedName="Contacts:Contact.all#name"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="title"
+								fullQualifiedName="Contacts:Contact.Person#title"
+								type="tl.core:String"
+							/>
+							<label key="dynamic.1f5a7ca7-6bc0-405d-b2f8-6ebf4e87dbe8">
+								<en>User data</en>
+								<de>Nutzerdaten</de>
+							</label>
+						</group>
+						<foreign-objects
+							items="x -> $x.get(`Contacts:PersonContact#account`)"
+							label="`tl.accounts:Person`.toString()"
+							type="tl.accounts:Person"
+						>
+							<layout>
+								<field
+									attribute="name"
+									fullQualifiedName="tl.accounts:Person#name"
+									type="tl.core:String"
+									visibility="read-only"
+								/>
+								<field
+									attribute="admin"
+									fullQualifiedName="tl.accounts:Person#admin"
+									type="tl.core:Boolean"
+								/>
+								<field
+									attribute="restrictedUser"
+									fullQualifiedName="tl.accounts:Person#restrictedUser"
+									type="tl.core:Boolean"
+								/>
+								<field
+									attribute="authDeviceID"
+									fullQualifiedName="tl.accounts:Person#authDeviceID"
+									type="tl.core:String"
+									visibility="read-only"
+								/>
+								<field
+									attribute="timezone"
+									fullQualifiedName="tl.accounts:Person#timeZone"
+									type="tl.util:TimeZone"
+									visibility="editable"
+								/>
+								<field
+									attribute="country"
+									fullQualifiedName="tl.accounts:Person#country"
+									type="tl.util:Country"
+									visibility="editable"
+								/>
+								<field
+									attribute="language"
+									fullQualifiedName="tl.accounts:Person#language"
+									type="tl.util:Language"
+									visibility="editable"
+								/>
+								<field
+									attribute="groups"
+									fullQualifiedName="tl.accounts:Person#groups"
+									type="tl.accounts:Group"
+								/>
+								<group>
+									<code>
+										<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+									</code>
+									<code>
+										<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+									</code>
+									<code>
+										<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+									</code>
+									<code>
+										<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+									</code>
+									<label key="dynamic.f6711e1e-a18a-405e-8f18-b1b737d7ba8d">
+										<en>Personal settings</en>
+										<de>Persönliche Einstellungen</de>
+									</label>
+								</group>
+							</layout>
+						</foreign-objects>
+						<group>
+							<field
+								attribute="email"
+								fullQualifiedName="Contacts:Contact.all#email"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="phone"
+								fullQualifiedName="Contacts:Contact.all#phone"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="phone_mobile"
+								fullQualifiedName="Contacts:Contact.Person#phone_mobile"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="phone_private"
+								fullQualifiedName="Contacts:Contact.Person#phone_private"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="fax"
+								fullQualifiedName="Contacts:Contact.Person#fax"
+								type="tl.core:String"
+							/>
+							<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
+								<en>Contact details</en>
+								<de>Kontaktdaten</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="position"
+								fullQualifiedName="Contacts:Contact.Person#position"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="boss"
+								fullQualifiedName="Contacts:Contact.Person#boss"
+								type="Contacts:Contact.Person"
+							/>
+							<field
+								attribute="company"
+								fullQualifiedName="Contacts:Contact.Person#company"
+								type="Contacts:Contact.Company"
+							/>
+							<label key="dynamic.ac4eddd9-e1ec-4e8e-87e8-0e0ef7186334">
+								<en>Organization</en>
+								<de>Organisation</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="remarks"
+								fullQualifiedName="Contacts:Contact.all#remarks"
+								type="tl.core:String"
+							>
+								<annotations>
+									<label-position value="hide-label"/>
+								</annotations>
+							</field>
+							<label key="dynamic.ce2445e8-bec3-40e9-b69f-788a7c1cc566">
+								<en>Remarks</en>
+								<de>Bemerkungen</de>
+							</label>
+						</group>
+						<other-attributes/>
+					</form>
+				</form-definition>
+			</annotations>
+		</class>
+	</module>
+</model>

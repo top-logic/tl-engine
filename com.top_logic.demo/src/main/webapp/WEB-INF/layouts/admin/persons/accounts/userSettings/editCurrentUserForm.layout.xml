@@ -146,12 +146,9 @@
 								type="tl.accounts:Group"
 								visibility="read-only"
 							/>
-							<field
-								attribute="admin"
-								fullQualifiedName="tl.accounts:Person#admin"
-								type="tl.core:Boolean"
-								visibility="read-only"
-							/>
+							<code>
+								<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+							</code>
 							<field
 								attribute="timezone"
 								fullQualifiedName="tl.accounts:Person#locale"

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/transaction.template.xml"
+>
+	<arguments formType="tl.contact.ui:CreateLogin">
+		<title>
+			<title key="dynamic.3751b9e1-27dd-420b-8345-e9b4480ffcb4">
+				<en>New account</en>
+				<de>Neuer Zugang</de>
+			</title>
+		</title>
+		<open-handler id="ID_b394adbc_6b2e_4c14_bb76_4e49d1350bb3"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique="additional"
+			group="Create"
+			image="css:fas fa-user-plus"
+			target="model(admin/security/accounts/detailsForm.layout.xml#Form)"
+			targetComponent="admin/security/accounts/newAccount2/dialog.layout.xml#Form"
+		>
+			<resourceKey key="dynamic.3751b9e1-27dd-420b-8345-e9b4480ffcb4">
+				<en>New account</en>
+				<de>Neuer Zugang</de>
+			</resourceKey>
+			<executability>
+				<rule-by-expression decision="contact -> $contact.get(`Contacts:PersonContact#account`) == null"/>
+			</executability>
+		</open-handler>
+		<transactionHandler id="perform"
+			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+			clique="apply"
+			closeDialog="true"
+			confirm="false"
+			confirmMessage=""
+			group="Write"
+			image="theme:ICONS_BUTTON_OK"
+		>
+			<resourceKey key="dynamic.3751b9e1-27dd-420b-8345-e9b4480ffcb4">
+				<en>New account</en>
+				<de>Neuer Zugang</de>
+			</resourceKey>
+			<postCreateActions/>
+			<operation><![CDATA[form -> contact -> {
+    login = $form.get(`tl.contact.ui:CreateLogin#login`);
+    account = new(`tl.accounts:Person`);
+    $account.set(`tl.accounts:Person#name`, $login);
+    $account.set(`tl.accounts:Person#authDeviceID`, "dbSecurity");
+    $account.set(`tl.accounts:Person#contact`, $contact);
+}]]></operation>
+		</transactionHandler>
+	</arguments>
+</config:template-call>

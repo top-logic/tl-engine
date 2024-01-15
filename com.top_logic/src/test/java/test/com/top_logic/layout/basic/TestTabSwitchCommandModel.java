@@ -36,6 +36,7 @@ import com.top_logic.mig.html.layout.Card;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.tool.boundsec.BoundHelper;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 import com.top_logic.util.TLContext;
 
@@ -220,6 +221,7 @@ public class TestTabSwitchCommandModel extends BasicTestCase {
 		Test t = new TestSuite(TestTabSwitchCommandModel.class);
 		t = ServiceTestSetup.createSetup(t, BoundHelper.Module.INSTANCE);
 		t = ServiceTestSetup.createSetup(t, SecurityObjectProviderManager.Module.INSTANCE);
+		t = ServiceTestSetup.createSetup(t, CommandHandlerFactory.Module.INSTANCE);
 		t = TestPersonSetup.wrap(t);
 		t = PersonManagerSetup.createPersonManagerSetup(t);
 		return t;

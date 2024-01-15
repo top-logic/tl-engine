@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="security"
+>
+	<properties extends="com.top_logic.mig.html.layout.SubComponentConfig">
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<available-templates value="tabbar"/>
+			<options
+				fun="com.top_logic.layout.editor.DynamicComponentOptions"
+				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
+			/>
+			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
+			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.CustomMode"/>
+		</property>
+	</properties>
+
+	<securityLayout name="adminRolesView"
+		helpIDLegacy="main.admin.roles.tabber"
+		horizontal="true"
+		titleKey="main.admin.roles.tabber"
+		useDefaultChecker="false"
+	>
+		<tabInfo label="main.admin.roles.tabber"/>
+		<components>
+			<layout
+				resizable="false"
+				titleKey="admin.roles.filter.title"
+			>
+				<components>
+					<layoutControl componentName="adminRolesView_tabBar">
+						<layoutInfo
+							scrolleable="false"
+							size="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
+						/>
+						<componentControlProvider class="com.top_logic.layout.tabbar.TabBarControlProvider"/>
+					</layoutControl>
+
+					<include name="com.top_logic.element/admin/security/securityStructure.xml"
+						toolbar="false"
+					/>
+
+					<tabbar name="adminRolesView_tabBar">
+						<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
+						<components>${components}</components>
+					</tabbar>
+				</components>
+			</layout>
+		</components>
+	</securityLayout>
+</config:template>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		height="300px"
+		helpID="ID_71d2eb55_e4c2_4bec_a426_b15881c2fb8e"
+		width="400px"
+	>
+		<title>
+			<title key="dynamic.ea8c42fb-57b5-44fa-9faa-6814315108bf">
+				<en>Change password</en>
+				<de>Passwort ändern</de>
+			</title>
+		</title>
+		<open-handler id="ID_4ec4d336_e899_45dc_97d1_88e73ecf6e6b"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique="additional"
+			group="Write"
+			image="css:fas fa-lock"
+			targetComponent="admin/security/accounts/changePassword/dialog.layout.xml#Dialog"
+		>
+			<resourceKey key="dynamic.ea8c42fb-57b5-44fa-9faa-6814315108bf">
+				<en>Change password</en>
+				<de>Passwort ändern</de>
+			</resourceKey>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+				input="model(admin/security/accounts/detailsForm.layout.xml#Form)"
+			/>
+			<executability>
+				<rule-by-expression decision="account -> $account != null"/>
+				<rule-by-expression show-disabled="true">
+					<decision>account -&gt; $account.get(`tl.accounts:Person#authDeviceID`) != "dbSecurity" ? #("Ein Passwort kann nur für lokale Zugänge gesetzt werden"@de, "Passwords can be managed only for local accounts."@en) : null</decision>
+				</rule-by-expression>
+			</executability>
+		</open-handler>
+		<components>
+			<layout-reference resource="admin/security/accounts/changePassword/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

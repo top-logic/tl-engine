@@ -1,0 +1,73 @@
+<h2>Syntax</h2>
+<pre>	<code>jmsSend($destination, $message)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Die Funktion dient dazu Nachrichten an eine Warteschlange (Queue) oder ein Thema (Topic) zu senden. Hierfür wird die Java-interne <strong>JMS API </strong>(Java Message Service / Jakarta Messaging) verwendet, die es ermöglicht Nachrichten an einen Server zu senden und synchron oder asynchron vom Server abzufragen.</p>
+<p>Damit eine Nachricht gesendet werden kann, muss eine Ziel-Konfiguration im JMS-Service angelegt sein. Der in der Konfiguration definierte Warteschlangenmanager muss unter der angegebenen Adresse erreichbar sein, um Erfolg beim Senden zu haben, andernfalls wird ein Fehler ausgegeben. Als Server kann hier die IBM MQ verwendet werden. Diese muss separat angelegt und gestartet worden sein.</p>
+<p>Alle Ziel-Konfigurationen können, sofern der Nutzer über entsprechende Berechtigungen verfügt, unter <strong>Administration &gt; Development &gt; Service Editor &gt; JMS Service </strong>angesehen, angelegt, bearbeitet und gelöscht werden.</p>
+<p></p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>destination</td>
+   <td>Zeichenkette (Ziel-Konfiguration)</td>
+   <td>Name einer Ziel-Konfiguration im JMS-Service</td>
+   <td>ja</td>
+   <td>-</td>
+  </tr>
+  <tr>
+   <td>message</td>
+   <td>Zahl/Zeichenkette/Binärdaten/XML</td>
+   <td>Nachricht, die an eine Warteschlange (Queue) oder an ein Thema (Topic) geschickt werden soll</td>
+   <td>ja</td>
+   <td>-</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p>null - Da beim Senden einer Nachricht keine Rückgabe erfolgt.</p>
+<h2>Beispiele</h2>
+<h3>String Nachricht (Topic)</h3>
+<pre>	<code>jmsSend("Topic1", "Hello Subscribers!");
+</code>
+</pre>
+<p><span style="color:#3498db"></span><strong><span style="color:#3498db">Neue Nachricht</span> </strong>(im Topic des Warteschlangenmanagers)<span style="color:#3498db"><strong>:</strong></span> <code class="hljs inlineCode">Hello Subscribers!</code></p>
+<p>Dieser Ausdruck sendet die Nachricht <code class="hljs inlineCode">Hello Subscribers!</code> an das Thema, das in der Konfiguration mit dem Namen "Topic1" festgelegt ist.</p>
+<p>​</p>
+<h3>String Nachricht (Queue)</h3>
+<pre>	<code>jmsSend("Queue1", "Hello World!");
+</code>
+</pre>
+<p><strong>Neue Nachricht </strong>(in der Queue des Warteschlangenmanagers)<strong>:</strong> <code class="hljs inlineCode">Hello world!</code></p>
+<p>Dieser Ausdruck sendet die Nachricht <code class="hljs inlineCode">Hello World!</code> an die Warteschlange, die in der Konfiguration mit dem Namen "Queue1" festgelegt ist.</p>
+<p>​</p>
+<h3>XML Nachricht (Queue)</h3>
+<pre>	<code>jmsSend("Queue1", {{{&lt;div&gt;Hello World!&lt;/div&gt;}}});
+</code>
+</pre>
+<p><strong><span style="color:#3498db">Neue Nachricht</span> </strong>(in der Queue des Warteschlangenmanagers)<span style="color:#3498db"><strong>:</strong></span> <code class="hljs inlineCode">&lt;div&gt;Hello World!&lt;/div&gt;</code></p>
+<p>Dieser Ausdruck sendet den XML Ausdruck <code class="hljs inlineCode">&lt;div&gt;Hello World!&lt;/div&gt;</code> an die Warteschlange, die in der Konfiguration mit dem Namen "Queue1" festgelegt ist.</p>
+<p></p>
+<h3>Binärdaten Nachricht (Queue)</h3>
+<pre>	<code>jmsSend("Queue1", binary(
+    name: "hello.txt",
+    data: "Hello Wörld!",
+    contentType: "text/plain",
+    encoding: "iso-8859-1"
+));
+</code>
+</pre>
+<p><strong><span style="color:#3498db">Neue Nachricht</span> </strong>(in der Queue des Warteschlangenmanagers)<span style="color:#3498db"><strong>:</strong></span> <code class="hljs inlineCode">Binärnachricht</code></p>
+<p>Dieser Ausdruck sendet die Binärdaten <code class="hljs inlineCode">binary(name: "hello.txt", data: "Hello Wörld!", contentType: "text/plain", encoding: "iso-8859-1")</code> an die Warteschlange, die in der Konfiguration mit dem Namen "Queue1" festgelegt ist.</p>
+<p>​</p>
+<p></p>

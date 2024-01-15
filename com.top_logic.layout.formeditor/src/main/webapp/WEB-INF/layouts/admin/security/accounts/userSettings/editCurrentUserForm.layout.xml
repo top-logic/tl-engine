@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		showNoModel="false"
+		type="Contacts:PersonContact"
+	>
+		<name key="dynamic.9099db9a-c920-459c-b3a3-31d67301a55d">
+			<en>Edit contact</en>
+			<de>Kontakt bearbeiten</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="currentUser().get(`tl.accounts:Person#contact`)"/>
+		</model>
+		<buttons>
+			<button id="resetPersonalConfiguration"
+				class="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
+				clique="additional"
+				image="theme:ICON_RESET_PERSONAL_CONFIGURATION"
+			>
+				<resourceKey key="dynamic.49aa2499-5cb1-4f78-929e-4ac543b322aa">
+					<en>Reset personal configuration</en>
+					<de>Persönliche Konfiguration zurücksetzen</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`).singleElement()"
+					input="model(self())"
+				/>
+				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
+					<en>Are you sure they want to delete your personal settings?</en>
+					<de>Sind Sie sicher, dass Sie Ihre persönlichen Einstellungen löschen wollen?</de>
+				</confirmMessage>
+			</button>
+			<button id="resetStartPage"
+				class="com.top_logic.contact.layout.person.related.ResetStartPageCommandHandler"
+				clique="additional"
+				image="theme:ICON_RESET_STARTPAGE"
+			>
+				<resourceKey key="dynamic.23488a5d-bdf8-43d0-9c7d-f370e470ccb3">
+					<en>Reset start page</en>
+					<de>Startseite zurücksetzen</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule class="com.top_logic.tool.execution.InViewModeExecutable"/>
+					<rule class="com.top_logic.knowledge.wrap.person.NoStartPageAutomatismExecutability"/>
+				</executability>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="admin/security/accounts/userSettings/changePassword/dialog.layout.xml"/>
+		</dialogs>
+		<forms>
+			<form type="Contacts:PersonContact">
+				<formDefinition>
+					<group>
+						<field
+							attribute="title"
+							fullQualifiedName="Contacts:Contact.Person#title"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="firstname"
+							fullQualifiedName="Contacts:Contact.Person#firstname"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="name"
+							fullQualifiedName="Contacts:Contact.all#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="company"
+							fullQualifiedName="Contacts:Contact.Person#company"
+							type="Contacts:Contact.Company"
+						/>
+						<field
+							attribute="fullName"
+							fullQualifiedName="Contacts:Contact.Person#fullName"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<label key="dynamic.881b2519-ae03-4afa-8922-660222835953">
+							<de>Basisinformationen</de>
+						</label>
+					</group>
+					<group>
+						<field
+							attribute="phone_mobile"
+							fullQualifiedName="Contacts:Contact.Person#phone_mobile"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="phone_private"
+							fullQualifiedName="Contacts:Contact.Person#phone_private"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="phone"
+							fullQualifiedName="Contacts:Contact.all#phone"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="fax"
+							fullQualifiedName="Contacts:Contact.Person#fax"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="email"
+							fullQualifiedName="Contacts:Contact.all#email"
+							type="tl.core:String"
+						/>
+						<label key="dynamic.5f728070-543b-4f33-9f90-af507e65d060">
+							<en>Contact information</en>
+							<de>Kontaktinformationen</de>
+						</label>
+					</group>
+					<foreign-objects
+						items="contact -> $contact.get(`Contacts:PersonContact#account`)"
+						label="`tl.accounts:Person`.toString()"
+						type="tl.accounts:Person"
+					>
+						<layout>
+							<field
+								attribute="name"
+								fullQualifiedName="tl.accounts:Person#name"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<field
+								attribute="authDeviceID"
+								fullQualifiedName="tl.accounts:Person#authDeviceID"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<field
+								attribute="groups"
+								fullQualifiedName="tl.accounts:Person#groups"
+								type="tl.accounts:Group"
+								visibility="read-only"
+							/>
+							<code>
+								<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+							</code>
+							<field
+								attribute="timezone"
+								fullQualifiedName="tl.accounts:Person#locale"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="country"
+								fullQualifiedName="tl.accounts:Person#country"
+								type="tl.util:Country"
+							/>
+							<field
+								attribute="language"
+								fullQualifiedName="tl.accounts:Person#language"
+								type="tl.util:Language"
+							/>
+							<group>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+								</code>
+								<code>
+									<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+								</code>
+								<label key="dynamic.55779d47-a87c-4b68-b48b-f8f890161dcd">
+									<en>Personal settings</en>
+									<de>Persönliche Einstellungen</de>
+								</label>
+							</group>
+						</layout>
+					</foreign-objects>
+					<other-attributes/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

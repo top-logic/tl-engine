@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		height="700px"
+		helpID="ID_e9bde879_3b0a_4188_b540_35af445c29b2"
+		width="1000px"
+	>
+		<title>
+			<title key="dynamic.a81055fe-8f11-4da9-bdee-e58999ef2134">
+				<en>Edit own contact</en>
+				<de>Eigenen Kontakt bearbeiten</de>
+			</title>
+		</title>
+		<open-handler id="showCurrentPersonDialog"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="theme:IMAGE_BUTTONS_PERSONAL_SETTINGS22"
+		>
+			<resourceKey key="dynamic.a81055fe-8f11-4da9-bdee-e58999ef2134">
+				<en>Personal settings</en>
+				<de>Persönliche Einstellungen</de>
+				<tooltip>
+					<en>Shows the personal settings of the current user.</en>
+					<de>Zeigt die persönliche Einstellungen des aktuellen Nutzers an.</de>
+				</tooltip>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="admin/security/accounts/userSettings/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

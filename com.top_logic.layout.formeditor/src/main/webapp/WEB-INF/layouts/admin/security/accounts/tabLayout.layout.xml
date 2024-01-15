@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_e51be6c9_33e1_4763_a5a9_616b72fe4831"
+		tabIcon="css:fas fa-user"
+	>
+		<tabLabel key="dynamic.7bb6b053-3757-4514-910d-105c8b6c6290">
+			<en>User management</en>
+			<de>Benutzerverwaltung</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="admin/security/accounts/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

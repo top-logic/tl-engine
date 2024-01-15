@@ -5,5 +5,4 @@
 	<layout-reference resource="export/gridExportDialog.layout.xml"/>
 	<layout-reference resource="admin/security/accounts/userSettings/dialog.layout.xml"/>
 	<layout-reference resource="admin/security/accounts/defaultFor/dialog.layout.xml"/>
-	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>
 </template>

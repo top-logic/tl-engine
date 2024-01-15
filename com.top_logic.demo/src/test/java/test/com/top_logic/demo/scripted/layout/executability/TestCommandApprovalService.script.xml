@@ -733,8 +733,9 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
-								value="com.top_logic.demo/technical/components/commandExecutability/operationsTable.layout.xml#Table"
+							<value config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-name="com.top_logic.demo/technical/components/commandExecutability/operationsTable.layout.xml#Table"
+								require-visible="false"
 							/>
 						</values>
 					</value>

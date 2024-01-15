@@ -31,12 +31,12 @@ public final class DisplayTemplateCodeCommand extends AbstractCommandModel imple
 	 */
 	public static final String CONTENT_PROPERTY = "content";
 
-	private final ConfiguredTemplate _template;
+	private final HTMLTemplate _template;
 
 	/**
 	 * Creates the command model that opens a popup displaying the templates source code.
 	 */
-	public DisplayTemplateCodeCommand(ConfiguredTemplate template) {
+	public DisplayTemplateCodeCommand(HTMLTemplate template) {
 		_template = template;
 		setImage(Icons.TEMPLATE_POPUP_BUTTON);
 	}

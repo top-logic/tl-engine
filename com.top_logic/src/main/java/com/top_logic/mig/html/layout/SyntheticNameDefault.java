@@ -14,6 +14,8 @@ import com.top_logic.model.provider.DefaultProvider;
 /**
  * {@link DefaultProvider} to create a synthetic name for components.
  * 
+ * @see LayoutConstants#isSyntheticName(ComponentName)
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class SyntheticNameDefault extends DefaultValueProvider {

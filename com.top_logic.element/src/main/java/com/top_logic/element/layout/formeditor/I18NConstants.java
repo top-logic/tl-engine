@@ -27,7 +27,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey OPEN_FORM_EDITOR_DIALOG;
 
-	public static ResKey1 FORM_EDITOR_DIALOG_DISABLED_NO_TYPE_SELECTED__TYPE_ATTRIBUTE;
+	public static ResKey FORM_EDITOR_DIALOG_DISABLED_NO_TYPE_SELECTED;
 
 	public static ResKey1 MISSING_TYPE_ATTRIBUTE_ANNOTATION__ATTRIBUTE;
 

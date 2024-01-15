@@ -13,25 +13,24 @@ import com.top_logic.layout.template.WithProperties;
  * Boolean {@link TemplateExpression} combining the result of tow other {@link TemplateExpression}s
  * with <code>and</code>.
  */
-public class AndExpression implements TemplateExpression {
-
-	private TemplateExpression _leftExpression;
-
-	private TemplateExpression _rightExpression;
+public class AndExpression extends BinaryExpression {
 
 	/**
 	 * Creates a {@link AndExpression}.
 	 */
-	public AndExpression(TemplateExpression leftExpression, TemplateExpression rightExpression) {
-		_leftExpression = leftExpression;
-		_rightExpression = rightExpression;
+	public AndExpression(TemplateExpression left, TemplateExpression right) {
+		super(left, right);
 	}
 
 	@Override
 	public Object eval(DisplayContext context, WithProperties properties) {
 		return Boolean.valueOf(
-			TestExpression.isTrue(_leftExpression.eval(context, properties))
-					&& TestExpression.isTrue(_rightExpression.eval(context, properties)));
+			TestExpression.isTrue(getLeft().eval(context, properties))
+				&& TestExpression.isTrue(getRight().eval(context, properties)));
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 }

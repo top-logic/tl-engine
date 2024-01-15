@@ -5,11 +5,12 @@
  */
 package com.top_logic.element.layout.formeditor.builder;
 
+import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.element.layout.formeditor.FormTypeProperty;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.model.form.definition.FormContextDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -18,7 +19,7 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * @author <a href=mailto:iwi@top-logic.com>Isabell Wittich</a>
  */
-public interface TypedFormDefinition extends TypeTemplateParameters {
+public interface TypedFormDefinition extends TypeTemplateParameters, FormContextDefinition {
 
 	/** Configuration name for the value of the {@link #getFormDefinition()}. */
 	String FORM_DEFINITION_NAME = "formDefinition";
@@ -35,10 +36,13 @@ public interface TypedFormDefinition extends TypeTemplateParameters {
 	TLModelPartRef getType();
 
 	/** The form to render for objects of the given {@link #getType()}. */
-	@FormTypeProperty(TYPE)
 	@ItemDisplay(ItemDisplayType.VALUE)
 	@Name(FORM_DEFINITION_NAME)
 	FormDefinition getFormDefinition();
+
+	@Override
+	@DerivedRef(TYPE)
+	TLModelPartRef getFormContextType();
 
 	/** @see #getFormDefinition() */
 	void setFormDefinition(FormDefinition formDefinition);

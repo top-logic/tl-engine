@@ -6,7 +6,7 @@
 package com.top_logic.html.template;
 
 import com.top_logic.html.template.RawTemplateFragment.Visitor;
-import com.top_logic.html.template.expr.StringLiteral;
+import com.top_logic.html.template.expr.LiteralText;
 
 /**
  * {@link Visitor} descending a template tree.
@@ -49,7 +49,7 @@ public class DescendingTemplateVisitor<A> implements RawTemplateFragment.Visitor
 	}
 
 	@Override
-	public Void visit(StringLiteral template, A arg) {
+	public Void visit(LiteralText template, A arg) {
 		return null;
 	}
 

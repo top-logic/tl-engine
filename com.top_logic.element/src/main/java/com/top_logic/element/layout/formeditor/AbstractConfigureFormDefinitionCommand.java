@@ -94,7 +94,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 	private GUIEditorDialog createEditorDialog(LayoutComponent component, FormDefinition definition,
 			TLStructuredType displayedType) {
-		GUIEditorDialog guiEditorDialog = new GUIEditorDialog();
+		GUIEditorDialog guiEditorDialog = new GUIEditorDialog(component);
 
 		guiEditorDialog.setFormDefinitionCopy(definition);
 		guiEditorDialog.setOpenInEditMode(true);

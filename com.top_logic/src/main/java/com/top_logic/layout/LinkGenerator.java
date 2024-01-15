@@ -52,20 +52,39 @@ public class LinkGenerator {
 
 	}
 
-	static final class CommandExecution implements CommandListener, Handle, UpdateListener {
+	/**
+	 * Pseudo control to handle requests from the browser client to actions that have no direct
+	 * {@link Control}-representation on the UI.
+	 * 
+	 * <p>
+	 * To activate a {@link Callback}, the instance must be added as {@link UpdateListener} to the
+	 * {@link ControlScope} (see {@link ControlScope#addUpdateListener(UpdateListener)}). The action
+	 * can then be triggered from within <em>JavaScript</em> by invoking the {@link DispatchAction}
+	 * passing the {@link #getID()} of the {@link Callback} as control ID.
+	 * </p>
+	 * 
+	 * <p>
+	 * The server-side operation is specified by implementing the method
+	 * {@link CommandListener#executeCommand(DisplayContext, String, Map)}.
+	 * </p>
+	 */
+	public static abstract class Callback implements CommandListener, Handle, UpdateListener {
 
 		private final String _id;
-
-		private final Command _command;
 
 		private final ControlScope _scope;
 
 		private boolean _disabled;
 
-		CommandExecution(ControlScope scope, Command command) {
+		/**
+		 * Creates a {@link Callback}.
+		 *
+		 * @param scope
+		 *        The {@link ControlScope} to listen to.
+		 */
+		protected Callback(ControlScope scope) {
 			_scope = scope;
 			_id = scope.getFrameScope().createNewID();
-			_command = command;
 		}
 
 		@Override
@@ -88,14 +107,11 @@ public class LinkGenerator {
 			return _id;
 		}
 
-		@Override
-		public HandlerResult executeCommand(DisplayContext context, String commandName, Map<String, Object> arguments) {
-			if (_disabled) {
-				// Skip.
-				return HandlerResult.DEFAULT_RESULT;
-			}
-			context.set(COMMAND_ARGUMENTS, arguments);
-			return _command.executeCommand(context);
+		/**
+		 * Whether this command temporarily cannot be executed.
+		 */
+		public boolean isDisabled() {
+			return _disabled;
 		}
 
 		@Override
@@ -112,6 +128,27 @@ public class LinkGenerator {
 		public void revalidate(DisplayContext context, UpdateQueue actions) {
 			// Ignore.
 		}
+	}
+
+	static final class CommandExecution extends Callback {
+
+		private final Command _command;
+
+		CommandExecution(ControlScope scope, Command command) {
+			super(scope);
+			_command = command;
+		}
+
+		@Override
+		public HandlerResult executeCommand(DisplayContext context, String commandName, Map<String, Object> arguments) {
+			if (isDisabled()) {
+				// Skip.
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			context.set(COMMAND_ARGUMENTS, arguments);
+			return _command.executeCommand(context);
+		}
+
 	}
 
 	/**

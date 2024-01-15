@@ -28,6 +28,13 @@ public class VariableTemplate implements RawTemplateFragment {
 		_name = name;
 	}
 
+	/**
+	 * Name of the variable accessed.
+	 */
+	public String getName() {
+		return _name;
+	}
+
 	@Override
 	public void write(DisplayContext context, TagWriter out, WithProperties properties) throws IOException {
 		try {

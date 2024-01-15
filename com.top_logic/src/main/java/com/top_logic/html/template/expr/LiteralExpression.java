@@ -34,4 +34,8 @@ public class LiteralExpression extends TemplateNode implements TemplateExpressio
 		return _value;
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 }

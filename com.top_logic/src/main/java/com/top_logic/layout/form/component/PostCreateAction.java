@@ -189,7 +189,8 @@ public interface PostCreateAction {
 
 		@Override
 		public void handleNew(LayoutComponent component, Object newModel) {
-			LayoutComponent editComponent = getConfig().getComponentRef().visit(DefaultRefVisitor.INSTANCE, component);
+			LayoutComponent editComponent =
+				DefaultRefVisitor.resolveReference(getConfig().getComponentRef(), component);
 			if (editComponent instanceof EditMode) {
 				((EditMode) editComponent).setEditMode();
 			}

@@ -26,6 +26,7 @@
 				<button value="com.top_logic.layout.formeditor.parts.MacroPart" />
 				<button value="com.top_logic.layout.formeditor.parts.ForeignAttributeDefinition" />
 				<button value="com.top_logic.layout.formeditor.parts.ForeignObjects" />
+				<button value="com.top_logic.layout.formeditor.parts.template.HTMLTemplateFormProvider$Config" />
 			</buttons>
 		</config>
 	</configs>

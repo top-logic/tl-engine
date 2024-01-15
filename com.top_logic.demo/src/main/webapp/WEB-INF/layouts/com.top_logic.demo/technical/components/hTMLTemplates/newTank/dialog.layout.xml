@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<forms>
+			<form type="test.htmltemplate:Tank">
+				<formDefinition>
+					<group>
+						<field
+							attribute="name"
+							fullQualifiedName="test.htmltemplate:Tank#name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="hide-label"/>
+							</annotations>
+						</field>
+						<label key="dynamic.bcef6eff-b1f0-4401-a0d3-d182e05e67ce">
+							<en>Name</en>
+							<de>Name</de>
+						</label>
+					</group>
+					<group>
+						<field
+							attribute="content"
+							fullQualifiedName="test.htmltemplate:Tank#content"
+							type="test.htmltemplate:ContentType"
+						/>
+						<field
+							attribute="capacity"
+							fullQualifiedName="test.htmltemplate:Tank#capacity"
+							type="tl.core:Double"
+						/>
+						<field
+							attribute="minLevel"
+							fullQualifiedName="test.htmltemplate:Tank#minLevel"
+							type="tl.core:Double"
+						/>
+						<field
+							attribute="maxLevel"
+							fullQualifiedName="test.htmltemplate:Tank#maxLevel"
+							type="tl.core:Double"
+						/>
+						<label key="dynamic.67975a45-1cf4-46be-9781-2303050ca500">
+							<en>Properties</en>
+							<de>Eigenschaften</de>
+						</label>
+					</group>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.0d6d236d-aaac-435d-8003-b7769c47233a">
+				<en>New tank</en>
+				<de>Neuer Tank</de>
+			</title>
+		</title>
+		<open-handler id="ID_ca60bf87_673b_484e_911c_8eb756d809bf"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="com.top_logic.demo/technical/components/hTMLTemplates/newTank/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.0d6d236d-aaac-435d-8003-b7769c47233a">
+				<en>New tank</en>
+				<de>Neuer Tank</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.htmltemplate:Tank"/>
+		<create-handler id="ID_091e23bc_5882_4959_a07c_02af9f7ebaa5"
+			linkOperation="farm -> tank -> $farm.add(`test.htmltemplate:TankFarm#tanks`, $tank)"
+		/>
+	</arguments>
+</config:template-call>

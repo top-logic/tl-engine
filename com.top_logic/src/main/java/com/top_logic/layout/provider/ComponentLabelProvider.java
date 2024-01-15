@@ -5,24 +5,15 @@
  */
 package com.top_logic.layout.provider;
 
-import com.top_logic.basic.StringServices;
-import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.label.TypeSafeLabelProvider;
-import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
-import com.top_logic.mig.html.layout.MainLayout;
 
 /**
- * Provides the label of the component given by a {@link ComponentName} using the
+ * Provides the label of the component given by a {@link LayoutComponent} using the
  * {@link LayoutComponent#getTitleKey()}.
- * 
- * @see ComponentName
- * @see LabelProvider
- * 
- * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public class ComponentLabelProvider extends TypeSafeLabelProvider<ComponentName> {
+public class ComponentLabelProvider extends TypeSafeLabelProvider<LayoutComponent> {
 
 	/**
 	 * Singleton {@link ComponentLabelProvider} instance.
@@ -30,33 +21,13 @@ public class ComponentLabelProvider extends TypeSafeLabelProvider<ComponentName>
 	public static final ComponentLabelProvider INSTANCE = new ComponentLabelProvider();
 
 	@Override
-	protected Class<ComponentName> getObjectType() {
-		return ComponentName.class;
+	protected Class<LayoutComponent> getObjectType() {
+		return LayoutComponent.class;
 	}
 
 	@Override
-	protected String getNonNullLabel(ComponentName name) {
-		String result = getLabel(name);
-
-		if (StringServices.isEmpty(result)) {
-			return MetaResourceProvider.INSTANCE.getLabel(name);
-		}
-
-		return result;
-	}
-
-	private String getLabel(ComponentName name) {
-		LayoutComponent component = getComponent(name);
-
-		if (component == null) {
-			return "UNRESOLVED: " + name;
-		}
-
+	protected String getNonNullLabel(LayoutComponent component) {
 		return LayoutUtils.getLabel(component);
-	}
-
-	private LayoutComponent getComponent(ComponentName name) {
-		return MainLayout.getDefaultMainLayout().getComponentByName(name);
 	}
 
 }

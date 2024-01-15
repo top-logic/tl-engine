@@ -17,6 +17,7 @@ import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -48,16 +49,16 @@ public class FormEditorElementFactory {
 	 * 
 	 * @see CreateConfigurationDialog
 	 */
-	public static HandlerResult openDialog(DisplayContext commandContext, FormElement<?> def,
-			Function<? super FormElement<?>, HandlerResult> okHandle, DialogClosedListener dialogCloseListener,
-			TLStructuredType editedType) {
+	public static HandlerResult openDialog(DisplayContext commandContext, LayoutComponent contextComponent,
+			FormElement<?> def, Function<? super FormElement<?>, HandlerResult> okHandle,
+			DialogClosedListener dialogCloseListener, TLStructuredType editedType) {
 
 		FormElementTemplateProvider formElement = TypedConfigUtil.createInstance(def);
 
 		ResKey dialogTitle = dialogTitle(formElement, editedType);
 
 		CreateConfigurationDialog<? extends FormElement<?>> dialog =
-			formElement.createConfigDialog(dialogTitle, okHandle);
+			formElement.createConfigDialog(contextComponent, dialogTitle, okHandle);
 
 		if (def != null) {
 			// edit ContentDefinition -> create preview

@@ -26,6 +26,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.structure.DialogClosedListener;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -55,12 +56,15 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 
 	private FormEditorMapping _formEditorMapping;
 
+	private LayoutComponent _contextComponent;
+
 	/**
 	 * Create a new {@link FormEditorPreviewControl}.
 	 */
-	protected FormEditorPreviewControl(FormDefinition model, TLStructuredType type, ResPrefix resPrefix,
-			boolean isInEditMode, FormEditorMapping formEditorMapping) {
+	protected FormEditorPreviewControl(LayoutComponent contextComponent, FormDefinition model, TLStructuredType type,
+			ResPrefix resPrefix, boolean isInEditMode, FormEditorMapping formEditorMapping) {
 		super(model, COMMANDS, type, null, resPrefix, isInEditMode);
+		_contextComponent = contextComponent;
 		_formEditorMapping = formEditorMapping;
 	}
 
@@ -172,8 +176,8 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 					fieldDefinition.setTypeSpec(TLModelUtil.qualifiedName(part.getType()));
 				}
 
-				FormEditorElementFactory.openDialog(context, def, createOkHandleEditGroup(def),
-					createDialogClosedListener(), _preview.getType());
+				FormEditorElementFactory.openDialog(context, _contextComponent, def,
+					createOkHandleEditGroup(def), createDialogClosedListener(), _preview.getType());
 			}
 		}
 	}
@@ -228,8 +232,8 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 				boolean openDialog = TypedConfigUtil.createInstance(element).openDialog();
 				if (ContentDefinitionUtil.hasMandatoryAttributes(descriptor) || openDialog) {
 					// open a dialog
-					return FormEditorElementFactory.openDialog(commandContext, element, okHandle, dialogCloseListener,
-						_preview.getType());
+					return FormEditorElementFactory.openDialog(commandContext, _contextComponent, element, okHandle,
+						dialogCloseListener, _preview.getType());
 				} else {
 					// no visible, mandatory attributes -> no dialog
 					addElement(parent, element, sibling);

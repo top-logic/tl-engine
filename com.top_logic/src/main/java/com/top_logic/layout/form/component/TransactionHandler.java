@@ -26,7 +26,7 @@ public interface TransactionHandler {
 	 */
 	default Transaction beginTransaction(Object model) {
 		KnowledgeBase kb;
-		if (model instanceof TLObject) {
+		if (model instanceof TLObject && !((TLObject) model).tTransient()) {
 			kb = ((TLObject) model).tKnowledgeBase();
 		} else {
 			kb = PersistencyLayer.getKnowledgeBase();

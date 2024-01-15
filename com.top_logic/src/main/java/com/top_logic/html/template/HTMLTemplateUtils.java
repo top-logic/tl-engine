@@ -9,8 +9,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -19,8 +22,27 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
-import com.top_logic.html.template.config.ConfiguredTemplate;
+import com.top_logic.html.template.config.HTMLTemplate;
+import com.top_logic.html.template.expr.AddExpression;
+import com.top_logic.html.template.expr.AndExpression;
+import com.top_logic.html.template.expr.BinaryExpression;
+import com.top_logic.html.template.expr.DivExpression;
+import com.top_logic.html.template.expr.EqExpression;
+import com.top_logic.html.template.expr.GeExpression;
+import com.top_logic.html.template.expr.GtExpression;
+import com.top_logic.html.template.expr.LiteralExpression;
+import com.top_logic.html.template.expr.LiteralText;
+import com.top_logic.html.template.expr.ModExpression;
+import com.top_logic.html.template.expr.MulExpression;
+import com.top_logic.html.template.expr.NegExpression;
+import com.top_logic.html.template.expr.NotExpression;
+import com.top_logic.html.template.expr.NullExpression;
+import com.top_logic.html.template.expr.OrExpression;
 import com.top_logic.html.template.expr.StringLiteral;
+import com.top_logic.html.template.expr.SubExpression;
+import com.top_logic.html.template.expr.TestExpression;
+import com.top_logic.html.template.expr.UnaryExpression;
+import com.top_logic.html.template.expr.VariableExpression;
 import com.top_logic.html.template.parser.HTMLTemplateParser;
 import com.top_logic.html.template.parser.ParseException;
 import com.top_logic.html.template.parser.TokenMgrError;
@@ -46,20 +68,23 @@ public class HTMLTemplateUtils {
 	 * @throws ConfigurationException
 	 *         If parsing fails.
 	 */
-	public static HTMLTemplateFragment parse(String templateName, String htmlTemplate) throws ConfigurationException {
+	public static HTMLTemplate parse(String templateName, String htmlTemplate) throws ConfigurationException {
 		HTMLTemplateParser parser = new HTMLTemplateParser(new StringReader(htmlTemplate));
 
 		HTMLTemplateFragment template;
+		Set<String> variables;
 		try {
 			RawTemplateFragment raw = parser.html();
-			template = checkStructure(raw);
+			StructureBuilder builder = new StructureBuilder();
+			template = builder.build(raw);
+			variables = builder.getVariables();
 		} catch (ParseException | TokenMgrError ex) {
 			throw new ConfigurationException(
 				I18NConstants.ERROR_TEMPLATE_SYNTAX_ERROR__NAME_DESC.fill(templateName, ex.getLocalizedMessage()),
 				templateName, htmlTemplate, ex);
 		}
 
-		return new ConfiguredTemplate(template, htmlTemplate);
+		return new HTMLTemplate(template, variables, htmlTemplate);
 	}
 
 	/**
@@ -100,25 +125,6 @@ public class HTMLTemplateUtils {
 		}
 	}
 
-	private static HTMLTemplateFragment checkStructure(HTMLTemplateFragment raw) {
-		if (raw instanceof RawTemplateFragment) {
-			Stack<TagContext> stack = new Stack<>();
-			TagContext context = new TagContext(null);
-			stack.push(context);
-			((RawTemplateFragment) raw).visit(StructureBuilder.INSTANCE, stack);
-
-			StartTagTemplate top = stack.peek().getStart();
-			if (top != null) {
-				throw new TopLogicException(
-					I18NConstants.ERROR_MISSING_END_TAG__NAME_LINE_COL.fill(top.getName(), top.getLine(),
-						top.getColumn()));
-			}
-			return context.toContent();
-		} else {
-			return raw;
-		}
-	}
-
 	/**
 	 * Temporary data structure for analyzing the contents of an open tag.
 	 */
@@ -127,6 +133,14 @@ public class HTMLTemplateUtils {
 		private final StartTagTemplate _start;
 
 		private final List<HTMLTemplateFragment> _contents = new ArrayList<>();
+
+		private String _defaultNamespace;
+
+		private Map<String, String> _namespaces = Collections.emptyMap();
+
+		private String _namespace;
+
+		private TagContext _parent;
 
 		/**
 		 * Creates a {@link HTMLTemplateUtils.TagContext}.
@@ -151,13 +165,13 @@ public class HTMLTemplateUtils {
 				return;
 			}
 
-			if (template instanceof StringLiteral) {
+			if (template instanceof LiteralText) {
 				// Join with potentially preceding string literal.
 				if (!_contents.isEmpty()) {
 					HTMLTemplateFragment last = _contents.get(_contents.size() - 1);
-					if (last instanceof StringLiteral) {
-						StringLiteral lastString = (StringLiteral) last;
-						StringLiteral templateString = (StringLiteral) template;
+					if (last instanceof LiteralText) {
+						LiteralText lastString = (LiteralText) last;
+						LiteralText templateString = (LiteralText) template;
 						lastString.setText(lastString.getText() + templateString.getText());
 						return;
 					}
@@ -166,30 +180,163 @@ public class HTMLTemplateUtils {
 
 			_contents.add(template);
 		}
+
+		public TagContext init(TagContext parent) {
+			_parent = parent;
+			_defaultNamespace = parent._defaultNamespace;
+
+			if (_start != null) {
+				Map<String, String> namespaces = null;
+				for (TagAttributeTemplate attribute : _start.getAttributes()) {
+					String name = attribute.getName();
+					if (name.equals("xmlns")) {
+						String value = getConstantValue(attribute);
+						_defaultNamespace = value;
+					} else if (name.startsWith("xmlns:")) {
+						String prefix = name.substring("xmlns:".length());
+						String value = getConstantValue(attribute);
+						if (namespaces == null) {
+							namespaces = new HashMap<>();
+						}
+						namespaces.put(prefix, value);
+					}
+				}
+				if (namespaces != null) {
+					_namespaces = namespaces;
+				}
+
+				String name = _start.getName();
+				int nsSep = name.indexOf(':');
+				if (nsSep < 0) {
+					_namespace = _defaultNamespace;
+				} else {
+					String prefix = name.substring(0, nsSep);
+					_namespace = getNameSpace(prefix);
+				}
+			} else {
+				_namespace = _defaultNamespace;
+			}
+
+			return this;
+		}
+
+		protected String getNameSpace(String prefix) {
+			String result = _namespaces.get(prefix);
+			if (result != null) {
+				return result;
+			}
+
+			return _parent == null ? null : _parent.getNameSpace(prefix);
+		}
+
+		/**
+		 * The namespace of this element.
+		 */
+		public String getNamespace() {
+			return _namespace;
+		}
+
+		private String getConstantValue(TagAttributeTemplate attribute) {
+			HTMLTemplateFragment content = attribute.getContent();
+			String value;
+			if (content instanceof LiteralText) {
+				value = ((LiteralText) content).getText();
+			} else if (content instanceof EmptyTemplate) {
+				value = "";
+			} else {
+				throw new TopLogicException(I18NConstants.ERROR_NAMESPACE_MUST_BE_CONSTANT__LINE_COL
+					.fill(attribute.getLine(), attribute.getColumn()));
+			}
+			return value;
+		}
 	}
 
 	/**
 	 * Transformer of a sequence of {@link RawTemplateFragment}s building a tree of well-formed
 	 * tags.
 	 */
-	static class StructureBuilder implements RawTemplateFragment.Visitor<Void, Stack<TagContext>> {
+	static class StructureBuilder
+			implements RawTemplateFragment.Visitor<Void, Stack<TagContext>>, TemplateExpression.Visitor<Void, Void> {
+
+		private final Set<String> _variables = new HashSet<>();
+
+		private boolean _inAttribute;
+
+		public StructureBuilder() {
+			// Singleton constructor.
+		}
 
 		/**
-		 * Singleton {@link HTMLTemplateUtils.StructureBuilder} instance.
+		 * Names of all used variables in the analyzed template.
 		 */
-		public static final StructureBuilder INSTANCE = new StructureBuilder();
+		public Set<String> getVariables() {
+			return _variables;
+		}
 
-		private StructureBuilder() {
-			// Singleton constructor.
+		public HTMLTemplateFragment build(RawTemplateFragment raw) {
+			Stack<TagContext> stack = new Stack<>();
+			TagContext context = new TagContext(null);
+			stack.push(context);
+			raw.visit(this, stack);
+
+			StartTagTemplate top = stack.peek().getStart();
+			if (top != null) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_MISSING_END_TAG__NAME_LINE_COL.fill(top.getName(), top.getLine(),
+						top.getColumn()));
+			}
+			return context.toContent();
+		}
+
+		private HTMLTemplateFragment descend(HTMLTemplateFragment fragment, Stack<TagContext> stack) {
+			if (fragment instanceof RawTemplateFragment) {
+				return descendRaw((RawTemplateFragment) fragment, stack);
+			} else {
+				return fragment;
+			}
+		}
+
+		private HTMLTemplateFragment descendRaw(RawTemplateFragment raw, Stack<TagContext> stack) {
+			if (stack == null) {
+				// In attribute context.
+				raw.visit(this, stack);
+				return raw;
+			} else {
+				TagContext context = new TagContext(null).init(stack.peek());
+				stack.push(context);
+				raw.visit(this, stack);
+				TagContext after = stack.pop();
+				if (after != context) {
+					StartTagTemplate top = after.getStart();
+					throw new TopLogicException(
+						I18NConstants.ERROR_MISSING_END_TAG__NAME_LINE_COL.fill(top.getName(), top.getLine(),
+							top.getColumn()));
+				}
+				return context.toContent();
+			}
 		}
 
 		@Override
 		public Void visit(StartTagTemplate template, Stack<TagContext> stack) {
-			processStart(template, stack);
+			if (_inAttribute) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__LINE_COL.fill(
+					template.getLine(), template.getColumn()));
+			}
+			TagContext context = processStart(template, stack);
 
-			if (template.isEmpty() && !HTMLConstants.VOID_ELEMENTS.contains(template.getName())) {
-				throw new TopLogicException(I18NConstants.NO_VALID_VOID_ELEMENT__NAME_LINE_COL
-					.fill(template.getName(), template.getLine(), template.getColumn()));
+			if (context.getNamespace() == null) {
+				// Looks like HTML.
+				if (template.isEmpty()) {
+					if (!HTMLConstants.VOID_ELEMENTS.contains(template.getName())) {
+						throw new TopLogicException(I18NConstants.NO_VALID_VOID_ELEMENT__NAME_LINE_COL
+							.fill(template.getName(), template.getLine(), template.getColumn()));
+					}
+				} else {
+					if (HTMLConstants.VOID_ELEMENTS.contains(template.getName())) {
+						throw new TopLogicException(I18NConstants.MUST_BE_VOID_ELEMENT__NAME_LINE_COL
+							.fill(template.getName(), template.getLine(), template.getColumn()));
+					}
+				}
 			}
 
 			return null;
@@ -197,7 +344,7 @@ public class HTMLTemplateUtils {
 
 		@Override
 		public Void visit(SpecialStartTag template, Stack<TagContext> stack) {
-			processAttributes(template);
+			checkAttributes(template);
 
 			if (template.isEmpty()) {
 				append(stack, template.getBuilder().build(template.getInner()));
@@ -208,41 +355,53 @@ public class HTMLTemplateUtils {
 			return null;
 		}
 
-		private void processStart(StartTagTemplate template, Stack<TagContext> stack) {
-			processAttributes(template);
-			push(stack, template);
+		private TagContext processStart(StartTagTemplate template, Stack<TagContext> stack) {
+			checkAttributes(template);
+			return push(stack, template);
 		}
 
-		private void processAttributes(StartTagTemplate template) {
+		private void checkAttributes(StartTagTemplate template) {
 			List<TagAttributeTemplate> attributes = template.getAttributes();
 			if (attributes.isEmpty()) {
 				return;
 			}
 
-			Set<String> names = new HashSet<>();
-			for (TagAttributeTemplate attr : attributes) {
-				boolean ok = names.add(attr.getName());
-				if (!ok) {
-					throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_ATTRIBUTE__NAME_LINE_COL
-						.fill(attr.getName(), attr.getLine(), attr.getColumn()));
+			_inAttribute = true;
+			try {
+				Set<String> names = new HashSet<>();
+				for (TagAttributeTemplate attr : attributes) {
+					boolean ok = names.add(attr.getName());
+					if (!ok) {
+						throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_ATTRIBUTE__NAME_LINE_COL
+							.fill(attr.getName(), attr.getLine(), attr.getColumn()));
+					}
+					HTMLTemplateFragment content = attr.getContent();
+					if (content instanceof RawTemplateFragment) {
+						((RawTemplateFragment) content).visit(this, null);
+					}
 				}
-				HTMLTemplateFragment content = attr.getContent();
-				if (content instanceof RawTemplateFragment) {
-					((RawTemplateFragment) content).visit(CheckNoStructure.INSTANCE, null);
-				}
+			} finally {
+				_inAttribute = false;
 			}
 		}
 
-		private void push(Stack<TagContext> stack, StartTagTemplate template) {
+		private TagContext push(Stack<TagContext> stack, StartTagTemplate template) {
+			TagContext context = new TagContext(template).init(stack.peek());
 			if (template.isEmpty()) {
 				append(stack, template);
 			} else {
-				stack.push(new TagContext(template));
+				stack.push(context);
 			}
+			return context;
 		}
 
 		@Override
 		public Void visit(TagAttributeTemplate template, Stack<TagContext> stack) {
+			if (_inAttribute) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__LINE_COL.fill(
+					template.getLine(), template.getColumn()));
+			}
+
 			append(stack, template);
 			return null;
 		}
@@ -262,6 +421,11 @@ public class HTMLTemplateUtils {
 
 		@Override
 		public Void visit(EndTagTemplate template, Stack<TagContext> stack) {
+			if (_inAttribute) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__LINE_COL.fill(
+					template.getLine(), template.getColumn()));
+			}
+
 			String foundTagName = template.getName();
 			TagContext context = stack.pop();
 			StartTagTemplate start = context.getStart();
@@ -294,78 +458,152 @@ public class HTMLTemplateUtils {
 
 		@Override
 		public Void visit(ConditionalTemplate template, Stack<TagContext> stack) {
-			template.setThenFragment(checkStructure(template.getThenFragment()));
-			template.setElseFragment(checkStructure(template.getElseFragment()));
+			template.getTest().visit(this, null);
+			template.setThenFragment(descend(template.getThenFragment(), stack));
+			template.setElseFragment(descend(template.getElseFragment(), stack));
 			append(stack, template);
 			return null;
 		}
 
 		@Override
 		public Void visit(ForeachTemplate template, Stack<TagContext> stack) {
-			template.setContent(checkStructure(template.getContent()));
+			template.setContent(descend(template.getContent(), stack));
 			append(stack, template);
 			return null;
 		}
 
 		@Override
 		public Void visit(DefineTemplate template, Stack<TagContext> stack) {
-			template.setContent(checkStructure(template.getContent()));
+			template.setContent(descend(template.getContent(), stack));
 			append(stack, template);
 			return null;
 		}
 
 		@Override
 		public Void visit(ExpressionTemplate template, Stack<TagContext> stack) {
+			template.getExpression().visit(this, null);
 			append(stack, template);
 			return null;
 		}
 
 		@Override
 		public Void visit(VariableTemplate template, Stack<TagContext> stack) {
+			_variables.add(template.getName());
 			append(stack, template);
 			return null;
 		}
 
 		@Override
-		public Void visit(StringLiteral template, Stack<TagContext> stack) {
+		public Void visit(LiteralText template, Stack<TagContext> stack) {
 			append(stack, template);
 			return null;
 		}
 
 		private void append(Stack<TagContext> stack, HTMLTemplateFragment template) {
-			stack.peek().add(template);
-		}
-	}
-
-	private static class CheckNoStructure extends DescendingTemplateVisitor<String> {
-
-		/**
-		 * Singleton {@link CheckNoStructure} instance.
-		 */
-		public static final CheckNoStructure INSTANCE = new CheckNoStructure();
-
-		private CheckNoStructure() {
-			// Singleton constructor.
+			if (stack != null) {
+				stack.peek().add(template);
+			}
 		}
 
 		@Override
-		public Void visit(StartTagTemplate template, String attr) {
-			throw new TopLogicException(I18NConstants.ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__NAME_LINE_COL.fill(attr,
-				template.getLine(), template.getColumn()));
+		public Void visit(NotExpression expr, Void arg) {
+			return descend(expr, arg);
 		}
 
 		@Override
-		public Void visit(TagAttributeTemplate template, String attr) {
-			throw new TopLogicException(I18NConstants.ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__NAME_LINE_COL.fill(attr,
-				template.getLine(), template.getColumn()));
+		public Void visit(AddExpression expr, Void arg) {
+			return descend(expr, arg);
 		}
 
 		@Override
-		public Void visit(EndTagTemplate template, String attr) {
-			throw new TopLogicException(I18NConstants.ERROR_NO_TAGS_INSIDE_ATTRIBUTE_VALUE__NAME_LINE_COL.fill(attr,
-				template.getLine(), template.getColumn()));
+		public Void visit(AndExpression expr, Void arg) {
+			return descend(expr, arg);
 		}
 
+		@Override
+		public Void visit(DivExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(EqExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(GeExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(GtExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(ModExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(MulExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(NegExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(OrExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(SubExpression expr, Void arg) {
+			return descend(expr, arg);
+		}
+
+		@Override
+		public Void visit(LiteralExpression expr, Void arg) {
+			return null;
+		}
+
+		@Override
+		public Void visit(NullExpression expr, Void arg) {
+			return null;
+		}
+
+		@Override
+		public Void visit(StringLiteral expr, Void arg) {
+			return null;
+		}
+
+		protected Void descend(UnaryExpression expr, Void arg) {
+			expr.getExpr().visit(this, arg);
+			return null;
+		}
+
+		protected Void descend(BinaryExpression expr, Void arg) {
+			expr.getLeft().visit(this, arg);
+			expr.getRight().visit(this, arg);
+			return null;
+		}
+
+		@Override
+		public Void visit(TestExpression expr, Void arg) {
+			expr.getTest().visit(this, arg);
+			expr.getThen().visit(this, arg);
+			expr.getElse().visit(this, arg);
+			return null;
+		}
+
+		@Override
+		public Void visit(VariableExpression expr, Void arg) {
+			_variables.add(expr.getName());
+			return null;
+		}
 	}
 
 	private static HTMLTemplateFragment toTemplate(List<HTMLTemplateFragment> contents) {

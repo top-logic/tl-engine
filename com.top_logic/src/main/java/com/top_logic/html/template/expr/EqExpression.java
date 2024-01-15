@@ -9,7 +9,7 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.html.template.TemplateExpression;
 
 /**
- * {@link BinaryExpression} comparing two values.
+ * {@link StrictBinaryExpression} comparing two values.
  */
 public class EqExpression extends CompareExpression {
 
@@ -33,5 +33,10 @@ public class EqExpression extends CompareExpression {
 	@Override
 	protected boolean compareInteger(long leftNum, long rightNum) {
 		return leftNum == rightNum;
+	}
+
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
 	}
 }

@@ -7,7 +7,6 @@ package com.top_logic.layout.scripting.recorder.ref.ui;
 
 import static com.top_logic.basic.col.TransformIterators.*;
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -228,6 +227,12 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 		/* Change the order from top-most dialog last to top-most dialog first. */
 		Collections.reverse(dialogs);
 		return dialogs;
+	}
+
+	@Override
+	protected boolean isCompatibleModel(LayoutComponent model) {
+		LayoutComponent parent = model.getParent();
+		return parent == null || parent.isVisible();
 	}
 
 	@Override

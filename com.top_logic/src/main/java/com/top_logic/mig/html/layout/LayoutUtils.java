@@ -1058,32 +1058,54 @@ public class LayoutUtils {
 	 * Heuristic creating a user friendly readable label for the given component.
 	 */
 	public static String getLabel(LayoutComponent component) {
+		ResKey labelKey = getLabelKey(component);
+		if (labelKey != null) {
+			return Resources.getInstance().getString(labelKey, null);
+		}
+		return component.getName().localName();
+	}
+
+	/**
+	 * The effective {@link ResKey} for labeling the given {@link LayoutComponent}, or
+	 * <code>null</code> if the component has no user-visible name.
+	 */
+	public static ResKey getLabelKey(LayoutComponent component) {
 		if (isRootDialog(component)) {
 			ResKey dialogTitle = getDialogTitle(component);
 
 			if (dialogTitle != null) {
-				return Resources.getInstance().getString(dialogTitle, null);
+				return dialogTitle;
 			}
 		}
 
-		return getLabel(component.getConfig());
+		return getLabelKey(component.getConfig());
 	}
 
 	/**
 	 * Returns a label for the given component configuration.
 	 */
 	public static String getLabel(LayoutComponent.Config config) {
+		ResKey labelKey = getLabelKey(config);
+		if (labelKey != null) {
+			return Resources.getInstance().getString(labelKey, null);
+		}
+		return config.getName().localName();
+	}
+
+	/**
+	 * The label {@link ResKey} for the given {@link LayoutComponent} configuration.
+	 */
+	private static ResKey getLabelKey(com.top_logic.mig.html.layout.LayoutComponent.Config config) {
 		ResKey titleKey = LayoutComponent.Config.getEffectiveTitleKey(config);
 		if (TLResKeyUtil.existsResource(titleKey)) {
-			return Resources.getInstance().getString(titleKey, null);
+			return titleKey;
 		}
 
 		TabConfig tabInfo = config.getTabInfo();
 		if (tabInfo != null) {
-			return Resources.getInstance().getString(tabInfo.getLabel(), null);
+			return tabInfo.getLabel();
 		}
-
-		return config.getName().localName();
+		return null;
 	}
 
 	/**

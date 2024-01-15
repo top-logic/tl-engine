@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_9975a769_5afe_4fc4_9a91_1ee551cf55b5"
+	>
+		<title>
+			<title key="dynamic.983646b6-9bb9-4340-a390-85a3c32b24d8">
+				<en>Tank properties</en>
+				<de>Tankeigenschaften</de>
+			</title>
+		</title>
+		<open-handler id="ID_7eac445a_7b69_49fc_856b_2078ca83fd52"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-cog"
+		>
+			<resourceKey key="dynamic.983646b6-9bb9-4340-a390-85a3c32b24d8">
+				<en>Tank properties</en>
+				<de>Tankeigenschaften</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

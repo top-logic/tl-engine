@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.40137137-28d6-4818-8675-3fa9a8c051b0">
+			<en>Tanks</en>
+			<de>Tanks</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="`test.htmltemplate#TANKS`"/>
+		</model>
+		<buttons>
+			<button id="ID_2033cd00_1435_4a72_8ee2_7b5caf0e870b"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/newTank/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/dialog.layout.xml"/>
+		</dialogs>
+		<forms>
+			<form type="test.htmltemplate:TankFarm">
+				<formDefinition>
+					<html-template>
+						<template><![CDATA[<h1>{title}</h1>
+<tl:if test="tanks">
+<div style="display: flex; flex-wrap: wrap;">{tanks}</div>
+</tl:if>
+<tl:if test="!tanks">
+<div>{emptyNote}</div>
+</tl:if>
+]]></template>
+						<value-computation name="tanks"
+							function="farm -> $farm.get(`test.htmltemplate:TankFarm#tanks`)"
+						/>
+						<i18n name="title">
+							<text key="dynamic.e48d11f9-f7ff-4cb4-9bf6-039277fee1b8">
+								<en>Tank farm overview</en>
+								<de>Tanklager Übersicht</de>
+							</text>
+						</i18n>
+						<i18n name="emptyNote">
+							<text key="dynamic.1fe33179-7090-4f0a-bbef-23de37b0c39c">
+								<en>No tanks available. Press the plus button to create the first tank.</en>
+								<de>Keine Tanks vorhanden. Drücke den Plus-Knopf um den ersten Tank anzulegen.</de>
+							</text>
+						</i18n>
+						<value-templates>
+							<value-template type="test.htmltemplate:Tank">
+								<template><![CDATA[<div style="position:relative; max-width: 400px; margin: 32px; background-color: #EEEEEE; border-radius: 8px; padding:8px;">
+<span style="position:absolute; top:8px; right:8px;">{menuButton}{deleteButton}</span>
+<div style="font-weight: bold;">{titleform}</div>
+<div onclick="{openProperties}" style="cursor:pointer;">
+<svg
+   id="Kraftstofftanks"
+   viewBox="0 0 341.67999 302.01999"
+   version="1.1"
+   sodipodi:docname="kraftstofftank.svg"
+   width="341.67999"
+   height="302.01999"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview900"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     fit-margin-left="20"
+     fit-margin-right="20"
+     fit-margin-top="20"
+     fit-margin-bottom="20"
+     inkscape:zoom="8"
+     inkscape:cx="238.5"
+     inkscape:cy="97.625"
+     inkscape:window-width="1920"
+     inkscape:window-height="1012"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="icon_kraftstofftanks" />
+  <defs
+     id="defs881">
+    <style
+       id="style879">.cls-1\{fill:none;stroke:#1d1d1b;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px;\}</style>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2531">
+      <rect
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         id="rect2533"
+         width="30.981804"
+         height="157.78729"
+         x="270.12045"
+         y="115.035"
+         rx="9.2048798"
+         ry="37.448387" />
+    </clipPath>
+  </defs>
+  <g
+     id="icon_kraftstofftanks"
+     transform="translate(-29.16,-50.16)">
+    <rect
+       style="fill:#68f362;fill-opacity:1;stroke:none;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="fill-level"
+       width="30.981804"
+       height="{149.72948 * fillRatio}"
+       x="269.95258"
+       y="{119.09282 + 149.72948 * (1 - fillRatio)}"
+       rx="0"
+       ry="0" />
+    <g
+       id="g3096"
+       transform="matrix(1,0,0,1.1737666,0,-38.228685)"
+       style="stroke-width:0.923016">
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,149.65389 h 8.35593"
+         id="path2847" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,141.65389 h 8.35593"
+         id="path2962" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,133.65389 h 8.35593"
+         id="path2964" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,157.65389 h 8.35593"
+         id="path3050" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 284.71444,165.65389 h 16.35593"
+         id="path3052"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,173.65389 h 8.35593"
+         id="path3054" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,181.65389 h 8.35593"
+         id="path3056" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,189.65389 h 8.35593"
+         id="path3058" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 284.71444,197.65389 h 16.35593"
+         id="path3060"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,205.65389 h 8.35593"
+         id="path3062" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,213.65389 h 8.35593"
+         id="path3064" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,221.65389 h 8.35593"
+         id="path3066" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 284.71444,229.65389 h 16.35593"
+         id="path3068"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,237.65389 h 8.35593"
+         id="path3070" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,245.65389 h 8.35593"
+         id="path3072" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,253.65389 h 8.35593"
+         id="path3074" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.84545;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         d="m 292.71444,261.65389 h 8.35593"
+         id="path3076" />
+    </g>
+    <path
+       id="tank_body"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:1.99937;stroke-miterlimit:4;stroke-dasharray:none"
+       class="cls-1"
+       d="m 76.419922,101.89062 c -1.108,0 -2,0.892 -2,2 v 196.99024 c 0,1.108 0.892,2 2,2 H 324.36914 c 1.108,0 2,-0.892 2,-2 V 103.89062 c 0,-1.108 -0.892,-2 -2,-2 z m 202.906248,17.14454 h 12.57031 c 5.09951,0 9.20508,16.70086 9.20508,37.44726 v 74.89063 c 0,20.7464 -4.10557,37.44922 -9.20508,37.44922 h -12.57031 c -5.0995,0 -9.20508,-16.70282 -9.20508,-37.44922 v -74.89063 c 0,-20.7464 4.10558,-37.44726 9.20508,-37.44726 z"
+       sodipodi:nodetypes="ssssssssssssssssss" />
+    <g
+       id="top_cap">
+      <path
+         id="cap_body"
+         class="cls-1"
+         d="m 170.91,87.650004 v 14.226786 h -65.2 V 87.650004 c 0.33,0 0.66,0.09394 1.03,0.09394 h 63.08 c 0.38,0 0.7,-0.09394 1.08,-0.09394 z" />
+      <path
+         id="lid"
+         class="cls-1"
+         d="m 178.14,79.43 c 0,4.23 -3.15,7.66 -7.24,8.23 -0.38,0 -0.71,0.09 -1.08,0.09 h -63.08 c -0.38,0 -0.7,-0.09 -1.03,-0.09 -4.09,-0.56 -7.24,-4 -7.24,-8.23 0,-4.56 3.71,-8.27 8.27,-8.27 h 63.08 c 4.61,0 8.32,3.71 8.32,8.27 z" />
+    </g>
+    <g
+       id="end_caps">
+      <path
+         id="end_cap_left"
+         class="cls-1"
+         d="m 74.41,278.35 c -0.24,0.05 -0.52,0.05 -0.75,0.05 -12.97,0 -23.5,-33.18 -23.5,-74.12 0,-40.94 10.53,-74.17 23.5,-74.17 0.24,0 0.52,0 0.75,0.05" />
+      <path
+         id="end_cap_right"
+         class="cls-1"
+         d="m 326.39,130.1 c 12.93,0 23.45,33.23 23.45,74.17 0,40.94 -10.53,74.12 -23.45,74.12" />
+    </g>
+    <g
+       id="fuel_drop">
+      <path
+         id="oil_drop_body"
+         class="cls-1"
+         style="fill:{color};fill-opacity:1"
+         d="m 238.82,220.08 c 0,21.16 -17.16,38.32 -38.32,38.32 -21.16,0 -38.32,-17.16 -38.32,-38.32 0,-38.72 38.32,-87.45 38.32,-87.45 0,0 38.32,48.73 38.32,87.45 z" />
+      <path
+         id="specular_highlight"
+         class="cls-1"
+         d="m 176.54,197.53 c 0,0 -3.64,41.25 19.21,41.25" />
+    </g>
+    <g
+       id="base">
+      <rect
+         id="foundation"
+         class="cls-1"
+         x="97.480003"
+         y="284.28"
+         width="208.07001"
+         height="25.280001"
+         style="fill:#ffffff;fill-opacity:1" />
+      <rect
+         id="foot_left"
+         class="cls-1"
+         x="97.480003"
+         y="284.28"
+         width="22.469999"
+         height="46.900002"
+         style="fill:#ffffff;fill-opacity:1" />
+      <rect
+         id="foot_center"
+         class="cls-1"
+         x="189.17"
+         y="284.28"
+         width="22.469999"
+         height="46.900002"
+         style="fill:#ffffff;fill-opacity:1" />
+      <rect
+         id="foot_right"
+         class="cls-1"
+         x="283.07999"
+         y="284.28"
+         width="22.469999"
+         height="46.900002"
+         style="fill:#ffffff;fill-opacity:1" />
+    </g>
+    <g
+       id="warning-sign"
+       transform="matrix(0.09495899,0,0,0.09495899,59.348616,197.4406)"
+       style="stroke-width:10.5309; {hasWarning ? '' : 'display: none;'}">
+      <path
+         inkscape:connector-curvature="0"
+         id="path885"
+         d="m 677.37249,-900.80657 c -20.13857,-0.19747 -40.42874,11.61768 -56.05859,38.0625 l -357.62696,605.08398 c -34.37226,58.15592 13.28289,101.54595 72.88281,101.69532 l 676.26955,1.69531 c 73.6478,0.18458 78.5504,-79.59412 59.3222,-113.56055 L 738.26311,-857.66009 c -15.43746,-27.27024 -38.06691,-42.92268 -60.89062,-43.14648 z m -5.21094,102.46875 327.11914,557.62695 -642.37305,-6.7793 z"
+         style="opacity:1;fill:#dd1515;fill-opacity:1;stroke:none;stroke-width:84.2468;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="path878"
+         d="m 619.61981,-628.84633 23.35284,215.75066 62.26533,-0.78723 17.65121,-215.37469 z"
+         style="opacity:1;fill:#dd1515;fill-opacity:1;stroke:none;stroke-width:84.2468;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="path880"
+         d="m 630.09438,-364.43955 5.08475,77.9661 84.45496,-1.69492 -1.90054,-78.87378 z"
+         style="opacity:1;fill:#dd1515;fill-opacity:1;stroke:none;stroke-width:84.2468;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <path
+       transform="translate(0 {-149.72948 * (minLevel || 0) / capacity})"
+       style="{minLevel ? '' : 'display: none;'} fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="m 305.27569,268.91771 8.63778,-0.0527 v 7.78736 z"
+       id="lower-limit"
+       sodipodi:nodetypes="cccc" />
+    <path
+       transform="translate(0 {149.72948 * (1 - (maxLevel || 0) / capacity)})"
+       style="{maxLevel ? '' : 'display: none;'} fill:#ffffff;fill-opacity:1;stroke:#1d1d1b;stroke-width:1.99937;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="m 305.27569,119.04757 8.63778,-6.88854 0,6.87969 z"
+       id="upper-limit"
+       sodipodi:nodetypes="cccc" />
+  </g>
+</svg>
+</div>
+
+<div>{form}</div>
+</div>
+]]></template>
+								<embedded-form name="form">
+									<form columns="ONE">
+										<field
+											attribute="capacity"
+											fullQualifiedName="test.htmltemplate:Tank#capacity"
+											type="tl.core:Double"
+											visibility="read-only"
+										/>
+										<field
+											attribute="level"
+											fullQualifiedName="test.htmltemplate:Tank#level"
+											type="tl.core:Double"
+										/>
+									</form>
+								</embedded-form>
+								<value-computation name="color">
+									<function><![CDATA[t -> switch ($t.get(`test.htmltemplate:Tank#content`)) {
+  `test.htmltemplate:ContentType#FUEL`: "#FFCC00";
+  `test.htmltemplate:ContentType#WATER`: "#0000FF";
+  `test.htmltemplate:ContentType#WASTE_OIL`: "#806600";
+}]]></function>
+								</value-computation>
+								<link-definition name="openProperties"
+									target-component="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/propertiesForm.layout.xml#Form"
+								/>
+								<embedded-form name="titleform">
+									<form>
+										<field
+											attribute="name"
+											fullQualifiedName="test.htmltemplate:Tank#name"
+											type="tl.core:String"
+											visibility="read-only"
+										>
+											<annotations>
+												<label-position value="hide-label"/>
+											</annotations>
+										</field>
+									</form>
+								</embedded-form>
+								<variable class="com.top_logic.layout.formeditor.parts.template.ButtonVariable"
+									name="deleteButton"
+								>
+									<button id="ID_fb1d8396_3f32_437b_b300_fb9ee22cbd0c"
+										class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+										closeDialog="false"
+										disabledImage=""
+										image="css:fas fa-times"
+									>
+										<executability>
+											<rule class="com.top_logic.tool.execution.EditorExecutabilityRule"
+												mode="EDIT_MODE"
+												visibility="HIDDEN"
+											/>
+										</executability>
+									</button>
+								</variable>
+								<variable class="com.top_logic.layout.formeditor.parts.template.MenuVariable"
+									name="menuButton"
+								>
+									<buttons>
+										<button id="ID_7e2c6afa_02fd_495f_ac0d_07b53a30e129"
+											class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+											image="css:fas fa-fill"
+											operation="tank -> $tank.set(`test.htmltemplate:Tank#level`, $tank.get(`test.htmltemplate:Tank#capacity`))"
+										>
+											<resourceKey key="dynamic.93d9d985-aa49-49ea-acb5-696e0ba2cd48">
+												<en>Fill up the tank</en>
+												<de>Tank auffüllen</de>
+											</resourceKey>
+											<executability>
+												<rule-by-expression decision="tank -> $tank.get(`test.htmltemplate:Tank#maxLevel`) == null"/>
+												<rule class="com.top_logic.tool.execution.EditorExecutabilityRule"
+													mode="EDIT_MODE"
+													visibility="HIDDEN"
+												/>
+											</executability>
+										</button>
+										<button id="ID_d41d307a_7bef_45bc_8b4b_b5a0d068af4b"
+											class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+											image="css:fas fa-sign-out-alt"
+											operation="tank -> $tank.set(`test.htmltemplate:Tank#level`, 0)"
+										>
+											<resourceKey key="dynamic.ddc4c44e-5662-4cdf-b92a-ef1b914fede8">
+												<en>Empty tank</en>
+												<de>Tank leeren</de>
+											</resourceKey>
+											<executability>
+												<rule-by-expression decision="tank -> $tank.get(`test.htmltemplate:Tank#minLevel`) == null"/>
+												<rule class="com.top_logic.tool.execution.EditorExecutabilityRule"
+													mode="EDIT_MODE"
+													visibility="HIDDEN"
+												/>
+											</executability>
+										</button>
+										<button id="ID_c97b3ada_4db1_4c8f_a828_87a7086440cc"
+											class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+											clique="settings"
+											dialog-name="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/dialog.layout.xml#Dialog"
+											group="Write"
+											image="css:fas fa-cog"
+											targetComponent="com.top_logic.demo/technical/components/hTMLTemplates/tankProperties/propertiesForm.layout.xml#Form"
+										>
+											<resourceKey key="dynamic.5a6b4f17-6d2d-42e5-8c3e-ad8fabc47093">
+												<en>Properties...</en>
+												<de>Eigenschaften...</de>
+											</resourceKey>
+											<executability>
+												<rule class="com.top_logic.tool.execution.InViewModeExecutable"/>
+											</executability>
+										</button>
+									</buttons>
+								</variable>
+							</value-template>
+						</value-templates>
+					</html-template>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

@@ -9,12 +9,13 @@ import java.util.Objects;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.layout.editor.AllComponentNames;
+import com.top_logic.layout.editor.AllComponents;
+import com.top_logic.layout.editor.ComponentNameMapping;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.ComponentLabelProvider;
+import com.top_logic.layout.provider.ComponentNameLabelProvider;
 
 /**
  * Name of a {@link LayoutComponent}.
@@ -22,9 +23,9 @@ import com.top_logic.layout.provider.ComponentLabelProvider;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Format(ComponentNameFormat.class)
-@Options(fun = AllComponentNames.class)
 @ControlProvider(SelectionControlProvider.class)
-@OptionLabels(ComponentLabelProvider.class)
+@Options(fun = AllComponents.class, mapping = ComponentNameMapping.class)
+@OptionLabels(ComponentNameLabelProvider.class)
 public abstract class ComponentName {
 
 	/** Separator used to separate between the scope and the local name if there is a scope. */

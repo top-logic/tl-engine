@@ -212,6 +212,17 @@ public class TLModelPartRef {
 	}
 
 	/**
+	 * Function wrapping a {@link TLModelPart} in a textual {@link TLModelPartRef} used in
+	 * configurations.
+	 */
+	public static class BuildRef extends Function1<TLModelPartRef, TLModelPart> {
+		@Override
+		public TLModelPartRef apply(TLModelPart arg) {
+			return arg == null ? null : ref(arg);
+		}
+	}
+
+	/**
 	 * {@link Function1} resolving a {@link TLModelPartRef} to a {@link TLClass}.
 	 * 
 	 * @see Derived

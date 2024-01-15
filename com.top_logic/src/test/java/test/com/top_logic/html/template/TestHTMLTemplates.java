@@ -17,6 +17,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.HTMLTemplateUtils;
 import com.top_logic.html.template.I18NConstants;
+import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.template.MapWithProperties;
 import com.top_logic.layout.template.WithProperties;
@@ -396,11 +397,17 @@ public class TestHTMLTemplates extends TestCase {
 		}
 	}
 
+	public void testVariables() throws ConfigurationException {
+		HTMLTemplate template = parse("<svg xmlns=\"http://www.w3.org/2000/svg\">"
+			+ "<g style=\"stroke-width:10.5309; {hasWarning ? '' : 'display: none;'}\"></g></svg>");
+		assertTrue(template.getVariables().contains("hasWarning"));
+	}
+
 	private String html(String template, WithProperties properties) throws IOException, ConfigurationException {
 		return render(parse(template), properties);
 	}
 
-	private HTMLTemplateFragment parse(String template) throws ConfigurationException {
+	private HTMLTemplate parse(String template) throws ConfigurationException {
 		return HTMLTemplateUtils.parse("test", template);
 	}
 

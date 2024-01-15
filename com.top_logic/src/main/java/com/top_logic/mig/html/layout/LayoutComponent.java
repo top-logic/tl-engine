@@ -291,7 +291,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * Returns the name of the configured component.
 		 *
 		 * If nothing is configured a synthetic name is returned.
-		 *
+		 * 
+		 * @see LayoutConstants#isSyntheticName(ComponentName)
 		 */
 		@Name(NAME)
 		@Id

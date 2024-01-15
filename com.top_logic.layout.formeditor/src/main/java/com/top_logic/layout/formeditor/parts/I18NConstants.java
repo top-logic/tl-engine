@@ -37,6 +37,16 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 FOREIGN_OBJECTS_LEGEND_KEY_PREVIEW__TYPE;
 
+	/**
+	 * @en HTML template
+	 */
+	public static ResKey HTML_TEMPLATE;
+
+	/**
+	 * @en Double-click to edit template contents.
+	 */
+	public static ResKey RENDERED_OBJECTS_PREVIEW;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

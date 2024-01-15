@@ -7,11 +7,13 @@ package com.top_logic.model.form.implementation;
 
 import java.util.function.Function;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -23,6 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
+@Label("Form part")
 public interface FormElementTemplateProvider {
 
 	/**
@@ -93,7 +96,9 @@ public interface FormElementTemplateProvider {
 	 * @param context
 	 *        Context information for label creation.
 	 */
-	ResKey getLabel(FormEditorContext context);
+	default ResKey getLabel(FormEditorContext context) {
+		return ResKey.forClass(this.getClass());
+	}
 
 	/**
 	 * The name for the label.
@@ -118,14 +123,17 @@ public interface FormElementTemplateProvider {
 	/**
 	 * Creates the {@link CreateConfigurationDialog} for configuring the {@link FormElement}
 	 * configuration.
-	 *
+	 * 
+	 * @param contextComponent
+	 *        The component for which a from is currently edited, <code>null</code> if the edited
+	 *        form does not belong to a unique component.
 	 * @param dialogTitle
 	 *        The dialog title to display.
 	 * @param okHandle
 	 *        Function that is called with the created configuration.
 	 */
-	CreateConfigurationDialog<? extends FormElement<?>> createConfigDialog(ResKey dialogTitle,
-			Function<? super FormElement<?>, HandlerResult> okHandle);
+	CreateConfigurationDialog<? extends FormElement<?>> createConfigDialog(LayoutComponent contextComponent,
+			ResKey dialogTitle, Function<? super FormElement<?>, HandlerResult> okHandle);
 
 	/**
 	 * The identifier between server and client elements.

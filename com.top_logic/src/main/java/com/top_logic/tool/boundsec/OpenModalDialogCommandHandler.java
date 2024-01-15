@@ -11,7 +11,6 @@ import java.util.Map;
 import com.top_logic.base.services.simpleajax.AJAXCommandScriptWriter;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
@@ -38,7 +37,7 @@ import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.ComponentLabelProvider;
+import com.top_logic.layout.provider.ComponentNameLabelProvider;
 import com.top_logic.mig.html.layout.AbstractWindowInfo;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.DialogInfo;
@@ -99,7 +98,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		 */
 		@Name(DIALOG_NAME_PROPERTY)
 		@Options(fun = AllDialogNames.class)
-		@OptionLabels(ComponentLabelProvider.class)
+		@OptionLabels(ComponentNameLabelProvider.class)
 		ComponentName getDialogName();
 
 		/**
@@ -201,7 +200,13 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		}
 
 		private BoundComponent getSecurityComponent(LayoutComponent targetComponent) {
+			if (targetComponent == null) {
+				return null;
+			}
 			LayoutComponent dialog = getDialog(targetComponent);
+			if (dialog == null) {
+				return null;
+			}
 			DialogInfo dialogInfo = dialog.getDialogInfo();
 			ComponentName securityComponentName = dialogInfo.getSecurityComponentName();
 			if (securityComponentName != null) {
@@ -221,11 +226,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 			// targetComponent.getDialog(...) is not sufficient.
 			ComponentName componentName = _handler.getOpenToDialogName();
 			LayoutComponent dialogComponent = targetComponent.getComponentByName(componentName);
-			if (dialogComponent == null) {
-				throw new ConfigurationError(
-					"Dialog '" + componentName + "' not found in '" + _handler.getConfig().location() + "'.");
-			}
-			return dialogComponent.getDialogTopLayout();
+			return dialogComponent == null ? null : dialogComponent.getDialogTopLayout();
 		}
 	}
 

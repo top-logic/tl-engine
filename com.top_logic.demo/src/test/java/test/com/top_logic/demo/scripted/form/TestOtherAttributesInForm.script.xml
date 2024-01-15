@@ -332,7 +332,7 @@
 							tab-path="Administration > Development > Modell Editor > Eigenschaften > Typ-Eigenschaften"
 						/>
 					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ConfigurationItemNaming$Name">
+					<value config:interface="com.top_logic.model.form.definition.FormDefinitionNaming$Name">
 						<item config:interface="com.top_logic.model.form.definition.FormDefinition"
 							class="com.top_logic.model.form.implementation.FormDefinitionTemplateProvider"
 						>
@@ -624,7 +624,7 @@
 							tab-path="Administration > Development > Modell Editor > Eigenschaften > Typ-Eigenschaften"
 						/>
 					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ConfigurationItemNaming$Name">
+					<value config:interface="com.top_logic.model.form.definition.FormDefinitionNaming$Name">
 						<item config:interface="com.top_logic.model.form.definition.FormDefinition"
 							class="com.top_logic.model.form.implementation.FormDefinitionTemplateProvider"
 						>

@@ -9,6 +9,7 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
@@ -62,6 +63,17 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 
 		/** @see #getComponentImplementationComment() */
 		void setComponentImplementationComment(String value);
+
+		/**
+		 * Whether the component is required to be visible when it is resolved.
+		 */
+		@BooleanDefault(true)
+		boolean getRequireVisible();
+
+		/**
+		 * @see #getRequireVisible()
+		 */
+		void setRequireVisible(boolean value);
 	}
 
 	public interface ComponentName extends ComponentBasedName {
@@ -82,6 +94,7 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 		LayoutComponent component = getContextComponent(model);
 
 		name.setComponentName(component.getName());
+		name.setRequireVisible(component.isVisible());
 
 		if (ScriptingRecorder.recordImplementationDetails()) {
 			name.setComponentImplementationComment(component.getClass().getName());
@@ -102,7 +115,9 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 		LayoutComponent componentRoot = context.getDisplayContext().getLayoutContext().getMainLayout();
 		com.top_logic.mig.html.layout.ComponentName componentName = name.getComponentName();
 		LayoutComponent component = locateComponent(name, componentRoot, componentName);
-		checkVisible(context, name, component);
+		if (name.getRequireVisible()) {
+			checkVisible(context, name, component);
+		}
 		return component;
 	}
 

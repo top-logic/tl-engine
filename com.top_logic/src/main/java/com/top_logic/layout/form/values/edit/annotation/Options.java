@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.func.IGenericFunction;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.model.utility.TreeOptionModel;
@@ -24,11 +25,14 @@ import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.model.TLProperty;
 
 /**
- * Annotates an {@link GenericFunction} to a {@link ConfigurationItem} property.
+ * Annotates an {@link GenericFunction} computing the options of a {@link ConfigurationItem}
+ * property.
  * 
  * <p>
  * The annotation can be specified at the property or at its value type.
  * </p>
+ * 
+ * @see OptionLabels
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -56,6 +60,12 @@ public @interface Options {
 	/**
 	 * The {@link OptionMapping} to translate an option returned by {@link #fun()} to the actual
 	 * value of the annotated {@link TLProperty}.
+	 * 
+	 * <p>
+	 * Note: When options and the final selection/value are of different type, a
+	 * {@link LabelProvider} must deal with both the option and the selection type. See
+	 * {@link OptionLabels}.
+	 * </p>
 	 * 
 	 * @return The class of the {@link OptionMapping} to transform an option into a
 	 *         {@link TLProperty} value and vice-versa.

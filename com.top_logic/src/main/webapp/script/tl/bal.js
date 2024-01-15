@@ -1429,7 +1429,13 @@ BAL = {
 			if (element.className === undefined || element.className === "") {
 				return [];
 			}
-			return element.className.split(' ');
+			
+			// Note: The type of className in an SVG element is SVGAnimatedString, which has no method "split".
+			var value = element.className;
+			if (typeof value !== "string") {
+			    value = value.baseVal;
+			}
+			return value.split(' ');
 		},
 		
 		setClassesArray: function(element, classes) {

@@ -16,11 +16,13 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.editor.AbstractComponentConfigurationDialogBuilder;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormElement;
@@ -87,8 +89,8 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	}
 
 	@Override
-	public CreateConfigurationDialog<? extends FormElement<?>> createConfigDialog(ResKey dialogTitle,
-			Function<? super FormElement<?>, HandlerResult> okHandle) {
+	public CreateConfigurationDialog<? extends FormElement<?>> createConfigDialog(LayoutComponent contextComponent,
+			ResKey dialogTitle, Function<? super FormElement<?>, HandlerResult> okHandle) {
 		CreateConfigurationDialog<T> result =
 			new CreateConfigurationDialog<>(getFormElementType(), okHandle, dialogTitle,
 			getDialogWidth(),
@@ -102,7 +104,9 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 
 			@Override
 			protected InitializerProvider createInitializers() {
-				return createConfigInitializers();
+				InitializerIndex initializers = createConfigInitializers();
+				initializers.set(AbstractComponentConfigurationDialogBuilder.COMPONENT, contextComponent);
+				return initializers;
 			}
 		};
 		return result;

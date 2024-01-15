@@ -22,6 +22,15 @@ import com.top_logic.layout.LabelProvider;
  * The annotation can be specified at the property or at its value type.
  * </p>
  * 
+ * <p>
+ * The options for a property can be specified using the {@link Options} annotation. When options
+ * and the final selection are of different type (e.g. because a {@link Options#mapping()} is
+ * specified), the label provider specified for the property must deal with both, the option type
+ * and the selection type.
+ * </p>
+ * 
+ * @see Options
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
@@ -30,7 +39,8 @@ import com.top_logic.layout.LabelProvider;
 public @interface OptionLabels {
 
 	/**
-	 * The {@link LabelProvider} class to use.
+	 * The {@link LabelProvider} for displaying options (and the final selection/value) of a
+	 * property.
 	 */
 	Class<? extends LabelProvider> value();
 

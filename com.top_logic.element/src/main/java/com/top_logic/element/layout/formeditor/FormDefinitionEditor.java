@@ -8,7 +8,6 @@ package com.top_logic.element.layout.formeditor;
 import static com.top_logic.layout.form.values.Fields.*;
 
 import com.top_logic.basic.config.ConfigurationChange;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.equal.ConfigEquality;
@@ -20,6 +19,7 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.editor.ComponentConfigurationDialogBuilder;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.BooleanField;
@@ -34,14 +34,15 @@ import com.top_logic.layout.scripting.action.ValueModelUpdate;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
+import com.top_logic.model.form.definition.FormContextDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link Editor} for a {@link FormDefinition}.
@@ -53,8 +54,8 @@ public class FormDefinitionEditor implements Editor {
 	@Override
 	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
 		final PropertyDescriptor property = model.getProperty();
-		ConfigurationItem configItem = model.getModel();
-		PropertyDescriptor typeProperty = getTypeProperty(configItem, property);
+		FormContextDefinition configItem = (FormContextDefinition) model.getModel();
+		PropertyDescriptor typeProperty = configItem.descriptor().getProperty(FormContextDefinition.FORM_CONTEXT_TYPE);
 		
 		CommandField commandField = new CommandField(normalizeFieldName(property.getPropertyName())) {
 
@@ -63,7 +64,9 @@ public class FormDefinitionEditor implements Editor {
 				TLStructuredType type = resolveFormType();
 				FormDefinition formDefinitionOrigin = (FormDefinition) model.getValue();
 
-				GUIEditorDialog guiEditorDialog = new GUIEditorDialog();
+				LayoutComponent contextComponent =
+					editorFactory.getSettings().get(ComponentConfigurationDialogBuilder.COMPONENT);
+				GUIEditorDialog guiEditorDialog = new GUIEditorDialog(contextComponent);
 				// setting of a FormDefinition is recorded as block
 				ScriptingRecorder.annotateAsDontRecord(guiEditorDialog.getDialogModel());
 				guiEditorDialog.setFormDefinitionCopy(formDefinitionOrigin);
@@ -82,10 +85,8 @@ public class FormDefinitionEditor implements Editor {
 			}
 
 			private TLStructuredType resolveFormType() {
-				Object formType = configItem.value(typeProperty);
-				return formType instanceof TLModelPartRef
-						? (TLStructuredType) ((TLModelPartRef) formType).resolveType()
-							: (TLStructuredType) formType;
+				TLModelPartRef formType = configItem.getFormContextType();
+				return (TLStructuredType) formType.resolveType();
 			}
 
 			private Command newAcceptCommand(FormDefinition formDefinitionOrigin, GUIEditorDialog guiEditorDialog) {
@@ -142,8 +143,8 @@ public class FormDefinitionEditor implements Editor {
 		// Reason key when whole form is not editable.
 		commandField.setNotExecutableReasonKey(com.top_logic.common.webfolder.ui.I18NConstants.FIELD_DISABLED);
 		commandField.setTooltip(Resources.getInstance().getString(I18NConstants.OPEN_FORM_EDITOR_DIALOG));
-		if (configItem.value(typeProperty) == null) {
-			setNotExecutable(commandField, typeProperty);
+		if (configItem.getFormContextType() == null) {
+			setNotExecutable(commandField);
 		}
 		
 		ConfigurationListener typeChangedListener = new ConfigurationListener() {
@@ -152,7 +153,7 @@ public class FormDefinitionEditor implements Editor {
 			public void onChange(ConfigurationChange change) {
 				Object newValue = change.getNewValue();
 				if (newValue == null) {
-					setNotExecutable(commandField, typeProperty);
+					setNotExecutable(commandField);
 					model.setValue(null);
 				} else {
 					commandField.setExecutable();
@@ -219,33 +220,8 @@ public class FormDefinitionEditor implements Editor {
 
 	}
 
-	/**
-	 * The property containing the type of the form to edit.
-	 */
-	private PropertyDescriptor getTypeProperty(ConfigurationItem configItem, PropertyDescriptor property) {
-		FormTypeProperty typePropertyAnnotation = property.getAnnotation(FormTypeProperty.class);
-		if (typePropertyAnnotation == null) {
-			throw new TopLogicException(
-				I18NConstants.MISSING_TYPE_ATTRIBUTE_ANNOTATION__ATTRIBUTE.fill(label(property)));
-		}
-		String typePropertyName = typePropertyAnnotation.value();
-		PropertyDescriptor typeProperty = configItem.descriptor().getProperty(typePropertyName);
-		if (typeProperty == null) {
-			throw new TopLogicException(I18NConstants.MISSING_TYPE_ATTRIBUTE__ATTRIBUTE.fill(typePropertyName));
-		}
-		Class<?> propertyType = typeProperty.getType();
-		if (!TLStructuredType.class.isAssignableFrom(propertyType)
-			&& !TLModelPartRef.class.isAssignableFrom(propertyType)) {
-			throw new TopLogicException(
-				I18NConstants.FORM_TYPE_PROPERTY_HAS_NO_MODEL_TYPE__PROPERTY_TYPE.fill(typePropertyName,
-					propertyType.getName()));
-		}
-		return typeProperty;
-	}
-
-	void setNotExecutable(CommandField commandField, PropertyDescriptor typeProperty) {
-		commandField.setNotExecutable(I18NConstants.FORM_EDITOR_DIALOG_DISABLED_NO_TYPE_SELECTED__TYPE_ATTRIBUTE
-			.fill(label(typeProperty)));
+	void setNotExecutable(CommandField commandField) {
+		commandField.setNotExecutable(I18NConstants.FORM_EDITOR_DIALOG_DISABLED_NO_TYPE_SELECTED);
 	}
 
 	ResKey label(PropertyDescriptor property) {

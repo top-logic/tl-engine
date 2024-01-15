@@ -19,6 +19,7 @@ import com.top_logic.html.template.StartTagTemplate;
 import com.top_logic.html.template.TagAttributeTemplate;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.html.template.TemplateSequence;
+import com.top_logic.html.template.expr.LiteralText;
 import com.top_logic.html.template.expr.StringLiteral;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
@@ -275,9 +276,16 @@ public class Templates {
 	}
 
 	/**
+	 * Creates a {@link LiteralText} template.
+	 */
+	public static LiteralText text(final String value) {
+		return new LiteralText(0, 0, value);
+	}
+
+	/**
 	 * Creates a {@link StringLiteral} template.
 	 */
-	public static StringLiteral text(final String value) {
+	public static StringLiteral string(final String value) {
 		return new StringLiteral(0, 0, value);
 	}
 

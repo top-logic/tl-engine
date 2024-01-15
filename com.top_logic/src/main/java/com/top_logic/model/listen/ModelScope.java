@@ -5,6 +5,9 @@
  */
 package com.top_logic.model.listen;
 
+import com.top_logic.layout.ControlScope;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.FrameScope;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 
@@ -15,6 +18,12 @@ import com.top_logic.model.TLStructuredType;
  * once. Example: A listener which is registered for a specific object and for its type, or if it is
  * registered for multiple types which match.
  * </p>
+ * 
+ * @implNote You may get a {@link ModelScope} through {@link FrameScope#getModelScope()}.
+ * 
+ * @see DisplayContext#getExecutionScope()
+ * @see ControlScope#getFrameScope()
+ * @see FrameScope#getModelScope()
  */
 public interface ModelScope {
 

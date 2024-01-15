@@ -41,6 +41,27 @@ public class TestExpression implements TemplateExpression {
 		_elseExpression = elseExpression;
 	}
 
+	/**
+	 * The expression to evaluate as boolean.
+	 */
+	public TemplateExpression getTest() {
+		return _test;
+	}
+
+	/**
+	 * The expression to evaluate, if the {@link #getTest()} returns <code>true</code>.
+	 */
+	public TemplateExpression getThen() {
+		return _thenExpression;
+	}
+
+	/**
+	 * The expression to evaluate, if the {@link #getTest()} returns <code>false</code>.
+	 */
+	public TemplateExpression getElse() {
+		return _elseExpression;
+	}
+
 	@Override
 	public Object eval(DisplayContext context, WithProperties properties) {
 		return TestExpression.isTrue(_test.eval(context, properties)) ? _thenExpression.eval(context, properties)
@@ -72,4 +93,8 @@ public class TestExpression implements TemplateExpression {
 		return true;
 	}
 
+	@Override
+	public <R, A> R visit(Visitor<R, A> v, A arg) {
+		return v.visit(this, arg);
+	}
 }

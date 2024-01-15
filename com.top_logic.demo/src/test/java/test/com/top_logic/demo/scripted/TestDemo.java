@@ -5,11 +5,17 @@
  */
 package test.com.top_logic.demo.scripted;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.demo.DemoSetup;
 import test.com.top_logic.layout.scripting.XmlScriptedTestUtil;
+
+import com.top_logic.basic.ArrayUtil;
 
 /**
  * Scripted tests for the Demo application.
@@ -22,7 +28,8 @@ import test.com.top_logic.layout.scripting.XmlScriptedTestUtil;
 public class TestDemo {
 
 	public static Test suite() {
-		String[] testCases = {
+		List<String> testCases = new ArrayList<>();
+		Collections.addAll(testCases,
 			"00_VisitAllTabs",
 			"01_EnsureAllTabsAreVisible",
 			"02_CreateNewElements",
@@ -93,15 +100,22 @@ public class TestDemo {
 			"A3_WarningsUponApply",
 			"A4_RolesProfileImport",
 			"A5_ThirdPartyLibraries",
-			"B0_ImageGallery",
-			"C0_Sidebar-Layout-Setup",
-			"00_VisitAllTabs",
-			"C0_Sidebar-Layout-Teardown",
+			"B0_ImageGallery"
 			/* Takes long and is only useful for profiling: "FE_Create1000Elements" */
 			/* Changes the file 'Messages.properties': "FF_changeI18N", */
-		};
-		TestSuite theTestSuite = XmlScriptedTestUtil.suite(TestDemo.class, testCases);
+		);
+		addSidebarLayoutTests(testCases);
+		TestSuite theTestSuite =
+			XmlScriptedTestUtil.suite(TestDemo.class, testCases.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
 		return DemoSetup.createDemoSetup(theTestSuite);
+	}
+
+	private static void addSidebarLayoutTests(List<String> testCases) {
+		Collections.addAll(testCases,
+			"C0_Sidebar-Layout-Setup",
+			"00_VisitAllTabs",
+			"C0_Sidebar-Layout-Teardown"
+		);
 	}
 
 }

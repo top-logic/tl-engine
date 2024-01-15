@@ -10,6 +10,7 @@ import java.util.Collections;
 import junit.framework.Test;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.export.Export;
@@ -22,7 +23,7 @@ import com.top_logic.tool.export.ExportTableComponent.EnqueueExportCommand;
 public class TestEnqueueExportCommand extends AbstractExportTest {
 
     public static Test suite() {
-        return suite(TestEnqueueExportCommand.class);
+		return suite(TestEnqueueExportCommand.class, CommandHandlerFactory.Module.INSTANCE);
     }
 
 //    public void testHandleCommand() throws Exception {

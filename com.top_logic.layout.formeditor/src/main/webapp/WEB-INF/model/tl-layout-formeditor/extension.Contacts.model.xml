@@ -44,11 +44,9 @@
 									type="tl.core:String"
 									visibility="read-only"
 								/>
-								<field
-									attribute="admin"
-									fullQualifiedName="tl.accounts:Person#admin"
-									type="tl.core:Boolean"
-								/>
+								<code>
+									<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+								</code>
 								<field
 									attribute="restrictedUser"
 									fullQualifiedName="tl.accounts:Person#restrictedUser"

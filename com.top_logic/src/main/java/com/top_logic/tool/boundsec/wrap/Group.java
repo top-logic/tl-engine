@@ -75,6 +75,9 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     /** The KO attribute used to store the system Group flag. */
     public static final String GROUP_SYSTEM      = "isSystem";
 
+	/** The KO attribute used to store the "is default group" flag. */
+	public static final String GROUP_DEFAULT = "defaultGroup";
+
     /** The name of the KnowledgeAssociation between a BoundObject and a Group
      *  used to say that a person belongs to that group.*/
     public static final String GROUP_ASSOCIATION = "hasGroup";
@@ -226,10 +229,30 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Sets the name of this instance.
-     *
-     * @param    aName    The name to be set.
-     */
+	 * Check if this is a default group, i.e. a group in which each user is a member
+	 *
+	 * @return true if this is a default group
+	 */
+	public boolean isDefaultGroup() {
+		return tGetDataBooleanValue(GROUP_DEFAULT);
+	}
+
+	/**
+	 * Setter for {@link #isDefaultGroup()}.
+	 *
+	 * @param isDefault
+	 *        Whether this is a default group.
+	 */
+	public void setDefaultGroup(boolean isDefault) {
+		this.tSetData(GROUP_DEFAULT, Boolean.valueOf(isDefault));
+	}
+
+	/**
+	 * Sets the name of this instance.
+	 *
+	 * @param aName
+	 *        The name to be set.
+	 */
     @Override
 	public void setName(String aName) {
         this.setValue(NAME_ATTRIBUTE, aName);

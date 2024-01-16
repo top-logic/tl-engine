@@ -11,8 +11,8 @@
 		<style name="/style/tabbar.css"/>
 		<style name="/style/form.css"/>
 		<style name="/style/tables.css"/>
-		<style name="/style/fotorama.css"/>
-		<style name="/style/mdtimepicker.css"/>
+		<style name="/style/fotorama_core.css"/>
+		<style name="/style/mdtimepicker_core.css"/>
 		<style name="/style/bootstrap-icons.css"/>
 		<style name="/style/interFonts.css"/>
 		<style name="/style/importGoogleFonts.css"/>

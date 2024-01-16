@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
 	<t:head>
 		<t:settings output-format="xml"/>
 		<t:parameters>
@@ -31,31 +34,43 @@
 						value="${$Tester}"
 					/>
 					<t:parameter name="Pfad"
-						value="Administration > Zugänge > Benutzerkonten"
+						value="Administration > Berechtigungen > Benutzerverwaltung"
 					/>
 				</t:invoke>
-				<t:invoke template="script:Selektion/Action-Selektion-Setzen.xml">
-					<t:parameter name="Tester"
-						value="${$Tester}"
-					/>
-					<t:parameter name="Pfad"
-						value="Administration > Zugänge > Benutzerkonten"
-					/>
-					<t:parameter name="Komponente"
-						value="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-					/>
-					<t:parameter name="kontext"
-						value="${$kontext}"
-					/>
-				</t:invoke>
-				<t:invoke template="script:Knopf/Action-Knopf-Druecken.xml">
-					<t:parameter name="Tester"
-						value="${$Tester}"
-					/>
-					<t:parameter name="Name"
-						value="Löschen..."
-					/>
-				</t:invoke>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.contact.layout.scripting.ContactAccountConversionNaming$Name">
+							<source config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+								name="${$kontext}"
+							/>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Zugang Löschen"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+					command-label="Löschen"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+				>
+					<arguments/>
+				</action>
 				<t:invoke template="script:Variable/Action-Variable-Loeschen.xml">
 					<t:parameter name="Tester"
 						value="${$Tester}"

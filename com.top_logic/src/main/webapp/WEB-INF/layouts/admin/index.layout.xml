@@ -14,7 +14,6 @@
 		z_legacy_tabLabel="tl.admin.tabber"
 	>
 		<components>
-			<layout-reference resource="admin/persons/index.layout.xml"/>
 			<layout-reference resource="admin/base/index.layout.xml"/>
 			<layout-reference resource="admin/technical/index.layout.xml"/>
 			<layout-reference resource="admin/monitor/index.layout.xml"/>

@@ -7,6 +7,7 @@
 >
 	<arguments>
 		<components>
+			<layout-reference resource="com.top_logic/admin/security/groups/adminGroupsView.layout.xml"/>
 			<layout-reference resource="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/security/profiles/adminSecurity.layout.xml"/>
 			<layout-reference resource="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml"/>

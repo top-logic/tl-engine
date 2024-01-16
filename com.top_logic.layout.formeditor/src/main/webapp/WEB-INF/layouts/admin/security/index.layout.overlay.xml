@@ -4,7 +4,7 @@
 	<components>
 		<layout-reference
 			config:position="before"
-			config:reference="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml"
+			config:reference="com.top_logic/admin/security/groups/adminGroupsView.layout.xml"
 			resource="admin/security/accounts/tabLayout.layout.xml"
 		/>
 	</components>

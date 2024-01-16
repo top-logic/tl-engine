@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;
@@ -111,7 +112,7 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 	private void mkGroups(Collection<Config.GroupConfig> groups, String defaultGroup) {
 		for (Config.GroupConfig groupConfig : groups) {
 			String groupName = groupConfig.getName();
-			Group group = mkGroup(groupName);
+			Group group = mkGroup(groupName, defaultGroup);
 			if (defaultGroup.equals(groupName)) {
 				_defaultGroup = group;
 			}
@@ -121,7 +122,7 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 		}
 	}
 
-	private Group mkGroup(String groupName) {
+	private Group mkGroup(String groupName, String defaultGroup) {
 		{
 			Group existingGroup = Group.getGroupByName(kb(), groupName);
 			if (existingGroup != null) {
@@ -129,6 +130,9 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 			}
 
 			Group newGroup = Group.createGroup(groupName, kb());
+			if (Utils.equals(defaultGroup, groupName)) {
+				newGroup.setDefaultGroup(true);
+			}
 			newGroup.setIsSystem(true);
 			Logger.info("Created system wide group " + newGroup, this);
 			return newGroup;

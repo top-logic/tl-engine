@@ -1590,14 +1590,9 @@
 	<icon name="ICONS_BUTTON_UNGROUP_DISABLED"
 		expr="%ICONS_BUTTON_UNGROUP%"
 	/>
-<<<<<<< Upstream, based on origin/master
 	<int name="com.top_logic.layout.form.control.Icons.MEGA_MENU_BORDER_WIDTH"
 		value="1"
 	/>
-	
-	<!-- No Bootstrap Icons found for these -->
-=======
->>>>>>> ef15482 Ticket #27692: Changed interactive state designs of trees and added and adjusted icons to the theme.
 	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
 		expr=""
 		value="colored:tl-icon selection-invert"

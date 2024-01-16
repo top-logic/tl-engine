@@ -19,6 +19,12 @@
 			entryRenderer="${entryRenderer}"
 			renderer="${renderer}"
 		/>
+		
+		<include name="toolrow/adminButtons.xml"
+			entryRenderer="${entryRenderer}"
+			renderer="${renderer}"
+			horizontalPosition="TO_THE_RIGHT"
+		/>
 
 		<include name="toolrow/homeButton.xml"
 			entryRenderer="${entryRenderer}"

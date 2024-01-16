@@ -59,6 +59,9 @@ public class AccordionEntryRenderer extends AbstractLinkRenderer {
 	@Override
 	protected <B> void writeCssClassesContent(DisplayContext context, Appendable out, Link button) throws IOException {
 		out.append(AccordionControl.NODE_CSS_CLASS);
+		if (button.isActive()) {
+			out.append(AccordionControl.SELECTED_CSS_CLASS);
+		}
 		super.writeCssClassesContent(context, out, button);
 	}
 

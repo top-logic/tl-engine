@@ -605,6 +605,60 @@
 					<form:custom name="dropDownMulti"/>
 				</form:descriptionCell>
 
+				<form:group name="megaMenu"
+					firstColumnWidth="27em"
+				>
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="emptyMandatoryMegaMenu"/>
+							<form:custom name="emptyMandatoryMegaMenu"
+								controlProvider="<%= com.top_logic.layout.form.control.MegaMenuControl.CP.INSTANCE %>"
+							/>
+						</form:description>
+					</form:descriptionCell>
+
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="smallestMegaMenuOptions"/>
+							<form:custom name="smallestMegaMenuOptions"
+								controlProvider="<%= com.top_logic.layout.form.control.MegaMenuControl.CP.INSTANCE %>"
+							/>
+						</form:description>
+					</form:descriptionCell>
+
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="bigMegaMenuOptions"/>
+							<form:custom name="bigMegaMenuOptions"
+								controlProvider="<%= com.top_logic.layout.form.control.MegaMenuControl.CP.INSTANCE %>"
+							/>
+						</form:description>
+					</form:descriptionCell>
+
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="biggestMegaMenuOptions"/>
+							<form:custom name="biggestMegaMenuOptions"
+								controlProvider="<%= com.top_logic.layout.form.control.MegaMenuControl.CP.INSTANCE %>"
+							/>
+						</form:description>
+					</form:descriptionCell>
+
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="megaMenuFixedOptions"/>
+							<form:custom name="megaMenuFixedOptions"/>
+						</form:description>
+					</form:descriptionCell>
+
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="megaMenuInvalidSelection"/>
+							<form:custom name="megaMenuInvalidSelection"/>
+						</form:description>
+					</form:descriptionCell>
+				</form:group>
+				
 				<form:group name="selectionControlGroup"
 					firstColumnWidth="27em"
 				>

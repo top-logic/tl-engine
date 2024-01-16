@@ -7,6 +7,7 @@
 	<arguments
 		tabIcon="theme:IMAGE_BUTTONS_ADMINISTRATION22"
 		tabVisible="false"
+		tabbarControlProvider="com.top_logic.layout.structure.DeckPaneControlProvider"
 		z_legacy_componentName="adminView"
 		z_legacy_tabBarName="adminView_tabBar"
 		z_legacy_tabId="adminView"

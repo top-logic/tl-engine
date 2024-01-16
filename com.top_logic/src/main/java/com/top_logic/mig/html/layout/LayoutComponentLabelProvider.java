@@ -5,8 +5,9 @@
  */
 package com.top_logic.mig.html.layout;
 
+
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.provider.label.NullSafeLabelProvider;
+import com.top_logic.layout.provider.resource.NullSafeResourceProvider;
 import com.top_logic.util.Resources;
 
 /**
@@ -14,7 +15,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class LayoutComponentLabelProvider extends NullSafeLabelProvider {
+public class LayoutComponentLabelProvider extends NullSafeResourceProvider {
 
 	/** Returns the {@link LayoutComponentLabelProvider} instance. */
 	public static final LayoutComponentLabelProvider INSTANCE = new LayoutComponentLabelProvider();

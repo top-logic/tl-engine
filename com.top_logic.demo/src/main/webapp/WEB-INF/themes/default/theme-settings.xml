@@ -139,10 +139,34 @@
 	<icon name="layouts.demo.tlHome"
 		value="/image_buttons/top-logic.png"
 	/>
+	<icon name="ICON_CHART_JS"
+		value="css:fas fa-chart-bar"
+	/>
 	<icon name="model.DemoTypes.A"
 		value="css:fas fa-beer"
 	/>
-	<icon name="ICON_CHART_JS"
-		value="css:fas fa-chart-bar"
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
+		value="css:fas fa-filter"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.USER_ICON"
+		value="css:fas fa-users"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.USER_LOCK"
+		value="css:fas fa-user-lock"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.KEY"
+		value="css:fas fa-key"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.USER_CONFIG"
+		value="css:fas fa-users-cog"
+	/>	
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.TOOLS"
+		value="css:fas fa-tools"
+	/>
+	<icon name="ccom.top_logic.demo.layout.form.demo.Icons.ESKTOP"
+		value="css:fas fa-desktop"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.FILE_CODE"
+		value="css:fas fa-file-code"
 	/>
 </settings>

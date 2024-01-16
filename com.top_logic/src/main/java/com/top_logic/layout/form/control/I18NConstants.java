@@ -29,6 +29,15 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DD_ITEM_SELECTED;
 
 	/**
+	 * Command to save selected option from a mega menu.
+	 * 
+	 * @see MegaMenuControl
+	 * 
+	 * @en element from mega menu list is selected.
+	 */
+	public static ResKey MEGAMENU_OPTION_SELECTED;
+
+	/**
 	 * @en Upload completed callback
 	 */
 	public static ResKey UPLOAD_COMPLETED_COMMAND;
@@ -305,6 +314,34 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The file "{0}" exceeds the maximum upload size of {1} bytes.
 	 */
 	public static ResKey2 ERROR_UPLOAD_SIZE_EXCEEDED__NAME_LIMIT;
+
+	/**
+	 * @en Opening the mega menu pop up.
+	 */
+	public static ResKey OPEN_MEGA_MENU;
+
+	/**
+	 * @en Sets selection and closes mega menu pop up.
+	 */
+	public static ResKey SET_VALUE_CLOSE_POPUP;
+
+	/**
+	 * @en No selection
+	 * @tooltip Resets the selection.
+	 */
+	public static ResKey MEGAMENU_NO_OPTION_LABEL;
+
+	/**
+	 * @en No selection available
+	 * @tooltip The list is empty. Selection options should be added
+	 */
+	public static ResKey EMPTY_SINGLE_SELECTION_WITH_NO_OPTIONS_MEGA_MENU;
+
+	/**
+	 * @en No selection available
+	 * @tooltip This field is mandatory, but the list is empty.
+	 */
+	public static ResKey MANDATORY_EMPTY_SINGLE_SELECTION_WITH_NO_OPTIONS_MEGA_MENU;
 
 	static {
 		initConstants(I18NConstants.class);

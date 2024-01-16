@@ -2423,7 +2423,7 @@ div.frmBody {
 	color: var(--S_TXT_RELEVANT);
 }
 
-.mandatory input, .mandatory select, .mandatory textarea  {
+.mandatory input, .mandatory select, .mandatory textarea, .mandatory .megaMenuButton  {
     background-color: var(--MANDATORY_FIELD_BG);
 }
 
@@ -3430,8 +3430,129 @@ div.pdlgContent {
 }
 
 /* ====================================== */
+/* ======    Styles for mega menu   ===== */
+/* ====================================== */
+
+.mandatory .tl-mega-menu-button {
+	border: 1px solid var(--ACCORDION_HOVER_BACKGROUND_COLOR)
+}
+
+.tl-mega-menu-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	border-radius: 4px;
+	border: 1px solid var(--NORMAL_TEXT);
+	font-size: 12px;
+	font-family: 'Open Sans', Geneva, sans-serif;
+	font-weight: normal;
+}
+
+.tl-mega-menu-button-arrow-down {
+	font-size: 10px;
+	padding-left: 3px;
+}
+
+.tl-mega-menu-grid-container .tl-mega-menu-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.tl-mega-menu-flex-container .tl-mega-menu-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.tl-mega-menu-container {
+	overflow: auto;
+	position: relative;
+	max-height: 90vh;
+}
+
+.tl-mega-menu__option,
+.tl-mega-menu__option--fixed {
+	display: flex;
+	flex-direction: column;
+	cursor: pointer;
+	padding: 5px;
+}
+
+.tl-mega-menu__option a {
+    width: 100%;
+    height: 100%;
+    float: left;
+    text-decoration: none;
+}
+
+.tl-mega-menu__option-label {
+  	font-weight: bold
+}
+
+.tl-mega-menu__option a:hover,
+.tl-mega-menu__option a:focus {
+    color: var(--NORMAL_TEXT);
+}
+
+.tl-mega-menu__option:hover,
+.tl-mega-menu__option:focus {
+    color: var(--NORMAL_TEXT);
+    background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
+}
+
+.tl-mega-menu__option--selected {
+    color: var(--NORMAL_TEXT);
+    background-color: var(--CALENDAR_SELECTED_BACKGROUND_COLOR);
+}
+
+.tl-mega-menu__option--selected a:hover {
+    color: var(--NORMAL_TEXT);
+}
+
+.tl-mega-menu__option-icon--immutable {
+	padding-right: 5px;
+}
+
+.tl-mega-menu__option-label--immutable {
+	font-weight: normal;
+}
+
+.tl-mega-menu__option--fixed {
+	cursor: default;
+}
+
+.tl-mega-menu-flex-container .tl-mega-menu__option--fixed,
+.tl-mega-menu-grid-container .tl-mega-menu__option--fixed {
+	color: graytext;
+}
+
+.tl-mega-menu__option-container {
+	display: flex;
+	justify-content: flex-start;
+}
+
+.tl-mega-menu__option-icon-container {
+	display: flex;
+	flex-shrink: 0;
+	justify-content: center;
+	align-self: flex-start;
+	width: 22px;
+	height: 22px;
+	padding: 0 10px 0 10px;
+}
+
+.tl-mega-menu__option-icon {
+	font-size: 21px;
+}
+
+.tl-mega-menu__option-text-container {
+	display: flex;
+	flex-direction: column;
+}
+
+/* ====================================== */
 /* ====== Styles for legacy dialogs ===== */
 /* ====================================== */
+
 div.splashScreen {
 	position:		absolute;
 	top:			0px;
@@ -3447,6 +3568,7 @@ div.splashScreen {
 	border:none;
 	text-align:left;
 }
+
 div.dialog {
 	position:			absolute;
 	max-width:			640px;
@@ -3457,9 +3579,11 @@ div.dialog {
 	border-width:		4px;
 	border-color:		var(--FRAME_BACK);
 }
+
 .dialogTitleBar {
 	background-color:	var(--FRAME_BACK);
 }
+
 td.dialogTitleBar {
 	color:				var(--INVERT_TEXT);
 	font-size:			var(--FONT_SIZE);

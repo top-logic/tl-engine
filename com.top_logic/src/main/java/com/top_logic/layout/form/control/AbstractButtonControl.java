@@ -282,7 +282,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 
 	@Override
 	public boolean isDisabled() {
-		return !this.model.isExecutable() || isActive();
+		return !this.model.isExecutable();
 	}
 
 	@Override

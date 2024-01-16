@@ -1556,6 +1556,9 @@
 	<icon name="ICONS_BUTTON_UNGROUP_DISABLED"
 		expr="%ICONS_BUTTON_UNGROUP%"
 	/>
+	<int name="com.top_logic.layout.form.control.Icons.MEGA_MENU_BORDER_WIDTH"
+		value="1"
+	/>
 	
 	<!-- No Bootstrap Icons found for these -->
 	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"

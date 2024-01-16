@@ -8,8 +8,10 @@ package com.top_logic.layout.form.control;
 import java.awt.Color;
 
 import com.top_logic.gui.ThemeVar;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
+import com.top_logic.layout.basic.TemplateType;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
@@ -210,5 +212,14 @@ public class Icons extends IconsBase {
 
 	@DefaultValue("16")
 	public static ThemeVar<Integer> TAB_COMPONENT_DEFAULT_TAB_HEIGHT;
+
+	@DefaultValue("3")
+	public static ThemeVar<Integer> MEGA_MENU_BORDER_WIDTH;
+
+	/**
+	 * Template for rendering an option inside a mega menu.
+	 */
+	@TemplateType(MegaMenuOptionControl.class)
+	public static ThemeVar<HTMLTemplateFragment> MEGA_MENU_OPTION_TEMPLATE;
 
 }

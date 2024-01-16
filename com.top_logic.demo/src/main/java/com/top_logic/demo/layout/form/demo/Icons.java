@@ -27,5 +27,19 @@ public class Icons extends IconsBase {
 	public static ThemeImage TOP_LOGIC;
 
 	public static ThemeImage DEMO_RESOURCE_PROVIDER_ICON;
+	
+	public static ThemeImage USER_ICON;
+
+	public static ThemeImage USER_LOCK;
+
+	public static ThemeImage KEY;
+
+	public static ThemeImage USER_CONFIG;
+
+	public static ThemeImage TOOLS;
+
+	public static ThemeImage DESKTOP;
+
+	public static ThemeImage FILE_CODE;
 
 }

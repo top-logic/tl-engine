@@ -25,6 +25,8 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	private int borderWidth;
 	private String borderColor;
 
+	private final String WINDOW_CLASS;
+
 	private final ToolBar _toolBar;
 	
 	/**
@@ -41,7 +43,8 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	 * @param borderColor
 	 *        The border color of the dialog.
 	 */
-	public DefaultPopupDialogModel(HTMLFragment dialogTitle, LayoutData layout, int borderWidth, String borderColor) {
+	public DefaultPopupDialogModel(HTMLFragment dialogTitle, LayoutData layout, int borderWidth, String borderColor,
+			String CssClass) {
 		_toolBar =
 			new DefaultToolBar(this, new DefaultExpandable(), dialogTitle, false, Decision.FALSE, Decision.FALSE);
 		this.layout = layout;
@@ -50,6 +53,22 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 		hasBorder = (borderWidth > 0);
 		this.borderColor = (borderColor != null) ? borderColor : "";
 		this.borderWidth = hasBorder ? borderWidth : 0;
+		this.WINDOW_CLASS = (CssClass != null) ? CssClass : "";
+	}
+
+	/**
+	 * Create a new DefaultPopupDialogModel, which has a title bar, a border (color = theme based)
+	 * and a css class.
+	 * 
+	 * @param dialogTitle
+	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String, String)}.
+	 * @param layout
+	 *        The layout definition of the dialog.
+	 * @param borderWidth
+	 *        The border width of the dialog in <code>px</code>.
+	 */
+	public DefaultPopupDialogModel(HTMLFragment dialogTitle, LayoutData layout, int borderWidth, String CssClass) {
+		this(dialogTitle, layout, borderWidth, "", CssClass);
 	}	
 	
 	/**
@@ -57,21 +76,21 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	 * based)
 	 * 
 	 * @param dialogTitle
-	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String)}.
+	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String, String)}.
 	 * @param layout
 	 *        The layout definition of the dialog.
 	 * @param borderWidth
 	 *        The border width of the dialog in <code>px</code>.
 	 */
 	public DefaultPopupDialogModel(HTMLFragment dialogTitle, LayoutData layout, int borderWidth) {
-		this(dialogTitle, layout, borderWidth, "");
+		this(dialogTitle, layout, borderWidth, "", null);
 	}	
 	
 	/**
 	 * Create a new DefaultPopupDialogModel, which has a title bar.
 	 * 
 	 * @param dialogTitle
-	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String)}
+	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String, String)}
 	 * @param layout
 	 *        The layout definition of the dialog.
 	 */
@@ -87,7 +106,7 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	 * @param borderColor - the border color of the dialog
 	 */
 	public DefaultPopupDialogModel(LayoutData layout, int borderWidth, String borderColor) {
-		this(null, layout, borderWidth, borderColor);
+		this(null, layout, borderWidth, borderColor, null);
 	}	
 	
 	/**
@@ -203,6 +222,16 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	@Override
 	public ToolBar getToolBar() {
 		return _toolBar;
+	}
+
+	@Override
+	public String getCssClass() {
+		return hasCssClass() ? WINDOW_CLASS : "";
+	}
+
+	@Override
+	public boolean hasCssClass() {
+		return WINDOW_CLASS != null && !WINDOW_CLASS.isEmpty();
 	}
 
 }

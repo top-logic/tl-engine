@@ -74,6 +74,62 @@ public class I18NConstants extends I18NConstantsBase {
 	
 	public static ResPrefix DROPDOWN_ITEM;
 
+	public static ResPrefix MEGAMENU;
+
+	/**
+	 * @en Modified no selection
+	 * @tooltip Modified tooltip from no selection.
+	 */
+	public static ResKey CUSTOMIZED_NO_OPTION_MEGAMENU;
+
+	/**
+	 * @en Administration
+	 * @tooltip Here is a descriptive text about Administration.
+	 */
+	public static ResKey ADMINISTRATION;
+
+	/**
+	 * @en Access Rights
+	 * @tooltip Here is a descriptive text about access rights.
+	 */
+	public static ResKey ACCESS_RIGHTS;
+
+	/**
+	 * @en Permissions
+	 * @tooltip Here is a descriptive text about permissions.
+	 */
+	public static ResKey PERMISSIONS;
+
+	/**
+	 * @en Basisadministration
+	 * @tooltip Here is a descriptive text about basisadministration.
+	 */
+	public static ResKey BASISADMINISTRATION;
+
+	/**
+	 * @en Technical Administration
+	 * @tooltip Here is a descriptive text about Tech.Administration. This section is intentionally
+	 *          made long. Tests the grid.
+	 */
+	public static ResKey TECHNICAL_ADMINISTRATION;
+
+	/**
+	 * @en Monitor
+	 * @tooltip Here is a descriptive text about monitor.
+	 */
+	public static ResKey MONITOR;
+
+	/**
+	 * @en Development
+	 * @tooltip Here is a descriptive text about development.
+	 */
+	public static ResKey DEVELOPMENT;
+
+	/**
+	 * @en Deleted View
+	 */
+	public static ResKey DELETED_VIEW;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

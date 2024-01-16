@@ -16,8 +16,10 @@
 	</xsl:template>
 
 	<xsl:template match="/config//module[@name='tl.accounts']//class[@name='Person']/generalizations">
-		<xsl:copy-of select="generalization[@type != 'tl.core:Author']"/>
-		<generalization type="tl.core:Author"/>
+		<generalizations>
+			<xsl:copy-of select="generalization[@type != 'tl.core:Author']"/>
+			<generalization type="tl.core:Author"/>
+		</generalizations>
 	</xsl:template>
 
 	<!-- standard copy template -->

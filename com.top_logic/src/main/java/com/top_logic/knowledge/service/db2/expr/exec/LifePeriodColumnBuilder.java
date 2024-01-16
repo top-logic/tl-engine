@@ -14,7 +14,6 @@ import com.top_logic.basic.db.sql.SQLJoin;
 import com.top_logic.basic.db.sql.SQLPart;
 import com.top_logic.basic.db.sql.SQLTable;
 import com.top_logic.knowledge.service.BasicTypes;
-import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 
 /**
  * Visitor that collects {@link TableInfo} for all {@link SQLTable} used in the visited
@@ -122,19 +121,11 @@ public class LifePeriodColumnBuilder extends DefaultSQLVisitor<Void, Void> {
 			return none;
 		}
 		
-		if (tableName.equals(AbstractFlexDataManager.FLEX_DATA_DB_NAME)) {
-			tableInfos.put(tableAlias,
-				new TableInfo(
-					sql.getTableAlias(),
-					AbstractFlexDataManager.REV_MIN_DBNAME, 
-					AbstractFlexDataManager.REV_MAX_DBNAME));
-		} else {
-			tableInfos.put(tableAlias,
-				new TableInfo(
-					sql.getTableAlias(),
-					BasicTypes.REV_MIN_DB_NAME,
-					BasicTypes.REV_MAX_DB_NAME));
-		}
+		tableInfos.put(tableAlias,
+			new TableInfo(
+				sql.getTableAlias(),
+				BasicTypes.REV_MIN_DB_NAME,
+				BasicTypes.REV_MAX_DB_NAME));
 		return none;
 	}
 	

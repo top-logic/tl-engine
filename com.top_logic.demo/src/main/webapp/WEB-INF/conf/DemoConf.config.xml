@@ -223,18 +223,6 @@
 			</instance>
 		</config>
 		
-        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
-			<instance>
-				<security-devices>
-					<security-device id="dbSecurity">
-						<initial-user-resources>
-							<initial-user-resource name="/WEB-INF/database/DemoUsers.xml"/>
-						</initial-user-resources>
-					</security-device>
-				</security-devices>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.common.webfolder.ui.WebFolderUIFactory">
 			<instance max-upload-size="5M" />
 		</config>		

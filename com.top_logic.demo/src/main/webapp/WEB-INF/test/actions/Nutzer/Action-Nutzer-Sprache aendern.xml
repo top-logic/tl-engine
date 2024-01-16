@@ -10,7 +10,7 @@
 			output-xml-header="false"
 		/>
 		<t:parameters>
-			<t:parameter name="Zeitzone"
+			<t:parameter name="Sprache"
 				type="string"
 			/>
 		</t:parameters>
@@ -38,7 +38,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Zeitzone"
+						label="Sprache"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Kontakt bearbeiten"
@@ -47,7 +47,7 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="${$Zeitzone}"
+								label="${$Sprache}"
 							/>
 						</values>
 					</value>
@@ -61,7 +61,6 @@
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"/>
 			</actions>
 		</action>
 	</t:body>

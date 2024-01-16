@@ -50,91 +50,59 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge > Benutzerkonten"
+						tab-path="Administration > Berechtigungen > Benutzerverwaltung"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Neu..."
-					command-name="displayDialog_newPersonDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-label="Neuer Zugang"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="admin/security/accounts/accountsTable.layout.xml#Table"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-						tab-path=""
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Vorname"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Eingabeformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="${$Vorname}"
 					/>
-					<field-values>
-						<value>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="${$Loginname}"
-							/>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Benutzername"
-									field-name="username"
-								/>
-							</field-path>
-						</value>
-					</field-values>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-						tab-path=""
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Eingabeformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="${$Nachname}"
 					/>
-					<field-values>
-						<value>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="${$Vorname}"
-							/>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Vorname"
-									field-name="givenName"
-								/>
-							</field-path>
-						</value>
-					</field-values>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-						tab-path=""
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Login"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Eingabeformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="${$Loginname}"
 					/>
-					<field-values>
-						<value>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="${$Nachname}"
-							/>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Nachname"
-									field-name="sn"
-								/>
-							</field-path>
-						</value>
-					</field-values>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler"
-					command-label="Erstellen"
-					command-name="newPerson"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Neuer Zugang"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="admin/security/accounts/newAccount/dialog.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
@@ -148,13 +116,14 @@
 					<t:parameter name="Wert">
 						<t:value>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
-								<model-name config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
-									<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
-										<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-											tab-path="Administration > Zugänge > Benutzerkonten"
-										/>
-									</component>
+								<model-name config:interface="com.top_logic.contact.layout.scripting.ContactAccountConversionNaming$Name">
+									<source config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+											/>
+										</component>
+									</source>
 								</model-name>
 							</value>
 						</t:value>

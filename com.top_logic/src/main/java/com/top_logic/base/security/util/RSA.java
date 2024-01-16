@@ -149,8 +149,7 @@ class RSA implements MessageCoder {
         for (int thePos = 0; thePos < aCode.length; thePos++) {
             theCode=theCode.add (aCode [thePos].modPow (aPrivateKey.getKey (),
                                                         aPrivateKey.getN ()));
-			// TODO #11351: FindBugs(RV_RETURN_VALUE_IGNORED)
-            theCode.shiftLeft (theLength);
+			theCode = theCode.shiftLeft(theLength);
         }
 
         return (new String (theCode.toByteArray ()));

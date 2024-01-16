@@ -55,8 +55,8 @@ import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.tabbar.TabBarModel;
-import com.top_logic.layout.tabbar.TabInfo;
 import com.top_logic.layout.tabbar.TabBarModel.TabBarListener;
+import com.top_logic.layout.tabbar.TabInfo;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeNode;
 import com.top_logic.layout.tree.model.TLTreeModel;
@@ -221,7 +221,13 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 						tree.attach();
 						
 						// Establish initial selection.
-						tree.setSelection(tree.innermostSelected(tree.getRoot()));
+						Node root = tree.getRoot();
+						Node innermostSelected = tree.innermostSelected(root);
+						if (root == innermostSelected) {
+							tree.setSelection(null);
+						} else {
+							tree.setSelection(innermostSelected);
+						}
 
 						// Add component validator.
 						//
@@ -325,7 +331,13 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 			boolean result = getRoot().attach();
 			if (result) {
 				// Update initial state.
-				setSelection(innermostSelected(getRoot()));
+				Node nodeSelected = getRoot();
+				Node innermostSelected = innermostSelected(nodeSelected);
+				if (nodeSelected == innermostSelected) {
+					setSelection(null);
+				} else {
+					setSelection(innermostSelected);
+				}
 
 				_selectionModel.addSingleSelectionListener(this);
 			}
@@ -333,7 +345,11 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 		}
 
 		void setSelection(Node node) {
-			_selectionModel.setSingleSelection(TreePath.fromNode(this, node));
+			if (node != null) {
+				_selectionModel.setSingleSelection(TreePath.fromNode(this, node));
+			} else {
+				_selectionModel.setSingleSelection(null);
+			}
 		}
 
 		@Override
@@ -367,7 +383,12 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 		 *        The newly selected node.
 		 */
 		void handleSelectionChange(Node selection) {
-			setSelection(innermostSelected(selection));
+			Node innermostSelected = innermostSelected(selection);
+			if (innermostSelected instanceof TabBarNode && innermostSelected == selection) {
+				setSelection(null);
+			} else {
+				setSelection(innermostSelected);
+			}
 		}
 
 		public Node innermostSelected(Node selection) {
@@ -559,6 +580,10 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 					}
 
 					TabbedLayoutComponent tab = (TabbedLayoutComponent) card;
+					TabInfo cardInfo = tab.getCardInfo();
+					if (!cardInfo.getConfig().isRendered()) {
+						continue;
+					}
 					LayoutComponent contentComponent = skipLayouts((LayoutComponent) tab.getContent());
 
 					if (contentComponent instanceof TabComponent && embedd(contentComponent)) {

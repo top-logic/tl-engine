@@ -1972,6 +1972,75 @@ services.form = {
 			}, true, callback);
 		}
 	},
+	
+	MegaMenuControl: {
+				
+		MegaMenuButtonControl: {
+		
+			handleButtonClick: function(optionElement, controlID, showWait) {
+				services.ajax.execute("dispatchControlCommand", {
+					controlCommand : "megaMenuActive",
+					controlID : controlID
+				}, true);
+			}
+
+		},
+		
+		handleOnOptionClick : function(optionElement, controlID, showWait) {
+			var optionValue = BAL.DOM.getNonStandardAttribute(optionElement, "data-value");
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand: "megaMenuOptionSelected",
+				controlID: controlID,
+				dataValue: optionValue
+			});
+		},
+		
+		handleArrowKeyNavigation: function(event, isGridLayout) {
+			const key = event.key;
+		    const megaMenuContainer = document.querySelector('.tl-mega-menu-container');
+		    const menuOptions = megaMenuContainer.querySelectorAll('.tl-mega-menu__option');
+		    let currentFocusIndex = Array.from(menuOptions).indexOf(document.activeElement);
+		    const columns = isGridLayout ? 2 : 1;
+		
+		    if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+		        event.preventDefault();
+		
+		        let newIndex;
+		        if (isGridLayout) {
+		            // Grid-Navigation
+		            let row = Math.floor(currentFocusIndex / columns);
+		            let col = currentFocusIndex % columns;
+		
+		            switch (key) {
+		                case 'ArrowDown':
+		                    row = (row + 1) % Math.ceil(menuOptions.length / columns);
+		                    break;
+		                case 'ArrowUp':
+		                    row = (row - 1 + Math.ceil(menuOptions.length / columns)) % Math.ceil(menuOptions.length / columns);
+		                    break;
+		                case 'ArrowLeft':
+		                    col = (col - 1 + columns) % columns;
+		                    break;
+		                case 'ArrowRight':
+		                    col = (col + 1) % columns;
+		                    break;
+		            }
+		
+		            newIndex = row * columns + col;
+		        } else {
+		            // Flexbox-Navigation (eine Spalte)
+		            if (key === 'ArrowDown') {
+		                newIndex = (currentFocusIndex + 1) % menuOptions.length;
+		            } else if (key === 'ArrowUp') {
+		                newIndex = (currentFocusIndex - 1 + menuOptions.length) % menuOptions.length;
+		            }
+		        }
+		
+		        newIndex = Math.min(newIndex, menuOptions.length - 1); // Verhindern, dass der Index das Array überläuft
+		        menuOptions[newIndex]?.focus();
+		    }
+		}
+	},
 
 	ChoiceControl : {
 		handleClick : function(optionInput, controlId, showWait) {

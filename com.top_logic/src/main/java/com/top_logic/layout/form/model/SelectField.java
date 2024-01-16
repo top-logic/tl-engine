@@ -270,7 +270,7 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	 * @see #setEmptyLabel(String)
 	 */
 	static final Property<String> EMPTY_LABEL_PROPERTY = TypedAnnotatable.property(String.class, "emptyLabel");
-	
+
 	/**
 	 * Key for storing the empty label set for immutable mode.
 	 * 

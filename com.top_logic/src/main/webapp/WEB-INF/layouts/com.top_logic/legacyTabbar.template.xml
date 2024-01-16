@@ -66,6 +66,11 @@
 		>
 			<hidden/>
 		</property>
+		<property name="tabbarControlProvider"
+			type="Class"
+		>
+			<hidden/>
+		</property>
 	</properties>
 
 	<include name="templates/tabbar.xml"
@@ -74,6 +79,7 @@
 		helpIDLegacy="${helpIDLegacy}"
 		tabIcon="${tabIcon}"
 		tabVisible="${tabVisible}"
+		tabbarControlProvider="${tabbarControlProvider}"
 		z_legacy_componentName="${z_legacy_componentName}"
 		z_legacy_tabBarName="${z_legacy_tabBarName}"
 		z_legacy_tabId="${z_legacy_tabId}"

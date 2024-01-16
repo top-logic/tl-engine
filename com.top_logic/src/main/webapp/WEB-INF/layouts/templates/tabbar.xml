@@ -19,6 +19,9 @@
 		<param name="tabVisible"
 			optional="true"
 		/>
+		<param name="tabbarControlProvider"
+			optional="true"
+		/>
 
 		<!-- START: Legacy parameters that never should get filled explicitly -->
 		<param name="z_legacy_componentName"
@@ -53,6 +56,7 @@
 
 		<components>
 			<tabbar name="${z_legacy_tabBarName}">
+				<componentControlProvider class="${tabbarControlProvider}"/>
 				<components>${components}</components>
 			</tabbar>
 		</components>

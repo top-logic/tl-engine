@@ -1055,6 +1055,162 @@ button.moveOption {
 	width: 100%;
 }
 
+/* ====================================== */
+/* ======    Styles for mega menu   ===== */
+/* ====================================== */
+.tl-mega-menu-button {
+	display: inline-flex;
+	gap: var(--spacing-02);
+	justify-content: center;
+	align-items: center;
+	font-family: 'Inter-Regular';
+	font-size: .875rem;
+	font-weight: 400;
+	color: var(--button-secondary);
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	height: 2.3rem; /* 36.8px height */
+	padding: var(--spacing-02) var(--spacing-03);
+	border-radius: .25rem;
+	border: none;
+	padding: var(--spacing-03) var(--spacing-02);
+	cursor: pointer;
+}
+
+.tl-mega-menu-button:hover {
+	color: var(--text-on-color);
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+.tl-mega-menu-button:focus {
+	color: var(--text-on-color);
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.tl-mega-menu-grid-container .tl-mega-menu-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	background: var(--layer);
+}
+
+.tl-mega-menu-flex-container .tl-mega-menu-container {
+	display: flex;
+	flex-direction: column;
+	background: var(--layer);
+}
+
+.tl-mega-menu-grid-container,
+.tl-mega-menu-flex-container {
+	overflow-y: auto;
+    max-height: 90vh;
+    border-color: var(--border-subtle);
+}
+
+.tl-mega-menu-grid-container .pdlgContent,
+.tl-mega-menu-flex-container .pdlgContent {
+	overflow: hidden !important;
+}
+
+.tl-mega-menu__option,
+.tl-mega-menu__option--fixed {
+	display: flex;
+	flex-direction: column;
+	cursor: pointer;
+	padding: var(--spacing-02) var(--spacing-03);
+}
+
+.tl-mega-menu__option a {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 var(--spacing-03);
+	color: var(--text-secondary);
+}
+
+.tl-mega-menu__option:hover,
+.tl-mega-menu__option:focus {
+	background: var(--layer-hover);
+    text-decoration: none !important;
+    box-shadow: none !important;
+}
+
+.tl-mega-menu__option--selected {
+    background-color: var(--layer-selected);
+}
+
+.tl-mega-menu__option-container {
+	display: flex;
+	gap: var(--spacing-02);
+}
+
+.tl-mega-menu__option-icon-container {
+	display: flex;
+	align-items: center;
+}
+
+.tl-mega-menu__option-icon {
+	font-size: 1.3rem;
+	color: var(--icon-secondary);
+}
+
+.tl-mega-menu__option:hover .tl-mega-menu__option-icon,
+.tl-mega-menu__option:focus .tl-mega-menu__option-icon,
+.tl-mega-menu__option--selected .tl-mega-menu__option-icon {
+	color: var(--icon-primary);
+}
+
+.tl-mega-menu__option-text-container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-01);
+	color: var(--text-secondary)
+}
+
+.tl-mega-menu__option-label {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-02-font-size);
+	line-height: var(--heading-02-line-height);
+	letter-spacing: var(--heading-02-letter-spacing);
+}
+
+.tl-mega-menu__option-tooltip {
+	font-family: 'Inter-Regular';
+    font-size: .875rem;
+    font-weight: 400;
+}
+
+.tl-mega-menu__option:hover .tl-mega-menu__option-text-container,
+.tl-mega-menu__option:focus .tl-mega-menu__option-text-container,
+.tl-mega-menu__option--selected .tl-mega-menu__option-text-container {
+	color: var(--text-primary);
+}
+
+.tl-mega-menu__option--fixed {
+	cursor: default;
+}
+
+.tl-mega-menu__option--fixed .tl-mega-menu__option-icon {
+	color: var(--icon-disabled);
+}
+
+.tl-mega-menu__option--fixed .tl-mega-menu__option-text-container {
+	color: var(--text-disabled);
+}
+
+.tl-mega-menu__option-icon--immutable {
+	padding: 0 var(--spacing-02) 0 var(--spacing-03);
+}
+
+.tl-mega-menu__option-label--immutable {
+	color: var(--text-primary);
+	font-family: 'Inter-Regular';
+    font-size: .875rem;
+    font-weight: 400;
+}
+
 /*
 ****							****
 ****	Message Boxes Styles	****

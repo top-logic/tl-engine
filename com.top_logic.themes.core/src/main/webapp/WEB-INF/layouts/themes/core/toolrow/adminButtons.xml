@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="renderer"
+			optional="true"
+		/>
+		<param name="entryRenderer"
+			optional="true"
+		/>
+		<param name="horizontalPosition"
+			optional="true"
+		/>
+	</params>
+
+	<view class="com.top_logic.layout.component.configuration.MegaMenuTabConfig"
+		component="admin/index.layout.xml#adminView_tabBar"
+		horizontalPosition="${horizontalPosition}"
+		name="adminTab"
+		renderer="${renderer}"
+	/>
+</template>

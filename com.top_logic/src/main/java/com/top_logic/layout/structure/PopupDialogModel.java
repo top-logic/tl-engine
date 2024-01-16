@@ -88,6 +88,20 @@ public interface PopupDialogModel extends PropertyObservable {
 	public boolean hasBorder();
 	
 	/**
+	 * returns the css class
+	 */
+	public default String getCssClass() {
+		return "";
+	}
+
+	/**
+	 * Whether this dialog has a css class
+	 */
+	public default boolean hasCssClass() {
+		return false;
+	}
+
+	/**
 	 * Action that closes this {@link PopupDialogModel}.
 	 */
 	default Command getCloseAction() {

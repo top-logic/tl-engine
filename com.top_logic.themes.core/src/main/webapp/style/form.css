@@ -1682,6 +1682,11 @@ span.disabled > span.lFlexible > select:not( [multiple="multiple"] ) {
 	width: 100%;
 }
 
+.cExpandableTextInput .lFlexible,
+.cBlockTextInput .lFlexible {
+	display: inline-flex
+}
+
 /* 		Radio Buttons styles	*/
 /* Resets browser's default radio style. */
 input[type="radio"] {

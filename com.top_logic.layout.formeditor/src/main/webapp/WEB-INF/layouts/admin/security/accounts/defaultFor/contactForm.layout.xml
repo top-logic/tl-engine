@@ -5,7 +5,10 @@
 	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments type="Contacts:PersonContact">
+	<arguments
+		defaultFor="Contacts:PersonContact"
+		type="Contacts:PersonContact"
+	>
 		<name key="dynamic.292e22a0-4e2e-485b-a0cc-c071313dbeb4">
 			<en>Contact</en>
 			<de>Kontakt</de>

@@ -32,9 +32,16 @@
 				</confirmMessage>
 			</button>
 			<button id="ID_d9a27df8_9c83_4318_9d56_53c2185a9543"
-				class="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				confirm="false"
 				target="model(self())"
-			/>
+			>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Zugang noch aktiv."@de,"Account still active."@en))</decision>
+					</rule-by-expression>
+				</executability>
+			</button>
 			<button id="ID_2fa7a149_7d10_46c9_90e1_b5e4db8b1378"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 			>

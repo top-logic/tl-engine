@@ -11,7 +11,6 @@
 		z_legacy_tabLabel="main.admin.functional.tabber"
 	>
 		<components>
-			<layout-reference resource="com.top_logic.contact/admin/personContacts/personContactView.layout.xml"/>
 			<layout-reference resource="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml"/>
 			<layout-reference resource="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml"/>
 		</components>

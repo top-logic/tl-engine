@@ -2398,7 +2398,17 @@ span.disabled .ddwttChevron::after {
 
 .ddwttItemLabel {
 	display: block;
-	padding: 0 var(--spacing-03);
+	padding: 0 var(--spacing-02);
+	cursor: default;
+}
+
+.ddwttItemIcon {
+	margin-right: 8px !important;
+	padding-left: 3px;
+}
+
+.ddwttItem .ddwttItemLabel {
+	display: inline-block;
 	cursor: default;
 }
 
@@ -2413,15 +2423,12 @@ span.disabled .ddwttChevron::after {
 
 .ddwttTag {
 	border: 1px solid var(--border-subtle);
+	box-sizing: border-box;
 	transition: 0.3s;
 	gap: var(--spacing-01);
 	padding: 0 var(--spacing-02);
 	height: 2rem;
 	margin-right: var(--spacing-02);
-}
-
-.ddwttTag:hover {
-	text-decoration: line-through var(--border-strong) 1px;
 }
 
 .ddwttTagX {

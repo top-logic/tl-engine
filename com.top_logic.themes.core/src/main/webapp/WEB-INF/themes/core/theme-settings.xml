@@ -1578,6 +1578,18 @@
 		value="colored:fas fa-save overlay-add"
 	/>
 	<!-- END -->
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_SIBLINGS"
+		value="/icons/selectSiblings.png"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_SIBLINGS_DISABLED"
+		value="/icons/selectSiblingsDisabled.png"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON_DISABLED"
+		expr="%com.top_logic.layout.form.values.edit.Icons.ADD_ICON%"
+	/>
 	<icon name="ICONS_BUTTON_GROUP"
 		value="colored:tl-icon text-arrow-right"
 	/>

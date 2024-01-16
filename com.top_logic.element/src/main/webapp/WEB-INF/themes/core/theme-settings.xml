@@ -97,6 +97,9 @@
 	<icon name="com.top_logic.element.layout.formeditor.implementation.Icons.OTHER_ATTRIBUTES"
 		value="css:bi bi-three-dots-vertical"
 	/>
+	<icon name="CONFIGURE_TABS_ICON"
+		value="css:bi bi-window-split"
+	/>
 	<icon name="com.top_logic.element.layout.formeditor.implementation.Icons.TABBAR"
 		expr="%CONFIGURE_TABS_ICON%"
 	/>

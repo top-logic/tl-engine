@@ -27,49 +27,38 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge > Benutzerkonten"
+						tab-path="Administration > Berechtigungen > Benutzerverwaltung"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="${$userName}"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+							name="${$userName}"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
 						/>
 					</selection-model-name>
 				</action>
+
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-					command-label="Löschen..."
-					command-name="deletePerson"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Zugang Löschen"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+					command-label="Löschen"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>

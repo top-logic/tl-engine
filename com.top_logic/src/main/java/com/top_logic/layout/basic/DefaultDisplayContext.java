@@ -9,11 +9,14 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CalledFromJSP;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.logging.LogConfigurator;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.layout.DisplayContext;
@@ -27,7 +30,20 @@ import com.top_logic.util.TLContextManager;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class DefaultDisplayContext extends AbstractDisplayContext {
-	
+
+	/**
+	 * The name of log mark for the session id.
+	 * <p>
+	 * <em>When the value is changed, the Log4j configuration files have to be updated, as they use
+	 * the value.</em>
+	 * </p>
+	 * <p>
+	 * The value of this constant is used in Log4J configuration files to extract and log the
+	 * session id with every log statement.
+	 * </p>
+	 */
+	private static final String TL_SESSION_ID_LOG_MARK = "tl-session-id";
+
 	private static final String DISPLAY_CONTEXT_REQUEST_ATTRIBUTE = DisplayContext.class.getName();
 
 	private final ServletContext servletContext;
@@ -178,6 +194,7 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 			request.setAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE, context);
 		}
 		ThreadContextManager.getManager().setInteraction(context);
+		addSessionIdLogMark(request);
 	}
 
 	/**
@@ -194,8 +211,27 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 			request.removeAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE);
 		}
 		ThreadContextManager.getManager().removeInteraction();
+		removeSessionIdLogMark();
 	}
-	
+
+	private static void addSessionIdLogMark(HttpServletRequest request) {
+		String sessionId = getSessionId(request);
+		if (StringServices.isEmpty(sessionId)) {
+			return;
+		}
+		String logSnippet = "S(" + sessionId + ") ";
+		LogConfigurator.getInstance().addLogMark(TL_SESSION_ID_LOG_MARK, logSnippet);
+	}
+
+	private static void removeSessionIdLogMark() {
+		LogConfigurator.getInstance().removeLogMark(TL_SESSION_ID_LOG_MARK);
+	}
+
+	private static String getSessionId(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		return session == null ? null : session.getId();
+	}
+
 	/**
 	 * The {@link DisplayContext} of the current request.
 	 * 

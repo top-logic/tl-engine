@@ -32,15 +32,17 @@ import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
-import com.top_logic.element.meta.kbbased.KBBasedMetaAttributeFactory;
 import com.top_logic.element.meta.kbbased.PersistentReference;
 import com.top_logic.element.meta.kbbased.storage.LinkStorage;
 import com.top_logic.element.meta.schema.ElementSchemaConstants;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
+import com.top_logic.model.migration.Util;
 import com.top_logic.util.TLContext;
 
 /**
@@ -50,9 +52,12 @@ import com.top_logic.util.TLContext;
  */
 public class MoveCompositionLinksToStructureChildTable implements MigrationProcessor {
 
+	private Util _util;
+
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			HashSet<Long> compositionRefIds = migrateData(log, connection);
 			migrateAnnotations(log, connection, compositionRefIds);
 			migrateBaseModel(log, connection);
@@ -110,14 +115,14 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 			table(SQLH.mangleDBName(PersistentReference.OBJECT_NAME)),
 			and(
 				eqSQL(
-					column(SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME)),
+					_util.branchColumnRef(),
 					literal(DBType.LONG, TLContext.TRUNK_ID)),
 				eqSQL(
 					column(SQLH.mangleDBName(BasicTypes.REV_MAX_DB_NAME)),
 					literal(DBType.LONG, Revision.CURRENT_REV)),
 				eqSQL(
 					column(SQLH.mangleDBName(KBBasedMetaAttribute.IMPLEMENTATION_NAME)),
-					literal(DBType.STRING, KBBasedMetaAttributeFactory.ASSOCIATION_END_IMPL)),
+					literal(DBType.STRING, TLStructuredTypeColumns.ASSOCIATION_END_IMPL)),
 				eqSQL(
 					column(SQLH.mangleDBName(PersistentReference.COMPOSITE_ATTR)),
 					literal(DBType.BOOLEAN, true))))).toSql(sql);
@@ -136,7 +141,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 			table(SQLH.mangleDBName(PersistentReference.OBJECT_NAME)),
 			and(
 				eqSQL(
-					column(SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME)),
+					_util.branchColumnRef(),
 					literal(DBType.LONG, TLContext.TRUNK_ID)),
 				eqSQL(
 					column(SQLH.mangleDBName(BasicTypes.REV_MAX_DB_NAME)),
@@ -157,7 +162,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 			table(SQLH.mangleDBName(PersistentReference.OBJECT_NAME)),
 			and(
 				eqSQL(
-					column(SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME)),
+					_util.branchColumnRef(),
 					literal(DBType.LONG, TLContext.TRUNK_ID)),
 				eqSQL(
 					column(SQLH.mangleDBName(BasicTypes.REV_MAX_DB_NAME)),
@@ -238,8 +243,8 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 			parameterDef(DBType.ID, "refId")),
 		insert(
 			table(SQLH.mangleDBName(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION)),
-			columnNames(
-				BasicTypes.BRANCH_DB_NAME,
+			Util.list(
+				_util.branchColumn(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
@@ -251,8 +256,8 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 				attrIdColumn,
 				SQLH.mangleDBName(LinkStorage.SORT_ORDER)),
 			select(
-				columns(
-					columnDef(BasicTypes.BRANCH_DB_NAME),
+				Util.list(
+					_util.branchColumnDefOrNull(),
 					columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 					columnDef(BasicTypes.REV_MIN_DB_NAME),
 					columnDef(BasicTypes.REV_MAX_DB_NAME),
@@ -291,7 +296,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 		parameters(),
 		select(
 			columns(
-				columnDef(BasicTypes.BRANCH_DB_NAME),
+				_util.branchColumnDef(),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),
 				columnDef(SQLH.mangleDBName(KBBasedMetaAttribute.NAME)),
@@ -299,14 +304,14 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 			table(SQLH.mangleDBName(PersistentReference.OBJECT_NAME)),
 			and(
 				eqSQL(
-					column(SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME)),
+					_util.branchColumnRef(),
 					literal(DBType.LONG, TLContext.TRUNK_ID)),
 				eqSQL(
 					column(SQLH.mangleDBName(BasicTypes.REV_MAX_DB_NAME)),
 					literal(DBType.LONG, Revision.CURRENT_REV)),
 				eqSQL(
 					column(SQLH.mangleDBName(KBBasedMetaAttribute.IMPLEMENTATION_NAME)),
-					literal(DBType.STRING, KBBasedMetaAttributeFactory.REFERENCE_IMPL))))).toSql(sql);
+					literal(DBType.STRING, TLStructuredTypeColumns.REFERENCE_IMPL))))).toSql(sql);
 		getAllRefs.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 
 		try (ResultSet refs = getAllRefs.executeQuery(connection)) {

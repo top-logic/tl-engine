@@ -15,10 +15,17 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.PartConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
 
 /**
  * {@link MigrationProcessor} updating a primitive attribute.
@@ -79,6 +86,8 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link UpdateTLPropertyProcessor} from configuration.
 	 * 
@@ -93,8 +102,9 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Update part migration failed at " + getConfig().location(), ex);
@@ -105,10 +115,10 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		QualifiedPartName partName = getConfig().getName();
 		TypePart part;
 		try {
-			part = Util.getTLTypePartOrFail(connection, partName);
+			part = _util.getTLTypePartOrFail(connection, partName);
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find property to update " + Util.qualifiedName(partName) + " at " + getConfig().location(),
+				"Unable to find property to update " + _util.qualifiedName(partName) + " at " + getConfig().location(),
 				Log.WARN);
 			return;
 		}
@@ -116,7 +126,7 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		if (getConfig().getNewType() == null) {
 			newType = null;
 		} else {
-			newType = Util.getTLTypeOrFail(connection, getConfig().getNewType());
+			newType = _util.getTLTypeOrFail(connection, getConfig().getNewType());
 		}
 		Type newOwner;
 		QualifiedPartName newName = getConfig().getNewName();
@@ -124,7 +134,7 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 			&& partName.getTypeName().equals(newName.getTypeName()))) {
 			newOwner = null;
 		} else {
-			newOwner = Util.getTLTypeOrFail(connection, newName);
+			newOwner = _util.getTLTypeOrFail(connection, newName);
 		}
 		String newLocalName;
 		if (newName == null || partName.getPartName().equals(newName.getPartName())) {
@@ -132,11 +142,11 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		} else {
 			newLocalName = newName.getPartName();
 		}
-		Util.updateTLProperty(connection, part,
+		_util.updateTLProperty(connection, part,
 			newType, newOwner, newLocalName,
 			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
 			getConfig());
-		log.info("Updated part " + Util.qualifiedName(partName));
+		log.info("Updated part " + _util.qualifiedName(partName));
 	}
 
 }

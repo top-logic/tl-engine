@@ -20,37 +20,62 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLScope;
 import com.top_logic.model.access.StorageMapping;
-import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.impl.util.TLPrimitiveColumns;
 
 /**
  * Persistent variant of a {@link TLPrimitive}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class PersistentDatatype extends DynamicType implements TLPrimitive {
+public class PersistentDatatype extends DynamicType implements TLPrimitive, TLPrimitiveColumns {
 
-	/** Column that stores {@link #getKind()}. */
-	public static final String KIND_ATTR = "kind";
+	/**
+	 * Column that stores {@link #getKind()}.
+	 * 
+	 * @deprecated Use {@link TLPrimitiveColumns#KIND_ATTR} instead
+	 */
+	public static final String KIND_ATTR = TLPrimitiveColumns.KIND_ATTR;
 
 	/**
 	 * The table to store {@link PersistentDatatype}s in.
+	 * @deprecated Use {@link TLPrimitiveColumns#OBJECT_TYPE} instead
 	 */
-	public static final String OBJECT_TYPE = TlModelFactory.KO_NAME_TL_PRIMITIVE;
+	public static final String OBJECT_TYPE = TLPrimitiveColumns.OBJECT_TYPE;
 
-	/** Column that stores {@link #getDBType()}. */
-	public static final String DB_TYPE_ATTR = "dbType";
+	/**
+	 * Column that stores {@link #getDBType()}.
+	 * 
+	 * @deprecated Use {@link TLPrimitiveColumns#DB_TYPE_ATTR} instead
+	 */
+	public static final String DB_TYPE_ATTR = TLPrimitiveColumns.DB_TYPE_ATTR;
 
-	/** Column that stores {@link #getDBSize()}. */
-	public static final String DB_SIZE_ATTR = "dbSize";
+	/**
+	 * Column that stores {@link #getDBSize()}.
+	 * 
+	 * @deprecated Use {@link TLPrimitiveColumns#DB_SIZE_ATTR} instead
+	 */
+	public static final String DB_SIZE_ATTR = TLPrimitiveColumns.DB_SIZE_ATTR;
 
-	/** Column that stores {@link #getDBPrecision()}. */
-	public static final String DB_PRECISION_ATTR = "dbPrecision";
+	/**
+	 * Column that stores {@link #getDBPrecision()}.
+	 * 
+	 * @deprecated Use {@link TLPrimitiveColumns#DB_PRECISION_ATTR} instead
+	 */
+	public static final String DB_PRECISION_ATTR = TLPrimitiveColumns.DB_PRECISION_ATTR;
 
-	/** Column that stores {@link #isBinary()}. */
-	public static final String BINARY_ATTR = "binary";
+	/**
+	 * Column that stores {@link #isBinary()}.
+	 * 
+	 * @deprecated Use {@link TLPrimitiveColumns#BINARY_ATTR} instead
+	 */
+	public static final String BINARY_ATTR = TLPrimitiveColumns.BINARY_ATTR;
 
-	/** Column that stores {@link #getStorageMapping()}. */
-	public static final String STORAGE_MAPPING = "storageMapping";
+	/**
+	 * Column that stores {@link #getStorageMapping()}.
+	 * 
+	 * @deprecated Use {@link TLPrimitiveColumns#STORAGE_MAPPING} instead
+	 */
+	public static final String STORAGE_MAPPING = TLPrimitiveColumns.STORAGE_MAPPING;
 
 	/**
 	 * Creates a {@link PersistentDatatype} for a given {@link KnowledgeObject}.
@@ -61,13 +86,14 @@ public class PersistentDatatype extends DynamicType implements TLPrimitive {
 
 	@Override
 	public StorageMapping<?> getStorageMapping() {
-		return (StorageMapping<?>) tGetData(STORAGE_MAPPING);
+		return (StorageMapping<?>) tGetData(TLPrimitiveColumns.STORAGE_MAPPING);
 	}
 
 	@Override
 	public DBType getDBType() {
 		try {
-			return DBTypeFormat.INSTANCE.getValue(DB_TYPE_ATTR, tGetDataString(DB_TYPE_ATTR));
+			return DBTypeFormat.INSTANCE.getValue(TLPrimitiveColumns.DB_TYPE_ATTR,
+				tGetDataString(TLPrimitiveColumns.DB_TYPE_ATTR));
 		} catch (ConfigurationException ex) {
 			throw new WrapperRuntimeException(ex);
 		}
@@ -75,37 +101,37 @@ public class PersistentDatatype extends DynamicType implements TLPrimitive {
 
 	@Override
 	public void setDBType(DBType value) {
-		tSetDataString(DB_TYPE_ATTR, DBTypeFormat.INSTANCE.getSpecification(value));
+		tSetDataString(TLPrimitiveColumns.DB_TYPE_ATTR, DBTypeFormat.INSTANCE.getSpecification(value));
 	}
 
 	@Override
 	public Integer getDBSize() {
-		return tGetDataInteger(DB_SIZE_ATTR);
+		return tGetDataInteger(TLPrimitiveColumns.DB_SIZE_ATTR);
 	}
 
 	@Override
 	public void setDBSize(Integer value) {
-		tSetDataInteger(DB_SIZE_ATTR, value);
+		tSetDataInteger(TLPrimitiveColumns.DB_SIZE_ATTR, value);
 	}
 
 	@Override
 	public Integer getDBPrecision() {
-		return tGetDataInteger(DB_PRECISION_ATTR);
+		return tGetDataInteger(TLPrimitiveColumns.DB_PRECISION_ATTR);
 	}
 
 	@Override
 	public void setDBPrecision(Integer value) {
-		tSetDataInteger(DB_PRECISION_ATTR, value);
+		tSetDataInteger(TLPrimitiveColumns.DB_PRECISION_ATTR, value);
 	}
 
 	@Override
 	public Boolean isBinary() {
-		return tGetDataBoolean(BINARY_ATTR);
+		return tGetDataBoolean(TLPrimitiveColumns.BINARY_ATTR);
 	}
 
 	@Override
 	public void setBinary(Boolean value) {
-		tSetDataBoolean(BINARY_ATTR, value);
+		tSetDataBoolean(TLPrimitiveColumns.BINARY_ATTR, value);
 	}
 
 	/**
@@ -129,12 +155,12 @@ public class PersistentDatatype extends DynamicType implements TLPrimitive {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			PersistentDatatype newType =
 				(PersistentDatatype) WrapperFactory.getWrapper(
-					kb.createKnowledgeObject(OBJECT_TYPE, new NameValueBuffer()
+					kb.createKnowledgeObject(TLPrimitiveColumns.OBJECT_TYPE, new NameValueBuffer()
 						.put(SCOPE_REF, scope.tHandle())
 						.put(MODULE_REF, module.tHandle())
 						.put(NAME_ATTR, name)
-						.put(KIND_ATTR, kind)
-						.put(STORAGE_MAPPING, mapping)));
+						.put(TLPrimitiveColumns.KIND_ATTR, kind)
+						.put(TLPrimitiveColumns.STORAGE_MAPPING, mapping)));
 			return newType;
 		} catch (DataObjectException ex) {
 			throw new KnowledgeBaseRuntimeException(ex);
@@ -157,7 +183,7 @@ public class PersistentDatatype extends DynamicType implements TLPrimitive {
 
 	@Override
 	public Kind getKind() {
-		return (Kind) tGetData(KIND_ATTR);
+		return (Kind) tGetData(TLPrimitiveColumns.KIND_ATTR);
 	}
 
 }

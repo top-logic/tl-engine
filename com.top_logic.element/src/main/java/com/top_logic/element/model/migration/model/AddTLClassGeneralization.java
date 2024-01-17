@@ -20,8 +20,11 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.ExtendsConfig;
 import com.top_logic.element.config.ObjectTypeConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
  * {@link MigrationProcessor} creating generalizations from a {@link TLClass} to a list of other
@@ -78,6 +81,8 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link AddTLClassGeneralization} from configuration.
 	 * 
@@ -92,8 +97,9 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Adding generalization extension migration failed at " + getConfig().location(), ex);
@@ -104,11 +110,11 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 		QualifiedTypeName specialisation = getConfig().getName();
 		for (Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
-			Util.addGeneralisation(connection, specialisation, typeName);
+			_util.addGeneralisation(connection, specialisation, typeName);
 			log.info(
 				"Added generalisation "
-					+ Util.qualifiedName(typeName) + " to "
-					+ Util.qualifiedName(specialisation));
+					+ _util.qualifiedName(typeName) + " to "
+					+ _util.qualifiedName(specialisation));
 		}
 	}
 

@@ -7,7 +7,6 @@ package com.top_logic.element.meta.kbbased;
 
 import java.util.Set;
 
-import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
@@ -27,13 +26,13 @@ import com.top_logic.model.internal.PersistentTypePart;
 public abstract class PersistentStructuredTypePart extends PersistentTypePart implements TLStructuredTypePart {
 
 	/** Column name for {@link #isMandatory()} property. */
-	public static final String MANDATORY = AttributeConfig.MANDATORY;
+	public static final String MANDATORY = TLStructuredTypePart.MANDATORY_ATTR;
 
 	/** Column name for {@link #getType()} reference. */
-	public static final String TYPE_REF = "type";
+	public static final String TYPE_REF = TLStructuredTypePart.TYPE_ATTR;
 
 	/** Column name for {@link #getDefinition()} reference. */
-	public static final String DEFINITION_REF = "definition";
+	public static final String DEFINITION_REF = TLStructuredTypePart.DEFINITION_ATTR;
 
 	/**
 	 * Creates a {@link PersistentStructuredTypePart}.

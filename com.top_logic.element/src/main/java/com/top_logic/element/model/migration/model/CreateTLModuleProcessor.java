@@ -13,10 +13,12 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLModuleAnnotation;
+import com.top_logic.model.migration.Util;
 
 /**
  * {@link MigrationProcessor} creating {@link TLModule}.
@@ -35,6 +37,8 @@ public class CreateTLModuleProcessor extends AbstractConfiguredInstance<CreateTL
 		// Sum interface
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLModuleProcessor} from configuration.
 	 * 
@@ -49,8 +53,9 @@ public class CreateTLModuleProcessor extends AbstractConfiguredInstance<CreateTL
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Create module migration failed at " + getConfig().location(), ex);
@@ -58,7 +63,7 @@ public class CreateTLModuleProcessor extends AbstractConfiguredInstance<CreateTL
 	}
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
-		Util.createTLModule(connection, getConfig().getName(), getConfig());
+		_util.createTLModule(connection, getConfig().getName(), getConfig());
 		log.info("Created module " + getConfig().getName());
 	}
 

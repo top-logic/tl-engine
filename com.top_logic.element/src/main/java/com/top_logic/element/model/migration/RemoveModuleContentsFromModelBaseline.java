@@ -26,6 +26,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
@@ -70,10 +71,14 @@ public class RemoveModuleContentsFromModelBaseline extends
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			String xml = DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY,
 				DynamicModelService.APPLICATION_MODEL_PROPERTY);
+			if (xml == null) {
+				log.info("No model baseline, skipping migration.");
+				return;
+			}
 			Document document = DOMUtil.parse(xml);
 			NodeList modules = document.getElementsByTagName(ModuleConfig.TAG_NAME);
 			List<String> found = new ArrayList<>();

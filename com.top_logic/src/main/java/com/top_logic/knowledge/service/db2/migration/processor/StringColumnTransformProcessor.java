@@ -30,6 +30,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.sql.DBTableMetaObject;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
@@ -91,7 +92,7 @@ public abstract class StringColumnTransformProcessor<C extends StringColumnTrans
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		C config = getConfig();
 		String table = mangleDBName(config.getTable());
 		String column = mangleDBName(config.getColumn());
@@ -99,6 +100,11 @@ public abstract class StringColumnTransformProcessor<C extends StringColumnTrans
 
 			DBTable tableDef =
 				DBSchemaUtils.extractTable(connection.getPool(), DBSchemaFactory.createDBSchema(), table);
+			if (tableDef == null) {
+				log.info("No such table '" + table + "', skipping migration.");
+				return;
+			}
+
 			DBPrimary primaryKey = tableDef.getPrimaryKey();
 
 			List<SQLColumnDefinition> columns = new ArrayList<>();

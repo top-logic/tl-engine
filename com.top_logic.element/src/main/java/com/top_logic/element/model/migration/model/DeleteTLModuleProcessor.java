@@ -31,11 +31,16 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.internal.PersistentType;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.BranchIdType;
+import com.top_logic.model.migration.data.Module;
+import com.top_logic.model.migration.data.Type;
 import com.top_logic.util.TLContext;
 
 /**
@@ -59,6 +64,8 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link DeleteTLModuleProcessor} from configuration.
 	 * 
@@ -74,7 +81,7 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		String moduleName = getConfig().getName();
-		Module module = Util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
+		Module module = _util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
 		if (module == null) {
 			log.info("No module with name '" + moduleName + "' to delete available at " + getConfig().location());
 			return;
@@ -84,16 +91,16 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 
 		List<BranchIdType> moduleSingletons = getTLModuleSingletons(connection, module);
 		toDelete.addAll(moduleSingletons);
-		List<Type> types = Util.getTLTypeIdentifiers(connection, module);
+		List<Type> types = _util.getTLTypeIdentifiers(connection, module);
 		if (getConfig().isFailOnExistingTypes() && !types.isEmpty()) {
-			log.error("Module " + Util.toString(module) + " is not empty: " + Util.toString(types));
+			log.error("Module " + _util.toString(module) + " is not empty: " + _util.toString(types));
 			return;
 		}
 		toDelete.addAll(types);
 		for (Type type : types) {
-			toDelete.addAll(Util.getTLTypeParts(connection, type));
-			toDelete.addAll(Util.getGeneralizations(connection, type));
-			toDelete.addAll(Util.getSpecializations(connection, type));
+			toDelete.addAll(_util.getTLTypeParts(connection, type));
+			toDelete.addAll(_util.getGeneralizations(connection, type));
+			toDelete.addAll(_util.getSpecializations(connection, type));
 		}
 
 		Map<String, Map<Long, List<BranchIdType>>> byTypeAndBranch = new HashMap<>();
@@ -124,14 +131,14 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 			columns(
 				columnDef(BasicTypes.BRANCH_DB_NAME, NO_TABLE_ALIAS, branchAlias),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
-				columnDef(Util.refID(TLModuleSingleton.SINGLETON_ATTR),
+					columnDef(_util.refID(TLModuleSingleton.SINGLETON_ATTR),
 					NO_TABLE_ALIAS, singletonIdAlias),
-				columnDef(Util.refType(TLModuleSingleton.SINGLETON_ATTR),
+					columnDef(_util.refType(TLModuleSingleton.SINGLETON_ATTR),
 					NO_TABLE_ALIAS, singletonTypeAlias)),
 			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE_SINGLETONS)),
 			and(
 				eqSQL(
-					column(Util.refID(PersistentType.MODULE_REF)),
+						column(_util.refID(PersistentType.MODULE_REF)),
 					parameter(DBType.ID, "module")),
 				eqSQL(
 					column(BasicTypes.BRANCH_DB_NAME),
@@ -175,14 +182,15 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 				Set<TLID> ids = tmp2.stream().map(BranchIdType::getID).collect(Collectors.toSet());
 				int deletedRows = delete.executeUpdate(connection, representative.getBranch(), ids);
 				log.info("Deleted " + deletedRows + " rows from '" + representative.getTable() + "' in branch '"
-					+ representative.getBranch() + "' elements '" + Util.toString(tmp2) + "'.");
+					+ representative.getBranch() + "' elements '" + _util.toString(tmp2) + "'.");
 			}
 		}
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Delete module migration failed.", ex);

@@ -28,10 +28,16 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.BasicTypes;
-import com.top_logic.element.model.ModelResolver;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.Reference;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} deleting no longer used {@link TLReference}.
@@ -97,6 +103,8 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 		String getAssociationTable();
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link DeleteTLReferenceProcessor} from configuration.
 	 * 
@@ -115,25 +123,25 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 
 		Reference typePart;
 		try {
-			typePart = (Reference) Util.getTLTypePartOrFail(connection, partToDelete);
+			typePart = (Reference) _util.getTLTypePartOrFail(connection, partToDelete);
 		} catch (MigrationException ex) {
 			log.info(
-				"No part with name '" + Util.qualifiedName(partToDelete) + "' to delete available at "
+				"No part with name '" + _util.qualifiedName(partToDelete) + "' to delete available at "
 					+ getConfig().location(),
 				Log.WARN);
 			return;
 		}
-		Util.deleteModelPart(connection, typePart);
-		log.info("Deleted reference " + Util.toString(typePart));
+		_util.deleteModelPart(connection, typePart);
+		log.info("Deleted reference " + _util.toString(typePart));
 
 		if (!typePart.getID().equals(typePart.getDefinition())) {
 			// Reference is an overridden attribute. Nothing to do more.
 			return;
 		}
 		if (!getConfig().isInverse()) {
-			Type association = Util.getTLTypeOrFail(connection, typePart.getOwner().getModule(),
-				ModelResolver.syntheticAssociationName(typePart.getOwner().getTypeName(), typePart.getPartName()));
-			Util.deleteTLType(connection, association, false);
+			Type association = _util.getTLTypeOrFail(connection, typePart.getOwner().getModule(),
+				TLStructuredTypeColumns.syntheticAssociationName(typePart.getOwner().getTypeName(), typePart.getPartName()));
+			_util.deleteTLType(connection, association, false);
 			if (getConfig().getAssociationTable() != null) {
 				CompiledStatement delete = query(
 				parameters(
@@ -146,18 +154,19 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 							column(BasicTypes.BRANCH_DB_NAME),
 							parameter(DBType.LONG, "branch")),
 						eqSQL(
-							column(Util.refID(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)),
+								column(_util.refID(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)),
 							parameter(DBType.ID, "id"))))).toSql(connection.getSQLDialect());
 
 				int deletedRows = delete.executeUpdate(connection, typePart.getBranch(), typePart.getID());
-				log.info("Deleted " + deletedRows + " assignments for deleted part " + Util.toString(typePart));
+				log.info("Deleted " + deletedRows + " assignments for deleted part " + _util.toString(typePart));
 			}
 		}
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Delete tl reference migration failed at " + getConfig().location(), ex);

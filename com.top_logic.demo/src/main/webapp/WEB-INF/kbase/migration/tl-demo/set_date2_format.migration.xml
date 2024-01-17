@@ -2,7 +2,7 @@
 
 <migration>
 	<dependencies>
-		<dependency name="migration_21612"
+		<dependency name="Ticket_24085_layout_db_storage"
 			module="tl"
 		/>
 	</dependencies>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+	<Match>
+		<Class name="com.top_logic.reporting.chart.dataset.TreeTask" />
+		<Method name="equals" />
+		<Bug pattern="EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC" />
+	</Match>
+</FindBugsFilter>

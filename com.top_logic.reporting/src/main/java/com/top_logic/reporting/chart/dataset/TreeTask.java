@@ -18,10 +18,9 @@ import com.top_logic.basic.TLID;
 /**
  * Extend Task with infos about the Tree-Structure.
  * 
- * Be carefull TreeTask with same name and smae parent index will
- * be suppressed by JFreechart
+ * Be carefull TreeTask with same name and same parent index will be suppressed by JFreechart
  * 
- * @author    <a href=mailto:kha@top-logic.com>kha</a>
+ * @author <a href=mailto:kha@top-logic.com>kha</a>
  */
 public class TreeTask extends Task implements Comparable {
     
@@ -85,7 +84,7 @@ public class TreeTask extends Task implements Comparable {
     
     @Override
 	public boolean equals(Object anOther) {
-		// TODO #19482: FindBugs(EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC)
+		// Ignoring SpotBugs(EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC)
         return (anOther instanceof TreeTask) && equals((TreeTask) anOther); 
     }
     

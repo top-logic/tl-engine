@@ -105,7 +105,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
      */
     @Override
 	public boolean equals(Object other) {
-		// TODO #19482: FindBugs(EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC)
+		// Ignoring SpotBugs(EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC)
     	if (other == this) {
     		return true;
     	}

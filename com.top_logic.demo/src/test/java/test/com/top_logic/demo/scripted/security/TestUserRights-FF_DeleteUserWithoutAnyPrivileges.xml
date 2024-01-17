@@ -4,62 +4,15 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Zugänge"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Zugänge > Benutzerkonten"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-			change-kind="ABSOLUTE"
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Nutzer/Nutzer-loeschen-byName.xml"
+			template-name-comment="Nutzer loeschen byName"
 		>
-			<selection>
-				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-					table-name="Person"
-				>
-					<key-values>
-						<attribute name="name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="userWithoutPrivileges"
-							/>
-						</attribute>
-					</key-values>
-				</selectee>
-				<selection-state boolean="true"/>
-			</selection>
-			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-					tab-path="Administration > Zugänge > Benutzerkonten"
+			<parameters>
+				<parameter name="userName"
+					value="userWithoutPrivileges"
 				/>
-			</selection-model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
-			command-label="Bearbeiten"
-			command-name="switchToAJAXEdit"
-			component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-			component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-			command-label="Löschen..."
-			command-name="deletePerson"
-			component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-			component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-		>
-			<arguments/>
+			</parameters>
 		</action>
 	</actions>
 </action>

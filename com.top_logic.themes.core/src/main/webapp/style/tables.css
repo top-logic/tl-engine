@@ -270,23 +270,23 @@ div.frmBody.dndInsertInto > div.dropPane {
  	bottom: 0px;
 	right: 0px;
 	opacity: 0.5;
-	background-color: var(--DROP_MARKER_COLOR);
+	background-color: var(--notification-info-background);
 }
 
 tr.tl-table__row.dndInsertInto > td {
-	background-color: var(--DROP_MARKER_COLOR);
+	background-color: var(--notification-info-background);
 }
 
 tr.tl-table__row.dndInsertBelow {
 	border-bottom-width: 2px;
 	border-bottom-style: solid;
-	border-bottom-color: var(--INSERT_MARKER_COLOR);
+	border-bottom-color: var(--border-interactive);
 }
 
 tr.tl-table__row.dndInsertAbove {
 	border-top-width: 2px;
 	border-top-style: solid;
-	border-top-color: var(--INSERT_MARKER_COLOR);
+	border-top-color: var(--border-interactive);
 }
 
 

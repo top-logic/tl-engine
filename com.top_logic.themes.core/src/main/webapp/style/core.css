@@ -2168,6 +2168,7 @@ If they're deleted, this can be deleted too
 .treeBody {
 	height: 100%;
 	background-color: var(--layer);
+	white-space: nowrap
 }
 
 .tcrNode {
@@ -2179,11 +2180,12 @@ If they're deleted, this can be deleted too
 }
 
 .tcrNode .treeNode {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-01);
-	height: 2rem;
-	padding: 0 var(--spacing-03);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-01);
+    height: 2rem;
+    padding: 0 var(--spacing-03);
+    position: relative;
 }
 
 .treeChildren {
@@ -2249,6 +2251,39 @@ If they're deleted, this can be deleted too
 .tcrNode .treeNode a:focus {
 	color: var(--icon-secondary);
 	box-shadow: none;
+}
+
+div.treeNode.dndInsertAbove::before,
+div.treeNode.dndInsertBelow::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0;
+    height: 2px;
+    background-color: var(--border-interactive);
+}
+
+div.treeNode.dndInsertAbove::before {
+    top: 0;
+}
+
+div.treeNode.dndInsertBelow::after {
+    bottom: 0;
+}
+
+div.treeNode.dndInsertWithin::after {
+    content: "";
+    position: absolute;
+    left: 4rem;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background-color: var(--border-interactive);
+}
+
+div.treeNode.dndInsertInto,
+div.treeNode.treeSelected.dndInsertInto {
+	background-color: var(--notification-info-background);
 }
 
 /*
@@ -2380,5 +2415,26 @@ If they're deleted, this can be deleted too
 	align-items: center;
 	gap: var(--spacing-01);
 	color: var(--text-primary);
+}
+
+/*
+ * =======================================
+ * ======= Styles for Drag n Drop ========
+ * =======================================
+ */
+.DNDinsertMarker {
+	line-height: 5px;
+	background-color: var(--border-interactive);
+}
+
+div.DNDmouseMarker {
+	position: absolute;
+}
+
+div.DNDmouseMarker div.dndSelection {
+    position: static;
+    background-color: var(--notification-info-background);
+    border: solid 1px;
+    padding: 2px;
 }
 

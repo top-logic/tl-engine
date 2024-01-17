@@ -92,7 +92,7 @@ public class AdminElementComponent extends EditAttributedComponent {
     private transient boolean editRoot;
     
     /**
-     * sets a boolean flag to indicate wether editing of attributes
+     * sets a boolean flag to indicate whether editing of attributes
      * on the root element is possible or not  
      */
     protected void setEditRoot(boolean flag){
@@ -100,7 +100,7 @@ public class AdminElementComponent extends EditAttributedComponent {
     }
     
     /**
-     * a boolean flag to indicate wether editing of attributes
+     * a boolean flag to indicate whether editing of attributes
      * on the root element is possible or not
      */
     protected boolean allowEditRoot(){

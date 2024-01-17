@@ -42,7 +42,7 @@ import com.top_logic.dsa.DatabaseAccessException;
  *  <li> create(dataSource) Where dataSource is the conatiner and
  *                          the filename is taken from the client
  *  </li> 
- *  <li> upload(dataSource) Decide wether an update or creation in senseful
+ *  <li> upload(dataSource) Decide whether an update or creation in senseful
  *  </li>
  *  <li> mkdir(dataSource)  Create new directory</li> 
  * </ul>
@@ -474,7 +474,7 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
      }
      
      /**
-      * Decide wether the doCreate, doUpdate or doUpload-method is invoked.
+      * Decide whether the doCreate, doUpdate or doUpload-method is invoked.
       * 
       * @param  aFileItems a list of FileItems
       * @param  aFormFieldMap a map the contains a name of a form-field as key and its 

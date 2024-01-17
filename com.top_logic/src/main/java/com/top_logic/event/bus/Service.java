@@ -68,7 +68,7 @@ public class Service implements Serializable {
     }
 
     /**
-     *  Indicates wether some other object is "equal to" this one.
+     *  Indicates whether some other object is "equal to" this one.
      *
      * @param  anObject   The reference object with which to compare.
      * @return            true, if this object is the same as the anObject 

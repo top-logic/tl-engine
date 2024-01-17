@@ -24,7 +24,8 @@
     overflow: hidden;
 }
 
-.rf_header > .rf_menu, .dfModeFull .dfListCommands {
+.rf_header > .rf_menu, .dfModeFull .dfListCommands,
+.dfEntryTitle .lFixedRight {
 	display: flex;
 	gap: var(--spacing-01);
 	margin-left: auto;
@@ -58,6 +59,7 @@ div.fptBodyContent {
 	right: 0px;
 	top: 0px;
 	bottom: 0px;
+    padding: 0 var(--spacing-03);
 }
 
 div.fptTitle {
@@ -231,7 +233,6 @@ a.is-action {
 
 .frmBody {
 	padding: 0 var(--spacing-03);
-	margin: var(--spacing-03) 0;
 }
 
 div.frmBody > div.dropPane {
@@ -278,6 +279,7 @@ div.rf_buttons {
 
 .rf_columnsLayout {
     margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+    margin-top: var(--spacing-03);
 }
 
 .rf_columnsLayout.keep {
@@ -407,7 +409,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-template-columns: repeat(5, 1fr); 
 } 
 
-
 /* in lists */
 .dfEntryTitle.colored {
 	grid-row: 1;
@@ -427,6 +428,16 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .dfEntryTitle.colored:hover {
 	background: var(--layer-accent-hover);
+}
+
+.dfEntryTitle.colored .lFixedRight,
+.dfEntryTitle.colored:hover .lFixedRight a {
+	background: none;
+}
+
+.dfEntryTitle.colored .lFixedRight a:hover {
+	background: none;
+	color: var(--link-primary-hover);
 }
 
 .cOnExpandedControl {
@@ -791,11 +802,44 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	background-position: left center, right center; 
 }
 
-div.cFormEditorToolbox [data-tool=true] > .attribute {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	/* width: 100px; */
+.cFormEditorToolbox [data-tool=true].rf_dragElement {
+    display: inline-block;
+    line-height: 12px;
+    overflow: hidden;
+    width: 100%;
+    margin-bottom: var(--spacing-02);
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	height: 2rem; /* 32px height */
+	border-radius: var(--corner-radius);
+	color: var(--button-secondary);
+	background: var(--background);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	white-space: nowrap;
+	width: 100%;
 	box-sizing: border-box;
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute:hover {
+	color: var(--text-on-color);
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute > .type-image {
+	display: inline-block;
+}
+
+.cFormEditorDisplay [data-tool=false] > .attribute {
+	color: var(--text-secondary);
+}
+
+.cFormEditorDisplay [data-tool=false] > .attribute:hover {
+	color: var(--text-primary);
 }
 
 /* form editor icons */
@@ -918,10 +962,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	transform: translate(-50%, -50%);
 }
 
-.cFormEditorToolbar .cFormEditorElement.rf_dragElement.rf_line {
-	width: auto;
-}
-
 /* for demo: display number of columns */
 .dflSize0 .show-columns:after { content: "0"; }
 .dflSize1 .show-columns:after { content: "1"; }
@@ -933,21 +973,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	border: 1px solid grey;
 	margin-bottom: 10px;
 	padding: 4px;
-}
-
-.cFormEditorToolbox [data-tool=true].rf_dragElement {
-	display: inline-block;
-	line-height: 12px;
-	margin-bottom: 5px;
-}
-
-.cFormEditorToolbox [data-tool=true] > .attribute {
-	padding: 2px 8px 3px 4px;
-}
-
-.cFormEditorToolbox [data-tool=true] > .attribute > .type-image {
-	display: inline-block;
-	width: 20px;
 }
 
 .rf_emptyCell {
@@ -1306,6 +1331,10 @@ div.cal_zoom_inAnimation {
 	display: inline-flex;
 }
 
+.cPopupSelect {
+	width: 100%;
+}
+
 .cDecoratedCell a.input-image,
 .cDecoratedCell a.input-image:hover,
 .cDecoratedCell a.input-image:focus {
@@ -1380,7 +1409,6 @@ span.cIconSelect .input-image.cannot-edit i {
 }
 
 .cTextInput input,
-.cTextInput textarea,
 .cIntegerInput.num input,
 .cExpandableTextInput input,
 .cBlockTextInput input,
@@ -1407,8 +1435,16 @@ span.cIconSelect .input-image.cannot-edit i {
 }
 
 .cTextInput textarea {
-	padding-top: var(--spacing-02);
-	padding-bottom: var(--spacing-02);
+	color: var(--text-primary);
+	background: var(--field);
+	border: none;
+	height: 6rem;
+	padding: var(--spacing-02) var(--spacing-03);
+	box-sizing: border-box;
+	max-width: 100%;
+	white-space: break-spaces;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
 .cTextInput input::placeholder,
@@ -1588,6 +1624,7 @@ select:not([multiple="multiple"]) {
     background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
     border: none;
+    background-color: var(--field);
 }
 
 select:not([multiple="multiple"]):disabled {
@@ -1798,7 +1835,7 @@ span.bcc-option, .cChoice-option {
 	width: 1.5rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 }
 
 span.cColorDisplay {
@@ -2028,7 +2065,7 @@ div.sizeContainer, div.imageContainer {
 	width: 1.5rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	background-color: var(--layer-accent);
 }
 
@@ -2078,7 +2115,7 @@ div.sizeContainer, div.imageContainer {
 	cursor: pointer;
 	color: var(--text-on-color);
 	padding-left: var(--spacing-02);
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
 }
@@ -2362,7 +2399,18 @@ span.disabled .ddwttChevron::after {
 
 .ddwttItemLabel {
 	display: block;
-	padding: 0 var(--spacing-03);
+	padding: 0 var(--spacing-02);
+	cursor: default;
+}
+
+.ddwttItemIcon {
+	margin-right: 8px !important;
+	padding-left: 3px;
+}
+
+.ddwttItem .ddwttItemLabel {
+	display: inline-block;
+	cursor: default;
 }
 
 /* Tags */
@@ -2376,15 +2424,12 @@ span.disabled .ddwttChevron::after {
 
 .ddwttTag {
 	border: 1px solid var(--border-subtle);
+	box-sizing: border-box;
 	transition: 0.3s;
 	gap: var(--spacing-01);
 	padding: 0 var(--spacing-02);
 	height: 2rem;
 	margin-right: var(--spacing-02);
-}
-
-.ddwttTag:hover {
-	text-decoration: line-through var(--border-strong) 1px;
 }
 
 .ddwttTagX {

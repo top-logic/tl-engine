@@ -77,6 +77,17 @@ i.yellow {
 	color: var(--support-warning);
 }
 
+/* Overlay styles are needed as long as the old icons with an overlay are not removed completely */
+i[class*=" overlay-"] span::before {
+	margin-left: -0.8em;
+	color: var(--background);
+}
+
+.overlay-add span::before {
+	content: "\e9cf";
+	margin-left: -1em;
+}
+
 .layoutVerticalAdjustmentGrabber {
     cursor: n-resize;
     background: var(--background);
@@ -136,6 +147,17 @@ a.cmdLink:visited {
 ****	Code-Editor Styles	  ****
 ****					      ****
 */
+.fullSize .ace_editor {
+	position: absolute;
+	margin: 0;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	border: none;
+	height: auto;
+}
+
 .ace-eclipse .ace_active-line {
     background: var(--layer-selected);
 	border: 1px solid var(--border-subtle);
@@ -280,6 +302,7 @@ div.ace_tooltip>code.inlineCode {
 	width: 100%;
 	height: 100%;
 	background: var(--layer);
+	overflow: auto;
 }
 
 .fltGlobalContainer input,
@@ -299,7 +322,6 @@ div.fltHeader {
 .fltSettings {
 	position: relative;
 	overflow: auto;
-	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
 	max-width: 100%;
 	padding: 0 var(--spacing-03);
 }
@@ -307,7 +329,7 @@ div.fltHeader {
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
-	padding: var(--spacing-03) var(--spacing-01);
+	padding: var(--spacing-03) var(--spacing-01) var(--spacing-02) var(--spacing-01);
 }
 
 .fltMenu {
@@ -1047,7 +1069,7 @@ td.rightList {
 
 .cDefaultButton button {
 	border: none;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	cursor: pointer;
 }
 
@@ -1732,7 +1754,7 @@ span.ltcCounting input {
 	padding-bottom: var(--spacing-03);
 	min-width: 0px;
 	background-clip: border-box;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 	height: 20rem;
 	width: 16rem;
 	overflow: hidden;
@@ -1762,7 +1784,7 @@ span.ltcCounting input {
     order: 1;
     width: 100%;
     height: 0;
-    padding-bottom: 75%;
+    padding-bottom: 100%;
     position: relative;
     overflow: hidden;
     background: var(--background);
@@ -1781,6 +1803,16 @@ span.ltcCounting input {
 	height: 100%;
 	object-fit: contain;
 	background: transparent;
+}
+
+.previewBoxOuter:not(.galleryPreview) .previewBoxInner {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-img-top i {
+	font-size: 8rem;
 }
 
 h5.card-title {
@@ -1878,7 +1910,7 @@ h5.card-title a:focus {
 	flex-shrink: 0;
 	height: 2.5rem;
 	width: 2.5rem;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 }
 
 .tlUser a {
@@ -1910,7 +1942,7 @@ h5.card-title a:focus {
 	flex-shrink: 0;
 	height: 2.5rem;
 	width: 2.5rem;
-	border-radius: .25rem;
+	border-radius: var(--corner-radius);
 }
 
 .ToolBarContainer .IconContainer .cButton a i,
@@ -2152,53 +2184,64 @@ If they're deleted, this can be deleted too
 }
 
 .tcrLink {
-	font-family: 'Inter-Regular';
-	font-size: var(--body-01-font-size);
-	line-height: var(--body-01-line-height);
-	letter-spacing: var(--body-01-letter-spacing);
 	color: var(--text-secondary);
-	word-break: break-all;
-	margin-left: var(--spacing-02);
+	overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .treeNode .fToggle,
-.fToggle.tcrToggle, .tlLeafIcon,
+.fToggle.tcrToggle, 
+.tlLeafIcon,
 .tcrNode .treeNode span {
 	color: var(--icon-secondary);
+	width: 15px;
 }
 
-.treeNode.treeSelected .fToggle.tcrToggle, .tlLeafIcon,
+.treeNode.treeSelected .fToggle.tcrToggle,
+.tlLeafIcon,
 .tcrNode .treeNode.treeSelected span {
 	color: var(--icon-primary);
 }
 
+.treeNode:hover .fToggle.tcrToggle,
+.tlLeafIcon:hover,
+.treeNode:hover span {
+	color: var(--icon-primary);
+}
+
 .treeNode .input-image.fToggle.disabled {
-	height: 1rem;
-	width: 1rem;
+	color: var(--icon-disabled);
 }
 
 .treeSelected .tcrLink {
 	color: var(--text-primary);
 }
 
-
-.tcrNode .treeNode:hover,
-.tcrNode .treeNode:hover::after {
+.tcrNode .treeNode:hover {
+	color: var(--text-primary);
 	background: var(--layer-hover);
 }
 
-.tcrNode .treeNode.treeSelected,
-.tcrNode .treeNode.treeSelected::after{
+.tcrNode .treeNode:hover .tcrLink {
+	color: var(--text-primary);
+}
+
+.tcrNode .treeNode.treeSelected {
 	background: var(--layer-selected);
 }
 
-.tcrNode .treeNode.treeSelected:hover,
-.tcrNode .treeNode.treeSelected:hover::after{
+.tcrNode .treeNode.treeSelected .tcrLink {
+	color: var(--text-primary);
+}
+
+.tcrNode .treeNode.treeSelected:hover {
 	background: var(--layer-selected-hover);
 }
 
 .tcrNode .treeNode a:focus {
-	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	color: var(--icon-secondary);
+	box-shadow: none;
 }
 
 /*
@@ -2211,7 +2254,7 @@ If they're deleted, this can be deleted too
 	flex-direction: row-reverse;
 	align-items: center;
 	justify-content: space-between;
-	background-color: var(--layer);
+	background-color: var(--layer-accent);
 	height: inherit;
 	gap: var(--spacing-02);
 	overflow: hidden;
@@ -2274,9 +2317,12 @@ If they're deleted, this can be deleted too
 	color: var(--icon-primary);
 }
 
-.cCollapsibleToolbar, .cToolbar, 
-.cCollapsibleToolbar .tbGroup, .cCollapsibleButtons,
-.tl-table__title-toolbar {
+.cCollapsibleToolbar,
+.cToolbar, 
+.cCollapsibleToolbar .tbGroup,
+.cCollapsibleButtons,
+.tl-table__title-toolbar,
+.tbGroup {
 	display: flex;
 	gap: var(--spacing-02);
 }

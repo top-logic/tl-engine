@@ -1487,8 +1487,11 @@
 	<icon name="com.top_logic.util.sched.layout.Icons.EXCEPTION"
 		expr="%com.top_logic.util.error.Icons.INFO%"
 	/>
-	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
+	<icon name="ICONS_BUTTON_PAUSE"
 		value="css:bi bi-pause-fill red"
+	/>
+	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
+		expr="%ICONS_BUTTON_PAUSE%"
 	/>
 	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_YELLOW"
 		value="css:bi bi-pause-fill yellow"

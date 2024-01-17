@@ -2050,7 +2050,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * Decides wether this LayoutComponent renders the content complete. If
+     * Decides whether this LayoutComponent renders the content complete. If
      * <code>false</code>, an HTML-Structure will be produced. Overwrite to
      * adjust to your component type.
      *

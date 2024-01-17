@@ -25,7 +25,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 public interface SecurityChecker {
 
     /**
-     * Checks, wether the access to the given object is allowed.
+     * Checks, whether the access to the given object is allowed.
      *
      * @param    anObject    The object to be inspected.
      * @return   true, if access allowed, false otherwise.
@@ -33,7 +33,7 @@ public interface SecurityChecker {
     public boolean allow (DataObject anObject);
 
     /**
-     * Checks, wether the access to the given attribute of the given object 
+     * Checks, whether the access to the given attribute of the given object 
      * is allowed.
      *
      * @param    anObject       The object to be inspected.

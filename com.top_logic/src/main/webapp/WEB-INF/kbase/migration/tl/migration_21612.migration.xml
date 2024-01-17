@@ -4,6 +4,11 @@
 	<version name="migration_21612"
 		module="tl"
 	/>
+	<dependencies>
+		<dependency name="00_initial_version"
+			module="tl"
+		/>
+	</dependencies>
 	<processors>
 		<sql file-name-prefix="webinf://kbase/migration/tl/migration_21612_scripts/updateTLProperties" />
 	</processors>

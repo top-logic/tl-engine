@@ -1453,19 +1453,6 @@ span.cIconSelect .input-image.cannot-edit i {
     gap: var(--spacing-02);
 }
 
-.cTextInput textarea {
-	color: var(--text-primary);
-	background: var(--field);
-	border: none;
-	height: 6rem;
-	padding: var(--spacing-02) var(--spacing-03);
-	box-sizing: border-box;
-	max-width: 100%;
-	white-space: break-spaces;
-	word-wrap: break-word;
-	word-break: break-word;
-}
-
 .cTextInput input::placeholder,
 .cTextInput textarea::placeholder,
 .cExpandableTextInput input::placeholder,

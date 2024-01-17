@@ -13,10 +13,16 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.Module;
+import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} updating a {@link TLAssociation}.
@@ -46,6 +52,8 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link UpdateTLAssociationProcessor} from configuration.
 	 * 
@@ -60,8 +68,9 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(com.top_logic.model.migration.Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Update association migration failed at " + getConfig().location(), ex);
@@ -72,10 +81,10 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 		QualifiedTypeName typeName = getConfig().getName();
 		Type association;
 		try {
-			association = Util.getTLTypeOrFail(connection, typeName);
+			association = _util.getTLTypeOrFail(connection, typeName);
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find association to update " + Util.qualifiedName(typeName) + " at "
+				"Unable to find association to update " + _util.qualifiedName(typeName) + " at "
 					+ getConfig().location(),
 				Log.WARN);
 			return;
@@ -85,7 +94,7 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 		if (newName == null || typeName.getModuleName().equals(newName.getModuleName())) {
 			newModule = null;
 		} else {
-			newModule = Util.getTLModuleOrFail(connection, newName.getModuleName());
+			newModule = _util.getTLModuleOrFail(connection, newName.getModuleName());
 		}
 		String newAssociationName;
 		if (newName == null || typeName.getTypeName().equals(newName.getTypeName())) {
@@ -94,9 +103,9 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 			newAssociationName = newName.getTypeName();
 		}
 
-		Util.updateTLStructuredType(connection, association, newModule, newAssociationName, null,
+		_util.updateTLStructuredType(connection, association, newModule, newAssociationName, null,
 			null, (String) null);
-		log.info("Updated association " + Util.toString(association));
+		log.info("Updated association " + _util.toString(association));
 	}
 
 }

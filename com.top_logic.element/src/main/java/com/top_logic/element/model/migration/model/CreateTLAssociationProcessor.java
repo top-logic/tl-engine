@@ -13,10 +13,13 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
  * {@link MigrationProcessor} creating a {@link TLAssociation}.
@@ -41,6 +44,8 @@ public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<Cre
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLAssociationProcessor} from configuration.
 	 * 
@@ -55,8 +60,9 @@ public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<Cre
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating association migration failed at " + getConfig().location(), ex);
@@ -65,8 +71,8 @@ public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<Cre
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
-		Util.createTLAssociation(connection, typeName, getConfig());
-		log.info("Created association " + Util.qualifiedName(typeName));
+		_util.createTLAssociation(connection, typeName, getConfig());
+		log.info("Created association " + _util.qualifiedName(typeName));
 	}
 
 }

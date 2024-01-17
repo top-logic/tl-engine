@@ -35,6 +35,7 @@ import com.top_logic.layout.security.LiberalAccessChecker;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -82,17 +83,17 @@ public abstract class KBBasedMetaAttribute extends PersistentStructuredTypePart 
 	 * The attribute storing the sort order of attributes with the same {@link #OWNER_REF}
 	 * reference.
 	 */
-	public static final String OWNER_REF_ORDER_ATTR = "ownerOrder";
+	public static final String OWNER_REF_ORDER_ATTR = ApplicationObjectUtil.OWNER_REF_ORDER_ATTR;
 
 	/**
 	 * Property deciding about the concrete meta type of the attribute.
 	 * 
-	 * @see KBBasedMetaAttributeFactory#CLASS_PROPERTY_IMPL
-	 * @see KBBasedMetaAttributeFactory#REFERENCE_IMPL
-	 * @see KBBasedMetaAttributeFactory#ASSOCIATION_PROPERTY_IMPL
-	 * @see KBBasedMetaAttributeFactory#ASSOCIATION_END_IMPL
+	 * @see TLStructuredTypeColumns#CLASS_PROPERTY_IMPL
+	 * @see TLStructuredTypeColumns#REFERENCE_IMPL
+	 * @see TLStructuredTypeColumns#ASSOCIATION_PROPERTY_IMPL
+	 * @see TLStructuredTypeColumns#ASSOCIATION_END_IMPL
 	 */
-	public static final String IMPLEMENTATION_NAME = "impl";
+	public static final String IMPLEMENTATION_NAME = ApplicationObjectUtil.IMPLEMENTATION_NAME;
 
 	/**
 	 * {@link MetaObject} name for {@link TLStructuredTypePart}s.

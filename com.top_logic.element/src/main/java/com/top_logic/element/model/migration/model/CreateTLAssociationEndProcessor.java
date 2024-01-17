@@ -13,8 +13,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.PartConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
  * {@link MigrationProcessor} creating {@link TLAssociationEnd}.
@@ -42,6 +46,8 @@ public class CreateTLAssociationEndProcessor
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLAssociationEndProcessor} from configuration.
 	 * 
@@ -56,8 +62,9 @@ public class CreateTLAssociationEndProcessor
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating association end migration failed at " + getConfig().location(), ex);
@@ -67,13 +74,13 @@ public class CreateTLAssociationEndProcessor
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
-		Util.createTLAssociationEnd(connection, partName, targetType,
+		_util.createTLAssociationEnd(connection, partName, targetType,
 			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
 			getConfig().isMultiple(), getConfig().isBag(),
 			getConfig().isOrdered(),
 			getConfig().canNavigate(), getConfig());
 
-		log.info("Created part " + Util.qualifiedName(partName));
+		log.info("Created part " + _util.qualifiedName(partName));
 	}
 
 }

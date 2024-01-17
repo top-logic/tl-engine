@@ -38,8 +38,14 @@ import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.BranchIdType;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLObject}.
@@ -130,6 +136,8 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 
 	private final Map<String, Object> _values = new LinkedHashMap<>();
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLObjectProcessor} from configuration.
 	 * 
@@ -162,8 +170,9 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating class migration failed at " + getConfig().location(), ex);
@@ -183,8 +192,8 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 	public BranchIdType createObject(PooledConnection connection) throws SQLException, MigrationException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 		
-		Type type = Util.getTLTypeOrFail(connection, getConfig().getType());
-		TLID newID = Util.newID(connection);
+		Type type = _util.getTLTypeOrFail(connection, getConfig().getType());
+		TLID newID = _util.newID(connection);
 		long branch = type.getBranch();
 		
 		List<Parameter> parameterDefs = new ArrayList<>();
@@ -208,10 +217,10 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		values.add(parameter(DBType.LONG, "revCreate"));
 		columns.add(BasicTypes.REV_CREATE_DB_NAME);
 		values.add(parameter(DBType.LONG, "revCreate"));
-		arguments.add(Util.getRevCreate(connection));
+		arguments.add(_util.getRevCreate(connection));
 		
 		parameterDefs.add(parameterDef(DBType.ID, "typeID"));
-		columns.add(Util.refID(PersistentObject.TYPE_REF));
+		columns.add(_util.refID(PersistentObject.TYPE_REF));
 		values.add(parameter(DBType.ID, "typeID"));
 		arguments.add(type.getID());
 		

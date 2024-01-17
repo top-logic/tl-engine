@@ -19,23 +19,23 @@ import com.top_logic.basic.LongID;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLStatement;
-import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.element.meta.kbbased.KBBasedMetaElement;
-import com.top_logic.element.meta.kbbased.KBBasedMetaElementFactory;
-import com.top_logic.element.model.migration.model.Module;
-import com.top_logic.element.model.migration.model.Type;
-import com.top_logic.element.model.migration.model.Util;
 import com.top_logic.knowledge.service.db2.SourceReference;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.Module;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} ensuring that all {@link TLClass} extends (inherited)
@@ -45,9 +45,13 @@ import com.top_logic.model.impl.generated.TlModelFactory;
  */
 public class ExtendsTLObject implements MigrationProcessor {
 
+	private Util _util;
+
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
+
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Unable to ensure that all TLClasses extends tl.model:TLObject.", ex);
@@ -55,8 +59,8 @@ public class ExtendsTLObject implements MigrationProcessor {
 	}
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
-		Module tlModelModule = Util.getTLModuleOrFail(connection, TlModelFactory.TL_MODEL_STRUCTURE);
-		Type tlObjectType = Util.getTLTypeOrFail(connection, tlModelModule, TLObject.TL_OBJECT_TYPE);
+		Module tlModelModule = _util.getTLModuleOrFail(connection, TlModelFactory.TL_MODEL_STRUCTURE);
+		Type tlObjectType = _util.getTLTypeOrFail(connection, tlModelModule, TLObject.TL_OBJECT_TYPE);
 
 		Map<TLID, String> identifiers = new HashMap<>();
 		long branch = tlObjectType.getBranch();
@@ -71,9 +75,9 @@ public class ExtendsTLObject implements MigrationProcessor {
 				// No self generalisation
 				continue;
 			}
-			Util.addGeneralization(connection, branch, classWithoutGeneralization.getKey(), tlObjectID,
+			_util.addGeneralization(connection, branch, classWithoutGeneralization.getKey(), tlObjectID,
 				OrderedLinkUtil.MAX_ORDER / 2);
-			log.info("Added generalization " + Util.toString(tlObjectType) + " to "
+			log.info("Added generalization " + _util.toString(tlObjectType) + " to "
 					+ classWithoutGeneralization.getValue() + " (" + classWithoutGeneralization.getKey() + ")");
 		}
 
@@ -84,16 +88,14 @@ public class ExtendsTLObject implements MigrationProcessor {
 		String source = "source";
 		CompiledStatement classesWithGeneralizations = query(
 		parameters(
-			parameterDef(DBType.LONG, "branch")),
+			_util.branchParamDef()),
 		selectDistinct(
 			columns(
 				columnDef(ReferencePart.name.getReferenceAspectColumnName(
 					SQLH.mangleDBName(SourceReference.REFERENCE_SOURCE_NAME)), NO_TABLE_ALIAS, source)),
 			table(SQLH.mangleDBName(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS))),
 			and(
-				eqSQL(
-					column(BasicTypes.BRANCH_DB_NAME),
-					parameter(DBType.LONG, "branch"))))).toSql(connection.getSQLDialect());
+				_util.eqBranch()))).toSql(connection.getSQLDialect());
 		try (ResultSet dbResult = classesWithGeneralizations.executeQuery(connection, branch)) {
 			while (dbResult.next()) {
 				identifiers.remove(LongID.valueOf(dbResult.getLong(source)));
@@ -107,19 +109,17 @@ public class ExtendsTLObject implements MigrationProcessor {
 		String nameAlias = "name";
 		CompiledStatement allClasses = query(
 		parameters(
-			parameterDef(DBType.LONG, "branch")),
+			_util.branchParamDef()),
 		selectDistinct(
 			columns(
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
 				columnDef(SQLH.mangleDBName(KBBasedMetaElement.NAME_ATTR), NO_TABLE_ALIAS, nameAlias)),
 			table(SQLH.mangleDBName(KBBasedMetaElement.META_ELEMENT_KO)),
 			and(
+				_util.eqBranch(),
 				eqSQL(
-					column(BasicTypes.BRANCH_DB_NAME),
-					parameter(DBType.LONG, "branch")),
-				eqSQL(
-					column(SQLH.mangleDBName(KBBasedMetaElement.META_ELEMENT_IMPL)),
-					literalString(KBBasedMetaElementFactory.CLASS_TYPE))))).toSql(connection.getSQLDialect());
+					column(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_IMPL)),
+					literalString(TLStructuredTypeColumns.CLASS_TYPE))))).toSql(connection.getSQLDialect());
 		try (ResultSet dbResult = allClasses.executeQuery(connection, branch)) {
 			while (dbResult.next()) {
 				identifiers.put(LongID.valueOf(dbResult.getLong(identifierAlias)), dbResult.getString(nameAlias));

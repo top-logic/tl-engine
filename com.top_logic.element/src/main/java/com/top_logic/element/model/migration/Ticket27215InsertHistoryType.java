@@ -15,11 +15,12 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
-import com.top_logic.element.meta.kbbased.KBBasedMetaAttributeFactory;
 import com.top_logic.element.meta.kbbased.PersistentReference;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 
 /**
  * {@link MigrationProcessor} that creates the column {@link PersistentReference#HISTORY_TYPE_ATTR}
@@ -29,7 +30,7 @@ import com.top_logic.model.TLAssociationEnd;
  */
 public class Ticket27215InsertHistoryType implements MigrationProcessor {
 
-	/** Inlined value of {@link KBBasedMetaAttributeFactory#ASSOCIATION_END_IMPL}. */
+	/** Inlined value of {@link TLStructuredTypeColumns#ASSOCIATION_END_IMPL}. */
 	private static final String ASSOCIATION_END_VALUE = "association-end";
 
 	/** Database name of column {@link PersistentReference#HISTORY_TYPE_ATTR}. */
@@ -45,7 +46,7 @@ public class Ticket27215InsertHistoryType implements MigrationProcessor {
 	private static final String HISTORY_TYPE_CURRENT = "current";
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			tryMigrate(log, connection);
 		} catch (SQLException ex) {

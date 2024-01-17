@@ -33,6 +33,7 @@ import com.top_logic.knowledge.service.db2.migration.db.RowTransformer;
 import com.top_logic.knowledge.service.db2.migration.db.RowValue;
 import com.top_logic.knowledge.service.db2.migration.db.RowWriter;
 import com.top_logic.knowledge.service.migration.MigrationConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
@@ -155,7 +156,7 @@ public class StoreTypeConfiguration extends AbstractConfiguredInstance<StoreType
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		initLog(log);
 
 		SchemaConfiguration schema = loadKBSchema();

@@ -300,8 +300,7 @@ public class XMLImportCommand extends AbstractCommandHandler {
 				buttons.add(MessageBox.button(ButtonType.OK, this::startImport));
 			}
 
-			protected HandlerResult startImport(DisplayContext displaycontext) {
-				// IGNORE FindBugs(UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS): Bug in FindBugs.
+			private HandlerResult startImport(DisplayContext displaycontext) {
 				return openProgress(displaycontext, _dataField.getDataItem(), getDiscardClosure());
 			}
 

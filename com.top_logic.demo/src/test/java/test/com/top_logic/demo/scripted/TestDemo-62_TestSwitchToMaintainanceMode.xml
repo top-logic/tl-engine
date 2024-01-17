@@ -9,901 +9,85 @@
 	<actions>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Nutzer anlegen"
-			failure-message=""
-			user-id="root"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge > Gruppen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="testMaintenance1"
-					failure-message=""
-					user-id="root"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Neu..."
-							command-name="displayDialog_newPersonDialog"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="t"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string=""
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="t"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance1"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Vorname"
-											field-name="givenName"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance1"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Nachname"
-											field-name="sn"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance1"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler"
-							command-label="Erstellen"
-							command-name="newPerson"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
-							command-label="Speichern"
-							command-name="defaultSave"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-					</actions>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="testMaintenance2"
-					failure-message=""
-					user-id="root"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Neu..."
-							command-name="displayDialog_newPersonDialog"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance1"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance2"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Vorname"
-											field-name="givenName"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance2"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Nachname"
-											field-name="sn"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance2"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler"
-							command-label="Erstellen"
-							command-name="newPerson"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
-							command-label="Speichern"
-							command-name="defaultSave"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-					</actions>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="testMaintenance3"
-					failure-message=""
-					user-id="root"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Neu..."
-							command-name="displayDialog_newPersonDialog"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance3"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Benutzername"
-											field-name="username"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance3"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Vorname"
-											field-name="givenName"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance3"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-								tab-path=""
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Nachname"
-											field-name="sn"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance3"
-									/>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler"
-							command-label="Erstellen"
-							command-name="newPerson"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
-							command-label="Speichern"
-							command-name="defaultSave"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-					</actions>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Passwörter setzen"
-			failure-message=""
-			user-id="root"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge > Gruppen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance1"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+					<parameters>
+						<parameter name="Loginname"
+							value="testMaintenance1"
 						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance1"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Passwort ändern"
-					command-name="displayDialog_AdminChangePasswordDialog"
-					comment=""
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Neues Passwort"
-									field-name="newPassword1"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root1234"
-							/>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Passwortwiederholung"
-									field-name="newPassword2"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root1234"
-							/>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent$ApplyPasswordCommand"
-					command-label="Passwort ändern"
-					command-name="changePassword"
-					comment=""
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance2"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+						<parameter name="Vorname"
+							value="testMaintenance1"
 						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance2"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Passwort ändern"
-					command-name="displayDialog_AdminChangePasswordDialog"
-					comment=""
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Neues Passwort"
-									field-name="newPassword1"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root1234"
-							/>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Passwortwiederholung"
-									field-name="newPassword2"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root1234"
-							/>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent$ApplyPasswordCommand"
-					command-label="Passwort ändern"
-					command-name="changePassword"
-					comment=""
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance3"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+						<parameter name="Nachname"
+							value="testMaintenance1"
 						/>
-					</selection-model-name>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
 				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance3"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
+					<parameters>
+						<parameter name="Loginname"
+							value="testMaintenance1"
+						/>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Passwort ändern"
-					command-name="displayDialog_AdminChangePasswordDialog"
-					comment=""
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					failure-message=""
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
 				>
-					<arguments/>
+					<parameters>
+						<parameter name="Loginname"
+							value="testMaintenance2"
+						/>
+						<parameter name="Vorname"
+							value="testMaintenance2"
+						/>
+						<parameter name="Nachname"
+							value="testMaintenance2"
+						/>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
 				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Neues Passwort"
-									field-name="newPassword1"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root1234"
-							/>
-						</value>
-					</field-values>
+					<parameters>
+						<parameter name="Loginname"
+							value="testMaintenance2"
+						/>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
 				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Passwortwiederholung"
-									field-name="newPassword2"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root1234"
-							/>
-						</value>
-					</field-values>
+					<parameters>
+						<parameter name="Loginname"
+							value="testMaintenance3"
+						/>
+						<parameter name="Vorname"
+							value="testMaintenance3"
+						/>
+						<parameter name="Nachname"
+							value="testMaintenance3"
+						/>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent$ApplyPasswordCommand"
-					command-label="Passwort ändern"
-					command-name="changePassword"
-					comment=""
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-					failure-message=""
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
 				>
-					<arguments/>
+					<parameters>
+						<parameter name="Loginname"
+							value="testMaintenance3"
+						/>
+					</parameters>
 				</action>
 			</actions>
 		</action>
@@ -1935,7 +1119,7 @@
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name=""
-						tab-path="Administration > Zugänge > Gruppen"
+						tab-path="Administration > Berechtigungen > Gruppen"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -1959,7 +1143,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminEditGroup_Table"
-						tab-path="Administration > Zugänge > Gruppen"
+						tab-path="Administration > Berechtigungen > Gruppen"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -1981,7 +1165,7 @@
 				>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminEditGroup"
-						tab-path="Administration > Zugänge > Gruppen"
+						tab-path="Administration > Berechtigungen > Gruppen"
 					/>
 					<field-values>
 						<value>
@@ -2479,123 +1663,35 @@
 					user-id="root"
 				>
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Nutzer-loeschen-byName.xml"
+							template-name-comment="Nutzer loeschen byName"
 						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
+							<parameters>
+								<parameter name="userName"
+									value="testMaintenance1"
+								/>
+							</parameters>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Nutzer-loeschen-byName.xml"
+							template-name-comment="Nutzer loeschen byName"
 						>
-							<selection>
-								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-									table-name="Person"
-								>
-									<key-values>
-										<attribute name="name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-												string="testMaintenance1"
-											/>
-										</attribute>
-									</key-values>
-								</selectee>
-								<selection-state boolean="true"/>
-							</selection>
-							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
+							<parameters>
+								<parameter name="userName"
+									value="testMaintenance2"
+								/>
+							</parameters>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-							command-label="Löschen..."
-							command-name="deletePerson"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Nutzer-loeschen-byName.xml"
+							template-name-comment="Nutzer loeschen byName"
 						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<selection>
-								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-									table-name="Person"
-								>
-									<key-values>
-										<attribute name="name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-												string="testMaintenance2"
-											/>
-										</attribute>
-									</key-values>
-								</selectee>
-								<selection-state boolean="true"/>
-							</selection>
-							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-							command-label="Löschen..."
-							command-name="deletePerson"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<selection>
-								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-									table-name="Person"
-								>
-									<key-values>
-										<attribute name="name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-												string="testMaintenance3"
-											/>
-										</attribute>
-									</key-values>
-								</selectee>
-								<selection-state boolean="true"/>
-							</selection>
-							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-							command-label="Löschen..."
-							command-name="deletePerson"
-							comment=""
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
+							<parameters>
+								<parameter name="userName"
+									value="testMaintenance3"
+								/>
+							</parameters>
 						</action>
 					</actions>
 				</action>

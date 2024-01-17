@@ -131,57 +131,28 @@
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Fach. Administration > Personen"
-					/>
+					<parameters>
+						<parameter name="Loginname"
+							value="TestPerson"
+						/>
+						<parameter name="Vorname"
+							value="TestPerson"
+						/>
+						<parameter name="Nachname"
+							value="TestPerson"
+						/>
+					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Neu..."
-					command-name="displayDialog_addPersonContactDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
-					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Vorname"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Neue Person"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="TestPerson"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Nachname"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Neue Person"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="TestPerson"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactCreateHandler"
-					command-label="Anlegen"
-					command-name="personContactCreate"
-					component-implementation-comment="com.top_logic.contact.layout.person.CreatePersonContactComponent"
-					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#addPersonContact"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -193,7 +164,7 @@
 						label="Unternehmen"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Fach. Administration > Personen > Person bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -208,8 +179,8 @@
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
-					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -275,39 +246,15 @@
 			comment="Teardown"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Fach. Administration > Personen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="TestPerson"
+					<parameters>
+						<parameter name="userName"
+							value="TestPerson"
 						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
-							tab-path="Administration > Fach. Administration > Personen"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
-					command-label="Löschen"
-					command-name="personContactDelete"
-					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
-					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
-					user-id="root"
-				>
-					<arguments/>
+					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 					user-id="root"

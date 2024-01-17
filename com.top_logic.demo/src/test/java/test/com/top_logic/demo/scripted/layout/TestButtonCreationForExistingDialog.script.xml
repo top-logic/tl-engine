@@ -327,7 +327,7 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
-								value="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPersonContainer"
+								value="admin/security/accounts/userSettings/dialog.layout.xml#Dialog"
 							/>
 						</values>
 					</value>
@@ -354,16 +354,11 @@
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-					command-label="Schließen"
-					command-name="closeDialogInView"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
-				>
-					<arguments/>
-				</action>
+				/>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -520,7 +515,7 @@
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
-								value="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPersonContainer"
+								value="admin/security/accounts/userSettings/dialog.layout.xml#Dialog"
 							/>
 						</values>
 					</expected-value>

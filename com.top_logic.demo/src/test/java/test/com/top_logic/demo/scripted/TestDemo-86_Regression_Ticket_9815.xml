@@ -5,33 +5,10 @@
 	user-id="root"
 >
 	<actions>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Reset personal configuration"
-			user-id="root"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
-					command-label="Persönliche Einstellungen zurücksetzen"
-					command-name="resetPersonalConfiguration"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-			</actions>
-		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+			template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			user-id="root"
 		>

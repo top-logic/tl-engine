@@ -70,7 +70,7 @@
 					command-label="Persönliche Einstellungen"
 					command-name="showCurrentPersonDialog"
 					component-implementation-comment="com.top_logic.layout.component.TabComponent"
-					component-name="rootLayout#mainTabber"
+					component-name="mainTabbar.layout.xml#mainTabber"
 					user-id="root"
 				>
 					<arguments/>
@@ -81,16 +81,11 @@
 			comment="Close settings"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-					command-label="Schließen"
-					command-name="closeDialogInView"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
-				>
-					<arguments/>
-				</action>
+				/>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"

@@ -46,6 +46,10 @@
     login = $form.get(`tl.contact.ui:CreateLogin#login`);
     account = new(`tl.accounts:Person`);
     $account.set(`tl.accounts:Person#name`, $login);
+    group = new(`tl.accounts:Group`);
+    $group.set(`tl.accounts:Group#name`, $login);
+    $group.set(`tl.accounts:Group#isSystem`, true);
+    $account.set(`tl.accounts:Person#representativeGroup`, $group);
     $account.set(`tl.accounts:Person#contact`, $contact);
 }]]></operation>
 		</transactionHandler>

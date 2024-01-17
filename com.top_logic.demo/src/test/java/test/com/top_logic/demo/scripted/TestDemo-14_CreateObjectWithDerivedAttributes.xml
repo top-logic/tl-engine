@@ -1001,7 +1001,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 								<list>
 									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Super, Administrator"
+										label="root"
 									/>
 								</list>
 							</value>
@@ -2393,7 +2393,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 								<list>
 									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Super, Administrator"
+										label="root"
 									/>
 								</list>
 							</value>

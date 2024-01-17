@@ -37,7 +37,7 @@
 			</arguments>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Check that the correct view is displayed. The correct view distinguishes itself by showing the information but the account, allowing the creation of new accounts and changing the password of the account."
+			comment="Check that the correct view is displayed."
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -47,54 +47,15 @@
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Titel"
+							label="Name"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-								tab-path="Administration > Zugänge > Benutzerkonten"
+								tab-path="Kontakt"
 							/>
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Admin"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Vorname"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
-						</model>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Administrator"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Nachname"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
-						</model>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Super"
+						value="root"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -107,8 +68,7 @@
 							label="Benutzername"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-								tab-path="Administration > Zugänge > Benutzerkonten"
+								tab-path="Kontakt"
 							/>
 						</model>
 					</actual-value>
@@ -117,76 +77,20 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Neu..."
-					command-name="displayDialog_newPersonDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/defaultFor/contactForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
-					comment=""
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/defaultFor/contactForm.layout.xml#Form"
 					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.ButtonLabelNaming$ButtonLabelName">
-						<button config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-							label="Neu..."
-						/>
-					</actual-value>
-					<constraints>
-						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Neu..."
-							/>
-						</constraint>
-					</constraints>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
-					comment=""
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.ButtonTooltipNaming$ButtonTooltipName">
-						<button config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-							label="Neu..."
-						/>
-					</actual-value>
-					<constraints>
-						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Legt ein neues Benutzerkonto im System an."
-							/>
-						</constraint>
-					</constraints>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Passwort ändern"
-					command-name="displayDialog_AdminChangePasswordDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
-					comment=""
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.ButtonLabelNaming$ButtonLabelName">
-						<button config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-							label="Passwort ändern"
-						/>
-					</actual-value>
-					<constraints>
-						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Passwort ändern"
-							/>
-						</constraint>
-					</constraints>
-				</action>
+				/>
 			</actions>
 		</action>
 	</actions>

@@ -1,5 +1,4 @@
 <%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
-%><%@page import="com.top_logic.element.layout.meta.search.QueryUtils"
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform"   prefix="form"
 %><layout:html>

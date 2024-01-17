@@ -1,3 +1,4 @@
+<%@page import="com.top_logic.element.layout.meta.search.QueryUtils"%>
 <form:group name="<%= QueryUtils.FORM_GROUP %>">
 	<table>
 		<tr>

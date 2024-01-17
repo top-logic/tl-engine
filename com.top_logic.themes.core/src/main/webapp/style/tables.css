@@ -197,7 +197,7 @@ td.tl-table__cell {
 	background: var(--layer-hover);
 }
 
-.tl-table__row.header .tl-table__cell:hover span.activeFilter {
+.tl-table__header-cell-content span.activeFilter:hover {
 	color: var(--support-danger);
 }
 
@@ -594,14 +594,41 @@ th.insertLeft{
 	z-index: 1000 !important;
 }
 
+.fltButtons {
+	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
+	display: flex;
+	justify-content: space-around;
+    align-items: center;
+}
+
 td.fltButton {
 	width:17px;
 	text-align: center;
 	position: relative;
 }
 
-.tl-table__header-cell-content span.activeFilter {
+.fltButtons .cButton {
+	padding: 0 var(--spacing-01);
+}
+
+.tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
+	color: var(--icon-primary);
+}
+
+.tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons) {
+	color: var(--icon-disabled);
+}
+
+.tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons):hover {
+	color: var(--icon-primary);
+}
+
+.tl-table__header-cell-content .fltButton.activeFilter {
 	color: var(--icon-interactive);
+}
+
+.tl-table__header-cell-content .fltButton.activeFilter:hover {
+	color: var(--support-danger);
 }
 
 i.bi-funnel-fill.tablefilter {
@@ -614,7 +641,7 @@ a:not(.disabled) i.bi-funnel-fill.tablefilter:hover {
 
 th span.tl-table__filter-sort-icons {
 	align-self: end;
-	font-size: 0.8em;
+	font-size: .6rem;
 }
 
 tr.sortState{
@@ -628,7 +655,6 @@ div.tl-table__filter-sort-container {
 	min-width: 1.5em;
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-01);
 }
 
 .sidebarFilterContainer {
@@ -874,6 +900,14 @@ table td span.cDecoratedCell {
 	gap: var(--spacing-02);
 }
 
+table.i18nStringTable td span.cDecoratedCell {
+	gap: 0;
+}
+
+table.i18nStringTable td {
+	padding-bottom: var(--spacing-02);
+}
+
 table td span.cExpandableTextInput,
 table td span.cTextInput {
 	white-space: break-spaces;
@@ -888,9 +922,6 @@ table td span.cTextPopup span.content {
 
 table td .cDataItem span.lFlexible span.content,
 table td span.downloadControl span.content {
-	display: block;
-	position: absolute;
-	top: 0px;
 	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -959,6 +990,7 @@ table.tl-table td span.lFlexible,
 table.tl-table td span.lFlexibleCustom {
 	display: inline-flex;
 	overflow: hidden;
+	width: 100%;
 }
 
 table td span.lFlexible > select {
@@ -1225,10 +1257,12 @@ div.dirtyHandlingDialog .changes {
 
 .h-100 {
   	height: 100% !important;
+  	overflow: auto;
 }
 
 .w-100 {
   	width: 100% !important;
+  	overflow: auto;
 }
 
 .px-1 {

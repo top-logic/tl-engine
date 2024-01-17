@@ -2,18 +2,18 @@
 
 <settings>
 	<color name="text-primary"
-		value="black"
+		value="#101113"
 	/>
 	<color name="support-danger"
-		value="red"
+		value="#D3181B"
 	/>
 	<color name="support-success"
-		value="green"
+		value="#04A38D"
 	/>
 	<color name="support-warning"
-		value="darkorange"
+		value="#D3A118"
 	/>
 	<string name="font-style"
-		value="italic"
+		value="unset"
 	/>
 </settings>

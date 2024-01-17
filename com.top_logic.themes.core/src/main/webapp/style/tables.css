@@ -748,14 +748,23 @@ tr.tblFilterIndirectMatch {
 }
 
 tr.tblFilterIndirectMatch td {
-	color: #888;
+	color: var(--text-disabled);
 }
 
-tr.tblFilterIndirectMatch td,
-tr.tblFilterIndirectMatch td input, 
-tr.tblFilterIndirectMatch td select,
-tr.tblFilterIndirectMatch td label {
-	font-style: italic;
+tr.tblSelected.tblFilterIndirectMatch td {
+	color: var(--text-on-color-disabled);
+}
+
+tr.tblFilterIndirectMatch .cButton a {
+	color: var(--icon-disabled);
+}
+
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .px-1 {
+	color: var(--text-on-color-disabled);
+}
+
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .cButton a {
+	color: var(--icon-on-color-disabled);
 }
 
 tr.tblFilterIndirectMatch td img,
@@ -772,6 +781,7 @@ tr.tblFilterNotValidated td input,
 tr.tblFilterNotValidated td select,
 tr.tblFilterNotValidated td label {
 	font-style: italic;
+	color: red;	/* intentionally red to help me find this element in the application */
 }
 
 tr.tblFrozen.title {
@@ -910,9 +920,9 @@ table.i18nStringTable td {
 
 table td span.cExpandableTextInput,
 table td span.cTextInput {
-	white-space: break-spaces;
-    word-wrap: break-word;
-    word-break: break-word;
+	/* white-space: break-spaces; */
+	/* word-wrap: break-word; */
+	/* word-break: break-word; */
 }
 
 table td span.cTextPopup span.content {
@@ -1577,8 +1587,19 @@ td.tl-table__cell--selected {
 }
 
 .tl-table__row:not(.tblSelected):hover > td {
-	color: var(--text-primary);
 	background-color: var(--layer-hover);
+}
+
+.tl-table__row:not(.tblSelected):hover .px-1 {
+	color: var(--text-primary);
+}
+
+.tl-table__row:not(.tblSelected):hover .fToggle a {
+	color: var(--icon-primary);
+}
+
+.tl-table__cell--selectable .fToggle a {
+	color: var(--icon-secondary);
 }
 
 .i18nStringTable.tl-table {

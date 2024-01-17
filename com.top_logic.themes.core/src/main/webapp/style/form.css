@@ -2281,6 +2281,11 @@ a.input-image.tristate.tBoolean {
 	padding: 0 var(--spacing-03);
 }
 
+.ddwttDropBtn .ddwttButtonContent {
+	display: inline-flex;
+	gap: var(--spacing-02);
+}
+
 .ddwttDropBtn > span {
 	overflow: hidden;
 	white-space: nowrap;
@@ -2359,10 +2364,10 @@ span.disabled .ddwttChevron::after {
 }
 
 .ddwttDDList {
-	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--focus);
+	overflow-y: auto;
 }
 
 .ddwttSearch {
@@ -2390,11 +2395,14 @@ span.disabled .ddwttChevron::after {
 	left: 0;
 }
 
-.ddwttSelectedItem {
+.ddwttItem.ddwttSelectedItem {
 	display: none;
 }
 
 .ddwttItem {
+	display: inline-flex;
+	gap: var(--spacing-02);
+	padding: 0 var(--spacing-02);
 	position: relative;
 	text-align: left;
 }
@@ -2414,39 +2422,30 @@ span.disabled .ddwttChevron::after {
 	text-align: left;
 }
 
-.ddwttItemLabel {
-	display: block;
-	padding: 0 var(--spacing-02);
-	cursor: default;
-}
-
-.ddwttItemIcon {
-	margin-right: 8px !important;
-	padding-left: 3px;
-}
-
 .ddwttItem .ddwttItemLabel {
 	display: inline-block;
 	cursor: default;
 }
 
 /* Tags */
-.ddwttTagLoc, .ddwttTag {
+.ddwttTagLoc,
+.ddwttTag {
 	display: inline-flex;
 	width: fit-content;
 	align-items: center;
 	justify-content: center;
-	gap: var(--spacing-02);
 }
 
 .ddwttTag {
+	height: 2rem;
 	border: 1px solid var(--border-subtle);
 	box-sizing: border-box;
-	transition: 0.3s;
-	gap: var(--spacing-01);
 	padding: 0 var(--spacing-02);
-	height: 2rem;
+	border: 1px solid var(--border-subtle);
+	padding: 0 var(--spacing-02);
 	margin-right: var(--spacing-02);
+	gap: var(--spacing-02);
+	box-sizing: border-box;
 }
 
 .ddwttTagX {

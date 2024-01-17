@@ -7778,7 +7778,6 @@ div.dirtyHandlingDialog .changes {
 .ddwttDDBox span {
 	margin: 0;
 	line-height: 24px;
-	/* line-height: 2em !important; */ /* estimated setting for new design-theme */
 }
 
 .ddwttContainer .ddwttDDBox {

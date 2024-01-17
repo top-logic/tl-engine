@@ -28,6 +28,7 @@ import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.wrap.WebFolder;
 
@@ -40,7 +41,7 @@ import com.top_logic.knowledge.wrap.WebFolder;
 public class Ticket26554MakeWebFolderReferencesCompositions implements MigrationProcessor {
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			tryMigrate(log, connection);
 		} catch (SQLException ex) {

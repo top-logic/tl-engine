@@ -37,7 +37,6 @@ import javax.crypto.SecretKey;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Environment;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
@@ -59,7 +58,6 @@ import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
-import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.encryption.SymmetricEncryption;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ManagedClass;
@@ -85,7 +83,6 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
-import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.db2.PersistentIdFactory;
 import com.top_logic.knowledge.service.db2.RowLevelLockingSequenceManager;
 import com.top_logic.knowledge.service.db2.SequenceManager;
@@ -282,38 +279,24 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 *        {@link PooledConnection} to write changes to.
 	 * @return Whether any changes have been written to the given connection.
 	 */
-	private boolean executeAutomaticSchemaMigrations(Protocol log, PooledConnection connection) {
-		SchemaConfiguration persistentSchema =
-			KBSchemaUtil.loadSchema(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
-
-		KnowledgeBaseFactoryConfig factoryConfig;
-		try {
-			factoryConfig = (KnowledgeBaseFactoryConfig) ApplicationConfig.getInstance()
-				.getServiceConfiguration(KnowledgeBaseFactory.class);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
-		}
-		KnowledgeBaseConfiguration defaultKbConfig =
-			factoryConfig.getKnowledgeBases().get(PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
-		SchemaSetup applicationSetup = KBUtils.getSchemaConfigResolved(defaultKbConfig);
-		SchemaConfiguration applicationSchema = applicationSetup.getConfig();
-
-		Map<String, MetaObjectName> applicationTypes = applicationSchema.getMetaObjects().getTypes();
-		Map<String, MetaObjectName> persistentTypes = persistentSchema.getMetaObjects().getTypes();
+	private boolean executeAutomaticSchemaMigrations(MigrationContext context, Protocol log,
+			PooledConnection connection) {
+		Map<String, MetaObjectName> applicationTypes = context.getApplicationSchema().getMetaObjects().getTypes();
+		Map<String, MetaObjectName> persistentTypes = context.getPersistentSchema().getMetaObjects().getTypes();
 
 		MapDifference<String, EqualityRedirect<MetaObjectName>> diff = Maps.difference(
 			wrap(persistentTypes), wrap(applicationTypes));
 
 		Map<String, EqualityRedirect<MetaObjectName>> newTypes = diff.entriesOnlyOnRight();
 		if (!newTypes.isEmpty()) {
-			MORepository allTypes = applicationSetup.createMORepository(DefaultMOFactory.INSTANCE);
+			MORepository allTypes = context.getApplicationSetup().createMORepository(DefaultMOFactory.INSTANCE);
 
 			CreateTablesProcessor.Config createProcessor =
 					TypedConfiguration.newConfigItem(CreateTablesProcessor.Config.class);
 			SchemaSetup.addTables(createProcessor, allTypes, newTypes.keySet());
 
 			if (!createProcessor.getTables().isEmpty()) {
-				execute(log, connection, createProcessor);
+				execute(context, log, connection, createProcessor);
 
 				InsertBranchSwitchProcessor.Config insertProcessor =
 					TypedConfiguration.newConfigItem(InsertBranchSwitchProcessor.Config.class);
@@ -324,21 +307,21 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 					}
 				}
 				assert insertProcessor.getTableTypes().size() == createProcessor.getTables().size();
-				execute(log, connection, insertProcessor);
+				execute(context, log, connection, insertProcessor);
 
 				// Create a StoreTypeConfiguration processor.
 				StoreTypeConfiguration.Config updateProcessor =
 					TypedConfiguration.newConfigItem(StoreTypeConfiguration.Config.class);
-				execute(log, connection, updateProcessor);
+				execute(context, log, connection, updateProcessor);
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private void execute(Protocol log, PooledConnection connection,
+	private void execute(MigrationContext context, Protocol log, PooledConnection connection,
 			PolymorphicConfiguration<? extends MigrationProcessor> processor) {
-		TypedConfigUtil.createInstance(processor).doMigration(log, connection);
+		TypedConfigUtil.createInstance(processor).doMigration(context, log, connection);
 	}
 
 	private static <K, V extends ConfigurationItem> Map<K, EqualityRedirect<V>> wrap(Map<K, V> map) {
@@ -360,11 +343,13 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	private void migrate(Protocol log) {
 		PooledConnection connection = _connectionPool.borrowWriteConnection();
 		try {
+			MigrationContext context = new MigrationContext(connection);
+
 			if (_migrationInfo.nothingToDo()) {
 				log.info("No configured migrations.");
 
 				if (_automaticMigration) {
-					boolean changes = executeAutomaticSchemaMigrations(log, connection);
+					boolean changes = executeAutomaticSchemaMigrations(context, log, connection);
 
 					// Check that everything is ok.
 					log.checkErrors();
@@ -389,7 +374,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			}
 			createTempFiles();
 
-			Map<String, Version> maximalVersionByModule = migrate(log, connection, _migrationInfo.isSchemaUpdateRequired());
+			Map<String, Version> maximalVersionByModule =
+				migrate(context, log, connection, _migrationInfo.isSchemaUpdateRequired());
 
 			MigrationUtil.updateStoredVersions(log, connection, maximalVersionByModule.values());
 
@@ -511,7 +497,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 	}
 
-	private Map<String, Version> migrate(Protocol log, PooledConnection connection, boolean schemaUpdateRequired) {
+	private Map<String, Version> migrate(MigrationContext context, Protocol log, PooledConnection connection,
+			boolean schemaUpdateRequired) {
 		DataMigration migration = new DataMigration(_migrationInfo);
 		migration.setBufferChunkSize(getConfig().getBufferChunkSize());
 		migration.build(log);
@@ -519,15 +506,15 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		// Note: SQL migration (migration processors) must happen before the persistency layer is
 		// accessed to allow upgrading the baseline of the persistency layer configuration in those
 		// processors.
-		migration.executeSQLMigration(log, connection);
+		migration.executeSQLMigration(context, log, connection);
 
-		executeAutomaticSchemaMigrations(log, connection);
+		executeAutomaticSchemaMigrations(context, log, connection);
 
 		// Update stored schema before the replay to ensure the dumping KB uses the correct
 		// configuration.
 		if (schemaUpdateRequired) {
 			StoreTypeConfiguration store = TypedConfigUtil.createInstance(StoreTypeConfiguration.Config.class);
-			store.doMigration(log, connection);
+			store.doMigration(context, log, connection);
 		}
 
 		if (migration.isReplayRequired()) {

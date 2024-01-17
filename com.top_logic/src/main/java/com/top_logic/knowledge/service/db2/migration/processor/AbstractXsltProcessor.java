@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.XsltUtil;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
@@ -73,7 +74,7 @@ public abstract class AbstractXsltProcessor<C extends AbstractXsltProcessor.Conf
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		String oldXml;
 		try {
 			oldXml = readOldValue(connection);

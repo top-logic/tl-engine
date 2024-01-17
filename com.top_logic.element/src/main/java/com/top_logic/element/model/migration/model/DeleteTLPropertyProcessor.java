@@ -25,8 +25,13 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLProperty;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.TypePart;
 
 /**
  * {@link MigrationProcessor} deleting no longer used {@link TLProperty}.
@@ -62,6 +67,8 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link DeleteTLPropertyProcessor} from configuration.
 	 * 
@@ -80,17 +87,17 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 
 		TypePart typePart;
 		try {
-			typePart = Util.getTLTypePartOrFail(connection, partToDelete);
+			typePart = _util.getTLTypePartOrFail(connection, partToDelete);
 		} catch (MigrationException ex) {
 			log.info(
-				"No part with name '" + Util.qualifiedName(partToDelete) + "' to delete available at "
+				"No part with name '" + _util.qualifiedName(partToDelete) + "' to delete available at "
 					+ getConfig().location(),
 				Log.WARN);
 			return;
 		}
 
-		Util.deleteModelPart(connection, typePart);
-		log.info("Deleted model part " + Util.toString(typePart));
+		_util.deleteModelPart(connection, typePart);
+		log.info("Deleted model part " + _util.toString(typePart));
 
 		if (!typePart.getID().equals(typePart.getDefinition())) {
 			// attribute is an overridden attribute. Nothing to do more.
@@ -118,13 +125,14 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 			int deletedRows =
 				delete.executeUpdate(connection, typePart.getBranch(), partToDelete.getPartName(),
 					getConfig().getTypeTables());
-			log.info("Deleted " + deletedRows + " assignments for deleted part " + Util.toString(typePart));
+			log.info("Deleted " + deletedRows + " assignments for deleted part " + _util.toString(typePart));
 		}
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Delete tl property migration failed at " + getConfig().location(), ex);

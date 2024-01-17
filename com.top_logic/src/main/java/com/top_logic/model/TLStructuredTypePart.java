@@ -20,6 +20,11 @@ import com.top_logic.model.impl.generated.TLStructuredTypePartBase;
  */
 public interface TLStructuredTypePart extends DerivedTLTypePart, TLStructuredTypePartBase {
 
+	/**
+	 * @see #getDefinition()
+	 */
+	String DEFINITION_ATTR = "definition";
+
 	@Override
 	@Container
 	TLStructuredType getOwner();

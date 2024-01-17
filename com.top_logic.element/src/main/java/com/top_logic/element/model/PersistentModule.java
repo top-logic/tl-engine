@@ -19,6 +19,7 @@ import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.impl.util.TLPrimitiveColumns;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -36,7 +37,7 @@ public class PersistentModule extends PersistentScope implements TLModuleBase {
 	/**
 	 * The {@link #getName()} column.
 	 */
-	public static final String NAME_ATTR = "name";
+	public static final String NAME_ATTR = ApplicationObjectUtil.MODULE_NAME_ATTR;
 
 	/**
 	 * The {@link #getModel()} reference.
@@ -45,7 +46,7 @@ public class PersistentModule extends PersistentScope implements TLModuleBase {
 
 	private static final AssociationSetQuery<PersistentDatatype> DATATYPES =
 		AssociationQuery.createQuery("datatypes", PersistentDatatype.class,
-			PersistentDatatype.OBJECT_TYPE, PersistentDatatype.MODULE_REF);
+			TLPrimitiveColumns.OBJECT_TYPE, PersistentDatatype.MODULE_REF);
 
 	/**
 	 * Creates a {@link PersistentModule} for a given {@link KnowledgeObject}.

@@ -15,10 +15,15 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.PartConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.TypePart;
 
 /**
  * {@link MigrationProcessor} updating a {@link TLAssociationEnd}.
@@ -88,6 +93,8 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		Boolean canNavigate();
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link UpdateTLAssociationEndProcessor} from configuration.
 	 * 
@@ -102,8 +109,9 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Update association end migration failed at " + getConfig().location(), ex);
@@ -114,10 +122,10 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		QualifiedPartName endName = getConfig().getName();
 		TypePart associationEnd;
 		try {
-			associationEnd = Util.getTLTypePartOrFail(connection, endName);
+			associationEnd = _util.getTLTypePartOrFail(connection, endName);
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find association end to update " + Util.qualifiedName(endName) + " at "
+				"Unable to find association end to update " + _util.qualifiedName(endName) + " at "
 					+ getConfig().location(),
 				Log.WARN);
 			return;
@@ -131,7 +139,7 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 			newAssociationEndName = newName.getPartName();
 		}
 
-		Util.updateTLStructuredTypePart(connection, associationEnd, null, null, newAssociationEndName,
+		_util.updateTLStructuredTypePart(connection, associationEnd, null, null, newAssociationEndName,
 			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
 			null, null);

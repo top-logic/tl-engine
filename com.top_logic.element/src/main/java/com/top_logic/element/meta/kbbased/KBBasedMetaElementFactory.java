@@ -65,6 +65,7 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
 import com.top_logic.model.export.PreloadContext;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.internal.PersistentType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.v5.ReferencePreload;
@@ -82,15 +83,20 @@ import com.top_logic.util.model.ModelService;
 public abstract class KBBasedMetaElementFactory extends MetaElementFactory implements UpdateListener {
 
 	/**
-	 * Value of the {@link KBBasedMetaElement#META_ELEMENT_IMPL} attribute marking an association
+	 * Value of the {@link TLStructuredTypeColumns#META_ELEMENT_IMPL} attribute marking an association
 	 * class.
+	 * @deprecated Use {@link TLStructuredTypeColumns#ASSOCIATION_TYPE} instead
 	 */
-	public static final String ASSOCIATION_TYPE = "association";
+	@Deprecated
+	public static final String ASSOCIATION_TYPE = TLStructuredTypeColumns.ASSOCIATION_TYPE;
 
 	/**
-	 * Value of the {@link KBBasedMetaElement#META_ELEMENT_IMPL} attribute marking a regular class.
+	 * Value of the {@link TLStructuredTypeColumns#META_ELEMENT_IMPL} attribute marking a regular class.
+	 * 
+	 * @deprecated Use {@link TLStructuredTypeColumns#CLASS_TYPE} instead
 	 */
-	public static final String CLASS_TYPE = "class";
+	@Deprecated
+	public static final String CLASS_TYPE = TLStructuredTypeColumns.CLASS_TYPE;
 
 	/**
 	 * Possible sub types of a {@link KBBasedMetaElement}.
@@ -102,10 +108,10 @@ public abstract class KBBasedMetaElementFactory extends MetaElementFactory imple
 	public static enum SubtypeDefinition implements ExternallyNamed {
 
 		/** A {@link TLClass} */
-		CLASS(CLASS_TYPE),
+		CLASS(TLStructuredTypeColumns.CLASS_TYPE),
 
 		/** An {@link TLAssociation} */
-		ASSOCIATION(ASSOCIATION_TYPE),
+		ASSOCIATION(TLStructuredTypeColumns.ASSOCIATION_TYPE),
 
 		;
 
@@ -210,7 +216,7 @@ public abstract class KBBasedMetaElementFactory extends MetaElementFactory imple
 				aKB.createKnowledgeObject(KBBasedMetaElement.META_ELEMENT_KO,
 					new NameValueBuffer()
 						.put(KBBasedMetaElement.META_ELEMENT_TYPE, aMetaElementType)
-						.put(KBBasedMetaElement.META_ELEMENT_IMPL, subType.getExternalName())
+						.put(TLStructuredTypeColumns.META_ELEMENT_IMPL, subType.getExternalName())
 						.put(KBBasedMetaElement.MODULE_REF, module.tHandle())
 						.put(KBBasedMetaElement.SCOPE_REF, aMetaElementHolder.tHandle()));
 			theME = (KBBasedMetaElement) WrapperFactory.getWrapper(theKO);
@@ -381,8 +387,8 @@ public abstract class KBBasedMetaElementFactory extends MetaElementFactory imple
 		SimpleQuery<TLClass> query =
 			SimpleQuery.queryResolved(TLClass.class, meType, 
 				eqBinary(
-					attribute(KBBasedMetaElement.META_ELEMENT_KO, KBBasedMetaElement.META_ELEMENT_IMPL), 
-					literal(CLASS_TYPE)));
+					attribute(KBBasedMetaElement.META_ELEMENT_KO, TLStructuredTypeColumns.META_ELEMENT_IMPL), 
+					literal(TLStructuredTypeColumns.CLASS_TYPE)));
 		_allMetaElements = SimpleQueryCache.newQueryCache(getKnowledgeBase(), query);
 
 	}

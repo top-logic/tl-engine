@@ -26,7 +26,7 @@ import com.top_logic.basic.util.ResourcesModule;
 public class MigrationProcessor24218 implements MigrationProcessor {
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		// Resources are started together with the XMLProperties.
 		ResourcesModule resources = ResourcesModule.getInstance();
 		File storage = FileManager.getInstance().getIDEFile(resources.getDynamicStorage());

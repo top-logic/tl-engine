@@ -30,22 +30,22 @@ import com.top_logic.model.util.TLModelUtil;
 public class PersistentReference extends ConfiguredAttributeImpl implements TLReference {
 
 	/** @see #getName() */
-	private static final String REF_NAME_ATTRIBUTE = "name";
+	private static final String REF_NAME_ATTRIBUTE = TLReference.NAME_ATTR;
 
 	/** @see #getEnd() */
-	public static final String END_ATTR = "end";
+	public static final String END_ATTR = TLReference.END_ATTR;
 
 	/** @see TLAssociationEnd#isComposite() */
-	public static final String COMPOSITE_ATTR = "composite";
+	public static final String COMPOSITE_ATTR = TLAssociationEnd.COMPOSITE_ATTR;
 
 	/** @see TLAssociationEnd#isAggregate() */
-	public static final String AGGREGATE_ATTR = "aggregate";
+	public static final String AGGREGATE_ATTR = TLAssociationEnd.AGGREGATE_ATTR;
 
 	/** @see TLAssociationEnd#isMultiple() */
-	public static final String MULTIPLE_ATTR = "multiple";
+	public static final String MULTIPLE_ATTR = TLReference.MULTIPLE_ATTR;
 
 	/** @see TLAssociationEnd#isBag() */
-	public static final String BAG_ATTR = "bag";
+	public static final String BAG_ATTR = TLReference.BAG_ATTR;
 
 	/**
 	 * Name of the database attribute in which the history type is stored.

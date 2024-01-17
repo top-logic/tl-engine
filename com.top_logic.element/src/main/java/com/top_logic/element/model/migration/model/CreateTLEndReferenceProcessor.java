@@ -13,11 +13,14 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedPartName;
 
 /**
  * {@link MigrationProcessor} creating a {@link TLReference} for an existing
@@ -49,6 +52,8 @@ public class CreateTLEndReferenceProcessor extends AbstractConfiguredInstance<Cr
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLEndReferenceProcessor} from configuration.
 	 * 
@@ -63,8 +68,9 @@ public class CreateTLEndReferenceProcessor extends AbstractConfiguredInstance<Cr
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating part migration failed at " + getConfig().location(), ex);
@@ -75,9 +81,9 @@ public class CreateTLEndReferenceProcessor extends AbstractConfiguredInstance<Cr
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedPartName associationEnd = getConfig().getEnd();
 
-		Util.createTLEndReference(connection, partName, associationEnd, getConfig());
+		_util.createTLEndReference(connection, partName, associationEnd, getConfig());
 		log.info(
-			"Created reference " + Util.qualifiedName(partName) + " for end " + Util.qualifiedName(associationEnd));
+			"Created reference " + _util.qualifiedName(partName) + " for end " + _util.qualifiedName(associationEnd));
 	}
 
 }

@@ -76,6 +76,13 @@ public class ApplicationObjectUtil {
 	/**
 	 * Constants actually defined in tl-element.
 	 * 
+	 * @see "com.top_logic.element.model.PersistentModule#NAME_ATTR"
+	 */
+	public static final String MODULE_NAME_ATTR = "name";
+
+	/**
+	 * Constants actually defined in tl-element.
+	 * 
 	 * @see "com.top_logic.element.model.PersistentModule#MODEL_ATTR"
 	 */
 	public static final String MODULE_MODEL_ATTR = "model";
@@ -88,6 +95,20 @@ public class ApplicationObjectUtil {
 	 * @see "com.top_logic.element.meta.kbbased.KBBasedMetaAttribute#META_ELEMENT_ATTR"
 	 */
 	public static final String META_ELEMENT_ATTR = "owner";
+
+	/**
+	 * Constants actually defined in tl-element.
+	 * 
+	 * @see "com.top_logic.element.meta.kbbased.KBBasedMetaAttribute#OWNER_REF_ORDER_ATTR"
+	 */
+	public static final String OWNER_REF_ORDER_ATTR = "ownerOrder";
+
+	/**
+	 * Constants actually defined in tl-element.
+	 * 
+	 * @see "com.top_logic.element.meta.kbbased.KBBasedMetaAttribute#IMPLEMENTATION_NAME"
+	 */
+	public static final String IMPLEMENTATION_NAME = "impl";
 
 	/**
 	 * Constants actually defined in tl-element.

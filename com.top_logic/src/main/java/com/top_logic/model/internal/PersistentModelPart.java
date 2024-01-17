@@ -44,7 +44,7 @@ public abstract class PersistentModelPart extends AbstractBoundWrapper implement
 	 * 
 	 * see ModelMeta.xml
 	 */
-	public static final String ANNOTATIONS_MO_ATTRIBUTE = "annotations";
+	public static final String ANNOTATIONS_MO_ATTRIBUTE = TLModelPart.ANNOTATIONS_ATTR;
 
 	/**
 	 * Creates a {@link PersistentModelPart}.

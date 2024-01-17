@@ -20,14 +20,18 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
 
 /**
  * {@link MigrationProcessor} marks a {@link TLStructuredTypePart} as override of another part.
@@ -59,6 +63,8 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link MarkTLTypePartOverride} from configuration.
 	 * 
@@ -73,13 +79,14 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error(
-				"Marking " + Util.qualifiedName(getConfig().getName()) + " as override of "
-					+ Util.qualifiedName(getConfig().getDefinition()) + " failed at " + getConfig().location(),
+				"Marking " + _util.qualifiedName(getConfig().getName()) + " as override of "
+					+ _util.qualifiedName(getConfig().getDefinition()) + " failed at " + getConfig().location(),
 				ex);
 		}
 	}
@@ -87,34 +94,32 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedPartName definition = (getConfig().getDefinition());
-		Type partOwner = Util.getTLTypeOrFail(connection, partName);
+		Type partOwner = _util.getTLTypeOrFail(connection, partName);
 
-		TypePart definitionPart = Util.getTLTypePartOrFail(connection, definition);
+		TypePart definitionPart = _util.getTLTypePartOrFail(connection, definition);
 		CompiledStatement sql = query(
 		parameters(
-			parameterDef(DBType.LONG, "branch"),
+			_util.branchParamDef(),
 			parameterDef(DBType.ID, "owner"),
 			parameterDef(DBType.STRING, "part"),
 			parameterDef(DBType.ID, "definitionID")),
 		update(
 			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 			and(
+				_util.eqBranch(),
 				eqSQL(
-					column(BasicTypes.BRANCH_DB_NAME),
-					parameter(DBType.LONG, "branch")),
-				eqSQL(
-					column(Util.refID(KBBasedMetaAttribute.OWNER_REF)),
+					column(_util.refID(KBBasedMetaAttribute.OWNER_REF)),
 					parameter(DBType.ID, "owner")),
 				eqSQL(
 					column(SQLH.mangleDBName(TLNamed.NAME)),
 					parameter(DBType.STRING, "part"))),
-			Arrays.asList(Util.refID(KBBasedMetaAttribute.DEFINITION_REF)),
+			Arrays.asList(_util.refID(KBBasedMetaAttribute.DEFINITION_REF)),
 			Arrays.asList(parameter(DBType.ID, "definitionID")))).toSql(connection.getSQLDialect());
 
 		sql.executeUpdate(connection, partOwner.getBranch(), partOwner.getID(), partName.getPartName(),
 			definitionPart.getID());
 
-		log.info("Mark " + Util.qualifiedName(partName) + " as override of " + Util.qualifiedName(definition));
+		log.info("Mark " + _util.qualifiedName(partName) + " as override of " + _util.qualifiedName(definition));
 	}
 
 }

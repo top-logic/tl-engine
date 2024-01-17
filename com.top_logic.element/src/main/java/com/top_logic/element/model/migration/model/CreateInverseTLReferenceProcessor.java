@@ -13,8 +13,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.ReferenceConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedPartName;
 
 /**
  * {@link MigrationProcessor} to create an inverse {@link TLReference}.
@@ -39,6 +42,8 @@ public class CreateInverseTLReferenceProcessor
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateInverseTLReferenceProcessor} from configuration.
 	 * 
@@ -53,13 +58,14 @@ public class CreateInverseTLReferenceProcessor
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error(
-				"Creating invert reference " + Util.qualifiedName(getConfig().getName()) + " for reference "
-					+ Util.qualifiedName(getConfig().getInverseReference()) + " failed at " + getConfig().location(),
+				"Creating invert reference " + _util.qualifiedName(getConfig().getName()) + " for reference "
+					+ _util.qualifiedName(getConfig().getInverseReference()) + " failed at " + getConfig().location(),
 				ex);
 		}
 	}
@@ -67,12 +73,12 @@ public class CreateInverseTLReferenceProcessor
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName reference = getConfig().getName();
 		QualifiedPartName inverseReference = getConfig().getInverseReference();
-		Util.createInverseTLReference(connection, reference, inverseReference,
+		_util.createInverseTLReference(connection, reference, inverseReference,
 			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig());
 
-		log.info("Created inverse reference " + Util.qualifiedName(reference) + " for reference "
-			+ Util.qualifiedName(inverseReference));
+		log.info("Created inverse reference " + _util.qualifiedName(reference) + " for reference "
+			+ _util.qualifiedName(inverseReference));
 	}
 
 }

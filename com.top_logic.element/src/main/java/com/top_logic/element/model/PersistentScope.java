@@ -21,7 +21,6 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.element.meta.MetaElementException;
 import com.top_logic.element.meta.MetaElementHolder;
 import com.top_logic.element.meta.kbbased.KBBasedMetaElement;
-import com.top_logic.element.meta.kbbased.KBBasedMetaElementFactory;
 import com.top_logic.element.util.model.ElementModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -36,6 +35,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLScope;
 import com.top_logic.model.TLType;
+import com.top_logic.model.impl.util.TLPrimitiveColumns;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.internal.PersistentType;
 
 /**
@@ -53,18 +54,18 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 			PersistentType.SCOPE_REF, KBBasedMetaElement.META_ELEMENT_TYPE, String.class, null, true);
 
 	private static final IndexedLinkQuery<String, TLPrimitive> DATATYPES_ATTR =
-		IndexedLinkQuery.indexedLinkQuery(new NamedConstant("datatypes"), TLPrimitive.class, PersistentDatatype.OBJECT_TYPE,
+		IndexedLinkQuery.indexedLinkQuery(new NamedConstant("datatypes"), TLPrimitive.class, TLPrimitiveColumns.OBJECT_TYPE,
 			PersistentType.SCOPE_REF, PersistentDatatype.NAME_ATTR, String.class, null, true);
 
 	private static final IndexedLinkQuery<String, TLClass> CLASSES_ATTR =
 		IndexedLinkQuery.indexedLinkQuery(new NamedConstant("classes"), TLClass.class, KBBasedMetaElement.META_ELEMENT_KO,
 			PersistentType.SCOPE_REF, KBBasedMetaElement.NAME_ATTR, String.class,
-			Collections.singletonMap(KBBasedMetaElement.META_ELEMENT_IMPL, KBBasedMetaElementFactory.CLASS_TYPE), true);
+			Collections.singletonMap(TLStructuredTypeColumns.META_ELEMENT_IMPL, TLStructuredTypeColumns.CLASS_TYPE), true);
 
 	private static final IndexedLinkQuery<String, TLAssociation> ASSOCIATIONS_ATTR =
 		IndexedLinkQuery.indexedLinkQuery(new NamedConstant("associations"), TLAssociation.class, KBBasedMetaElement.META_ELEMENT_KO,
 			PersistentType.SCOPE_REF, KBBasedMetaElement.NAME_ATTR, String.class,
-			Collections.singletonMap(KBBasedMetaElement.META_ELEMENT_IMPL, KBBasedMetaElementFactory.ASSOCIATION_TYPE), true);
+			Collections.singletonMap(TLStructuredTypeColumns.META_ELEMENT_IMPL, TLStructuredTypeColumns.ASSOCIATION_TYPE), true);
 
 	private static final IndexedLinkQuery<String, TLEnumeration> ENUMERATIONS_ATTR =
 		IndexedLinkQuery.indexedLinkQuery(new NamedConstant("enumerations"), TLEnumeration.class, FastList.OBJECT_NAME,

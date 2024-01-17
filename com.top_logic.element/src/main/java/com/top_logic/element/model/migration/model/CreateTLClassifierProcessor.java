@@ -13,10 +13,13 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLClassifierAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedPartName;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLClassifier}.
@@ -47,6 +50,8 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLClassifierProcessor} from configuration.
 	 * 
@@ -61,8 +66,9 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating classifier migration failed at " + getConfig().location(), ex);
@@ -71,8 +77,8 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName classifierName = getConfig().getName();
-		Util.createTLClassifier(connection, classifierName, getConfig().getSortOrder(), getConfig());
-		log.info("Created classifier " + Util.qualifiedName(classifierName));
+		_util.createTLClassifier(connection, classifierName, getConfig().getSortOrder(), getConfig());
+		log.info("Created classifier " + _util.qualifiedName(classifierName));
 	}
 
 }

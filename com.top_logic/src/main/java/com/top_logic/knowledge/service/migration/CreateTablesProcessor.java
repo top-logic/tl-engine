@@ -49,7 +49,7 @@ public class CreateTablesProcessor extends AbstractConfiguredInstance<CreateTabl
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			for (DBTable table : getConfig().getTables()) {
 				DBSchemaUtils.create(connection, table);

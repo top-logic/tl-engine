@@ -76,7 +76,7 @@ public class DefaultByExpressionProcessor extends RewriteMigrationProcessor<Rewr
 	private SQLSelect createMetaAttributeSelect(String annotationColumn) {
 		return select(
 			columns(
-				columnDef(BasicTypes.BRANCH_DB_NAME),
+				util().branchColumnDef(),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),
 				columnDef(annotationColumn)),

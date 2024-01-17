@@ -26,6 +26,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.util.ResourcesModule.Config;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
@@ -46,7 +47,7 @@ public class Ticket26529TransferVariantsToDynamicStorage implements MigrationPro
 				+ Pattern.quote(ResourcesModule.EXT));
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			ResourcesModule.Config config =
 				(Config) ApplicationConfig.getInstance().getServiceConfiguration(ResourcesModule.class);

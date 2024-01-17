@@ -61,7 +61,7 @@ public class InsertBranchSwitchProcessor extends AbstractConfiguredInstance<Inse
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			SQLQuery<SQLInsert> insert = query(
 				parameters(parameterDef(DBType.STRING, "typeName")),

@@ -21,10 +21,18 @@ import com.top_logic.basic.func.misc.AlwaysTrue;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.PartConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Reference;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
 
 /**
  * {@link MigrationProcessor} updating a {@link TLReference}.
@@ -132,6 +140,8 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 		boolean isInverse();
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link UpdateTLReferenceProcessor} from configuration.
 	 * 
@@ -146,8 +156,9 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Updating reference migration failed at " + getConfig().location(), ex);
@@ -158,10 +169,10 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 		QualifiedPartName referenceName = getConfig().getName();
 		Reference reference;
 		try {
-			reference = (Reference) Util.getTLTypePartOrFail(connection, referenceName);
+			reference = (Reference) _util.getTLTypePartOrFail(connection, referenceName);
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find reference to update " + Util.qualifiedName(referenceName) + " at "
+				"Unable to find reference to update " + _util.qualifiedName(referenceName) + " at "
 					+ getConfig().location(),
 				Log.WARN);
 			return;
@@ -170,14 +181,14 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 		if (getConfig().getNewType() == null) {
 			newType = null;
 		} else {
-			newType = Util.getTLTypeOrFail(connection, getConfig().getNewType());
+			newType = _util.getTLTypeOrFail(connection, getConfig().getNewType());
 		}
 
 		TypePart newEnd;
 		if (getConfig().getNewEnd() == null) {
 			newEnd = null;
 		} else {
-			newEnd = Util.getTLTypePartOrFail(connection, getConfig().getNewEnd());
+			newEnd = _util.getTLTypePartOrFail(connection, getConfig().getNewEnd());
 		}
 
 		QualifiedPartName newName = getConfig().getNewName();
@@ -193,23 +204,23 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				&& referenceName.getTypeName().equals(newName.getTypeName()))) {
 				newOwner = null;
 			} else {
-				newOwner = Util.getTLTypeOrFail(connection, newName);
+				newOwner = _util.getTLTypeOrFail(connection, newName);
 			}
-			Util.updateTLReference(connection,
+			_util.updateTLReference(connection,
 				reference, newType, newOwner,
 				newReferenceName, getConfig().isMandatory(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig(), newEnd);
-			log.info("Updated reference " + Util.qualifiedName(referenceName));
+			log.info("Updated reference " + _util.qualifiedName(referenceName));
 		} else {
-			Util.updateInverseReference(connection,
+			_util.updateInverseReference(connection,
 				reference,
 				newReferenceName, getConfig().isMandatory(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig(), newEnd);
-			log.info("Updated inverse reference " + Util.qualifiedName(referenceName));
+			log.info("Updated inverse reference " + _util.qualifiedName(referenceName));
 		}
 
 	}

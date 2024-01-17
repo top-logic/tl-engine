@@ -92,6 +92,13 @@ public class StoreTypeConfiguration extends AbstractConfiguredInstance<StoreType
 	}
 
 	/**
+	 * Sets the {@link SchemaSetup} to store.
+	 */
+	public void setSchemaSetup(SchemaSetup schemaSetup) {
+		_schemaSetup = schemaSetup;
+	}
+
+	/**
 	 * Sets the {@link Log} to write messages to.
 	 */
 	@Inject

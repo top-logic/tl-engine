@@ -25,10 +25,6 @@ import com.top_logic.knowledge.service.db2.KBSchemaUtil;
  */
 public class MigrationContext extends TypedAnnotationContainer {
 
-	private boolean _branchSupport;
-
-	private SchemaConfiguration _persistentSchema;
-
 	private KnowledgeBaseFactoryConfig _factoryConfig;
 
 	private SchemaSetup _applicationSetup;
@@ -37,12 +33,15 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 	private KnowledgeBaseConfiguration _kbConfig;
 
+	private PooledConnection _connection;
+
+	private boolean _branchSupport;
+
 	/**
 	 * Creates a {@link MigrationContext}.
 	 */
 	public MigrationContext(PooledConnection connection) {
-		_persistentSchema = KBSchemaUtil.loadSchema(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
-
+		_connection = connection;
 		try {
 			_factoryConfig = (KnowledgeBaseFactoryConfig) ApplicationConfig.getInstance()
 				.getServiceConfiguration(KnowledgeBaseFactory.class);
@@ -52,38 +51,18 @@ public class MigrationContext extends TypedAnnotationContainer {
 		_kbConfig = _factoryConfig.getKnowledgeBases().get(PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
 		_applicationSetup = KBUtils.getSchemaConfigResolved(_kbConfig);
 		_applicationSchema = _applicationSetup.getConfig();
+		_branchSupport = getPersistentSchema().hasMultipleBranches();
 	}
 
 	/**
-	 * TODO
+	 * The schema currently stored as baseline in the database.
 	 */
 	public SchemaConfiguration getPersistentSchema() {
-		return _persistentSchema;
+		return KBSchemaUtil.loadSchema(_connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
 	}
 
 	/**
-	 * TODO
-	 */
-	public KnowledgeBaseFactoryConfig getFactoryConfig() {
-		return _factoryConfig;
-	}
-
-	/**
-	 * TODO
-	 */
-	public KnowledgeBaseConfiguration getKbConfig() {
-		return _kbConfig;
-	}
-
-	/**
-	 * TODO
-	 */
-	public SchemaSetup getApplicationSetup() {
-		return _applicationSetup;
-	}
-
-	/**
-	 * TODO
+	 * The schema read from the application configuration.
 	 */
 	public SchemaConfiguration getApplicationSchema() {
 		return _applicationSchema;
@@ -95,7 +74,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 * @see SchemaConfiguration#hasMultipleBranches()
 	 */
 	public boolean hasBranchSupport() {
-		return _applicationSchema.hasMultipleBranches();
+		return _branchSupport;
 	}
 
 }

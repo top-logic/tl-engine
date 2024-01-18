@@ -119,7 +119,7 @@ public class ConfigurationAttributeStorage extends DBAttributeStorageImpl
 			return result;
 		} catch (ConfigurationError | ConfigurationException ex) {
 			return InvalidCacheValue.error("Datatabase value '" + dbValue
-				+ "' of column '" + attribute + "' cannot be parsed as configuration.", ex);
+				+ "' of column '" + attribute + "' cannot be parsed as configuration: " + ex.getMessage(), ex);
 		}
 	}
 

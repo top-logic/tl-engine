@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<migration schema-update="true"
+<migration
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<version name="Ticket_24085_layout_db_storage"
@@ -12,6 +12,21 @@
 		/>
 	</dependencies>
 	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.UpgradeTableNameConvention"/>
+		
+		<create-datatype name="tl.core:DateTime" db_type="timestamp" kind="Date">
+			<storage-mapping 
+				class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+				application-type="java.util.Date"
+			/>
+			
+			<annotations>
+				<config-type value="DATE_TIME"/>
+				<search-range value="true"/>
+				<format format-ref="medium-date-time"/>
+			</annotations>
+		</create-datatype>
+
 		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
 			<schema>
 				<metaobject

@@ -645,13 +645,13 @@
 					<handler id="resetModelSearch" class="com.top_logic.model.search.ui.selector.ResetSearchCommand"
 						clique="reset"/>
 					<handler id="saveModelSearch" class="com.top_logic.model.search.ui.selector.SaveSearchCommand"
-						clique="save">
+						clique="save" group="System">
 						<executability>
 							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
 						</executability>
 					</handler>
 					<handler id="saveModelSearchAs" class="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsCommand"
-						clique="save"/>
+						clique="save" group="System"/>
 				</handlers>
 			</instance>
 		</config>

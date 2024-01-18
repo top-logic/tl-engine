@@ -22,6 +22,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.KafkaFuture;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -86,8 +87,6 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 	/** The "replication factor" when a topic is created. */
 	public static final short REPLICATION_FACTOR = 1;
 
-	private InstantiationContext _context;
-
 	private CommonClientConfig<?, ?> _commonClientConfig;
 
 	private Set<String> _topics;
@@ -123,13 +122,12 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 			return true;
 		}
 		TopicChecker checker = context.getInstance(ownConfig);
-		checker.init(context, foreignConfig, topics);
+		checker.init(foreignConfig, topics);
 		return checker.checkTopicExists();
 	}
 
 	/** Initializes the {@link TopicChecker}. */
-	public void init(InstantiationContext context, CommonClientConfig<?, ?> config, Set<String> topics) {
-		_context = context;
+	public void init(CommonClientConfig<?, ?> config, Set<String> topics) {
 		_commonClientConfig = config;
 		_topics = topics;
 	}
@@ -140,21 +138,25 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 		if (adminClient == null) {
 			return false;
 		}
-		Set<String> existingTopics = fetchTopicNames(adminClient);
-		Set<String> missingTopics = set(_topics);
-		missingTopics.removeAll(existingTopics);
-		if (missingTopics.isEmpty()) {
-			return true;
-		}
-		if (getConfig().shouldCreateTopics()) {
-			createTopics(adminClient, missingTopics, existingTopics);
-			existingTopics = fetchTopicNames(adminClient);
+		try {
+			Set<String> existingTopics = fetchTopicNames(adminClient);
+			Set<String> missingTopics = set(_topics);
 			missingTopics.removeAll(existingTopics);
 			if (missingTopics.isEmpty()) {
 				return true;
 			}
+			if (getConfig().shouldCreateTopics()) {
+				createTopics(adminClient, missingTopics, existingTopics);
+				existingTopics = fetchTopicNames(adminClient);
+				missingTopics.removeAll(existingTopics);
+				if (missingTopics.isEmpty()) {
+					return true;
+				}
+			}
+			logMissingTopic(missingTopics, existingTopics, null);
+		} catch (RuntimeException ex) {
+			Logger.error("Cannot check for topics.", ex, TopicChecker.class);
 		}
-		logMissingTopic(missingTopics, existingTopics, null);
 		return false;
 	}
 
@@ -177,7 +179,7 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 		try {
 			return AdminClient.create(adminConfig);
 		} catch (RuntimeException ex) {
-			_context.error("Unable to create AdminClient for Kafka client '" + _commonClientConfig.getName() + "'.", ex);
+			Logger.error("Unable to create AdminClient for Kafka client '" + _commonClientConfig.getName() + "'.", ex);
 			return null;
 		}
 	}
@@ -214,7 +216,7 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 		List<String> requiredSorted = CollectionFactory.list(_topics);
 		requiredSorted.sort(Comparator.naturalOrder());
 
-		_context.error("One or more topics for Kafka client '" + clientName + "' either do not exist,"
+		Logger.error("One or more topics for Kafka client '" + clientName + "' either do not exist,"
 			+ " or access to it is restricted and the application does not have the necessary credentials."
 			+ " Required topics: " + requiredSorted
 			+ ". Missing topics: " + missingSorted

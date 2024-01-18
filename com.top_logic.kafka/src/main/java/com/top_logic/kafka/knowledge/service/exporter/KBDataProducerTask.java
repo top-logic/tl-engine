@@ -217,8 +217,8 @@ public class KBDataProducerTask extends StateHandlingTask<KBDataProducerTask.Con
 		super(context, config);
 		_producer = findProducer();
 		if (_producer == null) {
-			context.error("No " + TLKafkaProducer.class.getName() + " with name '" + config.getKafkaProducer()
-				+ "' known in the " + KafkaProducerService.class.getSimpleName());
+			Logger.error("No " + TLKafkaProducer.class.getName() + " with name '" + config.getKafkaProducer()
+				+ "' known in the " + KafkaProducerService.class.getSimpleName(), KBDataProducerTask.class);
 		}
 		int cachedEventSize = config.getCachedEventSize();
 		if (cachedEventSize <= 0) {
@@ -245,6 +245,9 @@ public class KBDataProducerTask extends StateHandlingTask<KBDataProducerTask.Con
 
 	@Override
 	protected void runHook() {
+		if (_producer == null) {
+			throw new IllegalStateException("No producer available.");
+		}
 		LogUtil.withLogMark(LOG_MARK_TL_SYNC, "true", this::runWithLogMark);
 	}
 

@@ -6,7 +6,7 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
-		defaultColumns="name,firstname,account"
+		defaultColumns="name,firstname,ID_c5acf4ed_9e63_49d8_a1db_832698711c4a"
 		size="300px"
 		type="Contacts:PersonContact"
 	>
@@ -22,6 +22,18 @@
 			elements="model->all(`Contacts:PersonContact`)"
 			supportsElement="element->$element.instanceOf(`Contacts:PersonContact`)"
 		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				accessor="contact -> $contact.get(`Contacts:PersonContact#account`).get(`tl.accounts:Person#name`)"
+				columnId="ID_c5acf4ed_9e63_49d8_a1db_832698711c4a"
+				columnType="tl.core:String"
+			>
+				<columnLabel key="dynamic.6781f741-32c0-4665-a2a2-dcfdf13ba081">
+					<en>User name</en>
+					<de>Benutzername</de>
+				</columnLabel>
+			</configurationProvider>
+		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"

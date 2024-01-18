@@ -642,7 +642,12 @@ public class SQLDumper implements EventWriter {
 
 		public void insert(Item version) throws IOException, NoSuchAttributeException {
 			updateMaxId(version);
-			TypedList buffer = _bufferByType.get(version.getType().getName());
+			String typeName = version.getType().getName();
+			TypedList buffer = _bufferByType.get(typeName);
+			if (buffer == null) {
+				_log.error("No buffer found for type: " + typeName);
+				return;
+			}
 			if (buffer == _revisionValues) {
 				updateFormerRevisionDates((Rev) version);
 				_revisionValues = null;

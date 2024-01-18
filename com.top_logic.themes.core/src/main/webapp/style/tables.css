@@ -927,13 +927,6 @@ table.i18nStringTable td {
 	padding-bottom: var(--spacing-02);
 }
 
-table td span.cExpandableTextInput,
-table td span.cTextInput {
-	/* white-space: break-spaces; */
-	/* word-wrap: break-word; */
-	/* word-break: break-word; */
-}
-
 table td span.cTextPopup span.content {
 	overflow: hidden;
 	text-overflow: ellipsis;

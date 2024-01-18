@@ -638,8 +638,6 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 				if (isDirectReversedReference(reference, target)) {
 					createReferenceEdge(graph, mapping.get(target), mapping.get(source), reference);
-				} else {
-					createReferenceEdge(graph, mapping.get(source), mapping.get(target), reference);
 				}
 			} else {
 				Logger.error("Couldn't create an edge for " + MetaLabelProvider.INSTANCE.getLabel(edgeObject), GraphModelUtil.class);

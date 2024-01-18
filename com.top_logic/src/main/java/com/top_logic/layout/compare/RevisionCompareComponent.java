@@ -70,7 +70,7 @@ public class RevisionCompareComponent extends RevisionSelectComponent implements
 				ColumnConfiguration column = table.declareColumn(COMPARE_COLUMN);
 				column.setColumnLabelKey(I18NConstants.COMPARE_COLUMN_LABEL);
 				column.setDefaultColumnWidth("30px");
-				column.setRenderer(new Renderer<Object>() {
+				column.setRenderer(new Renderer<>() {
 
 					@Override
 					public void write(DisplayContext context, TagWriter out, Object value) throws IOException {

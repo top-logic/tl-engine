@@ -162,7 +162,7 @@ public final class TabComponent extends LayoutList implements BoundCheckerDelega
 	/**
 	 * See {@link #getTabVisibilityFilter}.
 	 */
-	private Filter<? super Card> _tabVisiblityFilter = new Filter<Card>() {
+	private Filter<? super Card> _tabVisiblityFilter = new Filter<>() {
 
 		@Override
 		public boolean accept(Card anObject) {

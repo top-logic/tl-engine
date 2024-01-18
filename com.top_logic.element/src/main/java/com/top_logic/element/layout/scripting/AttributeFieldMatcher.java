@@ -114,7 +114,7 @@ public class AttributeFieldMatcher extends AbstractFieldMatcher<AttributeFieldMa
 		String prefix = config.getPrefix();
 		String domain = config.getDomain();
 		final String fieldName = MetaAttributeGUIHelper.internalID(prefix, attribute, self, domain);
-		return new Filter<FormMember>() {
+		return new Filter<>() {
 			@Override
 			public boolean accept(FormMember anObject) {
 				return fieldName.equals(anObject.getName());

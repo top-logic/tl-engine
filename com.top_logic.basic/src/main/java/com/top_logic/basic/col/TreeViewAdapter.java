@@ -34,7 +34,7 @@ public final class TreeViewAdapter implements TreeView<Object> {
 	
 	@Override
 	public Iterator<?> getChildIterator(final Object node) {
-		return new Iterator<Object>() {
+		return new Iterator<>() {
 			int index = 0;
 			
 			@Override

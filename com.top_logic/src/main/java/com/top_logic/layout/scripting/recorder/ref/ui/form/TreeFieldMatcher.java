@@ -77,7 +77,7 @@ public class TreeFieldMatcher extends AbstractFieldMatcher<TreeFieldMatcher.Conf
 
 	@Override
 	public Filter<? super FormMember> createFilter(final ActionContext context) {
-		return new Filter<FormMember>() {
+		return new Filter<>() {
 
 			@Override
 			public boolean accept(FormMember anObject) {

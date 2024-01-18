@@ -440,7 +440,7 @@ public class ValueResolver implements ValueRefVisitor<Object, ActionContext> {
 		if (ref == null) {
 			return null;
 		}
-		return ScriptingRecorder.withResourceInspection(new Computation<Object>() {
+		return ScriptingRecorder.withResourceInspection(new Computation<>() {
 			@Override
 			public Object run() {
 				return ref.visit(ValueResolver.this, actionContext);

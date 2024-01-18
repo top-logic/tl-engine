@@ -334,14 +334,14 @@ public class Values {
 		}
 	}
 
-	private static final Mapping<? super Object, ? extends Boolean> IS_NULL = new Mapping<Object, Boolean>() {
+	private static final Mapping<? super Object, ? extends Boolean> IS_NULL = new Mapping<>() {
 		@Override
 		public Boolean map(Object input) {
 			return input == null;
 		}
 	};
 
-	private static final Mapping<? super Object, ? extends Boolean> NOT_NULL = new Mapping<Object, Boolean>() {
+	private static final Mapping<? super Object, ? extends Boolean> NOT_NULL = new Mapping<>() {
 		@Override
 		public Boolean map(Object input) {
 			return input != null;
@@ -349,7 +349,7 @@ public class Values {
 	};
 
 	private static final Mapping<Object, ? extends Boolean> IS_EMPTY =
-		new Mapping<Object, Boolean>() {
+		new Mapping<>() {
 			@Override
 			public Boolean map(Object input) {
 				return input == null || (input instanceof Collection<?> && ((Collection<?>) input).isEmpty());
@@ -357,7 +357,7 @@ public class Values {
 		};
 
 	private static final Mapping<Object, ? extends Boolean> NOT_EMPTY =
-		new Mapping<Object, Boolean>() {
+		new Mapping<>() {
 			@Override
 			public Boolean map(Object input) {
 				return !(input == null || (input instanceof Collection<?> && ((Collection<?>) input).isEmpty()));
@@ -365,7 +365,7 @@ public class Values {
 		};
 
 	private static final Mapping<? super Iterable<?>, Object> FIRST =
-		new Mapping<Iterable<?>, Object>() {
+		new Mapping<>() {
 			@Override
 			public Object map(Iterable<?> input) {
 				if (input == null) {

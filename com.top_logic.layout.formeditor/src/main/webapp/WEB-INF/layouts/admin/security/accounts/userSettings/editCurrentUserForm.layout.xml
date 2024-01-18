@@ -6,6 +6,7 @@
 	template="com.top_logic.element/form.template.xml"
 >
 	<arguments
+		edit-group="System"
 		showNoModel="false"
 		type="Contacts:PersonContact"
 	>
@@ -20,6 +21,7 @@
 			<button id="resetPersonalConfiguration"
 				class="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
 				clique="additional"
+				group="System"
 				image="theme:ICON_RESET_PERSONAL_CONFIGURATION"
 			>
 				<resourceKey key="dynamic.49aa2499-5cb1-4f78-929e-4ac543b322aa">

@@ -375,9 +375,13 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			createTempFiles();
 
 			Map<String, Version> maximalVersionByModule =
-				migrate(context, log, connection, _migrationInfo.isSchemaUpdateRequired());
+				migrate(context, log, connection);
 
 			MigrationUtil.updateStoredVersions(log, connection, maximalVersionByModule.values());
+
+			// Update stored schema to be compatible with the current application configuration.
+			StoreTypeConfiguration store = TypedConfigUtil.createInstance(StoreTypeConfiguration.Config.class);
+			store.doMigration(context, log, connection);
 
 			commitConnection(log, connection, "Unable to commit migrated changes.");
 
@@ -497,8 +501,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 	}
 
-	private Map<String, Version> migrate(MigrationContext context, Protocol log, PooledConnection connection,
-			boolean schemaUpdateRequired) {
+	private Map<String, Version> migrate(MigrationContext context, Protocol log, PooledConnection connection) {
 		DataMigration migration = new DataMigration(_migrationInfo);
 		migration.setBufferChunkSize(getConfig().getBufferChunkSize());
 		migration.build(log);
@@ -509,13 +512,6 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		migration.executeSQLMigration(context, log, connection);
 
 		executeAutomaticSchemaMigrations(context, log, connection);
-
-		// Update stored schema before the replay to ensure the dumping KB uses the correct
-		// configuration.
-		if (schemaUpdateRequired) {
-			StoreTypeConfiguration store = TypedConfigUtil.createInstance(StoreTypeConfiguration.Config.class);
-			store.doMigration(context, log, connection);
-		}
 
 		if (migration.isReplayRequired()) {
 			commitConnection(log, connection, "Unable to commit changes before KnowledgeBase replay.");

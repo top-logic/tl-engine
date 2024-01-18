@@ -19,7 +19,7 @@
 		<open-handler id="ID_4ec4d336_e899_45dc_97d1_88e73ecf6e6b"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			clique="additional"
-			group="Write"
+			group="System"
 			image="css:fas fa-lock"
 			targetComponent="admin/security/accounts/userSettings/changePassword/dialog.layout.xml#Dialog"
 		>

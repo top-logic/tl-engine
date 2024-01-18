@@ -20,6 +20,7 @@
 		<open-handler id="showCurrentPersonDialog"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			image="theme:IMAGE_BUTTONS_PERSONAL_SETTINGS22"
+			securityObject="securityRoot"
 		>
 			<resourceKey key="dynamic.a81055fe-8f11-4da9-bdee-e58999ef2134">
 				<en>Personal settings</en>

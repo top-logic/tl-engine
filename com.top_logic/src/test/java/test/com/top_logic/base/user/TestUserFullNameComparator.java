@@ -34,7 +34,7 @@ public class TestUserFullNameComparator extends BasicTestCase {
      */
     public void testCollating() {
         String[] attrNames = new String[] 
-         { UserInterface.FIRST_NAME, UserInterface.NAME, UserInterface.USER_NAME};
+		{ UserInterface.NAME, UserInterface.FIRST_NAME, UserInterface.USER_NAME };
         
         DOUser alm = DOUser.getInstance(
             new ExampleDataObject( attrNames,

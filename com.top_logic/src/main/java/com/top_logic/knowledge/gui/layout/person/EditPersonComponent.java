@@ -282,13 +282,13 @@ public class EditPersonComponent extends EditComponent {
             formContext.addMember(FormFactory.newStringField(UserInterface.USER_NAME, true, false, new StringLengthConstraint(1, theSize)));
 
 			theSize = getSizeForMOAttribute(_userMO, UserInterface.NAME, false);
-            formContext.addMember(FormFactory.newStringField(UserInterface.NAME, false, false, new StringLengthConstraint(0, theSize)));
+            formContext.addMember(FormFactory.newStringField(UserInterface.NAME, false, false, new StringLengthConstraint(1, theSize)));
 
 			theSize = getSizeForMOAttribute(_userMO, UserInterface.TITLE, false);
             formContext.addMember(FormFactory.newStringField(UserInterface.TITLE, false, false, new StringLengthConstraint(0, theSize)));
 
 			theSize = getSizeForMOAttribute(_userMO, UserInterface.FIRST_NAME, false);
-            formContext.addMember(FormFactory.newStringField(UserInterface.FIRST_NAME, false, false, new StringLengthConstraint(1, theSize)));
+            formContext.addMember(FormFactory.newStringField(UserInterface.FIRST_NAME, false, false, new StringLengthConstraint(0, theSize)));
 
 			theSize = getSizeForMOAttribute(_userMO, UserInterface.PHONE, false);
             formContext.addMember(FormFactory.newStringField(UserInterface.PHONE, false, false, new StringLengthConstraint(0, theSize)));
@@ -344,9 +344,9 @@ public class EditPersonComponent extends EditComponent {
 						formContext.addMember(newSizedFormConstraint(UserInterface.TITLE,
 							!allowedToEdit || deviceReadonly, 0, tileSize, user.getTitle()));
 						StringField surNameField =
-							newSizedFormConstraint(UserInterface.FIRST_NAME,
+							newSizedFormConstraint(UserInterface.NAME,
 								!allowedToEdit || deviceReadonly, 1, getSizeForMOAttribute(_userMO,
-									UserInterface.FIRST_NAME, deviceReadonly),
+									UserInterface.NAME, deviceReadonly),
 								user.getName());
 						surNameField.setMandatory(true);
 						formContext.addMember(surNameField);
@@ -490,7 +490,7 @@ public class EditPersonComponent extends EditComponent {
 	}
 
 	private StringField surnameField(UserInterface user, boolean deviceReadonly) {
-		StringField field = newPersonField(UserInterface.FIRST_NAME, user.getName(), deviceReadonly);
+		StringField field = newPersonField(UserInterface.NAME, user.getName(), deviceReadonly);
 		field.setMandatory(true);
 		return field;
 	}
@@ -511,7 +511,7 @@ public class EditPersonComponent extends EditComponent {
 
 	private StringField givenNameField(UserInterface user, boolean deviceReadonly) {
 		StringField field =
-			FormFactory.newStringField(UserInterface.NAME, user.getFirstName(), false);
+			FormFactory.newStringField(UserInterface.FIRST_NAME, user.getFirstName(), false);
 		field.setDisabled(deviceReadonly);
 		field.setMandatory(true);
 		return field;

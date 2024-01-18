@@ -50,6 +50,12 @@
 		>
 			<acceptable-classifiers value="form, commons"/>
 		</property>
+		<property name="edit-group"
+			default="Write"
+			type="String"
+		>
+			<hidden/>
+		</property>
 	</properties>
 
 	<editor name="Form"
@@ -77,6 +83,7 @@
 			<button id="customEdit"
 				class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 				clique="edit"
+				group="${edit-group}"
 			>
 				<executability>
 					<reference rule-id="SwitchToEditMode"/>

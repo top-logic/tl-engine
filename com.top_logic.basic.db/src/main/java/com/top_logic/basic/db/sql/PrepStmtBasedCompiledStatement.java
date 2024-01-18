@@ -111,7 +111,7 @@ public abstract class PrepStmtBasedCompiledStatement extends ConfiguredCompiledS
 
 	private Batch tryCreateBatch(Connection connection) throws SQLException {
 		PreparedStatement stmt = prepareStatement(connection, toString(ArrayUtil.EMPTY_ARRAY));
-		return new AbstractStatementBatch<PreparedStatement>(stmt) {
+		return new AbstractStatementBatch<>(stmt) {
 
 			@Override
 			public void addBatch(Object... arguments) throws SQLException {

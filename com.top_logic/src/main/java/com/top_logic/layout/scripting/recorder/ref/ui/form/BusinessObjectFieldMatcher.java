@@ -67,7 +67,7 @@ public class BusinessObjectFieldMatcher extends AbstractFieldMatcher<BusinessObj
 
 	@Override
 	public Filter<? super FormMember> createFilter(ActionContext context) {
-		return new Filter<FormMember>() {
+		return new Filter<>() {
 			@Override
 			public boolean accept(FormMember anObject) {
 				final Object businessObject =

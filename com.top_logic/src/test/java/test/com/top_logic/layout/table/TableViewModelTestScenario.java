@@ -133,7 +133,7 @@ public class TableViewModelTestScenario {
 	}
 
 	private void createGlobalFilter(TableViewModel model) {
-		globalStaticFilter = new StaticFilterWrapper(new Filter<Object>() {
+		globalStaticFilter = new StaticFilterWrapper(new Filter<>() {
 
 			@Override
 			public boolean accept(Object rowObject) {

@@ -106,7 +106,7 @@ public class TreeGridBuilder<R> extends AbstractTreeGridBuilder<R> {
 	@Override
 	protected Iterable<?> getChildren(final LayoutComponent component, final Object rowModel) {
 		final TreeModelBuilder<Object> builder = _builder;
-		return new Iterable<Object>() {
+		return new Iterable<>() {
 			@Override
 			public Iterator<Object> iterator() {
 				// TreeView is to abstract.

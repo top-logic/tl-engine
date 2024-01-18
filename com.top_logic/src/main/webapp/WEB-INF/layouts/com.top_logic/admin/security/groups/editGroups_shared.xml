@@ -50,41 +50,6 @@
 						resPrefix="admin.group.edit."
 						securityProviderClass="${securityProviderClass}"
 					>
-						<tables>
-							<table name="members"
-								resPrefix="admin.person.edit.table."
-								titleKey="admin.group.edit.person.table.title"
-							>
-								<column-default
-									accessor="com.top_logic.knowledge.wrap.person.PersonAccessor"
-									filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
-								/>
-								<columns>
-									<column name="name"
-										accessor="com.top_logic.layout.IdentityAccessor"
-										comparator="com.top_logic.knowledge.wrap.util.PersonComparator"
-									/>
-									<column name="sn"/>
-									<column name="givenName"/>
-									<column name="username"/>
-									<column name="initials"/>
-									<column name="mail"/>
-									<column name="otherMailbox"/>
-									<column name="personalTitle"/>
-									<column name="telephoneNumber"/>
-									<column name="otherTelephone"/>
-									<column name="mobile"/>
-									<column name="lastLogin"
-										accessor="com.top_logic.knowledge.gui.layout.person.PersonTableComponent$LastLoginAccessor"
-										filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
-									/>
-									<column name="authDeviceID"/>
-									<column name="restrictedUser"
-										filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
-									/>
-								</columns>
-							</table>
-						</tables>
 						<dialogs>
 							<layout name="${namePrefix}NewGroupDialog">
 								<dialogInfo

@@ -47,19 +47,6 @@ public class MigrationInfo {
 	}
 
 	/**
-	 * Whether at least one of the {@link MigrationConfig}s has the
-	 * {@link MigrationConfig#getSchemaUpdate()} flag set.
-	 */
-	public boolean isSchemaUpdateRequired() {
-		for (MigrationConfig migration : _migrations) {
-			if (migration.getSchemaUpdate()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * Creates a {@link MigrationInfo}.
 	 *
 	 * @param downGrade

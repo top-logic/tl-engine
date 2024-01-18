@@ -1340,10 +1340,12 @@ div.cal_zoom_inAnimation {
 	height: inherit;
 }
 
-.cDecoratedCell a.input-image,
-.cDecoratedCell a.input-image:hover,
-.cDecoratedCell a.input-image:focus {
-	color: var(--icon-secondary);
+.dfModeFull .cPopupSelect {
+	flex-wrap: wrap;
+}
+
+.dfModeFull .cPopupSelect .tl-separator {
+	margin-right: var(--spacing-02);
 }
 
 td.tl-table__cell--selected .cDecoratedCell a.input-image,
@@ -1357,7 +1359,11 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 	display: inline-flex;
 	align-items: stretch;
 	color: var(--icon-primary);
-	background: var(--field);
+	background-color: var(--field);
+}
+
+.cDownload .lFixedRight {
+	background-color: unset;
 }
 
 .lFixedRight a:not(.lFlexible),
@@ -2380,6 +2386,7 @@ span.disabled .ddwttChevron::after {
 	border-radius: initial;
 	background: var(--field);
 	padding: 0 var(--spacing-03);
+	flex-shrink: 0;
 }
 
 .ddwttSearch:focus-visible {

@@ -6401,6 +6401,15 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	display: flex;
 }
 
+.dfModeFull .cPopupSelect {
+	display: inline-flex;
+	flex-wrap: wrap;
+}
+
+.dfModeFull .cPopupSelect .tl-separator {
+	margin-right: 4px;
+}
+
 .cPopupSelect.active > .lFlexible,
 .cExpandableTextInput.active > .lFlexible,
 .cIntegerInput.active > .lFlexible,
@@ -7778,7 +7787,6 @@ div.dirtyHandlingDialog .changes {
 .ddwttDDBox span {
 	margin: 0;
 	line-height: 24px;
-	/* line-height: 2em !important; */ /* estimated setting for new design-theme */
 }
 
 .ddwttContainer .ddwttDDBox {

@@ -285,7 +285,11 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 								Resources.getInstance().getString(I18NConstants.RENDERING_ERROR_SELECT_FIELD));
 						}
 						if (it.hasNext()) {
+							out.beginBeginTag(SPAN);
+							out.writeAttribute(CLASS_ATTR, "tl-separator");
+							out.endBeginTag();
 							out.writeText(SelectFieldUtils.getCollectionSeparator(theModel));
+							out.endTag(SPAN);
 						}
 					}
 					DecorateService.end(context, out, theModel, decorateInfo);

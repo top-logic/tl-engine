@@ -12,25 +12,25 @@
  */
 
 .tl-log-lines-table--fatal {
-	color: purple !important;
+	color: var(--support-danger) !important;
 }
 
 .tl-log-lines-table--error {
-	color: red !important;
+	color: var(--support-danger) !important;
 }
 
 .tl-log-lines-table--warn {
-	color: darkorange !important;
+	color: var(--support-warning) !important;
 }
 
 .tl-log-lines-table--info {
-	color: green !important;
+	color: var(--support-success) !important;
 }
 
 .tl-log-lines-table--debug {
-	color: black !important;
+	color: var(--text-primary) !important;
 }
 
 .tl-log-lines-table--trace {
-	color: black !important;
+	color: var(--text-primary) !important;
 }

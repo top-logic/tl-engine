@@ -53,7 +53,7 @@ public class SwingTreeModelAdapter extends AbstractTreeModel<Object> implements 
      */
     @Override
 	public Iterator<?> getChildIterator(final Object parent) {
-		return new Iterator<Object>() {
+		return new Iterator<>() {
             int index = 0;
             int size = impl.getChildCount(parent);
             

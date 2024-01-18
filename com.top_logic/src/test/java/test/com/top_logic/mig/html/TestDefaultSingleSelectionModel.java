@@ -89,7 +89,7 @@ public class TestDefaultSingleSelectionModel extends TestCase {
 	public void testCannotChangeFixedSelection() {
 		final Object fixedSelection = new Object();
 		_model.setSelected(fixedSelection, true);
-		_model.setDeselectionFilter(new Filter<Object>() {
+		_model.setDeselectionFilter(new Filter<>() {
 
 			@Override
 			public boolean accept(Object anObject) {
@@ -109,7 +109,7 @@ public class TestDefaultSingleSelectionModel extends TestCase {
 	public void testAcceptNoNewSelection() {
 		final Object fixedSelection = new Object();
 		_model.setSelected(fixedSelection, true);
-		_model.setDeselectionFilter(new Filter<Object>() {
+		_model.setDeselectionFilter(new Filter<>() {
 
 			@Override
 			public boolean accept(Object anObject) {
@@ -124,7 +124,7 @@ public class TestDefaultSingleSelectionModel extends TestCase {
 	public void testCannotClearFixedSelection() {
 		final Object fixedSelection = new Object();
 		_model.setSelected(fixedSelection, true);
-		_model.setDeselectionFilter(new Filter<Object>() {
+		_model.setDeselectionFilter(new Filter<>() {
 
 			@Override
 			public boolean accept(Object anObject) {

@@ -136,7 +136,7 @@ public class StaticAttributeFilter implements InteractiveBuilder<Filter<Object>,
 			Filter<?> filter = null;
 			TLStructuredTypePart attribute = getMetaAttribute();
 			if (AttributeOperations.isCollectionValued(attribute)) {
-				filter = new Filter<Object>() {
+				filter = new Filter<>() {
 
 					@Override
 					public boolean accept(Object anObject) {
@@ -144,7 +144,7 @@ public class StaticAttributeFilter implements InteractiveBuilder<Filter<Object>,
 					}
 				};
 			} else {
-				filter = new Filter<Object>() {
+				filter = new Filter<>() {
 
 					@Override
 					public boolean accept(Object anObject) {

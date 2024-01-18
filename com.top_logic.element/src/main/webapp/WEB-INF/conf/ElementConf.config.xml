@@ -813,41 +813,41 @@
 		            <handler id="elementRemove" class="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
 						clique="delete"/>
 		            <handler id="elementApply" class="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 		            <handler id="applyTLStructuredTypePart" class="com.top_logic.element.layout.meta.TLStructuredTypePartApplyHandler"
-						clique="additional-apply" resourceKey="tl.command.apply">
+						clique="additional-apply" group="System" resourceKey="tl.command.apply">
 						<executability>
 							<reference rule-id="InEditMode"/>
 						</executability>
 					</handler>
 		            <handler id="applyModuleContainer" class="com.top_logic.element.layout.meta.ModuleContainerApplyHandler"
-						clique="additional-apply" resourceKey="tl.command.apply">
+						clique="additional-apply" group="System" resourceKey="tl.command.apply">
 						<executability>
 							<reference rule-id="InEditMode"/>
 						</executability>
 					</handler>
 		            <handler id="applyTLModule" class="com.top_logic.element.layout.meta.TLModuleApplyHandler"
-						clique="additional-apply" resourceKey="tl.command.apply">
+						clique="additional-apply" group="System" resourceKey="tl.command.apply">
 						<executability>
 							<reference rule-id="InEditMode"/>
 						</executability>
 					</handler>
 		            <handler id="applyTLEnumeration" class="com.top_logic.element.layout.meta.TLEnumerationApplyHandler"
-						clique="additional-apply" resourceKey="tl.command.apply">
+						clique="additional-apply" group="System" resourceKey="tl.command.apply">
 						<executability>
 							<reference rule-id="InEditMode"/>
 						</executability>
 					</handler>
 		            <handler id="savePersonOrGroupRoles" class="com.top_logic.element.layout.person.SaveRolesHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 		            <handler id="applyPersonOrGroupRoles" class="com.top_logic.element.layout.person.ApplyRolesHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 		            <handler id="newMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$NewMandatorCommandHandler"
 						clique="create"/>
 		            <handler id="touchMetaAttribute" class="com.top_logic.element.meta.form.component.TouchMetaAttributeCommandHandler"/>
 		            <handler id="touchAllMetaAttributes" class="com.top_logic.element.meta.form.component.TouchAllMetaAttributesCommandHandler"/>
 		            <handler id="storeAttributes" class="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 		
 		            <handler id="searchAttributed" class="com.top_logic.element.layout.meta.search.SearchCommandHandler"
 						clique="main"
@@ -863,9 +863,9 @@
 		            <handler id="newAttributedQuery" class="com.top_logic.element.layout.meta.search.NewQueryComponent$NewQueryCommandHandler"
 						clique="create"/>
 		            <handler id="saveAttributedQuery" class="com.top_logic.element.layout.meta.search.SaveQueryCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 		            <handler id="publishableSaveAttributedQuery" class="com.top_logic.element.layout.meta.search.PublishableSaveQueryCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 		            <handler id="deleteAttributedQuery" class="com.top_logic.element.layout.meta.search.DeleteQueryCommandHandler"
 						clique="delete"/>
 		            <handler id="publishStoredQuery" class="com.top_logic.element.layout.meta.search.PublishableNewQueryComponent$PublishableNewQueryCommandHandler"
@@ -885,7 +885,7 @@
 		            	image="theme:ICONS_ADD2_CLIPBOARD" disabledImage="theme:ICONS_ADD2_CLIPBOARD_DISABLED"
 		            />
 		            <handler id="gridApplyRowObject" class="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
-						clique="apply"
+						clique="apply" group="System"
 						target="selection(self())"
 					/>
 					<handler id="gridDiscard" class="com.top_logic.layout.form.component.EditComponent$DiscardCommand"
@@ -923,9 +923,9 @@
 		            />
 		
 		            <handler id="attributeClassificationApply" class="com.top_logic.element.layout.security.AttributeSecurityEditComponent$AttributeClassificationApplyHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 		            <handler id="attributeClassifierRolesApply" class="com.top_logic.element.layout.security.AttributeClassifierRolesComponent$AttributeClassifirRolesApplyHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 		            <handler id="deleteMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$MandatorDeleteCommandhandler"
 						clique="delete"/>
 		            <handler id="addComment" class="com.top_logic.element.comment.layout.CommentDialogComponent$NewCommentHandler"

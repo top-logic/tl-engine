@@ -144,15 +144,15 @@
 		            	group="System"
 		            	image="theme:ICON_RESET_STARTPAGE" 
 		            />
-					<handler id="contactApply" class="com.top_logic.contact.layout.ContactApplyHandler" clique="apply"/>
+					<handler id="contactApply" class="com.top_logic.contact.layout.ContactApplyHandler" clique="apply" group="System"/>
 					<handler id="contactDelete" class="com.top_logic.contact.layout.ContactDeleteHandler" clique="delete"/>
-					<handler id="personContactApply" class="com.top_logic.contact.layout.person.PersonContactApplyHandler" clique="apply"/>
+					<handler id="personContactApply" class="com.top_logic.contact.layout.person.PersonContactApplyHandler" clique="apply" group="System"/>
 					<handler id="personContactDelete" class="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler" clique="delete"/>
 					<handler id="personContactCreate" class="com.top_logic.contact.layout.person.PersonContactCreateHandler" clique="create"/>
 					<handler id="companyContactDelete" class="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler" clique="delete"/>
 					<handler id="companyContactCreate" class="com.top_logic.contact.layout.company.CompanyContactCreateHandler" clique="create"/>
 		            <!-- Override person handling to (optionally) relate them to PersonContacts --> 
-		            <handler id="applyPerson" class="com.top_logic.contact.layout.person.related.ApplyRelatedPersonCommandHandler" clique="apply"/>
+		            <handler id="applyPerson" class="com.top_logic.contact.layout.person.related.ApplyRelatedPersonCommandHandler" clique="apply" group="System"/>
 		            <handler id="newPerson" class="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler" clique="create"/>
 		            <handler id="startSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$StartSAPImportCommandHandler"/>
 		            <handler id="finishSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$FinishSAPImportCommandHandler"/>

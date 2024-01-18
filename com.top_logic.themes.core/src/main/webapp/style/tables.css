@@ -910,6 +910,15 @@ table td span.cDecoratedCell {
 	gap: var(--spacing-02);
 }
 
+.cDecoratedCell .treeType {
+	color: var(--icon-secondary);
+}
+
+.tl-table__row:not(.tblSelected):hover .cDecoratedCell .treeType, 
+td.tl-table__cell--selected .cDecoratedCell .treeType {
+	color: var(--icon-primary);
+}
+
 table.i18nStringTable td span.cDecoratedCell {
 	gap: 0;
 }

@@ -48,6 +48,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
+import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -179,6 +180,8 @@ public class EditGroupComponent extends EditComponent {
         
 		List<Person> possibleMembers = Person.all();
 		SelectField memberField = newSelectField(FORM_FIELD_MEMBERS, possibleMembers, MULTIPLE, members, !IMMUTABLE);
+		memberField.setTableConfigurationProvider(
+			GenericTableConfigurationProvider.getTableConfigurationProvider(Person.PERSON_TYPE));
 		memberField.setOptionComparator(PersonComparator.getInstance());
 		makeConfigurable(memberField);
 		theFC.addMember(memberField);

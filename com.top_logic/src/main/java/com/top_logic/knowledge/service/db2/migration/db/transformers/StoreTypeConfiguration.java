@@ -32,7 +32,6 @@ import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.db2.migration.db.RowTransformer;
 import com.top_logic.knowledge.service.db2.migration.db.RowValue;
 import com.top_logic.knowledge.service.db2.migration.db.RowWriter;
-import com.top_logic.knowledge.service.migration.MigrationConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
@@ -41,9 +40,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
  * configuration in the {@link KnowledgeBase}.
  * 
  * <p>
- * Note: This {@link MigrationProcessor} must not be explicitly configured. It is automatically
- * executed after a potential replay migration, if some of the migrations have the
- * {@link MigrationConfig#getSchemaUpdate()} flag set.
+ * Note: This {@link MigrationProcessor} must not be explicitly configured.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

@@ -55,7 +55,7 @@ public class LayoutMigrationProcessor extends RewriteMigrationProcessor<RewriteM
 
 		SQLSelect select = select(
 			columns(
-				columnDef(column(null, BasicTypes.BRANCH_DB_NAME)),
+				util().branchColumnDef(),
 				columnDef(column(null, BasicTypes.IDENTIFIER_DB_NAME)),
 				columnDef(column(null, BasicTypes.REV_MAX_DB_NAME)),
 				columnDef(column(null, layoutKeyColumn)),

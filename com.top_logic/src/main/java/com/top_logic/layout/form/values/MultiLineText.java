@@ -27,28 +27,19 @@ public class MultiLineText implements ControlProvider {
 	 */
 	public interface Config extends PolymorphicConfiguration<MultiLineText> {
 
-		/**
-		 * @see #getRows()
-		 */
+		/** @see #getRows() */
 		String ROWS = "rows";
 
-		/**
-		 * The number of rows to display in the text area.
-		 */
+		/** The number of rows to display in the text area. */
 		@Name(ROWS)
 		@IntDefault(DEFAULT_ROWS)
 		int getRows();
-
 	}
 
-	/**
-	 * Number of rows to display in the text area.
-	 */
+	/** Number of rows to display in the text area. */
 	public static final int DEFAULT_ROWS = 5;
 
-	/**
-	 * Singleton {@link MultiLineText} instance.
-	 */
+	/** Singleton {@link MultiLineText} instance. */
 	public static final MultiLineText INSTANCE = new MultiLineText(DEFAULT_ROWS);
 
 	private final int _rows;

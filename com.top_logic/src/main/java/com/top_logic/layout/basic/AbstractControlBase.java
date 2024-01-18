@@ -377,6 +377,7 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 		return commandsByName.get(commandName);
 	}
 
+	@TemplateVariable("id")
 	@Override
 	public final String getID() {
 		if (id == null) {

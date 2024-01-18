@@ -16,6 +16,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.CollapsedListener;
 import com.top_logic.layout.form.Collapsible;
@@ -94,19 +95,20 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		return "cExpandableTextInput";
 	}
 
-    @Override
-    protected void writeEditableContents(DisplayContext context, TagWriter out) throws IOException {
-    	super.writeEditableContents(context, out);
-    	writeToggleModeButton(context, out, this, getOpenButtonID(), getToggleFieldModeCommand());
-    }
+	@Override
+	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+		if (this.isMultiLine()) {
+			Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_MULTI_TEMPLATE.get().write(context, out, this);
+		} else {
+			Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE.get().write(context, out, this);
+		}
+	}
     
-	protected void writeToggleModeButton(DisplayContext context, TagWriter out,
-            Control aControl, String anId, ControlCommand aCommand)
-            throws IOException {
-		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
-		out.endBeginTag();
-        
+	@TemplateVariable("buttons")
+	public void writeToggleModeButton(DisplayContext context, TagWriter out) throws IOException {
+		String anId = getOpenButtonID();
+		ControlCommand aCommand = getToggleFieldModeCommand();
+
         /* 2. Render the dialog popup button. */
 		String buttonTooltip = Resources.getInstance().getString(TOGGLE_BUTTON_TOOLTIP);
 		
@@ -120,11 +122,9 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		CssUtil.writeCombinedCssClasses(out,
 			FormConstants.INPUT_IMAGE_ACTION_CSS_CLASS,
 			FormConstants.TOGGLE_BUTTON_CSS_CLASS);
-		writeOnClick(out, aControl, aCommand);
+		writeOnClick(out, aCommand);
 
 		tag.endEmptyTag(context, out);
-
-		out.endTag(SPAN);
     }
 
 	private XMLTag getButton() {
@@ -135,10 +135,10 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		}
 	}
 
-	private void writeOnClick(TagWriter out, Control aControl, ControlCommand aCommand) throws IOException {
+	private void writeOnClick(TagWriter out, ControlCommand aCommand) throws IOException {
 		out.beginAttribute(ONCLICK_ATTR);
 		out.append("return ");
-		aCommand.writeInvokeExpression(out, aControl);
+		aCommand.writeInvokeExpression(out, this);
 		out.append(';');
 		out.endAttribute();
 	}

@@ -12,6 +12,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.I18NConstants;
@@ -121,6 +122,18 @@ public abstract class AbstractFormFieldControl extends AbstractFormFieldControlB
 		out.writeAttribute(ID_ATTR, getID());
 		out.endBeginTag();
 		out.endTag(SPAN);
+	}
+
+	/**
+	 * Tab index value if the control has one.
+	 */
+	@TemplateVariable("tabindex")
+	public final Integer tabIndex() {
+		if (hasTabIndex()) {
+			return Integer.valueOf(getTabIndex());
+		} else {
+			return null;
+		}
 	}
 
 	/**

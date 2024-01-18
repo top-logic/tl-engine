@@ -14,6 +14,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.gui.ThemeVar;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.format.ColorFormat;
 import com.top_logic.util.Resources;
@@ -25,6 +26,13 @@ import com.top_logic.util.Resources;
  */
 public class PasswordInputControl extends TextInputControl {
 	
+	/**
+	 * {@link TemplateVariable} for rendering the password validator view.
+	 * 
+	 * @see #writePasswordValidationSnippet(TagWriter)
+	 */
+	public static final String VALIDATOR_PROPERTY = "validator";
+
 	private static final String PASSWORD_INPUT_TYPE = "password";
 	private static final ResKey PASSWORD_VERDICT_KEY_WEAK = I18NConstants.PASSWORD_WEAK;
 	private static final ResKey PASSWORD_VERDICT_KEY_NORMAL = I18NConstants.PASSWORD_NORMAL;
@@ -35,10 +43,14 @@ public class PasswordInputControl extends TextInputControl {
 	private int minCharLength;
 	private int tlCriteriaCount;
 	
+	/**
+	 * Create a new {@link PasswordInputControl} with the default {@link #COMMANDS} map.
+	 */
 	public PasswordInputControl(FormField model, int minCharLength, int tlCriteriaCount) {
 		this(model, COMMANDS, minCharLength, tlCriteriaCount);
 	}
 
+	/** Create a new {@link PasswordInputControl}. */
 	public PasswordInputControl(FormField model, Map commands, int minCharLength, int tlCriteriaCount) {
 		super(model, commands);
 		setType(PASSWORD_INPUT_TYPE);
@@ -47,12 +59,13 @@ public class PasswordInputControl extends TextInputControl {
 	}
 	
 	@Override
-	protected void writeEditableContents(DisplayContext context, TagWriter out) throws IOException {
-		super.writeEditableContents(context, out);
-		writePasswordValidationSnippet(out);
+	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+		Icons.PASSWORD_INPUT_EDIT_TEMPLATE.get().write(context, out, this);
 	}
 
-	private void writePasswordValidationSnippet(TagWriter out) throws IOException {
+	/** Validates the entered password. */
+	@TemplateVariable(VALIDATOR_PROPERTY)
+	public void writePasswordValidationSnippet(TagWriter out) throws IOException {
 		FormField field = (FormField) getModel();
 		if (!field.isDisabled()) {
 			String elementId = getInputIdForJQuery();

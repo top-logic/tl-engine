@@ -204,6 +204,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(ID, getButtonContentID());
+		out.writeAttribute(CLASS_ATTR, "ddwttButtonContent");
 		out.endBeginTag();
 		{
 			String label;
@@ -218,7 +219,12 @@ public class DropDownControl extends AbstractSelectControl {
 					label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
 				}
 			}
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, "ddwttItemLabel");
+			out.endBeginTag();
 			out.writeText(label);
+			out.endTag(SPAN);
+
 		}
 		out.endTag(SPAN);
 	}

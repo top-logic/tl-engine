@@ -480,6 +480,9 @@
 	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.ADD_CLIPBOARD_DISABLED"
 		expr="%ICONS_ADD2_CLIPBOARD%"
 	/>
+	<icon name="com.top_logic.tool.export.Icons.DOWNLOAD"
+		expr="%ICONS_DOWNLOAD60%"
+	/>	
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD60"
 		expr="%ICONS_DOWNLOAD60%"
 	/>
@@ -1257,6 +1260,9 @@
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
 		value="62px"
 	/>
+	<icon name="mime.TLClass"
+		value="css:bi bi-window"
+	/>
 	
 	<!-- Form spacings  -->
 	<dim name="RF_FIRST_COLUMN_WIDTH"
@@ -1487,8 +1493,11 @@
 	<icon name="com.top_logic.util.sched.layout.Icons.EXCEPTION"
 		expr="%com.top_logic.util.error.Icons.INFO%"
 	/>
-	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
+	<icon name="ICONS_BUTTON_PAUSE"
 		value="css:bi bi-pause-fill red"
+	/>
+	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
+		expr="%ICONS_BUTTON_PAUSE%"
 	/>
 	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_YELLOW"
 		value="css:bi bi-pause-fill yellow"

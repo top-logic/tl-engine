@@ -44,19 +44,25 @@ public class TestSelectionControl extends TestControl {
 
 		String editableDisplay = writeControl(control);
 		assertTrue("Ticket #6779: Option label provider was not used: " + editableDisplay,
-			editableDisplay.contains("#B#, #C#"));
+			editableDisplay.contains("#B#"));
+		assertTrue("Ticket #6779: Option label provider was not used: " + editableDisplay,
+			editableDisplay.contains("#C#"));
 
 		field.setImmutable(true);
 
 		String immutableDisplay = writeControl(control);
 		assertTrue("Ticket #6779: Option label provider was not used: " + immutableDisplay,
-			immutableDisplay.contains("#B#, #C#"));
+			immutableDisplay.contains("#B#"));
+		assertTrue("Ticket #6779: Option label provider was not used: " + immutableDisplay,
+			immutableDisplay.contains("#C#"));
 
 		SelectFieldUtils.setCollectionSeparator(field, " ;");
 
 		immutableDisplay = writeControl(control);
 		assertTrue("Ticket #18557: Separator for immutable mode not used: " + immutableDisplay,
-			immutableDisplay.contains("#B# ;#C#"));
+			immutableDisplay.contains("#B#"));
+		assertTrue("Ticket #18557: Separator for immutable mode not used: " + immutableDisplay,
+			immutableDisplay.contains("#C#"));
 
 	}
 

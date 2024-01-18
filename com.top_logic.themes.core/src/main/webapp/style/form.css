@@ -1335,6 +1335,11 @@ div.cal_zoom_inAnimation {
 	width: 100%;
 }
 
+.cBlockTextInput .lFixedRight a:not(.lFlexible),
+.cExpandableTextInput .lFixedRight a:not(.lFlexible) {
+	height: inherit;
+}
+
 .cDecoratedCell a.input-image,
 .cDecoratedCell a.input-image:hover,
 .cDecoratedCell a.input-image:focus {
@@ -1427,18 +1432,12 @@ span.cIconSelect .input-image.cannot-edit i {
 	word-break: break-word;
 }
 
-.cTextPopup {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: var(--spacing-02);
-}
-
-.cTextInput textarea {
+.cTextInput textarea,
+.cExpandableTextInput textarea, 
+.cBlockTextInput textarea {
 	color: var(--text-primary);
 	background: var(--field);
 	border: none;
-	height: 6rem;
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
 	max-width: 100%;
@@ -1447,10 +1446,19 @@ span.cIconSelect .input-image.cannot-edit i {
 	word-break: break-word;
 }
 
+.cTextPopup {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: var(--spacing-02);
+}
+
 .cTextInput input::placeholder,
 .cTextInput textarea::placeholder,
 .cExpandableTextInput input::placeholder,
+.cExpandableTextInput textarea::placeholder,
 .cBlockTextInput input::placeholder,
+.cBlockTextInput textarea::placeholder,
 .cPopupSelect input::placeholder {
 	color: var(--text-placeholder);
 }
@@ -1594,7 +1602,9 @@ textarea:focus,
 .cTextInput.disabled textarea,
 .cIntegerInput.num.disabled input,
 .cExpandableTextInput.disabled input,
+.cExpandableTextInput.disabled textarea,
 .cBlockTextInput.disabled input,
+.cBlockTextInput.disabled textarea,
 .cPopupSelect.disabled input,
 .cDropdownSelect.disabled select,
 .cDateInput.disabled input,
@@ -1605,7 +1615,9 @@ textarea:focus,
 .cTextInput.disabled input::placeholder,
 .cTextInput.disabled textarea::placeholder,
 .cExpandableTextInput.disabled input:placeholder,
+.cExpandableTextInput.disabled textarea::placeholder,
 .cBlockTextInput.disabled input:placeholder,
+.cBlockTextInput.disabled textarea::placeholder,
 .cPopupSelect.disabled input::placeholder {
 	color: var(--text-disabled);
 }
@@ -1655,6 +1667,11 @@ span.disabled > span.lFlexible > select:not( [multiple="multiple"] ) {
 .dfList .dfListEntry .cTextInput:not(.searchIrrelevant) textarea.is-input {
 	box-sizing: border-box;
 	width: 100%;
+}
+
+.cExpandableTextInput .lFlexible,
+.cBlockTextInput .lFlexible {
+	display: inline-flex
 }
 
 /* 		Radio Buttons styles	*/

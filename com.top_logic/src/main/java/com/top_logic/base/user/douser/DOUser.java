@@ -106,7 +106,7 @@ public class DOUser implements UserInterface, LDAPAttributes {
     @Override
 	public String getFirstName () {
         try {
-            return(String)(internalUser.getAttributeValue (UserInterface.NAME));                
+			return (String) (internalUser.getAttributeValue(UserInterface.FIRST_NAME));
         }
         catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users GIVENNAME from dataobject " + internalUser + ", which is no User or has no such attribute", this);
@@ -120,7 +120,7 @@ public class DOUser implements UserInterface, LDAPAttributes {
     @Override
 	public String getName () {
         try {
-            return(String)(internalUser.getAttributeValue (UserInterface.FIRST_NAME));                
+			return (String) (internalUser.getAttributeValue(UserInterface.NAME));
         }catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users SUR_NAME from dataobject " + internalUser + ", which is no User or has no such attribute", this);
             return "";

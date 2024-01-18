@@ -31,8 +31,8 @@ public class GenericPersonCreateHandler extends WrapperUpdateHandler implements 
 	public Object createBusinessObject(GenericValueMap aDO, String aFKeyAttr) throws CreateException {
 		{
             String login     = (String) aDO.getAttributeValue(Person.NAME_ATTRIBUTE);
-            String firstName = (String) aDO.getAttributeValue(UserInterface.NAME);
-            String lastName  = (String) aDO.getAttributeValue(UserInterface.FIRST_NAME);
+			String firstName = (String) aDO.getAttributeValue(UserInterface.FIRST_NAME);
+			String lastName = (String) aDO.getAttributeValue(UserInterface.NAME);
             String title     = (String) aDO.getAttributeValue(UserInterface.TITLE);
 			Boolean isRestricted = (Boolean) aDO.getAttributeValue(Person.RESTRICTED_USER);
             

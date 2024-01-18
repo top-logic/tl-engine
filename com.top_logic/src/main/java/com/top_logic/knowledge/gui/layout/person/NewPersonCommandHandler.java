@@ -47,8 +47,8 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 	public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
 			Map<String, Object> arguments) {
         String theID           = (String) formContainer.getField(UserInterface.USER_NAME) .getValue();
-        String theFirst        = (String) formContainer.getField(UserInterface.NAME).getValue();
-        String theSur          = (String) formContainer.getField(UserInterface.FIRST_NAME)  .getValue();
+		String theFirst = (String) formContainer.getField(UserInterface.FIRST_NAME).getValue();
+		String theSur = (String) formContainer.getField(UserInterface.NAME).getValue();
         String theTitle        = (String) formContainer.getField(UserInterface.TITLE)     .getValue();
 		Boolean isRestricted = (Boolean) formContainer.getField(Person.RESTRICTED_USER).getValue();
 

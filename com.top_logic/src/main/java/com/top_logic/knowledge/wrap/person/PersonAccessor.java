@@ -28,9 +28,9 @@ public class PersonAccessor implements Accessor<Person> {
 		switch (property) {
 			case UserInterface.USER_NAME:
 				return person.getName();
-			case UserInterface.NAME:
-				return person.getUser().getFirstName();
 			case UserInterface.FIRST_NAME:
+				return person.getUser().getFirstName();
+			case UserInterface.NAME:
 				return person.getUser().getName();
 			case UserInterface.TITLE:
 				return person.getUser().getTitle();

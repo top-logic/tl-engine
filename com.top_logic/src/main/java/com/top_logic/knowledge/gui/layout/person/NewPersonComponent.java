@@ -106,10 +106,10 @@ public class NewPersonComponent extends AbstractCreateComponent {
         });
         
         formContext.addMember(userField);
-		StringField nameField = newStringField(UserInterface.NAME, 0, _userMO);
+		StringField nameField = newStringField(UserInterface.FIRST_NAME, 0, _userMO);
 		nameField.setMandatory(true);
 		formContext.addMember(nameField);
-		StringField surField = newStringField(UserInterface.FIRST_NAME, 1, _userMO);
+		StringField surField = newStringField(UserInterface.NAME, 1, _userMO);
         surField.setMandatory(true);
         formContext.addMember(surField);
 		formContext.addMember(newStringField(UserInterface.TITLE, 0, _userMO));

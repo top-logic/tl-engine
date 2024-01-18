@@ -144,8 +144,8 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 	 */
 	protected void updateAdminFields(Person aPerson, FormContext aContext) {
 		UserInterface user = aPerson.getUser();
-		user.setName((String) this.getChangedValue(aContext, UserInterface.FIRST_NAME));
-		user.setFirstName((String) this.getChangedValue(aContext, UserInterface.NAME));
+		user.setName((String) this.getChangedValue(aContext, UserInterface.NAME));
+		user.setFirstName((String) this.getChangedValue(aContext, UserInterface.FIRST_NAME));
 		user.setTitle((String) this.getChangedValue(aContext, UserInterface.TITLE));
     }
 

@@ -1,1 +1,2 @@
 tl-layout-formeditor.config.xml
+tl.contact.ui.config.xml

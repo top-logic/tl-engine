@@ -1047,7 +1047,7 @@
 				</cliques>
 				<handlers>
 		            <handler id="applyRoleRights" class="com.top_logic.tool.boundsec.gui.profile.ApplyRolesCommandHandler"
-		            	clique="apply"
+		            	clique="apply" group="System"
 		            />
 		            <handler id="AllOn" class="com.top_logic.event.layout.ToggleAllCommand"
 		            	value="true" 
@@ -1102,9 +1102,9 @@
 						resourceKey="tl.command.delete"
 						clique="delete"/>
 					<handler id="defaultSave" class="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 					<handler id="restrictedDefaultSave" class="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 					<handler id="invalidate" class="com.top_logic.layout.form.component.InvalidateCommand"
 						clique="refresh"/>
 					
@@ -1199,7 +1199,7 @@
 
 					<handler id="switchAssistentShow" class="com.top_logic.tool.boundsec.assistent.commandhandler.ShowAssistentCommandHandler"/>
 					<handler id="applyPerson" class="com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="deletePerson" class="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
 						clique="delete"/>
 					<handler id="newPerson" class="com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler"
@@ -1213,17 +1213,17 @@
 					<handler id="deleteDGroup" class="com.top_logic.layout.admin.component.EditGroupComponent$DeleteGroupCommandHandler"
 						clique="delete"/>
 					<handler id="applyDGroup" class="com.top_logic.layout.admin.component.EditGroupComponent$ApplyGroupCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="applyRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$ApplyRoleCommand"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="deleteRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 						clique="delete"/>
 					<handler id="newRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleCommand"
 						clique="create"/>
 					<handler id="applyPersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$ApplyPersonGroupCommand"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="savePersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"
-						clique="save"/>
+						clique="save" group="System"/>
 					<handler id="switchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 						clique="edit"
 					>
@@ -1250,15 +1250,15 @@
 						</executability>
 					</handler>
 					<handler id="ApplyList" class="com.top_logic.layout.admin.component.EditListComponent$ListApplyCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="ApplySimpleList" class="com.top_logic.layout.admin.component.SimpleEditListComponent$SimpleListApplyCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="CreateNewList" class="com.top_logic.layout.admin.component.EditListComponent$NewListCommandHandler"
 						clique="create"/>
 					<handler id="DeleteList" class="com.top_logic.layout.admin.component.EditListComponent$DeleteListCommandHandler"
 						clique="delete"/>
 					<handler id="applyCurrencyList" class="com.top_logic.layout.currency.EditCurrencyListComponent$ApplyCurrencyCommand"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					
 					<handler id="EnterMaintenanceWindow" class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowCommandHandler"
 						resourceKey="main.admin.maintenanceWindow.enterDialog.EnterMaintenanceWindow"
@@ -1277,7 +1277,7 @@
 					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"
 						clique="refresh"/>
 					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 					
 					<handler id="ChoiceChartCommand" class="com.top_logic.base.chart.component.ChoiceJFreeChartComponent$ChoiceChartCommand"/>
 					<handler id="refreshFilters" class="com.top_logic.base.chart.flex.control.FilterRefreshCommandHandler"
@@ -1308,7 +1308,7 @@
 					/>
 					
 					<handler id="applyCheckerRoles" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ApplyRolesProfile"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="expandRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
 						clique="expand" image="theme:ICONS_EXPAND_ALL" disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" />
 					<handler id="collapseRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$CollapseAllCommandHandler"
@@ -1319,7 +1319,7 @@
 					<handler id="newUnit" class="com.top_logic.layout.unit.NewUnitCommandHandler"
 						clique="create"/>
 					<handler id="applyUnit" class="com.top_logic.layout.unit.ApplyUnitCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="deleteUnit" class="com.top_logic.layout.unit.DeleteUnitCommandHandler"
 						clique="delete"/>
 					         

@@ -178,7 +178,7 @@
 				<handlers>
 		            <handler id="saveIgnoreWarnings" 
 		            	class="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler" 
-		            	clique="additional-apply"
+		            	clique="additional-apply" group="System"
 		            	save="true" 
 		            	resourceKey="demo.command.saveIgnoreWarnings"
 		            	ignoreWarnings="true" 

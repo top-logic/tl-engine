@@ -25,7 +25,7 @@
 				</cliques>
 				<handlers>
 		            <handler id="applyBPMNStructuralChanges" class="com.top_logic.bpe.modeler.component.ApplyBPMNStructuralChanges"
-		            	clique="apply"
+		            	clique="apply" group="System"
 		            />
 		        </handlers>
 			</instance>

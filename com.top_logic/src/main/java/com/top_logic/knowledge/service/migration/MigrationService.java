@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -28,16 +29,22 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.xml.stream.XMLStreamException;
+
+import org.xml.sax.SAXException;
 
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 
 import com.top_logic.basic.Environment;
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Protocol;
@@ -48,16 +55,22 @@ import com.top_logic.basic.col.equal.EqualityRedirect;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.ResourceDeclaration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
+import com.top_logic.basic.db.schema.io.MORepositoryBuilder;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
+import com.top_logic.basic.db.schema.setup.config.ApplicationTypes;
+import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.encryption.SymmetricEncryption;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ManagedClass;
@@ -69,10 +82,9 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.StopWatch;
-import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.meta.MORepository;
+import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.dob.schema.config.MetaObjectName;
-import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
+import com.top_logic.dob.schema.config.MetaObjectsConfig;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.InitialTableSetup;
 import com.top_logic.knowledge.service.KBUtils;
@@ -90,6 +102,9 @@ import com.top_logic.knowledge.service.db2.migration.KnowledgeBaseDumper;
 import com.top_logic.knowledge.service.db2.migration.db.transformers.StoreTypeConfiguration;
 import com.top_logic.knowledge.service.db2.migration.sql.InsertWriter;
 import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
+import com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor;
+import com.top_logic.layout.admin.component.TLServiceUtils;
+import com.top_logic.model.annotate.util.AttributeSettings;
 
 /**
  * {@link ManagedClass} that automatically migrates the application to the newest version.
@@ -111,6 +126,7 @@ import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
 	ConnectionPoolRegistry.Module.class,
 	/* Creation of temp file to dump KB */
 	Settings.Module.class,
+	AttributeSettings.Module.class,
 })
 @ServiceExtensionPoint(InitialTableSetup.Module.class)
 public class MigrationService extends ConfiguredManagedClass<MigrationService.Config> {
@@ -287,36 +303,99 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		MapDifference<String, EqualityRedirect<MetaObjectName>> diff = Maps.difference(
 			wrap(persistentTypes), wrap(applicationTypes));
 
+		recoverMetaDefinitions(log, persistentTypes, diff.entriesOnlyOnLeft().keySet());
+
 		Map<String, EqualityRedirect<MetaObjectName>> newTypes = diff.entriesOnlyOnRight();
 		if (!newTypes.isEmpty()) {
-			MORepository allTypes = context.getApplicationSetup().createMORepository(DefaultMOFactory.INSTANCE);
+			AddApplicationTypesProcessor.Config<?> addConfig =
+				TypedConfiguration.newConfigItem(AddApplicationTypesProcessor.Config.class);
 
-			CreateTablesProcessor.Config createProcessor =
-					TypedConfiguration.newConfigItem(CreateTablesProcessor.Config.class);
-			SchemaSetup.addTables(createProcessor, allTypes, newTypes.keySet());
-
-			if (!createProcessor.getTables().isEmpty()) {
-				execute(context, log, connection, createProcessor);
-
-				InsertBranchSwitchProcessor.Config insertProcessor =
-					TypedConfiguration.newConfigItem(InsertBranchSwitchProcessor.Config.class);
-				for (String newTypeName : newTypes.keySet()) {
-					MetaObject newType = allTypes.getMetaObject(newTypeName);
-					if (createProcessor.getTable(newType.getName()) != null) {
-						insertProcessor.getTableTypes().add(newType.getName());
-					}
-				}
-				assert insertProcessor.getTableTypes().size() == createProcessor.getTables().size();
-				execute(context, log, connection, insertProcessor);
-
-				// Create a StoreTypeConfiguration processor.
-				StoreTypeConfiguration.Config updateProcessor =
-					TypedConfiguration.newConfigItem(StoreTypeConfiguration.Config.class);
-				execute(context, log, connection, updateProcessor);
-				return true;
+			for (String newTypeName : newTypes.keySet()) {
+				MetaObjectName newType = applicationTypes.get(newTypeName);
+				addConfig.getSchema().getTypes().put(newTypeName, newType);
 			}
+
+			execute(context, log, connection, addConfig);
+			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Creates a <code>*.meta.xml</code> definition for "old" types found in the schema definition
+	 * stored in the database but not in the current application configuration. Since those types
+	 * are not automatically deleted, a configuration must be created for them to ensure that a
+	 * following replay is able to re-create those tables.
+	 */
+	private void recoverMetaDefinitions(Protocol log, Map<String, MetaObjectName> persistentTypes,
+			Set<String> oldTypeNames) {
+		if (!oldTypeNames.isEmpty()) {
+			log.info("Recovering configurations for lost tables: "
+				+ oldTypeNames.stream().collect(Collectors.joining(", ")));
+			MetaObjectsConfig inappSchema = TypedConfiguration.newConfigItem(MetaObjectsConfig.class);
+			for (var typeName : oldTypeNames) {
+				inappSchema.getTypes().put(typeName, persistentTypes.get(typeName));
+			}
+			try {
+				int id = 1;
+				File confFile;
+				String resourceName;
+				String baseName;
+				do {
+					baseName = "inapp-schema-" + id;
+					resourceName = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".meta.xml";
+					confFile = FileManager.getInstance().getIDEFile(resourceName);
+					id++;
+				} while (confFile.exists());
+				storeResource(inappSchema, confFile);
+
+				// Create a configuration fragment that loads the synthesized schema definition.
+				ApplicationConfig.Config configFragment =
+					TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
+				{
+					ApplicationTypes typesConfig = TypedConfiguration
+						.newConfigItem(ApplicationTypes.class);
+					{
+						SchemaConfiguration typeSystem = TypedConfiguration.newConfigItem(SchemaConfiguration.class);
+						{
+							typeSystem.setName(SchemaConfiguration.DEFAULT_NAME);
+							{
+								ResourceDeclaration decl = TypedConfiguration.newConfigItem(ResourceDeclaration.class);
+								decl.setResource(
+									"webinf://" + ModuleLayoutConstants.AUTOCONF_DIR + "/" + baseName + ".meta.xml");
+								typeSystem.getDeclarations().add(decl);
+							}
+						}
+						typesConfig.getTypeSystems().add(new SchemaSetup(null, typeSystem));
+					}
+					configFragment.getConfigs().put(ApplicationTypes.class, typesConfig);
+				}
+				storeResource(configFragment,
+					FileManager.getInstance().getIDEFile(
+						ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".config.xml"));
+
+				log.info("Created schema configuration with recovered types: " + confFile.getAbsolutePath());
+
+				// Re-load configuration to make sure, the updated config is found later on.
+				TLServiceUtils.reloadConfigurations();
+			} catch (IOException | XMLStreamException | SAXException ex) {
+				log.error("Cannot create schema add-on configuration: " + ex.getMessage(), ex);
+			}
+		}
+	}
+
+	/**
+	 * Creates a new configuration file.
+	 */
+	private void storeResource(ConfigurationItem conf, File file)
+			throws XMLStreamException, IOException, FileNotFoundException, SAXException {
+		try (var out = new FileOutputStream(file)) {
+			try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+				new ConfigurationWriter(writer)
+					.write(MORepositoryBuilder.ROOT_TAG, MetaObjectsConfig.class, conf);
+			}
+		}
+		XMLPrettyPrinter.normalizeFile(file);
 	}
 
 	private void execute(MigrationContext context, Protocol log, PooledConnection connection,
@@ -394,7 +473,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 						MigrationPostProcessor processor = TypedConfigUtil.createInstance(processorConf);
 
 						if (kb == null) {
-							kb = createDumpingKB(log);
+							kb = createKB(log);
 							tx = kb.beginTransaction();
 						}
 
@@ -516,7 +595,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		if (migration.isReplayRequired()) {
 			commitConnection(log, connection, "Unable to commit changes before KnowledgeBase replay.");
 
-			KnowledgeBase kb = createDumpingKB(log);
+			KnowledgeBase kb = createKB(log);
 			if (kb != null) {
 				replayHistory(log, connection, migration, kb);
 			}
@@ -525,15 +604,15 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		return migration.getNewVersion();
 	}
 
-	private KnowledgeBase createDumpingKB(Protocol log) {
-		KnowledgeBase kb;
+	private KnowledgeBase createKB(Protocol log) {
 		try {
-			kb = dumpingKB(log, kbConfig());
+			KnowledgeBase kb = KnowledgeBaseFactory.createKnowledgeBase(log, kbConfig());
+			((DBKnowledgeBase) kb).initLocalVariablesFromDatabase(log);
+			return kb;
 		} catch (ConfigurationException ex) {
 			log.error("Unable to get KnowledgeBaseConfiguration.", ex);
-			kb = null;
+			return null;
 		}
-		return kb;
 	}
 
 	private void replayHistory(Protocol log, PooledConnection connection, DataMigration migration,
@@ -620,12 +699,6 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		SequenceManager sequenceManager = new RowLevelLockingSequenceManager();
 		String sequenceId = DBKnowledgeBase.ID_SEQ;
 		return sequenceManager.getLastSequenceNumber(connection, connection.getSQLDialect().retryCount(), sequenceId);
-	}
-
-	KnowledgeBase dumpingKB(Protocol log, KnowledgeBaseConfiguration kbConfig) {
-		KnowledgeBase kb = KnowledgeBaseFactory.createKnowledgeBase(log, kbConfig);
-		((DBKnowledgeBase) kb).initLocalVariablesFromDatabase(log);
-		return kb;
 	}
 
 	private InputStream kbDumpIn() throws IOException, FileNotFoundException {

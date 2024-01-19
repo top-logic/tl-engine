@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
@@ -45,6 +46,7 @@ public class AddApplicationTypesProcessor extends AbstractConfiguredInstance<Add
 		/**
 		 * Table definitions for persistent types to add to the application schema.
 		 */
+		@ItemDefault
 		MetaObjectsConfig getSchema();
 
 	}

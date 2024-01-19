@@ -41,8 +41,6 @@ class RSAKey implements Serializable, PrivateKey, PublicKey {
 
         if (e.compareTo (n)!= (-1)) {
             e = new BigInteger (n.toString ());
-
-			e = e.subtract(BigInteger.valueOf(1));
         }
         // Sicherstellen, daﬂ e mit phi den ggT 1 hat.
         for(;!e.gcd (this.phi (p,q)).equals(BigInteger.valueOf (1));) {
@@ -50,7 +48,6 @@ class RSAKey implements Serializable, PrivateKey, PublicKey {
             // Sicherstellen, daﬂ e grˆﬂer 1 ist.
             if (e.compareTo(BigInteger.valueOf(1))!=(1)) {
                 e = new BigInteger(n.toString());
-				e = e.subtract(BigInteger.valueOf(1));
             }
         }
 

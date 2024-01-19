@@ -1659,7 +1659,12 @@
 						<version>4.8.3</version>
 					</dependency>
 				</dependencies> -->
-				<executions>
+				
+				<!-- To run SpotBugs manually, add 'spotbugs:spotbugs' to a Maven command e.g. 
+					'mvn clean verify spotbugs:spotbugs' or 'mvn clean install spotbugs:spotbugs'.
+					You can run those commands inside the project you want to check or in 'tl-parent-all' to run it for all projects. -->
+				<!-- Uncomment the executions section if you want SpotBugs to run automatically in the maven lifecycle (verify phase). -->
+				<!-- <executions>
 					<execution>
 						<id>spotbugs-integration</id>
 						<phase>verify</phase>
@@ -1667,7 +1672,7 @@
 							<goal>spotbugs</goal>
 						</goals>
 					</execution>
-				</executions>
+				</executions> -->
 			</plugin>
 		</plugins>
 		

@@ -129,7 +129,18 @@ public class ModelBasedImportConfiguration extends AbstractModelBasedKafkaConfig
 		String importedAttributeName = getImportedAttributeName(part, annotation);
 		StorageDetail storageDetail = AttributeOperations.getStorageImplementation(part);
 		if (storageDetail instanceof AssociationStorage) {
-			addAssociationType((AssociationStorage) storageDetail);
+			String associationTableName = ((AssociationStorage) storageDetail).getTable();
+			if (associationTableName == null) {
+				Logger.error("No table for association '" + part + "' configured.",
+					ModelBasedImportConfiguration.class);
+			} else {
+				try {
+					_allAssociationTypes.add(typeSystem().getType(associationTableName));
+				} catch (UnknownTypeException ex) {
+					Logger.error("Misconfigured type system. Table " + associationTableName + " does not exist.", ex,
+						ModelBasedImportConfiguration.class);
+				}
+			}
 		}
 		String sourceQualifiedPartName =
 			importedTypeName + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + importedAttributeName;
@@ -144,16 +155,6 @@ public class ModelBasedImportConfiguration extends AbstractModelBasedKafkaConfig
 			return part.getName();
 		}
 		return annotation.getSource();
-	}
-
-	private void addAssociationType(AssociationStorage storage) {
-		String associationTableName = storage.getTable();
-		try {
-			_allAssociationTypes.add(typeSystem().getType(associationTableName));
-		} catch (UnknownTypeException ex) {
-			Logger.error("Misconfigured type system. Table " + associationTableName + " does not exist.", ex,
-				ModelBasedImportConfiguration.class);
-		}
 	}
 
 	private String getTargetMoName(TLClassPart part, StorageDetail storageDetail) {

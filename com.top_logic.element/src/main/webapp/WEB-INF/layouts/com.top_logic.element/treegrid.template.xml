@@ -34,7 +34,7 @@
 					<property name="applyHandler"/>
 
 					<property name="dragSource"/>
-					<property name="tableDrop"/>
+					<property name="dropTargets"/>
 					<property name="buttons"/>
 				</value>
 			</display-order>
@@ -120,15 +120,17 @@
 				value="treegrid"
 			/>
 		</property>
-		<property name="tableDrop"
+		<property name="dropTargets"
+			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
 			instance-type="com.top_logic.layout.table.dnd.TableDropTarget"
-			type="PolymorphicConfiguration"
+			type="List"
 		>
 			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
 			<acceptable-classifiers
 				unclassified="false"
 				value="grid"
 			/>
+			<entry-tag value="dropTarget"/>
 		</property>
 	</properties>
 
@@ -186,7 +188,7 @@
 				defaultColumns="${defaultColumns}"
 				dragSource="${dragSource}"
 				fixedColumns="${fixedColumns}"
-				tableDrop="${tableDrop}"
+				dropTargets="${dropTargets}"
 			/>
 		</tables>
 	</component>

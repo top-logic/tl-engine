@@ -125,8 +125,9 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 
-		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class,
-			component -> _contextComponent = component);
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
+			_contextComponent = component;
+		});
 	}
 
 	@Override

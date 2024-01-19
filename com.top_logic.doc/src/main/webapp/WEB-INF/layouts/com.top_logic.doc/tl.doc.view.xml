@@ -33,8 +33,10 @@
 			rootVisible="false"
 			securityProviderClass="${securityProvider}"
 			titleKey="tl.doc.tree.title"
-			treeDrop="com.top_logic.element.layout.tree.StructuredElementTreeDropTarget"
 		>
+			<dropTargets>
+				<dropTarget class="com.top_logic.element.layout.tree.StructuredElementTreeDropTarget"/>
+			</dropTargets>
 			<layoutInfo size="400"/>
 			<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
 				structureName="tl.doc"

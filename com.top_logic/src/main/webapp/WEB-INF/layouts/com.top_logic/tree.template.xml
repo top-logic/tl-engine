@@ -23,7 +23,7 @@
 					<property name="partnerGroup"/>
 
 					<property name="dragSource"/>
-					<property name="treeDrop"/>
+					<property name="dropTargets"/>
 					<property name="buttons"/>
 				</value>
 			</display-order>
@@ -86,15 +86,17 @@
 				value="tree"
 			/>
 		</property>
-		<property name="treeDrop"
+		<property name="dropTargets"
+			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
 			instance-type="com.top_logic.layout.tree.dnd.TreeDropTarget"
-			type="PolymorphicConfiguration"
+			type="List"
 		>
 			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
 			<acceptable-classifiers
 				unclassified="false"
 				value="tree"
 			/>
+			<entry-tag value="dropTarget"/>
 		</property>
 	</properties>
 
@@ -115,7 +117,7 @@
 		selection="${selection}"
 		show-only-selectable-nodes="${showOnlySelectableNodes}"
 		titleKey="${name}"
-		treeDrop="${treeDrop}"
+		dropTargets="${dropTargets}"
 	>
 		<selectionModelFactory multiple="${multiSelection}"/>
 		<buttons>

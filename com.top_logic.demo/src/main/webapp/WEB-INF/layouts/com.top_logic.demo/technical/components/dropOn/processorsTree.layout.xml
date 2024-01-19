@@ -33,14 +33,16 @@
     default: $node.get(`test.dnd.dropon:Processor#subprocessors`);
 }]]></children>
 		</modelBuilder>
-		<treeDrop class="com.top_logic.model.search.providers.OntoTreeDropByExpression"
-			handleDrop="draggedObjects->referenceRow->{handleDrop=work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}"
-		>
-			<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=work -> processor -> switch {
-    !$processor.get(`test.dnd.dropon:Processor#active`): false;
-    !$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
-    default: true;
-};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
-		</treeDrop>
+		<dropTargets>
+			<dropTarget class="com.top_logic.model.search.providers.OntoTreeDropByExpression"
+				handleDrop="draggedObjects->referenceRow->{handleDrop=work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}"
+			>
+				<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=work -> processor -> switch {
+	    !$processor.get(`test.dnd.dropon:Processor#active`): false;
+	    !$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
+	    default: true;
+	};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
+			</dropTarget>
+		</dropTargets>
 	</arguments>
 </config:template-call>

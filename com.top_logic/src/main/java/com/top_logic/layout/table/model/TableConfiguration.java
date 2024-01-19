@@ -122,14 +122,14 @@ public abstract class TableConfiguration extends AbstractFreezable implements Co
 	public abstract void setDragSource(TableDragSource instance);
 
 	/**
-	 * @see TableConfig#getTableDrop()
+	 * @see TableConfig#getDropTargets()
 	 */
-	public abstract TableDropTarget getTableDrop();
+	public abstract List<TableDropTarget> getDropTargets();
 
 	/**
-	 * @see #getTableDrop()
+	 * @see #getDropTargets()
 	 */
-	public abstract void setTableDrop(TableDropTarget instance);
+	public abstract void setDropTargets(List<TableDropTarget> dropTargets);
 
 	/**
 	 * @see TableConfig#getContextMenu()
@@ -539,7 +539,7 @@ public abstract class TableConfiguration extends AbstractFreezable implements Co
 		tableCopy.setFixedColumnCount(getFixedColumnCount());
 		tableCopy.setTableRenderer(getTableRenderer());
 		tableCopy.setDragSource(getDragSource());
-		tableCopy.setTableDrop(getTableDrop());
+		tableCopy.setDropTargets(getDropTargets());
 		tableCopy.setContextMenu(getContextMenu());
 		tableCopy.setRowClassProvider(getRowClassProvider());
 		tableCopy.setRowObjectResourceProvider(getRowObjectResourceProvider());

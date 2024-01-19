@@ -35,7 +35,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-contact</artifactId>
+      <artifactId>tl-layout-formeditor</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

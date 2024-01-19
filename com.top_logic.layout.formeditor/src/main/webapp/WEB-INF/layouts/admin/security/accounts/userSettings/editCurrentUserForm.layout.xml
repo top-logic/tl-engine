@@ -7,6 +7,7 @@
 >
 	<arguments
 		edit-group="System"
+		resetInvisible="true"
 		showNoModel="false"
 		type="Contacts:PersonContact"
 	>

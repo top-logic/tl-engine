@@ -228,6 +228,10 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	}
 
 	private static String getSessionId(HttpServletRequest request) {
+		if (request == null) {
+			/* This happens in tests. */
+			return null;
+		}
 		HttpSession session = request.getSession(false);
 		return session == null ? null : session.getId();
 	}

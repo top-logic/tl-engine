@@ -114,6 +114,7 @@ public class TestDemo {
 		Collections.addAll(testCases,
 			"C0_Sidebar-Layout-Setup",
 			"00_VisitAllTabs",
+			"01_EnsureAllTabsAreVisible",
 			"C0_Sidebar-Layout-Teardown"
 		);
 	}

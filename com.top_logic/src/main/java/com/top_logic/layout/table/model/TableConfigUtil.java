@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.table.model;
 
-import static com.top_logic.basic.config.TypedConfiguration.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -23,6 +21,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.Renderer;
@@ -224,9 +223,10 @@ public class TableConfigUtil {
 				result.setDragSource(dragSource);
 			});
 		}
-		if (tableConfig.valueSet(descriptor.getProperty(TableConfig.TABLE_DROP_ATTRIBUTE))) {
-			TableDropTarget tableDrop = context.getInstance(tableConfig.getTableDrop());
-			settings.add(result -> result.setTableDrop(tableDrop));
+		if (tableConfig.valueSet(descriptor.getProperty(TableConfig.DROP_TARGETS_ATTRIBUTE))) {
+			List<TableDropTarget> dropTargets =
+				TypedConfiguration.getInstanceList(context, tableConfig.getDropTargets());
+			settings.add(result -> result.setDropTargets(dropTargets));
 		}
 
 		// Note: Instantiation must not be lazy, since the provider might have outer references to
@@ -448,7 +448,8 @@ public class TableConfigUtil {
 			settings.add(column -> column.setCellExistenceTester(instance));
 		}
 		if (config.valueSet(desc.getProperty(ColumnBaseConfig.ADDITIONAL_HEADERS))) {
-			List<HTMLFragmentProvider> instances = getInstanceList(context, config.getAdditionalHeaders());
+			List<HTMLFragmentProvider> instances =
+				TypedConfiguration.getInstanceList(context, config.getAdditionalHeaders());
 			settings.add(column -> column.setAdditionalHeaders(instances));
 		}
 		if (config.valueSet(desc.getProperty(ColumnBaseConfig.EXCEL_RENDERER))) {

@@ -6,6 +6,7 @@
 package com.top_logic.layout.table;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType;
@@ -118,11 +119,11 @@ public interface TableData extends ToolBarOwner, CheckScoped, NamedModel, TypedA
 	TableDragSource getDragSource();
 
 	/**
-	 * The {@link TableDropTarget} that controls drop operations in this table.
+	 * The {@link TableDropTarget}'s that controls drop operations in this table.
 	 * 
-	 * @see TableConfig#getTableDrop()
+	 * @see TableConfig#getDropTargets()
 	 */
-	TableDropTarget getDropTarget();
+	List<TableDropTarget> getDropTargets();
 
 	/**
 	 * The {@link ContextMenuProvider} used for table rows.

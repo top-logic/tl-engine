@@ -7,7 +7,6 @@ package com.top_logic.layout.dnd;
 
 import static com.top_logic.basic.util.Utils.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -66,19 +65,21 @@ public class TableDropActionOp extends DropActionOp<TableDropActionOp.TableDropA
 	@Override
 	protected void processDrop(ActionContext context, Object dropView, Object dropPosition, Object droppedObject) {
 		TableData dropTable = (TableData) dropView;
-		TableDropTarget dropHandler = dropTable.getDropTarget();
-		processDrop(dropTable, dropHandler, dropPosition, droppedObject);
-	}
-
-	/** Performs the drop into the given table. */
-	protected void processDrop(TableData dropTable, TableDropTarget javaDropHandler, Object dropPosition,
-			Object droppedObject) {
-		BusinessObjectTableDrop tlScriptDropHandler = assertTLScriptDrop(javaDropHandler);
-		assertDropEnabled(dropTable, tlScriptDropHandler);
 		List<?> droppedObjects = CollectionUtilShared.asList(droppedObject);
-		assertDropPossible(tlScriptDropHandler, dropPosition, droppedObjects);
 
-		tlScriptDropHandler.handleDrop(droppedObjects, dropPosition);
+		for (TableDropTarget dropTarget : dropTable.getDropTargets()) {
+			BusinessObjectTableDrop tlScriptDropHandler = assertTLScriptDrop(dropTarget);
+			assertDropEnabled(dropTable, tlScriptDropHandler);
+
+			if (tlScriptDropHandler.canDrop(droppedObjects, dropPosition)) {
+				tlScriptDropHandler.handleDrop(droppedObjects, dropPosition);
+
+				return;
+			}
+		}
+
+		fail("The object cannot be droppped here."
+			+ " Dropped object: " + droppedObjects + ". Drop position: " + dropPosition);
 	}
 
 	private BusinessObjectTableDrop assertTLScriptDrop(TableDropTarget dropHandler) {
@@ -92,14 +93,6 @@ public class TableDropActionOp extends DropActionOp<TableDropActionOp.TableDropA
 	private void assertDropEnabled(TableData dropTable, BusinessObjectTableDrop dropHandler) {
 		if (!dropHandler.dropEnabled(dropTable)) {
 			fail("Dropping is here not possible. Context:" + dropTable.getOwner());
-		}
-	}
-
-	private void assertDropPossible(BusinessObjectTableDrop dropHandler, Object dropPosition,
-			Collection<?> droppedObjects) {
-		if (!dropHandler.canDrop(droppedObjects, dropPosition)) {
-			fail("The object cannot be droppped here."
-				+ " Dropped object: " + droppedObjects + ". Drop position: " + dropPosition);
 		}
 	}
 

@@ -5,8 +5,11 @@
  */
 package com.top_logic.layout.tree;
 
-import com.top_logic.basic.col.LazyTypedAnnotatableMixin;
+import java.util.Arrays;
+import java.util.List;
+
 import com.top_logic.basic.col.InlineMap;
+import com.top_logic.basic.col.LazyTypedAnnotatableMixin;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.annotation.Inspectable;
 import com.top_logic.basic.util.AbstractObservable;
@@ -48,7 +51,7 @@ public class MutableTreeData extends AbstractObservable<TreeDataListener, TreeDa
 	@Inspectable
 	private InlineMap<Property<?>, Object> _properties = InlineMap.empty();
 
-	private TreeDropTarget _dropTarget = NoTreeDrop.INSTANCE;
+	private List<TreeDropTarget> _dropTargets = Arrays.asList(NoTreeDrop.INSTANCE);
 
 	private TreeDragSource _dragSource = DefaultTreeDrag.INSTANCE;
 
@@ -168,15 +171,15 @@ public class MutableTreeData extends AbstractObservable<TreeDataListener, TreeDa
 	}
 
 	@Override
-	public TreeDropTarget getDropTarget() {
-		return _dropTarget;
+	public List<TreeDropTarget> getDropTargets() {
+		return _dropTargets;
 	}
 
 	/**
-	 * @see #getDropTarget()
+	 * @see #getDropTargets()
 	 */
-	public void setDropTarget(TreeDropTarget dropTarget) {
-		_dropTarget = dropTarget;
+	public void setDropTargets(List<TreeDropTarget> dropTargets) {
+		_dropTargets = dropTargets;
 	}
 
 	@Override

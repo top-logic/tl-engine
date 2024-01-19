@@ -2311,7 +2311,6 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 			if (data != null) {
 				TableData tableData = table.getModel();
-				TableDropTarget dropTarget = table.getApplicationModel().getTableConfiguration().getTableDrop();
 
 				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
 				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
@@ -2319,11 +2318,17 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
 				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
 
-				if (dropTarget.canDrop(dropEvent)) {
-					displayDropMarker(table, refId, pos);
-				} else {
-					changeToNoDropCursor(table, refId);
+				List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
+
+				for (TableDropTarget dropTarget : dropTargets) {
+					if (dropTarget.canDrop(dropEvent)) {
+						displayDropMarker(table, refId, pos);
+
+						return HandlerResult.DEFAULT_RESULT;
+					}
 				}
+
+				changeToNoDropCursor(table, refId);
 			}
 
 
@@ -2373,10 +2378,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		@Override
 		public HandlerResult executeChecked(DisplayContext context, TableControl table, Map<String, Object> arguments) {
 			TableData tableData = table.getModel();
-			TableDropTarget dropTarget = table.getApplicationModel().getTableConfiguration().getTableDrop();
-			if (!dropTarget.dropEnabled(tableData)) {
-				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
-			}
+			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
 
 			DndData data = DnD.getDndData(context, arguments);
 			if (data != null) {
@@ -2386,11 +2388,16 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
 
 				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
-				if (dropTarget.canDrop(dropEvent)) {
-					dropTarget.handleDrop(dropEvent);
-				} else {
-					throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
+
+				for (TableDropTarget dropTarget : dropTargets) {
+					if (dropTarget.canDrop(dropEvent)) {
+						dropTarget.handleDrop(dropEvent);
+
+						return HandlerResult.DEFAULT_RESULT;
+					}
 				}
+
+				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 			}
 
 			return HandlerResult.DEFAULT_RESULT;

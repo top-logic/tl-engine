@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.form.model;
 
+import java.util.List;
+
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.annotation.Inspectable;
 import com.top_logic.layout.form.FormField;
@@ -94,8 +96,8 @@ public class TreeField extends ConstantField implements TreeData, TreeDataOwner 
 	}
 
 	@Override
-	public TreeDropTarget getDropTarget() {
-		return data.getDropTarget();
+	public List<TreeDropTarget> getDropTargets() {
+		return data.getDropTargets();
 	}
 
 	@Override

@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.tree;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -40,21 +43,21 @@ public class DefaultTreeData extends LazyTypedAnnotatable implements TreeData {
 
 	private TreeDragSource _dragSource;
 
-	private TreeDropTarget _dropTarget;
+	private List<TreeDropTarget> _dropTargets;
 
 	public DefaultTreeData(Maybe<? extends TreeDataOwner> owner, TreeUIModel treeModel, SelectionModel selectionModel,
 			TreeRenderer renderer) {
-		this(owner, treeModel, selectionModel, renderer, DefaultTreeDrag.INSTANCE, NoTreeDrop.INSTANCE);
+		this(owner, treeModel, selectionModel, renderer, DefaultTreeDrag.INSTANCE, Arrays.asList(NoTreeDrop.INSTANCE));
 	}
 
 	public DefaultTreeData(Maybe<? extends TreeDataOwner> owner, TreeUIModel treeModel, SelectionModel selectionModel,
-			TreeRenderer renderer, TreeDragSource dragSource, TreeDropTarget dropTarget) {
+			TreeRenderer renderer, TreeDragSource dragSource, List<TreeDropTarget> dropTargets) {
 		_owner = owner;
 		this.treeModel = treeModel;
 		this.selectionModel = selectionModel;
 		this.renderer = renderer;
 		_dragSource = dragSource;
-		_dropTarget = dropTarget;
+		_dropTargets = dropTargets;
 	}
 	
 
@@ -99,8 +102,8 @@ public class DefaultTreeData extends LazyTypedAnnotatable implements TreeData {
 	}
 
 	@Override
-	public TreeDropTarget getDropTarget() {
-		return _dropTarget;
+	public List<TreeDropTarget> getDropTargets() {
+		return _dropTargets;
 	}
 
 }

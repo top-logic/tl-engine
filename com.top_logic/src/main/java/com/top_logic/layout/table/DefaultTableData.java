@@ -6,6 +6,7 @@
 package com.top_logic.layout.table;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -485,11 +486,11 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	}
 
 	@Override
-	public TableDropTarget getDropTarget() {
+	public List<TableDropTarget> getDropTargets() {
 		if (_tableModel == null) {
-			return NoTableDrop.INSTANCE;
+			return Arrays.asList(NoTableDrop.INSTANCE);
 		}
-		return _tableModel.getTableConfiguration().getTableDrop();
+		return _tableModel.getTableConfiguration().getDropTargets();
 	}
 
 	@Override

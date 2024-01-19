@@ -118,6 +118,41 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Attribute (cumulativ)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Tabelle"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Baumtabelle"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Versionsvergleichstabelle"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Struktureditor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Strukturen > Typendemo > Chart Cockpit (Grid)"
 							/>
 						</action>
@@ -136,6 +171,13 @@
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name=""
 								tab-path="Strukturen > Typendemo > 0 Dokumente"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > 0 Dokumente (manuelle Sperren)"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -201,6 +243,13 @@
 					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Flache Typen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 					comment=""
 					failure-message=""
 					user-id="root"
@@ -249,13 +298,10 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Tabellen > Grid ohne Detaildialoge"
+						tab-path="Tabellen > Grid ohne disabled Marker"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -286,6 +332,13 @@
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name=""
 						tab-path="Tabellen > Einfach"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen > Konfigurierte Sidebar"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -782,6 +835,20 @@
 									</actions>
 								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Drag &amp; Drop"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > In-App Drag and Drop"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 									comment=""
 									failure-message=""
 									user-id="root"
@@ -831,6 +898,20 @@
 										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Deklarative Form (konf. Typ)"
 									/>
 								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Tabellen-PopupSelectDialog Anpassungen"
+									/>
+								</action>
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -847,6 +928,13 @@
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										name=""
 										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Tabelle 1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Custom Renderer"
 									/>
 								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
@@ -972,6 +1060,57 @@
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										name=""
 										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Clientseitiger Sprung-Test"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Technisches Demo > Layout-Framework#1 > Tabellen > Tabelle mit .xlsx export"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Tabelle mit .xlsx export"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.layout.table.export.ExcelExportHandler"
+											command-label="Nach Excel exportieren..."
+											command-name="exportExcel"
+											component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+											component-name="com.top_logic.demo/technical/layoutDemo1/tables/xlsxExport/demoXlsxExport.layout.xml#TableXlsxExport"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+											comment="Check and clear download."
+											user-id="root"
+										>
+											<actions>
+												<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+													<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+														file-name="AllA.xlsx"
+													/>
+													<constraints>
+														<constraint class="com.top_logic.layout.scripting.check.NoContentEqualityCheck">
+															<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+																content-type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+																name="AllA.xlsx"
+															/>
+														</constraint>
+													</constraints>
+												</action>
+												<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
+											</actions>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Filter und Sortier-Icons"
 									/>
 								</action>
 							</actions>
@@ -1466,6 +1605,61 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > #22798: ResetInvisible TreeGrid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > #22708: Flaches B mit A Kind"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > PDF Anzeige"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Tests > Default-Auswahl"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Tests > Default-Auswahl"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Grid ohne Default-Auswahl"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Tabelle ohne Default-Auswahl"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Externe Selektion"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							comment=""
 							failure-message=""
 							user-id="root"
@@ -1519,7 +1713,9 @@
 								tab-path="Technisches Demo > Tests > Test dynamischer Toolbartitel"
 							/>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Tests > Office-Exporte"
+						>
 							<actions>
 								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 									user-id="root"
@@ -1549,6 +1745,13 @@
 									<arguments/>
 								</action>
 							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Überschreibung"
+							/>
 						</action>
 					</actions>
 				</action>
@@ -2831,6 +3034,13 @@
 				</action>
 			</actions>
 		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="ChartJS"
+			/>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Administration"
 			failure-message=""
@@ -2838,21 +3048,11 @@
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Administration > FAch. Administration"
+					comment="Administration > Fach. Administration"
 					failure-message=""
 					user-id="root"
 				>
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Fach. Administration > Personen"
-							/>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							comment=""
 							failure-message=""
@@ -2876,57 +3076,23 @@
 					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Administration > Zugänge"
-					failure-message=""
-					user-id="root"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Zugänge > Gruppenzuordnung"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Zugänge > Gruppen"
-							/>
-						</action>
-					</actions>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					comment="Administration > Berechtigungen"
 					failure-message=""
 					user-id="root"
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment="Setup: Workaround dafür, dass der Sprung direkt nach [Administration > Berechtigungen > Rollen pflegen] zu einem Fehler führt."
-							failure-message=""
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Berechtigungen"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Gruppen"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -2977,6 +3143,13 @@
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name=""
 								tab-path="Administration > Berechtigungen > Attributkategorisierung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Kategoriefreigabe"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -3081,6 +3254,13 @@
 							user-id="root"
 						>
 							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Tech. Administration > Logdateien > Log Einträge"
+									/>
+								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 									comment=""
 									failure-message=""
@@ -3503,6 +3683,22 @@
 								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 									change-kind="ABSOLUTE"
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="/jsp/administration/maintenance/SendTestMail.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Tech. Administration > Wartung > Wartungsseiten"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
@@ -3614,6 +3810,13 @@
 									</selection-model-name>
 								</action>
 							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Tech. Administration > Login-Meldungen"
+							/>
 						</action>
 					</actions>
 				</action>
@@ -3753,6 +3956,13 @@
 								tab-path="Administration > Monitor > Performancetrend"
 							/>
 						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Monitor > Transaktionsmonitor"
+							/>
+						</action>
 					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -3789,6 +3999,34 @@
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name=""
 								tab-path="Administration > Development > Schema Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Service Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Layout Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Hilfe Editor"
 							/>
 						</action>
 					</actions>

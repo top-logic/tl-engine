@@ -2765,4 +2765,11 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Increment to the column index depending on the existence of the branch column.
+	 */
+	public int getBranchIndexInc() {
+		return _branchSupport ? 1 : 0;
+	}
+
 }

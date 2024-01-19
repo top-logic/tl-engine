@@ -33,6 +33,9 @@
 			default="true"
 			type="boolean"
 		/>
+		<property name="resetInvisible"
+			type="boolean"
+		/>
 		<property name="securityObject"
 			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
 			type="com.top_logic.basic.config.PolymorphicConfiguration"
@@ -67,6 +70,7 @@
 		lockHandler="${lockHandler}"
 		lockOperation="${lockOperation}"
 		model="${model}"
+		resetInvisible="${resetInvisible}"
 		saveClosesDialog="${saveClosesDialog}"
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"

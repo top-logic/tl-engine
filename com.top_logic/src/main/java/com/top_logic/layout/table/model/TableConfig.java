@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -130,8 +131,11 @@ public interface TableConfig extends ColumnContainerConfig, ModelMappingConfig, 
 	/** Property name of {@link #getDragSource()}. */
 	String DRAG_SOURCE_ATTRIBUTE = "dragSource";
 
-	/** Property name of {@link #getTableDrop()}. */
-	String TABLE_DROP_ATTRIBUTE = "tableDrop";
+	/** Property name of {@link #getDropTargets()}. */
+	String DROP_TARGETS_ATTRIBUTE = "dropTargets";
+
+	/** Entry tag name of {@link #getDropTargets()}. */
+	String DROP_TARGET_ENTRY_TAG = "dropTarget";
 
 	/** Property name of {@link #getCommands()}. */
 	String COMMANDS = "commands";
@@ -488,8 +492,9 @@ public interface TableConfig extends ColumnContainerConfig, ModelMappingConfig, 
 	/**
 	 * The {@link TableDropTarget} algorithm to use.
 	 */
-	@Name(TABLE_DROP_ATTRIBUTE)
-	PolymorphicConfiguration<TableDropTarget> getTableDrop();
+	@Name(DROP_TARGETS_ATTRIBUTE)
+	@EntryTag(DROP_TARGET_ENTRY_TAG)
+	List<PolymorphicConfiguration<TableDropTarget>> getDropTargets();
 
 	/**
 	 * Default column.

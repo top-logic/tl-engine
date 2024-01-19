@@ -26,19 +26,21 @@
 		<dragSource class="com.top_logic.model.search.providers.TreeTableDragSourceByExpression"
 			canDrag="source -> if($source!= `DemoTypes#ROOT`,$source.get(`DemoTypes:DemoTypes.All#name`).stringContains('1'), true)"
 		/>
-		<tableDrop class="com.top_logic.model.search.providers.TreeTableDropTargetByExpression"
-			canDrop="draggedObjects->referenceRow->{canDrop=source -> target -> $source.get(`DemoTypes:DemoTypes.All#parent`) != $target.get(`DemoTypes:DemoTypes.All#parent`);$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}"
-			dropType="ORDERED"
-		>
-			<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
-  info($source + " -> " + $target);
-  oldParent = $source.get(`DemoTypes:DemoTypes.All#parent`);
-  oldSiblings = $oldParent.get(`tl.element:StructuredElementContainer#children`).filter(element -> $element != $source);
-  $oldParent.set(`tl.element:StructuredElementContainer#children`, $oldSiblings);
-  newSiblings = concat($target.get(`tl.element:StructuredElementContainer#children`), $source);
-  $target.set(`tl.element:StructuredElementContainer#children`, $newSiblings);
-};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
-]]></handleDrop>
-		</tableDrop>
+		<dropTargets>
+			<dropTarget class="com.top_logic.model.search.providers.TreeTableDropTargetByExpression"
+				canDrop="draggedObjects->referenceRow->{canDrop=source -> target -> $source.get(`DemoTypes:DemoTypes.All#parent`) != $target.get(`DemoTypes:DemoTypes.All#parent`);$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}"
+				dropType="ORDERED"
+			>
+				<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
+	  info($source + " -> " + $target);
+	  oldParent = $source.get(`DemoTypes:DemoTypes.All#parent`);
+	  oldSiblings = $oldParent.get(`tl.element:StructuredElementContainer#children`).filter(element -> $element != $source);
+	  $oldParent.set(`tl.element:StructuredElementContainer#children`, $oldSiblings);
+	  newSiblings = concat($target.get(`tl.element:StructuredElementContainer#children`), $source);
+	  $target.set(`tl.element:StructuredElementContainer#children`, $newSiblings);
+	};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
+	]]></handleDrop>
+			</dropTarget>
+		</dropTargets>
 	</arguments>
 </config:template-call>

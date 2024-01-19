@@ -19,14 +19,20 @@
 			<treeView name="${namePrefix}OrderedTree"
 				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTreeModelBuilder"
 				titleKey="${resPrefix}.orderedTree.title"
-				treeDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTreeDrop"
-			/>
+			>
+				<dropTargets>
+					<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTreeDrop"/>
+				</dropTargets>
+			</treeView>
 
 			<treeView name="${namePrefix}DefaultTree"
 				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTreeModelBuilder"
 				titleKey="${resPrefix}.defaultTree.title"
-				treeDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoSimpleTreeDrop"
-			/>
+			>
+				<dropTargets>
+					<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoSimpleTreeDrop"/>
+				</dropTargets>
+			</treeView>
 		</layout>
 
 		<layout name="${namePrefix}LayoutForm">
@@ -93,8 +99,10 @@
 			>
 				<table
 					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
-					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTableDrop"
 				>
+					<dropTargets>
+						<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTableDrop"/>
+					</dropTargets>
 					<columns>
 						<column name="name"
 							accessor="com.top_logic.layout.IdentityAccessor"
@@ -110,8 +118,10 @@
 			>
 				<table
 					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
-					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoRowTableDrop"
 				>
+					<dropTargets>
+						<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoRowTableDrop"/>
+					</dropTargets>
 					<columns>
 						<column name="name"
 							accessor="com.top_logic.layout.IdentityAccessor"
@@ -128,8 +138,10 @@
 				<table
 					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
 					fixedColumns="0"
-					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTableDrop"
 				>
+					<dropTargets>
+						<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTableDrop"/>
+					</dropTargets>
 					<columns>
 						<column name="name"
 							accessor="com.top_logic.layout.IdentityAccessor"
@@ -147,8 +159,10 @@
 				<table
 					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
 					fixedColumns="0"
-					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoRowTableDrop"
 				>
+					<dropTargets>
+						<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoRowTableDrop"/>
+					</dropTargets>
 					<columns>
 						<column name="name"
 							accessor="com.top_logic.layout.IdentityAccessor"

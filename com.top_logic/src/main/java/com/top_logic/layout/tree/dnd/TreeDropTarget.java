@@ -11,7 +11,7 @@ import com.top_logic.mig.html.HTMLConstants;
 /**
  * Behavior that implements reactions on a drop operation over a tree.
  * 
- * @see TreeData#getDropTarget()
+ * @see TreeData#getDropTargets()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

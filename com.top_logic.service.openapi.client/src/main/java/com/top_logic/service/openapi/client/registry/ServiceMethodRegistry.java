@@ -518,7 +518,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		@Override
 		public Optional<String> getDocumentation(DisplayContext context, String functionName) {
 			if (!isActive()) {
-				return null;
+				return Optional.empty();
 			}
 			return getInstance().getDocumentation(context, functionName);
 		}

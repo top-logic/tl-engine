@@ -8,6 +8,7 @@ package com.top_logic.layout.scripting.template.gui;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -495,7 +496,7 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 
 	private final TreeDragSource _dragSource;
 
-	private final TreeDropTarget _dropTarget;
+	private final List<TreeDropTarget> _dropTargets;
 
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link ScriptRecorderTree}.
@@ -513,7 +514,7 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 	public ScriptRecorderTree(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_dragSource = context.getInstance(config.getTreeDragSource());
-		_dropTarget = context.getInstance(config.getTreeDropTarget());
+		_dropTargets = Arrays.asList(context.getInstance(config.getTreeDropTarget()));
 	}
 
 	@Override
@@ -592,7 +593,7 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 			DefaultSingleSelectionModel selectionModel = new DefaultSingleSelectionModel(SelectionModelOwner.NO_OWNER);
 			ActionTreeRenderer renderer = new ActionTreeRenderer();
 			_uiModel =
-				new DefaultTreeData(Maybe.some(this), treeUiModel, selectionModel, renderer, _dragSource, _dropTarget);
+				new DefaultTreeData(Maybe.some(this), treeUiModel, selectionModel, renderer, _dragSource, _dropTargets);
 			ScriptingRecorder.annotateAsDontRecord(_uiModel);
 			selectionModel.addSelectionListener(uiSelectionForwarder);
 			setSelected(getRoot());

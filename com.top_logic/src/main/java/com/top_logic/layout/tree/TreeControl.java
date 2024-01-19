@@ -1085,11 +1085,16 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 				String position = (String) arguments.get("pos");
 				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, node, Position.fromString(position));
 
-				if (treeData.getDropTarget().canDrop(dropEvent)) {
-					displayDropMarker(treeControl, (String) arguments.get(ID_PARAM), position);
-				} else {
-					changeToNoDropCursor(treeControl, (String) arguments.get(ID_PARAM), position);
+				List<TreeDropTarget> dropTargets = treeData.getDropTargets();
+				for (TreeDropTarget dropTarget : dropTargets) {
+					if (dropTarget.canDrop(dropEvent)) {
+						displayDropMarker(treeControl, (String) arguments.get(ID_PARAM), position);
+
+						return HandlerResult.DEFAULT_RESULT;
+					}
 				}
+
+				changeToNoDropCursor(treeControl, (String) arguments.get(ID_PARAM), position);
 			}
 
 			return HandlerResult.DEFAULT_RESULT;
@@ -1149,21 +1154,23 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		@Override
 		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node, Map arguments) {
 			TreeData treeData = treeControl.getData();
-			TreeDropTarget dropTarget = treeData.getDropTarget();
-			if (!dropTarget.dropEnabled(treeData)) {
-				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
-			}
 
 			DndData data = DnD.getDndData(context, arguments);
 			if (data != null) {
 				String pos = (String) arguments.get(POS_PARAM);
 
 				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, node, Position.fromString(pos));
-				if (treeData.getDropTarget().canDrop(dropEvent)) {
-					dropTarget.handleDrop(dropEvent);
-				} else {
-					throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
+
+				List<TreeDropTarget> dropTargets = treeData.getDropTargets();
+				for (TreeDropTarget dropTarget : dropTargets) {
+					if (dropTarget.canDrop(dropEvent)) {
+						dropTarget.handleDrop(dropEvent);
+
+						return HandlerResult.DEFAULT_RESULT;
+					}
 				}
+
+				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		}

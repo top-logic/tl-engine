@@ -536,7 +536,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * </p>
 	 */
     public void signalStop() {
-		// TODO #19415: FindBugs(JLM_JSR166_UTILCONCURRENT_MONITORENTER)
+		// Excluding SpotBugs(JLM_JSR166_UTILCONCURRENT_MONITORENTER).
+		// "synchronized" and "notifyAll()" could be replaced by a java.util.concurrent.locks.Lock,
+		// but this would need a lot of refactoring where small mistakes could alter the outcome.
+		// There exist other solutions to this problem, but it is unclear whether they would change
+		// the behavior.
 		synchronized (_shouldStop) {
 			_shouldStop.set(true);
 			_shouldStop.notifyAll();
@@ -1479,7 +1483,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		if (waitTime <= 0) {
 			return;
 		}
-		// TODO #19415: FindBugs(JLM_JSR166_UTILCONCURRENT_MONITORENTER)
+		// Excluding SpotBugs(JLM_JSR166_UTILCONCURRENT_MONITORENTER).
+		// See comment in signalStop() for further details.
 		synchronized (_shouldStop) {
 			if (_shouldStop.get()) {
 				return;

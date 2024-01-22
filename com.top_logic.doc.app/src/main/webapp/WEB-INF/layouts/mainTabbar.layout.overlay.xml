@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<components>
+		<layout-reference
+			config:position="begin"
+			resource="com.top_logic.doc.app/tl.doc.app.layout.xml"
+		/>
+	</components>
+</arguments>

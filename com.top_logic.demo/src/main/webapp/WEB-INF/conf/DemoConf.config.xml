@@ -23,7 +23,7 @@
                 <label-providers>
 		            <provider kind="MODEL" type="tl.accounts:Person">
 						<implementation class="com.top_logic.demo.layout.demo.DemoPersonResourceProvider"
-							goto-self-target="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							goto-self-target="admin/security/accounts/detailsForm.layout.xml#Form"
 						/>
 					</provider>
 		            <provider kind="CODE" type="com.top_logic.demo.layout.form.declarative.values.DemoAbstractSingleton" implementation="com.top_logic.layout.provider.label.SingletonLabelProvider" />
@@ -31,7 +31,7 @@
                 <resource-providers>
 		            <provider kind="MODEL" type="tl.accounts:Person">
 						<implementation class="com.top_logic.demo.layout.demo.DemoPersonResourceProvider"
-							goto-self-target="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							goto-self-target="admin/security/accounts/detailsForm.layout.xml#Form"
 						/>
 					</provider>
 					<provider kind="CODE" type="com.top_logic.demo.model.types.util.DemoYearGroup" implementation="com.top_logic.demo.model.types.util.DemoYearGroupResourceProvider" />

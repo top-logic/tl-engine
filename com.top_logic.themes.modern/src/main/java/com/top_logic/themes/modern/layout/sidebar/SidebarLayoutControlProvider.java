@@ -19,6 +19,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.Utils;
@@ -128,7 +129,8 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 		/**
 		 * {@link ViewConfiguration}s of clickable buttons of this {@link ToolRowView}
 		 */
-		List<PolymorphicConfiguration<ViewConfiguration>> getViews();
+		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
+		List<ViewConfiguration.Config<?>> getViews();
 	}
 
 	/**

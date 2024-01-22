@@ -9,7 +9,7 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.sql.Clob;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -69,11 +69,11 @@ public class LayoutMigrationProcessor extends RewriteMigrationProcessor<RewriteM
 			try (ResultSet result = statement.executeQuery(connection)) {
 				if (result.next()) {
 					do {
-						Clob data = result.getClob(argumentsColumn);
+						String data = result.getString(argumentsColumn);
 						if (data != null) {
 							String layoutKey = result.getString(layoutKeyColumn);
 							String template = result.getString(templateColumn);
-							try (Reader in = data.getCharacterStream()) {
+							try (Reader in = new StringReader(data)) {
 								Document document = DOMUtil.getDocumentBuilder().parse(new InputSource(in));
 								if (rewrite(rewriter, layoutKey, template, document)) {
 									result.updateString(argumentsColumn, DOMUtil.toString(document));

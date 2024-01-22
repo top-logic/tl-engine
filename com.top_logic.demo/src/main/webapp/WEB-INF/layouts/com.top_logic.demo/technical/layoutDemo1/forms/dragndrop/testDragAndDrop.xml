@@ -97,9 +97,7 @@
 				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
 				titleKey="${resPrefix}.defaultTable.title"
 			>
-				<table
-					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
-				>
+				<table dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag">
 					<dropTargets>
 						<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTableDrop"/>
 					</dropTargets>
@@ -116,9 +114,7 @@
 				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
 				titleKey="${resPrefix}.defaultRowTable.title"
 			>
-				<table
-					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
-				>
+				<table dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag">
 					<dropTargets>
 						<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoRowTableDrop"/>
 					</dropTargets>

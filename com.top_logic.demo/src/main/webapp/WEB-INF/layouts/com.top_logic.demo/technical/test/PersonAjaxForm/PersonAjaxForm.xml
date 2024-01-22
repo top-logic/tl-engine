@@ -11,7 +11,7 @@
 		>
 			<goto-targets>
 				<goto-target
-					component="PersonAjaxForm_PersonDialog"
+					component="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/userAccountForm.layout.xml#Form"
 					type="tl.accounts:Person"
 				/>
 			</goto-targets>
@@ -27,18 +27,11 @@
 					executability="InViewMode"
 					resourceKey="layouts.layoutdemo.test.PersonAjaxForm.PersonAjaxForm.openDialogForPerson"
 					target="model(self())"
-					targetComponent="PersonAjaxForm_PersonDialog"
+					targetComponent="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/userAccountForm.layout.xml#Form"
 				/>
 			</buttons>
 			<dialogs>
-				<component class="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					name="PersonAjaxForm_PersonDialog"
-					page="/jsp/contact/person/related/EditRelatedPerson.jsp"
-					resPrefix="layouts.admin.persons.personEditRaw.EditPerson."
-					securityProviderClass="securityRoot"
-				>
-					<dialogInfo createOpenerButtons="false"/>
-				</component>
+				<layout-reference resource="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/dialog.layout.xml"/>
 			</dialogs>
 		</component>
 		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>

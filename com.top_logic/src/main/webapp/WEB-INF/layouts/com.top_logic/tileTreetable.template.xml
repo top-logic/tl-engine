@@ -118,8 +118,8 @@
 					configurationProviders="${configurationProviders}"
 					defaultColumns="${defaultColumns}"
 					dragSource="${dragSource}"
-					fixedColumns="1"
 					dropTargets="${dropTargets}"
+					fixedColumns="1"
 				/>
 				<buttons>
 					${buttons}

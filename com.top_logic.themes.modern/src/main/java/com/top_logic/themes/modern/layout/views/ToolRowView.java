@@ -11,8 +11,8 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -23,7 +23,6 @@ import com.top_logic.layout.basic.DefaultView;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
-import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.themes.modern.layout.ModernThemeConstants;
@@ -42,17 +41,19 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants, 
 	/**
 	 * Configuration interface of {@link ToolRowView}
 	 */
-	public interface Config extends PolymorphicConfiguration<LayoutControlProvider> {
+	public interface Config extends ViewConfiguration.Config<ToolRowView> {
 
 		/**
 		 * {@link ViewConfiguration}s of clickable buttons of this {@link ToolRowView}
 		 */
-		List<PolymorphicConfiguration<ViewConfiguration>> getViews();
+		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
+		List<ViewConfiguration.Config<? extends ViewConfiguration>> getViews();
 
 		/**
 		 * {@link ViewConfiguration}s of messages to display of this {@link ToolRowView}.
 		 */
-		List<PolymorphicConfiguration<ViewConfiguration>> getMessages();
+		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
+		List<ViewConfiguration.Config<? extends ViewConfiguration>> getMessages();
 	}
 
 	/**
@@ -182,12 +183,13 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants, 
 		 * Configuration interface of {@link GroupView}
 		 */
 		@TagName("group")
-		public interface Config extends PolymorphicConfiguration<GroupView> {
+		public interface Config extends ViewConfiguration.Config<GroupView> {
 			
 			/**
 			 * {@link ViewConfiguration}s of clickable buttons of this {@link ToolRowView}
 			 */
-			List<PolymorphicConfiguration<ViewConfiguration>> getViews();
+			@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
+			List<ViewConfiguration.Config<? extends ViewConfiguration>> getViews();
 
 		}
 

@@ -475,6 +475,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<WindowTemplate.Config> getWindows();
 
 		@Name(XML_TAG_VIEWS_NAME)
+		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
 		List<ViewConfiguration.Config<?>> getViews();
 		
 		@Name(COMMANDS_NAME)

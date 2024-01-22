@@ -9,7 +9,7 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.sql.Clob;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -68,9 +68,9 @@ public class Ticket25242UseLegacyTabbarTemplatesForOldLayouts implements Migrati
 					XPathExpression check = XPathFactory.newInstance().newXPath()
 						.compile("/arguments/@*|/arguments/*[local-name(.) != 'components']");
 					do {
-						Clob data = result.getClob(argumentsColumn);
+						String data = result.getString(argumentsColumn);
 						if (data != null) {
-							try (Reader in = data.getCharacterStream()) {
+							try (Reader in = new StringReader(data)) {
 								Document document = DOMUtil.getDocumentBuilder().parse(new InputSource(in));
 								NodeList nodes = (NodeList) check.evaluate(document, XPathConstants.NODESET);
 								if (nodes.getLength() > 0) {

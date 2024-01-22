@@ -333,7 +333,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 						String newXml = DOMUtil.toString(document);
 						log.info("Removed storage annotation from reference '" + name + "(" + refId + ")" + "': "
 							+ newXml);
-						refs.updateClob(5, new StringReader(newXml));
+						refs.updateString(5, new StringReader(newXml));
 						refs.updateRow();
 					}
 				}

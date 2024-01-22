@@ -1513,12 +1513,13 @@
 			<plugin>
 			    <groupId>org.owasp</groupId>
 			    <artifactId>dependency-check-maven</artifactId>
-			    <version>8.1.2</version>
+			    <version>9.0.9</version>
 		        <configuration>
 	                <format>ALL</format>
 	                <skipProvidedScope>true</skipProvidedScope>
 	                <suppressionFile>http://tl/trac/wiki/DependencyCheckSuppressions?format=txt</suppressionFile>
 	                <suppressionFileServerId>tl-trac</suppressionFileServerId>
+					<nvdApiServerId>nvd-api-key</nvdApiServerId>
 		        </configuration>
 			</plugin>
 			

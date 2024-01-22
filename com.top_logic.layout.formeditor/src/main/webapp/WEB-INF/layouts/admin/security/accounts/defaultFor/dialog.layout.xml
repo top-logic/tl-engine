@@ -9,6 +9,7 @@
 		createOpenerButtons="false"
 		defaultFor="tl.accounts:Person"
 		helpID="ID_b8e7cb8b_d58e_4990_bddd_8fea1d1937ef"
+		with-security-configuration="true"
 	>
 		<title>
 			<title key="dynamic.ca8b7df3-e7a4-4e1b-8898-cec1b4115464">
@@ -24,6 +25,10 @@
 				<de>Person</de>
 			</resourceKey>
 		</open-handler>
+		<security-label key="dynamic.0a640b3d-d901-499a-9aff-22ce27b42c75">
+			<en>Person</en>
+			<de>Person</de>
+		</security-label>
 		<components>
 			<layout-reference resource="admin/security/accounts/defaultFor/innerLayout.layout.xml"/>
 		</components>

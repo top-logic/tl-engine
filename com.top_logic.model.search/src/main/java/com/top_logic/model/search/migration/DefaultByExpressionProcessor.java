@@ -9,7 +9,7 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.sql.Clob;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -102,8 +102,7 @@ public class DefaultByExpressionProcessor extends RewriteMigrationProcessor<Rewr
 			try (ResultSet result = statement.executeQuery(connection)) {
 				if (result.next()) {
 					do {
-						Clob data = result.getClob(column);
-
+						String data = result.getString(column);
 						if (data != null) {
 							rewriteData(log, rewriter, column, result, data);
 						}
@@ -115,8 +114,8 @@ public class DefaultByExpressionProcessor extends RewriteMigrationProcessor<Rewr
 		}
 	}
 
-	private void rewriteData(Log log, DocumentRewrite rewriter, String column, ResultSet result, Clob data) {
-		try (Reader in = data.getCharacterStream()) {
+	private void rewriteData(Log log, DocumentRewrite rewriter, String column, ResultSet result, String data) {
+		try (Reader in = new StringReader(data)) {
 			Document document = DOMUtil.getDocumentBuilder().parse(new InputSource(in));
 
 			if (rewriter.rewrite(document)) {

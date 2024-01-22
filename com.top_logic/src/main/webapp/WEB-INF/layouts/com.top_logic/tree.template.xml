@@ -105,6 +105,7 @@
 		defaultSelection="${defaultSelection}"
 		dialogs="${dialogs}"
 		dragSource="${dragSource}"
+		dropTargets="${dropTargets}"
 		expandRoot="${expandRoot}"
 		expandSelected="${expandSelected}"
 		isSecurityMaster="${isSecurityMaster}"
@@ -117,7 +118,6 @@
 		selection="${selection}"
 		show-only-selectable-nodes="${showOnlySelectableNodes}"
 		titleKey="${name}"
-		dropTargets="${dropTargets}"
 	>
 		<selectionModelFactory multiple="${multiSelection}"/>
 		<buttons>

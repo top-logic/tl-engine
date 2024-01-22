@@ -169,8 +169,8 @@
 				configurationProviders="${configurationProviders}"
 				defaultColumns="${defaultColumns}"
 				dragSource="${dragSource}"
-				fixedColumns="${fixedColumns}"
 				dropTargets="${dropTargets}"
+				fixedColumns="${fixedColumns}"
 			/>
 		</tables>
 	</component>

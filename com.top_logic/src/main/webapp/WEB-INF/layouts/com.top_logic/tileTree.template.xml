@@ -118,6 +118,7 @@
 				defaultSelection="false"
 				dialogs="${dialogs}"
 				dragSource="${dragSource}"
+				dropTargets="${dropTargets}"
 				expandRoot="${expandRoot}"
 				expandSelected="${expandSelected}"
 				isSecurityMaster="true"
@@ -128,7 +129,6 @@
 				securityObject="${securityObject}"
 				show-only-selectable-nodes="${showOnlySelectableNodes}"
 				titleKey="${name}"
-				dropTargets="${dropTargets}"
 			>
 				<buttons>
 					${buttons}

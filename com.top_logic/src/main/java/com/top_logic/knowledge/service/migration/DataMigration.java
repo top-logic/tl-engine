@@ -226,6 +226,13 @@ public class DataMigration {
 					log.error("Unable to process migration processor " + processor, ex);
 				}
 			}
+
+			try {
+				log.info("Done with " + version.getModule() + "': " + version.getName());
+				connection.commit();
+			} catch (SQLException ex) {
+				log.error("Failed to commit results. ", ex);
+			}
 		}
 		for (MigrationProcessor processor : deferred) {
 			try {

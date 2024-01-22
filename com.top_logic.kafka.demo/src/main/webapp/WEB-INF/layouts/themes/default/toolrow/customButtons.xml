@@ -10,7 +10,7 @@
 		/>
 	</params>
 
-	<group>
+	<group name="custom">
 		<views>
 			<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
 				name="sensorTab"

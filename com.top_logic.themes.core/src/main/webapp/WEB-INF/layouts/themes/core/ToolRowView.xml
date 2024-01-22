@@ -9,8 +9,8 @@
 		<include name="toolrow/customButtons.xml"/>
 
 		<include name="toolrow/adminButtons.xml"/>
-		
-		<group>
+
+		<group name="scripting">
 			<views>
 				<include name="toolrow/scriptingButtons.xml"/>
 			</views>

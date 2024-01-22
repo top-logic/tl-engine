@@ -12,7 +12,9 @@
 			<layoutControl>
 				<layoutInfo size="%TITLEBAR_HEIGHT%"/>
 				<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
-					<view class="com.top_logic.themes.modern.layout.views.TitleView">
+					<view class="com.top_logic.themes.modern.layout.views.TitleView"
+						name="titleView"
+					>
 						<logout-view class="com.top_logic.layout.component.configuration.LogoutView"
 							image="theme:IMAGES_CLOSE_BTN"
 							name="titleLogoutButton"
@@ -27,10 +29,14 @@
 				/>
 				<componentControlProvider class="com.top_logic.layout.tabbar.TabBarControlProvider"/>
 			</layoutControl>
-			<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+			<layoutControl name="toolRow"
+				componentName="mainTabbar.layout.xml#mainTabber"
+			>
 				<layoutInfo size="%TOOL_ROW_HEIGHT%"/>
 				<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
-					<view class="com.top_logic.themes.modern.layout.views.ToolRowView">
+					<view class="com.top_logic.themes.modern.layout.views.ToolRowView"
+						name="toolRow"
+					>
 						<include name="ToolRowView.xml"/>
 					</view>
 				</componentControlProvider>

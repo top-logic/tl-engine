@@ -151,6 +151,14 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 		@StringDefault(DEFAULT_MESSAGE_START_MARKER)
 		String getMessageStartMarker();
 
+		/**
+		 * When this filter is set, only log entries accepted by it are included.
+		 * <p>
+		 * <code>null</code> means, everything is included.
+		 * </p>
+		 */
+		PolymorphicConfiguration<LogLineFilter> getFilter();
+
 	}
 
 	/**
@@ -192,6 +200,8 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 
 	private final Map<String, String> _details = new ConcurrentHashMap<>();
 
+	private final LogLineFilter _filter;
+
 	/** {@link TypedConfiguration} constructor for {@link LogParser}. */
 	public LogParser(InstantiationContext context, Config config) {
 		super(context, config);
@@ -204,6 +214,7 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 		_threadPattern = config.getThreadPattern();
 		_categoryPattern = config.getCategoryPattern();
 		_messageStartMarker = config.getMessageStartMarker();
+		_filter = context.getInstance(config.getFilter());
 	}
 
 	/**
@@ -216,6 +227,7 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 	public List<LogLine> parseLog(LogFile logFile) {
 		return separateEntries(logFile)
 			.stream()
+			.filter(this::filterEntries)
 			.map(logLine -> createLogLine(logFile.getFileCategory(), logFile.getFileName(), logLine))
 			.collect(toList());
 	}
@@ -310,6 +322,14 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 		}
 		entry.put(property, matcher.group().strip());
 		return matcher.end();
+	}
+
+	/** Whether the {@link Config#getFilter()} the entry should be included. */
+	protected boolean filterEntries(Map<String, Object> entry) {
+		if (_filter == null) {
+			return true;
+		}
+		return _filter.accept(entry);
 	}
 
 	/** Creates a {@link LogLine} from the map of its parts. */

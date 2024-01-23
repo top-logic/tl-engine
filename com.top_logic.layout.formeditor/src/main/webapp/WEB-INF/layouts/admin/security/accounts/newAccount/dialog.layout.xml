@@ -83,11 +83,6 @@
 								type="tl.util:Language"
 							/>
 							<field
-								attribute="admin"
-								fullQualifiedName="tl.accounts:Person#admin"
-								type="tl.core:Boolean"
-							/>
-							<field
 								attribute="restrictedUser"
 								fullQualifiedName="tl.accounts:Person#restrictedUser"
 								type="tl.core:Boolean"

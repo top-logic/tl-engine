@@ -1198,12 +1198,6 @@
 						clique="finish"/>
 
 					<handler id="switchAssistentShow" class="com.top_logic.tool.boundsec.assistent.commandhandler.ShowAssistentCommandHandler"/>
-					<handler id="applyPerson" class="com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler"
-						clique="apply" group="System"/>
-					<handler id="deletePerson" class="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-						clique="delete"/>
-					<handler id="newPerson" class="com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler"
-						clique="create"/>
 					<handler id="resetPersonalConfiguration" 
 						class="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
 						image="theme:ICON_RESET_PERSONAL_CONFIGURATION"

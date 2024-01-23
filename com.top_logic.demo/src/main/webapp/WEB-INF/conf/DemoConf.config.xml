@@ -252,9 +252,6 @@
 				</object-type>
 			</registrations>
 		</config>
-		<config config:interface="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent$EditRelatedPersonConfig">
-			<allow-manual-contact-assigning>true</allow-manual-contact-assigning>
-		</config>
 
 		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
 			<layout>

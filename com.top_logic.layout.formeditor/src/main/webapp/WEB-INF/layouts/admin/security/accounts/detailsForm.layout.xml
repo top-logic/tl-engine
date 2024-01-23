@@ -58,6 +58,9 @@
 					<rule-by-expression show-disabled="true">
 						<decision>account -&gt; if ($account != currentUser(), null, #("Ein Nutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en))</decision>
 					</rule-by-expression>
+					<rule-by-expression show-disabled="true">
+						<decision>account -&gt; if ($account.get(`tl.accounts:Person#admin`) == true, #("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en), null)</decision>
+					</rule-by-expression>
 				</executability>
 				<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
 					<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>
@@ -105,11 +108,9 @@
 								type="tl.core:String"
 								visibility="read-only"
 							/>
-							<field
-								attribute="admin"
-								fullQualifiedName="tl.accounts:Person#admin"
-								type="tl.core:Boolean"
-							/>
+							<code>
+								<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+							</code>
 							<field
 								attribute="restrictedUser"
 								fullQualifiedName="tl.accounts:Person#restrictedUser"

@@ -54,7 +54,9 @@
 						</componentControlProvider>
 					</layoutControl>
 
-					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+					<layoutControl name="toolRow"
+						componentName="mainTabbar.layout.xml#mainTabber"
+					>
 						<layoutInfo size="100%"/>
 						<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.SidebarLayoutControlProvider"
 							accordion="%SBL_ACCORDION%"

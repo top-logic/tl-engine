@@ -106,7 +106,7 @@ public class KnowledgeObjectResultImpl implements KnowledgeObjectResult  {
     }
 
     /**
-     * Test wether this object is equals to the given one.
+     * Test whether this object is equals to the given one.
      * True, if the object is a KnowledgeObjectResult and
      * the KnowledgeObjects and the Relevance are equal.
      *

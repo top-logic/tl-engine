@@ -191,7 +191,7 @@ public class TestFormField extends BasicTestCase {
 			adress1.addMember(street1); // second assignment
 			fail("Expected to fail, as assigning a FormField twice is not allowed");
 		} catch (Throwable ex) {
-			// expected (one of them, depending on wether the test runs with assertions enabled or not).
+			// expected (one of them, depending on whether the test runs with assertions enabled or not).
 			assertInstanceof(ex, IllegalStateException.class, AssertionError.class);
 		}
 	}

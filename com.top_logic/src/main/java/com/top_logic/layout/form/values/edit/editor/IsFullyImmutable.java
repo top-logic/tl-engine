@@ -9,7 +9,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.layout.form.model.FieldMode;
 
 /**
- * Mapping deciding wether a given {@link FieldMode} is {@link FieldMode#IMMUTABLE}.
+ * Mapping deciding whether a given {@link FieldMode} is {@link FieldMode#IMMUTABLE}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

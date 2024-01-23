@@ -790,9 +790,9 @@ public abstract class AbstractDBKnowledgeBaseTest extends AbstractKnowledgeBaseT
 					literalString(key.getObjectType().getName())),
 				eq(notNullColumn(alias, AbstractFlexDataManager.IDENTIFIER_DBNAME),
 					literalID(key.getObjectName())),
-				ge(notNullColumn(alias, AbstractFlexDataManager.REV_MAX_DBNAME),
+				ge(notNullColumn(alias, BasicTypes.REV_MAX_DB_NAME),
 					literalLong(key.getHistoryContext())),
-				le(notNullColumn(alias, AbstractFlexDataManager.REV_MIN_DBNAME),
+				le(notNullColumn(alias, BasicTypes.REV_MIN_DB_NAME),
 					literalLong(key.getHistoryContext()))));
 		CompiledStatement sql = query(select).toSql(connection.getSQLDialect());
 		return sql.executeQuery(connection);

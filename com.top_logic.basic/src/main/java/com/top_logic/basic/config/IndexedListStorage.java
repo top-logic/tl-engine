@@ -171,7 +171,8 @@ class IndexedListStorage<K, V extends ConfigurationItem> extends AbstractListSto
 		// Not the first element
 		final LinkedValue<V> afterValue = _storage.get(reference);
 		if (afterValue == null) {
-			_protocol.error("No corresponding ConfigurationItem found for reference '" + reference + "'.");
+			_protocol.error("No corresponding ConfigurationItem found for reference '" + reference
+				+ "'. References: " + _storage.keySet());
 			return;
 		}
 
@@ -241,7 +242,8 @@ class IndexedListStorage<K, V extends ConfigurationItem> extends AbstractListSto
 	void remove(K reference) {
 		final LinkedValue<V> value = _storage.remove(reference);
 		if (value == null) {
-			_protocol.error("No corresponding ConfigurationItem found for reference '" + reference + "'.");
+			_protocol.error("No corresponding ConfigurationItem found for reference '" + reference
+				+ "'. References: " + _storage.keySet());
 			return;
 		}
 		if (_storage.isEmpty()) {
@@ -362,7 +364,8 @@ class IndexedListStorage<K, V extends ConfigurationItem> extends AbstractListSto
 		final LinkedValue<V> value = _storage.get(reference);
 		if (value == null) {
 			if (!mayBeNull) {
-				_protocol.error("No corresponding ConfigurationItem found for reference '" + reference + "'.");
+				_protocol.error("No corresponding ConfigurationItem found for reference '" + reference
+					+ "'. References: " + _storage.keySet());
 			}
 			return null;
 		}

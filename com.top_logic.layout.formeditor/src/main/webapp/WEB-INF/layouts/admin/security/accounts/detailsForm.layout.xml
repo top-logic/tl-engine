@@ -55,6 +55,9 @@
 				/>
 				<executability>
 					<rule-by-expression decision="account -> $account != null"/>
+					<rule-by-expression show-disabled="true">
+						<decision>account -&gt; if ($account != currentUser(), null, #("Ein Nutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en))</decision>
+					</rule-by-expression>
 				</executability>
 				<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
 					<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>

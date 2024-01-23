@@ -1518,33 +1518,8 @@ com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider.java: Inval
 com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider.java: Missing documentation: com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider.INSTANCE
 com.top_logic.knowledge.gui.layout.list.FastListElementRenderer.java: Missing documentation: com.top_logic.knowledge.gui.layout.list.FastListElementRenderer
 com.top_logic.knowledge.gui.layout.list.FastListElementRenderer.java: Missing documentation: com.top_logic.knowledge.gui.layout.list.FastListElementRenderer.INSTANCE
-com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler.java: Invalid camel case word 'FormContext', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler.java: Invalid camel case word 'ModelTrackingService', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler.updataAuthenticationDeviceID
-com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.java: Invalid camel case word 'ModelTrackingService', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.DISALLOW_DELETE_LDAP_USER
-com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.DISALLOW_SELF_DELETE
-com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler.EXPLAIN_NO_SELF_DELETE
 com.top_logic.knowledge.gui.layout.person.DisallowRootDeleteRule.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.DisallowRootDeleteRule.INSTANCE
-com.top_logic.knowledge.gui.layout.person.EditPersonComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.gui.layout.person.EditPersonComponent.CountryComparator
-com.top_logic.knowledge.gui.layout.person.EditPersonComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.gui.layout.person.EditPersonComponent.LanguageComparator
-com.top_logic.knowledge.gui.layout.person.EditPersonComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.gui.layout.person.EditPersonComponent.TextBasedComparator
-com.top_logic.knowledge.gui.layout.person.EditPersonComponent.java: Invalid camel case word 'GoTo', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.EditPersonComponent.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.EditPersonComponent.USER_EVENT_SENDER
-com.top_logic.knowledge.gui.layout.person.EditPersonComponent.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.EditPersonComponent.WriteableSecurityDeviceRule
 com.top_logic.knowledge.gui.layout.person.IsCurrentPersonOrRootFilter.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.IsCurrentPersonOrRootFilter
-com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.java: Invalid camel case word 'CommandHandler', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.java: Invalid camel case word 'ModelTrackingService', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.COMMAND_ID
-com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler.createPerson
-com.top_logic.knowledge.gui.layout.person.NewPersonComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.gui.layout.person.NewPersonComponent
-com.top_logic.knowledge.gui.layout.person.NewPersonComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.gui.layout.person.NewPersonComponent.Config
 com.top_logic.knowledge.gui.layout.person.PersonGroupComponent.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.gui.layout.person.PersonGroupComponent.java: Invalid camel case word 'aCmdGroup', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.gui.layout.person.PersonGroupComponent.java: Invalid camel case word 'aRoot', this may only be used within JavaDoc links or HTML code tags.

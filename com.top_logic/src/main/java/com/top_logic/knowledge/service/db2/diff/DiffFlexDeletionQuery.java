@@ -15,6 +15,7 @@ import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.DBBinaryData;
 import com.top_logic.basic.sql.DBHelper;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeResult;
@@ -54,12 +55,12 @@ public class DiffFlexDeletionQuery extends AbstractDiffDeletionQuery {
 	
 	@Override
 	protected String getRevMaxColumnName() {
-		return AbstractFlexDataManager.REV_MAX_DBNAME;
+		return BasicTypes.REV_MAX_DB_NAME;
 	}
 
 	@Override
 	protected String getRevMinColumnName() {
-		return AbstractFlexDataManager.REV_MIN_DBNAME;
+		return BasicTypes.REV_MIN_DB_NAME;
 	}
 
 	@Override

@@ -94,10 +94,10 @@ private static char delim='\n';
 	%><%@page import="com.top_logic.basic.util.NumberUtil"%>
 	
 	<%!private String createLine(Person person, Date lastLoginDate) {
-		return encodeValue(person.getName()) + separator + encodeValue(person.getLastName()) + separator
-		+ encodeValue(person.getFirstName()) + separator
-		+ encodeValue(person.getInternalMail()) + separator + encodeValue(person.getOrgUnit()) + separator
-		+ encodeValue(person.getDataAccessDeviceID()) + separator
+		return encodeValue(person.getName()) + separator + encodeValue(person.getUser().getFirstName()) + separator
+		+ encodeValue(person.getUser().getName()) + separator
+		+ encodeValue(person.getUser().getEMail()) + separator
+		+ encodeValue(person.getAuthenticationDeviceID()) + separator
 		+ MetaLabelProvider.INSTANCE.getLabel(lastLoginDate) + delim;
 	}
 	
@@ -115,7 +115,7 @@ private static char delim='\n';
 		try {
 			List<String> theResult = new ArrayList<>();
 			theResult.add("Login-ID" + separator + "Vorname" + separator + "Nachname" + separator + "E-Mail" + separator
-			+ "Abteilung" + separator + "Nutzerverwaltungsressource" + separator + "Datum letzter Login" + delim); //add header line
+			 + "Authentifizierungsressource" + separator + "Datum letzter Login" + delim); //add header line
 			
 			Map<String, Date> latestLogins = DBUtil.executeQuery("SELECT NAME, MAX(LOGIN) FROM USER_SESSION GROUP BY NAME",
 				new ResultExtractor<Map<String, Date>>() {
@@ -129,7 +129,7 @@ private static char delim='\n';
 					}
 			});
 			
-			Iterator<Person>accounts = PersonManager.getManager().getAllAlivePersons().iterator();
+			Iterator<Person>accounts = Person.all().iterator();
 			while (accounts.hasNext()) {
 				Person person = accounts.next();
 				checked++;

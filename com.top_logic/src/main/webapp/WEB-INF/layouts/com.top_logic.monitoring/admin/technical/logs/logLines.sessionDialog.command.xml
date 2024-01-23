@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params/>
+	<!--
+		Intentionally empty: The actual content is defined in the project "com.top_logic.monitoring".
+		Adding this command with an '.layout.overlay.xml' file is not possible, as it would be theme-dependent.
+		But that is not possible for '.layout.overlay.xml' files.
+	-->
+</template>

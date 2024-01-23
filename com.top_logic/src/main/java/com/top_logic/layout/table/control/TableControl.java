@@ -2335,10 +2335,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
 					out.append("services.form.TableControl.changeToNoDropCursor(");
-					out.append(control.getID());
-					out.append(",'");
-					out.append(targetID);
-					out.append("');");
+					TagUtil.writeJsString(out, targetID);
+					out.append(");");
 				}
 			}));
 		}
@@ -2348,10 +2346,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
 					out.append("services.form.TableControl.displayDropMarker(");
-					out.append(control.getID());
-					out.append(",'");
-					out.append(targetID);
-					out.append("'");
+					TagUtil.writeJsString(out, targetID);
 					if (!StringServices.isEmpty(position)) {
 						out.append(",");
 						TagUtil.writeJsString(out, position);

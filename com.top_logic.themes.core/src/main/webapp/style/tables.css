@@ -277,13 +277,13 @@ tr.tl-table__row.dndInsertInto > td {
 	background-color: var(--notification-info-background);
 }
 
-tr.tl-table__row.dndInsertBelow {
+tr.tl-table__row.dndInsertBelow > td {
 	border-bottom-width: 2px;
 	border-bottom-style: solid;
 	border-bottom-color: var(--border-interactive);
 }
 
-tr.tl-table__row.dndInsertAbove {
+tr.tl-table__row.dndInsertAbove > td {
 	border-top-width: 2px;
 	border-top-style: solid;
 	border-top-color: var(--border-interactive);

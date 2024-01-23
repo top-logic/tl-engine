@@ -295,7 +295,7 @@ services.form = {
 		updateFunction();
 	},
 	
-	_putToDnDCache: function(controlElement, sourceID, targetID, dropability) {
+	_putToDnDCache: function(sourceID, targetID, dropability) {
 		if(window.tlDnD.cache === undefined) {
 			window.tlDnD.cache = new services.util.TwoKeyMap();
 		}
@@ -615,7 +615,7 @@ services.form = {
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
-								this.displayDropMarkerInternal(controlElement, row, position);
+								this.displayDropMarkerInternal(row, position);
 								event.dataTransfer.dropEffect = "move";
 							} else {
 								this.resetMarker();
@@ -659,20 +659,20 @@ services.form = {
 			}
 		},
 		
-		changeToNoDropCursor: function(controlElement, target) {
+		changeToNoDropCursor: function(targetID) {
 			this.resetMarker();
 			
-			services.form._putToDnDCache(controlElement, window.tlDnD.data.split("/").pop(), target, false);
+			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, false);
 		},
 		
-		displayDropMarker: function(controlElement, target, position) {
-			this.displayDropMarkerInternal(controlElement, target, position);
-			services.form._putToDnDCache(controlElement, window.tlDnD.data.split("/").pop(), target, true);
+		displayDropMarker: function(targetID, position) {
+			this.displayDropMarkerInternal(document.getElementById(targetID), position);
+			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, true);
 
 			return false;
 		},
 		
-		displayDropMarkerInternal: function(controlElement, rowElement, position) {
+		displayDropMarkerInternal: function(rowElement, position) {
 			this.resetMarker();
 			
 			if (position == "below") {
@@ -1101,7 +1101,7 @@ services.form = {
 							
 							if(isDropableAtPosition !== undefined) {
 								if(isDropableAtPosition) {
-									this.displayDropMarkerInternal(controlElement, dropTarget.node, dropTarget.position);
+									this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
 									event.dataTransfer.dropEffect = "move";
 								} else {
 									this.resetMarker();
@@ -1130,14 +1130,14 @@ services.form = {
 			}
 		},
 		
-		changeToNoDropCursor: function(controlElement, target, pos) {
+		changeToNoDropCursor: function(targetID, pos) {
 			this.resetMarker();
 			
 			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(controlElement, sourceID, target.id, pos, false);
+			this.addToDnDCache(sourceID, targetID, pos, false);
 		},
 		
-		addToDnDCache: function (controlElement, sourceID, targetID, pos, isDropable) {
+		addToDnDCache: function (sourceID, targetID, pos, isDropable) {
 			if(window.tlDnD.cache !== undefined) {
 				var cacheValue = window.tlDnD.cache.get(sourceID, targetID);
 				if(cacheValue !== undefined) {
@@ -1149,13 +1149,13 @@ services.form = {
 			var cacheValue = {};
 			cacheValue[pos] = isDropable;
 			
-			services.form._putToDnDCache(controlElement, sourceID, targetID, cacheValue);
+			services.form._putToDnDCache(sourceID, targetID, cacheValue);
 		},
 		
-		displayDropMarker: function(controlElement, target, pos) {
-			this.displayDropMarkerInternal(controlElement, target, pos);
+		displayDropMarker: function(targetID, pos) {
+			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
 			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(controlElement, sourceID, target.id, pos, true);
+			this.addToDnDCache(sourceID, targetID, pos, true);
 
 			return false;
 		},
@@ -1234,6 +1234,11 @@ services.form = {
 						position: "above"
 					};
 				}
+			} else if(dropType == "CHILD") {
+				return {
+					node: nodeElement,
+					position: "onto"
+				};
 			} else {
 				return {
 					node: nodeElement,
@@ -1242,19 +1247,17 @@ services.form = {
 			}
 		},
 		
-		displayDropMarkerInternal: function(controlElement, nodeElement, position) {
+		displayDropMarkerInternal: function(nodeElement, position) {
 			this.resetMarker();
 			
 			this.currentInsertionMarker = nodeElement;
 			
-			if (BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype") == "ORDERED") {
-				if(position == "above") {
-					BAL.DOM.addClass(nodeElement, "dndInsertAbove");
-				} else if(position == "below") {
-					BAL.DOM.addClass(nodeElement, "dndInsertBelow");
-				} else {
-					BAL.DOM.addClass(nodeElement, "dndInsertWithin");
-				}
+			if(position == "above") {
+				BAL.DOM.addClass(nodeElement, "dndInsertAbove");
+			} else if(position == "below") {
+				BAL.DOM.addClass(nodeElement, "dndInsertBelow");
+			} else if(position == "within"){
+				BAL.DOM.addClass(nodeElement, "dndInsertWithin");
 			} else {
 				BAL.DOM.addClass(nodeElement, "dndInsertInto");
 			}

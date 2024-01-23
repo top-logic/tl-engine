@@ -1100,9 +1100,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
 					out.append("services.form.TreeControl.changeToNoDropCursor(");
-					out.append(treeControl.getID());
-					out.append(",");
-					out.append(targetID);
+					TagUtil.writeJsString(out, targetID);
 					out.append(",");
 					TagUtil.writeJsString(out, position);
 					out.append(");");
@@ -1115,9 +1113,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
 					out.append("services.form.TreeControl.displayDropMarker(");
-					out.append(treeControl.getID());
-					out.append(",");
-					out.append(targetID);
+					TagUtil.writeJsString(out, targetID);
 					out.append(",");
 					TagUtil.writeJsString(out, position);
 					out.append(");");

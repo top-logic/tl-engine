@@ -315,9 +315,6 @@
 					<handler id="assistentBackward" class="com.top_logic.tool.boundsec.assistent.commandhandler.BackwardAssistentCommandHandler"/>
 					<handler id="assistentCancel" class="com.top_logic.tool.boundsec.assistent.commandhandler.CancelAssistentCommandHandler"/>
 					<handler id="assistentFinish" class="com.top_logic.tool.boundsec.assistent.commandhandler.FinishAssistentCommandHandler"/>
-					<handler id="applyPerson" class="com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler"/>
-					<handler id="deletePerson" class="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"/>
-					<handler id="newPerson" class="com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler"/>
 					<handler id="applyRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$ApplyRoleCommand"/>
 					<handler id="deleteRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"/>
 					<handler id="newRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleCommand"/>

@@ -151,9 +151,6 @@
 					<handler id="personContactCreate" class="com.top_logic.contact.layout.person.PersonContactCreateHandler" clique="create"/>
 					<handler id="companyContactDelete" class="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler" clique="delete"/>
 					<handler id="companyContactCreate" class="com.top_logic.contact.layout.company.CompanyContactCreateHandler" clique="create"/>
-		            <!-- Override person handling to (optionally) relate them to PersonContacts --> 
-		            <handler id="applyPerson" class="com.top_logic.contact.layout.person.related.ApplyRelatedPersonCommandHandler" clique="apply" group="System"/>
-		            <handler id="newPerson" class="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler" clique="create"/>
 		            <handler id="startSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$StartSAPImportCommandHandler"/>
 		            <handler id="finishSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$FinishSAPImportCommandHandler"/>
 		            <handler id="ContactSwitchEditCommand" class="com.top_logic.contact.mandatoraware.layout.COSEditPersonContactComponent$ContactSwitchEditCommandHandler" clique="edit"/>
@@ -188,9 +185,6 @@
 					</schemas>
 				</type-system>
 			</type-systems>
-		</config>
-		<config config:interface="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent$EditRelatedPersonConfig">
-			<allow-manual-contact-assigning>false</allow-manual-contact-assigning>
 		</config>
 
 		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">

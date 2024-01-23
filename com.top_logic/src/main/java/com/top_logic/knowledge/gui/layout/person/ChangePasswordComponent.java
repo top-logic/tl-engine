@@ -160,25 +160,6 @@ public class ChangePasswordComponent extends FormComponent {
 	}
 
 	/**
-	 * Check, if the changing of password is allowed for the given user.
-	 * 
-	 * @param aPerson
-	 *        The person to change the password for, must not be <code>null</code>
-	 * @return <code>true</code>, if password change is allowed.
-	 */
-	protected boolean allowPwdChange(Person aPerson) {
-		{
-			AuthenticationDevice theDevice = aPerson.getAuthenticationDevice();
-			boolean hasChangeAccess = ((EditPersonComponent) getDialogParent()).hasDeleteAccess(aPerson);
-
-			return (theDevice != null)
-				&& theDevice.allowPwdChange()
-				&& (TLContext.getContext().getCurrentUserName().equals(aPerson.getName())
-				|| hasChangeAccess);
-		}
-	}
-
-	/**
 	 * {@link CommandHandler} applying a password change.
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

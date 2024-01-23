@@ -289,7 +289,6 @@ com.top_logic.element.genericimport.GenericImporterProxy.java: Documentation con
 com.top_logic.element.genericimport.GenericImporterProxy.java: Invalid camel case word 'GenericImporter', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.GenericImporterProxy.java: Invalid camel case word 'GenericImporterProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.GenericImporterProxy.java: Missing documentation: com.top_logic.element.genericimport.GenericImporterProxy.PROXY_IMPORTER
-com.top_logic.element.genericimport.GenericPersonCreateHandler.java: Missing documentation: com.top_logic.element.genericimport.GenericPersonCreateHandler
 com.top_logic.element.genericimport.GenericStructureCreateHandler.java: Missing documentation: com.top_logic.element.genericimport.GenericStructureCreateHandler
 com.top_logic.element.genericimport.GenericTwoPhaseImportTask.java: Missing documentation: com.top_logic.element.genericimport.GenericTwoPhaseImportTask
 com.top_logic.element.genericimport.GenericValueMapImpl.java: Missing documentation: com.top_logic.element.genericimport.GenericValueMapImpl

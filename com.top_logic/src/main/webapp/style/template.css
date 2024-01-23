@@ -559,13 +559,13 @@ tr.tl-table__row.dndInsertInto > td {
 	background-color: var(--DROP_MARKER_COLOR);
 }
 
-tr.tl-table__row.dndInsertBelow {
+tr.tl-table__row.dndInsertBelow > td {
 	border-bottom-width: 2px;
 	border-bottom-style: solid;
 	border-bottom-color: var(--INSERT_MARKER_COLOR);
 }
 
-tr.tl-table__row.dndInsertAbove {
+tr.tl-table__row.dndInsertAbove > td {
 	border-top-width: 2px;
 	border-top-style: solid;
 	border-top-color: var(--INSERT_MARKER_COLOR);

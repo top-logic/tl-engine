@@ -548,9 +548,9 @@ public class StateManager /* implements EventListener */ {
      * this element belongs to and return its state.
      *
      * NOTE: This is not a good way to do this! In this case the elements state determines
-     * himself wether it is the final state or not. This is done by checking if there are any
+     * himself whether it is the final state or not. This is done by checking if there are any
      * successors or not.
-     * However, the state can NOT determine wether it is the initial state this way.
+     * However, the state can NOT determine whether it is the initial state this way.
      * It cant do that at all actually. So this is done by the statemanager::isInitalState() method.
      * Likewise the statemanager offers a isFinalState() method, of course. So it can check for both criterias,
      * something the state can not do. Further there is a risk that the results of State::isFinal() and

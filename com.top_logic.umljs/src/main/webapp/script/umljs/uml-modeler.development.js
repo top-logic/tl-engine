@@ -3617,7 +3617,7 @@
    * @param {string} action The action to be allowed or disallowed.
    * @param {Object} [context] The context for allowing or disallowing the action.
    *
-   * @return {boolean|null} Wether the action is allowed. Returns `null` if the action
+   * @return {boolean|null} Whether the action is allowed. Returns `null` if the action
    * is to be ignored.
    */
   Rules.prototype.allowed = function(action, context) {
@@ -4727,7 +4727,7 @@
   }
 
   /**
-   * Check wether node type can have marker attributes.
+   * Check whether node type can have marker attributes.
    *
    * @param {HTMLElement} node
    *
@@ -6374,7 +6374,7 @@
     // rules //////////
 
     /**
-     * Check wether elements can be created.
+     * Check whether elements can be created.
      *
      * @param {Element[]} elements
      * @param {Shape} target
@@ -6453,7 +6453,7 @@
         };
       }
 
-      // ignore wether or not elements can be created
+      // ignore whether or not elements can be created
       if (create === null || attach === null) {
         return null;
       }

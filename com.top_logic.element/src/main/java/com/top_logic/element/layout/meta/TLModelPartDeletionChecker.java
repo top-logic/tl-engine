@@ -30,7 +30,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.DefaultTLModelVisitor;
 
 /**
- * Checks wether the given {@link TLModelPart}s can be deleted without destroying the model
+ * Checks whether the given {@link TLModelPart}s can be deleted without destroying the model
  * consistency.
  * 
  * Must be complied with:

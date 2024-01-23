@@ -21,7 +21,7 @@ public class RowColorIndexer {
 	// current color index and row number
 	private int _colorIndex, _lastRowIndex;
 
-	// flag to indicate wether to toggle color for row groups (true) or individual rows (false)
+	// flag to indicate whether to toggle color for row groups (true) or individual rows (false)
 	private final boolean _onlyOrigRows;
 
 	/**
@@ -47,7 +47,7 @@ public class RowColorIndexer {
 	 * Creates a new {@link RowColorIndexer}.
 	 * 
 	 * @param onlyOriginalRows
-	 *        Flag to indicate wether to increment the color index for row groups or for each row
+	 *        Flag to indicate whether to increment the color index for row groups or for each row
 	 */
 	private RowColorIndexer(boolean onlyOriginalRows) {
 		_colorIndex = -1;

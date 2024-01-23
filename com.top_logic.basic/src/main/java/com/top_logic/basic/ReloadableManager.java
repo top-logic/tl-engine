@@ -206,7 +206,7 @@ public class ReloadableManager {
 	 * @param aReloadable
 	 *     The {@link Reloadable} to test.
 	 * @return
-	 *     Wether the given {@link Reloadable} is registered with this manager. 
+	 *     Whether the given {@link Reloadable} is registered with this manager. 
 	 */
     public boolean isReloadableRegistered(Reloadable aReloadable) {
 		String theName = aReloadable.getName();

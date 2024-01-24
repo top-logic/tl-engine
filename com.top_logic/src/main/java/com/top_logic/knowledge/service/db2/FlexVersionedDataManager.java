@@ -40,6 +40,7 @@ import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.persist.DataManager;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AddAttributeStatement.AddAttributeBatchCollector;
 import com.top_logic.knowledge.service.db2.MutableFlexData.ChangeType;
@@ -118,9 +119,9 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			Collections.addAll(columnNames,
 				TYPE_DBNAME,
 				IDENTIFIER_DBNAME,
-				REV_MAX_DBNAME,
+				BasicTypes.REV_MAX_DB_NAME,
 				ATTRIBUTE_DBNAME,
-				REV_MIN_DBNAME,
+				BasicTypes.REV_MIN_DB_NAME,
 				DATA_TYPE_DBNAME,
 				LONG_DATA_DBNAME,
 				DOUBLE_DATA_DBNAME,
@@ -134,9 +135,9 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			Collections.addAll(values,
 				parameter(DBType.STRING, TYPE_DBNAME),
 				parameter(DBType.ID, IDENTIFIER_DBNAME),
-				parameter(DBType.LONG, REV_MAX_DBNAME),
+				parameter(DBType.LONG, BasicTypes.REV_MAX_DB_NAME),
 				parameter(DBType.STRING, ATTRIBUTE_DBNAME),
-				parameter(DBType.LONG, REV_MIN_DBNAME),
+				parameter(DBType.LONG, BasicTypes.REV_MIN_DB_NAME),
 				parameter(DBType.BYTE, DATA_TYPE_DBNAME),
 				parameter(DBType.LONG, LONG_DATA_DBNAME),
 				parameter(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
@@ -150,9 +151,9 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			}
 			parameters.add(parameterDef(DBType.STRING, TYPE_DBNAME));
 			parameters.add(parameterDef(DBType.ID, IDENTIFIER_DBNAME));
-			parameters.add(parameterDef(DBType.LONG, REV_MAX_DBNAME));
+			parameters.add(parameterDef(DBType.LONG, BasicTypes.REV_MAX_DB_NAME));
 			parameters.add(parameterDef(DBType.STRING, ATTRIBUTE_DBNAME));
-			parameters.add(parameterDef(DBType.LONG, REV_MIN_DBNAME));
+			parameters.add(parameterDef(DBType.LONG, BasicTypes.REV_MIN_DB_NAME));
 			parameters.add(parameterDef(DBType.BYTE, DATA_TYPE_DBNAME));
 			parameters.add(parameterDef(DBType.LONG, LONG_DATA_DBNAME));
 			parameters.add(parameterDef(DBType.DOUBLE, DOUBLE_DATA_DBNAME));
@@ -178,11 +179,11 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				where,
 				eq(column(tableAlias, TYPE_DBNAME, NOT_NULL), parameter(DBType.STRING, TYPE_DBNAME)),
 				eq(column(tableAlias, IDENTIFIER_DBNAME, NOT_NULL), parameter(DBType.ID, IDENTIFIER_DBNAME)),
-				eq(column(tableAlias, REV_MAX_DBNAME, NOT_NULL), literalLong(CURRENT_REV)),
+				eq(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), literalLong(CURRENT_REV)),
 				eq(column(tableAlias, ATTRIBUTE_DBNAME, NOT_NULL), parameter(DBType.STRING, ATTRIBUTE_DBNAME)));
 			List<String> columns = new ArrayList<>();
 			Collections.addAll(columns,
-				REV_MIN_DBNAME,
+				BasicTypes.REV_MIN_DB_NAME,
 				DATA_TYPE_DBNAME,
 				LONG_DATA_DBNAME,
 				DOUBLE_DATA_DBNAME,
@@ -191,7 +192,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				BLOB_DATA_DBNAME);
 			List<SQLExpression> values = new ArrayList<>();
 			Collections.addAll(values,
-				parameter(DBType.LONG, REV_MIN_DBNAME),
+				parameter(DBType.LONG, BasicTypes.REV_MIN_DB_NAME),
 				parameter(DBType.BYTE, DATA_TYPE_DBNAME),
 				parameter(DBType.LONG, LONG_DATA_DBNAME),
 				parameter(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
@@ -208,7 +209,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				parameterDef(DBType.STRING, TYPE_DBNAME),
 				parameterDef(DBType.ID, IDENTIFIER_DBNAME),
 				parameterDef(DBType.STRING, ATTRIBUTE_DBNAME),
-				parameterDef(DBType.LONG, REV_MIN_DBNAME),
+				parameterDef(DBType.LONG, BasicTypes.REV_MIN_DB_NAME),
 				parameterDef(DBType.BYTE, DATA_TYPE_DBNAME),
 				parameterDef(DBType.LONG, LONG_DATA_DBNAME),
 				parameterDef(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
@@ -340,12 +341,12 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				where,
 				eq(column(tableAlias, TYPE_DBNAME, NOT_NULL), parameter(DBType.STRING, TYPE_DBNAME)),
 				eq(column(tableAlias, IDENTIFIER_DBNAME, NOT_NULL), parameter(DBType.ID, IDENTIFIER_DBNAME)),
-				eq(column(tableAlias, REV_MAX_DBNAME, NOT_NULL), literalLong(CURRENT_REV)),
+				eq(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), literalLong(CURRENT_REV)),
 				eq(column(tableAlias, ATTRIBUTE_DBNAME, NOT_NULL), parameter(DBType.STRING, ATTRIBUTE_DBNAME))
 				);
-			List<String> columns = Collections.singletonList(REV_MAX_DBNAME);
+				List<String> columns = Collections.singletonList(BasicTypes.REV_MAX_DB_NAME);
 			List<SQLExpression> values =
-				Collections.<SQLExpression> singletonList(parameter(DBType.LONG, REV_MAX_DBNAME));
+					Collections.<SQLExpression> singletonList(parameter(DBType.LONG, BasicTypes.REV_MAX_DB_NAME));
 			SQLUpdate updates = update(table, where, columns, values);
 			List<Parameter> parameters = new ArrayList<>();
 			if (multipleBranches) {
@@ -354,7 +355,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			Collections.addAll(parameters,
 				parameterDef(DBType.STRING, TYPE_DBNAME),
 				parameterDef(DBType.ID, IDENTIFIER_DBNAME),
-				parameterDef(DBType.LONG, REV_MAX_DBNAME),
+				parameterDef(DBType.LONG, BasicTypes.REV_MAX_DB_NAME),
 				parameterDef(DBType.STRING, ATTRIBUTE_DBNAME)
 				);
 			MAX_BATCH_SIZE = sqlDialect.getMaxBatchSize(parameters.size());
@@ -408,11 +409,11 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				where,
 				eq(column(tableAlias, TYPE_DBNAME, NOT_NULL), parameter(DBType.STRING, TYPE_DBNAME)),
 				identifierMatch(tableAlias),
-				eq(column(tableAlias, REV_MAX_DBNAME, NOT_NULL), literalLong(CURRENT_REV))
+				eq(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), literalLong(CURRENT_REV))
 				);
-			List<String> columns = Collections.singletonList(REV_MAX_DBNAME);
+			List<String> columns = Collections.singletonList(BasicTypes.REV_MAX_DB_NAME);
 			List<SQLExpression> values =
-				Collections.<SQLExpression> singletonList(parameter(DBType.LONG, REV_MAX_DBNAME));
+				Collections.<SQLExpression> singletonList(parameter(DBType.LONG, BasicTypes.REV_MAX_DB_NAME));
 			SQLUpdate updates = update(table, where, columns, values);
 			List<Parameter> parameters = new ArrayList<>();
 			if (multipleBranches) {
@@ -421,7 +422,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			Collections.addAll(parameters,
 				parameterDef(DBType.STRING, TYPE_DBNAME),
 				identifierParameterDefinition(),
-				parameterDef(DBType.LONG, REV_MAX_DBNAME));
+				parameterDef(DBType.LONG, BasicTypes.REV_MAX_DB_NAME));
 			SQLQuery<SQLUpdate> query = query(parameters, updates);
 			CompiledStatement sql = query.toSql(sqlDialect);
 			return sql;

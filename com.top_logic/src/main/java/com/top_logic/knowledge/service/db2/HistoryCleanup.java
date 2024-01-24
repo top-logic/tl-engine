@@ -173,7 +173,7 @@ public class HistoryCleanup implements Runnable {
 				and(
 					inSet(column(alias, AbstractFlexDataManager.TYPE_DBNAME), typeNames, referenceDBType),
 					le(
-						column(alias, AbstractFlexDataManager.REV_MAX_DBNAME, NOT_NULL),
+						column(alias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL),
 						parameter(IdentifierTypes.REVISION_REFERENCE_MO_TYPE.getDefaultSQLType(), "rev")))));
 		return query.toSql(sqlDialect);
 	}

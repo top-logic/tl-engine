@@ -24,4 +24,17 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+	<build>
+		<plugins>
+			<!-- SpotBugs -->
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<configuration>
+					<excludeFilterFile>spotbugs/spotbugs-exclude.xml</excludeFilterFile>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

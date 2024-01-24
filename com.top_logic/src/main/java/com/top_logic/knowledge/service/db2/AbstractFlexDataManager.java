@@ -72,6 +72,7 @@ import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.ex.DuplicateAttributeException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -161,7 +162,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 * revision, the row value belongs to.
 	 */
 	private static MOAttributeImpl createRevMaxAttr() {
-		MOAttributeImpl attr = IdentifierTypes.newRevisionReference(REV_MAX, REV_MAX_DBNAME, !MOAttribute.IMMUTABLE);
+		MOAttributeImpl attr =
+			IdentifierTypes.newRevisionReference(REV_MAX, BasicTypes.REV_MAX_DB_NAME, !MOAttribute.IMMUTABLE);
 		attr.setSystem(true);
 		return attr;
 	}
@@ -187,7 +189,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 * revision, the row value belongs to.
 	 */
 	private static MOAttributeImpl createRevMinAttr() {
-		MOAttributeImpl attr = IdentifierTypes.newRevisionReference(REV_MIN, REV_MIN_DBNAME, !MOAttribute.IMMUTABLE);
+		MOAttributeImpl attr =
+			IdentifierTypes.newRevisionReference(REV_MIN, BasicTypes.REV_MIN_DB_NAME, !MOAttribute.IMMUTABLE);
 		attr.setSystem(true);
 		return attr;
 	}
@@ -340,16 +343,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 * Name of the {@link MOAttribute} that stores {@link #createAttributeAttr()} data.
 	 */
 	public static final String ATTRIBUTE_DBNAME = "ATTR";
-
-	/**
-	 * Name of the {@link MOAttribute} that stores {@link #createRevMinAttr()} data.
-	 */
-	public static final String REV_MIN_DBNAME = "REV_MIN";
-
-	/**
-	 * Name of the {@link MOAttribute} that stores {@link #createRevMaxAttr()} data.
-	 */
-	public static final String REV_MAX_DBNAME = "REV_MAX";
 
 	/**
 	 * Name of the {@link MOAttribute} that stores {@link #createTypeAttr()} data.
@@ -781,7 +774,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			List<SQLColumnDefinition> columns = new ArrayList<>();
 			columns.add(columnDef(column(tableAlias, ATTRIBUTE_DBNAME), ATTRIBUTE_DBNAME));
 			RESULT_ATTRIBUTE_IDX = columns.size();
-			columns.add(columnDef(column(tableAlias, REV_MIN_DBNAME), REV_MIN_DBNAME));
+			columns.add(columnDef(column(tableAlias, BasicTypes.REV_MIN_DB_NAME), BasicTypes.REV_MIN_DB_NAME));
 			RESULT_REV_MIN_IDX = columns.size();
 			columns.add(columnDef(column(tableAlias, DATA_TYPE_DBNAME), DATA_TYPE_DBNAME));
 			RESULT_DATA_TYPE_IDX = columns.size();
@@ -807,8 +800,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				where,
 				eq(column(tableAlias, TYPE_DBNAME, NOT_NULL), parameter(DBType.STRING, TYPE_DBNAME)),
 				eq(column(tableAlias, IDENTIFIER_DBNAME, NOT_NULL), parameter(DBType.ID, IDENTIFIER_DBNAME)),
-				ge(column(tableAlias, REV_MAX_DBNAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
-				le(column(tableAlias, REV_MIN_DBNAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
+				ge(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
+				le(column(tableAlias, BasicTypes.REV_MIN_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
 				);
 			SQLSelect select = select(columns, from, where);
 			select.setNoBlockHint(true);
@@ -945,8 +938,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				eq(column(tableAlias, TYPE_DBNAME, NOT_NULL), parameter(DBType.STRING, TYPE_DBNAME)),
 				eq(column(tableAlias, IDENTIFIER_DBNAME, NOT_NULL), parameter(DBType.ID, IDENTIFIER_DBNAME)),
 				eq(column(tableAlias, ATTRIBUTE_DBNAME, NOT_NULL), parameter(DBType.STRING, ATTRIBUTE_DBNAME)),
-				ge(column(tableAlias, REV_MAX_DBNAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
-				le(column(tableAlias, REV_MIN_DBNAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
+				ge(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
+				le(column(tableAlias, BasicTypes.REV_MIN_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
 				);
 			SQLSelect select = select(columns, from, where);
 			select.setNoBlockHint(true);
@@ -1033,7 +1026,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			RESULT_ID_IDX = columns.size();
 			columns.add(columnDef(column(tableAlias, ATTRIBUTE_DBNAME), ATTRIBUTE_DBNAME));
 			RESULT_ATTRIBUTE_IDX = columns.size();
-			columns.add(columnDef(column(tableAlias, REV_MIN_DBNAME), REV_MIN_DBNAME));
+			columns.add(columnDef(column(tableAlias, BasicTypes.REV_MIN_DB_NAME), BasicTypes.REV_MIN_DB_NAME));
 			RESULT_REV_MIN_IDX = columns.size();
 			columns.add(columnDef(column(tableAlias, DATA_TYPE_DBNAME), DATA_TYPE_DBNAME));
 			RESULT_DATA_TYPE_IDX = columns.size();
@@ -1058,8 +1051,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				where,
 				eq(column(tableAlias, TYPE_DBNAME, NOT_NULL), parameter(DBType.STRING, TYPE_DBNAME)),
 				inSet(column(tableAlias, IDENTIFIER_DBNAME, NOT_NULL), setParameter(IDENTIFIER_DBNAME, DBType.ID)),
-				ge(column(tableAlias, REV_MAX_DBNAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
-				le(column(tableAlias, REV_MIN_DBNAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
+				ge(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
+				le(column(tableAlias, BasicTypes.REV_MIN_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
 				);
 			List<SQLOrder> order = orders(order(false, column(tableAlias, IDENTIFIER_DBNAME)));
 			SQLSelect select = select(columns, from, where, order);
@@ -1212,9 +1205,9 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			Collections.addAll(columnNames,
 				TYPE_DBNAME,
 				IDENTIFIER_DBNAME,
-				REV_MAX_DBNAME,
+				BasicTypes.REV_MAX_DB_NAME,
 				ATTRIBUTE_DBNAME,
-				REV_MIN_DBNAME,
+				BasicTypes.REV_MIN_DB_NAME,
 				DATA_TYPE_DBNAME,
 				LONG_DATA_DBNAME,
 				DOUBLE_DATA_DBNAME,
@@ -1231,7 +1224,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				parameter(DBType.ID, IDENTIFIER_DBNAME),
 				literal(DBType.LONG, CURRENT_REV),
 				parameter(DBType.STRING, ATTRIBUTE_DBNAME),
-				parameter(DBType.LONG, REV_MIN_DBNAME),
+				parameter(DBType.LONG, BasicTypes.REV_MIN_DB_NAME),
 				parameter(DBType.BYTE, DATA_TYPE_DBNAME),
 				parameter(DBType.LONG, LONG_DATA_DBNAME),
 				parameter(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
@@ -1254,7 +1247,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			PARAM_ATTRIBUTE_IDX = parameters.size();
 			parameters.add(parameterDef(DBType.STRING, ATTRIBUTE_DBNAME));
 			PARAM_REV_IDX = parameters.size();
-			parameters.add(parameterDef(DBType.LONG, REV_MIN_DBNAME));
+			parameters.add(parameterDef(DBType.LONG, BasicTypes.REV_MIN_DB_NAME));
 			PARAM_DATA_TYPE_IDX = parameters.size();
 			parameters.add(parameterDef(DBType.BYTE, DATA_TYPE_DBNAME));
 			PARAM_LONG_DATA_IDX = parameters.size();

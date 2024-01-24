@@ -201,7 +201,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		@Override
 		public Optional<String> getDocumentation(DisplayContext context, String functionName) {
 			if (!isActive()) {
-				return null;
+				return Optional.empty();
 			}
 			return getImplementationInstance().getDocumentation(context, functionName);
 		}

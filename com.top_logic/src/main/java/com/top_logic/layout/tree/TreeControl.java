@@ -650,8 +650,8 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(ModelName dragSourceName, String ref) {
-		return ModelResolver.buildModelNameIfAvailable(dragSourceName, getDragData(ref));
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref) {
+		return ModelResolver.buildModelNameIfAvailable(dragSource, getDragData(ref));
 	}
 
 	@Override

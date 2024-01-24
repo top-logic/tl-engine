@@ -325,14 +325,14 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		boolean getFocusSelection();
 
 		/**
-		 * The {@link TreeDragSource} to use.
+		 * Operation that controls dragging data from a tree.
 		 */
 		@Name(DRAG_SOURCE)
 		@ItemDefault(DefaultTreeDrag.class)
 		PolymorphicConfiguration<TreeDragSource> getDragSource();
 
 		/**
-		 * The {@link TreeDropTarget} handler to use.
+		 * Operations that control element drops in a tree.
 		 */
 		@Name(DROP_TARGETS_ATTRIBUTE_NAME)
 		@EntryTag(DROP_TARGETS_ENTRY_TAG_NAME)

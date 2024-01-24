@@ -484,13 +484,13 @@ public interface TableConfig extends ColumnContainerConfig, ModelMappingConfig, 
 	PolymorphicConfiguration<? extends ITableRenderer> getTableRenderer();
 
 	/**
-	 * The {@link TableDragSource} algorithm to use.
+	 * Operation that controls dragging data from a table.
 	 */
 	@Name(DRAG_SOURCE_ATTRIBUTE)
 	PolymorphicConfiguration<TableDragSource> getDragSource();
 
 	/**
-	 * The {@link TableDropTarget} algorithm to use.
+	 * Operations that control element drops in a table.
 	 */
 	@Name(DROP_TARGETS_ATTRIBUTE)
 	@EntryTag(DROP_TARGET_ENTRY_TAG)

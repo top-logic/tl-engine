@@ -61,7 +61,7 @@ public class OrderedTreeDropActionOp extends TreeDropActionOp<OrderedTreeDropAct
 		 *        See: {@link #getDropPositionParent()}
 		 */
 		static OrderedTreeDropAction create(TreeData dropView, Object dragView, TLTreeNode<?> dropPositionParent,
-				TLTreeNode<?> dropPosition, Function<ModelName, ModelName> dragData) {
+				TLTreeNode<?> dropPosition, Function<Object, ModelName> dragData) {
 			OrderedTreeDropAction action = TypedConfiguration.newConfigItem(OrderedTreeDropAction.class);
 			DropActionOp.DropAction.fill(action, dropView, dragView, dropPosition, dragData);
 			action.setDropPositionParent(ModelResolver.buildModelName(dropView, dropPositionParent));

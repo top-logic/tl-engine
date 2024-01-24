@@ -62,7 +62,7 @@ public class TreeDropActionOp<C extends TreeDropActionOp.TreeDropAction> extends
 		 * </p>
 		 */
 		static TreeDropAction create(TreeData dropView, Object dragView, TLTreeNode<?> dropPosition,
-				Function<ModelName, ModelName> dragData) {
+				Function<Object, ModelName> dragData) {
 			TreeDropAction action = TypedConfiguration.newConfigItem(TreeDropAction.class);
 			DropActionOp.DropAction.fill(action, dropView, dragView, dropPosition, dragData);
 			return action;

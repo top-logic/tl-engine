@@ -50,7 +50,7 @@ public class TableDropActionOp extends DropActionOp<TableDropActionOp.TableDropA
 		 * </p>
 		 */
 		static TableDropAction create(TableData dropView, Object dragView, Object dropPosition,
-				Function<ModelName, ModelName> function) {
+				Function<Object, ModelName> function) {
 			TableDropAction action = TypedConfiguration.newConfigItem(TableDropAction.class);
 			DropActionOp.DropAction.fill(action, dropView, dragView, dropPosition, function);
 			return action;

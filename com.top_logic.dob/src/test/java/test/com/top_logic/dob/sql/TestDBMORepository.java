@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
@@ -221,7 +222,7 @@ public class TestDBMORepository extends BasicTestCase {
 		return DOBTestSetup.createDOBTestSetup(DatabaseTestSetup.getDBTest(TestDBMORepository.class,
 			dbType, new TestFactory() {
 			@Override
-			public Test createSuite(Class testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return new Setup(new TestSuite(TestDBMORepository.class, suiteName));
 			}
         }));

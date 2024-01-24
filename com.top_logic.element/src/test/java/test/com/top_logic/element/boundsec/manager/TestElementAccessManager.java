@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
@@ -1731,7 +1732,7 @@ public class TestElementAccessManager extends BasicTestCase {
 
 					@SuppressWarnings("unused")
 					@Override
-					public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+					public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 						TestSuite suite = new TestSuite(testCase);
 						suite.setName(suiteName);
 						Test innerTest = suite;

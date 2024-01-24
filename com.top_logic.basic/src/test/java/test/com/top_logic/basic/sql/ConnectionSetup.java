@@ -12,6 +12,7 @@ import java.sql.Statement;
 import java.util.Calendar;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.basic.DatabaseTestSetup;
 import test.com.top_logic.basic.RearrangableThreadContextSetup;
@@ -284,12 +285,12 @@ public class ConnectionSetup extends RearrangableThreadContextSetup {
     }
     
     /** Create a Suite of Tests wrapped for all Connections */
-	public static Test createSuite(Class<? extends Test> testClass, TestFactory factory) {
+	public static Test createSuite(Class<? extends TestCase> testClass, TestFactory factory) {
 		return DatabaseTestSetup.getDBTest(testClass, wrapConnectionSetup(factory));
     }
 
 	/** Create a Suite of Tests wrapped for the given {@link DBType}. */
-	public static Test createSuite(Class<? extends Test> testCase,
+	public static Test createSuite(Class<? extends TestCase> testCase,
 			test.com.top_logic.basic.DatabaseTestSetup.DBType dbType, TestFactory factory) {
 		return DatabaseTestSetup.getDBTest(testCase, dbType, wrapConnectionSetup(factory));
 	}
@@ -298,7 +299,7 @@ public class ConnectionSetup extends RearrangableThreadContextSetup {
 		return new TestFactoryProxy(factory) {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return new ConnectionSetup(super.createSuite(testCase, suiteName));
 			}
 		};

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -92,7 +93,7 @@ public class TestAbstractTableFLElementFilter extends BasicTestCase {
 	public static Test suite() {
 		return PersonManagerSetup.createPersonManagerSetup(TestAbstractTableFLElementFilter.class, new TestFactory() {
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test innerTest = DefaultTestFactory.INSTANCE.createSuite(testCase, suiteName);
 				return ServiceTestSetup.createSetup(innerTest, ModelService.Module.INSTANCE);
 			}

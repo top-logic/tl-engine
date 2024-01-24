@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.ComponentTestUtils;
@@ -221,10 +222,8 @@ public class TestBoundComponent extends BasicTestCase {
 		return PersonManagerSetup.createPersonManagerSetup(TestBoundComponent.class, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
-				TestSuite suite = new TestSuite(testCase);
-				suite.setName(suiteName);
-				Test test = suite;
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
+				Test test = new TestSuite(testCase, suiteName);
 				test = ServiceTestSetup.createSetup(test, LayoutStorage.Module.INSTANCE);
 				test = ServiceTestSetup.createSetup(test, SecurityObjectProviderManager.Module.INSTANCE);
 				test = ServiceTestSetup.createSetup(test, BoundHelper.Module.INSTANCE);

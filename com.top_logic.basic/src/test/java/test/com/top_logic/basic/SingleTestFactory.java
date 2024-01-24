@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
@@ -46,7 +47,7 @@ public class SingleTestFactory implements TestFactory {
 	}
 
 	@Override
-	public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+	public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 		try {
 			return create(testCase, suiteName);
 		} catch (Exception ex) {

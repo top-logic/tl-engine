@@ -30,6 +30,7 @@ import junit.textui.TestRunner;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.contact.business.CreateDefaultTestContacts;
 
 import com.top_logic.base.mail.I18NConstants;
 import com.top_logic.base.mail.MailHelper;
@@ -217,7 +218,7 @@ public class TestMailHelper extends BasicTestCase {
         
         //resolve address from Person
         PersonManager thePM = PersonManager.getManager();
-        receiver.add(Person.byName("root"));     // support@top-logic.com
+		receiver.add(Person.byName("dau")); // info3@top-logic.com
         receiver.add(Person.byName("guest_de")); // null
         
         theAddresses = theHelper.getEmailAddresses(receiver, invalidAddresses);
@@ -228,7 +229,7 @@ public class TestMailHelper extends BasicTestCase {
         
         //resolve address from Group
         Group theGroup = Group.createGroup("testmailuser");
-        theGroup.addMember(Person.byName("root")); // support@top-logic.com
+		theGroup.addMember(Person.byName("dau")); // info3@top-logic.com
         theGroup.addMember(Person.byName("guest_de")); // null
         
         receiver.add(theGroup);
@@ -459,6 +460,7 @@ public class TestMailHelper extends BasicTestCase {
      */
      public static Test suite () {
         Test innerTest = new TestSuite(TestMailHelper.class);
+		innerTest = new CreateDefaultTestContacts(innerTest);
 		innerTest = ServiceTestSetup.createSetup(innerTest,
 			MailSenderService.Module.INSTANCE,
 			MailReceiverService.Module.INSTANCE,

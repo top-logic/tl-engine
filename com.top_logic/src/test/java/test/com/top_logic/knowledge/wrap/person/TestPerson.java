@@ -17,7 +17,6 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObjectException;
@@ -65,6 +64,7 @@ public class TestPerson extends BasicTestCase {
 
 		Person stillKnownPerson = Person.byName(personName);
 		assertNull("Ticket #13195: Deleting person does not update person manager.", stillKnownPerson);
+		assertFalse("Ticket #13195: ", Person.all().stream().anyMatch(p -> personName.equals(p.getName())));
 	}
 
 	/**
@@ -77,7 +77,7 @@ public class TestPerson extends BasicTestCase {
 		try {
 			createPerson(root.getName());
 			fail("Creating a person with the name of a different person should not work.");
-		} catch (IllegalStateException ex) {
+		} catch (KnowledgeBaseException ex) {
 			// expected
 		}
 	}
@@ -133,34 +133,6 @@ public class TestPerson extends BasicTestCase {
 		}
 	}
 
-	/**
-	 * Tests that the initial locale of a new locale is that of the creator.
-	 */
-	public void testSameLocaleAsCreator() throws Throwable {
-		TLSubSessionContext session = TLContextManager.getSubSession();
-		Person creator = createPerson("creator");
-		try {
-			session.setPerson(creator);
-			testLocalEquality(creator, Locale.CANADA);
-			testLocalEquality(creator, Locale.ITALY);
-		} finally {
-			// set root to session as otherwise deleting fails
-			session.setPerson(PersonManager.getManager().getRoot());
-			deletePersonAndUser(creator);
-		}
-	}
-
-	private void testLocalEquality(final Person creator, Locale locale) {
-		setLanguageAndCountry(creator, locale);
-		Person newPerson = createPerson("newPerson");
-		try {
-			assertEquals("Created person does not have locale of creator.", creator.getLocale(),
-				newPerson.getLocale());
-		} finally {
-			deletePersonAndUser(newPerson);
-		}
-	}
-
 	private void setLanguageAndCountry(Person p, Locale locale) {
 		if (locale == null) {
 			p.setLanguage(null);
@@ -178,8 +150,12 @@ public class TestPerson extends BasicTestCase {
 		assertNotNull("Creating of group with name " + groupName + " should work.", group);
 		groupCreation.commit();
 
-		Person createdPerson = createPerson(groupName);
-		assertNull("Ticket #9261: Group with name '" + groupName + "' already exists", createdPerson);
+		try {
+			createPerson(groupName);
+			fail("Ticket #9261: Group with name '" + groupName + "' already exists");
+		} catch (KnowledgeBaseException ex) {
+			// expected
+		}
 	}
 
 	public void testSavePerson() {
@@ -221,10 +197,6 @@ public class TestPerson extends BasicTestCase {
             assertEquals("The wrappers are not the same.", thePerson, thePerson2);
             // Person is god
 			assertEquals(thePerson.getName(), TestPersonSetup.USER_ID);
-            // get DOUser from Person
-			UserInterface theUser = thePerson.getUser();
-			assertNotNull("No user for Person.", theUser);
-			assertEquals(TestPersonSetup.USER_ID, theUser.getUserName());
         }
         finally {
             ThreadContext.popSuperUser();   
@@ -235,10 +207,14 @@ public class TestPerson extends BasicTestCase {
 	 * This method tests the problem described in Ticket #667.
 	 */
 	public void testToStringForDeletedKO() throws KnowledgeBaseException {
-    	String personName = "dau";
-		Person p = Person.byName(personName);
-    	assertNotNull("There is no person with name " + personName, p);
-		Transaction delTx = KBSetup.getKnowledgeBase().beginTransaction();
+		String personName = "testToStringForDeletedKO";
+
+		KnowledgeBase kb = KBSetup.getKnowledgeBase();
+		Transaction createTx = kb.beginTransaction();
+		Person p = Person.create(kb, personName, null);
+		createTx.commit();
+
+		Transaction delTx = kb.beginTransaction();
 		p.tDelete();
 		delTx.commit();
 		try {

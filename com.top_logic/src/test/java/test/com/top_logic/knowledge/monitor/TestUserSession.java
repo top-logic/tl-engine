@@ -15,6 +15,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContext;
@@ -137,10 +138,10 @@ public class TestUserSession extends BasicTestCase {
 			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase, suiteName);
 				suite.addTest(new TestUserSession("doRemoveSessions"));
-				return suite;
+				return new CreateDefaultTestPersons(suite);
 			}
 		};
-        
+
 		return PersonManagerSetup.createPersonManagerSetup(TestUserSession.class, f);
     }
 

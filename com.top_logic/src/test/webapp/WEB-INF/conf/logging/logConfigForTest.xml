@@ -19,18 +19,18 @@
 		<Console name="STDOUT"
 			target="SYSTEM_OUT"
 		>
-			<PatternLayout pattern="${pattern.long}"/>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
 		</Console>
 		<Console name="STDERR"
 			target="SYSTEM_ERR"
 		>
-			<PatternLayout pattern="${pattern.plain}"/>
+			<PatternLayout pattern="${pattern.plain}" charset="UTF-8"/>
 		</Console>
 		<RollingFile name="FILE_APPENDER"
 			fileName="${log.directory}/${filename.prefix}.main.log"
 			filePattern="${log.directory}/${filename.prefix}.main.%i.log"
 		>
-			<PatternLayout pattern="${pattern.long}"/>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
 			<DefaultRolloverStrategy
 				fileIndex="min"
 				max="10"

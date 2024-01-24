@@ -51,8 +51,8 @@ public interface TableDragSource {
 	/**
 	 * Tries to create a {@link ModelName} for the object with the given client-side identifier.
 	 * 
-	 * @param dragSourceName
-	 *        Name for this source model, or <code>null</code> if no such name could be created.
+	 * @param dragSource
+	 *        The source model.
 	 * @param tableData
 	 *        The {@link TableData} from which the drag started.
 	 * @param row
@@ -60,8 +60,8 @@ public interface TableDragSource {
 	 * 
 	 * @return {@link ModelName} for the drag data or empty if no such name could be created.
 	 */
-	default Maybe<? extends ModelName> getDragDataName(ModelName dragSourceName, TableData tableData, int row) {
-		return ModelResolver.buildModelNameIfAvailable(dragSourceName, getDragObject(tableData, row));
+	default Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
+		return ModelResolver.buildModelNameIfAvailable(dragSource, getDragObject(tableData, row));
 	}
 
 }

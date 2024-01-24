@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -346,7 +347,7 @@ public class TestJDBCDSA extends BasicTestCase {
 		Test test = DatabaseTestSetup.getDBTest(TestJDBCDSA.class, DBType.H2_DB, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				return new Setup(suite);

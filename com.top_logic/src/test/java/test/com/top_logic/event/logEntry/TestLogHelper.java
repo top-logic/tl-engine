@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
@@ -196,7 +197,7 @@ public abstract class TestLogHelper extends BasicTestCase {
     	return PersonManagerSetup.createPersonManagerSetup(testClass, new TestFactory() {
     		
     		@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				Test test = suite;

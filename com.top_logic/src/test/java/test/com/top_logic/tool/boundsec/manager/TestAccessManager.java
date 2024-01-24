@@ -6,6 +6,7 @@
 package test.com.top_logic.tool.boundsec.manager;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
@@ -149,7 +150,7 @@ public class TestAccessManager  extends BasicTestCase {
     	 return PersonManagerSetup.createPersonManagerSetup(TestAccessManager.class, new TestFactory() {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite theSuite = new TestSuite(suiteName);
 				theSuite.addTest(new TestAccessManager("testBoundSecurity"));
 				theSuite.addTest(new TestAccessManager("cleanup"));

@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -457,7 +458,7 @@ public class TestFastList extends BasicTestCase {
     public static Test suite () {
 		TestFactory f = new TestFactory() {
     		@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test innerTest = DefaultTestFactory.INSTANCE.createSuite(testCase, suiteName);
 				return PersonManagerSetup.createPurePersonManagerSetup(
 					ServiceTestSetup.createSetup(innerTest, ModelService.Module.INSTANCE));

@@ -10,6 +10,7 @@ import static com.top_logic.knowledge.search.ExpressionFactory.*;
 import java.util.List;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -177,7 +178,7 @@ public class TestElementExpressionFactory extends BasicTestCase {
 		return KBSetup.getKBTest(TestElementExpressionFactory.class, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return new Setup(new TestSuite(testCase));
 			}
 		});

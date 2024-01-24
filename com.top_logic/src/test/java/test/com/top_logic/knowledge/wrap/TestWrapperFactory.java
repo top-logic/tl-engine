@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch;
 
 import junit.extensions.ActiveTestSuite;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -293,7 +294,7 @@ public class TestWrapperFactory extends BasicTestCase {
 		}
     	return KBSetup.getKBTest(TestWrapperFactory.class, new TestFactory() {
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(suiteName);
 		        suite.addTestSuite(TestWrapperFactory.class);
 		        suite.addTest(new TestWrapperFactory("addAdressKOs"));

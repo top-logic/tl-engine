@@ -8,6 +8,7 @@ package test.com.top_logic.knowledge.monitor;
 import java.util.Date;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
@@ -133,9 +134,8 @@ public class TestUserSession extends BasicTestCase {
 		TestFactory f = new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
-				TestSuite suite = new TestSuite(testCase);
-				suite.setName(suiteName);
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
+				TestSuite suite = new TestSuite(testCase, suiteName);
 				suite.addTest(new TestUserSession("doRemoveSessions"));
 				return suite;
 			}

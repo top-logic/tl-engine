@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -452,7 +453,7 @@ public class TestKOIndex extends BasicTestCase {
     public static Test suite () {
         return KBSetup.getKBTest(TestKOIndex.class, new TestFactory() {
         	@Override
-			public Test createSuite(Class testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
         		return new MySetup(new TestSuite(TestKOIndex.class));
         	}
         });

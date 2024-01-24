@@ -7,6 +7,7 @@ package test.com.top_logic;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.TestFactoryProxy;
@@ -90,7 +91,7 @@ public class TestPersonSetup extends ThreadContextSetup {
 		return new TestFactoryProxy(f) {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return wrap(super.createSuite(testCase, suiteName));
 			}
 		};

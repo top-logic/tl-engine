@@ -8,6 +8,11 @@
 		<param name="filter"
 			optional="true"
 		/>
+		<param name="buttons">
+			<button id="dumpLogLineToConsole"
+				class="com.top_logic.monitoring.log.DumpLogLineCommand"
+			/>
+		</param>
 	</params>
 
 	<tableView name="logLinesTable"
@@ -22,9 +27,7 @@
 		</modelBuilder>
 		<buttons>
 			<reference command-id="invalidate"/>
-			<button id="dumpLogLineToConsole"
-				class="com.top_logic.monitoring.log.DumpLogLineCommand"
-			/>
+			${buttons}
 		</buttons>
 		<table
 			defaultColumns="time, severity, file-category, category, thread, message, details"

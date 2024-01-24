@@ -36,14 +36,13 @@ public interface DragSourceSPI {
 	/**
 	 * Tries to create a {@link ModelName} for the object with the given client-side identifier.
 	 * 
-	 * @param dragSourceName
-	 *        Name for the {@link #getDragSourceModel() source model}, or <code>null</code> if no
-	 *        such name could be created.
+	 * @param dragSource
+	 *        The {@link #getDragSourceModel() source model}
 	 * @param ref
 	 *        Client-side representation of the drag data.
 	 * 
 	 * @return {@link ModelName} for the drag data or empty if no such name could be created.
 	 */
-	Maybe<? extends ModelName> getDragDataName(ModelName dragSourceName, String ref);
+	Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref);
 
 }

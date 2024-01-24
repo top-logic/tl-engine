@@ -7,6 +7,7 @@ package test.com.top_logic.dob.persist;
 
 import junit.extensions.ActiveTestSuite;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.TestFactory;
@@ -22,7 +23,7 @@ public class TestNewDataManager extends AbstractDataManagerTest {
 
     private static final TestFactory TEST_FACTORY = new TestFactory() {
 		@Override
-		public Test createSuite(Class testCase, String suiteName) {
+		public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 			TestSuite suite = new ActiveTestSuite(suiteName);
 	        suite.addTestSuite(TestNewDataManager.class);
 	        suite.addTest(TestUtils.tryEnrichTestnames(new TestNewDataManager("testMassStore"), "ActiveTestSuite"));

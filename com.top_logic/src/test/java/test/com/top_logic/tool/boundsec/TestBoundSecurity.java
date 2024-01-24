@@ -8,6 +8,7 @@ package test.com.top_logic.tool.boundsec;
 import java.util.Collection;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
@@ -202,7 +203,7 @@ public class TestBoundSecurity extends BasicTestCase {
     	 return PersonManagerSetup.createPersonManagerSetup(TestBoundSecurity.class, new TestFactory() {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(suiteName);
 				suite.addTest(new TestBoundSecurity("testBoundSecurity"));
 				suite.addTest(new TestBoundSecurity("testBoundObjectTreeModel"));

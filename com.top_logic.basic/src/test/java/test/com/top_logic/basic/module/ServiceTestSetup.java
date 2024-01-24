@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.DatabaseTestSetup;
@@ -149,7 +150,7 @@ public class ServiceTestSetup extends RearrangableTestSetup {
 		return new TestFactory() {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test innerTest = ServiceTestSetup.createTestSuite(testCase, suiteName, module);
 				return ServiceTestSetup.createSetup(innerTest, module);
 			}
@@ -160,7 +161,7 @@ public class ServiceTestSetup extends RearrangableTestSetup {
 		return new TestFactory() {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				Test innerTest = suite;
@@ -178,7 +179,7 @@ public class ServiceTestSetup extends RearrangableTestSetup {
 		return new TestFactoryProxy(innerFactory) {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test innerTest = super.createSuite(testCase, suiteName);
 				return ServiceTestSetup.createSetup(decorator, innerTest, module);
 			}
@@ -189,7 +190,7 @@ public class ServiceTestSetup extends RearrangableTestSetup {
 		return new TestFactoryProxy(innerFactory) {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test innerTest = super.createSuite(testCase, ServiceTestSetup.createSuiteName(suiteName, module));
 				return ServiceTestSetup.createSetup(innerTest, module);
 			}

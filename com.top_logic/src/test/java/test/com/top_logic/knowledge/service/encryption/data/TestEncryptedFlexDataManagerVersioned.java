@@ -6,6 +6,7 @@
 package test.com.top_logic.knowledge.service.encryption.data;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.TestFactory;
@@ -42,7 +43,7 @@ public class TestEncryptedFlexDataManagerVersioned extends TestFlexVersionedData
 		return AbstractDBKnowledgeBaseTest.suite(testClass, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				Test test = suite;

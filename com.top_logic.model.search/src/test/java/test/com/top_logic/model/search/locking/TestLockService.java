@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.AssertProtocol;
@@ -289,7 +290,7 @@ public class TestLockService extends BasicTestCase {
 		return KBSetup.getKBTest(TestLockService.class, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				return ServiceTestSetup.createSetup(

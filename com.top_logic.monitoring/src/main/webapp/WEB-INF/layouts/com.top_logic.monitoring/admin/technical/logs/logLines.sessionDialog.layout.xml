@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <include name="com.top_logic.monitoring/admin/technical/logs/logLines.layout.xml"
+	buttons=""
 	defaultSortOrder="time:descending"
 	filter="com.top_logic.monitoring.log.CurrentSessionLogLineFilter"
 >

@@ -58,8 +58,8 @@ public abstract class DropEvent {
 	 * A {@link Function} determining a scripting name for the drag data.
 	 * 
 	 * <p>
-	 * The input argument for the function must be a {@link ModelName} for {@link #getSource()}, or
-	 * <code>null</code> if no such name exists.
+	 * The input argument for the function must be the dragged data to create a {@link ModelName}
+	 * for.
 	 * </p>
 	 * 
 	 * <p>
@@ -68,7 +68,7 @@ public abstract class DropEvent {
 	 * 
 	 * @see DndData#getDragDataName()
 	 */
-	public Function<ModelName, ModelName> getDragDataName() {
+	public Function<Object, ModelName> getDragDataName() {
 		return _data.getDragDataName();
 	}
 

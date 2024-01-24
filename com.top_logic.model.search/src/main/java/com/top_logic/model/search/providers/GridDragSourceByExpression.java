@@ -63,9 +63,9 @@ public class GridDragSourceByExpression extends TableDragSourceByExpression impl
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(ModelName dragSourceName, TableData tableData, int row) {
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
 		Maybe<? extends ModelName> rowName =
-			ModelResolver.buildModelNameIfAvailable(dragSourceName, super.getDragObject(tableData, row));
+			ModelResolver.buildModelNameIfAvailable(dragSource, super.getDragObject(tableData, row));
 		if (rowName.hasValue()) {
 			return Maybe.some(GridBusinessObjectNaming.newName(rowName.get()));
 		}

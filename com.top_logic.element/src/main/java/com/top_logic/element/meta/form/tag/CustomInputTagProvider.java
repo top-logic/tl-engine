@@ -62,7 +62,7 @@ public class CustomInputTagProvider extends AbstractConfiguredInstance<CustomInp
 		ControlProvider controlProvider = getConfig().getControlProvider();
 		if (controlProvider == null) {
 			ControlProvider cp = member.getControlProvider();
-			if (cp != null && cp != this) {
+			if (cp != null) {
 				controlProvider = cp;
 			} else {
 				controlProvider = DefaultFormFieldControlProvider.INSTANCE;

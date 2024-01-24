@@ -20,7 +20,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-common</artifactId>
-	  <version>7.8.0-SNAPSHOT</version>
+	  <version>${tl.version}</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

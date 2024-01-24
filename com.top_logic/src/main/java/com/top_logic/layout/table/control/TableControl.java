@@ -456,8 +456,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(ModelName dragSourceName, String ref) {
-		return getTableData().getDragSource().getDragDataName(dragSourceName, getTableData(), getRowIndex(ref));
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref) {
+		return getTableData().getDragSource().getDragDataName(dragSource, getTableData(), getRowIndex(ref));
 	}
 
 	final int getRowIndex(String rowId) {

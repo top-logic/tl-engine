@@ -13,7 +13,7 @@
 		-->
 		<Property name="log.directory">%LOG_PATH%</Property>
 		<Property name="filename.prefix">top-logic</Property>
-		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %mdc{tl-session-id}%message%n%throwable</Property>
+		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %message - %mdc{tl-session-id}%n%throwable</Property>
 		<Property name="pattern.plain">%message%n%throwable</Property>
 	</Properties>
 	<Appenders>

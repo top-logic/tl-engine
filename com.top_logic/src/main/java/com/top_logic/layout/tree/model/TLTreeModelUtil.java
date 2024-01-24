@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
@@ -465,6 +466,24 @@ public class TLTreeModelUtil {
 			}
 			treeChildIndex++;
 		}
+	}
+
+	/** Prints the tree structure to {@link System#out}. */
+	public static <T> void printDebugTree(T root, Function<? super T, ? extends Collection<? extends T>> children) {
+		printDebugTree(root, children, Object::toString, 0);
+	}
+
+	/** Prints the tree structure to {@link System#out}. */
+	public static <T> void printDebugTree(T root, Function<? super T, ? extends Collection<? extends T>> children,
+			Function<? super T, CharSequence> toString) {
+		printDebugTree(root, children, toString, 0);
+	}
+
+	private static <T> void printDebugTree(T root, Function<? super T, ? extends Collection<? extends T>> children,
+			Function<? super T, CharSequence> toString, int indentation) {
+		System.out.println("\t".repeat(indentation) + toString.apply(root));
+		int newIndentation = indentation + 1;
+		children.apply(root).forEach(child -> printDebugTree(child, children, toString, newIndentation));
 	}
 
 	/**

@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.dob.MOAttribute;
@@ -130,6 +131,8 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	private long currentBranchCreateRev;
 
 	private final MutableObjectContext _objectContext;
+
+	private final HashMap<String, String> _flexAttributeCache = new HashMap<>();
 
 	/**
 	 * Creates a {@link ItemEventReader} without additional type filter or branch filter.
@@ -435,7 +438,8 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 			TLID nextFlexIdentifier = flexAttributes.getIdentifier();
 			long nextRevMin = flexAttributes.getRevMin();
 			long nextRevMax = flexAttributes.getRevMax();
-			String nextFlexAttributeName = flexAttributes.getAttributeName();
+			String nextFlexAttributeName =
+				_flexAttributeCache.computeIfAbsent(flexAttributes.getAttributeName(), a -> a);
 			
 			if (! nextFlexTypeName.equals(this.currentFlexTypeName)) {
 				this.currentFlexType = kb.lookupType(nextFlexTypeName);
@@ -505,6 +509,11 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 					}
 				}
 				
+				if (_flexAttributeCache.size() > 10000) {
+					Logger.info("Dropping excessively created flex attribute names.", ItemEventReader.class);
+					_flexAttributeCache.clear();
+				}
+
 				return result;
 			}
 		} catch (SQLException ex) {

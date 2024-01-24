@@ -15,6 +15,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
@@ -163,6 +164,7 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
      */
     public static Test suite () {
 		Test t = new TestSuite(TestAbstractBoundWrapper.class);
+		t = new CreateDefaultTestPersons(t);
 		t = ServiceTestSetup.createSetup(t, MimeTypes.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(t);
     }

@@ -17,6 +17,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.contact.business.CreateDefaultTestContacts;
 
 import com.top_logic.base.mail.MailHelper;
 import com.top_logic.base.mail.MailSenderService;
@@ -103,6 +104,7 @@ public class TestUserMailBatch extends BasicTestCase {
     */
     public static Test suite () {
         Test innerTest = new TestSuite(TestUserMailBatch.class);
+		innerTest = new CreateDefaultTestContacts(innerTest);
 		innerTest = ServiceTestSetup.createSetup(innerTest,
 			MailSenderService.Module.INSTANCE,
 			MailReceiverService.Module.INSTANCE,

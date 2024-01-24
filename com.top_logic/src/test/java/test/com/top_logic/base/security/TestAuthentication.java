@@ -25,6 +25,7 @@ import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
  *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@SuppressWarnings("javadoc")
 public class TestAuthentication extends BasicTestCase {
 
 	private static final String USER_ID = TestPersonSetup.USER_ID;
@@ -52,34 +53,18 @@ public class TestAuthentication extends BasicTestCase {
         this.authentication = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
     }
 
-    /**
-     * Test, if an authentication with name "dau" exists. This should be the
-     * case for the tests.
-     */
-    public void test_checkPasswordTest1 () {
+	public void test_checkPasswordTest1() {
 		this.doTest(USER_ID, TestPersonSetup.USER_PASSWORD.toCharArray());
     }
 
-    /**
-     * Test, if an authentication with name "dau" exists. This should be the
-     * case for the tests.
-     */
     public void test_checkPasswordTest1Fail () {
 		this.doTestFail(USER_ID, (TestPersonSetup.USER_PASSWORD + "xyz").toCharArray());
     }
 
-    /**
-     * Test, if an authentication with name "dau" exists. This should be the
-     * case for the tests.
-     */
     public void test_checkPasswordTest1NullWord () {
         this.doTestFail (USER_ID, null);
     }
 
-    /**
-     * Test, if an authentication with name "dummy" exists. This should be the
-     * case for the tests.
-     */
     public void test_checkPasswordTest2Fail () {
 		this.doTestFail(USER_ID, "12".toCharArray());
     }

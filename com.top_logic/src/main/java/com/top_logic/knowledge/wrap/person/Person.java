@@ -614,8 +614,14 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * All {@link Person}s that are known in the system.
 	 */
 	public static List<Person> all() {
-		Collection<KnowledgeObject> handles =
-			PersistencyLayer.getKnowledgeBase().getAllKnowledgeObjects(OBJECT_NAME);
+		return all(PersistencyLayer.getKnowledgeBase());
+	}
+
+	/**
+	 * All {@link Person}s that are known in the given {@link KnowledgeBase}.
+	 */
+	public static List<Person> all(KnowledgeBase kb) {
+		Collection<KnowledgeObject> handles = kb.getAllKnowledgeObjects(OBJECT_NAME);
 		List<Person> result = new ArrayList<>(handles.size());
 		for (KnowledgeObject handle : handles) {
 			Person person = handle.getWrapper();

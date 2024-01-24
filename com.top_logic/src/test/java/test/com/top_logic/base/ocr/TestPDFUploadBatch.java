@@ -9,10 +9,13 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import junit.framework.Test;
+import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
+import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
 import com.top_logic.base.ocr.PDFUploadBatch;
 import com.top_logic.base.ocr.TLPDFCompress;
@@ -256,7 +259,9 @@ public class TestPDFUploadBatch extends BasicTestCase {
      * the suite of test to execute.
      */
     public static Test suite () {
-		return KBSetup.getSingleKBTest(TestPDFUploadBatch.class);
+		Test test = new TestSuite(TestPDFUploadBatch.class);
+		test = new CreateDefaultTestPersons(test);
+		return PersonManagerSetup.createPersonManagerSetup(test);
     }
 
     /**

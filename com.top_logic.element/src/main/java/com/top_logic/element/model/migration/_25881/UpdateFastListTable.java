@@ -55,10 +55,10 @@ public class UpdateFastListTable implements MigrationProcessor {
 	}
 
 	private void addIndexes(PooledConnection connection, String scopeIDColName) throws SQLException {
-		execute(connection, addIndex(enumTable(), "FAST_LIST_NAME_IDX", true, _util.branchColumn(),
+		execute(connection, addIndex(enumTable(), "FAST_LIST_NAME_IDX", true, _util.branchColumnOrNull(),
 			scopeIDColName, SQLH.mangleDBName(FastList.NAME_ATTRIBUTE), BasicTypes.REV_MAX_DB_NAME));
 
-		execute(connection, addIndex(enumTable(), "FAST_LIST_SCOPE", false, _util.branchColumn(),
+		execute(connection, addIndex(enumTable(), "FAST_LIST_SCOPE", false, _util.branchColumnOrNull(),
 			scopeIDColName, BasicTypes.REV_MAX_DB_NAME));
 	}
 

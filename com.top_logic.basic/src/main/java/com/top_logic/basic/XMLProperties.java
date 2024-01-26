@@ -1063,6 +1063,11 @@ public class XMLProperties extends ManagedClass {
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, "ascii"))) {
 				String configName;
 				while ((configName = reader.readLine()) != null) {
+					configName = configName.trim();
+					if (configName.isEmpty() || configName.startsWith("#")) {
+						// Ignore comment and empty lines.
+						continue;
+					}
 					configNames.add(configName);
 				}
 			}

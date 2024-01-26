@@ -8,6 +8,9 @@
 		<dependency name="Ticket_24085_layout_db_storage"
 			module="tl"
 		/>
+		<dependency name="Ticket_24085_DateTime"
+			module="tl-element"
+		/>
 	</dependencies>
 	<migration>
 		<type-mapping/>

@@ -47,7 +47,7 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 		QualifiedTypeName getName();
 
 		/**
-		 * See {@link TLPrimitive#getKind()}.
+		 * The datatype {@link TLPrimitive#getKind() kind}.
 		 */
 		@Name(DatatypeConfig.KIND)
 		@Mandatory

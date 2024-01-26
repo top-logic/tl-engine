@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.model.migration.model;
+package com.top_logic.model.migration;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
@@ -16,18 +16,17 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.schema.config.DBColumnType;
-import com.top_logic.element.config.DatatypeConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotatedConfig;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
-import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
- * {@link MigrationProcessor} creating a new {@link TLPrimitive}..
+ * {@link MigrationProcessor} creating a new {@link TLPrimitive}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -48,7 +47,7 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 		QualifiedTypeName getName();
 
 		/**
-		 * See {@link DatatypeConfig#getKind()}.
+		 * See {@link TLPrimitive#getKind()}.
 		 */
 		@Name(DatatypeConfig.KIND)
 		@Mandatory
@@ -57,7 +56,7 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 		/**
 		 * The {@link StorageMapping} to apply when loading and storing values.
 		 * 
-		 * @see DatatypeConfig#getStorageMapping()
+		 * @see TLPrimitive#getStorageMapping()
 		 */
 		@Name(DatatypeConfig.STORAGE_MAPPING)
 		@Mandatory

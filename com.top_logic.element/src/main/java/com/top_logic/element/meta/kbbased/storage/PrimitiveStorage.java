@@ -25,7 +25,6 @@ import com.top_logic.basic.shared.io.StringR;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.element.config.DatatypeConfig;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
@@ -33,6 +32,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.util.error.TopLogicException;
 
 /**

@@ -7,7 +7,6 @@ package com.top_logic.element.model.migration;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
-import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -333,7 +332,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 						String newXml = DOMUtil.toString(document);
 						log.info("Removed storage annotation from reference '" + name + "(" + refId + ")" + "': "
 							+ newXml);
-						refs.updateString(5, new StringReader(newXml));
+						refs.updateString(5, newXml);
 						refs.updateRow();
 					}
 				}

@@ -243,8 +243,8 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 			parameterDef(DBType.ID, "refId")),
 		insert(
 			table(SQLH.mangleDBName(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION)),
-			Util.list(
-				_util.branchColumn(),
+			Util.listWithoutNull(
+				_util.branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
@@ -256,7 +256,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 				attrIdColumn,
 				SQLH.mangleDBName(LinkStorage.SORT_ORDER)),
 			select(
-				Util.list(
+				Util.listWithoutNull(
 					_util.branchColumnDefOrNull(),
 					columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 					columnDef(BasicTypes.REV_MIN_DB_NAME),
@@ -295,7 +295,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 		CompiledStatement getAllRefs = query(
 		parameters(),
 		select(
-				Util.list(
+				Util.listWithoutNull(
 					_util.branchColumnDefOrNull(),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),

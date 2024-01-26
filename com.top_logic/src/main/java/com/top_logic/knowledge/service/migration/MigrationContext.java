@@ -51,7 +51,9 @@ public class MigrationContext extends TypedAnnotationContainer {
 		_kbConfig = _factoryConfig.getKnowledgeBases().get(PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
 		_applicationSetup = KBUtils.getSchemaConfigResolved(_kbConfig);
 		_applicationSchema = _applicationSetup.getConfig();
-		_branchSupport = getPersistentSchema().hasMultipleBranches();
+
+		SchemaConfiguration oldSchema = getPersistentSchema();
+		_branchSupport = oldSchema == null ? _applicationSchema.hasMultipleBranches() : oldSchema.hasMultipleBranches();
 	}
 
 	/**

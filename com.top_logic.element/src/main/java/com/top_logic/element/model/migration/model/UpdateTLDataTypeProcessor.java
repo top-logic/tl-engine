@@ -17,12 +17,12 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.schema.config.DBColumnType;
-import com.top_logic.element.config.DatatypeConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotatedConfig;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
@@ -41,7 +41,7 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 	/**
 	 * Configuration options of {@link UpdateTLDataTypeProcessor}.
 	 * 
-	 * @see CreateTLDatatypeProcessor.Config
+	 * @see com.top_logic.model.migration.CreateTLDatatypeProcessor.Config
 	 */
 	@TagName("update-datatype")
 	public interface Config extends PolymorphicConfiguration<UpdateTLDataTypeProcessor>,

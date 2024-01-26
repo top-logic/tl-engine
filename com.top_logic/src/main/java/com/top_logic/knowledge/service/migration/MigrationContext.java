@@ -21,7 +21,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 
 /**
- * Context for {@link MigrationProcessor}s
+ * Context for {@link MigrationProcessor}s.
  */
 public class MigrationContext extends TypedAnnotationContainer {
 

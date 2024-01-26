@@ -42,6 +42,7 @@ import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLLiteral;
+import com.top_logic.basic.db.sql.SQLParameter;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
@@ -249,8 +250,8 @@ public class Util {
 			parameterDef(DBType.BOOLEAN, "final")),
 		insert(
 			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_CLASS)),
-				list(
-				branchColumn(),
+				listWithoutNull(
+					branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
@@ -263,8 +264,8 @@ public class Util {
 				SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_IMPL),
 					SQLH.mangleDBName(TLClass.ABSTRACT_ATTR),
 					SQLH.mangleDBName(TLClass.FINAL_ATTR)),
-				list(
-				branchParam(),
+				listWithoutNull(
+					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
 				literalLong(Revision.CURRENT_REV),
 				parameter(DBType.LONG, "revCreate"),
@@ -501,8 +502,8 @@ public class Util {
 			parameterDef(DBType.BOOLEAN, "navigate")),
 		insert(
 			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
-				list(
-				branchColumn(),
+				listWithoutNull(
+					branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
@@ -523,8 +524,8 @@ public class Util {
 				SQLH.mangleDBName(TLAssociationEnd.ORDERED_ATTR),
 				SQLH.mangleDBName(TLAssociationEnd.BAG_ATTR),
 				SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
-				list(
-				branchParam(),
+				listWithoutNull(
+					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
 				literalLong(Revision.CURRENT_REV),
 				parameter(DBType.LONG, "revCreate"),
@@ -628,8 +629,8 @@ public class Util {
 			parameterDef(DBType.STRING, "name")),
 		insert(
 			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE)),
-				list(
-				branchColumn(),
+				listWithoutNull(
+					branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
@@ -637,8 +638,8 @@ public class Util {
 				SQLH.mangleDBName(TLModelPart.ANNOTATIONS_ATTR),
 				SQLH.mangleDBName(TLModule.NAME_ATTR),
 				refID(TLModule.MODEL_ATTR)),
-				list(
-				branchParam(),
+				listWithoutNull(
+					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
 				literalLong(Revision.CURRENT_REV),
 				parameter(DBType.LONG, "revCreate"),
@@ -879,7 +880,7 @@ public class Util {
 			parameterDef(DBType.ID, "module")),
 		selectDistinct(
 			columns(
-					_branchSupport ? columnDef(branchColumn(), NO_TABLE_ALIAS, branchAlias)
+					_branchSupport ? columnDef(branchColumnOrNull(), NO_TABLE_ALIAS, branchAlias)
 						: columnDef(trunkBranch(), branchAlias),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
 				columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias)),
@@ -1040,7 +1041,7 @@ public class Util {
 				eqSQL(
 					column(refID(TLReference.END_ATTR)),
 					parameter(DBType.ID, "endID"))),
-				list(
+				listWithoutNull(
 					SQLH.mangleDBName(TLAssociationEnd.MANDATORY_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR),
@@ -1048,7 +1049,7 @@ public class Util {
 					SQLH.mangleDBName(TLAssociationEnd.BAG_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.ORDERED_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
-				list(
+				listWithoutNull(
 				parameter(DBType.BOOLEAN, "mandatory"),
 				parameter(DBType.BOOLEAN, "composite"),
 				parameter(DBType.BOOLEAN, "aggregate"),
@@ -1158,10 +1159,16 @@ public class Util {
 
 	}
 
+	/**
+	 * The column name of the {@link ReferencePart#name} aspect of the given reference attribute.
+	 */
 	public String refID(String reference) {
 		return ReferencePart.name.getReferenceAspectColumnName(SQLH.mangleDBName(reference));
 	}
 
+	/**
+	 * The column name of the {@link ReferencePart#type} aspect of the given reference attribute.
+	 */
 	public String refType(String reference) {
 		return ReferencePart.type.getReferenceAspectColumnName(SQLH.mangleDBName(reference));
 	}
@@ -1219,8 +1226,8 @@ public class Util {
 			parameterDef(DBType.INT, "order")),
 		insert(
 			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS)),
-				list(
-				branchColumn(),
+				listWithoutNull(
+					branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
@@ -1228,8 +1235,8 @@ public class Util {
 				refID(SourceReference.REFERENCE_SOURCE_NAME),
 				refID(DestinationReference.REFERENCE_DEST_NAME),
 				SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER)),
-				list(
-				branchParam(),
+				listWithoutNull(
+					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
 				literalLong(Revision.CURRENT_REV),
 				parameter(DBType.LONG, "revCreate"),
@@ -1692,8 +1699,8 @@ public class Util {
 			parameterDef(DBType.STRING, "storage")),
 		insert(
 			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_PRIMITIVE)),
-				list(
-				branchColumn(),
+				listWithoutNull(
+					branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
@@ -1709,8 +1716,8 @@ public class Util {
 					SQLH.mangleDBName(TLPrimitiveColumns.DB_PRECISION_ATTR),
 					SQLH.mangleDBName(TLPrimitiveColumns.BINARY_ATTR),
 					SQLH.mangleDBName(TLPrimitiveColumns.STORAGE_MAPPING)),
-				list(
-				branchParam(),
+				listWithoutNull(
+					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
 				literalLong(Revision.CURRENT_REV),
 				parameter(DBType.LONG, "revCreate"),
@@ -1776,9 +1783,9 @@ public class Util {
 				eqSQL(
 					column(SQLH.mangleDBName(TLModule.NAME_ATTR)),
 					parameter(DBType.STRING, "name"))),
-				list(
+				listWithoutNull(
 				SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
-				list(
+				listWithoutNull(
 				parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, branch, moduleName, annotations);
@@ -1822,9 +1829,9 @@ public class Util {
 				eqSQL(
 					column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
 					parameter(DBType.STRING, "name"))),
-				list(
+				listWithoutNull(
 				SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
-				list(
+				listWithoutNull(
 				parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, module.getBranch(), module.getID(), typeName, annotations);
@@ -1866,9 +1873,9 @@ public class Util {
 				eqSQL(
 					column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
 					parameter(DBType.STRING, "name"))),
-				list(
+				listWithoutNull(
 				SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
-				list(
+				listWithoutNull(
 				parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, owner.getBranch(), owner.getID(), partName, annotations);
@@ -1914,8 +1921,8 @@ public class Util {
 			parameterDef(DBType.ID, "moduleID")),
 		insert(
 			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_ENUMERATION)),
-				list(
-				branchColumn(),
+				listWithoutNull(
+					branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
@@ -1926,8 +1933,8 @@ public class Util {
 				refType(PersistentType.SCOPE_REF),
 				refID(PersistentType.SCOPE_REF),
 				refID(FastList.DEFAULT_ATTRIBUTE)),
-				list(
-				branchParam(),
+				listWithoutNull(
+					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
 				literalLong(Revision.CURRENT_REV),
 				parameter(DBType.LONG, "revCreate"),
@@ -2007,8 +2014,8 @@ public class Util {
 			parameterDef(DBType.INT, "sortOrder")),
 		insert(
 			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_CLASSIFIER)),
-				list(
-				branchColumn(),
+				listWithoutNull(
+					branchColumnOrNull(),
 				BasicTypes.IDENTIFIER_DB_NAME,
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
@@ -2017,8 +2024,8 @@ public class Util {
 				refID(FastListElement.OWNER_ATTRIBUTE),
 				SQLH.mangleDBName(TLClassifier.NAME_ATTR),
 				SQLH.mangleDBName(FastListElement.ORDER_DB_NAME)),
-				list(
-				branchParam(),
+				listWithoutNull(
+					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
 				literalLong(Revision.CURRENT_REV),
 				parameter(DBType.LONG, "revCreate"),
@@ -2098,9 +2105,9 @@ public class Util {
 				eqSQL(
 					column(BasicTypes.IDENTIFIER_DB_NAME),
 					parameter(DBType.ID, "identifier"))),
-				list(
+				listWithoutNull(
 				refID(FastList.DEFAULT_ATTRIBUTE)),
-				list(
+				listWithoutNull(
 				parameter(DBType.ID, "defaultClassifier")))).toSql(sqlDialect);
 		updateStmt.executeUpdate(con, branch, enumeration.getID(), defaultID);
 	}
@@ -2278,9 +2285,9 @@ public class Util {
 						eqSQL(
 							column(refID(TLReference.END_ATTR)),
 							parameter(DBType.ID, "endID"))),
-						list(
+						listWithoutNull(
 						refID(TLReference.OWNER_ATTR)),
-						list(
+						listWithoutNull(
 						parameter(DBType.ID, "ownerID")))).toSql(con.getSQLDialect());
 
 				sql.executeUpdate(con, reference.getBranch(), otherPart.getID(), newType.getID());
@@ -2689,7 +2696,10 @@ public class Util {
 		deleteModelParts(connection, toDelete);
 	}
 
-	public String branchColumn() {
+	/**
+	 * Name of the branch column, or <code>null</code> if the application has no branch support.
+	 */
+	public String branchColumnOrNull() {
 		if (_branchSupport) {
 			return BasicTypes.BRANCH_DB_NAME;
 		} else {
@@ -2697,7 +2707,11 @@ public class Util {
 		}
 	}
 
-	public SQLExpression branchParam() {
+	/**
+	 * {@link SQLParameter} for the branch column, or <code>null</code>, if the application has no
+	 * branch support.
+	 */
+	public SQLExpression branchParamOrNull() {
 		if (_branchSupport) {
 			return parameter(DBType.LONG, "branch");
 		} else {
@@ -2705,26 +2719,38 @@ public class Util {
 		}
 	}
 
+	/**
+	 * {@link SQLExpression} for the trunk branch ID.
+	 */
 	public SQLLiteral trunkBranch() {
 		return literalLong(1L);
 	}
 
+	/**
+	 * {@link Parameter} for a branch ID.
+	 */
 	public Parameter branchParamDef() {
 		return parameterDef(DBType.LONG, "branch");
 	}
 
+	/**
+	 * Check for the branch column matching a branch parameter.
+	 */
 	public SQLExpression eqBranch() {
 		if (_branchSupport) {
 			return eqSQL(
-				column(branchColumn()),
-				branchParam());
+				column(branchColumnOrNull()),
+				branchParamOrNull());
 		} else {
 			return SQLFactory.literalTrueLogical();
 		}
 	}
 
+	/**
+	 * The given values as list excluding <code>null</code> values.
+	 */
 	@SafeVarargs
-	public static <T> List<T> list(T... values) {
+	public static <T> List<T> listWithoutNull(T... values) {
 		List<T> result = Arrays.asList(values);
 		if (result.contains(null)) {
 			return result.stream().filter(Objects::nonNull).collect(Collectors.toList());

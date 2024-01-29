@@ -117,6 +117,7 @@ public class ScriptingRecorderDropTarget implements TreeDropTarget {
 				updateTree(targetParent, IndexPosition.before(targetIndex), source);
 				return;
 			}
+			case ONTO:
 			case WITHIN: {
 				if (ScriptRecorderTree.action(target) instanceof ActionChain) {
 					// Insert the node as child of target

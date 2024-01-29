@@ -47,4 +47,5 @@
 	</securityLayout>
 	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>
 	<layout-reference resource="admin/loginMessageDialog.layout.xml"/>
+	<layout-reference resource="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml"/>
 </template>

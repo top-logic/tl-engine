@@ -130,7 +130,17 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 	private Iterator<PathUpdate> _updates;
 
+	/**
+	 * Whether the layouts are being loaded for one of the themes.
+	 * <p>
+	 * Is <code>false</code> between the themes: When loading for one theme is finished but loading
+	 * for the next one has not yet started.
+	 * </p>
+	 */
 	private volatile boolean _loading = false;
+
+	/** Whether the layouts have been loaded for all themes. */
+	private volatile boolean _everythingLoaded;
 
 	/**
 	 * Creates a {@link LayoutStorage} from configuration.
@@ -208,7 +218,8 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	@Override
 	protected void startUp() {
 		super.startUp();
-		
+
+		setEverythingLoaded(false);
 		_updates = FileSystemCache.getCache().getUpdates();
 		initFilesystemCache();
 	}
@@ -261,7 +272,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 		StopWatch timer = StopWatch.createStartedWatch();
 		for (Theme theme : choosableThemes) {
 			if (!lock()) {
-				log.info("Skip loading remaining themes after " + timer + ".");
+				log.info("Skip loading of remaining themes, as this service is not started.");
 				return;
 			}
 			try {
@@ -270,6 +281,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 				unlock();
 			}
 		}
+		setEverythingLoaded(true);
 		log.info("Loading layouts for non default themes needed " + timer + ".");
 	}
 
@@ -284,6 +296,18 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	private synchronized void unlock() {
 		_loading = false;
 		notifyAll();
+	}
+
+	private synchronized void setEverythingLoaded(boolean value) {
+		_everythingLoaded = value;
+		notifyAll();
+	}
+
+	/** Wait until the layouts have been loaded for every theme. */
+	public synchronized void awaitEverythingLoaded() throws InterruptedException {
+		while (!_everythingLoaded) {
+			wait();
+		}
 	}
 
 	private void loadLayoutsForDefaultTheme(Collection<String> layoutNames, List<Theme> choosableThemes) {

@@ -5,13 +5,17 @@
  */
 package com.top_logic.knowledge.service.migration;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.TypedAnnotationContainer;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.format.PrimitiveBooleanFormat;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
@@ -52,8 +56,29 @@ public class MigrationContext extends TypedAnnotationContainer {
 		_applicationSetup = KBUtils.getSchemaConfigResolved(_kbConfig);
 		_applicationSchema = _applicationSetup.getConfig();
 
-		SchemaConfiguration oldSchema = getPersistentSchema();
-		_branchSupport = oldSchema == null ? _applicationSchema.hasMultipleBranches() : oldSchema.hasMultipleBranches();
+		_branchSupport = hasStoredBranchSupport();
+	}
+
+	private boolean hasStoredBranchSupport() {
+		// Note: The schema can potentially not be loaded as typed configuration due to schema
+		// changes.
+		String xml = KBSchemaUtil.loadSchemaRaw(_connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
+		if (xml != null && !xml.isBlank()) {
+			Document document = DOMUtil.parse(xml);
+			String value = document.getDocumentElement().getAttribute(SchemaConfiguration.MULTIPLE_BRANCHES_ATTRIBUTE);
+			if (value == null || value.isBlank()) {
+				return SchemaConfiguration.DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE;
+			}
+
+			try {
+				return ((Boolean) PrimitiveBooleanFormat.INSTANCE.getValue(
+					SchemaConfiguration.MULTIPLE_BRANCHES_ATTRIBUTE,
+					value)).booleanValue();
+			} catch (ConfigurationException ex) {
+				return SchemaConfiguration.DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE;
+			}
+		}
+		return _applicationSchema.hasMultipleBranches();
 	}
 
 	/**

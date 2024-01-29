@@ -45,9 +45,24 @@ public class LayoutExporter {
 	 * Exports the template for the given layout identifier into the filesystem and removes it from the database.
 	 */
 	public void export(String layoutKey, TLLayout layout) throws ConfigurationException {
+		ensureLoadingCompleted();
 		exportToFilesystem(_mapper.mapScope(layoutKey), getExportedTemplate(layoutKey, layout));
 
 		LayoutExportUtils.deletePersistentLayoutTemplates(layoutKey);
+	}
+
+	/**
+	 * Exporting the layouts has to wait until loading them is completed for all themes. Otherwise,
+	 * the loading process might see a mixture of old and new layouts, with the new layouts being
+	 * written only partially.
+	 */
+	private void ensureLoadingCompleted() {
+		try {
+			LayoutStorage.getInstance().awaitEverythingLoaded();
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException("Thread is being interrupted.", exception);
+		}
 	}
 
 	private LayoutTemplateCall getExportedTemplate(String layoutKey, TLLayout layout) throws ConfigurationException {

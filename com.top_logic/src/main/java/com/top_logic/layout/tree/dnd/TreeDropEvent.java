@@ -36,14 +36,19 @@ public class TreeDropEvent extends DropEvent {
 		/**
 		 * Just after the reference node within its siblings.
 		 */
-		BELOW;
+		BELOW,
+
+		/**
+		 * Unordered drop on the reference node.
+		 */
+		ONTO;
 
 		/**
 		 * Parses a client-side value to a {@link Position} constant.
 		 */
 		public static Position fromString(String pos) {
 			if (StringServices.isEmpty(pos)) {
-				return null;
+				return ONTO;
 			}
 			switch (pos) {
 				case "above":
@@ -52,6 +57,8 @@ public class TreeDropEvent extends DropEvent {
 					return WITHIN;
 				case "below":
 					return BELOW;
+				case "onto":
+					return ONTO;
 			}
 			throw new IllegalArgumentException("No such position: " + pos);
 		}

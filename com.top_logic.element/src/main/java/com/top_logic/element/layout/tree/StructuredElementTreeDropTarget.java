@@ -107,6 +107,7 @@ public class StructuredElementTreeDropTarget extends BusinessObjectTreeDrop {
 				}
 				return parent;
 			}
+			case ONTO:
 			case WITHIN: {
 				return target;
 			}
@@ -166,6 +167,7 @@ public class StructuredElementTreeDropTarget extends BusinessObjectTreeDrop {
 				}
 				return parent.getChildren().indexOf(target) + 1;
 			}
+			case ONTO:
 			case WITHIN: {
 				return target.getChildren().size();
 			}

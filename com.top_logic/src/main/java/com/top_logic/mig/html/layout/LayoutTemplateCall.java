@@ -10,6 +10,7 @@ import java.io.OutputStream;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.util.error.TopLogicException;
@@ -17,7 +18,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Layout origins from a template.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class LayoutTemplateCall implements TLLayout {
 
@@ -93,4 +94,12 @@ public class LayoutTemplateCall implements TLLayout {
 	public void writeTo(OutputStream stream, boolean isFinal) throws IOException {
 		LayoutTemplateUtils.writeLayoutTemplateCall(stream, _templateName, _arguments, isFinal);
 	}
+
+	@Override
+	public String toString() {
+		return new NameBuilder(this)
+			.addUnnamed(getTemplateName())
+			.build();
+	}
+
 }

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <include name="com.top_logic.monitoring/admin/technical/logs/logLines.layout.xml"
-	buttons=""
 	defaultSortOrder="time:descending"
 	filter="com.top_logic.monitoring.log.CurrentSessionLogLineFilter"
 >
+	<dumpLogLineToConsoleCommand>
+		<!-- Remove the "dump to console" command for the session log dialog. -->
+	</dumpLogLineToConsoleCommand>
 	<inject>
 		<dialogInfo
 			createOpenerButtons="false"

@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27517_Refactoring_User_Management"
+		module="tl-layout-formeditor"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26190_single_drop_targets_to_list"
+			module="tl"
+		/>
+		<dependency name="Ticket_27764_missing_type_for_association_properties"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<metaobject
+					db_name="PASSWORD"
+					object_name="Password"
+					object_type="MOKnowledgeObject"
+					super_class="KnowledgeObject"
+					versioned="false"
+				>
+					<annotations>
+						<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+							<binding application-type="com.top_logic.knowledge.wrap.DefaultWrapper"/>
+						</annotation>
+					</annotations>
+					<attributes>
+						<reference
+							att_name="account"
+							branch-global="false"
+							by-value="false"
+							deletion-policy="delete-referer"
+							history-type="current"
+							is-container="false"
+							mandatory="true"
+							monomorphic="true"
+							target-type="Person"
+						/>
+						<mo_attribute
+							att_name="password"
+							att_type="String"
+							db_size="254"
+							mandatory="true"
+						/>
+						<mo_attribute
+							att_name="expired"
+							att_type="Boolean"
+							mandatory="false"
+						/>
+						<mo_attribute
+							att_name="history"
+							att_type="String"
+							db_size="4095"
+							hidden="true"
+							mandatory="false"
+						/>
+					</attributes>
+					<index>
+						<mo_index name="account"
+							unique="true"
+						>
+							<index-parts>
+								<index_part name="account"/>
+							</index-parts>
+						</mo_index>
+					</index>
+				</metaobject>
+			</schema>
+		</processor>
+
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-layout-formeditor/Ticket_27517_Refactoring_User_Management.db.xslt"
+		/>
+
+		<processor class="com.top_logic.knowledge.service.migration._27517.Ticket27517UpdatePersonTable">
+			<person-table
+				db_name="PERSON"
+				object_name="Person"
+				object_type="MOKnowledgeObject"
+				super_class="KnowledgeObject"
+			>
+				<annotations>
+					<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+						<binding application-type="com.top_logic.contact.business.Account"/>
+					</annotation>
+					<key-attributes attributes="tType"/>
+				</annotations>
+				<attributes>
+					<mo_attribute
+						att_name="name"
+						att_type="String"
+						mandatory="true"
+					/>
+					<mo_attribute
+						att_name="country"
+						att_type="String"
+						mandatory="false"
+					/>
+					<mo_attribute
+						att_name="language"
+						att_type="String"
+						mandatory="false"
+					/>
+					<mo_attribute
+						att_name="timezone"
+						att_type="String"
+						mandatory="false"
+					/>
+					<mo_attribute
+						att_name="unusedNotified"
+						att_type="Boolean"
+						mandatory="false"
+					/>
+					<mo_attribute
+						att_name="authDeviceID"
+						att_type="String"
+						mandatory="false"
+					/>
+					<mo_attribute
+						att_name="restrictedUser"
+						att_type="Boolean"
+						mandatory="false"
+					/>
+					<mo_attribute
+						att_name="admin"
+						att_type="Boolean"
+						mandatory="false"
+					/>
+					<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+						att_name="tType"
+						att_type="MetaElement"
+						mandatory="true"
+					>
+						<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+							<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+								type="tl.accounts:Person"
+							/>
+						</storage>
+					</mo_attribute>
+					<reference
+						att_name="contact"
+						branch-global="false"
+						by-value="false"
+						deletion-policy="delete-referer"
+						history-type="current"
+						is-container="false"
+						mandatory="true"
+						monomorphic="true"
+						target-type="Contact"
+					/>
+				</attributes>
+				<index>
+					<mo_index name="name"
+						unique="true"
+					>
+						<index-parts>
+							<index_part name="name"/>
+						</index-parts>
+					</mo_index>
+				</index>
+			</person-table>
+		</processor>
+		<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor"
+			additional-tables="DO_STORAGE, DATA_OBJECT_BLOB"
+		>
+			<application-tables>
+				<application-table name="EMailTask"
+					db-name="E_MAIL_TASK"
+				/>
+				<application-table name="representsUser"
+					db-name="REPRESENTS_USER"
+				/>
+				<application-table name="user"
+					db-name="TL_USER"
+				/>
+			</application-tables>
+		</processor>
+		<update-reference name="orgStructure:OrgUnit.base#boss"
+			new-type="Contacts:PersonContact"
+		/>
+		<update-reference name="orgStructure:OrgUnit.base#member"
+			new-type="Contacts:PersonContact"
+		/>
+		<update-reference name="Contacts:Contact.Person#boss"
+			new-type="Contacts:PersonContact"
+		/>
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-layout-formeditor/Ticket_27517_Refactoring_User_Management.model.xslt"
+		/>
+
+		<apply-patches>
+			<create-module>
+				<module name="tl.contact.ui">
+					<class name="CreateLogin">
+						<generalizations>
+							<generalization type="tl.model:TLObject"/>
+						</generalizations>
+						<attributes>
+							<property name="login"
+								mandatory="true"
+								type="tl.core:String"
+							>
+								<annotations>
+									<constraints>
+										<constraint-by-expression>
+											<check><![CDATA[value -> object -> {
+    existingNames = all(`tl.accounts:Person`).get(`tl.accounts:Person#name`);
+    $existingNames.containsElement($value)
+        ? #("Der Zugang ''{0}'' ist bereits vergeben."@de, "The login ''{0}'' is already used."@en).fill($value)
+        : null;
+}]]></check>
+										</constraint-by-expression>
+									</constraints>
+								</annotations>
+							</property>
+						</attributes>
+					</class>
+					<class name="CreateAccount">
+						<generalizations>
+							<generalization type="CreateLogin"/>
+							<generalization type="Contacts:Contact.Person"/>
+						</generalizations>
+					</class>
+				</module>
+			</create-module>
+			<add-annotations part="tl.accounts:Group">
+				<annotations>
+					<main-properties properties="name"/>
+					<form-definition>
+						<form>
+							<columnsLayout columns="ONE">
+								<field
+									attribute="name"
+									fullQualifiedName="tl.accounts:Group#name"
+									type="tl.core:String"
+								/>
+							</columnsLayout>
+							<field
+								attribute="isSystem"
+								fullQualifiedName="tl.accounts:Group#isSystem"
+								type="tl.core:Boolean"
+							/>
+							<field
+								attribute="defaultGroup"
+								fullQualifiedName="tl.accounts:Group#defaultGroup"
+								type="tl.core:Boolean"
+							/>
+							<field
+								attribute="members"
+								fullQualifiedName="tl.accounts:Group#members"
+								type="tl.accounts:Person"
+							>
+								<annotations>
+									<reference-display value="table"/>
+									<label-position value="hide-label"/>
+								</annotations>
+							</field>
+						</form>
+					</form-definition>
+				</annotations>
+			</add-annotations>
+			<delete-annotation
+				annotation="com.top_logic.model.config.annotation.MainProperties"
+				part="tl.accounts:Person"
+			/>
+			<add-annotations part="tl.accounts:Person">
+				<annotations>
+					<form-definition>
+						<form>
+							<field
+								attribute="name"
+								fullQualifiedName="tl.accounts:Person#name"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<field
+								attribute="authDeviceID"
+								fullQualifiedName="tl.accounts:Person#authDeviceID"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<code>
+								<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+							</code>
+							<field
+								attribute="restrictedUser"
+								fullQualifiedName="tl.accounts:Person#restrictedUser"
+								type="tl.core:Boolean"
+							/>
+							<field
+								attribute="groups"
+								fullQualifiedName="tl.accounts:Person#groups"
+								type="tl.accounts:Group"
+							/>
+							<field
+								attribute="timezone"
+								fullQualifiedName="tl.accounts:Person#timezone"
+								type="tl.util:TimeZone"
+							/>
+							<field
+								attribute="language"
+								fullQualifiedName="tl.accounts:Person#language"
+								type="tl.util:Language"
+							/>
+							<field
+								attribute="country"
+								fullQualifiedName="tl.accounts:Person#country"
+								type="tl.util:Country"
+							/>
+							<code>
+								<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+							</code>
+							<code>
+								<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+							</code>
+							<code>
+								<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+							</code>
+							<code>
+								<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+							</code>
+						</form>
+					</form-definition>
+					<main-properties properties="name,firstName,lastName"/>
+				</annotations>
+			</add-annotations>
+			<add-annotations part="tl.accounts:Role">
+				<annotations>
+					<form-definition>
+						<form>
+							<field
+								attribute="name"
+								fullQualifiedName="tl.accounts:Role#name"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="isSystem"
+								fullQualifiedName="tl.accounts:Role#isSystem"
+								type="tl.core:Boolean"
+							/>
+							<field
+								attribute="description"
+								fullQualifiedName="tl.accounts:Role#description"
+								type="tl.core:String"
+							/>
+						</form>
+					</form-definition>
+				</annotations>
+			</add-annotations>
+			<create-part type="tl.accounts:Group">
+				<reference name="members"
+					inverse-reference="groups"
+					kind="backwards"
+					multiple="true"
+					navigate="true"
+					type="Person"
+				/>
+			</create-part>
+			<create-part type="tl.accounts:Group">
+				<property name="defaultGroup"
+					type="tl.core:Boolean"
+				/>
+			</create-part>
+			<delete name="tl.accounts:Person#pwdhistory"/>
+			<delete name="tl.accounts:Person#lastPwdChange"/>
+			<delete name="tl.accounts:Person#wasAlive"/>
+			<delete name="tl.accounts:Person#dataDeviceID"/>
+			<add-annotations part="tl.accounts:Person#name">
+				<annotations>
+					<visibility value="read-only"/>
+				</annotations>
+			</add-annotations>
+			<delete name="tl.accounts:Person#locale"/>
+			<create-part
+				before="unusedNotified"
+				type="tl.accounts:Person"
+			>
+				<property name="locale"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.knowledge.wrap.person.Person#computeLocale()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</create-part>
+			<create-part
+				before="unusedNotified"
+				type="tl.accounts:Person"
+			>
+				<property name="language"
+					type="tl.util:Language"
+				>
+					<annotations>
+						<delete-protected/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.DefaultLocaleDefault"/>
+						</default-value>
+						<options>
+							<config-reference name="supportedLocales"/>
+						</options>
+					</annotations>
+				</property>
+			</create-part>
+			<create-part
+				before="unusedNotified"
+				type="tl.accounts:Person"
+			>
+				<property name="country"
+					type="tl.util:Country"
+				>
+					<annotations>
+						<delete-protected/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.DefaultCountryDefault"/>
+						</default-value>
+					</annotations>
+				</property>
+			</create-part>
+			<create-part
+				before="unusedNotified"
+				type="tl.accounts:Person"
+			>
+				<property name="timezone"
+					type="tl.util:TimeZone"
+				>
+					<annotations>
+						<delete-protected/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.UserTimeZoneDefault"/>
+						</default-value>
+					</annotations>
+				</property>
+			</create-part>
+			<add-annotations part="tl.accounts:Person#restrictedUser">
+				<annotations>
+					<constraints>
+						<constraint-by-expression>
+							<check>value -&gt; object -&gt; if ($value &amp;&amp; $object.get(`tl.accounts:Person#admin`) == true, #("Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."@de, "A user cannot be an administrator and restricted at the same time."@en))</check>
+						</constraint-by-expression>
+					</constraints>
+				</annotations>
+			</add-annotations>
+			<create-part
+				before="representativeGroup"
+				type="tl.accounts:Person"
+			>
+				<property name="admin"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+						<constraints>
+							<constraint-by-expression>
+								<check>value -&gt; object -&gt; if ($value &amp;&amp; $object.get(`tl.accounts:Person#restrictedUser`) == true, #("Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."@de, "A user cannot be an administrator and restricted at the same time."@en))</check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+			</create-part>
+			<create-part type="tl.accounts:Person">
+				<reference name="contact"
+					inverse-reference="account"
+					kind="forwards"
+					mandatory="true"
+					type="Contacts:PersonContact"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="contact"
+								storage-type="Person"
+							/>
+						</storage-algorithm>
+						<delete-protected/>
+					</annotations>
+				</reference>
+			</create-part>
+			<create-part type="tl.accounts:Person">
+				<reference name="groups"
+					inverse-reference="members"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Group"
+				>
+					<annotations>
+						<storage-algorithm>
+							<set-storage
+								monomorphic-table="true"
+								table="hasGroup"
+							/>
+						</storage-algorithm>
+						<create-visibility value="hidden"/>
+						<default-value>
+							<default-by-expression
+								in-transaction="true"
+								value="all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#defaultGroup`))"
+							/>
+						</default-value>
+					</annotations>
+				</reference>
+			</create-part>
+			<create-part type="tl.accounts:Person">
+				<property name="firstName"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#firstname`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</create-part>
+			<create-part type="tl.accounts:Person">
+				<property name="lastName"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#name`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</create-part>
+			<add-annotations part="tl.accounts:Role#description">
+				<annotations>
+					<multi-line rows="10"/>
+				</annotations>
+			</add-annotations>
+			<create-type module="tl.util">
+				<datatype name="TimeZone"
+					db_size="8"
+					db_type="string"
+					kind="Custom"
+				>
+					<annotations>
+						<config-type value="TIMEZONE"/>
+					</annotations>
+					<storage-mapping class="com.top_logic.element.meta.complex.TimeZoneValueProvider"/>
+				</datatype>
+			</create-type>
+			<add-annotations part="Contacts:PersonContact">
+				<annotations>
+					<dynamic-icon>
+						<icon-by-expression>
+							<icon>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, icon("css:far fa-user"))</icon>
+						</icon-by-expression>
+					</dynamic-icon>
+					<form-definition>
+						<form>
+							<group>
+								<field
+									attribute="firstname"
+									fullQualifiedName="Contacts:Contact.Person#firstname"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="name"
+									fullQualifiedName="Contacts:Contact.all#name"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="title"
+									fullQualifiedName="Contacts:Contact.Person#title"
+									type="tl.core:String"
+								/>
+								<label key="dynamic.1f5a7ca7-6bc0-405d-b2f8-6ebf4e87dbe8">
+									<en>User data</en>
+									<de>Nutzerdaten</de>
+								</label>
+							</group>
+							<foreign-objects
+								items="x -> $x.get(`Contacts:PersonContact#account`)"
+								label="`tl.accounts:Person`.toString()"
+								type="tl.accounts:Person"
+							/>
+							<group>
+								<field
+									attribute="email"
+									fullQualifiedName="Contacts:Contact.all#email"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="phone"
+									fullQualifiedName="Contacts:Contact.all#phone"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="phone_mobile"
+									fullQualifiedName="Contacts:Contact.Person#phone_mobile"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="phone_private"
+									fullQualifiedName="Contacts:Contact.Person#phone_private"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="fax"
+									fullQualifiedName="Contacts:Contact.Person#fax"
+									type="tl.core:String"
+								/>
+								<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
+									<en>Contact details</en>
+									<de>Kontaktdaten</de>
+								</label>
+							</group>
+							<group>
+								<field
+									attribute="position"
+									fullQualifiedName="Contacts:Contact.Person#position"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="boss"
+									fullQualifiedName="Contacts:Contact.Person#boss"
+									type="Contacts:PersonContact"
+								/>
+								<field
+									attribute="company"
+									fullQualifiedName="Contacts:Contact.Person#company"
+									type="Contacts:Contact.Company"
+								/>
+								<label key="dynamic.ac4eddd9-e1ec-4e8e-87e8-0e0ef7186334">
+									<en>Organization</en>
+									<de>Organisation</de>
+								</label>
+							</group>
+							<group>
+								<field
+									attribute="remarks"
+									fullQualifiedName="Contacts:Contact.all#remarks"
+									type="tl.core:String"
+								>
+									<annotations>
+										<label-position value="hide-label"/>
+									</annotations>
+								</field>
+								<label key="dynamic.ce2445e8-bec3-40e9-b69f-788a7c1cc566">
+									<en>Remarks</en>
+									<de>Bemerkungen</de>
+								</label>
+							</group>
+							<other-attributes/>
+						</form>
+					</form-definition>
+				</annotations>
+			</add-annotations>
+			<delete name="Contacts:Contact.Person#account"/>
+			<update-mandatory
+				mandatory="false"
+				part="Contacts:Contact.Person#firstname"
+			/>
+			<create-part type="Contacts:PersonContact">
+				<reference name="account"
+					inverse-reference="contact"
+					kind="backwards"
+					type="tl.accounts:Person"
+				/>
+			</create-part>
+		</apply-patches>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

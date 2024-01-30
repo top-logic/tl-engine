@@ -3460,7 +3460,13 @@ public class Util {
 	 */
 	@SafeVarargs
 	public static <T> List<T> listWithoutNull(T... values) {
-		List<T> result = Arrays.asList(values);
+		return listWithoutNull(Arrays.asList(values));
+	}
+
+	/**
+	 * Filters the given list such that no <code>null</code> values are contained.
+	 */
+	public static <T> List<T> listWithoutNull(List<T> result) {
 		if (result.contains(null)) {
 			return result.stream().filter(Objects::nonNull).collect(Collectors.toList());
 		}

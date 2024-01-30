@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27517_Refactoring_User_Management"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26190_single_drop_targets_to_list"
+			module="tl"
+		/>
+		<dependency name="Ticket_27764_missing_type_for_association_properties"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_21471_Adjust_model_overrides"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_26966_Set_date2_storage_mapping"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<apply-patches>
+			<delete name="DemoTypes:DemoTypes.A#person"/>
+			<create-part
+				before="containment"
+				type="DemoTypes:DemoTypes.A"
+			>
+				<reference name="account"
+					kind="forwards"
+					type="tl.accounts:Person"
+				/>
+			</create-part>
+			<create-part
+				before="containment"
+				type="DemoTypes:DemoTypes.A"
+			>
+				<reference name="contact"
+					kind="forwards"
+					type="Contacts:PersonContact"
+				/>
+			</create-part>
+			<delete name="DemoTypes:DemoTypes.X#person"/>
+			<create-part
+				before="gallery"
+				type="DemoTypes:DemoTypes.X"
+			>
+				<property name="account"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="account"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</create-part>
+			<create-part
+				before="gallery"
+				type="DemoTypes:DemoTypes.X"
+			>
+				<property name="contact"
+					type="Contacts:PersonContact"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="contact"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</create-part>
+		</apply-patches>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

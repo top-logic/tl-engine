@@ -613,6 +613,7 @@ td.fltButton {
 
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
 	color: var(--icon-primary);
+	align-self: center;
 }
 
 .tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons) {
@@ -1388,6 +1389,7 @@ div.dirtyHandlingDialog .changes {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: stretch;
+	min-height: var(--table-height);
 }
 
 .tblSelected .tl-table__cell {
@@ -1608,4 +1610,16 @@ td.tl-table__cell--selected {
 	border: none;
 }
 
+.adjustableColumn {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.unselectableContent {
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+  	-moz-user-select: none;     /* Firefox all */
+  	user-select: none;     
+}
 

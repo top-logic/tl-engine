@@ -40,7 +40,7 @@
 				<dependency>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-basic-core</artifactId>
-					<version>${tl.version}</version>
+					<version>7.8.0-SNAPSHOT</version>
 				</dependency>
 			</dependencies>
 		</plugin>

@@ -780,7 +780,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	@Override
 	public String toString() {
 		return name + " [types: " + getObjectTypes().size()
-					+ ((cache != null) ? (", cache size: " + cache.size()) : "")
+			+ ((cache != null) ? (", cache size: " + getCacheSize()) : "")
                     + ", DB: " + dbUrl
                     + "] ";
     }
@@ -5279,6 +5279,11 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 		AdaptToUpdate<E> adaption = new AdaptToUpdate<>(update, simpleQuery, query, arguments);
 		return adaption.adaptResult(dbResult, adaptInline);
+	}
+
+	@Override
+	public int getCacheSize() {
+		return cache.size();
 	}
 
 }

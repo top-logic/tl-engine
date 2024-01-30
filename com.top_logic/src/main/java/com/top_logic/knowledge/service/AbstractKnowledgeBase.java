@@ -174,4 +174,9 @@ public abstract class AbstractKnowledgeBase implements KnowledgeBase {
 		return getHistoryManager().getContextBranch();
 	}
 
+	@Override
+	public int getCacheSize() {
+		return 0;
+	}
+
 }

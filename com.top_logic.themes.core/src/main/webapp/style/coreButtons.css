@@ -518,6 +518,8 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .tlAdditionalRightContent .cImageButton.cmdButtonDisabled, 
 .sblLogo .cImageButton,
 .sblLogo .cImageButton.cmdButtonDisabled, 
+.dfToolbar .cmdLink, 
+.dfToolbar .cmdLinkDisabled, 
 .dfListCommands .cmdLink,
 .dfListCommands .cmdLinkDisabled,
 .px-1 .cmdLink,
@@ -541,6 +543,8 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .sblLogo .cImageButton, 
 .sblLogo .cImageButton.cmdButtonDisabled, 
+.dfToolbar .cmdLink, 
+.dfToolbar .cmdLinkDisabled, 
 .dfListCommands .cmdLink, 
 .dfListCommands .cmdLinkDisabled, 
 .px-1 .cmdLink,
@@ -553,6 +557,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton a,
 .sblLogo .cImageButton a,
+.dfToolbar .cmdLink a, 
 .dfListCommands .cmdLink a,
 .px-1 .cmdLink a,
 .cTextPopup .lFixedLeft .cmdLink a {
@@ -568,6 +573,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton:hover,
 .sblLogo .cImageButton:hover,
+.dfToolbar .cmdLink:hover, 
 .dfListCommands .cmdLink:hover,
 .px-1 .cmdLink:hover,
 .cTextPopup .lFixedLeft .cmdLink:hover {
@@ -577,6 +583,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton:focus,
 .sblLogo .cImageButton:focus,
+.dfToolbar .cmdLink:focus, 
 .dfListCommands .cmdLink:focus,
 .px-1 .cmdLink:focus,
 .cTextPopup .lFixedLeft:focus {
@@ -585,6 +592,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton a:focus,
 .sblLogo .cImageButton a:focus,
+.dfToolbar .cmdLink a:focus,
 .dfListCommands .cmdLink a:focus,
 .px-1 .cmdLink a:focus,
 .cTextPopup .lFixedLeft .cmdLink a:focus {
@@ -593,6 +601,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton:active,
 .sblLogo .cImageButton:active,
+.dfToolbar .cmdLink:active, 
 .dfListCommands .cmdLink:active,
 .px-1 .cmdLink:active,
 .cTextPopup .lFixedLeft:active {
@@ -601,6 +610,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton.cmdButtonDisabled,
 .sblLogo .cImageButton.cmdButtonDisabled,
+.dfToolbar .cmdLinkDisabled,
 .dfListCommands .cmdLinkDisabled,
 .px-1 .cmdLinkDisabled,
 .cTextPopup .lFixedLeft .cmdLinkDisabled {
@@ -611,6 +621,7 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 
 .tlAdditionalRightContent .cImageButton.cmdButtonDisabled a,
 .sblLogo .cImageButton.cmdButtonDisabled a,
+.dfToolbar .cmdLinkDisabled a,
 .dfListCommands .cmdLinkDisabled a,
 .px-1 .cmdLinkDisabled a,
 .cTextPopup .lFixedLeft .cmdLinkDisabled a {

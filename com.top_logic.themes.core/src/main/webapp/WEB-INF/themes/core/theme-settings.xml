@@ -179,6 +179,9 @@
 	<icon name="com.top_logic.layout.Icons.ADD_TAB_COMMAND"
 		expr="%ICON_PLUS%"
 	/>
+	<icon name="com.top_logic.layout.table.filter.Icons.FILTER_SHOW_ALL"
+		value="css:bi bi-chevron-double-down"
+	/>
 	<icon name="CONFIGURE_TABS_ICON"
 		value="css:bi bi-window-split"
 	/>
@@ -419,6 +422,36 @@
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ALERT"
 		value="css:bi bi-x-octagon-fill"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON_DISABLED"
+		expr="%com.top_logic.layout.form.values.edit.Icons.ADD_ICON%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
+		expr="%IMAGE_BUTTONS_SCRIPT_RECORDER22%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
+		expr="%ICONS_REMOVE%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
+		expr="%ICONS_REMOVE%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
+		value="css:bi bi-arrow-down-up"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
+		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.DISPLAY_DERIVED_RESOURCES"
+		expr="%com.top_logic.layout.table.filter.Icons.FILTER_SHOW_ALL%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.HIDE_DERIVED_RESOURCES"
+		expr="%ICONS_MOVE_ROW_TO_TOP%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.SELECT_TYPE"
+		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.TRANSLATE"
 		expr="%IMAGE_BUTTONS_DOC_TRANSLATE%"
@@ -1203,12 +1236,6 @@
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP_DISABLED"
 		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
-		expr="%ICONS_REMOVE%"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
-		expr="%ICONS_REMOVE%"
-	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON"
 		expr="%ICONS_BUTTON_CLOSE%"
 	/>
@@ -1221,9 +1248,6 @@
 	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR_DISABLED"
 		expr="%ICONS_DELETE_MENU%"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
-		expr="%IMAGE_BUTTONS_SCRIPT_RECORDER22%"
-	/>
 	<icon name="layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand"
 		value="css:bi bi-brush-fill"
 	/>
@@ -1232,12 +1256,6 @@
 	/>
 	<icon name="layouts.themes.default.toolrow.designModeButton.ReleaseLayout"
 		value="css:bi bi-check-lg"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
-		value="css:bi bi-arrow-down-up"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
-		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.RESET_TABLE"
 		expr="%ICON_TABLE%"
@@ -1427,9 +1445,6 @@
 	<icon name="LOGIN_MESSAGE_RESET_ICON"
 		expr="%ICON_UNDO%"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.SELECT_TYPE"
-		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
-	/>
 	<icon name="ICONS_BUTTON_START"
 		value="css:bi bi-play-fill green"
 	/>
@@ -1596,12 +1611,6 @@
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_SIBLINGS_DISABLED"
 		value="/icons/selectSiblingsDisabled.png"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON"
-		value="css:bi bi-plus-lg"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON_DISABLED"
-		expr="%com.top_logic.layout.form.values.edit.Icons.ADD_ICON%"
-	/>
 	<icon name="ICONS_BUTTON_GROUP"
 		value="colored:tl-icon text-arrow-right"
 	/>
@@ -1687,6 +1696,15 @@
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__TRISTATE"
 		value="css:far fa-check-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BUTTON_MISSING"
+		value="css: bi bi-question-square-fill"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BUTTON_MISSING_DISABLED"
+		value="css: bi bi-question-square-fill"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.PDF_MISSING"
+		value="bi bi-question-square-fill missingPDFIcon"
 	/>
 
 	<!-- Style Tokens -->

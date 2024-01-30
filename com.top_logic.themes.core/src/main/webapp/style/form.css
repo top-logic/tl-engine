@@ -24,8 +24,24 @@
     overflow: hidden;
 }
 
-.rf_header > .rf_menu, .dfModeFull .dfListCommands,
+.rf_header > .rf_menu, 
+.dfModeFull .dfListCommands,
 .dfEntryTitle .lFixedRight {
+	display: flex;
+	gap: var(--spacing-01);
+	margin-left: auto;
+	padding-right: var(--spacing-03);
+}
+
+.mboxContent .dfContent {
+	flex-grow: 2;
+}
+
+.mboxContent .dfContent .dfItemTitle {
+	display: flex;
+}
+
+.mboxContent .dfContent .dfToolbar {
 	display: flex;
 	gap: var(--spacing-01);
 	margin-left: auto;

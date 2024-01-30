@@ -1290,4 +1290,8 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 */
 	SchemaSetup getSchemaSetup();
 
+	/**
+	 * Returns the size of the cache if used. Otherwise 0 is returned.
+	 */
+	int getCacheSize();
 }

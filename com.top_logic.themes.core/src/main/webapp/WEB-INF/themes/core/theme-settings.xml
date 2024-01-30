@@ -137,6 +137,9 @@
 	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT"
 		value="40px"
 	/>
+	<size name="table-height"
+		expr="%com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT%"
+	/>
 	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT"
 		expr="%TABLE_TITLE_HEIGHT%"
 	/>

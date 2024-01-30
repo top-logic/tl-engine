@@ -34,11 +34,13 @@
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 			command="openLicenseDialog"
 		/>
-		<!-- Disable the session log dialog in the migration test application:
-		     It is practically impossible to migrate that automatically.
-		     The migration depends upon which layout xml files have been overwritten and how.
-		     Depending on the application it is either inherited automatically
-		     or it has to be added to one of several potential layout xml files. -->
+		<!--
+			Disable the session log dialog in the migration test application:
+			It is practically impossible to migrate that automatically.
+			The migration depends upon which layout xml files have been overwritten and how.
+			Depending on the application it is either inherited automatically
+			or it has to be added to one of several potential layout xml files.
+		-->
 		<!-- <include name="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.command.xml"/> -->
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 			command="logout"

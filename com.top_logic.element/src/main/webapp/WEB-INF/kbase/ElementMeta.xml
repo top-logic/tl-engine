@@ -252,6 +252,7 @@
 						<entry key="tl.model:TLProperty" value="property" />
 						<entry key="tl.model:TLReference" value="reference" />
 						<entry key="tl.model:TLAssociationEnd" value="association-end" />
+						<entry key="tl.model:TLProperty" value="association-property" />
 					</type-value-mapping>
 				</builder>
 			</annotation>
@@ -358,6 +359,7 @@
 						<entry type="tl.model:TLProperty" value="property" />
 						<entry type="tl.model:TLReference" value="reference" />
 						<entry type="tl.model:TLAssociationEnd" value="association-end" />
+						<entry type="tl.model:TLProperty" value="association-property" />
 					</value-type-mapping>
 				</value-factory>
 			</storage>

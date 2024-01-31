@@ -105,11 +105,14 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 
 	private ProgressDialog createProgressDialog(final LayoutComponent aComponent) {
 		return new ProgressDialog(I18NConstants.PERFORMING_EXPORT, DisplayDimension.px(500), DisplayDimension.px(250)) {
+
+			private final int _rowCount = extractTableData(aComponent).getViewModel().getRowCount();
+
 			private BinaryData _download;
 
 			@Override
 			protected void run(I18NLog log) throws AbortExecutionException {
-				_download = createDownloadData(log, aComponent);
+				_download = createDownloadData(this::incProgress, log, aComponent);
 			}
 
 			@Override
@@ -127,6 +130,16 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 				}
 				return getDiscardClosure().executeCommand(displayContext);
 			}
+
+			@Override
+			protected int getStepCnt() {
+				return _rowCount;
+			}
+
+			protected void incProgress() {
+				incProgress(1);
+			}
+
 		};
 	}
 
@@ -140,7 +153,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	 *        the model fetched from the underlying component.
 	 * @return {@link BinaryData} to be streamed to the client.
 	 */
-	protected abstract BinaryData createDownloadData(I18NLog log, LayoutComponent component);
+	protected abstract BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component);
 
 	/**
 	 * Retrieves the {@link TableData} from the component.

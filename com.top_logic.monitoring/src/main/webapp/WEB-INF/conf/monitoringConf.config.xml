@@ -23,5 +23,20 @@
 				</label-providers>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+			       <module key="com.top_logic.monitoring.data.TLDataBeanService$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.monitoring.data.TLDataBeanService">
+			<instance class="com.top_logic.monitoring.data.TLDataBeanService">
+				<mbeans>
+					<mbean class="com.top_logic.monitoring.data.MonitorUser" />
+					<mbean class="com.top_logic.monitoring.data.MonitorDatabase" />
+				</mbeans>
+			</instance>
+		</config>
 	</services>
 </application>

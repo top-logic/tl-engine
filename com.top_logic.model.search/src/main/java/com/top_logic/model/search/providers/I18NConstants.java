@@ -34,7 +34,10 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey3 ERROR_SCRIPT_RESULT_OF_INCOMPATIBLE_TYPE__ATTR_EXPECTED_ACTUAL;
 
-	public static ResKey1 ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR;
+	/**
+	 * @en The calculation result of the mandatory attribute "{0}" is empty for object "{1}".
+	 */
+	public static ResKey2 ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ;
 
 	public static ResKey1 TASK_MESSAGE__VALUE;
 

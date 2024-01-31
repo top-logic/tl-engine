@@ -29,5 +29,9 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-reporting-flex</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search</artifactId>
+    </dependency>
   </dependencies>
 </project>

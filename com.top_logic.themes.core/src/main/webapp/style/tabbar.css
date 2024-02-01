@@ -32,7 +32,6 @@
 	flex-wrap: nowrap;
 	height: var(--tabbar-height);
   	overflow-x: auto;
-	scrollbar-width: none;	/* Hides the scrollbar. */
 }
 
 /* Hides the scrollbar in Chrome, Safari, and Opera */
@@ -83,13 +82,18 @@
 
 .tlTabBar .activeTabLabel {
 	color: var(--text-primary);
-	font-size: .875rem;
-	font-weight: 600;
+	font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
 }
 
 .tlTabBar .tabLabel {
 	color: var(--text-secondary);
-	font-size: .875rem;
+	font-family: 'Inter-Regular';
+    font-size: var(--body-02-font-size);
+    line-height: var(--body-02-line-height);
+    letter-spacing: var(--body-02-letter-spacing);
 	font-weight: 400;
 }
 

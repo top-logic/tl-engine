@@ -123,7 +123,7 @@
 		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<size name="TABLE_TITLE_HEIGHT"
-		value="32px"
+		value="40px"
 	/>
 	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
 		value="height: 40px;"
@@ -285,10 +285,22 @@
 		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
 	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH"
-		value="32px"
+		value="40px"
 	/>
 	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_HEIGHT"
-		value="32px"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.layoutRenderer.Icons.POPUP_TITLE_HEIGHT"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_TITLE_HEIGHT"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
+		value="10px"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.CLOSE_DIALOG"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<icon name="com.top_logic.layout.compare.Icons.OPEN_COMPARE_VIEW"
 		expr="%ICONS_COMPARE%"
@@ -1086,6 +1098,27 @@
 	<icon name="MIMETYPES_PERSON_CONTACT_16"
 		expr="%USER_MENU_ICON%"
 	/>
+	<icon name="ICONS_STAKEHOLDER"
+		value="css:bi bi-people-fill"
+	/>
+	<icon name="ICONS_LARGE_STAKEHOLDER60"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="mime.tl.accounts.Group"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="mime.tl.accounts.Group.large"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="ICONS_PERSON_ASSIGNMENTS48"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="MIMETYPES_GROUP_16"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="MIMETYPES_LARGE_GROUP_60"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
 	<icon name="mime.tl.accounts.Person"
 		expr="%USER_MENU_ICON%"
 	/>
@@ -1130,12 +1163,6 @@
 	/>
 	<icon name="mime.tl.folder.DocumentVersion"
 		expr="%mime.tl.folder.Document%"
-	/>
-	<icon name="mime.tl.accounts.Group"
-		value="css:bi bi-people-fill"
-	/>
-	<icon name="mime.tl.accounts.Group.large"
-		expr="%mime.tl.accounts.Group%"
 	/>
 	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
 		expr="%ICONS_EXPORT_GRID%"
@@ -1265,18 +1292,6 @@
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_COLUMN_CONFIG"
 		value="css:bi bi-layout-three-columns"
-	/>
-	<size name="com.top_logic.layout.layoutRenderer.Icons.POPUP_TITLE_HEIGHT"
-		value="32px"
-	/>
-	<size name="com.top_logic.layout.structure.Icons.DIALOG_TITLE_HEIGHT"
-		value="32px"
-	/>
-	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
-		value="10px"
-	/>
-	<icon name="com.top_logic.layout.structure.Icons.CLOSE_DIALOG"
-		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
 		value="62px"

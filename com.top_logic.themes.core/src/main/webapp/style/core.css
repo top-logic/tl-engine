@@ -2297,9 +2297,11 @@ div.treeNode.treeSelected.dndInsertInto {
 	align-items: center;
 	justify-content: space-between;
 	background-color: var(--layer-accent);
-	height: inherit;
 	gap: var(--spacing-02);
+	height: inherit;
 	overflow: hidden;
+	padding: var(--spacing-02) var(--spacing-03);
+    box-sizing: border-box;
 }
 
 .cCollapsibleToolbar {
@@ -2307,13 +2309,11 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleTitle {
-	font-family: 'Inter-Regular';
-	font-size: var(--body-01-font-size);
-	line-height: var(--body-01-line-height);
-	letter-spacing: var(--body-01-letter-spacing);
-	font-weight: 600;
+	font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
 	color: var(--text-primary);
-	padding-left: var(--spacing-03);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -2367,6 +2367,7 @@ div.treeNode.treeSelected.dndInsertInto {
 .tbGroup {
 	display: flex;
 	gap: var(--spacing-02);
+	flex-shrink: 0;
 }
 
 .cToolbar {

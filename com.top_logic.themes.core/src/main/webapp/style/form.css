@@ -12,10 +12,10 @@
 
 .rf_header,
 .dfEntryTitle {
-	font-family: 'Inter-SemiBold';
-	font-size: var(--heading-03-font-size);
-	line-height: var(--heading-03-line-height);
-	letter-spacing: var(--heading-03-letter-spacing);
+    font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
 }
 
 .dfItemTitle {
@@ -278,7 +278,7 @@ div.frmBody > div.dropPane {
 	grid-auto-rows: max-content;
 	grid: auto / auto-flow / max-content;
 	gap: var(--RF_VERTICAL_GAP_CELLS) var(--RF_HORIZONTAL_GAP_CELLS);
-	padding: 15px 10px 10px 10px;
+	padding: var(--spacing-03);
 	line-height: 1.5rem;
 	border-radius: 0 0 3px 3px;
 }
@@ -347,7 +347,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     min-height: 1.5rem;
     margin: var(--spacing-02) 0;
   	word-wrap: break-word;
-  	box-sizing: border-box
+  	box-sizing: border-box;
+  	word-break: break-all;
 }
 
 /* columns layout */
@@ -545,9 +546,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
   	box-sizing: border-box;
 }
 
-*:not(.rf_content) > .rf_inputCell,
 *:not(.rf_content) > .rf_columnsLayout:not(.keep) {
-	margin-bottom: .25rem;
+	margin-bottom: var(--spacing-03);
 }
 
 .rf_content .pre {
@@ -560,6 +560,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	display: grid;
 	grid-template-columns: 1fr;
 	grid-column: 1 / -1;
+	overflow: auto;
 }
 
 .rf_spanRow1 { grid-row-end: span 1; }
@@ -612,6 +613,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
 	line-height: 24px;
+	margin-bottom: 0;
 }
 
 /* indent all lines but the first */
@@ -620,7 +622,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
 .cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > :nth-child(n+2)  {
-	padding-left: 5px;
+	padding-left: var(--spacing-01);
 }
 
 .rf_inputCell .ace_editor div,
@@ -672,6 +674,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     min-width: min-content;
 }
 
+.rf_groupCell .rf_groupCell {
+    margin-top: 0;
+}
+
 .rf_groupCell > .rf_header {
 	border-top: none;
 }
@@ -699,10 +705,13 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     grid-column: 1;
     display: flex;
     align-items: center;
-    gap: var(--spacing-03);
+    gap: var(--spacing-02);
     background: var(--layer-accent);
     padding: var(--spacing-02) var(--spacing-03);
     white-space: nowrap;
+    height: 2.5rem;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .rf_groupCell .rf_header:hover {
@@ -757,7 +766,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_descriptionContainer {
 	display: grid;
 	grid-auto-flow: row;
-	grid-gap: 4px 5px;
+	grid-gap: var(--spacing-01) var(--spacing-01);
 	grid-auto-rows: minmax(24px, max-content);
 }
 
@@ -1102,7 +1111,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
   
   .cMediaQuery.dflSize1 .rf_inputCell > :nth-child(n+2),
   .rf_inputCell.rf_line > :nth-child(n+2) {
-	padding-left: 5px;
+	padding-left: var(--spacing-01);
   }
 
   .rf_hr {

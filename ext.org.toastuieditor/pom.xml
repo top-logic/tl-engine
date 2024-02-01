@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<relativePath>../tl-parent-core/internal</relativePath>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-core-internal</artifactId>
+		<version>7.8.0-SNAPSHOT</version>
+	</parent>
+	<artifactId>ext-org-toastuieditor</artifactId>
+
+	<description>Toast UI Editor version 3.2.2 - WYSIWYG Editor supporting markdown</description>
+	<url>https://ui.toast.com/tui-editor</url>
+
+	<licenses>
+		<license>
+			<name>MIT (MIT License)</name>
+			<url>https://github.com/nhn/tui.editor/blob/master/LICENSE</url>
+			<comments>https://github.com/nhn/tui.editor/blob/master/README.md</comments>
+		</license>
+	</licenses>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.webjars/webjars-locator -->
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>webjars-locator</artifactId>
+			<version>0.50</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>toast-ui__editor</artifactId>
+			<version>3.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>toast-ui__editor-plugin-code-syntax-highlight</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>toast-ui__editor-plugin-color-syntax</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>toast-ui__editor-plugin-table-merged-cell</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>toast-ui__editor-plugin-chart</artifactId>
+			<version>3.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>toast-ui__editor-plugin-uml</artifactId>
+			<version>3.0.1</version>
+		</dependency>
+	</dependencies>
+</project>

@@ -22,5 +22,6 @@
 		<style name="/style/dezent/setPaddings.css"/>
 		<style name="/style/dezent/setLineHeight.css"/>
 		<style name="/style/dezent/setWidthHeight.css"/>
+		<style name="/style/dezent/toastui-editor.css"/>
 	</styles>
 </theme>

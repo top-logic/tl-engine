@@ -727,11 +727,11 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		@Override
 		protected void updateValue(DisplayContext commandContext, AbstractFormFieldControlBase formFieldControl,
 				Object newValue, Map<String, Object> arguments) {
-			Object clientValue = transformClientVlaue(formFieldControl, newValue);
+			Object clientValue = transformClientValue(formFieldControl, newValue);
 			super.updateValue(commandContext, formFieldControl, clientValue, arguments);
 		}
 
-		private Object transformClientVlaue(AbstractFormFieldControlBase formFieldControl, Object newValue) {
+		private Object transformClientValue(AbstractFormFieldControlBase formFieldControl, Object newValue) {
 			String newHtml = (String) newValue;
 			try {
 				SafeHTML.getInstance().check(newHtml);

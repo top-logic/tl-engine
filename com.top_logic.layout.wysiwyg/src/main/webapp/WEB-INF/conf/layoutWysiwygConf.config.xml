@@ -22,9 +22,9 @@
 	
         <config service-class="com.top_logic.gui.JSFileCompiler">
 			<instance>
-	            <files>
-	            	<file resource="wysiwyg.js"/>
-				</files>
+	            <additional-files>
+	            	<file resource="wysiwyg.js" type="module"/>
+				</additional-files>
 			</instance>
 		</config>
 		

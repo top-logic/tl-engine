@@ -18,6 +18,8 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.element.config.SingletonConfig;
+import com.top_logic.element.config.annotation.TLSingletons;
 import com.top_logic.element.core.CreateElementException;
 import com.top_logic.element.core.TraversalFactory;
 import com.top_logic.element.core.wrap.WrapperTLElement;
@@ -29,6 +31,7 @@ import com.top_logic.element.structured.wrap.StructuredElementWrapperFactory;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -392,7 +395,15 @@ public interface StructuredElement extends Wrapper, TLScope {
 	 * @return The root of the StructureElement tree, never <code>null</code>.
 	 */
 	default StructuredElement getRoot() {
-		return (StructuredElement) tType().getModule().getSingleton(TLModule.DEFAULT_SINGLETON_NAME);
+		TLModule module = tType().getModule();
+		TLSingletons singletons = module.getAnnotation(TLSingletons.class);
+		if (singletons != null) {
+			SingletonConfig singletonConfig = singletons.getSingleton(TLModule.DEFAULT_SINGLETON_NAME);
+			if (singletonConfig != null) {
+				return (StructuredElement) module.getSingleton(TLModule.DEFAULT_SINGLETON_NAME);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -420,7 +431,17 @@ public interface StructuredElement extends Wrapper, TLScope {
 	 * @return <code>true</code> if this is the root of the StructureElement tree.
 	 */
 	default boolean isRoot() {
-		return getRoot() == this;
+		TLModule module = tType().getModule();
+		TLSingletons singletons = module.getAnnotation(TLSingletons.class);
+		if (singletons != null) {
+			for (var singletonConfig : singletons.getSingletons()) {
+				TLObject singleton = module.getSingleton(singletonConfig.getName());
+				if (singleton == this) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

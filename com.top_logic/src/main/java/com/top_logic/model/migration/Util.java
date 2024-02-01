@@ -7,8 +7,6 @@ package com.top_logic.model.migration;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -184,22 +182,29 @@ public class Util {
 		_revCreate = -1;
 	}
 
-	private String toString(AnnotatedConfig<? extends TLAnnotation> annotations) throws XMLStreamException {
+	private String toString(AnnotatedConfig<? extends TLAnnotation> annotations) {
 		String annotationsAsStrings;
 		if (annotations == null || annotations.getAnnotations().isEmpty()) {
 			annotationsAsStrings = null;
 		} else {
 			ConfigBuilder sink = TypedConfiguration.createConfigBuilder(AnnotationConfigs.class);
 			ConfigCopier.fillDeepCopy(annotations, sink, SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY);
-			try (StringWriter out = new StringWriter()) {
-				new ConfigurationWriter(out).write("config", ConfigurationItem.class, sink);
-				annotationsAsStrings = out.toString();
-			} catch (IOException ex) {
-				// StringWriter does not throw IOException!
-				throw new IOError(ex);
-			}
+			AnnotationConfigs annotationsCopy =
+				(AnnotationConfigs) sink.createConfig(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY);
+			annotationsAsStrings = writeToString("config", ConfigurationItem.class, annotationsCopy);
 		}
 		return annotationsAsStrings;
+	}
+
+	private String writeToString(String rootTag, Class<? extends ConfigurationItem> staticType,
+			ConfigurationItem config) {
+		StringWriter storageMappingBuffer = new StringWriter();
+		try {
+			new ConfigurationWriter(storageMappingBuffer).write(rootTag, staticType, config);
+		} catch (XMLStreamException ex) {
+			throw new RuntimeException(ex);
+		}
+		return storageMappingBuffer.toString();
 	}
 
 	/**
@@ -211,7 +216,7 @@ public class Util {
 	public Type createTLClass(PooledConnection con, QualifiedTypeName className,
 			boolean isAbstract, boolean isFinal,
 			AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLStructuredType(con, TLContext.TRUNK_ID,
 			className.getModuleName(), className.getTypeName(),
 			isAbstract, isFinal,
@@ -302,7 +307,7 @@ public class Util {
 	 */
 	public Type createTLAssociation(PooledConnection con, QualifiedTypeName associationName,
 			AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLStructuredType(con, TLContext.TRUNK_ID,
 			associationName.getModuleName(), associationName.getTypeName(),
 			null, null,
@@ -320,7 +325,7 @@ public class Util {
 	public TypePart createTLProperty(Log log, PooledConnection con, QualifiedPartName name,
 			QualifiedTypeName target, boolean isMandatory, boolean isMultiple, Boolean bag,
 			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLProperty(log, con,
 			TLContext.TRUNK_ID, name.getModuleName(), name.getTypeName(),
 			name.getPartName(), target.getModuleName(),
@@ -388,7 +393,7 @@ public class Util {
 			QualifiedTypeName target, boolean mandatory, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
 			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLAssociationEnd(log, con,
 			TLContext.TRUNK_ID, assEnd.getModuleName(), assEnd.getTypeName(),
 			assEnd.getPartName(), target.getModuleName(),
@@ -663,7 +668,7 @@ public class Util {
 	 */
 	public Module createTLModule(PooledConnection con, String moduleName,
 			AnnotatedConfig<TLModuleAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLModule(con, TLContext.TRUNK_ID, moduleName, toString(annotations));
 	}
 
@@ -976,7 +981,7 @@ public class Util {
 			QualifiedTypeName target, boolean mandatory, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
 			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws XMLStreamException, SQLException, MigrationException {
+			throws SQLException, MigrationException {
 		return createTLReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), target.getModuleName(),
@@ -1042,7 +1047,7 @@ public class Util {
 			QualifiedPartName inverseReference, boolean mandatory, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered,
 			boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createInverseTLReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), inverseReference.getModuleName(), inverseReference.getTypeName(),
@@ -1137,7 +1142,7 @@ public class Util {
 	 */
 	public Reference createTLEndReference(Log log, PooledConnection con,
 			QualifiedPartName reference, QualifiedPartName assEnd, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws XMLStreamException, SQLException, MigrationException {
+			throws SQLException, MigrationException {
 		return createTLEndReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), assEnd.getModuleName(), assEnd.getTypeName(),
@@ -1730,7 +1735,7 @@ public class Util {
 	 */
 	public Type createTLDatatype(PooledConnection connection, QualifiedTypeName type, Kind kind,
 			DBColumnType dbType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
-			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException, MigrationException, XMLStreamException {
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException, MigrationException {
 		return createTLDatatype(connection, TLContext.TRUNK_ID, type.getModuleName(), type.getTypeName(), kind,
 			dbType, storageMapping, toString(annotations));
 	}
@@ -1740,7 +1745,7 @@ public class Util {
 	 */
 	public Type createTLDatatype(PooledConnection con, long branch, String moduleName, String typeName,
 			Kind kind, DBColumnType dbType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
-			String annotations) throws SQLException, MigrationException, XMLStreamException {
+			String annotations) throws SQLException, MigrationException {
 		Module module = getTLModuleOrFail(con, branch, moduleName);
 		TLID newIdentifier = newID(con);
 		Long revCreate = getRevCreate(con);
@@ -1809,14 +1814,11 @@ public class Util {
 
 	}
 
-	private String toString(PolymorphicConfiguration<StorageMapping<?>> storageMapping)
-			throws XMLStreamException {
+	private String toString(PolymorphicConfiguration<StorageMapping<?>> storageMapping) {
 		if (storageMapping == null) {
 			return null;
 		}
-		StringWriter storageMappingBuffer = new StringWriter();
-		new ConfigurationWriter(storageMappingBuffer).write("config", PolymorphicConfiguration.class, storageMapping);
-		return storageMappingBuffer.toString();
+		return writeToString("config", PolymorphicConfiguration.class, storageMapping);
 	}
 
 	/**
@@ -1824,7 +1826,7 @@ public class Util {
 	 */
 	public void updateModuleAnnotations(PooledConnection con, String moduleName,
 			AnnotatedConfig<? extends TLAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateModuleAnnotations(con, TLContext.TRUNK_ID, moduleName, toString(annotations));
 	}
 
@@ -1859,7 +1861,7 @@ public class Util {
 	 */
 	public void updateTypeAnnotations(PooledConnection con, Module module, String typeName,
 			AnnotatedConfig<? extends TLAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTypeAnnotations(con, module, typeName, toString(annotations));
 	}
 
@@ -1904,7 +1906,7 @@ public class Util {
 	 */
 	public void updateTypePartAnnotations(PooledConnection con, Type owner, String partName,
 			AnnotatedConfig<? extends TLAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTypePartAnnotations(con, owner, partName, toString(annotations));
 	}
 
@@ -1951,7 +1953,7 @@ public class Util {
 	 */
 	public Type createTLEnumeration(PooledConnection con, QualifiedTypeName enumName,
 			AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLEnumeration(con, TLContext.TRUNK_ID,
 			enumName.getModuleName(), enumName.getTypeName(),
 			toString(annotations));
@@ -2026,7 +2028,7 @@ public class Util {
 	 */
 	public TypePart createTLClassifier(PooledConnection con, QualifiedPartName classifierName, int sortOrder,
 			AnnotatedConfig<TLClassifierAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLClassifier(con, TLContext.TRUNK_ID,
 			classifierName.getModuleName(), classifierName.getTypeName(), classifierName.getPartName(), sortOrder,
 			toString(annotations));
@@ -2224,7 +2226,7 @@ public class Util {
 	public void updateTLProperty(PooledConnection con, TypePart part, Type newType, Type newOwner,
 			String newName, Boolean mandatory, Boolean multiple, Boolean bag,
 			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTLStructuredTypePart(con, part, newType, newOwner, newName, mandatory, null, null, multiple, bag,
 			ordered, null, null, toString(annotations), null);
 	}
@@ -2244,7 +2246,7 @@ public class Util {
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
 			Boolean ordered, Boolean navigate, HistoryType historyType,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		TLID endID = null;
 		if (newEnd != null) {
 			endID = newEnd.getID();
@@ -2276,7 +2278,7 @@ public class Util {
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
 			Boolean ordered, Boolean navigate, HistoryType historyType,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
-			throws SQLException, XMLStreamException, MigrationException {
+			throws SQLException, MigrationException {
 
 		TLID endID = null;
 		if (newEnd != null) {
@@ -2479,7 +2481,7 @@ public class Util {
 	 */
 	public void updateTLStructuredType(PooledConnection con, Type type, Module newModule, String newName,
 			Boolean isAbstract, Boolean isFinal, AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTLStructuredType(con, type, newModule, newName, isAbstract, isFinal, toString(annotations));
 	}
 
@@ -2554,7 +2556,7 @@ public class Util {
 	 */
 	public void updateTLDataType(PooledConnection con, Type type, Module newModule, String newName, Kind kind,
 			DBColumnType columnType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
-			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException, XMLStreamException {
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException {
 		String dbType;
 		Integer dbSize;
 		Integer dbPrecision;

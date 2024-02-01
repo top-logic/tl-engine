@@ -295,40 +295,6 @@ services.form = {
 		updateFunction();
 	},
 	
-	_putToDnDCache: function(sourceID, targetID, dropability) {
-		if(window.tlDnD.cache === undefined) {
-			window.tlDnD.cache = new services.util.TwoKeyMap();
-		}
-		
-		window.tlDnD.cache.set(sourceID, targetID, dropability);
-	},
-	
-	_createDragImageElement: function(draggedObjects) {
-		var dragImageElement = document.createElement("div");
-		dragImageElement.classList.add("dragImage");
-		var draggedObjectList = document.createElement("ul");
-		dragImageElement.appendChild(draggedObjectList);
-		
-		for(var i = 0; i < draggedObjects.length; i++) {
-			var draggedObjectListItem = document.createElement("li");
-			draggedObjectList.appendChild(draggedObjectListItem);
-			var draggedObjectImage = BAL.DOM.getAttribute(draggedObjects[i], "data-drag-image");
-			draggedObjectListItem.insertAdjacentHTML("beforebegin", draggedObjectImage);
-		}
-		
-		dragImageElement.style.position = "absolute";
-		/*
-		 * The element from which the image for the drag operation is created should not be visible
-		 * to the user. The height is unknown and depends on the number and size of the elements to be dragged. 
-		 * Therefore, the element is moved down by the maximal height (i.e. height of the viewport).
-		 */
-		dragImageElement.style.bottom = "-100vh";
-	
-		document.body.appendChild(dragImageElement);
-		
-		return dragImageElement;
-	},
-	
 	ScrollContainerControl : {
 
 		scrollRatio : 0.382 // ca. golden ratio.
@@ -470,8 +436,6 @@ services.form = {
     },
 
     TableControl : {
-    	currentInsertionMarker : null,
-    	
         selectRow : function(evt, element, controlId) {
             evt = BAL.getEvent(evt);
             var eventSource = BAL.getEventSource(evt);
@@ -536,7 +500,7 @@ services.form = {
 			}
 
 			var scope = services.ajax.COMPONENT_ID;
-			var dragImageElement = services.form._createDragImageElement(draggedRows);
+			var dragImageElement = services.DnD.createDragImage(draggedRows);
 
 			window.tlDnD = {
 				/**
@@ -553,19 +517,46 @@ services.form = {
 			return true;
 		},
 		
+		isTreeTable: function(controlElement) {
+			return services.form.TableControl.isTrue(BAL.DOM.getNonStandardAttribute(controlElement, "data-is-tree"));
+		},
+		
+		/**
+		 * Returns true if the given boolean string is truthy.
+		 *
+		 * @param{booleanString} Boolean string to evaluate.
+		 */
+		isTrue: function(booleanString) {
+			return booleanString?.toLowerCase() === "true";
+		},
+		
 		handleOnDrop: function(event, controlElement) {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 
 			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
+			var isTreeTable = services.form.TableControl.isTreeTable(controlElement);
 			var targetId;
 			var pos;
 			var success;
-			{
-				var rowElement = this.currentInsertionMarker;
-				success = rowElement != null;
-				if (success) {
-					targetId = rowElement.id;
+			var rowElement = services.DnD.insertMarker;
+			success = rowElement != null;
+			if (success) {
+				targetId = rowElement.id;
+				
+				if(isTreeTable) {
+					if (dropType == "ORDERED") {
+						if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
+							pos = "above";
+						} else if (BAL.DOM.containsClass(rowElement, "dndInsertBelow")) {
+							pos = "below";
+						} else {
+							pos = "within";
+						}
+					} else {
+						pos = "within";
+					}
+				} else {
 					if (dropType == "ORDERED") {
 						if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
 							pos = "above";
@@ -578,9 +569,7 @@ services.form = {
 						pos = "onto";
 					}
 				}
-			}
 			
-			if (success) {
 				var data = window.tlDnD.data;
 				services.ajax.execute("dispatchControlCommand", {
 					controlCommand : "dndDrop",
@@ -591,7 +580,7 @@ services.form = {
 				}, services.ajax.USE_WAIT_PANE_IN_FORMULA);
 			}
 			
-			this.resetMarker();
+			services.DnD.removeInsertMarkerStyles();
 			return false;
 		},
 		
@@ -611,19 +600,19 @@ services.form = {
 					var position = services.form.TableControl._getDropPosition(event, controlElement, row);
 					
 					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), row.id);
+						var dropOptions = services.DnD.getDropOptions(row.id, position);
 						
-						if(isDropable !== undefined) {
-							if(isDropable) {
-								this.displayDropMarkerInternal(row, position);
+						if(dropOptions) {
+							if(dropOptions.isDropable) {
+								services.DnD.createDropInsertMarker(dropOptions.object, dropOptions.position);
 								event.dataTransfer.dropEffect = "move";
 							} else {
-								this.resetMarker();
+								services.DnD.removeInsertMarkerStyles()
 								event.dataTransfer.dropEffect = 'none';
 							}
-							
-							return;
-						} 
+
+							return;								
+						}
 					}
 					
 					controlElement.isDragOverHandled = true;
@@ -640,47 +629,40 @@ services.form = {
 						controlElement.isDragOverHandled = false;
 					}, 50);
 				} else {
-					this.resetMarker();
+					services.DnD.removeInsertMarkerStyles()
 					event.dataTransfer.dropEffect = 'none';
 				}
 			}
 		},
 		
 		_getDropPosition: function(event, controlElement, row) {
+			var isTreeTable = services.form.TableControl.isTreeTable(controlElement);
 			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
 
-			if (dropType == "ORDERED") {
-				var coordinates = BAL.relativeMouseCoordinates(event, row);
-				var height = BAL.getElementHeight(row);
-				
-				return coordinates.y > (height / 2) ? "below" : "above";
-			} else {
-				return "onto";
-			}
-		},
-		
-		changeToNoDropCursor: function(targetID) {
-			this.resetMarker();
+			var coordinates = BAL.relativeMouseCoordinates(event, row);
+			var height = BAL.getElementHeight(row);
+			var within = coordinates.y > (height / 2);
 			
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, false);
-		},
-		
-		displayDropMarker: function(targetID, position) {
-			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, true);
-
-			return false;
-		},
-		
-		displayDropMarkerInternal: function(rowElement, position) {
-			this.resetMarker();
-			
-			if (position == "below") {
-				this.addMarkerClass(rowElement, "dndInsertBelow");
-			} else if(position == "above"){
-				this.addMarkerClass(rowElement, "dndInsertAbove");
+			if(isTreeTable) {
+				if (dropType == "ORDERED") {
+					if(within) {
+						return "below";
+					} else {
+						return "above";
+					}
+				} else {
+					return "within";
+				}
 			} else {
-				this.addMarkerClass(rowElement, "dndInsertInto");
+				if (dropType == "ORDERED") {
+					if(within) {
+						return "below";
+					} else {
+						return "above";
+					}
+				} else {
+					return "onto";
+				}
 			}
 		},
 		
@@ -694,7 +676,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			this.resetMarker();
+			services.DnD.removeInsertMarkerStyles()
 			
 			return false;
 		},
@@ -719,24 +701,6 @@ services.form = {
             }
             return null;
 		},
-		
-		addMarkerClass: function(markerElement, hoverClass) {
-			BAL.DOM.addClass(markerElement, hoverClass);
-			this.currentInsertionMarker = markerElement;
-		},
-		
-		resetMarker: function() {
-			var markerElement = this.currentInsertionMarker;
-			if (markerElement != null) {
-				this.resetMarkerOn(markerElement);
-			}
-		},
-		
-		resetMarkerOn: function(element) {
-			BAL.DOM.removeClass(element, "dndInsertAbove");
-			BAL.DOM.removeClass(element, "dndInsertBelow");
-			BAL.DOM.removeClass(element, "dndInsertInto");
-		}
 		
 	},
 
@@ -867,7 +831,7 @@ services.form = {
 			}
 			event.preventDefault();
 			
-			this.resetMarker(controlElement);
+			services.DnD.removeInsertMarkerStylesOn(controlElement)
 			
 			return false;
 		},
@@ -883,21 +847,13 @@ services.form = {
 				data : data
 			}, services.ajax.USE_WAIT_PANE_IN_FORMULA);
 			
-			this.resetMarker(controlElement);
+			services.DnD.removeInsertMarkerStylesOn(controlElement)
 			return false;
 		},
 		
-		resetMarker: function(controlElement) {
-			BAL.DOM.removeClass(controlElement, "dndInsertInto");
-		}
 	},
 	
 	TreeControl: {
-		
-		/**
-		 * The node element that is currently highlighted for a pending drop operation.
-		 */
-		currentInsertionMarker: null,
 		
 		selectTreeTableRow: function(event, controlId, nodeId) {
 			var controlElement = document.getElementById(controlId);
@@ -1063,7 +1019,7 @@ services.form = {
 
 			var scope = services.ajax.COMPONENT_ID;
 
-			var dragImageElement = services.form._createDragImageElement(draggedNodes);
+			var dragImageElement = services.DnD.createDragImage(draggedNodes);
 			
 			window.tlDnD = {
 				/**
@@ -1094,22 +1050,18 @@ services.form = {
 				
 				if(dropTarget !== undefined) {
 					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), dropTarget.node.id);
+						var dropOptions = services.DnD.getDropOptions(dropTarget.node.id, dropTarget.position);
 						
-						if(isDropable !== undefined) {
-							var isDropableAtPosition = isDropable[dropTarget.position];
-							
-							if(isDropableAtPosition !== undefined) {
-								if(isDropableAtPosition) {
-									this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
-									event.dataTransfer.dropEffect = "move";
-								} else {
-									this.resetMarker();
-									event.dataTransfer.dropEffect = 'none';
-								}
-								
-								return;
-							} 
+						if(dropOptions) {
+							if(dropOptions.isDropable) {
+								services.DnD.createDropInsertMarker(dropOptions.object, dropOptions.position);
+								event.dataTransfer.dropEffect = "move";
+							} else {
+								services.DnD.removeInsertMarkerStyles()
+								event.dataTransfer.dropEffect = 'none';
+							}
+
+							return;								
 						}
 					}
 					
@@ -1128,36 +1080,6 @@ services.form = {
 					}, 50);
 				}
 			}
-		},
-		
-		changeToNoDropCursor: function(targetID, pos) {
-			this.resetMarker();
-			
-			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(sourceID, targetID, pos, false);
-		},
-		
-		addToDnDCache: function (sourceID, targetID, pos, isDropable) {
-			if(window.tlDnD.cache !== undefined) {
-				var cacheValue = window.tlDnD.cache.get(sourceID, targetID);
-				if(cacheValue !== undefined) {
-					cacheValue[pos] = isDropable;
-					return;
-				}
-			}
-			
-			var cacheValue = {};
-			cacheValue[pos] = isDropable;
-			
-			services.form._putToDnDCache(sourceID, targetID, cacheValue);
-		},
-		
-		displayDropMarker: function(targetID, pos) {
-			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
-			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(sourceID, targetID, pos, true);
-
-			return false;
 		},
 		
 		getDropTarget: function(controlElement, event) {
@@ -1191,44 +1113,12 @@ services.form = {
 			 	height = BAL.getElementHeight(nodeElement);
 			 	var within = coordinates.y > (height / 2);
 				
-				if (within) {
-					var expanded = BAL.DOM.containsClass(nodeElement, "tcrExpanded");
-					
-					var childrenContainer = BAL.DOM.getNextElementSibling(nodeElement);
-					if (childrenContainer != null) {
-						var firstChild = BAL.DOM.getFirstElementChild(childrenContainer);
-						if (firstChild != null) {
-							if (BAL.DOM.containsClass(firstChild, "tcrNode")) {
-								var firstChildLabel = BAL.DOM.getFirstElementChild(firstChild);
-								if (firstChildLabel != null) {
-									return {
-										node: firstChildLabel,
-										position: "above"
-									};
-								}
-							}
-						}
-					}
-					
+				if(within) {
 					return {
 						node: nodeElement,
-						position: "within"
+						position: "below"
 					};
 				} else {
-					var nodeParent = nodeElement.parentNode;
-					if (nodeParent != null) {
-						var preceeding = BAL.DOM.getPreviousSibling(nodeParent);
-						if (preceeding != null) {
-							var node = this.lastNode(preceeding);
-							if (node != null) {
-								return {
-									node: node,
-									position: "below"
-								};
-							}
-						}
-					}
-					
 					return {
 						node: nodeElement,
 						position: "above"
@@ -1244,22 +1134,6 @@ services.form = {
 					node: nodeElement,
 					position: "within"
 				};
-			}
-		},
-		
-		displayDropMarkerInternal: function(nodeElement, position) {
-			this.resetMarker();
-			
-			this.currentInsertionMarker = nodeElement;
-			
-			if(position == "above") {
-				BAL.DOM.addClass(nodeElement, "dndInsertAbove");
-			} else if(position == "below") {
-				BAL.DOM.addClass(nodeElement, "dndInsertBelow");
-			} else if(position == "within"){
-				BAL.DOM.addClass(nodeElement, "dndInsertWithin");
-			} else {
-				BAL.DOM.addClass(nodeElement, "dndInsertInto");
 			}
 		},
 		
@@ -1288,7 +1162,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			this.resetMarker();
+			services.DnD.removeInsertMarkerStyles()
 			return false;
 		},
 		
@@ -1318,13 +1192,13 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 
-			var node = this.currentInsertionMarker;
+			var node = services.DnD.insertMarker;
 			if(node != null) {
 				var position = this.getDropPositionFromElement(controlElement, node);
 				var data = window.tlDnD.data;
 				
 				services.ajax.execute("dispatchControlCommand", {
-					controlCommand : "dndTreeDrop",
+					controlCommand : "dndDrop",
 					controlID : controlElement.id,
 					data : data,
 					id: node.id,
@@ -1332,17 +1206,8 @@ services.form = {
 				}, services.ajax.USE_WAIT_PANE_IN_FORMULA);
 			}
 			
-			this.resetMarker();
+			services.DnD.removeInsertMarkerStyles()
 			return false;
-		},
-		
-		resetMarker: function() {
-			if (this.currentInsertionMarker != null) {
-				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertAbove");
-				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertWithin");
-				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertBelow");
-				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertInto");
-			}
 		},
 		
 		getNode: function(controlElement, element) {

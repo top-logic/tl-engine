@@ -91,13 +91,18 @@ public class TreeField extends ConstantField implements TreeData, TreeDataOwner 
 	}
 
 	@Override
-	public TreeDragSource getDragSource() {
-		return data.getDragSource();
+	public TreeDragSource getTreeDragSource() {
+		return data.getTreeDragSource();
 	}
 
 	@Override
-	public List<TreeDropTarget> getDropTargets() {
-		return data.getDropTargets();
+	public List<TreeDropTarget> getTreeDropTargets() {
+		return data.getTreeDropTargets();
+	}
+
+	@Override
+	public void setTreeDropTargets(List<TreeDropTarget> dropTargets) {
+		data.setTreeDropTargets(dropTargets);
 	}
 
 	@Override

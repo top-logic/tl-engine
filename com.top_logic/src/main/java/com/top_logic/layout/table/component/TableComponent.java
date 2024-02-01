@@ -33,6 +33,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.FilterUtil;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -1315,7 +1316,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	private TableData createTableData() {
 		FormTableModel tableModel = createFormTableModel(createApplicationModel());
 		TableData tableData =
-			DefaultTableData.createTableData(this, tableModel, ConfigKey.component(this));
+			DefaultTableData.createTableData(Maybe.some(this), tableModel, ConfigKey.component(this));
 		if (getToolBar() != null) {
 			tableData.setToolBar(getToolBar());
 		}

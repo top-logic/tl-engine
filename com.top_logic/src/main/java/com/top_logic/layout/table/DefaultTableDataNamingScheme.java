@@ -55,7 +55,7 @@ public class DefaultTableDataNamingScheme extends AbstractModelNamingScheme<Defa
 
 	@Override
 	protected void initName(DefaultTableDataName name, DefaultTableData model) {
-		name.setDefaultTableDataOwner(model.getOwner().getModelName());
+		name.setDefaultTableDataOwner(model.getOwner().get().getModelName());
 	}
 
 }

@@ -108,7 +108,6 @@ import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.structure.PopupDialogModel;
 import com.top_logic.layout.structure.Scrolling;
-import com.top_logic.layout.table.DefaultTableData.NoTableDataOwner;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.SortConfig;
 import com.top_logic.layout.table.SortConfigFactory;
@@ -117,6 +116,7 @@ import com.top_logic.layout.table.TableDataListener;
 import com.top_logic.layout.table.TableFilter;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableModelUtils;
+import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.control.TableUpdateAccumulator.UpdateRequest;
 import com.top_logic.layout.table.control.access.CellRef;
@@ -144,7 +144,13 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 import com.top_logic.layout.table.renderer.Icons;
+import com.top_logic.layout.table.tree.TreeTableData;
 import com.top_logic.layout.toolbar.ToolBar;
+import com.top_logic.layout.tree.TreeData;
+import com.top_logic.layout.tree.dnd.TreeDropEvent;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
+import com.top_logic.layout.tree.model.AbstractTreeUINodeModel.TreeUINode;
+import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.HTMLConstants;
@@ -425,6 +431,13 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	/**
+	 * Whether the underlying table has a tree like structure.
+	 */
+	public boolean isTree() {
+		return tableData instanceof TreeTableData;
+	}
+
+	/**
 	 * {@link ContextMenuProvider} that produces an optional context menu for table rows.
 	 */
 	public ContextMenuProvider getContextMenuProvider() {
@@ -452,12 +465,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	@Override
 	public Object getDragData(String ref) {
-		return getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref));
+		return getTableData().getTableDragSource().getDragObject(getTableData(), getRowIndex(ref));
 	}
 
 	@Override
 	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref) {
-		return getTableData().getDragSource().getDragDataName(dragSource, getTableData(), getRowIndex(ref));
+		return getTableData().getTableDragSource().getDragDataName(dragSource, getTableData(), getRowIndex(ref));
 	}
 
 	final int getRowIndex(String rowId) {
@@ -1268,7 +1281,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	protected ControlCommandModel newTableCommandModel(ControlCommand command) {
 		ControlCommandModel result = new ControlCommandModel(command, this);
 		TableData table = getTableData();
-		if (table.getOwner() != NoTableDataOwner.INSTANCE) {
+		if (table.getOwner().hasValue()) {
 			result.set(LabeledButtonNaming.BUSINESS_OBJECT, table);
 		}
 		return result;
@@ -2312,50 +2325,146 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			if (data != null) {
 				TableData tableData = table.getModel();
 
-				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
-				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
+				String cachePositionString = (String) arguments.get(DND_TABLE_POS_PARAM);
+				String cacheTargetId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
+				int rowIndex = cacheTargetId == null ? -1 : table.getRowIndex(cacheTargetId);
 
-				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
-				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
-
-				List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
-
-				for (TableDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						displayDropMarker(table, refId, pos);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
+				if (tableData instanceof TreeTableData) {
+					handleTreeTableDragOver(table, data, tableData, cachePositionString, cacheTargetId, rowIndex);
+				} else {
+					handleTableDragOver(table, data, tableData, cachePositionString, cacheTargetId, rowIndex);
 				}
-
-				changeToNoDropCursor(table, refId);
 			}
 
 
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		private void changeToNoDropCursor(TableControl control, String targetID) {
+		private void handleTreeTableDragOver(TableControl table, DndData data, TableData tableData,
+				String cachePositionString, String cacheTargetId, int rowIndex) {
+			TreeData treeData = (TreeData) tableData;
+
+			TreeDropEvent.Position cachePosition = TreeDropEvent.Position.fromString(cachePositionString);
+			TLTreeNode<?> newRefNode;
+			String positionString;
+			TreeUINode<?> cacheObject = (TreeUINode<?>) tableData.getViewModel().getRowObject(rowIndex);
+
+			if (cachePosition == TreeDropEvent.Position.ABOVE) {
+				Optional<TLTreeNode<?>> predecessorLastChild = getPredecessorLastChild(tableData, cacheObject);
+
+				if (predecessorLastChild.isPresent()) {
+					// If predecessor (previous sibling node) has children, then it is a drop after
+					// its last child
+					newRefNode = predecessorLastChild.get();
+					positionString = "below";
+				} else {
+					// Otherwise (i.e. if the predecessor has no displayed children), then it is a
+					// drop before this node whose upper half is hovered
+					newRefNode = cacheObject;
+					positionString = "above";
+				}
+			} else if (cachePosition == TreeDropEvent.Position.BELOW) {
+				if (cacheObject.getChildCount() > 0 && cacheObject.isExpanded()) {
+					// If node has displayed children, then it is a drop before the first
+					// child
+					positionString = "above";
+					newRefNode = cacheObject.getChildAt(0);
+				} else {
+					// Otherwise it is a drop within the node
+					positionString = "within";
+					newRefNode = cacheObject;
+				}
+			} else {
+				newRefNode = cacheObject;
+				positionString = "within";
+			}
+
+			TreeDropEvent.Position newPosition = TreeDropEvent.Position.fromString(cachePositionString);
+
+			TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, newRefNode, newPosition);
+
+			List<TreeDropTarget> dropTargets = treeData.getTreeDropTargets();
+			for (TreeDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(dropEvent)) {
+					displayDropMarker(table, cacheTargetId, cachePositionString,
+						((TableRenderer<?>) table.getRenderer()).getRowID(table,
+							tableData.getViewModel().getRowOfObject(newRefNode)),
+						positionString);
+
+					return;
+				}
+			}
+
+			changeToNoDropCursor(table, cacheTargetId, cachePositionString);
+		}
+
+		private void handleTableDragOver(TableControl table, DndData data, TableData tableData,
+				String cachePositionString, String cacheTargetId, int rowIndex) {
+			TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowIndex, Position.fromString(cachePositionString));
+
+			List<TableDropTarget> dropTargets =
+				table.getApplicationModel().getTableConfiguration().getDropTargets();
+
+			for (TableDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(dropEvent)) {
+					displayDropMarker(table, cacheTargetId, cachePositionString, cacheTargetId, cachePositionString);
+
+					return;
+				}
+			}
+
+			changeToNoDropCursor(table, cacheTargetId, cachePositionString);
+		}
+
+		private Optional<TLTreeNode<?>> getPredecessorLastChild(TableData tableData, TreeUINode<?> node) {
+			TLTreeNode<?> parent = node.getParent();
+
+			if (parent != null) {
+				TableViewModel viewModel = tableData.getViewModel();
+				int rowIndex = viewModel.getRowOfObject(node);
+
+				for (int index = rowIndex - 1; index >= viewModel.getFirstDisplayedRow(); index--) {
+					TreeUINode<?> predecessor = (TreeUINode<?>) viewModel.getRowObject(index);
+
+					if (predecessor.getParent() == parent) {
+						if (predecessor.isExpanded() && predecessor.getChildCount() > 0) {
+							return Optional.of(predecessor.getChildAt(predecessor.getChildCount() - 1));
+						} else {
+							return Optional.empty();
+						}
+					}
+				}
+			}
+
+			return Optional.empty();
+		}
+
+		private void changeToNoDropCursor(TableControl control, String cacheTargetID, String cachePosition) {
 			control.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TableControl.changeToNoDropCursor(");
-					TagUtil.writeJsString(out, targetID);
+					out.append("services.DnD.showNoDropMarker(");
+					TagUtil.writeJsString(out, cacheTargetID);
+					out.append(",");
+					TagUtil.writeJsString(out, cachePosition);
 					out.append(");");
 				}
 			}));
 		}
 
-		private void displayDropMarker(TableControl control, String targetID, String position) {
+		private void displayDropMarker(TableControl control, String cacheTargetID, String cachePosition,
+				String targetID, String position) {
 			control.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TableControl.displayDropMarker(");
+					out.append("services.DnD.showDropInsertMarker(");
+					TagUtil.writeJsString(out, cacheTargetID);
+					out.append(",");
+					TagUtil.writeJsString(out, cachePosition);
+					out.append(",");
 					TagUtil.writeJsString(out, targetID);
-					if (!StringServices.isEmpty(position)) {
-						out.append(",");
-						TagUtil.writeJsString(out, position);
-					}
+					out.append(",");
+					TagUtil.writeJsString(out, position);
 					out.append(");");
 				}
 			}));
@@ -2378,29 +2487,55 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		@Override
 		public HandlerResult executeChecked(DisplayContext context, TableControl table, Map<String, Object> arguments) {
 			TableData tableData = table.getModel();
-			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
 
 			DndData data = DnD.getDndData(context, arguments);
 			if (data != null) {
 				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
-
 				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
 				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
 
-				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
-
-				for (TableDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						dropTarget.handleDrop(dropEvent);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
+				if (tableData instanceof TreeTableData) {
+					handleTreeTableDrop(tableData, data, pos, rowNum);
+				} else {
+					handleTableDrop(table, tableData, data, pos, rowNum);
 				}
+
 
 				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 			}
 
 			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		private void handleTreeTableDrop(TableData tableData, DndData data, String pos, int rowNum) {
+			TreeData treeData = (TreeData) tableData;
+
+			TreeDropEvent.Position position = TreeDropEvent.Position.fromString(pos);
+			TLTreeNode<?> refNode = (TLTreeNode<?>) tableData.getViewModel().getRowObject(rowNum);
+			TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, refNode, position);
+
+			List<TreeDropTarget> dropTargets = treeData.getTreeDropTargets();
+			for (TreeDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(dropEvent)) {
+					dropTarget.handleDrop(dropEvent);
+
+					return;
+				}
+			}
+		}
+
+		private void handleTableDrop(TableControl table, TableData tableData, DndData data, String pos, int rowNum) {
+			TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
+
+			List<TableDropTarget> dropTargets =
+				table.getApplicationModel().getTableConfiguration().getDropTargets();
+			for (TableDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(dropEvent)) {
+					dropTarget.handleDrop(dropEvent);
+
+					return;
+				}
+			}
 		}
 
 		@Override

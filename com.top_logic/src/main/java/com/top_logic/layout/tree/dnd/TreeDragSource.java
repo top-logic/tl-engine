@@ -10,7 +10,7 @@ import com.top_logic.layout.tree.TreeData;
 /**
  * Behavior that implements reactions on a drag operation over a tree.
  * 
- * @see TreeData#getDragSource()
+ * @see TreeData#getTreeDragSource()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

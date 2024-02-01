@@ -22,7 +22,7 @@ import com.top_logic.model.search.providers.TreeDropActionOp.TreeDropAction;
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-@InApp(classifiers = { "tree" })
+@InApp(classifiers = { "tree", "treetable", "treegrid" })
 @Label("Custom drop onto tree node")
 public class OntoTreeDropByExpression extends TreeDropTargetByExpression {
 

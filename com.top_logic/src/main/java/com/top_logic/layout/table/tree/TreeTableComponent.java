@@ -37,6 +37,7 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -87,7 +88,9 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.toolbar.ToolBar;
+import com.top_logic.layout.tree.TreeData;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeNode;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel.AbstractTreeTableNode;
@@ -307,6 +310,8 @@ public class TreeTableComponent extends BoundComponent
 
 	private boolean _isSelectionValid;
 
+	private List<TreeDropTarget> _dropTargets;
+
 	/**
 	 * Legacy constructor for creating an {@link TreeTableComponent} via {@link Config}.
 	 */
@@ -325,6 +330,7 @@ public class TreeTableComponent extends BoundComponent
 		if (table != null) {
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
+		_dropTargets = TypedConfiguration.getInstanceList(context, config.getDropTargets());
 	}
 
 	private Set<TLType> resolveTypes(InstantiationContext context, Config config) {
@@ -1233,8 +1239,9 @@ public class TreeTableComponent extends BoundComponent
 		configureTreeModel(treeModel);
 
 		TreeTableData treeTableData =
-			DefaultTreeTableData.createTreeTableData(this, treeModel, ConfigKey.component(this));
+			DefaultTreeTableData.createTreeTableData(Maybe.some(this), treeModel, ConfigKey.component(this), false);
 
+		treeTableData.setTreeDropTargets(_dropTargets);
 		treeTableData.setSelectionModel(selectionModel);
 		ToolBar toolbar = getToolBar();
 		if (toolbar != null) {
@@ -1298,6 +1305,16 @@ public class TreeTableComponent extends BoundComponent
 	@Override
 	public List<?> getDisplayedRows() {
 		return new ArrayList<>(_treeTableData.getViewModel().getDisplayedRows());
+	}
+
+	@Override
+	public TreeData getTreeData() {
+		return _treeTableData;
+	}
+
+	@Override
+	public TreeTableData getTreeTableData() {
+		return _treeTableData;
 	}
 
 }

@@ -555,7 +555,7 @@ div.frmBody.dndInsertInto > div.dropPane {
 	background-color: var(--DROP_MARKER_COLOR);
 }
 
-tr.tl-table__row.dndInsertInto > td {
+:is(tr.tl-table__row.dndInsertInto, tr.tl-table__row.dndInsertWithin) > td {
 	background-color: var(--DROP_MARKER_COLOR);
 }
 
@@ -3792,15 +3792,6 @@ div.treeNode.dndInsertAbove::before {
 	content: "";
 }
 
-div.treeNode.dndInsertWithin::after {
-	display: block;
-	margin-left: 24px;
-	border-bottom-width: 2px;
-	border-bottom-style: solid;
-	border-bottom-color: var(--INSERT_MARKER_COLOR);
-	content: "";
-}
-
 div.treeNode.dndInsertBelow::after {
 	display: block;
 	margin-left: 12px;
@@ -3811,6 +3802,7 @@ div.treeNode.dndInsertBelow::after {
 }
 
 div.treeNode.dndInsertInto,
+div.treeNode.dndInsertWithin,
 div.treeNode.treeSelected.dndInsertInto {
 	background-color: var(--DROP_MARKER_COLOR);
 }

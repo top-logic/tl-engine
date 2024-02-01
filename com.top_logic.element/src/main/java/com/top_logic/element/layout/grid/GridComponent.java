@@ -42,6 +42,7 @@ import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -577,17 +578,18 @@ public class GridComponent extends EditComponent implements
 		ModelBuilder gridBuilder = createGridBuilder(builder);
 
 		if (gridBuilder instanceof AbstractTreeGridBuilder) {
-			initTreeGridBuilder((Config) attr, (AbstractTreeGridBuilder<?>) gridBuilder);
+			initTreeGridBuilder(context, (Config) attr, (AbstractTreeGridBuilder<?>) gridBuilder);
 		}
 
 		return gridBuilder;
 	}
 
-	private void initTreeGridBuilder(Config config, AbstractTreeGridBuilder<?> gridBuilder) {
-		gridBuilder.setRootVisible(config.isRootVisible());
-		gridBuilder.setExpandRoot(config.getExpandRoot());
-		gridBuilder.setExpandSelected(config.getExpandSelected());
-		gridBuilder.adjustSelectionWhenCollapsing(config.adjustSelectionWhenCollapsing());
+	private void initTreeGridBuilder(InstantiationContext context, Config config, AbstractTreeGridBuilder<?> builder) {
+		builder.setRootVisible(config.isRootVisible());
+		builder.setExpandRoot(config.getExpandRoot());
+		builder.setExpandSelected(config.getExpandSelected());
+		builder.adjustSelectionWhenCollapsing(config.adjustSelectionWhenCollapsing());
+		builder.setDropTargets(TypedConfiguration.getInstanceList(context, config.getDropTargets()));
 	}
 
 	private ModelBuilder createGridBuilder(ModelBuilder builder) {

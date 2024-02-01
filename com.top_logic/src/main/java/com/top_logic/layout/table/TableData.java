@@ -8,6 +8,7 @@ package com.top_logic.layout.table;
 import java.util.Collection;
 import java.util.List;
 
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.PropertyListener;
@@ -72,9 +73,9 @@ public interface TableData extends ToolBarOwner, CheckScoped, NamedModel, TypedA
 	 * {@link TableData} was constructed anonymously, {@link NoTableDataOwner#INSTANCE} is returned.
 	 * </p>
 	 * 
-	 * @see DefaultTableData#createTableData(TableDataOwner, TableModel, ConfigKey)
+	 * @see DefaultTableData#createTableData(Maybe, TableModel, ConfigKey)
 	 */
-	TableDataOwner getOwner();
+	Maybe<? extends TableDataOwner> getOwner();
 
 	/**
 	 * Returns the {@link TableModel} of this {@link TableData}
@@ -116,14 +117,14 @@ public interface TableData extends ToolBarOwner, CheckScoped, NamedModel, TypedA
 	 * 
 	 * @see TableConfig#getDragSource()
 	 */
-	TableDragSource getDragSource();
+	TableDragSource getTableDragSource();
 
 	/**
 	 * The {@link TableDropTarget}'s that controls drop operations in this table.
 	 * 
 	 * @see TableConfig#getDropTargets()
 	 */
-	List<TableDropTarget> getDropTargets();
+	List<TableDropTarget> getTableDropTargets();
 
 	/**
 	 * The {@link ContextMenuProvider} used for table rows.

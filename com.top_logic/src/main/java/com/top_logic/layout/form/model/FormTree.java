@@ -19,6 +19,7 @@ import org.apache.commons.collections4.BidiMap;
 import com.top_logic.basic.col.BidiHashMap;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.annotation.Inspectable;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.form.FormContainer;
@@ -487,24 +488,25 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 	}
 
 	@Override
-	public TreeDragSource getDragSource() {
+	public TreeDragSource getTreeDragSource() {
 		return _dragSource;
 	}
 
-	public void setDragSource(TreeDragSource dragSource) {
+	/**
+	 * @see #getTreeDragSource()
+	 */
+	public void setTreeDragSource(TreeDragSource dragSource) {
 		_dragSource = dragSource;
 	}
 
 	@Override
-	public List<TreeDropTarget> getDropTargets() {
+	public List<TreeDropTarget> getTreeDropTargets() {
 		return _dropTargets;
 	}
 
-	/**
-	 * @see #getDropTargets()
-	 */
-	public void setDropTargets(List<TreeDropTarget> dropTargets) {
-		_dropTargets = dropTargets;
+	@Override
+	public void setTreeDropTargets(List<TreeDropTarget> dropTargets) {
+		_dropTargets = CollectionUtilShared.unmodifiableList(dropTargets);
 	}
 
 	@Override

@@ -28,6 +28,7 @@ import com.top_logic.basic.col.IDBuilder;
 import com.top_logic.basic.col.LazyListUnmodifyable;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Matcher;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.filter.FalseFilter;
 import com.top_logic.basic.col.filter.FilterFactory;
@@ -1350,7 +1351,7 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 				tableModel = new SelectionTableModel(this, null,
 					configuration);
 			}
-			result = DefaultTableData.createTableData(this, tableModel, getConfigKey());
+			result = DefaultTableData.createTableData(Maybe.some(this), tableModel, getConfigKey());
 
 			set(TABLE_DATA, result);
 		}

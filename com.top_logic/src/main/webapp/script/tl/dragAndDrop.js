@@ -268,7 +268,123 @@ services.DnD = {
 			serverDropInfo : serverDropInfo
 
 		}, /*useWaitPane*/ false);
-	}
+	},
+
+	insertMarker: null,
+	
+	showDropInsertMarker: function(cacheTargetID, cachePosition, targetID, position) {
+		var target = document.getElementById(targetID);
+		
+		this.createDropInsertMarker(target, position);
+		
+		this.addToCache(window.tlDnD.data.split("/").pop(), cacheTargetID, cachePosition, {
+			isDropable: true,
+			object: target,
+			position: position
+		});
+
+		return false;
+	},
+	
+	createDropInsertMarker: function(element, position) {
+		this.removeInsertMarkerStyles();
+		this.insertMarker = element;
+		this.addInsertMarkerStyles(position);
+	},
+	
+	addInsertMarkerStyles: function(position) {
+		this.addInsertMarkerStylesOn(this.insertMarker, position);
+	},
+	
+	addInsertMarkerStylesOn: function(element, position) {
+		if(position == "above") {
+			BAL.DOM.addClass(element, "dndInsertAbove");
+		} else if(position == "below") {
+			BAL.DOM.addClass(element, "dndInsertBelow");
+		} else if(position == "within") {
+			BAL.DOM.addClass(element, "dndInsertWithin");
+		} else if(position == "into") {
+			BAL.DOM.addClass(element, "dndInsertInto");
+		} else if(position == "onto") {
+			BAL.DOM.addClass(element, "dndInsertInto");
+		} else {
+			console.log("drop position " + position + " for element " + element + " is unsupported.");
+		}
+	},
+	
+	removeInsertMarkerStyles: function() {
+		this.removeInsertMarkerStylesOn(this.insertMarker);
+	},
+	
+	removeInsertMarkerStylesOn: function(element) {
+		if(element) {
+			BAL.DOM.removeClass(element, "dndInsertAbove");
+			BAL.DOM.removeClass(element, "dndInsertBelow");
+			BAL.DOM.removeClass(element, "dndInsertInto");
+			BAL.DOM.removeClass(element, "dndInsertWithin");
+		}
+	},
+	
+	showNoDropMarker: function(cacheTargetID, cachePosition) {
+		this.removeInsertMarkerStyles();
+		this.addToCache(window.tlDnD.data.split("/").pop(), cacheTargetID, cachePosition, {
+			isDropable: false
+		});
+	},
+	
+	getDropOptions: function(targetID, position) {
+		return window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), targetID)?.[position];
+	},
+	
+	addToCache: function (sourceID, targetID, position, options) {
+		if(window.tlDnD.cache !== undefined) {
+			var cacheValue = window.tlDnD.cache.get(sourceID, targetID);
+			if(cacheValue !== undefined) {
+				cacheValue[position] = options;
+				
+				return;
+			}
+		}
+		
+		var cacheValue = {};
+		cacheValue[position] = options;
+		
+		this.addToCacheInternal(sourceID, targetID, cacheValue);
+	},
+	
+	addToCacheInternal: function(sourceID, targetID, cacheValue) {
+		if(window.tlDnD.cache === undefined) {
+			window.tlDnD.cache = new services.util.TwoKeyMap();
+		}
+		
+		window.tlDnD.cache.set(sourceID, targetID, cacheValue);
+	},
+	
+	createDragImage: function(draggedObjects) {
+		var dragImage = document.createElement("div");
+		dragImage.classList.add("dragImage");
+		var draggedObjectList = document.createElement("ul");
+		dragImage.appendChild(draggedObjectList);
+		
+		for(var i = 0; i < draggedObjects.length; i++) {
+			var draggedObjectListItem = document.createElement("li");
+			draggedObjectList.appendChild(draggedObjectListItem);
+			var draggedObjectImage = BAL.DOM.getAttribute(draggedObjects[i], "data-drag-image");
+			draggedObjectListItem.insertAdjacentHTML("beforebegin", draggedObjectImage);
+		}
+		
+		dragImage.style.position = "absolute";
+		/*
+		 * The element from which the image for the drag operation is created should not be visible
+		 * to the user. The height is unknown and depends on the number and size of the elements to be dragged. 
+		 * Therefore, the element is moved down by the maximal height (i.e. height of the viewport).
+		 */
+		dragImage.style.bottom = "-100vh";
+	
+		document.body.appendChild(dragImage);
+		
+		return dragImage;
+	},
 
 };
 

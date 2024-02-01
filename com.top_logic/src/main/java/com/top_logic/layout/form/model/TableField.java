@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.annotation.Inspectable;
 import com.top_logic.basic.listener.EventType;
@@ -44,7 +45,7 @@ import com.top_logic.mig.html.SelectionModel;
 public class TableField extends ConstantField implements TableData, TableDataOwner, Provider<TableViewModel> {
 	
 	@Inspectable
-	private final TableData tableData;
+	private TableData tableData;
 
 	@Inspectable
 	private boolean selectable;
@@ -59,16 +60,20 @@ public class TableField extends ConstantField implements TableData, TableDataOwn
 		super(name, !IMMUTABLE);
 
 		_configKey = ConfigKey.field(configNameMapping, this);
-		tableData =
-			DefaultTableData.createTableDataImplementation(this, this, _configKey, updateSelectionOnTableEvents);
+		initData(_configKey, updateSelectionOnTableEvents);
 		installEventForward();
     }
 
 	protected TableField(String name, ConfigKey configKey, boolean updateSelectionOnTableEvents) {
 		super(name, !IMMUTABLE);
 		_configKey = configKey;
-		tableData = DefaultTableData.createTableDataImplementation(this, this, configKey, updateSelectionOnTableEvents);
+		initData(configKey, updateSelectionOnTableEvents);
 		installEventForward();
+	}
+
+	void initData(ConfigKey configKey, boolean updateSelectionOnTableEvents) {
+		tableData = DefaultTableData.createTableDataImplementation(this, Maybe.some(this), configKey,
+		updateSelectionOnTableEvents);
 	}
 
 	private void installEventForward() {
@@ -87,7 +92,7 @@ public class TableField extends ConstantField implements TableData, TableDataOwn
 	}
 
 	@Override
-	public TableDataOwner getOwner() {
+	public Maybe<? extends TableDataOwner> getOwner() {
 		return getTableData().getOwner();
 	}
 
@@ -132,13 +137,13 @@ public class TableField extends ConstantField implements TableData, TableDataOwn
 	}
 
 	@Override
-	public TableDragSource getDragSource() {
-		return getTableData().getDragSource();
+	public TableDragSource getTableDragSource() {
+		return getTableData().getTableDragSource();
 	}
 
 	@Override
-	public List<TableDropTarget> getDropTargets() {
-		return getTableData().getDropTargets();
+	public List<TableDropTarget> getTableDropTargets() {
+		return getTableData().getTableDropTargets();
 	}
 
 	@Override

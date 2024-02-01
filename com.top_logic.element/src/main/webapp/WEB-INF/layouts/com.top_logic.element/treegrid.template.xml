@@ -39,7 +39,7 @@
 					<property name="applyHandler"/>
 
 					<property name="dragSource"/>
-					<property name="dropTargets"/>
+					<property name="treeDropTargets"/>
 					<property name="buttons"/>
 				</value>
 			</display-order>
@@ -138,6 +138,18 @@
 			/>
 			<entry-tag value="dropTarget"/>
 		</property>
+		<property name="treeDropTargets"
+			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
+			instance-type="com.top_logic.layout.tree.dnd.TreeDropTarget"
+			type="List"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="treegrid"
+			/>
+			<entry-tag value="dropTarget"/>
+		</property>
 	</properties>
 
 	<component class="com.top_logic.element.layout.grid.GridComponent"
@@ -167,6 +179,7 @@
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		titleKey="${name}"
+		treeDropTargets="${treeDropTargets}"
 	>
 		<modifier class="com.top_logic.element.layout.meta.TemplateFormContextModificator"
 			readOnlyColumns="${readOnlyColumns}"
@@ -196,7 +209,6 @@
 				configurationProviders="${configurationProviders}"
 				defaultColumns="${defaultColumns}"
 				dragSource="${dragSource}"
-				dropTargets="${dropTargets}"
 				fixedColumns="${fixedColumns}"
 			/>
 		</tables>

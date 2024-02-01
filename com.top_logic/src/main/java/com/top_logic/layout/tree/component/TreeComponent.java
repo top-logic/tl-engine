@@ -41,7 +41,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -238,12 +237,6 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		/** Name of the {@link #getResourceProvider()} property. */
 		String RESOURCE_PROVIDER_ATTRIBUTE = "resource-provider";
 
-		/** @see #getDropTargets() */
-		String DROP_TARGETS_ATTRIBUTE_NAME = "dropTargets";
-
-		/** @see #getDropTargets() */
-		String DROP_TARGETS_ENTRY_TAG_NAME = "dropTarget";
-
 		/** @see #getDragSource() */
 		String DRAG_SOURCE = "dragSource";
 
@@ -335,13 +328,6 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		@Name(DRAG_SOURCE)
 		@ItemDefault(DefaultTreeDrag.class)
 		PolymorphicConfiguration<TreeDragSource> getDragSource();
-
-		/**
-		 * Operations that control element drops in a tree.
-		 */
-		@Name(DROP_TARGETS_ATTRIBUTE_NAME)
-		@EntryTag(DROP_TARGETS_ENTRY_TAG_NAME)
-		List<PolymorphicConfiguration<TreeDropTarget>> getDropTargets();
 
 		@Override
 		@ItemDefault(TreeContextMenuFactory.class)

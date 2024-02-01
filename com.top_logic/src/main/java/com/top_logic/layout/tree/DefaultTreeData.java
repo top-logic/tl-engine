@@ -12,6 +12,7 @@ import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.annotation.Inspectable;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.tree.dnd.DefaultTreeDrag;
@@ -97,13 +98,18 @@ public class DefaultTreeData extends LazyTypedAnnotatable implements TreeData {
 	}
 
 	@Override
-	public TreeDragSource getDragSource() {
+	public TreeDragSource getTreeDragSource() {
 		return _dragSource;
 	}
 
 	@Override
-	public List<TreeDropTarget> getDropTargets() {
+	public List<TreeDropTarget> getTreeDropTargets() {
 		return _dropTargets;
+	}
+
+	@Override
+	public void setTreeDropTargets(List<TreeDropTarget> dropTargets) {
+		_dropTargets = CollectionUtilShared.unmodifiableList(dropTargets);
 	}
 
 }

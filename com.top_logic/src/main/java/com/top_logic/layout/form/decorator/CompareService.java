@@ -20,6 +20,7 @@ import com.top_logic.basic.col.CustomStartNodeDFSIterator;
 import com.top_logic.basic.col.DescendantDFSIterator;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.ReverseCustomStartNodeDFSIterator;
 import com.top_logic.basic.col.ReverseDescendantDFSIterator;
 import com.top_logic.basic.col.TreeView;
@@ -336,7 +337,7 @@ public class CompareService<CI extends CompareInfo> extends DecorateService<CI> 
 		table.setResPrefix(field.getResources());
 		ObjectTableModel tableModel = new ObjectTableModel(columnNames, table, rows);
 		CompareTableOwner owner = new CompareTableOwner();
-		TableData compareTable = DefaultTableData.createTableData(owner, tableModel, configKey);
+		TableData compareTable = DefaultTableData.createTableData(Maybe.some(owner), tableModel, configKey);
 		owner.init(compareTable, field);
 		attachTableModelToCompareColumn(tableModel, table);
 		return compareTable;

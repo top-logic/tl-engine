@@ -17,6 +17,9 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.dnd.TableDropTarget;
+import com.top_logic.layout.tree.TreeData;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
@@ -26,6 +29,8 @@ import com.top_logic.mig.html.HTMLUtil;
  */
 public abstract class AbstractTableRenderer<C extends AbstractTableRenderer.Config<?>>
 		extends ConfigurableControlRenderer<TableControl, C> implements TableRenderer<C> {
+
+	private static final String IS_TREE_DATA_ATTRIBUTE = HTMLConstants.DATA_ATTRIBUTE_PREFIX + "is-tree";
 
 	/**
 	 * Configuration of the {@link AbstractTableRenderer}.
@@ -57,25 +62,70 @@ public abstract class AbstractTableRenderer<C extends AbstractTableRenderer.Conf
 
 		TableControl table = control;
 		TableData data = table.getTableData();
-		if (data.getDragSource().dragEnabled(data)) {
-			out.beginAttribute(ONDRAGSTART_ATTR);
-			out.append("return services.form.TableControl.handleOnDragStart(event, this);");
-			out.endAttribute();
-			out.beginAttribute(ONDRAGEND_ATTR);
-			out.append("return services.form.TableControl.handleOnDragEnd(event, this);");
-			out.endAttribute();
+
+		out.writeAttribute(IS_TREE_DATA_ATTRIBUTE, control.isTree());
+
+		if (control.isTree()) {
+			writeTreeDragAndDropListeners(out, data);
+		} else {
+			writeTableDragAndDropListeners(out, data);
+		}
+	}
+
+	private void writeTableDragAndDropListeners(TagWriter out, TableData data) throws IOException {
+		if (data.getTableDragSource().dragEnabled(data)) {
+			writeDragStartEndListeners(out);
 		}
 
-		TableDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getDropTargets(), data);
+		TableDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getTableDropTargets(), data);
 
 		if (firstEnabledDropTarget != null) {
-			out.writeAttribute(TableDropTarget.TL_DROPTYPE_ATTR, firstEnabledDropTarget.getDropType().name());
+			writeDragAndDropType(out, firstEnabledDropTarget.getDropType().name());
+			writeOnDropAttributes(out, data);
+		}
+	}
+
+	private void writeDragAndDropType(TagWriter out, String typeName) {
+		out.writeAttribute(TableDropTarget.TL_DROPTYPE_ATTR, typeName);
+	}
+
+	private void writeDragStartEndListeners(TagWriter out) throws IOException {
+		out.beginAttribute(ONDRAGSTART_ATTR);
+		out.append("return services.form.TableControl.handleOnDragStart(event, this);");
+		out.endAttribute();
+		out.beginAttribute(ONDRAGEND_ATTR);
+		out.append("return services.form.TableControl.handleOnDragEnd(event, this);");
+		out.endAttribute();
+	}
+
+	private void writeTreeDragAndDropListeners(TagWriter out, TableData data) throws IOException {
+		TreeData treeData = (TreeData) data;
+
+		if (treeData.getTreeDragSource().dragEnabled(treeData)) {
+			writeDragStartEndListeners(out);
+		}
+
+		TreeDropTarget firstEnabledDropTarget =
+			getFirstEnabledTreeDropTarget(treeData.getTreeDropTargets(), treeData);
+
+		if (firstEnabledDropTarget != null) {
+			writeDragAndDropType(out, firstEnabledDropTarget.getDropType().name());
 			writeOnDropAttributes(out, data);
 		}
 	}
 
 	private TableDropTarget getFirstEnabledDropTarget(List<TableDropTarget> dropTargets, TableData data) {
 		for (TableDropTarget dropTarget : dropTargets) {
+			if (dropTarget.dropEnabled(data)) {
+				return dropTarget;
+			}
+		}
+
+		return null;
+	}
+
+	private TreeDropTarget getFirstEnabledTreeDropTarget(List<TreeDropTarget> dropTargets, TreeData data) {
+		for (TreeDropTarget dropTarget : dropTargets) {
 			if (dropTarget.dropEnabled(data)) {
 				return dropTarget;
 			}

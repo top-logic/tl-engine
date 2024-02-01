@@ -45,6 +45,7 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.NoPrepare;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.TLTreeModelUtil;
@@ -118,6 +119,8 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	private boolean _expandRoot;
 	
 	private boolean _adjustSelectionWhenCollapsing;
+
+	private List<TreeDropTarget> _dropTargets;
 
 	/**
 	 * Creates a new {@link AbstractTreeGridBuilder} from the given configuration.
@@ -263,6 +266,20 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 */
 	public void adjustSelectionWhenCollapsing(boolean adjustSelectionWhenCollapsing) {
 		_adjustSelectionWhenCollapsing = adjustSelectionWhenCollapsing;
+	}
+
+	/**
+	 * Operations that control element drops in a tree grid.
+	 */
+	public List<TreeDropTarget> getDropTargets() {
+		return _dropTargets;
+	}
+
+	/**
+	 * Sets the value of {@link #getDropTargets()}.
+	 */
+	public void setDropTargets(List<TreeDropTarget> dropTargets) {
+		_dropTargets = dropTargets;
 	}
 
 	/**
@@ -472,6 +489,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 			}
 
 			table = FormFactory.newTreeTableField(GridComponent.FIELD_TABLE, grid.getConfigKey(), _treeModel);
+			table.setTreeDropTargets(_dropTargets);
 		}
 
 		/**

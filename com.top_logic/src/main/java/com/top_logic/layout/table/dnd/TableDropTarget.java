@@ -11,7 +11,7 @@ import com.top_logic.mig.html.HTMLConstants;
 /**
  * Handler that controls drop operations in a table.
  * 
- * @see TableData#getDropTargets()
+ * @see TableData#getTableDropTargets()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

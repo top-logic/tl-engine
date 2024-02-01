@@ -22,6 +22,7 @@ import test.com.top_logic.layout.table.TableTestStructure.DeferredLoading;
 import test.com.top_logic.layout.table.TableTestStructure.TableControlProvider;
 import test.com.top_logic.layout.table.TestingConfigKey;
 
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayUnit;
@@ -38,7 +39,6 @@ import com.top_logic.layout.structure.DefaultPopupDialogModel;
 import com.top_logic.layout.structure.PopupDialogModel;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.table.DefaultTableData;
-import com.top_logic.layout.table.DefaultTableData.NoTableDataOwner;
 import com.top_logic.layout.table.SortConfig;
 import com.top_logic.layout.table.SortConfigFactory;
 import com.top_logic.layout.table.TableData;
@@ -266,7 +266,7 @@ public class TestTableControl extends TestControl {
 		ObjectTableModel applicationModel = tableTestStructure.applicationModel;
 		TestingConfigKey configKey = tableTestStructure.configKey;
 		TableData tableData =
-			DefaultTableData.createTableData(NoTableDataOwner.INSTANCE, applicationModel, configKey);
+			DefaultTableData.createTableData(Maybe.none(), applicationModel, configKey);
 		TableControl tableControl = getTableControlProvider().createTableControl(tableData);
 		writeControl(tableControl);
 	}

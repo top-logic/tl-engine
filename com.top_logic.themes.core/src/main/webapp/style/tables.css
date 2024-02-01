@@ -344,7 +344,7 @@ div.frmBody.dndInsertInto > div.dropPane {
 	background-color: var(--notification-info-background);
 }
 
-tr.tl-table__row.dndInsertInto > td {
+:is(tr.tl-table__row.dndInsertInto, tr.tl-table__row.dndInsertWithin) > td {
 	background-color: var(--notification-info-background);
 }
 

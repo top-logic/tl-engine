@@ -5,11 +5,22 @@
  */
 package com.top_logic.layout.form.model;
 
+import java.util.List;
+
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.col.Maybe;
+import com.top_logic.basic.config.annotation.Inspectable;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.table.ConfigKey;
+import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
+import com.top_logic.layout.table.tree.DefaultTreeTableData;
 import com.top_logic.layout.table.tree.TreeTableData;
+import com.top_logic.layout.table.tree.TreeTableDataOwner;
+import com.top_logic.layout.tree.TreeData;
+import com.top_logic.layout.tree.TreeDataListener;
+import com.top_logic.layout.tree.dnd.TreeDragSource;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.TreeTableModel;
 
@@ -24,7 +35,10 @@ import com.top_logic.layout.tree.model.TreeTableModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class TreeTableField extends TableField implements TreeTableData {
+public class TreeTableField extends TableField implements TreeTableData, TreeTableDataOwner {
+
+	@Inspectable
+	private TreeTableData _treeTableData;
 
 	/**
 	 * Creates a new TreeTableField.
@@ -50,12 +64,23 @@ public class TreeTableField extends TableField implements TreeTableData {
 		super(name, configKey, false);
 	}
 
+	@Override
+	void initData(ConfigKey configKey, boolean updateSelectionOnTableEvents) {
+		_treeTableData = DefaultTreeTableData.createTreeTableDataImplementation(this, Maybe.some(this), configKey,
+			updateSelectionOnTableEvents);
+	}
+
+	@Override
+	public Maybe<? extends TreeTableDataOwner> getOwner() {
+		return getTreeTableData().getOwner();
+	}
+
 	/**
 	 * Sets the {@link AbstractTreeTableModel} on which the table bases.
 	 */
 	@Override
 	public void setTree(AbstractTreeTableModel<?> treeModel) {
-		internalSetTableModel(treeModel.getTable());
+		super.setTableModel(treeModel.getTable());
 		treeModel.setViewModel(this);
 	}
 
@@ -66,6 +91,16 @@ public class TreeTableField extends TableField implements TreeTableData {
 	public AbstractTreeTableModel<?> getTree() {
 		TreeTableModel table = (TreeTableModel) getTableModel();
 		return (AbstractTreeTableModel<?>) table.getTreeModel();
+	}
+
+	@Override
+	public TableData getTableData() {
+		return _treeTableData;
+	}
+
+	@Override
+	public TreeData getTreeData() {
+		return _treeTableData;
 	}
 
 	/**
@@ -89,15 +124,34 @@ public class TreeTableField extends TableField implements TreeTableData {
 			+ this + "' must not be set direct. Set the corresponding tree model.");
 	}
 
-	/**
-	 * Internal method to set the {@link TableModel}.
-	 * 
-	 * <p>
-	 * This model must be called as the table model is not set from outside.
-	 * </p>
-	 */
-	protected void internalSetTableModel(TableModel tableModel) {
-		super.setTableModel(tableModel);
+	@Override
+	public boolean addTreeDataListener(TreeDataListener listener) {
+		return getTreeData().addTreeDataListener(listener);
+	}
+
+	@Override
+	public boolean removeTreeDataListener(TreeDataListener listener) {
+		return getTreeData().removeTreeDataListener(listener);
+	}
+
+	@Override
+	public List<TreeDropTarget> getTreeDropTargets() {
+		return getTreeData().getTreeDropTargets();
+	}
+
+	@Override
+	public TreeDragSource getTreeDragSource() {
+		return getTreeData().getTreeDragSource();
+	}
+
+	@Override
+	public TreeTableData getTreeTableData() {
+		return _treeTableData;
+	}
+
+	@Override
+	public void setTreeDropTargets(List<TreeDropTarget> dropTargets) {
+		getTreeData().setTreeDropTargets(dropTargets);
 	}
 
 }

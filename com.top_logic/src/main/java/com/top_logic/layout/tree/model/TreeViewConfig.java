@@ -5,9 +5,14 @@
  */
 package com.top_logic.layout.tree.model;
 
+import java.util.List;
+
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
 
 /**
  * Configuration for displaying tree alike structures.
@@ -35,6 +40,16 @@ public interface TreeViewConfig extends Selectable.SelectableConfig {
 	 * The configuration parameter for {@link #adjustSelectionWhenCollapsing()}.
 	 */
 	String ADJUST_SELECTION_WHEN_COLLAPSING_ATTRIBUTE = "adjustSelectionWhenCollapsing";
+
+	/**
+	 * The configuration parameter for {@link #getDropTargets()}
+	 */
+	String DROP_TARGETS_ATTRIBUTE_NAME = "treeDropTargets";
+
+	/**
+	 * Entry tag name for the configuration parameter in {@link #getDropTargets()}
+	 */
+	String DROP_TARGETS_ENTRY_TAG_NAME = "dropTarget";
 
 	/**
 	 * Whether the selected node should be expanded when selected.
@@ -69,5 +84,12 @@ public interface TreeViewConfig extends Selectable.SelectableConfig {
 	@Name(ADJUST_SELECTION_WHEN_COLLAPSING_ATTRIBUTE)
 	@BooleanDefault(true)
 	boolean adjustSelectionWhenCollapsing();
+
+	/**
+	 * Operations that control element drops in a tree.
+	 */
+	@Name(DROP_TARGETS_ATTRIBUTE_NAME)
+	@EntryTag(DROP_TARGETS_ENTRY_TAG_NAME)
+	List<PolymorphicConfiguration<TreeDropTarget>> getDropTargets();
 
 }

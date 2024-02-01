@@ -81,7 +81,7 @@ public class TreeDropActionOp<C extends TreeDropActionOp.TreeDropAction> extends
 		Args arguments = toDropArguments(context, tree, dropPosition);
 		List<?> droppedObjects = CollectionUtilShared.asList(droppedObject);
 
-		for (TreeDropTarget dropTarget : tree.getDropTargets()) {
+		for (TreeDropTarget dropTarget : tree.getTreeDropTargets()) {
 			assertTLScriptDrop(dropTarget);
 			TreeDropTargetByExpression tlScriptDropHandler = (TreeDropTargetByExpression) dropTarget;
 			assertDropEnabled(tree, tlScriptDropHandler);

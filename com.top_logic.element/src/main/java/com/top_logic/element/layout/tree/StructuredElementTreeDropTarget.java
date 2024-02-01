@@ -38,7 +38,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-@InApp(classifiers = { "tree" })
+@InApp(classifiers = { "tree", "treetable", "treegrid" })
 @Label("Structure element drop")
 public class StructuredElementTreeDropTarget extends BusinessObjectTreeDrop {
 

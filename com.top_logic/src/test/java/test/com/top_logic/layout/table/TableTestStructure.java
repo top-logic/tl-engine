@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.Permutation;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
@@ -24,7 +25,6 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.resources.SimpleResourceView;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.DefaultTableData;
-import com.top_logic.layout.table.DefaultTableData.NoTableDataOwner;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableFilter;
 import com.top_logic.layout.table.TableModel;
@@ -226,7 +226,7 @@ public class TableTestStructure {
 
 	private static TableData createTableViewModel(TableModel applicationModel, ConfigKey key) {
 		TableData tableData =
-			DefaultTableData.createTableData(NoTableDataOwner.INSTANCE, applicationModel, key);
+			DefaultTableData.createTableData(Maybe.none(), applicationModel, key);
 		TableViewModel tableModel = tableData.getViewModel();
 		tableModel.getPagingModel().setPageSizeSpec(PAGE_SIZE);
 		return tableData;

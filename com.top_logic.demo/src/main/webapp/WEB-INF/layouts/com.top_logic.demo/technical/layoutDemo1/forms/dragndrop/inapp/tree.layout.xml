@@ -28,7 +28,7 @@
 		<dragSource class="com.top_logic.model.search.providers.TreeDragSourceByExpression"
 			canDrag="source -> if($source!= `DemoTypes#ROOT`,$source.get(`DemoTypes:DemoTypes.All#name`).stringContains('1'), true)"
 		/>
-		<dropTargets>
+		<treeDropTargets>
 			<dropTarget class="com.top_logic.model.search.providers.OntoTreeDropByExpression"
 				canDrop="draggedObjects->referenceRow->{canDrop=source -> target -> $source.get(`DemoTypes:DemoTypes.All#parent`) != $target.get(`DemoTypes:DemoTypes.All#parent`);$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}"
 			>
@@ -42,6 +42,6 @@
 	};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
 	]]></handleDrop>
 			</dropTarget>
-		</dropTargets>
+		</treeDropTargets>
 	</arguments>
 </config:template-call>

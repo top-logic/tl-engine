@@ -83,7 +83,7 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 		if (!treeControl.useLegacyDrag()) {
 			TreeData data = treeControl.getData();
 
-			if (data.getDragSource().dragEnabled(data)) {
+			if (data.getTreeDragSource().dragEnabled(data)) {
 				out.beginAttribute(ONDRAGSTART_ATTR);
 				out.append("return services.form.TreeControl.handleOnDragStart(event, this);");
 				out.endAttribute();
@@ -92,7 +92,7 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 				out.endAttribute();
 			}
 
-			TreeDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getDropTargets(), data);
+			TreeDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getTreeDropTargets(), data);
 			if (firstEnabledDropTarget != null) {
 				out.beginAttribute(ONDROP_ATTR);
 				out.append("return services.form.TreeControl.handleOnDrop(event, this);");
@@ -361,7 +361,7 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 			throws IOException {
 		TreeData data = nodeContext.getTree().getData();
 		if (!nodeContext.getTree().useLegacyDrag()) {
-			if (data.getDragSource().canDrag(data, nodeContext.currentNode())) {
+			if (data.getTreeDragSource().canDrag(data, nodeContext.currentNode())) {
 				writer.writeAttribute(HTMLConstants.DRAGGABLE_ATTR, HTMLConstants.DRAGGABLE_TRUE_VALUE);
 				HTMLUtil.writeDragImage(context, writer, getTreeContentRenderer().getResourceProvider(),
 					nodeContext.currentNode());

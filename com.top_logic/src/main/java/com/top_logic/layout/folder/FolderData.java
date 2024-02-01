@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.common.folder.model.FolderFilter;
 import com.top_logic.common.folder.model.FolderNode;
 import com.top_logic.layout.DisplayContext;
@@ -81,7 +82,7 @@ public class FolderData implements TableDataOwner, BreadcrumbDataOwner,
 			EditableRowTableModel tableModel, ConfigKey configKey) {
 		_owner = owner;
 		this.treeModel = new LazyMappedTreeModel<>(rootUserObject, treeBuilder);
-		this.tableData = DefaultTableData.createTableData(this, tableModel, configKey);
+		this.tableData = DefaultTableData.createTableData(Maybe.some(this), tableModel, configKey);
 
 		this.selectionModel = new DefaultSingleSelectionModel(this);
 		setSingleSelection(treeModel.getRoot());

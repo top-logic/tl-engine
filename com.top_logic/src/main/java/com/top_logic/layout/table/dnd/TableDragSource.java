@@ -13,7 +13,7 @@ import com.top_logic.layout.table.TableData;
 /**
  * Handler that controls dragging data from a table.
  * 
- * @see TableData#getDragSource()
+ * @see TableData#getTableDragSource()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

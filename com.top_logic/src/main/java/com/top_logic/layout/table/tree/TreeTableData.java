@@ -5,16 +5,23 @@
  */
 package com.top_logic.layout.table.tree;
 
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.tree.TreeData;
+import com.top_logic.layout.tree.TreeRenderer;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.TreeUIModel;
+import com.top_logic.layout.tree.renderer.DefaultTreeRenderer;
 
 /**
  * Data holder for {@link TreeTableComponent}s.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public interface TreeTableData extends TableData {
+public interface TreeTableData extends TableData, TreeData {
+
+	@Override
+	Maybe<? extends TreeTableDataOwner> getOwner();
 
 	/**
 	 * Returns the {@link TreeUIModel}.
@@ -25,5 +32,15 @@ public interface TreeTableData extends TableData {
 	 * Sets the {@link AbstractTreeTableModel} on which the table bases.
 	 */
 	public void setTree(AbstractTreeTableModel<?> treeModel);
+
+	@Override
+	default TreeRenderer getTreeRenderer() {
+		return DefaultTreeRenderer.INSTANCE;
+	}
+
+	@Override
+	default TreeUIModel<?> getTreeModel() {
+		return getTree();
+	}
 
 }

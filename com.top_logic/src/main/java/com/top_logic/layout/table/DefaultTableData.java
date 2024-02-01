@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.InlineMap;
 import com.top_logic.basic.col.LazyTypedAnnotatableMixin;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.annotation.Inspectable;
 import com.top_logic.basic.listener.PropertyObservableBase;
 import com.top_logic.layout.LayoutContext;
@@ -73,7 +74,7 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 
 	private TableModelListener _multiSortDialogListener;
 
-	private final TableDataOwner owner;
+	private final Maybe<? extends TableDataOwner> owner;
 
 	private final ConfigKey _configKey;
 
@@ -99,7 +100,8 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	 * @param updateSelectionOnTableEvents
 	 *        True if the {@link TableData} updates his selection when table model events are sent.
 	 */
-	public DefaultTableData(TableDataOwner owner, ConfigKey configKey, boolean updateSelectionOnTableEvents) {
+	public DefaultTableData(Maybe<? extends TableDataOwner> owner, ConfigKey configKey,
+			boolean updateSelectionOnTableEvents) {
 		assert owner != null;
 		assert configKey != null;
 
@@ -411,7 +413,8 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	 * 
 	 * @return the newly created implementation instance for the specified object
 	 */
-	public static TableData createTableDataImplementation(TableData proxy, TableDataOwner owner, ConfigKey configKey,
+	public static TableData createTableDataImplementation(TableData proxy, Maybe<? extends TableDataOwner> owner,
+			ConfigKey configKey,
 			boolean updateSelectionOnTableEvents) {
 		return new TableDataImplementation(proxy, owner, configKey, updateSelectionOnTableEvents);
     }
@@ -435,7 +438,7 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	 *        the {@link TableModel} for the new {@link DefaultTableData}
 	 */
 	public static final TableData createAnonymousTableData(TableModel table) {
-		return createTableData(NoTableDataOwner.INSTANCE, table, ConfigKey.none());
+		return createTableData(Maybe.none(), table, ConfigKey.none());
 	}
 
 	/**
@@ -448,7 +451,8 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	 * @param configKey
 	 *        The {@link ConfigKey}.
 	 */
-	public static TableData createTableData(TableDataOwner owner, TableModel tableModel, ConfigKey configKey) {
+	public static TableData createTableData(Maybe<? extends TableDataOwner> owner, TableModel tableModel,
+			ConfigKey configKey) {
 		DefaultTableData result = new DefaultTableData(owner, configKey, true);
 		result.setTableModel(tableModel);
 		result.setToolBar(new DefaultToolBar(result, new DefaultExpandable()));
@@ -461,7 +465,7 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	}
 
 	@Override
-	public final TableDataOwner getOwner() {
+	public Maybe<? extends TableDataOwner> getOwner() {
 		return owner;
 	}
 
@@ -478,7 +482,7 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	}
 
 	@Override
-	public TableDragSource getDragSource() {
+	public TableDragSource getTableDragSource() {
 		if (_tableModel == null) {
 			return NoTableDrag.INSTANCE;
 		}
@@ -486,7 +490,7 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	}
 
 	@Override
-	public List<TableDropTarget> getDropTargets() {
+	public List<TableDropTarget> getTableDropTargets() {
 		if (_tableModel == null) {
 			return Arrays.asList(NoTableDrop.INSTANCE);
 		}
@@ -535,7 +539,7 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 	private static final class TableDataImplementation extends DefaultTableData {
 		private final TableData proxy;
 
-		public TableDataImplementation(TableData proxy, TableDataOwner owner, ConfigKey configKey,
+		public TableDataImplementation(TableData proxy, Maybe<? extends TableDataOwner> owner, ConfigKey configKey,
 				boolean updateSelectionOnTableEvents) {
 			super(owner, configKey, updateSelectionOnTableEvents);
 			this.proxy = proxy;

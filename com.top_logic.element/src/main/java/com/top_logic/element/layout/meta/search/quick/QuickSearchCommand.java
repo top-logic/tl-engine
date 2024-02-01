@@ -15,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.NamedConstant;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -270,7 +271,7 @@ public class QuickSearchCommand extends AbstractSearchCommand {
 		TableModel tableModel = getTableModel(searchResult);
 		FormMember reference = _input.getModel();
 		GenericTableDataOwner owner = new GenericTableDataOwner(reference, FormMemberAlgorithm.INSTANCE);
-		TableData table = DefaultTableData.createTableData(owner, tableModel, ConfigKey.none());
+		TableData table = DefaultTableData.createTableData(Maybe.some(owner), tableModel, ConfigKey.none());
 		customizeTableModel(aContext, dialogModel, table);
 		TableControl tableControl = new TableControl(table, DefaultTableRenderer.newInstance());
 		tableControl.addListener(AbstractControlBase.ATTACHED_PROPERTY, new AttachedPropertyListener() {

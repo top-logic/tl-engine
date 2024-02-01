@@ -159,26 +159,24 @@ public class MutableTreeData extends AbstractObservable<TreeDataListener, TreeDa
 	}
 
 	@Override
-	public TreeDragSource getDragSource() {
+	public TreeDragSource getTreeDragSource() {
 		return _dragSource;
 	}
 
 	/**
-	 * @see #getDragSource()
+	 * @see #getTreeDragSource()
 	 */
 	public void setDragSource(TreeDragSource dragSource) {
 		_dragSource = dragSource;
 	}
 
 	@Override
-	public List<TreeDropTarget> getDropTargets() {
+	public List<TreeDropTarget> getTreeDropTargets() {
 		return _dropTargets;
 	}
 
-	/**
-	 * @see #getDropTargets()
-	 */
-	public void setDropTargets(List<TreeDropTarget> dropTargets) {
+	@Override
+	public void setTreeDropTargets(List<TreeDropTarget> dropTargets) {
 		_dropTargets = dropTargets;
 	}
 

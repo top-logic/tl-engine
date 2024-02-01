@@ -89,6 +89,8 @@ public class TypeResolver extends DescendingVisitor<TLType, TLType> {
 
 	private TLModel _model;
 
+	private TLType _any;
+
 	/**
 	 * The {@link TLType} of the evaluation result of this {@link SearchExpression}.
 	 */
@@ -99,11 +101,19 @@ public class TypeResolver extends DescendingVisitor<TLType, TLType> {
 	/**
 	 * @see #getType(SearchExpressionPart)
 	 */
-	private static TLType setType(SearchExpressionPart part, TLType type) {
-		if (type != null) {
-			part.set(TYPE, type);
+	private TLType setType(SearchExpressionPart part, TLType type) {
+		if (type == null) {
+			type = any();
 		}
+		part.set(TYPE, type);
 		return type;
+	}
+
+	private TLType any() {
+		if (_any == null) {
+			_any = _model.getModule("tl.util").getType("Any");
+		}
+		return _any;
 	}
 
 	/**

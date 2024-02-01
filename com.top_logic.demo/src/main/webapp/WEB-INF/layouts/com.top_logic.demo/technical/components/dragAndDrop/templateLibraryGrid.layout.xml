@@ -46,35 +46,37 @@
 		<dragSource class="com.top_logic.model.search.providers.GridDragSourceByExpression"
 			canDrag="x -> $x.instanceOf(`test.dnd:NamedPlanElement`)"
 		/>
-		<tableDrop class="com.top_logic.model.search.providers.GridDropTargetByExpression"
-			dropType="ROW"
-		>
-			<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=source -> target -> {
-  containerParent = if($source.type() == `test.dnd:Machine`, $source.get(`test.dnd:Machine#location`), $source);
-  root = $containerParent.recursion(x -> $x.container()).lastElement();
-  if($root.type() == `test.dnd:Library`, {
-    switch($source.type()) {
-      `test.dnd:Floor`: $target.instanceOf(`test.dnd:Factory`);
-      `test.dnd:Location`: $target.instanceOf(`test.dnd:Floor`);
-      `test.dnd:Entry`: $target.instanceOf(`test.dnd:Location`);
-      `test.dnd:Machine`: $target.instanceOf(`test.dnd:Location`);
-    }
-  }, false);
-};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
-			<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
-    if($source.type() == `test.dnd:Machine`, $source.set(`test.dnd:Machine#location`, $target), {
-     ref = switch($target.type()) {
-       `test.dnd:Factory`: `test.dnd:Factory#floors`;
-       `test.dnd:Floor`: `test.dnd:Floor#locations`;
-       `test.dnd:Location`: `test.dnd:Location#entry`;
-      };
-      oldParent = $source.referers($ref);
-      oldChildren = $oldParent.get($ref);
-      $oldParent.set($ref, $oldChildren.filter(x -> $x != $source));
-      $target.add($ref, $source);
-    });
-};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}]]></handleDrop>
-		</tableDrop>
+		<dropTargets>
+			<dropTarget class="com.top_logic.model.search.providers.GridDropTargetByExpression"
+				dropType="ROW"
+			>
+				<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=source -> target -> {
+	  containerParent = if($source.type() == `test.dnd:Machine`, $source.get(`test.dnd:Machine#location`), $source);
+	  root = $containerParent.recursion(x -> $x.container()).lastElement();
+	  if($root.type() == `test.dnd:Library`, {
+	    switch($source.type()) {
+	      `test.dnd:Floor`: $target.instanceOf(`test.dnd:Factory`);
+	      `test.dnd:Location`: $target.instanceOf(`test.dnd:Floor`);
+	      `test.dnd:Entry`: $target.instanceOf(`test.dnd:Location`);
+	      `test.dnd:Machine`: $target.instanceOf(`test.dnd:Location`);
+	    }
+	  }, false);
+	};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
+				<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
+	    if($source.type() == `test.dnd:Machine`, $source.set(`test.dnd:Machine#location`, $target), {
+	     ref = switch($target.type()) {
+	       `test.dnd:Factory`: `test.dnd:Factory#floors`;
+	       `test.dnd:Floor`: `test.dnd:Floor#locations`;
+	       `test.dnd:Location`: `test.dnd:Location#entry`;
+	      };
+	      oldParent = $source.referers($ref);
+	      oldChildren = $oldParent.get($ref);
+	      $oldParent.set($ref, $oldChildren.filter(x -> $x != $source));
+	      $target.add($ref, $source);
+	    });
+	};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}]]></handleDrop>
+			</dropTarget>
+		</dropTargets>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"

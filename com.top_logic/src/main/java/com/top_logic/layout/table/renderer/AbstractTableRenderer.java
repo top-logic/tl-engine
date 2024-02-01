@@ -6,6 +6,7 @@
 package com.top_logic.layout.table.renderer;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -65,10 +66,22 @@ public abstract class AbstractTableRenderer<C extends AbstractTableRenderer.Conf
 			out.endAttribute();
 		}
 
-		if (data.getDropTarget().dropEnabled(data)) {
-			out.writeAttribute(TableDropTarget.TL_DROPTYPE_ATTR, data.getDropTarget().getDropType().name());
+		TableDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getDropTargets(), data);
+
+		if (firstEnabledDropTarget != null) {
+			out.writeAttribute(TableDropTarget.TL_DROPTYPE_ATTR, firstEnabledDropTarget.getDropType().name());
 			writeOnDropAttributes(out, data);
 		}
+	}
+
+	private TableDropTarget getFirstEnabledDropTarget(List<TableDropTarget> dropTargets, TableData data) {
+		for (TableDropTarget dropTarget : dropTargets) {
+			if (dropTarget.dropEnabled(data)) {
+				return dropTarget;
+			}
+		}
+
+		return null;
 	}
 
 	@Override

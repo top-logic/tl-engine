@@ -14,7 +14,7 @@
 					<property name="buttons"/>
 					<property name="modelBuilder"/>
 					<property name="dragSource"/>
-					<property name="treeDrop"/>
+					<property name="dropTargets"/>
 					<property name="securityDomain"/>
 					<property name="securityObject"/>
 					<property name="helpID"/>
@@ -57,15 +57,17 @@
 				value="tree"
 			/>
 		</property>
-		<property name="treeDrop"
+		<property name="dropTargets"
+			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
 			instance-type="com.top_logic.layout.tree.dnd.TreeDropTarget"
-			type="PolymorphicConfiguration"
+			type="List"
 		>
 			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
 			<acceptable-classifiers
 				unclassified="false"
 				value="tree"
 			/>
+			<entry-tag value="dropTarget"/>
 		</property>
 		<property name="component"
 			type="com.top_logic.mig.html.layout.LayoutComponent$Config"
@@ -116,6 +118,7 @@
 				defaultSelection="false"
 				dialogs="${dialogs}"
 				dragSource="${dragSource}"
+				dropTargets="${dropTargets}"
 				expandRoot="${expandRoot}"
 				expandSelected="${expandSelected}"
 				isSecurityMaster="true"
@@ -126,7 +129,6 @@
 				securityObject="${securityObject}"
 				show-only-selectable-nodes="${showOnlySelectableNodes}"
 				titleKey="${name}"
-				treeDrop="${treeDrop}"
 			>
 				<buttons>
 					${buttons}

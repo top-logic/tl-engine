@@ -18,5 +18,8 @@
 		<style name="/style/importGoogleFonts.css"/>
 		<style name="/style/fontawesome/all.css"/>
 		<style name="/style/tl_iconFont.css"/>
+		<style name="/style/toastui-editor.css"/>
+		<style name="/style/tui-color-picker.min.css"/>
+		<style name="/style/toastui-editor-plugin-color-syntax.css"/>
 	</styles>
 </theme>

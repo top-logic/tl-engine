@@ -111,7 +111,7 @@ public class TLModelPartDeletionChecker extends DefaultTLModelVisitor<Void, Void
 
 				if (!_toBeDeletedTypes.contains(owner)) {
 					ResKey2 errorKey = I18NConstants.ERROR_DELETE_TYPE_USED_BY_TYPEPART__TYPE_TYPEPART;
-					addConflictingPart(clazz, errorKey.fill(clazz.getName(), typePart.getName()));
+					addConflictingPart(clazz, errorKey.fill(clazz.getName(), TLModelUtil.qualifiedName(typePart)));
 				}
 			}
 		}

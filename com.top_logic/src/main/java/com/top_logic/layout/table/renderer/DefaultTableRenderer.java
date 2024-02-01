@@ -859,6 +859,14 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		/**
+		 * Whether the underlying table has a tree like structure (e. g. treetable or treegrid).
+		 */
+		@TemplateVariable("isTree")
+		public boolean isTree() {
+			return getView().isTree();
+		}
+
+		/**
 		 * The script to initialize the client-side state of the table.
 		 * 
 		 * <p>
@@ -1083,7 +1091,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			TableData tableData = getView().getTableData();
 			Object rowObject = getModel().getRowObject(rowIndex);
 
-			if (tableData.getDragSource().dragEnabled(tableData, rowObject)) {
+			if (tableData.getTableDragSource().dragEnabled(tableData, rowObject)) {
 				properties.put("isDraggable", true);
 				properties.put("dragImage", createDragImageFragment(rowObject, getModel().getTableConfiguration()));
 			} else {

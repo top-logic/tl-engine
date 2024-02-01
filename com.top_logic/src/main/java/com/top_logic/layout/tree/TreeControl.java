@@ -64,6 +64,8 @@ import com.top_logic.layout.tree.dnd.LegacyTreeDrag;
 import com.top_logic.layout.tree.dnd.TreeDropEvent;
 import com.top_logic.layout.tree.dnd.TreeDropEvent.Position;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
+import com.top_logic.layout.tree.model.AbstractTreeUINodeModel.TreeUINode;
+import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.tree.model.TreeModelEvent;
 import com.top_logic.layout.tree.model.TreeModelListener;
 import com.top_logic.layout.tree.model.TreeUIModel;
@@ -1084,51 +1086,112 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		}
 
 		@Override
-		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node,
+		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object cacheObject,
 				Map<String, Object> arguments) {
 			DndData data = DnD.getDndData(context, arguments);
 
 			if (data != null) {
 				TreeData treeData = treeControl.getData();
-				String position = (String) arguments.get("pos");
-				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, node, Position.fromString(position));
+				TreeUINode<?> cacheTreeNode = (TreeUINode<?>) cacheObject;
+				TLTreeNode<?> newRefNode;
+				String cachePositionString = (String) arguments.get("pos");
+				String positionString;
+				Position cachePosition = Position.fromString(cachePositionString);
 
-				List<TreeDropTarget> dropTargets = treeData.getDropTargets();
+				if (cachePosition == Position.ABOVE) {
+					Optional<TLTreeNode<?>> predecessorLastChild = getPredecessorLastChild(cacheTreeNode);
+
+					if (predecessorLastChild.isPresent()) {
+						// If predecessor (previous sibling node) has children, then it is a drop
+						// after its last child
+						newRefNode = predecessorLastChild.get();
+						positionString = "below";
+					} else {
+						// Otherwise (i.e. if the predecessor has no displayed children), then it is
+						// a drop before this node whose upper half is hovered
+						newRefNode = cacheTreeNode;
+						positionString = "above";
+					}
+				} else if (cachePosition == Position.BELOW) {
+					if (cacheTreeNode.getChildCount() > 0 && cacheTreeNode.isExpanded()) {
+						// If node has displayed children, then it is a drop before the first child
+						positionString = "above";
+						newRefNode = cacheTreeNode.getChildAt(0);
+					} else {
+						// Otherwise it is a drop within the node
+						positionString = "within";
+						newRefNode = cacheTreeNode;
+					}
+				} else {
+					newRefNode = cacheTreeNode;
+					positionString = "within";
+				}
+
+				Position newPosition = Position.fromString(cachePositionString);
+
+				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, newRefNode, newPosition);
+
+				List<TreeDropTarget> dropTargets = treeData.getTreeDropTargets();
 				for (TreeDropTarget dropTarget : dropTargets) {
 					if (dropTarget.canDrop(dropEvent)) {
-						displayDropMarker(treeControl, (String) arguments.get(ID_PARAM), position);
+						displayDropMarker(treeControl, treeControl.getNodeId(newRefNode), treeControl.getNodeId(cacheObject),
+							cachePositionString,
+							positionString);
 
 						return HandlerResult.DEFAULT_RESULT;
 					}
 				}
 
-				changeToNoDropCursor(treeControl, (String) arguments.get(ID_PARAM), position);
+				changeToNoDropCursor(treeControl, treeControl.getNodeId(cacheObject), cachePositionString);
 			}
 
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		private void changeToNoDropCursor(TreeControl treeControl, String targetID, String position) {
+		private Optional<TLTreeNode<?>> getPredecessorLastChild(TreeUINode<?> node) {
+			TLTreeNode<?> parent = node.getParent();
+
+			if (parent != null) {
+				int nodeIndex = parent.getIndex(node);
+
+				if (nodeIndex - 1 >= 0) {
+					TreeUINode<?> predecessor = (TreeUINode<?>) parent.getChildAt(nodeIndex - 1);
+
+					if (predecessor.isExpanded() && predecessor.getChildCount() > 0) {
+						return Optional.of(predecessor.getChildAt(predecessor.getChildCount() - 1));
+					}
+				}
+			}
+
+			return Optional.empty();
+		}
+
+		private void changeToNoDropCursor(TreeControl treeControl, String cacheTargetID, String cachePosition) {
 			treeControl.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TreeControl.changeToNoDropCursor(");
-					TagUtil.writeJsString(out, targetID);
+					out.append("services.DnD.showNoDropMarker(");
+					TagUtil.writeJsString(out, cacheTargetID);
 					out.append(",");
-					TagUtil.writeJsString(out, position);
+					TagUtil.writeJsString(out, cachePosition);
 					out.append(");");
 				}
 			}));
 		}
 
-		private void displayDropMarker(TreeControl treeControl, String targetID, String position) {
+		private void displayDropMarker(TreeControl treeControl, String targetID, String cacheTargetID,
+				String cachePosition, String newPositionString) {
 			treeControl.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TreeControl.displayDropMarker(");
+					out.append("services.DnD.showDropInsertMarker(");
+					TagUtil.writeJsString(out, cacheTargetID);
+					out.append(",");
+					TagUtil.writeJsString(out, cachePosition);
+					out.append(",");
 					TagUtil.writeJsString(out, targetID);
 					out.append(",");
-					TagUtil.writeJsString(out, position);
+					TagUtil.writeJsString(out, newPositionString);
 					out.append(");");
 				}
 			}));
@@ -1151,7 +1214,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		 */
 		public static final DndTreeDropAction INSTANCE = new DndTreeDropAction();
 
-		private static final String COMMAND_NAME = "dndTreeDrop";
+		private static final String COMMAND_NAME = "dndDrop";
 
 		private static final String POS_PARAM = "pos";
 
@@ -1160,7 +1223,8 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		}
 
 		@Override
-		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node, Map arguments) {
+		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node,
+				Map<String, Object> arguments) {
 			TreeData treeData = treeControl.getData();
 
 			DndData data = DnD.getDndData(context, arguments);
@@ -1169,7 +1233,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 
 				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, node, Position.fromString(pos));
 
-				List<TreeDropTarget> dropTargets = treeData.getDropTargets();
+				List<TreeDropTarget> dropTargets = treeData.getTreeDropTargets();
 				for (TreeDropTarget dropTarget : dropTargets) {
 					if (dropTarget.canDrop(dropEvent)) {
 						dropTarget.handleDrop(dropEvent);

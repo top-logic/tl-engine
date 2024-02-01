@@ -71,11 +71,16 @@ public interface TreeData extends NamedModel, SelectionModelOwner, TypedAnnotata
 	/**
 	 * The {@link TreeDropTarget}'s that controls drop operations in this tree.
 	 */
-	List<TreeDropTarget> getDropTargets();
+	List<TreeDropTarget> getTreeDropTargets();
+
+	/**
+	 * @see #getTreeDropTargets()
+	 */
+	void setTreeDropTargets(List<TreeDropTarget> dropTargets);
 
 	/**
 	 * Defines the behavior if a drag-and-drop operation is started from this {@link TreeData}.
 	 */
-	TreeDragSource getDragSource();
+	TreeDragSource getTreeDragSource();
 
 }

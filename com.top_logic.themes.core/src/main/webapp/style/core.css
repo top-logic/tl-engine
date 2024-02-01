@@ -2367,11 +2367,8 @@ div.treeNode.dndInsertBelow::after {
     bottom: 0;
 }
 
-div.treeNode.dndInsertWithin {
-	background-color: var(--notification-info-background);
-}
-
 div.treeNode.dndInsertInto,
+div.treeNode.dndInsertWithin,
 div.treeNode.treeSelected.dndInsertInto {
 	background-color: var(--notification-info-background);
 }

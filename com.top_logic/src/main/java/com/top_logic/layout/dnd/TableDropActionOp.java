@@ -67,7 +67,7 @@ public class TableDropActionOp extends DropActionOp<TableDropActionOp.TableDropA
 		TableData dropTable = (TableData) dropView;
 		List<?> droppedObjects = CollectionUtilShared.asList(droppedObject);
 
-		for (TableDropTarget dropTarget : dropTable.getDropTargets()) {
+		for (TableDropTarget dropTarget : dropTable.getTableDropTargets()) {
 			BusinessObjectTableDrop tlScriptDropHandler = assertTLScriptDrop(dropTarget);
 			assertDropEnabled(dropTable, tlScriptDropHandler);
 

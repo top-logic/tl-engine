@@ -62,7 +62,6 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming;
 import com.top_logic.layout.structure.DialogWindowControl;
 import com.top_logic.layout.table.ConfigKey;
-import com.top_logic.layout.table.DefaultTableData.NoTableDataOwner;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableDataListener;
 import com.top_logic.layout.table.TableFilter;
@@ -432,7 +431,7 @@ public class TableButtons {
 
 	static void initButton(CommandModel button, TableData table, ThemeImage image, ThemeImage disabledImage,
 			ResKey labelKey) {
-		if (table.getOwner() != NoTableDataOwner.INSTANCE) {
+		if (table.getOwner().hasValue()) {
 			button.set(LabeledButtonNaming.BUSINESS_OBJECT, table);
 		}
 		button.setImage(image);

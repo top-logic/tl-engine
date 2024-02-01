@@ -19,7 +19,7 @@
 					<property name="securityObject"/>
 					<property name="configurationProviders"/>
 					<property name="dragSource"/>
-					<property name="dropTargets"/>
+					<property name="treeDropTargets"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -52,9 +52,9 @@
 				value="treetable"
 			/>
 		</property>
-		<property name="dropTargets"
+		<property name="treeDropTargets"
 			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
-			instance-type="com.top_logic.layout.table.dnd.TableDropTarget"
+			instance-type="com.top_logic.layout.tree.dnd.TreeDropTarget"
 			type="List"
 		>
 			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
@@ -111,6 +111,7 @@
 				rootVisible="${rootVisible}"
 				securityObject="${securityObject}"
 				titleKey="${name}"
+				treeDropTargets="${treeDropTargets}"
 			>
 				<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
 					treeModelBuilder="${modelBuilder}"
@@ -119,7 +120,6 @@
 					configurationProviders="${configurationProviders}"
 					defaultColumns="${defaultColumns}"
 					dragSource="${dragSource}"
-					dropTargets="${dropTargets}"
 					fixedColumns="1"
 				/>
 				<buttons>

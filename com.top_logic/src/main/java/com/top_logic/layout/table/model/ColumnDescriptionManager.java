@@ -6,6 +6,7 @@
 package com.top_logic.layout.table.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -120,7 +121,7 @@ public class ColumnDescriptionManager extends TableConfiguration {
 
 	private TableDragSource _dragSource = NoTableDrag.INSTANCE;
 
-	private TableDropTarget _dropTarget = NoTableDrop.INSTANCE;
+	private List<TableDropTarget> _dropTargets = Arrays.asList(NoTableDrop.INSTANCE);
 
 	private ContextMenuProvider _contextMenu = NoContextMenuProvider.INSTANCE;
 
@@ -195,13 +196,13 @@ public class ColumnDescriptionManager extends TableConfiguration {
 	}
 
 	@Override
-	public TableDropTarget getTableDrop() {
-		return _dropTarget;
+	public List<TableDropTarget> getDropTargets() {
+		return _dropTargets;
 	}
 
 	@Override
-	public void setTableDrop(TableDropTarget value) {
-		_dropTarget = value;
+	public void setDropTargets(List<TableDropTarget> dropTargets) {
+		_dropTargets = dropTargets;
 	}
 
 	@Override

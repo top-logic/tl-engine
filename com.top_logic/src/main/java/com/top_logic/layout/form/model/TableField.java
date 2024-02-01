@@ -7,6 +7,7 @@ package com.top_logic.layout.form.model;
 
 
 import java.util.Collection;
+import java.util.List;
 
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Provider;
@@ -136,8 +137,8 @@ public class TableField extends ConstantField implements TableData, TableDataOwn
 	}
 
 	@Override
-	public TableDropTarget getDropTarget() {
-		return getTableData().getDropTarget();
+	public List<TableDropTarget> getDropTargets() {
+		return getTableData().getDropTargets();
 	}
 
 	@Override

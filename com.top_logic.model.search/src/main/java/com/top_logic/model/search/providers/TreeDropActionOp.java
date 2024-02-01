@@ -7,7 +7,6 @@ package com.top_logic.model.search.providers;
 
 import static com.top_logic.basic.util.Utils.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -77,9 +76,25 @@ public class TreeDropActionOp<C extends TreeDropActionOp.TreeDropAction> extends
 
 	@Override
 	protected void processDrop(ActionContext context, Object dropView, Object dropPosition, Object droppedObject) {
-		TreeData dropTree = (TreeData) dropView;
-		TreeDropTarget dropHandler = dropTree.getDropTarget();
-		processDrop(context, dropTree, dropHandler, businessObjectForPosition(dropPosition), droppedObject);
+		TreeData tree = (TreeData) dropView;
+		Object positionObject = businessObjectForPosition(dropPosition);
+		Args arguments = toDropArguments(context, tree, dropPosition);
+		List<?> droppedObjects = CollectionUtilShared.asList(droppedObject);
+
+		for (TreeDropTarget dropTarget : tree.getDropTargets()) {
+			assertTLScriptDrop(dropTarget);
+			TreeDropTargetByExpression tlScriptDropHandler = (TreeDropTargetByExpression) dropTarget;
+			assertDropEnabled(tree, tlScriptDropHandler);
+
+			if (tlScriptDropHandler.canDrop(droppedObjects, arguments)) {
+				tlScriptDropHandler.handleDrop(droppedObjects, arguments);
+
+				return;
+			}
+		}
+
+		fail("The object cannot be droppped here."
+			+ " Dropped object: " + droppedObjects + ". Drop position: " + positionObject);
 	}
 
 	/**
@@ -93,18 +108,6 @@ public class TreeDropActionOp<C extends TreeDropActionOp.TreeDropAction> extends
 		return dropPosition;
 	}
 
-	/** Performs the drop into the given tree. */
-	protected void processDrop(ActionContext context, TreeData dropTree, TreeDropTarget javaDropHandler,
-			Object dropPosition, Object droppedObject) {
-		assertTLScriptDrop(javaDropHandler);
-		TreeDropTargetByExpression tlScriptDropHandler = (TreeDropTargetByExpression) javaDropHandler;
-		assertDropEnabled(dropTree, tlScriptDropHandler);
-		List<?> droppedObjects = CollectionUtilShared.asList(droppedObject);
-		assertDropPossible(context, dropTree, tlScriptDropHandler, dropPosition, droppedObjects);
-
-		tlScriptDropHandler.handleDrop(droppedObjects, toDropArguments(context, dropTree, dropPosition));
-	}
-
 	private void assertTLScriptDrop(TreeDropTarget dropHandler) {
 		if (!(dropHandler instanceof TreeDropTargetByExpression)) {
 			fail("The drop handler has to be TL-Script based, i.e. it has to be a "
@@ -115,14 +118,6 @@ public class TreeDropActionOp<C extends TreeDropActionOp.TreeDropAction> extends
 	private void assertDropEnabled(TreeData dropTree, TreeDropTargetByExpression dropHandler) {
 		if (!dropHandler.dropEnabled(dropTree)) {
 			fail("Dropping is here not possible. Context:" + dropTree.getOwner());
-		}
-	}
-
-	private void assertDropPossible(ActionContext context, TreeData dropTree, TreeDropTargetByExpression dropHandler,
-			Object dropPosition, Collection<?> droppedObjects) {
-		if (!dropHandler.canDrop(droppedObjects, toDropArguments(context, dropTree, dropPosition))) {
-			fail("The object cannot be droppped here."
-				+ " Dropped object: " + droppedObjects + ". Drop position: " + dropPosition);
 		}
 	}
 

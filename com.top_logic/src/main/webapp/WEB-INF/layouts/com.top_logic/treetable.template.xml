@@ -26,7 +26,7 @@
 					<property name="securityObject"/>
 
 					<property name="dragSource"/>
-					<property name="tableDrop"/>
+					<property name="dropTargets"/>
 					<property name="buttons"/>
 				</value>
 			</display-order>
@@ -80,15 +80,17 @@
 				value="treetable"
 			/>
 		</property>
-		<property name="tableDrop"
+		<property name="dropTargets"
+			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
 			instance-type="com.top_logic.layout.table.dnd.TableDropTarget"
-			type="PolymorphicConfiguration"
+			type="List"
 		>
 			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
 			<acceptable-classifiers
 				unclassified="false"
 				value="treetable"
 			/>
+			<entry-tag value="dropTarget"/>
 		</property>
 		<property name="fixedColumns"
 			default="1"
@@ -120,8 +122,8 @@
 			configurationProviders="${configurationProviders}"
 			defaultColumns="${defaultColumns}"
 			dragSource="${dragSource}"
+			dropTargets="${dropTargets}"
 			fixedColumns="${fixedColumns}"
-			tableDrop="${tableDrop}"
 		/>
 		<buttons>
 			${buttons}

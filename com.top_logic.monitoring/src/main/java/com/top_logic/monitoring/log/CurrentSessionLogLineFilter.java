@@ -14,7 +14,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 /**
  * A {@link LogLineFilter} that accepts only log lines from the current session.
  * 
- * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
+ * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class CurrentSessionLogLineFilter implements LogLineFilter {
 

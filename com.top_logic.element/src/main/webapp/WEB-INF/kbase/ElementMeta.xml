@@ -249,10 +249,9 @@
 				<builder class="com.top_logic.knowledge.search.QNameQueryBuilder"
 					type-reference-column="impl">
 					<type-value-mapping>
-						<entry key="tl.model:TLProperty" value="property" />
+						<entry key="tl.model:TLProperty" value="property,association-property" />
 						<entry key="tl.model:TLReference" value="reference" />
 						<entry key="tl.model:TLAssociationEnd" value="association-end" />
-						<entry key="tl.model:TLProperty" value="association-property" />
 					</type-value-mapping>
 				</builder>
 			</annotation>

@@ -27,7 +27,6 @@ import com.top_logic.basic.func.misc.AlwaysTrue;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -58,6 +57,11 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 		 */
 		@Mandatory
 		QualifiedPartName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedPartName value);
 
 		/**
 		 * Whether the reference to delete is an inverse reference.
@@ -144,18 +148,16 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 			_util.deleteTLType(connection, association, false);
 			if (getConfig().getAssociationTable() != null) {
 				CompiledStatement delete = query(
-				parameters(
-					parameterDef(DBType.LONG, "branch"),
-					parameterDef(DBType.ID, "id")),
-				delete(
-					table(SQLH.mangleDBName(getConfig().getAssociationTable())),
-					and(
-						eqSQL(
-							column(BasicTypes.BRANCH_DB_NAME),
-							parameter(DBType.LONG, "branch")),
-						eqSQL(
+					parameters(
+						_util.branchParamDef(),
+						parameterDef(DBType.ID, "id")),
+					delete(
+						table(SQLH.mangleDBName(getConfig().getAssociationTable())),
+						and(
+							_util.eqBranch(),
+							eqSQL(
 								column(_util.refID(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)),
-							parameter(DBType.ID, "id"))))).toSql(connection.getSQLDialect());
+								parameter(DBType.ID, "id"))))).toSql(connection.getSQLDialect());
 
 				int deletedRows = delete.executeUpdate(connection, typePart.getBranch(), typePart.getID());
 				log.info("Deleted " + deletedRows + " assignments for deleted part " + _util.toString(typePart));

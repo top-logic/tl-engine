@@ -22,7 +22,6 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -52,6 +51,11 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 		 */
 		@Mandatory
 		QualifiedTypeName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
 
 		/**
 		 * Whether it is a failure if the class is not empty.
@@ -104,18 +108,16 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 
 		if (getConfig().getTypeTable() != null) {
 			CompiledStatement delete = query(
-			parameters(
-				parameterDef(DBType.LONG, "branch"),
-				parameterDef(DBType.ID, "type")),
-			delete(
-				table(SQLH.mangleDBName(getConfig().getTypeTable())),
-				and(
-					eqSQL(
-						column(BasicTypes.BRANCH_DB_NAME),
-						parameter(DBType.LONG, "branch")),
-					eqSQL(
+				parameters(
+					_util.branchParamDef(),
+					parameterDef(DBType.ID, "type")),
+				delete(
+					table(SQLH.mangleDBName(getConfig().getTypeTable())),
+					and(
+						_util.eqBranch(),
+						eqSQL(
 							column(_util.refID(PersistentObject.TYPE_REF)),
-						parameter(DBType.ID, "type"))))).toSql(connection.getSQLDialect());
+							parameter(DBType.ID, "type"))))).toSql(connection.getSQLDialect());
 
 			int deletedRows = delete.executeUpdate(connection, type.getBranch(), type.getID());
 			log.info("Deleted " + deletedRows + " instances of type '" + _util.toString(type) + "' from table "

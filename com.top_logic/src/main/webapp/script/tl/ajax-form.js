@@ -512,6 +512,10 @@ services.form = {
 			var event = BAL.getEvent(event);
 			var rowElement = this.getRow(controlElement, event.target);
 
+			if(!rowElement.draggable) {
+				return false;
+			}
+
 			var draggedRows = [];
 			
 			if(BAL.DOM.containsClass(rowElement, "tblSelected")) {

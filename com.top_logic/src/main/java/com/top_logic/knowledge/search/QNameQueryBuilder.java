@@ -9,9 +9,11 @@ import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -54,8 +56,8 @@ public class QNameQueryBuilder extends PolymorphicQueryBuilder<QNameQueryBuilder
 		 * an unique value is given.
 		 * </p>
 		 */
-		@MapBinding
-		Map<String, String> getTypeValueMapping();
+		@MapBinding(valueFormat = CommaSeparatedStrings.class)
+		Map<String, List<String>> getTypeValueMapping();
 	}
 
 	/**
@@ -77,16 +79,16 @@ public class QNameQueryBuilder extends PolymorphicQueryBuilder<QNameQueryBuilder
 
 	@Override
 	protected Collection<?> identifiers(MOClass table, Set<TLClass> types) {
-		Map<String, String> typeValueMapping = getConfig().getTypeValueMapping();
+		Map<String, List<String>> typeValueMapping = getConfig().getTypeValueMapping();
 		HashSet<String> matchingValues = new HashSet<>();
 		for (TLClass type : types) {
 			String typeName = TLModelUtil.qualifiedName(type);
-			String typeDBValue = typeValueMapping.get(typeName);
-			if (typeDBValue == null) {
+			List<String> typeDBValues = typeValueMapping.get(typeName);
+			if (typeDBValues == null) {
 				throw new IllegalArgumentException(
 					"No database value configured for type " + typeName + " in table " + table);
 			}
-			matchingValues.add(typeDBValue);
+			matchingValues.addAll(typeDBValues);
 		}
 		return matchingValues;
 	}

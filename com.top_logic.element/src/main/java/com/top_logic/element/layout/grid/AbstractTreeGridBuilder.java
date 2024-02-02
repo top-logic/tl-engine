@@ -28,6 +28,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TreeView;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.layout.ContextPosition;
 import com.top_logic.layout.IndexPosition;
 import com.top_logic.layout.PositionStrategy;
@@ -500,6 +501,12 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		private boolean addToParent(R parentRow, Object rowModel) {
 			boolean rowCreated = false;
 			List<GridTreeTableNode> parentNodes = _index.getNodes(parentRow);
+
+			if (CollectionUtilShared.isEmpty(parentNodes)) {
+				addNewRow(parentRow);
+				parentNodes = _index.getNodes(parentRow);
+			}
+
 			for (GridTreeTableNode parentNode : parentNodes) {
 				if (!parentNode.isInitialized()) {
 					// Parent not (yet) initialized and adding the new row
@@ -908,6 +915,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 
 		for (TLObject newObject : toIterable(creations)) {
 			changes = true;
+			grid.getHandler().addNewRow(newObject);
 			handler.updateRowModels(getNodesToUpdate(grid, newObject));
 
 			if (grid.getRowGroup(newObject) == null) {

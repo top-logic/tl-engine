@@ -18,7 +18,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Layout origins from a template.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class LayoutTemplateCall implements TLLayout {
 

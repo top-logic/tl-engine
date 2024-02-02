@@ -79,7 +79,7 @@ public abstract class DirectCompiledStatement extends ConfiguredCompiledStatemen
 	@Override
 	public Batch createBatch(Connection connection) throws SQLException {
 		Statement stmt = createStatement(connection);
-		return new AbstractStatementBatch<Statement>(stmt) {
+		return new AbstractStatementBatch<>(stmt) {
 
 			@Override
 			public void addBatch(Object... arguments) throws SQLException {

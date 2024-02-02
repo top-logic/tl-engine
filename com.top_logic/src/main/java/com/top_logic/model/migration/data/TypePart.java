@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.model.migration.model;
+package com.top_logic.model.migration.data;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.model.TLTypePart;

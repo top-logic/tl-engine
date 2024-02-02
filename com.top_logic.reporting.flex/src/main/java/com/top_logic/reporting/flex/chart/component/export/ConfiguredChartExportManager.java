@@ -388,7 +388,7 @@ public class ConfiguredChartExportManager extends AbstractExportManager<Configur
 					SlideReplacerBuilder builder = SlideReplacerBuilder.instance(builderConfig, template, columns);
 					builder.initContext(valueMap);
 					final Accessor accessor = configuration.getAccessor();
-					builder.setAccessor(new ReadOnlyAccessor<Object>() {
+					builder.setAccessor(new ReadOnlyAccessor<>() {
 						@Override
 						public Object getValue(Object object, String property) {
 							MethodCriterion criterion = description.getMethodCriterion(property);

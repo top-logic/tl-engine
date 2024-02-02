@@ -285,7 +285,7 @@ public class ShowSecurityComponent extends FormComponent {
 		theField.setOptionLabelProvider(theProvider);
 
 		final LabelComparator labelComparator = LabelComparator.newCachingInstance();
-		theField.setOptionComparator(new Comparator<Object>() {
+		theField.setOptionComparator(new Comparator<>() {
             @Override
             public int compare(Object value1, Object value2) {
                 boolean v1MO = value1 instanceof MetaObject;

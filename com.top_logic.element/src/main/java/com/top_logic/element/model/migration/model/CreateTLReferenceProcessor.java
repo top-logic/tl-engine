@@ -13,8 +13,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.PartConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
  * {@link MigrationProcessor} creates a new {@link TLReference}.
@@ -40,6 +44,8 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLReferenceProcessor} from configuration.
 	 * 
@@ -54,8 +60,9 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating part migration failed at " + getConfig().location(), ex);
@@ -65,14 +72,14 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
-		Util.createTLReference(connection,
+		_util.createTLReference(connection,
 			partName, targetType, getConfig().isMandatory(),
 			getConfig().isComposite(), getConfig().isAggregate(),
 			getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
 			getConfig().canNavigate(),
 			getConfig());
 
-		log.info("Created reference " + Util.qualifiedName(partName));
+		log.info("Created reference " + _util.qualifiedName(partName));
 	}
 
 }

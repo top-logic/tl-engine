@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.config;
+package com.top_logic.model.config;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -14,7 +14,6 @@ import com.top_logic.dob.schema.config.DBColumnType;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.access.StorageMapping;
-import com.top_logic.model.config.TypeConfig;
 
 /**
  * {@link TypeConfig} specifying a primitive type.

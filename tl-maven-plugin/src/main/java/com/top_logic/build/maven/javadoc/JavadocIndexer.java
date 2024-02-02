@@ -756,7 +756,7 @@ public class JavadocIndexer extends AbstractMojo {
 
 	static class Pkg extends Item {
 
-		public static final Comparator<? super Pkg> INDEX_ORDER = new Comparator<Pkg>() {
+		public static final Comparator<? super Pkg> INDEX_ORDER = new Comparator<>() {
 			@Override
 			public int compare(Pkg o1, Pkg o2) {
 				int nameOrder = Item.NAME_ORDER.compare(o1, o2);
@@ -802,7 +802,7 @@ public class JavadocIndexer extends AbstractMojo {
 
 	static class Type extends Item {
 
-		public static final Comparator<? super Type> QNAME_ORDER = new Comparator<Type>() {
+		public static final Comparator<? super Type> QNAME_ORDER = new Comparator<>() {
 			@Override
 			public int compare(Type t1, Type t2) {
 				int pkgCompare = Pkg.QNAME_ORDER.compare(t1._pkg, t2._pkg);
@@ -814,7 +814,7 @@ public class JavadocIndexer extends AbstractMojo {
 			}
 		};
 
-		public static final Comparator<? super Type> TYPE_INDEX_ORDER = new Comparator<Type>() {
+		public static final Comparator<? super Type> TYPE_INDEX_ORDER = new Comparator<>() {
 			@Override
 			public int compare(Type t1, Type t2) {
 				int nameCompare = WithId.ID_ORDER.compare(t1._name, t2._name);
@@ -886,7 +886,7 @@ public class JavadocIndexer extends AbstractMojo {
 		/**
 		 * Order of {@link Member}s in the method table of the index.
 		 */
-		public static final Comparator<? super Member> MEMBER_INDEX_ORDER = new Comparator<Member>() {
+		public static final Comparator<? super Member> MEMBER_INDEX_ORDER = new Comparator<>() {
 			@Override
 			public int compare(Member m1, Member m2) {
 				if (m1 == m2) {

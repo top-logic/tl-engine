@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<migration schema-update="true">
+<migration>
 	<version name="22747-Add_GenericObject_table"
 		module="tl-element"
 	/>
 	<dependencies>
-		<dependency name="migration_21612"
+		<dependency name="Ticket_24085_layout_db_storage"
 			module="tl"
+		/>
+		<dependency name="Ticket_24085_DateTime"
+			module="tl-element"
 		/>
 	</dependencies>
 	<migration>

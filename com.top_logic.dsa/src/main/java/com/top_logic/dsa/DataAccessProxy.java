@@ -995,7 +995,7 @@ public class DataAccessProxy {
 		final String[] allAccessibleVersions = dap.getVersions();
 		final Date date2 = new Date(date);
 		final Object key = new NamedConstant("myFunnyConstant");
-		final int insertIndex = Arrays.binarySearch(allAccessibleVersions, key, new Comparator<Object>() {
+		final int insertIndex = Arrays.binarySearch(allAccessibleVersions, key, new Comparator<>() {
 
 			@Override
 			public int compare(Object o1, Object o2) {

@@ -20,6 +20,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.migration.db.RowTransformer;
 import com.top_logic.knowledge.service.db2.migration.db.RowValue;
 import com.top_logic.knowledge.service.db2.migration.db.RowWriter;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
@@ -54,7 +55,7 @@ public class DeleteStoredTLModel extends AbstractConfiguredInstance<DeleteStored
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY,
 				DynamicModelService.APPLICATION_MODEL_PROPERTY, null);

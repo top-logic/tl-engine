@@ -23,7 +23,6 @@ import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
-import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.config.ConfigurationException;
@@ -35,7 +34,6 @@ import com.top_logic.element.config.AssociationConfig.EndConfig;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.AttributedTypeConfig;
 import com.top_logic.element.config.ClassConfig;
-import com.top_logic.element.config.DatatypeConfig;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.ExtendsConfig;
 import com.top_logic.element.config.ModelConfig;
@@ -81,12 +79,14 @@ import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.annotate.security.TLRoleDefinitions;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 import com.top_logic.model.config.ScopeConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -99,9 +99,6 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ModelResolver {
-
-	@FrameworkInternal
-	public static final String SELF_ASSOCIATION_END_NAME = "self";
 
 	private static final Set<String> PROPERTIES_FOR_OVERRIDES = CollectionFactory.set(
 		AttributeConfig.NAME,
@@ -490,7 +487,7 @@ public class ModelResolver {
 					return;
 				}
 
-				String associationName = syntheticAssociationName(type.getName(), otherEndName);
+				String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), otherEndName);
 				TLModule module = type.getModule();
 
 				TLType associationType = module.getType(associationName);
@@ -503,7 +500,8 @@ public class ModelResolver {
 					targetEnd.setMultiple(true);
 
 					// Create destination end
-					sourceEnd = TLModelUtil.addEnd(association, SELF_ASSOCIATION_END_NAME, sourceType);
+					sourceEnd =
+						TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
 				} else {
 					List<TLAssociationEnd> ends = TLModelUtil.getEnds((TLAssociation) associationType);
 					if (ends.isEmpty()) {
@@ -511,7 +509,7 @@ public class ModelResolver {
 					}
 
 					TLAssociationEnd end = ends.get(0);
-					if (SELF_ASSOCIATION_END_NAME.equals(end.getName())) {
+					if (TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME.equals(end.getName())) {
 						sourceEnd = end;
 					} else {
 						sourceEnd = TLModelUtil.getOtherEnd(end);
@@ -589,7 +587,7 @@ public class ModelResolver {
 	}
 
 	private void createForwardsRef(final TLClass type, final ReferenceConfig referenceConfig) {
-		String associationName = syntheticAssociationName(type.getName(), referenceConfig.getName());
+		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), referenceConfig.getName());
 		TLModule module = type.getModule();
 
 		TLType associationType = module.getType(associationName);
@@ -597,7 +595,7 @@ public class ModelResolver {
 			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
 
 			// Add source end
-			TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, SELF_ASSOCIATION_END_NAME, type);
+			TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, type);
 			sourceEnd.setMultiple(true);
 
 			// Create destination end
@@ -616,11 +614,6 @@ public class ModelResolver {
 			log().info("Module '" + module + "' already contains a type with name '" + associationName
 				+ "', skipping creation of association.");
 		}
-	}
-
-	@FrameworkInternal
-	public static String syntheticAssociationName(String typeName, String referenceName) {
-		return typeName + "$" + referenceName;
 	}
 
 	void addReference(TLClass owner, ReferenceConfig referenceConfig, TLAssociationEnd associationEnd) {

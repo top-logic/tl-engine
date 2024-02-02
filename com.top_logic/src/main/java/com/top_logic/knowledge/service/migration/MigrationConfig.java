@@ -45,9 +45,6 @@ public interface MigrationConfig extends ConfigurationItem {
 	/** Configuration name for {@link #getPostProcessors()}. */
 	String POST_PROCESSORS = "post-processors";
 
-	/** @see #getSchemaUpdate() */
-	String SCHEMA_UPDATE = "schema-update";
-
 	/**
 	 * The versions which are needed to be able to apply this migration.
 	 * 
@@ -74,12 +71,6 @@ public interface MigrationConfig extends ConfigurationItem {
 	 *        New value of {@link #getVersion()}.
 	 */
 	void setVersion(Version v);
-
-	/**
-	 * Whether the stored DB schema baseline is updated after all migrations are performed.
-	 */
-	@Name(SCHEMA_UPDATE)
-	boolean getSchemaUpdate();
 
 	/**
 	 * {@link MigrationProcessor} to execute before the actual migration as described in

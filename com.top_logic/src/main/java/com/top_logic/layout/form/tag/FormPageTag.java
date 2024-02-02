@@ -729,7 +729,7 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 				}
 			}
 
-			basedOnType(new ControlValue<Object>(icon) {
+			basedOnType(new ControlValue<>(icon) {
 				@Override
 				public void setValue(Object type) {
 					if (type instanceof ResKey) {
@@ -751,7 +751,7 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 		if (_imageTooltipKey != null) {
 			icon.setTooltip(Resources.getInstance().decodeMessageFromKeyWithEncodedArguments(_imageTooltipKey));
 		} else {
-			basedOnType(new ControlValue<Object>(icon) {
+			basedOnType(new ControlValue<>(icon) {
 				@Override
 				public void setValue(Object type) {
 					if (type != null) {

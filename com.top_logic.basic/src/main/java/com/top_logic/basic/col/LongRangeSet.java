@@ -35,7 +35,7 @@ public final class LongRangeSet extends AbstractSingletonList<LongRange> impleme
 	public static final List<LongRange> FULL_SET = range(Long.MIN_VALUE, Long.MAX_VALUE);
 	
 	
-	private static final Comparator<? super LongRange> REV_MIN_COMPARATOR = new Comparator<LongRange>() {
+	private static final Comparator<? super LongRange> REV_MIN_COMPARATOR = new Comparator<>() {
 		@Override
 		public int compare(LongRange o1, LongRange o2) {
 			long o1Start = o1.getStartValue();

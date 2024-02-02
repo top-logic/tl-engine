@@ -114,7 +114,7 @@ public class TestJournal extends BasicTestCase {
 	private static final String CONTAINER_ATTRIBUTE = "content";
     
 
-	private static final Mapping<? super JournalResultEntry, ?> ENTRY_ID = new Mapping<JournalResultEntry, Object>() {
+	private static final Mapping<? super JournalResultEntry, ?> ENTRY_ID = new Mapping<>() {
 		@Override
 		public Object map(JournalResultEntry input) {
 			return input.getIdentifier();

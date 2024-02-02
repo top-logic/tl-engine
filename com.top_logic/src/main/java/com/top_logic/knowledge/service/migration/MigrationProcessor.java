@@ -20,12 +20,14 @@ public interface MigrationProcessor {
 	/**
 	 * Executes the actual migration.
 	 * 
+	 * @param context
+	 *        The migration context.
 	 * @param log
 	 *        The {@link Log} to log informations and potential errors to.
 	 * @param connection
 	 *        The connection to the database to modify
 	 */
-	void doMigration(Log log, PooledConnection connection);
+	void doMigration(MigrationContext context, Log log, PooledConnection connection);
 
 	/**
 	 * Whether the migration of this {@link MigrationProcessor} should be performed "out of band"

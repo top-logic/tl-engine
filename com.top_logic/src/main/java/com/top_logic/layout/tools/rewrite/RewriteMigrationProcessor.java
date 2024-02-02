@@ -11,7 +11,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.model.migration.Util;
 
 /**
  * {@link MigrationProcessor} applying a configured {@link DocumentRewrite} operation.
@@ -22,6 +24,8 @@ public abstract class RewriteMigrationProcessor<C extends RewriteMigrationProces
 		extends AbstractConfiguredInstance<C> implements MigrationProcessor {
 
 	private DocumentRewrite _rewriter;
+
+	private Util _util;
 
 	/**
 	 * Configuration options for {@link RewriteMigrationProcessor}.
@@ -51,10 +55,18 @@ public abstract class RewriteMigrationProcessor<C extends RewriteMigrationProces
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		_rewriter.init(log);
+		_util = context.get(Util.PROPERTY);
 
 		doMigration(log, connection, _rewriter);
+	}
+
+	/**
+	 * Migration utilities.
+	 */
+	public Util util() {
+		return _util;
 	}
 
 	/**

@@ -76,10 +76,11 @@ final class TestDynamicDialog extends AbstractFormDialog {
 			FormGroupControl result = new FormGroupControl(group);
 			result.setCollapsible(true);
 			result.setRenderer(
-				new DecoratedControlRenderer<>(HTMLConstants.DIV, FieldsetDecorator.INSTANCE, new Renderer<Object>() {
+				new DecoratedControlRenderer<>(HTMLConstants.DIV, FieldsetDecorator.INSTANCE, new Renderer<>() {
 
 				@Override
-				public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
+					public void write(DisplayContext context, TagWriter out, FormGroupControl value)
+							throws IOException {
 					innerView.write(context, out);
 				}
 				

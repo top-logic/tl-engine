@@ -93,7 +93,7 @@ public class StructureGridBuilder<R> extends AbstractTreeGridBuilder<R> {
 
 	@Override
 	protected Iterable<?> getChildren(final LayoutComponent component, final Object rowModel) {
-		return new Iterable<Object>() {
+		return new Iterable<>() {
 			@Override
 			public Iterator<Object> iterator() {
 				// Interface TreeView is to abstract.

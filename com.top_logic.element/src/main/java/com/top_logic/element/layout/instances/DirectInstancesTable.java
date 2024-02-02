@@ -86,7 +86,7 @@ public class DirectInstancesTable<C extends DirectInstancesTable.Config<?>> exte
 
 	private void addDefaultViewColumn(TableConfiguration table) {
 		ColumnConfiguration viewColumn = table.declareColumn(DEFAULT_VIEW_COLUMN_NAME);
-		viewColumn.setAccessor(new ReadOnlyAccessor<Object>() {
+		viewColumn.setAccessor(new ReadOnlyAccessor<>() {
 
 			@Override
 			public Object getValue(Object object, String property) {

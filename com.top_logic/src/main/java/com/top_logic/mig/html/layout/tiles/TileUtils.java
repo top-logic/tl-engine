@@ -114,7 +114,7 @@ public class TileUtils {
 	}
 
 	private static List<String> getUnkownTiles(TileLayout tile, Set<String> knownTiles) {
-		Object unknownTiles = tile.visit(new TileLayoutVisitor<Object, Object>() {
+		Object unknownTiles = tile.visit(new TileLayoutVisitor<>() {
 	
 			@Override
 			public Object visitTileRef(TileRef value, Object arg) {

@@ -190,7 +190,7 @@ public class CreateModelPatch {
 
 	}
 
-	private final Visitor<TLClassifier, Void, Void> _classifiersDiff = new PartOpPatcher<TLClassifier>() {
+	private final Visitor<TLClassifier, Void, Void> _classifiersDiff = new PartOpPatcher<>() {
 		@Override
 		public Void visit(Create<? extends TLClassifier> op, Void arg) {
 			TLClassifier created = op.getItem();
@@ -260,7 +260,7 @@ public class CreateModelPatch {
 		}
 	};
 
-	private Visitor<TLClassPart, Void, Void> _partUpdater = new PartOpPatcher<TLClassPart>() {
+	private Visitor<TLClassPart, Void, Void> _partUpdater = new PartOpPatcher<>() {
 
 		@Override
 		public Void visit(Create<? extends TLClassPart> op, Void arg) {

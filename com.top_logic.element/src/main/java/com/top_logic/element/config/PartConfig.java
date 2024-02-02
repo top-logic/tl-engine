@@ -8,7 +8,7 @@ package com.top_logic.element.config;
 
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.element.meta.kbbased.PersistentReference;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.config.PartAspect;
@@ -26,16 +26,16 @@ import com.top_logic.model.config.TypeRef;
 public interface PartConfig extends AttributeConfigBase, PartAspect, TypeRef {
     
 	/** Property name of {@link #getMandatory()}. */
-    public static final String MANDATORY       = "mandatory";
+	String MANDATORY = TLStructuredTypePart.MANDATORY_ATTR;
     
 	/** @see #isMultiple() */
-	String MULTIPLE_PROPERTY = PersistentReference.MULTIPLE_ATTR;
+	String MULTIPLE_PROPERTY = TLReference.MULTIPLE_ATTR;
 
 	/** @see #isOrdered() */
-	String ORDERED_PROPERTY = PersistentReference.ORDERED_ATTR;
+	String ORDERED_PROPERTY = TLReference.ORDERED_ATTR;
 
 	/** @see #isBag() */
-	String BAG_PROPERTY = PersistentReference.BAG_ATTR;
+	String BAG_PROPERTY = TLReference.BAG_ATTR;
 
 	/** Name of the property {@link #isOverride()}. */
 	String OVERRIDE = "override";

@@ -13,11 +13,14 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLClassifierAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
  * {@link MigrationProcessor} defining the default {@link TLClassifier} in a {@link TLEnumeration}.
@@ -49,6 +52,8 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link SetDefaultTLClassifierProcessor} from configuration.
 	 * 
@@ -63,8 +68,9 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Setting default classifier migration failed at " + getConfig().location(), ex);
@@ -73,12 +79,12 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedTypeName enumName = getConfig().getEnumeration();
-		Util.setDefaultTLClassifier(connection, enumName, getConfig().getDefaultClassifier());
+		_util.setDefaultTLClassifier(connection, enumName, getConfig().getDefaultClassifier());
 		if (getConfig().getDefaultClassifier() == null) {
-			log.info("Removed default classifier in " + Util.qualifiedName(enumName));
+			log.info("Removed default classifier in " + _util.qualifiedName(enumName));
 		} else {
 			log.info("Set default classifier '" + getConfig().getDefaultClassifier() + "' in "
-				+ Util.qualifiedName(enumName));
+				+ _util.qualifiedName(enumName));
 		}
 	}
 

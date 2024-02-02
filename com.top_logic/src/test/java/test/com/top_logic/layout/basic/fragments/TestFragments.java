@@ -176,11 +176,11 @@ public class TestFragments extends TestCase {
 
 	public void testRendered() throws IOException {
 		assertRender("<div>content</div>",
-			Fragments.div(Fragments.rendered(new Renderer<Object>() {
+			Fragments.div(Fragments.rendered(new Renderer<>() {
 				@Override
-				public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
+				public void write(DisplayContext context, TagWriter out, String value) throws IOException {
 					out.writeText("con");
-					out.writeText(value.toString());
+					out.writeText(value);
 				}
 
 			}, "tent")));

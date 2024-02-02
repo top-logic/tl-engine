@@ -23,7 +23,6 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -52,6 +51,11 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 		 */
 		@Mandatory
 		QualifiedPartName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedPartName value);
 
 		/**
 		 * The list of {@link MetaObject tables} in which the the owner type of {@link #getName()}
@@ -105,22 +109,20 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 		}
 		if (!getConfig().getTypeTables().isEmpty()) {
 			CompiledStatement delete = query(
-			parameters(
-				parameterDef(DBType.LONG, "branch"),
-				parameterDef(DBType.STRING, "attr"),
-				setParameterDef("types", DBType.STRING)),
-			delete(
-				table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
-				and(
-					eqSQL(
-						column(BasicTypes.BRANCH_DB_NAME),
-						parameter(DBType.LONG, "branch")),
-					eqSQL(
-						column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
-						parameter(DBType.STRING, "attr")),
-					inSet(
-						column(AbstractFlexDataManager.TYPE_DBNAME),
-						setParameter("types", DBType.STRING))))).toSql(connection.getSQLDialect());
+				parameters(
+					_util.branchParamDef(),
+					parameterDef(DBType.STRING, "attr"),
+					setParameterDef("types", DBType.STRING)),
+				delete(
+					table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
+					and(
+						_util.eqBranch(),
+						eqSQL(
+							column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
+							parameter(DBType.STRING, "attr")),
+						inSet(
+							column(AbstractFlexDataManager.TYPE_DBNAME),
+							setParameter("types", DBType.STRING))))).toSql(connection.getSQLDialect());
 
 			int deletedRows =
 				delete.executeUpdate(connection, typePart.getBranch(), partToDelete.getPartName(),

@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Filters the unparsed log lines in the parser, before they are being parsed and objectified.
  * 
- * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
+ * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public interface LogLineFilter {
 

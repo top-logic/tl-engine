@@ -17,6 +17,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLI18NKey;
 import com.top_logic.model.config.annotation.MainProperties;
@@ -111,7 +112,10 @@ public class TypeResolver extends DescendingVisitor<TLType, TLType> {
 
 	private TLType any() {
 		if (_any == null) {
-			_any = _model.getModule("tl.util").getType("Any");
+			TLModule utilModule = _model.getModule("tl.util");
+			if (utilModule != null) {
+				_any = utilModule.getType("Any");
+			}
 		}
 		return _any;
 	}

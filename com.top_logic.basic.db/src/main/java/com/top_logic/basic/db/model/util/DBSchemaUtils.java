@@ -629,7 +629,7 @@ public class DBSchemaUtils {
 	 *        The {@link DBSchema} to add the extracted table to.
 	 * @param tableName
 	 *        The name of the table to extract its schema.
-	 * @return The extracted table.
+	 * @return The extracted table, nor <code>null</code> if no such table exists.
 	 * @throws SQLException
 	 *         If extraction fails.
 	 */
@@ -639,7 +639,9 @@ public class DBSchemaUtils {
 			DatabaseMetaData metaData = connection.getMetaData();
 			SchemaExtraction extraction = new SchemaExtraction(metaData, pool.getSQLDialect());
 			DBTable table = extraction.addTable(analyzedSchema, tableName);
-			
+			if (table.getColumns().isEmpty()) {
+				return null;
+			}
 			return table;
 		} finally {
 			pool.releaseReadConnection(connection);

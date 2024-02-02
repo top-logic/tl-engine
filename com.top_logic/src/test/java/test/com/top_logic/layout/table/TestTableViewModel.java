@@ -963,7 +963,7 @@ public class TestTableViewModel extends AbstractLayoutTest {
 			@Override
 			public TableFilter createTableFilter(TableViewModel aTableViewModel, String filterPosition) {
 				// TODO STS Automatically created
-				globalStaticFilter = new StaticFilterWrapper(new Filter<Object>() {
+				globalStaticFilter = new StaticFilterWrapper(new Filter<>() {
 
 					@Override
 					public boolean accept(Object rowObject) {

@@ -57,7 +57,7 @@ public class SystemContextThread extends Thread {
 
 	@Override
 	public final void run() {
-		ThreadContext.inSystemContext(SystemContextThread.class, new Computation<Object>() {
+		ThreadContext.inSystemContext(SystemContextThread.class, new Computation<>() {
 
 			@Override
 			public Object run() {

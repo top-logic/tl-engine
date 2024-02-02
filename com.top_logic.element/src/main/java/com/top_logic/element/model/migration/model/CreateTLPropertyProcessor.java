@@ -15,10 +15,14 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.PartConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
  * {@link MigrationProcessor} creating a primitive attribute.
@@ -74,6 +78,8 @@ public class CreateTLPropertyProcessor extends AbstractConfiguredInstance<Create
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLPropertyProcessor} from configuration.
 	 * 
@@ -88,8 +94,9 @@ public class CreateTLPropertyProcessor extends AbstractConfiguredInstance<Create
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating part migration failed at " + getConfig().location(), ex);
@@ -99,10 +106,10 @@ public class CreateTLPropertyProcessor extends AbstractConfiguredInstance<Create
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = (getConfig().getType());
-		Util.createTLProperty(connection, partName, targetType,
+		_util.createTLProperty(connection, partName, targetType,
 			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(),
 			getConfig().isOrdered(), getConfig());
-		log.info("Created part " + Util.qualifiedName(partName));
+		log.info("Created part " + _util.qualifiedName(partName));
 	}
 
 }

@@ -153,7 +153,7 @@ class LiveAssociationsMap<K, T extends TLObject> extends AssociationsMap<K, T> {
 
 			final BidiMap<K, T> linksWhenStarted = cacheInstance.linksShared();
 			final int modCountWhenStarted = cacheInstance.modCount();
-			return new AbstractMapIteratorDecorator<K, T>(linksWhenStarted.mapIterator()) {
+			return new AbstractMapIteratorDecorator<>(linksWhenStarted.mapIterator()) {
 				private BidiMap<K, T> _iterated = linksWhenStarted;
 
 				private int _modCount = modCountWhenStarted;

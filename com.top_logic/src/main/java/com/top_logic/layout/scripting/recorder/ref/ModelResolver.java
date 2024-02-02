@@ -136,7 +136,7 @@ public class ModelResolver extends ManagedClass {
 			}
 		}
 
-		_priorityOrder = new Comparator<ModelNamingScheme<?, ?, ?>>() {
+		_priorityOrder = new Comparator<>() {
 			@Override
 			public int compare(ModelNamingScheme<?, ?, ?> o1, ModelNamingScheme<?, ?, ?> o2) {
 				return priorityByScheme.get(o1).compareTo(priorityByScheme.get(o2));

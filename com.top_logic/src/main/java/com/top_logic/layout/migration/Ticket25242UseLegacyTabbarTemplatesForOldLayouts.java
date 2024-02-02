@@ -9,7 +9,7 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.sql.Clob;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -30,8 +30,10 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.dob.sql.SQLH;
 import com.top_logic.knowledge.service.BasicTypes;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.mig.html.layout.PersistentTemplateLayoutWrapper;
+import com.top_logic.model.migration.Util;
 
 /**
  * {@link MigrationProcessor} rewriting legacy in-app tabbar definitions to use the legacy template.
@@ -40,15 +42,19 @@ import com.top_logic.mig.html.layout.PersistentTemplateLayoutWrapper;
  */
 public class Ticket25242UseLegacyTabbarTemplatesForOldLayouts implements MigrationProcessor {
 
+	private Util _util;
+
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+		_util = context.get(Util.PROPERTY);
+
 		String table = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.KO_NAME_TEMPLATE_LAYOUTS);
 		String templateColumn = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.TEMPLATE_ATTR);
 		String argumentsColumn = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.ARGUMENTS_ATTR);
 
 		SQLSelect select = select(
 			columns(
-				columnDef(BasicTypes.BRANCH_DB_NAME),
+				_util.branchColumnDef(),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),
 				columnDef(templateColumn),
@@ -68,9 +74,9 @@ public class Ticket25242UseLegacyTabbarTemplatesForOldLayouts implements Migrati
 					XPathExpression check = XPathFactory.newInstance().newXPath()
 						.compile("/arguments/@*|/arguments/*[local-name(.) != 'components']");
 					do {
-						Clob data = result.getClob(argumentsColumn);
+						String data = result.getString(argumentsColumn);
 						if (data != null) {
-							try (Reader in = data.getCharacterStream()) {
+							try (Reader in = new StringReader(data)) {
 								Document document = DOMUtil.getDocumentBuilder().parse(new InputSource(in));
 								NodeList nodes = (NodeList) check.evaluate(document, XPathConstants.NODESET);
 								if (nodes.getLength() > 0) {

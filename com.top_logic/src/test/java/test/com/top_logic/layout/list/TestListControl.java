@@ -495,9 +495,9 @@ public class TestListControl extends AbstractLayoutTest {
 	}
 
 	private List<Integer> createExpected(int optionCount, int optionsPerPage, int page, final String pattern) {
-		List<Integer> result = FilterUtil.filterList(new Filter<Object>() {
+		List<Integer> result = FilterUtil.filterList(new Filter<>() {
 			@Override
-			public boolean accept(Object anObject) {
+			public boolean accept(Integer anObject) {
 				return anObject.toString().indexOf(pattern) >= 0;
 			}
 		}, range(0, optionCount));

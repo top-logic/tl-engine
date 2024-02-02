@@ -17,16 +17,16 @@ import com.top_logic.model.TLType;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ScopeNameComaprator implements Comparator<TLType> {
+public class ScopeNameComparator implements Comparator<TLType> {
 
 	/**
-	 * Singleton {@link ScopeNameComaprator} instance.
+	 * Singleton {@link ScopeNameComparator} instance.
 	 */
-	public static final ScopeNameComaprator INSTANCE = new ScopeNameComaprator(Equality.INSTANCE);
+	public static final ScopeNameComparator INSTANCE = new ScopeNameComparator(Equality.INSTANCE);
 	
 	private final Comparator<? super TLType> stableOrder;
 
-	private ScopeNameComaprator(Comparator<? super TLType> stableOrder) {
+	private ScopeNameComparator(Comparator<? super TLType> stableOrder) {
 		this.stableOrder = stableOrder;
 	}
 	

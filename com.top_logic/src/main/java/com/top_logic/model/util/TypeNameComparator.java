@@ -22,7 +22,7 @@ public class TypeNameComparator implements Comparator<TLType> {
 	 * Singleton {@link TypeNameComparator} instance that is stable for types in
 	 * named scopes.
 	 */
-	public static final TypeNameComparator INSTANCE = new TypeNameComparator(ScopeNameComaprator.INSTANCE);
+	public static final TypeNameComparator INSTANCE = new TypeNameComparator(ScopeNameComparator.INSTANCE);
 	
 	private final Comparator<? super TLType> stableOrder;
 

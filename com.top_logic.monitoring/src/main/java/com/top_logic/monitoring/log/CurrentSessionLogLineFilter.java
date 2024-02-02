@@ -7,6 +7,8 @@ package com.top_logic.monitoring.log;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpSession;
+
 import com.top_logic.layout.basic.DefaultDisplayContext;
 
 /**
@@ -25,7 +27,11 @@ public class CurrentSessionLogLineFilter implements LogLineFilter {
 	}
 
 	private static String getCurrentSessionMark() {
-		return DefaultDisplayContext.getDisplayContext().asRequest().getSession(false).getId();
+		HttpSession session = DefaultDisplayContext.getDisplayContext().asRequest().getSession(false);
+		if (session == null) {
+			return "[NO_SESSION]";
+		}
+		return session.getId();
 	}
 
 }

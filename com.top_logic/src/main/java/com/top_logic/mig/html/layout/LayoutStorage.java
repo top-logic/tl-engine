@@ -140,7 +140,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	private volatile boolean _loading = false;
 
 	/** Whether the layouts have been loaded for all themes. */
-	private volatile boolean _everythingLoaded;
+	private boolean _everythingLoaded;
 
 	/**
 	 * Creates a {@link LayoutStorage} from configuration.

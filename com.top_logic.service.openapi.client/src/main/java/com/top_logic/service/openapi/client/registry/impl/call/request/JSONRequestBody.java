@@ -5,6 +5,7 @@
  */
 package com.top_logic.service.openapi.client.registry.impl.call.request;
 
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -200,7 +201,8 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 
 		@Override
 		public void buildRequest(ClassicHttpRequest request, Call call) {
-			HttpEntity body = new StringEntity(jsonBody(request, call));
+			HttpEntity body =
+				new StringEntity(jsonBody(request, call), Charset.forName(JsonUtilities.DEFAULT_JSON_ENCODING));
 			request.setEntity(body);
 			ensureContentType(request);
 		}
@@ -210,7 +212,7 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 			 * set the "content-type" header, our setting will be overridden. */
 			Header[] headers = request.getHeaders(CONTENT_TYPE_HEADER);
 			if (headers == null || headers.length == 0) {
-				request.setHeader(CONTENT_TYPE_HEADER, JsonUtilities.JSON_CONTENT_TYPE);
+				request.setHeader(CONTENT_TYPE_HEADER, JsonUtilities.JSON_CONTENT_TYPE_HEADER);
 			}
 		}
 

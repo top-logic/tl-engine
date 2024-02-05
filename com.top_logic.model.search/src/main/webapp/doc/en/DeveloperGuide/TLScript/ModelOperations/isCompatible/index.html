@@ -1,0 +1,53 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$objectType.isCompatible($variableType)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Checks whether an object of type <code class="hljs inlineCode">objectType</code> can be assigned to a variable of type <code class="hljs inlineCode">variableType</code>. "Object" is not restricted to <code class="hljs inlineCode">TLObjects</code> but includes all types of objects, for example numbers. If <code class="hljs inlineCode">objectType</code> should be exactly <code class="hljs inlineCode">variableType</code> without potential subtypes, <code class="hljs inlineCode">$objectType == $variableType</code> can be used (vgl. <a class="tlObject" data-custom="false" href="?page=type&amp;uuid=842058fd-9ad1-406f-997d-bc65d9d27593">Type of an object</a>).</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>objectType</td>
+			<td>Type</td>
+			<td>The type of an object that should, for example, be stored in a v ariable of type <code class="hljs inlineCode">variableType</code>.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>variableType</td>
+			<td>Type</td>
+			<td>The type of, for example, a variable that should store <code class="hljs inlineCode">objectType</code>.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return Value</h2>
+
+<p><strong>Type:</strong> Boolean value</p>
+
+<h2>Example</h2>
+
+<pre>
+	<code>{
+   objectType = new(`my.module:MyClass`);
+   variableType = new(`my.module:OtherClass`);
+   $objectType.isCompatible($variableType);
+}</code>
+</pre>

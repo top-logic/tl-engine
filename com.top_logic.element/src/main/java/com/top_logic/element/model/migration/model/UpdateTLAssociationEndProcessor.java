@@ -10,9 +10,13 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -91,6 +95,15 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		 */
 		@Name(EndAspect.NAVIGATE_PROPERTY)
 		Boolean canNavigate();
+
+		/**
+		 * See {@link EndAspect#getHistoryType()}.
+		 */
+		@Name(EndAspect.HISTORY_TYPE_PROPERTY)
+		@NullDefault
+		@Nullable
+		@Label("Historization")
+		HistoryType getHistoryType();
 	}
 
 	private Util _util;
@@ -141,7 +154,7 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 
 		_util.updateTLStructuredTypePart(connection, associationEnd, null, null, newAssociationEndName,
 			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
-			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
+			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
 			null, null);
 	}
 

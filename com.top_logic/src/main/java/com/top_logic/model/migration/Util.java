@@ -50,6 +50,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.schema.config.DBColumnType;
 import com.top_logic.knowledge.service.Revision;
@@ -364,11 +365,12 @@ public class Util {
 		Boolean composite = null;
 		Boolean aggregate = null;
 		Boolean navigate = null;
+		HistoryType historyType = null;
 
 		return createTLStructuredTypePart(con, branch, module, className, partName, partID, targetModule,
 			targetType, TLStructuredTypeColumns.CLASS_PROPERTY_IMPL, endID, definitionID, mandatory,
 			composite, aggregate, multiple, bag, ordered,
-			navigate, annotations);
+			navigate, historyType, annotations);
 	}
 
 	/**
@@ -382,13 +384,13 @@ public class Util {
 	public TypePart createTLAssociationEnd(PooledConnection con,
 			QualifiedPartName assEnd, QualifiedTypeName target,
 			boolean mandatory, boolean composite, boolean aggregate, boolean multiple,
-			boolean bag, boolean ordered, boolean navigate,
+			boolean bag, boolean ordered, boolean navigate, HistoryType historyType,
 			AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, MigrationException, XMLStreamException {
 		return createTLAssociationEnd(con, TLContext.TRUNK_ID,
 			assEnd.getModuleName(), assEnd.getTypeName(), assEnd.getPartName(),
 			target.getModuleName(), target.getTypeName(),
-			mandatory, composite, aggregate, multiple, bag, ordered, navigate,
+			mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType,
 			toString(annotations));
 	}
 
@@ -406,9 +408,10 @@ public class Util {
 			String moduleName, String ownerName, String partName,
 			String targetModule, String targetTypeName,
 			boolean mandatory, boolean composite, boolean aggregate, boolean multiple,
-			boolean bag, boolean ordered, boolean navigate,
+			boolean bag, boolean ordered, boolean navigate, HistoryType historyType,
 			String annotations)
 			throws SQLException, MigrationException {
+		Objects.requireNonNull(historyType);
 		TLID partID = newID(con);
 		TLID endID = IdentifierUtil.nullIdForMandatoryDatabaseColumns();
 		TLID definitionID = IdentifierUtil.nullIdForMandatoryDatabaseColumns();
@@ -416,7 +419,7 @@ public class Util {
 		return createTLStructuredTypePart(con, branch, moduleName, ownerName, partName, partID, targetModule,
 			targetTypeName, TLStructuredTypeColumns.ASSOCIATION_END_IMPL, endID, definitionID, mandatory,
 			composite, aggregate, multiple, bag, ordered,
-			navigate, annotations);
+			navigate, historyType, annotations);
 	}
 
 	private Reference internalCreateTLReference(PooledConnection con, long branch,
@@ -436,10 +439,11 @@ public class Util {
 		Boolean ordered = null;
 		Boolean bag = null;
 		Boolean navigate = null;
+		HistoryType historyType = null;
 		return (Reference) createTLStructuredTypePart(con, branch, moduleName, ownerName, partName, partID, targetTable,
 			targetID, TLStructuredTypeColumns.REFERENCE_IMPL, endID, definitionID, isMandatory,
 			composite, aggregate, isMultiple, bag, ordered,
-			navigate, annotations);
+			navigate, historyType, annotations);
 	}
 
 	private TypePart createTLStructuredTypePart(PooledConnection con, long branch,
@@ -447,7 +451,7 @@ public class Util {
 			String targetModule, String targetTypeName,
 			String impl, TLID endID, TLID definitionID,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple,
-			Boolean bag, Boolean ordered, Boolean navigate,
+			Boolean bag, Boolean ordered, Boolean navigate, HistoryType historyType,
 			String annotations)
 			throws SQLException, MigrationException {
 		Type targetType = getTLTypeOrFail(con, branch, targetModule, targetTypeName);
@@ -458,7 +462,7 @@ public class Util {
 
 		return createTLStructuredTypePart(con, branch, moduleName, ownerName, partName, partID, targetType.getTable(),
 			targetType.getID(), impl, endID, definitionID, mandatory, composite, aggregate, multiple, bag,
-			ordered, navigate, annotations);
+			ordered, navigate, historyType, annotations);
 	}
 
 	private TypePart createTLStructuredTypePart(PooledConnection con, long branch,
@@ -466,7 +470,7 @@ public class Util {
 			String targetTable, TLID targetID,
 			String impl, TLID endID, TLID definitionID,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple,
-			Boolean bag, Boolean ordered, Boolean navigate,
+			Boolean bag, Boolean ordered, Boolean navigate, HistoryType historyType,
 			String annotations)
 			throws SQLException, MigrationException {
 		DBHelper sqlDialect = con.getSQLDialect();
@@ -499,7 +503,8 @@ public class Util {
 			parameterDef(DBType.BOOLEAN, "aggregate"),
 			parameterDef(DBType.BOOLEAN, "ordered"),
 			parameterDef(DBType.BOOLEAN, "bag"),
-			parameterDef(DBType.BOOLEAN, "navigate")),
+				parameterDef(DBType.BOOLEAN, "navigate"),
+				parameterDef(DBType.STRING, "historyType")),
 		insert(
 			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 				listWithoutNull(
@@ -523,7 +528,8 @@ public class Util {
 				SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR),
 				SQLH.mangleDBName(TLAssociationEnd.ORDERED_ATTR),
 				SQLH.mangleDBName(TLAssociationEnd.BAG_ATTR),
-				SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
+					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR),
+					SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)),
 				listWithoutNull(
 					branchParamOrNull(),
 				parameter(DBType.ID, "identifier"),
@@ -545,12 +551,13 @@ public class Util {
 				parameter(DBType.BOOLEAN, "aggregate"),
 				parameter(DBType.BOOLEAN, "ordered"),
 				parameter(DBType.BOOLEAN, "bag"),
-				parameter(DBType.BOOLEAN, "navigate")))).toSql(sqlDialect);
+					parameter(DBType.BOOLEAN, "navigate"),
+					parameter(DBType.STRING, "historyType")))).toSql(sqlDialect);
 
 		createProperty.executeUpdate(con, branch, partID, revCreate, annotations, partName, impl,
 			ownerClass.getID(),
 			ownerOrder, targetTable, targetID, endID, definitionID, mandatory, multiple,
-			composite, aggregate, ordered, bag, navigate);
+			composite, aggregate, ordered, bag, navigate, historyType == null ? null : historyType.getExternalName());
 
 		TypePart typePart;
 		if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
@@ -916,13 +923,13 @@ public class Util {
 	public Reference createTLReference(PooledConnection con,
 			QualifiedPartName reference, QualifiedTypeName target,
 			boolean mandatory, boolean composite, boolean aggregate, boolean multiple,
-			boolean bag, boolean ordered, boolean navigate,
+			boolean bag, boolean ordered, boolean navigate, HistoryType historyType,
 			AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws XMLStreamException, SQLException, MigrationException {
 		return createTLReference(con, TLContext.TRUNK_ID,
 			reference.getModuleName(), reference.getTypeName(), reference.getPartName(),
 			target.getModuleName(), target.getTypeName(),
-			mandatory, composite, aggregate, multiple, bag, ordered, navigate,
+			mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType,
 			toString(annotations));
 	}
 
@@ -944,21 +951,22 @@ public class Util {
 			String moduleName, String ownerName, String partName,
 			String targetModule, String targetTypeName,
 			boolean mandatory, boolean composite, boolean aggregate, boolean multiple,
-			boolean bag, boolean ordered, boolean navigate,
+			boolean bag, boolean ordered, boolean navigate, HistoryType historyType,
 			String annotations)
 			throws SQLException, MigrationException {
+		Objects.requireNonNull(historyType);
 
 		Type associationType = createTLStructuredType(con, branch, moduleName,
 			TLStructuredTypeColumns.syntheticAssociationName(ownerName, partName), null, null, null, true);
 
 		createTLAssociationEnd(con, branch, associationType.getModule().getModuleName(), associationType.getTypeName(),
 			TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, moduleName, ownerName, false, false, false, true, false, false,
-			false, null);
+			false, HistoryType.CURRENT, null);
 
 		TypePart targetEnd = createTLAssociationEnd(con, branch, associationType.getModule().getModuleName(),
 			associationType.getTypeName(),
 			partName, targetModule, targetTypeName, mandatory, composite, aggregate, multiple, bag, ordered, navigate,
-			null);
+			historyType, null);
 
 		Reference reference =
 			internalCreateTLReference(con, branch, moduleName, ownerName, partName, targetEnd.getID(), annotations);
@@ -2164,7 +2172,7 @@ public class Util {
 			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, XMLStreamException {
 		updateTLStructuredTypePart(con, part, newType, newOwner, newName, mandatory, null, null, multiple, bag,
-			ordered, null, toString(annotations), null);
+			ordered, null, null, toString(annotations), null);
 	}
 
 	/**
@@ -2176,11 +2184,12 @@ public class Util {
 	 * </p>
 	 * 
 	 * @see #updateTLReference(PooledConnection, Reference, Type, Type, String, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, Boolean, AnnotatedConfig, TypePart)
+	 *      Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, AnnotatedConfig, TypePart)
 	 */
 	public void updateInverseReference(PooledConnection con, Reference inverseReference,
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
+			Boolean ordered, Boolean navigate, HistoryType historyType,
+			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException, XMLStreamException {
 		TLID endID = null;
 		if (newEnd != null) {
@@ -2196,10 +2205,10 @@ public class Util {
 				ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
 
 		updateTLStructuredTypePart(con, associationEnd, null, null, null,
-			mandatory, composite, aggregate, multiple, bag, ordered, navigate,
+			mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType,
 			null, null);
 		updateTLStructuredTypePart(con, inverseReference, null, null, newName,
-			null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null,
 			toString(annotations), newEnd);
 	}
 
@@ -2207,11 +2216,12 @@ public class Util {
 	 * Updates a {@link TLReference}.
 	 * 
 	 * @see #updateInverseReference(PooledConnection, Reference, String, Boolean, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, AnnotatedConfig, TypePart)
+	 *      Boolean, Boolean, Boolean, Boolean, HistoryType, AnnotatedConfig, TypePart)
 	 */
 	public void updateTLReference(PooledConnection con, Reference reference, Type newType, Type newOwner,
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
+			Boolean ordered, Boolean navigate, HistoryType historyType,
+			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException, XMLStreamException, MigrationException {
 
 		TLID endID = null;
@@ -2229,10 +2239,10 @@ public class Util {
 
 		// Name of the association end is the name as the reference.
 		updateTLStructuredTypePart(con, associationEnd, newType, null, newName,
-			mandatory, composite, aggregate, multiple, bag, ordered, navigate,
+			mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType,
 			null, null);
 		updateTLStructuredTypePart(con, reference, null, newOwner, newName,
-			null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null,
 			toString(annotations), newEnd);
 
 		if (newOwner != null || newType != null || newName != null) {
@@ -2268,7 +2278,7 @@ public class Util {
 				// type
 				// of the other end.
 				updateTLStructuredTypePart(con, otherPart, newOwner, null, null, null, null, null, null, null, null,
-					null, null, null);
+					null, null, null, null);
 			}
 			if (newType != null) {
 				// new type is the new owner of the inverse reference, if exists.
@@ -2300,7 +2310,8 @@ public class Util {
 	 */
 	public void updateTLStructuredTypePart(PooledConnection con, BranchIdType part, Type newType, Type newOwner,
 			String name, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, String annotations, TypePart newEnd) throws SQLException {
+			Boolean ordered, Boolean navigate, HistoryType historyType, String annotations, TypePart newEnd)
+			throws SQLException {
 		List<Parameter> parameterDefs = new ArrayList<>();
 		List<String> columns = new ArrayList<>();
 		List<SQLExpression> parameters = new ArrayList<>();
@@ -2373,6 +2384,12 @@ public class Util {
 			columns.add(SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR));
 			parameters.add(parameter(DBType.BOOLEAN, "navigate"));
 			arguments.add(navigate);
+		}
+		if (historyType != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "historyType"));
+			columns.add(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR));
+			parameters.add(parameter(DBType.STRING, "historyType"));
+			arguments.add(historyType.getExternalName());
 		}
 		if (annotations != null) {
 			parameterDefs.add(parameterDef(DBType.STRING, "annotations"));

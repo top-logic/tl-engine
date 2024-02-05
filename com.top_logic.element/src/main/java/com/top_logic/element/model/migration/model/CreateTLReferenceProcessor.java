@@ -77,6 +77,7 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 			getConfig().isComposite(), getConfig().isAggregate(),
 			getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
 			getConfig().canNavigate(),
+			getConfig().getHistoryType(),
 			getConfig());
 
 		log.info("Created reference " + _util.qualifiedName(partName));

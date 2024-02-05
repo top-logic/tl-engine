@@ -208,7 +208,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		}
 		
 		_util.updateTLStructuredTypePart(connection, sourcePart, targetType, null, null, null, null, null, null, null,
-			null, null, null, null);
+			null, null, null, null, null);
 		
 		log.info(
 			"Changed type of " + _util.qualifiedName(part) + " to " + _util.qualifiedName(getConfig().getTarget()));

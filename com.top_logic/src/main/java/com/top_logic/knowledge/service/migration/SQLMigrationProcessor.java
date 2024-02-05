@@ -44,7 +44,6 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 
 	private enum DatabaseType implements ExternallyNamed {
 		DB2("db2"), H2("h2"), MSSQL("mssql"), MYSQL("mysql"), MYSQL55("mysql55") {
-
 			@Override
 			DatabaseType getFallback() {
 				return MYSQL;
@@ -57,7 +56,12 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 				return DatabaseType.ORACLE;
 			}
 		},
-		POSTGRESQL("postgresql")
+		POSTGRESQL("postgresql") {
+			@Override
+			DatabaseType getFallback() {
+				return H2;
+			}
+		}
 
 		;
 
@@ -237,10 +241,12 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 				}
 				if (currentChar == ';') {
 					// Do not add ',' to statement because this is invalid, e.g. in Oracle.
+					String sql = buffer.toString();
 					try {
-						stmt.execute(buffer.toString());
+						int cnt = stmt.executeUpdate(sql);
+						log.info("Updated " + cnt + " rows: " + sql);
 					} catch (SQLException ex) {
-						log.error("Unable to execute statement '" + buffer.toString() + "'.", ex);
+						log.error("Unable to execute statement '" + sql + "'.", ex);
 						return;
 					}
 					buffer.setLength(0);

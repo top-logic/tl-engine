@@ -78,7 +78,8 @@ public class CreateTLAssociationEndProcessor
 			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
 			getConfig().isMultiple(), getConfig().isBag(),
 			getConfig().isOrdered(),
-			getConfig().canNavigate(), getConfig());
+			getConfig().canNavigate(),
+			getConfig().getHistoryType(), getConfig());
 
 		log.info("Created part " + _util.qualifiedName(partName));
 	}

@@ -8,8 +8,10 @@ package com.top_logic.element.model.migration.model;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -80,6 +82,13 @@ public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProc
 		 */
 		@Name(EndAspect.NAVIGATE_PROPERTY)
 		boolean canNavigate();
+
+		/**
+		 * See {@link EndAspect#getHistoryType()}.
+		 */
+		@Name(EndAspect.HISTORY_TYPE_PROPERTY)
+		@Label("Historization")
+		HistoryType getHistoryType();
 	}
 
 	/**

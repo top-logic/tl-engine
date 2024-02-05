@@ -44,7 +44,7 @@ public interface TreeViewConfig extends Selectable.SelectableConfig {
 	/**
 	 * The configuration parameter for {@link #getDropTargets()}
 	 */
-	String DROP_TARGETS_ATTRIBUTE_NAME = "treeDropTargets";
+	String DROP_TARGETS_ATTRIBUTE_NAME = "dropTargets";
 
 	/**
 	 * Entry tag name for the configuration parameter in {@link #getDropTargets()}

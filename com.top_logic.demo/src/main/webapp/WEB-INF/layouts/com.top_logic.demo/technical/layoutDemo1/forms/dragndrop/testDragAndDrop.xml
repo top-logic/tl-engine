@@ -20,18 +20,18 @@
 				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTreeModelBuilder"
 				titleKey="${resPrefix}.orderedTree.title"
 			>
-				<treeDropTargets>
+				<dropTargets>
 					<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTreeDrop"/>
-				</treeDropTargets>
+				</dropTargets>
 			</treeView>
 
 			<treeView name="${namePrefix}DefaultTree"
 				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTreeModelBuilder"
 				titleKey="${resPrefix}.defaultTree.title"
 			>
-				<treeDropTargets>
+				<dropTargets>
 					<dropTarget class="com.top_logic.demo.layout.demo.dnd.handlers.DemoSimpleTreeDrop"/>
-				</treeDropTargets>
+				</dropTargets>
 			</treeView>
 		</layout>
 

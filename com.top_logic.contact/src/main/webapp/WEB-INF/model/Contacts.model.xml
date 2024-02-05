@@ -6,7 +6,6 @@
 			<display-group value="tl.contact"/>
 			<factory value="com.top_logic.contact.business.ContactFactory"/>
 		</annotations>
-
 		<interface name="Contact.all">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>

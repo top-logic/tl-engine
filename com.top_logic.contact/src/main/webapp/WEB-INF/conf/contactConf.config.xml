@@ -47,6 +47,7 @@
 			<instance>
 				<bundles>
 					<bundle name="ContactMessages" />
+					<bundle name="model.Contacts.messages" />
 					<bundle name="model.tl.contact.external.messages" />
 				</bundles>
 			</instance>

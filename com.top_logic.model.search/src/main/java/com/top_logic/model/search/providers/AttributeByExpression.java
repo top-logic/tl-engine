@@ -64,31 +64,33 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) throws AttributeException {
 		Object result = executor(attribute.tKnowledgeBase(), attribute.getModel(), getExpr()).execute(object);
-		return convertAndCheck(attribute, result);
+		return convertAndCheck(object, attribute, result);
 	}
 
-	private Object convertAndCheck(TLStructuredTypePart attribute, Object result) {
+	private Object convertAndCheck(TLObject object, TLStructuredTypePart attribute, Object result) {
 		TLType type = attribute.getType();
 		if (attribute.isMultiple()) {
-			return checkCollection(attribute, type, attribute.isMandatory(), toCollection(attribute, result));
+			return checkCollection(object, attribute, type, attribute.isMandatory(), toCollection(attribute, result));
 		} else {
-			return normalizeValue(attribute, type, attribute.isMandatory(), toSingleElement(attribute, result));
+			return normalizeValue(object, attribute, type, attribute.isMandatory(), toSingleElement(attribute, result));
 		}
 	}
 
-	private Collection<?> checkCollection(TLStructuredTypePart attribute, TLType type, boolean mandatory,
-			Collection<?> collection) {
+	private Collection<?> checkCollection(TLObject object, TLStructuredTypePart attribute, TLType type,
+			boolean mandatory, Collection<?> collection) {
 		for (Object element : collection) {
-			checkValue(attribute, type, true, element);
+			checkValue(object, attribute, type, true, element);
 		}
 		if (mandatory && collection.isEmpty()) {
 			throw new TopLogicException(
-				I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR.fill(attribute));
+				I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ.fill(attribute,
+					object));
 		}
 		return collection;
 	}
 
-	private Object normalizeValue(TLStructuredTypePart attribute, TLType type, boolean mandatory, Object element) {
+	private Object normalizeValue(TLObject object, TLStructuredTypePart attribute, TLType type, boolean mandatory,
+			Object element) {
 		if (type.getModelKind() == ModelKind.DATATYPE) {
 			TLPrimitive primitiveType = (TLPrimitive) type;
 			StorageMapping<?> mapping = primitiveType.getStorageMapping();
@@ -97,21 +99,23 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 			Object storage = mapping.getStorageObject(element);
 			return mapping.getBusinessObject(storage);
 		} else {
-			checkValue(attribute, type, mandatory, element);
+			checkValue(object, attribute, type, mandatory, element);
 			return element;
 		}
 	}
 
-	private void checkValue(TLStructuredTypePart attribute, TLType type, boolean mandatory, Object element) {
+	private void checkValue(TLObject object, TLStructuredTypePart attribute, TLType type, boolean mandatory, Object element) {
 		if (element == null) {
 			if (mandatory) {
 				throw new TopLogicException(
-					I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR.fill(attribute));
+					I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ
+						.fill(TLModelUtil.qualifiedName(attribute), object));
 			}
 		} else {
 			if (!TLModelUtil.isCompatibleInstance(type, element)) {
 				throw new TopLogicException(
-					I18NConstants.ERROR_SCRIPT_RESULT_OF_INCOMPATIBLE_TYPE__ATTR_EXPECTED_ACTUAL.fill(attribute,
+					I18NConstants.ERROR_SCRIPT_RESULT_OF_INCOMPATIBLE_TYPE__ATTR_EXPECTED_ACTUAL.fill(
+						TLModelUtil.qualifiedName(attribute),
 						type, element instanceof TLObject ? ((TLObject) element).tType() : element));
 			}
 		}

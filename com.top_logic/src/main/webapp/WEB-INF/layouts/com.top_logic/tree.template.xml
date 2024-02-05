@@ -23,7 +23,7 @@
 					<property name="partnerGroup"/>
 
 					<property name="dragSource"/>
-					<property name="treeDropTargets"/>
+					<property name="dropTargets"/>
 					<property name="buttons"/>
 				</value>
 			</display-order>
@@ -86,7 +86,7 @@
 				value="tree"
 			/>
 		</property>
-		<property name="treeDropTargets"
+		<property name="dropTargets"
 			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
 			instance-type="com.top_logic.layout.tree.dnd.TreeDropTarget"
 			type="List"
@@ -117,7 +117,7 @@
 		selection="${selection}"
 		show-only-selectable-nodes="${showOnlySelectableNodes}"
 		titleKey="${name}"
-		treeDropTargets="${treeDropTargets}"
+		dropTargets="${dropTargets}"
 	>
 		<selectionModelFactory multiple="${multiSelection}"/>
 		<buttons>

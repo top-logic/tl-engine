@@ -43,7 +43,7 @@
 }
 ]]></parents>
 		</modelBuilder>
-		<treeDropTargets>
+		<dropTargets>
 			<dropTarget class="com.top_logic.model.search.providers.OrderedTreeDropByExpression">
 				<canDrop><![CDATA[draggedObjects->parent->reference->{canDrop=source -> parent -> reference ->
 					if($source.type() == `test.dnd:Machine`, false, {
@@ -101,7 +101,7 @@
 					<setModel target="selection(self())"/>
 				</postCreateActions>
 			</dropTarget>
-		</treeDropTargets>
+		</dropTargets>
 		<buttons>
 			<button id="ID_81961406_c00a_4c18_9610_4f8b3c65c413"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"

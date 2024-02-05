@@ -18,6 +18,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_COMPILING_EXPRESSION__PATH_PARAMETERS;
 
+	/**
+	 * @en Invalid content type "{0}": {1}
+	 */
+	public static ResKey2 ERROR_INVALID_CONTENET_TYPE__VALUE_MSG;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

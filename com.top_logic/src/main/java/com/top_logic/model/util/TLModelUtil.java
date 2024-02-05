@@ -1896,7 +1896,7 @@ public class TLModelUtil {
 	 * <p>
 	 * <ol>
 	 * <li>If the <code>expectedType</code> is a {@link TLClass} it checks whether the
-	 * <code>actualType</code> is either the same or an subtype (hereditarily).</li>
+	 * <code>actualType</code> is either the same or a subtype (hereditarily).</li>
 	 * <li>If the <code>expectedType</code> is a {@link TLAssociation} it checks whether the
 	 * <code>actualType</code> is either the same or (if the association is a union) one of its part
 	 * (hereditarily).</li>

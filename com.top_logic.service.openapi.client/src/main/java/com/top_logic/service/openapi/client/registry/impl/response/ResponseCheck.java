@@ -43,7 +43,7 @@ public class ResponseCheck implements ResponseHandlerFactory {
 			HttpEntity entity = response.getEntity();
 			String contentType = StringServices.nonNull(entity.getContentType());
 			Object content;
-			if (contentType.startsWith("text/plain")) {
+			if (contentType.startsWith("text/") || contentType.startsWith("application/json")) {
 				String contentEncoding = StringServices.nonEmpty(entity.getContentEncoding());
 				if (contentEncoding == null) {
 					try (InputStream in = entity.getContent()) {

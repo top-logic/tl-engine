@@ -473,7 +473,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					fail("Expected error.");
 				} catch (TopLogicException ex) {
 					assertEquals(
-						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR,
+						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ,
 						ex.getErrorKey().plain());
 				}
 
@@ -482,7 +482,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					fail("Expected error.");
 				} catch (TopLogicException ex) {
 					assertEquals(
-						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR,
+						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ,
 						ex.getErrorKey().plain());
 				}
 			}
@@ -503,7 +503,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					fail("Expected error.");
 				} catch (TopLogicException ex) {
 					assertEquals(
-						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR,
+						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ,
 						ex.getErrorKey().plain());
 				}
 
@@ -512,7 +512,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					fail("Expected error.");
 				} catch (TopLogicException ex) {
 					assertEquals(
-						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR,
+						com.top_logic.model.search.providers.I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ,
 						ex.getErrorKey().plain());
 				}
 			}

@@ -31,6 +31,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
 import com.top_logic.model.search.expr.query.Args;
@@ -320,6 +321,64 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 				I18NConstants.ERROR_NOT_A_REFERENCE__EXPR_VALUE.fill(expr, value));
 		}
 		return (TLReference) value;
+	}
+
+	/**
+	 * Dynamic cast to {@link TLType} with user-readable error message and ensures the value is not
+	 * <code>null</code>.
+	 *
+	 * @param value
+	 *        The evaluation value.
+	 * @return The given value cast to {@link TLType}.
+	 */
+	public TLType asTypeNonNull(Object value) {
+		return asTypeNonNull(this, value);
+	}
+
+	/**
+	 * Dynamic cast to {@link TLType} with user-readable error message.
+	 *
+	 * @param value
+	 *        The evaluation value. Must be <code>null</code> or a {@link TLType}.
+	 * @return The given value cast to {@link TLType}.
+	 */
+	public TLType asType(Object value) {
+		return asType(this, value);
+	}
+
+	/**
+	 * Dynamic cast to {@link TLType} with user-readable error message and ensures the value is not
+	 * <code>null</code>.
+	 *
+	 * @param context
+	 *        The {@link SearchExpression} context in which the evaluation occurs (for error
+	 *        reporting).
+	 * @param value
+	 *        The evaluation value.
+	 * @return The given value cast to {@link TLType}.
+	 */
+	public static TLType asTypeNonNull(SearchExpression context, Object value) {
+		return asType(context, notNull(context, value));
+	}
+
+	/**
+	 * Dynamic cast to {@link TLType} with user-readable error message.
+	 *
+	 * @param context
+	 *        The {@link SearchExpression} context in which the evaluation occurs (for error
+	 *        reporting).
+	 * @param value
+	 *        The evaluation value. Must be <code>null</code> or a {@link TLType}.
+	 * @return The given value cast to {@link TLType}.
+	 */
+	public static TLType asType(SearchExpression context, Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof TLType) {
+			return (TLType) value;
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_TYPE__VAL_EXPR.fill(value, context));
 	}
 
 	/**

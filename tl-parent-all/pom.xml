@@ -1780,6 +1780,25 @@
 											org.apache.maven.plugins
 										</groupId>
 										<artifactId>
+											maven-war-plugin
+										</artifactId>
+										<versionRange>
+											[3.3.2,)
+										</versionRange>
+										<goals>
+											<goal>war</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.apache.maven.plugins
+										</groupId>
+										<artifactId>
 											maven-enforcer-plugin
 										</artifactId>
 										<versionRange>

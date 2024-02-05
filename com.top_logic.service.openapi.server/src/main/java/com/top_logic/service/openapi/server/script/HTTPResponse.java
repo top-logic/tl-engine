@@ -61,7 +61,7 @@ public class HTTPResponse extends GenericMethod {
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("statusCode")
 			.optional("content")
-			.optional("contentType", JsonUtilities.JSON_CONTENT_TYPE)
+			.optional("contentType", JsonUtilities.JSON_CONTENT_TYPE_HEADER)
 			.build();
 
 		/**

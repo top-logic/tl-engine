@@ -15,14 +15,14 @@
         <config service-class="com.top_logic.layout.provider.LabelProviderService">
             <instance>
                 <label-providers>
-					<provider kind="MODEL" type="Contacts:Contact.Person" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
                 </label-providers>
                 <resource-providers>
-					<provider kind="MODEL" type="Contacts:Contact.Person" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />

@@ -50,7 +50,7 @@
 						</property>
 						<reference name="boss"
 							kind="forwards"
-							type="Contacts:Contact.Person"
+							type="Contacts:PersonContact"
 						>
 							<annotations>
 								<constraint>
@@ -63,7 +63,7 @@
 						<reference name="member"
 							kind="forwards"
 							multiple="true"
-							type="Contacts:Contact.Person"
+							type="Contacts:PersonContact"
 						>
 							<annotations>
 								<constraint>

@@ -42,6 +42,11 @@ public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<Cre
 		@Mandatory
 		QualifiedTypeName getName();
 
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
 	}
 
 	private Util _util;

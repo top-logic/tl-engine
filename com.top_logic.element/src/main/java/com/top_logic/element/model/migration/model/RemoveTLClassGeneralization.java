@@ -10,9 +10,9 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -47,27 +47,17 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 		QualifiedTypeName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * The extended types.
 		 */
 		@Name(ObjectTypeConfig.GENERALIZATIONS)
 		@EntryTag(ExtendsConfig.TAG_NAME)
-		List<Generalization> getGeneralizations();
-	}
-
-	/**
-	 * Configuration of a generalization.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface Generalization extends ConfigurationItem {
-
-		/**
-		 * The extended type.
-		 */
-		@Mandatory
-		@Name(ExtendsConfig.TYPE)
-		QualifiedTypeName getType();
-
+		@DefaultContainer
+		List<AddTLClassGeneralization.Generalization> getGeneralizations();
 	}
 
 	private Util _util;
@@ -97,7 +87,7 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedTypeName specialisation = getConfig().getName();
-		for (Generalization generalization : getConfig().getGeneralizations()) {
+		for (AddTLClassGeneralization.Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.removeGeneralisation(connection, specialisation, typeName);
 			log.info(

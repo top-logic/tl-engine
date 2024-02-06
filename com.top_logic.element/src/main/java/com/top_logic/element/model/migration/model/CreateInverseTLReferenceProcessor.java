@@ -40,6 +40,11 @@ public class CreateInverseTLReferenceProcessor
 		@Name(ReferenceConfig.INVERSE_REFERENCE)
 		QualifiedPartName getInverseReference();
 
+		/**
+		 * Setter for {@link #getInverseReference()}.
+		 */
+		void setInverseReference(QualifiedPartName value);
+
 	}
 
 	private Util _util;

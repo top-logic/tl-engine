@@ -13,10 +13,12 @@ import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.equal.EqualityByValue;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
+import com.top_logic.model.util.QualifiedTypeNameConstraint;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -33,6 +35,13 @@ import com.top_logic.model.util.TLModelUtil;
  */
 @Format(QualifiedTypeName.Format.class)
 public interface QualifiedTypeName extends NamedConfigMandatory, EqualityByValue {
+
+	/**
+	 * The qualified name of the {@link TLType type}.
+	 */
+	@Override
+	@Constraint(QualifiedTypeNameConstraint.class)
+	String getName();
 
 	/**
 	 * The name of the {@link TLModule} in the qualified name.

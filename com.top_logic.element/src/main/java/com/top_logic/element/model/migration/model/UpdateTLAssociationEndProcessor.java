@@ -18,12 +18,10 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
-import com.top_logic.element.config.PartConfig;
+import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor.UpdateTypePartConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociationEnd;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
@@ -41,24 +39,18 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 	 * Configuration options of {@link UpdateTLAssociationEndProcessor}.
 	 */
 	@TagName("update-association-end")
-	public interface Config
-			extends PolymorphicConfiguration<UpdateTLAssociationEndProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+	public interface Config extends PolymorphicConfiguration<UpdateTLAssociationEndProcessor>, UpdateEndAspectConfig {
 
-		/**
-		 * Qualified name of the {@link TLAssociationEnd} to update.
-		 */
-		QualifiedPartName getName();
+		// sum interface
 
-		/**
-		 * New name of the association end.
-		 */
-		QualifiedPartName getNewName();
+	}
 
-		/**
-		 * See {@link PartConfig#getMandatory()}
-		 */
-		@Name(PartConfig.MANDATORY)
-		Boolean isMandatory();
+	/**
+	 * {@link UpdateTypePartConfig} for association end aspects.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface UpdateEndAspectConfig extends UpdateTypePartConfig {
 
 		/**
 		 * See {@link EndAspect#isComposite()}.
@@ -71,24 +63,6 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		 */
 		@Name(EndAspect.AGGREGATE_PROPERTY)
 		Boolean isAggregate();
-
-		/**
-		 * See {@link PartConfig#isMultiple()}.
-		 */
-		@Name(PartConfig.MULTIPLE_PROPERTY)
-		Boolean isMultiple();
-
-		/**
-		 * See {@link PartConfig#isBag()}.
-		 */
-		@Name(PartConfig.BAG_PROPERTY)
-		Boolean isBag();
-
-		/**
-		 * See {@link PartConfig#isOrdered()}.
-		 */
-		@Name(PartConfig.ORDERED_PROPERTY)
-		Boolean isOrdered();
 
 		/**
 		 * See {@link EndAspect#canNavigate()}.

@@ -66,6 +66,24 @@ public class ParseJson extends GenericMethod implements WithFlatMapSemantics<Obj
 			return null;
 		}
 
+		Object result = parse(input);
+		if (result instanceof Number) {
+			// Make sure that for consistency, only double is returned form a script funtion.
+			if (result instanceof Double) {
+				return result;
+			}
+			if (result instanceof Integer) {
+				return toNumber(((Number) result).intValue());
+			}
+			if (result instanceof Long) {
+				return toNumber(((Number) result).longValue());
+			}
+			return toNumber(((Number) result).doubleValue());
+		}
+		return result;
+	}
+
+	private Object parse(Object input) {
 		try {
 			if (input instanceof BinaryDataSource) {
 				BinaryDataSource data = (BinaryDataSource) input;

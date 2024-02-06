@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.pdf2txt()</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Extracts the text from a given PDF document. In the case of a scanned PDF, text is extracted using OCR software. The result may then be inaccurate or incorrect.</p>
+
+<p>The function uses external tools that may need to be installed on the application server: <code class="hljs inlineCode">pdf2txt</code> for simple text extraction, <code class="hljs inlineCode">pdftoppm</code> for image generation in preparation for OCR, and <code class="hljs inlineCode">tesseract</code> for the OCR process of scanned documents.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binary data in PDF format</td>
+			<td>The document to be converted.</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> String</p>
+
+<p>The text extracted from the PDF.</p>

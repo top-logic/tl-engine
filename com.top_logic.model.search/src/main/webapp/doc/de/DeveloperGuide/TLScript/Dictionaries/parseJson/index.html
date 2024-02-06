@@ -1,0 +1,63 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.parseJson()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Interpretiert die Eingabe als JSON formattierten Text und dekodiert daraus ein Wörterbuch.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Zeichenkette/Binärwert</td>
+			<td>Text im JSON-Format</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wörterbuch, Liste, Zeichenkette, Zahl, Wahrheitswert</p>
+
+<p>Das aus der JSON-Eingabe rekonstruierte strukturierte Objekt.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre>
+	<code>"{foo: 3, bar: true}".parseJson()["foo"]</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 3</p>
+
+<p>Der Aufruf von <code class="hljs inlineCode">parseJson()</code> liefert das Wörterbuch mit den Einträgen <code class="hljs inlineCode">"foo"</code> und <code class="hljs inlineCode">"bar"</code>. Von diesem Wörterbuch wird der Wert des Eintrags mit dem Schlüssel <code class="hljs inlineCode">"foo"</code> geliefert, also der Wert <code class="hljs inlineCode">3</code>.</p>
+
+<p> </p>
+
+<h3>Beispiel 2</h3>
+
+<pre>
+	<code>"47".parseJson() + 2
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 49</p>
+
+<p>Interpretiert die Zeichenkette <code class="hljs inlineCode">"47"</code> als Zahl <code class="hljs inlineCode">47</code> und addiert <code class="hljs inlineCode">2</code>. Beachte: Der Ausdruck <code class="hljs inlineCode">"47" + 2</code> würde die Zeichenkette <code class="hljs inlineCode">"472"</code> liefern!</p>

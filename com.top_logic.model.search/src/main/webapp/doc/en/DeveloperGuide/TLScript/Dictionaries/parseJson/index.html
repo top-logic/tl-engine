@@ -1,0 +1,63 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.parseJson()</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Interprets the input as JSON formatted text and decodes a dictionary from it.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Character string/binary value</td>
+			<td>Text in JSON format</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Dictionary, list, string, number, truth value</p>
+
+<p>The structured object reconstructed from the JSON input.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1: Output</h3>
+
+<pre>
+	<code>"{foo: 3, bar: true}".parseJson()["foo"]</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> 3</p>
+
+<p>Calling <code class="hljs inlineCode">parseJson()</code> returns the dictionary with the entries <code class="hljs inlineCode">"foo"</code> and <code class="hljs inlineCode">"bar"</code>. From this dictionary, the value of the entry with the key <code class="hljs inlineCode">"foo"</code> is returned, i.e. the value <code class="hljs inlineCode">3</code>.</p>
+
+<p> </p>
+
+<h3>Example 2</h3>
+
+<pre>
+	<code>"47".parseJson() + 2
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> 49</p>
+
+<p>Interprets the character string <code class="hljs inlineCode">"47"</code> as the number <code class="hljs inlineCode">47</code> and adds <code class="hljs inlineCode">2</code>. Note: The expression <code class="hljs inlineCode">"47" + 2</code> would return the character string <code class="hljs inlineCode">"472"</code>!</p>

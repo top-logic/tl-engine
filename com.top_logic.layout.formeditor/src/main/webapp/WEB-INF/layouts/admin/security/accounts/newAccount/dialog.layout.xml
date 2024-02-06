@@ -135,7 +135,7 @@
 						<field
 							attribute="boss"
 							fullQualifiedName="Contacts:Contact.Person#boss"
-							type="Contacts:Contact.Person"
+							type="PersonContact"
 						/>
 						<field
 							attribute="company"

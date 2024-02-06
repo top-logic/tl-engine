@@ -348,9 +348,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 		TLModel oldModel;
 		try {
-			ModelConfig oldConfig = parseConfig(oldConfigXML);
-			oldModel = loadTransientModel(log, oldConfig);
-			log.checkErrors();
+			oldModel = loadTransientModel(log, oldConfigXML);
 		} catch (ConfigurationException ex) {
 			throw new IllegalStateException("Cannot parse old model configuration, no schema upgrade possible.", ex);
 		}
@@ -364,9 +362,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		List<DiffElement> patch = patchCreator.getPatch();
 		if (!patch.isEmpty()) {
 			Logger.info("Started incremental model upgrade: " + patch, DynamicModelService.class);
-			ApplyModelPatch apply = new ApplyModelPatch(log, getModel(), getFactory());
-			apply.applyPatch(patch);
-			apply.complete();
+			ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch);
 
 			storeModelConfig(connection);
 
@@ -376,7 +372,17 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		}
 	}
 
-	private ModelConfig parseConfig(String oldConfigXML) throws ConfigurationException {
+	/**
+	 * Parses the given XML as {@link ModelConfig} and instantiates a transient {@link TLModel}.
+	 */
+	public static TLModel loadTransientModel(Protocol log, String modelXML) throws ConfigurationException {
+		ModelConfig modelConfig = parseConfig(modelXML);
+		TLModel oldModel = loadTransientModel(log, modelConfig);
+		log.checkErrors();
+		return oldModel;
+	}
+
+	private static ModelConfig parseConfig(String oldConfigXML) throws ConfigurationException {
 		/* Note: Unlike the configuration which is read from the file system, the constraints are
 		 * not checked on the content from the database. This would only cause problems if a new
 		 * constraint was added */
@@ -395,7 +401,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	/**
 	 * Instantiates the given {@link ModelConfig} into a transient {@link TLModel}.
 	 */
-	public TLModel loadTransientModel(Protocol log, ModelConfig modelConfig) {
+	public static TLModel loadTransientModel(Protocol log, ModelConfig modelConfig) {
 		return loadModel(log, new TLModelImpl(), null, modelConfig);
 	}
 

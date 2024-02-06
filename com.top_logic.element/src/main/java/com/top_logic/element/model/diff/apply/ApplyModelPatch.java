@@ -6,6 +6,7 @@
 package com.top_logic.element.model.diff.apply;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -196,15 +197,44 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	}
 
 	/**
+	 * Applies all given diffs to the given model.
+	 * 
+	 * @param log
+	 *        Protocol to write messages to.
+	 * @param model
+	 *        The {@link TLModel} to adapt.
+	 * @param factory
+	 *        {@link TLFactory} to create new elements.
+	 * @param patch
+	 *        The {@link DiffElement}s to apply.
+	 */
+	public static void applyPatch(Protocol log, TLModel model, TLFactory factory, List<DiffElement> patch) {
+		ApplyModelPatch apply = new ApplyModelPatch(log, model, factory);
+		apply.applyPatch(patch);
+		apply.complete();
+	}
+
+	/**
 	 * Applies all given diffs to the {@link #getModel() encapsulated model}.
 	 */
 	public void applyPatch(List<DiffElement> patch) {
-		List<DiffElement> elements = new ArrayList<>(patch);
-		Collections.sort(elements,
-			(d1, d2) -> Integer.compare(d1.visit(DiffPriority.INSTANCE, null), d2.visit(DiffPriority.INSTANCE, null)));
+		List<DiffElement> elements = sortByPriority(patch);
 		for (DiffElement diff : elements) {
 			diff.visit(this, null);
 		}
+	}
+
+	/**
+	 * Creates a new list with the given {@link DiffElement}s and sorts it by priority.
+	 */
+	public static <E extends DiffElement> List<E> sortByPriority(Collection<E> patch) {
+		List<E> elements = new ArrayList<>(patch);
+		Collections.sort(elements, ApplyModelPatch::compareByPriority);
+		return elements;
+	}
+
+	private static int compareByPriority(DiffElement d1, DiffElement d2) {
+		return Integer.compare(d1.visit(DiffPriority.INSTANCE, null), d2.visit(DiffPriority.INSTANCE, null));
 	}
 
 	@Override

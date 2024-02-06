@@ -68,7 +68,7 @@ public class ParseJson extends GenericMethod implements WithFlatMapSemantics<Obj
 
 		Object result = parse(input);
 		if (result instanceof Number) {
-			// Make sure that for consistency, only double is returned form a script funtion.
+			// Make sure that for consistency, only double is returned form a script function.
 			if (result instanceof Double) {
 				return result;
 			}

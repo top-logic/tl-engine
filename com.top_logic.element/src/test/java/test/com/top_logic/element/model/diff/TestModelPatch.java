@@ -98,9 +98,7 @@ public class TestModelPatch extends BasicTestCase {
 				super.localInfo(message, verbosityLevel);
 			}
 		};
-		ApplyModelPatch apply = new ApplyModelPatch(log, left, factory);
-		apply.applyPatch(patch);
-		apply.complete();
+		ApplyModelPatch.applyPatch(log, left, factory, patch);
 	}
 
 	private List<DiffElement> createPatch(TLModel left, TLModel right) {

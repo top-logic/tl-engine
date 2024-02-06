@@ -99,9 +99,9 @@ public class CollectionDiff {
 				T commonItem = common.get(commonPos);
 				if (eq.test(rightItem, commonItem)) {
 					// Take (no change).
-					result.add(new Update<>(commonItem, rightItem));
+					T leftItem = leftIndex.remove(idFun.apply(commonItem));
+					result.add(new Update<>(leftItem, rightItem));
 					commonPos++;
-					leftIndex.remove(idFun.apply(commonItem));
 				} else {
 					// Insert in between.
 					addInsert(result, idFun, leftIndex, commonItem, rightItem);

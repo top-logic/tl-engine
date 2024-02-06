@@ -8,7 +8,6 @@ package com.top_logic.element.model.diff.config;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.model.TLModelPart;
-import com.top_logic.model.annotate.TLAnnotation;
 
 /**
  * Base properties for modifying a model part.
@@ -19,7 +18,7 @@ import com.top_logic.model.annotate.TLAnnotation;
 public interface PartUpdate extends Update {
 
 	/**
-	 * The {@link TLModelPart} to remove a {@link TLAnnotation} from.
+	 * The {@link TLModelPart} to update.
 	 */
 	@Mandatory
 	String getPart();

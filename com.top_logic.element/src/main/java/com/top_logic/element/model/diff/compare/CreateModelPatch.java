@@ -472,7 +472,7 @@ public class CreateModelPatch {
 
 	final void addPatchEnumeration(TLEnumeration model, TLEnumeration other) {
 		List<DiffOp<TLClassifier>> diff =
-			CollectionDiff.diffList(TLNamedPart::getName, model.getClassifiers(), other.getClassifiers());
+			CreateModelPatch.diffList(model.getClassifiers(), other.getClassifiers());
 
 		for (DiffOp<TLClassifier> op : diff) {
 			op.visit(_classifiersDiff, null);

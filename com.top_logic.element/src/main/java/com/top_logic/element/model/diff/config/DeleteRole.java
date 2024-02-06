@@ -8,7 +8,7 @@ package com.top_logic.element.model.diff.config;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
- * {@link DiffElement} requesting the creation of a new singleton.
+ * {@link DiffElement} requesting the deletion of a role.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -16,7 +16,7 @@ import com.top_logic.basic.config.annotation.TagName;
 public interface DeleteRole extends ModulePartDiff {
 
 	/**
-	 * Configuration of the new singleton to create within {@link #getModule()}.
+	 * Configuration of the role to delete within {@link #getModule()}.
 	 */
 	String getRole();
 

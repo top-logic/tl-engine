@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.config;
 
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -16,6 +17,7 @@ import com.top_logic.element.meta.kbbased.PersistentReference;
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
+@Abstract
 public interface EndAspect extends PartConfig {
 
 	/** @see #isComposite() */

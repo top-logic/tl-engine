@@ -10,6 +10,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
@@ -17,8 +18,6 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.annotate.TLClassifierAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 
@@ -34,13 +33,18 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 	 * Configuration options of {@link SetDefaultTLClassifierProcessor}.
 	 */
 	@TagName("set-default-classifier")
-	public interface Config
-			extends PolymorphicConfiguration<SetDefaultTLClassifierProcessor>, AnnotatedConfig<TLClassifierAnnotation> {
+	public interface Config extends PolymorphicConfiguration<SetDefaultTLClassifierProcessor> {
 
 		/**
 		 * Qualified name of the {@link TLEnumeration} to update.
 		 */
+		@Mandatory
 		QualifiedTypeName getEnumeration();
+
+		/**
+		 * Setter for {@link #getEnumeration()}.
+		 */
+		void setEnumeration(QualifiedTypeName value);
 
 		/**
 		 * Name of the classifier in {@link #getEnumeration()} that must be
@@ -49,6 +53,11 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 		 */
 		@Nullable
 		String getDefaultClassifier();
+
+		/**
+		 * Setter for {@link #getDefaultClassifier()}.
+		 */
+		void setDefaultClassifier(String value);
 
 	}
 

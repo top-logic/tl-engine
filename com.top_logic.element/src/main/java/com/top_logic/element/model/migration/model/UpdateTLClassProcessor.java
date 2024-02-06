@@ -53,22 +53,51 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		QualifiedTypeName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * New name of the class including the new module.
 		 */
 		@Nullable
 		QualifiedTypeName getNewName();
 
 		/**
+		 * Setter for {@link #getNewName()}.
+		 */
+		void setNewName(QualifiedTypeName value);
+
+		/**
 		 * See {@link ClassConfig#isAbstract()}.
+		 * 
+		 * <p>
+		 * If the value is not set, the value in the database remains unchanged.
+		 * </p>
 		 */
 		@Name(ClassConfig.ABSTRACT)
-		boolean isAbstract();
+		Boolean isAbstract();
+
+		/**
+		 * Setter for {@link #isAbstract()}.
+		 */
+		void setAbstract(Boolean value);
 
 		/**
 		 * See {@link ClassConfig#isFinal()}.
+		 * 
+		 * <p>
+		 * If the value is not set, the value in the database remains unchanged.
+		 * </p>
 		 */
 		@Name(ClassConfig.FINAL)
-		boolean isFinal();
+		Boolean isFinal();
+
+		/**
+		 * Setter for {@link #isFinal()}.
+		 */
+		void setFinal(Boolean value);
+
 	}
 
 	private Util _util;

@@ -50,10 +50,20 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		QualifiedTypeName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * See {@link ClassConfig#isAbstract()}.
 		 */
 		@Name(ClassConfig.ABSTRACT)
 		boolean isAbstract();
+
+		/**
+		 * Setter for {@link #isAbstract()}.
+		 */
+		void setAbstract(boolean value);
 
 		/**
 		 * See {@link ClassConfig#isFinal()}.
@@ -62,9 +72,23 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		boolean isFinal();
 
 		/**
+		 * Setter for {@link #isFinal()}.
+		 */
+		void setFinal(boolean value);
+
+		/**
 		 * Name of the primary generalization for the new {@link TLClass}.
+		 * 
+		 * @implNote This value is mandatory for all types not in
+		 *           {@link TlModelFactory#TL_MODEL_STRUCTURE}. At least
+		 *           {@link TLObject#TL_OBJECT_TYPE} can be used.
 		 */
 		QualifiedTypeName getPrimaryGeneralization();
+
+		/**
+		 * Setter for {@link #getPrimaryGeneralization()}.
+		 */
+		void setPrimaryGeneralization(QualifiedTypeName value);
 
 	}
 

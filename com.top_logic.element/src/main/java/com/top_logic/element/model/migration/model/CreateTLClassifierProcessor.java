@@ -42,11 +42,21 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 		QualifiedPartName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedPartName value);
+
+		/**
 		 * Sort order of the new classifier. If not set, the new {@link TLClassifier} will be
 		 * appended to the list of classifiers.
 		 */
 		@IntDefault(Util.NO_SORT_ORDER)
 		int getSortOrder();
+
+		/**
+		 * Setter for {@link #getSortOrder()}.
+		 */
+		void setSortOrder(int value);
 
 	}
 

@@ -10,6 +10,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -38,7 +39,13 @@ public class CreateTLEnumerationProcessor extends AbstractConfiguredInstance<Cre
 		/**
 		 * Qualified name of the new {@link TLEnumeration}.
 		 */
+		@Mandatory
 		QualifiedTypeName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
 
 	}
 

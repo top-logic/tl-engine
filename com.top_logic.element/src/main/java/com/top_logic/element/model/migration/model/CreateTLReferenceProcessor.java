@@ -42,6 +42,11 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 		@Name(PartConfig.TYPE_SPEC)
 		QualifiedTypeName getType();
 
+		/**
+		 * Setter for {@link #getType()}
+		 */
+		void setType(QualifiedTypeName value);
+
 	}
 
 	private Util _util;

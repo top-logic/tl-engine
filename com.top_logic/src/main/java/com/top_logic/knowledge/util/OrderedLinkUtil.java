@@ -8,6 +8,8 @@ package com.top_logic.knowledge.util;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.dob.DataObjectException;
@@ -101,12 +103,28 @@ public class OrderedLinkUtil {
 	 *        The integer attribute to update with the ordering criterium.
 	 */
 	public static <L extends TLObject> void updateIndices(List<L> links, String orderAttribute) {
+		updateIndices(links, orderGetter(orderAttribute), orderSetter(orderAttribute));
+	}
+
+	/**
+	 * Update the order of the links in a way that it reflects the implicit order of the given
+	 * objects.
+	 * 
+	 * @param links
+	 *        The objects to reorder.
+	 * @param orderGetter
+	 *        Access to the order of a link.
+	 * @param orderSetter
+	 *        Updater for the order of a link.
+	 */
+	public static <L> void updateIndices(List<L> links, Function<L, Number> orderGetter,
+			BiConsumer<L, Integer> orderSetter) {
 		try {
-			assignIndicesOptimized(links, orderAttribute);
-		} catch (IndexRangeToShort ex) {
+			assignIndicesOptimized(links, orderGetter, orderSetter);
+		} catch (IndexRangeTooShort ex) {
 			try {
-				assignIndices(links, 0, links.size(), MAX_ORDER, orderAttribute, APPEND_INC);
-			} catch (IndexRangeToShort ex1) {
+				assignIndices(links, 0, links.size(), MAX_ORDER, orderGetter, orderSetter, APPEND_INC);
+			} catch (IndexRangeTooShort ex1) {
 				throw new KnowledgeBaseRuntimeException("Failed to set ordered link attribute.", ex);
 			}
 		}
@@ -158,14 +176,11 @@ public class OrderedLinkUtil {
 	/**
 	 * Assign new values to the order attribute by keeping non-conflicting order values.
 	 * 
-	 * @param orderAttribute
-	 *        The integer attribute to store the ordering criterium in.
-	 * 
-	 * @throws IndexRangeToShort
+	 * @throws IndexRangeTooShort
 	 *         If optimized assignment is not possible.
 	 */
-	private static <L extends TLObject> void assignIndicesOptimized(List<L> links, String orderAttribute)
-			throws IndexRangeToShort {
+	private static <L> void assignIndicesOptimized(List<L> links, Function<L, Number> orderGetter,
+			BiConsumer<L, Integer> orderSetter) throws IndexRangeTooShort {
 		// The index of the last link in links that had an unchanged non-conflicting order
 		// assignment.
 		int last = -1;
@@ -175,7 +190,7 @@ public class OrderedLinkUtil {
 		for (int n = 0, cnt = links.size(); n < cnt; n++) {
 			L link = links.get(n);
 	
-			Number linkOderValue = getOrder(link, orderAttribute);
+			Number linkOderValue = getOrder(link, orderGetter);
 			if (linkOderValue != null) {
 				int linkOrder = linkOderValue.intValue();
 				if (linkOrder > lastOrder) {
@@ -183,7 +198,7 @@ public class OrderedLinkUtil {
 					if (last < n - 1) {
 						// There are links between last and n that require a new order assignment.
 						int lastPossibleOrderValue = linkOrder - 1;
-						assignIndices(links, last + 1, n, lastPossibleOrderValue, orderAttribute, INSERT_INC);
+						assignIndices(links, last + 1, n, lastPossibleOrderValue, orderGetter, orderSetter, INSERT_INC);
 					}
 	
 					last = n;
@@ -193,7 +208,7 @@ public class OrderedLinkUtil {
 		}
 		if (last < links.size() - 1) {
 			int lastPossibleOrderValue = MAX_ORDER;
-			assignIndices(links, last + 1, links.size(), lastPossibleOrderValue, orderAttribute, APPEND_INC);
+			assignIndices(links, last + 1, links.size(), lastPossibleOrderValue, orderGetter, orderSetter, APPEND_INC);
 		}
 	}
 
@@ -208,44 +223,47 @@ public class OrderedLinkUtil {
 	 *        The index after the last index to assign a new order value to.
 	 * @param lastPossibleOrderValue
 	 *        The last order value that is available for assignment.
-	 * @param orderAttribute
+	 * @param orderGetter
 	 *        The integer attribute to store the ordering criterium in.
 	 * @param maxDelta
 	 *        Maximum difference between the new orders of the links.
 	 * 
-	 * @throws IndexRangeToShort
+	 * @throws IndexRangeTooShort
 	 *         If assignment is not possible due to missing index values.
 	 */
-	private static <L extends TLObject> void assignIndices(List<L> links, int start, int stop,
-			int lastPossibleOrderValue, String orderAttribute, int maxDelta) throws IndexRangeToShort {
-		int firstPossibleOrderValue = firstPossibleValue(links, start, orderAttribute);
+	private static <L> void assignIndices(List<L> links, int start, int stop, int lastPossibleOrderValue,
+			Function<L, Number> orderGetter, BiConsumer<L, Integer> orderSetter, int maxDelta)
+			throws IndexRangeTooShort {
+		int firstPossibleOrderValue = firstPossibleValue(links, start, orderGetter);
 		int delta = delta(firstPossibleOrderValue, lastPossibleOrderValue, stop - start, maxDelta);
-		applyOrder(links, start, stop, orderAttribute, firstPossibleOrderValue, delta);
+		applyOrder(links, start, stop, orderSetter, firstPossibleOrderValue, delta);
 	}
 
-	private static <L extends TLObject> void applyOrder(List<L> links, int start, int stop, String orderAttribute,
+	private static <L> void applyOrder(List<L> links, int start, int stop, BiConsumer<L, Integer> orderSetter,
 			int previousOrderValue, int delta) throws DataObjectException {
 		int offset = delta / 2;
 		int newOrderValue = previousOrderValue + offset;
 		List<L> subList = links.subList(start, stop);
 		/* Iterate over a copy of the links list, because it may be a "live" list, such that
 		 * modifying the order attribute also the list order is changed directly. */
-		for (TLObject link : subList.toArray(new TLObject[subList.size()])) {
-			setOrder(link, orderAttribute, newOrderValue);
+		for (Object link : subList.toArray()) {
+			@SuppressWarnings("unchecked")
+			L typedLink = (L) link;
+			setOrder(typedLink, orderSetter, newOrderValue);
 			newOrderValue += delta;
 		}
 	}
 
-	private static <L extends TLObject> int firstPossibleValue(List<L> links, int start, String orderAttribute)
-			throws IndexRangeToShort {
+	private static <L> int firstPossibleValue(List<L> links, int start, Function<L, Number> orderGetter)
+			throws IndexRangeTooShort {
 		int firstPossibleOrderValue;
 		if (start == 0) {
 			firstPossibleOrderValue = 0;
 		} else {
-			int preceedingOrderValue = getOrder(links.get(start - 1), orderAttribute).intValue();
+			int preceedingOrderValue = getOrder(links.get(start - 1), orderGetter).intValue();
 			if (preceedingOrderValue == MAX_ORDER) {
 				// It is not possible to add 1 to the maximum value.
-				throw new IndexRangeToShort();
+				throw new IndexRangeTooShort();
 			}
 			firstPossibleOrderValue = preceedingOrderValue + 1;
 		}
@@ -253,14 +271,14 @@ public class OrderedLinkUtil {
 	}
 
 	private static int delta(int firstPossibleOrderValue, int lastPossibleOrderValue, int linkCnt, int maxDelta)
-			throws IndexRangeToShort {
+			throws IndexRangeTooShort {
 		// The number of available index values. Note, lastPossibleOrderValue is potentially
 		// MAX_ORDER and firstPossibleOrderValue 0. Therefore, the result of the expression
 		// potentially exceeds the integer range.
 		long availableOrderRange = ((long) lastPossibleOrderValue) - firstPossibleOrderValue + 1;
 	
 		if (linkCnt > availableOrderRange) {
-			throw new IndexRangeToShort();
+			throw new IndexRangeTooShort();
 		}
 	
 		long delta = availableOrderRange / linkCnt;
@@ -305,52 +323,88 @@ public class OrderedLinkUtil {
 	 *         if the index is out of range (index < 0 || index >= size())
 	 */
 	public static <L extends TLObject> Number determineInsertOrder(List<L> links, int index, String orderAttribute) {
+		return determineInsertOrder(links, index, orderGetter(orderAttribute), orderSetter(orderAttribute));
+	}
+
+	/**
+	 * Returns the order which the element must have to insert into the given list at the given
+	 * index.
+	 * 
+	 * <p>
+	 * It is supposed that the given links are already sorted using the given order getter. This
+	 * method computes a order which can be set to an element to insert into the given list at the
+	 * index position without violating the sorted property.
+	 * </p>
+	 * 
+	 * <p>
+	 * When it is not possible to compute such an order, the links are re-indexed (not necessarily
+	 * all) to ensure such an order exists.
+	 * </p>
+	 * 
+	 * @param links
+	 *        The list of items in which an element should be inserted.
+	 * @param index
+	 *        The index in the list which the new element should have.
+	 * @param orderGetter
+	 *        Access to the order of an item.
+	 * @param orderSetter
+	 *        Updater for the order of an item.
+	 * 
+	 * @return The order which the element must have to insert into the given list at the given
+	 *         index.
+	 * 
+	 * @throws IndexOutOfBoundsException
+	 *         if the index is out of range (index < 0 || index >= size())
+	 */
+	public static <L> Number determineInsertOrder(List<L> links, int index, Function<L, Number> orderGetter,
+			BiConsumer<L, Integer> orderSetter) {
 		try {
-			return getInsertOrder(links, index, orderAttribute);
-		} catch (IndexRangeToShort ex) {
+			return getInsertOrder(links, index, orderGetter);
+		} catch (IndexRangeTooShort ex) {
 			try {
-				return ensureInsertPosition(links, index, orderAttribute);
-			} catch (IndexRangeToShort ex1) {
+				return ensureInsertPosition(links, index, orderGetter, orderSetter);
+			} catch (IndexRangeTooShort ex1) {
 				throw new KnowledgeBaseRuntimeException(ex1);
 			}
 		}
 	}
 
-	private static <L extends TLObject> int ensureInsertPosition(List<L> links, int index, String orderAttribute)
-			throws IndexRangeToShort, DataObjectException {
+	private static <L> int ensureInsertPosition(List<L> links, int index, Function<L, Number> orderGetter,
+			BiConsumer<L, Integer> orderSetter)
+			throws IndexRangeTooShort, DataObjectException {
 		int numberLinks = links.size();
 		if (index == 0) {
 			int delta = delta(0, MAX_ORDER, numberLinks + 1, APPEND_INC);
-			applyOrder(links, 0, numberLinks, orderAttribute, delta, delta);
+			applyOrder(links, 0, numberLinks, orderSetter, delta, delta);
 			return delta;
 		}
 		if (index == numberLinks) {
 			int delta = delta(0, MAX_ORDER, numberLinks + 1, APPEND_INC);
-			applyOrder(links, 0, numberLinks, orderAttribute, 0, delta);
-			return getOrder(links.get(numberLinks - 1), orderAttribute).intValue() + delta;
+			applyOrder(links, 0, numberLinks, orderSetter, 0, delta);
+			return getOrder(links.get(numberLinks - 1), orderGetter).intValue() + delta;
 		}
-		int order = getOrder(links.get(index), orderAttribute).intValue();
+		int order = getOrder(links.get(index), orderGetter).intValue();
 		int delta = delta(order, MAX_ORDER, numberLinks - index + 1, APPEND_INC);
-		applyOrder(links, index, numberLinks, orderAttribute, order + delta, delta);
+		applyOrder(links, index, numberLinks, orderSetter, order + delta, delta);
 		return order + (delta / 2);
 	}
 
 	/**
 	 * Assign new values to the order attribute by keeping non-conflicting order values.
 	 * 
-	 * @param orderAttribute
-	 *        The integer attribute to store the ordering criterium in.
+	 * @param orderGetter
+	 *        Access to the order of a link.
 	 * 
-	 * @throws IndexRangeToShort
+	 * @throws IndexRangeTooShort
 	 *         If optimized assignment is not possible.
 	 */
-	private static <L extends TLObject> int getInsertOrder(List<L> links, int index, String orderAttribute)
-			throws IndexRangeToShort {
+	public static <L> int getInsertOrder(List<L> links, int index, Function<L, Number> orderGetter)
+			throws IndexRangeTooShort {
 		if (links.isEmpty()) {
 			return APPEND_INC;
 		}
 		if (index == links.size()) {
-			int order = firstPossibleValue(links, index, orderAttribute);
+			int order = firstPossibleValue(links, index, orderGetter);
 			int delta = delta(order, MAX_ORDER, 1, APPEND_INC);
 			return order + (delta / 2);
 		}
@@ -359,13 +413,13 @@ public class OrderedLinkUtil {
 		if (index == 0) {
 			previousIndex = -1;
 		} else {
-			previousIndex = getOrder(links.get(index - 1), orderAttribute).intValue();
+			previousIndex = getOrder(links.get(index - 1), orderGetter).intValue();
 		}
-		int order = getOrder(links.get(index), orderAttribute).intValue();
+		int order = getOrder(links.get(index), orderGetter).intValue();
 		int delta = order - previousIndex;
 		if (delta < 2) {
 			// no space between elements.
-			throw new IndexRangeToShort();
+			throw new IndexRangeTooShort();
 		}
 		return previousIndex + (delta / 2);
 	}
@@ -391,21 +445,41 @@ public class OrderedLinkUtil {
 	 */
 	@FrameworkInternal
 	public static Number getOrder(TLObject link, String orderAttribute) {
-		KnowledgeItem handle = link.tHandle();
-		try {
-			return (Number) handle.getAttributeValue(orderAttribute);
-		} catch (NoSuchAttributeException ex) {
-			throw errorMissingOrderAttribute(handle.tTable(), orderAttribute, ex);
-		}
+		return getOrder(link, orderGetter(orderAttribute));
 	}
 
-	static void setOrder(TLObject link, String orderAttribute, int order) throws DataObjectException {
-		KnowledgeItem handle = link.tHandle();
-		try {
-			handle.setAttributeValue(orderAttribute, order);
-		} catch (NoSuchAttributeException ex) {
-			throw errorMissingOrderAttribute(handle.tTable(), orderAttribute, ex);
-		}
+	private static <L extends TLObject> Function<L, Number> orderGetter(String orderAttribute) {
+		return link -> {
+			KnowledgeItem handle = link.tHandle();
+			try {
+				return (Number) handle.getAttributeValue(orderAttribute);
+			} catch (NoSuchAttributeException ex) {
+				throw errorMissingOrderAttribute(handle.tTable(), orderAttribute, ex);
+			}
+		};
+	}
+
+	private static <T> Number getOrder(T link, Function<T, Number> getter) {
+		return getter.apply(link);
+	}
+
+	static <T> void setOrder(T link, BiConsumer<T, Integer> setter, int order) {
+		setter.accept(link, order);
+	}
+
+	static void setOrder(TLObject link, String orderAttribute, int order) {
+		setOrder(link, orderSetter(orderAttribute), order);
+	}
+
+	private static <L extends TLObject> BiConsumer<L, Integer> orderSetter(String orderAttribute) {
+		return (link, order) -> {
+			KnowledgeItem handle = link.tHandle();
+			try {
+				handle.setAttributeValue(orderAttribute, order);
+			} catch (NoSuchAttributeException ex) {
+				throw errorMissingOrderAttribute(handle.tTable(), orderAttribute, ex);
+			}
+		};
 	}
 
 	static IllegalArgumentException errorMissingOrderAttribute(MetaObject linkType, String orderAttribute, NoSuchAttributeException ex) {
@@ -414,7 +488,7 @@ public class OrderedLinkUtil {
 	}
 
 	/**
-	 * {@link Comparator} that compares arbitrary {@link TLObject}s accoring to a given integer
+	 * {@link Comparator} that compares arbitrary {@link TLObject}s according to a given integer
 	 * attribute.
 	 */
 	public static final class LinkOrder implements Comparator<TLObject> {
@@ -450,8 +524,14 @@ public class OrderedLinkUtil {
 		}
 	}
 
-	private static class IndexRangeToShort extends Exception {
-		public IndexRangeToShort() {
+	/**
+	 * Exception that is triggered when it is not possible to insert an element because the index
+	 * range is too short.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static class IndexRangeTooShort extends Exception {
+		IndexRangeTooShort() {
 			super();
 		}
 	}

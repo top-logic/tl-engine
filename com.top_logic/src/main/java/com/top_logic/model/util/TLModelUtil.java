@@ -1668,11 +1668,26 @@ public class TLModelUtil {
 	}
 
 	/**
-	 * The fully qualified name of the part with given name of the given {@link TLType type} (No
-	 * matter whether it exist).
+	 * The fully qualified name of the part with the given qualified name of the given {@link TLType
+	 * type} (No matter whether it exist).
 	 */
 	public static String qualifiedTypePartName(TLType type, String partName) {
-		return qualifiedName(type) + QUALIFIED_NAME_PART_SEPARATOR + partName;
+		return qualifiedTypePartName(qualifiedName(type), partName);
+	}
+
+	/**
+	 * The fully qualified name of the part (No matter whether it exist).
+	 */
+	public static String qualifiedTypePartName(String moduleName, String typeName, String partName) {
+		return qualifiedTypePartName(qualifiedName(moduleName, typeName), partName);
+	}
+
+	/**
+	 * The fully qualified name of the part with given qualified name of the type with the given
+	 * name (No matter whether it exist).
+	 */
+	public static String qualifiedTypePartName(String qualifiedTypeName, String partName) {
+		return qualifiedTypeName + QUALIFIED_NAME_PART_SEPARATOR + partName;
 	}
 
 	/**

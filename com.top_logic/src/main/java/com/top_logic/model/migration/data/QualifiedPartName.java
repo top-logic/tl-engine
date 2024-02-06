@@ -5,6 +5,9 @@
  */
 package com.top_logic.model.migration.data;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -12,10 +15,12 @@ import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.util.QualifiedTypePartNameConstraint;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -34,6 +39,16 @@ import com.top_logic.model.util.TLModelUtil;
 @Format(QualifiedPartName.Format.class)
 public interface QualifiedPartName extends QualifiedTypeName {
 
+	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+	/**
+	 * The qualified name of the {@link TLTypePart part}.
+	 */
+	@Override
+	@Constraint(QualifiedTypePartNameConstraint.class)
+	String getName();
+
 	/**
 	 * The name of the {@link TLTypePart} in the qualified name.
 	 */
@@ -41,6 +56,14 @@ public interface QualifiedPartName extends QualifiedTypeName {
 	@Derived(fun = PartName.class, args = @Ref(NAME_ATTRIBUTE))
 	String getPartName();
 
+	/**
+	 * {@link QualifiedTypeName} representing the owner of this part.
+	 */
+	default QualifiedTypeName getOwner() {
+		QualifiedTypeName type = TypedConfiguration.newConfigItem(QualifiedTypeName.class);
+		type.setName(TLModelUtil.qualifiedName(getModuleName(), getTypeName()));
+		return type;
+	}
 
 	/**
 	 * Serialization format of a {@link QualifiedPartName}.

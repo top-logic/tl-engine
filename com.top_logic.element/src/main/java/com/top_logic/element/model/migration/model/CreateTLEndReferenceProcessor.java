@@ -81,7 +81,7 @@ public class CreateTLEndReferenceProcessor extends AbstractConfiguredInstance<Cr
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedPartName associationEnd = getConfig().getEnd();
 
-		_util.createTLEndReference(connection, partName, associationEnd, getConfig());
+		_util.createTLEndReference(log, connection, partName, associationEnd, getConfig());
 		log.info(
 			"Created reference " + _util.qualifiedName(partName) + " for end " + _util.qualifiedName(associationEnd));
 	}

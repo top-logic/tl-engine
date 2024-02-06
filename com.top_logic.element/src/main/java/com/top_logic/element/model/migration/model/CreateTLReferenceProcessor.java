@@ -72,13 +72,13 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
-		_util.createTLReference(connection,
-			partName, targetType, getConfig().isMandatory(),
-			getConfig().isComposite(), getConfig().isAggregate(),
-			getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
+		_util.createTLReference(log,
+			connection, partName, targetType,
+			getConfig().isMandatory(), getConfig().isComposite(),
+			getConfig().isAggregate(), getConfig().isMultiple(), getConfig().isBag(),
+			getConfig().isOrdered(),
 			getConfig().canNavigate(),
-			getConfig().getHistoryType(),
-			getConfig());
+			getConfig().getHistoryType(), getConfig());
 
 		log.info("Created reference " + _util.qualifiedName(partName));
 	}

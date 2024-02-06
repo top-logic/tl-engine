@@ -106,9 +106,9 @@ public class CreateTLPropertyProcessor extends AbstractConfiguredInstance<Create
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = (getConfig().getType());
-		_util.createTLProperty(connection, partName, targetType,
-			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(),
-			getConfig().isOrdered(), getConfig());
+		_util.createTLProperty(log, connection, partName,
+			targetType, getConfig().isMandatory(), getConfig().isMultiple(),
+			getConfig().isBag(), getConfig().isOrdered(), getConfig());
 		log.info("Created part " + _util.qualifiedName(partName));
 	}
 

@@ -74,12 +74,12 @@ public class CreateTLAssociationEndProcessor
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
-		_util.createTLAssociationEnd(connection, partName, targetType,
-			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-			getConfig().isMultiple(), getConfig().isBag(),
+		_util.createTLAssociationEnd(log, connection, partName,
+			targetType, getConfig().isMandatory(), getConfig().isComposite(),
+			getConfig().isAggregate(), getConfig().isMultiple(),
+			getConfig().isBag(),
 			getConfig().isOrdered(),
-			getConfig().canNavigate(),
-			getConfig().getHistoryType(), getConfig());
+			getConfig().canNavigate(), getConfig().getHistoryType(), getConfig());
 
 		log.info("Created part " + _util.qualifiedName(partName));
 	}

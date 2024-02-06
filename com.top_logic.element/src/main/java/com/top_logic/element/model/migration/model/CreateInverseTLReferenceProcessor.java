@@ -73,9 +73,9 @@ public class CreateInverseTLReferenceProcessor
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName reference = getConfig().getName();
 		QualifiedPartName inverseReference = getConfig().getInverseReference();
-		_util.createInverseTLReference(connection, reference, inverseReference,
-			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
-			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig());
+		_util.createInverseTLReference(log, connection, reference,
+			inverseReference, getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
+			getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig());
 
 		log.info("Created inverse reference " + _util.qualifiedName(reference) + " for reference "
 			+ _util.qualifiedName(inverseReference));

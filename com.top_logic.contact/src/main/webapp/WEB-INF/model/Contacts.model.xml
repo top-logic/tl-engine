@@ -297,7 +297,7 @@
 				</reference>
 				<reference name="boss"
 					kind="forwards"
-					type="Contact.Person"
+					type="PersonContact"
 				>
 					<annotations>
 						<constraint>

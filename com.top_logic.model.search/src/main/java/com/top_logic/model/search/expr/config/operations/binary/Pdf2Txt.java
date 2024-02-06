@@ -169,7 +169,7 @@ public class Pdf2Txt extends GenericMethod implements WithFlatMapSemantics<Objec
 			return buffer.toString();
 		} catch (IOException | InterruptedException ex) {
 			throw new TopLogicException(
-				I18NConstants.ERROR_CONVERSION_FAILED__MSG.fill(input.getClass().getName()));
+				I18NConstants.ERROR_CONVERSION_FAILED__MSG.fill(ex.getMessage()));
 		}
 	}
 

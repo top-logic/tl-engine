@@ -7,9 +7,7 @@ package com.top_logic.element.model.migration.model;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -17,9 +15,6 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
-import com.top_logic.model.TLProperty;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
@@ -29,21 +24,13 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateTLPropertyProcessor extends AbstractConfiguredInstance<CreateTLPropertyProcessor.Config>
-		implements MigrationProcessor {
+public class CreateTLPropertyProcessor extends AbstractCreateTypePartProcessor<CreateTLPropertyProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLPropertyProcessor}.
 	 */
 	@TagName("create-property")
-	public interface Config
-			extends PolymorphicConfiguration<CreateTLPropertyProcessor>, AnnotatedConfig<TLAttributeAnnotation> {
-
-		/**
-		 * Qualified name for the new {@link TLProperty}.
-		 */
-		@Mandatory
-		QualifiedPartName getName();
+	public interface Config extends AbstractCreateTypePartProcessor.Config<CreateTLPropertyProcessor> {
 
 		/**
 		 * See {@link PartConfig#getTypeSpec()}.
@@ -53,28 +40,9 @@ public class CreateTLPropertyProcessor extends AbstractConfiguredInstance<Create
 		QualifiedTypeName getType();
 
 		/**
-		 * See {@link PartConfig#getMandatory()}.
+		 * Setter for {@link #getType()}.
 		 */
-		@Name(PartConfig.MANDATORY)
-		boolean isMandatory();
-
-		/**
-		 * See {@link PartConfig#isMultiple()}.
-		 */
-		@Name(PartConfig.MULTIPLE_PROPERTY)
-		boolean isMultiple();
-
-		/**
-		 * See {@link PartConfig#isOrdered()}.
-		 */
-		@Name(PartConfig.ORDERED_PROPERTY)
-		Boolean isOrdered();
-
-		/**
-		 * See {@link PartConfig#isBag()}.
-		 */
-		@Name(PartConfig.BAG_PROPERTY)
-		Boolean isBag();
+		void setType(QualifiedTypeName value);
 
 	}
 

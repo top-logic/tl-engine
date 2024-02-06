@@ -228,7 +228,7 @@ public class DataMigration {
 			}
 
 			try {
-				log.info("Done with " + version.getModule() + "': " + version.getName());
+				log.info("Done with '" + version.getModule() + "': " + version.getName());
 				connection.commit();
 			} catch (SQLException ex) {
 				log.error("Failed to commit results. ", ex);

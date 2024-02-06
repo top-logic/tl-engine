@@ -26,8 +26,6 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.Type;
@@ -45,8 +43,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 	 * Configuration options of {@link MarkTLTypePartOverride}.
 	 */
 	@TagName("mark-override")
-	public interface Config
-			extends PolymorphicConfiguration<MarkTLTypePartOverride>, AnnotatedConfig<TLAttributeAnnotation> {
+	public interface Config extends PolymorphicConfiguration<MarkTLTypePartOverride> {
 
 		/**
 		 * Qualified name of the overriding part.
@@ -55,11 +52,21 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 		QualifiedPartName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedPartName value);
+
+		/**
 		 * Qualified name of the definition of the overriding part, i.e. the top level part in the
 		 * override chain.
 		 */
 		@Mandatory
 		QualifiedPartName getDefinition();
+
+		/**
+		 * Setter for {@link #getDefinition()}.
+		 */
+		void setDefinition(QualifiedPartName value);
 
 	}
 

@@ -47,11 +47,21 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 		QualifiedTypeName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * The datatype {@link TLPrimitive#getKind() kind}.
 		 */
 		@Name(DatatypeConfig.KIND)
 		@Mandatory
 		TLPrimitive.Kind getKind();
+
+		/**
+		 * Setter for {@link #getKind()}.
+		 */
+		void setKind(TLPrimitive.Kind value);
 
 		/**
 		 * The {@link StorageMapping} to apply when loading and storing values.
@@ -63,9 +73,14 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 		@DefaultContainer
 		PolymorphicConfiguration<StorageMapping<?>> getStorageMapping();
 
+		/**
+		 * Setter for {@link #getStorageMapping()}.
+		 */
+		void setStorageMapping(PolymorphicConfiguration<StorageMapping<?>> value);
+
 	}
 
-	private Util _uUtil;
+	private Util _util;
 
 	/**
 	 * Creates a {@link CreateTLDatatypeProcessor} from configuration.
@@ -83,7 +98,7 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			_uUtil = context.get(Util.PROPERTY);
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating datatype migration failed at " + getConfig().location(), ex);
@@ -92,10 +107,10 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
-		_uUtil.createTLDatatype(connection, typeName, getConfig().getKind(), getConfig(),
+		_util.createTLDatatype(connection, typeName, getConfig().getKind(), getConfig(),
 			getConfig().getStorageMapping(),
 			getConfig());
-		log.info("Created datatype " + _uUtil.qualifiedName(typeName));
+		log.info("Created datatype " + _util.qualifiedName(typeName));
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -24,25 +24,26 @@ import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * {@link MigrationProcessor} for updating the annotations of a model element.
+ * {@link MigrationProcessor} for adding annotations to a model element. Already existing
+ * annotations are replaced.
  * 
- * @see AddTLAnnotations
  * @see RemoveTLAnnotations
+ * @see UpdateTLAnnotations
  * 
- * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnnotations.Config>
+public class AddTLAnnotations extends AbstractConfiguredInstance<AddTLAnnotations.Config>
 		implements MigrationProcessor {
 
 	/**
-	 * Configuration options of {@link UpdateTLAnnotations}.
+	 * Configuration options of {@link AddTLAnnotations}.
 	 */
-	@TagName("update-annotations")
-	public interface Config extends PolymorphicConfiguration<UpdateTLAnnotations>,
+	@TagName("add-annotations")
+	public interface Config extends PolymorphicConfiguration<AddTLAnnotations>,
 			AnnotatedConfig<TLAnnotation> {
 
 		/**
-		 * Qualified name of the {@link TLModelPart} whose annotations must be updated.
+		 * Qualified name of the {@link TLModelPart} to add annotations to.
 		 */
 		@Mandatory
 		String getName();
@@ -57,7 +58,7 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 	private Util _util;
 
 	/**
-	 * Creates a {@link UpdateTLAnnotations} from configuration.
+	 * Creates a {@link AddTLAnnotations} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -65,7 +66,7 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public UpdateTLAnnotations(InstantiationContext context, Config config) {
+	public AddTLAnnotations(InstantiationContext context, Config config) {
 		super(context, config);
 	}
 
@@ -75,7 +76,7 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
-			log.error("Updating part annotations failed at " + getConfig().location(), ex);
+			log.error("Adding part annotations failed at " + getConfig().location(), ex);
 		}
 	}
 
@@ -83,24 +84,24 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 		String name = getConfig().getName();
 		int moduleTypeSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 		if (moduleTypeSepIdx < 0) {
-			_util.updateModuleAnnotations(connection, name, getConfig());
-			log.info("Updated annotation of module " + name + ".");
+			_util.addModuleAnnotations(log, connection, name, getConfig());
+			log.info("Added annotations to module '" + name + "'.");
 			return;
 		}
 		Module module = _util.getTLModuleOrFail(connection, name.substring(0, moduleTypeSepIdx));
 		int typePartSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR, moduleTypeSepIdx + 1);
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
-			_util.updateTypeAnnotations(connection, module, typeName, getConfig());
-			log.info("Updated annotation of type " + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + ".");
+			_util.addTypeAnnotations(log, connection, module, typeName, getConfig());
+			log.info("Added annotation to type '" + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + "'.");
 			return;
 		}
 
 		Type type = _util.getTLTypeOrFail(connection, module, name.substring(moduleTypeSepIdx + 1, typePartSepIdx));
 		String partName = name.substring(typePartSepIdx + 1);
-		_util.updateTypePartAnnotations(connection, type, partName, getConfig());
-		log.info("Updated annotation of type part "
-			+ TLModelUtil.qualifiedName(module.getModuleName(), type.getTypeName(), partName) + ".");
+		_util.addTypePartAnnotations(log, connection, type, partName, getConfig());
+		log.info("Added annotation to type part '"
+				+ TLModelUtil.qualifiedTypePartName(module.getModuleName(), type.getTypeName(), partName) + "'.");
 	}
 
 }

@@ -18,6 +18,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.element.meta.TypeSpec;
@@ -134,7 +135,7 @@ public class Pdf2Txt extends GenericMethod implements WithFlatMapSemantics<Objec
 
 			// Maybe a scanned PDF, try OCR.
 			File tmpConversionDir = File.createTempFile("image-data", "", tmpDir);
-			tmpConversionDir.delete();
+			FileUtilities.deleteR(tmpConversionDir);
 			tmpConversionDir.mkdir();
 
 			waitFor(
@@ -145,7 +146,7 @@ public class Pdf2Txt extends GenericMethod implements WithFlatMapSemantics<Objec
 
 			File[] pngFiles = tmpConversionDir.listFiles();
 			if (pngFiles == null) {
-				tmpConversionDir.delete();
+				FileUtilities.deleteR(tmpConversionDir);
 				tmp.delete();
 				return "";
 			}
@@ -163,7 +164,7 @@ public class Pdf2Txt extends GenericMethod implements WithFlatMapSemantics<Objec
 				png.delete();
 			}
 
-			tmpConversionDir.delete();
+			FileUtilities.deleteR(tmpConversionDir);
 			tmp.delete();
 
 			return buffer.toString();

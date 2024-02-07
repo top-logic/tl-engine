@@ -16,6 +16,8 @@ import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.table.control.TableControl;
@@ -37,22 +39,45 @@ public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 	 *
 	 * @author <a href=mailto:sfo@top-logic.com>sfo</a>
 	 */
+	@DisplayOrder({
+		Config.COLUMNS,
+		Config.EXCLUDED,
+	})
 	public interface Config<I extends AllVisibleColumnsProvider> extends PolymorphicConfiguration<I> {
 
+		/** Configuration name for {@link #getColumns()}. */
+		String COLUMNS = "columns";
+
+		/** Configuration name for {@link #isExcluded()}. */
+		String EXCLUDED = "excluded";
+
 		/**
-		 * All column names for the configured types in its form model.
+		 * Column names for the configured types in its form model.
 		 * 
 		 * @see AllColumnsForConfiguredTypes
 		 */
 		@Options(fun = AllColumnsForConfiguredTypes.class, mapping = ColumnOptionMapping.class)
 		@OptionLabels(ColumnOptionLabelProvider.class)
 		@Format(CommaSeparatedStrings.class)
+		@Name(COLUMNS)
 		List<String> getColumns();
 
 		/**
 		 * Setter for {@link #getColumns()}.
 		 */
 		void setColumns(List<String> columns);
+
+		/**
+		 * Whether the selected {@link #getColumns()} must be excluded from the selectable columns.
+		 * All other columns have their default visibility.
+		 */
+		@Name(EXCLUDED)
+		boolean isExcluded();
+
+		/**
+		 * Setter for {@link #isExcluded()}.
+		 */
+		void setExcluded(boolean value);
 
 	}
 
@@ -81,14 +106,20 @@ public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 			if (TableControl.SELECT_COLUMN_NAME.equals(name)) {
 				continue;
 			}
-
-			if (columns.contains(name)) {
-				if (elementaryColumn.getVisibility() == DisplayMode.excluded) {
-					elementaryColumn.setVisibility(DisplayMode.hidden);
+			if (getConfig().isExcluded()) {
+				if (columns.contains(name)) {
+					elementaryColumn.setVisibility(DisplayMode.excluded);
 				}
 			} else {
-				elementaryColumn.setVisibility(DisplayMode.excluded);
+				if (columns.contains(name)) {
+					if (elementaryColumn.getVisibility() == DisplayMode.excluded) {
+						elementaryColumn.setVisibility(DisplayMode.hidden);
+					}
+				} else {
+					elementaryColumn.setVisibility(DisplayMode.excluded);
+				}
 			}
+
 		}
 
 	}

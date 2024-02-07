@@ -38,9 +38,11 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.MetaAttributeFactory;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
@@ -1304,19 +1306,39 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
+
 				TLObject copy = (TLObject) execute(search("x -> $x.copy()"), orig);
-				assertNotNull(copy);
-				assertNotEquals(orig, copy);
-				assertDifferent(orig, copy, "b");
-				assertDifferent(orig, copy, "b", "contents", 0);
-				assertDifferent(orig, copy, "b", "contents", 1);
-				assertDifferent(orig, copy, "b", "contents", 2);
+				checkCopy(orig, copy);
 
-				assertNotNull(value(orig, "b", "contents", 0, "other"));
-				assertEquals(value(copy, "b", "contents", 0, "other"), value(copy, "b", "contents", 1));
-				assertEquals(value(orig, "b", "name"), value(copy, "b", "name"));
+				TLObject stable = stabilize(orig);
 
+				// The result must be the same, when using the stable version of the current
+				// original as input to the copy operation.
+				TLObject stableCopy = (TLObject) execute(search("x -> $x.copy()"), stable);
+				checkCopy(orig, stableCopy);
 			});
+	}
+
+	private TLObject stabilize(TLObject orig) {
+		HistoryManager historyManager = orig.tKnowledgeBase().getHistoryManager();
+		TLObject stable =
+			WrapperHistoryUtils.getWrapper(historyManager.getRevision(historyManager.getLastRevision()), orig);
+		return stable;
+	}
+
+	private void checkCopy(TLObject orig, TLObject copy) {
+		assertNotNull(copy);
+		assertNotEquals(orig, copy);
+		assertDifferent(orig, copy, "b");
+		assertDifferent(orig, copy, "b", "contents", 0);
+		assertDifferent(orig, copy, "b", "contents", 1);
+		assertDifferent(orig, copy, "b", "contents", 2);
+
+		assertNotNull(value(orig, "b", "contents", 0, "other"));
+		assertNotNull(value(copy, "b", "contents", 0, "other"));
+
+		assertEquals(value(copy, "b", "contents", 1), value(copy, "b", "contents", 0, "other"));
+		assertEquals(value(orig, "b", "name"), value(copy, "b", "name"));
 	}
 
 	public void testCopyFilter() {
@@ -1324,15 +1346,28 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
 				TLObject copy =
-					(TLObject) execute(search("x -> $x.copy(null, part -> $part != `TestSearchExpression:B#others`)"),
+					(TLObject) execute(
+						search("x -> $x.copy(null, filter: part -> $part != `TestSearchExpression:B#others`)"),
 						orig);
-				assertNotNull(value(orig, "b", "contents", 0, "other"));
-				assertNotNull(value(copy, "b", "contents", 0, "other"));
-				assertDifferent(orig, copy, "b", "contents", 0, "other");
+				checkCopyFilter(orig, copy);
 
-				assertNotEmpty(value(orig, "b", "contents", 1, "others"));
-				assertEmpty(value(copy, "b", "contents", 1, "others"));
+				TLObject stable = stabilize(orig);
+
+				TLObject stableCopy =
+					(TLObject) execute(search(
+						"x -> $x.copy(null, filter: part -> !$part.equalsUnversioned(`TestSearchExpression:B#others`))"),
+						stable);
+				checkCopyFilter(orig, stableCopy);
 			});
+	}
+
+	private void checkCopyFilter(TLObject orig, TLObject copy) {
+		assertNotNull(value(orig, "b", "contents", 0, "other"));
+		assertNotNull(value(copy, "b", "contents", 0, "other"));
+		assertDifferent(orig, copy, "b", "contents", 0, "other");
+
+		assertNotEmpty(value(orig, "b", "contents", 1, "others"));
+		assertEmpty(value(copy, "b", "contents", 1, "others"));
 	}
 
 	public void testCopyConstructor() {
@@ -1351,8 +1386,25 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 								"}))"),
 						orig);
 
-				assertEquals(value(orig, "b", "contents", 0), value(copy, "b", "contents", 0, "orig"));
+				checkCopyConstructor(orig, copy);
+
+				TLObject stable = stabilize(orig);
+
+				TLObject stableCopy =
+					(TLObject) execute(search(
+						"x -> $x.copy(null, true, " +
+							"orig -> if ($orig.instanceOf(`TestSearchExpression:B`), " +
+							"new(`TestSearchExpression:C`) " +
+							"..set(`TestSearchExpression:C#orig`, $orig.inCurrent()) " +
+							"))"),
+						stable);
+
+				checkCopyConstructor(orig, stableCopy);
 			});
+	}
+
+	private void checkCopyConstructor(TLObject orig, TLObject copy) {
+		assertEquals(value(orig, "b", "contents", 0), value(copy, "b", "contents", 0, "orig"));
 	}
 
 	private void assertEmpty(Object value) {

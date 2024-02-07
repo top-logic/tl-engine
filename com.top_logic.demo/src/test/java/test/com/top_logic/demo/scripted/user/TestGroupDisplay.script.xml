@@ -27,7 +27,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -101,7 +101,7 @@
 							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
@@ -110,7 +110,7 @@
 							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -158,7 +158,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -226,7 +226,7 @@
 							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
@@ -235,7 +235,7 @@
 							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">

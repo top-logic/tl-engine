@@ -46,7 +46,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -100,7 +100,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -234,7 +234,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -242,9 +242,9 @@
 					executable="false"
 					user-id="root"
 				>
-					<reason-key>#("Ein Nutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en)</reason-key>
+					<reason-key>#("Ein Benutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en)</reason-key>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-						label="Zugang Löschen"
+						label="Zugang entfernen"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -259,7 +259,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -269,7 +269,7 @@
 				>
 					<reason-key>#("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en)</reason-key>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-						label="Zugang Löschen"
+						label="Zugang entfernen"
 					/>
 				</action>
 			</actions>
@@ -322,7 +322,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -374,7 +374,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -529,7 +529,7 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 								/>
 							</selection-model-name>
 						</action>
@@ -891,7 +891,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
@@ -966,7 +966,7 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 								/>
 							</selection-model-name>
 						</action>
@@ -1032,7 +1032,7 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 								/>
 							</selection-model-name>
 						</action>

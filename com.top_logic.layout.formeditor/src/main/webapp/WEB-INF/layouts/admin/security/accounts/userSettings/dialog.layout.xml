@@ -13,8 +13,8 @@
 	>
 		<title>
 			<title key="dynamic.a81055fe-8f11-4da9-bdee-e58999ef2134">
-				<en>Edit own contact</en>
-				<de>Eigenen Kontakt bearbeiten</de>
+				<en>Edit profile</en>
+				<de>Profil bearbeiten</de>
 			</title>
 		</title>
 		<open-handler id="showCurrentPersonDialog"
@@ -26,8 +26,8 @@
 				<en>Personal settings</en>
 				<de>Persönliche Einstellungen</de>
 				<tooltip>
-					<en>Shows the personal settings of the current user.</en>
-					<de>Zeigt die persönliche Einstellungen des aktuellen Nutzers an.</de>
+					<en>Displays the personal settings of the logged-in user.</en>
+					<de>Zeigt die persönliche Einstellungen des angemeldeten Benutzers an.</de>
 				</tooltip>
 			</resourceKey>
 		</open-handler>

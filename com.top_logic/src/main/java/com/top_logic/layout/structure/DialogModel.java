@@ -11,6 +11,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.NoBubblingEventType;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.mig.html.layout.LayoutComponent;
 
 
 /**
@@ -52,11 +53,28 @@ public interface DialogModel extends WindowModel, TypedAnnotatable {
 	boolean isClosed();
 
 	/**
-	 * The {@link Command} that closes this dialog by finally setting the
-	 * {@link #isClosed()} property.
+	 * The {@link Command} that closes this dialog by finally setting the {@link #isClosed()}
+	 * property.
+	 * <p>
+	 * In addition, this is the {@link Command} that is executed when "Escape" is pressed.
+	 * </p>
+	 * 
+	 * @see LayoutComponent#getCancelCommand()
 	 */
 	Command getCloseAction();
-	
+
+	/**
+	 * The {@link Command} that should be executed when "Enter" or "Return" is pressed.
+	 * 
+	 * @return <code>null</code> when nothing should happen.
+	 * 
+	 * @see LayoutComponent#getDefaultCommand()
+	 */
+	Command getDefaultCommand();
+
+	/** @see #getDefaultCommand() */
+	void setDefaultCommand(Command defaultCommand);
+
 	/**
 	 * Returns a help ID that can be used for this dialog. Might be
 	 * <code>null</code>

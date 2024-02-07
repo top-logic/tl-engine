@@ -16,6 +16,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.CommandHandlerCommand;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.scripting.action.ActionFactory;
@@ -26,6 +27,7 @@ import com.top_logic.layout.structure.LayoutControlFactory;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -150,6 +152,7 @@ public class DialogComponent extends AbstractDialogModel {
 			LayoutControlFactory.checkForComponentNameValidity(dialogContent);
 		}
 		_content = dialogContent;
+		initDefaultCommand();
 	}
 
 	public static DialogComponent newDialog(LayoutComponent aDialogContent, DialogInfo aDialogInfo,
@@ -171,6 +174,20 @@ public class DialogComponent extends AbstractDialogModel {
 		return dialogComponent;
 	}
 
+	private void initDefaultCommand() {
+		CommandHandler handler = getContentComponent().getDefaultCommand();
+		if (handler == null) {
+			return;
+		}
+		CommandHandlerCommand command = new CommandHandlerCommand(handler, getContentComponent());
+		setDefaultCommand(command);
+	}
+
+	/**
+	 * The {@link LayoutComponent} displayed by this {@link DialogComponent}.
+	 * 
+	 * @return Never <code>null</code>.
+	 */
 	public final LayoutComponent getContentComponent() {
 		return _content;
 	}

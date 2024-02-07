@@ -79,11 +79,11 @@ public class ProgrammaticFormDefinitionProvider
 	}
 
 	@Override
-	public boolean isVisible(TLStructuredType type, FormMode formMode) {
+	public boolean isVisible(FormEditorContext context) {
 		if (_impl == null) {
-			return super.isVisible(type, formMode);
+			return super.isVisible(context);
 		}
-		return _impl.isVisible(type, formMode);
+		return _impl.isVisible(context);
 	}
 
 	@Override

@@ -41,14 +41,12 @@ public interface FormElementTemplateProvider {
 	/**
 	 * Determines whether the {@link FormElementTemplateProvider} is visible.
 	 * 
-	 * @param type
-	 *        Context type in which this {@link FormElementTemplateProvider} is evaluated.
-	 * @param formMode
-	 *        The mode how the in-app form is displayed.
+	 * @param context
+	 *        Context information for template creation.
 	 * 
 	 * @implSpec By default it is <code>true</code>.
 	 */
-	default boolean isVisible(TLStructuredType type, FormMode formMode) {
+	default boolean isVisible(FormEditorContext context) {
 		return true;
 	}
 

@@ -73,7 +73,7 @@ public abstract class AbstractFormContainerProvider<T extends ContainerDefinitio
 
 		LabelPlacement labelPlacement = getConfig().getLabelPlacement();
 		for (FormElementTemplateProvider content : getContent()) {
-			if (content.isVisible(context.getFormType(), context.getFormMode())) {
+			if (content.isVisible(context)) {
 				HTMLTemplateFragment innerTemplate =
 					context.withLabelPlacement(labelPlacement, content::createTemplate);
 				formFieldTemplates.add(innerTemplate);

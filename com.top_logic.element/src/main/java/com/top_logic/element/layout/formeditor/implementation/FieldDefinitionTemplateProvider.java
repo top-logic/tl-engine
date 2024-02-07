@@ -323,7 +323,9 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public boolean isVisible(TLStructuredType type, FormMode formMode) {
+	public boolean isVisible(FormEditorContext context) {
+		TLStructuredType type = context.getFormType();
+		FormMode formMode = context.getFormMode();
 		return calculateVisibility(getPart(type), getConfig().getVisibility(), formMode) != null;
 	}
 

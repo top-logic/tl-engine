@@ -104,7 +104,7 @@ public class IDESchemaExtractCommand extends AbstractCommandHandler {
 				DisplayDimension.dim(250, DisplayUnit.PIXEL), 100, Scrolling.AUTO), true,
 				Fragments.message(I18NConstants.UPDATE_SCHEMA_TITLE),
 				Fragments.message(I18NConstants.UPDATE_SCHEMA_NOTICE),
-				MessageBox.button(ButtonType.NO), MessageBox.button(ButtonType.YES, resume));
+				MessageBox.button(ButtonType.YES, resume), MessageBox.button(ButtonType.NO));
 			return result;
 		}
 

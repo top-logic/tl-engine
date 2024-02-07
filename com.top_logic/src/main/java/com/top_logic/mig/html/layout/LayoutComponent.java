@@ -127,6 +127,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
 import com.top_logic.layout.structure.ContentLayouting;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.Expandable;
 import com.top_logic.layout.structure.ExpandableConfig;
 import com.top_logic.layout.structure.InlineLayoutControlProvider;
@@ -3054,10 +3055,20 @@ public abstract class LayoutComponent extends ModelEventAdapter
         return null;
     }
 
+	/**
+	 * The {@link CommandHandler} that should be executed when "Enter" or "Return" is pressed.
+	 * 
+	 * @see DialogModel#getDefaultCommand()
+	 */
 	public CommandHandler getDefaultCommand() {
 		return null;
 	}
 
+	/**
+	 * The {@link CommandHandler} that should be executed when the "Escape" key is pressed.
+	 * 
+	 * @see DialogModel#getCloseAction()
+	 */
 	public CommandHandler getCancelCommand() {
 		return null;
 	}

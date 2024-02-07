@@ -11,19 +11,23 @@
 	>
 		<title>
 			<title key="dynamic.f3e46a4c-a8ed-4293-9da8-d3044e84f243">
-				<en>New Account</en>
-				<de>Neuer Zugang</de>
+				<en>New user</en>
+				<de>Neuer Benutzer</de>
 			</title>
 		</title>
 		<open-handler id="ID_f3c05b49_379d_4d78_be3f_b2f0f2f8b352"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			group="Create"
-			image="colored:fas fa-user tl-create"
+			image="colored:fas fa-user overlay-add"
 			targetComponent="admin/security/accounts/newAccount/dialog.layout.xml#Form"
 		>
 			<resourceKey key="dynamic.f3e46a4c-a8ed-4293-9da8-d3044e84f243">
-				<en>New Account</en>
-				<de>Neuer Zugang</de>
+				<en>New user</en>
+				<de>Neuer Benutzer</de>
+				<tooltip>
+					<en>Creates a new user with access to the application.</en>
+					<de>Legt einen neuen Benutzer mit Zugang zu der Anwendung an.</de>
+				</tooltip>
 			</resourceKey>
 		</open-handler>
 		<forms>
@@ -175,8 +179,8 @@
 			image="theme:ICONS_BUTTON_OK"
 		>
 			<resourceKey key="dynamic.f3e46a4c-a8ed-4293-9da8-d3044e84f243">
-				<en>New Account</en>
-				<de>Neuer Zugang</de>
+				<en>Create user</en>
+				<de>Benutzer anlegen</de>
 			</resourceKey>
 			<postCreateActions>
 				<setModel target="selection(dialogParent())"/>

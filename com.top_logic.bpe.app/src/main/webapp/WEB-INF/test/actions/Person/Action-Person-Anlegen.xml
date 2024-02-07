@@ -40,7 +40,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Neuer Zugang"
+					command-label="Neuer Benutzer"
 					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 					component-name="admin/security/accounts/accountsTable.layout.xml#Table"
 				>
@@ -108,7 +108,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
-					command-label="Neuer Zugang"
+					command-label="Benutzer anlegen"
 					command-name="perform"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 					component-name="admin/security/accounts/newAccount/dialog.layout.xml#Form"

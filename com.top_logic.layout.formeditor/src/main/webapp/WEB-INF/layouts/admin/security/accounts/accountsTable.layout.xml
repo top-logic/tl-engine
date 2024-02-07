@@ -15,8 +15,8 @@
 			<layout-reference resource="admin/security/accounts/createContact/dialog.layout.xml"/>
 		</dialogs>
 		<name key="dynamic.98c36f50-b5a8-410c-a520-3803367d8868">
-			<en>Accounts</en>
-			<de>Zugänge</de>
+			<en>Users</en>
+			<de>Benutzer</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`Contacts:PersonContact`)"
@@ -43,6 +43,9 @@
 				target="selection(self())"
 			>
 				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Der Benutzer kann nicht gelöscht werden, weil sein Zugang noch aktiv ist."@de,"The user cannot be deleted because their account is still active."@en))</decision>
+					</rule-by-expression>
 					<rule-by-expression show-disabled="true">
 						<decision>contact -&gt; $contact.get(`Contacts:PersonContact#account`).get(`tl.accounts:Person#admin`) ? #("Ein Administrator-Konto kann nicht gelöscht werden"@de, "An administrator account cannot be deleted"@en)  :null</decision>
 					</rule-by-expression>

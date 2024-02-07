@@ -23,6 +23,7 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/SearchExpressionStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/tl-layout-formeditor/extension.Contacts.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-layout-formeditor/extension.tl.accounts.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

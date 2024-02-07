@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.accounts">
+		<class name="Person">
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.accounts:Person#name"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<field
+							attribute="authDeviceID"
+							fullQualifiedName="tl.accounts:Person#authDeviceID"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<code>
+							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+						</code>
+						<field
+							attribute="restrictedUser"
+							fullQualifiedName="tl.accounts:Person#restrictedUser"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="groups"
+							fullQualifiedName="tl.accounts:Person#groups"
+							type="tl.accounts:Group"
+						/>
+						<field
+							attribute="timezone"
+							fullQualifiedName="tl.accounts:Person#timezone"
+							type="tl.util:TimeZone"
+						/>
+						<field
+							attribute="language"
+							fullQualifiedName="tl.accounts:Person#language"
+							type="tl.util:Language"
+						/>
+						<field
+							attribute="country"
+							fullQualifiedName="tl.accounts:Person#country"
+							type="tl.util:Country"
+						/>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+						</code>
+					</form>
+				</form-definition>
+			</annotations>
+		</class>
+	</module>
+</model>

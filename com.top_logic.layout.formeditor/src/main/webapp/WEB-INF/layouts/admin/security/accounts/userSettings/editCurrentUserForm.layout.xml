@@ -12,8 +12,8 @@
 		type="Contacts:PersonContact"
 	>
 		<name key="dynamic.9099db9a-c920-459c-b3a3-31d67301a55d">
-			<en>Edit contact</en>
-			<de>Kontakt bearbeiten</de>
+			<en>Edit profile</en>
+			<de>Profil bearbeiten</de>
 		</name>
 		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
 			<script expr="currentUser().get(`tl.accounts:Person#contact`)"/>
@@ -28,6 +28,10 @@
 				<resourceKey key="dynamic.49aa2499-5cb1-4f78-929e-4ac543b322aa">
 					<en>Reset personal configuration</en>
 					<de>Persönliche Konfiguration zurücksetzen</de>
+					<tooltip>
+						<en>Personal settings such as the start page or the selected theme are deleted. The selected language, country and time zone are retained.</en>
+						<de>Es werden persönliche Einstellungen wie z.B. die Startseite oder das ausgewählte Theme gelöscht. Die ausgewählte Sprache, Land und Zeitzone bleiben erhalten.</de>
+					</tooltip>
 				</resourceKey>
 				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
 					function="contact -> $contact.get(`Contacts:PersonContact#account`).singleElement()"

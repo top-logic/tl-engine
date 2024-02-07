@@ -57,7 +57,7 @@
 							label="Theme"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
@@ -66,7 +66,7 @@
 							label="Theme"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">

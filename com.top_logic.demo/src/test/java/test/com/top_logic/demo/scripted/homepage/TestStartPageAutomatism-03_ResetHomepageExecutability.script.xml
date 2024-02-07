@@ -33,7 +33,7 @@
 						label="Startseite beim Logout setzen"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Kontakt bearbeiten"
+							tab-path="Profil bearbeiten"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -105,7 +105,7 @@
 						label="Startseite beim Logout setzen"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Kontakt bearbeiten"
+							tab-path="Profil bearbeiten"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"

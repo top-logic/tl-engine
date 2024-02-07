@@ -800,13 +800,13 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
-					command-label="Zugang Löschen"
+					command-label="Zugang entfernen"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
@@ -815,7 +815,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
-					command-label="Löschen"
+					command-label="Benutzer löschen"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
@@ -894,13 +894,13 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Zugänge"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
-					command-label="Zugang Löschen"
+					command-label="Zugang entfernen"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
@@ -909,7 +909,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
-					command-label="Löschen"
+					command-label="Benutzer löschen"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"

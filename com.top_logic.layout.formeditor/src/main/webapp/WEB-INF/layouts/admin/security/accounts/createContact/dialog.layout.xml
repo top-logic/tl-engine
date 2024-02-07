@@ -106,9 +106,13 @@
 				<de>Kontakt anlegen</de>
 			</title>
 		</title>
+		<header key="dynamic.99b1e65a-7ff0-4e9b-a22d-b3938603b202">
+			<en>Create contact</en>
+			<de>Kontakt anlegen</de>
+		</header>
 		<open-handler id="ID_65673cc8_6e65_4f23_91f7_d529718c7544"
 			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
-			image="css:far fa-user"
+			image="colored:far fa-user overlay-add "
 			targetComponent="admin/security/accounts/createContact/dialog.layout.xml#Editor"
 		>
 			<resourceKey key="dynamic.7adf5265-8f6e-4487-84e9-82d591764699">

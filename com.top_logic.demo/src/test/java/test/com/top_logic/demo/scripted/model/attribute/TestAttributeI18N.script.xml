@@ -523,7 +523,7 @@
 								label="Language"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit contact"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -541,7 +541,7 @@
 								label="Country"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit contact"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -672,7 +672,7 @@
 								label="Language"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit contact"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -690,7 +690,7 @@
 								label="Country"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit contact"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">

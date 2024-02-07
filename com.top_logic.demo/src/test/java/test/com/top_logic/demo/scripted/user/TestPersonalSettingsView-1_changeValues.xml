@@ -27,7 +27,7 @@
 							label="Benutzername"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
@@ -49,7 +49,7 @@
 						label="Titel"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Kontakt bearbeiten"
+							tab-path="Profil bearbeiten"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -83,7 +83,7 @@
 							label="Titel"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
@@ -105,7 +105,7 @@
 						label="Titel"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Kontakt bearbeiten"
+							tab-path="Profil bearbeiten"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -139,7 +139,7 @@
 							label="Titel"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Kontakt bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
@@ -208,7 +208,7 @@
 									label="Benutzername"
 								>
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Kontakt bearbeiten"
+										tab-path="Profil bearbeiten"
 									/>
 								</model>
 							</actual-value>
@@ -230,7 +230,7 @@
 								label="Titel"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Kontakt bearbeiten"
+									tab-path="Profil bearbeiten"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -264,7 +264,7 @@
 									label="Titel"
 								>
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Kontakt bearbeiten"
+										tab-path="Profil bearbeiten"
 									/>
 								</model>
 							</actual-value>
@@ -286,7 +286,7 @@
 								label="Titel"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Kontakt bearbeiten"
+									tab-path="Profil bearbeiten"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -320,7 +320,7 @@
 									label="Titel"
 								>
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Kontakt bearbeiten"
+										tab-path="Profil bearbeiten"
 									/>
 								</model>
 							</actual-value>

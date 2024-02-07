@@ -214,12 +214,6 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 
 		public static final String COLUMNS_GROUP = "columns";
 
-		/** Ok command. */
-		public static final String OK_COMMAND = "ok";
-
-		/** Cancel command. */
-		public static final String CANCEL_COMMAND = "cancel";
-
 		static final ValueListener REMOVE_ON_CLEAR = new ValueListener() {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
@@ -532,7 +526,9 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 	protected void fillButtons(List<CommandModel> buttons) {
 		SortConfigContext fc = (SortConfigContext) getFormContext();
 
-		buttons.add(MessageBox.button(ButtonType.OK, fc.getOk()));
+		CommandModel okButton = MessageBox.button(ButtonType.OK, fc.getOk());
+		buttons.add(okButton);
+		getDialogModel().setDefaultCommand(okButton);
 		buttons.add(MessageBox.button(ButtonType.CANCEL, fc.getCancel()));
 	}
 

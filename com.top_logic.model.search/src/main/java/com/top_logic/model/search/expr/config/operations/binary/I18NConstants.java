@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.search.expr.config.operations.binary;
 
-import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -20,14 +19,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_INVALID_CONTENT_TYPE_SPECIFIED__VALUE_MSG;
 
 	/**
-	 * @en Binary data expected got "{0}".
+	 * @en Binary data expected in "{1}" but got "{0}".
 	 */
-	public static ResKey1 ERROR_BINARY_DATA_EXPECTED__ACTUAL;
+	public static ResKey2 ERROR_BINARY_DATA_EXPECTED__ACTUAL_EXPR;
 
 	/**
-	 * @en Conversion failed: {0}
+	 * @en Conversion in "{1}" failed: {0}
 	 */
-	public static ResKey1 ERROR_CONVERSION_FAILED__MSG;
+	public static ResKey2 ERROR_CONVERSION_FAILED__MSG_EXPR;
 
 	static {
 		initConstants(I18NConstants.class);

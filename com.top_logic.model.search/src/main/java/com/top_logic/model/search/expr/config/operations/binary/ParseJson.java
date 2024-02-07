@@ -101,7 +101,8 @@ public class ParseJson extends GenericMethod implements WithFlatMapSemantics<Obj
 				return JSON.fromString(json);
 			}
 		} catch (ParseException | IOException | MimeTypeParseException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED__MSG.fill(ex.getMessage()), ex);
+			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED__MSG_EXPR.fill(ex.getMessage(), this),
+				ex);
 		}
 	}
 

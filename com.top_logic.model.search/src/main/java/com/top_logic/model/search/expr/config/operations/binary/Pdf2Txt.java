@@ -103,7 +103,8 @@ public class Pdf2Txt extends GenericMethod implements WithFlatMapSemantics<Objec
 
 		if (!(input instanceof BinaryDataSource)) {
 			throw new TopLogicException(
-				I18NConstants.ERROR_BINARY_DATA_EXPECTED__ACTUAL.fill(input.getClass().getName()));
+				I18NConstants.ERROR_BINARY_DATA_EXPECTED__ACTUAL_EXPR.fill(input.getClass().getName(),
+					getArguments()[0]));
 		}
 
 		BinaryDataSource data = (BinaryDataSource) input;
@@ -170,14 +171,15 @@ public class Pdf2Txt extends GenericMethod implements WithFlatMapSemantics<Objec
 			return buffer.toString();
 		} catch (IOException | InterruptedException ex) {
 			throw new TopLogicException(
-				I18NConstants.ERROR_CONVERSION_FAILED__MSG.fill(ex.getMessage()));
+				I18NConstants.ERROR_CONVERSION_FAILED__MSG_EXPR.fill(ex.getMessage(), this));
 		}
 	}
 
 	private void waitFor(Process p, String name) throws InterruptedException {
 		int result = p.waitFor();
 		if (result != 0) {
-			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED__MSG.fill(name + ": " + result));
+			throw new TopLogicException(
+				I18NConstants.ERROR_CONVERSION_FAILED__MSG_EXPR.fill(name + ": " + result, this));
 		}
 	}
 

@@ -34,6 +34,7 @@ public abstract class TreeSelectDialog extends SelectDialogBase {
 		Command closeAction = dialog.getDialogModel().getCloseAction();
 
 		TreeSelectorContext context = new TreeSelectorContext(getTargetField(), closeAction, getConfig());
+		dialog.getDialogModel().setDefaultCommand(context.getAcceptCommand());
 		return context;
 	}
 

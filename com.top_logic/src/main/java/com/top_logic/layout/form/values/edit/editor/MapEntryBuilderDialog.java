@@ -135,7 +135,9 @@ public class MapEntryBuilderDialog extends AbstractFormDialog {
 			}
 		};
 
-		buttons.add(MessageBox.button(ButtonType.OK, addOperation));
+		CommandModel okButton = MessageBox.button(ButtonType.OK, addOperation);
+		buttons.add(okButton);
+		getDialogModel().setDefaultCommand(okButton);
 		buttons.add(MessageBox.button(ButtonType.CANCEL, getDialogModel().getCloseAction()));
 	}
 

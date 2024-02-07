@@ -120,6 +120,7 @@ public class ConstraintCheckingVetoListener implements ValueVetoListener {
 		});
 		CommandModel okButton = MessageBox.button(ButtonType.OK, dialogModel.getCloseAction());
 		List<CommandModel> buttons = Collections.singletonList(okButton);
+		dialogModel.setDefaultCommand(okButton);
 		DialogWindowControl dialog = MessageBox.createDialog(dialogModel, content, buttons);
 		return dialog;
 	}

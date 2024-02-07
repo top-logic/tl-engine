@@ -68,9 +68,10 @@ public class ThrowableColumnRenderer implements Renderer<Throwable> {
 				DisplayDimension.dim(500, DisplayUnit.PIXEL), 100,
 				Scrolling.AUTO);
 			DisplayValue title = new ResourceText(I18NConstants.STACKTRACE);
-			final DialogModel dialogModel = new DefaultDialogModel(layoutData, title, true, true, null);
-			return MessageBox.open(_scope, dialogModel, new ThrowableDisplay(_ex),
-				Arrays.asList(MessageBox.button(ButtonType.OK, dialogModel.getCloseAction())));
+			DialogModel dialogModel = new DefaultDialogModel(layoutData, title, true, true, null);
+			CommandModel okButton = MessageBox.button(ButtonType.OK, dialogModel.getCloseAction());
+			dialogModel.setDefaultCommand(okButton);
+			return MessageBox.open(_scope, dialogModel, new ThrowableDisplay(_ex), Arrays.asList(okButton));
 		}
 	}
 

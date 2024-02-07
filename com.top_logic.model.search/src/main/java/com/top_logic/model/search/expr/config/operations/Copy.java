@@ -17,6 +17,7 @@ import java.util.Set;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -306,10 +307,17 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		public TLObject allocate(TLObject orig, TLReference reference, TLObject context) {
 			TLStructuredType type = orig.tType();
 			if (type.getModelKind() != ModelKind.CLASS) {
+				// Not an object, no copy.
 				return orig;
 			}
 
-			TLClass classType = (TLClass) type;
+			TLStructuredType currentType = WrapperHistoryUtils.getCurrent(type);
+			if (currentType == null) {
+				// Type does no longer exist, keep historic reference.
+				return orig;
+			}
+
+			TLClass classType = (TLClass) currentType;
 			boolean copyTransient = _transientCopy == null ? orig.tTransient() : _transientCopy;
 			if (copyTransient) {
 				return TransientObjectFactory.INSTANCE.createObject(classType, context);
@@ -319,7 +327,13 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 
 		private void copyComposite(TLObject orig, TLReference reference, TLObject copy) {
-			if (!defines(copy, reference)) {
+			TLReference currentReference = WrapperHistoryUtils.getCurrent(reference);
+			if (currentReference == null) {
+				// Reference does no longer exist.
+				return;
+			}
+
+			if (!defines(copy, currentReference)) {
 				return;
 			}
 
@@ -330,7 +344,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 			}
 
 			Object valueCopy = copyValue(orig, reference, value);
-			copy.tUpdate(reference, valueCopy);
+			copy.tUpdate(currentReference, valueCopy);
 		}
 
 		private Object copyValue(TLObject orig, TLReference reference, Object value) {
@@ -399,7 +413,9 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 					continue;
 				}
 				
-				if (!defines(copy, part)) {
+				TLStructuredTypePart currentPart = WrapperHistoryUtils.getCurrent(part);
+
+				if (!defines(copy, currentPart)) {
 					continue;
 				}
 
@@ -419,7 +435,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 				} else {
 					copyValue = value;
 				}
-				copy.tUpdate(part, copyValue);
+				copy.tUpdate(currentPart, copyValue);
 			}
 		}
 

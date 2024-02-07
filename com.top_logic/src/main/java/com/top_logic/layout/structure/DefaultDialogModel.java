@@ -45,8 +45,8 @@ public class DefaultDialogModel extends AbstractDialogModel {
 	 */
 	public static final boolean CLOSE_BUTTON = true;
 
-	boolean closed;
-	
+	private boolean closed;
+
 	private final Command closeAction;
 
 	/**

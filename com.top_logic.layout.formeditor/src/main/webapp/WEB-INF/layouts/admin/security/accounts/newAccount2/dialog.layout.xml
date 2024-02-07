@@ -32,6 +32,12 @@
 				<rule-by-expression decision="contact -> $contact.get(`Contacts:PersonContact#account`) == null"/>
 			</executability>
 		</open-handler>
+		<initialization><![CDATA[login -> contact -> {
+  name = $contact.get(`Contacts:PersonContact#name`).toLowerCase();
+  givenName = $contact.get(`Contacts:PersonContact#firstname`).toLowerCase();
+  loginName = $givenName == null ? $name : $givenName + "." +$name;
+  $login.set(`tl.contact.ui:CreateLogin#login`, $loginName);
+}]]></initialization>
 		<transactionHandler id="perform"
 			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
 			clique="apply"

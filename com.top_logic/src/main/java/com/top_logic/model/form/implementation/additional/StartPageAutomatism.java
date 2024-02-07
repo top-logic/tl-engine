@@ -14,10 +14,8 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
-import com.top_logic.model.form.implementation.FormMode;
 
 /**
  * {@link FormElementTemplateProvider} that allows to set
@@ -60,7 +58,7 @@ public class StartPageAutomatism extends PersonTemplateProvider {
 	}
 
 	@Override
-	public boolean isVisible(TLStructuredType type, FormMode formMode) {
+	public boolean isVisible(FormEditorContext context) {
 		return !PersonalConfiguration.getConfig().getHideOptionStartPageAutomatism();
 	}
 

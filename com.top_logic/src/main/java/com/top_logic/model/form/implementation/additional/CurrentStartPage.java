@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
@@ -90,7 +91,14 @@ public class CurrentStartPage extends PersonTemplateProvider {
 
 	@Override
 	public boolean isVisible(FormEditorContext context) {
-		return !PersonalConfiguration.getPersonalConfiguration().getStartPageAutomatism();
+		TLObject editedPerson = context.getModel();
+		if (editedPerson != null) {
+			PersonalConfiguration pc = getPersonalConfiguration((Person) editedPerson);
+			if (pc != null) {
+				return !pc.getStartPageAutomatism();
+			}
+		}
+		return true;
 	}
 
 }

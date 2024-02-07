@@ -90,7 +90,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 					charset = "utf-8";
 				}
 			} catch (MimeTypeParseException ex) {
-				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENET_TYPE__VALUE_MSG
+				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
 					.fill(response.getContentType(), ex.getMessage()), ex);
 			}
 		} else {

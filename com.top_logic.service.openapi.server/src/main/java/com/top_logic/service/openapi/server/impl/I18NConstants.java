@@ -21,7 +21,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Invalid content type "{0}": {1}
 	 */
-	public static ResKey2 ERROR_INVALID_CONTENET_TYPE__VALUE_MSG;
+	public static ResKey2 ERROR_INVALID_CONTENT_TYPE__VALUE_MSG;
 
 	static {
 		initConstants(I18NConstants.class);

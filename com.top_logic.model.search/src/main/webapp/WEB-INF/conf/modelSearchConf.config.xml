@@ -384,6 +384,7 @@
 					<method name="reduce" class="com.top_logic.model.search.expr.ReduceOperation$Builder"/>
 					<method name="referers" class="com.top_logic.model.search.expr.config.operations.ReferersBuilder"/>
 					<method name="instanceOf" class="com.top_logic.model.search.expr.config.operations.InstanceOfBuilder"/>
+					<method name="isCompatible" class="com.top_logic.model.search.expr.config.operations.IsCompatible$Builder"/>
 					<method name="singleElement" class="com.top_logic.model.search.expr.config.operations.SingleElementBuilder"/>
 					<method name="singleton" class="com.top_logic.model.search.expr.config.operations.SingletonBuilder"/>
 					<method name="fill" class="com.top_logic.model.search.expr.config.operations.ResKeyArgumentsBuilder"/>

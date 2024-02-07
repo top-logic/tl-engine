@@ -1945,6 +1945,12 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		}
 	}
 
+	public void testIsCompatible() throws ParseException {
+		assertTrue((Boolean) execute(search("`TestSearchExpression:A`.isCompatible(`TestSearchExpression:A`)")));
+		assertTrue((Boolean) execute(search("`TestSearchExpression:R`.isCompatible(`TestSearchExpression:S`)")));
+		assertFalse((Boolean) execute(search("`TestSearchExpression:S`.isCompatible(`TestSearchExpression:R`)")));
+	}
+
 	public void testConstantFolding() throws ParseException {
 		try {
 			compile(search("list('a', 'b').singleElement()"));

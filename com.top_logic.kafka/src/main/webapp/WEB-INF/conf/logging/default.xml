@@ -20,7 +20,7 @@
 		<Console name="STDOUT"
 			target="SYSTEM_OUT"
 		>
-			<PatternLayout pattern="${pattern.plain}"/>
+			<PatternLayout pattern="${pattern.long}"/>
 		</Console>
 		<Console name="STDERR"
 			target="SYSTEM_ERR"
@@ -136,6 +136,7 @@
 		</Logger>
 
 		<Root level="info">
+			<AppenderRef ref="STDOUT"/>
 			<AppenderRef ref="FILE_APPENDER">
 				<Filters>
 					<ThreadContextMapFilter operator="or" onMatch="DENY" onMismatch="NEUTRAL">

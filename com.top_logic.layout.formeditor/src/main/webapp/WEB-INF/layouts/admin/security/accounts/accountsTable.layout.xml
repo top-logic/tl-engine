@@ -33,6 +33,10 @@
 					<de>Benutzername</de>
 				</columnLabel>
 			</configurationProvider>
+			<configurationProvider class="com.top_logic.layout.table.model.AllVisibleColumnsProvider"
+				columns="account"
+				excluded="true"
+			/>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"

@@ -319,6 +319,7 @@ public class ChecklistControl extends AbstractControl implements ValueListener, 
 
 	private CommandModel createOkButton(DialogModel dialogModel) {
 		CommandModel result = MessageBox.button(ButtonType.OK, dialogModel.getCloseAction());
+		dialogModel.setDefaultCommand(dialogModel.getCloseAction());
 		ScriptingRecorder.annotateAsDontRecord(result);
 		return result;
 	}

@@ -100,9 +100,9 @@ public abstract class AbstractShowObjectColumnRenderer<T> implements Renderer<T>
 		public HandlerResult executeCommand(DisplayContext commandContext) {
 			LayoutData layout = createLayoutData();
 			DialogModel dialogModel = new DefaultDialogModel(layout, _title, true, true, null);
-
-			return MessageBox.open(commandContext, dialogModel, createDisplay(),
-				Arrays.asList(MessageBox.button(ButtonType.OK, dialogModel.getCloseAction())));
+			CommandModel okButton = MessageBox.button(ButtonType.OK, dialogModel.getCloseAction());
+			dialogModel.setDefaultCommand(okButton);
+			return MessageBox.open(commandContext, dialogModel, createDisplay(), Arrays.asList(okButton));
 		}
 
 		private HTMLFragment createDisplay() {

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,6 +16,15 @@ public interface ThingBase extends com.top_logic.model.TLNamed {
 	 * Name of type <code>Thing</code>
 	 */
 	String THING_TYPE = "Thing";
+
+	/**
+	 * Part <code>createdFor</code> of <code>Thing</code>
+	 * 
+	 * <p>
+	 * Declared as <code>test.containmentContext:World</code> in configuration.
+	 * </p>
+	 */
+	String CREATED_FOR_ATTR = "createdFor";
 
 	/**
 	 * Part <code>name</code> of <code>Thing</code>
@@ -43,6 +52,20 @@ public interface ThingBase extends com.top_logic.model.TLNamed {
 	 * </p>
 	 */
 	String WORLD_ATTR = "world";
+
+	/**
+	 * Getter for part {@link #CREATED_FOR_ATTR}.
+	 */
+	default com.top_logic.demo.model.containmentContext.World getCreatedFor() {
+		return (com.top_logic.demo.model.containmentContext.World) tValueByName(CREATED_FOR_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CREATED_FOR_ATTR}.
+	 */
+	default void setCreatedFor(com.top_logic.demo.model.containmentContext.World newValue) {
+		tUpdateByName(CREATED_FOR_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #USES_ATTR}.

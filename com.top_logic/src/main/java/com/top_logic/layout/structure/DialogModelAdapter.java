@@ -56,6 +56,16 @@ public abstract class DialogModelAdapter extends WindowModelAdapter implements D
 	}
 
 	@Override
+	public Command getDefaultCommand() {
+		return getDialogModelImplementation().getDefaultCommand();
+	}
+
+	@Override
+	public void setDefaultCommand(Command defaultCommand) {
+		getDialogModelImplementation().setDefaultCommand(defaultCommand);
+	}
+
+	@Override
 	public boolean hasCloseButton() {
 		return getDialogModelImplementation().hasCloseButton();
 	}

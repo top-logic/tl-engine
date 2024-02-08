@@ -1362,26 +1362,23 @@ div.cal_zoom_inAnimation {
 
 .cDecoratedCell,
 .cExpandableTextInput,
-.cBlockTextInput,
-.cPopupSelect {
+.cBlockTextInput {
 	display: inline-flex;
 }
 
 .cPopupSelect {
+	display: inline-flex;
+	flex-wrap: wrap;
 	width: 100%;
+}
+
+.cPopupSelect .tl-separator {
+	margin-right: var(--spacing-02);
 }
 
 .cBlockTextInput .lFixedRight a:not(.lFlexible),
 .cExpandableTextInput .lFixedRight a:not(.lFlexible) {
 	height: inherit;
-}
-
-.dfModeFull .cPopupSelect {
-	flex-wrap: wrap;
-}
-
-.dfModeFull .cPopupSelect .tl-separator {
-	margin-right: var(--spacing-02);
 }
 
 td.tl-table__cell--selected .cDecoratedCell a.input-image,

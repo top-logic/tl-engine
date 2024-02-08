@@ -109,6 +109,17 @@ i[class*=" overlay-"] span::before {
 	cursor: default;
 }
 
+/* The general footer of the application */
+.Footer {
+	font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secondary);
+	text-align: right;
+	padding-right: var(--spacing-03);
+	background: var(--layer);
+}
+
 /*
 ****					****
 ****	Anchor syles	****
@@ -662,6 +673,7 @@ div.fltList {
 
 a.cMenuButton.menuEntryDisabled {
 	color: var(--text-on-color-disabled);
+	cursor: default;
 }
 
 a.cMenuButton.menuEntryDisabled i {
@@ -692,6 +704,7 @@ a.cMenuButton.menuEntryDisabled:focus {
 
 .popupMenu a.tlInApp.menuEntryDisabled {
 	background-color: var(--debug-disabled);
+	cursor: default;
 }
 
 .popupMenu a.tlInApp.menuEntryDisabled:hover,
@@ -799,6 +812,8 @@ div.dlgMaximized .input-image.dlgRestore {
 	cursor: move;
 	height: var(--DIALOG_TITLE_HEIGHT);
 	background-color: var(--layer-accent);
+	padding: 0 var(--spacing-02);
+	box-sizing: border-box;
 }
 
 .dlgBorderNW.dlgResizeNW {
@@ -875,8 +890,8 @@ div.dlgMaximized .input-image.dlgRestore {
 }
 
 .dlgBorderNW, .dlgBorderSW, .dlgBorderNE, .dlgBorderSE {
-	width: 10px;
-	height: 10px;
+	width: var(--spacing-02);
+	height: var(--spacing-02);
 
 	/* For debugging:
 	background-color: red;
@@ -897,15 +912,15 @@ div.dlgMaximized .input-image.dlgRestore {
 }
 .dlgResizeW {
 	cursor: w-resize;
-	width: 10px;
+	width: var(--spacing-02);
 }
 .dlgResizeE {
 	cursor: e-resize;
-	width: 10px;
+	width: var(--spacing-02);
 }
 .dlgResizeS {
 	cursor: s-resize;
-	height: 10px;
+	height: var(--spacing-02);
 }
 
 .dlgRightBorder {
@@ -2295,7 +2310,7 @@ div.treeNode.treeSelected.dndInsertInto {
 	height: inherit;
 	overflow: hidden;
 	padding: var(--spacing-02) var(--spacing-03);
-    box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .cCollapsibleToolbar {
@@ -2313,6 +2328,33 @@ div.treeNode.treeSelected.dndInsertInto {
 	white-space: nowrap;
 }
 
+.cCollapsibleToolbar .cButton,
+.cToolbar .cButton,
+.tl-table__title-toolbar .cButton {
+	display: inline-flex;
+	margin-left: var(--spacing-02);
+}
+
+.cCollapsibleToolbar a:hover,
+.cToolbar a:hover,
+.tl-table__title-toolbar a:hover {
+	color: var(--icon-primary);
+	text-decoration: none;
+}
+
+.cCollapsibleToolbar a:focus,
+.cToolbar a:focus,
+.tl-table__title-toolbar a:focus {
+	color: var(--icon-primary);
+}
+
+.cCollapsibleToolbar a,
+.cToolbar a,
+.tl-table__title-toolbar a {
+	color: var(--icon-primary);
+}
+
+/* for when the toolbar is collapsed */
 .cCollapsibleHorizontal .cCollapsibleHeader {
 	flex-direction: column;
 	justify-content: flex-start;
@@ -2327,64 +2369,14 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleHorizontal .cCollapsibleToolbar {
+	display: inline-flex;
 	padding-top: var(--spacing-03);
-    justify-content: center;
-    align-items: center;
+	justify-content: center;
+	align-items: center;
 }
 
-.cCollapsibleHorizontal .cCollapsibleButtons {
-    padding-right: 0;
-}
-
-.cCollapsibleToolbar a:hover,
-.cToolbar a:hover,
-.cCollapsibleToolbar .tbGroup a:hover,
-.cCollapsibleButtons a:hover,
-.tl-table__title-toolbar a:hover {
-	color: var(--icon-primary);
-	text-decoration: none;
-}
-
-.cCollapsibleToolbar a:focus,
-.cToolbar a:focus,
-.cCollapsibleToolbar .tbGroup a:focus,
-.cCollapsibleButtons a:focus,
-.tl-table__title-toolbar a:focus {
-	color: var(--icon-primary);
-}
-
-.cCollapsibleToolbar,
-.cToolbar, 
-.cCollapsibleToolbar .tbGroup,
-.cCollapsibleButtons,
-.tl-table__title-toolbar,
-.tbGroup {
-	display: flex;
-	gap: var(--spacing-02);
-	flex-shrink: 0;
-}
-
-.cToolbar {
-	margin-right: var(--spacing-02);
-}
-
-.cCollapsibleButtons {
-	padding-right: var(--spacing-03);
-}
-
-.cCollapsibleToolbar a,
-.tl-table__title-toolbar a {
-	color: var(--icon-primary);
-}
-
-.Footer {
-	font-size: var(--body-01-font-size);
-    line-height: var(--body-01-line-height);
-    letter-spacing: var(--body-01-letter-spacing);
-	color: var(--text-secondary);
-	text-align: right;
-	padding-right: var(--spacing-03);
-	background: var(--layer);
+.cCollapsibleHorizontal .cCollapsibleButtons .cButton {
+    margin-left: 0;
 }
 
 /*

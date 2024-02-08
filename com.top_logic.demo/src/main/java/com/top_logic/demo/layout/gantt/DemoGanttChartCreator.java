@@ -47,7 +47,7 @@ public class DemoGanttChartCreator extends AbstractGanttChartCreator {
 	@Override
 	protected Object getResponsibleFromBusinessObject(Object aBO) {
 		if (aBO instanceof DemoTypesA) {
-			return ((DemoTypesA) aBO).getPerson();
+			return ((DemoTypesA) aBO).getAccount();
 		}
 		return null;
 	}

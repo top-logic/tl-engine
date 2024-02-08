@@ -64,6 +64,7 @@ import com.top_logic.layout.UpdateListener;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.AbstractControlBase;
+import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlRenderer;
@@ -1257,6 +1258,11 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 					if (dialogs.isEmpty()) {
 						return dispatchEvent(commandContext, LayoutComponent::getDefaultCommand, getChildControl());
 					} else {
+						DialogModel dialogModel = getActiveDialog().getDialogModel();
+						Command defaultCommand = dialogModel.getDefaultCommand();
+						if (defaultCommand != null) {
+							return defaultCommand.executeCommand(commandContext);
+						}
 						return dispatchEvent(commandContext, LayoutComponent::getDefaultCommand, getActiveDialog());
 					}
 				} else {

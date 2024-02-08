@@ -2310,6 +2310,7 @@ a.input-image.tristate.tBoolean {
 	color: var(--text-primary);
 	background: var(--field);
 	padding: 0 var(--spacing-03);
+	cursor: pointer;
 }
 
 .ddwttDropBtn .ddwttButtonContent {
@@ -2414,6 +2415,10 @@ span.disabled .ddwttChevron::after {
 	flex-shrink: 0;
 }
 
+.ddwttSearch::-webkit-search-cancel-button {
+	cursor: pointer;
+}
+
 .ddwttSearch:focus-visible {
 	color: var(--text-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
@@ -2437,6 +2442,7 @@ span.disabled .ddwttChevron::after {
 	padding: 0 var(--spacing-02);
 	position: relative;
 	text-align: left;
+	cursor: pointer;
 }
 
 .ddwttActiveItem {
@@ -2456,7 +2462,6 @@ span.disabled .ddwttChevron::after {
 
 .ddwttItem .ddwttItemLabel {
 	display: inline-block;
-	cursor: default;
 }
 
 /* Tags */
@@ -2556,5 +2561,74 @@ span.disabled .ddwttChevron::after {
 	margin-bottom: var(--spacing-01);
 }
 
+/* ========================== */
+/* ====== Legacy Search ===== */
+/* ========================== */
 
+.searchIrrelevant input,
+.searchIrrelevant textarea,
+.searchIrrelevant select {
+	color: var(--text-primary);
+	background: var(--field);
+}
+
+.searchPositive input,
+.searchPositive textarea,
+.searchPositive select {
+	color: var(--text-primary);
+	background: var(--notification-success-background);
+}
+
+.searchNegative input,
+.searchNegative textarea,
+.searchNegative select {
+	color: var(--text-primary);
+	background: var(--notification-danger-background);
+}
+
+span.is-accesskey {
+	text-decoration: underline;
+}
+
+/* smartInputField */
+div.sifFloater {
+    z-index: 20;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--field);
+}
+
+div.sifSearchElement,
+div.sifSearchElementUnselectable {
+    vertical-align: middle;
+    white-space: pre;
+	color: var(--text-secondary);
+	text-decoration:none;
+    z-index: 21;
+	padding: 0 var(--spacing-02);
+	line-height: 2rem;
+}
+
+div.sifSearchElement {
+    cursor: pointer;
+}
+
+div.sifSearchElementUnselectable {
+    cursor: default;
+}
+
+div.sifSearchElementSelected {
+    vertical-align: middle;
+    white-space: pre;
+	color: var(--text-primary);
+	text-decoration:none;
+    background-color: var(--layer-hover);
+    z-index: 21;
+    cursor: pointer;
+    padding: 0 var(--spacing-02);
+    line-height: 2rem;
+}
+
+div.sifSearchElementSelected:focus {
+    box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
 

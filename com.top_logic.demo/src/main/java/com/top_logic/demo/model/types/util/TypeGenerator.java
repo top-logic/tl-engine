@@ -221,9 +221,9 @@ public class TypeGenerator {
 					child.setStringSet(stringSet);
 
 					Set<Person> person = createWrapperValues(Person.class,
-						DemoTypesFactory.getPersonDemoTypesAAttr(), rand, 1);
+						DemoTypesFactory.getAccountDemoTypesAAttr(), rand, 1);
 					if (!person.isEmpty()) {
-						child.setPerson(person.iterator().next());
+						child.setAccount(person.iterator().next());
 					}
 					sendCreateEvent(child);
 

@@ -116,6 +116,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#ACCOUNT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getAccountDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.ACCOUNT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#BINARY_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getBinaryDemoTypesAAttr() {
@@ -323,6 +330,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLReference getComplexUnitDemoTypesAAttr() {
 		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.COMPLEX_UNIT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#CONTACT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getContactDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.CONTACT_ATTR);
 	}
 
 	/**
@@ -610,13 +624,6 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getPasswordDemoTypesAAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.PASSWORD_ATTR);
-	}
-
-	/**
-	 * Lookup {@link DemoTypesA#PERSON_ATTR} of {@link DemoTypesA}.
-	 */
-	public static com.top_logic.model.TLReference getPersonDemoTypesAAttr() {
-		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.PERSON_ATTR);
 	}
 
 	/**
@@ -1005,6 +1012,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesX#ACCOUNT_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLProperty getAccountDemoTypesXAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.ACCOUNT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesX#BINARY_ATTR} of {@link DemoTypesX}.
 	 */
 	public static com.top_logic.model.TLProperty getBinaryDemoTypesXAttr() {
@@ -1194,6 +1208,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesX#CONTACT_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLProperty getContactDemoTypesXAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.CONTACT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesX#CREATED_BY_ATTR} of {@link DemoTypesX}.
 	 */
 	public static com.top_logic.model.TLProperty getCreatedByDemoTypesXAttr() {
@@ -1359,13 +1380,6 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getModifiedDateDemoTypesXAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.MODIFIED_DATE_ATTR);
-	}
-
-	/**
-	 * Lookup {@link DemoTypesX#PERSON_ATTR} of {@link DemoTypesX}.
-	 */
-	public static com.top_logic.model.TLProperty getPersonDemoTypesXAttr() {
-		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.PERSON_ATTR);
 	}
 
 	/**

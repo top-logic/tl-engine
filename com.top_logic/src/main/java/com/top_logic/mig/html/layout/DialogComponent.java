@@ -152,7 +152,6 @@ public class DialogComponent extends AbstractDialogModel {
 			LayoutControlFactory.checkForComponentNameValidity(dialogContent);
 		}
 		_content = dialogContent;
-		initDefaultCommand();
 	}
 
 	public static DialogComponent newDialog(LayoutComponent aDialogContent, DialogInfo aDialogInfo,
@@ -174,15 +173,6 @@ public class DialogComponent extends AbstractDialogModel {
 		return dialogComponent;
 	}
 
-	private void initDefaultCommand() {
-		CommandHandler handler = getContentComponent().getDefaultCommand();
-		if (handler == null) {
-			return;
-		}
-		CommandHandlerCommand command = new CommandHandlerCommand(handler, getContentComponent());
-		setDefaultCommand(command);
-	}
-
 	/**
 	 * The {@link LayoutComponent} displayed by this {@link DialogComponent}.
 	 * 
@@ -190,6 +180,19 @@ public class DialogComponent extends AbstractDialogModel {
 	 */
 	public final LayoutComponent getContentComponent() {
 		return _content;
+	}
+
+	@Override
+	public Command getDefaultCommand() {
+		Command command = super.getDefaultCommand();
+		if (command != null) {
+			return command;
+		}
+		CommandHandler handler = getContentComponent().getDefaultCommand();
+		if (handler == null) {
+			return null;
+		}
+		return new CommandHandlerCommand(handler, getContentComponent());
 	}
 
 	@Override

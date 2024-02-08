@@ -19,11 +19,11 @@
 .tlTabBar::before {
 	content: "";
 	position: absolute;
-  	bottom: 0;
-  	left: 0;
-  	right: 0;
-  	height: 2px;
-  	background-color: var(--border-subtle);
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background-color: var(--border-subtle);
 	z-index: -1;
 }
 
@@ -31,12 +31,17 @@
 	display: flex;
 	flex-wrap: nowrap;
 	height: var(--tabbar-height);
-  	overflow-x: auto;
+	overflow-x: auto;
 }
 
 /* Hides the scrollbar in Chrome, Safari, and Opera */
 .tlTabScrollContainer::-webkit-scrollbar {
   	display: none;
+}
+
+/* Hides the scrollbar in FireFox */
+.tlTabScrollContainer {
+	scrollbar-width: none;
 }
 
 .tlTabScrollContainer.scrolling .tab,

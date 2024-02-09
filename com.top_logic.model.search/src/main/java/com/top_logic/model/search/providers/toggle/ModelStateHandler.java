@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -21,7 +22,13 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * {@link StateHandler} taking the button state from a persistent state.
+ * 
+ * <p>
+ * State can be bound to a property of an object. Changing the state can modify the persistent
+ * object. Such state is visible to all users that have access to the corresponding object.
+ * </p>
  */
+@Label("Persistent state")
 public class ModelStateHandler extends AbstractConfiguredInstance<ModelStateHandler.Config<?>> implements StateHandler {
 
 	/**

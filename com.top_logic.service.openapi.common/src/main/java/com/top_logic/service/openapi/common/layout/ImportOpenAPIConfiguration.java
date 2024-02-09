@@ -234,7 +234,7 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 
 			@Override
 			public String getContentType() {
-				return JsonUtilities.JSON_CONTENT_TYPE;
+				return JsonUtilities.JSON_CONTENT_TYPE_HEADER;
 			}
 		};
 	}

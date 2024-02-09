@@ -16,7 +16,6 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -119,7 +118,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 
-		boolean state = !getState(aContext, aComponent);
+		boolean state = !getState(aComponent);
 		setState(aContext, aComponent, state);
 
 		CommandModel commandModel = getCommandModel(someArguments);
@@ -148,7 +147,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 	 * @param component
 	 *        The context component displaying this command.
 	 */
-	protected abstract boolean getState(DisplayContext context, LayoutComponent component);
+	protected abstract boolean getState(LayoutComponent component);
 
 	/**
 	 * Updates the state that remembers that this button is pressed.
@@ -160,7 +159,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 
 	@Override
 	public ThemeImage getImage(LayoutComponent component) {
-		return getImage(component, getState(DefaultDisplayContext.getDisplayContext(), component));
+		return getImage(component, getState(component));
 	}
 
 	private ThemeImage getImage(LayoutComponent component, boolean state) {
@@ -181,7 +180,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 
 	@Override
 	public ResKey getResourceKey(LayoutComponent component) {
-		return getResourceKey(component, getState(DefaultDisplayContext.getDisplayContext(), component));
+		return getResourceKey(component, getState(component));
 	}
 
 	private ResKey getResourceKey(LayoutComponent component, boolean state) {
@@ -202,7 +201,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 
 	@Override
 	public String getCssClasses(LayoutComponent component) {
-		return getCssClasses(component, getState(DefaultDisplayContext.getDisplayContext(), component));
+		return getCssClasses(component, getState(component));
 	}
 
 	private String getCssClasses(LayoutComponent component, boolean state) {

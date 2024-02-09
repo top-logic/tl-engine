@@ -39,7 +39,7 @@ public class ToggleShowAllCommands extends ToggleCommandHandler {
 	}
 
 	@Override
-	protected boolean getState(DisplayContext context, LayoutComponent component) {
+	protected boolean getState(LayoutComponent component) {
 		return ExecutableState.allVisible();
 	}
 

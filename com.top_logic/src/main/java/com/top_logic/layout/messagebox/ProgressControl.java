@@ -77,7 +77,10 @@ public class ProgressControl extends AbstractVisibleControl {
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		
-		out.writeInt(100 * _value / _max);
+		/* _max can be 0 when a table with 0 lines is exported. That export might not be very
+		 * useful, but it must not crash. */
+		int progresPercent = (_max == 0) ? 100 : (100 * _value / _max);
+		out.writeInt(progresPercent);
 		out.append("%");
 
 		out.endTag(PROGRESS);

@@ -12,6 +12,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.basic.ControlRenderer;
@@ -43,6 +44,7 @@ public class MultiViewConfiguration extends AbstractViewConfiguration<MultiViewC
 		
 		/** The list of configured view configurations. */
 		@Name(XML_ATTRIBUTE_VIEWS)
+		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
 		List<ViewConfiguration.Config<ViewConfiguration>> getViews();
 	}
 

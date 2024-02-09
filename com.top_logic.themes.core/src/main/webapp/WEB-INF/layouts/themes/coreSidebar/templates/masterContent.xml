@@ -6,43 +6,43 @@
 	</params>
 
 	<layout name="sblOuterContainer"
-			resizable="false"
+		resizable="false"
 	>
 		<layout name="leftLayoutBorder"
-				resizable="false"
+			resizable="false"
 		>
 			<layoutInfo size="%SIDEBAR_LAYOUT_TOP_BORDER%"/>
 		</layout>
-	
+
 		<layout name="sblMain"
 			horizontal="true"
 			resizable="false"
 		>
 			<layout name="topLayoutBorder"
-					resizable="false"
+				resizable="false"
 			>
 				<layoutInfo size="%SIDEBAR_LAYOUT_LEFT_SIDE_BORDER%"/>
 			</layout>
-			
+
 			<layout name="sblInnerMain"
 				horizontal="true"
 				resizable="%SIDEBAR_RESIZABLE%"
 			>
 				<layoutInfo size="100%"/>
-		
+
 				<components>
 					<layout name="sblSidebar"
 						resizable="false"
 					>
 						<layoutInfo size="%SIDEBAR_WIDTH%"/>
-		
+
 						<componentControlProvider class="com.top_logic.layout.structure.MinimizableControl$Provider">
 							<minimizedSize
 								height="100%"
 								width="%SIDEBAR_WIDTH_MINIMIZED%"
 							/>
 						</componentControlProvider>
-		
+
 						<components>
 							<component class="com.top_logic.mig.html.layout.PageComponent"
 								name="sblLogo"
@@ -62,7 +62,7 @@
 									/>
 								</views>
 							</component>
-							
+
 							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 								<layoutInfo size="0px"/>
 								<componentControlProvider class="com.top_logic.themes.modern.layout.structure.ConditionalViewLayout"
@@ -72,8 +72,10 @@
 									<include name="com.top_logic/license/license-expiry.xml"/>
 								</componentControlProvider>
 							</layoutControl>
-		
-							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+
+							<layoutControl name="toolRow"
+								componentName="mainTabbar.layout.xml#mainTabber"
+							>
 								<layoutInfo size="100%"/>
 								<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.SidebarLayoutControlProvider"
 									accordion="%SBL_ACCORDION%"
@@ -84,12 +86,12 @@
 							</layoutControl>
 						</components>
 					</layout>
-		
+
 					<layout name="sblRight"
 						resizable="false"
 					>
 						<layoutInfo size="100%"/>
-		
+
 						<components>
 							<include name="templates/navigationComponent.xml"
 								componentName="sblNavigation"
@@ -98,7 +100,7 @@
 									<layoutInfo size="%MAIN_NAVIGATION_BAR_HEIGHT%"/>
 								</inject>
 							</include>
-		
+
 							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 								<layoutInfo size="0px"/>
 								<componentControlProvider class="com.top_logic.themes.modern.layout.structure.ConditionalViewLayout"
@@ -110,16 +112,16 @@
 									/>
 								</componentControlProvider>
 							</layoutControl>
-		
+
 							<component class="com.top_logic.tool.boundsec.CockpitLayout"
 								horizontal="false"
 								name="sblContent"
 							>
 								<layoutInfo size="100%"/>
-		
+
 								<components>${mainTabbar}</components>
 							</component>
-		
+
 							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 								<layoutInfo
 									scrolleable="false"
@@ -133,14 +135,12 @@
 					</layout>
 				</components>
 			</layout>
-			
+
 			<layout name="rightLayoutBorder"
-					resizable="false"
+				resizable="false"
 			>
 				<layoutInfo size="%MAIN_LAYOUT_SIDE_BORDER%"/>
 			</layout>
-			
 		</layout>
-	
 	</layout>
 </template>

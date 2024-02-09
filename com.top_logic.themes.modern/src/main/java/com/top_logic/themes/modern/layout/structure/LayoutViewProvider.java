@@ -43,7 +43,7 @@ public class LayoutViewProvider extends DecoratingLayoutControlProvider<LayoutVi
 		 * {@link ViewConfiguration} of the {@link LayoutControl}, which will be created by
 		 *         this {@link LayoutViewProvider}.
 		 */
-		PolymorphicConfiguration<ViewConfiguration> getView();
+		ViewConfiguration.Config<?> getView();
 	}
 
 	/**

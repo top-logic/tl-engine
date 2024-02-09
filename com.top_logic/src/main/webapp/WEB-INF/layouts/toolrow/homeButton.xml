@@ -34,6 +34,7 @@
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 			command="openLicenseDialog"
 		/>
+		<include name="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.command.xml"/>
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 			command="logout"
 		/>

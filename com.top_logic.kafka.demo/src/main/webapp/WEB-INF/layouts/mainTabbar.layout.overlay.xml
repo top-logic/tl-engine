@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<components>
+		<layout-reference
+			config:position="begin"
+			resource="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml"
+		/>
+		<layout-reference resource="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml"/>
+		<layout-reference resource="com.top_logic.kafka.demo/kafka/sensors/sensorView.layout.xml"/>
+		<layout-reference resource="com.top_logic.kafka.demo/kafka/kafka/kafkaView.layout.xml"/>
+	</components>
+</arguments>

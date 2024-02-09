@@ -25,6 +25,7 @@ import com.top_logic.basic.listener.NoBubblingEventType;
 import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.listener.PropertyObservable;
 import com.top_logic.basic.listener.PropertyObservableBase;
+import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.CommandListener;
@@ -1129,4 +1130,13 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 		}
 
 	}
+
+	@Override
+	public String toString() {
+		return new NameBuilder(this)
+			.add("model", id)
+			.add("model", getModel())
+			.build();
+	}
+
 }

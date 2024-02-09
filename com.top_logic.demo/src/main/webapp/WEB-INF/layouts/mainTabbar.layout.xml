@@ -19,5 +19,8 @@
 			<layout-reference resource="com.top_logic.demo/chartJS/index.layout.xml"/>
 			<layout-reference resource="admin/index.layout.xml"/>
 		</components>
+		<dialogs>
+			<layout-reference resource="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml"/>
+		</dialogs>
 	</arguments>
 </config:template-call>

@@ -9,10 +9,14 @@
 		resizable="false"
 	>
 		<components>
-			<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+			<layoutControl name="toolRow"
+				componentName="mainTabbar.layout.xml#mainTabber"
+			>
 				<layoutInfo size="%TOOL_ROW_HEIGHT%"/>
 				<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
-					<view class="com.top_logic.themes.modern.layout.views.ToolRowView">
+					<view class="com.top_logic.themes.modern.layout.views.ToolRowView"
+						name="toolRow"
+					>
 						<include name="ToolRowView.xml"/>
 					</view>
 				</componentControlProvider>

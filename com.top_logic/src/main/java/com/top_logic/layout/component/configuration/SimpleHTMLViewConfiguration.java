@@ -11,7 +11,6 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -67,7 +66,7 @@ public class SimpleHTMLViewConfiguration extends AbstractViewConfiguration<Simpl
 		 * Either {@link #getContentView()} or {@link #getContentKey()} must be set.
 		 * </p>
 		 */
-		PolymorphicConfiguration<? extends ViewConfiguration> getContentView();
+		ViewConfiguration.Config<?> getContentView();
 	}
 
 	/**

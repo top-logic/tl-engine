@@ -13,7 +13,7 @@
 		/>
 	</params>
 
-	<group>
+	<group name="custom">
 		<views>
 			<include name="toolrow/modelSearchButtons.xml"
 				entryRenderer="${entryRenderer}"

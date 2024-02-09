@@ -24,11 +24,11 @@
 			<button id="ID_f5d54a4d_204f_4a25_8cf3_4850871c26f8"
 				activeImage="css:fas fa-dot-circle"
 				class="com.top_logic.model.search.providers.toggle.ToggleCommandByExpression"
-				disabledImage=""
 				group="System"
 				image="css:far fa-dot-circle"
 				operation="model -> state -> ($state ? $model : `DemoTypes#ROOT`)"
 				target="selection(self())"
+				transaction="false"
 			>
 				<resourceKey key="dynamic.73a32594-54af-4391-bd36-608e59b50371">
 					<en>Set focus</en>
@@ -57,9 +57,9 @@
 				<state-handler/>
 			</button>
 			<button id="ID_5adcbd7b_476b_4363_b6c9_418be9b7f28c"
+				activeCssClasses=""
 				activeImage="css:fas fa-toggle-on"
 				class="com.top_logic.model.search.providers.toggle.ToggleCommandByExpression"
-				disabledImage=""
 				image="css:fas fa-toggle-off"
 				target="selection(self())"
 				transaction="false"

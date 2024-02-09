@@ -12,25 +12,25 @@
 		-->
 		<Property name="log.directory">%LOG_PATH%</Property>
 		<Property name="filename.prefix">top-logic</Property>
-		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %mdc{tl-session-id}%message%n%throwable</Property>
+		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %message - %mdc{tl-session-id}%n%throwable</Property>
 		<Property name="pattern.plain">%message%n%throwable</Property>
 	</Properties>
 	<Appenders>
 		<Console name="STDOUT"
 			target="SYSTEM_OUT"
 		>
-			<PatternLayout pattern="${pattern.plain}"/>
+			<PatternLayout pattern="${pattern.plain}" charset="UTF-8"/>
 		</Console>
 		<Console name="STDERR"
 			target="SYSTEM_ERR"
 		>
-			<PatternLayout pattern="${pattern.plain}"/>
+			<PatternLayout pattern="${pattern.plain}" charset="UTF-8"/>
 		</Console>
 		<RollingFile name="FILE_APPENDER"
 			fileName="${log.directory}/${filename.prefix}.main.log"
 			filePattern="${log.directory}/${filename.prefix}.main.%i.log"
 		>
-			<PatternLayout pattern="${pattern.long}"/>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
 			<DefaultRolloverStrategy
 				fileIndex="min"
 				max="10"
@@ -41,7 +41,7 @@
 			fileName="${log.directory}/${filename.prefix}.scheduler.log"
 			filePattern="${log.directory}/${filename.prefix}.scheduler.%i.log"
 		>
-			<PatternLayout pattern="${pattern.long}"/>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
 			<DefaultRolloverStrategy
 				fileIndex="min"
 				max="10"
@@ -52,7 +52,7 @@
 			fileName="${log.directory}/${filename.prefix}.memory.log"
 			filePattern="${log.directory}/${filename.prefix}.memory.%i.log"
 		>
-			<PatternLayout pattern="${pattern.long}"/>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
 			<DefaultRolloverStrategy
 				fileIndex="min"
 				max="10"

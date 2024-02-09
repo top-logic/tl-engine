@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.monitoring/admin/technical/logs/logLines.layout.xml"
+	buttons=""
+	defaultSortOrder="time:descending"
+	filter="com.top_logic.monitoring.log.CurrentSessionLogLineFilter"
+>
+	<inject>
+		<dialogInfo
+			createOpenerButtons="false"
+			height="100%"
+			width="100%"
+		>
+			<title title="monitoring.admin.logLines.sessionDialog.title"/>
+			<open-handler id="openLogLinesSessionDialog"
+				image="css:fas fa-list"
+				resourceKey="monitoring.admin.logLines.sessionDialog"
+			/>
+		</dialogInfo>
+	</inject>
+</include>

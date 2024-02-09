@@ -1,92 +1,108 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<tableView name="logLinesTable"
-	modelBuilder="com.top_logic.monitoring.log.LogLineModelBuilder"
-	resPrefix="layouts.admin.technical.logs.logging.logLinesTable."
-	resetInvisible="true"
-	securityProviderClass="securityRoot"
->
-	<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"/>
-	<tabInfo label="admin.logs.entries"/>
-	<buttons>
-		<reference command-id="invalidate"/>
-		<button id="dumpLogLineToConsole"
-			class="com.top_logic.monitoring.log.DumpLogLineCommand"
+<template>
+	<params>
+		<param name="defaultSortOrder"
+			value="severity:descending, time:descending"
 		/>
-	</buttons>
-	<table
-		defaultColumns="time, severity, file-category, category, thread, message, details"
-		defaultSortOrder="severity:descending, time:descending"
-		fixedColumns="2"
-		tableRenderer="com.top_logic.monitoring.log.LogLineTableRenderer"
+		<param name="filter"
+			optional="true"
+		/>
+		<param name="buttons">
+			<button id="dumpLogLineToConsole"
+				class="com.top_logic.monitoring.log.DumpLogLineCommand"
+			/>
+		</param>
+	</params>
+
+	<tableView name="logLinesTable"
+		resPrefix="layouts.admin.technical.logs.logging.logLinesTable."
+		resetInvisible="true"
+		securityProviderClass="securityRoot"
 	>
-		<column-default
-			accessor="com.top_logic.monitoring.log.LogLineAccessor"
-			cssClassProvider="com.top_logic.monitoring.log.LogLineCellClassProvider"
-			filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
-			resourceProvider="com.top_logic.layout.provider.resource.LabelAsTooltipResourceProvider"
-		/>
-		<columns>
-			<column name="time"
-				columnWidth="125px"
-				labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
-					comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
-					show-option-entries="false"
-				/>
-			</column>
-			<column name="severity"
-				columnWidth="90px"
-				labelProvider="com.top_logic.monitoring.log.LogLineSeverityLabelProvider"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
-					show-option-entries="true"
-				/>
-			</column>
-			<column name="file-category"
-				columnWidth="150px"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
-					show-option-entries="true"
-				/>
-			</column>
-			<column name="file-name"
-				columnWidth="150px"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
-					show-option-entries="true"
-				/>
-			</column>
-			<column name="category"
-				columnWidth="350px"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
-					show-option-entries="true"
-				/>
-			</column>
-			<column name="thread"
-				columnWidth="200px"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
-					show-option-entries="true"
-				/>
-			</column>
-			<column name="message"
-				columnWidth="900px"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
-					show-option-entries="true"
-				/>
-			</column>
-			<column name="details"
-				columnWidth="35px"
-				renderer="com.top_logic.monitoring.log.LogLineDetailsColumnRenderer"
-			>
-				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
-					show-option-entries="false"
-				/>
-			</column>
-		</columns>
-	</table>
-</tableView>
+		<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"/>
+		<tabInfo label="admin.logs.entries"/>
+		<modelBuilder class="com.top_logic.monitoring.log.LogLineModelBuilder">
+			<log-parser filter="${filter}"/>
+		</modelBuilder>
+		<buttons>
+			<reference command-id="invalidate"/>
+			${buttons}
+		</buttons>
+		<table
+			defaultColumns="time, severity, file-category, category, thread, message, details"
+			defaultSortOrder="${defaultSortOrder}"
+			fixedColumns="2"
+			tableRenderer="com.top_logic.monitoring.log.LogLineTableRenderer"
+		>
+			<column-default
+				accessor="com.top_logic.monitoring.log.LogLineAccessor"
+				cssClassProvider="com.top_logic.monitoring.log.LogLineCellClassProvider"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+				resourceProvider="com.top_logic.layout.provider.resource.LabelAsTooltipResourceProvider"
+			/>
+			<columns>
+				<column name="time"
+					columnWidth="125px"
+					labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+						comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+						show-option-entries="false"
+					/>
+				</column>
+				<column name="severity"
+					columnWidth="90px"
+					labelProvider="com.top_logic.monitoring.log.LogLineSeverityLabelProvider"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+						show-option-entries="true"
+					/>
+				</column>
+				<column name="file-category"
+					columnWidth="150px"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+						show-option-entries="true"
+					/>
+				</column>
+				<column name="file-name"
+					columnWidth="150px"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+						show-option-entries="true"
+					/>
+				</column>
+				<column name="category"
+					columnWidth="350px"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+						show-option-entries="true"
+					/>
+				</column>
+				<column name="thread"
+					columnWidth="200px"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+						show-option-entries="true"
+					/>
+				</column>
+				<column name="message"
+					columnWidth="900px"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+						show-option-entries="true"
+					/>
+				</column>
+				<column name="details"
+					columnWidth="35px"
+					renderer="com.top_logic.monitoring.log.LogLineDetailsColumnRenderer"
+				>
+					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+						show-option-entries="false"
+					/>
+				</column>
+			</columns>
+		</table>
+	</tableView>
+</template>

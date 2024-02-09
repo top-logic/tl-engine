@@ -10,7 +10,7 @@
 		/>
 	</params>
 
-	<group>
+	<group name="search">
 		<views>
 			<include name="toolrow/searchButtons.xml"
 				entryRenderer="${entryRenderer}"
@@ -20,7 +20,7 @@
 	</group>
 
 	<!-- TODO #25919: Try to add the documentation button without a re-definition of the entire file. -->
-	<group>
+	<group name="help">
 		<views>
 			<include name="toolrow/docButton.xml"
 				entryRenderer="${entryRenderer}"

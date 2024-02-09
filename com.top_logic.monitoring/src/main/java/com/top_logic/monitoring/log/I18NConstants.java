@@ -25,6 +25,13 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Failed to parse the log file {0}. */
 	public static ResKey FAILED_TO_PARSE_FILE__NAME;
 
+	/**
+	 * @en Failed to read log file {0}. The encoding {1} failed to parse the characters. The file
+	 *     will be re-read with UTF-8 with unparseable characters being replaced by the Unicode
+	 *     "Replacement Character": \uFFFD
+	 */
+	public static ResKey2 FILE_IN_WRONG_ENCODING__NAME_ENCODING;
+
 	/** @en The log entry has been printed to the console. */
 	public static ResKey LOG_LINE_DUMPED_TO_CONSOLE;
 

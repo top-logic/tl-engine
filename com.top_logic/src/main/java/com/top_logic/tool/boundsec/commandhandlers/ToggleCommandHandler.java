@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
@@ -32,7 +33,10 @@ import com.top_logic.util.css.CssUtil;
  */
 public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 
-	private String ACTIVE_CSS = "active";
+	/**
+	 * Default CSS class for activated {@link ToggleCommandHandler}s.
+	 */
+	public static final String ACTIVE_CSS = "active";
 
 	/**
 	 * Configuration options for {@link ToggleCommandHandler}.
@@ -93,6 +97,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 		 * CSS classes to set in active state.
 		 */
 		@Name(ACTIVE_CSS_CLASSES)
+		@StringDefault(ACTIVE_CSS)
 		String getActiveCssClasses();
 
 	}
@@ -202,7 +207,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 	}
 
 	private String getActiveCssClasses() {
-		return CssUtil.joinCssClasses(ACTIVE_CSS, config().getActiveCssClasses());
+		return config().getActiveCssClasses();
 	}
 
 	private String getDefaultCssClasses(LayoutComponent component) {

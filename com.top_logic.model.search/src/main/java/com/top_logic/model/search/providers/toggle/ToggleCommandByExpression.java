@@ -101,7 +101,7 @@ public class ToggleCommandByExpression extends ToggleCommandHandler implements W
 		 * <p>
 		 * A function taking the command's model and the new state (<code>true</code> or
 		 * <code>false</code>) as arguments. The result produced is used as command result and
-		 * passed to configured {#getPostCreateActions() UI actions}.
+		 * passed to configured {@link #getPostCreateActions() UI actions}.
 		 * </p>
 		 * 
 		 * <p>

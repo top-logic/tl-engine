@@ -10,9 +10,10 @@
 			<en>Context tree</en>
 			<de>Kontext-Baum</de>
 		</name>
-		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
-			<script expr="`DemoTypes#ROOT`"/>
-		</model>
+		<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+			function="model -> $model"
+			input="selection(com.top_logic.demo/technical/components/toggleButton/treeRootTable.layout.xml#Table)"
+		/>
 		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
 			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
 			modelQuery="node -> model -> $model"
@@ -26,8 +27,7 @@
 				class="com.top_logic.model.search.providers.toggle.ToggleCommandByExpression"
 				group="System"
 				image="css:far fa-dot-circle"
-				operation="model -> state -> ($state ? $model : `DemoTypes#ROOT`)"
-				target="selection(self())"
+				operation="input -> state -> ($state ? $input[1] : $input[0])"
 				transaction="false"
 			>
 				<resourceKey key="dynamic.73a32594-54af-4391-bd36-608e59b50371">
@@ -40,7 +40,7 @@
 				</resourceKey>
 				<executability>
 					<rule-by-expression show-disabled="true">
-						<decision>model -&gt; $model != null || #("Es ist nichts selektiert."@de, "Nothing selected."@en)</decision>
+						<decision>input -&gt; $input[1] != null || #("Es ist nichts selektiert."@de, "Nothing selected."@en)</decision>
 					</rule-by-expression>
 				</executability>
 				<activeResourceKey key="dynamic.70b4fa4b-3094-4620-9114-fbf003920ca1">
@@ -51,10 +51,25 @@
 						<de>Stellt die vollständige Baumansicht wieder her.</de>
 					</tooltip>
 				</activeResourceKey>
+				<target class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+					<channel name="selection">
+						<target name="com.top_logic.demo/technical/components/toggleButton/treeRootTable.layout.xml#Table"/>
+					</channel>
+					<channel name="selection">
+						<relation/>
+					</channel>
+					<channel name="model">
+						<relation/>
+					</channel>
+				</target>
+				<state-handler class="com.top_logic.model.search.providers.toggle.ModelStateHandler"
+					state-lookup="input -> $input[2] != $input[0]"
+					state-update="null"
+					transaction="false"
+				/>
 				<postCreateActions>
 					<setModel target="model(self())"/>
 				</postCreateActions>
-				<state-handler/>
 			</button>
 			<button id="ID_5adcbd7b_476b_4363_b6c9_418be9b7f28c"
 				activeCssClasses=""

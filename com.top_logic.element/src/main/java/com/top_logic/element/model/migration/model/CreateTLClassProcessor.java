@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -80,7 +81,8 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		 * Name of the primary generalization for the new {@link TLClass}.
 		 * 
 		 * @implNote This value is mandatory for all types not in
-		 *           {@link TlModelFactory#TL_MODEL_STRUCTURE}. At least
+		 *           {@link TlModelFactory#TL_MODEL_STRUCTURE} unless
+		 *           {@link #isWithoutPrimaryGeneralization()}. At least
 		 *           {@link TLObject#TL_OBJECT_TYPE} can be used.
 		 */
 		QualifiedTypeName getPrimaryGeneralization();
@@ -90,6 +92,22 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		 */
 		void setPrimaryGeneralization(QualifiedTypeName value);
 
+		/**
+		 * Whether no primary generalization is given.
+		 * 
+		 * <p>
+		 * Each type needs a primary generalization. At least {@link TLObject#TL_OBJECT_TYPE} can be
+		 * used. If {@link #isWithoutPrimaryGeneralization()} is set, the user <b>must</b> ensure
+		 * that a later {@link MigrationProcessor} creates a generalization for the type.
+		 * </p>
+		 */
+		@Hidden
+		boolean isWithoutPrimaryGeneralization();
+
+		/**
+		 * Setter for {@link #isWithoutPrimaryGeneralization()}.
+		 */
+		void setWithoutPrimaryGeneralization(boolean value);
 	}
 
 	private Util _util;
@@ -131,6 +149,10 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 			QualifiedTypeName newClass) {
 		QualifiedTypeName primaryGeneralization = getConfig().getPrimaryGeneralization();
 		if (primaryGeneralization == null) {
+			if (getConfig().isWithoutPrimaryGeneralization()) {
+				log.info("Skip generalization creation for '" + _util.qualifiedName(newClass) + "'.");
+				return;
+			}
 			if (!TlModelFactory.TL_MODEL_STRUCTURE.equals(newClass.getModuleName())) {
 				log.error("No primary generalization given for new class '" + _util.qualifiedName(newClass)
 					+ "'. Use at least "

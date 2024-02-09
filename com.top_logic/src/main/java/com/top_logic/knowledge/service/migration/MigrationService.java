@@ -105,6 +105,7 @@ import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
 import com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.annotate.util.AttributeSettings;
+import com.top_logic.util.model.CompatibilityService;
 
 /**
  * {@link ManagedClass} that automatically migrates the application to the newest version.
@@ -127,6 +128,7 @@ import com.top_logic.model.annotate.util.AttributeSettings;
 	/* Creation of temp file to dump KB */
 	Settings.Module.class,
 	AttributeSettings.Module.class,
+	CompatibilityService.Module.class,
 })
 @ServiceExtensionPoint(InitialTableSetup.Module.class)
 public class MigrationService extends ConfiguredManagedClass<MigrationService.Config> {

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -122,19 +123,59 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 		setState(aContext, aComponent, state);
 
 		CommandModel commandModel = getCommandModel(someArguments);
-		if (commandModel != null) {
-			// Update view. Make sure that the view is optional to allow simplified testing.
-			commandModel.setImage(getImage(aComponent, state));
-			Resources resources = aContext.getResources();
-			ResKey labelKey = getResourceKey(aComponent, state);
-			commandModel.setLabel(resources.getString(labelKey));
-			commandModel.setCssClasses(getCssClasses(aComponent, state));
-			if (labelKey != null) {
-				commandModel.setTooltip(resources.getString(labelKey.tooltipOptional()));
-			}
+		if (commandModel instanceof ToggleCommandModel) {
+			((ToggleCommandModel) commandModel).updateCommandModel(aContext.getResources(), aComponent, state);
 		}
 
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	@Override
+	public CommandModel createCommandModel(LayoutComponent component, Map<String, Object> arguments) {
+		ResKey label = getResourceKey(component);
+		return new ToggleCommandModel(this, component, arguments, label);
+	}
+
+	static class ToggleCommandModel extends ComponentCommandModel {
+
+		private boolean _state;
+
+		/**
+		 * Creates a {@link ToggleCommandModel}.
+		 */
+		public ToggleCommandModel(ToggleCommandHandler command, LayoutComponent component,
+				Map<String, Object> someArguments,
+				ResKey label) {
+			super(command, component, someArguments, label);
+
+			_state = command.getState(component);
+		}
+
+		@Override
+		public void updateExecutabilityState() {
+			super.updateExecutabilityState();
+
+			ToggleCommandHandler handler = (ToggleCommandHandler) getCommandHandler();
+			LayoutComponent component = getComponent();
+			boolean state = handler.getState(component);
+
+			if (state != _state) {
+				updateCommandModel(Resources.getInstance(), component, state);
+			}
+		}
+
+		void updateCommandModel(Resources resources, LayoutComponent component, boolean state) {
+			ToggleCommandHandler handler = (ToggleCommandHandler) getCommandHandler();
+			setImage(handler.getImage(component, state));
+			ResKey labelKey = handler.getResourceKey(component, state);
+			setLabel(resources.getString(labelKey));
+			setCssClasses(handler.getCssClasses(component, state));
+			if (labelKey != null) {
+				setTooltip(resources.getString(labelKey.tooltipOptional()));
+			}
+
+			_state = state;
+		}
 	}
 
 	/**

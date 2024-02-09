@@ -124,7 +124,8 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 		String tooltip;
 		if (comparisonActive) {
 			label = createActivatedLabel(resources, component);
-			tooltip = getTooltip(resources, component);
+			ResKey labelKey = this.getResourceKey(component);
+			tooltip = labelKey == null ? null : resources.getString(labelKey.tooltipOptional());
 		} else {
 			label = createDeactivatedLabel(resources, component);
 			tooltip = getDeactivatedTooltip(resources, component);
@@ -146,11 +147,7 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 	}
 
 	private String createActivatedLabel(Resources resources, LayoutComponent targetComponent) {
-		return resources.getString(LayoutComponent.createCommandLabel(targetComponent, this));
-	}
-
-	private String getTooltip(Resources res, LayoutComponent targetComponent) {
-		return LayoutComponent.getTooltip(res, this, targetComponent);
+		return resources.getString(this.getResourceKey(targetComponent));
 	}
 
 	private String getDeactivatedTooltip(Resources res, LayoutComponent targetComponent) {

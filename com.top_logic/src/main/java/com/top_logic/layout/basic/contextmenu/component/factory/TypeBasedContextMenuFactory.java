@@ -22,7 +22,7 @@ import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.basic.ComponentCommandModel;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.config.ConfiguredContextMenuCommandsProvider;
@@ -138,7 +138,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		@Override
 		public Menu getContextMenu(Object obj) {
 			Object model = mapContext(obj);
-			List<ComponentCommandModel> buttons = createButtons(model, createArguments(model));
+			List<CommandModel> buttons = createButtons(model, createArguments(model));
 			Menu result = ContextMenuUtil.toContextMenu(buttons);
 			String title = getConfig().getTitleProvider().getLabel(model);
 			if (!StringServices.isEmpty(title)) {
@@ -163,14 +163,14 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		 *        The arguments to invoke the commands with.
 		 * @return The (unordered) list of context menu entries.
 		 */
-		protected List<ComponentCommandModel> createButtons(Object model, Map<String, Object> arguments) {
+		protected List<CommandModel> createButtons(Object model, Map<String, Object> arguments) {
 			return createProviderButtons(model, arguments);
 		}
 
 		/**
 		 * Creates context menu entries from {@link Config#getCustomCommands()}.
 		 */
-		protected final List<ComponentCommandModel> createProviderButtons(Object model, Map<String, Object> arguments) {
+		protected final List<CommandModel> createProviderButtons(Object model, Map<String, Object> arguments) {
 			return toButtons(getComponent(), arguments, _provider.getContextCommands(model));
 		}
 	}

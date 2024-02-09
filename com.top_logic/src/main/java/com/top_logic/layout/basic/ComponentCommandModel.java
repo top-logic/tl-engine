@@ -41,10 +41,8 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 	 *        {@link CommandHandler#handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
 	 * @param label
 	 *        The label of the button.
-	 * 
-	 * @see CommandModelFactory#commandModel(CommandHandler, LayoutComponent, Map, ResKey)
 	 */
-	protected ComponentCommandModel(CommandHandler command, LayoutComponent component,
+	public ComponentCommandModel(CommandHandler command, LayoutComponent component,
 			Map<String, Object> someArguments, ResKey label) {
 		super(ComponentCommand.newInstance(command, component, someArguments));
 		if (label == null) {
@@ -56,6 +54,7 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 		setImage(command.getImage(component));
 		setNotExecutableImage(command.getNotExecutableImage(component));
 		setCssClasses(command.getCssClasses(component));
+		setShowProgress(true);
 	}
 
 	/**

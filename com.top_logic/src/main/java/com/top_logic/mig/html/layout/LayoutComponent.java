@@ -102,9 +102,7 @@ import com.top_logic.layout.URLParser;
 import com.top_logic.layout.View;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
@@ -3388,23 +3386,20 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				theTarget = this;
 			}
 		}
-		return modelForCommand(res, command, arguments, theTarget);
+		return modelForCommand(command, arguments, theTarget);
 	}
 
 	/**
-	 * Short-cut for {@link #modelForCommand(Resources, CommandHandler, Map, LayoutComponent)} with
+	 * Short-cut for {@link #modelForCommand(CommandHandler, Map, LayoutComponent)} with
 	 * {@link CommandHandler#NO_ARGS}.
 	 */
-	protected final CommandModel modelForCommand(Resources res, CommandHandler command, LayoutComponent targetComponent) {
-		return modelForCommand(res, command, CommandHandler.NO_ARGS, targetComponent);
+	protected final CommandModel modelForCommand(CommandHandler command, LayoutComponent targetComponent) {
+		return modelForCommand(command, CommandHandler.NO_ARGS, targetComponent);
 	}
 
 	/**
 	 * Create a {@link CommandModel} for the given {@link CommandHandler} for being displayed in the
 	 * {@link ButtonComponent}.
-	 * 
-	 * @param res
-	 *        Use for translation.
 	 * @param command
 	 *        The Command to create a CommandModel for.
 	 * @param targetComponent
@@ -3412,56 +3407,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * 
 	 * @return A {@link CommandModel} to be displayed in the {@link ButtonComponent}.
 	 */
-	protected CommandModel modelForCommand(Resources res, CommandHandler command, Map<String, Object> arguments,
-			LayoutComponent targetComponent) {
-		ResKey label = createCommandLabel(targetComponent, command);
-
-		CommandModel theModel = CommandModelFactory.commandModel(command, targetComponent, arguments, label);
-		ThemeImage commandImage = command.getImage(targetComponent);
-		if (commandImage != null) {
-			theModel.setImage(commandImage);
-			theModel.setNotExecutableImage(command.getNotExecutableImage(targetComponent));
-		}
-		theModel.setShowProgress(needsShowProgress(command));
-
-		updateTooltip(theModel, targetComponent, command, res);
-
-		return (theModel);
+	protected CommandModel modelForCommand(CommandHandler command, Map<String, Object> arguments, LayoutComponent targetComponent) {
+		return command.createCommandModel(targetComponent, arguments);
 	}
-
-	public static void updateTooltip(CommandModel commandModel, LayoutComponent targetComponent, CommandHandler command,
-			Resources res) {
-		String tooltip = getTooltip(res, command, targetComponent);
-		if (tooltip != null) {
-			commandModel.setTooltip(tooltip);
-		}
-	}
-
-	public static String getTooltip(Resources res, CommandHandler command, LayoutComponent targetComponent) {
-		ResKey labelKey = command.getResourceKey(targetComponent);
-		if (labelKey == null) {
-			// No default tooltip specified.
-			return null;
-		}
-
-		return res.getString(labelKey.tooltipOptional());
-	}
-
-	public static ResKey createCommandLabel(LayoutComponent targetComponent, CommandHandler command) {
-		return command.getResourceKey(targetComponent);
-	}
-
-	/**
-	 * Hook for displaying show process slider in button bar. The default is
-	 * <code>true</code> for each command.
-	 * 
-	 * @param command
-	 *        The command to be checked, must not be <code>null</code>.
-	 * @return <code>true</code>, if progress has to be displayed.
-	 */
-    protected boolean needsShowProgress(CommandHandler command) {
-        return true;
-    }
 
 	/**
 	 * Registers the given command and registers it as automatically displayed button.

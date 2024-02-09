@@ -46,6 +46,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
+import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.check.CheckScopeProvider;
 import com.top_logic.layout.channel.ModelChannel;
@@ -53,6 +55,7 @@ import com.top_logic.layout.channel.linking.Channel;
 import com.top_logic.layout.channel.linking.Null;
 import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.ComponentRelation;
+import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
@@ -899,6 +902,16 @@ public CommandScriptWriter getCommandScriptWriter(LayoutComponent component);
 
 		ComponentRelation relation = (ComponentRelation) componentRef;
 		return relation.getKind() == ComponentRelation.Kind.self;
+	}
+
+	/**
+	 * Creates a {@link CommandModel} for a button representing this {@link CommandHandler}.
+	 * 
+	 * @see ButtonControl#ButtonControl(CommandModel)
+	 */
+	default CommandModel createCommandModel(LayoutComponent component, Map<String, Object> arguments) {
+		ResKey label = getResourceKey(component);
+		return new ComponentCommandModel(this, component, arguments, label);
 	}
 
 }

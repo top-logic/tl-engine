@@ -525,7 +525,7 @@ public class GridComponent extends EditComponent implements
 	 * currently selected object.
 	 * 
 	 * Not <code>null</code> after
-	 * {@link #modelForCommand(Resources, CommandHandler, LayoutComponent)}
+	 * {@link #modelForCommand(CommandHandler, LayoutComponent)}
 	 */
 	private ApplyComandImageChange _applyListener;
 	
@@ -842,9 +842,8 @@ public class GridComponent extends EditComponent implements
 	}
 
     @Override
-	protected CommandModel modelForCommand(Resources aRes, CommandHandler command, Map<String, Object> arguments,
-			LayoutComponent aComponent) {
-		CommandModel theModel = super.modelForCommand(aRes, command, arguments, aComponent);
+	protected CommandModel modelForCommand(CommandHandler command, Map<String, Object> arguments, LayoutComponent aComponent) {
+		CommandModel theModel = super.modelForCommand(command, arguments, aComponent);
 
 		if (command.equals(this.getApplyCommandHandler())) {
 			this.setButtonImages(theModel, Icons.SAVE_BUTTON_ICON, Icons.SAVE_BUTTON_ICON_DISABLED);

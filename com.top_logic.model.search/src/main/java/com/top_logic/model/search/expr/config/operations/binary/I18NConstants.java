@@ -18,6 +18,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_INVALID_CONTENT_TYPE_SPECIFIED__VALUE_MSG;
 
+	/**
+	 * @en Binary data expected in "{1}" but got "{0}".
+	 */
+	public static ResKey2 ERROR_BINARY_DATA_EXPECTED__ACTUAL_EXPR;
+
+	/**
+	 * @en Conversion in "{1}" failed: {0}
+	 */
+	public static ResKey2 ERROR_CONVERSION_FAILED__MSG_EXPR;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

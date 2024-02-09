@@ -1415,7 +1415,7 @@
 						resourceKey="debug.button.reloadTheme"
 					/>
 					<handler id="toggleAlwaysShowKeys"
-						activeCssClasses="pushed"
+						activeCssClasses="active pushed"
 						activeImage="theme:IMAGE_BUTTONS_I18N_DEBUG_ACTIVE22"
 						class="com.top_logic.layout.debug.ToggleShowKeyCommand"
 						clique="debugButtons"
@@ -1424,7 +1424,7 @@
 						resourceKey="debug.button.toggleAlwaysShowKeys"
 					/>
 					<handler id="toggleShowAllCommands"
-						activeCssClasses="pushed"
+						activeCssClasses="active pushed"
 						activeImage="theme:IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
 						class="com.top_logic.layout.debug.ToggleShowAllCommands"
 						clique="debugButtons"

@@ -68,11 +68,11 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 		ResKey getActiveResourceKey();
 
 		@Override
-		@FormattedDefault("theme:TRISTATE_NULL")
+		@FormattedDefault("theme:com.top_logic.layout.form.control.Icons.TRISTATE_NULL")
 		public ThemeImage getImage();
 
 		@Override
-		@FormattedDefault("theme:TRISTATE_NULL_DISABLED")
+		@FormattedDefault("theme:com.top_logic.layout.form.control.Icons.TRISTATE_NULL_DISABLED")
 		public ThemeImage getDisabledImage();
 
 		/**
@@ -86,7 +86,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 		 */
 		@Name(ACTIVE_IMAGE)
 		@Nullable
-		@FormattedDefault("theme:TRISTATE_TRUE")
+		@FormattedDefault("theme:com.top_logic.layout.form.control.Icons.TRISTATE_TRUE")
 		ThemeImage getActiveImage();
 
 		/**

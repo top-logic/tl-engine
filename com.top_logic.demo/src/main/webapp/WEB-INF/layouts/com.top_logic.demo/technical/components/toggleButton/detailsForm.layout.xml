@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/toggleButton/contextTreeTree.layout.xml#Tree)">
+		<name key="dynamic.d4a8550b-13e0-4f2a-ad7b-9f0e50cf83f4">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+		<forms>
+			<form type="DemoTypes:A">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="DemoTypes:DemoTypes.All#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="float"
+						fullQualifiedName="DemoTypes:DemoTypes.A#float"
+						type="tl.core:Double"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

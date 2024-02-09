@@ -26,7 +26,6 @@ import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
@@ -183,7 +182,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		LayoutComponent component = MainLayout.getComponent(displayContext);
 
 		Map<String, Object> args = ContextMenuUtil.createArguments(targetModel);
-		Stream<ComponentCommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, buttons);
+		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, buttons);
 		Menu menu;
 		if (designMode) {
 			List<List<? extends CommandModel>> deactivated = ContextMenuUtil.groupAndSort(buttonsStream)

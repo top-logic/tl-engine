@@ -14,7 +14,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.basic.ComponentCommandModel;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ConstantControl;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
@@ -94,7 +94,7 @@ public abstract class ContextCommandsControl<T> extends ConstantControl<T> imple
 		T model = getModel();
 		List<CommandHandler> commands = _contextMenu.getContextCommands(model);
 		Map<String, Object> arguments = ContextMenuUtil.createArguments(model);
-		Stream<ComponentCommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(_component, arguments, commands);
+		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(_component, arguments, commands);
 		Menu result = ContextMenuUtil.toContextMenu(buttonsStream);
 		String title = _titleProvider.getLabel(model);
 		if (title != null) {

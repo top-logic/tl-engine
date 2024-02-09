@@ -126,9 +126,13 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 		if (commandModel != null) {
 			// Update view. Make sure that the view is optional to allow simplified testing.
 			commandModel.setImage(getImage(aComponent, state));
-			commandModel.setLabel(aContext.getResources().getString(getResourceKey(aComponent, state)));
+			Resources resources = aContext.getResources();
+			ResKey labelKey = getResourceKey(aComponent, state);
+			commandModel.setLabel(resources.getString(labelKey));
 			commandModel.setCssClasses(getCssClasses(aComponent, state));
-			LayoutComponent.updateTooltip(commandModel, aComponent, this, Resources.getInstance());
+			if (labelKey != null) {
+				commandModel.setTooltip(resources.getString(labelKey.tooltipOptional()));
+			}
 		}
 
 		return HandlerResult.DEFAULT_RESULT;

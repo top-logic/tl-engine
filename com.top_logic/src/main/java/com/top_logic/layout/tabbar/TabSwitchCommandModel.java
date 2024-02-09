@@ -21,7 +21,6 @@ import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ComponentCommandModel;
-import com.top_logic.layout.basic.DefaultButtonUIModel;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.tabbar.TabBarModel.TabBarListener;
 import com.top_logic.mig.html.layout.Card;
@@ -142,7 +141,7 @@ public class TabSwitchCommandModel extends ComponentCommandModel {
 	}
 
 	private static TabSwitchCommandModel newInstance(TabComponent component, String tabName, CommandHandler handler) {
-		ResKey label = DefaultButtonUIModel.getCommandI18N(component, handler);
+		ResKey label = handler.getResourceKey(component);
 		return new TabSwitchCommandModel(handler, component, tabName, label);
 	}
 

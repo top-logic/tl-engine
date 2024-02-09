@@ -15,7 +15,7 @@ import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ButtonUIConfig;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.CommandModelFactory;
+import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.Resources;
@@ -87,7 +87,7 @@ public interface ToolBarGroupConfig extends NamedConfigMandatory {
 				}
 				// Prevent a missing key warning, if the default key is not defined but was
 				// overridden in the the toolbar-local UI config.
-				return CommandModelFactory.commandModel(command, component, buttonConfig.getArguments(), toLabel(component, command, buttonConfig));
+				return new ComponentCommandModel(command, component, buttonConfig.getArguments(), toLabel(component, command, buttonConfig));
 			}
 
 			private static ResKey toLabel(LayoutComponent component, CommandHandler command,

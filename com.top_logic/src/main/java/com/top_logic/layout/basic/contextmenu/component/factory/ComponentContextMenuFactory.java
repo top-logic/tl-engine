@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.layout.basic.ComponentCommandModel;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.channel.ModelChannel;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -84,9 +84,9 @@ public class ComponentContextMenuFactory<C extends ComponentContextMenuFactory.C
 		}
 
 		@Override
-		protected List<ComponentCommandModel> createButtons(Object model, Map<String, Object> arguments) {
-			List<ComponentCommandModel> buttons = super.createButtons(model, arguments);
-			List<ComponentCommandModel> componentButtons = createComponentCommandButtons(model, arguments);
+		protected List<CommandModel> createButtons(Object model, Map<String, Object> arguments) {
+			List<CommandModel> buttons = super.createButtons(model, arguments);
+			List<CommandModel> componentButtons = createComponentCommandButtons(model, arguments);
 			return CollectionUtil.concatNew(buttons, componentButtons);
 		}
 
@@ -98,7 +98,7 @@ public class ComponentContextMenuFactory<C extends ComponentContextMenuFactory.C
 		 * @param arguments
 		 *        See {@link #createButtons(Object, Map)}.
 		 */
-		protected final List<ComponentCommandModel> createComponentCommandButtons(Object model,
+		protected final List<CommandModel> createComponentCommandButtons(Object model,
 				Map<String, Object> arguments) {
 			return toButtons(getComponent(), arguments, componentCommands());
 		}

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments expandSelected="false">
+		<name key="dynamic.9c5d0251-0faa-48b3-b6ff-bf9b9f960060">
+			<en>Context tree</en>
+			<de>Kontext-Baum</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="`DemoTypes#ROOT`"/>
+		</model>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			modelQuery="node -> model -> $model"
+			nodePredicate="true"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="model -> $model"
+		/>
+		<buttons>
+			<button id="ID_f5d54a4d_204f_4a25_8cf3_4850871c26f8"
+				activeImage="css:fas fa-dot-circle"
+				class="com.top_logic.model.search.providers.toggle.ToggleCommandByExpression"
+				disabledImage=""
+				group="System"
+				image="css:far fa-dot-circle"
+				operation="model -> state -> ($state ? $model : `DemoTypes#ROOT`)"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.73a32594-54af-4391-bd36-608e59b50371">
+					<en>Set focus</en>
+					<de>Fokus setzen</de>
+					<tooltip>
+						<en>Reduces the tree view by using the currently selected node as the root node. Pressing the button again returns to the full view.</en>
+						<de>Reduziert die Baumansicht, indem der aktuell selektierte Knoten als Wurzelknoten verwendet wird. Ein erneutes Drücken des Knopfes kehrt zu der vollständigen Ansicht zurück.</de>
+					</tooltip>
+				</resourceKey>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision>model -&gt; $model != null || #("Es ist nichts selektiert."@de, "Nothing selected."@en)</decision>
+					</rule-by-expression>
+				</executability>
+				<activeResourceKey key="dynamic.70b4fa4b-3094-4620-9114-fbf003920ca1">
+					<en>Reset focus</en>
+					<de>Fokus zurücksetzen</de>
+					<tooltip>
+						<en>Restores the complete tree view.</en>
+						<de>Stellt die vollständige Baumansicht wieder her.</de>
+					</tooltip>
+				</activeResourceKey>
+				<postCreateActions>
+					<setModel target="model(self())"/>
+				</postCreateActions>
+				<state-handler/>
+			</button>
+			<button id="ID_5adcbd7b_476b_4363_b6c9_418be9b7f28c"
+				activeImage="css:fas fa-toggle-on"
+				class="com.top_logic.model.search.providers.toggle.ToggleCommandByExpression"
+				disabledImage=""
+				image="css:fas fa-toggle-off"
+				target="selection(self())"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.a35c09f8-0ab9-4870-bafb-eca2ba733659">
+					<en>Prioritize</en>
+					<de>Priorisieren</de>
+					<tooltip>
+						<en>Prioritizes the selected element by setting the "float" attribute to 1.0 if the attribute was previously less than 1. Otherwise, the attribute is set to 0.0.</en>
+						<de>Priorisiert das selektierte Element, indem das Attribut "float" auf 1.0 gesetzt wird, wenn das Attribut vorher kleiner 1 war. Ansonsten wird das Attribut auf 0.0 gesetzt.</de>
+					</tooltip>
+				</resourceKey>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision>model -&gt; $model.instanceOf(`DemoTypes:A`) || #("Nur für Objekte vom Typ A möglich"@de, "Only possible for objects of type A"@en)</decision>
+					</rule-by-expression>
+				</executability>
+				<activeResourceKey key="dynamic.188b913a-6f62-47ba-bc9f-f432f8aea39d">
+					<en>Cancel prioritization</en>
+					<de>Priorisierung aufheben</de>
+				</activeResourceKey>
+				<state-handler class="com.top_logic.model.search.providers.toggle.ModelStateHandler"
+					state-lookup="selection -> $selection.get(`DemoTypes:A#float`) >= 1"
+					state-update="selection -> state -> $selection.set(`DemoTypes:A#float`, $state ? 1 : 0)"
+				/>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

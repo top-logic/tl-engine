@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_cfcf85d5_a89c_403a_bd05_759b94d7a368">
+		<tabLabel key="dynamic.d35f240d-f63b-43c3-94d0-64849d04242c">
+			<en>Toggle button</en>
+			<de>Toggle-Button</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/toggleButton/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

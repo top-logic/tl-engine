@@ -10,6 +10,7 @@ import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
@@ -25,6 +26,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * the value of the component channel is changed.
  * </p>
  */
+@Label("Component channel state")
 public class ChannelStateHandler extends AbstractConfiguredInstance<ChannelStateHandler.Config<?>>
 		implements StateHandler {
 

@@ -5,13 +5,21 @@
  */
 package com.top_logic.model.search.providers.toggle;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * {@link StateHandler} linking the button state to a component property.
+ * 
+ * <p>
+ * The state is session-local and private to a single button.
+ * </p>
  */
+@InApp
+@Label("Local state")
 public class LocalStateHandler implements StateHandler {
 
 	/**

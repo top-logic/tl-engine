@@ -208,7 +208,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 * @param patch
 	 *        The {@link DiffElement}s to apply.
 	 */
-	public static void applyPatch(Protocol log, TLModel model, TLFactory factory, List<DiffElement> patch) {
+	public static void applyPatch(Protocol log, TLModel model, TLFactory factory, List<? extends DiffElement> patch) {
 		ApplyModelPatch apply = new ApplyModelPatch(log, model, factory);
 		apply.applyPatch(patch);
 		apply.complete();
@@ -217,8 +217,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	/**
 	 * Applies all given diffs to the {@link #getModel() encapsulated model}.
 	 */
-	public void applyPatch(List<DiffElement> patch) {
-		List<DiffElement> elements = sortByPriority(patch);
+	public void applyPatch(List<? extends DiffElement> patch) {
+		List<? extends DiffElement> elements = sortByPriority(patch);
 		for (DiffElement diff : elements) {
 			diff.visit(this, null);
 		}
@@ -242,7 +242,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		String partName = diff.getPart();
 		TLModelPart part;
 		try {
-			part = resovePart(partName);
+			part = resolvePart(partName);
 		} catch (TopLogicException ex) {
 			log().info("Merge conflict: Adding annotations to '" + partName + "', but part does not exist.", Log.WARN);
 			return null;
@@ -472,7 +472,15 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		return null;
 	}
 
-	private void movePart(TLStructuredType type, String partName, String beforeName) {
+	/**
+	 * Moves a part in the list of local parts of a {@link TLStructuredType}.
+	 *
+	 * @param partName
+	 *        Local name of the part to move.
+	 * @param beforeName
+	 *        Local name of the part to move the given part before. May be <code>null</code>
+	 */
+	protected void movePart(TLStructuredType type, String partName, String beforeName) {
 		TLStructuredTypePart before;
 		if (beforeName != null) {
 			before = type.getPart(beforeName);
@@ -493,17 +501,19 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 					return;
 				}
 			}
-
-			TLClassPart part = (TLClassPart) type.getPart(partName);
-			movePart(part, before);
+		} else {
+			before = null;
 		}
+		TLClassPart part = (TLClassPart) type.getPart(partName);
+		movePart(part, before);
+
 	}
 
 	@Override
 	public Void visit(CreateClassifier diff, Void arg) throws RuntimeException {
 		TLEnumeration type;
 		try {
-			type = (TLEnumeration) resoveQName(diff.getType());
+			type = (TLEnumeration) resolveQName(diff.getType());
 		} catch (TopLogicException ex) {
 			log().info("Merge conflict: Adding classifier '" + diff.getClassifier().getName() + " to enumeration '"
 				+ diff.getType() + "', but enumeration does not exist.", Log.WARN);
@@ -536,7 +546,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	public Void visit(Delete diff, Void arg) throws RuntimeException {
 		TLObject part;
 		try {
-			part = resoveQName(diff.getName());
+			part = resolveQName(diff.getName());
 		} catch (TopLogicException ex) {
 			log().info(
 				"Merge conflict: Deleting '" + diff.getName() + "' but it does not exist.", Log.INFO);
@@ -546,7 +556,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (part instanceof TLClass) {
 			TLClass type = (TLClass) part;
 			if (!type.isAbstract()) {
-				try (CloseableIterator<TLObject> it = MetaElementUtil.iterateDirectInstances(type, TLObject.class)) {
+				try (CloseableIterator<TLObject> it = directInstances(type)) {
 					if (it.hasNext()) {
 						log().info("Merge conflict deleting '" + type + "': Instances exist.");
 						return null;
@@ -595,7 +605,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	public Void visit(UpdateMandatory diff, Void arg) throws RuntimeException {
 		TLStructuredTypePart part;
 		try {
-			part = (TLStructuredTypePart) resoveQName(diff.getPart());
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
 		} catch (TopLogicException ex) {
 			log().info(
 				"Merge conflict: Updating mandatory state of '" + diff.getPart() + "' to '" + diff.isMandatory()
@@ -658,18 +668,18 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	/**
 	 * Moves a part in the list of local parts of a {@link TLClass}.
 	 *
-	 * @param partName
+	 * @param qPartName
 	 *        Qualified name of the part to move.
 	 * @param beforeName
-	 *        Local name of the part to move the given part before.
+	 *        Local name of the part to move the given part before. May be <code>null</code>.
 	 */
-	private void movePart(String partName, String beforeName) {
+	protected void movePart(String qPartName, String beforeName) {
 		TLClassPart part;
 		try {
-			part = (TLClassPart) resoveQName(partName);
+			part = (TLClassPart) resolveQName(qPartName);
 		} catch (TopLogicException ex) {
 			log().info(
-				"Merge conflict: Moved part '" + partName + "' does not exist.",
+				"Merge conflict: Moved part '" + qPartName + "' does not exist.",
 				Log.INFO);
 			return;
 		}
@@ -679,14 +689,14 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			before = part.getOwner().getPart(beforeName);
 			if (before == null) {
 				log().info(
-					"Merge conflict: Reference part '" + beforeName + "' for moving part '" + partName
+					"Merge conflict: Reference part '" + beforeName + "' for moving part '" + qPartName
 						+ "' does not exist.",
 					Log.INFO);
 				return;
 			}
 			if (before.getOwner() != part.getOwner()) {
 				log().info(
-					"Merge conflict: Reference part '" + beforeName + "' for moving part '" + partName
+					"Merge conflict: Reference part '" + beforeName + "' for moving part '" + qPartName
 						+ "' is declared in super type.",
 					Log.INFO);
 				return;
@@ -696,7 +706,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		String pos = before == null ? "to the end" : "before part '" + beforeName + "'";
-		log().info("Moving part '" + partName + "' " + pos + ".", Log.INFO);
+		log().info("Moving part '" + qPartName + "' " + pos + ".", Log.INFO);
 		movePart(part, before);
 	}
 
@@ -711,7 +721,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	public Void visit(RemoveAnnotation diff, Void arg) throws RuntimeException {
 		TLModelPart part;
 		try {
-			part = resovePart(diff.getPart());
+			part = resolvePart(diff.getPart());
 		} catch (TopLogicException ex) {
 			log().info(
 				"Merge conflict: Removing annotation '" + diff.getAnnotation().getName() + "' from '" + diff.getPart()
@@ -764,19 +774,27 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			return null;
 		}
 
-		List<TLObject> directInstances = MetaElementUtil.getAllDirectInstancesOf(type, TLObject.class);
-		if (!directInstances.isEmpty()) {
-			log().info(
-				"Merge conflict: Cannot make '" + diff.getType() + "' abstract, " + directInstances.size()
-						+ " instances exist.",
-				Log.INFO);
-			return null;
+		try (CloseableIterator<TLObject> it = directInstances(type)) {
+			if (it.hasNext()) {
+				log().info(
+					"Merge conflict: Cannot make '" + diff.getType() + "' abstract: Instances exist.",
+					Log.INFO);
+				return null;
+			}
+
 		}
 
 		log().info("Making type abstract: " + diff.getType());
 		type.setAbstract(true);
 
 		return null;
+	}
+
+	/**
+	 * Finds all direct instances of the given type.
+	 */
+	protected CloseableIterator<TLObject> directInstances(TLClass type) {
+		return MetaElementUtil.iterateDirectInstances(type, TLObject.class);
 	}
 
 	@Override
@@ -802,7 +820,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		TLNamedPart part;
 		try {
 			log().info("Renaming '" + diff.getPart() + "' to '" + diff.getNewName() + "'.");
-			part = (TLNamedPart) resoveQName(diff.getPart());
+			part = (TLNamedPart) resolveQName(diff.getPart());
 		} catch (TopLogicException ex) {
 			log().info(
 				"Merge conflict: Renaming '" + diff.getPart() + "' to '" + diff.getNewName()
@@ -814,11 +832,14 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		return null;
 	}
 
-	private TLModelPart resovePart(String qname) throws TopLogicException {
-		return (TLModelPart) resoveQName(qname);
+	/**
+	 * Service method to resolve a {@link TLModelPart} by its qualified name.
+	 */
+	protected TLModelPart resolvePart(String qname) throws TopLogicException {
+		return (TLModelPart) resolveQName(qname);
 	}
 
-	private TLObject resoveQName(String qname) throws TopLogicException {
+	private TLObject resolveQName(String qname) throws TopLogicException {
 		return TLModelUtil.resolveQualifiedName(getModel(), qname);
 	}
 

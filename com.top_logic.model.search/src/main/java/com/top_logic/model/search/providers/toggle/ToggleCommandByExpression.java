@@ -150,7 +150,7 @@ public class ToggleCommandByExpression extends ToggleCommandHandler implements W
 	}
 
 	@Override
-	protected boolean getState(DisplayContext context, LayoutComponent component) {
+	protected boolean getState(LayoutComponent component) {
 		Object model = model(component);
 		return _stateHandler.getState(component, model);
 	}

@@ -35,7 +35,7 @@ public class ToggleShowKeyCommand extends ToggleCommandHandler {
 	}
 
 	@Override
-	protected boolean getState(DisplayContext context, LayoutComponent component) {
+	protected boolean getState(LayoutComponent component) {
 		return ResourcesModule.getInstance().isAlwaysShowKeys();
 	}
 

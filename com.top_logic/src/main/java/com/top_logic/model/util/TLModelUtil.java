@@ -225,14 +225,55 @@ public class TLModelUtil {
 
 	}
 
+	private static abstract class AbstractDeleteVisitor extends DefaultTLModelVisitor<Void, Object> {
+
+		@Override
+		public Void visitReference(TLReference model, Object arg) {
+			TLAssociationEnd end = model.getEnd();
+
+			// Note: The end may be null, during a model refactoring operation, if the association
+			// is already deleted.
+			if (end != null && end.tValid()) {
+				if (isForwardReference(model)) {
+					return unlinkWholeReference(model, arg, end.getOwner());
+				} else {
+					return super.visitReference(model, arg);
+				}
+			}
+
+			return none;
+		}
+
+		private Void unlinkWholeReference(TLReference model, Object arg, TLAssociation owner) {
+			TLReference inverseReference = TLModelUtil.getForeignName(model);
+
+			if (inverseReference != null) {
+				super.visitReference(inverseReference, arg);
+			}
+
+			super.visitReference(model, arg);
+
+			return visitValid(owner, arg);
+		}
+
+		private Void visitValid(TLModelPart part, Object arg) {
+			if (part.tValid()) {
+				return part.visit(this, arg);
+			}
+
+			return none;
+		}
+
+	}
+
 	/**
-	 * Visitor that removes the visited model part from the {@link TLModelPart} hierarchy
+	 * Visitor that removes the visited model part from the {@link TLModelPart} hierarchy.
 	 * 
 	 * @since 5.8.0
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	private static final class UnlinkPartVisitor extends DefaultTLModelVisitor<Void, Object> {
+	private static final class UnlinkPartVisitor extends AbstractDeleteVisitor {
 
 		/** Singleton {@link TLModelUtil.UnlinkPartVisitor} instance. */
 		public static final UnlinkPartVisitor INSTANCE = new UnlinkPartVisitor();
@@ -293,7 +334,7 @@ public class TLModelUtil {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	private static final class DeleteVisitor extends DefaultTLModelVisitor<Void, Object> {
+	private static final class DeleteVisitor extends AbstractDeleteVisitor {
 	
 		/** Singleton {@link TLModelUtil.DeleteVisitor} instance. */
 		public static final DeleteVisitor INSTANCE = new DeleteVisitor();
@@ -306,35 +347,6 @@ public class TLModelUtil {
 		protected Void visitModelPart(TLModelPart model, Object arg) {
 			deleteTLObject(model);
 			return none;
-		}
-
-		@Override
-		public Void visitReference(TLReference model, Object arg) {
-			TLAssociationEnd end = model.getEnd();
-
-			// Note: The end may be null, during a model refactoring operation, if the association
-			// is already deleted.
-			if (end != null && end.tValid()) {
-				if (isForwardReference(model)) {
-					return removeWholeReference(model, arg, end.getOwner());
-				} else {
-					return super.visitReference(model, arg);
-				}
-			}
-
-			return none;
-		}
-
-		private Void removeWholeReference(TLReference model, Object arg, TLAssociation owner) {
-			TLReference inverseReference = TLModelUtil.getForeignName(model);
-
-			if (inverseReference != null) {
-				super.visitReference(inverseReference, arg);
-			}
-
-			super.visitReference(model, arg);
-
-			return visitValid(owner, arg);
 		}
 
 		private void deleteTLObject(TLObject model) {

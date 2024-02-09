@@ -414,6 +414,10 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 				}
 				
 				TLStructuredTypePart currentPart = WrapperHistoryUtils.getCurrent(part);
+				if (currentPart == null) {
+					// Property no longer exists.
+					continue;
+				}
 
 				if (!defines(copy, currentPart)) {
 					continue;

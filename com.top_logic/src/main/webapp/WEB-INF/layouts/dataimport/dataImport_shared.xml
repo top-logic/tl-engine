@@ -20,7 +20,7 @@
 			/>
 		</param>
 		<param name="closeableUsingX"
-			value="false"
+			value="true"
 		/>
 		<param name="statusComponentClass"
 			value="com.top_logic.tool.dataImport.layout.DataImportStatusComponent"

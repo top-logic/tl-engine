@@ -155,7 +155,7 @@ public class WarnDialogTemplate {
 		LayoutData dialogDimension = new DefaultLayoutData(450, DisplayUnit.PIXEL, 100, 300, DisplayUnit.PIXEL, 100,
 			Scrolling.AUTO);
 		final DialogModel dialogModelImpl =
-			new DefaultDialogModel(dialogDimension, dialogTitle, false, false, null);
+			new DefaultDialogModel(dialogDimension, dialogTitle, false, true, null);
 		return new DialogModelAdapter() {
 	
 			@Override

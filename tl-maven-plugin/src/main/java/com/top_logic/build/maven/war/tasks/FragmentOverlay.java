@@ -35,7 +35,7 @@ public class FragmentOverlay extends AbstractWarTask {
 	protected void doRun(WarContext context) throws IOException {
 		getLog().info("Expanding web fragment: " + _fragment);
 		
-		FileSystem zip = FileSystems.newFileSystem(_fragment.getFile().toPath(), null);
+		FileSystem zip = FileSystems.newFileSystem(_fragment.getFile().toPath());
 		for (Path root : zip.getRootDirectories()) {
 			copyToTarget(root);
 		}

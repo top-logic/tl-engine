@@ -147,7 +147,7 @@ public class PathInfo {
 	}
 
 	void addJar(File jarFile) throws IOException {
-		FileSystem fileSystem = FileSystems.newFileSystem(jarFile.toPath(), null);
+		FileSystem fileSystem = FileSystems.newFileSystem(jarFile.toPath());
 
 		Path base = fileSystem.getPath("META-INF", "maven");
 		if (Files.exists(base)) {
@@ -192,7 +192,7 @@ public class PathInfo {
 	private void addFragmentWar(File fragmentWar) {
 		addResourcePath(fragmentWar);
 		try {
-			for (Path root : FileSystems.newFileSystem(fragmentWar.toPath(), null).getRootDirectories()) {
+			for (Path root : FileSystems.newFileSystem(fragmentWar.toPath()).getRootDirectories()) {
 				addResourceDir(root);
 			}
 		} catch (IOException ex) {

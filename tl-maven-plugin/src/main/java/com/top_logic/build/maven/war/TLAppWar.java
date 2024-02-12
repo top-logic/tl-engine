@@ -429,7 +429,7 @@ public class TLAppWar extends AbstractMojo {
 			.filter(Objects::nonNull)
 			.map(a -> a.getFile().toPath())
 			.collect(Collectors.toList())) {
-			for (Path root : FileSystems.newFileSystem(fragment, null).getRootDirectories()) {
+			for (Path root : FileSystems.newFileSystem(fragment).getRootDirectories()) {
 				resourcePath.add(root);
 			}
 		}
@@ -529,7 +529,7 @@ public class TLAppWar extends AbstractMojo {
 			throws IOException {
 		Artifact deployArtifact = project.getArtifacts().stream().filter(overlay::matches).findFirst().orElse(null);
 		if (deployArtifact != null) {
-			for (Path root : FileSystems.newFileSystem(deployArtifact.getFile().toPath(), null).getRootDirectories()) {
+			for (Path root : FileSystems.newFileSystem(deployArtifact.getFile().toPath()).getRootDirectories()) {
 				resourcePath.add(root);
 			}
 			warTasks.add(new FragmentOverlay(deployArtifact));

@@ -124,7 +124,7 @@ public class ThemeFileStructureContraint extends AbstractConstraint {
 	}
 
 	private Optional<ThemeConfig> readThemeConfig(File themeZipTmpFile) throws IOException, FileNotFoundException {
-		try (FileSystem fileSystem = FileSystems.newFileSystem(themeZipTmpFile.toPath(), null)) {
+		try (FileSystem fileSystem = FileSystems.newFileSystem(themeZipTmpFile.toPath())) {
 			List<Path> themeConfigurationPaths = getThemeConfigurationPaths(fileSystem);
 
 			if (themeConfigurationPaths.size() == 1) {

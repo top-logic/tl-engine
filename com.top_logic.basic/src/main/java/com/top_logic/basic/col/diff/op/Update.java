@@ -15,12 +15,22 @@ public class Update<T> extends DiffOp<T> {
 
 	private final T _right;
 
+	private T _rightSuccessor;
+
 	/**
 	 * Creates a {@link Update}.
 	 */
 	public Update(T left, T right) {
+		this(left, right, null);
+	}
+
+	/**
+	 * Creates a {@link Update}.
+	 */
+	public Update(T left, T right, T rightSuccessor) {
 		_left = left;
 		_right = right;
+		_rightSuccessor = rightSuccessor;
 	}
 
 	@Override
@@ -40,6 +50,17 @@ public class Update<T> extends DiffOp<T> {
 	 */
 	public T getRight() {
 		return _right;
+	}
+
+	/**
+	 * The successor of {@link #getRight()} in the new list.
+	 * 
+	 * @return May be <code>null</code>, either if {@link #getRight()} is the last element in the
+	 *         new item sequence, or if {@link #getRight()} is not contained in an ordered
+	 *         collection.
+	 */
+	public T getRightSuccessor() {
+		return _rightSuccessor;
 	}
 
 	@Override

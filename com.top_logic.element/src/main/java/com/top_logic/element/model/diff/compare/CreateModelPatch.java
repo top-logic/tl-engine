@@ -270,7 +270,7 @@ public class CreateModelPatch {
 
 		@Override
 		public Void visit(Update<? extends TLClassPart> op, Void arg) {
-			addPartUpdate(op.getLeft(), op.getRight());
+			addPartUpdate(op.getLeft(), op.getRight(), op.getRightSuccessor());
 			return null;
 		}
 
@@ -512,14 +512,11 @@ public class CreateModelPatch {
 		}
 	}
 
-	void addPartUpdate(TLStructuredTypePart left, TLStructuredTypePart right) {
+	void addPartUpdate(TLStructuredTypePart left, TLStructuredTypePart right, TLClassPart rightSuccessor) {
 		if (!isCompatiblePart(left, right)) {
 			delete(left);
 
-			List<? extends TLStructuredTypePart> localParts = right.getOwner().getLocalParts();
-			int index = localParts.indexOf(right);
-			TLStructuredTypePart before = index < localParts.size() - 1 ? localParts.get(index + 1) : null;
-			createStructuredTypePart(right, before);
+			createStructuredTypePart(right, rightSuccessor);
 			return;
 		}
 

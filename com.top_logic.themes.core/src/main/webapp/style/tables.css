@@ -87,8 +87,8 @@ th.tblTitleRight {
 
 .tl-table__title-toolbar {
 	border-spacing: 0px;
-	float: right; 
-	margin-right: 2px; 
+	float: right;
+	white-space: nowrap;
 }
 
 input.tblRowSelector {

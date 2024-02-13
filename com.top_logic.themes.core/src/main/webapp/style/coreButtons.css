@@ -147,10 +147,12 @@ with hard coded popup window dimension
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
 }
 
-.tlButton 
+.tlButton,
+.tlButtonLabel,
 .fltSubContent .cMenuButton.menuEntryEnabled,
-.tlButtonLabel, .cDefaultButton button {
+.cDefaultButton button {
 	color: var(--button-secondary);
+	white-space: nowrap;
 }
 
 .tlButton .cmdImg,

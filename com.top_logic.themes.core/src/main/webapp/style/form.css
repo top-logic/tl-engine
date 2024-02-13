@@ -256,15 +256,36 @@ div.frmBody > div.dropPane {
 	display: none;
 }
 
-.fhrContainer {
-	background-color: var(--layer-accent);
+/* HRTag (fhr - form header) */
+div.fhrContainer {
+	margin-top: var(--spacing-03);
+	margin-bottom: var(--spacing-02);
+	height: 2.5rem;
 }
 
-.rf_content.rf_dropTarget > :not(.fhrContainer) {
-	/*
-	Needs more stylings, because this makes the grid in forms too long and creates other problems.
-	padding: var(--spacing-02) 20% 0 3rem;
-	*/
+table.fhrTable {
+	border-collapse: collapse;
+	margin-left: -5px;
+	margin-right: -5px;
+}
+
+td.fhrLeft {
+	height: 2.5rem;
+	padding-right: var(--spacing-02);
+	background: var(--layer-accent);
+}
+
+td.fhrMiddle {
+	vertical-align: middle;
+	height: 2.5rem;
+	width: 100%;
+	background: var(--layer-accent);
+}
+
+td.fhrRight {
+	height: 2.5rem;
+	padding-right: var(--spacing-02);
+	background: var(--layer-accent);
 }
 
 /* ================================= */

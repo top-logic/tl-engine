@@ -306,7 +306,7 @@
 		expr="%ICONS_COMPARE%"
 	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_ACTIVE"
-		expr="%ICONS_COMPARE%"
+		expr="%ICONS_COMPARE% green"
 	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_INACTIVE"
 		expr="%ICONS_COMPARE%"
@@ -1612,6 +1612,7 @@
 	/>
 	
 	<!-- No Bootstrap Icons found for these -->
+	
 	<!-- START: These two are in the theme-settings.xml in com.top_logic.layout.scripting.template project -->
 	<icon name="SAVE_SCRIPT"
 		value="css:fas fa-save"
@@ -1620,6 +1621,42 @@
 		value="colored:fas fa-save overlay-add"
 	/>
 	<!-- END -->
+	<icon name="com.top_logic.layout.form.control.Icons.WARN"
+		value="/icons/warn.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.CHANGED"
+		value="/misc/compare/changed.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.COMPARE_MODE_ACTIVE"
+		value="/misc/compare/compare-mode-active.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.COMPARE_MODE_INACTIVE"
+		value="/misc/compare/compare-mode-inactive.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.CREATED"
+		value="/misc/compare/created.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.DEEP_CHANGED"
+		value="/misc/compare/deep_changed.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.REMOVED"
+		value="/misc/compare/removed.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.UNCHANGED"
+		value="/misc/compare/unchanged.png"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED"
+		value="css:bi bi-lock-fill"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED_DISABLED"
+		expr="%com.top_logic.layout.form.model.Icons.DOC_LOCKED%"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK"
+		value="css:bi bi-unlock-fill"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK_DISABLED"
+		expr="%com.top_logic.layout.form.model.Icons.DOC_UNLOCK%"
+	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_SIBLINGS"
 		value="/icons/selectSiblings.png"
 	/>

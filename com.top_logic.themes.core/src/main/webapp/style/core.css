@@ -2222,8 +2222,12 @@ h5.card-title a:focus {
 .treeNode .fToggle,
 .fToggle.tcrToggle, 
 .tlLeafIcon,
-.tcrNode .treeNode span {
+.tcrNode .treeNode span i {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: var(--icon-secondary);
+	/* Is needed for consistency as long as there are toggle arrow pictures width 15px. */
 	width: 15px;
 }
 
@@ -2428,5 +2432,144 @@ div.DNDmouseMarker div.dndSelection {
     background-color: var(--notification-info-background);
     border: solid 1px;
     padding: 2px;
+}
+
+/* ============================================================== */
+/* ====== Sync scrolling images (ssi), see ImageControl     ===== */
+/* ============================================================== */
+div.ssiHeader,
+div.ssiEdge,
+div.ssiTop,
+div.ssiBody,
+div.ssiLeft,
+div.ssiContent {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+}
+
+div.ssiHeader,
+div.ssiEdge,
+div.ssiTop,
+div.ssiBody,
+div.ssiLeft {
+	overflow: hidden;
+}
+
+div.ssiEdge,
+div.ssiTop,
+div.ssiLeft,
+div.ssiContent {
+	vertical-align: top;
+	text-align: left;
+}
+
+div.ssiContent {
+	overflow: auto;
+}
+
+img.ssiImage {
+	position: relative;
+}
+
+div.ssiContentArea {
+	overflow: hidden;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+/* ===== com.top_logic.layout.form.decorator.ChangeInfo ===== */
+
+.changeInfoNoChange {
+	display: flex;
+	align-items: center;
+}
+
+.changeInfoCreated {
+	display: flex;
+	align-items: center;
+	color: green;
+}
+
+.changeInfoRemoved {
+	display: flex;
+	align-items: center;
+	color: red;
+}
+
+.changeInfoChanged {
+	display: flex;
+	align-items: center;
+	color: blue;
+}
+
+.changeInfoDeepChanged {
+	display: flex;
+	align-items: center;
+	color: darkblue;
+}
+
+.changeInfoCreated img,
+.changeInfoRemoved img,
+.changeInfoChanged img, 
+.changeInfoDeepChanged img {
+	vertical-align: text-bottom;
+}
+
+.changeInfoCreated.form img,
+.changeInfoRemoved.form img,
+.changeInfoChanged.form img, 
+.changeInfoDeepChanged.form img {
+	padding-right: 5px;
+}
+
+.changeInfoCreated.table img,
+.changeInfoRemoved.table img,
+.changeInfoChanged.table img, 
+.changeInfoDeepChanged.table img {
+	padding-right: 0px;
+}
+
+.clickGuardContainer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	overflow: hidden;
+	background-color: white;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+
+.activeGalleryManagementButton, .inactiveGalleryManagementButton {
+	text-align: center;
+	border: 0 solid;
+    border-radius: 0 0 10px 10px;
+}
+
+.activeGalleryManagementButton {
+	cursor: pointer;
+	color: var(--BUTTON_COLOR);
+	background-color: var(--BUTTON_BACKGROUND);
+}
+
+.activeGalleryManagementButton:hover,
+[data-tool=true] > .attribute:hover {
+	color: var(--BUTTON_COLOR_HOVER);
+	background-color: var(--BUTTON_BACKGROUND_HOVER);
+}
+
+.inactiveGalleryManagementButton {
+	cursor: default;
+	color: var(--BUTTON_DISABLED_COLOR);
+	background-color: var(--BUTTON_DISABLED_BACKGROUND);
+}
+
+.galleryImageLabel {
+	margin-left: 5px;
 }
 

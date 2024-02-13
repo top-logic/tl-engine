@@ -10,6 +10,6 @@ package com.top_logic.monitoring.data;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public interface NamedMonitor {
+public interface MBeanElement {
 	// Pure marker interface.
 }

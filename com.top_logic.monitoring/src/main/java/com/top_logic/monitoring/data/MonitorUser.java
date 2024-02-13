@@ -29,7 +29,7 @@ import com.top_logic.util.AbstractStartStopListener;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class MonitorUser extends AbstractConfiguredInstance<MonitorUser.Config>
-		implements MonitorUserMBean, NamedMonitor {
+		implements MonitorUserMBean, MBeanElement {
 
 	/** {@link ConfigurationItem} for the {@link MonitorUser}. */
 	public interface Config extends MBeanConfiguration<MonitorUser> {

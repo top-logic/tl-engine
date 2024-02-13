@@ -21,7 +21,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class MonitorDatabase extends AbstractConfiguredInstance<MonitorDatabase.Config>
-		implements MonitorDatabaseMBean, NamedMonitor {
+		implements MonitorDatabaseMBean, MBeanElement {
 
 	/** {@link ConfigurationItem} for the {@link MonitorDatabase}. */
 	public interface Config extends MBeanConfiguration<MonitorDatabase> {

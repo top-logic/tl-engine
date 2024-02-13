@@ -6,13 +6,17 @@
 package com.top_logic.monitoring.data;
 
 /**
- * Interface for a MBean with a configured TL-script expression.
+ * Interface for a MBean with a configured TL-script expression and a method for external scripts.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public interface MonitorByExpressionMBean {
-	/**
-	 * The result of the configured script.
-	 */
+	/** The result of the configured script. */
 	Object getResult();
+
+	/** Executes an external script. */
+	void compileExternalQuery(String script);
+
+	/** The result of the external script. */
+	Object getExternalResult();
 }

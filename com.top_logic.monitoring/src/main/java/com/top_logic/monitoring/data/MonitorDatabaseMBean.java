@@ -12,11 +12,9 @@ package com.top_logic.monitoring.data;
  */
 public interface MonitorDatabaseMBean {
 
-	/**
-	 * Calculates the size of the used knowledge-base cache.
-	 * 
-	 * @return Size of the used knowledge-base cache.
-	 */
+	/** Returns the size of the used knowledge-base cache. */
 	public int getSizeOfKnowledgebaseCache();
 
+	/** Returns the last revision of the knowledge-base. */
+	public String getLastRevision();
 }

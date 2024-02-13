@@ -22,7 +22,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class MonitorByExpression extends AbstractConfiguredInstance<MonitorByExpression.Config>
-		implements MonitorByExpressionMBean, NamedMonitor {
+		implements MonitorByExpressionMBean, MBeanElement {
 
 	private QueryExecutor _compile;
 

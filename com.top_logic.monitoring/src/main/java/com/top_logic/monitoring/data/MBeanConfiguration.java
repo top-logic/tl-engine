@@ -13,6 +13,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public interface MBeanConfiguration<T extends NamedMonitor> extends NamedPolymorphicConfiguration<T> {
+public interface MBeanConfiguration<T extends MBeanElement> extends NamedPolymorphicConfiguration<T> {
 	// Pure marker configuration.
 }

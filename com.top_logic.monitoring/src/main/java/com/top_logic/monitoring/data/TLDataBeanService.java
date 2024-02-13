@@ -75,7 +75,7 @@ public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.
 	}
 
 	private void registerMBean(MBeanServer mbs, MBeanConfiguration<?> mBeanConfiguration) {
-		NamedMonitor mBean = TypedConfigUtil.createInstance(mBeanConfiguration);
+		MBeanElement mBean = TypedConfigUtil.createInstance(mBeanConfiguration);
 		ObjectName objectName = createObjectName(mBeanConfiguration.getName());
 		try {
 			mbs.registerMBean(mBean, objectName);

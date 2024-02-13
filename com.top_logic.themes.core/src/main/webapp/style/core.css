@@ -1388,10 +1388,10 @@ div.lcHidden {
 div.mcToggle {
 	position: absolute;
 	cursor: pointer;
-	width: 2rem;
-	height: 4rem;
-	right: 0;
-	top: calc(50% - 4rem / 2);
+    width: 2rem;
+    height: 2rem;
+    right: 0;
+    top: 105px;
 	background: var(--MC_MINIMIZE_ICON) no-repeat;
 	box-shadow: var(--shadow-menu);
 	visibility: hidden

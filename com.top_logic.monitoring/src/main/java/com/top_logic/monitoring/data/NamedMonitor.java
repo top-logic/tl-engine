@@ -11,9 +11,5 @@ package com.top_logic.monitoring.data;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public interface NamedMonitor {
-
-	/**
-	 * The unique name to identify the MBean.
-	 */
-	String getName();
+	// Pure marker interface.
 }

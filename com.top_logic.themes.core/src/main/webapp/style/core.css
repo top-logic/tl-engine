@@ -2107,26 +2107,6 @@ h5.card-title a:focus {
 	padding: 0;
 }
 
-/* 
-
-
-normaler breadcrumb
-treeNode
-	unselectableNode
-		breadcrumbNodeIcon
-		breadcrumbNodeText
-	breadcrumbNodeSeparator
-
-wirklich normaler breadcrumb
-treeNode (treeSelected)
-	selectableNode tcrLink
-		breadcrumbNodeIcon
-		breadcrumbNodeText
-	breadcrumbNodeSeparator
-
-
-*/
-
 .breadcrumbNodeText {
     text-overflow: ellipsis;
     overflow: hidden;

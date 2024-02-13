@@ -1754,6 +1754,12 @@
 	<color name="text-on-color"
 		value="#ffffff"
 	/>
+	<color name="text-highlight"
+		value="#89ADE4"
+	/>
+	<color name="script-editor-text-highlight"
+		value="#D6E3F7"
+	/>
 	<color name="text-on-color-disabled"
 		value="#878d96"
 	/>

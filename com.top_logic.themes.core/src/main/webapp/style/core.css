@@ -58,6 +58,18 @@ h1 {
 	letter-spacing: var(--heading-05-letter-spacing);
 }
 
+/* Text highlight color for WebKit, Chrome, Opera and Safari */
+::selection {
+	background: var(--text-highlight);
+	color: var(--text-on-color);
+}
+
+/* Text highlight color */
+::-moz-selection {
+	background: var(--text-highlight);
+	color: var(--text-on-color);
+}
+
 .structuredTextFullHeight {
     padding: 0 var(--spacing-03);
 }
@@ -177,12 +189,11 @@ a.cmdLink:visited {
 }
 
 .ace-eclipse .ace_active-line {
-    background: var(--layer-selected);
-	border: 1px solid var(--border-subtle);
+    background: var(--background);
 }
 
 .ace-eclipse .ace_marker-layer .ace_selection {
-    background: var(--layer-selected);
+    background: var(--script-editor-text-highlight);
 }
 
 /* Adjust line height for the entire Ace Editor */
@@ -2091,62 +2102,86 @@ h5.card-title a:focus {
 	gap: var(--spacing-02);
 }
 
-.breadcrumb .treeNode, .breadcrumb .hover,
-.breadcrumb .treeNode a, .breadcrumb .hover a {
-	display: flex;
-	gap: var(--spacing-02);
+.tl-table__title-label .breadcrumb {
+	gap: 0;
+	padding: 0;
+}
+
+/* 
+
+
+normaler breadcrumb
+treeNode
+	unselectableNode
+		breadcrumbNodeIcon
+		breadcrumbNodeText
+	breadcrumbNodeSeparator
+
+wirklich normaler breadcrumb
+treeNode (treeSelected)
+	selectableNode tcrLink
+		breadcrumbNodeIcon
+		breadcrumbNodeText
+	breadcrumbNodeSeparator
+
+
+*/
+
+.breadcrumbNodeText {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.breadcrumb .treeNode,
+.breadcrumb .treeNode .unselectableNode, 
+.breadcrumb .treeNode .selectableNode {
+	display: inline-flex;
 	align-items: center;
+	gap: var(--spacing-02);
 }
 
-.breadcrumb .treeSelected .tcrLink {
-    color: var(--link-primary);
+.breadcrumb .treeNode .selectableNode .breadcrumbNodeText {
+	color: var(--text-secondary);
 }
 
-.breadcrumb .treeSelected .tcrLink:hover,
-.breadcrumb .hover {
+.breadcrumb .treeSelected .selectableNode .breadcrumbNodeText {
+	color: var(--text-primary);
+}
+
+.breadcrumb .treeNode:hover .fToggle.tcrToggle,
+.breadcrumb .treeNode:hover .selectableNode {
     color: var(--link-primary-hover);
 	text-decoration: underline;
 }
 
-.breadcrumb .treeSelected .tcrLink:active,
-.breadcrumb .hover:active {
+.breadcrumb .treeSelected .selectableNode:active {
     color: var(--text-primary);
 	text-decoration: underline;
 }
 
-.breadcrumb .treeSelected .tcrLink:focus,
-.breadcrumb .hover:focus {
+.breadcrumb .treeSelected .selectableNode:focus {
     color: var(--link-primary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
-}
-
-/* 
-Is needes as long as the data-hover classes exist.
-If they're deleted, this can be deleted too
-*/
-.breadcrumb span.hover,
-.breadcrumb span.hover:active {
-	color: var(--text-primary);
-	text-decoration: none;
-	cursor: default;
+	text-decoration: underline;
 }
 
 /* Disable the anchor effects of the last (active) breadcrumb */
-.breadcrumb > span .selectableNode.tcrLink:last-child:hover {
+.breadcrumb > span .selectableNode:last-child:hover {
 	text-decoration: none;
 	cursor: default;
 }
 
-.breadcrumb > span .selectableNode.tcrLink:last-child:focus {
+.breadcrumb > span .selectableNode:last-child:focus {
 	box-shadow: none;
+}
+
+.breadcrumbNodeSeparator i {
+	color: var(--icon-primary);
 }
 
 .breadcrumbMenu {
 	display: none;
-}
-
-.tl-table__title-label .breadcrumb {
-	gap: 0;
 }
 
 .breadcrumbMenuVisible {
@@ -2155,24 +2190,14 @@ If they're deleted, this can be deleted too
 	z-index: 5;
 }
 
-/* class of the lines which contains the nodes in the menu */
-.breadcrumbMenuNode, .breadcrumbMenuNode_hover {
+.breadcrumbMenuNode, 
+.breadcrumbMenuNode_hover {
 	cursor: pointer;
 	padding: var(--spacing-01);
 }
 
 .breadcrumbMenuNode_hover {
 	background-color: var(--layer-accent-hover);
-}
-
-.breadcrumbNodeSeparator i {
-	color: var(--icon-primary);
-}
-
-.breadcrumbNodeText {
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
 }
 
 /*

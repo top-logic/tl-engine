@@ -18,10 +18,10 @@ import javax.management.ObjectName;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
@@ -29,16 +29,16 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class TLDataBeanService extends ManagedClass {
+public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.Config> {
 
-	List<NamedMonitor> _mBeans;
-
+	private final List<MBeanConfiguration<?>> _mBeanConfigurations;
+	
 	/**
 	 * Configuration of a {@link TLDataBeanService}.
 	 * 
 	 * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
 	 */
-	public interface Config extends ManagedClass.ServiceConfiguration<TLDataBeanService> {
+	public interface Config extends ConfiguredManagedClass.Config<TLDataBeanService> {
 		/**
 		 * @see #getMbeans()
 		 */
@@ -48,7 +48,8 @@ public class TLDataBeanService extends ManagedClass {
 		 * Configured MBeans with metrics.
 		 */
 		@Name(MBEANS)
-		List<PolymorphicConfiguration<NamedMonitor>> getMbeans();
+		@Key(MBeanConfiguration.NAME_ATTRIBUTE)
+		List<MBeanConfiguration<?>> getMbeans();
 	}
 
 	/**
@@ -57,29 +58,29 @@ public class TLDataBeanService extends ManagedClass {
 	public TLDataBeanService(InstantiationContext context, Config configuration) {
 		super(context, configuration);
 
-		List<PolymorphicConfiguration<NamedMonitor>> mBeanClasses = configuration.getMbeans();
-		_mBeans = TypedConfiguration.getInstanceList(context, mBeanClasses);
+		_mBeanConfigurations = configuration.getMbeans();
 	}
 
-	private List<NamedMonitor> getMBeans() {
-		return _mBeans;
+	private List<MBeanConfiguration<?>> getMBeans() {
+		return _mBeanConfigurations;
 	}
 
 	@Override
 	protected void startUp() {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-		for (NamedMonitor mBean : getMBeans()) {
+		for (MBeanConfiguration<?> mBean : getMBeans()) {
 			registerMBean(mbs, mBean);
 		}
 	}
 
-	private void registerMBean(MBeanServer mbs, NamedMonitor mBean) {
-		ObjectName objectName = createObjectName(mBean.getName());
+	private void registerMBean(MBeanServer mbs, MBeanConfiguration<?> mBeanConfiguration) {
+		NamedMonitor mBean = TypedConfigUtil.createInstance(mBeanConfiguration);
+		ObjectName objectName = createObjectName(mBeanConfiguration.getName());
 		try {
 			mbs.registerMBean(mBean, objectName);
 		} catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException ex) {
-			Logger.error("Failed to register MBean (" + mBean.getName() + ").", ex, TLDataBeanService.class);
+			Logger.error("Failed to register MBean (" + mBeanConfiguration.getName() + ").", ex, TLDataBeanService.class);
 		}
 	}
 
@@ -97,7 +98,7 @@ public class TLDataBeanService extends ManagedClass {
 	protected void shutDown() {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-		for (NamedMonitor mBean : getMBeans()) {
+		for (MBeanConfiguration<?> mBean : getMBeans()) {
 			try {
 				mbs.unregisterMBean(createObjectName(mBean.getName()));
 			} catch (MBeanRegistrationException | InstanceNotFoundException ex) {

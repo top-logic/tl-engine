@@ -10,6 +10,11 @@ import static com.top_logic.knowledge.search.ExpressionFactory.*;
 import java.util.Date;
 import java.util.List;
 
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.monitor.UserSession;
 import com.top_logic.knowledge.search.Expression;
@@ -23,11 +28,20 @@ import com.top_logic.util.AbstractStartStopListener;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class MonitorUser implements MonitorUserMBean, NamedMonitor {
+public class MonitorUser extends AbstractConfiguredInstance<MonitorUser.Config>
+		implements MonitorUserMBean, NamedMonitor {
 
-	@Override
-	public String getName() {
-		return "com.test.top_logic.monitor.data:name=MonitorUser";
+	/** {@link ConfigurationItem} for the {@link MonitorUser}. */
+	public interface Config extends MBeanConfiguration<MonitorUser> {
+
+		@Override
+		@StringDefault("com.top_logic.monitoring.data:name=MonitorUser")
+		public String getName();
+	}
+
+	/** {@link TypedConfiguration} constructor for {@link MonitorUser}. */
+	public MonitorUser(InstantiationContext context, Config config) {
+		super(context, config);
 	}
 
 	@Override

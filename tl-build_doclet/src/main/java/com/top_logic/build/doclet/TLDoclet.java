@@ -1298,6 +1298,7 @@ public class TLDoclet implements Doclet {
 								case ANNOTATION_TYPE:
 								case CLASS:
 								case INTERFACE:
+								case RECORD:
 								case ENUM_CONSTANT:
 									buffer.append("<i>");
 									buffer.append(label(referencedElement, _startOfSentence));
@@ -1314,6 +1315,8 @@ public class TLDoclet implements Doclet {
 								case RESOURCE_VARIABLE:
 								case STATIC_INIT:
 								case TYPE_PARAMETER:
+								case RECORD_COMPONENT:
+								case BINDING_VARIABLE:
 									break;
 							}
 						}
@@ -2466,6 +2469,7 @@ public class TLDoclet implements Doclet {
 						case CLASS:
 						case ENUM:
 						case INTERFACE:
+						case RECORD:
 							attribute("class", signature(referencedElement.asType()));
 							break;
 						case CONSTRUCTOR:
@@ -2481,6 +2485,8 @@ public class TLDoclet implements Doclet {
 						case RESOURCE_VARIABLE:
 						case STATIC_INIT:
 						case TYPE_PARAMETER:
+						case BINDING_VARIABLE:
+						case RECORD_COMPONENT:
 							attribute("class", signature(referencedElement.getEnclosingElement().asType()));
 							attribute("member", elementSignature(referencedElement));
 							break;
@@ -2552,6 +2558,7 @@ public class TLDoclet implements Doclet {
 							case CLASS:
 							case ENUM:
 							case INTERFACE:
+							case RECORD:
 								raw.append("class=\"");
 								raw.append(signature(referencedElement.asType()));
 								raw.append("\" ");
@@ -2569,6 +2576,8 @@ public class TLDoclet implements Doclet {
 							case RESOURCE_VARIABLE:
 							case STATIC_INIT:
 							case TYPE_PARAMETER:
+							case BINDING_VARIABLE:
+							case RECORD_COMPONENT:
 								raw.append("class=\"");
 								raw.append(signature(referencedElement.getEnclosingElement().asType()));
 								raw.append("\" ");

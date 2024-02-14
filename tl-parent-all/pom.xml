@@ -43,8 +43,8 @@
 		
 		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
 
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 
 		<skipTests>true</skipTests>
 		<skipDependencyCheck>false</skipDependencyCheck>
@@ -678,7 +678,7 @@
 			<dependency>
 			    <groupId>com.microsoft.sqlserver</groupId>
 			    <artifactId>mssql-jdbc</artifactId>
-			    <version>12.2.0.jre11</version>
+			    <version>12.2.0.jre11</version><!-- The 'jre11' version works with newer Java versions, too: https://github.com/microsoft/mssql-jdbc/issues/2161 -->
 			</dependency>
 			<dependency>
 			    <groupId>com.mysql</groupId>

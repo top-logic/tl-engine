@@ -163,9 +163,14 @@ th.tblCounterNoBorder {
     padding: 0 var(--spacing-03);
 }
 
-.tl-table__footer-pager a,
-.tl-table__footer-pager span {
+.tl-table__footer-pager i {
 	color: var(--icon-primary);
+}
+
+.tl-table__footer-pager-item {
+	display: inline-flex;
+	gap: var(--spacing-02);
+	align-items: center;
 }
 
 .tl-table__footer-pager .ddwttDropBtn {
@@ -1656,8 +1661,6 @@ td.tl-table__cell--selected {
 }
 
 .unselectableContent {
-	-webkit-user-select: none;  /* Chrome all / Safari all */
-  	-moz-user-select: none;     /* Firefox all */
   	user-select: none;     
 }
 

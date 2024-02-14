@@ -1,3 +1,21 @@
+table.treeBody {
+	white-space: nowrap;
+	display: table;
+	width: 100%;
+	margin-top: var(--spacing-03);
+	background: var(--background);
+	border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+th {
+	text-align: left;
+}
+
+table.treeBody .tl-table__row:not(.tblSelected):hover > td {
+    background: var(--background);
+}
+
 /* ============================================ */
 /* ====== Table styles (prefix is 'tbl') ===== */
 /* ============================================ */
@@ -38,17 +56,20 @@ a.tl-table__title:visited {
 	display: flex;
 	justify-content: space-between;
     align-items: center;
+    gap: var(--spacing-02);
 	background: var(--layer-accent);
 	color: var(--text-primary);
 	font-family: 'Inter-SemiBold';
-	font-size: var(--heading-03-font-size);
-	line-height: var(--heading-03-line-height);
-	letter-spacing: var(--heading-03-letter-spacing);
-	padding: 0 2px;
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
+	padding: var(--spacing-02) var(--spacing-03);
 	border: var(--border-strong) solid 1px;
 	border-top-style: none;
 	border-right-style: none;
 	border-left-style: none;
+	height: var(--TABLE_TITLE_HEIGHT);
+	box-sizing: border-box;
 }
 
 th.tblTitleRight {
@@ -66,8 +87,8 @@ th.tblTitleRight {
 
 .tl-table__title-toolbar {
 	border-spacing: 0px;
-	float: right; 
-	margin-right: 2px; 
+	float: right;
+	white-space: nowrap;
 }
 
 input.tblRowSelector {
@@ -103,42 +124,53 @@ span.tblButton input {
 }
 
 .tl-table__footer-counter {
-	padding:2px;
-	border-top: 1px solid var(--border-subtle);
+	display: flex;
+	align-items: center;
+	align-self: center;
+	justify-content: end;
 	color: var(--text-primary);
-	background-color:var(--layer-accent);
-	text-align: right;
 	white-space: nowrap;
+	height: inherit;
 	padding-right: var(--spacing-03);
+	box-sizing: border-box;
+	width: 100%;
+	height: 2.5rem;
 }
 
 th.tblCounterNoBorder {
-	padding: 2px;
-	border-top-color: var(--border-subtle);
-	border-top-style: solid;
-	border-width: 0px;
-	color: black;
-	text-align: right;
-	background-color:var(--layer);
+	display: flex;
+	align-items: center;
+	align-self: center;
+	justify-content: end;
+	color: var(--text-primary);
+	white-space: nowrap;
+	height: inherit;
+	padding-right: var(--spacing-03);
+	box-sizing: border-box;
+	width: 100%;
+	height: 2.5rem;
 }
 
 .tl-table__footer-pager {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-	color: var(--text-primary);
-	font-family: 'Inter-Regular';
-	font-size: var(--body-01-font-size);
-	line-height: var(--body-01-line-height);
-	letter-spacing: var(--body-01-letter-spacing);
-	white-space: nowrap;
-    background-color: var(--layer-accent);
+    align-self: center;
+    gap: var(--spacing-02);
+    height: inherit;
+    overflow-y: hidden;
+    overflow-x: auto;
+    height: 2.5rem;
+    padding: 0 var(--spacing-03);
 }
 
-.tl-table__footer-pager a,
-.tl-table__footer-pager span {
+.tl-table__footer-pager i {
 	color: var(--icon-primary);
+}
+
+.tl-table__footer-pager-item {
+	display: inline-flex;
+	gap: var(--spacing-02);
+	align-items: center;
 }
 
 .tl-table__footer-pager .ddwttDropBtn {
@@ -613,6 +645,7 @@ td.fltButton {
 
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
 	color: var(--icon-primary);
+	align-self: center;
 }
 
 .tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons) {
@@ -1342,6 +1375,17 @@ div.dirtyHandlingDialog .changes {
 	position: sticky;
 	bottom: 0;
 	left: 0;
+	display: flex;
+	justify-content: center;
+	background: var(--layer-accent);
+	color: var(--text-primary);
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	white-space: nowrap;
+	box-sizing: border-box;
+	border-top: 1px solid var(--border-subtle);
 }
 
 .frmBody .tl-table__footer {
@@ -1388,6 +1432,7 @@ div.dirtyHandlingDialog .changes {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: stretch;
+	min-height: var(--table-height);
 }
 
 .tblSelected .tl-table__cell {
@@ -1608,4 +1653,14 @@ td.tl-table__cell--selected {
 	border: none;
 }
 
+.adjustableColumn {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.unselectableContent {
+  	user-select: none;     
+}
 

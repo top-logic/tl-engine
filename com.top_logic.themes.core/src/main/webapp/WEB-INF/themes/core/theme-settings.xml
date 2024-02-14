@@ -123,7 +123,7 @@
 		expr="%ICONS_EXPORT_GRID%"
 	/>
 	<size name="TABLE_TITLE_HEIGHT"
-		value="32px"
+		value="40px"
 	/>
 	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
 		value="height: 40px;"
@@ -136,6 +136,9 @@
 	/>
 	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT"
 		value="40px"
+	/>
+	<size name="table-height"
+		expr="%com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT%"
 	/>
 	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT"
 		expr="%TABLE_TITLE_HEIGHT%"
@@ -175,6 +178,9 @@
 	/>
 	<icon name="com.top_logic.layout.Icons.ADD_TAB_COMMAND"
 		expr="%ICON_PLUS%"
+	/>
+	<icon name="com.top_logic.layout.table.filter.Icons.FILTER_SHOW_ALL"
+		value="css:bi bi-chevron-double-down"
 	/>
 	<icon name="CONFIGURE_TABS_ICON"
 		value="css:bi bi-window-split"
@@ -279,16 +285,28 @@
 		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
 	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH"
-		value="32px"
+		value="40px"
 	/>
 	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_HEIGHT"
-		value="32px"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.layoutRenderer.Icons.POPUP_TITLE_HEIGHT"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_TITLE_HEIGHT"
+		value="40px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
+		value="10px"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.CLOSE_DIALOG"
+		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<icon name="com.top_logic.layout.compare.Icons.OPEN_COMPARE_VIEW"
 		expr="%ICONS_COMPARE%"
 	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_ACTIVE"
-		expr="%ICONS_COMPARE%"
+		expr="%ICONS_COMPARE% green"
 	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_INACTIVE"
 		expr="%ICONS_COMPARE%"
@@ -416,6 +434,36 @@
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ALERT"
 		value="css:bi bi-x-octagon-fill"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON"
+		value="css:bi bi-plus-lg"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON_DISABLED"
+		expr="%com.top_logic.layout.form.values.edit.Icons.ADD_ICON%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
+		expr="%IMAGE_BUTTONS_SCRIPT_RECORDER22%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
+		expr="%ICONS_REMOVE%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
+		expr="%ICONS_REMOVE%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
+		value="css:bi bi-arrow-down-up"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
+		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.DISPLAY_DERIVED_RESOURCES"
+		expr="%com.top_logic.layout.table.filter.Icons.FILTER_SHOW_ALL%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.HIDE_DERIVED_RESOURCES"
+		expr="%ICONS_MOVE_ROW_TO_TOP%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.SELECT_TYPE"
+		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.TRANSLATE"
 		expr="%IMAGE_BUTTONS_DOC_TRANSLATE%"
@@ -1050,6 +1098,27 @@
 	<icon name="MIMETYPES_PERSON_CONTACT_16"
 		expr="%USER_MENU_ICON%"
 	/>
+	<icon name="ICONS_STAKEHOLDER"
+		value="css:bi bi-people-fill"
+	/>
+	<icon name="ICONS_LARGE_STAKEHOLDER60"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="mime.tl.accounts.Group"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="mime.tl.accounts.Group.large"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="ICONS_PERSON_ASSIGNMENTS48"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="MIMETYPES_GROUP_16"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
+	<icon name="MIMETYPES_LARGE_GROUP_60"
+		expr="%ICONS_STAKEHOLDER%"
+	/>
 	<icon name="mime.tl.accounts.Person"
 		expr="%USER_MENU_ICON%"
 	/>
@@ -1094,12 +1163,6 @@
 	/>
 	<icon name="mime.tl.folder.DocumentVersion"
 		expr="%mime.tl.folder.Document%"
-	/>
-	<icon name="mime.tl.accounts.Group"
-		value="css:bi bi-people-fill"
-	/>
-	<icon name="mime.tl.accounts.Group.large"
-		expr="%mime.tl.accounts.Group%"
 	/>
 	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
 		expr="%ICONS_EXPORT_GRID%"
@@ -1200,12 +1263,6 @@
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP_DISABLED"
 		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
-		expr="%ICONS_REMOVE%"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
-		expr="%ICONS_REMOVE%"
-	/>
 	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON"
 		expr="%ICONS_BUTTON_CLOSE%"
 	/>
@@ -1218,9 +1275,6 @@
 	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR_DISABLED"
 		expr="%ICONS_DELETE_MENU%"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
-		expr="%IMAGE_BUTTONS_SCRIPT_RECORDER22%"
-	/>
 	<icon name="layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand"
 		value="css:bi bi-brush-fill"
 	/>
@@ -1230,12 +1284,6 @@
 	<icon name="layouts.themes.default.toolrow.designModeButton.ReleaseLayout"
 		value="css:bi bi-check-lg"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
-		value="css:bi bi-arrow-down-up"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
-		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
-	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.RESET_TABLE"
 		expr="%ICON_TABLE%"
 	/>
@@ -1244,18 +1292,6 @@
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_COLUMN_CONFIG"
 		value="css:bi bi-layout-three-columns"
-	/>
-	<size name="com.top_logic.layout.layoutRenderer.Icons.POPUP_TITLE_HEIGHT"
-		value="32px"
-	/>
-	<size name="com.top_logic.layout.structure.Icons.DIALOG_TITLE_HEIGHT"
-		value="32px"
-	/>
-	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
-		value="10px"
-	/>
-	<icon name="com.top_logic.layout.structure.Icons.CLOSE_DIALOG"
-		expr="%ICONS_BUTTON_CLOSE%"
 	/>
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
 		value="62px"
@@ -1424,9 +1460,6 @@
 	<icon name="LOGIN_MESSAGE_RESET_ICON"
 		expr="%ICON_UNDO%"
 	/>
-	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.SELECT_TYPE"
-		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
-	/>
 	<icon name="ICONS_BUTTON_START"
 		value="css:bi bi-play-fill green"
 	/>
@@ -1579,6 +1612,7 @@
 	/>
 	
 	<!-- No Bootstrap Icons found for these -->
+	
 	<!-- START: These two are in the theme-settings.xml in com.top_logic.layout.scripting.template project -->
 	<icon name="SAVE_SCRIPT"
 		value="css:fas fa-save"
@@ -1587,17 +1621,47 @@
 		value="colored:fas fa-save overlay-add"
 	/>
 	<!-- END -->
+	<icon name="com.top_logic.layout.form.control.Icons.WARN"
+		value="/icons/warn.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.CHANGED"
+		value="/misc/compare/changed.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.COMPARE_MODE_ACTIVE"
+		value="/misc/compare/compare-mode-active.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.COMPARE_MODE_INACTIVE"
+		value="/misc/compare/compare-mode-inactive.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.CREATED"
+		value="/misc/compare/created.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.DEEP_CHANGED"
+		value="/misc/compare/deep_changed.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.REMOVED"
+		value="/misc/compare/removed.png"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.UNCHANGED"
+		value="/misc/compare/unchanged.png"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED"
+		value="css:bi bi-lock-fill"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED_DISABLED"
+		expr="%com.top_logic.layout.form.model.Icons.DOC_LOCKED%"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK"
+		value="css:bi bi-unlock-fill"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK_DISABLED"
+		expr="%com.top_logic.layout.form.model.Icons.DOC_UNLOCK%"
+	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_SIBLINGS"
 		value="/icons/selectSiblings.png"
 	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_SIBLINGS_DISABLED"
 		value="/icons/selectSiblingsDisabled.png"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON"
-		value="css:bi bi-plus-lg"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON_DISABLED"
-		expr="%com.top_logic.layout.form.values.edit.Icons.ADD_ICON%"
 	/>
 	<icon name="ICONS_BUTTON_GROUP"
 		value="colored:tl-icon text-arrow-right"
@@ -1685,6 +1749,15 @@
 	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__TRISTATE"
 		value="css:far fa-check-square"
 	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BUTTON_MISSING"
+		value="css: bi bi-question-square-fill"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BUTTON_MISSING_DISABLED"
+		value="css: bi bi-question-square-fill"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.PDF_MISSING"
+		value="bi bi-question-square-fill missingPDFIcon"
+	/>
 
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->
@@ -1717,6 +1790,12 @@
 	/>
 	<color name="text-on-color"
 		value="#ffffff"
+	/>
+	<color name="text-highlight"
+		value="#89ADE4"
+	/>
+	<color name="script-editor-text-highlight"
+		value="#D6E3F7"
 	/>
 	<color name="text-on-color-disabled"
 		value="#878d96"

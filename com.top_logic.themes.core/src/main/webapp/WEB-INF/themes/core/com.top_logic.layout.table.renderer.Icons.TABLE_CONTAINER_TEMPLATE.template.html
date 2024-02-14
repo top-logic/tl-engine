@@ -1,0 +1,22 @@
+<div id="{id}_table"
+	class="tl-height-100 tl-stacking-context tl-vstack tl-line_height--normal"
+	data-complexwidget="true"
+>
+	{title}
+	<div class="tl-flex--fill tl-table__content-container">
+		<div id="{id}_scrollContainer"
+			style="display:flex;"
+			class="tl-height-100 tl-width-100 tl-overflow--auto"
+		>
+			<table class="tl-table {hasFixedColumns ? 'tl-table--fixed'}"
+				cellpadding="0"
+			>
+				{colgroup}
+				{header}
+				{body}
+			</table>
+		</div>
+	</div>
+	{footer}
+</div>
+{tableInitializer}

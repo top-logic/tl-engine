@@ -18,5 +18,6 @@
 		<style name="/style/importGoogleFonts.css"/>
 		<style name="/style/fontawesome/all.css"/>
 		<style name="/style/tl_iconFont.css"/>
+		<style name="/style/scripting.css"/>
 	</styles>
 </theme>

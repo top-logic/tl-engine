@@ -58,6 +58,12 @@ h1 {
 	letter-spacing: var(--heading-05-letter-spacing);
 }
 
+/* Text highlight color */
+::selection {
+	background: var(--text-highlight);
+	color: var(--text-on-color);
+}
+
 .structuredTextFullHeight {
     padding: 0 var(--spacing-03);
 }
@@ -107,6 +113,17 @@ i[class*=" overlay-"] span::before {
 
 .fflCollapsed {
 	cursor: default;
+}
+
+/* The general footer of the application */
+.Footer {
+	font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secondary);
+	text-align: right;
+	padding-right: var(--spacing-03);
+	background: var(--layer);
 }
 
 /*
@@ -166,12 +183,11 @@ a.cmdLink:visited {
 }
 
 .ace-eclipse .ace_active-line {
-    background: var(--layer-selected);
-	border: 1px solid var(--border-subtle);
+    background: var(--background);
 }
 
 .ace-eclipse .ace_marker-layer .ace_selection {
-    background: var(--layer-selected);
+    background: var(--script-editor-text-highlight);
 }
 
 /* Adjust line height for the entire Ace Editor */
@@ -662,6 +678,7 @@ div.fltList {
 
 a.cMenuButton.menuEntryDisabled {
 	color: var(--text-on-color-disabled);
+	cursor: default;
 }
 
 a.cMenuButton.menuEntryDisabled i {
@@ -692,6 +709,7 @@ a.cMenuButton.menuEntryDisabled:focus {
 
 .popupMenu a.tlInApp.menuEntryDisabled {
 	background-color: var(--debug-disabled);
+	cursor: default;
 }
 
 .popupMenu a.tlInApp.menuEntryDisabled:hover,
@@ -799,6 +817,8 @@ div.dlgMaximized .input-image.dlgRestore {
 	cursor: move;
 	height: var(--DIALOG_TITLE_HEIGHT);
 	background-color: var(--layer-accent);
+	padding: 0 var(--spacing-02);
+	box-sizing: border-box;
 }
 
 .dlgBorderNW.dlgResizeNW {
@@ -875,8 +895,8 @@ div.dlgMaximized .input-image.dlgRestore {
 }
 
 .dlgBorderNW, .dlgBorderSW, .dlgBorderNE, .dlgBorderSE {
-	width: 10px;
-	height: 10px;
+	width: var(--spacing-02);
+	height: var(--spacing-02);
 
 	/* For debugging:
 	background-color: red;
@@ -897,15 +917,15 @@ div.dlgMaximized .input-image.dlgRestore {
 }
 .dlgResizeW {
 	cursor: w-resize;
-	width: 10px;
+	width: var(--spacing-02);
 }
 .dlgResizeE {
 	cursor: e-resize;
-	width: 10px;
+	width: var(--spacing-02);
 }
 .dlgResizeS {
 	cursor: s-resize;
-	height: 10px;
+	height: var(--spacing-02);
 }
 
 .dlgRightBorder {
@@ -1362,10 +1382,10 @@ div.lcHidden {
 div.mcToggle {
 	position: absolute;
 	cursor: pointer;
-	width: 2rem;
-	height: 4rem;
-	right: 0;
-	top: calc(50% - 4rem / 2);
+    width: 2rem;
+    height: 2rem;
+    right: 0;
+    top: 105px;
 	background: var(--MC_MINIMIZE_ICON) no-repeat;
 	box-shadow: var(--shadow-menu);
 	visibility: hidden
@@ -2076,62 +2096,66 @@ h5.card-title a:focus {
 	gap: var(--spacing-02);
 }
 
-.breadcrumb .treeNode, .breadcrumb .hover,
-.breadcrumb .treeNode a, .breadcrumb .hover a {
-	display: flex;
-	gap: var(--spacing-02);
+.tl-table__title-label .breadcrumb {
+	gap: 0;
+	padding: 0;
+}
+
+.breadcrumbNodeText {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.breadcrumb .treeNode,
+.breadcrumb .treeNode .unselectableNode, 
+.breadcrumb .treeNode .selectableNode {
+	display: inline-flex;
 	align-items: center;
+	gap: var(--spacing-02);
 }
 
-.breadcrumb .treeSelected .tcrLink {
-    color: var(--link-primary);
+.breadcrumb .treeNode .selectableNode .breadcrumbNodeText {
+	color: var(--text-secondary);
 }
 
-.breadcrumb .treeSelected .tcrLink:hover,
-.breadcrumb .hover {
+.breadcrumb .treeSelected .selectableNode .breadcrumbNodeText {
+	color: var(--text-primary);
+}
+
+.breadcrumb .treeNode:hover .fToggle.tcrToggle,
+.breadcrumb .treeNode:hover .selectableNode {
     color: var(--link-primary-hover);
 	text-decoration: underline;
 }
 
-.breadcrumb .treeSelected .tcrLink:active,
-.breadcrumb .hover:active {
+.breadcrumb .treeSelected .selectableNode:active {
     color: var(--text-primary);
 	text-decoration: underline;
 }
 
-.breadcrumb .treeSelected .tcrLink:focus,
-.breadcrumb .hover:focus {
+.breadcrumb .treeSelected .selectableNode:focus {
     color: var(--link-primary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
-}
-
-/* 
-Is needes as long as the data-hover classes exist.
-If they're deleted, this can be deleted too
-*/
-.breadcrumb span.hover,
-.breadcrumb span.hover:active {
-	color: var(--text-primary);
-	text-decoration: none;
-	cursor: default;
+	text-decoration: underline;
 }
 
 /* Disable the anchor effects of the last (active) breadcrumb */
-.breadcrumb > span .selectableNode.tcrLink:last-child:hover {
+.breadcrumb > span .selectableNode:last-child:hover {
 	text-decoration: none;
 	cursor: default;
 }
 
-.breadcrumb > span .selectableNode.tcrLink:last-child:focus {
+.breadcrumb > span .selectableNode:last-child:focus {
 	box-shadow: none;
+}
+
+.breadcrumbNodeSeparator i {
+	color: var(--icon-primary);
 }
 
 .breadcrumbMenu {
 	display: none;
-}
-
-.tl-table__title-label .breadcrumb {
-	gap: 0;
 }
 
 .breadcrumbMenuVisible {
@@ -2140,24 +2164,14 @@ If they're deleted, this can be deleted too
 	z-index: 5;
 }
 
-/* class of the lines which contains the nodes in the menu */
-.breadcrumbMenuNode, .breadcrumbMenuNode_hover {
+.breadcrumbMenuNode, 
+.breadcrumbMenuNode_hover {
 	cursor: pointer;
 	padding: var(--spacing-01);
 }
 
 .breadcrumbMenuNode_hover {
 	background-color: var(--layer-accent-hover);
-}
-
-.breadcrumbNodeSeparator i {
-	color: var(--icon-primary);
-}
-
-.breadcrumbNodeText {
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
 }
 
 /*
@@ -2202,8 +2216,12 @@ If they're deleted, this can be deleted too
 .treeNode .fToggle,
 .fToggle.tcrToggle, 
 .tlLeafIcon,
-.tcrNode .treeNode span {
+.tcrNode .treeNode span i {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: var(--icon-secondary);
+	/* Is needed for consistency as long as there are toggle arrow pictures width 15px. */
 	width: 15px;
 }
 
@@ -2271,14 +2289,8 @@ div.treeNode.dndInsertBelow::after {
     bottom: 0;
 }
 
-div.treeNode.dndInsertWithin::after {
-    content: "";
-    position: absolute;
-    left: 4rem;
-    right: 0;
-    bottom: 0;
-    height: 2px;
-    background-color: var(--border-interactive);
+div.treeNode.dndInsertWithin {
+	background-color: var(--notification-info-background);
 }
 
 div.treeNode.dndInsertInto,
@@ -2297,9 +2309,11 @@ div.treeNode.treeSelected.dndInsertInto {
 	align-items: center;
 	justify-content: space-between;
 	background-color: var(--layer-accent);
-	height: inherit;
 	gap: var(--spacing-02);
+	height: inherit;
 	overflow: hidden;
+	padding: var(--spacing-02) var(--spacing-03);
+	box-sizing: border-box;
 }
 
 .cCollapsibleToolbar {
@@ -2307,18 +2321,43 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleTitle {
-	font-family: 'Inter-Regular';
-	font-size: var(--body-01-font-size);
-	line-height: var(--body-01-line-height);
-	letter-spacing: var(--body-01-letter-spacing);
-	font-weight: 600;
+	font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
 	color: var(--text-primary);
-	padding-left: var(--spacing-03);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
+.cCollapsibleToolbar .cButton,
+.cToolbar .cButton,
+.tl-table__title-toolbar .cButton {
+	display: inline-flex;
+	margin-left: var(--spacing-02);
+}
+
+.cCollapsibleToolbar a:hover,
+.cToolbar a:hover,
+.tl-table__title-toolbar a:hover {
+	color: var(--icon-primary);
+	text-decoration: none;
+}
+
+.cCollapsibleToolbar a:focus,
+.cToolbar a:focus,
+.tl-table__title-toolbar a:focus {
+	color: var(--icon-primary);
+}
+
+.cCollapsibleToolbar a,
+.cToolbar a,
+.tl-table__title-toolbar a {
+	color: var(--icon-primary);
+}
+
+/* for when the toolbar is collapsed */
 .cCollapsibleHorizontal .cCollapsibleHeader {
 	flex-direction: column;
 	justify-content: flex-start;
@@ -2333,63 +2372,14 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleHorizontal .cCollapsibleToolbar {
+	display: inline-flex;
 	padding-top: var(--spacing-03);
-    justify-content: center;
-    align-items: center;
+	justify-content: center;
+	align-items: center;
 }
 
-.cCollapsibleHorizontal .cCollapsibleButtons {
-    padding-right: 0;
-}
-
-.cCollapsibleToolbar a:hover,
-.cToolbar a:hover,
-.cCollapsibleToolbar .tbGroup a:hover,
-.cCollapsibleButtons a:hover,
-.tl-table__title-toolbar a:hover {
-	color: var(--icon-primary);
-	text-decoration: none;
-}
-
-.cCollapsibleToolbar a:focus,
-.cToolbar a:focus,
-.cCollapsibleToolbar .tbGroup a:focus,
-.cCollapsibleButtons a:focus,
-.tl-table__title-toolbar a:focus {
-	color: var(--icon-primary);
-}
-
-.cCollapsibleToolbar,
-.cToolbar, 
-.cCollapsibleToolbar .tbGroup,
-.cCollapsibleButtons,
-.tl-table__title-toolbar,
-.tbGroup {
-	display: flex;
-	gap: var(--spacing-02);
-}
-
-.cToolbar {
-	margin-right: var(--spacing-02);
-}
-
-.cCollapsibleButtons {
-	padding-right: var(--spacing-03);
-}
-
-.cCollapsibleToolbar a,
-.tl-table__title-toolbar a {
-	color: var(--icon-primary);
-}
-
-.Footer {
-	font-size: var(--body-01-font-size);
-    line-height: var(--body-01-line-height);
-    letter-spacing: var(--body-01-letter-spacing);
-	color: var(--text-secondary);
-	text-align: right;
-	padding-right: var(--spacing-03);
-	background: var(--layer);
+.cCollapsibleHorizontal .cCollapsibleButtons .cButton {
+    margin-left: 0;
 }
 
 /*
@@ -2436,5 +2426,144 @@ div.DNDmouseMarker div.dndSelection {
     background-color: var(--notification-info-background);
     border: solid 1px;
     padding: 2px;
+}
+
+/* ============================================================== */
+/* ====== Sync scrolling images (ssi), see ImageControl     ===== */
+/* ============================================================== */
+div.ssiHeader,
+div.ssiEdge,
+div.ssiTop,
+div.ssiBody,
+div.ssiLeft,
+div.ssiContent {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+}
+
+div.ssiHeader,
+div.ssiEdge,
+div.ssiTop,
+div.ssiBody,
+div.ssiLeft {
+	overflow: hidden;
+}
+
+div.ssiEdge,
+div.ssiTop,
+div.ssiLeft,
+div.ssiContent {
+	vertical-align: top;
+	text-align: left;
+}
+
+div.ssiContent {
+	overflow: auto;
+}
+
+img.ssiImage {
+	position: relative;
+}
+
+div.ssiContentArea {
+	overflow: hidden;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+/* ===== com.top_logic.layout.form.decorator.ChangeInfo ===== */
+
+.changeInfoNoChange {
+	display: flex;
+	align-items: center;
+}
+
+.changeInfoCreated {
+	display: flex;
+	align-items: center;
+	color: green;
+}
+
+.changeInfoRemoved {
+	display: flex;
+	align-items: center;
+	color: red;
+}
+
+.changeInfoChanged {
+	display: flex;
+	align-items: center;
+	color: blue;
+}
+
+.changeInfoDeepChanged {
+	display: flex;
+	align-items: center;
+	color: darkblue;
+}
+
+.changeInfoCreated img,
+.changeInfoRemoved img,
+.changeInfoChanged img, 
+.changeInfoDeepChanged img {
+	vertical-align: text-bottom;
+}
+
+.changeInfoCreated.form img,
+.changeInfoRemoved.form img,
+.changeInfoChanged.form img, 
+.changeInfoDeepChanged.form img {
+	padding-right: 5px;
+}
+
+.changeInfoCreated.table img,
+.changeInfoRemoved.table img,
+.changeInfoChanged.table img, 
+.changeInfoDeepChanged.table img {
+	padding-right: 0px;
+}
+
+.clickGuardContainer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	overflow: hidden;
+	background-color: white;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+
+.activeGalleryManagementButton, .inactiveGalleryManagementButton {
+	text-align: center;
+	border: 0 solid;
+    border-radius: 0 0 10px 10px;
+}
+
+.activeGalleryManagementButton {
+	cursor: pointer;
+	color: var(--BUTTON_COLOR);
+	background-color: var(--BUTTON_BACKGROUND);
+}
+
+.activeGalleryManagementButton:hover,
+[data-tool=true] > .attribute:hover {
+	color: var(--BUTTON_COLOR_HOVER);
+	background-color: var(--BUTTON_BACKGROUND_HOVER);
+}
+
+.inactiveGalleryManagementButton {
+	cursor: default;
+	color: var(--BUTTON_DISABLED_COLOR);
+	background-color: var(--BUTTON_DISABLED_BACKGROUND);
+}
+
+.galleryImageLabel {
+	margin-left: 5px;
 }
 

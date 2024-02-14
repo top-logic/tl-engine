@@ -12,10 +12,10 @@
 
 .rf_header,
 .dfEntryTitle {
-	font-family: 'Inter-SemiBold';
-	font-size: var(--heading-03-font-size);
-	line-height: var(--heading-03-line-height);
-	letter-spacing: var(--heading-03-letter-spacing);
+    font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
 }
 
 .dfItemTitle {
@@ -24,8 +24,25 @@
     overflow: hidden;
 }
 
-.rf_header > .rf_menu, .dfModeFull .dfListCommands,
+.rf_header > .rf_menu, 
+.dfModeFull .dfListCommands,
 .dfEntryTitle .lFixedRight {
+	display: flex;
+	gap: var(--spacing-01);
+	margin-left: auto;
+	padding-right: var(--spacing-03);
+}
+
+.mboxContent .dfContent {
+	flex-grow: 2;
+	align-self: center;
+}
+
+.mboxContent .dfContent .dfItemTitle {
+	display: flex;
+}
+
+.mboxContent .dfContent .dfToolbar {
 	display: flex;
 	gap: var(--spacing-01);
 	margin-left: auto;
@@ -239,15 +256,36 @@ div.frmBody > div.dropPane {
 	display: none;
 }
 
-.fhrContainer {
-	background-color: var(--layer-accent);
+/* HRTag (fhr - form header) */
+div.fhrContainer {
+	margin-top: var(--spacing-03);
+	margin-bottom: var(--spacing-02);
+	height: 2.5rem;
 }
 
-.rf_content.rf_dropTarget > :not(.fhrContainer) {
-	/*
-	Needs more stylings, because this makes the grid in forms too long and creates other problems.
-	padding: var(--spacing-02) 20% 0 3rem;
-	*/
+table.fhrTable {
+	border-collapse: collapse;
+	margin-left: -5px;
+	margin-right: -5px;
+}
+
+td.fhrLeft {
+	height: 2.5rem;
+	padding-right: var(--spacing-02);
+	background: var(--layer-accent);
+}
+
+td.fhrMiddle {
+	vertical-align: middle;
+	height: 2.5rem;
+	width: 100%;
+	background: var(--layer-accent);
+}
+
+td.fhrRight {
+	height: 2.5rem;
+	padding-right: var(--spacing-02);
+	background: var(--layer-accent);
 }
 
 /* ================================= */
@@ -262,7 +300,7 @@ div.frmBody > div.dropPane {
 	grid-auto-rows: max-content;
 	grid: auto / auto-flow / max-content;
 	gap: var(--RF_VERTICAL_GAP_CELLS) var(--RF_HORIZONTAL_GAP_CELLS);
-	padding: 15px 10px 10px 10px;
+	padding: var(--spacing-03);
 	line-height: 1.5rem;
 	border-radius: 0 0 3px 3px;
 }
@@ -331,7 +369,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     min-height: 1.5rem;
     margin: var(--spacing-02) 0;
   	word-wrap: break-word;
-  	box-sizing: border-box
+  	box-sizing: border-box;
+  	word-break: break-all;
 }
 
 /* columns layout */
@@ -529,9 +568,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
   	box-sizing: border-box;
 }
 
-*:not(.rf_content) > .rf_inputCell,
 *:not(.rf_content) > .rf_columnsLayout:not(.keep) {
-	margin-bottom: .25rem;
+	margin-bottom: var(--spacing-03);
 }
 
 .rf_content .pre {
@@ -544,6 +582,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	display: grid;
 	grid-template-columns: 1fr;
 	grid-column: 1 / -1;
+	overflow: auto;
 }
 
 .rf_spanRow1 { grid-row-end: span 1; }
@@ -596,6 +635,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
 	line-height: 24px;
+	margin-bottom: 0;
 }
 
 /* indent all lines but the first */
@@ -604,7 +644,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
 .cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > :nth-child(n+2)  {
-	padding-left: 5px;
+	padding-left: var(--spacing-01);
 }
 
 .rf_inputCell .ace_editor div,
@@ -656,6 +696,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     min-width: min-content;
 }
 
+.rf_groupCell .rf_groupCell {
+    margin-top: 0;
+}
+
 .rf_groupCell > .rf_header {
 	border-top: none;
 }
@@ -683,10 +727,13 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     grid-column: 1;
     display: flex;
     align-items: center;
-    gap: var(--spacing-03);
+    gap: var(--spacing-02);
     background: var(--layer-accent);
     padding: var(--spacing-02) var(--spacing-03);
     white-space: nowrap;
+    height: 2.5rem;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .rf_groupCell .rf_header:hover {
@@ -741,7 +788,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_descriptionContainer {
 	display: grid;
 	grid-auto-flow: row;
-	grid-gap: 4px 5px;
+	grid-gap: var(--spacing-01) var(--spacing-01);
 	grid-auto-rows: minmax(24px, max-content);
 }
 
@@ -804,24 +851,34 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .cFormEditorToolbox [data-tool=true].rf_dragElement {
     display: inline-block;
-    line-height: 12px;
     overflow: hidden;
-    width: 100%;
+    width: calc(50% - var(--spacing-02));
     margin-bottom: var(--spacing-02);
+}
+
+.cFormEditorToolbox [data-tool=true].rf_dragElement:nth-child(2n+1) {
+    margin-right: var(--spacing-02);
 }
 
 .cFormEditorToolbox [data-tool=true] > .attribute {
 	display: inline-flex;
-	justify-content: center;
+	justify-content: flex-start;
 	align-items: center;
 	height: 2rem; /* 32px height */
 	border-radius: var(--corner-radius);
 	color: var(--button-secondary);
 	background: var(--background);
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	white-space: nowrap;
 	width: 100%;
+	padding: 0 var(--spacing-02);
 	box-sizing: border-box;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+    overflow: hidden;
+    font-family: 'Inter-Regular';
+    font-size: var(--body-02-font-size);
+    line-height: var(--body-02-line-height);
+    letter-spacing: var(--body-02-letter-spacing);
 }
 
 .cFormEditorToolbox [data-tool=true] > .attribute:hover {
@@ -831,7 +888,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .cFormEditorToolbox [data-tool=true] > .attribute > .type-image {
-	display: inline-block;
+	display: inline-flex;
 }
 
 .cFormEditorDisplay [data-tool=false] > .attribute {
@@ -1086,7 +1143,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
   
   .cMediaQuery.dflSize1 .rf_inputCell > :nth-child(n+2),
   .rf_inputCell.rf_line > :nth-child(n+2) {
-	padding-left: 5px;
+	padding-left: var(--spacing-01);
   }
 
   .rf_hr {
@@ -1326,26 +1383,23 @@ div.cal_zoom_inAnimation {
 
 .cDecoratedCell,
 .cExpandableTextInput,
-.cBlockTextInput,
-.cPopupSelect {
+.cBlockTextInput {
 	display: inline-flex;
 }
 
 .cPopupSelect {
+	display: inline-flex;
+	flex-wrap: wrap;
 	width: 100%;
+}
+
+.cPopupSelect .tl-separator {
+	margin-right: var(--spacing-02);
 }
 
 .cBlockTextInput .lFixedRight a:not(.lFlexible),
 .cExpandableTextInput .lFixedRight a:not(.lFlexible) {
 	height: inherit;
-}
-
-.dfModeFull .cPopupSelect {
-	flex-wrap: wrap;
-}
-
-.dfModeFull .cPopupSelect .tl-separator {
-	margin-right: var(--spacing-02);
 }
 
 td.tl-table__cell--selected .cDecoratedCell a.input-image,
@@ -2285,6 +2339,7 @@ a.input-image.tristate.tBoolean {
 	color: var(--text-primary);
 	background: var(--field);
 	padding: 0 var(--spacing-03);
+	cursor: pointer;
 }
 
 .ddwttDropBtn .ddwttButtonContent {
@@ -2389,6 +2444,10 @@ span.disabled .ddwttChevron::after {
 	flex-shrink: 0;
 }
 
+.ddwttSearch::-webkit-search-cancel-button {
+	cursor: pointer;
+}
+
 .ddwttSearch:focus-visible {
 	color: var(--text-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
@@ -2412,6 +2471,7 @@ span.disabled .ddwttChevron::after {
 	padding: 0 var(--spacing-02);
 	position: relative;
 	text-align: left;
+	cursor: pointer;
 }
 
 .ddwttActiveItem {
@@ -2431,7 +2491,6 @@ span.disabled .ddwttChevron::after {
 
 .ddwttItem .ddwttItemLabel {
 	display: inline-block;
-	cursor: default;
 }
 
 /* Tags */
@@ -2531,5 +2590,74 @@ span.disabled .ddwttChevron::after {
 	margin-bottom: var(--spacing-01);
 }
 
+/* ========================== */
+/* ====== Legacy Search ===== */
+/* ========================== */
 
+.searchIrrelevant input,
+.searchIrrelevant textarea,
+.searchIrrelevant select {
+	color: var(--text-primary);
+	background: var(--field);
+}
+
+.searchPositive input,
+.searchPositive textarea,
+.searchPositive select {
+	color: var(--text-primary);
+	background: var(--notification-success-background);
+}
+
+.searchNegative input,
+.searchNegative textarea,
+.searchNegative select {
+	color: var(--text-primary);
+	background: var(--notification-danger-background);
+}
+
+span.is-accesskey {
+	text-decoration: underline;
+}
+
+/* smartInputField */
+div.sifFloater {
+    z-index: 20;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--field);
+}
+
+div.sifSearchElement,
+div.sifSearchElementUnselectable {
+    vertical-align: middle;
+    white-space: pre;
+	color: var(--text-secondary);
+	text-decoration:none;
+    z-index: 21;
+	padding: 0 var(--spacing-02);
+	line-height: 2rem;
+}
+
+div.sifSearchElement {
+    cursor: pointer;
+}
+
+div.sifSearchElementUnselectable {
+    cursor: default;
+}
+
+div.sifSearchElementSelected {
+    vertical-align: middle;
+    white-space: pre;
+	color: var(--text-primary);
+	text-decoration:none;
+    background-color: var(--layer-hover);
+    z-index: 21;
+    cursor: pointer;
+    padding: 0 var(--spacing-02);
+    line-height: 2rem;
+}
+
+div.sifSearchElementSelected:focus {
+    box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
 

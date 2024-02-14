@@ -32,16 +32,12 @@
 	flex-wrap: nowrap;
 	height: var(--tabbar-height);
 	overflow-x: auto;
+	scrollbar-width: none;
 }
 
 /* Hides the scrollbar in Chrome, Safari, and Opera */
 .tlTabScrollContainer::-webkit-scrollbar {
   	display: none;
-}
-
-/* Hides the scrollbar in FireFox */
-.tlTabScrollContainer {
-	scrollbar-width: none;
 }
 
 .tlTabScrollContainer.scrolling .tab,

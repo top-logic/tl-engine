@@ -58,14 +58,8 @@ h1 {
 	letter-spacing: var(--heading-05-letter-spacing);
 }
 
-/* Text highlight color for WebKit, Chrome, Opera and Safari */
-::selection {
-	background: var(--text-highlight);
-	color: var(--text-on-color);
-}
-
 /* Text highlight color */
-::-moz-selection {
+::selection {
 	background: var(--text-highlight);
 	color: var(--text-on-color);
 }

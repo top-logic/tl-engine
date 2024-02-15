@@ -1141,6 +1141,9 @@
 	<icon name="IMAGE_BUTTONS_CLIPBOARD_ACTIVE"
 		value="/image_buttons/clipboard_active.png"
 	/>
+	<icon name="IMAGE_DEBUG_22"
+		value="css:fas fa-bug"
+	/>
 	<icon name="IMAGE_BUTTONS_DASH_BOARD22"
 		value="colored:tl-icon dashboard-alt"
 	/>

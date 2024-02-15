@@ -7,6 +7,7 @@ package com.top_logic.basic.col;
 
 import java.util.AbstractList;
 import java.util.List;
+import java.util.RandomAccess;
 
 /**
  * {@link List} view through a {@link Mapping}.
@@ -27,7 +28,7 @@ public class MappedList<S, D> extends AbstractList<D> {
 	 * @param source
 	 *        The source elements.
 	 */
-	public MappedList(Mapping<S, D> mapping, List<? extends S> source) {
+	protected MappedList(Mapping<S, D> mapping, List<? extends S> source) {
 		this._mapping = mapping;
 		this._source = source;
 	}
@@ -42,4 +43,34 @@ public class MappedList<S, D> extends AbstractList<D> {
 		return _mapping.map(_source.get(index));
 	}
 
+	/**
+	 * Creates a {@link MappedList} with the given {@link Mapping} and source {@link List}.
+	 * 
+	 * <p>
+	 * The result list is {@link RandomAccess} if the specified source is.
+	 * </p>
+	 *
+	 * @param mapping
+	 *        The {@link Mapping} to apply to the source elements.
+	 * @param source
+	 *        The source elements.
+	 */
+	public static <S, D> MappedList<S, D> create(Mapping<S, D> mapping, List<? extends S> source) {
+		if (source instanceof RandomAccess) {
+			return new RandomAccessMappedList<>(mapping, source);
+		}
+		return new MappedList<>(mapping, source);
+	}
+
+	private static class RandomAccessMappedList<S, D> extends MappedList<S, D> implements RandomAccess {
+
+		private RandomAccessMappedList(Mapping<S, D> mapping, List<? extends S> source) {
+			super(mapping,  source);
+			if (!(source instanceof RandomAccess)) {
+				throw new IllegalArgumentException("Source is not " + RandomAccess.class.getName());
+			}
+		}
+
+	}
 }
+

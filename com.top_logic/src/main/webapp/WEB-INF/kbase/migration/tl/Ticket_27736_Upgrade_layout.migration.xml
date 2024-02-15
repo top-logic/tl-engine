@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27736_Upgrade_layout"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26190_single_drop_targets_to_list"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor"
+			rewriter="com.top_logic.layout.migration.Ticket27736UpgradeLayout"
+		/>
+	</processors>
+</migration>

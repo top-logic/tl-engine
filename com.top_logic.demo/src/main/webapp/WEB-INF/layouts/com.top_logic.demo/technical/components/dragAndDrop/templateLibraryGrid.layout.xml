@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/treegrid.template.xml"
 >
 	<arguments
@@ -19,7 +19,7 @@
 			leafPredicate="false"
 			modelPredicate="true"
 			modelQuery="null"
-			nodePredicate="node->$node.instanceOf(`test.dnd:NamedPlanElement`)"
+			nodePredicate="node->$node.instanceOf(`test.dnd:NamedPlanElement`) || $node == `test.dnd#LIBRARY`"
 			nodesToUpdate="null"
 			rootNode="`test.dnd#LIBRARY`"
 		>
@@ -83,7 +83,6 @@
 			/>
 			<button id="ID_4806a4bb_4c2e_4d69_800c_f7bc3c94e0aa"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
-				clique="delete"
 				target="selection(self())"
 			>
 				<resourceKey key="dynamic.63079cbc-9fae-4384-b637-7c95ebda61ee">
@@ -93,8 +92,6 @@
 			</button>
 			<button id="ID_89fd44eb_ec4d_42bb_9d0d_b00bfecd594e"
 				class="com.top_logic.xio.command.XMLImportCommand"
-				clique="importButtons"
-				group="Create"
 				image="css:fas fa-upload"
 				logging="true"
 			>

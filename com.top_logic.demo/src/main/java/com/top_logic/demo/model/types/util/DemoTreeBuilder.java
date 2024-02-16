@@ -45,9 +45,8 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * {@link TreeModelBuilder} that creates a joned tree from the
- * {@link DemoTypesFactory} structure with {@link DemoPlainFactory} objects
- * linked from {@link DemoTypesL} nodes.
+ * {@link TreeModelBuilder} that creates a joined tree from the {@link DemoTypesFactory} structure
+ * with {@link DemoPlainFactory} objects linked from {@link DemoTypesL} nodes.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

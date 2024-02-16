@@ -5,8 +5,9 @@
  */
 package com.top_logic.element.layout.grid;
 
-import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
+import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
 import static java.util.Collections.*;
+import static org.apache.commons.collections4.CollectionUtils.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,8 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.collections4.CollectionUtils;
-
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.element.layout.grid.GridBuilder.GridHandler;
@@ -25,7 +25,6 @@ import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.mig.html.SelectionModel;
-import com.top_logic.mig.html.SelectionUtil;
 import com.top_logic.model.TLObject;
 
 /**
@@ -118,36 +117,35 @@ public abstract class AbstractGridHandler<R> implements GridHandler<R> {
 	 * 
 	 * @param selectionModel
 	 *        the {@link SelectionModel}
-	 * @param rows
-	 *        selected rows
+	 * @param selectedPaths
+	 *        selected paths
 	 */
-	protected void setSelection(SelectionModel selectionModel, Set<?> rows) {
-		SelectionUtil.setSelection(selectionModel, rows);
-	}
+	protected abstract void setSelection(SelectionModel selectionModel, Set<List<?>> selectedPaths);
 	
 	@Override
-	public void setUISelection(Collection<?> newSelection) {
-		if (newSelection.isEmpty()) {
+	public void setUISelectionPaths(Collection<? extends List<?>> selectionPaths) {
+		if (selectionPaths.isEmpty()) {
 			setDefaultUISelection();
 		} else {
-			Set<Object> newSelectedObjects = new HashSet<>();
+			Set<List<?>> newSelectedPaths = new HashSet<>();
 
 			Filter<Object> selectionFilter = getSelectionFilter();
 
-			for (Object selectedObject : newSelection) {
-				if (selectionFilter.test(selectedObject)) {
-					newSelectedObjects.add(selectedObject);
+			for (List<?> path : selectionPaths) {
+				Object actuallySelected = getLast(path);
+				if (!path.isEmpty() && selectionFilter.test(actuallySelected)) {
+					newSelectedPaths.add(path);
 				}
 			}
 
-			if (newSelectedObjects.isEmpty()) {
+			if (newSelectedPaths.isEmpty()) {
 				Set<?> oldSelectedObjects = _grid.getSelectionModel().getSelection();
 
 				if (oldSelectedObjects.isEmpty() || !isSelectionValid(selectionFilter, oldSelectedObjects)) {
 					setDefaultUISelection();
 				}
 			} else {
-				setUISelectionInternal(newSelectedObjects);
+				setUISelectionInternal(newSelectedPaths);
 			}
 		}
 	}
@@ -155,11 +153,13 @@ public abstract class AbstractGridHandler<R> implements GridHandler<R> {
 	private void setDefaultUISelection() {
 		Object defaultSelection = _grid.getDefaultSelection();
 
+		List<Object> selectionPath;
 		if (defaultSelection != null) {
-			setUISelectionInternal(Collections.singleton(defaultSelection));
+			selectionPath = GridComponent.buildRandomPathForObject(_grid, defaultSelection);
 		} else {
-			setUISelectionInternal(Collections.emptySet());
+			selectionPath = null;
 		}
+		setUISelectionInternal(CollectionUtil.singletonOrEmptySet(selectionPath));
 	}
 
 	private boolean isSelectionValid(Filter<Object> selectionFilter, Set<?> selection) {
@@ -172,21 +172,22 @@ public abstract class AbstractGridHandler<R> implements GridHandler<R> {
 		return true;
 	}
 
-	private void setUISelectionInternal(Set<Object> newSelectedObjects) {
+	private void setUISelectionInternal(Set<List<?>> newSelectedPaths) {
 		SelectionModel selectionModel = getTableField().getSelectionModel();
 
-		if (newSelectedObjects.isEmpty()) {
+		if (newSelectedPaths.isEmpty()) {
 			selectionModel.clear();
 		} else {
-			if (newSelectedObjects.size() == 1 && !selectionModel.isMultiSelectionSupported()) {
-				Object tableRow = getFirstTableRow(toGridRow(CollectionUtils.extractSingleton(newSelectedObjects)));
+			if (newSelectedPaths.size() == 1 && !selectionModel.isMultiSelectionSupported()) {
+				R actuallySelected = toGridRow(getLast(extractSingleton(newSelectedPaths)));
+				Object tableRow = getFirstTableRow(actuallySelected);
 
 				if (getTableField().getTableModel().getRowOfObject(tableRow) == TableModel.NO_ROW) {
 					adjustFiltersForRow(tableRow);
 				}
 			}
 
-			setSelection(selectionModel, selectionToFormGroups(newSelectedObjects));
+			setSelection(selectionModel, newSelectedPaths);
 		}
 	}
 

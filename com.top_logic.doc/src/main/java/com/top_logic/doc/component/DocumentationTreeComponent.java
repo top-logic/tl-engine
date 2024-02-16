@@ -41,6 +41,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -58,8 +59,8 @@ public class DocumentationTreeComponent extends DocumentationViewerTree implemen
 	 */
 	public static final String LANGUAGE_CHANNEL_NAME = "language";
 
-	private static final Map<String, ChannelSPI> CHANNELS =
-		channels(MODEL_AND_SELECTION_CHANNEL, new TypedChannelSPI<>(LANGUAGE_CHANNEL_NAME, Locale.class, null));
+	private static final ChannelSPI LANGUAGE_CHANNEL_SPI =
+		new TypedChannelSPI<>(LANGUAGE_CHANNEL_NAME, Locale.class, null);
 
 	private static final String LANGUAGE_FIELD_CSS_CLASS = "languageSelect";
 
@@ -238,7 +239,7 @@ public class DocumentationTreeComponent extends DocumentationViewerTree implemen
 
 	@Override
 	protected Map<String, ChannelSPI> channels() {
-		return CHANNELS;
+		return LayoutComponent.channels(super.channels(), LANGUAGE_CHANNEL_SPI);
 	}
 
 	/**

@@ -16,7 +16,6 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.layout.SelectionModelProvider;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.SingleSelectionModelProvider;
 import com.top_logic.layout.component.Selectable;
@@ -29,6 +28,7 @@ import com.top_logic.layout.scripting.recorder.ref.misc.SelectionRef;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SelectionModelOwner;
 
 /**
  * Handles both kinds of selections: {@link Selectable} and {@link SelectionModel}
@@ -55,15 +55,15 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 			selectSelectable((Selectable) model);
 		} else if (model instanceof SelectionModel) {
 			selectSelectionModel((SelectionModel) model);
-		} else if (model instanceof SelectionModelProvider) {
-			selectSelectionModelProvider((SelectionModelProvider) model);
-		} else if (model instanceof SingleSelectionModelProvider) {
-			selectSingleSelectionModelProvider((SingleSelectionModelProvider) model);
 		} else if (model instanceof TableData) {
 			selectTableData((TableData) model, _selection, _selectionState);
+		} else if (model instanceof SelectionModelOwner) {
+			selectSelectionModelOwner((SelectionModelOwner) model);
+		} else if (model instanceof SingleSelectionModelProvider) {
+			selectSingleSelectionModelProvider((SingleSelectionModelProvider) model);
 		} else {
 			throw new UnsupportedOperationException("The model is not supported for 'Select' actions. Supported are "
-				+ Selectable.class + ", " + SelectionModelProvider.class + ", " + SingleSelectionModelProvider.class
+					+ Selectable.class + ", " + SelectionModelOwner.class + ", " + SingleSelectionModelProvider.class
 				+ " and " + TableData.class + ". But the model is of type: "
 				+ StringServices.getClassNameNullsafe(model));
 		}
@@ -91,8 +91,8 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 		return getConfig().getSelection();
 	}
 
-	private void selectSelectionModelProvider(SelectionModelProvider selectionModelProvider) {
-		SelectionModel selectionModel = selectionModelProvider.getSelectionModel();
+	private void selectSelectionModelOwner(SelectionModelOwner selectionModelOwner) {
+		SelectionModel selectionModel = selectionModelOwner.getSelectionModel();
 		selectSelectionModel(selectionModel);
 	}
 

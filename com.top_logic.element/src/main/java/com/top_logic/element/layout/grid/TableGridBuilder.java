@@ -12,8 +12,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.MappedComparator;
@@ -34,6 +37,7 @@ import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ListModelBuilderProxy;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SelectionUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.export.AccessContext;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -202,7 +206,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 		}
 
 		@Override
-		public void createRow(Object contextModel, ContextPosition position, Object newRowModel) {
+		public Object createRow(Object contextModel, ContextPosition position, Object newRowModel) {
 			EditableRowTableModel tableModel = getTableModel();
 			int beforeRow;
 			switch (position.getStrategy()) {
@@ -226,7 +230,11 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 					throw new UnreachableAssertion("No such strategy: " + position.getStrategy());
 				}
 			}
-			tableModel.showRowAt(toGridRow(newRowModel), beforeRow);
+			R gridRow = toGridRow(newRowModel);
+			tableModel.showRowAt(gridRow, beforeRow);
+			// Rows are not wrapped.
+			Object tableRow = gridRow;
+			return tableRow;
 		}
 
 		private EditableRowTableModel getTableModel() {
@@ -240,6 +248,11 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 			return (R) tableRow;
 		}
 		
+		@Override
+		public Object getParentRow(Object tableRow) {
+			return null;
+		}
+
 		@Override
 		public Collection<?> getTableRows(R gridRow) {
 			// Rows are not wrapped.
@@ -273,6 +286,15 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 		@Override
 		public void setExpansionState(Collection<?> expansionState) {
 			// Do nothing
+		}
+
+		@Override
+		protected void setSelection(SelectionModel selectionModel, Set<List<?>> selectedPaths) {
+			Set<R> rows = selectedPaths.stream()
+				.map(CollectionUtil::getLast)
+				.map(this::toGridRow)
+				.collect(Collectors.toSet());
+			SelectionUtil.setSelection(selectionModel, rows);
 		}
 
 	}
@@ -323,6 +345,11 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 	@Override
 	public Object retrieveModelFromRow(GridComponent grid, Object row) {
 		return retrieveModelFromListElement(grid, row);
+	}
+
+	@Override
+	public Collection<? extends Object> getParentsForRow(GridComponent grid, Object row) {
+		return Collections.emptySet();
 	}
 
 }

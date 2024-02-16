@@ -141,6 +141,11 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 			}
 		}
 
+		@Override
+		public String toString() {
+			return "ModuleContainer: " + _name;
+		}
+
 	}
 
 	@Override

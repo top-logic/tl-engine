@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.layout.grid;
 
+import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
+
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -18,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.ServletContext;
@@ -102,12 +105,12 @@ import com.top_logic.layout.basic.check.SingletonCheckScope;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
+import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.channel.RowsChannel;
 import com.top_logic.layout.channel.SelectionChannel;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
-import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -172,6 +175,7 @@ import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.tree.component.StructureModelBuilder;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
+import com.top_logic.layout.tree.component.WithSelectionPath;
 import com.top_logic.layout.tree.model.TreeViewConfig;
 import com.top_logic.mig.html.AbstractRestrainedSelectionModel;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
@@ -208,6 +212,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InEditModeExecutable;
 import com.top_logic.util.Resources;
+import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.TL5Types;
 
@@ -221,7 +226,7 @@ import com.top_logic.util.model.TL5Types;
 public class GridComponent extends EditComponent implements
 		SelectableWithSelectionModel,
 		ControlRepresentable, SelectionVetoListener, CompareAlgorithmHolder,
-		ComponentRowSource {
+		ComponentRowSource, WithSelectionPath {
 
 	/**
 	 * Configuration options for {@link GridComponent}.
@@ -429,7 +434,7 @@ public class GridComponent extends EditComponent implements
 	 * @see #channels()
 	 */
 	@SuppressWarnings("hiding")
-	protected static final Map<String, ChannelSPI> CHANNELS =
+	private static final Map<String, ChannelSPI> CHANNELS =
 		channels(EditComponent.CHANNELS, SelectionChannel.INSTANCE, RowsChannel.INSTANCE, ColumnsChannel.INSTANCE);
 
 	private static final ComponentChannel.ChannelListener COLUMNS_LISTENER = new ComponentChannel.ChannelListener() {
@@ -438,34 +443,12 @@ public class GridComponent extends EditComponent implements
 		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
 			GridComponent grid = (GridComponent) sender.getComponent();
 			if (grid.hasFormContext()) {
-				TableModelUtils.setKnownColumns(grid.getViewModel(), (List<String>) newValue);
+				TableModelUtils.setKnownColumns(grid.getViewModel(), unsafeCast(newValue));
 			}
 		}
 	};
 
 	private static final String ROW_DOMAIN = null;
-
-	private static final ChannelListener ON_SELECTION_CHANGE = new ChannelListener() {
-		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			GridComponent grid = (GridComponent) sender.getComponent();
-			GridBuilder<FormGroup> gridBuilder = grid.gridBuilder();
-
-			for (Object object : grid.asCollection(newValue)) {
-				if (!ComponentUtil.isValid(object)) {
-					return;
-				}
-				if (object != null && !isTransient(object) && gridBuilder.supportsRow(grid, object)) {
-					if (grid.getRowGroup(object) == null) {
-						// Choose new model that matches the requested selection.
-						grid.setModel(gridBuilder.retrieveModelFromRow(grid, object));
-					}
-				}
-			}
-
-			grid.invalidateSelection();
-		}
-	};
 
 	GridHandler<FormGroup> _handler;
 
@@ -603,10 +586,10 @@ public class GridComponent extends EditComponent implements
 			return new TableGridBuilder<FormGroup>((ListModelBuilder) builder);
 		}
 		if (builder instanceof TreeModelBuilder<?>) {
-			return new TreeGridBuilder<>((TreeModelBuilder<Object>) builder);
+			return new TreeGridBuilder<>(unsafeCast(builder));
 		}
 		if (builder instanceof StructureModelBuilder<?>) {
-			return new StructureGridBuilder<FormGroup>((StructureModelBuilder<Object>) builder);
+			return new StructureGridBuilder<FormGroup>(unsafeCast(builder));
 		}
 		
 		throw new ConfigurationError("Only " + ListModelBuilder.class.getName()
@@ -719,7 +702,7 @@ public class GridComponent extends EditComponent implements
 			if (!_isSelectionValid) {
 				_isSelectionValid = true;
 
-				setUISelection(getSelectedCollection());
+				setUISelectionPaths(getSelectedPathsCollection());
 			}
 		} else {
 			getFormContext();
@@ -727,7 +710,7 @@ public class GridComponent extends EditComponent implements
 			 * still contains the *old* FormGroups for the rows. Creating the FormContext create new
 			 * FormGroup, so that the groups in the selection model can not be found. Therefore the
 			 * selection must be updated. */
-			setUISelection(getSelectedCollection());
+			setUISelectionPaths(getSelectedPathsCollection());
 		}
 
 		_focusColumn = null;
@@ -1205,7 +1188,7 @@ public class GridComponent extends EditComponent implements
      * Set all visible check boxes to selected.
      */
     public void selectAllVisibleCheckboxes() {
-		setUISelection(getDisplayedRows());
+		setUISelectionPaths(addDisplayedPaths(new HashSet<>()));
     }
 
     /** 
@@ -1360,14 +1343,21 @@ public class GridComponent extends EditComponent implements
 							if (selectionModel.isSelected(_handler.getFirstTableRow(formGroup))) {
 								boolean before = _isSelectionValid;
 
-								if (isInMultiSelectionMode()) {
-									Set<Object> selection = new HashSet<>(getSelectedCollection());
-									selection.remove(object);
-									selection.add(createdObject);
-									setSelected(selection);
-								} else {
-									setSelected(createdObject);
-								}
+								Set<List<? extends Object>> newSelection = getSelectedPathsCollection()
+									.stream()
+									.map(path -> {
+										int idx = path.indexOf(object);
+										if (idx < 0) {
+											return path;
+										}
+										List<Object> newPath = new ArrayList<>(path.size());
+										newPath.addAll(path.subList(0, idx));
+										newPath.add(createdObject);
+										newPath.addAll(path.subList(idx + 1, path.size()));
+										return newPath;
+									})
+									.collect(Collectors.toSet());
+								updateSelectionPathsChannel(newSelection);
 
 								// Note: When a selection change is pending, a mode switch is does
 								// not update the form context. Since this is not a real selection
@@ -1505,8 +1495,8 @@ public class GridComponent extends EditComponent implements
 		setEditMode();
 		NewObject creation = new NewObject(typeName, type, createHandler, container, model);
     	
-    	_handler.createRow(container, position, creation);
-		setUISelection(Collections.singleton(creation));
+    	Object newTableRow = _handler.createRow(container, position, creation);
+		setUISelectionPaths(Collections.singleton(getRowObjectPath(newTableRow)));
 		focusFirstElementOfSelectedRow();
     }
     
@@ -1705,13 +1695,14 @@ public class GridComponent extends EditComponent implements
     }
 
     /**
-	 * Set the given model object as new selection.
-     * @param newSelectedModels
-	 *        The object to be selected, may be <code>null</code>.
+	 * Set the given model paths as new selection.
+	 * 
+	 * @param selectionPaths
+	 *        The object paths to select. Must not be <code>null</code>.
 	 */
-    protected void setUISelection(Collection<?> newSelectedModels) {
-        _handler.setUISelection(newSelectedModels);
-    }
+	protected void setUISelectionPaths(Collection<? extends List<?>> selectionPaths) {
+		_handler.setUISelectionPaths(selectionPaths);
+	}
 
 	/**
 	 * Return the form group for the given row number.
@@ -1723,8 +1714,12 @@ public class GridComponent extends EditComponent implements
 	 * @return The requested form group or <code>null</code> when no matching form group found.
 	 */
     protected FormGroup getFormGroup(TableViewModel aViewModel, int aApplModelRow) {
-        return _handler.getGridRow(aViewModel.getApplicationModel().getRowObject(aApplModelRow));
+        return _handler.getGridRow(getTableRow(aViewModel, aApplModelRow));
     }
+
+	private Object getTableRow(TableViewModel aViewModel, int aApplModelRow) {
+		return aViewModel.getApplicationModel().getRowObject(aApplModelRow);
+	}
 
     /** 
      * Retrieve the business object displayed in a given view row.
@@ -2025,6 +2020,14 @@ public class GridComponent extends EditComponent implements
 			}
 		}
 		return rows;
+	}
+
+	private <T extends Collection<? super List<Object>>> T addDisplayedPaths(T out) {
+		GridHandler<FormGroup> gridHandler = getHandler();
+		for (FormGroup group : getAllVisibleFormGroups()) {
+			addRowObjectPaths(gridHandler.getTableRows(group), out);
+		}
+		return out;
 	}
 
 	/**
@@ -2544,7 +2547,7 @@ public class GridComponent extends EditComponent implements
 	 * Builder for the table model.
 	 */
 	final GridBuilder<FormGroup> gridBuilder() {
-		return (GridBuilder<FormGroup>) super.getBuilder();
+		return unsafeCast(super.getBuilder());
 	}
 
     private void initGridHandler(FormContext aContext) {
@@ -2794,7 +2797,8 @@ public class GridComponent extends EditComponent implements
 
 	@Override
 	protected Map<String, ChannelSPI> channels() {
-		return CHANNELS;
+		return LayoutComponent.channels(CHANNELS,
+			isInMultiSelectionMode() ? MULTI_SELECTION_PATH_SPI : SINGLE_SELECTION_PATH_SPI);
 	}
 
 	@Override
@@ -2805,8 +2809,271 @@ public class GridComponent extends EditComponent implements
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);
 
-		selectionChannel().addListener(ON_SELECTION_CHANGE);
+		selectionChannel().addListener(GridComponent::handleNewSelectionChannelValue);
+
+		selectionPathChannel().addListener(GridComponent::handleNewSelectionPathChannelValue);
+		selectionPathChannel().addVetoListener(GridComponent::isValidSelectionPathChannelChange);
+
 	}
+
+	/**
+	 * {@link ChannelListener} for {@link #selectionChannel()}.
+	 *
+	 * @param sender
+	 *        The changed channel.
+	 * @param oldValue
+	 *        Old value of the channel.
+	 * @param newValue
+	 *        New value for the channel.
+	 */
+	private static void handleNewSelectionChannelValue(ComponentChannel sender, Object oldValue, Object newValue) {
+		GridComponent grid = (GridComponent) sender.getComponent();
+
+		Object selectionPath = grid.getSelectionPath();
+		if (grid.isInSingleSelectionMode()) {
+			if (newValue == null) {
+				if (selectionPath == null) {
+					return;
+				} else {
+					grid.setSelectionPath(null);
+				}
+			} else {
+				if (selectionPath == null) {
+					grid.setSelectionPath(buildRandomPathForObject(grid, newValue));
+				} else {
+					List<?> path = unsafeCast(selectionPath);
+					if (newValue.equals(getLast(path))) {
+						return;
+					} else {
+						grid.setSelectionPath(buildRandomPathForObject(grid, newValue));
+					}
+				}
+			}
+		} else {
+			Collection<?> newSetValue = (Collection<?>) newValue;
+			Collection<List<?>> selectionPaths = unsafeCast(selectionPath);
+			switch (newSetValue.size()) {
+				case 0: {
+					grid.setSelectionPath(Collections.emptySet());
+					break;
+				}
+				default: {
+					Set<Object> newSelectionPaths = new HashSet<>();
+					Set<Object> newSelection = new HashSet<>();
+					boolean withDeselection = false;
+					for (List<?> currentPath : selectionPaths) {
+						Object selected = getLast(currentPath);
+						if (newSetValue.contains(selected)) {
+							newSelectionPaths.add(currentPath);
+							newSelection.add(selected);
+						} else {
+							// Element was deselected
+							withDeselection = true;
+						}
+					}
+					if (!withDeselection && newSelection.containsAll(newSetValue)) {
+						// same selected objects
+						return;
+					} else {
+						List<?> tmp = new ArrayList<>(newSetValue);
+						tmp.removeAll(newSelection);
+						for (Object newlySelected : tmp) {
+							newSelectionPaths.add(buildRandomPathForObject(grid, newlySelected));
+						}
+						grid.setSelectionPath(newSelectionPaths);
+					}
+				}
+			}
+		}
+	}
+
+	static List<Object> buildRandomPathForObject(GridComponent grid, Object bo) {
+		Set<Object> alreadySeen = new HashSet<>();
+		List<Object> path = new ArrayList<>();
+		pathStep:
+		while (bo != null) {
+			alreadySeen.add(bo);
+			FormGroup row = grid.getRowGroup(bo);
+			if (row != null) {
+				Collection<?> tableRows = grid.getHandler().getTableRows(row);
+				if (!tableRows.isEmpty()) {
+					List<Object> boPathToRoot = grid.getRowObjectPath(tableRows.iterator().next());
+					Collections.reverse(boPathToRoot);
+					path.addAll(boPathToRoot);
+					break;
+				}
+			}
+			path.add(bo);
+			Collection<? extends Object> parentObjects = grid.gridBuilder().getParentsForRow(grid, bo);
+			if (parentObjects.isEmpty()) {
+				// reached root
+				break;
+			}
+			for (Object parent : parentObjects) {
+				if (!alreadySeen.contains(parent)) {
+					bo = parent;
+					continue pathStep;
+				}
+			}
+			throw new IllegalArgumentException("Can not create path. All parents of " + bo
+					+ " already contained in path " + path + ". Parents: " + parentObjects);
+		}
+		Collections.reverse(path);
+		return path;
+
+	}
+
+
+	/**
+	 * {@link ChannelListener} for {@link #selectionPathChannel()}.
+	 *
+	 * @param sender
+	 *        The changed channel.
+	 * @param oldValue
+	 *        Old value of the channel.
+	 * @param newValue
+	 *        New value for the channel.
+	 */
+	private static void handleNewSelectionPathChannelValue(ComponentChannel sender, Object oldValue, Object newValue) {
+		GridComponent grid = (GridComponent) sender.getComponent();
+
+		Collection<? extends List<?>> selectionPaths;
+		Object selectionChannelValue;
+		if (grid.isInSingleSelectionMode()) {
+			if (newValue == null) {
+				selectionChannelValue = null;
+				selectionPaths = Collections.emptySet();
+			} else {
+				List<?> selectedPath = (List<?>) newValue;
+				selectionChannelValue = getLast(selectedPath);
+				grid.setModel(retrieveModelFromPath(grid, selectedPath));
+			}
+		} else {
+			selectionPaths = unsafeCast(newValue);
+			if (!selectionPaths.isEmpty()) {
+				Set<Object> lastElements = new HashSet<>();
+				for (List<?> path : selectionPaths) {
+					lastElements.add(getLast(path));
+				}
+				selectionChannelValue = lastElements;
+				// all have the same model
+				grid.setModel(retrieveModelFromPath(grid, getFirst(selectionPaths)));
+			} else {
+				selectionChannelValue = Collections.emptySet();
+			}
+		}
+		grid.setSelected(selectionChannelValue);
+
+		grid.invalidateSelection();
+	}
+
+	private static Object retrieveModelFromPath(GridComponent grid, List<?> path) {
+		Object actualSelected = getLast(path);
+		if (GridComponent.isTransient(actualSelected)) {
+			// Unable to retrieve model from transient object.
+			return grid.getModel();
+		}
+		return grid.gridBuilder().retrieveModelFromRow(grid, actualSelected);
+	}
+
+	/**
+	 * Casts the given value to anything you want.
+	 * 
+	 * @return The given value.
+	 */
+	@SuppressWarnings("unchecked")
+	static <T> T unsafeCast(Object value) {
+		return (T) value;
+	}
+
+	/**
+	 * {@link ChannelValueFilter} for {@link #selectionPathChannel()}.
+	 *
+	 * @param sender
+	 *        Channel about to change.
+	 * @param oldValue
+	 *        Current value of the channel.
+	 * @param newValue
+	 *        Potential new value for the channel.
+	 * @return Whether the value is a valid channel value.
+	 */
+	private static boolean isValidSelectionPathChannelChange(ComponentChannel sender, Object oldValue,
+			Object newValue) {
+		GridComponent grid = (GridComponent) sender.getComponent();
+
+		if (!grid.isInMultiSelectionMode()) {
+			if (newValue == null) {
+				return true;
+			}
+			return isValidPath(grid, newValue);
+		} else {
+			if (!(newValue instanceof Collection<?>)) {
+				return false;
+			}
+			Collection<?> potentialPaths = (Collection<?>) newValue;
+			switch (potentialPaths.size()) {
+				case 0:
+					return true;
+				case 1:
+					return isValidPath(grid, potentialPaths.iterator().next());
+				default:
+					Iterator<?> it = potentialPaths.iterator();
+					Object firstPath = it.next();
+					if (!isValidPath(grid, firstPath)) {
+						return false;
+					}
+					Object newComponentModel = retrieveModelFromPath(grid, (List<?>) firstPath);
+					do {
+						Object nextPath = it.next();
+						if (!isValidPath(grid, nextPath)) {
+							return false;
+						}
+						if (!Utils.equals(newComponentModel, retrieveModelFromPath(grid, (List<?>) nextPath))) {
+							// different models
+							return false;
+						}
+					} while (it.hasNext());
+					return true;
+			}
+		}
+	}
+
+	private static boolean isValidPath(GridComponent grid, Object path) {
+		if (path instanceof List<?>) {
+			List<?> l = (List<?>) path;
+			if (l.isEmpty()) {
+				return false;
+			}
+			GridBuilder<FormGroup> gridBuilder = grid.gridBuilder();
+
+			int leafIDX = l.size() - 1;
+			for (int i = leafIDX; i >= 0; i--) {
+				Object node = l.get(i);
+
+				if (GridComponent.isTransient(node)) {
+					if (i == leafIDX) {
+						// The last node of a path can be a transient node
+						continue;
+					} else {
+						return false;
+					}
+				}
+
+				if (!gridBuilder.supportsRow(grid, node)) {
+					return false;
+				}
+				if (i > 0) {
+					Collection<?> parents = gridBuilder.getParentsForRow(grid, node);
+					if (!parents.contains(l.get(i - 1))) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 
 	ComponentChannel columnsChannel() {
 		return getChannel(ColumnsChannel.NAME);
@@ -2845,6 +3112,40 @@ public class GridComponent extends EditComponent implements
 		return CollectionUtilShared.singletonOrEmptySet(value);
 	}
 
+	/**
+	 * Access to {@link #getSelectionPath()} potentially wrapped into a {@link Collection}.
+	 */
+	public Collection<? extends List<?>> getSelectedPathsCollection() {
+		if (isInSingleSelectionMode()) {
+			return CollectionUtilShared.singletonOrEmptySet((List<?>) getSelectionPath());
+		} else {
+			return unsafeCast(getSelectionPath());
+		}
+	}
+
+	private Set<List<Object>> getRowObjectPaths(Collection<?> tableRows) {
+		return addRowObjectPaths(tableRows, new HashSet<>());
+	}
+
+	private <T extends Collection<? super List<Object>>> T addRowObjectPaths(Collection<?> tableRows, T paths) {
+		for (Object row : tableRows) {
+			paths.add(getRowObjectPath(row));
+		}
+		return paths;
+	}
+
+	private List<Object> getRowObjectPath(Object tableRow) {
+		GridHandler<FormGroup> handler = getHandler();
+
+		List<Object> path = new ArrayList<>();
+		do {
+			path.add(getRowObject(handler.getGridRow(tableRow)));
+			tableRow = handler.getParentRow(tableRow);
+		} while (tableRow != null);
+		Collections.reverse(path);
+		return path;
+	}
+
 	private Set<Object> getRowObjects(Set<?> rows) {
 		Set<Object> rowObjects = new HashSet<>();
 
@@ -2853,6 +3154,26 @@ public class GridComponent extends EditComponent implements
 		}
 
 		return rowObjects;
+	}
+
+	private boolean updateSelectionPathsChannel(Set<?> newSelectedPaths) {
+		boolean updated;
+		if (isInMultiSelectionMode()) {
+			updated = setSelectionPath(newSelectedPaths);
+		} else {
+			updated = setSelectionPath(CollectionUtil.getSingleValueFromCollection(newSelectedPaths));
+		}
+		return updated;
+	}
+
+	private boolean updateSelectionPathChannel(Object newSelectedPath) {
+		boolean updated;
+		if (isInMultiSelectionMode()) {
+			updated = setSelectionPath(CollectionUtil.singletonOrEmptySet(newSelectedPath));
+		} else {
+			updated = setSelectionPath(newSelectedPath);
+		}
+		return updated;
 	}
 
     /**
@@ -2956,14 +3277,18 @@ public class GridComponent extends EditComponent implements
 			}
 			focusColumn(getTableField(getFormContext()).getViewModel());
 
-			Set<?> newSelectedObjects = getRowObjects(newSelection);
+			Set<List<Object>> newSelectedPaths = getRowObjectPaths(newSelection);
 
-			Collection<?> currentlySelectedCollection = getSelectedCollection();
-			boolean needChannelUpdate = !CollectionUtil.equals(currentlySelectedCollection, newSelectedObjects);
-			if (needChannelUpdate) {
-				boolean selectionChannelIsUpdated = updateSelectionChannel(newSelectedObjects);
-				if (!selectionChannelIsUpdated) {
-					needChannelUpdate = false;
+			Collection<?> currentlySelectedPathsCollection = getSelectedPathsCollection();
+			boolean channelUpdated = updateSelectionPathsChannel(newSelectedPaths);
+			if (!channelUpdated) {
+				/* There are two possible reasons why the selection has not changed: The channel may
+				 * reject the selection. In this case the selection must be reverted. The second is
+				 * that the event is triggered by the selection channel itself. In this case the
+				 * selection must not be reverted. */
+				Set<Object> newSelectedObjects = getRowObjects(newSelection);
+				if (!CollectionUtil.equals(getSelectedCollection(), newSelectedObjects)) {
+					channelUpdated = false;
 					revertSelection(oldSelection);
 				}
 			}
@@ -2972,23 +3297,13 @@ public class GridComponent extends EditComponent implements
 				HandlerResult result = storeAttributeValuesAndAddFields(oldSelection, newSelection);
 				if (!result.isSuccess()) {
 					revertSelection(oldSelection);
-					if (needChannelUpdate) {
+					if (channelUpdated) {
 						// Channel value was updated; Revert changes.
-						updateSelectionChannel(CollectionUtil.toSet(currentlySelectedCollection));
+						updateSelectionPathsChannel(CollectionUtil.toSet(currentlySelectedPathsCollection));
 					}
 					openErrorDialog(result);
 				}
 			}
-		}
-
-		private boolean updateSelectionChannel(Set<?> newSelectedObjects) {
-			boolean updated;
-			if (isInMultiSelectionMode()) {
-				updated = setSelected(newSelectedObjects);
-			} else {
-				updated = setSelected(CollectionUtil.getSingleValueFromCollection(newSelectedObjects));
-			}
-			return updated;
 		}
 
 		private void revertSelection(Set<?> oldSelection) {
@@ -3604,16 +3919,11 @@ public class GridComponent extends EditComponent implements
 			HandlerResult result = store(AbstractApplyCommandHandler.warningsDisabledTemporarily());
 			if (result.isSuccess()) {
 				int nextRowNumber = calcNextRowNumber(tableModel, currentRowNumber, event);
-				FormGroup nextSelectedGroup =
-					getFormGroup(tableModel, tableModel.getApplicationModelRow(nextRowNumber));
-				Object nextRow = getRowObject(nextSelectedGroup);
-				if (isInSingleSelectionMode()) {
-					setSelected(nextRow);
-				} else {
-					setSelected(CollectionUtil.singletonOrEmptySet(nextRow));
-				}
+				Object nextTableRow = getTableRow(tableModel, tableModel.getApplicationModelRow(nextRowNumber));
+				updateSelectionPathChannel(getRowObjectPath(nextTableRow));
 				focus(columnName);
 
+				FormGroup nextSelectedGroup = _handler.getGridRow(nextTableRow);
 				if (ScriptingRecorder.isRecordingActive()) {
 					// Explicitly record the selection change, since keystrokes are not recorded by
 					// default.

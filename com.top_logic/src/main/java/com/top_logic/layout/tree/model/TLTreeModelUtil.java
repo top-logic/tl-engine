@@ -595,4 +595,47 @@ public class TLTreeModelUtil {
 		return currentObject;
 	}
 
+	/**
+	 * Whether the given <code>path</code> represents the path of business objects (in the owner
+	 * tree of the given node) which leads to the node.
+	 * 
+	 * <p>
+	 * The given path is the business object path of the given node, if the
+	 * {@link TLTreeNode#getBusinessObject() business object} of the node is the last element in the
+	 * path, the business object of the node's parent is the next to last, ..., and the business
+	 * object of the root node of the tree is the first element in the path.
+	 * </p>
+	 */
+	public static boolean sameBusinessObjectPath(TLTreeNode<?> node, List<?> path) {
+		if (path.isEmpty()) {
+			return false;
+		}
+		return sameBusinessObjectPath(node, path, path.size() - 1);
+	}
+
+	private static boolean sameBusinessObjectPath(TLTreeNode<?> node, List<?> path, int pathIDx) {
+		Object bo = path.get(pathIDx);
+		if (!Utils.equals(bo, node.getBusinessObject())) {
+			// different path.
+			return false;
+		}
+		TLTreeNode<?> parent = node.getParent();
+		if (pathIDx == 0) {
+			if (parent == null) {
+				// Match.
+				return true;
+			} else {
+				// Path of node is longer than searched path.
+				return false;
+			}
+		} else {
+			if (parent == null) {
+				// Path of node is shorter than searched path.
+				return false;
+			} else {
+				return sameBusinessObjectPath(parent, path, pathIDx - 1);
+			}
+		}
+	}
+
 }

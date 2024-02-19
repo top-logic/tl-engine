@@ -434,8 +434,9 @@ public class GridComponent extends EditComponent implements
 	 * @see #channels()
 	 */
 	@SuppressWarnings("hiding")
-	private static final Map<String, ChannelSPI> CHANNELS =
-		channels(EditComponent.CHANNELS, SelectionChannel.INSTANCE, RowsChannel.INSTANCE, ColumnsChannel.INSTANCE);
+	protected static final Map<String, ChannelSPI> CHANNELS =
+		channels(EditComponent.CHANNELS, SelectionChannel.INSTANCE, RowsChannel.INSTANCE, ColumnsChannel.INSTANCE,
+			WithSelectionPath.SELECTION_PATH_SPI);
 
 	private static final ComponentChannel.ChannelListener COLUMNS_LISTENER = new ComponentChannel.ChannelListener() {
 
@@ -2797,8 +2798,7 @@ public class GridComponent extends EditComponent implements
 
 	@Override
 	protected Map<String, ChannelSPI> channels() {
-		return LayoutComponent.channels(CHANNELS,
-			isInMultiSelectionMode() ? MULTI_SELECTION_PATH_SPI : SINGLE_SELECTION_PATH_SPI);
+		return CHANNELS;
 	}
 
 	@Override

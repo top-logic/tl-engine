@@ -11,7 +11,7 @@ import java.util.List;
 
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
-import com.top_logic.layout.channel.DefaultChannelSPI;
+import com.top_logic.layout.channel.SelectionChannelSPI;
 import com.top_logic.layout.component.IComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -30,8 +30,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * {@link WithSelectionPath#SELECTION_PATH_CHANNEL}.
  * </p>
  * 
- * @see WithSelectionPath#SINGLE_SELECTION_PATH_SPI
- * @see WithSelectionPath#MULTI_SELECTION_PATH_SPI
+ * @see WithSelectionPath#SELECTION_PATH_SPI
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -43,16 +42,9 @@ public interface WithSelectionPath extends IComponent {
 	String SELECTION_PATH_CHANNEL = "selectionPath";
 
 	/**
-	 * Default {@link ChannelSPI} for creating a corresponding {@link ComponentChannel} for single
-	 * selection.
+	 * Default {@link ChannelSPI} for creating a corresponding {@link ComponentChannel}.
 	 */
-	DefaultChannelSPI SINGLE_SELECTION_PATH_SPI = new DefaultChannelSPI(SELECTION_PATH_CHANNEL, null);
-
-	/**
-	 * Default {@link ChannelSPI} for creating a corresponding {@link ComponentChannel} for multi
-	 * selection.
-	 */
-	DefaultChannelSPI MULTI_SELECTION_PATH_SPI = new DefaultChannelSPI(SELECTION_PATH_CHANNEL, Collections.emptySet());
+	ChannelSPI SELECTION_PATH_SPI = new SelectionChannelSPI(SELECTION_PATH_CHANNEL, null, Collections.emptySet());
 
 	/**
 	 * The current component's selection paths.

@@ -243,6 +243,12 @@ public class TreeTableComponent extends BoundComponent
 		}
 	}
 
+	/**
+	 * @see #channels()
+	 */
+	private static final Map<String, ChannelSPI> CHANNELS =
+		channels(ComponentRowSource.MODEL_ROWS_AND_SELECTION_CHANNEL, WithSelectionPath.SELECTION_PATH_SPI);
+
 	private final Set<TLType> _types;
 
 	private final TreeBuilder<? extends AbstractMutableTLTreeNode<?>> _treeBuilder;
@@ -1215,8 +1221,7 @@ public class TreeTableComponent extends BoundComponent
 
 	@Override
 	protected Map<String, ChannelSPI> channels() {
-		return LayoutComponent.channels(ComponentRowSource.MODEL_ROWS_AND_SELECTION_CHANNEL,
-			isInMultiSelectionMode() ? MULTI_SELECTION_PATH_SPI : SINGLE_SELECTION_PATH_SPI);
+		return CHANNELS;
 	}
 
 	@Override

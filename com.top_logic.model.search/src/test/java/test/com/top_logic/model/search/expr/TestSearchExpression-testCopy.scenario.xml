@@ -28,5 +28,13 @@
 	</object>
 	<object id="b13" type="TestSearchExpression:B">
 		<attribute name="name" value="B13"/>
+		<attribute name="others">
+			<ref id="external"/>
+		</attribute>
+	</object>
+
+	<!-- Object that is not part of the copy operation (external object referenced from the copied graph) -->
+	<object id="external" type="TestSearchExpression:B">
+		<attribute name="name" value="External"/>
 	</object>
 </objects>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		type="DemoTypes:DemoTypes.BC"
+	>
+		<name key="dynamic.153f79b6-debc-45aa-951c-97fc0ad987a3">
+			<en>Tree root</en>
+			<de>Baum-Wurzel</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->`DemoTypes#ROOT`.get(`tl.element:StructuredElementContainer#children`)"
+			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.BC`)"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -15,22 +15,10 @@
 				<button id="Ticket2725_Confirm_Progress"
 					class="com.top_logic.demo.layout.form.demo.TestLayoutProblems$Ticket2725_Command"
 					confirm="true"
-					progress="true"
-				/>
-				<button id="Ticket2725_Confirm_NoProgress"
-					class="com.top_logic.demo.layout.form.demo.TestLayoutProblems$Ticket2725_Command"
-					confirm="true"
-					progress="false"
 				/>
 				<button id="Ticket2725_NoConfirm_Progress"
 					class="com.top_logic.demo.layout.form.demo.TestLayoutProblems$Ticket2725_Command"
 					confirm="false"
-					progress="true"
-				/>
-				<button id="Ticket2725_NoConfirm_NoProgress"
-					class="com.top_logic.demo.layout.form.demo.TestLayoutProblems$Ticket2725_Command"
-					confirm="false"
-					progress="false"
 				/>
 			</buttons>
 		</component>

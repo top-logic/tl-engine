@@ -15,8 +15,6 @@ import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.AbstractFormMember;
-import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Utils;
 
@@ -461,19 +459,6 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 		_properties = newProperties;
 	}
 
-	/**
-	 * Return the I18N name of the given command.
-	 * 
-	 * @param component
-	 *        The target component displaying the given command.
-	 * @param aCommand
-	 *        The command to get the I18N for, must not be <code>null</code>.
-	 * @return The requested I18N.
-	 */
-	protected static ResKey getCommandI18N(LayoutComponent component, BoundCommand aCommand) {
-		return aCommand.getResourceKey(component);
-    }
-	
 	/**
 	 * Return the I18N name of the given command.
 	 * 

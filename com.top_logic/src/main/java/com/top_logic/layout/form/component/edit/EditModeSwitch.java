@@ -34,7 +34,7 @@ public class EditModeSwitch extends ToggleCommandHandler {
 	}
 
 	@Override
-	protected boolean getState(DisplayContext context, LayoutComponent component) {
+	protected boolean getState(LayoutComponent component) {
 		if (component == null) {
 			// Note: Required for static resource checking during startup.
 			return false;

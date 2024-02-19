@@ -121,7 +121,6 @@ import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.filter.ConstantForwardFilter;
 
@@ -1414,21 +1413,8 @@ public class TestLayoutProblems extends FormComponent {
 		removeFormContext();
 	}
 	
-	@Override
-	protected boolean needsShowProgress(CommandHandler command) {
-		if (command instanceof Ticket2725_Command) {
-			return ((Ticket2725_Command.Config) ((Ticket2725_Command) command).getConfig()).getProgress();
-		}
-		return super.needsShowProgress(command);
-	}
-	
 	public static final class Ticket2725_Command extends AbstractCommandHandler {
 		
-		public interface Config extends AbstractCommandHandler.Config {
-
-			boolean getProgress();
-		}
-
 		public Ticket2725_Command(InstantiationContext context, Config config) {
 			super(context, config);
 		}

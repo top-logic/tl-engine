@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
-import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.channel.ModelChannel;
 import com.top_logic.layout.channel.SelectionChannel;
@@ -65,8 +65,8 @@ public class SelectableContextMenuFactory<C extends SelectableContextMenuFactory
 		}
 
 		@Override
-		protected List<ComponentCommandModel> createButtons(Object model, Map<String, Object> arguments) {
-			List<ComponentCommandModel> buttons = super.createButtons(model, arguments);
+		protected List<CommandModel> createButtons(Object model, Map<String, Object> arguments) {
+			List<CommandModel> buttons = super.createButtons(model, arguments);
 
 			LayoutComponent self = getComponent();
 			buttons.addAll(

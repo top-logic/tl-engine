@@ -13,7 +13,7 @@ import java.util.Map;
 import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.CommandModelFactory;
+import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.editor.commands.DeleteComponentCommand;
@@ -104,7 +104,7 @@ public abstract class BOComponentTile extends AbstractComponentTile {
 		ResKey label = I18NConstants.EDIT_TILE_COMMAND_LABEL;
 		Map<String, Object> args =
 			Collections.singletonMap(EditableComponentExecutability.EDITED_COMPONENT_ARG, toEdit);
-		commands.add(CommandModelFactory.commandModel(editCommmand, invocationComponent, args, label));
+		commands.add(new ComponentCommandModel(editCommmand, invocationComponent, args, label));
 	}
 
 	private static void removeCommand(Collection<CommandModel> commands, LayoutComponent invocationComponent,
@@ -116,7 +116,7 @@ public abstract class BOComponentTile extends AbstractComponentTile {
 		ResKey label = I18NConstants.DELETE_TILE_COMMAND_LABEL;
 		Map<String, Object> args =
 			Collections.singletonMap(EditableComponentExecutability.EDITED_COMPONENT_ARG, toRemove);
-		commands.add(CommandModelFactory.commandModel(deleteCommmand, invocationComponent, args, label));
+		commands.add(new ComponentCommandModel(deleteCommmand, invocationComponent, args, label));
 	}
 
 }

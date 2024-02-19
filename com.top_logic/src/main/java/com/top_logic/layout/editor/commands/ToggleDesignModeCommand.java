@@ -10,6 +10,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.commandhandlers.ToggleCommandHandler;
 
@@ -40,8 +41,8 @@ public class ToggleDesignModeCommand extends ToggleCommandHandler {
 	}
 
 	@Override
-	protected boolean getState(DisplayContext context, LayoutComponent component) {
-		return ToggleDesignModeCommand.isInDesignMode(context.getSubSessionContext());
+	protected boolean getState(LayoutComponent component) {
+		return ToggleDesignModeCommand.isInDesignMode(DefaultDisplayContext.getDisplayContext().getSubSessionContext());
 	}
 
 	@Override

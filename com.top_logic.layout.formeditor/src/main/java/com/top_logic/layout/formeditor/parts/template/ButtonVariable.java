@@ -11,8 +11,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
-import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
@@ -73,7 +73,7 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
 		Map<String, Object> args = ContextMenuUtil.createArguments(model);
-		ComponentCommandModel commandModel = CommandModelFactory.commandModel(_command, component, args);
+		CommandModel commandModel = CommandModelFactory.commandModel(_command, component, args);
 		return new ButtonControl(commandModel);
 	}
 

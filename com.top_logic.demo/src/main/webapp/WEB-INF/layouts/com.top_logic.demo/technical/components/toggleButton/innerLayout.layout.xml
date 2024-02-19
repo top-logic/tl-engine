@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/contentLayout.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/toggleButton/treeRootTable.layout.xml">
+				<layoutInfo size="200px"/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/toggleButton/contextTreeTree.layout.xml">
+				<layoutInfo size="300px"/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/toggleButton/detailsForm.layout.xml">
+				<layoutInfo/>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

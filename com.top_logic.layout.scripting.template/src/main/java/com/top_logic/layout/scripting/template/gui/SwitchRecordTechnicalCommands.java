@@ -9,6 +9,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -37,8 +38,9 @@ public class SwitchRecordTechnicalCommands extends ToggleCommandHandler {
 	}
 
 	@Override
-	protected boolean getState(DisplayContext aContext, LayoutComponent component) {
-		return ScriptingRecorder.recordTechnicalCommands(aContext.getSubSessionContext());
+	protected boolean getState(LayoutComponent component) {
+		return ScriptingRecorder
+			.recordTechnicalCommands(DefaultDisplayContext.getDisplayContext().getSubSessionContext());
 	}
 
 	@Override

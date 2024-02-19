@@ -51,7 +51,6 @@ import com.top_logic.tool.boundsec.assistent.commandhandler.ShowAssistentCommand
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -315,7 +314,7 @@ public class AssistentComponent extends LayoutList implements Selectable {
 		for (Iterator<CommandHolder> it = commands.iterator(); it.hasNext();) {
 			CommandHolder holder = it.next();
 
-			CommandModel model = modelForCommand(Resources.getInstance(), holder.getHandler(), holder.getTargetComponent());
+			CommandModel model = modelForCommand(holder.getHandler(), holder.getTargetComponent());
 			model.setShowProgress();
 			buttons.add(model);
 		}
@@ -326,9 +325,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
     }
 
     @Override
-	protected CommandModel modelForCommand(Resources someResources, CommandHandler command,
-			Map<String, Object> arguments, LayoutComponent targetComponent) {
-		CommandModel theModel = super.modelForCommand(someResources, command, arguments, targetComponent);
+	protected CommandModel modelForCommand(CommandHandler command, Map<String, Object> arguments,
+			LayoutComponent targetComponent) {
+		CommandModel theModel = super.modelForCommand(command, arguments, targetComponent);
 
         if (command instanceof CommandChain) {
 			theModel.setShowProgress();

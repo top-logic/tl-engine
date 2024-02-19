@@ -52,7 +52,7 @@ import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AbstractVisibleControl;
-import com.top_logic.layout.basic.ComponentCommandModel;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
@@ -363,7 +363,7 @@ public class HTMLTemplateFormProvider
 		public Menu createContextMenu(String contextInfo) {
 			LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());
 			Map<String, Object> args = ContextMenuUtil.createArguments(_model);
-			Stream<ComponentCommandModel> buttonsStream =
+			Stream<CommandModel> buttonsStream =
 				ContextMenuUtil.toButtonsStream(component, args, _contextMenuCommands);
 			return ContextMenuUtil.toContextMenu(buttonsStream);
 		}

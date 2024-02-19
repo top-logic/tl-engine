@@ -422,7 +422,7 @@ public class TestControlsForm extends FormComponent {
 				return result;
 			}
 
-			final boolean visible = !getState(aContext, aComponent);
+			final boolean visible = !getState(aComponent);
 			
 			return new ForEachMember() {
 				@Override
@@ -433,7 +433,7 @@ public class TestControlsForm extends FormComponent {
 		}
 		
 		@Override
-		protected boolean getState(DisplayContext context, LayoutComponent component) {
+		protected boolean getState(LayoutComponent component) {
 			return component.get(HIDDEN_PROPERTY).booleanValue();
 		}
 

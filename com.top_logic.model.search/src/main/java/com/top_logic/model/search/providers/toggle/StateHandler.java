@@ -9,7 +9,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * Algorithm specifying how to read the state of a {@link ToggleCommandByExpression} and how to
- * store a state upate.
+ * store a state update.
  */
 public interface StateHandler {
 

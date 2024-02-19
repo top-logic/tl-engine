@@ -139,7 +139,7 @@ public class RSAKeyPair {
      * @throws   Exception   If something fails while init keys.
      */
     private  void initKeys (String anUserID) throws Exception {
-        synchronized (RSAKeyPair.class) { // Avoid lost upate on key file
+		synchronized (RSAKeyPair.class) { // Avoid lost update on key file
             if (!this.loadKeys (anUserID)) {
                 this.generateKeys (anUserID);
             }

@@ -67,7 +67,7 @@ public abstract class TokenService extends ManagedClass {
 	 * @param expireDate
 	 *        The new expire date.
 	 * @param tokens
-	 *        The {@link Token}s to upate.
+	 *        The {@link Token}s to update.
 	 * @return Whether the update succeeded.
 	 */
 	public abstract boolean renew(Date expireDate, Collection<Token> tokens);

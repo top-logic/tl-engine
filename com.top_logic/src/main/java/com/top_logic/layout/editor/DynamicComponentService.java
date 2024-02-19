@@ -148,7 +148,7 @@ public class DynamicComponentService extends ConfiguredManagedClass<DynamicCompo
 	 * templates are found in the file system, or something went wrong during startup.
 	 */
 	public Collection<DynamicComponentDefinition> getComponentDefinitions() {
-		upateTemplateCache();
+		updateTemplateCache();
 		return _allDefinitions.values();
 	}
 
@@ -159,11 +159,11 @@ public class DynamicComponentService extends ConfiguredManagedClass<DynamicCompo
 	 *         <code>null</code>, if no such template exists.
 	 */
 	public DynamicComponentDefinition getComponentDefinition(String templateName) {
-		upateTemplateCache();
+		updateTemplateCache();
 		return _allDefinitions.get(templateName);
 	}
 
-	private void upateTemplateCache() {
+	private void updateTemplateCache() {
 		FileSystemCache.getCache().fetchUpdates();
 		while (_updates.hasNext()) {
 			PathUpdate update = _updates.next();

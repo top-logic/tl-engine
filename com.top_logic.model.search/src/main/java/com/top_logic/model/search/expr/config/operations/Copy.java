@@ -15,8 +15,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.top_logic.basic.NamedConstant;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -435,7 +437,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 						// Already processed during allocate step.
 						continue;
 					}
-					copyValue = rewriteReferences(value);
+					copyValue = rewriteReferences(reference.getHistoryType(), value);
 				} else {
 					copyValue = value;
 				}
@@ -443,31 +445,45 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 			}
 		}
 
-		private Object rewriteReferences(Object value) {
+		private Object rewriteReferences(HistoryType historyType, Object value) {
 			if (value instanceof Collection<?>) {
-				return rewriteCollection((Collection<?>) value);
+				return rewriteCollection(historyType, (Collection<?>) value);
 			} else {
-				return rewriteReference((TLObject) value);
+				return rewriteReference(historyType, (TLObject) value);
 			}
 		}
 
-		private Object rewriteCollection(Collection<?> value) {
+		private Object rewriteCollection(HistoryType historyType, Collection<?> value) {
 			Collection<Object> result = allocateCopy(value);
 			for (Object orig : value) {
-				result.add(rewriteReference((TLObject) orig));
+				result.add(rewriteReference(historyType, (TLObject) orig));
 			}
 			return result;
 		}
 
-		private Object rewriteReference(TLObject orig) {
+		private Object rewriteReference(HistoryType historyType, TLObject orig) {
+			if (orig == null) {
+				return null;
+			}
+
 			TLObject copy = resolveCopy(orig);
 			if (copy == null) {
-				return orig;
+				switch (historyType) {
+					case HISTORIC:
+					case MIXED:
+						return orig;
+
+					case CURRENT:
+						// When copying a stable version, current references must only contain
+						// current values. If the target object is not copied (because it is not
+						// part of the copy operation, it's current version must be used).
+						return WrapperHistoryUtils.getCurrent(orig);
+				}
+				throw new UnreachableAssertion("No such history type: " + historyType);
 			} else {
 				return copy;
 			}
 		}
-
 	}
 
 	static class NestedOperation extends OperationImpl {

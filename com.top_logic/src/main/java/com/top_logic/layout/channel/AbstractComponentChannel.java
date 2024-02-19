@@ -14,6 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
@@ -63,7 +64,8 @@ public abstract class AbstractComponentChannel implements ComponentChannel {
 	}
 
 	@Override
-	public final boolean set(Object newValue) {
+	public boolean set(Object newValue) {
+		newValue = tranformInput(newValue);
 		Object oldValue = get();
 		if (CollectionUtil.equals(newValue, oldValue)) {
 			return false;
@@ -111,6 +113,14 @@ public abstract class AbstractComponentChannel implements ComponentChannel {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Transforms the input value to the value to store.
+	 */
+	@FrameworkInternal
+	protected Object tranformInput(Object newValue) {
+		return newValue;
 	}
 
 	/**

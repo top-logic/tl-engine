@@ -21,7 +21,7 @@ public interface StateHandler {
 	 * @param model
 	 *        The command's model of the toggle button.
 	 * @return The current state of the button (<code>true</code> for active, <code>false</code> for
-	 *         inaktive).
+	 *         inactive).
 	 */
 	boolean getState(LayoutComponent component, Object model);
 

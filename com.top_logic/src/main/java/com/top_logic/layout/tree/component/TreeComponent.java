@@ -69,6 +69,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.provider.MetaResourceProvider;
@@ -356,6 +357,12 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	}
 	
+	/**
+	 * @see #channels()
+	 */
+	private static final Map<String, ChannelSPI> CHANNELS =
+		channels(Selectable.MODEL_AND_SELECTION_CHANNEL, WithSelectionPath.SELECTION_PATH_SPI);
+
 	private static final Property<AccessContext> PRELOAD_CONTEXT_PROPERTY = TypedAnnotatable.property(
 		AccessContext.class, "expansionContext", NoPrepare.INSTANCE);
 
@@ -1599,8 +1606,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	@Override
 	protected Map<String, ChannelSPI> channels() {
-		return LayoutComponent.channels(super.channels(),
-			isInMultiSelectionMode() ? MULTI_SELECTION_PATH_SPI : SINGLE_SELECTION_PATH_SPI);
+		return CHANNELS;
 	}
 
 	@Override

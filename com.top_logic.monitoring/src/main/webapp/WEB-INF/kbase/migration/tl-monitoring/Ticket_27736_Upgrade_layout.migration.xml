@@ -4,16 +4,19 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<version name="Ticket_27736_Upgrade_layout"
-		module="tl"
+		module="tl-monitoring"
 	/>
 	<dependencies>
 		<dependency name="Ticket_26190_single_drop_targets_to_list"
 			module="tl"
 		/>
+		<dependency name="Ticket_27764_missing_type_for_association_properties"
+			module="tl-element"
+		/>
 	</dependencies>
 	<processors>
 		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor"
-			rewriter="com.top_logic.layout.migration.Ticket27736UpgradeLayout"
+			rewriter="com.top_logic.monitoring.migration.Ticket27736UpgradeLayout"
 		/>
 	</processors>
 </migration>

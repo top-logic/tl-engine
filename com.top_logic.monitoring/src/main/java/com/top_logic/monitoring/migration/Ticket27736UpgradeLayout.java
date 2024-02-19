@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.migration;
+package com.top_logic.monitoring.migration;
 
 import static com.top_logic.basic.core.xml.DOMUtil.*;
 import static com.top_logic.basic.shared.collection.iterator.IteratorUtilShared.*;

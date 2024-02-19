@@ -87,7 +87,9 @@ public abstract class AbstractInstanceCheck implements InstanceCheck {
 		if (LabelProviderService.Module.INSTANCE.isActive()) {
 			String label = MetaLabelProvider.INSTANCE.getLabel(object);
 			if (label == null || label.isEmpty()) {
-				return I18NConstants.OBJECT_WITHOUT_NAME;
+				if (object != null) {
+					return I18NConstants.OBJECT_WITHOUT_NAME__TYPE.fill(object.tType());
+				}
 			}
 			return label;
 		} else {

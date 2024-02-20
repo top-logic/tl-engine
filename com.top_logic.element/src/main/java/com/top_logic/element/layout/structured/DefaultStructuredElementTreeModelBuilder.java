@@ -150,6 +150,21 @@ public class DefaultStructuredElementTreeModelBuilder extends AbstractTreeModelB
 
 	@Override
 	public Object retrieveModelFromNode(LayoutComponent contextComponent, StructuredElement node) {
+		// Preserve current model if possible.
+		Object model = contextComponent.getModel();
+		if (model == null) {
+			return node.getRoot();
+		}
+		StructuredElement parent = node;
+		do {
+			parent = parent.getParent();
+			if (parent == null) {
+				break;
+			}
+			if (model.equals(parent)) {
+				return model;
+			}
+		} while (true);
 		return node.getRoot();
 	}
 
@@ -159,9 +174,10 @@ public class DefaultStructuredElementTreeModelBuilder extends AbstractTreeModelB
 
 			@Override
 			public void prepare(PreloadContext context, Collection<?> baseObjects) {
-				SubtreeLoader subtreeLoader = new SubtreeLoader(context);
-				for (Object baseObject : baseObjects) {
-					subtreeLoader.loadTree((StructuredElement) baseObject, 2);
+				try (SubtreeLoader subtreeLoader = new SubtreeLoader(context)) {
+					for (Object baseObject : baseObjects) {
+						subtreeLoader.loadTree((StructuredElement) baseObject, 2);
+					}
 				}
 			}
 		};

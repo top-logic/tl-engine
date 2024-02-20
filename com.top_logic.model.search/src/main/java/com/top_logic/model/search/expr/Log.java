@@ -65,6 +65,11 @@ public class Log extends GenericMethod {
 		return context.getContextId();
 	}
 
+	@Override
+	public boolean isSideEffectFree() {
+		return false;
+	}
+
 	/**
 	 * {@link MethodBuilder} creating {@link Log}.
 	 */

@@ -269,7 +269,7 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 	}
 
 	private void writeRestoreButton(DisplayContext context, TagWriter out) throws IOException {
-		XMLTag restoreTag = Icons.WINDOW_NORMALIZE.toButton();
+		XMLTag restoreTag = Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED.toButton();
 		String restoreDialogName = Resources.getInstance().getString(RESTORE_DIALOG);
 		restoreTag.beginBeginTag(context, out);
 		CssUtil.writeCombinedCssClasses(out, FormConstants.INPUT_IMAGE_CSS_CLASS, "dlgRestore");

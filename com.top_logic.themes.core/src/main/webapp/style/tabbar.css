@@ -282,6 +282,19 @@ div.accRoot {
 	background: transparent;
 }
 
+div.accRoot::-webkit-scrollbar {
+	width: 0px;
+	background-color: transparent;
+}
+
+div.accRoot:hover::-webkit-scrollbar {
+	width: 8px;
+}
+
+div.accRoot:hover::-webkit-scrollbar-thumb {
+	background-color: rgba(0,0,0,.2);
+}
+
 div.accChildren {
 	margin-left: var(--ACCORDION_INDENT);
 }
@@ -295,6 +308,12 @@ a.accEntry:active {
 	padding: var(--spacing-02) var(--spacing-03);
 	white-space: nowrap;
 	overflow-x: hidden;
+}
+
+.accNode a:focus,
+a.accEntry:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 a.accEntry span.accEntryContent {
@@ -311,15 +330,6 @@ a.accEntry span.accLabel {
 a.accEntry img.accMarker {
 	width: 22px;
 	padding-right: 7px;
-}
-
-div.accChildren > div.accNode > a.accEntry {
-	border-top-left-radius: var(--ACCORDION_BORDER_RADIUS);
-	border-bottom-left-radius: var(--ACCORDION_BORDER_RADIUS);
-}
-
-div.accChildren > div.accNode:first-child > a.accEntry {
-	border-top-left-radius: 0px;
 }
 
 span.accIcon.input-image,

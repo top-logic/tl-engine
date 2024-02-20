@@ -218,6 +218,7 @@ td.tl-table__cell {
 
 .tl-table__row.header .tl-table__cell:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 .tl-table__row.header .tl-table__cell:active {
@@ -813,8 +814,8 @@ tr.tblFilterNotValidated td,
 tr.tblFilterNotValidated td input,
 tr.tblFilterNotValidated td select,
 tr.tblFilterNotValidated td label {
-	font-style: italic;
-	color: red;	/* intentionally red to help me find this element in the application */
+	font-weight: 600;
+	color: var(--text-primary);
 }
 
 tr.tblFrozen.title {
@@ -939,8 +940,15 @@ table td span.downloadControl {
 	height: 100%;
 }
 
-table td span.cDecoratedCell {
-	gap: var(--spacing-02);
+table td span.cDecoratedCell .lFlexible, 
+table td span.cDecoratedCell .lFixedLeft {
+	height: inherit;
+	display: inline-flex;
+	align-items: center;
+}
+
+table td span.cDecoratedCell .lFlexible {
+	padding: 0 var(--spacing-02);
 }
 
 .cDecoratedCell .treeType {
@@ -952,8 +960,9 @@ td.tl-table__cell--selected .cDecoratedCell .treeType {
 	color: var(--icon-primary);
 }
 
-table.i18nStringTable td span.cDecoratedCell {
-	gap: 0;
+table.i18nStringTable td span.cDecoratedCell .lFlexible {
+	padding-left: 0px;
+	padding-right: 0px;
 }
 
 table.i18nStringTable td {
@@ -1242,11 +1251,6 @@ table td span.lFlexible > input:not([type="image"]) {
 	}
 }
 
-.i18nTranslationCommand {
-/* Style for the "translation command" aspect field, same as input.is-action*/
-	margin-left: 2px;
-}
-
 .cPDFDisplay {
 /* Center replacement message. */
 	text-align: center;
@@ -1311,13 +1315,22 @@ div.dirtyHandlingDialog .changes {
 }
 
 .px-1 {
-  	padding-right: 0.25rem !important;
-  	padding-left: 0.25rem !important;
+	padding-right: var(--spacing-02) !important;
+	padding-left: var(--spacing-02) !important;
+    height: inherit;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .px-1 .tl-radio-checkbox-container {
 	display: flex;
 	justify-content: center;
+}
+
+.px-1 .cPopupSelect.cannot-edit {
+	flex-wrap: nowrap;
 }
 
 .tl-table__content-container {

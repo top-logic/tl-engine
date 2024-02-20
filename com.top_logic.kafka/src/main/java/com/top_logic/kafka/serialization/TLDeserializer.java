@@ -10,7 +10,7 @@ import java.util.Map;
 import org.apache.kafka.common.serialization.Deserializer;
 
 /**
- * Common super class for {@link Deserializer} in TL which are not configured via Kakfa.
+ * Common super class for {@link Deserializer} in TL which are not configured via Kafka.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

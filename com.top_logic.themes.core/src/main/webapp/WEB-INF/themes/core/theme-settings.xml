@@ -18,7 +18,7 @@
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="64"
+		value="42"
 	/>
 	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
@@ -261,10 +261,13 @@
 		value="css:bi bi-fullscreen"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MINIMIZE"
-		value="css:bi bi-arrows-collapse"
+		value="css:bi bi-chevron-down"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE"
-		value="css:bi bi-window-stack"
+		value="css:bi bi-chevron-right"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED"
+		value="css:bi bi-fullscreen-exit"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__EXPERT_MODE_BUTTON"
 		value="css:bi bi-keyboard-fill"
@@ -325,7 +328,7 @@
 		value="css:bi bi-caret-down-fill"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LEAF"
-		value="/tree/tree-leaf.png"
+		value="/icons/tree-leaf.png"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LF"
 		value="/tree/lf.png"

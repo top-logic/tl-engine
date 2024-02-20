@@ -287,7 +287,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		}
 
 		private void update(boolean maximized) {
-			setImage(maximized ? com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE
+			setImage(maximized ? com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED
 				: com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE);
 			ResKey tooltipKey = maximized ? I18NConstants.RESTORE_WINDOW : I18NConstants.MAXIMIZE_WINDOW;
 			setTooltip(Resources.getInstance().getString(tooltipKey));

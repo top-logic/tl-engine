@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   inkscape:export-filename="D:\local\bhu\desktop\new-as.png"
+   inkscape:export-xdpi="19.785006"
+   inkscape:export-ydpi="19.785006"
+   sodipodi:docname="dialog-icon.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="6.5757577"
+     inkscape:cx="195.55639"
+     inkscape:cy="860.31662"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:snap-object-midpoints="true"
+     inkscape:window-width="1492"
+     inkscape:window-height="922"
+     inkscape:window-x="127"
+     inkscape:window-y="48"
+     inkscape:window-maximized="0"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g3763"
+       inkscape:export-filename="C:\local\devel\workspace-toplogic-5.7.4_x2\com.top_logic.demo\webapps\demo\themes\default\demo\dialog-action.png"
+       inkscape:export-xdpi="78.260002"
+       inkscape:export-ydpi="78.260002">
+      <path
+         sodipodi:nodetypes="cccccccccccc"
+         inkscape:connector-curvature="0"
+         id="path2991"
+         d="m 210.16589,159.38524 -15.20737,26.91705 17.18433,-5.17051 -15.35945,19.00922 -1.36866,-7.75576 -5.32258,17.03226 16.88019,-3.64977 -7.29954,-3.04147 23.41935,-25.09217 -18.24885,0 11.70968,-17.64055 z"
+         style="fill:#fe582e;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1" />
+      <rect
+         y="156.49585"
+         x="178.66359"
+         height="55.202763"
+         width="55.202763"
+         id="rect3761"
+         style="fill:none;stroke:none" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Schrift" />
+</svg>

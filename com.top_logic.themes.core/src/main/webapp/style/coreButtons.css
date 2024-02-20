@@ -86,6 +86,8 @@ div.cmdProgress img {
 .tlButtonScrollContainer .tlDropdownButton,
 .sxButtons .tlButton,
 .cButton.bcPopup,
+.cButton.cLinkButton.cmdLink,
+.cButton.cLinkButton.cmdLinkDisabled,
 .fltSubContent .cMenuButton.menuEntryEnabled,
 .fltSubContent .cMenuButton.menuEntryDisabled {
 	display: inline-flex;
@@ -96,6 +98,10 @@ div.cmdProgress img {
 	height: 2rem; /* 32px height */
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
 }
 
 .cImageLinkButton {
@@ -127,6 +133,43 @@ div.cmdProgress img {
 	cursor: pointer;
 }
 
+.cButton.cImageLinkButton,
+.cButton.cImageLinkButton {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	gap: var(--spacing-02);
+	height: 2rem; /* 32px height */
+	padding: 0 var(--spacing-03);
+	border-radius: var(--corner-radius);
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: 600;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.cButton.cImageLinkButton.cmdLink {
+	color: var(--button-secondary);
+}
+
+.cButton.cImageLinkButton > .cButton.cImageLinkButton {
+	gap: 0;
+	padding: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.cButton.cImageLinkButton.cmdLinkDisabled {
+	color: var(--text-disabled);
+}
+
 /* 
 Button heights for popup window of a select chooser model,
 with hard coded popup window dimension
@@ -136,13 +179,15 @@ with hard coded popup window dimension
 }
 
 .tlButtonLabel, 
-.cDefaultButton button {
+.cDefaultButton button, 
+.cButton.cLinkButton.cmdLinkDisabled {
 	font-weight: 600;
 }
 
 .tlButton, 
 .fltSubContent .cMenuButton.menuEntryEnabled,
-.cDefaultButton button {
+.cDefaultButton button,
+.cButton.cLinkButton.cmdLink {
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
 }
@@ -150,7 +195,8 @@ with hard coded popup window dimension
 .tlButton,
 .tlButtonLabel,
 .fltSubContent .cMenuButton.menuEntryEnabled,
-.cDefaultButton button {
+.cDefaultButton button,
+.cButton.cLinkButton.cmdLink {
 	color: var(--button-secondary);
 	white-space: nowrap;
 }
@@ -163,7 +209,8 @@ with hard coded popup window dimension
 
 .tlButton:hover,
 .fltSubContent .cMenuButton.menuEntryEnabled:hover,
-.cDefaultButton button:hover {
+.cDefaultButton button:hover,
+.cButton.cLinkButton.cmdLink:hover {
 	background: var(--button-secondary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
 }
@@ -171,6 +218,7 @@ with hard coded popup window dimension
 .tlButton:hover .tlButtonLabel,
 .fltSubContent .cMenuButton.menuEntryEnabled:hover,
 .cDefaultButton button:hover,
+.cButton.cLinkButton.cmdLink:hover, 
 .fltSubContent .cMenuButton.menuEntryEnabled:hover .menuEntryCell {
 	color: var(--text-on-color);
 	text-decoration: none;
@@ -184,15 +232,18 @@ with hard coded popup window dimension
 
 .tlButton:focus,
 .fltSubContent .cMenuButton.menuEntryEnabled:focus,
-.cDefaultButton button:focus {
+.cDefaultButton button:focus,
+.cButton.cLinkButton.cmdLink:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	background: var(--button-secondary-hover);
+	outline: none !important;
 }
 
 .tlButton:focus .tlButtonLabel,
 .cDefaultButton button:focus,
 .fltSubContent .cMenuButton.menuEntryEnabled:focus,
-.fltSubContent .cMenuButton.menuEntryEnabled:focus .menuEntryCell {
+.fltSubContent .cMenuButton.menuEntryEnabled:focus .menuEntryCell,
+.cButton.cLinkButton.cmdLink:focus {
 	color: var(--text-on-color);
 }
 
@@ -200,11 +251,13 @@ with hard coded popup window dimension
 .fltSubContent .cMenuButton.menuEntryEnabled:focus .menuEntryCell:first-child, 
 .fltSubContent .cMenuButton.menuEntryEnabled:focus img.menuEntryImage {
 	color: var(--icon-on-color);
+	outline: none !important;
 }
 
 .tlButton:active,
 .cDefaultButton button:active,
-.fltSubContent .cMenuButton.menuEntryEnabled:active {
+.fltSubContent .cMenuButton.menuEntryEnabled:active,
+.cButton.cLinkButton.cmdLink:active {
 	text-decoration: none;
 	background: var(--button-secondary-active);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
@@ -212,7 +265,8 @@ with hard coded popup window dimension
 
 .tlButton:active .tlButtonLabel,
 .cDefaultButton button:active,
-.fltSubContent .cMenuButton.menuEntryEnabled:active .menuEntryCell {
+.fltSubContent .cMenuButton.menuEntryEnabled:active .menuEntryCell,
+.cButton.cLinkButton.cmdLink:active {
 	color: var(--text-on-color);
 }
 
@@ -224,19 +278,23 @@ with hard coded popup window dimension
 
 .tlButton.cmdButtonDisabled,
 .tlButton.cmdButtonDisabled:hover,
-.cDefaultButton button:disabled {
+.cDefaultButton button:disabled,
+.cButton.cLinkButton.cmdLinkDisabled {
 	cursor: default;
 	background: none;
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	text-decoration: none;
 }
 
-.tlButton.cmdButtonDisabled:focus {
+.tlButton.cmdButtonDisabled:focus,
+.cButton.cLinkButton.cmdLinkDisabled:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	outline: none !important;
 }
 
 .tlButton.cmdButtonDisabled .tlButtonLabel,
-.cDefaultButton button:disabled {
+.cDefaultButton button:disabled,
+.cButton.cLinkButton.cmdLinkDisabled {
 	color: var(--text-disabled);
 }
 
@@ -264,6 +322,7 @@ with hard coded popup window dimension
 
 .tlButton.tlPrimaryButton:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 .tlButton.tlPrimaryButton:active {
@@ -312,6 +371,7 @@ with hard coded popup window dimension
 .tlButton.tlGhostButton:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	background: transparent;
+	outline: none !important;
 }
 
 .tlButton.tlGhostButton:active {
@@ -352,6 +412,7 @@ with hard coded popup window dimension
 
 .tlButton.tlDangerButtonPrimary:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 .tlButton.tlDangerButtonPrimary:active {
@@ -366,6 +427,7 @@ with hard coded popup window dimension
 
 .tlButton.tlDangerButtonPrimary.cmdButtonDisabled:focus {
 	box-shadow: none;
+	outline: none !important;
 }
 
 .tlButton.tlDangerButtonPrimary.cmdButtonDisabled .tlButtonLabel {
@@ -405,6 +467,7 @@ with hard coded popup window dimension
 
 .tlButton.tlDangerButtonSecondary:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 .tlButton.tlDangerButtonSecondary:active {
@@ -502,6 +565,7 @@ with hard coded popup window dimension
 
 .tlDropdownContent a:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus);
+	outline: none !important;
 }
 
 span.cImageButton .input-image.disabled i, span.cmdLink .input-image.disabled i, span.cOpenCalendar .input-image.disabled i, 
@@ -515,11 +579,12 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 	color: var(--icon-disabled);
 }
 
-/* Icon Styles */
-.tlAdditionalRightContent .cImageButton,
-.tlAdditionalRightContent .cImageButton.cmdButtonDisabled, 
-.sblLogo .cImageButton,
-.sblLogo .cImageButton.cmdButtonDisabled, 
+/* Icon Button Styles */
+.cOpenCalendar,
+.cButton.i18nTranslationCommand,
+.cButton.cmdLink, 
+.cButton.cImageButton,
+cButton.cImageButton,
 .dfToolbar .cmdLink, 
 .dfToolbar .cmdLinkDisabled, 
 .dfListCommands .cmdLink,
@@ -528,8 +593,49 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 .px-1 .cmdLinkDisabled,
 .dfListAdd .cButton a,
 .dfListAdd .cButton a.disabled,
-.cTextPopup .lFixedLeft .cmdLink,
-.cTextPopup .lFixedLeft .cmdLinkDisabled {
+.cButton.dfRemove,
+.cButton.fToggle {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	align-self: center;
+	height: 1rem;
+	min-width: 1rem;
+	color: var(--icon-primary);
+}
+
+.cOpenCalendar a,
+a.fClear,
+a.fChoose, 
+.cButton.i18nTranslationCommand a,
+.cButton.cmdLink a, 
+.cButton.cImageButton a,
+.cButton.dfRemove a,
+.cButton.fToggle a {
+	color: var(--icon-primary);
+}
+
+.cOpenCalendar a:hover,
+a.fClear:hover,
+a.fChoose:hover,
+.cButton.i18nTranslationCommand a:hover,
+.cButton.cmdLink a:hover, 
+.cButton.cImageButton a:hover,
+.dfToolbar .cmdLink:hover, 
+.dfListCommands .cmdLink:hover,
+.px-1 .cmdLink:hover,
+.dfListAdd .cButton a:hover,
+.cButton.dfRemove a:hover,
+.cButton.fToggle a:hover {
+	color: var(--icon-primary);
+}
+
+
+/* Icon Styles for design mode hamburger buttons */
+.tlAdditionalRightContent .cButton.cImageButton,
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled, 
+.sblLogo .cButton.cImageButton,
+.sblLogo .cButton.cImageButton.cmdButtonDisabled {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
@@ -539,35 +645,20 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
 }
 
-.tlAdditionalRightContent .cImageButton,
-.tlAdditionalRightContent .cImageButton.cmdButtonDisabled {
+.tlAdditionalRightContent .cButton.cImageButton,
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled {
 	height: 1.25rem;
 	width: 1.25rem;
 }
 
-.sblLogo .cImageButton, 
-.sblLogo .cImageButton.cmdButtonDisabled, 
-.dfToolbar .cmdLink, 
-.dfToolbar .cmdLinkDisabled, 
-.dfListCommands .cmdLink, 
-.dfListCommands .cmdLinkDisabled, 
-.px-1 .cmdLink,
-.px-1 .cmdLinkDisabled,
-.dfListAdd .cButton a,
-.dfListAdd .cButton a.disabled,
-.cTextPopup .lFixedLeft .cmdLink,
-.cTextPopup .lFixedLeft .cmdLinkDisabled {
+.sblLogo .cButton.cImageButton, 
+.sblLogo .cButton.cImageButton.cmdButtonDisabled {
 	height: .5rem;
 	width: .5rem;
 }
 
-.tlAdditionalRightContent .cImageButton a,
-.sblLogo .cImageButton a,
-.dfToolbar .cmdLink a, 
-.dfListCommands .cmdLink a,
-.px-1 .cmdLink a,
-.dfListAdd .cButton a,
-.cTextPopup .lFixedLeft .cmdLink a {
+.tlAdditionalRightContent .cButton.cImageButton a,
+.sblLogo .cImageButton a {
 	padding: inherit;
 	color: var(--icon-on-color);
 }
@@ -578,65 +669,38 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 	width: .1rem;
 }
 
-.tlAdditionalRightContent .cImageButton:hover,
-.sblLogo .cImageButton:hover,
-.dfToolbar .cmdLink:hover, 
-.dfListCommands .cmdLink:hover,
-.px-1 .cmdLink:hover,
-.dfListAdd .cButton a:hover,
-.cTextPopup .lFixedLeft .cmdLink:hover {
+.tlAdditionalRightContent .cButton.cImageButton:hover,
+.sblLogo .cImageButton:hover {
 	background: var(--button-primary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 }
 
-.tlAdditionalRightContent .cImageButton:focus,
-.sblLogo .cImageButton:focus,
-.dfToolbar .cmdLink:focus, 
-.dfListAdd .cButton:focus,
-.dfListCommands .cmdLink:focus,
-.px-1 .cmdLink:focus,
-.cTextPopup .lFixedLeft:focus {
+.tlAdditionalRightContent .cButton.cImageButton:focus,
+.sblLogo .cImageButton:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
-.tlAdditionalRightContent .cImageButton a:focus,
-.sblLogo .cImageButton a:focus,
-.dfToolbar .cmdLink a:focus,
-.dfListCommands .cmdLink a:focus,
-.px-1 .cmdLink a:focus,
-.cTextPopup .lFixedLeft .cmdLink a:focus {
+.tlAdditionalRightContent .cButton.cImageButton a:focus,
+.sblLogo .cImageButton a:focus {
 	box-shadow: none;
+	outline: none !important;
 }
 
-.tlAdditionalRightContent .cImageButton:active,
-.sblLogo .cImageButton:active,
-.dfToolbar .cmdLink:active, 
-.dfListCommands .cmdLink:active,
-.px-1 .cmdLink:active,
-.dfListAdd .cButton a:active,
-.cTextPopup .lFixedLeft:active {
+.tlAdditionalRightContent .cButton.cImageButton:active,
+.sblLogo .cImageButton:active {
 	background: var(--button-primary-active);
 }
 
-.tlAdditionalRightContent .cImageButton.cmdButtonDisabled,
-.sblLogo .cImageButton.cmdButtonDisabled,
-.dfToolbar .cmdLinkDisabled,
-.dfListCommands .cmdLinkDisabled,
-.px-1 .cmdLinkDisabled,
-.dfListAdd .cButton a.disabled,
-.cTextPopup .lFixedLeft .cmdLinkDisabled {
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled,
+.sblLogo .cImageButton.cmdButtonDisabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	cursor: default;
 }
 
-.tlAdditionalRightContent .cImageButton.cmdButtonDisabled a,
-.sblLogo .cImageButton.cmdButtonDisabled a,
-.dfToolbar .cmdLinkDisabled a,
-.dfListCommands .cmdLinkDisabled a,
-.px-1 .cmdLinkDisabled a,
-.dfListAdd .cButton a.disabled,
-.cTextPopup .lFixedLeft .cmdLinkDisabled a {
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled a,
+.sblLogo .cImageButton.cmdButtonDisabled a {
 	color: var(--icon-on-color-disabled);
 	cursor: default;
 }

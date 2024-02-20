@@ -708,22 +708,24 @@ services.viewport = {
 	
 	/* 
 	*	Makes Tabbar scrollable with mouse drag and drop, 
-	*	gui-arrows on each end of the tabbar and keyword 
-	*	shift or ctrl + mouse wheel
+	*	gui-arrows on each end of the tabbar and mouse wheel.
 	*	Parameter: TabBarControl.
 	*/
 	tabScrollBehaviour: function(element) {
+		services.layout._applyLayout();
 		const elementID = element.id;
 		const tabLayout = document.getElementById(elementID);
 		const scrollContainer = tabLayout.querySelector('.tlTabScrollContainer');
 		const tabBar = scrollContainer.parentElement;
 		const scrollLeftButton = tabLayout.querySelector('.tlTabScrollLeft');
 		const scrollRightButton = tabLayout.querySelector('.tlTabScrollRight');
+		const rightContent = tabLayout.querySelector('.tlRightContent');
 		let isScrolling = false;
 		const scrollAmount = 70;
-		 
-		if (tabBar.clientWidth > scrollContainer.scrollWidth || 
-				scrollContainer.scrollWidth < scrollContainer.clientWidth) {
+		const totalContentWidth = scrollContainer.scrollWidth + rightContent.offsetWidth;
+		
+		
+		if (tabBar.clientWidth >= totalContentWidth) {
 	        scrollLeftButton.style.display = 'none';
 	        scrollRightButton.style.display = 'none';
 	    } else {
@@ -794,39 +796,51 @@ services.viewport = {
 		
 		// Makes scolling with CTRL or SHIFT + mouse wheel possible.
 		scrollContainer.addEventListener('wheel', function(event) {
-        	if (event.ctrlKey) {
-            	scrollContainer.scrollLeft += event.deltaY;
-            	// Prevents the default browser action (e.g. zooming)
-            	event.preventDefault();
-       		}
+            scrollContainer.scrollLeft += event.deltaY;
         });
         
 	},
 	
+	/* Gets a value when a tab is clicked. See services.form.TabBarControl.handleClick */
+	savedTabScrollOffset: null,
+	
 	/* 
-	*	Ensures that the selected tab is being displayed in the tab container
-	*	and not hidden outside the tab bar scope.
+	*	Ensures that the selected tab is being displayed in the
+	*	tab container and not hidden outside the tab bar scope.
+	*	Especially important for when the page is being refreshed.
 	*	Parameter: TabBarControl.
 	*/
 	ensureTabVisible: function(element) {
 		const elementID = element.id;
 		const tabLayout = document.getElementById(elementID);
 		const tabContainer = tabLayout.querySelector('.tlTabScrollContainer');
-		const activeTab = tabContainer.querySelector('.activeTab'); 
+		const activeTab = tabContainer.querySelector('.activeTab');
+		const scrollLeftButton = tabLayout.querySelector('.tlTabScrollLeft');
+		const scrollRightButton = tabLayout.querySelector('.tlTabScrollRight');
 		/* 
-		*	It does not matter if no tab has been selected from a container.
-		*	This happens if you go to administration in the non-sidebar theme.
-		*	None of the tabs from the first tab bar are selected.
+		*	Code has to be skipped when the element
+		*	has no tabbar, for example a mega menu.
 		*/
-		if(activeTab) {
-			const containerWidth = tabContainer.clientWidth;
-  			const tabLeftEnd = activeTab.offsetLeft;
-  			const tabRightEnd = tabLeftEnd + activeTab.clientWidth;
-  			if (tabLeftEnd < tabContainer.scrollLeft) {
-    			tabContainer.scrollLeft = tabLeftEnd;
-  			} else if (tabRightEnd > tabContainer.scrollLeft + containerWidth) {
-    			tabContainer.scrollLeft = tabRightEnd - containerWidth;
-  			}
+		if (activeTab) {
+			if(services.viewport.savedTabScrollOffset !== null) {
+	        	tabContainer.scrollLeft = services.viewport.savedTabScrollOffset;			
+			}
+			const containerScrollLeft = tabContainer.scrollLeft;
+	        const containerWidth = tabContainer.clientWidth;
+	        const tabLeft = activeTab.offsetLeft;
+	        const tabWidth = activeTab.offsetWidth;
+	        const tabRight = tabLeft + tabWidth;
+	        const scrollLeftButtonWidth = scrollLeftButton ? scrollLeftButton.offsetWidth : 0;
+	        const scrollRightButtonWidth = scrollRightButton ? scrollRightButton.offsetWidth : 0;
+	        const visibleLeft = containerScrollLeft + scrollLeftButtonWidth;
+	        const visibleRight = visibleLeft + containerWidth - scrollRightButtonWidth;
+	
+	        if (tabLeft < visibleLeft) {
+	            tabContainer.scrollLeft = tabLeft - scrollLeftButtonWidth - 60;
+	        }
+	        else if (tabRight > visibleRight) {
+	            tabContainer.scrollLeft = tabRight - containerWidth;
+	        }
 		}
 	},
 	

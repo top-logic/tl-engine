@@ -271,16 +271,6 @@
 						>
 							<annotations>
 								<search-range/>
-								<storage-algorithm>
-									<derived-storage>
-										<expression-evaluation>
-											<navigate-backwards
-												attribute-name="typedWrapper"
-												type="DemoPlain:DemoPlain.A"
-											/>
-										</expression-evaluation>
-									</derived-storage>
-								</storage-algorithm>
 							</annotations>
 						</reference>
 						<property name="dateWithDefault"

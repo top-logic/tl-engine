@@ -6401,12 +6401,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	display: flex;
 }
 
-.dfModeFull .cPopupSelect {
-	display: inline-flex;
-	flex-wrap: wrap;
-}
-
-.dfModeFull .cPopupSelect .tl-separator {
+.cPopupSelect .tl-separator {
 	margin-right: 4px;
 }
 

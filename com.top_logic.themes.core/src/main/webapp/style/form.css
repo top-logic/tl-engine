@@ -1387,7 +1387,12 @@ div.cal_zoom_inAnimation {
 	display: inline-flex;
 }
 
-.cPopupSelect {
+.cPopupSelect.active {
+	display: inline-flex;
+	width: 100%;
+}
+
+.cPopupSelect.cannot-edit {
 	display: inline-flex;
 	flex-wrap: wrap;
 	width: 100%;
@@ -1749,8 +1754,8 @@ input[type="radio"] {
 	display: inline-grid;
 	place-content: center;
 	position: relative;
-	height: 1rem;
-	width: 1rem;
+	min-height: 1rem;
+	min-width: 1rem;
 	border-radius: 50%;
 	border: 1px solid var(--icon-primary);
 }
@@ -1760,8 +1765,8 @@ input[type="radio"]::before {
  	position: absolute;
  	top: 50%;
  	left: 50%;
- 	height: 0.5rem;
- 	width: 0.5rem;
+ 	min-height: 0.5rem;
+ 	min-width: 0.5rem;
  	border-radius: 50%;
  	background-color: var(--background);
 	transform: scale(0);
@@ -1790,8 +1795,8 @@ input[type="checkbox"] {
     display: inline-grid;
     place-content: center;
     position: relative;
-    height: 1rem;
-    width: 1rem;
+    min-height: 1rem;
+    min-width: 1rem;
     border-radius: 1px;
     border: 1px solid var(--icon-primary);
 }
@@ -1800,8 +1805,8 @@ input[type="checkbox"]::before {
     content: '';
     position: absolute;
     transform: translateY(-50%);
-    height: 100%;
-    width: 100%;
+    min-height: 100%;
+    min-width: 100%;
     border-radius: 1px;
     background-color: var(--background);
     transform: scaleX(0);
@@ -2195,6 +2200,7 @@ div.sizeContainer, div.imageContainer {
 	border-radius: var(--corner-radius);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+	white-space: nowrap;
 }
 
 .cDataItem label .cmdImg {
@@ -2203,6 +2209,7 @@ div.sizeContainer, div.imageContainer {
 
 .cDataItem label .cmdLabel {
 	padding-right: var(--spacing-03);
+	white-space: nowrap;
 }
 
 .cDataItem label:hover {
@@ -2490,7 +2497,11 @@ span.disabled .ddwttChevron::after {
 }
 
 .ddwttItem .ddwttItemLabel {
-	display: inline-block;
+	display: inline-block;}
+
+.ddwttItemLabel {
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 /* Tags */

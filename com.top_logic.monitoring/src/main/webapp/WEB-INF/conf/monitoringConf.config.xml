@@ -9,5 +9,12 @@
 				</bundles>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-monitoring" />
+				</modules>
+			</instance>
+		</config>
 	</services>
 </application>

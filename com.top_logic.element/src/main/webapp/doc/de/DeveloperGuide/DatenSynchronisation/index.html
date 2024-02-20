@@ -2,7 +2,7 @@
 <p>Der Ablauf bei der Synchronisation ist folgender:</p>
 <ul>
  <li>Im Quellsystem TL1 werden Änderungen vorgenommen.</li>
- <li>Diese Änderungen werden von der KnowledgeBase an einen Kakfa-Listener innerhalb TL1 geschickt.</li>
+ <li>Diese Änderungen werden von der KnowledgeBase an einen Kafka-Listener innerhalb TL1 geschickt.</li>
  <li>Innerhalb des Kafka-Listener werden diese Änderungen gefiltert und aufbereitet, so dass nur die zu exportierenden Informationen enthalten sind. Weiterhin werden technische Daten hinzugefügt, die keinerlei fachliche Relevanz haben.</li>
  <li>Das Event wird an das vorhandene Kafka-System gegeben.</li>
  <li>Das Zielsystem TL2 empfängt als Listener an Kafka die Änderungen.</li>

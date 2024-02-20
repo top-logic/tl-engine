@@ -54,7 +54,7 @@ public class ReportQueueTest extends BasicTestCase {
         ReportToken theToken = ReportToken.createToken("noopID",null,null);
         
         Logger.configureStdout("FATAL");
-        // Suppress (correct) ERROR mesaage from ReportGenerator 
+		// Suppress (correct) ERROR message from ReportGenerator
         try {
 			_queue.addJob(theToken);
             

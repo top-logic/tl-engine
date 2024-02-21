@@ -15,6 +15,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -647,19 +648,42 @@ public class TreeTableComponent extends BoundComponent
 	private Set<AbstractTreeTableNode<?>> getNodesForPaths(Collection<? extends List<?>> paths) {
 		Set<AbstractTreeTableNode<?>> selectableNodes = new HashSet<>();
 
+		Map<Object, AbstractTreeTableNode<?>> nonMatchingPathNodes = Collections.emptyMap();
 		for (List<?> path : paths) {
 			if (path.isEmpty()) {
 				continue;
 			}
-			List<AbstractTreeTableNode<?>> nodes = findNodes(path.get(path.size() - 1));
+			Object bo = path.get(path.size() - 1);
+			List<AbstractTreeTableNode<?>> nodes = findNodes(bo);
+			if (nodes.isEmpty()) {
+				continue;
+			}
+			AbstractTreeTableNode<?> nodeWithDifferentPath = null;
+			boolean noNodeFound = true;
 			for (AbstractTreeTableNode<?> node : nodes) {
 				if (!isSelectable(node)) {
 					continue;
 				}
 				if (TLTreeModelUtil.sameBusinessObjectPath(node, path)) {
 					selectableNodes.add(node);
+					noNodeFound = false;
+				} else {
+					nodeWithDifferentPath = node;
 				}
 			}
+			// There are nodes for the business object, but all have different paths.
+			if (noNodeFound && nodeWithDifferentPath != null) {
+				if (nonMatchingPathNodes.isEmpty()) {
+					nonMatchingPathNodes = new HashMap<>();
+				}
+				nonMatchingPathNodes.put(bo, nodeWithDifferentPath);
+			}
+		}
+		if (!nonMatchingPathNodes.isEmpty()) {
+			selectableNodes.stream().map(TLTreeNode::getBusinessObject).forEach(nonMatchingPathNodes.keySet()::remove);
+			// For the actual selected business objects, the paths are all invalid. Select other
+			// nodes which represent the same selection.
+			selectableNodes.addAll(nonMatchingPathNodes.values());
 		}
 
 		return selectableNodes;
@@ -667,6 +691,9 @@ public class TreeTableComponent extends BoundComponent
 
 	private boolean isSelectionValid(Collection<AbstractTreeTableNode<?>> selection) {
 		for (AbstractTreeTableNode<?> selectedNode : selection) {
+			if (!selectedNode.isAlive() || selectedNode.getModel() != getTreeModel()) {
+				return false;
+			}
 			if (!isSelectable(selectedNode)) {
 				return false;
 			}

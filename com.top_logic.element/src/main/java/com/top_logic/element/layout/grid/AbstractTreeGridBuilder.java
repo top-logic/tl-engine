@@ -565,16 +565,39 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		private Set<GridTreeTableNode> formGroupsToTreeNodes(Set<List<?>> paths) {
 			Set<GridTreeTableNode> treeNodes = new HashSet<>();
 
+			Map<R, GridTreeTableNode> nonMatchingPathNodes = Collections.emptyMap();
 			for (List<?> path : paths) {
 				List<R> gridRowPath = MappedList.create(this::toGridRow, path);
-				List<GridTreeTableNode> nodesForPath = _index.getNodes(CollectionUtil.getLast(gridRowPath));
+				R bo = CollectionUtil.getLast(gridRowPath);
+				List<GridTreeTableNode> nodesForPath = _index.getNodes(bo);
+				if (nodesForPath.isEmpty()) {
+					continue;
+				}
+				GridTreeTableNode nodeWithDifferentPath = null;
+				boolean noNodeFound = true;
 				for (GridTreeTableNode node : nodesForPath) {
 					if (TLTreeModelUtil.sameBusinessObjectPath(node, gridRowPath)) {
 						treeNodes.add(node);
+						noNodeFound = false;
+					} else {
+						nodeWithDifferentPath = node;
 					}
+				}
+				// There are nodes for the business object, but all have different paths.
+				if (noNodeFound && nodeWithDifferentPath != null) {
+					if (nonMatchingPathNodes.isEmpty()) {
+						nonMatchingPathNodes = new HashMap<>();
+					}
+					nonMatchingPathNodes.put(bo, nodeWithDifferentPath);
 				}
 			}
 
+			if (!nonMatchingPathNodes.isEmpty()) {
+				treeNodes.stream().map(TLTreeNode::getBusinessObject).forEach(nonMatchingPathNodes.keySet()::remove);
+				// For the actual selected business objects, the paths are all invalid. Select other
+				// nodes which represent the same selection.
+				treeNodes.addAll(nonMatchingPathNodes.values());
+			}
 			return treeNodes;
 		}
 

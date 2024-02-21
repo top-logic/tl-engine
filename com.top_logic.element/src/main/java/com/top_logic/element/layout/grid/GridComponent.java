@@ -2814,6 +2814,26 @@ public class GridComponent extends EditComponent implements
 		selectionPathChannel().addListener(GridComponent::handleNewSelectionPathChannelValue);
 		selectionPathChannel().addVetoListener(GridComponent::isValidSelectionPathChannelChange);
 
+		Object channelValue = selectionPathChannel().get();
+		if (isInMultiSelectionMode()) {
+			if (!((Collection<?>) channelValue).isEmpty()) {
+				handleNewSelectionPathChannelValue(selectionPathChannel(), Collections.emptySet(), channelValue);
+			} else {
+				Object currentSelection = selectionChannel().get();
+				if (!((Collection<?>) currentSelection).isEmpty()) {
+					handleNewSelectionChannelValue(selectionChannel(), Collections.emptySet(), currentSelection);
+				}
+			}
+		} else {
+			if (channelValue != null) {
+				handleNewSelectionPathChannelValue(selectionPathChannel(), null, channelValue);
+			} else {
+				Object currentSelection = selectionChannel().get();
+				if (currentSelection != null) {
+					handleNewSelectionChannelValue(selectionChannel(), null, currentSelection);
+				}
+			}
+		}
 	}
 
 	/**

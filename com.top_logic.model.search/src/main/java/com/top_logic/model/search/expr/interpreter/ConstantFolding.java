@@ -19,11 +19,13 @@ import java.util.Set;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.ArithmeticExpr;
 import com.top_logic.model.search.expr.Call;
 import com.top_logic.model.search.expr.Compare;
 import com.top_logic.model.search.expr.CompareOp;
+import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.GetDay;
@@ -332,6 +334,17 @@ public class ConstantFolding {
 			if (!expr.isSideEffectFree()) {
 				return super.composeGenericMethod(expr, arg, argumentsResult);
 			}
+
+			// Make get access static.
+			if (expr instanceof DynamicGet) {
+				SearchExpression property = argumentsResult.get(1);
+				if (isLiteral(property)) {
+					return access(argumentsResult.get(0), (TLStructuredTypePart) literalValue(property));
+				} else {
+					return super.composeGenericMethod(expr, arg, argumentsResult);
+				}
+			}
+
 			for (SearchExpression argExpr : argumentsResult) {
 				if (!isLiteral(argExpr)) {
 					return super.composeGenericMethod(expr, arg, argumentsResult);

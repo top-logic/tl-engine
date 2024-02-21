@@ -82,7 +82,12 @@
 													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#source"/>
 												</linking>
 											</case>
-	
+
+											<!-- Note: In the TopLogic BPMN model, AnnotationAssociation links have 
+												a fixed direction from annotatable nodes to text annotations. In the BPML 
+												XML format however, associations can exist with both directions (from node 
+												to annotation or vice versa). During the import, annotation associations 
+												are normalized to always point from nodes to annotations. -->
 											<else>
 												<linking target-var="association-link" value-var="src">
 													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#target"/>

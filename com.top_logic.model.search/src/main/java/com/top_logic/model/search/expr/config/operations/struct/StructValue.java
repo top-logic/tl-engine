@@ -172,6 +172,10 @@ public class StructValue extends AbstractMap<Object, Object> {
 								return (Objects.equals(e1.getKey(), e2.getKey())
 									&& Objects.equals(e1.getValue(), e2.getValue()));
 							}
+
+							public final String toString() {
+								return getKey() + "=" + getValue();
+							}
 						};
 					}
 				};

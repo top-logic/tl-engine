@@ -359,7 +359,7 @@ public class ConstantFolding {
 		}
 
 		private static Collection<?> literalCollection(SearchExpression leftResult) {
-			return (Collection<?>) literalValue(leftResult);
+			return SearchExpression.asCollection(literalValue(leftResult));
 		}
 
 		private static Object literalValue(SearchExpression leftResult) {

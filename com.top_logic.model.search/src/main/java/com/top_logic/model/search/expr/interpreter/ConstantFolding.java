@@ -10,14 +10,18 @@ import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.ArithmeticExpr;
+import com.top_logic.model.search.expr.Call;
 import com.top_logic.model.search.expr.Compare;
 import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.Filter;
@@ -26,6 +30,7 @@ import com.top_logic.model.search.expr.GetDay;
 import com.top_logic.model.search.expr.IfElse;
 import com.top_logic.model.search.expr.IsEmpty;
 import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Lambda;
 import com.top_logic.model.search.expr.Length;
 import com.top_logic.model.search.expr.ListExpr;
 import com.top_logic.model.search.expr.Literal;
@@ -37,6 +42,7 @@ import com.top_logic.model.search.expr.SingleElement;
 import com.top_logic.model.search.expr.Singleton;
 import com.top_logic.model.search.expr.Size;
 import com.top_logic.model.search.expr.Union;
+import com.top_logic.model.search.expr.Var;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
@@ -60,17 +66,16 @@ public class ConstantFolding {
 	 * @return The transformed expression.
 	 */
 	public static SearchExpression transform(SearchExpression expr) {
-		return expr.visit(Fold.INSTANCE, null);
+		return expr.visit(new Fold(), null);
 	}
 
 	private static class Fold extends Rewriter<Void> {
 
-		/**
-		 * Singleton {@link ConstantFolding.Fold} instance.
-		 */
-		public static final Fold INSTANCE = new Fold();
+		private final Map<NamedConstant, Object> _bindings = new HashMap<>();
 
-		private Fold() {
+		private final List<SearchExpression> _stack = new ArrayList<>();
+
+		Fold() {
 			// Singleton constructor.
 		}
 
@@ -344,6 +349,70 @@ public class ConstantFolding {
 			} else {
 				return super.composeGenericMethod(expr, arg, argumentsResult);
 			}
+		}
+
+		@Override
+		public SearchExpression visitCall(Call expr, Void arg) {
+			SearchExpression argument = descendPart(expr, arg, expr.getArgument());
+			push(argument);
+			SearchExpression function = descendPart(expr, arg, expr.getFunction());
+			SearchExpression top = pop();
+
+			if (top == null) {
+				return function;
+			} else {
+				// Keep function call.
+				return composeCall(expr, arg, function, top);
+			}
+		}
+
+		private SearchExpression pop() {
+			return _stack.remove(_stack.size() - 1);
+		}
+
+		@Override
+		public SearchExpression visitLambda(Lambda expr, Void arg) {
+			if (_stack.isEmpty()) {
+				// The result is a function value.
+				return super.visitLambda(expr, arg);
+			}
+
+			SearchExpression top = pop();
+
+			SearchExpression result;
+			if (isLiteral(top)) {
+				NamedConstant key = expr.getKey();
+
+				_bindings.put(key, literalValue(top));
+				super.visitLambda(expr, arg);
+				_bindings.remove(key);
+
+				// Remove call.
+				result = expr.getBody();
+				push(null);
+			} else {
+				// Keep call.
+				result = super.visitLambda(expr, arg);
+
+				push(top);
+			}
+			return result;
+		}
+
+		private void push(SearchExpression top) {
+			_stack.add(top);
+		}
+
+		@Override
+		protected SearchExpression composeVar(Var expr, Void arg) {
+			NamedConstant key = expr.getKey();
+
+			Object value = _bindings.get(key);
+			if (value != null || _bindings.containsKey(key)) {
+				return literal(value);
+			}
+
+			return super.composeVar(expr, arg);
 		}
 
 		private static boolean isLiteral(SearchExpression result) {

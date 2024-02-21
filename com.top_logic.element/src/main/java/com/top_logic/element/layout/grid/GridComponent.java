@@ -2973,6 +2973,9 @@ public class GridComponent extends EditComponent implements
 			// Unable to retrieve model from transient object.
 			return grid.getModel();
 		}
+		if (!GridComponent.isValid(actualSelected)) {
+			return grid.getModel();
+		}
 		return grid.gridBuilder().retrieveModelFromRow(grid, actualSelected);
 	}
 
@@ -3059,6 +3062,9 @@ public class GridComponent extends EditComponent implements
 					}
 				}
 
+				if (!GridComponent.isValid(node)) {
+					return false;
+				}
 				if (!gridBuilder.supportsRow(grid, node)) {
 					return false;
 				}

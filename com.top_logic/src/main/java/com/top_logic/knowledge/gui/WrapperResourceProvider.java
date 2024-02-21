@@ -14,6 +14,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.TLIDColumn;
+import com.top_logic.util.Resources;
 
 /**
  * {@link ResourceProvider} for {@link TLObject} implementations.
@@ -66,13 +67,19 @@ public class WrapperResourceProvider extends AbstractTLItemResourceProvider {
 			}
 
 			if (object instanceof TLNamed) {
-				return ((TLNamed) object).getName();
+				String name = ((TLNamed) object).getName();
+				if (name != null) {
+					return name;
+				}
 			}
 
 			if (type != null) {
 				TLStructuredTypePart namePart = type.getPart(TLNamed.NAME_ATTRIBUTE);
 				if (namePart != null) {
 					return getValue(tlObject, namePart);
+				} else {
+					return Resources.getInstance()
+						.getString(com.top_logic.util.model.check.I18NConstants.OBJECT_WITHOUT_NAME__TYPE.fill(type));
 				}
 			}
 		}

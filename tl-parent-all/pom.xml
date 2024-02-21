@@ -1107,7 +1107,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>5.7.1</version>
+    			<version>6.0.1</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1116,8 +1116,9 @@
 			</dependency>			
 			<dependency>
 			    <groupId>org.pac4j</groupId>
-			    <artifactId>pac4j-jee</artifactId>
-    			<version>5.4.6</version>
+			    <artifactId>pac4j-javaee</artifactId>
+			    <version>6.0.1</version>
+			    <scope>runtime</scope>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>

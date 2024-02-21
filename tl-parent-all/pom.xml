@@ -29,7 +29,7 @@
             <url>https://www.gnu.org/licenses/agpl-3.0.txt</url>
         </license>
     </licenses>
-
+pos
 	<properties>
 		<tl.version>7.8.0-SNAPSHOT</tl.version>
 		<jetty.version>9.4.51.v20230217</jetty.version>
@@ -689,7 +689,7 @@
 			<dependency>
 			    <groupId>org.postgresql</groupId>
 			    <artifactId>postgresql</artifactId>
-			    <version>42.6.0</version>
+			    <version>42.7.2</version>
 			</dependency>
 
 			<!-- External dependencies -->

@@ -1125,12 +1125,17 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	private List<DefaultTreeUINode> findAllNodes(Collection<?> businessObject) {
 		return businessObject.stream()
-			.map(_treeModel.getIndex()::getNodes)
+			.map(this::findNodes)
 			.flatMap(List::stream)
 			.collect(Collectors.toList());
 	}
 
 	private List<DefaultTreeUINode> findNodes(Object businessObject) {
+		if (_treeModel == null) {
+			// This method is called when selection or selectionPath channel changes. In this case
+			// the tree model may not yet be created.
+			return Collections.emptyList();
+		}
 		return _treeModel.getIndex().getNodes(businessObject);
 	}
 
@@ -1304,7 +1309,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 							/* It may happen that a parent node was processed before. In this case
 							 * the parent (and therefore the child node) are already removed from
 							 * parent. */
-							assert _treeModel.getIndex().getNodes(node.getBusinessObject()).isEmpty();
+							assert findNodes(node.getBusinessObject()).isEmpty();
 							continue;
 						}
 						removeNodeFromParent(node);

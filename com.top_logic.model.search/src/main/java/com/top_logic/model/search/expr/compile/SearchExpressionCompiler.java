@@ -110,6 +110,9 @@ public class SearchExpressionCompiler {
 
 			// Structurally simplify the expression (union pull-out, and pull-out)
 			expr = SearchExpressionCompiler.applyTransform(expr, TRANSFORMS);
+		} else {
+			// Execute operations on literals.
+			expr = ConstantFolding.transform(expr);
 		}
 
 		// (Partially) compile filter functions to DB queries.

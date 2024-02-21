@@ -1405,6 +1405,39 @@
 								</component-keys>
 							</identifiers>
 						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.EditComponentCommand"
+							command-label="Sicht bearbeiten"
+							command-name="editComponentCommand"
+							component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
+							component-name="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml#Tree"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Knoten-Prädikat"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)||$node==`DemoTypes#ROOT`"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<uuids>
+									<uuid value="ID_d87fc3a8_b323_43b6_8f3f_0ce469e2ab52"/>
+								</uuids>
+							</identifiers>
+						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 							change-kind="ABSOLUTE"
 							user-id="root"

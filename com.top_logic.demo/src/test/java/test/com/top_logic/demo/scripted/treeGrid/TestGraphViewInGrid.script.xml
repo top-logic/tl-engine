@@ -711,6 +711,26 @@
 						</path>
 					</selection-model-name>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="INCREMENTAL"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming$GridNodeLabelName"
+							path="ROOT > C > X"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Graph-Grid > Baumdarstellung eines Graphen"
+							/>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+						<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Komponenten > Graph-Grid > Baumdarstellung eines Graphen"
+						/>
+					</selection-model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="set-equals"
 					inverted="false"
@@ -1129,8 +1149,8 @@
 							component-name="com.top_logic.demo/technical/components/graphGrid/treeViewOfGraphGrid.layout.xml#Grid"
 							user-id="root"
 						>
-							<reason-key>#("Kein Parent-Knoten gewählt"@de, "No parent node selected"@en)</reason-key>
 							<arguments/>
+							<reason-key>#("Kein Parent-Knoten gewählt"@de, "No parent node selected"@en)</reason-key>
 						</action>
 					</actions>
 				</action>
@@ -1177,8 +1197,8 @@
 							component-name="com.top_logic.demo/technical/components/graphGrid/treeViewOfGraphGrid.layout.xml#Grid"
 							user-id="root"
 						>
-							<reason-key>#("Kein Parent-Knoten gewählt"@de, "No parent node selected"@en)</reason-key>
 							<arguments/>
+							<reason-key>#("Kein Parent-Knoten gewählt"@de, "No parent node selected"@en)</reason-key>
 						</action>
 					</actions>
 				</action>

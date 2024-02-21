@@ -641,7 +641,7 @@
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="node -> $node"
+						value="node -> model -> $model"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"

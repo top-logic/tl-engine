@@ -175,7 +175,7 @@
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp">
-					<expected-failure-message>Ungültiger Wert in Attribut "name" von "Objekt ohne Namen": Der Wert darf nicht leer sein.</expected-failure-message>
+					<expected-failure-message>Ungültiger Wert in Attribut "name" von "Unbenanntes Objekt vom Typ "Sub sub"": Der Wert darf nicht leer sein.</expected-failure-message>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 						command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 						command-label="Speichern"
@@ -639,7 +639,7 @@
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp">
-							<expected-failure-message>Ungültiger Wert in Attribut "name" von "Objekt ohne Namen": Der Wert darf nicht leer sein.</expected-failure-message>
+							<expected-failure-message>Ungültiger Wert in Attribut "name" von "Unbenanntes Objekt vom Typ "Sub sub"": Der Wert darf nicht leer sein.</expected-failure-message>
 							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 								command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 								command-label="Speichern"
@@ -1168,7 +1168,7 @@
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp">
-							<expected-failure-message>Ungültiger Wert in Attribut "name" von "Objekt ohne Namen": Der Wert darf nicht leer sein.</expected-failure-message>
+							<expected-failure-message>Ungültiger Wert in Attribut "name" von "Unbenanntes Objekt vom Typ "Sub sub"": Der Wert darf nicht leer sein.</expected-failure-message>
 							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 								command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 								command-label="Speichern"
@@ -1690,7 +1690,7 @@
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp">
-							<expected-failure-message>Ungültiger Wert in Attribut "Name" von "Objekt ohne Namen": Der Wert darf nicht leer sein.</expected-failure-message>
+							<expected-failure-message>Ungültiger Wert in Attribut "Name" von "Unbenanntes Objekt vom Typ "Sub sub"": Der Wert darf nicht leer sein.</expected-failure-message>
 							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 								command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 								command-label="Speichern"

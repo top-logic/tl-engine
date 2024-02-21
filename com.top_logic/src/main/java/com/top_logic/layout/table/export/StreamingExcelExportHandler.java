@@ -138,15 +138,15 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 	}
 
 	@Override
-	protected BinaryData createDownloadData(I18NLog log, LayoutComponent component) {
-		return createExporter(log, component).createData();
+	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
+		return createExporter(progressIncrementer, log, component).createData();
 	}
 
 	/**
 	 * Creates the export algorithm.
 	 */
-	protected Exporter createExporter(I18NLog log, LayoutComponent component) {
-		return new Exporter(log, component);
+	protected Exporter createExporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
+		return new Exporter(progressIncrementer, log, component);
 	}
 
 	/**
@@ -164,12 +164,15 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 
 		private final TableData _tableData;
 
+		private final Runnable _progressIncrementer;
+
 		/**
 		 * Creates a {@link Exporter}.
 		 */
-		public Exporter(I18NLog log, LayoutComponent component) {
+		public Exporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
 			_log = log;
 			_component = component;
+			_progressIncrementer = progressIncrementer;
 			_tableData = extractTableData(getComponent());
 		}
 
@@ -274,6 +277,7 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 			_exportRenderContexts = CollectionFactoryShared.map();
 			for (; rowId < theRows; rowId++) {
 				_exportRowContext.updateRows(rowId, rowId);
+				_progressIncrementer.run();
 				log().info(I18NConstants.EXPORTING_ROW__NUM_TOTAL.fill(rowId + 1, theRows));
 
 				if (shouldExportRow(viewModel, rowId)) {

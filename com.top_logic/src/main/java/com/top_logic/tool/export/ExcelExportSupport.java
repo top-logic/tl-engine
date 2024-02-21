@@ -324,7 +324,7 @@ public class ExcelExportSupport {
 	 * @param tableData
 	 *        The {@link TableData} to export.
 	 * @param complete
-	 *        Whether all information should be exported (not only thus currently displayed)
+	 *        Whether all information should be exported (not only those currently displayed)
 	 * @param aStartRow
 	 *        The row to start writing the excel values for.
 	 * @return The excel based representation of the table.

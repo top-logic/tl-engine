@@ -110,7 +110,7 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 	}
 
 	@Override
-	protected BinaryData createDownloadData(I18NLog log, LayoutComponent component) {
+	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
 		log.info(I18NConstants.STARTING_EXPORT);
 		Config config = (Config) getConfig();
 

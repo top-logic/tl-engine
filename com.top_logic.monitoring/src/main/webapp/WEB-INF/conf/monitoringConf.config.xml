@@ -16,5 +16,12 @@
 				</modules>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+			<instance>
+				<label-providers>
+					<provider kind="CODE" type="com.top_logic.monitoring.log.LogLineSeverity" implementation="com.top_logic.monitoring.log.LogLineSeverityLabelProvider" />
+				</label-providers>
+			</instance>
+		</config>
 	</services>
 </application>

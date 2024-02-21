@@ -8,10 +8,23 @@
 		<param name="filter"
 			optional="true"
 		/>
-		<param name="buttons">
+		<param name="dumpLogLineToConsoleCommand">
 			<button id="dumpLogLineToConsole"
 				class="com.top_logic.monitoring.log.DumpLogLineCommand"
 			/>
+		</param>
+		<param name="exportExcelFileName"
+			value="log.xls"
+		/>
+		<param name="exportExcelCommand">
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+				exportNameKey="/s${exportExcelFileName}"
+			/>
+		</param>
+		<param name="buttons">
+			${dumpLogLineToConsoleCommand}
+			${exportExcelCommand}
 		</param>
 	</params>
 
@@ -53,7 +66,6 @@
 				</column>
 				<column name="severity"
 					columnWidth="90px"
-					labelProvider="com.top_logic.monitoring.log.LogLineSeverityLabelProvider"
 				>
 					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
 						show-option-entries="true"
@@ -96,6 +108,7 @@
 				</column>
 				<column name="details"
 					columnWidth="35px"
+					excelRenderer="com.top_logic.monitoring.log.LogLineDetailsExcelRenderer"
 					renderer="com.top_logic.monitoring.log.LogLineDetailsColumnRenderer"
 				>
 					<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"

@@ -88,6 +88,16 @@
 		>
 			<arguments/>
 		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			command-label="Nach Excel exportieren..."
+			command-name="exportExcel"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml#logLinesTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 			component-name="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml#logLinesTable"

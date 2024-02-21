@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
@@ -16,31 +16,33 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="release->all(`test.tiles:Ticket`).filter(t -> $t.get(`test.tiles:Ticket#planedIn`).containsElement($release))"
-			modelForElement="t -> $t.get(`test.tiles:Ticket#reportedFor`).firstElement()"
 			supportsElement="element->$element.instanceOf(`test.tiles:Ticket`)"
 			supportsModel="true"
-		/>
+		>
+			<modelForElement><![CDATA[t -> model -> {
+  releases = $t.get(`test.tiles:Ticket#planedIn`);
+  if ($releases.containsElement($model), $model, $releases.firstElement())
+}]]></modelForElement>
+		</modelBuilder>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
 			/>
 			<button id="ID_e09aeeab_7fa3_47b8_9a35_1aaaacfd8741"
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-				clique="create"
 				createContext="model->$model"
-				group="Create"
 			>
 				<resourceKey key="dynamic.131b74af-d3cc-4c71-9762-500977778697">
 					<en>New ticket</en>
 					<de>Neues Ticket</de>
 				</resourceKey>
-				<checkScopeProvider class="com.top_logic.layout.basic.check.SelfCheckProvider"/>
+				<checkScopeProvider/>
 				<initOperation><![CDATA[release -> ticket -> {
     product = $release.referers(`test.tiles:Product#releases`).singleElement();
     $product.add(`test.tiles:Product#tickets`, $ticket);
     $ticket.add(`test.tiles:Ticket#planedIn`, $release);
 }]]></initOperation>
-				<type-options class="com.top_logic.element.layout.create.ConstantCreateTypeOptions"
+				<type-options
 					include-subtypes="false"
 					type="test.tiles:Ticket"
 				/>

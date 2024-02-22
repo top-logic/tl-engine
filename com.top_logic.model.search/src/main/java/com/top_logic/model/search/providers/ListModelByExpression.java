@@ -15,6 +15,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -175,7 +176,7 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		 * </p>
 		 */
 		@Name(MODEL_FOR_ELEMENT_NAME)
-		@ItemDefault(Expr.Null.class)
+		@FormattedDefault("element->model->$model")
 		@NonNullable
 		Expr getModelForElement();
 

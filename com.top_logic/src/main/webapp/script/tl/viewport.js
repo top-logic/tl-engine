@@ -817,6 +817,7 @@ services.viewport = {
 		const activeTab = tabContainer.querySelector('.activeTab');
 		const scrollLeftButton = tabLayout.querySelector('.tlTabScrollLeft');
 		const scrollRightButton = tabLayout.querySelector('.tlTabScrollRight');
+
 		/* 
 		*	Code has to be skipped when the element
 		*	has no tabbar, for example a mega menu.
@@ -834,9 +835,12 @@ services.viewport = {
 	        const scrollRightButtonWidth = scrollRightButton ? scrollRightButton.offsetWidth : 0;
 	        const visibleLeft = containerScrollLeft + scrollLeftButtonWidth;
 	        const visibleRight = visibleLeft + containerWidth - scrollRightButtonWidth;
-	
+			// Adjusts scroll position to ensure that a selected tab, if clipped on the left side,
+			// is brought fully into view within the scroll container, while maintaining a gap
+			// between the tab and the left scroll arrow.
+			const spaceBetweenScrollButtonAndSelectedTab = 60;
 	        if (tabLeft < visibleLeft) {
-	            tabContainer.scrollLeft = tabLeft - scrollLeftButtonWidth - 60;
+	            tabContainer.scrollLeft = tabLeft - scrollLeftButtonWidth - spaceBetweenScrollButtonAndSelectedTab;
 	        }
 	        else if (tabRight > visibleRight) {
 	            tabContainer.scrollLeft = tabRight - containerWidth;

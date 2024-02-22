@@ -2536,6 +2536,11 @@ services.form = {
 	TabBarControl : {
 		
 		handleClick : function(controlID, newSelection) {
+			const scrollContainer = document.getElementById(controlID).querySelector('.tlTabScrollContainer');
+	        if (scrollContainer) {
+	            services.viewport.savedTabScrollOffset = scrollContainer.scrollLeft;
+	        }
+
 			services.ajax.execute("dispatchControlCommand", {
 				controlCommand : "tabSwitch",
 				newSelection : newSelection,

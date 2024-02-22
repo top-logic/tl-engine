@@ -923,28 +923,33 @@ BAL = {
 	},
 
     getViewportWidthOfWindowObject: function(windowObject){
+    	// Reduces the viewport width by 1px to account for rounding discrepancies in browser calculations, 
+		// preventing unintended scrollbars due to slight oversizing of the application content.
+    	const roundingVariable = 1;
     	// Dynamic test, because property depends on the browser mode!
 		if (windowObject.innerWidth) {
-			return windowObject.innerWidth;
+			return windowObject.innerWidth - roundingVariable;
 		} else if (windowObject.document.documentElement && windowObject.document.documentElement.clientWidth) {
 			// Explorer 6 Strict Mode
-			return windowObject.document.documentElement.clientWidth;
+			return windowObject.document.documentElement.clientWidth - roundingVariable;
 		} else if (windowObject.document.body) {
 			// other Explorers
-			return windowObject.document.body.clientWidth;
+			return windowObject.document.body.clientWidth - roundingVariable;
 		}	
     },
 
     getViewportHeightOfWindowObject: function(windowObject){
+    	// @see getViewportWidthOfWindowObject()#roundingVariable
+    	const roundingVariable = 1;
     	// Dynamic test, because property depends on the browser mode!
 		if (windowObject.innerHeight) {
-			return windowObject.innerHeight;
+			return windowObject.innerHeight - roundingVariable;
 		} else if (windowObject.document.documentElement && windowObject.document.documentElement.clientHeight) {
 			// Explorer 6 Strict Mode
-			return windowObject.document.documentElement.clientHeight;
+			return windowObject.document.documentElement.clientHeight - roundingVariable;
 		} else if (windowObject.document.body) {
 			// other Explorers
-			return windowObject.document.body.clientHeight;
+			return windowObject.document.body.clientHeight - roundingVariable;
 		}	
     },
 

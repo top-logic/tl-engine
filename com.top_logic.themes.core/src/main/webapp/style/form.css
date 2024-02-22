@@ -30,7 +30,6 @@
 	display: flex;
 	gap: var(--spacing-01);
 	margin-left: auto;
-	padding-right: var(--spacing-03);
 }
 
 .mboxContent .dfContent {
@@ -46,7 +45,6 @@
 	display: flex;
 	gap: var(--spacing-01);
 	margin-left: auto;
-	padding-right: var(--spacing-03);
 }
 
 .dfListCommands .cOnExpandedControl {
@@ -472,11 +470,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .dfEntryTitle.colored .lFixedRight,
 .dfEntryTitle.colored:hover .lFixedRight a {
 	background: none;
-}
-
-.dfEntryTitle.colored .lFixedRight a:hover {
-	background: none;
-	color: var(--link-primary-hover);
 }
 
 .cOnExpandedControl {
@@ -1387,7 +1380,12 @@ div.cal_zoom_inAnimation {
 	display: inline-flex;
 }
 
-.cPopupSelect {
+.cPopupSelect.active {
+	display: inline-flex;
+	width: 100%;
+}
+
+.cPopupSelect.cannot-edit {
 	display: inline-flex;
 	flex-wrap: wrap;
 	width: 100%;
@@ -1406,6 +1404,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image,
 td.tl-table__cell--selected .cDecoratedCell a.input-image:hover,
 td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 	color: var(--icon-secondary);
+	outline: none !important;
 }
 
 .lFixedRight,
@@ -1454,6 +1453,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 .lFixedRight .button_minus:focus-within::after {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	border-left: none;
+	outline: none !important;
 }
 
 .lFixedRight a.disabled,
@@ -1471,6 +1471,7 @@ span.cIconSelect .input-image.cannot-edit i {
 .lFixedRight a.disabled:focus,
 .lFixedRight .button_minus:focus::after {
 	box-shadow: none;
+	outline: none !important;
 }
 
 .cTextInput input,
@@ -1647,13 +1648,13 @@ textarea:focus,
 .error-annotation .ace_editor textarea:focus,
 .warning-annotation .ace_editor textarea:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
-	outline: none;
+	outline: none !important;
 }
 
 .cIntegerInput.num input:focus,
 .cIntegerInput.num.error input:focus,
 .cIntegerInput.num.error-annotation input:focus {
-	outline: none;
+	outline: none !important;
 	border: none;
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
@@ -1749,8 +1750,8 @@ input[type="radio"] {
 	display: inline-grid;
 	place-content: center;
 	position: relative;
-	height: 1rem;
-	width: 1rem;
+	min-height: 1rem;
+	min-width: 1rem;
 	border-radius: 50%;
 	border: 1px solid var(--icon-primary);
 }
@@ -1760,8 +1761,8 @@ input[type="radio"]::before {
  	position: absolute;
  	top: 50%;
  	left: 50%;
- 	height: 0.5rem;
- 	width: 0.5rem;
+ 	min-height: 0.5rem;
+ 	min-width: 0.5rem;
  	border-radius: 50%;
  	background-color: var(--background);
 	transform: scale(0);
@@ -1773,7 +1774,7 @@ input[type="radio"]:checked::before {
 }
 
 input[type="radio"]:focus {
-	box-shadow: inset 0 0 0 1px var(--focus);;
+	box-shadow: inset 0 0 0 1px var(--focus);
 }
 
 /* 		Check Box styles	*/
@@ -1896,6 +1897,7 @@ span.bcc-option, .cChoice-option {
 .cCheckbox {
 	display: inline-flex;
 	align-items: center;
+	vertical-align: middle;
 }
 
 .fltSubContent .cSelectOption,
@@ -1978,10 +1980,6 @@ div.cColorComposer tr.spacer {
     cursor:pointer;
     height:30px;
     width:30px;
-}
-
-.mandatory > .ColorChooser {
-	border:thick solid var(--MANDATORY_FIELD_BG);
 }
 
 .cBeacon {
@@ -2195,6 +2193,7 @@ div.sizeContainer, div.imageContainer {
 	border-radius: var(--corner-radius);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+	white-space: nowrap;
 }
 
 .cDataItem label .cmdImg {
@@ -2203,6 +2202,7 @@ div.sizeContainer, div.imageContainer {
 
 .cDataItem label .cmdLabel {
 	padding-right: var(--spacing-03);
+	white-space: nowrap;
 }
 
 .cDataItem label:hover {
@@ -2212,6 +2212,7 @@ div.sizeContainer, div.imageContainer {
 
 .cDataItem label:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 .cDataItem label:active {
@@ -2366,6 +2367,7 @@ span.disabled .ddwttDropBtn {
 .ddwttDropBtn:focus,
 .error.ddwttDropBtnActive .ddwttDropBtn{
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 .fptSubtitleContent .ddwttDropBtn {
@@ -2451,7 +2453,7 @@ span.disabled .ddwttChevron::after {
 .ddwttSearch:focus-visible {
 	color: var(--text-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
-	outline: none;
+	outline: none !important;
 }
 
 .ddwttHide {
@@ -2482,6 +2484,7 @@ span.disabled .ddwttChevron::after {
 
 .ddwttActiveItem:focus{
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
 }
 
 .ddwttImmutableItem {
@@ -2490,7 +2493,11 @@ span.disabled .ddwttChevron::after {
 }
 
 .ddwttItem .ddwttItemLabel {
-	display: inline-block;
+	display: inline-block;}
+
+.ddwttItemLabel {
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 /* Tags */
@@ -2659,5 +2666,6 @@ div.sifSearchElementSelected {
 
 div.sifSearchElementSelected:focus {
     box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+    outline: none !important;
 }
 

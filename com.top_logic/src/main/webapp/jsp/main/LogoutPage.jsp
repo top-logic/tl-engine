@@ -39,6 +39,7 @@ try {
             overflow: hidden;
             background: transparent;
             height: 100vh;
+            margin: 0;
         }
 
         .container {
@@ -101,12 +102,18 @@ try {
             margin-bottom: 1.5rem;
         }
 
-        img {
-            width: 240px;
+        .logo img {
+            width: 340px;
+            height: auto;
         }
 
         /** Text styling **/
         h1 {
+        	font-family: 'Inter-SemiBold';
+			font-size: 1.5rem;
+			line-height: 2rem;
+			letter-spacing: 0px;
+            color: #101113;
             margin-top: 0;
             margin-bottom: 1.5rem;
         }

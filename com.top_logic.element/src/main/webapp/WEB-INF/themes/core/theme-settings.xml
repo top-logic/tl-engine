@@ -77,7 +77,7 @@
 		expr="%com.top_logic.element.comment.layout.Icons.QUOTE%"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.Icons.DELETE_FORM"
-		value="css:bi bi-arrow-counterclockwise"
+		value="css:bi bi-trash3"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.Icons.DELETE_FORM_DISABLED"
 		expr="%com.top_logic.element.layout.formeditor.Icons.DELETE_FORM%"

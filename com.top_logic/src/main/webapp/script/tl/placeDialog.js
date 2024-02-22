@@ -82,7 +82,7 @@ PlaceDialog = {
 	
 	setVerticalPosition: function(tooltip, ttPos, targetPos, positioning) {
 		let topSpace = targetPos.top,
-			bottomSpace = (window.innerHeight - targetPos.bottom);
+			bottomSpace = (document.documentElement.clientHeight - targetPos.bottom);
 			
 		let contentStyle = window.getComputedStyle(tooltip.firstElementChild),
 			ttPadding = parseFloat(contentStyle.getPropertyValue("--ttPadding")),

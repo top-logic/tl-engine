@@ -90,6 +90,10 @@ i.yellow {
 	color: var(--support-warning);
 }
 
+a img.type-image {
+    vertical-align: middle;
+}
+
 /* Overlay styles are needed as long as the old icons with an overlay are not removed completely */
 i[class*=" overlay-"] span::before {
 	margin-left: -0.8em;
@@ -152,7 +156,8 @@ a:not(.disabled):active {
 
 a:not(.disabled):focus {
     color: var(--link-primary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: 1px solid var(--focus);
+	outline-offset: 2px;
 }
 
 a:visited, a.gotoLink:visited,
@@ -669,6 +674,7 @@ div.fltList {
 .popupMenu a:focus {
 	color: var(--text-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
 }
 
 .popupMenu a:active {
@@ -817,7 +823,7 @@ div.dlgMaximized .input-image.dlgRestore {
 	cursor: move;
 	height: var(--DIALOG_TITLE_HEIGHT);
 	background-color: var(--layer-accent);
-	padding: 0 var(--spacing-02);
+	padding: 0 var(--spacing-01);
 	box-sizing: border-box;
 }
 
@@ -833,6 +839,7 @@ div.dlgMaximized .input-image.dlgRestore {
 	flex-grow: 2;
 	order: 2;
 	overflow: hidden;
+	padding: var(--spacing-02) var(--spacing-01);
 }
 
 .dlgTitle {
@@ -1184,6 +1191,7 @@ button.moveOption {
 	background: var(--layer-hover);
     text-decoration: none !important;
     box-shadow: none !important;
+    outline: none !important;
 }
 
 .tl-mega-menu__option--selected {
@@ -1940,7 +1948,7 @@ h5.card-title a:focus {
 	border-radius: var(--corner-radius);
 }
 
-.tlUser a {
+.tlUser.cButton.cmdLink a {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1949,19 +1957,20 @@ h5.card-title a:focus {
 	width: inherit;
 }
 
-.tlUser a:hover,
-.tlUser a:active,
-.tlUser a:focus {
+.tlUser.cButton.cmdLink a:hover,
+.tlUser.cButton.cmdLink a:active,
+.tlUser.cButton.cmdLink a:focus {
 	color: var(--icon-on-color);
 	text-decoration: none;
 }
 
-.tlUser a i {
+.tlUser.cButton.cmdLink a i {
 	font-size: 1.5rem;
 }
 
-.ToolBarContainer .IconContainer .cButton a,
-.ToolBarContainer .IconContainer .trbEntry a,
+.ToolBarContainer .IconContainer .cButton.cmdLink a, 
+.ToolBarContainer .IconContainer .cButton.cmdLinkActive a,
+.ToolBarContainer .IconContainer .trbEntry a, 
 .quickSearch .cButton a {
 	display: flex;
 	justify-content: center;
@@ -1996,38 +2005,42 @@ h5.card-title a:focus {
 	font-size: 1rem;
 }
 
-.mtbGroup .cButton {
+.mtbGroup .cButton.cmdLink {
 	background: transparent;
 }
 
-.quickSearch .cButton.quickSearchButton a,
-.mtbGroup .cButton a,
-.mtbGroup .trbEntry a,
-.cButton a[alt="Administration"] {
+.quickSearch .cButton.quickSearchButton a, 
+.mtbGroup .cButton.cmdLink a, 
+.mtbGroup .trbEntry a, 
+.cButton.cmdLink a[alt="Administration"] {
 	color: var(--icon-secondary);
 	padding: inherit;
 }
 
 .quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:hover,
-.mtbGroup .cButton:not(.cmdLinkDisabled) a:hover,
+.mtbGroup .cButton.cmdLink a:hover,
 .mtbGroup .trbEntry a:not(.disabled):hover,
-.cButton:not(.cmdLinkDisabled) a:hover[alt="Administration"] {
+.cButton.cmdLink a:hover[alt="Administration"] {
+	color: var(--icon-secondary);
 	background: var(--field-hover);
 	box-shadow: inset 0px 0px 0px 1px var(--field-hover);
 }
 
 .quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:focus,
-.mtbGroup .cButton:not(.cmdLinkDisabled) a:focus,
+.mtbGroup .cButton.cmdLink a:focus,
 .mtbGroup .trbEntry:not(.disabled) a:focus,
-.cButton:not(.cmdLinkDisabled) a:focus[alt="Administration"] {
+.cButton.cmdLink a:focus[alt="Administration"] {
+	color: var(--icon-secondary);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	background: transparent;
+	outline: none;
 }
 
 .quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:active,
-.mtbGroup .cButton:not(.cmdLinkDisabled) a:active,
+.mtbGroup .cButton.cmdLink a:active,
 .mtbGroup .trbEntry:not(.disabled) a:active,
-.cButton:not(.cmdLinkDisabled) a:active[alt="Administration"] {
+.cButton.cmdLink a:active[alt="Administration"] {
+	color: var(--icon-secondary);
 	background: var(--background-active);
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
@@ -2056,7 +2069,6 @@ h5.card-title a:focus {
 	color: var(--text-on-color);
 }
 
-
 /*
 ****						****
 ****	Breadcrump syles	****
@@ -2070,7 +2082,7 @@ h5.card-title a:focus {
 
 .BreadCrumbOuter {
     display: flex;
-    align-self: center;
+    align-self: flex-start;
     background: var(--layer);
     width: 100%;
 }
@@ -2216,12 +2228,17 @@ h5.card-title a:focus {
 .treeNode .fToggle,
 .fToggle.tcrToggle, 
 .tlLeafIcon,
-.tcrNode .treeNode span i {
+.tcrNode .treeNode span i,
+.treeNode img,
+.tcrNode .treeNode span img {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	color: var(--icon-secondary);
-	/* Is needed for consistency as long as there are toggle arrow pictures width 15px. */
+	/* 
+	Is needed for consistency as long as there are backend rendered 
+	toggle arrow pictures with width 15px. 
+	*/
 	width: 15px;
 }
 
@@ -2267,7 +2284,7 @@ h5.card-title a:focus {
 }
 
 .tcrNode .treeNode a:focus {
-	color: var(--icon-secondary);
+	color: var(--icon-secondary); /* Without it it's becoming the color of the anchor */
 	box-shadow: none;
 }
 
@@ -2380,6 +2397,18 @@ div.treeNode.treeSelected.dndInsertInto {
 
 .cCollapsibleHorizontal .cCollapsibleButtons .cButton {
     margin-left: 0;
+}
+
+span.tbGroup,
+.cToolbar,
+.cCollapsibleButtons,
+.cCollapsibleToolbar {
+    display: inline-flex;
+}
+
+.tbGroup.cImageButton input {
+	height: 1.5rem;
+	width: 1.5rem;
 }
 
 /*

@@ -27,6 +27,8 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage WINDOW_NORMALIZE;
 
+	public static ThemeImage WINDOW_NORMALIZE_AFTER_MAXIMIZED;
+
 	/**
 	 * Image to minimize the window size.
 	 */

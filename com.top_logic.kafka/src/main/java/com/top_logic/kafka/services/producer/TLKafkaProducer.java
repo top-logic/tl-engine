@@ -10,11 +10,11 @@ import static java.util.Objects.*;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.internals.DefaultPartitioner;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -24,7 +24,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
@@ -119,14 +118,18 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		 * @see ProducerConfig#ENABLE_IDEMPOTENCE_DOC
 		 */
 		@Name(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG)
-		@BooleanDefault(false)
+		@BooleanDefault(true)
 		@KafkaClientProperty
 		boolean getEnableIdempotence();
 
 		/**
-		 * @see ConsumerConfig#INTERCEPTOR_CLASSES_CONFIG
+		 * @see ProducerConfig#INTERCEPTOR_CLASSES_CONFIG
+		 * 
+		 * @implNote Kafka specifies this in the {@link ConsumerConfig} <em>and</em> the
+		 *           {@link ProducerConfig}, but <em>not</em> in the {@link CommonClientConfigs}. It
+		 *           is therefore declared here that way, too.
 		 */
-		@Name(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG)
+		@Name(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG)
 		@KafkaClientProperty
 		String getInterceptorClasses();
 
@@ -171,6 +174,14 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		int getMaxInFlightRequestsPerConnection();
 
 		/**
+		 * @see ProducerConfig#METADATA_MAX_IDLE_CONFIG
+		 */
+		@Name(ProducerConfig.METADATA_MAX_IDLE_CONFIG)
+		@LongDefault(5 * 60 * 1000)
+		@KafkaClientProperty
+		long getMetadataMaxIdleMS();
+
+		/**
 		 * @see ProducerConfig#MAX_REQUEST_SIZE_DOC
 		 */
 		@Name(ProducerConfig.MAX_REQUEST_SIZE_CONFIG)
@@ -182,16 +193,37 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		 * @see ProducerConfig#PARTITIONER_CLASS_CONFIG
 		 */
 		@Name(ProducerConfig.PARTITIONER_CLASS_CONFIG)
-		@ClassDefault(DefaultPartitioner.class)
 		@KafkaClientProperty
 		Class<? extends Partitioner> getPartitionerClass();
+
+		/**
+		 * @see ProducerConfig#PARTITIONER_IGNORE_KEYS_CONFIG
+		 */
+		@Name(ProducerConfig.PARTITIONER_IGNORE_KEYS_CONFIG)
+		@KafkaClientProperty
+		boolean getPartitionerIgnoreKeys();
+
+		/**
+		 * @see ProducerConfig#PARTITIONER_ADPATIVE_PARTITIONING_ENABLE_CONFIG
+		 */
+		@Name(ProducerConfig.PARTITIONER_ADPATIVE_PARTITIONING_ENABLE_CONFIG)
+		@BooleanDefault(true)
+		@KafkaClientProperty
+		boolean getPartitionerAdaptivePartitioningEnabled();
+
+		/**
+		 * @see ProducerConfig#PARTITIONER_AVAILABILITY_TIMEOUT_MS_CONFIG
+		 */
+		@Name(ProducerConfig.PARTITIONER_AVAILABILITY_TIMEOUT_MS_CONFIG)
+		@KafkaClientProperty
+		long getPartitionerAvailabilityTimeoutMS();
 
 		@Override
 		@IntDefault(32 * 1024)
 		int getReceiveBufferBytes();
 
 		@Override
-		@IntDefault(20 * 1000)
+		@IntDefault(30 * 1000)
 		int getRequestTimeoutMS();
 
 		/**

@@ -17,7 +17,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.kafka.server.module.KafkaModule;
 
 import kafka.Kafka;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 /**
  * {@link RearrangableTestSetup} removing {@link Kafka} data.
@@ -38,7 +38,7 @@ public class RemoveKafkaFiles extends RearrangableTestSetup {
 	@Override
 	protected void doSetUp() throws Exception {
 		KafkaModule kafkaModule = KafkaModule.Module.INSTANCE.getImplementationInstance();
-		List<String> logDirs = JavaConversions.seqAsJavaList(kafkaModule.getKafkaConfig().logDirs());
+		List<String> logDirs = JavaConverters.asJava(kafkaModule.getKafkaConfig().logDirs());
 		for (String logDir : logDirs) {
 			FileUtilities.deleteR(new File(logDir));
 		}

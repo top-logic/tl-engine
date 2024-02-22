@@ -24,7 +24,9 @@ import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
+import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdatePartType;
 
 /**
  * Visitor interface for the {@link DiffElement} hierarchy.
@@ -65,6 +67,9 @@ public interface DiffVisitor<R, A, E extends Throwable> {
 	/** Visit case for {@link AddAnnotations}. */
 	R visit(AddAnnotations diff, A arg) throws E;
 
+	/** Visit case for {@link SetAnnotations}. */
+	R visit(SetAnnotations diff, A arg) throws E;
+
 	/** Visit case for {@link RemoveAnnotation}. */
 	R visit(RemoveAnnotation diff, A arg) throws E;
 
@@ -94,5 +99,8 @@ public interface DiffVisitor<R, A, E extends Throwable> {
 
 	/** Visit case for {@link RenamePart}. */
 	R visit(RenamePart diff, A arg) throws E;
+
+	/** Visit case for {@link UpdatePartType}. */
+	R visit(UpdatePartType diff, A arg) throws E;
 
 }

@@ -18,7 +18,7 @@ import com.top_logic.model.TLModelPart;
 public interface PartUpdate extends Update {
 
 	/**
-	 * The {@link TLModelPart} to update.
+	 * The qualified name of the {@link TLModelPart} to update.
 	 */
 	@Mandatory
 	String getPart();

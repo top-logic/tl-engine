@@ -55,7 +55,11 @@ import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
+import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdatePartType;
+import com.top_logic.element.model.migration.ChangeAttributeTargetType;
+import com.top_logic.element.model.migration.ChangeAttributeTargetType.ChangeRefConfig;
 import com.top_logic.element.model.migration.model.AbstractCreateTypePartProcessor;
 import com.top_logic.element.model.migration.model.AbstractEndAspectProcessor;
 import com.top_logic.element.model.migration.model.AddTLAnnotations;
@@ -81,6 +85,7 @@ import com.top_logic.element.model.migration.model.RemoveTLClassGeneralization;
 import com.top_logic.element.model.migration.model.ReorderTLClassGeneralization;
 import com.top_logic.element.model.migration.model.ReorderTLTypePart;
 import com.top_logic.element.model.migration.model.SetDefaultTLClassifierProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLAnnotations;
 import com.top_logic.element.model.migration.model.UpdateTLAssociationEndProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
@@ -170,6 +175,17 @@ public class CreateMigrationProcessors extends ApplyModelPatch {
 		super.visit(diff, arg);
 
 		AddTLAnnotations.Config config = newConfigItem(AddTLAnnotations.Config.class);
+		config.setName(diff.getPart());
+		copyAnnotations(diff, config);
+		addProcessor(config);
+		return null;
+	}
+
+	@Override
+	public Void visit(SetAnnotations diff, Void arg) throws RuntimeException {
+		super.visit(diff, arg);
+
+		UpdateTLAnnotations.Config config = newConfigItem(UpdateTLAnnotations.Config.class);
 		config.setName(diff.getPart());
 		copyAnnotations(diff, config);
 		addProcessor(config);
@@ -708,6 +724,25 @@ public class CreateMigrationProcessors extends ApplyModelPatch {
 
 		/* Renames part, so it must be executed *after* resolving part. */
 		return super.visit(diff, arg);
+	}
+
+	@Override
+	public Void visit(UpdatePartType diff, Void arg) throws RuntimeException {
+		super.visit(diff, arg);
+		TLObject part = resolvePart(diff.getPart());
+		ChangeAttributeTargetType.Config config;
+		if (part instanceof TLReference) {
+			ChangeRefConfig changeRefConfig = newConfigItem(ChangeAttributeTargetType.ChangeRefConfig.class);
+			changeRefConfig.setReference(qTypePartName(diff.getPart()));
+			config = changeRefConfig;
+		} else {
+			config = newConfigItem(ChangeAttributeTargetType.Config.class);
+			config.setPart(qTypePartName(diff.getPart()));
+		}
+		config.setTarget(qTypeName(diff.getTypeSpec()));
+		addProcessor(config);
+
+		return null;
 	}
 
 	@Override

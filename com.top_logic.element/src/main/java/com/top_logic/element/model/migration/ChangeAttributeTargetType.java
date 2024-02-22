@@ -74,11 +74,20 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		QualifiedPartName getPart();
 
 		/**
+		 * Setter for {@link #getPart()}.
+		 */
+		void setPart(QualifiedPartName value);
+
+		/**
 		 * Qualified name of the target type.
 		 */
 		@Mandatory
 		QualifiedTypeName getTarget();
 
+		/**
+		 * Setter for {@link #getTarget()}.
+		 */
+		void setTarget(QualifiedTypeName value);
 	}
 
 	/**
@@ -101,6 +110,11 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		@Mandatory
 		@Name(REFERENCE)
 		QualifiedPartName getReference();
+
+		/**
+		 * Setter for {@link #getReference()}.
+		 */
+		void setReference(QualifiedPartName value);
 
 		/**
 		 * For a concrete {@link TLReference}, no source is needed.

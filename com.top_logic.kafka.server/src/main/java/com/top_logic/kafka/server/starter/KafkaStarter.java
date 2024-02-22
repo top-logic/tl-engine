@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import org.apache.kafka.common.utils.Time;
+
 import com.top_logic.basic.AliasedProperties;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -17,7 +19,8 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 import kafka.Kafka;
 import kafka.server.KafkaConfig;
-import kafka.server.KafkaServerStartable;
+import kafka.server.KafkaServer;
+import scala.Option;
 
 /**
  * Service class to Start {@link Kafka}
@@ -41,7 +44,7 @@ public class KafkaStarter implements Starter {
 
 	}
 
-	private KafkaServerStartable _kafkaStarter;
+	private KafkaServer _kafka;
 
 	/**
 	 * Creates a new {@link KafkaStarter}.
@@ -57,24 +60,27 @@ public class KafkaStarter implements Starter {
 			properties.setProperty("zookeeper.connect", "localhost:%ZOO_KEEPER_PORT%");
 			context.error("Unable to load configuration '" + config.getConfigFile() + "'.", ex);
 		}
-		_kafkaStarter = KafkaServerStartable.fromProps(properties);
+		KafkaConfig kafkaConfig = new KafkaConfig(properties);
+		boolean enableForwarding = false;
+		Option<String> threadPrefix = Option.apply("TL Kafka Server");
+		_kafka = new KafkaServer(kafkaConfig, Time.SYSTEM, threadPrefix, enableForwarding);
 	}
 
 	/**
 	 * The configuration used to create {@link Kafka} server.
 	 */
 	public KafkaConfig getKafkaConfig() {
-		return _kafkaStarter.staticServerConfig();
+		return _kafka.config();
 	}
 
 	@Override
 	public void startup() {
-		_kafkaStarter.startup();
+		_kafka.startup();
 	}
 
 	@Override
 	public void shutdown() {
-		_kafkaStarter.shutdown();
+		_kafka.shutdown();
 	}
 
 }

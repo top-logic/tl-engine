@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.SingleSelectionModel;
@@ -194,19 +195,39 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 	}
 
 	private void selectTableData(TableData tableData) {
-		assert getConfig()
-			.getChangeKind() != SelectionChangeKind.INCREMENTAL : "TableData only supports absolute selection changes. Therefore, a selection change cannot be incremental.";
-		if (_doSelect) {
-			Set<?> selectionCollection = asSet(_selection);
-			assertAllElementsExist(tableData, selectionCollection);
-			tableData.getSelectionModel().setSelection(selectionCollection);
-			assertTrue("Selection change failed!",
-				CollectionUtil.containsSame(selectionCollection, tableData.getSelectionModel().getSelection()));
-		} else {
-			assert _selection == ScriptingRecorder.NO_SELECTION;
-			tableData.getSelectionModel().clear();
-			assertTrue("Removing the selection failed!", tableData.getSelectionModel().getSelection().isEmpty());
+		SelectionModel selectionModel = tableData.getSelectionModel();
+		switch (getConfig().getChangeKind()) {
+			case INCREMENTAL: {
+				Set<?> selectionCollection = asSet(_selection);
+				if (_doSelect) {
+					assertAllElementsExist(tableData, selectionCollection);
+				}
+				for (Object element : selectionCollection) {
+					selectionModel.setSelected(element, _doSelect);
+					assertEquals("Selection change failed!", _doSelect,
+						selectionModel.getSelection().contains(element));
+				}
+				return;
+			}
+			case ABSOLUTE:
+			case LEGACY: {
+				if (_doSelect) {
+					Set<?> selectionCollection = asSet(_selection);
+					assertAllElementsExist(tableData, selectionCollection);
+					selectionModel.setSelection(selectionCollection);
+					assertTrue("Selection change failed!",
+						CollectionUtil.containsSame(selectionCollection, selectionModel.getSelection()));
+				} else {
+					assert _selection == ScriptingRecorder.NO_SELECTION;
+					selectionModel.clear();
+					assertTrue("Removing the selection failed!",
+						selectionModel.getSelection().isEmpty());
+				}
+				return;
+			}
+
 		}
+		throw new UnreachableAssertion("Uncovered case: " + getConfig().getChangeKind());
 	}
 
 	private Set<?> asSet(Object selection) {

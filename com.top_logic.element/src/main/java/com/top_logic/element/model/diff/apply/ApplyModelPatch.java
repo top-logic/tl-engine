@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
@@ -36,7 +37,9 @@ import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
+import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdatePartType;
 import com.top_logic.element.model.diff.config.visit.DiffVisitor;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
@@ -50,6 +53,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.factory.TLFactory;
@@ -114,6 +118,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		@Override
+		public Integer visit(UpdatePartType diff, Void arg) throws RuntimeException {
+			return 31;
+		}
+
+		@Override
 		public Integer visit(Delete diff, Void arg) throws RuntimeException {
 			if (diff.getName().indexOf('#') > 0) {
 				// A part (type part or singleton).
@@ -134,6 +143,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		@Override
 		public Integer visit(AddAnnotations diff, Void arg) throws RuntimeException {
+			return 40;
+		}
+
+		@Override
+		public Integer visit(SetAnnotations diff, Void arg) throws RuntimeException {
 			return 40;
 		}
 
@@ -251,6 +265,32 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		for (TLAnnotation annotation : diff.getAnnotations()) {
 			log().info("Adding annotation '" + annotation.getConfigurationInterface().getName() + "' to '" + partName
 				+ "'.");
+			part.setAnnotation(TypedConfiguration.copy(annotation));
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(SetAnnotations diff, Void arg) throws RuntimeException {
+		String partName = diff.getPart();
+		TLModelPart part;
+		try {
+			part = resolvePart(partName);
+		} catch (TopLogicException ex) {
+			log().info("Merge conflict: Setting annotations to '" + partName + "', but part does not exist.", Log.WARN);
+			return null;
+		}
+
+		// Remove existing annotations.
+		part.getAnnotations()
+			.stream()
+			.map(TLAnnotation::getConfigurationInterface)
+			.collect(Collectors.toList())
+			.forEach(part::removeAnnotation);
+
+		for (TLAnnotation annotation : diff.getAnnotations()) {
+			log().info("Set annotation '" + annotation.getConfigurationInterface().getName() + "' to '" + partName
+					+ "'.");
 			part.setAnnotation(TypedConfiguration.copy(annotation));
 		}
 		return null;
@@ -506,7 +546,40 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 		TLClassPart part = (TLClassPart) type.getPart(partName);
 		movePart(part, before);
+	}
 
+	@Override
+	public Void visit(UpdatePartType diff, Void arg) throws RuntimeException {
+		TLModelPart part;
+		String partName = diff.getPart();
+		try {
+			part = resolvePart(partName);
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Changing type of part '" + partName + "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		if (!(part instanceof TLTypePart)) {
+			log().info("Referenced part '" + part + "' is not a type part.", Log.WARN);
+			return null;
+		}
+		schedule().createReference(() -> {
+			TLModelPart type;
+			try {
+				type = resolvePart(diff.getTypeSpec());
+			} catch (TopLogicException ex) {
+				log().error(diff.getTypeSpec() + " in " + diff.location() + " could not be resolved to a valid type.",
+					ex);
+				return;
+			}
+			if (!(type instanceof TLType)) {
+				log().error("Configured type " + type + " is not a " + TLType.class.getName());
+				return;
+			}
+			((TLTypePart) part).setType((TLType) type);
+		});
+		return null;
 	}
 
 	@Override

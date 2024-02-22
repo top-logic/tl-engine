@@ -1191,6 +1191,7 @@ button.moveOption {
 	background: var(--layer-hover);
     text-decoration: none !important;
     box-shadow: none !important;
+    outline: none !important;
 }
 
 .tl-mega-menu__option--selected {

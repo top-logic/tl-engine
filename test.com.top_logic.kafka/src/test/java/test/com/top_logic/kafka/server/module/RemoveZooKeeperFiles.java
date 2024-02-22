@@ -38,8 +38,8 @@ public class RemoveZooKeeperFiles extends RearrangableTestSetup {
 	protected void doSetUp() throws Exception {
 		ZooKeeperModule zooKeeperModule = ZooKeeperModule.Module.INSTANCE.getImplementationInstance();
 		ServerConfig config = zooKeeperModule.getZooKeeperConf();
-		String dataDir = config.getDataDir();
-		FileUtilities.deleteR(new File(dataDir));
+		File dataDir = config.getDataDir();
+		FileUtilities.deleteR(dataDir);
 	}
 
 	@Override

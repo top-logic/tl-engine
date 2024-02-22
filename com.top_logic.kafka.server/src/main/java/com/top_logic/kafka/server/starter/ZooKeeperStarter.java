@@ -14,13 +14,13 @@ import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.kafka.common.config.ConfigException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 import com.top_logic.basic.AliasedProperties;
 import com.top_logic.basic.FileManager;
@@ -87,10 +87,7 @@ public class ZooKeeperStarter implements Starter {
 		QuorumPeerConfig peerConfig = new QuorumPeerConfig();
 		try {
 			peerConfig.parseProperties(properties);
-		} catch (ConfigException ex) {
-			context.error("Unable to parse configuration.", ex);
-			return;
-		} catch (IOException ex) {
+		} catch (IOException | ConfigException | QuorumPeerConfig.ConfigException ex) {
 			context.error("Unable to parse configuration.", ex);
 			return;
 		}
@@ -118,8 +115,8 @@ public class ZooKeeperStarter implements Starter {
 		_txnLog = null;
 		try {
 			_zkServer = new ZooKeeperServer();
-			File dataLogDir = new File(_config.getDataLogDir());
-			File snapDir = new File(_config.getDataDir());
+			File dataLogDir = _config.getDataLogDir();
+			File snapDir = _config.getDataDir();
 			_txnLog = new FileTxnSnapLog(dataLogDir, snapDir);
 			registerZKShutdownHandler(_zkServer, new CountDownLatch(0));
 			_zkServer.setTxnLogFactory(_txnLog);

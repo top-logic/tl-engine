@@ -34,7 +34,7 @@
 		<tl.version>7.9.0-SNAPSHOT</tl.version>
 		<jetty.version>9.4.51.v20230217</jetty.version>
 		<poi.version>5.2.5</poi.version>
-		<kafka.version>2.1.1</kafka.version>
+		<kafka.version>3.6.1</kafka.version>
 		<slf4j.version>2.0.7</slf4j.version>
 		<log4j.version>2.20.0</log4j.version>
 		<fasterxml.version>2.16.1</fasterxml.version>
@@ -856,7 +856,7 @@
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.kafka</groupId>
-			    <artifactId>kafka_2.12</artifactId>
+			    <artifactId>kafka_2.13</artifactId>
 			    <version>${kafka.version}</version>
 			</dependency>
 			<dependency>
@@ -1501,12 +1501,12 @@
 							<rule>
 								<groupId>org.apache.kafka</groupId>
 								
-								<!-- Limit to Kafka 2.1.x for compatibility -->
+								<!-- Limit to Kafka 3.6.x for compatibility -->
 								<ignoreVersions>
 									<ignoreVersion>
 										<type>regex</type>
-										<version>(?!2\.1\.).*</version>
-									</ignoreVersion>								
+										<version>(?!3\.6\.).*</version>
+									</ignoreVersion>
 								</ignoreVersions>
 							</rule>
 						</rules>

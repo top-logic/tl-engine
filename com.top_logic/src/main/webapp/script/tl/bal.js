@@ -925,26 +925,26 @@ BAL = {
     getViewportWidthOfWindowObject: function(windowObject){
     	// Dynamic test, because property depends on the browser mode!
 		if (windowObject.innerWidth) {
-			return windowObject.innerWidth;
+			return windowObject.innerWidth - 1;
 		} else if (windowObject.document.documentElement && windowObject.document.documentElement.clientWidth) {
 			// Explorer 6 Strict Mode
-			return windowObject.document.documentElement.clientWidth;
+			return windowObject.document.documentElement.clientWidth - 1;
 		} else if (windowObject.document.body) {
 			// other Explorers
-			return windowObject.document.body.clientWidth;
+			return windowObject.document.body.clientWidth - 1;
 		}	
     },
 
     getViewportHeightOfWindowObject: function(windowObject){
     	// Dynamic test, because property depends on the browser mode!
 		if (windowObject.innerHeight) {
-			return windowObject.innerHeight;
+			return windowObject.innerHeight - 1;
 		} else if (windowObject.document.documentElement && windowObject.document.documentElement.clientHeight) {
 			// Explorer 6 Strict Mode
-			return windowObject.document.documentElement.clientHeight;
+			return windowObject.document.documentElement.clientHeight - 1;
 		} else if (windowObject.document.body) {
 			// other Explorers
-			return windowObject.document.body.clientHeight;
+			return windowObject.document.body.clientHeight - 1;
 		}	
     },
 

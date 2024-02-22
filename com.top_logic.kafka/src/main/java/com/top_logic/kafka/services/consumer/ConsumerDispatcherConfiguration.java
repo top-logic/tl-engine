@@ -8,8 +8,10 @@ package com.top_logic.kafka.services.consumer;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
@@ -135,7 +137,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	@IntDefault(5 * 1000)
 	@KafkaClientProperty
 	int getAutoCommitIntervalMS();
-	
+
 	/**
 	 * @see ConsumerConfig#AUTO_OFFSET_RESET_DOC
 	 */
@@ -160,7 +162,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	String getClientRack();
 
 	/**
-	 * @see ConsumerConfig#DEFAULT_API_TIMEOUT_MS_DOC
+	 * @see ConsumerConfig#DEFAULT_API_TIMEOUT_MS_CONFIG
 	 */
 	@Name(ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG)
 	@IntDefault(60 * 1000)
@@ -214,7 +216,14 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	@Mandatory
 	@KafkaClientProperty
 	String getGroupId();
-	
+
+	/**
+	 * @see ConsumerConfig#GROUP_INSTANCE_ID_DOC
+	 */
+	@Name(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG)
+	@KafkaClientProperty
+	String getGroupInstanceId();
+
 	/**
 	 * @see ConsumerConfig#HEARTBEAT_INTERVAL_MS_CONFIG
 	 */
@@ -225,6 +234,10 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	
 	/**
 	 * @see ConsumerConfig#INTERCEPTOR_CLASSES_DOC
+	 * 
+	 * @implNote Kafka specifies this in the {@link ConsumerConfig} <em>and</em> the
+	 *           {@link ProducerConfig}, but <em>not</em> in the {@link CommonClientConfigs}. It is
+	 *           therefore declared here that way, too.
 	 */
 	@Name(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG)
 	@KafkaClientProperty
@@ -266,7 +279,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 * @see ConsumerConfig#PARTITION_ASSIGNMENT_STRATEGY_CONFIG
 	 */
 	@Name(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG)
-	@StringDefault("org.apache.kafka.clients.consumer.RangeAssignor")
+	@StringDefault("org.apache.kafka.clients.consumer.RangeAssignor,org.apache.kafka.clients.consumer.CooperativeStickyAssignor")
 	@KafkaClientProperty
 	String getPartitionAssignmentStrategy();
 
@@ -275,14 +288,14 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	int getReceiveBufferBytes();
 	
 	@Override
-	@IntDefault(305 * 1000)
+	@IntDefault(30 * 1000)
 	int getRequestTimeoutMS();
 	
 	/**
 	 * @see ConsumerConfig#SESSION_TIMEOUT_MS_CONFIG
 	 */
 	@Name(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG)
-	@IntDefault(10 * 1000)
+	@IntDefault(45 * 1000)
 	@KafkaClientProperty
 	int getSessionTimeoutMS();
 	

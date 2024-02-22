@@ -535,7 +535,9 @@ public class CreateModelPatch {
 
 		MoveStructuredTypePart move = TypedConfiguration.newConfigItem(MoveStructuredTypePart.class);
 		move.setPart(TLModelUtil.qualifiedName(left));
-		move.setBefore(before == null ? null : before.getName());
+		if (before != null) {
+			move.setBefore(before.getName());
+		}
 		addDiff(move);
 	}
 
@@ -683,7 +685,9 @@ public class CreateModelPatch {
 		CreateStructuredTypePart result = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
 		result.setType(TLModelUtil.qualifiedName(model.getOwner()));
 		result.setPart((PartConfig) model.visit(_configExtractor, null));
-		result.setBefore(before == null ? null : before.getName());
+		if (before != null) {
+			result.setBefore(before.getName());
+		}
 		addDiff(result);
 	}
 

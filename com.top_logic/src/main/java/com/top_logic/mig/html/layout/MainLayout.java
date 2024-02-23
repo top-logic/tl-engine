@@ -1352,7 +1352,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 		ml.initLayoutContext(subSession);
 
-		layoutContext.enableUpdate(true);
+		boolean before = layoutContext.enableUpdate(true);
 		try {
 			/* post initialization. (we guarantee, that theMainLayout is available at this point) */
 			ml.resolveComponent(new ComponentInstantiationContext(instantiationContext, ml));
@@ -1375,7 +1375,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 				ml.initialValidateModel(context);
 			}
 		} finally {
-			layoutContext.enableUpdate(false);
+			layoutContext.enableUpdate(before);
 		}
 
 		DebugHelper.logTiming(context.asRequest(), "Initializing layout", watch, 500, MainLayout.class);

@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import javax.activation.MimeType;
+import javax.activation.MimeTypeParseException;
 import javax.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
@@ -19,6 +21,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.service.openapi.server.script.Response;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ServiceMethod} executing a TL-Script expression.
@@ -64,6 +67,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 				() -> inInteraction(arguments));
 
 		String contentType;
+		String charset;
 		int status;
 		String content;
 		if (result instanceof Response) {
@@ -73,21 +77,32 @@ public class ServiceMethodByExpression implements ServiceMethod {
 				resp.sendError(status);
 				return;
 			}
-			contentType = response.getContentType();
-			if (JsonUtilities.JSON_CONTENT_TYPE.equals(contentType)) {
-				content = JSON.toString(response.getResult());
-			} else {
-				content = String.valueOf(response.getResult());
+			try {
+				MimeType mimeType = new MimeType(response.getContentType());
+				if (JsonUtilities.JSON_CONTENT_TYPE.equals(mimeType.getBaseType())) {
+					content = JSON.toString(response.getResult());
+				} else {
+					content = String.valueOf(response.getResult());
+				}
+				contentType = mimeType.getBaseType();
+				charset = mimeType.getParameter("charset");
+				if (charset == null) {
+					charset = "utf-8";
+				}
+			} catch (MimeTypeParseException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
+					.fill(response.getContentType(), ex.getMessage()), ex);
 			}
 		} else {
 			status = HttpServletResponse.SC_OK;
 			contentType = JsonUtilities.JSON_CONTENT_TYPE;
+			charset = JsonUtilities.DEFAULT_JSON_ENCODING;
 			content = JSON.toString(result);
 		}
 
 		resp.setStatus(status);
 		resp.setContentType(contentType);
-		resp.setCharacterEncoding("utf-8");
+		resp.setCharacterEncoding(charset);
 		resp.getWriter().write(content);
 	}
 

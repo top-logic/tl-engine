@@ -72,7 +72,7 @@ import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
  * 
  * <ol>
  * <li>{@link #build(Log)}</li>
- * <li>{@link #executeSQLMigration(Log, PooledConnection)}</li>
+ * <li>{@link #executeSQLMigration(MigrationContext, Log, PooledConnection)}</li>
  * <li>{@link #createInsertSQL(Log, KnowledgeBaseConfiguration, ConnectionPool, long, InputStream, InsertWriter)}</li>
  * <li>{@link #dropAndRecreateDatabase(PooledConnection, KnowledgeBaseConfiguration, Reader)}</li>
  * </ol>
@@ -204,7 +204,7 @@ public class DataMigration {
 	 * {@link #createInsertSQL(Log, KnowledgeBaseConfiguration, ConnectionPool, long, InputStream, InsertWriter)}.
 	 * </p>
 	 */
-	public void executeSQLMigration(Log log, PooledConnection connection) {
+	public void executeSQLMigration(MigrationContext context, Log log, PooledConnection connection) {
 		List<MigrationProcessor> deferred = new ArrayList<>();
 		for (MigrationConfig migration : _migrationInfo.getMigrations()) {
 			Version version = migration.getVersion();
@@ -221,16 +221,23 @@ public class DataMigration {
 					continue;
 				}
 				try {
-					processor.doMigration(log, connection);
+					processor.doMigration(context, log, connection);
 				} catch (Exception ex) {
 					log.error("Unable to process migration processor " + processor, ex);
 				}
+			}
+
+			try {
+				log.info("Done with " + version.getModule() + "': " + version.getName());
+				connection.commit();
+			} catch (SQLException ex) {
+				log.error("Failed to commit results. ", ex);
 			}
 		}
 		for (MigrationProcessor processor : deferred) {
 			try {
 				log.info("Applying deferred migration processor " + processor);
-				processor.doMigration(log, connection);
+				processor.doMigration(context, log, connection);
 			} catch (Exception ex) {
 				log.error("Unable to process deferred processor " + processor, ex);
 			}

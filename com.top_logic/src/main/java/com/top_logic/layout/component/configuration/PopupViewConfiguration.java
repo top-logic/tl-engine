@@ -223,7 +223,7 @@ public class PopupViewConfiguration extends AbstractViewConfiguration<PopupViewC
 		Resources resources = Resources.getInstance();
 		if (_label != null) {
 			menuModel.setLabel(resources.getString(_label, null));
-			menuModel.setTooltip(resources.getString(_label.tooltip(), null));
+			menuModel.setTooltip(resources.getString(_label.tooltipOptional()));
 		}
 		return menuModel;
 	}

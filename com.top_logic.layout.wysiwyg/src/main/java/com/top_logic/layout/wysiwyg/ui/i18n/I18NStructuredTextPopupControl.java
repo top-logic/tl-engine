@@ -37,12 +37,12 @@ public class I18NStructuredTextPopupControl extends I18NStringTextPopupControl {
 	protected FormField createEditField(FormField originalField) {
 		String name = originalField.getName() + POPUP_SUFFIX;
 		boolean mandatory = originalField.isMandatory();
-		boolean disabled = originalField.isDisabled();
+		boolean immutable = originalField.isImmutable();
 		Constraint constraint = getConstraint(originalField);
 		List<String> featureConfig = getFeatureConfig(originalField);
 		List<String> templateFiles = getTemplateFiles(originalField);
 		String templates = getTemplates(originalField);
-		return I18NStructuredTextField.new18NStructuredTextField(name, mandatory, disabled, constraint, featureConfig,
+		return I18NStructuredTextField.new18NStructuredTextField(name, mandatory, immutable, constraint, featureConfig,
 			templateFiles, templates);
 	}
 

@@ -101,13 +101,27 @@
 					image="theme:ICON_SYNC"
 					resourceKey="model.graph.relayout.command"
 				/>
+				<button id="showAllElements"
+					class="com.top_logic.graph.diagramjs.server.commands.ShowAllElements"
+					image="css:fas fa-eye"
+				/>
+				<button id="showHiddenElements"
+					activeImage="css:far fa-check-square"
+					class="com.top_logic.graph.diagramjs.server.handler.ShowHiddenElementsHandler"
+					clique="settings"
+					image="css:far fa-square"
+				/>
+				<button id="showTechnicalGeneralizations"
+					activeImage="css:far fa-check-square"
+					class="com.top_logic.graph.diagramjs.server.handler.ShowTechnicalGeneralizationsHandler"
+					clique="settings"
+					image="css:far fa-square"
+				/>
 				<button id="showTechnicalNames"
+					activeImage="css:far fa-check-square"
 					class="com.top_logic.graph.diagramjs.server.handler.ShowTechnicalNamesHandler"
 					clique="settings"
-				/>
-				<button id="showTableInterfaceTypes"
-					class="com.top_logic.graph.diagramjs.server.handler.ShowTableInterfaceTypesHandler"
-					clique="settings"
+					image="css:far fa-square"
 				/>
 			</buttons>
 		</component>

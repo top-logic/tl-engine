@@ -5,7 +5,6 @@
  */
 package com.top_logic.graph.diagramjs.client.service.event;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import com.top_logic.ajax.client.compat.AJAX;
@@ -37,7 +36,6 @@ public final class CreateEnumerationEventHandler implements EventHandler {
 
 	@Override
 	public void call(Event event) {
-		GWT.debugger();
 		CreateNodeCommandArguments arguments = JavaScriptObject.createObject().cast();
 
 		Bounds bounds = getBounds(event);

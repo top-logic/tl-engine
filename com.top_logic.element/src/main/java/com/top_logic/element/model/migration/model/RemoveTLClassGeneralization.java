@@ -20,8 +20,11 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.ExtendsConfig;
 import com.top_logic.element.config.ObjectTypeConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 
 /**
  * {@link MigrationProcessor} removing generalizations from a {@link TLClass}.
@@ -67,6 +70,8 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link RemoveTLClassGeneralization} from configuration.
 	 * 
@@ -81,8 +86,9 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Removing generalization extension migration failed at " + getConfig().location(), ex);
@@ -93,11 +99,11 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 		QualifiedTypeName specialisation = getConfig().getName();
 		for (Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
-			Util.removeGeneralisation(connection, specialisation, typeName);
+			_util.removeGeneralisation(connection, specialisation, typeName);
 			log.info(
 				"Removed generalisation "
-					+ Util.qualifiedName(typeName) + " from "
-					+ Util.qualifiedName(specialisation));
+					+ _util.qualifiedName(typeName) + " from "
+					+ _util.qualifiedName(specialisation));
 		}
 	}
 

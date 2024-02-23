@@ -90,13 +90,13 @@ public class DataField extends AbstractFormField {
 	}
 
 	@Override
-	protected Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
-		if (aValue == null) {
+	protected Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException {
+		if (value == null) {
 			return null;
-		} else if (aValue instanceof List) {
-			return castList((List<?>) aValue);
+		} else if (value instanceof List) {
+			return castList((List<?>) value);
 		} else {
-			return cast(aValue);
+			return cast(value);
 		}
 	}
 
@@ -167,8 +167,8 @@ public class DataField extends AbstractFormField {
 	 * @see AbstractFormField#parseRawValue(Object)
 	 */
 	@Override
-	protected Object parseRawValue(Object aRawValue) throws CheckException {
-		return aRawValue;
+	protected Object parseRawValue(Object rawValue) throws CheckException {
+		return rawValue;
 	}
 
 	/**
@@ -177,8 +177,8 @@ public class DataField extends AbstractFormField {
 	 * @see AbstractFormField#unparseValue(Object)
 	 */
 	@Override
-	protected Object unparseValue(Object aValue) {
-		return aValue;
+	protected Object unparseValue(Object value) {
+		return value;
 	}
 
 	@Override

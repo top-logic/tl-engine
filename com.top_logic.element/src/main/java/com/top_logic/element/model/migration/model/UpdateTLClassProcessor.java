@@ -18,11 +18,17 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.ClassConfig;
-import com.top_logic.element.model.ModelResolver;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.Module;
+import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} updating a {@link TLClass}.
@@ -65,6 +71,8 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		boolean isFinal();
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link UpdateTLClassProcessor} from configuration.
 	 * 
@@ -79,8 +87,9 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Update class migration failed at " + getConfig().location(), ex);
@@ -91,10 +100,10 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		QualifiedTypeName typeName = getConfig().getName();
 		Type type;
 		try {
-			type = Util.getTLTypeOrFail(connection, typeName);
+			type = _util.getTLTypeOrFail(connection, typeName);
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find class to update " + Util.qualifiedName(typeName) + " at " + getConfig().location(),
+				"Unable to find class to update " + _util.qualifiedName(typeName) + " at " + getConfig().location(),
 				Log.WARN);
 			return;
 		}
@@ -103,7 +112,7 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		if (newName == null || typeName.getModuleName().equals(newName.getModuleName())) {
 			newModule = null;
 		} else {
-			newModule = Util.getTLModuleOrFail(connection, newName.getModuleName());
+			newModule = _util.getTLModuleOrFail(connection, newName.getModuleName());
 		}
 		String className;
 		if (newName == null || typeName.getTypeName().equals(newName.getTypeName())) {
@@ -111,28 +120,28 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		} else {
 			className = newName.getTypeName();
 		}
-		Util.updateTLStructuredType(connection, type, newModule, className, getConfig().isAbstract(),
+		_util.updateTLStructuredType(connection, type, newModule, className, getConfig().isAbstract(),
 			getConfig().isFinal(), getConfig());
-		log.info("Updated type " + Util.qualifiedName(typeName));
+		log.info("Updated type " + _util.qualifiedName(typeName));
 
 		if (newModule != null || className != null) {
 			String assNamePrefix = typeName.getName() + "$";
 			List<Type> allTypes = new ArrayList<>();
-			Util.addTLStructuredTypeIdentifiers(connection, type.getModule(), allTypes);
+			_util.addTLStructuredTypeIdentifiers(connection, type.getModule(), allTypes);
 			for (Type typeInModule : allTypes) {
 				if (typeInModule.getTypeName().startsWith(assNamePrefix)) {
 					Type associationInModule = typeInModule;
 					// Association for a reference in the renamed or moved type.
 					String newAssociationName;
 					if (className != null) {
-						newAssociationName = ModelResolver.syntheticAssociationName(className,
+						newAssociationName = TLStructuredTypeColumns.syntheticAssociationName(className,
 							associationInModule.getTypeName().substring(assNamePrefix.length()));
 					} else {
 						newAssociationName = null;
 					}
-					Util.updateTLStructuredType(connection, associationInModule, newModule, newAssociationName, null,
+					_util.updateTLStructuredType(connection, associationInModule, newModule, newAssociationName, null,
 						null, (String) null);
-					log.info("Updated association " + Util.toString(associationInModule));
+					log.info("Updated association " + _util.toString(associationInModule));
 				}
 			}
 		}

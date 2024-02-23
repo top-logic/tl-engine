@@ -24,7 +24,7 @@ public class DndData {
 
 	private final Collection<Object> _dragData;
 
-	private final Function<ModelName, ModelName> _dragDataName;
+	private final Function<Object, ModelName> _dragDataName;
 
 	/**
 	 * Creates a {@link DndData}.
@@ -36,7 +36,7 @@ public class DndData {
 	 * @param dragDataName
 	 *        See {@link #getDragDataName()}.
 	 */
-	public DndData(DragSourceSPI source, Collection<Object> dragData, Function<ModelName, ModelName> dragDataName) {
+	public DndData(DragSourceSPI source, Collection<Object> dragData, Function<Object, ModelName> dragDataName) {
 		_source = source;
 		_dragData = dragData;
 		_dragDataName = dragDataName;
@@ -60,15 +60,15 @@ public class DndData {
 	 * A {@link Function} determining a scripting name for the drag data.
 	 * 
 	 * <p>
-	 * The input argument for the function must be a {@link ModelName} for {@link #getSource()}, or
-	 * <code>null</code> if no such name exists.
+	 * The input argument for the function must be the dragged data to create a {@link ModelName}
+	 * for.
 	 * </p>
 	 * 
 	 * <p>
 	 * Must only be used when {@link ScriptingRecorder#isRecordingActive() recording is enabled}.
 	 * </p>
 	 */
-	public Function<ModelName, ModelName> getDragDataName() {
+	public Function<Object, ModelName> getDragDataName() {
 		return _dragDataName;
 	}
 

@@ -7,18 +7,16 @@ package com.top_logic.graph.diagramjs.server;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.graph.common.model.Node;
 import com.top_logic.graph.common.model.impl.SharedGraph;
-import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSClassNode;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
 import com.top_logic.graph.layouter.LayoutContext;
 import com.top_logic.graph.server.model.GraphData;
 import com.top_logic.graph.server.model.GraphDropEvent;
 import com.top_logic.graph.server.model.GraphDropTarget;
-import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLType;
 
 /**
@@ -62,21 +60,13 @@ public class TLTypeDrop implements GraphDropTarget {
 		TLType type = (TLType) tableNode.getBusinessObject();
 		DiagramJSGraphComponent graphComponent = (DiagramJSGraphComponent) _component;
 
-		LabelProvider labelProvider = graphComponent.getLabelProvider();
-
 		if (graph.getGraphPart(type) == null) {
 			DefaultDiagramJSGraphModel graphModel = (DefaultDiagramJSGraphModel) graph;
 
 			LayoutContext context = graphComponent.getLayoutContext();
 
-			DefaultDiagramJSClassNode node = GraphModelUtil.createDiagramJSNode(labelProvider, graphModel, type);
-
-			GraphModelUtil.connectReferences(context, graphModel, node);
-
-			if (type.getModelKind() == ModelKind.CLASS) {
-				GraphModelUtil.connectGeneralizations(context, graphModel, node);
-				GraphModelUtil.connectSpecializations(context, graphModel, node);
-			}
+			Node node =
+				GraphModelUtil.insertNodeIntoGraph(graphModel, type, context, graphComponent.getInvisibleGraphParts());
 
 			node.setX(event.getX());
 			node.setY(event.getY());

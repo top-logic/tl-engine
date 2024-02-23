@@ -5,19 +5,17 @@
  */
 package com.top_logic.client.diagramjs.model;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.google.gwt.core.client.JavaScriptObject;
 
 import com.top_logic.client.diagramjs.model.util.Waypoint;
+import com.top_logic.client.diagramjs.util.DiagramJSObjectUtil;
 
 /**
  * Options for a {@link Connection}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
-public final class ConnectionOptions extends JavaScriptObject {
+public final class ConnectionOptions extends GraphPartOptions {
 
 	/**
 	 * Creates a {@link ConnectionOptions}.
@@ -25,20 +23,6 @@ public final class ConnectionOptions extends JavaScriptObject {
 	protected ConnectionOptions() {
 		super();
 	}
-
-	/**
-	 * Business object of this {@link Connection}.
-	 */
-	public native Object getBusinessObject() /*-{
-		return this.sharedGraphPart;
-	}-*/;
-
-	/**
-	 * {@link #getBusinessObject()}
-	 */
-	public native void setBusinessObject(Object businessObject) /*-{
-		this.sharedGraphPart = businessObject;
-	}-*/;
 
 	/**
 	 * Type of this {@link Connection}.
@@ -57,18 +41,16 @@ public final class ConnectionOptions extends JavaScriptObject {
 	/**
 	 * @see Connection#getWaypoints()
 	 */
-	public List<Waypoint> getWaypoints() {
-		return Arrays.asList(getWaypointsInternal());
-	}
-
-	private native Waypoint[] getWaypointsInternal() /*-{
+	public native Waypoint[] getWaypoints() /*-{
 		return this.waypoints;
 	}-*/;
 
 	/**
 	 * @see #getWaypoints()
+	 * @see DiagramJSObjectUtil#setWaypoints(JavaScriptObject, Waypoint[])
 	 */
-	public native void setWaypoints(Waypoint[] waypoints) /*-{
-		this.waypoints = waypoints;
-	}-*/;
+	public void setWaypoints(Waypoint[] waypoints) {
+		DiagramJSObjectUtil.setWaypoints(this, waypoints);
+	}
+
 }

@@ -9,6 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.graph.diagramjs.server.commands.CreateClassCommand;
 import com.top_logic.graph.diagramjs.server.commands.CreateConnectionGraphCommand;
 import com.top_logic.graph.diagramjs.server.commands.DeleteGraphPartCommand;
+import com.top_logic.graph.diagramjs.server.commands.ElementsVisibilityCommand;
 import com.top_logic.graph.diagramjs.server.commands.GoToDefinitionCommand;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.model.TLClass;
@@ -116,6 +117,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @see DiagramJSGraphComponent#createInheritance(TLClass, TLClass)
 	 */
 	public static ResKey ERROR_NO_CYCLIC_INHERITANCE;
+
+	/**
+	 * Command executed elements have changed their visibility on the clients diagram.
+	 * 
+	 * @see ElementsVisibilityCommand
+	 */
+	public static ResKey ELEMENTS_VISIBILITY_COMMAND;
 
 	static {
 		initConstants(I18NConstants.class);

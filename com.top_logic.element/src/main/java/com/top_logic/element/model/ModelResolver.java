@@ -23,7 +23,6 @@ import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
-import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.config.ConfigurationException;
@@ -35,7 +34,6 @@ import com.top_logic.element.config.AssociationConfig.EndConfig;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.AttributedTypeConfig;
 import com.top_logic.element.config.ClassConfig;
-import com.top_logic.element.config.DatatypeConfig;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.ExtendsConfig;
 import com.top_logic.element.config.ModelConfig;
@@ -49,7 +47,6 @@ import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.config.annotation.TLSingletons;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentAssociation;
-import com.top_logic.element.meta.kbbased.PersistentReference;
 import com.top_logic.element.meta.schema.HolderType;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
 import com.top_logic.model.ModelKind;
@@ -82,12 +79,14 @@ import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.annotate.security.TLRoleDefinitions;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 import com.top_logic.model.config.ScopeConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -101,15 +100,13 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ModelResolver {
 
-	@FrameworkInternal
-	public static final String SELF_ASSOCIATION_END_NAME = "self";
-
 	private static final Set<String> PROPERTIES_FOR_OVERRIDES = CollectionFactory.set(
 		AttributeConfig.NAME,
 		AttributeConfig.OVERRIDE,
 		AttributeConfig.TYPE_SPEC,
 		AttributeConfig.MANDATORY,
-		PersistentReference.END_ATTR,
+		ReferenceConfig.END,
+		ReferenceConfig.KIND,
 		AttributeConfig.ANNOTATIONS);
 
 	private final Protocol _log;
@@ -221,9 +218,10 @@ public class ModelResolver {
 
 				addAnnotations(newType, typeConfig);
 
-				_schedule.fillType(new NewType(module, scope, newType, typeConfig));
+				_schedule.createTypeHierarchy(new NewType(module, scope, newType, typeConfig));
+				_schedule.createParts(newType, new CreateParts(module, scope, newType, typeConfig, true));
 			} else {
-				_schedule.fillType(new TypeUpdate(module, scope, existingType, typeConfig));
+				_schedule.createParts(existingType, new CreateParts(module, scope, existingType, typeConfig, false));
 			}
 		} else if (config instanceof DatatypeConfig) {
 			DatatypeConfig typeConfig = (DatatypeConfig) config;
@@ -270,9 +268,9 @@ public class ModelResolver {
 					newType.setAnnotation(annotation);
 				}
 
-				_schedule.fillType(new NewAssociation(module, scope, newType, associationConfig));
+				_schedule.createTypeHierarchy(new NewAssociation(module, scope, newType, associationConfig));
 			} else {
-				_schedule.fillType(new TypeUpdate(module, scope, existingType, associationConfig));
+				_schedule.createTypeHierarchy(new CreateParts(module, scope, existingType, associationConfig, false));
 			}
 		} else {
 			log().error("Unsupported type configuration '" + config.getConfigurationInterface() + "'.");
@@ -457,70 +455,139 @@ public class ModelResolver {
 			return true;
 		} else if (kind == ReferenceKind.FORWARDS || (kind == ReferenceKind.NONE && otherEndName.isEmpty())) {
 			if (referenceConfig.isOverride()) {
-				_schedule.createOverride(type, () -> createForwardsRef(type, referenceConfig));
+				_schedule.createReferenceOverride(type, () -> createForwardsRef(type, referenceConfig));
 			} else {
 				_schedule.createReference(() -> createForwardsRef(type, referenceConfig));
 			}
 			return true;
 		} else {
-			_schedule.createBackReference(new Runnable() {
-				@Override
-				public void run() {
-					TLType sourceType;
-					try {
-						sourceType = lookupAttributeType(type, referenceConfig);
-					} catch (ConfigurationException ex) {
-						log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
-						return;
-					}
-					if (!(sourceType instanceof TLClass)) {
-						if (sourceType == null) {
-							log().error("No type found for back reference '" + referenceConfig.getName() + "' at '"
-								+ referenceConfig.location() + "'.");
-						} else {
-							log().error("In back reference '" + referenceConfig.getName() + "', type '"
-								+ sourceType.getName() + "' is not a TLClass at '" + referenceConfig.location() + "'.");
-						}
-						return;
-					}
-
-					TLReference destinationRef = (TLReference) ((TLClass) sourceType).getPart(otherEndName);
-					if (destinationRef == null) {
-						// Reference not found.
-						log().error("In back reference '" + referenceConfig.getName() + "', destination reference '"
-							+ otherEndName + "' in type '" + qualifiedName(sourceType) + "' not found in '"
-							+ referenceConfig.location() + "'.");
-						return;
-					}
-
-					TLAssociationEnd destinationEnd = destinationRef.getEnd();
-
-					TLType destinationType = destinationEnd.getType();
-					if (!(destinationType instanceof TLClass)) {
-						log().error("In back reference " + referenceConfig.getName() + "', destination type '"
-							+ destinationType + "' of corresponding forward reference '" + otherEndName
-							+ "' is not a class in '" + referenceConfig.location() + "'.");
-						return;
-					}
-
-					TLAssociationEnd sourceEnd = TLModelUtil.getOtherEnd(destinationEnd);
-					try {
-						addReference(type, referenceConfig, sourceEnd);
-					} catch (IllegalArgumentException ex) {
-						log().error(
-							"In back reference '" + referenceConfig.getName()
-								+ "', associtiation end could not be implemented by reference in type '"
-								+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.", ex);
-						return;
-					}
-				}
-			});
+			if (referenceConfig.isOverride()) {
+				_schedule.createBackReferenceOverride(type, createBackwardsRefOverride(type, referenceConfig));
+			} else {
+				_schedule.createBackReference(createBackwardsRef(type, referenceConfig, otherEndName));
+			}
 			return true;
 		}
 	}
 
+	private Runnable createBackwardsRefOverride(TLClass type, ReferenceConfig referenceConfig) {
+		return new Runnable() {
+
+			@Override
+			public void run() {
+				TLReference reference = (TLReference) type.getPart(referenceConfig.getName());
+				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(reference.getEnd());
+				String otherEndName = otherEnd.getName();
+
+				TLType sourceType;
+				try {
+					sourceType = lookupAttributeType(type, referenceConfig);
+				} catch (ConfigurationException ex) {
+					log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
+					return;
+				}
+
+				String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), otherEndName);
+				TLModule module = type.getModule();
+
+				TLType associationType = module.getType(associationName);
+				TLAssociationEnd sourceEnd;
+				if (associationType == null) {
+					TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
+
+					// Add source end
+					TLAssociationEnd targetEnd = TLModelUtil.addEnd(association, otherEndName, type);
+					targetEnd.setMultiple(true);
+
+					// Create destination end
+					sourceEnd =
+						TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
+				} else {
+					List<TLAssociationEnd> ends = TLModelUtil.getEnds((TLAssociation) associationType);
+					if (ends.isEmpty()) {
+						log().error("No ends found for " + associationType);
+					}
+
+					TLAssociationEnd end = ends.get(0);
+					if (TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME.equals(end.getName())) {
+						sourceEnd = end;
+					} else {
+						sourceEnd = TLModelUtil.getOtherEnd(end);
+					}
+				}
+
+				try {
+					addReference(type, referenceConfig, sourceEnd);
+				} catch (IllegalArgumentException ex) {
+					log().error(
+						"In back reference '" + referenceConfig.getName()
+							+ "', associtiation end could not be implemented by reference in type '"
+							+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
+						ex);
+					return;
+				}
+			}
+		};
+	}
+
+	private Runnable createBackwardsRef(final TLClass type, final ReferenceConfig referenceConfig,
+			final String otherEndName) {
+		return new Runnable() {
+			@Override
+			public void run() {
+				TLType sourceType;
+				try {
+					sourceType = lookupAttributeType(type, referenceConfig);
+				} catch (ConfigurationException ex) {
+					log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
+					return;
+				}
+				if (!(sourceType instanceof TLClass)) {
+					if (sourceType == null) {
+						log().error("No type found for back reference '" + referenceConfig.getName() + "' at '"
+							+ referenceConfig.location() + "'.");
+					} else {
+						log().error("In back reference '" + referenceConfig.getName() + "', type '"
+							+ sourceType.getName() + "' is not a TLClass at '" + referenceConfig.location() + "'.");
+					}
+					return;
+				}
+
+				TLReference destinationRef = (TLReference) ((TLClass) sourceType).getPart(otherEndName);
+				if (destinationRef == null) {
+					// Reference not found.
+					log().error("In back reference '" + referenceConfig.getName() + "', destination reference '"
+						+ otherEndName + "' in type '" + qualifiedName(sourceType) + "' not found in '"
+						+ referenceConfig.location() + "'.");
+					return;
+				}
+
+				TLAssociationEnd destinationEnd = destinationRef.getEnd();
+
+				TLType destinationType = destinationEnd.getType();
+				if (!(destinationType instanceof TLClass)) {
+					log().error("In back reference " + referenceConfig.getName() + "', destination type '"
+						+ destinationType + "' of corresponding forward reference '" + otherEndName
+						+ "' is not a class in '" + referenceConfig.location() + "'.");
+					return;
+				}
+
+				TLAssociationEnd sourceEnd = TLModelUtil.getOtherEnd(destinationEnd);
+				try {
+					addReference(type, referenceConfig, sourceEnd);
+				} catch (IllegalArgumentException ex) {
+					log().error(
+						"In back reference '" + referenceConfig.getName()
+							+ "', associtiation end could not be implemented by reference in type '"
+							+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.", ex);
+					return;
+				}
+			}
+		};
+	}
+
 	private void createForwardsRef(final TLClass type, final ReferenceConfig referenceConfig) {
-		String associationName = syntheticAssociationName(type.getName(), referenceConfig.getName());
+		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), referenceConfig.getName());
 		TLModule module = type.getModule();
 
 		TLType associationType = module.getType(associationName);
@@ -528,7 +595,7 @@ public class ModelResolver {
 			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
 
 			// Add source end
-			TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, SELF_ASSOCIATION_END_NAME, type);
+			TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, type);
 			sourceEnd.setMultiple(true);
 
 			// Create destination end
@@ -547,11 +614,6 @@ public class ModelResolver {
 			log().info("Module '" + module + "' already contains a type with name '" + associationName
 				+ "', skipping creation of association.");
 		}
-	}
-
-	@FrameworkInternal
-	public static String syntheticAssociationName(String typeName, String referenceName) {
-		return typeName + "$" + referenceName;
 	}
 
 	void addReference(TLClass owner, ReferenceConfig referenceConfig, TLAssociationEnd associationEnd) {
@@ -702,29 +764,30 @@ public class ModelResolver {
 
 				TLModelUtil.setGeneralizations(type, superTypes);
 			}
-
-			addParts(type, typeConfig, true);
 		}
 
 	}
 
-	private class TypeUpdate extends AbstractCompletion {
+	private class CreateParts extends AbstractCompletion {
 
-		private final TLStructuredType _existingType;
+		private final TLStructuredType _type;
 
 		private final AttributedTypeConfig _typeConfig;
 
-		public TypeUpdate(TLModule module, TLScope scopeInstance, TLStructuredType existingType,
-				AttributedTypeConfig typeConfig) {
+		private final boolean _isNew;
+
+		public CreateParts(TLModule module, TLScope scopeInstance, TLStructuredType type,
+				AttributedTypeConfig typeConfig, boolean isNew) {
 			super(module, scopeInstance);
-			_existingType = existingType;
+
+			_type = type;
 			_typeConfig = typeConfig;
+			_isNew = isNew;
 		}
 
 		@Override
 		public void run() {
-			// Local type already exists. Synchronize attributes.
-			addParts(_existingType, _typeConfig, false);
+			addParts(_type, _typeConfig, _isNew);
 		}
 
 	}
@@ -993,8 +1056,7 @@ public class ModelResolver {
 			errorUndeclaredOverride(classPart, conflict);
 		}
 		if (isDeclaredOverride && !isActualOverride) {
-// TODO #21471: Do not check for override, if produces false positives.
-//			errorNoOverride(classPart, log);
+			errorNoOverride(classPart);
 		}
 	}
 

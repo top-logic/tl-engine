@@ -100,10 +100,7 @@ public class KafkaConsumerService extends ConfiguredManagedClass<KafkaConsumerSe
 	 * and starts it.
 	 */
 	protected void createAndStartConsumer(InstantiationContext context, ConsumerDispatcherConfiguration<?, ?> config) {
-		if (!TopicChecker.checkTopicsExists(context, config)) {
-			/* No need to log it, as 'checkTopicExists' already logged an error. */
-			return;
-		}
+		TopicChecker.checkTopicsExists(context, config);
 		ConsumerDispatcher<?, ?> consumer = createConsumer(context, config);
 		startConsumer(consumer);
 	}

@@ -456,8 +456,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(ModelName dragSourceName, String ref) {
-		return getTableData().getDragSource().getDragDataName(dragSourceName, getTableData(), getRowIndex(ref));
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref) {
+		return getTableData().getDragSource().getDragDataName(dragSource, getTableData(), getRowIndex(ref));
 	}
 
 	final int getRowIndex(String rowId) {
@@ -2311,7 +2311,6 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 			if (data != null) {
 				TableData tableData = table.getModel();
-				TableDropTarget dropTarget = table.getApplicationModel().getTableConfiguration().getTableDrop();
 
 				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
 				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
@@ -2319,11 +2318,17 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
 				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
 
-				if (dropTarget.canDrop(dropEvent)) {
-					displayDropMarker(table, refId, pos);
-				} else {
-					changeToNoDropCursor(table, refId);
+				List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
+
+				for (TableDropTarget dropTarget : dropTargets) {
+					if (dropTarget.canDrop(dropEvent)) {
+						displayDropMarker(table, refId, pos);
+
+						return HandlerResult.DEFAULT_RESULT;
+					}
 				}
+
+				changeToNoDropCursor(table, refId);
 			}
 
 
@@ -2335,10 +2340,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
 					out.append("services.form.TableControl.changeToNoDropCursor(");
-					out.append(control.getID());
-					out.append(",'");
-					out.append(targetID);
-					out.append("');");
+					TagUtil.writeJsString(out, targetID);
+					out.append(");");
 				}
 			}));
 		}
@@ -2348,10 +2351,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
 					out.append("services.form.TableControl.displayDropMarker(");
-					out.append(control.getID());
-					out.append(",'");
-					out.append(targetID);
-					out.append("'");
+					TagUtil.writeJsString(out, targetID);
 					if (!StringServices.isEmpty(position)) {
 						out.append(",");
 						TagUtil.writeJsString(out, position);
@@ -2378,10 +2378,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		@Override
 		public HandlerResult executeChecked(DisplayContext context, TableControl table, Map<String, Object> arguments) {
 			TableData tableData = table.getModel();
-			TableDropTarget dropTarget = table.getApplicationModel().getTableConfiguration().getTableDrop();
-			if (!dropTarget.dropEnabled(tableData)) {
-				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
-			}
+			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
 
 			DndData data = DnD.getDndData(context, arguments);
 			if (data != null) {
@@ -2391,11 +2388,16 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
 
 				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
-				if (dropTarget.canDrop(dropEvent)) {
-					dropTarget.handleDrop(dropEvent);
-				} else {
-					throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
+
+				for (TableDropTarget dropTarget : dropTargets) {
+					if (dropTarget.canDrop(dropEvent)) {
+						dropTarget.handleDrop(dropEvent);
+
+						return HandlerResult.DEFAULT_RESULT;
+					}
 				}
+
+				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 			}
 
 			return HandlerResult.DEFAULT_RESULT;

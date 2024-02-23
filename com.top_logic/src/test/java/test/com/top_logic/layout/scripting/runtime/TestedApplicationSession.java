@@ -542,7 +542,7 @@ public class TestedApplicationSession implements ApplicationSession, HttpSession
 				LayoutUtils.setContextComponent(displayContext, masterFrame);
 				final SubsessionHandler rootHandler = (SubsessionHandler) masterFrame.getLayoutContext();
 
-				rootHandler.enableUpdate(true);
+				boolean before = rootHandler.enableUpdate(true);
 				try {
 					ApplicationActionOp<?> op =
 						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(action);
@@ -565,7 +565,7 @@ public class TestedApplicationSession implements ApplicationSession, HttpSession
 						}
 					}
 				} finally {
-					rootHandler.enableUpdate(false);
+					rootHandler.enableUpdate(before);
 				}
 			}
 		});

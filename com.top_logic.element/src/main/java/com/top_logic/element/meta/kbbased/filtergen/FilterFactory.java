@@ -27,6 +27,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.element.meta.form.EditContext;
 
 /**
  * Get Filter for Wrapper based MetaAttributed.
@@ -113,7 +114,12 @@ public class FilterFactory extends ManagedClass implements Reloadable {
 	private AttributedValueFilter createFilter(String filterName) {
 		Config.FilterConfig filterConfig = _config.getFilters().get(filterName);
 		if (filterConfig == null) {
-			throw new IllegalArgumentException("No such predefined filter: " + filterName);
+			return new AttributedValueFilter() {
+				@Override
+				public boolean accept(Object value, EditContext editContext) {
+					throw new IllegalArgumentException("No such predefined filter: " + filterName);
+				}
+			};
 		}
 
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(filterConfig.getImpl());

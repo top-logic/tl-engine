@@ -277,8 +277,8 @@ public class DefaultGraphModel extends DefaultSharedObject implements SharedGrap
 		node.delete();
 	}
 
-	void removeInternal(Node node) {
-		Object tag = node.getTag();
+	void removeInternal(GraphPart part) {
+		Object tag = part.getTag();
 		if (tag != null) {
 			_graphPartByTag.remove(tag);
 		}
@@ -300,13 +300,6 @@ public class DefaultGraphModel extends DefaultSharedObject implements SharedGrap
 	@Override
 	public void remove(Edge edge) {
 		edge.delete();
-	}
-
-	void removeInternal(Edge edge) {
-		Object tag = edge.getTag();
-		if (tag != null) {
-			_graphPartByTag.remove(tag);
-		}
 	}
 
 	@Override

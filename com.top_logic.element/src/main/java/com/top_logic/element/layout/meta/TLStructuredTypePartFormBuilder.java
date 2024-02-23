@@ -9,6 +9,7 @@ import java.util.Locale;
 
 import com.top_logic.base.config.i18n.Internationalized;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationChange;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,6 +24,10 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.Step;
+import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency3;
+import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.func.And;
@@ -214,6 +219,8 @@ public class TLStructuredTypePartFormBuilder extends
 		@Override
 		@DynamicMode(fun = ActiveIf.class, args = @Ref({ EDIT_MODEL, EditModel.CREATING }))
 		@RegexpConstraint(value = PartNameConstraints.RECOMMENDED_TYPE_PART_NAME_PATTERN, errorKey = PartNameConstraints.RecommendedTypePartNameKey.class, asWarning = true)
+		@Constraint(value = TypePartNotExistsConstraint.class, args = { @Ref({ EDIT_MODEL, EditModel.CONTEXT_TYPE }),
+			@Ref(OVERRIDE), @Ref({ EDIT_MODEL, EditModel.CREATING }) })
 		public String getName();
 
 		/**
@@ -235,7 +242,7 @@ public class TLStructuredTypePartFormBuilder extends
 		@InstanceFormat
 		@Hidden
 		@Derived(fun = ResolveType.class, args = { @Ref({ EDIT_MODEL, EditModel.CONTEXT_TYPE }), @Ref(TYPE_SPEC) })
-		@CalledByReflection()
+		@CalledByReflection
 		TLType getResolvedType();
 
 		@Override
@@ -290,6 +297,57 @@ public class TLStructuredTypePartFormBuilder extends
 				}
 			}
 		}
+
+		/**
+		 * {@link ValueConstraint} that checks that no {@link TLStructuredTypePart} with the
+		 * configured name exists in the given {@link TLStructuredType}.
+		 * 
+		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+		 */
+		class TypePartNotExistsConstraint extends GenericValueDependency3<String, TLStructuredType, Boolean, Boolean> {
+
+			/**
+			 * Creates a {@link TypePartNotExistsConstraint}.
+			 */
+			public TypePartNotExistsConstraint() {
+				super(String.class, TLStructuredType.class, Boolean.class, Boolean.class);
+			}
+
+			@Override
+			protected void checkValue(PropertyModel<String> propertyModel, PropertyModel<TLStructuredType> typeModel,
+					PropertyModel<Boolean> overrideModel, PropertyModel<Boolean> createModel) {
+				Boolean isOverride = overrideModel.getValue();
+				if (isOverride == null || isOverride.booleanValue()) {
+					return;
+				}
+				Boolean isCreate = createModel.getValue();
+				if (isCreate == null || !isCreate.booleanValue()) {
+					return;
+				}
+				String newPartName = propertyModel.getValue();
+				if (StringServices.isEmpty(newPartName)) {
+					return;
+				}
+				TLStructuredType type = typeModel.getValue();
+				if (type == null) {
+					return;
+				}
+				TLStructuredTypePart existingPart = type.getPart(newPartName);
+				if (existingPart != null) {
+					TLStructuredType owner = existingPart.getOwner();
+					ResKey error;
+					if (owner == type) {
+						error = I18NConstants.ERROR_PART_WITH_NAME_EXISTS__NAME_TYPE.fill(newPartName, owner);
+					} else {
+						error = I18NConstants.ERROR_PART_WITH_NAME_EXISTS__NAME_GENERALIZATION.fill(newPartName, owner);
+					}
+					propertyModel.setProblemDescription(error);
+				}
+
+			}
+
+		}
+
 	}
 
 	/**

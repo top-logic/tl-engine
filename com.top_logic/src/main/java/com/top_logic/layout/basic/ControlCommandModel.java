@@ -53,7 +53,7 @@ public class ControlCommandModel extends AbstractCommandModel {
 		this.arguments = someArguments;
 		Resources resources = Resources.getInstance();
 		setLabel(resources.getString(aLabel));
-		setTooltip(resources.getString(aLabel.tooltip(), null));
+		setTooltip(resources.getString(aLabel.tooltipOptional()));
 	}
 
 	/**

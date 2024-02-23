@@ -8,14 +8,12 @@ package com.top_logic.client.diagramjs.model;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 /**
  * Options for a {@link Shape}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
-public final class ShapeOptions extends JavaScriptObject {
+public final class ShapeOptions extends GraphPartOptions {
 
 	/**
 	 * Creates a {@link Shape}.
@@ -65,20 +63,6 @@ public final class ShapeOptions extends JavaScriptObject {
 	 */
 	public native void setModifiers(List<String> modifiers) /*-{
 		this.modifiers = modifiers;
-	}-*/;
-
-	/**
-	 * Business object of this {@link Shape}.
-	 */
-	public native Object getBusinessObject() /*-{
-		return this.sharedGraphPart;
-	}-*/;
-
-	/**
-	 * {@link #getBusinessObject()}
-	 */
-	public native void setBusinessObject(Object businessObject) /*-{
-		this.sharedGraphPart = businessObject;
 	}-*/;
 
 }

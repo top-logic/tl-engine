@@ -18,9 +18,11 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.migration.Util;
 
 /**
  * {@link MigrationProcessor} updating the table {@link FastList#OBJECT_NAME} to be compatible with
@@ -30,9 +32,12 @@ import com.top_logic.model.impl.generated.TlModelFactory;
  */
 public class UpdateFastListTable implements MigrationProcessor {
 
+	private Util _util;
+
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			String scopeTypeColName =
 				ReferencePart.type.getReferenceAspectColumnName(SQLH.mangleDBName(FastList.SCOPE_REF));
 			String scopeIDColName =
@@ -50,10 +55,10 @@ public class UpdateFastListTable implements MigrationProcessor {
 	}
 
 	private void addIndexes(PooledConnection connection, String scopeIDColName) throws SQLException {
-		execute(connection, addIndex(enumTable(), "FAST_LIST_NAME_IDX", true, BasicTypes.BRANCH_DB_NAME,
+		execute(connection, addIndex(enumTable(), "FAST_LIST_NAME_IDX", true, _util.branchColumnOrNull(),
 			scopeIDColName, SQLH.mangleDBName(FastList.NAME_ATTRIBUTE), BasicTypes.REV_MAX_DB_NAME));
 
-		execute(connection, addIndex(enumTable(), "FAST_LIST_SCOPE", false, BasicTypes.BRANCH_DB_NAME,
+		execute(connection, addIndex(enumTable(), "FAST_LIST_SCOPE", false, _util.branchColumnOrNull(),
 			scopeIDColName, BasicTypes.REV_MAX_DB_NAME));
 	}
 

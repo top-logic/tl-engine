@@ -107,7 +107,7 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			SQLQuery<SQLDelete> delete = query(
 				parameters(parameterDef(DBType.STRING, "typeName")),

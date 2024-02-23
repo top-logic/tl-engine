@@ -202,7 +202,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 				}
 				gotoArguments.remove(ContentHandlersRegistry.LAYOUT_PARAMETER);
 				if (!gotoArguments.isEmpty()) {
-					enableUpdate(true);
+					boolean before = enableUpdate(true);
 					try {
 						try {
 							CommandHandlerUtil.handleCommand(handler, context, mainLayout, gotoArguments);
@@ -212,7 +212,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 						}
 						mainLayout.globallyValidateModel(context);
 					} finally {
-						enableUpdate(false);
+						enableUpdate(before);
 					}
 				}
 			}
@@ -264,7 +264,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	}
 
 	private void validateMainLayout(DisplayContext context, MainLayout mainLayout) {
-		enableUpdate(true);
+		boolean before = enableUpdate(true);
 		try {
 			/* Ensure that the MainLayout is context component, because the request is actually
 			 * processed by MainLayout. */
@@ -287,7 +287,7 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 		} catch (Throwable ex) {
 			InfoService.logError(context, I18NConstants.ERROR_VIEW_CREATION, ex, SubsessionHandler.class);
 		} finally {
-			enableUpdate(false);
+			enableUpdate(before);
 		}
 	}
 
@@ -386,10 +386,22 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	public final void checkUpdate(Object updater) {
 		if (!this.updateEnabled) {
 			if (updater != this.lastIllegalUpdateBy) {
-				Logger.error("State modification during rendering.", new Exception("Stack trace."), MainLayout.class);
+				errorStateModification();
 			}
 			this.lastIllegalUpdateBy = updater;
 		}
+	}
+
+	/**
+	 * Reports a state modification error.
+	 * 
+	 * <p>
+	 * A state modification is only allowed during the command phase of an interaction. This is
+	 * necessary to ensure that updates have a chance to be transported back to the client.
+	 * </p>
+	 */
+	protected void errorStateModification() {
+		Logger.error("State modification during rendering.", new Exception("Stack trace."), MainLayout.class);
 	}
 
 	/**
@@ -411,7 +423,9 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	}
 
 	private final void checkUpdateDisabled() {
-		assert !this.updateEnabled : "Must have updates disabled.";
+		if (this.updateEnabled) {
+			throw new IllegalStateException("Must have updates disabled.");
+		}
 	}
 
 	private synchronized void finishLogin(DisplayContext displayContext) {

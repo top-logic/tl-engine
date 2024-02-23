@@ -98,7 +98,7 @@ public abstract class DropActionOp<C extends DropActionOp.DropAction> extends Ab
 		 *        See {@link DropEvent#getDragDataName()}.
 		 */
 		static void fill(DropAction action, Object view, Object dragView, Object dropPosition,
-				Function<ModelName, ModelName> dragData) {
+				Function<Object, ModelName> dragData) {
 			action.setDropView(ModelResolver.buildModelName(view));
 			/* Don't use the dragView when it cannot be recorded. This should rarely be the case.
 			 * But if it is the case, it is better to use only value context free NamingSchemes for
@@ -107,7 +107,7 @@ public abstract class DropActionOp<C extends DropActionOp.DropAction> extends Ab
 			if (dragViewName.hasValue()) {
 				action.setDragView(dragViewName.get());
 			}
-			action.setDroppedObject(dragData.apply(dragViewName.getElse(null)));
+			action.setDroppedObject(dragData.apply(dragView));
 			action.setDropPosition(ModelResolver.buildModelName(view, dropPosition));
 		}
 

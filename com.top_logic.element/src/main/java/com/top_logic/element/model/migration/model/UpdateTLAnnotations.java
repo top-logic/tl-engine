@@ -13,10 +13,14 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.Module;
+import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -42,6 +46,8 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link UpdateTLAnnotations} from configuration.
 	 * 
@@ -56,8 +62,9 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating part migration failed at " + getConfig().location(), ex);
@@ -68,22 +75,22 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 		String name = getConfig().getName();
 		int moduleTypeSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 		if (moduleTypeSepIdx < 0) {
-			Util.updateModuleAnnotations(connection, name, getConfig());
+			_util.updateModuleAnnotations(connection, name, getConfig());
 			log.info("Updated annotation of module " + name + ".");
 			return;
 		}
-		Module module = Util.getTLModuleOrFail(connection, name.substring(0, moduleTypeSepIdx));
+		Module module = _util.getTLModuleOrFail(connection, name.substring(0, moduleTypeSepIdx));
 		int typePartSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR, moduleTypeSepIdx + 1);
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
-			Util.updateTypeAnnotations(connection, module, typeName, getConfig());
+			_util.updateTypeAnnotations(connection, module, typeName, getConfig());
 			log.info("Updated annotation of type " + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + ".");
 			return;
 		}
 
-		Type type = Util.getTLTypeOrFail(connection, module, name.substring(moduleTypeSepIdx + 1, typePartSepIdx));
+		Type type = _util.getTLTypeOrFail(connection, module, name.substring(moduleTypeSepIdx + 1, typePartSepIdx));
 		String partName = name.substring(typePartSepIdx + 1);
-		Util.updateTypePartAnnotations(connection, type, partName, getConfig());
+		_util.updateTypePartAnnotations(connection, type, partName, getConfig());
 		log.info("Updated annotation of type part "
 			+ TLModelUtil.qualifiedName(module.getModuleName(), type.getTypeName(), partName) + ".");
 	}

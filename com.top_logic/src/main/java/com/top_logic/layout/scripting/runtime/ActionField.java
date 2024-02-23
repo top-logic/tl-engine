@@ -71,8 +71,8 @@ public class ActionField extends AbstractSingleValueField {
 	}
 
 	@Override
-	protected Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
-		return aValue;
+	protected Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException {
+		return value;
 	}
 
 }

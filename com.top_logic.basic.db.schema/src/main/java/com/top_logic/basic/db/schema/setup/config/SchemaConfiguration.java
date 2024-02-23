@@ -35,6 +35,11 @@ import com.top_logic.dob.schema.config.MetaObjectsConfig;
 public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetup>, NamedConfiguration {
 
 	/**
+	 * Default of {@link #hasMultipleBranches()}
+	 */
+	boolean DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE = true;
+
+	/**
 	 * Name of the {@link SchemaConfiguration} used by default.
 	 */
 	String DEFAULT_NAME = "Default";
@@ -94,7 +99,7 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	/**
 	 * Whether the types support more branches than trunk.
 	 */
-	@BooleanDefault(true)
+	@BooleanDefault(DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE)
 	@Name(MULTIPLE_BRANCHES_ATTRIBUTE)
 	boolean hasMultipleBranches();
 

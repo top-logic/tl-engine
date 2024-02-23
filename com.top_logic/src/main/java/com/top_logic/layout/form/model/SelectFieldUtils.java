@@ -678,12 +678,12 @@ public class SelectFieldUtils {
 	}
 
 	/**
-	 * Creates a {@link Renderer} from the {@link SelectField#getOptionLabelProvider()} of the given
-	 * field.
+	 * Creates a {@link Renderer} from the
+	 * {@link SelectFieldUtils#getOptionLabelProvider(FormField)} of the given field.
 	 */
-	public static Renderer<Object> getOptionRenderer(SelectField selectField) {
-		LabelProvider optionLabels = selectField.getOptionLabelProvider();
-		ContextMenuProvider contextMenu = selectField.getOptionContextMenu();
+	public static Renderer<Object> getOptionRenderer(FormField field) {
+		LabelProvider optionLabels = SelectFieldUtils.getOptionLabelProvider(field);
+		ContextMenuProvider contextMenu = SelectFieldUtils.getOptionContextMenu(field);
 		return ResourceRenderer.newResourceRenderer(optionLabels, contextMenu);
 	}
 

@@ -28,21 +28,21 @@ import com.top_logic.basic.func.misc.AlwaysNull;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.element.meta.kbbased.PersistentStructuredTypePart;
-import com.top_logic.element.model.ModelResolver;
-import com.top_logic.element.model.migration.model.MigrationException;
-import com.top_logic.element.model.migration.model.QualifiedPartName;
-import com.top_logic.element.model.migration.model.QualifiedTypeName;
-import com.top_logic.element.model.migration.model.Type;
-import com.top_logic.element.model.migration.model.TypePart;
-import com.top_logic.element.model.migration.model.Util;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -134,7 +134,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 				}
 				QualifiedPartName endName = TypedConfiguration.newConfigItem(QualifiedPartName.class);
 				String associationName =
-					ModelResolver.syntheticAssociationName(referenceName.getTypeName(), referenceName.getPartName());
+					TLStructuredTypeColumns.syntheticAssociationName(referenceName.getTypeName(), referenceName.getPartName());
 				endName.setName(TLModelUtil.qualifiedName(referenceName.getModuleName(), associationName)
 					+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + referenceName.getPartName());
 				return endName;
@@ -143,6 +143,8 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		}
 
 	}
+
+	private Util _util;
 
 	/**
 	 * Creates a {@link ChangeAttributeTargetType} from configuration.
@@ -158,8 +160,10 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
+
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Migration failed with config " + getConfig(), ex);
@@ -181,19 +185,19 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 			throws SQLException, MigrationException {
 		TypePart sourcePart;
 		try {
-			sourcePart = Util.getTLTypePartOrFail(connection, part);
+			sourcePart = _util.getTLTypePartOrFail(connection, part);
 		} catch (MigrationException ex) {
-			log.info("Unable to find source part " + Util.qualifiedName(part) + " at " + getConfig().location(),
+			log.info("Unable to find source part " + _util.qualifiedName(part) + " at " + getConfig().location(),
 				Log.WARN);
 			return;
 		}
 		Type targetType;
 		try {
-			targetType = Util.getTLTypeOrFail(connection, getConfig().getTarget());
+			targetType = _util.getTLTypeOrFail(connection, getConfig().getTarget());
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find new target type '" + Util.qualifiedName(getConfig().getTarget()) + "' for source part "
-					+ Util.qualifiedName(part) + " at " + getConfig().location(),
+				"Unable to find new target type '" + _util.qualifiedName(getConfig().getTarget()) + "' for source part "
+					+ _util.qualifiedName(part) + " at " + getConfig().location(),
 				Log.WARN);
 			return;
 		}
@@ -203,23 +207,24 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 					+ getConfig().getTarget() + ": " + sourcePart.getBranch() + " != " + targetType.getBranch());
 		}
 		
-		Util.updateTLStructuredTypePart(connection, sourcePart, targetType, null, null, null, null, null, null, null,
-			null, null, null);
+		_util.updateTLStructuredTypePart(connection, sourcePart, targetType, null, null, null, null, null, null, null,
+			null, null, null, null);
 		
-		log.info("Changed type of " + Util.qualifiedName(part) + " to " + Util.qualifiedName(getConfig().getTarget()));
+		log.info(
+			"Changed type of " + _util.qualifiedName(part) + " to " + _util.qualifiedName(getConfig().getTarget()));
 	}
 
 	private void replaceAllPartTypeReferences(Log log, PooledConnection connection, QualifiedTypeName source)
 			throws SQLException, MigrationException {
 		Type sourceType;
 		try {
-			sourceType = Util.getTLTypeOrFail(connection, source);
+			sourceType = _util.getTLTypeOrFail(connection, source);
 		} catch (MigrationException ex) {
-			log.info("Unable to find source type " + Util.qualifiedName(source) + " at " + getConfig().location(),
+			log.info("Unable to find source type " + _util.qualifiedName(source) + " at " + getConfig().location(),
 				Log.WARN);
 			return;
 		}
-		Type targetType = Util.getTLTypeOrFail(connection, getConfig().getTarget());
+		Type targetType = _util.getTLTypeOrFail(connection, getConfig().getTarget());
 		if (sourceType.getBranch() != targetType.getBranch()) {
 			throw new MigrationException(
 				"Different branches in source type " + source + " and target type "
@@ -228,7 +233,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		
 		CompiledStatement updateType = query(
 		parameters(
-			parameterDef(DBType.LONG, "branch"),
+			_util.branchParamDef(),
 			parameterDef(DBType.STRING, "sourceType"),
 			parameterDef(DBType.ID, "sourceID"),
 			parameterDef(DBType.STRING, "targetType"),
@@ -236,9 +241,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		update(
 			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE), NO_TABLE_ALIAS),
 			and(
-				eqSQL(
-					column(BasicTypes.BRANCH_DB_NAME),
-					parameter(DBType.LONG, "branch")),
+				_util.eqBranch(),
 				eqSQL(
 					column(ReferencePart.type.getReferenceAspectColumnName(
 						SQLH.mangleDBName(PersistentStructuredTypePart.TYPE_REF))),
@@ -262,8 +265,8 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 			targetType.getTable(), targetType.getID());
 
 		log.info(
-			"Changed types in " + changed + " rows from " + Util.qualifiedName(source) + " to "
-				+ Util.qualifiedName(getConfig().getTarget()));
+			"Changed types in " + changed + " rows from " + _util.qualifiedName(source) + " to "
+				+ _util.qualifiedName(getConfig().getTarget()));
 	}
 
 }

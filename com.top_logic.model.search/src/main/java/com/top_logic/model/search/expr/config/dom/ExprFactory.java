@@ -29,6 +29,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.search.expr.CompareKind;
 import com.top_logic.model.search.expr.config.ExprPrinter;
+import com.top_logic.model.search.expr.config.dom.Expr.Access;
+import com.top_logic.model.search.expr.config.dom.Expr.AccessLike;
 import com.top_logic.model.search.expr.config.dom.Expr.Add;
 import com.top_logic.model.search.expr.config.dom.Expr.And;
 import com.top_logic.model.search.expr.config.dom.Expr.Apply;
@@ -40,6 +42,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Attribute;
 import com.top_logic.model.search.expr.config.dom.Expr.AttributeContent;
 import com.top_logic.model.search.expr.config.dom.Expr.AttributeContents;
 import com.top_logic.model.search.expr.config.dom.Expr.Block;
+import com.top_logic.model.search.expr.config.dom.Expr.Chain;
 import com.top_logic.model.search.expr.config.dom.Expr.Cmp;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.config.dom.Expr.Div;
@@ -640,27 +643,34 @@ public class ExprFactory {
 	}
 
 	/** @see Method */
-	public Expr method(String name, Expr self, List<Arg> args) {
-		Method result = method(name, self);
+	public Method method(String name, List<Arg> args) {
+		Method result = node(Method.class);
+		result.setName(name);
 		result.getArgs().addAll(args);
 		return result;
 	}
 
 	/** @see Method */
-	public Method method(String name, Expr self) {
-		Method result = node(Method.class);
-		result.setName(name);
-		if (self != null) {
-			result.getArgs().add(arg(self));
-		}
-		return result;
-	}
-
-	/** @see Method */
-	public Expr staticMethod(String name, List<Arg> args) {
+	public Method staticMethod(String name, List<Arg> args) {
 		Method result = node(Method.class);
 		result.setName(name);
 		result.setArgs(args);
+		return result;
+	}
+
+	/** @see Access */
+	public AccessLike access(Expr self, Method method) {
+		return initAccess(node(Access.class), self, method);
+	}
+
+	/** @see Chain */
+	public AccessLike chain(Expr self, Method method) {
+		return initAccess(node(Chain.class), self, method);
+	}
+
+	private AccessLike initAccess(AccessLike result, Expr self, Method method) {
+		result.setExpr(self);
+		result.setMethod(method);
 		return result;
 	}
 
@@ -715,7 +725,7 @@ public class ExprFactory {
 		 * Creates the final expression.
 		 */
 		public Expr toExpr() {
-			return method("newStruct", staticMethod("structType", args(_keys)), args(_values));
+			return access(staticMethod("structType", args(_keys)), method("newStruct", args(_values)));
 		}
 	}
 
@@ -789,15 +799,16 @@ public class ExprFactory {
 			for (int n = _cases.size() - 1; n >= 0; n--) {
 				Case current = _cases.get(n);
 				Args args = args();
-				args.add(arg(current.getResult()));
-				args.add(arg(result));
 				Expr test;
 				if (_value == null) {
 					test = current.getTest();
 				} else {
 					test = eq(internalVar(var), current.getTest());
 				}
-				result = method("ifElse", test, args);
+				args.add(arg(test));
+				args.add(arg(current.getResult()));
+				args.add(arg(result));
+				result = method("ifElse", args);
 			}
 
 			if (_value == null) {

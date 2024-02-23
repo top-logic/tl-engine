@@ -28,9 +28,9 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	/**
 	 * Creates a {@link I18NStringField}.
 	 */
-	public static I18NStringField newI18NStringField(String fieldName, boolean isMandatory, boolean isDisabled,
+	public static I18NStringField newI18NStringField(String fieldName, boolean isMandatory, boolean immutable,
 			boolean isMultiLine, Constraint constraint) {
-		I18NStringField field = new I18NStringField(fieldName, isMandatory, isDisabled, isMultiLine, constraint);
+		I18NStringField field = new I18NStringField(fieldName, isMandatory, immutable, isMultiLine, constraint);
 		field.initLanguageFields();
 		return field;
 	}
@@ -44,9 +44,9 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	 *           after creation, i.e. caller must either trigger {@link #initLanguageFields()} or
 	 *           add this note.
 	 */
-	protected I18NStringField(String fieldName, boolean isMandatory, boolean isDisabled, boolean isMultiLine,
+	protected I18NStringField(String fieldName, boolean isMandatory, boolean immutable, boolean isMultiLine,
 			Constraint constraint) {
-		super(fieldName, isMandatory, isDisabled, constraint, GenericMandatoryConstraint.SINGLETON);
+		super(fieldName, isMandatory, immutable, constraint, GenericMandatoryConstraint.SINGLETON);
 		_isMultiLine = isMultiLine;
 	}
 
@@ -58,9 +58,9 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	}
 
 	@Override
-	protected StringField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean isDisabled,
+	protected StringField createLanguageSpecificField(String fieldName, boolean isMandatory, boolean immutable,
 			Constraint constraint, Locale language) {
-		return newStringField(fieldName, StringField.EMPTY_STRING_VALUE, isMandatory, isDisabled, constraint);
+		return newStringField(fieldName, StringField.EMPTY_STRING_VALUE, isMandatory, immutable, constraint);
 	}
 
 	@Override

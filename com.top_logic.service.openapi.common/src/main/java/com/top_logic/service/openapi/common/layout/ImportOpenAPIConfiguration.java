@@ -19,11 +19,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.yaml.snakeyaml.Yaml;
+
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.core.exc.StreamWriteException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
@@ -199,8 +200,7 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 		String name = openAPIConfiguration.getName();
 		if (endsWithIgnoreCase(name, ".yaml") || endsWithIgnoreCase(name, ".yml")) {
 			try (InputStream input = openAPIConfiguration.getStream()) {
-				ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-				Object readValue = yamlReader.readValue(input, Object.class);
+				Object readValue = new Yaml().load(input);
 
 				ByteArrayStream jsonContent = new ByteArrayStream();
 				new ObjectMapper().writeValue(jsonContent, readValue);
@@ -234,7 +234,7 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 
 			@Override
 			public String getContentType() {
-				return JsonUtilities.JSON_CONTENT_TYPE;
+				return JsonUtilities.JSON_CONTENT_TYPE_HEADER;
 			}
 		};
 	}

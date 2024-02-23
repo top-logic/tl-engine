@@ -62,19 +62,19 @@ public class TestFormField extends BasicTestCase {
 		}
 
 		@Override
-		protected Object unparseValue(Object aValue) {
-			return aValue;
+		protected Object unparseValue(Object value) {
+			return value;
 		}
 
 		@Override
-		protected Object parseRawValue(Object aRawValue) throws CheckException {
+		protected Object parseRawValue(Object rawValue) throws CheckException {
 			// Accept no raw value
-			throw new CheckException(aRawValue + " can not be parsed.");
+			throw new CheckException(rawValue + " can not be parsed.");
 		}
 
 		@Override
-		protected Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
-			return aValue;
+		protected Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException {
+			return value;
 		}
 	}
 

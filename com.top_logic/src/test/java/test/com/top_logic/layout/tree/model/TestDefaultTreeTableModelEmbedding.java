@@ -141,9 +141,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals("An invisible root is always expanded.", 5, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().createChild(IndexPosition.before(0), 5);
-		disableUpdates();
 		assertEquals(6, getTable().getRowCount());
 		assertNodes(5, 0, 1, 2, 3, 4);
 	}
@@ -152,9 +150,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals("An invisible root is always expanded.", 5, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().createChild(IndexPosition.before(5), 5);
-		disableUpdates();
 		assertEquals(6, getTable().getRowCount());
 		assertNodes(0, 1, 2, 3, 4, 5);
 	}
@@ -163,9 +159,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals("An invisible root is always expanded.", 5, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().createChild(IndexPosition.START, 5);
-		disableUpdates();
 		assertEquals(6, getTable().getRowCount());
 		assertNodes(5, 0, 1, 2, 3, 4);
 	}
@@ -174,9 +168,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals("An invisible root is always expanded.", 5, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().createChild(IndexPosition.before(2), 5);
-		disableUpdates();
 		assertEquals(6, getTable().getRowCount());
 		assertNodes(0, 1, 5, 2, 3, 4);
 	}
@@ -185,9 +177,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals("An invisible root is always expanded.", 5, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().createChild(IndexPosition.after(2), 5);
-		disableUpdates();
 		assertEquals(6, getTable().getRowCount());
 		assertNodes(0, 1, 2, 5, 3, 4);
 	}
@@ -196,9 +186,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals("An invisible root is always expanded.", 5, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().createChild(IndexPosition.END, 5);
-		disableUpdates();
 		assertEquals(6, getTable().getRowCount());
 		assertNodes(0, 1, 2, 3, 4, 5);
 	}
@@ -214,9 +202,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals(5, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().addChild(IndexPosition.START, child);
-		disableUpdates();
 		assertEmbedding();
 
 		assertEquals(6 + 5 + 4 + 3, getTable().getRowCount());
@@ -235,9 +221,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		getRoot().setExpanded(true);
 		getRoot().getChildAt(3).setExpanded(true);
 		assertEmbedding();
-		enableUpdates();
 		getRoot().getChildAt(3).createChild(IndexPosition.END, 7);
-		disableUpdates();
 		assertEmbedding();
 		getRoot().getChildAt(3).setExpanded(false);
 		assertEmbedding();
@@ -247,9 +231,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		getRoot().setExpanded(true);
 		getRoot().getChildAt(3).setExpanded(true);
 		assertEmbedding();
-		enableUpdates();
 		getRoot().getChildAt(3).removeChild(0);
-		disableUpdates();
 		assertEmbedding();
 		getRoot().getChildAt(3).setExpanded(false);
 		assertEmbedding();
@@ -264,9 +246,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 	public void testRemove() {
 		assertEmbedding();
 
-		enableUpdates();
 		getRoot().removeChild(0);
-		disableUpdates();
 		assertEmbedding();
 		assertEquals(4, getTable().getRowCount());
 	}
@@ -278,9 +258,7 @@ public class TestDefaultTreeTableModelEmbedding extends AbstractTreeTableTest {
 		assertEmbedding();
 		assertEquals(5 + 4 + 3, getTable().getRowCount());
 
-		enableUpdates();
 		getRoot().removeChild(4);
-		disableUpdates();
 		assertEmbedding();
 
 		assertEquals(4, getTable().getRowCount());

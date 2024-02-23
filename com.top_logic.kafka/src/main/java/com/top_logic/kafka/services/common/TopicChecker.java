@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.kafka.services.common;
 
@@ -20,6 +22,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.KafkaFuture;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -84,8 +87,6 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 	/** The "replication factor" when a topic is created. */
 	public static final short REPLICATION_FACTOR = 1;
 
-	private InstantiationContext _context;
-
 	private CommonClientConfig<?, ?> _commonClientConfig;
 
 	private Set<String> _topics;
@@ -96,8 +97,9 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 	}
 
 	/**
-	 * Reports an error in the {@link InstantiationContext} if any of the producers topics don't
-	 * exist.
+	 * Logs an error if any of the producers topics don't exist.
+	 * 
+	 * @return <code>true</code> if all topics exist.
 	 */
 	public static boolean checkTopicExists(InstantiationContext context, TLKafkaProducer.Config<?, ?> config) {
 		Set<String> topics = Set.of(config.getTopic());
@@ -105,8 +107,9 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 	}
 
 	/**
-	 * Reports an error in the {@link InstantiationContext} if any of the consumers topics don't
-	 * exist.
+	 * Logs an error if any of the consumers topics don't exist.
+	 * 
+	 * @return <code>true</code> if all topics exist.
 	 */
 	public static boolean checkTopicsExists(InstantiationContext context,
 			ConsumerDispatcherConfiguration<?, ?> config) {
@@ -121,39 +124,43 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 			return true;
 		}
 		TopicChecker checker = context.getInstance(ownConfig);
-		checker.init(context, foreignConfig, topics);
+		checker.init(foreignConfig, topics);
 		return checker.checkTopicExists();
 	}
 
 	/** Initializes the {@link TopicChecker}. */
-	public void init(InstantiationContext context, CommonClientConfig<?, ?> config, Set<String> topics) {
-		_context = context;
+	public void init(CommonClientConfig<?, ?> config, Set<String> topics) {
 		_commonClientConfig = config;
 		_topics = topics;
 	}
 
 	/** Reports an error in the {@link InstantiationContext} if any of the topics don't exist. */
 	protected boolean checkTopicExists() {
-		AdminClient adminClient = createAdminClient();
-		if (adminClient == null) {
-			return false;
-		}
-		Set<String> existingTopics = fetchTopicNames(adminClient);
-		Set<String> missingTopics = set(_topics);
-		missingTopics.removeAll(existingTopics);
-		if (missingTopics.isEmpty()) {
-			return true;
-		}
-		if (getConfig().shouldCreateTopics()) {
-			createTopics(adminClient, missingTopics, existingTopics);
-			existingTopics = fetchTopicNames(adminClient);
+		try {
+			AdminClient adminClient = createAdminClient();
+			if (adminClient == null) {
+				return false;
+			}
+			Set<String> existingTopics = fetchTopicNames(adminClient);
+			Set<String> missingTopics = set(_topics);
 			missingTopics.removeAll(existingTopics);
 			if (missingTopics.isEmpty()) {
 				return true;
 			}
+			if (getConfig().shouldCreateTopics()) {
+				createTopics(adminClient, missingTopics, existingTopics);
+				existingTopics = fetchTopicNames(adminClient);
+				missingTopics.removeAll(existingTopics);
+				if (missingTopics.isEmpty()) {
+					return true;
+				}
+			}
+			logMissingTopic(missingTopics, existingTopics, null);
+			return false;
+		} catch (RuntimeException exception) {
+			logError("Failed to check whether the required Kafka topics exist.", exception);
+			return false;
 		}
-		logMissingTopic(missingTopics, existingTopics, null);
-		return false;
 	}
 
 	private void createTopics(AdminClient adminClient, Set<String> missingTopics, Set<String> existingTopics) {
@@ -175,7 +182,7 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 		try {
 			return AdminClient.create(adminConfig);
 		} catch (RuntimeException ex) {
-			_context.error("Unable to create AdminClient for Kafka client '" + _commonClientConfig.getName() + "'.", ex);
+			logError("Unable to create AdminClient for Kafka client '" + _commonClientConfig.getName() + "'.", ex);
 			return null;
 		}
 	}
@@ -212,7 +219,7 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 		List<String> requiredSorted = CollectionFactory.list(_topics);
 		requiredSorted.sort(Comparator.naturalOrder());
 
-		_context.error("One or more topics for Kafka client '" + clientName + "' either do not exist,"
+		logError("One or more topics for Kafka client '" + clientName + "' either do not exist,"
 			+ " or access to it is restricted and the application does not have the necessary credentials."
 			+ " Required topics: " + requiredSorted
 			+ ". Missing topics: " + missingSorted
@@ -236,6 +243,10 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 		String message =
 			"Failed to retrieve the list of existing topics for Kafka client '" + _commonClientConfig.getName() + "'.";
 		return new RuntimeException(message, exception);
+	}
+
+	private void logError(String message, Throwable cause) {
+		Logger.error(message, cause, TopicChecker.class);
 	}
 
 }

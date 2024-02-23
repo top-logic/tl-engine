@@ -5,7 +5,6 @@
  */
 package com.top_logic.graph.diagramjs.server.handler;
 
-import java.util.Collection;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
@@ -13,7 +12,6 @@ import com.top_logic.graph.common.model.GraphPart;
 import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.server.DiagramJSGraphComponent;
-import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -59,13 +57,10 @@ public class DeleteSelectedSharedGraphPartHandler extends AbstractCommandHandler
 			Map<String, Object> args) {
 		DiagramJSGraphModel graphModel = getGraphModel(component);
 
-		Collection<? extends GraphPart> selectedGraphParts = graphModel.getSelectedGraphParts();
 		CommandHandler deleteHandler = getDeleteHandler();
-		for (GraphPart part : selectedGraphParts) {
+		for (GraphPart part : graphModel.getSelectedGraphParts()) {
 			deleteHandler.handleCommand(context, component, part.getTag(), args);
 		}
-
-		GraphModelUtil.removeGraphParts(graphModel, selectedGraphParts);
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

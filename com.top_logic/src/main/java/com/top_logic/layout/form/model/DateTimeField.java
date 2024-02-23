@@ -197,25 +197,25 @@ public class DateTimeField extends CompositeField {
 		}
 
 		@Override
-		protected Object unparseValue(Object aValue) {
-			if (aValue == null) {
+		protected Object unparseValue(Object value) {
+			if (value == null) {
 				return null;
 			}
-			Date date = (Date) aValue;
+			Date date = (Date) value;
 			return new DateTime(toDay(date), null, toTime(date), null);
 		}
 
 		@Override
-		protected Object parseRawValue(Object aRawValue) throws CheckException {
-			if (aRawValue == null) {
+		protected Object parseRawValue(Object rawValue) throws CheckException {
+			if (rawValue == null) {
 				return null;
 			}
-			return ((DateTime) aRawValue).toDate();
+			return ((DateTime) rawValue).toDate();
 		}
 
 		@Override
-		protected Object narrowValue(Object aValue) throws IllegalArgumentException, ClassCastException {
-			Date dateTime = (Date) aValue;
+		protected Object narrowValue(Object value) throws IllegalArgumentException, ClassCastException {
+			Date dateTime = (Date) value;
 			return dateTime;
 		}
 
@@ -592,9 +592,9 @@ public class DateTimeField extends CompositeField {
 		FormField timeField = getTimeField();
 		
 		Object timeVal = valueOrRawValue(timeField);
-		String timeError = errorOrNull(timeField);
-		String dayError = errorOrNull(dayField);
 		if (timeVal instanceof String) {
+			String timeError = errorOrNull(timeField);
+			String dayError = errorOrNull(dayField);
 			getProxy().updateField(new DateTime(day, dayError, timeVal, timeError));
 			return;
 		}
@@ -616,6 +616,10 @@ public class DateTimeField extends CompositeField {
 				timeField.setMandatory(true);
 			}
 		}
+		/* Changing mandatory may change error state, so errors must be fetched after changing
+		 * mandatory. */
+		String timeError = errorOrNull(timeField);
+		String dayError = errorOrNull(dayField);
 		deliverDate(new DateTime(day, dayError, timeVal, timeError), dayField, oldDay);
 	}
 
@@ -624,9 +628,9 @@ public class DateTimeField extends CompositeField {
 		FormField dayField = getDayField();
 		
 		Object currentDay = valueOrRawValue(dayField);
-		String dayError = errorOrNull(dayField);
-		String timeError = errorOrNull(timeField);
 		if (currentDay instanceof String) {
+			String dayError = errorOrNull(dayField);
+			String timeError = errorOrNull(timeField);
 			getProxy().updateField(new DateTime(currentDay, dayError, time, timeError));
 			return;
 		}
@@ -648,6 +652,10 @@ public class DateTimeField extends CompositeField {
 				dayField.setMandatory(true);
 			}
 		}
+		/* Changing mandatory may change error state, so errors must be fetched after changing
+		 * mandatory. */
+		String dayError = errorOrNull(dayField);
+		String timeError = errorOrNull(timeField);
 		deliverDate(new DateTime(currentDay, dayError, time, timeError), timeField, oldTime);
 	}
 
@@ -751,20 +759,24 @@ public class DateTimeField extends CompositeField {
 
 	@Override
 	public boolean checkConstraints() {
-		boolean result = true;
-		result &= getDayField().checkConstraints();
-		result &= getTimeField().checkConstraints();
-		result &= super.checkConstraints();
-		return result;
+		if (!getDayField().checkConstraints()) {
+			return false;
+		}
+		if (!getTimeField().checkConstraints()) {
+			return false;
+		}
+		return super.checkConstraints();
 	}
 
 	@Override
 	public boolean checkConstraints(Object value) {
-		boolean result = true;
-		result &= getDayField().checkConstraints(value);
-		result &= getTimeField().checkConstraints(value);
-		result &= super.checkConstraints(value);
-		return result;
+		if (!getDayField().checkConstraints(value)) {
+			return false;
+		}
+		if (!getTimeField().checkConstraints(value)) {
+			return false;
+		}
+		return super.checkConstraints(value);
 	}
 
 	@Override

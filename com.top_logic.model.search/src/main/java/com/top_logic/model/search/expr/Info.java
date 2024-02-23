@@ -5,14 +5,14 @@
  */
 package com.top_logic.model.search.expr;
 
-import static com.top_logic.model.search.expr.Throw.*;
-
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.event.infoservice.InfoServiceItemMessageFragment;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
@@ -49,17 +49,23 @@ public class Info extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		ResKey message = toResKey(arguments[0]);
+		HTMLFragment message = toFragment(arguments[0]);
 		if (message != null) {
-			ResKey details;
 			if (arguments.length > 1) {
-				details = toResKey(arguments[1]);
+				HTMLFragment details = toFragment(arguments[1]);
+				InfoService.showInfo(new InfoServiceItemMessageFragment(message, details));
 			} else {
-				details = ResKey.NONE;
+				InfoService.showInfo(message);
 			}
-			InfoService.showInfo(message, details);
 		}
 		return null;
+	}
+
+	private static HTMLFragment toFragment(Object object) {
+		if (object instanceof HTMLFragment) {
+			return (HTMLFragment) object;
+		}
+		return Fragments.message(Throw.toResKey(object));
 	}
 
 	/**

@@ -72,6 +72,12 @@
 	<modules>
 		<!-- Archetypes -->
 		<module>../tl-archetype-app</module>
+
+		<!-- Module parents -->
+		<module>../tl-parent-app</module>
+		<module>../tl-parent-core</module>
+		<module>../tl-parent-build</module>
+		<module>../tl-parent-gwt</module>
 	</modules>
 
 	<profiles>

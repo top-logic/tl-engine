@@ -14,9 +14,11 @@
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <properties>
-		<!-- gwt does not full understand Java 11 syntax. -->		
+		<!-- GWT supports only Java 8 syntax. -->
 		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<!-- Using Java 8 for 'source' but a newer Java version for 'target' causes Eclipse to complain:
+		     "The compiler compliance specified is 1.8 but a JRE 17 is used" -->
+		<maven.compiler.target>1.8</maven.compiler.target>
 
 		<!-- Note: This module must not have the "internal" parent, because dependencies of GWT modules require full source. -->
 		<!-- For framework modules, combine all JavaDoc to its deploy location. -->

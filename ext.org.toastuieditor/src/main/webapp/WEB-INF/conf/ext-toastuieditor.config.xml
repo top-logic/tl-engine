@@ -8,12 +8,12 @@
 <!-- 					<file resource="webjar:org.webjars.npm/toast-ui__editor:/webjars/toast-ui__editor:dist/toastui-editor.js"/> -->
 					<file resource="webjar:org.webjars.npm/toast-ui__editor:/webjars/toast-ui__editor:dist/esm/index.js" type="module" as="@toast-ui/editor"/>
 <!-- 					<file resource="webjar:org.webjars.npm/toast-ui__chart:/webjars/toast-ui__chart:dist/toastui-chart.js" type="module" as="@toast-ui/chart"/> -->
-<!-- 					<file resource="webjar:org.webjars.npm/tui-color-picker:/webjars/tui-color-picker:dist/tui-color-picker.js" type="module" as="tui-color-picker"/> -->
+					<file resource="webjar:org.webjars.npm/tui-color-picker:/webjars/tui-color-picker:dist/tui-color-picker.js"/>
 <!-- 					<file resource="toastui-editor.js"/> -->
-					<file resource="tui-color-picker.min.js"/>
-					<file resource="toastui-editor-plugin-color-syntax.js"/>
+<!-- 					<file resource="tui-color-picker.min.js"/> -->
+<!-- 					<file resource="toastui-editor-plugin-color-syntax.js"/> -->
 <!-- 					<file resource="webjar:org.webjars.npm/toast-ui__editor-plugin-code-syntax-highlight:/webjars/toast-ui__editor-plugin-code-syntax-highlight:dist/toastui-editor-plugin-code-syntax-highlight.js" type="module" as="@toast-ui/editor-plugin-code-syntax-highlight"/> -->
-<!-- 					<file resource="webjar:org.webjars.npm/toast-ui__editor-plugin-color-syntax:/webjars/toast-ui__editor-plugin-color-syntax:dist/toastui-editor-plugin-color-syntax.js" type="module" as="@toast-ui/editor-plugin-color-syntax"/> -->
+					<file resource="webjar:org.webjars.npm/toast-ui__editor-plugin-color-syntax:/webjars/toast-ui__editor-plugin-color-syntax:dist/toastui-editor-plugin-color-syntax.js"/>
 <!-- 					<file resource="webjar:org.webjars.npm/toast-ui__editor-plugin-table-merged-cell:/webjars/toast-ui__editor-plugin-table-merged-cell:dist/toastui-editor-plugin-table-merged-cell.js" type="module" as="@toast-ui/editor-plugin-table-merged-cell"/> -->
 <!-- 					<file resource="webjar:org.webjars.npm/toast-ui__editor-plugin-chart:/webjars/toast-ui__editor-plugin-chart:dist/toastui-editor-plugin-chart.js" type="module" as="@toast-ui/editor-plugin-chart"/> -->
 <!-- 					<file resource="webjar:org.webjars.npm/toast-ui__editor-plugin-uml:/webjars/toast-ui__editor-plugin-uml:dist/toastui-editor-plugin-uml.js" type="module" as="@toast-ui/editor-plugin-uml"/> -->

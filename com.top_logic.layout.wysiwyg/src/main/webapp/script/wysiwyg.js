@@ -45,9 +45,10 @@ services.wysiwyg = {
 		
 		init: function(controlId, contentId, configString, tlObjectClass, tlObjectWrapperClass, useComponentScrollPosition) {
 			let content = document.getElementById(contentId);
-			const TUIEditor = toastui.Editor;
-//			const { TUIEditor } = toastui;
-			const { colorSyntax } = TUIEditor.plugin;
+//			const TUIEditor = toastui.Editor;
+//			const { Editor } = toastui;
+//			const { colorSyntax } = Editor.plugin;
+			const { colorSyntax } = toastui.Editor.plugin;
 			const editor = new Editor({
 				el: content,
 				height: '400px',

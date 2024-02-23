@@ -69,6 +69,7 @@ import com.top_logic.element.model.migration.model.CreateTLAssociationEndProcess
 import com.top_logic.element.model.migration.model.CreateTLAssociationProcessor;
 import com.top_logic.element.model.migration.model.CreateTLClassProcessor;
 import com.top_logic.element.model.migration.model.CreateTLClassifierProcessor;
+import com.top_logic.element.model.migration.model.CreateTLDatatypeProcessor;
 import com.top_logic.element.model.migration.model.CreateTLEnumerationProcessor;
 import com.top_logic.element.model.migration.model.CreateTLModuleProcessor;
 import com.top_logic.element.model.migration.model.CreateTLObjectProcessor;
@@ -115,7 +116,6 @@ import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.impl.generated.TlModelFactory;
-import com.top_logic.model.migration.CreateTLDatatypeProcessor;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;

@@ -1923,6 +1923,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(list("a"), execute(search("singleton('a').toList()")));
 	}
 
+	public void testSingletonUnion() throws ParseException {
+		assertEquals(true, execute(search("union(list(1, 2, 2, 4, 3)) == list(1, 2, 3, 4).toSet()")));
+	}
+
 	public void testToSet() throws ParseException {
 		assertEquals(set(), execute(search("null.toSet()")));
 		assertEquals(set("a"), execute(search("'a'.toSet()")));

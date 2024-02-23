@@ -41,7 +41,7 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 	/**
 	 * Configuration options of {@link UpdateTLDataTypeProcessor}.
 	 * 
-	 * @see com.top_logic.model.migration.CreateTLDatatypeProcessor.Config
+	 * @see com.top_logic.element.model.migration.model.CreateTLDatatypeProcessor.Config
 	 */
 	@TagName("update-datatype")
 	public interface Config extends PolymorphicConfiguration<UpdateTLDataTypeProcessor>,

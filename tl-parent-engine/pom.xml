@@ -34,13 +34,6 @@
 		<!-- Archetypes -->
 		<module>../tl-archetype-deploy</module>
 
-		<!-- Module parents -->
-		<module>../tl-parent-app</module>
-		<module>../tl-parent-core</module>
-		<module>../tl-parent-build</module>
-		<module>../tl-parent-gwt</module>
-
-
 		<!-- JavaScript libraries created with GWT -->
 		<module>../com.top_logic.ajax.client</module>
 		<module>../com.top_logic.client.diagramjs</module>

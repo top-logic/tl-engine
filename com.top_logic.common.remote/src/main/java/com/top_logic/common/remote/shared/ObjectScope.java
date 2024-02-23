@@ -229,7 +229,9 @@ public class ObjectScope implements JsonSerializable {
 		if (_replay) {
 			return;
 		}
-		recordUpdate(obj, property);
+		if (!obj.isTransient(property)) {
+			recordUpdate(obj, property);
+		}
 		sendUpdateEvent(obj, property);
 	}
 

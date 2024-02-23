@@ -92,7 +92,8 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 				out.endAttribute();
 			}
 
-			if (data.getDropTarget().dropEnabled(data)) {
+			TreeDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getDropTargets(), data);
+			if (firstEnabledDropTarget != null) {
 				out.beginAttribute(ONDROP_ATTR);
 				out.append("return services.form.TreeControl.handleOnDrop(event, this);");
 				out.endAttribute();
@@ -106,12 +107,22 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 				out.append("return services.form.TreeControl.handleOnDragLeave(event, this);");
 				out.endAttribute();
 
-				out.writeAttribute(TreeDropTarget.TL_DROPTYPE_ATTR, data.getDropTarget().getDropType().name());
+				out.writeAttribute(TreeDropTarget.TL_DROPTYPE_ATTR, firstEnabledDropTarget.getDropType().name());
 			}
 		} else {
 			treeControl.writeLegacyDragAndDropSupport(context, out);
 		}
 
+	}
+
+	private TreeDropTarget getFirstEnabledDropTarget(List<TreeDropTarget> dropTargets, TreeData data) {
+		for (TreeDropTarget dropTarget : dropTargets) {
+			if (dropTarget.dropEnabled(data)) {
+				return dropTarget;
+			}
+		}
+
+		return null;
 	}
 
 	private void writeOnClick(TagWriter out, TreeControl treeControl) throws IOException {

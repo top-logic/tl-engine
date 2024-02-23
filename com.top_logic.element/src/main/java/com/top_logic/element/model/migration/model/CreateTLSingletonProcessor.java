@@ -23,7 +23,11 @@ import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.element.model.PersistentModuleSingletons;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.BranchIdType;
+import com.top_logic.model.migration.data.Module;
 
 /**
  * {@link MigrationProcessor} creating a new singleton for a module.
@@ -34,6 +38,8 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 		implements MigrationProcessor {
 
 	private CreateTLObjectProcessor _singletonCreator;
+
+	private Util _util;
 
 	/**
 	 * Configuration options of {@link CreateTLSingletonProcessor}.
@@ -77,8 +83,9 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating singleton migration failed at " + getConfig().location(), ex);
@@ -86,7 +93,7 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 	}
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
-		Module module = Util.getTLModuleOrFail(connection, getConfig().getModule());
+		Module module = _util.getTLModuleOrFail(connection, getConfig().getModule());
 		BranchIdType newSingleton = _singletonCreator.createObject(connection);
 		CompiledStatement createSingleton = query(
 		parameters(
@@ -105,10 +112,10 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 				BasicTypes.REV_MAX_DB_NAME,
 				BasicTypes.REV_MIN_DB_NAME,
 				BasicTypes.REV_CREATE_DB_NAME,
-				Util.refID(PersistentModuleSingletons.SOURCE_ATTR),
+					_util.refID(PersistentModuleSingletons.SOURCE_ATTR),
 				SQLH.mangleDBName(PersistentModuleSingletons.NAME_ATTR),
-				Util.refType(PersistentModuleSingletons.DEST_ATTR),
-				Util.refID(PersistentModuleSingletons.DEST_ATTR)),
+					_util.refType(PersistentModuleSingletons.DEST_ATTR),
+					_util.refID(PersistentModuleSingletons.DEST_ATTR)),
 			Arrays.asList(
 				parameter(DBType.LONG, "branch"),
 				parameter(DBType.ID, "identifier"),
@@ -120,10 +127,10 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 				parameter(DBType.STRING, "singletonType"),
 				parameter(DBType.ID, "singletonID")))).toSql(connection.getSQLDialect());
 
-		createSingleton.executeUpdate(connection, newSingleton.getBranch(), Util.newID(connection),
-			Util.getRevCreate(connection), module.getID(), getConfig().getName(), newSingleton.getTable(),
+		createSingleton.executeUpdate(connection, newSingleton.getBranch(), _util.newID(connection),
+			_util.getRevCreate(connection), module.getID(), getConfig().getName(), newSingleton.getTable(),
 			newSingleton.getID());
-		log.info("Created singleton '" + getConfig().getName() + "' for module " + Util.toString(module));
+		log.info("Created singleton '" + getConfig().getName() + "' for module " + _util.toString(module));
 
 	}
 

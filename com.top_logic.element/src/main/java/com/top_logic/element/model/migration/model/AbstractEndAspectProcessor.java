@@ -15,6 +15,7 @@ import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.migration.data.QualifiedPartName;
 
 /**
  * {@link MigrationProcessor} handling properties like an {@link EndAspect}.

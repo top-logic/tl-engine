@@ -170,7 +170,7 @@ public abstract class AbstractTableCommandProvider<C extends AbstractTableComman
 			labelKey = defaultTooltipKey();
 		}
 		if (tooltipKey == null && labelKey != null) {
-			tooltipKey = labelKey.tooltip().fallback(ResKey.text(null));
+			tooltipKey = labelKey.tooltipOptional();
 		}
 		Resources resources = Resources.getInstance();
 		if (labelKey != null) {

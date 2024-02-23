@@ -23,6 +23,7 @@ import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 
 /**
  * Create/remove MetaAttributes in/from MetaElements.
@@ -36,29 +37,33 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 	 * Marker value for {@link TLReference}s.
 	 * 
 	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 * @deprecated Use {@link TLStructuredTypeColumns#REFERENCE_IMPL} instead
 	 */
-	public static final String REFERENCE_IMPL = "reference";
+	public static final String REFERENCE_IMPL = TLStructuredTypeColumns.REFERENCE_IMPL;
 
 	/**
 	 * Marker value for {@link TLProperty} instances of a {@link TLClass}.
 	 * 
 	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 * @deprecated Use {@link TLStructuredTypeColumns#CLASS_PROPERTY_IMPL} instead
 	 */
-	public static final String CLASS_PROPERTY_IMPL = "property";
+	public static final String CLASS_PROPERTY_IMPL = TLStructuredTypeColumns.CLASS_PROPERTY_IMPL;
 
 	/**
 	 * Marker value for {@link TLProperty} instances of a {@link TLAssociation}.
 	 * 
 	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 * @deprecated Use {@link TLStructuredTypeColumns#ASSOCIATION_PROPERTY_IMPL} instead
 	 */
-	public static final String ASSOCIATION_PROPERTY_IMPL = "association-property";
+	public static final String ASSOCIATION_PROPERTY_IMPL = TLStructuredTypeColumns.ASSOCIATION_PROPERTY_IMPL;
 
 	/**
 	 * Marker value for {@link TLAssociationEnd}s.
 	 * 
 	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 * @deprecated Use {@link TLStructuredTypeColumns#ASSOCIATION_END_IMPL} instead
 	 */
-	public static final String ASSOCIATION_END_IMPL = "association-end";
+	public static final String ASSOCIATION_END_IMPL = TLStructuredTypeColumns.ASSOCIATION_END_IMPL;
 
 	/**
 	 * Creates a {@link KBBasedMetaAttributeFactory} from configuration.
@@ -70,7 +75,7 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 	@Override
 	public TLClassProperty createClassProperty(KnowledgeBase kb) {
 		NameValueBuffer initialValues = new NameValueBuffer();
-		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, CLASS_PROPERTY_IMPL);
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.CLASS_PROPERTY_IMPL);
 		KBBasedMetaAttribute newMetaAttribute = newMetaAttribute(kb, initialValues);
 		initAttributes(newMetaAttribute);
 		return (PersistentClassProperty) newMetaAttribute;
@@ -79,7 +84,7 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 	@Override
 	public TLAssociationProperty createAssocationProperty(KnowledgeBase kb) {
 		NameValueBuffer initialValues = new NameValueBuffer();
-		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, ASSOCIATION_PROPERTY_IMPL);
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.ASSOCIATION_PROPERTY_IMPL);
 		KBBasedMetaAttribute newMetaAttribute = newMetaAttribute(kb, initialValues);
 		initAttributes(newMetaAttribute);
 		return (PersistentAssociationProperty) newMetaAttribute;
@@ -92,7 +97,7 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 	@Override
 	public TLAssociationEnd createEnd(KnowledgeBase kb) {
 		NameValueBuffer initialValues = new NameValueBuffer();
-		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, ASSOCIATION_END_IMPL);
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.ASSOCIATION_END_IMPL);
 		PersistentEnd end = (PersistentEnd) newMetaAttribute(kb, initialValues);
 		initEnd(end);
 		return end;
@@ -111,7 +116,7 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 	@Override
 	public TLReference createTLReference(KnowledgeBase kb, TLAssociationEnd end) {
 		NameValueBuffer initialValues = new NameValueBuffer();
-		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, REFERENCE_IMPL);
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.REFERENCE_IMPL);
 		PersistentReference reference = (PersistentReference) newMetaAttribute(kb, initialValues);
 		reference.tSetDataReference(PersistentReference.END_ATTR, end);
 		initAttributes(reference);

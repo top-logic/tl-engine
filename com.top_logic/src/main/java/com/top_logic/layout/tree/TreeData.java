@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.tree;
 
+import java.util.List;
+
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.layout.SelectionModelProvider;
@@ -67,9 +69,9 @@ public interface TreeData extends NamedModel, SelectionModelProvider, TypedAnnot
 	Maybe<? extends TreeDataOwner> getOwner();
 
 	/**
-	 * Defines the behavior if a drag-and-drop operation delivers data to this {@link TreeData}.
+	 * The {@link TreeDropTarget}'s that controls drop operations in this tree.
 	 */
-	TreeDropTarget getDropTarget();
+	List<TreeDropTarget> getDropTargets();
 
 	/**
 	 * Defines the behavior if a drag-and-drop operation is started from this {@link TreeData}.

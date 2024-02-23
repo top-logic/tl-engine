@@ -20,7 +20,6 @@ import com.top_logic.element.config.AssociationConfig.EndConfig;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.AttributedTypeConfig;
 import com.top_logic.element.config.ClassConfig;
-import com.top_logic.element.config.DatatypeConfig;
 import com.top_logic.element.config.ExtendsConfig;
 import com.top_logic.element.config.InterfaceConfig;
 import com.top_logic.element.config.ModelConfig;
@@ -52,6 +51,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 import com.top_logic.model.config.ModelPartConfig;
@@ -263,6 +263,10 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 				}
 			} else {
 				config.setEndName(TLModelUtil.qualifiedName(model.getEnd()));
+			}
+		} else {
+			if (kind(model) == ReferenceKind.BACKWARDS) {
+				config.setKind(ReferenceKind.BACKWARDS);
 			}
 		}
 		return config;

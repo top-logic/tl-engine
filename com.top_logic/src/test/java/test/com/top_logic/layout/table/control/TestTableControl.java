@@ -152,13 +152,11 @@ public class TestTableControl extends TestControl {
 		TableData tableData = tableTestStructure.getTableData();
 		TableViewModel oldViewModel = tableData.getViewModel();
 
-		enableUpdates();
 		tableData.setTableModel(null);
-		disableUpdates();
 
-		enableUpdates();
+		boolean before = setUpdatesEnabled(false);
 		writeControl(tableTestStructure.tableControl);
-		disableUpdates();
+		resetUpdatesEnabled(before);
 
 		tableData.setTableModel(oldViewModel);
 		writeControl(tableTestStructure.tableControl);

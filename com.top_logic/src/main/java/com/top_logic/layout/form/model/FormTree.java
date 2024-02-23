@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -90,7 +91,7 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 
 	private TreeDragSource _dragSource = DefaultTreeDrag.INSTANCE;
 
-	private TreeDropTarget _dropTarget = NoTreeDrop.INSTANCE;
+	private List<TreeDropTarget> _dropTargets = Arrays.asList(NoTreeDrop.INSTANCE);
 
 	public FormTree(String name, ResourceView resources, TreeUIModel treeModel, NodeGroupInitializer nodeGroupProvider) {
 		super(name, resources);
@@ -495,12 +496,15 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 	}
 
 	@Override
-	public TreeDropTarget getDropTarget() {
-		return _dropTarget;
+	public List<TreeDropTarget> getDropTargets() {
+		return _dropTargets;
 	}
 
-	public void setDropTarget(TreeDropTarget dropTarget) {
-		_dropTarget = dropTarget;
+	/**
+	 * @see #getDropTargets()
+	 */
+	public void setDropTargets(List<TreeDropTarget> dropTargets) {
+		_dropTargets = dropTargets;
 	}
 
 	@Override

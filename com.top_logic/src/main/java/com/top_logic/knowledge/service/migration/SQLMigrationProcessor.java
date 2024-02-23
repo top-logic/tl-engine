@@ -134,7 +134,7 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 
 	@SuppressWarnings("resource")
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		DBHelper sqlDialect;
 		try {
 			sqlDialect = connection.getSQLDialect();

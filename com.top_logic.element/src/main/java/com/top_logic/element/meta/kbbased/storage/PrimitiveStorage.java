@@ -22,11 +22,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.element.config.DatatypeConfig;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
@@ -34,6 +32,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -224,7 +223,7 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	}
 
 	private String toJson(StorageMapping<?> storageMapping, Collection<?> values) {
-		StringW buffer = new StringW();
+		StringBuilder buffer = new StringBuilder();
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginArray();
 			for (Object element : values) {

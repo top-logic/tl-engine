@@ -18,6 +18,7 @@ import com.top_logic.client.diagramjs.model.Label;
 import com.top_logic.client.diagramjs.model.util.Bounds;
 import com.top_logic.client.diagramjs.model.util.Dimension;
 import com.top_logic.client.diagramjs.model.util.Position;
+import com.top_logic.client.diagramjs.model.util.Waypoint;
 
 /**
  * Utilities methods for diagramJS objects.
@@ -37,7 +38,7 @@ public class DiagramJSObjectUtil {
 	 * Checks if the given {@link JavaScriptObject} is diagramJS Shape.
 	 */
 	public static boolean isShape(JavaScriptObject object) {
-		return JavaScriptObjectUtil.has(object, "children");
+		return JavaScriptObjectUtil.has(object, "children") && !isConnection(object);
 	}
 
 	/**
@@ -157,4 +158,29 @@ public class DiagramJSObjectUtil {
 
 		return bounds;
 	}
+
+	/**
+	 * Sets the waypoint property of the given object with the value that results by transforming
+	 * the given array of waypoints to an array with the same content but which only has as many
+	 * keys as it has entries.
+	 * 
+	 * <p>
+	 * It is dangerous to iterate over the keys of the given <code>Waypoint[]</code> array because
+	 * GWT adds more keys in addition to the existing keys for each entry in the array.
+	 * </p>
+	 */
+	public static native void setWaypoints(JavaScriptObject object, Waypoint[] waypoints) /*-{
+		var newWaypoints = [];
+
+		for (var i = 0; i < waypoints.length; i++) {
+			var waypoint = waypoints[i];
+
+			newWaypoints.push({
+				x : waypoint.x,
+				y : waypoint.y
+			});
+		}
+
+		object.waypoints = newWaypoints;
+	}-*/;
 }

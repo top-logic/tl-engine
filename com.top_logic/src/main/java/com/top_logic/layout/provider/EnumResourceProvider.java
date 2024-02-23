@@ -42,7 +42,7 @@ public class EnumResourceProvider extends EnumLabelProvider implements ResourceP
 		}
 
 		Enum<?> enumInstance = (Enum<?>) object;
-		return Resources.getInstance().getString(ResKey.forEnum(enumInstance).tooltip(), null);
+		return Resources.getInstance().getString(ResKey.forEnum(enumInstance).tooltipOptional());
 	}
 
 	@Override

@@ -23,17 +23,18 @@ public class I18NStructureTextFieldProvider extends I18NFieldProvider {
 
 	@Override
 	protected I18NStructuredTextField createField(EditContext editContext, String fieldName, boolean mandatory,
-			boolean disabled, boolean multiLine, Constraint constraint) {
+			boolean immutable, boolean multiLine, Constraint constraint) {
 
 		StructuredTextEditorConfig annotation = editContext.getAnnotation(StructuredTextEditorConfig.class);
 
 		I18NStructuredTextField field;
 		/* Ignore "multiLine", as single line StructuredText fields are not supported. */
 		if (annotation != null) {
-			field = I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, disabled, constraint,
+			field = I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, immutable, constraint,
 				annotation.getFeatures(), annotation.getTemplateFiles(), annotation.getTemplates());
 		} else {
-			field = I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, disabled, constraint, null);
+			field =
+				I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, immutable, constraint, null);
 		}
 		AllLanguagesInViewMode allLanguagesAnnotation = editContext.getAnnotation(AllLanguagesInViewMode.class);
 		if (allLanguagesAnnotation != null && allLanguagesAnnotation.getValue()) {

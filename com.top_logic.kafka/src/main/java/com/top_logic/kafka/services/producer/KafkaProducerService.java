@@ -65,10 +65,7 @@ public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerSe
 		HashMap<String, TLKafkaProducer<?, ?>> producers = CollectionFactory.map();
 		for (Entry<String, ? extends TLKafkaProducer.Config<?, ?>> entry : config.getProducers().entrySet()) {
 			TLKafkaProducer.Config<?, ?> producerConfig = entry.getValue();
-			if (!TopicChecker.checkTopicExists(context, producerConfig)) {
-				/* No need to log it, as 'checkTopicExists' already logged an error. */
-				continue;
-			}
+			TopicChecker.checkTopicExists(context, producerConfig);
 			TLKafkaProducer<?, ?> producer;
 			try {
 				producer = context.getInstance(producerConfig);

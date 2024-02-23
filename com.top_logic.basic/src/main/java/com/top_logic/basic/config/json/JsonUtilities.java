@@ -15,13 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.activation.MimeType;
+import javax.activation.MimeTypeParseException;
+
 import org.apache.commons.io.function.IOConsumer;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
-import com.top_logic.basic.shared.io.W;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.common.json.gstream.MalformedJsonException;
@@ -33,13 +34,35 @@ import com.top_logic.common.json.gstream.MalformedJsonException;
  */
 public class JsonUtilities {
 
-	/** Default Json content type. */
+	/**
+	 * Default JSON content type without character encoding parameter.
+	 * 
+	 * @see #JSON_CONTENT_TYPE_HEADER
+	 */
 	public static final String JSON_CONTENT_TYPE = "application/json";
 
 	/**
 	 * Standard encoding for Json files. See [rfc8259].
 	 */
 	public static final String DEFAULT_JSON_ENCODING = StringServices.UTF8;
+
+	/**
+	 * Content-Type header value for JSON including an charset parameter selecting
+	 * {@link #DEFAULT_JSON_ENCODING}.
+	 */
+	public static final String JSON_CONTENT_TYPE_HEADER;
+
+	static {
+		String headerValue;
+		try {
+			MimeType mimeType = new MimeType(JSON_CONTENT_TYPE);
+			mimeType.setParameter("charset", JsonUtilities.DEFAULT_JSON_ENCODING);
+			headerValue = mimeType.toString();
+		} catch (MimeTypeParseException ex) {
+			headerValue = JSON_CONTENT_TYPE;
+		}
+		JSON_CONTENT_TYPE_HEADER = headerValue;
+	}
 
 	/**
 	 * Reads the next valid Json element (i.e. array, object, or primitive) from given
@@ -242,7 +265,7 @@ public class JsonUtilities {
 	 * @return The serialized content.
 	 */
 	public static String writeJSONContent(IOConsumer<JsonWriter> content) {
-		W out = new StringW();
+		StringBuilder out = new StringBuilder();
 		try (JsonWriter json = new JsonWriter(out)) {
 			content.accept(json);
 		} catch (IOException ex) {

@@ -60,6 +60,7 @@ import com.top_logic.graph.diagramjs.client.service.event.CreateClassPropertyEve
 import com.top_logic.graph.diagramjs.client.service.event.CreateConnectionEventHandler;
 import com.top_logic.graph.diagramjs.client.service.event.CreateEnumerationEventHandler;
 import com.top_logic.graph.diagramjs.client.service.event.DeleteGraphPartEventHandler;
+import com.top_logic.graph.diagramjs.client.service.event.ElementVisibilityEventHandler;
 import com.top_logic.graph.diagramjs.client.service.event.ElementsMoveEventHandler;
 import com.top_logic.graph.diagramjs.client.service.event.GoToDefinitionEventHandler;
 import com.top_logic.graph.diagramjs.client.service.event.ShapeResizeEventHandler;
@@ -121,12 +122,17 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		return id + GRAPH_SUFFIX;
 	}
 
+	/**
+	 * These are the arguments that are sent by the
+	 * <code>DiagramJSGraphControl#writeGraphInitScript</code> of the server graph control.
+	 */
 	@Override
 	public void init(Object[] args) {
 		checkArguments(args);
 
 		_scope.addListener(new DefaultGraphScopeListener(_diagram));
 		initSharedGraphModel((String) args[0]);
+		setShowHiddenElements((boolean) args[1]);
 		_scope.addListener(this);
 
 		registerDisplayGraphEventHandlers(_diagram.getEventBus());
@@ -274,6 +280,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		eventBus.addEventHandler(CREATE_ENUMERATION_EVENT, new CreateEnumerationEventHandler(id));
 		eventBus.addEventHandler(DELETE_ELEMENT_EVENT, new DeleteGraphPartEventHandler(id));
 		eventBus.addEventHandler(ELEMENT_GOTO_EVENT, new GoToDefinitionEventHandler(id));
+		eventBus.addEventHandler(ELEMENTS_VISIBILITY_EVENT, new ElementVisibilityEventHandler(id));
 	}
 
 	private List<String> getUpdatedWaypointsEventNames() {
@@ -297,8 +304,10 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 	}
 
 	private void checkArguments(Object[] args) {
-		if (args.length < 1) {
-			GWT.log("No graph available.");
+		if (args.length < 2) {
+			GWT.log("Two arguments are expected."
+				+ "The first argument represents the graph status in json."
+				+ "The second argument is a flag to indicate if hidden elements should be displayed.");
 		}
 	}
 
@@ -322,9 +331,16 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 				Changes changes = ChangeIO.readChanges(updateJSON);
 				_scope.update(changes);
 				break;
+			case GraphControlCommon.SHOW_HIDDEN_ELEMENTS_COMMAND:
+				setShowHiddenElements(Boolean.parseBoolean((String) args[0]));
+				break;
 			default:
 				throw new IllegalArgumentException("Command '" + command + "' not supported.");
 		}
+	}
+
+	private void setShowHiddenElements(boolean showHiddenElements) {
+		_diagram.getLayouter().setShowHiddenElements(showHiddenElements);
 	}
 
 	/**

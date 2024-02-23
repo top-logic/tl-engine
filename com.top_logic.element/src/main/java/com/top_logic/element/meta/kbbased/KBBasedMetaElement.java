@@ -23,6 +23,7 @@ import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypeVisitor;
 import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 
 /**
  * {@link TLClass} backed by a KnowledgeObject.
@@ -32,10 +33,10 @@ import com.top_logic.model.cache.TLModelCacheService;
 public abstract class KBBasedMetaElement extends DynamicType implements TLClass {
 
 	/** @see #isFinal() */
-	private static final String FINAL = "final";
+	private static final String FINAL = TLClass.FINAL_ATTR;
 
 	/** @see #isAbstract() */
-	private static final String META_ELEMENT_ABSTRACT = "abstract";
+	private static final String META_ELEMENT_ABSTRACT = TLClass.ABSTRACT_ATTR;
 
 	/** {@link KnowledgeObject} type used to store {@link TLClass}s in. */
 	public static final String META_ELEMENT_KO = ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE;
@@ -49,25 +50,29 @@ public abstract class KBBasedMetaElement extends DynamicType implements TLClass 
 	/**
 	 * Marker for different implementations stored in the {@link #META_ELEMENT_KO} table.
 	 * 
-	 * @see KBBasedMetaElementFactory#CLASS_TYPE
-	 * @see KBBasedMetaElementFactory#ASSOCIATION_TYPE
+	 * @see TLStructuredTypeColumns#CLASS_TYPE
+	 * @see TLStructuredTypeColumns#ASSOCIATION_TYPE
+	 * @deprecated Use {@link TLStructuredTypeColumns#META_ELEMENT_IMPL} instead
 	 */
-	public static final String META_ELEMENT_IMPL = "impl";
+	@Deprecated
+	public static final String META_ELEMENT_IMPL = TLStructuredTypeColumns.META_ELEMENT_IMPL;
 
     /** The KA for getting the sub meta elements */
 	protected static final String META_ELEMENT_GENERALIZATIONS = ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS;
 	
 	/**
 	 * The ordering attribute of generalization links.
+	 * @deprecated Use {@link TLStructuredTypeColumns#META_ELEMENT_GENERALIZATIONS__ORDER} instead
 	 */
-	public static final String META_ELEMENT_GENERALIZATIONS__ORDER = "order";
+	@Deprecated
+	public static final String META_ELEMENT_GENERALIZATIONS__ORDER = TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER;
 
 	/**
 	 * {@link AssociationQuery} to resolve the super types.
 	 */
 	public static final OrderedLinkQuery<KnowledgeAssociation> SUPER_ME_ATTR = AssociationQuery.createOrderedLinkQuery(
 		"superMetaElement", KnowledgeAssociation.class, META_ELEMENT_GENERALIZATIONS,
-		DBKnowledgeAssociation.REFERENCE_SOURCE_NAME, META_ELEMENT_GENERALIZATIONS__ORDER, null, true);
+		DBKnowledgeAssociation.REFERENCE_SOURCE_NAME, TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER, null, true);
 	
 	/**
 	 * {@link AssociationQuery} to resolve the sub {@link TLClass}s of a given

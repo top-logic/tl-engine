@@ -17,12 +17,15 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.ClassConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -65,6 +68,8 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link CreateTLClassProcessor} from configuration.
 	 * 
@@ -79,29 +84,31 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			internalDoMigration(log, connection);
+			_util = context.get(Util.PROPERTY);
+			internalDoMigration(context, log, connection);
 		} catch (Exception ex) {
 			log.error("Class creation failed at " + getConfig().location(), ex);
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection) throws Exception {
 		QualifiedTypeName className = getConfig().getName();
-		Util.createTLClass(connection, className,
+		_util.createTLClass(connection, className,
 			getConfig().isAbstract(), getConfig().isFinal(),
 			getConfig());
-		log.info("Created class " + Util.qualifiedName(className));
+		log.info("Created class " + _util.qualifiedName(className));
 
-		addPrimaryGeneralization(log, connection, className);
+		addPrimaryGeneralization(context, log, connection, className);
 	}
 
-	private void addPrimaryGeneralization(Log log, PooledConnection connection, QualifiedTypeName newClass) {
+	private void addPrimaryGeneralization(MigrationContext context, Log log, PooledConnection connection,
+			QualifiedTypeName newClass) {
 		QualifiedTypeName primaryGeneralization = getConfig().getPrimaryGeneralization();
 		if (primaryGeneralization == null) {
 			if (!TlModelFactory.TL_MODEL_STRUCTURE.equals(newClass.getModuleName())) {
-				log.error("No primary generalization given for new class '" + Util.qualifiedName(newClass)
+				log.error("No primary generalization given for new class '" + _util.qualifiedName(newClass)
 					+ "'. Use at least "
 					+ TLModelUtil.qualifiedName(TlModelFactory.TL_MODEL_STRUCTURE, TLObject.TL_OBJECT_TYPE) + ".");
 			}
@@ -116,7 +123,7 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		addGeneralization.getGeneralizations().add(generalization);
 		AddTLClassGeneralization processor =
 			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(addGeneralization);
-		processor.doMigration(log, connection);
+		processor.doMigration(context, log, connection);
 	}
 
 }

@@ -37,6 +37,8 @@ import com.top_logic.basic.col.filter.TrueFilter;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -78,7 +80,6 @@ import com.top_logic.layout.tree.TreeData;
 import com.top_logic.layout.tree.TreeDataOwner;
 import com.top_logic.layout.tree.TreeRenderer;
 import com.top_logic.layout.tree.dnd.DefaultTreeDrag;
-import com.top_logic.layout.tree.dnd.NoTreeDrop;
 import com.top_logic.layout.tree.dnd.TreeDragSource;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
@@ -232,8 +233,11 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		/** Name of the {@link #getResourceProvider()} property. */
 		String RESOURCE_PROVIDER_ATTRIBUTE = "resource-provider";
 
-		/** @see #getTreeDrop() */
-		String TREE_DROP = "treeDrop";
+		/** @see #getDropTargets() */
+		String DROP_TARGETS_ATTRIBUTE_NAME = "dropTargets";
+
+		/** @see #getDropTargets() */
+		String DROP_TARGETS_ENTRY_TAG_NAME = "dropTarget";
 
 		/** @see #getDragSource() */
 		String DRAG_SOURCE = "dragSource";
@@ -321,18 +325,18 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		boolean getFocusSelection();
 
 		/**
-		 * The {@link TreeDragSource} to use.
+		 * Operation that controls dragging data from a tree.
 		 */
 		@Name(DRAG_SOURCE)
 		@ItemDefault(DefaultTreeDrag.class)
 		PolymorphicConfiguration<TreeDragSource> getDragSource();
 
 		/**
-		 * The {@link TreeDropTarget} handler to use.
+		 * Operations that control element drops in a tree.
 		 */
-		@Name(TREE_DROP)
-		@ItemDefault(NoTreeDrop.class)
-		PolymorphicConfiguration<TreeDropTarget> getTreeDrop();
+		@Name(DROP_TARGETS_ATTRIBUTE_NAME)
+		@EntryTag(DROP_TARGETS_ENTRY_TAG_NAME)
+		List<PolymorphicConfiguration<TreeDropTarget>> getDropTargets();
 
 		@Override
 		@ItemDefault(TreeContextMenuFactory.class)
@@ -429,7 +433,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	private TreeDragSource _dragSource;
 
-	private TreeDropTarget _dropTarget;
+	private List<TreeDropTarget> _dropTargets;
 
 	private ContextMenuFactory _contextMenuFactory;
 
@@ -449,7 +453,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		_treeRenderer = buildRenderer(context, config);
 		_focusSelection = config.getFocusSelection();
 		_dragSource = context.getInstance(config.getDragSource());
-		_dropTarget = context.getInstance(config.getTreeDrop());
+		_dropTargets = TypedConfiguration.getInstanceList(context, config.getDropTargets());
 		_contextMenuFactory = context.getInstance(config.getContextMenuFactory());
 	}
 
@@ -890,7 +894,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	protected TreeControl createTreeControl() {
 		DefaultTreeData treeData =
 			new DefaultTreeData(Maybe.some(this), getTreeModel(), getSelectionModel(), _treeRenderer, _dragSource,
-				_dropTarget);
+				_dropTargets);
 
 		if (ScriptingRecorder.mustNotRecord(this)) {
 			ScriptingRecorder.annotateAsDontRecord(treeData);

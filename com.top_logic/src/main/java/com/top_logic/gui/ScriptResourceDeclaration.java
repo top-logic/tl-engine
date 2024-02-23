@@ -6,7 +6,9 @@
 package com.top_logic.gui;
 
 import com.top_logic.basic.config.ResourceDeclaration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.mig.html.HTMLConstants;
 
@@ -38,4 +40,27 @@ public interface ScriptResourceDeclaration extends ResourceDeclaration {
 	 * Sets the value of {@link #getType()}.
 	 */
 	void setType(String type);
+
+	/**
+	 * The module specifier to map the imported <em>ES6</em> module to.
+	 * 
+	 * <p>
+	 * Use this only when {@link #getType() type} is <code>module</code>.
+	 * </p>
+	 * 
+	 * <p>
+	 * From a module referenced with specifier <code>service</code>, contents can be imported with
+	 * the following statement:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>
+	 * import {...} from 'service';
+	 * </code>
+	 * </pre>
+	 */
+	@Nullable
+	@Label("Specifier")
+	String getAs();
+
 }

@@ -778,11 +778,19 @@ public class MigrationUtil {
 
 	private static Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log, String[] modules)
 			throws DatabaseAccessException {
+		Set<String> modulesSet = Set.of(modules);
 		Map<String, Map<Version, MigrationConfig>> migrationConfigs = new HashMap<>();
 		for (String migrationFolder : FileManager.getInstance().getResourcePaths(MIGRATION_BASE_RESOURCE)) {
 			String moduleName =
 				migrationFolder.substring(MIGRATION_BASE_RESOURCE.length(), migrationFolder.length() - 1);
 
+			if (!modulesSet.contains(moduleName)) {
+				log.info(
+					"Folder " + moduleName + " is not configured as migration folder. Configured migration folders: "
+							+ Arrays.toString(modules),
+					Protocol.WARN);
+				continue;
+			}
 			log.info("Read migration scripts for module " + moduleName, Protocol.VERBOSE);
 			Map<Version, MigrationConfig> moduleMigrationConfigs = new HashMap<>();
 			for (String migrationResource : FileManager.getInstance().getResourcePaths(migrationFolder)) {
@@ -796,7 +804,7 @@ public class MigrationUtil {
 				}
 			}
 			if (moduleMigrationConfigs.isEmpty()) {
-				// No configuration read. May occur when reading failed.
+				// No configuration read. May occur when reading failed. Error is logged by reader.
 				continue;
 			}
 			migrationConfigs.put(moduleName, moduleMigrationConfigs);
@@ -950,8 +958,12 @@ public class MigrationUtil {
 		} else {
 			relevantMigrations =
 				getRelevantMigrations(migrationScripts, appVersion, dataVersion, migrationModules);
-
-			log.info("Pending migrations: "
+			String pendingMigrations = "Pending migrations: ";
+			if (relevantMigrations.isEmpty()) {
+				log.info(pendingMigrations + "None");
+				return MigrationInfo.NO_MIGRATION;
+			}
+			log.info(pendingMigrations
 					+ relevantMigrations.stream().map(m -> m.getVersion().getModule() + ": " + m.getVersion().getName())
 						.collect(Collectors.joining(", ")));
 		}

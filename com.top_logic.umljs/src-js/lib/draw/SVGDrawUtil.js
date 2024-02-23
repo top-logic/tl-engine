@@ -99,6 +99,8 @@ function getPathData(waypoints) {
 
 function getGroup(elements) {
     var group = svgCreate('g');
+    
+    svgClasses(group).add('djs-visual');
 
     elements.forEach(function(element) {
         svgAppend(group, element);
@@ -177,3 +179,25 @@ export function getRectPath(shape) {
 
   return componentsToPath(rectPath);
 }
+
+function addHiddenElementStyles(element) {
+  element.style.setProperty('opacity', 0.3);
+};
+
+function removeHiddenElementStyles(element) {
+  element.style.removeProperty('opacity');
+};
+
+export function setVisibilityStyles(parentGfx, element) {
+  var groupElement = parentGfx.closest('.djs-group');
+  
+  if(element.parent && element.parent.isVisible) {
+	  if(element.isVisible) {
+		removeHiddenElementStyles(groupElement);
+	  } else {
+		addHiddenElementStyles(groupElement);
+	  }
+  } else {
+	removeHiddenElementStyles(groupElement);
+  }
+};

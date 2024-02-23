@@ -38,8 +38,12 @@ public class UnionBuilder extends AbstractSimpleMethodBuilder<SearchExpression> 
 		}
 		
 		SearchExpression result = args[0];
-		for (int i = 1; i < args.length; i++) {
-			result = union(result, args[i]);
+		if (args.length == 1) {
+			result = new ToSet("toSet", new SearchExpression[] { result });
+		} else {
+			for (int i = 1; i < args.length; i++) {
+				result = union(result, args[i]);
+			}
 		}
 		return result;
 	}

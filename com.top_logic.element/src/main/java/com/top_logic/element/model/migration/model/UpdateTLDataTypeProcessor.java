@@ -17,12 +17,18 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.schema.config.DBColumnType;
-import com.top_logic.element.config.DatatypeConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotatedConfig;
+import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.Module;
+import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} updating a {@link TLPrimitive}.
@@ -35,7 +41,7 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 	/**
 	 * Configuration options of {@link UpdateTLDataTypeProcessor}.
 	 * 
-	 * @see CreateTLDatatypeProcessor.Config
+	 * @see com.top_logic.model.migration.CreateTLDatatypeProcessor.Config
 	 */
 	@TagName("update-datatype")
 	public interface Config extends PolymorphicConfiguration<UpdateTLDataTypeProcessor>,
@@ -80,6 +86,8 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 
 	}
 
+	private Util _util;
+
 	/**
 	 * Creates a {@link UpdateTLDataTypeProcessor} from configuration.
 	 * 
@@ -94,8 +102,9 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 	}
 
 	@Override
-	public void doMigration(Log log, PooledConnection connection) {
+	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
+			_util = context.get(Util.PROPERTY);
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Update datatype migration failed at " + getConfig().location(), ex);
@@ -106,10 +115,10 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		QualifiedTypeName typeName = getConfig().getName();
 		Type type;
 		try {
-			type = Util.getTLTypeOrFail(connection, typeName);
+			type = _util.getTLTypeOrFail(connection, typeName);
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find datatype to update " + Util.qualifiedName(typeName) + " at " + getConfig().location(),
+				"Unable to find datatype to update " + _util.qualifiedName(typeName) + " at " + getConfig().location(),
 				Log.WARN);
 			return;
 		}
@@ -118,7 +127,7 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		if (newName == null || typeName.getModuleName().equals(newName.getModuleName())) {
 			newModule = null;
 		} else {
-			newModule = Util.getTLModuleOrFail(connection, newName.getModuleName());
+			newModule = _util.getTLModuleOrFail(connection, newName.getModuleName());
 		}
 		String dataTypeName;
 		if (newName == null || typeName.getTypeName().equals(newName.getTypeName())) {
@@ -130,10 +139,10 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		DBColumnType columnType = getConfig().getDBMapping();
 		PolymorphicConfiguration<StorageMapping<?>> storageMapping = getConfig().getStorageMapping();
 		AnnotatedConfig<TLTypeAnnotation> annotations = getConfig();
-		Util.updateTLDataType(connection, type, newModule, dataTypeName, getConfig().getKind(), columnType,
+		_util.updateTLDataType(connection, type, newModule, dataTypeName, getConfig().getKind(), columnType,
 			storageMapping, annotations);
 
-		log.info("Updated datatype " + Util.qualifiedName(typeName));
+		log.info("Updated datatype " + _util.qualifiedName(typeName));
 	}
 
 }

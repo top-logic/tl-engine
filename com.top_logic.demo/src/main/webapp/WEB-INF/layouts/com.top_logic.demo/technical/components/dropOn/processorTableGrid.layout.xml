@@ -35,16 +35,18 @@
     default: $node.get(`test.dnd.dropon:Processor#subprocessors`);
 }]]></children>
 		</modelBuilder>
-		<tableDrop class="com.top_logic.model.search.providers.GridDropTargetByExpression"
-			dropType="ROW"
-			handleDrop="draggedObjects->referenceRow->{handleDrop=work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}"
-		>
-			<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=work -> processor -> switch {
-    !$processor.get(`test.dnd.dropon:Processor#active`): false;
-    !$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
-    default: true;
-};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
-		</tableDrop>
+		<dropTargets>
+			<dropTarget class="com.top_logic.model.search.providers.GridDropTargetByExpression"
+				dropType="ROW"
+				handleDrop="draggedObjects->referenceRow->{handleDrop=work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}"
+			>
+				<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=work -> processor -> switch {
+	    !$processor.get(`test.dnd.dropon:Processor#active`): false;
+	    !$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
+	    default: true;
+	};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
+			</dropTarget>
+		</dropTargets>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"

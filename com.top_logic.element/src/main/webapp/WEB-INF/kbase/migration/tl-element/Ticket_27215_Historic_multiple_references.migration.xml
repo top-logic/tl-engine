@@ -16,323 +16,114 @@
 	</dependencies>
 	<processors>
 		<!-- Update database model -->
-		<processor class="com.top_logic.knowledge.service.migration.CreateTablesProcessor">
-			<tables>
-				<table name="hasHistoricValue"
-					compress="0"
-					dbname="HAS_HISTORIC_VALUE"
-					pkey-storage="false"
-				>
-					<columns>
-						<column name="BRANCH"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="IDENTIFIER"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="REV_MAX"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="REV_MIN"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="REV_CREATE"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="SOURCE_TYPE"
-							binary="true"
-							mandatory="true"
-							precision="0"
-							size="150"
-							type="string"
-						/>
-						<column name="SOURCE_ID"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="DEST_TYPE"
-							binary="true"
-							mandatory="true"
-							precision="0"
-							size="150"
-							type="string"
-						/>
-						<column name="DEST_ID"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="DEST_REV"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="DEST_BRC"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="META_ATTRIBUTE_ID"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="SORT_ORDER"
-							binary="false"
-							mandatory="false"
-							precision="0"
-							size="12"
-							type="int"
-						/>
-					</columns>
-					<keys>
-						<key name="REV_MAX"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-						<key name="REV_MIN"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="REV_MIN"/>
-							</columns>
-						</key>
-						<key name="SOURCE"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="BRANCH"/>
-								<column name="SOURCE_ID"/>
-								<column name="META_ATTRIBUTE_ID"/>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-						<key name="META_ATTRIBUTE"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="BRANCH"/>
-								<column name="META_ATTRIBUTE_ID"/>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-						<key name="DEST"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="BRANCH"/>
-								<column name="DEST_ID"/>
-								<column name="META_ATTRIBUTE_ID"/>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-					</keys>
-					<primary-key>
-						<columns>
-							<column name="BRANCH"/>
-							<column name="IDENTIFIER"/>
-							<column name="REV_MAX"/>
-						</columns>
-					</primary-key>
-				</table>
-				<table name="hasMixedValue"
-					compress="0"
-					dbname="HAS_MIXED_VALUE"
-					pkey-storage="false"
-				>
-					<columns>
-						<column name="BRANCH"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="IDENTIFIER"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="REV_MAX"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="REV_MIN"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="REV_CREATE"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="SOURCE_TYPE"
-							binary="true"
-							mandatory="true"
-							precision="0"
-							size="150"
-							type="string"
-						/>
-						<column name="SOURCE_ID"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="DEST_TYPE"
-							binary="true"
-							mandatory="true"
-							precision="0"
-							size="150"
-							type="string"
-						/>
-						<column name="DEST_ID"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="DEST_REV"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="DEST_BRC"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="long"
-						/>
-						<column name="META_ATTRIBUTE_ID"
-							binary="false"
-							mandatory="true"
-							precision="0"
-							size="20"
-							type="id"
-						/>
-						<column name="SORT_ORDER"
-							binary="false"
-							mandatory="false"
-							precision="0"
-							size="12"
-							type="int"
-						/>
-					</columns>
-					<keys>
-						<key name="REV_MAX"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-						<key name="REV_MIN"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="REV_MIN"/>
-							</columns>
-						</key>
-						<key name="SOURCE"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="BRANCH"/>
-								<column name="SOURCE_ID"/>
-								<column name="META_ATTRIBUTE_ID"/>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-						<key name="DEST"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="BRANCH"/>
-								<column name="DEST_ID"/>
-								<column name="META_ATTRIBUTE_ID"/>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-						<key name="META_ATTRIBUTE"
-							compress="0"
-							kind="default"
-						>
-							<columns>
-								<column name="BRANCH"/>
-								<column name="META_ATTRIBUTE_ID"/>
-								<column name="REV_MAX"/>
-							</columns>
-						</key>
-					</keys>
-					<primary-key>
-						<columns>
-							<column name="BRANCH"/>
-							<column name="IDENTIFIER"/>
-							<column name="REV_MAX"/>
-						</columns>
-					</primary-key>
-				</table>
-			</tables>
-		</processor>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<metaobject object_name="hasHistoricValue" super_class="Item">
+					<annotations>
+						<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+							<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+						</annotation>
+						<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+							full-load="true" />
+					</annotations>
+					<attributes>
+						<source
+					    	target-type="Object"
+					    />
+					    <destination
+					    	target-type="Object"
+					    	history-type="historic" 
+					    />
+				    	<reference att_name="metaAttribute" 
+							mandatory="true" 
+					    	by-value="true"
+					    	history-type="current" 
+					    	branch-global="false" 
+					    	monomorphic="true" 
+					    	is-container="false" 
+					    	deletion-policy="delete-referer" 
+					    	target-type="MetaAttribute"
+				    	/>
+						<mo_attribute att_name="sortOrder"       att_type="Integer" mandatory="false" />
+					</attributes>
+					<index>
+						<!-- Note: The name of the index matches the name of the auto-generated 
+							index for the source reference as inherited from the super class. By this 
+							convention, the inherited index is replaced by the explicitly declared new 
+							index. This explicitly declared index superseeds the inherited auto-generated 
+							one. Therefore it makes no sense to add this index as additional index to 
+							the type. -->
+						<mo_index name="source" unique="false">
+							<index-parts>
+						        <index_part name="source" part="name" />
+						        <index_part name="metaAttribute" />
+							</index-parts>
+						</mo_index>
+					
+						<!-- See comment for the source index. -->		
+					    <mo_index name="dest" unique="false">
+							<index-parts>
+						        <index_part name="dest" part="name" />
+						        <index_part name="metaAttribute" />
+							</index-parts>
+					    </mo_index>
+					</index>
+				</metaobject>
 
+				<metaobject object_name="hasMixedValue" super_class="Item">
+					<annotations>
+						<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+							<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+						</annotation>
+						<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+							full-load="true" />
+					</annotations>
+					<attributes>
+						<source
+					    	target-type="Object"
+					    />
+					    <destination
+					    	target-type="Object"
+					    	history-type="mixed" 
+					    />
+				    	<reference att_name="metaAttribute" 
+							mandatory="true" 
+					    	by-value="true"
+					    	history-type="current" 
+					    	branch-global="false" 
+					    	monomorphic="true" 
+					    	is-container="false" 
+					    	deletion-policy="delete-referer" 
+					    	target-type="MetaAttribute"
+				    	/>
+						<mo_attribute att_name="sortOrder"       att_type="Integer" mandatory="false" />
+					</attributes>
+					<index>
+						<!-- Note: The name of the index matches the name of the auto-generated 
+							index for the source reference as inherited from the super class. By this 
+							convention, the inherited index is replaced by the explicitly declared new 
+							index. This explicitly declared index superseeds the inherited auto-generated 
+							one. Therefore it makes no sense to add this index as additional index to 
+							the type. -->
+						<mo_index name="source" unique="false">
+							<index-parts>
+						        <index_part name="source" part="name" />
+						        <index_part name="metaAttribute" />
+							</index-parts>
+						</mo_index>
+					
+						<!-- See comment for the source index. -->		
+					    <mo_index name="dest" unique="false">
+							<index-parts>
+						        <index_part name="dest" part="name" />
+						        <index_part name="metaAttribute" />
+							</index-parts>
+					    </mo_index>
+					</index>
+				</metaobject>
+			</schema>
+		</processor>
+		
 		<processor class="com.top_logic.element.model.migration.Ticket27215InsertHistoryType"/>
 
 		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
@@ -351,6 +142,7 @@
 				application-type="com.top_logic.dob.meta.MOReference$HistoryType"
 			/>
 		</create-datatype>
+
 		<create-property name="tl.model:TLAssociationEnd#historyType"
 			type="tl.model:HistoryType"
 		/>

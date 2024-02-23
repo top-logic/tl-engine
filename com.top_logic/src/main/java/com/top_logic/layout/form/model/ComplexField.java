@@ -359,14 +359,14 @@ public final class ComplexField extends AbstractSingleValueField {
 	}
 
 	@Override
-	protected Object narrowValue(Object aValue) {
-		if (aValue == EMPTY_INPUT) return aValue;
+	protected Object narrowValue(Object value) {
+		if (value == EMPTY_INPUT) return value;
 
 		// Prevent illegal values from being stored programmatically into this
 		// field.
-		checkFormat(aValue);
+		checkFormat(value);
 
-		return aValue;
+		return value;
 	}
 
 	/**

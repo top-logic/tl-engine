@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -137,6 +138,8 @@ public class TLEnumerationFormBuilder
 
 		@DynamicMode(fun = ActiveIf.class, args = @Ref({ CREATE }))
 		@RegexpConstraint(value = PartNameConstraints.RECOMMENDED_TYPE_NAME_PATTERN, errorKey = PartNameConstraints.RecommendedTypeNameKey.class, asWarning = true)
+		@Constraint(value = TLStructuredTypeFormBuilder.EditModel.TypeNotExistsConstraint.class, args = { @Ref(MODULE),
+			@Ref(CREATE) })
 		@Override
 		String getName();
 	}

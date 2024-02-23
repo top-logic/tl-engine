@@ -9,6 +9,8 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.junit.Assert;
+
 import test.com.top_logic.ComponentTestUtils;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -79,7 +81,12 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		
 		ContentHandlersRegistry urlContext = new ContentHandlersRegistry();
 		WindowId windowId = new WindowId("test");
-		SubsessionHandler layoutContext = new SubsessionHandler(urlContext, windowId, null, null);
+		SubsessionHandler layoutContext = new SubsessionHandler(urlContext, windowId, null, null) {
+			@Override
+			protected void errorStateModification() {
+				Assert.fail("State modification during rendering.");
+			}
+		};
 		TLContextManager.initLayoutContext(subSession, layoutContext);
 
 		// Simulate initial rendering to set up URL contexts.
@@ -90,6 +97,8 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		DefaultDisplayContext.teardownDisplayContext(null, initialDisplayContext);
 		
 		_displayContext  = createDisplayContext(subSession, component);
+
+		enableUpdates();
 	}
 
 	private AbstractDisplayContext createDisplayContext(TLSubSessionContext subSession, LayoutComponent component) {
@@ -102,19 +111,47 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		return displayContext;
 	}
 
-	protected void enableUpdates() {
-		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
-		layoutContext.enableUpdate(true);
+	/**
+	 * Enables model updates in the session.
+	 *
+	 * @return The state before, should be passed to {@link #resetUpdatesEnabled(boolean)} later on
+	 *         (ideally in a finally clause).
+	 */
+	protected boolean enableUpdates() {
+		return setUpdatesEnabled(true);
 	}
 
-	protected void disableUpdates() {
+	/**
+	 * Sets the "updates-enabled" state of the session.
+	 *
+	 * @param enabled
+	 *        Whether updates should be enabled.
+	 * @return The session state before. Must be passed to {@link #resetUpdatesEnabled(boolean)}
+	 *         later on (ideally in a finally clause).
+	 */
+	protected boolean setUpdatesEnabled(boolean enabled) {
+		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
+		return layoutContext.enableUpdate(enabled);
+	}
+
+	/**
+	 * Resets the "updates-enabled" state of the session.
+	 * 
+	 * @param before
+	 *        The value returned from {@link #setUpdatesEnabled(boolean)} called before.
+	 * 
+	 * @see #setUpdatesEnabled(boolean)
+	 */
+	protected void resetUpdatesEnabled(boolean before) {
 		SubsessionHandler layoutContext = (SubsessionHandler) TLContext.getContext().getLayoutContext();
 		layoutContext.processActions();
-		layoutContext.enableUpdate(false);
+		layoutContext.enableUpdate(before);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
+		resetUpdatesEnabled(false);
+
 		DefaultDisplayContext.teardownDisplayContext(null, _displayContext);
 		_displayContext = null;
 		super.tearDown();

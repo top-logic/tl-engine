@@ -29,6 +29,7 @@ import org.jsoup.nodes.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -60,7 +61,7 @@ import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.SearchExpressions;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.Method;
+import com.top_logic.model.search.expr.config.dom.Expr.Access;
 import com.top_logic.model.search.expr.config.dom.Expr.Add;
 import com.top_logic.model.search.expr.config.dom.Expr.And;
 import com.top_logic.model.search.expr.config.dom.Expr.Apply;
@@ -71,6 +72,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Attribute;
 import com.top_logic.model.search.expr.config.dom.Expr.AttributeContent;
 import com.top_logic.model.search.expr.config.dom.Expr.AttributeContents;
 import com.top_logic.model.search.expr.config.dom.Expr.Block;
+import com.top_logic.model.search.expr.config.dom.Expr.Chain;
 import com.top_logic.model.search.expr.config.dom.Expr.Cmp;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.config.dom.Expr.Div;
@@ -80,6 +82,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Eq;
 import com.top_logic.model.search.expr.config.dom.Expr.False;
 import com.top_logic.model.search.expr.config.dom.Expr.Html;
 import com.top_logic.model.search.expr.config.dom.Expr.HtmlContent;
+import com.top_logic.model.search.expr.config.dom.Expr.Method;
 import com.top_logic.model.search.expr.config.dom.Expr.Mod;
 import com.top_logic.model.search.expr.config.dom.Expr.ModuleLiteral;
 import com.top_logic.model.search.expr.config.dom.Expr.Mul;
@@ -572,11 +575,36 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 	}
 
 	@Override
-	public SearchExpression visit(Method expr, TLModel arg) throws ConfigurationException {
-		Argument[] args = descendArgs(expr.getArgs(), arg);
+	public SearchExpression visit(Access expr, TLModel arg) throws ConfigurationException {
+		SearchExpression self = descend(expr.getExpr(), arg);
 
-		MethodBuilder<?> builder = getBuilder(expr);
-		return builder.build(expr, args);
+		Method method = expr.getMethod();
+		Argument[] args = descendArgs(self, method.getArgs(), arg);
+
+		MethodBuilder<?> builder = getBuilder(method);
+		return builder.build(method, args);
+	}
+
+	@Override
+	public SearchExpression visit(Chain expr, TLModel arg) throws ConfigurationException {
+		SearchExpression self = descend(expr.getExpr(), arg);
+
+		Object anonymous = new NamedConstant("<chainvar>");
+
+		Method method = expr.getMethod();
+		Argument[] args = descendArgs(var(anonymous), method.getArgs(), arg);
+
+		MethodBuilder<?> builder = getBuilder(method);
+		return call(lambda(anonymous, block(builder.build(method, args), var(anonymous))), self);
+	}
+
+	@Override
+	public SearchExpression visit(Method expr, TLModel arg) throws ConfigurationException {
+		Method method = expr;
+		Argument[] args = descendArgs(method.getArgs(), arg);
+
+		MethodBuilder<?> builder = getBuilder(method);
+		return builder.build(method, args);
 	}
 
 	private ConfigurationException error(String message) throws ConfigurationException {
@@ -676,10 +704,11 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		return new Argument(argument.getName(), argument.getValue().visit(this, arg));
 	}
 
-	private SearchExpression[] descend(List<Expr> exprs, TLModel arg) throws ConfigurationException {
-		SearchExpression[] result = new SearchExpression[exprs.size()];
-		for (int n = 0, cnt = exprs.size(); n < cnt; n++) {
-			result[n] = descend(exprs.get(n), arg);
+	private Argument[] descendArgs(SearchExpression self, List<Arg> args, TLModel arg) throws ConfigurationException {
+		Argument[] result = new Argument[args.size() + 1];
+		result[0] = new Argument(null, self);
+		for (int n = 0, cnt = args.size(); n < cnt; n++) {
+			result[n + 1] = descend(args.get(n), arg);
 		}
 		return result;
 	}

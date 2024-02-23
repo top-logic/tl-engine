@@ -75,11 +75,11 @@
 <pre>	<code>dateTime(2021, 11, 31, 23, 59, 59, 999)</code>
 </pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31.12.2021</p>
-<h3>Formtiertes Datum</h3>
-<pre>	<code>dateFormat("dd-MM-yy hh:mm:ss").format(dateTime(2021, 11, 31, 23, 59, 59, 999))</code>
+<h3>Formatiertes Datum</h3>
+<pre>	<code>dateFormat("dd-MM-yy HH:mm:ss").format(dateTime(2021, 11, 31, 23, 59, 59, 999))</code>
 </pre>
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31-12-21 11:59:59</p>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31-12-21 23:59:59</p>
 <h3>Unvollständiges Datum</h3>
-<pre><code>dateFormat("dd-MM-yy hh:mm:ss").format(dateTime(2021, 11, 31))</code></pre>
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31-12-21 12:00:00</p>
+<pre><code>dateFormat("dd-MM-yy HH:mm:ss").format(dateTime(2021, 11, 31))</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31-12-21 00:00:00</p>
 <p></p>

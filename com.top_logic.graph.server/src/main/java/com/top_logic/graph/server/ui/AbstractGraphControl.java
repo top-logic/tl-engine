@@ -17,7 +17,6 @@ import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.common.remote.shared.ObjectScope;
@@ -147,20 +146,20 @@ public abstract class AbstractGraphControl extends AbstractControlBase implement
 	}
 
 	/**
-	 * Writes a script to create the client-side control for the given controlType.
+	 * Writes a script to create the client-side control for the given type.
 	 */
-	protected void writeGraphInitScript(TagWriter out, String controlType) throws IOException {
-		boolean isDropEnabled = _data.getDropTarget().dropEnabled(_data);
-		String state = retrieveStateAsJSON();
-
-		JSControlUtil.writeCreateJSControlScript(out, controlType, getID(), state, isDropEnabled);
+	protected void writeGraphInitScript(TagWriter out, String type) throws IOException {
+		JSControlUtil.writeCreateJSControlScript(out, type, getID(), retrieveStateAsJSON());
 	}
 
-	private String retrieveStateAsJSON() throws IOException {
+	/**
+	 * Graph state as json expression.
+	 */
+	protected String retrieveStateAsJSON() throws IOException {
 		if (!hasGraph()) {
 			return StringServices.EMPTY_STRING;
 		}
-		StringW buffer = new StringW();
+		StringBuilder buffer = new StringBuilder();
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			getGraphScope().writeTo(json);
 		}

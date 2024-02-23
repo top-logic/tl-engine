@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.top_logic.common.json.gstream;
 
 import java.io.IOException;
@@ -29,15 +30,10 @@ public final class MalformedJsonException extends IOException {
   }
 
   public MalformedJsonException(String msg, Throwable throwable) {
-    super(msg);
-    // Using initCause() instead of calling super() because Java 1.5 didn't retrofit IOException
-    // with a constructor with Throwable. This was done in Java 1.6
-    initCause(throwable);
+    super(msg, throwable);
   }
 
   public MalformedJsonException(Throwable throwable) {
-    // Using initCause() instead of calling super() because Java 1.5 didn't retrofit IOException
-    // with a constructor with Throwable. This was done in Java 1.6
-    initCause(throwable);
+    super(throwable);
   }
 }

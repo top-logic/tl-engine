@@ -32,7 +32,7 @@ import com.top_logic.mig.html.layout.LayoutComponentScope;
  */
 public class DnD {
 
-	private static final Function<ModelName, ModelName> ERROR_ON_CALL_SCRIPTING_NOT_ENABLED = dragSourceName -> {
+	private static final Function<Object, ModelName> ERROR_ON_CALL_SCRIPTING_NOT_ENABLED = dragSource -> {
 		throw new IllegalStateException("Function must only be called when scripting is enabled.");
 	};
 
@@ -105,7 +105,7 @@ public class DnD {
 		return Arrays.stream(referenceIDs).map(source::getDragData).collect(Collectors.toList());
 	}
 
-	private static Function<ModelName, ModelName> getDragDataName(String[] referenceIDs, DragSourceSPI source) {
+	private static Function<Object, ModelName> getDragDataName(String[] referenceIDs, DragSourceSPI source) {
 		if (ScriptingRecorder.isRecordingActive()) {
 			return dragViewName -> {
 				List<ModelName> modelNames = Arrays.stream(referenceIDs)
@@ -120,12 +120,12 @@ public class DnD {
 		}
 	}
 
-	private static ModelName createNameForDragData(String id, DragSourceSPI source, ModelName dragViewName) {
-		Maybe<? extends ModelName> specialName = source.getDragDataName(dragViewName, id);
+	private static ModelName createNameForDragData(String id, DragSourceSPI source, Object dragView) {
+		Maybe<? extends ModelName> specialName = source.getDragDataName(dragView, id);
 		if (specialName.hasValue()) {
 			return specialName.get();
 		}
 		/* Try to build a name for the concrete business object that is dragged. */
-		return ModelResolver.buildModelName(dragViewName, source.getDragData(id));
+		return ModelResolver.buildModelName(dragView, source.getDragData(id));
 	}
 }

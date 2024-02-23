@@ -241,13 +241,24 @@ public class SQLFactory {
 	 * @param unique
 	 *        Whether the new index should be unique.
 	 * @param columnNames
-	 *        Names of the columns in the new index in the given order.
+	 *        Names of the columns in the new index in the given order (<code>null</code> values are
+	 *        skipped).
 	 */
 	public static SQLAddIndex addIndex(SQLTable table, String indexName, boolean unique, String... columnNames) {
 		SQLAddIndex addIndex = new SQLAddIndex(table, indexName);
 		addIndex.setUnique(unique);
-		Collections.addAll(addIndex.getIndexColumns(), columnNames);
+		addNonNull(addIndex.getIndexColumns(), columnNames);
 		return addIndex;
+	}
+
+	@SafeVarargs
+	private static <T> void addNonNull(List<T> collectionColumns, T... elements) {
+		for (T element : elements) {
+			if (element == null) {
+				continue;
+			}
+			collectionColumns.add(element);
+		}
 	}
 
 	/**

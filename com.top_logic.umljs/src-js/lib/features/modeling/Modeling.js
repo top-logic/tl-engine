@@ -2,7 +2,9 @@ import inherits from 'inherits';
 
 import UpdateLabelHandler from '../label-editing/cmd/UpdateLabelHandler';
 import LayoutConnectionLabelsHandler from './cmd/LayoutConnectionLabelsHandler';
-import HideElementHandler from './cmd/HideElementHandler';
+import VisibilityHandler from './cmd/VisibilityHandler';
+
+import { isShape, isLabel, isConnection } from '../../util/ModelUtil';
 
 import BaseModeling from 'diagram-js/lib/features/modeling/Modeling';
 
@@ -13,14 +15,22 @@ inherits(Modeling, BaseModeling);
 Modeling.$inject = [
   'eventBus',
   'elementFactory',
+  'elementRegistry',
   'commandStack',
   'textRenderer',
-  'canvas'
+  'canvas',
+  'selection',
+  'graphicsFactory',
+  'layouter'
 ];
 
-export default function Modeling(eventBus, elementFactory, commandStack, textRenderer, canvas) {
+export default function Modeling(eventBus, elementFactory, elementRegistry, commandStack, textRenderer, canvas, selection, graphicsFactory, layouter) {
   this.canvas = canvas;
   this._textRenderer = textRenderer;
+  this._graphicsFactory = graphicsFactory;
+  this._elementRegistry = elementRegistry;
+  this._selection = selection;
+  this._layouter = layouter;
 
   BaseModeling.call(this, eventBus, elementFactory, commandStack);
 }
@@ -30,7 +40,7 @@ Modeling.prototype.getHandlers = function() {
 
   handlers['element.updateLabel'] = UpdateLabelHandler;
   handlers['layout.connection.labels'] = LayoutConnectionLabelsHandler;
-  handlers['element.hide'] = HideElementHandler;
+  handlers['element.visibility'] = VisibilityHandler;
 
   return handlers;
 };
@@ -48,10 +58,9 @@ Modeling.prototype.connect = function(source, target, connectionType, attrs, hin
   }, attrs), source.parent);
 };
 
-Modeling.prototype.hide = function(element) {
-  var context = {
-    element: element
-  }
-
-  this._commandStack.execute('element.hide', context);
+Modeling.prototype.setVisibility = function(element, isVisible) {
+  this._commandStack.execute('element.visibility', {
+    element: element,
+    visibility: isVisible
+  });
 };

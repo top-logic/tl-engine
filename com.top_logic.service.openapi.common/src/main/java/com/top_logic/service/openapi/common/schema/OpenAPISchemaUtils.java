@@ -52,7 +52,9 @@ public class OpenAPISchemaUtils {
 		String referencedSchema = stringValue(schemaAsMap, ReferencingObject.$REF);
 		if (!referencedSchema.isEmpty()) {
 			Schema parsedReferencedSchema = referencedSchemas.apply(referencedSchema);
-			if (parsedReferencedSchema != null) {
+			if (parsedReferencedSchema == null) {
+				return TypedConfiguration.newConfigItem(ObjectSchema.class);
+			} else {
 				/* Ensure that the schema still knows that it is a referenced schema. */
 				parsedReferencedSchema.setAsString(JsonUtilities.writeJSONContent(out -> {
 					out.beginObject();
@@ -166,7 +168,7 @@ public class OpenAPISchemaUtils {
 				break;
 			}
 			default: {
-				schema = null;
+				schema = TypedConfiguration.newConfigItem(ObjectSchema.class);
 			}
 		}
 		if (schema != null) {

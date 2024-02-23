@@ -52,6 +52,7 @@ export default function Create(
     dragging,
     eventBus,
     modeling,
+    elementRegistry,
     rules
 ) {
   function setMarker(element, marker) {
@@ -217,6 +218,7 @@ Create.$inject = [
   'dragging',
   'eventBus',
   'modeling',
+  'elementRegistry',
   'rules'
 ];
 

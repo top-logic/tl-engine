@@ -8,7 +8,6 @@ package com.top_logic.graph.diagramjs.server.commands;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.DisplayUnit.*;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import com.top_logic.graph.common.model.GraphPart;
 import com.top_logic.graph.common.model.Label;
 import com.top_logic.graph.common.model.Node;
 import com.top_logic.graph.common.model.impl.SharedGraph;
-import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.server.DiagramJSGraphControl;
 import com.top_logic.graph.diagramjs.server.I18NConstants;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
@@ -52,7 +50,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class DeleteGraphPartCommand extends ControlCommand {
 
-	private static final String ID = "id";
+	/**
+	 * Graph part identifier.
+	 */
+	public static final String ID = "id";
 
 	/**
 	 * Singleton instance of {@link DeleteGraphPartCommand}.
@@ -121,21 +122,15 @@ public class DeleteGraphPartCommand extends ControlCommand {
 		return new Command() {
 			@Override
 			public HandlerResult executeCommand(DisplayContext anInnerContext) {
-				DiagramJSGraphModel graphModel = (DiagramJSGraphModel) graph;
-				Collection<? extends GraphPart> selectedGraphParts = graphModel.getSelectedGraphParts();
-
-				HandlerResult handlerResult = removePersistentGraphPart(anInnerContext, control, tag);
-
-				if (handlerResult.isSuccess()) {
-					GraphModelUtil.removeGraphParts(graphModel, selectedGraphParts);
-				}
-
-				return handlerResult;
+				return removePersistentGraphPart(anInnerContext, control, tag);
 			}
 		};
 	}
 
-	private String getIDArgument(Map<String, Object> arguments) {
+	/**
+	 * Extract the graph part identifier from the given arguments.
+	 */
+	public static String getIDArgument(Map<String, Object> arguments) {
 		return (String) arguments.get(ID);
 	}
 
@@ -169,17 +164,20 @@ public class DeleteGraphPartCommand extends ControlCommand {
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	SharedGraph getSharedGraph(DiagramJSGraphControl graphControl) {
+	private static SharedGraph getSharedGraph(DiagramJSGraphControl graphControl) {
 		return graphControl.getModel().getGraph();
 	}
 
-	GraphPart getGraphPart(String id, DiagramJSGraphControl graphControl) {
+	/**
+	 * Returns the {@link GraphPart} from the graph of the given control.
+	 */
+	public static GraphPart getGraphPart(String id, DiagramJSGraphControl graphControl) {
 		ObjectScope objectScope = getObjectScope(graphControl);
 
 		return (GraphPart) objectScope.obj(id);
 	}
 
-	private ObjectScope getObjectScope(DiagramJSGraphControl graphControl) {
+	private static ObjectScope getObjectScope(DiagramJSGraphControl graphControl) {
 		return getSharedGraph(graphControl).data().scope();
 	}
 

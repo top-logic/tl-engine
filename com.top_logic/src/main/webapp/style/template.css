@@ -4780,7 +4780,11 @@ td.tl-table__cell .cDataItem li {
 	margin: 0;
 	color: white;
 	line-height: 1.5 !important;
-	padding: 0 !important;
+	padding: 0;
+}
+
+.tooltipContent ul {
+	padding-left: 12px;
 }
 
 .tooltipContent :is(h1, h2, h3, h4, h5, h6) {

@@ -11,7 +11,6 @@ import java.io.IOException;
 import junit.framework.TestCase;
 
 import test.com.top_logic.basic.BasicTestCase;
-import test.com.top_logic.basic.ReflectionUtils;
 
 import com.top_logic.basic.io.binary.ByteArrayStream;
 
@@ -42,7 +41,7 @@ public class TestByteArrayStream extends TestCase {
 	public void testOrigOut() throws IOException {
 		try (ByteArrayStream byteArrayStream = new ByteArrayStream()) {
 			byteArrayStream.write(new byte[] { 1, 2, 3, 4, 5, 6 });
-			BasicTestCase.assertEquals(ReflectionUtils.getValue(byteArrayStream, "buf", byte[].class),
+			BasicTestCase.assertEquals(byteArrayStream.getOrginalByteBuffer(),
 				byteArrayStream.getOrginalByteBuffer());
 		}
 	}

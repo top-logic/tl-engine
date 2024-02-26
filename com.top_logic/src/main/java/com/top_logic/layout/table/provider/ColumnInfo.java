@@ -6,7 +6,6 @@
 package com.top_logic.layout.table.provider;
 
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -29,9 +28,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.export.ConcatenatedPreloadContribution;
-import com.top_logic.model.export.DefaultPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
-import com.top_logic.model.export.PreloadOperation;
 import com.top_logic.model.util.TLTypeContext;
 import com.top_logic.tool.export.pdf.PDFRenderer;
 
@@ -209,23 +206,6 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 	 * The control provider for the column, if the column should be edited.
 	 */
 	protected abstract ControlProvider getControlProvider();
-
-	/**
-	 * Adds the given {@link PreloadOperation}s to the {@link PreloadContribution} for the column.
-	 * 
-	 * @param operations
-	 *        The operations to add.
-	 * 
-	 * @see ColumnConfiguration#getPreloadContribution()
-	 * 
-	 * @deprecated Use {@link #addPreloadContribution(PreloadContribution)}
-	 */
-	@Deprecated
-	public void addPreloadOperations(PreloadOperation[] operations) {
-		if (operations != null && operations.length > 0) {
-			_preloadContributions.add(new DefaultPreloadContribution(Arrays.asList(operations)));
-		}
-	}
 
 	/**
 	 * Adds the given {@link PreloadContribution}s to the {@link PreloadContribution} for the

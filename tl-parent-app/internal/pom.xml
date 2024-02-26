@@ -114,7 +114,7 @@
 			<id>with-postgresql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-postgres.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons>db-postgresql.xml</tl.app.metaConfAddons>
 			</properties>
 
 			<dependencies>

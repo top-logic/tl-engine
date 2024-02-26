@@ -112,7 +112,7 @@
          <incoming>sid-320501CD-323C-4526-B943-7A3F4B6DA7C6</incoming>
       </endEvent>
       <task completionQuantity="1" id="sid-A4B3B1A8-03FD-4296-B8F7-C0C0769F7A24" isForCompensation="false" name="Complete a purchase order" startQuantity="1">
-         <documentation id="sid-1bc1c491-1c09-4ed8-bc1a-fa51a112ee99">The purchase order must be added in the ERP-System with transaction number TA4711. Each department is authorized to do this. </documentation>
+         <documentation id="sid-1bc1c491-1c09-4ed8-bc1a-fa51a112ee99">The purchase order must be added in the ERP-System with transaction number TA4711. Each department is authorized to do this.</documentation>
          <extensionElements>
             <signavio:signavioMetaData metaKey="bgcolor" metaValue="#ffffcc"/>
             <signavio:signavioMetaData metaKey="bordercolor" metaValue="#000000"/>
@@ -175,9 +175,7 @@
          <outgoing>sid-B51A3A9F-F0CD-44F2-A5EF-9008B4790F26</outgoing>
       </exclusiveGateway>
       <task completionQuantity="1" id="sid-0EADDA90-9E13-48F9-91A1-2090821E6591" isForCompensation="false" name="Create order template from purchase order" startQuantity="1">
-         <documentation id="sid-99ef9ca8-7e39-43b5-ab1a-810d6c3d5906">In the ERP System, a binding order template is created from the purchase order, which can subsequently be ordered  from the appropriate vendor. 
-
-</documentation>
+         <documentation id="sid-99ef9ca8-7e39-43b5-ab1a-810d6c3d5906">In the ERP System, a binding order template is created from the purchase order, which can subsequently be ordered from the appropriate vendor.</documentation>
          <extensionElements>
             <signavio:signavioMetaData metaKey="bgcolor" metaValue="#ffffcc"/>
             <signavio:signavioMetaData metaKey="bordercolor" metaValue="#000000"/>

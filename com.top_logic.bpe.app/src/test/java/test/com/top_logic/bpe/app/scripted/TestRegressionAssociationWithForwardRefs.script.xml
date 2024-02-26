@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Administration"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Workflow hochladen"
+			command-name="displayDialog_tlBpeModelerEditorUpload"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="BPML"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+						content-type="application/octet-stream"
+						name="Procure parts.bpmnl"
+						url="file:../com.top_logic.bpe.app/src/test/java/test/com/top_logic/bpe/app/scripted/TestRegressionAssociationWithForwardRefs.bpmn"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.modeler.upload.BPMLUploadCommand"
+			command-label="Hochladen"
+			command-name="upload"
+			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="Procure parts > ACME AG > Department > Complete a purchase order"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor > Workflow"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="Procure parts > ACME AG > Central Purchasing > Check purchase order"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor > Workflow"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
+			command-label="Löschen..."
+			command-name="delete"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

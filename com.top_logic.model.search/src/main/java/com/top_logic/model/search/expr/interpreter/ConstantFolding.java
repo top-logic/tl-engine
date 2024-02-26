@@ -285,8 +285,8 @@ public class ConstantFolding {
 		protected SearchExpression composeIfElse(IfElse expr, Void arg, SearchExpression conditionResult,
 				SearchExpression ifResult, SearchExpression elseResult) {
 			if (isLiteral(conditionResult)) {
-				Boolean decision = literalBoolean(conditionResult);
-				if (decision != null && decision.booleanValue()) {
+				boolean decision = literalBoolean(conditionResult);
+				if (decision) {
 					return expr.getIfClause();
 				} else {
 					return expr.getElseClause();
@@ -427,27 +427,41 @@ public class ConstantFolding {
 
 			return super.composeVar(expr, arg);
 		}
-
-		private static boolean isLiteral(SearchExpression result) {
-			return result instanceof Literal;
-		}
-
-		private static boolean literalBoolean(SearchExpression leftResult) {
-			return SearchExpression.isTrue(literalValue(leftResult));
-		}
-
-		private boolean isEmptyCollection(SearchExpression baseResult) {
-			return literalCollection(baseResult).isEmpty();
-		}
-
-		private static Collection<?> literalCollection(SearchExpression leftResult) {
-			return SearchExpression.asCollection(literalValue(leftResult));
-		}
-
-		private static Object literalValue(SearchExpression leftResult) {
-			return ((Literal) leftResult).getValue();
-		}
-
 	}
 
+	/**
+	 * Whether the given {@link SearchExpression} represents a literal value.
+	 */
+	public static boolean isLiteral(SearchExpression result) {
+		return result instanceof Literal;
+	}
+
+	/**
+	 * The literal value represented by the given {@link SearchExpression} converted to boolean.
+	 */
+	public static boolean literalBoolean(SearchExpression leftResult) {
+		return SearchExpression.isTrue(literalValue(leftResult));
+	}
+
+	/**
+	 * Whether the literal value represented by the given {@link SearchExpression} can be
+	 * interpreted as empty collection.
+	 */
+	public static boolean isEmptyCollection(SearchExpression baseResult) {
+		return literalCollection(baseResult).isEmpty();
+	}
+
+	/**
+	 * The literal value represented by the given {@link SearchExpression} as collection.
+	 */
+	public static Collection<?> literalCollection(SearchExpression leftResult) {
+		return SearchExpression.asCollection(literalValue(leftResult));
+	}
+
+	/**
+	 * The literal value represented by the given {@link SearchExpression}.
+	 */
+	public static Object literalValue(SearchExpression leftResult) {
+		return ((Literal) leftResult).getValue();
+	}
 }

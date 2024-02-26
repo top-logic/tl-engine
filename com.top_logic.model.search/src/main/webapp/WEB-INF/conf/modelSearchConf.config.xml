@@ -309,6 +309,7 @@
 					<method name="union" class="com.top_logic.model.search.expr.config.operations.UnionBuilder"/>
 					<method name="map" class="com.top_logic.model.search.expr.config.operations.ForeachBuilder"/>
 					<method name="foreach" class="com.top_logic.model.search.expr.config.operations.ForeachBuilder"/>
+					<method name="preload" class="com.top_logic.model.search.expr.config.operations.cache.Preload$Builder"/>
 					<method name="containsAll" class="com.top_logic.model.search.expr.config.operations.ContainsAllBuilder"/>
 					<method name="containsElement" class="com.top_logic.model.search.expr.config.operations.ContainsElementBuilder"/>
 					<method name="containsSome" class="com.top_logic.model.search.expr.config.operations.ContainsSomeBuilder"/>

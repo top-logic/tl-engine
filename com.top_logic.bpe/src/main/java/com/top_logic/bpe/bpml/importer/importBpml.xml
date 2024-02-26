@@ -70,36 +70,35 @@
 							<object model-type="tl.bpe.bpml:AnnotationAssociation" id-attribute="id" id="create-association" var="association-link">
 								<property name="extId" xml-attribute="id"/>
 							
-								<object-ref id-attribute="sourceRef">
-									<switch-block>
-										<case predicate="src -> $src.instanceOf(`tl.bpe.bpml:Annotated`)">
-											<object-ref id-attribute="sourceRef">
-												<linking target-var="association-link">
-													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#source"/>
-												</linking>
-											</object-ref>
-										
-											<object-ref id-attribute="targetRef">
-												<linking target-var="association-link">
+								<object-ref id-attribute="sourceRef" var="src" mandatory="true">
+									<object-ref id-attribute="targetRef" var="dst" mandatory="true">
+										<switch-block>
+											<case arguments="dst" predicate="target -> $target.instanceOf(`tl.bpe.bpml:TextAnnotation`)">
+												<linking target-var="association-link" value-var="dst">
 													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#target"/>
 												</linking>
-											</object-ref>
-										</case>
-									
-										<case predicate="src -> $src.instanceOf(`tl.bpe.bpml:TextAnnotation`)">
-											<object-ref id-attribute="targetRef">
-												<linking target-var="association-link">
+												
+												<linking target-var="association-link" value-var="src">
 													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#source"/>
 												</linking>
-											</object-ref>
+											</case>
+
+											<!-- Note: In the TopLogic BPMN model, AnnotationAssociation links have 
+												a fixed direction from annotatable nodes to text annotations. In the BPML 
+												XML format however, associations can exist with both directions (from node 
+												to annotation or vice versa). During the import, annotation associations 
+												are normalized to always point from nodes to annotations. -->
+											<else>
+												<linking target-var="association-link" value-var="src">
+													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#target"/>
+												</linking>
 											
-											<object-ref id-attribute="sourceRef">
-												<linking target-var="association-link">
-													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#target"/>
+												<linking target-var="association-link" value-var="dst">
+													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#source"/>
 												</linking>
-											</object-ref>
-										</case>
-									</switch-block>
+											</else>
+										</switch-block>
+									</object-ref>
 								</object-ref>
 							</object>
 							

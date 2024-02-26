@@ -186,8 +186,8 @@ public class ZooKeeperStarter implements Starter {
 
 	@Override
 	public void shutdown() {
-		closeLog();
 		_cnxnFactory.shutdown();
+		closeLog();
 		waitForShutdownCompleted(2000);
 
 	}

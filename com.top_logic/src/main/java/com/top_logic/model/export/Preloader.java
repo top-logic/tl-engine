@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.top_logic.layout.table.model.NoPrepare;
+
 /**
  * Composed {@link PreloadOperation} that can be built through calls to
  * {@link #addPreload(PreloadOperation)}.
@@ -32,10 +34,23 @@ public class Preloader implements PreloadBuilder, PreloadOperation {
 	}
 
 	@Override
+	public AccessContext prepare(Collection<?> baseObjects) {
+		if (preloads.isEmpty()) {
+			return NoPrepare.INSTANCE;
+		}
+
+		return PreloadOperation.super.prepare(baseObjects);
+	}
+
+	@Override
 	public void prepare(PreloadContext context, Collection<?> baseObjects) {
 		if (baseObjects.isEmpty()) {
 			return;
 		}
+		internalPrepare(context, baseObjects);
+	}
+
+	private void internalPrepare(PreloadContext context, Collection<?> baseObjects) {
 		for (PreloadOperation preload : preloads) {
 			preload.prepare(context, baseObjects);
 		}

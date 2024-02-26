@@ -7,6 +7,8 @@ package com.top_logic.model.export;
 
 import java.util.Collection;
 
+import com.top_logic.layout.table.model.NoPrepare;
+
 /**
  * Operation that prepares the access to a number of base objects.
  * 
@@ -18,6 +20,25 @@ import java.util.Collection;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface PreloadOperation {
+
+	/**
+	 * Starts a top-level preload operation by optionally creating a {@link AccessContext} and
+	 * {@link PreloadOperation#prepare(PreloadContext, Collection) preparing} all preloads.
+	 *
+	 * @param baseObjects
+	 *        The object to preload.
+	 * @return The {@link AccessContext} to {@link AccessContext#close() close} after the operation
+	 *         has completed.
+	 */
+	default AccessContext prepare(Collection<?> baseObjects) {
+		if (baseObjects.isEmpty()) {
+			return NoPrepare.INSTANCE;
+		}
+
+		PreloadContext result = new PreloadContext();
+		prepare(result, baseObjects);
+		return result;
+	}
 
 	/**
 	 * Prepare for accessing the given base objects.

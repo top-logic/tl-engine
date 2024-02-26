@@ -55,7 +55,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.export.AccessContext;
-import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.export.Preloader;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -460,9 +459,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 						column.getPreloadContribution().contribute(preloader);
 					}
 
-					final PreloadContext context = new PreloadContext();
-					preloader.prepare(context, accessedObjects);
-					return context;
+					return preloader.prepare(accessedObjects);
 				}
 			};
 			_treeModel.setRootVisible(AbstractTreeGridBuilder.this.isRootVisible() && root != null);

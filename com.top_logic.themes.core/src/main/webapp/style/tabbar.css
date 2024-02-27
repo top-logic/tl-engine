@@ -255,6 +255,15 @@ div.mcMinimized .sblTitle img {
 	color: var(--support-danger);
 }
 
+/* For collapsed sidebar */
+.mcMinimized .licenseView .licenseContent {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	padding: 0 var(--spacing-01);
+}
+
 span.cLogoutTimer {
 	display: none;
 	font-weight: bold;

@@ -85,7 +85,6 @@ public class GalleryButtonRenderer extends AbstractButtonRenderer<GalleryButtonR
 		out.beginAttribute(STYLE_ATTR);
 		out.append("width: ");
 		out.append(String.valueOf(getConfig().getButtonWidth()));
-		out.append("px");
 		out.endAttribute();
 	}
 

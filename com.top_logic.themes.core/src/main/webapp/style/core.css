@@ -2569,44 +2569,30 @@ div.ssiContentArea {
 }
 
 .activeGalleryManagementButton, .inactiveGalleryManagementButton {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	flex-shrink: 0;
-	gap: var(--spacing-02);
-	height: 2rem; /* 32px height */
-	padding: 0 var(--spacing-03);
-	border-radius: var(--corner-radius);
-	font-family: 'Inter-SemiBold';
-	font-size: var(--heading-compact-02-font-size);
-	line-height: var(--heading-compact-02-line-height);
-	letter-spacing: var(--heading-compact-02-letter-spacing);
-	box-sizing: border-box;
-	margin-top: var(--spacing-03);
+	text-align: center;
+	border: 0 solid;
+    border-radius: 0 0 10px 10px;
 }
 
 .activeGalleryManagementButton {
 	cursor: pointer;
-	color: var(--text-on-color);
-	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	color: var(--BUTTON_COLOR);
+	background-color: var(--BUTTON_BACKGROUND);
 }
 
 .activeGalleryManagementButton:hover,
 [data-tool=true] > .attribute:hover {
-	color: var(--text-on-color);
-	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+	color: var(--BUTTON_COLOR_HOVER);
+	background-color: var(--BUTTON_BACKGROUND_HOVER);
 }
 
 .inactiveGalleryManagementButton {
 	cursor: default;
-	color: var(--text-on-color-disabled);
-	background: var(--button-disabled);
-	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	color: var(--BUTTON_DISABLED_COLOR);
+	background-color: var(--BUTTON_DISABLED_BACKGROUND);
 }
 
 .galleryImageLabel {
-	margin-left: var(--spacing-01);
+	margin-left: 5px;
 }
 

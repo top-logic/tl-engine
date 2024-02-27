@@ -27,6 +27,9 @@ import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.StaticItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.export.PreloadBuilder;
+import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.v5.AssociationCachePreload;
 import com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorage;
 import com.top_logic.util.error.TopLogicException;
 
@@ -58,6 +61,8 @@ public abstract class CommonStructuredTextAttributeStorage<C extends Association
 
 	private AssociationSetQuery<? extends KnowledgeItem> _imagesQuery;
 
+	private PreloadContribution _imagePreload;
+
 	/** {@link TypedConfiguration} constructor for {@link CommonStructuredTextAttributeStorage}. */
 	public CommonStructuredTextAttributeStorage(InstantiationContext context, C config) {
 		super(context, config);
@@ -67,6 +72,12 @@ public abstract class CommonStructuredTextAttributeStorage<C extends Association
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
 		_imagesQuery = createQuery(getImagesTableName(), attribute, StaticItem.class);
+		_imagePreload = new AssociationCachePreload(_imagesQuery);
+	}
+
+	@Override
+	public void contribute(PreloadBuilder preloadBuilder) {
+		_imagePreload.contribute(preloadBuilder);
 	}
 
 	/**

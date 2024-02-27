@@ -26,6 +26,7 @@ import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -36,7 +37,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public abstract class AssociationQueryBasedStorage<C extends AbstractStorage.Config<?>> extends AbstractStorage<C> {
+public abstract class AssociationQueryBasedStorage<C extends AbstractStorage.Config<?>> extends AbstractStorage<C>
+		implements PreloadContribution {
 
 	/** The column for the owner of the values. */
 	public static final String OBJECT_ATTRIBUTE_NAME = "object";
@@ -55,6 +57,11 @@ public abstract class AssociationQueryBasedStorage<C extends AbstractStorage.Con
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
 		_knowledgeBase = attribute.tKnowledgeBase();
+	}
+
+	@Override
+	public final PreloadContribution getPreload() {
+		return this;
 	}
 
 	/**

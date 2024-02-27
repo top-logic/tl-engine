@@ -400,5 +400,29 @@ a.accEntry.accContainer.accSelected .accIcon i {
 	color: var(--icon-primary);
 }
 
+.mcMinimized div.accNode {
+	display: inline-flex;
+	justify-content: center;
+	width: 100%;
+}
+
+.mcMinimized div.accNode a.accEntry,
+.mcMinimized a.accEntry,
+.mcMinimized a.accEntry:link,
+.mcMinimized a.accEntry:visited,
+.mcMinimized a.accEntry:active {
+	display: inline-flex;
+	padding: var(--spacing-02) var(--spacing-02);
+	white-space: nowrap;
+	overflow-x: hidden;
+	justify-content: center;
+	align-self: center;
+	width: inherit;
+}
 
 
+.mcMinimized span.accIcon.input-image,
+.mcMinimized span.accIcon.input-image i,
+.mcMinimized img.accIcon {
+	padding-right: 0;
+}

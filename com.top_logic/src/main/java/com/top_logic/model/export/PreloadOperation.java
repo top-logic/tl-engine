@@ -19,7 +19,7 @@ import com.top_logic.layout.table.model.NoPrepare;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface PreloadOperation {
+public interface PreloadOperation extends PreloadContribution {
 
 	/**
 	 * Starts a top-level preload operation by optionally creating a {@link AccessContext} and
@@ -50,4 +50,8 @@ public interface PreloadOperation {
 	 */
 	void prepare(PreloadContext context, Collection<?> baseObjects);
 
+	@Override
+	default void contribute(PreloadBuilder preloadBuilder) {
+		preloadBuilder.addPreload(this);
+	}
 }

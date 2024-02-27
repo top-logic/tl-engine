@@ -28,4 +28,8 @@ public class NoPreload implements PreloadOperation {
 		// Ignore.
 	}
 
+	@Override
+	public void contribute(PreloadBuilder preloadBuilder) {
+		// Ignore.
+	}
 }

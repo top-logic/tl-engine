@@ -996,6 +996,8 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testSort() throws ParseException {
 		assertEquals(list("A", "B", "C"), execute(search("sort(list('B', 'C', 'A'))")));
+		assertEquals(list("A"), execute(search("sort(list('A'))")));
+		assertEquals(list(), execute(search("sort(null)")));
 	}
 
 	public void testDescendingSort() throws ParseException {

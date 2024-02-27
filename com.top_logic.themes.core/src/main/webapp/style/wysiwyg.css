@@ -1,0 +1,96 @@
+/*
+  CSS for the WYSIWYG editor.
+  
+  The classes prefixed with "cke" are those of the CKEditor itself.
+*/
+
+.cke_editable {
+	height: min-content;
+}
+
+.structuredTextFullHeight,
+.structuredTextFullHeight .cke_inner,
+.structuredTextFullHeight .cke,
+.cStructuredText {
+	height: 100%;
+}
+
+.cke_editable {
+	padding: 0 var(--spacing-03);
+	overflow: auto;
+}
+
+.immutableSourceCodeFrame > p:first-child {
+	/* HTML as value of a field in a form does must not have enormous space between label and text. */
+	margin-top: 0px;
+}
+
+.structuredTextFullHeight {
+	padding: 0 var(--spacing-03);
+}
+
+.structuredTextFullHeight,
+.cke_editable {
+	position: absolute;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.structuredTextFullHeight .cke_inner {
+	display: flex;
+	flex-flow: column;
+}
+
+.structuredTextFullHeight .cke_top,
+.structuredTextFullHeight .cke_bottom {
+	flex: 0 0 auto;
+}
+
+.structuredTextFullHeight .cke_contents {
+	flex: 1 1 auto;
+}
+
+.structuredTextFullHeight .cke_reset {
+	box-sizing: border-box;
+}
+
+.tlObjectWrapper {
+	white-space: nowrap;
+}
+
+.cke_notification_message {
+	overflow-wrap: break-word;	
+}
+
+.tlDocTable {
+	border-collapse: collapse;
+}
+
+.tlDocTable th {
+	color: var(--text-primary);
+	font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
+	border: 1px solid var(--border-subtle);
+	background: var(--layer);
+	padding: var(--spacing-02) var(--spacing-03);
+}
+
+.tlDocTable td {
+	color: var(--text-secondary);
+	border: 1px solid var(--border-subtle);
+	padding: var(--spacing-03);
+}
+
+.tlDocTable tr:nth-child(even) {
+	background: var(--background);
+}
+
+.tlDocTable tr:nth-child(odd) {
+	background: var(--background);
+}
+
+.cke_combo__format .cke_combopanel {
+	width: auto !important;
+}

@@ -873,7 +873,7 @@ public class TLDoclet implements Doclet {
 	}
 
 	private List<ReturnTree> returnTags(DocCommentTree commentTree) {
-		return bockTagsOfKind(commentTree, DocTree.Kind.RETURN, ReturnTree.class);
+		return blockTagsOfKind(commentTree, DocTree.Kind.RETURN, ReturnTree.class);
 	}
 
 	private List<ParamTree> paramTags(Element elem) {
@@ -881,10 +881,10 @@ public class TLDoclet implements Doclet {
 	}
 
 	private List<ParamTree> paramTags(DocCommentTree commentTree) {
-		return bockTagsOfKind(commentTree, DocTree.Kind.PARAM, ParamTree.class);
+		return blockTagsOfKind(commentTree, DocTree.Kind.PARAM, ParamTree.class);
 	}
 
-	private <T extends DocTree> List<T> bockTagsOfKind(DocCommentTree commentTree, DocTree.Kind blockTagKind,
+	private <T extends DocTree> List<T> blockTagsOfKind(DocCommentTree commentTree, DocTree.Kind blockTagKind,
 			Class<T> tagClass) {
 		if (commentTree == null) {
 			return Collections.emptyList();
@@ -2441,7 +2441,7 @@ public class TLDoclet implements Doclet {
 		}
 
 		private List<SeeTree> seeTags(DocCommentTree commentTree) {
-			return bockTagsOfKind(commentTree, DocTree.Kind.SEE, SeeTree.class);
+			return blockTagsOfKind(commentTree, DocTree.Kind.SEE, SeeTree.class);
 		}
 
 		private void writeSee(DocTreePath tagPath, SeeTree tag) throws XMLStreamException, IOException {

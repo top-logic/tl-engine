@@ -38,7 +38,7 @@ public class KafkaModule extends ManagedClass {
 		// sum interface
 	}
 
-	private KafkaStarter _kafkaStarter;
+	private final KafkaStarter _kafkaStarter;
 
 	/**
 	 * Creates a new {@link KafkaModule} from the given configuration.

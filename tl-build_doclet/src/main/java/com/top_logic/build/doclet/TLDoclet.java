@@ -98,6 +98,7 @@ import com.sun.source.doctree.EndElementTree;
 import com.sun.source.doctree.EntityTree;
 import com.sun.source.doctree.ErroneousTree;
 import com.sun.source.doctree.LinkTree;
+import com.sun.source.doctree.LiteralTree;
 import com.sun.source.doctree.ParamTree;
 import com.sun.source.doctree.ReferenceTree;
 import com.sun.source.doctree.ReturnTree;
@@ -2712,6 +2713,11 @@ public class TLDoclet implements Doclet {
 						.append(node.getName())
 						.append('>');
 					return super.visitEndElement(node, p);
+				}
+
+				@Override
+				public Void visitLiteral(LiteralTree node, StringBuilder p) {
+					return null; // Skip. We don't supported this, yet.
 				}
 
 			}

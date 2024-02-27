@@ -56,4 +56,10 @@ public class Preloader implements PreloadBuilder, PreloadOperation {
 		}
 	}
 
+	@Override
+	public void contribute(PreloadBuilder preloadBuilder) {
+		for (PreloadOperation preload : preloads) {
+			preloadBuilder.addPreload(preload);
+		}
+	}
 }

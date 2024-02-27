@@ -62,11 +62,11 @@
 	overflow-wrap: break-word;	
 }
 
-.tlDocTable {
+table {
 	border-collapse: collapse;
 }
 
-.tlDocTable th {
+th {
 	color: var(--text-primary);
 	font-family: 'Inter-SemiBold';
     font-size: var(--heading-compact-02-font-size);
@@ -77,17 +77,17 @@
 	padding: var(--spacing-02) var(--spacing-03);
 }
 
-.tlDocTable td {
+td {
 	color: var(--text-secondary);
 	border: 1px solid var(--border-subtle);
 	padding: var(--spacing-03);
 }
 
-.tlDocTable tr:nth-child(even) {
+tr:nth-child(even) {
 	background: var(--background);
 }
 
-.tlDocTable tr:nth-child(odd) {
+tr:nth-child(odd) {
 	background: var(--background);
 }
 

@@ -4,18 +4,6 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Administration"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
-		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration"
-			/>
-		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 			user-id="root"
 		>

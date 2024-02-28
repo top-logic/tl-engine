@@ -2180,21 +2180,68 @@ h5.card-title a:focus {
 	color: var(--text-primary);
 }
 
-.breadcrumb .treeNode:hover .fToggle.tcrToggle,
-.breadcrumb .treeNode:hover .selectableNode {
-    color: var(--link-primary-hover);
+.breadcrumb .treeSelected .selectableNode .breadcrumbNodeIcon {
+	color: var(--icon-primary);
+}
+
+.breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeText,
+.breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeIcon {
+	color: var(--link-primary-hover);
 	text-decoration: underline;
 }
 
-.breadcrumb .treeSelected .selectableNode:active {
+.breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeText {
     color: var(--text-primary);
 	text-decoration: underline;
 }
 
-.breadcrumb .treeSelected .selectableNode:focus {
+.breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeIcon {
+    color: var(--icon-primary);
+}
+
+.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus {
     color: var(--link-primary-hover);
+	/*
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
-	text-decoration: underline;
+	*/
+	outline-offset: -1px;
+}
+
+.breadcrumb .treeSelected .selectableNode:focus {
+    text-decoration: none;
+}
+
+.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeText {
+    color: var(--text-secondary);
+}
+
+.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeIcon {
+    color: var(--icon-secondary);
+}
+
+.breadcrumb .treeSelected .selectableNode:focus {
+	box-shadow: none;
+	outline: none;
+}
+
+.breadcrumbNodeSeparator i {
+	color: var(--icon-secondary);
+}
+
+.breadcrumbNodeSeparator .fMenu i {
+	color: var(--icon-secondary);
+}
+
+.breadcrumbNodeSeparator .fMenu:hover i {
+	color: var(--icon-primary);
+}
+
+.breadcrumbNodeSeparator .fMenu:focus i {
+	color: var(--icon-secondary);
+}
+
+.breadcrumbNodeSeparator .fMenu:focus {
+	outline-offset: -1px;
 }
 
 /* Disable the anchor effects of the last (active) breadcrumb */
@@ -2207,8 +2254,14 @@ h5.card-title a:focus {
 	box-shadow: none;
 }
 
-.breadcrumbNodeSeparator i {
-	color: var(--icon-primary);
+/* Disable the anchor effects of the last (active) breadcrumb */
+.breadcrumb > span .selectableNode:last-child:hover {
+	text-decoration: none;
+	cursor: default;
+}
+
+.breadcrumb > span .selectableNode:last-child:focus {
+	box-shadow: none;
 }
 
 .breadcrumbMenu {
@@ -2301,12 +2354,6 @@ h5.card-title a:focus {
 .treeNode.treeSelected .fToggle.tcrToggle,
 .tlLeafIcon,
 .tcrNode .treeNode.treeSelected span {
-	color: var(--icon-primary);
-}
-
-.treeNode:hover .fToggle.tcrToggle,
-.tlLeafIcon:hover,
-.treeNode:hover span {
 	color: var(--icon-primary);
 }
 

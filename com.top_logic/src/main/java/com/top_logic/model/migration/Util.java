@@ -163,9 +163,6 @@ public class Util {
 
 	}
 
-	/** @see #createTLClassifier(PooledConnection, QualifiedPartName, int, AnnotatedConfig) */
-	public static final int NO_SORT_ORDER = -1;
-
 	private long _stopId = 0;
 
 	private long _nextId = 0;
@@ -2661,20 +2658,16 @@ public class Util {
 	 * 
 	 * @param classifierName
 	 *        Name of the {@link TLClassifier} to create.
-	 * @param sortOrder
-	 *        Sort order of the new classifier. If {@link #NO_SORT_ORDER}, the new TLCLasifier will
-	 *        be the last one.
 	 */
-	public TypePart createTLClassifier(PooledConnection con, QualifiedPartName classifierName, int sortOrder,
-			AnnotatedConfig<TLClassifierAnnotation> annotations)
-			throws SQLException, MigrationException {
+	public TypePart createTLClassifier(PooledConnection con, QualifiedPartName classifierName,
+			AnnotatedConfig<TLClassifierAnnotation> annotations) throws SQLException, MigrationException {
 		return createTLClassifier(con, TLContext.TRUNK_ID,
-			classifierName.getModuleName(), classifierName.getTypeName(), classifierName.getPartName(), sortOrder,
+			classifierName.getModuleName(), classifierName.getTypeName(), classifierName.getPartName(),
 			toString(annotations));
 	}
 
 	/**
-	 * Creates a new {@link TLEnumeration}.
+	 * Creates a new {@link TLClassifier}.
 	 * 
 	 * @param moduleName
 	 *        Name of the module of the new classifier to create.
@@ -2684,8 +2677,7 @@ public class Util {
 	 *        Name of the new classifier.
 	 */
 	public TypePart createTLClassifier(PooledConnection con, long branch, String moduleName, String enumName,
-			String classifierName, int sortOrder,
-			String annotations) throws SQLException, MigrationException {
+			String classifierName, String annotations) throws SQLException, MigrationException {
 		DBHelper sqlDialect = con.getSQLDialect();
 
 		Module module = getTLModuleOrFail(con, branch, moduleName);
@@ -2694,14 +2686,13 @@ public class Util {
 			throw new MigrationException(
 				"No enumeration with name '" + enumName + "' found in module " + toString(module));
 		}
-		if (sortOrder == NO_SORT_ORDER) {
-			List<OrderValue> orders = getOrders(con, branch, enumeration.getID(), FastListElement.ORDER_DB_NAME,
-				PersistentTypePart.NAME_ATTR, TlModelFactory.KO_NAME_TL_CLASSIFIER, FastListElement.OWNER_ATTRIBUTE);
-			if (orders.isEmpty()) {
-				sortOrder = 0;
-			} else {
-				sortOrder = orders.get(orders.size() - 1).getOrder() + 1;
-			}
+		List<OrderValue> orders = getOrders(con, branch, enumeration.getID(), FastListElement.ORDER_DB_NAME,
+			PersistentTypePart.NAME_ATTR, TlModelFactory.KO_NAME_TL_CLASSIFIER, FastListElement.OWNER_ATTRIBUTE);
+		int sortOrder;
+		if (orders.isEmpty()) {
+			sortOrder = 0;
+		} else {
+			sortOrder = orders.get(orders.size() - 1).getOrder() + 1;
 		}
 		TLID newIdentifier = newID(con);
 		Long revCreate = getRevCreate(con);

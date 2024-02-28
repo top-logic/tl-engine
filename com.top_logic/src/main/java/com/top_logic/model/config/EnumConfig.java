@@ -37,10 +37,15 @@ public interface EnumConfig extends TypeConfig {
 	/**
 	 * Definition of a {@link TLClassifier}.
 	 */
+	@TagName(ClassifierConfig.TAG_NAME)
 	public interface ClassifierConfig extends PartAspect, AnnotatedConfig<TLClassifierAnnotation> {
 
 		/** @see #isDefault() */
 		String DEFAULT = "default";
+
+		/** Default Tag name for {@link ClassifierConfig}. */
+		@SuppressWarnings("hiding")
+		String TAG_NAME = "classifier";
 
 		/**
 		 * Whether this is the default classifier for the defining enumeration.

@@ -694,7 +694,7 @@ public class CreateModelPatch {
 	final void createClassifier(TLClassifier created, TLClassifier before) {
 		CreateClassifier result = TypedConfiguration.newConfigItem(CreateClassifier.class);
 		result.setType(TLModelUtil.qualifiedName(created.getOwner()));
-		result.setClassifier(_configExtractor.visitClassifier(created, null));
+		result.setClassifierConfig(_configExtractor.visitClassifier(created, null));
 		result.setBefore(before == null ? null : before.getName());
 		addDiff(result);
 	}

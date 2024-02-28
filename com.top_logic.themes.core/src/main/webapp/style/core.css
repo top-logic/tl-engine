@@ -1499,7 +1499,8 @@ div.mcMinimized .accText {
 }
 
 /* Tooltip Content */
-.tooltipContent {
+.tooltipContent,
+.tooltipContent code {
 	overflow-y: auto;
 	white-space: normal;
 	overflow-wrap: break-word;

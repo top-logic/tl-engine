@@ -77,6 +77,14 @@
 	padding: var(--spacing-02) var(--spacing-03);
 }
 
+.tlDocTable th * {
+	color: var(--text-primary);
+}
+
+.tlDocTable td * {
+	color: var(--text-secondary);
+}
+
 .tlDocTable td {
 	color: var(--text-secondary);
 	border: 1px solid var(--border-subtle);

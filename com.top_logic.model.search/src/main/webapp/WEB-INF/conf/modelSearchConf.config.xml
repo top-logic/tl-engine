@@ -378,6 +378,8 @@
 					<method name="get" class="com.top_logic.model.search.expr.config.operations.GetBuilder"/>
 					<method name="set" class="com.top_logic.model.search.expr.config.operations.SetBuilder"/>
 					<method name="add" class="com.top_logic.model.search.expr.Add$Builder"/>
+					<method name="loadFromSession" class="com.top_logic.model.search.expr.config.operations.session.LoadFromSession$Builder"/>
+					<method name="storeInSession" class="com.top_logic.model.search.expr.config.operations.session.StoreInSession$Builder"/>
 					<method name="type" class="com.top_logic.model.search.expr.config.operations.Type$Builder"/>
 					<method name="container" class="com.top_logic.model.search.expr.config.operations.Container$Builder"/>
 					<method name="containerReference" class="com.top_logic.model.search.expr.config.operations.ContainerReference$Builder"/>

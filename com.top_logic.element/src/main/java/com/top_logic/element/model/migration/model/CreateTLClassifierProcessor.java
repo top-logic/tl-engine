@@ -11,7 +11,6 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -46,18 +45,6 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 		 */
 		void setName(QualifiedPartName value);
 
-		/**
-		 * Sort order of the new classifier. If not set, the new {@link TLClassifier} will be
-		 * appended to the list of classifiers.
-		 */
-		@IntDefault(Util.NO_SORT_ORDER)
-		int getSortOrder();
-
-		/**
-		 * Setter for {@link #getSortOrder()}.
-		 */
-		void setSortOrder(int value);
-
 	}
 
 	private Util _util;
@@ -87,7 +74,7 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 
 	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
 		QualifiedPartName classifierName = getConfig().getName();
-		_util.createTLClassifier(connection, classifierName, getConfig().getSortOrder(), getConfig());
+		_util.createTLClassifier(connection, classifierName, getConfig());
 		log.info("Created classifier " + _util.qualifiedName(classifierName));
 	}
 

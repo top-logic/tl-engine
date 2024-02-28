@@ -429,21 +429,17 @@ public class CreateMigrationProcessors extends ApplyModelPatch {
 	public void addClassifier(TLEnumeration classification, ClassifierConfig classifierConfig, TLClassifier before) {
 		super.addClassifier(classification, classifierConfig, before);
 		
-		QualifiedPartName newClassifierName = classifierMigration(qTypeName(classification), null, classifierConfig);
+		QualifiedPartName newClassifierName = classifierMigration(qTypeName(classification), classifierConfig);
 		if (before != null) {
 			addMoveTLTypePart(newClassifierName, before.getName());
 		}
 		
 	}
 
-	private QualifiedPartName classifierMigration(QualifiedTypeName enumName, Integer sortOrder,
-			ClassifierConfig part) {
+	private QualifiedPartName classifierMigration(QualifiedTypeName enumName, ClassifierConfig part) {
 		QualifiedPartName classifierName = qTypePartName(enumName, part.getName());
 		CreateTLClassifierProcessor.Config config = newConfigItem(CreateTLClassifierProcessor.Config.class);
 		config.setName(classifierName);
-		if (sortOrder != null) {
-			config.setSortOrder(sortOrder.intValue());
-		}
 		copyAnnotations(part, config);
 		addProcessor(config);
 

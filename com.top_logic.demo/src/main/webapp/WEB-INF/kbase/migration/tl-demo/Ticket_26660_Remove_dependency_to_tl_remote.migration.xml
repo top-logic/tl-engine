@@ -35,6 +35,9 @@
 				<table object_name="ExternalReference"/>
 			</tables>
 		</processor>
+		
+		<delete-class name="tl.legacy.tabletypes:ExternalReferenceTable">
+		</delete-class>
 
 		<!-- Remove implementation class annotations that prevents the object from being loaded, which is required for deleting it. -->
 		<update-annotations name="DemoRemote:Root">

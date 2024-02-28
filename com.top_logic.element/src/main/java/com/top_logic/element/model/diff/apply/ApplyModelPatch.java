@@ -584,19 +584,20 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	@Override
 	public Void visit(CreateClassifier diff, Void arg) throws RuntimeException {
+		String classifierName = diff.getClassifierConfig().getName();
 		TLEnumeration type;
 		try {
 			type = (TLEnumeration) resolveQName(diff.getType());
 		} catch (TopLogicException ex) {
-			log().info("Merge conflict: Adding classifier '" + diff.getClassifier().getName() + " to enumeration '"
+			log().info("Merge conflict: Adding classifier '" + classifierName + " to enumeration '"
 				+ diff.getType() + "', but enumeration does not exist.", Log.WARN);
 			return null;
 		}
 
-		TLClassifier existing = type.getClassifier(diff.getClassifier().getName());
+		TLClassifier existing = type.getClassifier(classifierName);
 		if (existing != null) {
 			log().info(
-				"Merge conflict: Adding classifier '" + diff.getClassifier().getName() + "' to enumeration '"
+				"Merge conflict: Adding classifier '" + classifierName + "' to enumeration '"
 					+ diff.getType() + "', but classifier already exists.",
 				Log.WARN);
 			return null;
@@ -610,8 +611,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			before = type.getClassifier(beforeName);
 		}
 
-		log().info("Adding classifier '" + diff.getClassifier().getName() + " to enumeration '" + diff.getType() + "'.");
-		addClassifier(type, diff.getClassifier(), before);
+		log().info("Adding classifier '" + classifierName + " to enumeration '" + diff.getType() + "'.");
+		addClassifier(type, diff.getClassifierConfig(), before);
 		return null;
 	}
 

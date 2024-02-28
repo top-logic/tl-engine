@@ -149,6 +149,9 @@
 	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TREE_TABLE_TITLE_HEIGHT"
 		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
 	/>
+	<size name="com.top_logic.layout.table.model.Icons.SELECTION_COLUMN_WIDTH"
+		value="34px"
+	/>
 	<icon name="com.top_logic.layout.tabbar.Icons.TAB_LEFT_SCROLL_BUTTON"
 		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>

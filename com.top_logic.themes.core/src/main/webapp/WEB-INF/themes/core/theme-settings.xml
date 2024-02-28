@@ -317,6 +317,9 @@
 	<icon name="MISC_COMPARE_COMPARE_MODE_INACTIVE"
 		expr="%ICONS_COMPARE%"
 	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_BOTTOM_BORDER_HEIGHT"
+		value="8px"
+	/>
 	<!-- Tree -->
 	<icon name="com.top_logic.layout.tree.renderer.Icons.L"
 		value="/tree/l.png"

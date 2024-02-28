@@ -67,9 +67,9 @@ public class Sort extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		Object result = _list.evalWith(definitions, args);
-		if (result instanceof Collection<?>) {
-			ArrayList<?> list = new ArrayList<>((Collection<?>) result);
+		List<?> result = asList(_list.evalWith(definitions, args));
+		if (result.size() > 1) {
+			ArrayList<?> list = new ArrayList<>(result);
 			list.sort(cmp(definitions));
 			return list;
 		} else {

@@ -1,0 +1,52 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$value.storeInSession(key: "my-prop-1", persistent: true)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Saves a value in the user session. If <code class="hljs inlineCode">persistent</code> is set to <code class="hljs inlineCode">false</code>, the value is lost after the user logs out. With <code class="hljs inlineCode">persistent: true</code>, the value is saved under the specified key in the user's personal settings and is still available after a new login.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Parameter Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>value</td>
+			<td>Number, character string, truth value, specialized object or list of these values</td>
+			<td>The value to be saved</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>key</td>
+			<td>Character string</td>
+			<td>Key under which the value is saved in the session or the user's personal settings.</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>persistent</td>
+			<td>Truth value</td>
+			<td>Whether the value should be retained after a logout/login of the user.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">false</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number, character string, truth value, specialized object or list of these values</p>
+
+<p>The value that was previously saved under the specified key.</p>

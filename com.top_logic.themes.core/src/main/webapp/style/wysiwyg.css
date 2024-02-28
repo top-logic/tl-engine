@@ -29,6 +29,10 @@
 	padding: 0 var(--spacing-03);
 }
 
+.structuredTextFullHeight .tlTranslatedI18nField {
+	height: 100%;
+}
+
 .structuredTextFullHeight,
 .cke_editable {
 	position: absolute;

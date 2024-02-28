@@ -1499,7 +1499,8 @@ div.mcMinimized .accText {
 }
 
 /* Tooltip Content */
-.tooltipContent {
+.tooltipContent,
+.tooltipContent code {
 	overflow-y: auto;
 	white-space: normal;
 	overflow-wrap: break-word;
@@ -2397,6 +2398,11 @@ div.treeNode.treeSelected.dndInsertInto {
 
 .cCollapsibleHorizontal .cCollapsibleButtons .cButton {
     margin-left: 0;
+}
+
+/* Makes it visible when it's in a collapsed title state. */
+.cCollapsibleHorizontal .ddwttDropBtn {
+	max-width: none;
 }
 
 span.tbGroup,

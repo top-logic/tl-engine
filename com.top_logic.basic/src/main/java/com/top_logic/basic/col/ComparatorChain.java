@@ -177,7 +177,7 @@ public class ComparatorChain {
 		 */
 		final Comparator<? super T>[] resultArray = (Comparator<? super T>[]) new Comparator<?>[comparators.size()];
 
-		// Note: Java 11 requires a variable for the comparators array to accept the types.
+		// Note: 'javac' requires a variable for the comparators array to accept the types.
 		Comparator<? super T>[] comparatorsArray = comparators.toArray(resultArray);
 
 		return new ComparatorSequence<>(comparatorsArray);

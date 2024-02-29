@@ -111,7 +111,7 @@
 		value="16"
 	/>
 	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
-		value="300"
+		value="360"
 	/>	
 	<string name="MC_MINIMIZE_ICON"
 		value="url(/icons/minimizeNormal.svg)"
@@ -184,6 +184,12 @@
 	/>
 	<icon name="com.top_logic.layout.Icons.ADD_TAB_COMMAND"
 		expr="%ICON_PLUS%"
+	/>
+	<icon name="com.top_logic.layout.table.filter.Icons.FILTER_APPLY"
+		expr="%ICONS_BUTTON_OK%"
+	/>
+	<icon name="com.top_logic.layout.table.filter.Icons.FILTER_RESET"
+		value="css:bi bi-funnel-fill"
 	/>
 	<icon name="com.top_logic.layout.table.filter.Icons.FILTER_SHOW_ALL"
 		value="css:bi bi-chevron-double-down"

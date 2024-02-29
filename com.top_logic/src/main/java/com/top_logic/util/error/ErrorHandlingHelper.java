@@ -41,7 +41,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class ErrorHandlingHelper extends ManagedClass {
 
-	private static final int DIALOG_HEIGHT = 200;
+	private static final int DIALOG_HEIGHT = 250;
 
 	private static final int DIALOG_WIDTH = 500;
 	

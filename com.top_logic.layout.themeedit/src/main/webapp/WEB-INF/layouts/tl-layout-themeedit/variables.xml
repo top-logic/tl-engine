@@ -162,9 +162,9 @@
 					<dialogInfo
 						defaultI18n="${resPrefix}.create.variable.dialog"
 						executability="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"
-						height="400"
+						height="480"
 						image="theme:ICON_PLUS"
-						width="450"
+						width="600"
 					/>
 					<components>
 						<form name="${namePrefix}CreateVariable"

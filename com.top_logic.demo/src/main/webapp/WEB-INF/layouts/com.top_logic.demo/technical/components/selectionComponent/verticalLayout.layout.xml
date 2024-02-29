@@ -11,13 +11,13 @@
 	>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml">
-				<layoutInfo size="65px"/>
+				<layoutInfo size="100px"/>
 			</layout-reference>
 			<layout-reference resource="com.top_logic.demo/technical/components/selectionComponent/childrenSelector.layout.xml">
-				<layoutInfo size="65px"/>
+				<layoutInfo size="100px"/>
 			</layout-reference>
 			<layout-reference resource="com.top_logic.demo/technical/components/selectionComponent/standardMultipleSelectionSelector.layout.xml">
-				<layoutInfo size="65px"/>
+				<layoutInfo size="100px"/>
 			</layout-reference>
 			<layout-reference resource="com.top_logic.demo/technical/components/selectionComponent/potentialBlankSelectionSelector.layout.xml">
 				<layoutInfo/>

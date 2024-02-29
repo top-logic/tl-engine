@@ -47,12 +47,12 @@ import com.top_logic.util.css.CssUtil;
 public class DialogWindowControl extends WindowControl<DialogWindowControl> implements DialogClosedListener {
 
 	/**
-	 * increases the height for which was introduced solely because of the core theme.
+	 * Additional height added to ensure dialog windows are displayed correctly in the core theme.
 	 */
 	private static final int HEIGHT_ENLARGER = 100;
 
 	/**
-	 * increases the width for which was introduced solely because of the core theme.
+	 * Additional width added to ensure dialog windows are displayed correctly in the core theme.
 	 */
 	private static final int WIDTH_ENLARGER = 50;
 

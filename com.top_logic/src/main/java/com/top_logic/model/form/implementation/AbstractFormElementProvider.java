@@ -39,7 +39,7 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	/**
 	 * Default dialog width of the configuration dialog of a {@link FormElementTemplateProvider}.
 	 */
-	public static final DisplayDimension DIALOG_WIDTH = dim(300, DisplayUnit.PIXEL);
+	public static final DisplayDimension DIALOG_WIDTH = dim(480, DisplayUnit.PIXEL);
 
 	/**
 	 * Default dialog height of the configuration dialog of a {@link FormElementTemplateProvider}.

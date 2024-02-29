@@ -63,13 +63,13 @@ public class MessageBox extends MessageBoxShortcuts {
 		/**
 		 * Default width of a message box.
 		 */
-		@IntDefault(450)
+		@IntDefault(500)
 		int getWidth();
 
 		/**
 		 * Default height of a message box.
 		 */
-		@IntDefault(200)
+		@IntDefault(250)
 		int getHeight();
 
 		/**

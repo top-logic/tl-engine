@@ -2,24 +2,16 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
 	template="com.top_logic/contentLayout.template.xml"
 >
-	<arguments
-		orientation="HORIZONTAL"
-		resizable="true"
-	>
+	<arguments>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/selectionComponent/verticalLayout.layout.xml">
-				<layoutInfo
-					scrolleable="true"
-					size="300px"
-				/>
+				<layoutInfo size="300px"/>
 			</layout-reference>
 			<layout-reference resource="com.top_logic.demo/technical/components/selectionComponent/detailsForm.layout.xml">
-				<layoutInfo
-					scrolleable="true"
-					size=""
-				/>
+				<layoutInfo/>
 			</layout-reference>
 		</components>
 	</arguments>

@@ -1,0 +1,12 @@
+/*	Start
+*	Is needed for the HTML Template 
+*	"Tank farm overview"
+*/
+.cCollapsibleTitle *:not(.rf_content) > .rf_columnsLayout:not(.keep) {
+	margin-bottom: 0;
+}
+
+.cCollapsibleTitle .rf_columnsLayout {
+	margin-top: 0;
+}
+/*	End */

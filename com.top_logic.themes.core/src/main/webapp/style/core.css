@@ -1925,7 +1925,7 @@ h5.card-title a:focus {
 	padding-inline-start: 0px;
 }
 
-.ToolBarContainer .IconContainer > ul > li {
+.ToolBarContainer .IconContainer > ul > li:not(:first-child) {
 	padding-left: var(--spacing-03);
 }
 
@@ -1959,11 +1959,19 @@ h5.card-title a:focus {
 }
 
 .tlUser.cButton.cmdLink a:hover,
-.tlUser.cButton.cmdLink a:active,
+.tlUser.cButton.cmdLink a:active {
+	color: var(--icon-on-color);
+	text-decoration: none;
+	outline: none;
+}
+
 .tlUser.cButton.cmdLink a:focus {
 	color: var(--icon-on-color);
 	text-decoration: none;
+	outline: none;
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
+
 
 .tlUser.cButton.cmdLink a i {
 	font-size: 1.5rem;

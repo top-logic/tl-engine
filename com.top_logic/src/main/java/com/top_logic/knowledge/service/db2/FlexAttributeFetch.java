@@ -48,8 +48,10 @@ public final class FlexAttributeFetch implements PreloadOperation {
 	@Override
 	public void prepare(PreloadContext context, Collection<?> baseObjects) {
 		List<KnowledgeItem> knowledgeItems = new ArrayList<>(baseObjects.size());
-		for (Object tlObject : baseObjects) {
-			knowledgeItems.add(((TLObject) tlObject).tHandle());
+		for (Object obj : baseObjects) {
+			if (obj instanceof TLObject) {
+				knowledgeItems.add(((TLObject) obj).tHandle());
+			}
 		}
 		prepareKnowledgeItems(IN_SESSION_REVISION, knowledgeItems);
 	}

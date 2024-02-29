@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -25,14 +26,21 @@ import com.top_logic.basic.shared.io.StringR;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.ex.UnknownTypeException;
+import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
+import com.top_logic.knowledge.service.db2.FlexAttributeFetch;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.config.DatatypeConfig;
+import com.top_logic.model.export.EmptyPreloadContribution;
+import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -91,6 +99,8 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 
 	private StorageMapping<?> _storageMapping;
 
+	private PreloadContribution _preload;
+
 	/**
 	 * Creates a {@link PrimitiveStorage} from configuration.
 	 * 
@@ -116,6 +126,21 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 		if (_storageMapping == null) {
 			_storageMapping = ((TLPrimitive) attribute.getType()).getStorageMapping();
 		}
+
+		TLStructuredType ownerType = attribute.getOwner();
+		String tableName = TLAnnotations.getTable(ownerType);
+
+		boolean isRowAttribute;
+		try {
+			MOStructure tableType =
+				(MOStructure) attribute.tHandle().getKnowledgeBase().getMORepository().getMetaObject(tableName);
+			isRowAttribute = tableType.hasAttribute(_storageAttribute);
+		} catch (UnknownTypeException ex) {
+			Logger.warn("Storage table '" + tableName + "' for type '" + ownerType + "' does not exist.",
+				PrimitiveStorage.class);
+			isRowAttribute = false;
+		}
+		_preload = isRowAttribute ? EmptyPreloadContribution.INSTANCE : FlexAttributeFetch.INSTANCE;
 	}
 
 	/**
@@ -124,6 +149,11 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	 */
 	private StorageMapping<?> getStorageMapping() {
 		return _storageMapping;
+	}
+
+	@Override
+	public PreloadContribution getPreload() {
+		return _preload;
 	}
 
 	@Override

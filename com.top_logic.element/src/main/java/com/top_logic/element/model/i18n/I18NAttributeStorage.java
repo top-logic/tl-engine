@@ -25,6 +25,9 @@ import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.StaticItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.export.PreloadBuilder;
+import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.v5.AssociationCachePreload;
 
 /**
  * {@link AssociationQueryBasedStorage} to store {@link ResKey}s.
@@ -44,6 +47,8 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 
 	private AssociationSetQuery<? extends KnowledgeItem> _query;
 
+	private PreloadContribution _preload;
+
 	/**
 	 * Creates a new {@link I18NAttributeStorage}.
 	 */
@@ -55,6 +60,12 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
 		_query = createQuery(I18N_STORAGE_KO_TYPE, attribute, StaticItem.class);
+		_preload = new AssociationCachePreload(_query);
+	}
+
+	@Override
+	public void contribute(PreloadBuilder preloadBuilder) {
+		_preload.contribute(preloadBuilder);
 	}
 
 	@Override

@@ -53,13 +53,7 @@ public class ElementCompatibilityService extends CompatibilityService {
 
 	@Override
 	public PreloadContribution preloadContribution(TLStructuredTypePart part) {
-		PreloadContribution contribution;
-		if (part instanceof TLStructuredTypePart) {
-			contribution = AttributeOperations.getStorageImplementation(((TLStructuredTypePart) part)).getPreload();
-		} else {
-			contribution = super.preloadContribution(part);
-		}
-		return contribution;
+		return AttributeOperations.getStorageImplementation(part).getPreload();
 	}
 
 	@Override

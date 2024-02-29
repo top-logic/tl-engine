@@ -93,11 +93,6 @@ public abstract class ColumnConfiguration extends ColumnBase
 	public static final ResourceProvider DEFAULT_RESOURCE_PROVIDER = MetaResourceProvider.INSTANCE;
 
 	/**
-	 * Default value of {@link #getPreloadContribution()}.
-	 */
-	protected static final PreloadContribution DEFAULT_PRELOAD_CONTRIBUTION = EmptyPreloadContribution.INSTANCE;
-
-	/**
 	 * Default value of {@link #getComparator()}.
 	 */
 	protected static final Comparator<Object> DEFAULT_COMPARATOR = ComparableComparator.INSTANCE;
@@ -428,7 +423,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 
 	public final void setPreloadContribution(PreloadContribution value) {
 		if (value == null) {
-			copyPreloadContribution(DEFAULT_PRELOAD_CONTRIBUTION);
+			copyPreloadContribution(EmptyPreloadContribution.INSTANCE);
 		} else {
 			copyPreloadContribution(value);
 		}

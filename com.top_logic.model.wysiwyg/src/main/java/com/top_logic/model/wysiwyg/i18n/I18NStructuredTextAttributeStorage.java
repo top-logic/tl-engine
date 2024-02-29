@@ -36,6 +36,9 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.export.PreloadBuilder;
+import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.v5.AssociationCachePreload;
 import com.top_logic.model.wysiwyg.storage.CommonStructuredTextAttributeStorage;
 import com.top_logic.util.TLContextManager;
 
@@ -63,6 +66,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 
 	private List<Locale> _supportedLocales;
 
+	private PreloadContribution _sourcePreload;
+
 	/** {@link TypedConfiguration} constructor for {@link I18NStructuredTextAttributeStorage}. */
 	public I18NStructuredTextAttributeStorage(InstantiationContext context, C config) {
 		super(context, config);
@@ -72,8 +77,15 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
 		_sourceCodesQuery = this.createQuery(getSourceCodeTableName(), attribute, StaticItem.class);
+		_sourcePreload = new AssociationCachePreload(_sourceCodesQuery);
 		
 		_supportedLocales = unmodifiableList(list(getSupportedLocales()));
+	}
+
+	@Override
+	public void contribute(PreloadBuilder preloadBuilder) {
+		super.contribute(preloadBuilder);
+		_sourcePreload.contribute(preloadBuilder);
 	}
 
 	private List<Locale> getSupportedLocales() {

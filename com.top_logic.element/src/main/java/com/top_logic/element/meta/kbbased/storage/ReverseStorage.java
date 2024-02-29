@@ -29,7 +29,10 @@ import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.export.NoPreload;
+import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.model.v5.AssociationNavigationPreload;
 
 /**
  * {@link StorageImplementation} for an attribute representing the inverse navigation of another
@@ -47,6 +50,10 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	private String _table;
 
 	private boolean _monomorphic;
+
+	private PreloadContribution _preload = NoPreload.INSTANCE;
+
+	private PreloadContribution _reversePreload = NoPreload.INSTANCE;
 
 	/**
 	 * Configuration options for {@link ReverseStorage}.
@@ -117,12 +124,11 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	public void init(TLStructuredTypePart attribute) {
 		TLAssociationEnd sourceEnd = ((TLReference) attribute).getEnd();
 		TLAssociationEnd destinationEnd = TLModelUtil.getOtherEnd(sourceEnd);
-		TLStructuredTypePart destinationReference = destinationEnd.getReference();
-		if (destinationReference != null) {
-			StorageImplementation destStorage = AttributeOperations.getStorageImplementation(destinationReference);
-
-			if (destStorage instanceof AssociationStorage) {
-				AssociationStorage linkStorage = (AssociationStorage) destStorage;
+		TLStructuredTypePart forwardRef = destinationEnd.getReference();
+		if (forwardRef != null) {
+			StorageImplementation forwardStorage = AttributeOperations.getStorageImplementation(forwardRef);
+			if (forwardStorage instanceof AssociationStorage) {
+				AssociationStorage linkStorage = (AssociationStorage) forwardStorage;
 				_outgoingQuery = linkStorage.getIncomingQuery();
 				_table = _outgoingQuery.getAssociationTypeName();
 				_monomorphic = linkStorage.monomophicTable();
@@ -140,10 +146,23 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 						_table,
 						_outgoingQuery.getAttributeQuery());
 				}
+
+				_preload = new AssociationNavigationPreload(_outgoingQuery);
+				_reversePreload = new AssociationNavigationPreload(_incomingQuery);
 			}
 		}
 
 		super.init(attribute);
+	}
+
+	@Override
+	public PreloadContribution getPreload() {
+		return _preload;
+	}
+
+	@Override
+	public PreloadContribution getReversePreload() {
+		return _reversePreload;
 	}
 
 	@Override

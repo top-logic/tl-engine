@@ -194,8 +194,7 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 				return Collections.emptyList();
 			}
 			StructPreloader preloader = getPreloader();
-			PreloadContext context = new PreloadContext();
-			try {
+			try (PreloadContext context = new PreloadContext()) {
 				Collection<Wrapper> wrappers = new HashSet<>();
 
 				for (TLStructuredTypePart part : configuredParts) {
@@ -204,8 +203,6 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 				}
 
 				return wrappers;
-			} finally {
-				context.close();
 			}
 		}
 	}

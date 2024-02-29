@@ -21,7 +21,7 @@
 		<components>
 			<include name="com.top_logic.monitoring/admin/monitor/session/sessionFilter.xml">
 				<inject>
-					<layoutInfo size="30px"/>
+					<layoutInfo size="50px"/>
 				</inject>
 			</include>
 

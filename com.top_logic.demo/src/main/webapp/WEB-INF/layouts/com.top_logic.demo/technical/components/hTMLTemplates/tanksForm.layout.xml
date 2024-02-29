@@ -51,9 +51,15 @@
 						</i18n>
 						<value-templates>
 							<value-template type="test.htmltemplate:Tank">
-								<template><![CDATA[<div style="position:relative; max-width: 400px; margin: 32px; background-color: #EEEEEE; border-radius: 8px; padding:8px;">
-<span style="position:absolute; top:8px; right:8px;">{menuButton}{deleteButton}</span>
-<div style="font-weight: bold;">{titleform}</div>
+								<template><![CDATA[<div style="display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: var(--spacing-05); background-color: var(--layer); border-radius: var(--corner-radius);">
+    <div class="cCollapsibleHeader" style="width: 100%; background-color: var(--layer-accent); padding: 0 var(--spacing-03);">
+        <div class="cCollapsibleToolbar">
+            <div class="cToolbar">{menuButton}{deleteButton}</div>
+        </div>
+        <div class="cCollapsibleTitle">
+            {titleform}
+        </div>
+    </div>
 <div onclick="{openProperties}" style="cursor:pointer;">
 <svg
    id="Kraftstofftanks"
@@ -308,7 +314,7 @@
 </svg>
 </div>
 
-<div>{form}</div>
+<div style="padding: 0 var(--spacing-03);">{form}</div>
 </div>
 ]]></template>
 								<embedded-form name="form">

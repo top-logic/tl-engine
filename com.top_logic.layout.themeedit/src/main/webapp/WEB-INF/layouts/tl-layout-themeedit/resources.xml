@@ -94,7 +94,7 @@
 				>
 					<dialogInfo
 						defaultI18n="${resPrefix}.resources.uploadDialog.openCommand"
-						height="200"
+						height="230"
 						image="theme:ICON_FILE_IMPORT"
 						openerCommandGroup="Create"
 						width="350"

@@ -12,7 +12,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/combiningChannel/horizontalLayout.layout.xml">
 				<layoutInfo
 					scrolleable="true"
-					size="65px"
+					size="80px"
 				/>
 			</layout-reference>
 			<layout-reference resource="com.top_logic.demo/technical/components/combiningChannel/matchingAsTable.layout.xml">

@@ -7,7 +7,7 @@
 			securityProviderClass="securityRoot"
 			titleKey="tl.layouteditor.layoutKeySelector.title"
 		>
-			<layoutInfo size="65px"/>
+			<layoutInfo size="80px"/>
 		</component>
 		<tree-table name="LayoutTreeTable"
 			model="selection(LayoutKeySelector)"

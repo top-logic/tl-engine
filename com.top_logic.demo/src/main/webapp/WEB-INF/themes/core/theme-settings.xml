@@ -89,13 +89,13 @@
 		value="css:fas fa-parachute-box demo-fuchsia"
 	/>
 	<icon name="ICON_PEN_FANCY"
-		value="css:fas fa-pen-fancy"
+		value="css:bi bi-pencil-fill"
 	/>
 	<icon name="ICON_PIGGY_BANK_DEMO_FUCHSIA"
 		value="css:fas fa-piggy-bank demo-fuchsia"
 	/>
 	<icon name="ICON_PLUS"
-		value="css:fas fa-plus"
+		value="css:bi bi-plus-lg"
 	/>
 	<icon name="ICON_PROJECT_DIAGRAM"
 		value="css:fas fa-project-diagram"
@@ -110,10 +110,10 @@
 		value="css:fas fa-seedling demo-green"
 	/>
 	<icon name="ICON_TABLE"
-		value="css:fas fa-table"
+		value="css:bi bi-table"
 	/>
 	<icon name="ICON_USER_SECRET"
-		value="css:fas fa-user-secret"
+		value="css:bi bi-people-fill"
 	/>
 	<icon name="ICONS_DIALOG_INFORMATION"
 		value="css:bi bi-info-circle-fill"
@@ -146,7 +146,7 @@
 		value="css:bi bi-pie-chart-fill"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
-		value="css:fas fa-filter"
+		value="css:bi bi-funnel-fill"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.USER_ICON"
 		value="css:fas fa-users"

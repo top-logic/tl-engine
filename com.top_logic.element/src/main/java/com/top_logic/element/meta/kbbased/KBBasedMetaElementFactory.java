@@ -254,16 +254,16 @@ public abstract class KBBasedMetaElementFactory extends MetaElementFactory imple
         Set<TLClass> theResult = new HashSet<>();
 
 		ReferencePreload scopePreload = new ReferencePreload(PersistentType.TL_TYPE_KO, PersistentType.SCOPE_REF);
-		PreloadContext context = new PreloadContext();
-		scopePreload.prepare(context, theMEs);
-		for (Iterator<TLClass> theIt = theMEs.iterator(); theIt.hasNext();) {
-			TLClass theME = theIt.next();
+		try (PreloadContext context = new PreloadContext()) {
+			scopePreload.prepare(context, theMEs);
+			for (Iterator<TLClass> theIt = theMEs.iterator(); theIt.hasNext();) {
+				TLClass theME = theIt.next();
 
-			if (MetaElementUtil.isGlobal(theME)) {
-                theResult.add(theME);
-            }
-        }
-		context.close();
+				if (MetaElementUtil.isGlobal(theME)) {
+					theResult.add(theME);
+				}
+			}
+		}
         return theResult;
     }
 

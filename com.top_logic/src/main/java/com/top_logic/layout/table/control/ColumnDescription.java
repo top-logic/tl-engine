@@ -29,6 +29,7 @@ import com.top_logic.layout.table.filter.CellExistenceTester;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurationContainer;
 import com.top_logic.layout.table.model.FieldProvider;
+import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.pdf.PDFRenderer;
@@ -155,7 +156,7 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	private CellClassProvider cssClassProvider = DEFAULT_CSS_CLASS_PROVIDER;
 
-	private PreloadContribution preloadContribution = DEFAULT_PRELOAD_CONTRIBUTION;
+	private PreloadContribution preloadContribution = EmptyPreloadContribution.INSTANCE;
 
 	private List<HTMLFragmentProvider> _additionalHeaders;
 

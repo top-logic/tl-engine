@@ -3064,38 +3064,38 @@ public class GridComponent extends EditComponent implements
 	private static boolean isValidPath(GridComponent grid, Object path) {
 		if (path instanceof List<?>) {
 			List<?> l = (List<?>) path;
-			if (l.isEmpty()) {
+			int pathLength = l.size();
+			if (pathLength == 0) {
 				return false;
 			}
 			GridBuilder<FormGroup> gridBuilder = grid.gridBuilder();
-
-			int leafIDX = l.size() - 1;
-			for (int i = leafIDX; i >= 0; i--) {
+			Object lastNode = getLast(l);
+			if (!GridComponent.isTransient(lastNode)) {
+				if (!GridComponent.isValid(lastNode)) {
+					// Last node may be the transient.
+					return false;
+				}
+				if (!gridBuilder.supportsRow(grid, lastNode)) {
+					return false;
+				}
+			} else {
+				// The last node may be transient.
+			}
+			if (pathLength == 1) {
+				return true;
+			}
+			for (int i = pathLength - 2; i > 0; i--) {
 				Object node = l.get(i);
-
-				if (GridComponent.isTransient(node)) {
-					if (i == leafIDX) {
-						// The last node of a path can be a transient node
-						continue;
-					} else {
-						return false;
-					}
-				}
-
-				if (!GridComponent.isValid(node)) {
+				if (GridComponent.isTransient(node) || !GridComponent.isValid(node)) {
 					return false;
 				}
-				if (!gridBuilder.supportsRow(grid, node)) {
+				Collection<?> parents = gridBuilder.getParentsForRow(grid, node);
+				if (!parents.contains(l.get(i - 1))) {
 					return false;
-				}
-				if (i > 0) {
-					Collection<?> parents = gridBuilder.getParentsForRow(grid, node);
-					if (!parents.contains(l.get(i - 1))) {
-						return false;
-					}
 				}
 			}
-			return true;
+			Object firstNode = l.get(0);
+			return !GridComponent.isTransient(firstNode) && GridComponent.isValid(firstNode);
 		}
 		return false;
 	}

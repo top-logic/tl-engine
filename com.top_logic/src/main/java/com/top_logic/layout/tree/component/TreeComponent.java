@@ -1889,25 +1889,31 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	private static boolean isValidPath(TreeComponent tree, Object path) {
 		if (path instanceof List<?>) {
 			List<?> l = (List<?>) path;
-			if (l.isEmpty()) {
+			int pathLength = l.size();
+			if (pathLength == 0) {
 				return false;
 			}
-			for (int i = l.size() - 1; i >= 0; i--) {
+			Object last = getLast(l);
+			if (!tree.nodeSupported(last)) {
+				return false;
+			}
+			if (!tree.isSelectable(last)) {
+				return false;
+			}
+			if (pathLength == 1){
+				return true;
+			}
+			for (int i = pathLength - 2; i > 0; i--) {
 				Object node = l.get(i);
-				if (!tree.nodeSupported(node)) {
+				if (!ComponentUtil.isValid(node)) {
 					return false;
 				}
-				if (i > 0) {
-					Collection<?> parents = tree.getParentObjects(node);
-					if (!parents.contains(l.get(i - 1))) {
-						return false;
-					}
+				Collection<?> parents = tree.getParentObjects(node);
+				if (!parents.contains(l.get(i - 1))) {
+					return false;
 				}
 			}
-			if (!tree.isSelectable(getLast(l))) {
-				return false;
-			}
-			return true;
+			return ComponentUtil.isValid(l.get(0));
 		}
 		return false;
 	}

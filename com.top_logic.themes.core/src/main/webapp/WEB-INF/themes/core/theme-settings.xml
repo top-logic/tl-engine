@@ -1311,7 +1311,12 @@
 	<icon name="mime.TLClass"
 		value="css:bi bi-window"
 	/>
-	
+	<size name="com.top_logic.layout.basic.Icons.DIRTY_DIALOG_WIDTH"
+		value="550px"
+	/>
+	<size name="com.top_logic.layout.basic.Icons.DIRTY_DIALOG_HEIGHT"
+		value="350px"
+	/>
 	<!-- Form spacings  -->
 	<dim name="RF_FIRST_COLUMN_WIDTH"
 		value="10em"

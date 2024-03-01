@@ -16,6 +16,43 @@ body {
 	color: var(--text-primary);
 }
 
+/* Scrollbars */
+body {
+	--sb-track-color: #c4c7cc;
+	--sb-thumb-color: #2968c8;
+	--sb-small: 3px;
+	--sb-size: 4px;
+}
+
+::-webkit-scrollbar {
+	width: var(--sb-size);
+	height: var(--sb-size);
+	background: transparent;
+}
+
+:hover::-webkit-scrollbar {
+	width: var(--sb-size);
+	height: var(--sb-size);
+}
+
+:hover::-webkit-scrollbar-track {
+	background: var(--sb-track-color);
+	border-radius: 4px;
+}
+
+:hover::-webkit-scrollbar-thumb {
+	background: var(--sb-thumb-color);
+	border-radius: 4px;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	body {
+		scrollbar-color: var(--sb-thumb-color)
+						var(--sb-track-color);
+	}
+}
+/* Scrollbars */
+
 code {
 	font-family: 'Inter-Regular';
     font-size: var(--body-02-font-size);

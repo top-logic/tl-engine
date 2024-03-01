@@ -9,19 +9,19 @@ import java.util.List;
 
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
-import com.top_logic.layout.SelectionModelProvider;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
 import com.top_logic.layout.tree.dnd.TreeDragSource;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SelectionModelOwner;
 
 /**
  * Observable state of {@link TreeControl}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface TreeData extends NamedModel, SelectionModelProvider, TypedAnnotatable {
+public interface TreeData extends NamedModel, SelectionModelOwner, TypedAnnotatable {
 	
 	/**
 	 * The currently displayed {@link TreeUIModel}.

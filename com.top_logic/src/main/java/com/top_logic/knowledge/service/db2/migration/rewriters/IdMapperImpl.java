@@ -360,7 +360,7 @@ public class IdMapperImpl extends Rewriter implements IdMapper {
 			String type = mapping.getType();
 			Indexer.Index index = _indexer.register(type,
 				Collections.singletonList(Indexer.SELF_ATTRIBUTE ),
-				new MappedList<>(new Mapping<AttributesConfiguration, String>() {
+				MappedList.create(new Mapping<AttributesConfiguration, String>() {
 
 					@Override
 					public String map(AttributesConfiguration input) {

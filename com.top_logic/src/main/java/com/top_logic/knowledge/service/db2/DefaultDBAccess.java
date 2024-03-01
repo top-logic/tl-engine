@@ -220,7 +220,7 @@ abstract class DefaultDBAccess extends AbstractDBAccess {
 			+ Arrays.toString(sortedKeys);
 
 
-		List<TLID> ids = new MappedList<>(TO_ID, Arrays.asList(sortedKeys));
+		List<TLID> ids = MappedList.create(TO_ID, Arrays.asList(sortedKeys));
 		KnowledgeItemFactory implFactory = type.getImplementationFactory();
 		DBKey dbResultKey = new DBKey();
 

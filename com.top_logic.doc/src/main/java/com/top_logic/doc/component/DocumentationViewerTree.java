@@ -8,15 +8,17 @@ package com.top_logic.doc.component;
 import static com.top_logic.basic.col.FilterUtil.*;
 import static com.top_logic.layout.tree.model.TLTreeModelUtil.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.util.Utils;
 import com.top_logic.doc.model.Page;
 import com.top_logic.layout.tree.component.TreeComponent;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
+import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SelectionUtil;
 
 /**
  * {@link TreeComponent} implementing {@link DocumentationViewer}.
@@ -67,12 +69,9 @@ public class DocumentationViewerTree extends TreeComponent implements Documentat
 	}
 
 	private boolean show(DefaultTreeUINode node) {
-		Object businessObject = node.getBusinessObject();
-		boolean selectionChanged = setSelected(businessObject);
-		if (selectionChanged) {
-			return true;
-		}
-		return Utils.equals(getSelected(), businessObject);
+		SelectionModel selectionModel = getSelectionModel();
+		SelectionUtil.setTreeSelection(selectionModel, Collections.singleton(node));
+		return selectionModel.getSelection().contains(node);
 	}
 
 }

@@ -23,6 +23,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.ListComparator;
+import com.top_logic.basic.col.MappedList;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TreeView;
 import com.top_logic.basic.config.InstantiationContext;
@@ -45,12 +46,14 @@ import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
+import com.top_logic.layout.tree.model.TLTreeModelUtil;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.tree.model.TreeUIModelUtil;
 import com.top_logic.layout.tree.model.TreeViewConfig;
 import com.top_logic.layout.tree.model.UserObjectIndex;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SelectionUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -545,10 +548,10 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		}
 
 		@Override
-		protected void setSelection(SelectionModel selectionModel, Set<?> selectedFormGroups) {
-			Set<GridTreeTableNode> selectectedTreeNodes = formGroupsToTreeNodes(selectedFormGroups);
+		protected void setSelection(SelectionModel selectionModel, Set<List<?>> selectedPaths) {
+			Set<GridTreeTableNode> selectectedTreeNodes = formGroupsToTreeNodes(selectedPaths);
 
-			super.setSelection(selectionModel, selectectedTreeNodes);
+			SelectionUtil.setSelection(selectionModel, selectectedTreeNodes);
 
 			for (GridTreeTableNode selectedNode : selectectedTreeNodes) {
 				if (expandSelectedNode()) {
@@ -559,13 +562,42 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 			}
 		}
 
-		private Set<GridTreeTableNode> formGroupsToTreeNodes(Set<?> formGroups) {
+		private Set<GridTreeTableNode> formGroupsToTreeNodes(Set<List<?>> paths) {
 			Set<GridTreeTableNode> treeNodes = new HashSet<>();
 
-			for (Object formGroup : formGroups) {
-				treeNodes.addAll(_index.getNodes(formGroup));
+			Map<R, GridTreeTableNode> nonMatchingPathNodes = Collections.emptyMap();
+			for (List<?> path : paths) {
+				List<R> gridRowPath = MappedList.create(this::toGridRow, path);
+				R bo = CollectionUtil.getLast(gridRowPath);
+				List<GridTreeTableNode> nodesForPath = _index.getNodes(bo);
+				if (nodesForPath.isEmpty()) {
+					continue;
+				}
+				GridTreeTableNode nodeWithDifferentPath = null;
+				boolean noNodeFound = true;
+				for (GridTreeTableNode node : nodesForPath) {
+					if (TLTreeModelUtil.sameBusinessObjectPath(node, gridRowPath)) {
+						treeNodes.add(node);
+						noNodeFound = false;
+					} else {
+						nodeWithDifferentPath = node;
+					}
+				}
+				// There are nodes for the business object, but all have different paths.
+				if (noNodeFound && nodeWithDifferentPath != null) {
+					if (nonMatchingPathNodes.isEmpty()) {
+						nonMatchingPathNodes = new HashMap<>();
+					}
+					nonMatchingPathNodes.put(bo, nodeWithDifferentPath);
+				}
 			}
 
+			if (!nonMatchingPathNodes.isEmpty()) {
+				treeNodes.stream().map(TLTreeNode::getBusinessObject).forEach(nonMatchingPathNodes.keySet()::remove);
+				// For the actual selected business objects, the paths are all invalid. Select other
+				// nodes which represent the same selection.
+				treeNodes.addAll(nonMatchingPathNodes.values());
+			}
 			return treeNodes;
 		}
 
@@ -675,7 +707,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		}
 
 		@Override
-		public void createRow(Object contextModel, ContextPosition position, Object newRowModel) {
+		public Object createRow(Object contextModel, ContextPosition position, Object newRowModel) {
 			List<GridTreeTableNode> contextParents = _index.getNodes(toGridRow(contextModel));
 			switch (contextParents.size()) {
 				case 0:
@@ -724,7 +756,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 				throw new UnreachableAssertion("No such position: " + position.getStrategy());
 			}
 			
-			parentNode.createChild(insertPosition, toGridRow(newRowModel));
+			return parentNode.createChild(insertPosition, toGridRow(newRowModel));
 		}
 
 		private int getContextIndex(GridTreeTableNode parentNode, ContextPosition position) {
@@ -742,6 +774,11 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 			return (R) ((GridTreeTableNode) tableRow).getBusinessObject();
 		}
 		
+		@Override
+		public Object getParentRow(Object tableRow) {
+			return ((GridTreeTableNode) tableRow).getParent();
+		}
+
 		@Override
 		public Collection<? extends GridTreeTableNode> getTableRows(R gridRow) {
 			return _index.getNodes(gridRow);
@@ -887,6 +924,11 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 
 	private AbstractTreeGridBuilder<FormGroup>.TreeGridHandler getTreeGridHandler(GridComponent grid) {
 		return (AbstractTreeGridBuilder<FormGroup>.TreeGridHandler) grid.getHandler();
+	}
+
+	@Override
+	public Collection<? extends Object> getParentsForRow(GridComponent grid, Object row) {
+		return getParents(grid, row);
 	}
 
 }

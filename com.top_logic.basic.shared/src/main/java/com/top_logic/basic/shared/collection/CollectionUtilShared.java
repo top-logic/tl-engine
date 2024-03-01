@@ -938,6 +938,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 		if (aCollection instanceof RandomAccess) {
 			return ((List<E>) aCollection).get(aCollection.size() - 1);
 		}
+		if (aCollection instanceof List) {
+			return ((List<E>) aCollection).listIterator(aCollection.size()).previous();
+		}
 		if (aCollection instanceof SortedSet) {
 			return ((SortedSet<E>) aCollection).last();
 		}

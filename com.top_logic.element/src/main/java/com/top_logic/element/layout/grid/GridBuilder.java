@@ -15,6 +15,7 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
+import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -70,8 +71,8 @@ public interface GridBuilder<R> extends ModelBuilder {
 		void removeRow(R rowObject);
 
 		/**
-		 * Creates a new row for the given row model object in the grid. The row
-		 * is created from the given context row object.
+		 * Creates a new row for the given row model object in the grid. The row is created from the
+		 * given context row object.
 		 * 
 		 * @param contextModel
 		 *        The row that was selected before the creation.
@@ -79,8 +80,10 @@ public interface GridBuilder<R> extends ModelBuilder {
 		 *        Location of the new row to insert.
 		 * @param newRowModel
 		 *        The new row model that should be inserted into the grid.
+		 * 
+		 * @return The new table row for the row model.
 		 */
-		void createRow(Object contextModel, ContextPosition position, Object newRowModel);
+		Object createRow(Object contextModel, ContextPosition position, Object newRowModel);
 
 		/**
 		 * Retrieve the grid row model from a row object of the {@link #getTableField()} this
@@ -94,6 +97,17 @@ public interface GridBuilder<R> extends ModelBuilder {
 		 * @see #getTableRows(Object) inverse operation
 		 */
 		R getGridRow(Object tableRow);
+
+		/**
+		 * Determine the "parent" row of the given table row, if the table represents a tree.
+		 *
+		 * @param tableRow
+		 *        Row in {@link #getTableField()}.
+		 * 
+		 * @return May be <code>null</code>, if the table is not a tree or the table has no further
+		 *         parent row.
+		 */
+		Object getParentRow(Object tableRow);
 
 		/**
 		 * Retrieve the table row object of the {@link #getTableField()} this
@@ -129,10 +143,10 @@ public interface GridBuilder<R> extends ModelBuilder {
 		/**
 		 * Establishes the given selection.
 		 * 
-		 * @param newSelectedModels
-		 *        The new model objects to select.
+		 * @param selectionPaths
+		 *        Paths from root to the selected elements.
 		 */
-		void setUISelection(Collection<?> newSelectedModels);
+		void setUISelectionPaths(Collection<? extends List<?>> selectionPaths);
 
 		/**
 		 * Marks the corresponding table row for the given grid row as
@@ -243,5 +257,19 @@ public interface GridBuilder<R> extends ModelBuilder {
 	 * @see ListModelBuilder#retrieveModelFromListElement(LayoutComponent, Object)
 	 */
 	Object retrieveModelFromRow(GridComponent grid, Object row);
+
+	/**
+	 * Finds the parent objects for the given row object in the given {@link GridComponent}, if the
+	 * grid displays a tree, or an empty collection if the grid is not a tree or the given row is
+	 * the root node.
+	 *
+	 * @param grid
+	 *        The context {@link GridComponent}.
+	 * @param row
+	 *        The row to find parents for.
+	 * 
+	 * @see TreeModelBuilder#getParents(LayoutComponent, Object)
+	 */
+	Collection<? extends Object> getParentsForRow(GridComponent grid, Object row);
 
 }

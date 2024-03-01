@@ -9,7 +9,6 @@
 		defaultColumns="name"
 		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
 		multiSelection="true"
-		partnerGroup="TreeTablePartner"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.10afb99b-4510-4e83-8f2a-fef566383440">

@@ -14,11 +14,12 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.layout.SelectionModelProvider;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.SingleSelectionModelProvider;
+import com.top_logic.layout.channel.SelectionChannelSPI;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.scripting.action.SelectAction;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
@@ -29,6 +30,8 @@ import com.top_logic.layout.scripting.recorder.ref.misc.SelectionRef;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SelectionModelOwner;
+import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * Handles both kinds of selections: {@link Selectable} and {@link SelectionModel}
@@ -39,7 +42,7 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 
 	private Object _selection;
 
-	private boolean _selectionState;
+	private boolean _doSelect;
 
 	/** {@link TypedConfiguration} constructor for {@link SelectActionOp}. */
 	public SelectActionOp(InstantiationContext context, SelectAction config) {
@@ -50,20 +53,20 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 	public Object processInternal(ActionContext actionContext, Object argument) {
 		Object model = findModel(actionContext);
 		_selection = getSelection(actionContext, model);
-		_selectionState = getSelectionState(actionContext);
+		_doSelect = getSelectionState(actionContext);
 		if (model instanceof Selectable) {
 			selectSelectable((Selectable) model);
 		} else if (model instanceof SelectionModel) {
 			selectSelectionModel((SelectionModel) model);
-		} else if (model instanceof SelectionModelProvider) {
-			selectSelectionModelProvider((SelectionModelProvider) model);
+		} else if (model instanceof TableData) {
+			selectTableData((TableData) model);
+		} else if (model instanceof SelectionModelOwner) {
+			selectSelectionModelOwner((SelectionModelOwner) model);
 		} else if (model instanceof SingleSelectionModelProvider) {
 			selectSingleSelectionModelProvider((SingleSelectionModelProvider) model);
-		} else if (model instanceof TableData) {
-			selectTableData((TableData) model, _selection, _selectionState);
 		} else {
 			throw new UnsupportedOperationException("The model is not supported for 'Select' actions. Supported are "
-				+ Selectable.class + ", " + SelectionModelProvider.class + ", " + SingleSelectionModelProvider.class
+					+ Selectable.class + ", " + SelectionModelOwner.class + ", " + SingleSelectionModelProvider.class
 				+ " and " + TableData.class + ". But the model is of type: "
 				+ StringServices.getClassNameNullsafe(model));
 		}
@@ -91,13 +94,13 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 		return getConfig().getSelection();
 	}
 
-	private void selectSelectionModelProvider(SelectionModelProvider selectionModelProvider) {
-		SelectionModel selectionModel = selectionModelProvider.getSelectionModel();
+	private void selectSelectionModelOwner(SelectionModelOwner selectionModelOwner) {
+		SelectionModel selectionModel = selectionModelOwner.getSelectionModel();
 		selectSelectionModel(selectionModel);
 	}
 
 	private void selectSelectionModel(SelectionModel selectionModel) {
-		if (_selectionState) {
+		if (_doSelect) {
 			for (Object element : getSelectionSet()) {
 				assertTrue("The object to select is not selectable! Object to select: "
 					+ StringServices.getObjectDescription(_selection),
@@ -111,17 +114,17 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 	private void applySelectionChange(SelectionModel selectionModel) {
 		switch (getConfig().getChangeKind()) {
 			case LEGACY: {
-				selectionModel.setSelected(_selection, _selectionState);
+				selectionModel.setSelected(_selection, _doSelect);
 				checkIncrementalSelection(selectionModel);
 				return;
 			}
 			case INCREMENTAL: {
-				selectionModel.setSelected(_selection, _selectionState);
+				selectionModel.setSelected(_selection, _doSelect);
 				checkIncrementalSelection(selectionModel);
 				return;
 			}
 			case ABSOLUTE: {
-				if (_selectionState) {
+				if (_doSelect) {
 					selectionModel.setSelection(getSelectionSet());
 				} else {
 					selectionModel.clear();
@@ -134,7 +137,7 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 
 	private void checkIncrementalSelection(SelectionModel selectionModel) {
 		boolean isSelected = selectionModel.getSelection().contains(_selection);
-		if (_selectionState) {
+		if (_doSelect) {
 			assertTrue("Object was not selected. Expected: " + StringServices.getObjectDescription(_selection)
 				+ "; Actual: " + StringServices.getObjectDescription(selectionModel.getSelection()), isSelected);
 		} else {
@@ -145,7 +148,7 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 
 	private void checkAbsoluteSelection(SelectionModel selectionModel) {
 		Set<?> actualSelection = selectionModel.getSelection();
-		if (_selectionState) {
+		if (_doSelect) {
 			Set<?> expectedSelectionSet = getSelectionSet();
 			assertEquals(
 				"Selection was not Changed. Expected: " + StringServices.getObjectDescription(expectedSelectionSet)
@@ -163,7 +166,7 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 	}
 
 	private void selectSingleSelectionModelProvider(SingleSelectionModelProvider singleSelectionModelProvider) {
-		assert _selectionState;
+		assert _doSelect;
 		assert getConfig().getChangeKind() != SelectionChangeKind.INCREMENTAL :
 			"A change for a single selection cannot be incremental.";
 		SingleSelectionModel selectionModel = singleSelectionModelProvider.getSingleSelectionModel();
@@ -175,28 +178,56 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 	}
 
 	private void selectSelectable(Selectable selectable) {
-		assert _selectionState;
+		assert _doSelect;
 		assert getConfig().getChangeKind() != SelectionChangeKind.INCREMENTAL :
 			"Selectable has only a single selection. Therefore, a selection change cannot be incremental.";
-		selectable.setSelected(_selection);
 
-		assertEquals("Selection change failed!", _selection, selectable.getSelected());
+		Object newSelection;
+		if (selectable instanceof LayoutComponent
+				&& SelectionChannelSPI.isMultiSelection((LayoutComponent) selectable)) {
+			newSelection = CollectionUtil.singletonOrEmptySet(_selection);
+		} else {
+			newSelection = _selection;
+		}
+		selectable.setSelected(newSelection);
+
+		assertEquals("Selection change failed!", newSelection, selectable.getSelected());
 	}
 
-	private void selectTableData(TableData tableData, Object selection, boolean selectionState) {
-		assert getConfig()
-			.getChangeKind() != SelectionChangeKind.INCREMENTAL : "TableData only supports absolute selection changes. Therefore, a selection change cannot be incremental.";
-		if (selectionState) {
-			Set<?> selectionCollection = asSet(selection);
-			assertAllElementsExist(tableData, selectionCollection);
-			tableData.getSelectionModel().setSelection(selectionCollection);
-			assertTrue("Selection change failed!",
-				CollectionUtil.containsSame(selectionCollection, tableData.getSelectionModel().getSelection()));
-		} else {
-			assert selection == ScriptingRecorder.NO_SELECTION;
-			tableData.getSelectionModel().clear();
-			assertTrue("Removing the selection failed!", tableData.getSelectionModel().getSelection().isEmpty());
+	private void selectTableData(TableData tableData) {
+		SelectionModel selectionModel = tableData.getSelectionModel();
+		switch (getConfig().getChangeKind()) {
+			case INCREMENTAL: {
+				Set<?> selectionCollection = asSet(_selection);
+				if (_doSelect) {
+					assertAllElementsExist(tableData, selectionCollection);
+				}
+				for (Object element : selectionCollection) {
+					selectionModel.setSelected(element, _doSelect);
+					assertEquals("Selection change failed!", _doSelect,
+						selectionModel.getSelection().contains(element));
+				}
+				return;
+			}
+			case ABSOLUTE:
+			case LEGACY: {
+				if (_doSelect) {
+					Set<?> selectionCollection = asSet(_selection);
+					assertAllElementsExist(tableData, selectionCollection);
+					selectionModel.setSelection(selectionCollection);
+					assertTrue("Selection change failed!",
+						CollectionUtil.containsSame(selectionCollection, selectionModel.getSelection()));
+				} else {
+					assert _selection == ScriptingRecorder.NO_SELECTION;
+					selectionModel.clear();
+					assertTrue("Removing the selection failed!",
+						selectionModel.getSelection().isEmpty());
+				}
+				return;
+			}
+
 		}
+		throw new UnreachableAssertion("Uncovered case: " + getConfig().getChangeKind());
 	}
 
 	private Set<?> asSet(Object selection) {

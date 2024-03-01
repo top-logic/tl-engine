@@ -10,7 +10,6 @@
 		defaultSelection="false"
 		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
 		multiSelection="true"
-		partnerGroup="GridPartner"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.bb55090d-9bec-4f2c-9825-e4487b58bdbe">

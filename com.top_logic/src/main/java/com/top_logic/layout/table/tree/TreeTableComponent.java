@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.table.tree;
 
+import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
 import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
 
@@ -14,11 +15,13 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -88,6 +91,7 @@ import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
+import com.top_logic.layout.tree.component.WithSelectionPath;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeNode;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel.AbstractTreeTableNode;
@@ -123,7 +127,8 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 public class TreeTableComponent extends BoundComponent
-		implements SelectableWithSelectionModel, ControlRepresentable, TreeTableDataOwner, ComponentRowSource {
+		implements SelectableWithSelectionModel, ControlRepresentable, TreeTableDataOwner, ComponentRowSource,
+		WithSelectionPath {
 
 	/**
 	 * Configuration options for {@link TreeTableComponent}.
@@ -239,16 +244,11 @@ public class TreeTableComponent extends BoundComponent
 		}
 	}
 
-	private static final ChannelListener ON_SELECTION_CHANGE = new ChannelListener() {
-
-		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			TreeTableComponent treeTable = (TreeTableComponent) sender.getComponent();
-
-			treeTable.invalidateSelection();
-		}
-
-	};
+	/**
+	 * @see #channels()
+	 */
+	private static final Map<String, ChannelSPI> CHANNELS =
+		channels(ComponentRowSource.MODEL_ROWS_AND_SELECTION_CHANNEL, WithSelectionPath.SELECTION_PATH_SPI);
 
 	private final Set<TLType> _types;
 
@@ -260,8 +260,8 @@ public class TreeTableComponent extends BoundComponent
 
 		@Override
 		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
-			Collection<TreeUINode<?>> oldSelectedNodes = (Collection<TreeUINode<?>>) oldSelection;
-			Set<AbstractTreeTableNode<?>> newSelectedNodes = (Set<AbstractTreeTableNode<?>>) newSelection;
+			Collection<TreeUINode<?>> oldSelectedNodes = unsafeCast(oldSelection);
+			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(newSelection);
 
 			if (_expandSelected) {
 				for (AbstractTreeTableNode<?> newSelectedNode : newSelectedNodes) {
@@ -271,17 +271,15 @@ public class TreeTableComponent extends BoundComponent
 				}
 			}
 
-			/* Different tree nodes may have the same business object, therefore no event must be
-			 * sent if the business object has not changed. */
-			Set<Object> newSelectedObjects = TreeUIModelUtil.getBusinessObjects(newSelectedNodes);
-
-			if (!TreeUIModelUtil.nodesHasSameBusinessObject(oldSelectedNodes, newSelectedObjects)) {
+			boolean changed = setSelectionPathToChannel(newSelectedNodes);
+			if (!changed) {
+				/* There are two possible reasons why the selection has not changed: The channel may
+				 * reject the selection. In this case the selection must be reverted. The second is
+				 * that the event is triggered by the selection channel itself. In this case the
+				 * selection must not be reverted. */
+				Set<Object> newSelectedObjects = TreeUIModelUtil.getBusinessObjects(newSelectedNodes);
 				if (!CollectionUtil.equals(selectionFromChannel(), newSelectedObjects)) {
-					boolean selectionChannelIsUpdated = setSelectionToChannel(newSelectedObjects);
-
-					if (!selectionChannelIsUpdated) {
-						_selectionModel.setSelection(oldSelection);
-					}
+					_selectionModel.setSelection(oldSelection);
 				}
 			}
 		}
@@ -421,30 +419,47 @@ public class TreeTableComponent extends BoundComponent
 		Logger.error(message, TreeTableComponent.class);
 	}
 
-	private boolean setSelectionToChannel(Collection<?> newSelection) {
+	boolean setSelectionPathToChannel(Collection<? extends TLTreeNode<?>> newSelection) {
+		Object newSelectionPath;
 		if (isInMultiSelectionMode()) {
-			return setSelected(newSelection);
+			newSelectionPath =
+				newSelection.stream().map(TreeTableComponent::toBusinessObjectPath).collect(Collectors.toSet());
 		} else {
 			switch (newSelection.size()) {
 				case 0:
-					return setSelected(null);
+					newSelectionPath = null;
+					break;
 				case 1:
-					return setSelected(CollectionUtils.extractSingleton(newSelection));
+					newSelectionPath = toBusinessObjectPath(CollectionUtils.extractSingleton(newSelection));
+					break;
 				default:
 					throw new IllegalArgumentException(
-						"Multiple selection " + newSelection + " for single selection tree table: " + this);
+						"Multiple selection " + newSelection + " for single selection tree: " + this);
 			}
+		}
+		return setSelectionPath(newSelectionPath);
+	}
+
+	private static List<Object> toBusinessObjectPath(TLTreeNode<?> node) {
+		List<Object> path = TLTreeModelUtil.createPathToRootUserObject(node);
+		Collections.reverse(path);
+		return path;
+	}
+
+	private Collection<? extends List<?>> selectionPathFromChannel() {
+		Object selected = getSelectionPath();
+		if (isInMultiSelectionMode()) {
+			return unsafeCast(selected);
+		} else {
+			return CollectionUtil.singletonOrEmptySet((List<?>) selected);
 		}
 	}
 
 	private Collection<?> selectionFromChannel() {
-		return toCollection(getSelected());
-	}
-
-	static Collection<?> toCollection(Object selected) {
-		if (selected instanceof Collection) {
+		Object selected = getSelected();
+		if (isInMultiSelectionMode()) {
 			return (Collection<?>) selected;
-		} else  {
+		} else {
 			return CollectionUtil.singletonOrEmptySet(selected);
 		}
 	}
@@ -542,7 +557,11 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void updateNewParents(Object nodeObject) {
-		updateChildren(getTreeModelBuilder().getParents(this, nodeObject));
+		updateChildren(getParentObjects(nodeObject));
+	}
+
+	private Collection<? extends Object> getParentObjects(Object nodeObject) {
+		return getTreeModelBuilder().getParents(this, nodeObject);
 	}
 
 	private void updateOldParents(AbstractTreeTableNode<?> node) {
@@ -561,16 +580,6 @@ public class TreeTableComponent extends BoundComponent
 
 	private void updateChildren(Object nodeObject) {
 		updateChildrenInternal(findNodes(nodeObject));
-	}
-
-	private Set<TreeUINode<?>> getNodes(Collection<?> nodeObjects) {
-		Set<TreeUINode<?>> nodes = new HashSet<>();
-
-		for (Object nodeObject : nodeObjects) {
-			nodes.addAll(findNodes(nodeObject));
-		}
-
-		return nodes;
 	}
 
 	private List<AbstractTreeTableNode<?>> findNodes(Object nodeObject) {
@@ -607,12 +616,12 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void validateSelection() {
-		Collection<?> newSelectedObjects = selectionFromChannel();
+		Collection<? extends List<?>> newSelectedPaths = selectionPathFromChannel();
 
-		if (newSelectedObjects.isEmpty()) {
+		if (newSelectedPaths.isEmpty()) {
 			setDefaultTreeSelection();
 		} else {
-			Set<AbstractTreeTableNode<?>> newSelectedNodes = getSelectableNodes(newSelectedObjects);
+			Set<AbstractTreeTableNode<?>> newSelectedNodes = getNodesForPaths(newSelectedPaths);
 
 			if (newSelectedNodes.isEmpty()) {
 				Collection<AbstractTreeTableNode<?>> oldSelectedNodes = getSelectedNodes();
@@ -636,17 +645,45 @@ public class TreeTableComponent extends BoundComponent
 		}
 	}
 
-	private Set<AbstractTreeTableNode<?>> getSelectableNodes(Collection<?> businessObjects) {
+	private Set<AbstractTreeTableNode<?>> getNodesForPaths(Collection<? extends List<?>> paths) {
 		Set<AbstractTreeTableNode<?>> selectableNodes = new HashSet<>();
 
-		for (Object businessObject : businessObjects) {
-			List<AbstractTreeTableNode<?>> nodes = findNodes(businessObject);
-
+		Map<Object, AbstractTreeTableNode<?>> nonMatchingPathNodes = Collections.emptyMap();
+		for (List<?> path : paths) {
+			if (path.isEmpty()) {
+				continue;
+			}
+			Object bo = path.get(path.size() - 1);
+			List<AbstractTreeTableNode<?>> nodes = findNodes(bo);
+			if (nodes.isEmpty()) {
+				continue;
+			}
+			AbstractTreeTableNode<?> nodeWithDifferentPath = null;
+			boolean noNodeFound = true;
 			for (AbstractTreeTableNode<?> node : nodes) {
-				if (isSelectable(node)) {
+				if (!isSelectable(node)) {
+					continue;
+				}
+				if (TLTreeModelUtil.sameBusinessObjectPath(node, path)) {
 					selectableNodes.add(node);
+					noNodeFound = false;
+				} else {
+					nodeWithDifferentPath = node;
 				}
 			}
+			// There are nodes for the business object, but all have different paths.
+			if (noNodeFound && nodeWithDifferentPath != null) {
+				if (nonMatchingPathNodes.isEmpty()) {
+					nonMatchingPathNodes = new HashMap<>();
+				}
+				nonMatchingPathNodes.put(bo, nodeWithDifferentPath);
+			}
+		}
+		if (!nonMatchingPathNodes.isEmpty()) {
+			selectableNodes.stream().map(TLTreeNode::getBusinessObject).forEach(nonMatchingPathNodes.keySet()::remove);
+			// For the actual selected business objects, the paths are all invalid. Select other
+			// nodes which represent the same selection.
+			selectableNodes.addAll(nonMatchingPathNodes.values());
 		}
 
 		return selectableNodes;
@@ -654,6 +691,9 @@ public class TreeTableComponent extends BoundComponent
 
 	private boolean isSelectionValid(Collection<AbstractTreeTableNode<?>> selection) {
 		for (AbstractTreeTableNode<?> selectedNode : selection) {
+			if (!selectedNode.isAlive() || selectedNode.getModel() != getTreeModel()) {
+				return false;
+			}
 			if (!isSelectable(selectedNode)) {
 				return false;
 			}
@@ -827,7 +867,7 @@ public class TreeTableComponent extends BoundComponent
 	 * <code>null</code>, if nothing is selected
 	 */
 	protected final Collection<AbstractTreeTableNode<?>> getSelectedNodes() {
-		return (Set<AbstractTreeTableNode<?>>) getTableData().getSelectionModel().getSelection();
+		return unsafeCast(getTableData().getSelectionModel().getSelection());
 	}
 
 	/**
@@ -1208,14 +1248,185 @@ public class TreeTableComponent extends BoundComponent
 
 	@Override
 	protected Map<String, ChannelSPI> channels() {
-		return ComponentRowSource.MODEL_ROWS_AND_SELECTION_CHANNEL;
+		return CHANNELS;
 	}
 
 	@Override
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		selectionChannel().addListener(ON_SELECTION_CHANGE);
+		selectionChannel().addListener(TreeTableComponent::handleNewSelectionChannelValue);
+		
+		selectionPathChannel().addListener(TreeTableComponent::handleNewSelectionPathChannelValue);
+
+		Object channelValue = selectionPathChannel().get();
+		if (isInMultiSelectionMode()) {
+			if (!((Collection<?>) channelValue).isEmpty()) {
+				handleNewSelectionPathChannelValue(selectionPathChannel(), Collections.emptySet(), channelValue);
+			} else {
+				Object currentSelection = selectionChannel().get();
+				if (!((Collection<?>) currentSelection).isEmpty()) {
+					handleNewSelectionChannelValue(selectionChannel(), Collections.emptySet(), currentSelection);
+				}
+			}
+		} else {
+			if (channelValue != null) {
+				handleNewSelectionPathChannelValue(selectionPathChannel(), null, channelValue);
+			} else {
+				Object currentSelection = selectionChannel().get();
+				if (currentSelection != null) {
+					handleNewSelectionChannelValue(selectionChannel(), null, currentSelection);
+				}
+			}
+		}
+	}
+
+	/**
+	 * {@link ChannelListener} for {@link #selectionChannel()}.
+	 *
+	 * @param sender
+	 *        The changed channel.
+	 * @param oldValue
+	 *        Old value of the channel.
+	 * @param newValue
+	 *        New value for the channel.
+	 */
+	private static void handleNewSelectionChannelValue(ComponentChannel sender, Object oldValue, Object newValue) {
+		TreeTableComponent treeTable = (TreeTableComponent) sender.getComponent();
+
+		Object selectionPath = treeTable.getSelectionPath();
+		if (!treeTable.isInMultiSelectionMode()) {
+			if (newValue == null) {
+				if (selectionPath == null) {
+					return;
+				} else {
+					treeTable.setSelectionPath(null);
+				}
+			} else {
+				if (selectionPath == null) {
+					treeTable.setSelectionPath(buildRandomPathForObject(treeTable, newValue));
+				} else {
+					List<?> path = unsafeCast(selectionPath);
+					if (newValue.equals(getLast(path))) {
+						return;
+					} else {
+						treeTable.setSelectionPath(buildRandomPathForObject(treeTable, newValue));
+					}
+				}
+			}
+		} else {
+			Collection<?> newSetValue = (Collection<?>) newValue;
+			Collection<List<?>> selectionPaths = unsafeCast(selectionPath);
+			switch (newSetValue.size()) {
+				case 0: {
+					treeTable.setSelectionPath(Collections.emptySet());
+					break;
+				}
+				default: {
+					Set<Object> newSelectionPaths = new HashSet<>();
+					Set<Object> newSelection = new HashSet<>();
+					boolean withDeselection = false;
+					for (List<?> currentPath : selectionPaths) {
+						Object selected = getLast(currentPath);
+						if (newSetValue.contains(selected)) {
+							newSelectionPaths.add(currentPath);
+							newSelection.add(selected);
+						} else {
+							// Element was deselected
+							withDeselection = true;
+						}
+					}
+					if (!withDeselection && newSelection.containsAll(newSetValue)) {
+						// same selected objects
+						return;
+					} else {
+						List<?> tmp = new ArrayList<>(newSetValue);
+						tmp.removeAll(newSelection);
+						for (Object newlySelected : tmp) {
+							newSelectionPaths.add(buildRandomPathForObject(treeTable, newlySelected));
+						}
+						treeTable.setSelectionPath(newSelectionPaths);
+					}
+				}
+			}
+		}
+	}
+
+	private static List<Object> buildRandomPathForObject(TreeTableComponent treeTable, Object bo) {
+		Set<Object> alreadySeen = new HashSet<>();
+		List<Object> path = new ArrayList<>();
+		pathStep:
+		while (bo != null) {
+			alreadySeen.add(bo);
+			List<? extends TLTreeNode<?>> nodes = treeTable.findNodes(bo);
+			if (!nodes.isEmpty()) {
+				TLTreeNode<?> node = nodes.get(0);
+				while (node != null) {
+					path.add(node.getBusinessObject());
+					node = node.getParent();
+				}
+				break;
+			}
+			path.add(bo);
+			Collection<? extends Object> parentObjects = treeTable.getParentObjects(bo);
+			if (parentObjects.isEmpty()) {
+				// reached root
+				break;
+			}
+			for (Object parent : parentObjects) {
+				if (!alreadySeen.contains(parent)) {
+					bo = parent;
+					continue pathStep;
+				}
+			}
+			throw new IllegalArgumentException("Can not create path. All parents of " + bo
+					+ " already contained in path " + path + ". Parents: " + parentObjects);
+		}
+		Collections.reverse(path);
+		return path;
+
+	}
+
+	/**
+	 * Casts the given value to anything you want.
+	 * 
+	 * @return The given value.
+	 */
+	@SuppressWarnings("unchecked")
+	static <T> T unsafeCast(Object value) {
+		return (T) value;
+	}
+
+	/**
+	 * {@link ChannelListener} for {@link #selectionPathChannel()}.
+	 *
+	 * @param sender
+	 *        The changed channel.
+	 * @param oldValue
+	 *        Old value of the channel.
+	 * @param newValue
+	 *        New value for the channel.
+	 */
+	private static void handleNewSelectionPathChannelValue(ComponentChannel sender, Object oldValue, Object newValue) {
+		TreeTableComponent tree = (TreeTableComponent) sender.getComponent();
+
+		Object selectionChannelValue;
+		if (!tree.isInMultiSelectionMode()) {
+			if (newValue == null) {
+				selectionChannelValue = null;
+			} else {
+				List<?> selectedPath = (List<?>) newValue;
+				selectionChannelValue = selectedPath.get(selectedPath.size() - 1);
+			}
+		} else {
+			selectionChannelValue = ((Collection<?>) newValue).stream().map(path -> {
+				List<?> selectedPath = (List<?>) path;
+				return selectedPath.get(selectedPath.size() - 1);
+			}).collect(Collectors.toSet());
+		}
+		tree.setSelected(selectionChannelValue);
+
+		tree.invalidateSelection();
 	}
 
 	@Override

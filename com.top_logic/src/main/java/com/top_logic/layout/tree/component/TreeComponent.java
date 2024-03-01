@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.tree.component;
 
+import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
+
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -14,6 +16,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -61,10 +64,12 @@ import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.config.WithContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.TreeContextMenuFactory;
+import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.provider.MetaResourceProvider;
@@ -132,7 +137,7 @@ import com.top_logic.util.Utils;
  */
 public class TreeComponent extends BuilderComponent implements SelectableWithSelectionModel,
 		TreeBuilder<DefaultTreeUINodeModel.DefaultTreeUINode>, TreeModelListener,
-		CompoundSecurityBoundChecker, TreeDataOwner {
+		CompoundSecurityBoundChecker, TreeDataOwner, WithSelectionPath {
 
 	/**
 	 * Default renderer for a {@link TreeComponent}.
@@ -352,34 +357,14 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	}
 	
+	/**
+	 * @see #channels()
+	 */
+	private static final Map<String, ChannelSPI> CHANNELS =
+		channels(Selectable.MODEL_AND_SELECTION_CHANNEL, WithSelectionPath.SELECTION_PATH_SPI);
+
 	private static final Property<AccessContext> PRELOAD_CONTEXT_PROPERTY = TypedAnnotatable.property(
 		AccessContext.class, "expansionContext", NoPrepare.INSTANCE);
-
-	private static final ChannelListener ON_SELECTION_CHANGE = new ChannelListener() {
-		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			TreeComponent component = (TreeComponent) sender.getComponent();
-			Collection<?> newSelectedObjects = CollectionUtilShared.asSet(newValue);
-			if (component.needsSelectionChange(newSelectedObjects)) {
-				component.internalSetSelected(newSelectedObjects);
-				component.focusSelection();
-			}
-		}
-	};
-
-	private static final ChannelValueFilter SELECTION_FILTER = new ChannelValueFilter() {
-		@Override
-		public boolean accept(ComponentChannel sender, Object oldValue, Object newValue) {
-			Collection<?> newSelection = CollectionUtilShared.asSet(newValue);
-			for (Object selectedObject : newSelection) {
-				if (selectedObject != null
-					&& !((TreeComponent) sender.getComponent()).nodeSupported(selectedObject)) {
-					return false;
-				}
-			}
-			return true;
-		}
-	};
 
 	private final SelectionModel _selectionModel;
 
@@ -509,18 +494,16 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		@Override
 		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
 			{
-				Set<DefaultTreeUINode> newSelectedNodes = (Set<DefaultTreeUINode>) newSelection;
-				for (DefaultTreeUINode selectedNode : newSelectedNodes) {
-					if (_expandSelected && selectedNode != null) {
-						_treeModel.setExpanded(selectedNode, true);
+				Set<DefaultTreeUINode> newSelectedNodes = unsafeCast(newSelection);
+				if (_expandSelected) {
+					for (DefaultTreeUINode selectedNode : newSelectedNodes) {
+						if (selectedNode != null) {
+							_treeModel.setExpanded(selectedNode, true);
+						}
 					}
 				}
 
-				/* Different tree nodes may have the same business object, therefore no event must
-				 * be sent if the business object has not changed. */
-				if (!hasSameBusinessObject(newSelectedNodes, (Collection<DefaultTreeUINode>) oldSelection)) {
-					setSelectionToChannel(newSelectedNodes);
-				}
+				setSelectionPathToChannel(newSelectedNodes);
 
 				if (isVisible()) {
 					displaySelection();
@@ -530,33 +513,40 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	}
 
-	boolean setSelectionToChannel(Set<DefaultTreeUINode> newSelection) {
+	boolean setSelectionPathToChannel(Collection<? extends TLTreeNode<?>> newSelection) {
+		Object newSelectionPath;
 		if (isInMultiSelectionMode()) {
-			switch(newSelection.size()) {
-				case 0:
-					return setSelected(Collections.emptySet());
-				case 1:
-					return setSelected(
-						Collections.singleton(CollectionUtils.extractSingleton(newSelection).getBusinessObject()));
-				default:
-					return setSelected(
-						newSelection.stream().map(DefaultTreeUINode::getBusinessObject).collect(Collectors.toSet()));
-			}
+			newSelectionPath =
+				newSelection.stream().map(TreeComponent::toBusinessObjectPath).collect(Collectors.toSet());
 		} else {
 			switch (newSelection.size()) {
 				case 0:
-					return setSelected(null);
+					newSelectionPath = null;
+					break;
 				case 1:
-					return setSelected(CollectionUtils.extractSingleton(newSelection).getBusinessObject());
+					newSelectionPath = toBusinessObjectPath(CollectionUtils.extractSingleton(newSelection));
+					break;
 				default:
 					throw new IllegalArgumentException(
 						"Multiple selection " + newSelection + " for single selection tree: " + this);
 			}
 		}
+		return setSelectionPath(newSelectionPath);
 	}
 
-	Collection<?> selectionFromChannel() {
-		return CollectionUtilShared.asSet(getSelected());
+	private static List<Object> toBusinessObjectPath(TLTreeNode<?> node) {
+		List<Object> path = TLTreeModelUtil.createPathToRootUserObject(node);
+		Collections.reverse(path);
+		return path;
+	}
+
+	private Collection<? extends List<?>> selectionPathsFromChannel() {
+		Object selectionPath = getSelectionPath();
+		if (isInMultiSelectionMode()) {
+			return unsafeCast(selectionPath);
+		} else {
+			return CollectionUtil.singletonOrEmptySet((List<?>) selectionPath);
+		}
 	}
 
 	/**
@@ -574,7 +564,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	 * Casts {@link BuilderComponent#getBuilder()} to {@link TreeModelBuilder}.
 	 */
 	protected final TreeModelBuilder<Object> getTreeModelBuilder() {
-		return (TreeModelBuilder<Object>) getBuilder();
+		return unsafeCast(getBuilder());
 	}
 
 	/**
@@ -618,7 +608,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		if (CollectionUtils.isEmpty(selectedNodes)) {
 			return !CollectionUtils.isEmpty(newSelectedObjects);
 		}
-		DefaultTreeUINode selectedNode = CollectionUtil.getFirst(selectedNodes);
+		DefaultTreeUINode selectedNode = getFirst(selectedNodes);
 		if (selectedNode.getModel() != _treeModel) {
 			/* when tree model was reset, the selection model is not adapted. Therefore the tree
 			 * model of the selected node may be of a foreign tree. In such a case the selected node
@@ -628,49 +618,51 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		return !nodesHasSameBusinessObject(selectedNodes, newSelectedObjects);
 	}
 
-	final boolean internalSetSelected(Collection<?> businessObjects) {
-		if (CollectionUtils.isEmpty(businessObjects)) {
+	private boolean internalSetSelectedPaths(Collection<? extends List<?>> paths) {
+		if (CollectionUtils.isEmpty(paths)) {
 			// Selection of null is as clearSelection.
 			return internalClearSelection();
-		} else {
-			setModel(
-				getTreeModelBuilder().retrieveModelFromNode(this, CollectionUtilShared.getFirst(businessObjects)));
+		}
+		
+		Set<TreeUINode<?>> selectableNodes = new HashSet<>();
+		boolean hasSelectableObjects = false;
 
-			Set<TreeUINode<?>> selectableNodes = new HashSet<>();
-			boolean hasSelectableObjects = false;
-
-			for (Object businessObject : businessObjects) {
-				if (isSelectable(businessObject)) {
-					if (!hasSelectableObjects) {
-						hasSelectableObjects = true;
-						initTreeModel();
-					}
-
-					List<DefaultTreeUINode> touchedNodes = findNodes(businessObject);
-					if (!touchedNodes.isEmpty()) {
-						selectableNodes.addAll(touchedNodes);
-					} else {
-						DefaultTreeUINode node = createNodeForBusinessNode(businessObject);
-						if (node != null) {
-							selectableNodes.add(node);
-						}
-					}
-				}
+		for (List<?> path : paths) {
+			Object businessObject = getLast(path);
+			if (!isSelectable(businessObject)) {
+				continue;
 			}
 
-			if (hasSelectableObjects) {
-				if (selectableNodes.isEmpty()) {
-					return false;
-				} else {
-					Collection<DefaultTreeUINode> oldSelection = getSelection();
-
-					setSelection(selectableNodes);
-
-					return hasSameBusinessObject(oldSelection, selectableNodes);
+			if (!hasSelectableObjects) {
+				hasSelectableObjects = true;
+				initTreeModel();
+			}
+			List<DefaultTreeUINode> touchedNodes = findNodes(businessObject);
+			if (touchedNodes.isEmpty()) {
+				DefaultTreeUINode node = createNodeForBusinessNode(businessObject);
+				if (node != null) {
+					selectableNodes.add(node);
 				}
 			} else {
-				return internalClearSelection();
+				for (DefaultTreeUINode touchedNode : touchedNodes) {
+					if (TLTreeModelUtil.sameBusinessObjectPath(touchedNode, path)) {
+						selectableNodes.add(touchedNode);
+					}
+				}
 			}
+		}
+		if (hasSelectableObjects) {
+			if (selectableNodes.isEmpty()) {
+				return installDefaultSelection();
+			} else {
+				Collection<DefaultTreeUINode> oldSelection = getSelection();
+
+				setSelection(selectableNodes);
+
+				return hasSameBusinessObject(oldSelection, selectableNodes);
+			}
+		} else {
+			return internalClearSelection();
 		}
 	}
 
@@ -703,7 +695,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	}
 
 	private Collection<DefaultTreeUINode> getSelection() {
-		return (Collection<DefaultTreeUINode>) _selectionModel.getSelection();
+		return unsafeCast(_selectionModel.getSelection());
 	}
 
 	/**
@@ -714,8 +706,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		if (Utils.equals(_treeModel.getRoot().getBusinessObject(), businessObject)) {
 			return _treeModel.getRoot();
 		}
-		TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
-		Collection<? extends Object> parents = treeModelBuilder.getParents(this, businessObject);
+		Collection<? extends Object> parents = getParentObjects(businessObject);
 		if (parents.isEmpty()) {
 			// business object is root of a different tree.
 			return null;
@@ -794,7 +785,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	}
 
 	private boolean internalClearSelection() {
-		if (!CollectionUtils.isEmpty(selectionFromChannel())) {
+		if (!CollectionUtils.isEmpty(selectionPathsFromChannel())) {
 			getSelectionModel().clear();
 			return true;
 		} else {
@@ -979,28 +970,17 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 			return false;
 		}
 
-		Collection<?> selectedObjects = selectionFromChannel();
+		Collection<? extends List<?>> selectedPaths = selectionPathsFromChannel();
 		Object root = getTreeModelBuilder().getModel(getModel(), this);
 		_treeModel = new IndexedTreeUINodeModel(this, root);
 		_treeModel.setRootVisible(_rootVisible && root != null);
 		/* Add listener before expanding node to ensure that preload is triggered. */
 		_treeModel.addTreeModelListener(this);
 		_treeModel.setExpanded(_treeModel.getRoot(), _expandRoot);
-		if (CollectionUtils.isEmpty(selectedObjects)) {
+		if (CollectionUtils.isEmpty(selectedPaths)) {
 			return installDefaultSelection();
 		} else {
-			Set<Object> newSelectedObjects = new HashSet<>();
-			for (Object selectedObject : selectedObjects) {
-				if (isSelectable(selectedObject) && nodeSupported(selectedObject)
-					&& isAncestorOrSelf(selectedObject, root)) {
-					newSelectedObjects.add(selectedObject);
-				}
-			}
-
-			if (CollectionUtils.isEmpty(newSelectedObjects)) {
-				return installDefaultSelection();
-			}
-			return internalSetSelected(selectedObjects);
+			return internalSetSelectedPaths(selectedPaths);
 		}
 	}
 
@@ -1053,7 +1033,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 			if (alreadyProcessed) {
 				continue;
 			}
-			if (isAncestorOrSelf(getTreeModelBuilder().getParents(this, node), ancestor, processed)) {
+			if (isAncestorOrSelf(getParentObjects(node), ancestor, processed)) {
 				return true;
 			}
 		}
@@ -1109,10 +1089,14 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 			updateNodeObjects(getTreeModelBuilder().getNodesToUpdate(this, model));
 			updateNodeObject(model);
 
-			_isSelectionValid = false;
+			invalidateSelection();
 		}
 
 		return super.receiveModelChangedEvent(model, someChangedBy);
+	}
+
+	private void invalidateSelection() {
+		_isSelectionValid = false;
 	}
 
 	private void validateSelection() {
@@ -1141,12 +1125,17 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	private List<DefaultTreeUINode> findAllNodes(Collection<?> businessObject) {
 		return businessObject.stream()
-			.map(_treeModel.getIndex()::getNodes)
+			.map(this::findNodes)
 			.flatMap(List::stream)
 			.collect(Collectors.toList());
 	}
 
 	private List<DefaultTreeUINode> findNodes(Object businessObject) {
+		if (_treeModel == null) {
+			// This method is called when selection or selectionPath channel changes. In this case
+			// the tree model may not yet be created.
+			return Collections.emptyList();
+		}
 		return _treeModel.getIndex().getNodes(businessObject);
 	}
 
@@ -1254,7 +1243,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 				}
 			}
 
-			_isSelectionValid = false;
+			invalidateSelection();
 		}
 		return super.receiveModelCreatedEvent(model, changedBy);
 	}
@@ -1320,7 +1309,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 							/* It may happen that a parent node was processed before. In this case
 							 * the parent (and therefore the child node) are already removed from
 							 * parent. */
-							assert _treeModel.getIndex().getNodes(node.getBusinessObject()).isEmpty();
+							assert findNodes(node.getBusinessObject()).isEmpty();
 							continue;
 						}
 						removeNodeFromParent(node);
@@ -1621,11 +1610,312 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	}
 
 	@Override
+	protected Map<String, ChannelSPI> channels() {
+		return CHANNELS;
+	}
+
+	@Override
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		selectionChannel().addListener(ON_SELECTION_CHANGE);
-		selectionChannel().addVetoListener(SELECTION_FILTER);
+		selectionChannel().addListener(TreeComponent::handleNewSelectionChannelValue);
+		selectionChannel().addVetoListener(TreeComponent::isValidSelectionChannelChange);
+
+		selectionPathChannel().addListener(TreeComponent::handleNewSelectionPathChannelValue);
+		selectionPathChannel().addVetoListener(TreeComponent::isValidSelectionPathChannelChange);
+
+		Object channelValue = selectionPathChannel().get();
+		if (isInMultiSelectionMode()) {
+			if (!((Collection<?>) channelValue).isEmpty()) {
+				handleNewSelectionPathChannelValue(selectionPathChannel(), Collections.emptySet(), channelValue);
+			} else {
+				Object currentSelection = selectionChannel().get();
+				if (!((Collection<?>) currentSelection).isEmpty()) {
+					handleNewSelectionChannelValue(selectionChannel(), Collections.emptySet(), currentSelection);
+				}
+			}
+		} else {
+			if (channelValue != null) {
+				handleNewSelectionPathChannelValue(selectionPathChannel(), null, channelValue);
+			} else {
+				Object currentSelection = selectionChannel().get();
+				if (currentSelection != null) {
+					handleNewSelectionChannelValue(selectionChannel(), null, currentSelection);
+				}
+			}
+		}
+	}
+
+	/**
+	 * {@link ChannelListener} for {@link #selectionChannel()}.
+	 *
+	 * @param sender
+	 *        The changed channel.
+	 * @param oldValue
+	 *        Old value of the channel.
+	 * @param newValue
+	 *        New value for the channel.
+	 */
+	private static void handleNewSelectionChannelValue(ComponentChannel sender, Object oldValue, Object newValue) {
+		TreeComponent tree = (TreeComponent) sender.getComponent();
+
+		Object selectionPath = tree.getSelectionPath();
+		if (!tree.isInMultiSelectionMode()) {
+			if (newValue == null) {
+				if (selectionPath == null) {
+					return;
+				} else {
+					tree.setSelectionPath(null);
+				}
+			} else {
+				if (selectionPath == null) {
+					tree.setSelectionPath(buildRandomPathForObject(tree, newValue));
+				} else {
+					List<?> path = unsafeCast(selectionPath);
+					if (newValue.equals(getLast(path))) {
+						return;
+					} else {
+						tree.setSelectionPath(buildRandomPathForObject(tree, newValue));
+					}
+				}
+			}
+		} else {
+			Collection<?> newSetValue = (Collection<?>) newValue;
+			Collection<List<?>> selectionPaths = unsafeCast(selectionPath);
+			switch (newSetValue.size()) {
+				case 0: {
+					tree.setSelectionPath(Collections.emptySet());
+					break;
+				}
+				default: {
+					Set<Object> newSelectionPaths = new HashSet<>();
+					Set<Object> newSelection = new HashSet<>();
+					boolean withDeselection = false;
+					for (List<?> currentPath : selectionPaths) {
+						Object selected = getLast(currentPath);
+						if (newSetValue.contains(selected)) {
+							newSelectionPaths.add(currentPath);
+							newSelection.add(selected);
+						} else {
+							// Element was deselected
+							withDeselection = true;
+						}
+					}
+					if (!withDeselection && newSelection.containsAll(newSetValue)) {
+						// same selected objects
+						return;
+					} else {
+						List<?> tmp = new ArrayList<>(newSetValue);
+						tmp.removeAll(newSelection);
+						for (Object newlySelected : tmp) {
+							newSelectionPaths.add(buildRandomPathForObject(tree, newlySelected));
+						}
+						tree.setSelectionPath(newSelectionPaths);
+					}
+				}
+			}
+		}
+	}
+
+	private static List<Object> buildRandomPathForObject(TreeComponent tree, Object bo) {
+		Set<Object> alreadySeen = new HashSet<>();
+		List<Object> path = new ArrayList<>();
+		pathStep:
+		while (bo != null) {
+			alreadySeen.add(bo);
+			List<? extends TLTreeNode<?>> nodes = tree.findNodes(bo);
+			if (!nodes.isEmpty()) {
+				TLTreeNode<?> node = nodes.get(0);
+				while (node != null) {
+					path.add(node.getBusinessObject());
+					node = node.getParent();
+				}
+				break;
+			}
+			path.add(bo);
+			Collection<? extends Object> parentObjects = tree.getParentObjects(bo);
+			if (parentObjects.isEmpty()) {
+				// reached root
+				break;
+			}
+			for (Object parent : parentObjects) {
+				if (!alreadySeen.contains(parent)) {
+					bo = parent;
+					continue pathStep;
+				}
+			}
+			throw new IllegalArgumentException("Can not create path. All parents of " + bo
+					+ " already contained in path " + path + ". Parents: " + parentObjects);
+		}
+		Collections.reverse(path);
+		return path;
+
+	}
+
+	/**
+	 * {@link ChannelListener} for {@link #selectionPathChannel()}.
+	 *
+	 * @param sender
+	 *        The changed channel.
+	 * @param oldValue
+	 *        Old value of the channel.
+	 * @param newValue
+	 *        New value for the channel.
+	 */
+	private static void handleNewSelectionPathChannelValue(ComponentChannel sender, Object oldValue, Object newValue) {
+		TreeComponent tree = (TreeComponent) sender.getComponent();
+		
+		Collection<? extends List<?>> selectionPaths;
+		Object selectionChannelValue;
+		if (!tree.isInMultiSelectionMode()) {
+			if (newValue == null) {
+				selectionChannelValue = null;
+				selectionPaths = Collections.emptySet();
+			} else {
+				List<?> selectedPath = (List<?>) newValue;
+				selectionChannelValue = getLast(selectedPath);
+				selectionPaths = Collections.singleton(selectedPath);
+				tree.setModel(retrieveModelFromPath(tree, selectedPath));
+			}
+		} else {
+			selectionPaths = unsafeCast(newValue);
+			if (!selectionPaths.isEmpty()) {
+				Set<Object> lastElements = new HashSet<>();
+				for (List<?> path : selectionPaths) {
+					lastElements.add(getLast(path));
+				}
+				selectionChannelValue = lastElements;
+				// all have the same model
+				tree.setModel(retrieveModelFromPath(tree, getFirst(selectionPaths)));
+			} else {
+				selectionChannelValue = Collections.emptySet();
+			}
+		}
+		tree.setSelected(selectionChannelValue);
+		
+		boolean changed = tree.internalSetSelectedPaths(selectionPaths);
+		if (changed) {
+			tree.focusSelection();
+		}
+	}
+
+	private static Object retrieveModelFromPath(TreeComponent tree, List<?> path) {
+		return tree.getTreeModelBuilder().retrieveModelFromNode(tree, getLast(path));
+	}
+
+	/**
+	 * Casts the given value to anything you want.
+	 * 
+	 * @return The given value.
+	 */
+	@SuppressWarnings("unchecked")
+	static <T> T unsafeCast(Object value) {
+		return (T) value;
+	}
+
+	/**
+	 * {@link ChannelValueFilter} for {@link #selectionChannel()}.
+	 *
+	 * @param sender
+	 *        Channel about to change.
+	 * @param oldValue
+	 *        Current value of the channel.
+	 * @param newValue
+	 *        Potential new value for the channel.
+	 * @return Whether the value is a valid channel value.
+	 */
+	private static boolean isValidSelectionChannelChange(ComponentChannel sender, Object oldValue, Object newValue) {
+		TreeComponent tree = (TreeComponent) sender.getComponent();
+
+		Collection<?> newSelection = CollectionUtilShared.asSet(newValue);
+		for (Object selectedObject : newSelection) {
+			if (selectedObject != null && !tree.nodeSupported(selectedObject)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * {@link ChannelValueFilter} for {@link #selectionPathChannel()}.
+	 *
+	 * @param sender
+	 *        Channel about to change.
+	 * @param oldValue
+	 *        Current value of the channel.
+	 * @param newValue
+	 *        Potential new value for the channel.
+	 * @return Whether the value is a valid channel value.
+	 */
+	private static boolean isValidSelectionPathChannelChange(ComponentChannel sender, Object oldValue,
+			Object newValue) {
+		TreeComponent tree = (TreeComponent) sender.getComponent();
+
+		if (!tree.isInMultiSelectionMode()) {
+			if (newValue == null) {
+				return true;
+			}
+			return isValidPath(tree, newValue);
+		} else {
+			if (!(newValue instanceof Collection<?>)) {
+				return false;
+			}
+			Collection<?> potentialPaths = (Collection<?>) newValue;
+			switch(potentialPaths.size()) {
+				case 0: return true;
+				case 1: return isValidPath(tree, potentialPaths.iterator().next());
+				default:
+					Iterator<?> it = potentialPaths.iterator();
+					Object firstPath = it.next();
+					if (!isValidPath(tree, firstPath)) {
+						return false;
+					}
+					Object newComponentModel = retrieveModelFromPath(tree, (List<?>) firstPath);
+					do {
+						Object nextPath = it.next();
+						if (!isValidPath(tree, nextPath)) {
+							return false;
+						}
+						if (!Utils.equals(newComponentModel, retrieveModelFromPath(tree, (List<?>) nextPath))) {
+							// different models
+							return false;
+						}
+					} while (it.hasNext());
+					return true;
+			}
+		}
+	}
+
+	private static boolean isValidPath(TreeComponent tree, Object path) {
+		if (path instanceof List<?>) {
+			List<?> l = (List<?>) path;
+			int pathLength = l.size();
+			if (pathLength == 0) {
+				return false;
+			}
+			Object last = getLast(l);
+			if (!tree.nodeSupported(last)) {
+				return false;
+			}
+			if (!tree.isSelectable(last)) {
+				return false;
+			}
+			if (pathLength == 1){
+				return true;
+			}
+			for (int i = pathLength - 2; i > 0; i--) {
+				Object node = l.get(i);
+				if (!ComponentUtil.isValid(node)) {
+					return false;
+				}
+				Collection<?> parents = tree.getParentObjects(node);
+				if (!parents.contains(l.get(i - 1))) {
+					return false;
+				}
+			}
+			return ComponentUtil.isValid(l.get(0));
+		}
+		return false;
 	}
 
 }

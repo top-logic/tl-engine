@@ -287,7 +287,7 @@ span.ltcCounting {
 /* =============================================== */
 /* ====== AccordionControl (prefix is 'acc') ===== */
 /* =============================================== */
-div.accRoot {
+/* div.accRoot {
 	background: transparent;
 }
 
@@ -302,7 +302,7 @@ div.accRoot:hover::-webkit-scrollbar {
 
 div.accRoot:hover::-webkit-scrollbar-thumb {
 	background-color: rgba(0,0,0,.2);
-}
+} */
 
 div.accChildren {
 	margin-left: var(--ACCORDION_INDENT);

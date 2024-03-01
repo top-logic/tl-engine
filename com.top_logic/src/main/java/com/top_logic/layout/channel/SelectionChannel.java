@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.channel;
 
+import java.util.Collections;
+
 import com.top_logic.layout.component.Selectable;
 
 /**
@@ -22,6 +24,6 @@ public final class SelectionChannel {
 	/**
 	 * Singleton {@link SelectionChannel} instance.
 	 */
-	public static final ChannelSPI INSTANCE = new DefaultChannelSPI(NAME, null);
+	public static final ChannelSPI INSTANCE = new CompatibilitySelectionChannelSPI(NAME, null, Collections.emptySet());
 
 }

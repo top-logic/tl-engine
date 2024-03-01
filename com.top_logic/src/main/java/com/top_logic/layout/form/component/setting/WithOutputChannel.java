@@ -70,7 +70,7 @@ public interface WithOutputChannel extends IComponent {
 	}
 
 	/**
-	 * The {@link ComponentChannel} managing the component's edit mode.
+	 * The {@link ComponentChannel} managing the component's output.
 	 */
 	default ComponentChannel outputChannel() {
 		return getChannel(OUTPUT_CHANNEL);

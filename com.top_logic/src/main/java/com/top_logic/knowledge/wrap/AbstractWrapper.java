@@ -1058,7 +1058,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 					} else {
 						endAccess = ReferenceAccess.incomingAccess(targetType);
 					}
-					return new MappedList<>(endAccess, links);
+					return MappedList.create(endAccess, links);
 			}
 		}
 	}

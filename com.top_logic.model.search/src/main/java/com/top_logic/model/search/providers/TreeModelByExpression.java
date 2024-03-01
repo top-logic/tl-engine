@@ -188,7 +188,7 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * @see TreeModelByExpression#getModel(Object, LayoutComponent)
 		 */
 		@Name(ROOT_NODE)
-		@FormattedDefault("x -> $x")
+		@FormattedDefault("model -> $model")
 		@NonNullable
 		Expr getRootNode();
 
@@ -221,7 +221,7 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * @see TreeModelByExpression#retrieveModelFromNode(LayoutComponent, Object)
 		 */
 		@Name(MODEL_QUERY)
-		@ItemDefault(Expr.Null.class)
+		@FormattedDefault("node -> model -> $model")
 		@NonNullable
 		Expr getModelQuery();
 

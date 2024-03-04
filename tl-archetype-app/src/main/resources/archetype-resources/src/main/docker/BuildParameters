@@ -32,7 +32,7 @@ DATABASE="h2"
 # Overrides hostname, port and scheme.
 DB_URL=""
 
-# [ip|hostname] Default: [IP of this machine] - H2 default:/var/lib/tomcat9/work/
+# [ip|hostname] Default: [IP of this machine] - H2 default:/var/lib/tomcat10/work/
 DB_HOST=""
 
 # Default: DB dependent default port

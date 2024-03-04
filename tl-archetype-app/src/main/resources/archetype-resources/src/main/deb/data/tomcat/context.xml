@@ -11,17 +11,17 @@
 		maxWaitMillis="10000" />
 
 	<Environment name="tl/tl_storage_path"
-		value="/var/lib/tomcat9/work/{contextName}"
+		value="/var/lib/tomcat10/work/{contextName}"
 		type="java.lang.String"
 		override="false"
 	/>
 	<Environment name="tl/tl_autoconf_dir"
-		value="/var/lib/tomcat9/work/{contextName}/autoconf"
+		value="/var/lib/tomcat10/work/{contextName}/autoconf"
 		type="java.lang.String"
 		override="false"
 	/>
 	<Environment name="tl/tl_log_dir"
-		value="/var/log/tomcat9/{contextName}"
+		value="/var/log/tomcat10/{contextName}"
 		type="java.lang.String"
 		override="false"
 	/>

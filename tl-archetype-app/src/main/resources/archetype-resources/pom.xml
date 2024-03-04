@@ -217,14 +217,14 @@
 
 								<data>
 									<type>link</type>
-									<linkName>/var/lib/tomcat9/webapps/\${tl.deb.contextName}.war</linkName>
+									<linkName>/var/lib/tomcat10/webapps/\${tl.deb.contextName}.war</linkName>
 									<linkTarget>\${tl.deb.installDir}/\${project.build.finalName}-app.war</linkTarget>
 									<symlink>true</symlink>
 								</data>
 
 								<data>
 									<type>link</type>
-									<linkName>/etc/tomcat9/Catalina/localhost/\${tl.deb.contextName}.xml</linkName>
+									<linkName>/etc/tomcat10/Catalina/localhost/\${tl.deb.contextName}.xml</linkName>
 									<linkTarget>\${tl.deb.installDir}/tomcat/context.xml</linkTarget>
 									<symlink>true</symlink>
 								</data>
@@ -238,7 +238,7 @@
 
 								<data>
 									<type>link</type>
-									<linkName>/var/lib/tomcat9/lib/mariadb-java-client.jar</linkName>
+									<linkName>/var/lib/tomcat10/lib/mariadb-java-client.jar</linkName>
 									<linkTarget>/usr/share/java/mariadb-java-client.jar</linkTarget>
 									<symlink>true</symlink>
 								</data>

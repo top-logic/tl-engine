@@ -152,7 +152,7 @@ h2(){
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  [ -z "$DB_URL" ] && DB_URL="/var/lib/tomcat9/work/$APPNAME/h2"
+  [ -z "$DB_URL" ] && DB_URL="/var/lib/tomcat10/work/$APPNAME/h2"
   sed -i -e "s|{dbLibrary}|RUN apt install libh2-java|g" $BUILD_PATH/Dockerfile
   sed -i -e "s|{dbDriver}|org.h2.Driver|g" $BUILD_PATH/context.xml
   sed -i -e "s|{dbURL}|jdbc:h2:$DB_URL|g" $BUILD_PATH/context.xml
@@ -267,7 +267,7 @@ if [[ "$SKIP_CONTAINER" != "true" ]] ; then
 		sudo chown :$USER /root/.docker/config.json
 		sudo chmod g+r /root/.docker/config.json
 	fi
-	$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest
+	$DRY_RUN $RUN pull docker.top-logic.com/tomcat:10.1-jdk17-openjdk:latest
 	
 	echo
 	echo "=== Building docker image ==="
@@ -337,7 +337,7 @@ trap finish EXIT 2
 $DRY_RUN $RUN run \
   -tdi -p $HTTP_PORT:8080 \
   "${dollar}{ENVIRONMENT[@]}" \
-  -v "$FILES":"/var/lib/tomcat9/work/${APPNAME}" \
+  -v "$FILES":"/var/lib/tomcat10/work/${APPNAME}" \
   --restart=unless-stopped \
   --memory ${DOCKER_MEMORY}m \
   --name="$APPNAME" \

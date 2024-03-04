@@ -5,22 +5,21 @@
  */
 package com.top_logic.monitoring.data;
 
-import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanConstructorInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
+
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.ValueInitializer;
-import com.top_logic.basic.config.constraint.annotation.Constraint;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.parser.ParseException;
-import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -28,20 +27,18 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class MonitorByExpression extends AbstractConfiguredInstance<MonitorByExpression.Config>
-		implements MonitorByExpressionMBean, MBeanElement {
+public class MonitorByExpression extends DynamicMBeanElement {
 
-	private QueryExecutor _internalImplemenation;
+	private QueryExecutor _impl;
 
-	private QueryExecutor _externalImplementation;
+	private List<OperationParameter> _parameters;
 
 	/** {@link ConfigurationItem} for the {@link MonitorByExpression}. */
-	public interface Config extends MBeanConfiguration<MonitorByExpression> {
+	public interface Config extends DynamicMBeanElement.Config {
 
 		@ValueInitializer(MonitorByExpressionValueInitializer.class)
-		@Constraint(MBeanNameConstraint.class)
 		@Override
-		public String getName();
+		String getName();
 
 		/**
 		 * A configured expression which will be executed when this MBean is asked for the result of
@@ -50,52 +47,68 @@ public class MonitorByExpression extends AbstractConfiguredInstance<MonitorByExp
 		@Label("Implementation")
 		@Mandatory
 		Expr getImpl();
+
+		/**
+		 * Parameters to fill for the configured script.
+		 */
+		List<OperationParameter> getParameters();
 	}
 
 	/** {@link TypedConfiguration} constructor for {@link MonitorByExpression}. */
 	public MonitorByExpression(InstantiationContext context, Config config) {
 		super(context, config);
 
-		_internalImplemenation = QueryExecutor.compile(config.getImpl());
+		_impl = QueryExecutor.compile(config.getImpl());
+		_parameters = config.getParameters();
+
+		buildDynamicMBeanInfo(config);
 	}
 
 	@Override
-	public Object getResult() {
-		return _internalImplemenation.execute();
-	}
-
-	@Override
-	public void compileExternalQuery(String script) {
-		Expr stringToExpr = stringToExpr(script);
-
-		if (stringToExpr != null) {
-			ThreadContextManager.inSystemInteraction(MonitorUser.class, () -> {
-				_externalImplementation = QueryExecutor.compile(stringToExpr);
-			});
-		}
-	}
-
-	private Expr stringToExpr(String script) {
-		if (StringServices.isEmpty(script)) {
-			return null;
-		}
-
-		SearchExpressionParser parser = new SearchExpressionParser(new StringReader(script));
-		try {
-			return parser.expr();
-		} catch (ParseException ex) {
-			Logger.error("Failed to create an Expr of: '" + script + "'.", ex, MonitorByExpression.class);
-		}
+	protected MBeanConstructorInfo[] createConstructorInfo() {
 		return null;
 	}
 
 	@Override
-	public Object getExternalResult() {
-		if (_externalImplementation != null) {
-			return _externalImplementation.execute();
+	protected MBeanAttributeInfo[] createAttributeInfo() {
+		return null;
+	}
+
+	@Override
+	protected MBeanOperationInfo[] createOperationInfo() {
+		MBeanOperationInfo[] dOperations = new MBeanOperationInfo[1];
+
+		List<MBeanParameterInfo> parameters = new ArrayList<>();
+		for (OperationParameter param : _parameters) {
+			com.top_logic.monitoring.data.OperationParameter.Config paramConfig = param.getConfig();
+			parameters.add(new MBeanParameterInfo(
+				paramConfig.getName(), // name
+				paramConfig.getType().getCanonicalName(), // type
+				paramConfig.getDescription())); // description
 		}
 
-		return null;
+		dOperations[0] = new MBeanOperationInfo(
+			"execute", // name
+			"Executes the configured script with its given parameters.", // description
+			parameters.toArray(MBeanParameterInfo[]::new), // parameter types
+			"java.lang.Object", // return type
+			MBeanOperationInfo.ACTION); // impact
+
+		return dOperations;
+	}
+
+	/** Executes the configured script with its given parameters. */
+	public Object execute(Object... args) {
+		Object[] arguments;
+		if (args.length == 1 && args[0] instanceof Object[]) {
+			// if called by reflection, the arguments are wrapped inside an array at the first
+			// position to fit to the number of parameters.
+			arguments = (Object[]) args[0];
+		} else {
+			arguments = args;
+		}
+
+		return _impl.execute(arguments);
 	}
 
 }

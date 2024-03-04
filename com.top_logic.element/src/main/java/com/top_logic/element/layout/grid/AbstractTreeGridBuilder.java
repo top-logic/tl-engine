@@ -915,7 +915,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 
 		for (TLObject newObject : toIterable(creations)) {
 			changes = true;
-			grid.getHandler().addNewRow(newObject);
+			handler.addNewRow(newObject);
 			handler.updateRowModels(getNodesToUpdate(grid, newObject));
 
 			if (grid.getRowGroup(newObject) == null) {

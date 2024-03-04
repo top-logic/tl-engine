@@ -8,6 +8,7 @@ package com.top_logic.layout;
 import java.io.IOException;
 import java.util.Map;
 
+import jakarta.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +31,7 @@ import com.top_logic.mig.html.HTMLConstants;
 public class ErrorPage {
 
 	/** Attribute of the request containing {@link HttpServletRequest#getRequestURI()} */
-	public static final String JAVAX_SERVLET_ERROR_REQUEST_URI = "javax.servlet.error.request_uri";
+	public static final String JAVAX_SERVLET_ERROR_REQUEST_URI = RequestDispatcher.ERROR_REQUEST_URI;
 
 	/**
 	 * Configuration of error pages.
@@ -73,7 +74,7 @@ public class ErrorPage {
 		if (errorPage != null) {
 			request.setAttribute(JAVAX_SERVLET_ERROR_REQUEST_URI, request.getRequestURI());
 			/* This attribute is read by the Glassfish container in compiled JSP. */
-			request.setAttribute("javax.servlet.error.status_code", HttpServletResponse.SC_NOT_FOUND);
+			request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, HttpServletResponse.SC_NOT_FOUND);
 			try {
 				context.asServletContext().getRequestDispatcher(errorPage).forward(request, response);
 			} catch (ServletException ex) {

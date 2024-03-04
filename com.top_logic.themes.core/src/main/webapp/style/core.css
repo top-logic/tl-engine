@@ -16,11 +16,10 @@ body {
 	color: var(--text-primary);
 }
 
-/* Scrollbars */
+/* Scrollbars > */
 body {
 	--sb-track-color: #c4c7cc;
 	--sb-thumb-color: #2968c8;
-	--sb-small: 3px;
 	--sb-size: 4px;
 }
 
@@ -51,7 +50,7 @@ body {
 						var(--sb-track-color);
 	}
 }
-/* Scrollbars */
+/* < Scrollbars */
 
 code {
 	font-family: 'Inter-Regular';

@@ -13,6 +13,7 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -792,6 +793,31 @@ public class Fragments {
 			return empty();
 		}
 		return RenderedFragment.createRenderedFragment(html);
+	}
+
+	/**
+	 * A fragment of internationalized HTML.
+	 * 
+	 * @see SafeHTML
+	 * 
+	 * @param reskey
+	 *        The {@link ResKey} resolving to HTML source code, <code>null</code> means
+	 *        {@link #empty()}.
+	 * @return The new fragment.
+	 */
+	public static HTMLFragment htmlSource(ResKey reskey) {
+		if (reskey == null) {
+			return empty();
+		}
+		return (context, out) -> {
+			String html = context.getResources().getString(reskey);
+			try {
+				SafeHTML.getInstance().check(html);
+				out.writeContent(html);
+			} catch (I18NException ex) {
+				out.writeText(html);
+			}
+		};
 	}
 
 	/** Renders a {@link HTMLConstants#STYLE_ELEMENT} tag. */

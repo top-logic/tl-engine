@@ -25,6 +25,7 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.generate.CodeUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -67,9 +68,10 @@ public class TestFragments extends TestCase {
 	}
 
 	public void testRenderedFragment() throws IOException {
-		assertRender("", Fragments.htmlSource(null));
+		assertRender("", Fragments.htmlSource((String) null));
 		assertRender("", Fragments.htmlSource(""));
 		assertRender("<bar/>", Fragments.htmlSource("<bar/>"));
+		assertRender("<b>bold</b>", Fragments.htmlSource(ResKey.text("<b>bold</b>")));
 	}
 
 	public void testMessageFragment() throws IOException {

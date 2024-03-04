@@ -27,10 +27,22 @@ public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProc
 	 */
 	public interface Config<I extends AbstractEndAspectProcessor<?>> extends AbstractCreateTypePartProcessor.Config<I> {
 
+		/** Name for {@link #getHistoryType()}. */
+		String HISTORY_TYPE = EndAspect.HISTORY_TYPE_PROPERTY;
+
+		/** Name for {@link #canNavigate()}. */
+		String NAVIGATE = EndAspect.NAVIGATE_PROPERTY;
+
+		/** Name for {@link #isAggregate()}. */
+		String AGGREGATE = EndAspect.AGGREGATE_PROPERTY;
+
+		/** Name for {@link #isComposite()}. */
+		String COMPOSITE = EndAspect.COMPOSITE_PROPERTY;
+
 		/**
 		 * See {@link EndAspect#isComposite()}.
 		 */
-		@Name(EndAspect.COMPOSITE_PROPERTY)
+		@Name(COMPOSITE)
 		boolean isComposite();
 
 		/**
@@ -41,7 +53,7 @@ public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProc
 		/**
 		 * See {@link EndAspect#isAggregate()}.
 		 */
-		@Name(EndAspect.AGGREGATE_PROPERTY)
+		@Name(AGGREGATE)
 		boolean isAggregate();
 
 		/**
@@ -52,7 +64,7 @@ public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProc
 		/**
 		 * See {@link EndAspect#canNavigate()}.
 		 */
-		@Name(EndAspect.NAVIGATE_PROPERTY)
+		@Name(NAVIGATE)
 		boolean canNavigate();
 
 		/**
@@ -63,7 +75,7 @@ public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProc
 		/**
 		 * See {@link EndAspect#getHistoryType()}.
 		 */
-		@Name(EndAspect.HISTORY_TYPE_PROPERTY)
+		@Name(HISTORY_TYPE)
 		@Label("Historization")
 		HistoryType getHistoryType();
 

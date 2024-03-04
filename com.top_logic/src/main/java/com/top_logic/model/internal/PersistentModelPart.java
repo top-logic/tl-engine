@@ -36,7 +36,7 @@ public abstract class PersistentModelPart extends AbstractBoundWrapper implement
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public static interface AnnotationConfigs extends AnnotatedConfig<TLAnnotation> {
-		// Pure type-paramter-binding interface.
+		// Pure type-parameter-binding interface.
 	}
 
 	/**
@@ -98,6 +98,9 @@ public abstract class PersistentModelPart extends AbstractBoundWrapper implement
 		tSetData(ANNOTATIONS_MO_ATTRIBUTE, annotationConfigs);
 	}
 
+	/**
+	 * Access to the whole {@link AnnotationConfigs} attribute value.
+	 */
 	public final AnnotationConfigs annotations() {
 		return (AnnotationConfigs) tGetData(ANNOTATIONS_MO_ATTRIBUTE);
 	}

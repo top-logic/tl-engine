@@ -7,6 +7,8 @@ package com.top_logic.element.model.migration.model;
 
 import java.sql.SQLException;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -32,7 +34,7 @@ import com.top_logic.model.migration.data.Type;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypePart.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link ReorderTLTypePart}.
@@ -85,16 +87,18 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Reordering tl part migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws SQLException, MigrationException {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel)
+			throws SQLException, MigrationException {
 		QualifiedPartName partToReorder = getConfig().getName();
 		QualifiedTypeName owner = partToReorder.getOwner();
 
@@ -105,14 +109,17 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 			log.info("No type with name '" + _util.qualifiedName(owner) + "' as owner of '"
 					+ _util.qualifiedName(partToReorder) + "' available at" + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 
+		boolean updateModelBaseline;
 		String before = getConfig().getBefore();
 		if (FastList.OBJECT_NAME.equals(type.getTable())) {
 			_util.reorderTLClassifier(connection, type, partToReorder.getName(), before);
+			updateModelBaseline = MigrationUtils.reorderClassifier(log, tlModel, partToReorder, before);
 		} else {
 			_util.reorderTLStructuredTypePart(connection, type, partToReorder.getPartName(), before);
+			updateModelBaseline = MigrationUtils.reorderStructuredTypePart(log, tlModel, partToReorder, before);
 		}
 		StringBuilder info = new StringBuilder("Part '");
 		info.append(_util.qualifiedName(partToReorder)).append("' reordered ");
@@ -122,6 +129,7 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 			info.append("before '" + before + "'.");
 		}
 		log.info(info.toString());
+		return updateModelBaseline;
 	}
 
 }

@@ -7,6 +7,8 @@ package com.top_logic.element.model.migration.model;
 
 import java.util.List;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -33,7 +35,7 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLClassGeneralization.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link AddTLClassGeneralization}.
@@ -97,20 +99,23 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			internalDoMigration(log, connection, tlModel);
+			return true;
 		} catch (Exception ex) {
 			log.error("Adding generalization extension migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(Log log, PooledConnection connection, Document model) throws Exception {
 		QualifiedTypeName specialisation = getConfig().getName();
 		for (Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.addGeneralisation(connection, specialisation, typeName);
+			MigrationUtils.addGeneralisation(log, model, specialisation, typeName);
 			log.info(
 				"Added generalisation "
 					+ _util.qualifiedName(typeName) + " to "

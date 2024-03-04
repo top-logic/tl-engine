@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LongID;
@@ -49,7 +51,7 @@ import com.top_logic.util.TLContext;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTLModuleProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link DeleteTLModuleProcessor}.
@@ -79,12 +81,12 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 		super(context, config);
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		String moduleName = getConfig().getName();
 		Module module = _util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
 		if (module == null) {
 			log.info("No module with name '" + moduleName + "' to delete available at " + getConfig().location());
-			return;
+			return false;
 		}
 		List<BranchIdType> toDelete = new ArrayList<>();
 		toDelete.add(module);
@@ -94,7 +96,7 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 		List<Type> types = _util.getTLTypeIdentifiers(connection, module);
 		if (getConfig().isFailOnExistingTypes() && !types.isEmpty()) {
 			log.error("Module " + _util.toString(module) + " is not empty: " + _util.toString(types));
-			return;
+			return false;
 		}
 		toDelete.addAll(types);
 		for (Type type : types) {
@@ -112,6 +114,8 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 		}
 
 		deleteElements(log, connection, byTypeAndBranch);
+
+		return MigrationUtils.deleteModule(log, tlModel, moduleName);
 	}
 
 	private List<BranchIdType> getTLModuleSingletons(PooledConnection connection, BranchIdType module)
@@ -186,12 +190,13 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Delete module migration failed.", ex);
+			return false;
 		}
 	}
 

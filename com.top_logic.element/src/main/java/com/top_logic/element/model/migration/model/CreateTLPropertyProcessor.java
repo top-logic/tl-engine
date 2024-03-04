@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
@@ -62,21 +64,26 @@ public class CreateTLPropertyProcessor extends AbstractCreateTypePartProcessor<C
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			internalDoMigration(log, connection, tlModel);
+			return true;
 		} catch (Exception ex) {
 			log.error("Creating part migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = (getConfig().getType());
 		_util.createTLProperty(log, connection, partName,
 			targetType, getConfig().isMandatory(), getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig());
+		MigrationUtils.createAttribute(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
+			nullIfUnset(Config.MULTIPLE), nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED),
+			getConfig());
 		log.info("Created part " + _util.qualifiedName(partName));
 	}
 

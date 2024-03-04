@@ -538,13 +538,21 @@ public class TypedConfiguration {
 	 * The given configuration in raw serialized form without pretty printing.
 	 */
 	public static String toStringRaw(String rootTagName, ConfigurationItem config) {
+		return toStringRaw(rootTagName, ConfigurationItem.class, config);
+	}
+
+	/**
+	 * The given configuration in raw serialized form without pretty printing.
+	 */
+	public static String toStringRaw(String rootTagName, Class<? extends ConfigurationItem> staticType,
+			ConfigurationItem config) {
 		if (config == null) {
 			return null;
 		}
 
 		StringWriter out = new StringWriter();
 		try {
-			serialize(rootTagName, config, new ConfigurationWriter(out));
+			serialize(rootTagName, staticType, config, new ConfigurationWriter(out));
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -599,15 +607,16 @@ public class TypedConfiguration {
 	 * @see #serialize(ConfigurationItem, Writer)
 	 */
 	public static void serialize(String rootTagName, ConfigurationItem config, ConfigurationWriter out) {
+		serialize(rootTagName, ConfigurationItem.class, config, out);
+	}
+
+	private static void serialize(String rootTagName, Class<? extends ConfigurationItem> staticType,
+			ConfigurationItem config, ConfigurationWriter out) {
 		try {
-			out.write(rootTagName, configItemDescriptor(), config);
+			out.write(rootTagName, staticType, config);
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}
-	}
-
-	private static ConfigurationDescriptor configItemDescriptor() {
-		return getConfigurationDescriptor(ConfigurationItem.class);
 	}
 
 	/**

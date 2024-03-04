@@ -7,6 +7,8 @@ package com.top_logic.element.model.migration.model;
 
 import java.sql.SQLException;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -31,7 +33,7 @@ import com.top_logic.model.migration.data.Type;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<ReorderTLClassGeneralization.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link ReorderTLClassGeneralization}.
@@ -96,16 +98,17 @@ public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<Reo
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Reordering generalizations failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws SQLException, MigrationException {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws SQLException, MigrationException {
 		Type specialization;
 		try {
 			specialization = _util.getTLTypeOrFail(connection, getConfig().getType());
@@ -113,7 +116,7 @@ public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<Reo
 			log.info("No type with name '" + _util.qualifiedName(getConfig().getType())
 					+ "' as source of the generalization relation available at" + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 
 		Type generalization;
@@ -124,7 +127,7 @@ public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<Reo
 				"No type with name '" + _util.qualifiedName(getConfig().getGeneralization())
 						+ "' as destination of the generalization relation available at" + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 
 		Type before;
@@ -136,13 +139,16 @@ public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<Reo
 					"No type with name '" + _util.qualifiedName(getConfig().getBefore())
 							+ "' as successor of the generalization relation available at" + getConfig().location(),
 					Log.WARN);
-				return;
+				return false;
 			}
 		} else {
 			before = null;
 		}
 		_util.reorderTLTypeGeneralization(connection, specialization, generalization, before);
-		StringBuilder info = new StringBuilder("Generaliztion link '");
+		boolean updateModelBaseline =
+			MigrationUtils.reorderGeneralisation(log, tlModel, getConfig().getType(), getConfig().getGeneralization(),
+				getConfig().getBefore());
+		StringBuilder info = new StringBuilder("Generalization link '");
 		info.append(_util.toString(specialization)).append(" <-> ").append(_util.toString(generalization));
 		info.append("' has been moved ");
 		if (before == null) {
@@ -153,6 +159,7 @@ public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<Reo
 			info.append("'.");
 		}
 		log.info(info.toString());
+		return updateModelBaseline;
 	}
 
 }

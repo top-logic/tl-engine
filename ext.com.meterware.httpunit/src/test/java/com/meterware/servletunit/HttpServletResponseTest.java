@@ -25,8 +25,8 @@ import java.util.Date;
 import java.util.Locale;
 import java.text.SimpleDateFormat;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

@@ -22,8 +22,8 @@ package com.meterware.servletunit;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;

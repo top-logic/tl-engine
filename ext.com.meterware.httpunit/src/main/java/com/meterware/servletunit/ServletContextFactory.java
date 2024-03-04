@@ -5,7 +5,7 @@
  */
 package com.meterware.servletunit;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 /**
  * Use {@link ServletContextFactory#create(WebApplication)}

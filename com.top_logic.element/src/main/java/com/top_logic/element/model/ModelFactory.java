@@ -21,12 +21,9 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.config.ScopeConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
-import com.top_logic.model.provider.DefaultProvider;
 
 /**
  * Base class for all factories creating objects in a dynamic model.
@@ -137,56 +134,13 @@ public abstract class ModelFactory implements TLStructureFactory {
 	/**
 	 * Sets the default values for the given {@link TLObject} without create context.
 	 * 
-	 * @see #setupDefaultValues(Object, TLObject, TLClass)
+	 * @see TLFactory#setupDefaultValues(Object, TLObject, TLClass)
 	 * 
-	 * @deprecated Use {@link #setupDefaultValues(Object, TLObject, TLClass)}
+	 * @deprecated Use {@link TLFactory#setupDefaultValues(Object, TLObject, TLClass)}
 	 */
 	@Deprecated
 	protected final void setupDefaultValues(TLObject newWrapper, TLClass type) {
-		setupDefaultValues(null, newWrapper, type);
-	}
-
-	/**
-	 * Sets the default values for the given {@link TLObject}.
-	 * 
-	 * @param createContext
-	 *        The context in which the new wrapper is created. May be <code>null</code>.
-	 * @param newWrapper
-	 *        The {@link TLObject} to set values for.
-	 * @param type
-	 *        The type of the wrapper, i.e. value of {@link TLObject#tType()} of the given
-	 *        <code>newWrapper</code>.
-	 */
-	protected void setupDefaultValues(Object createContext, TLObject newWrapper, TLClass type) {
-		for (TLStructuredTypePart part : type.getAllParts()) {
-			if (part.isDerived()) {
-				// For safety reasons, ignore default value annotations on derived attributes.
-				continue;
-			}
-			DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
-			if (defaultProvider == null) {
-				continue;
-			}
-			newWrapper.tUpdate(part, defaultProvider.createDefault(createContext, part, false));
-		}
-	}
-
-	/**
-	 * Checks that the given type is not {@link TLClass#isAbstract() abstract}. If the given type is
-	 * abstract, an {@link IllegalArgumentException} is thrown.
-	 * 
-	 * @param type
-	 *        The type to check.
-	 * @return Given Type for chaining.
-	 * 
-	 * @throws IllegalArgumentException
-	 *         iff the given type is {@link TLClass#isAbstract()}.
-	 */
-	protected static TLClass failIfAbstract(TLClass type) {
-		if (type.isAbstract()) {
-			throw new IllegalArgumentException("Can not create an element for abstract type '" + type + "'.");
-		}
-		return type;
+		TLFactory.setupDefaultValues(null, newWrapper, type);
 	}
 
 }

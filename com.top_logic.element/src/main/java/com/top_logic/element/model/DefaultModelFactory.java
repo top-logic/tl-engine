@@ -14,6 +14,7 @@ import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.factory.TLFactory;
 
 /**
  * Default factory for non-structure types.
@@ -29,11 +30,11 @@ public class DefaultModelFactory extends ModelFactory {
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		String tableName = TLAnnotations.getTable(type);
-		failIfAbstract(type);
+		TLFactory.failIfAbstract(type);
 		KnowledgeObject handle = kb.createKnowledgeObject(tableName, values);
 
 		TLObject result = handle.getWrapper();
-		setupDefaultValues(context, result, type);
+		TLFactory.setupDefaultValues(context, result, type);
 
 		return result;
 	}

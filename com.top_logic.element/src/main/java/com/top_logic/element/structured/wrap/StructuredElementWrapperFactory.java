@@ -45,6 +45,7 @@ import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.export.PreloadOperation;
+import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -181,7 +182,7 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 				AttributeOperations.addValue(parent, StructuredElement.CHILDREN_ATTR, child);
 			}
 
-			setupDefaultValues(parentElement, child, type);
+			TLFactory.setupDefaultValues(parentElement, child, type);
 
 			return (child);
 		} catch (Exception ex) {

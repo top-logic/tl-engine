@@ -41,6 +41,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -61,7 +62,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 
 	@Override
 	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
-		failIfAbstract(type);
+		TLFactory.failIfAbstract(type);
 
 		String tableType = TLAnnotations.getTable(type);
 		KnowledgeBase kb = getKnowledgeBase();
@@ -76,7 +77,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 				typeFactory.setupLocalScope(getModule(), (TLScope) result, type.getName());
 			}
 
-			setupDefaultValues(context, result, type);
+			TLFactory.setupDefaultValues(context, result, type);
 		}
 
 		return result;
@@ -239,7 +240,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	@Deprecated
 	protected AttributedWrapper getNewWrapper(String staticTypeName, TLClass type, NameValueBuffer initialValues)
 			throws DataObjectException {
-		failIfAbstract(type);
+		TLFactory.failIfAbstract(type);
 		KnowledgeBase   theKBase  = this.getKnowledgeBase();
 		buildInitialValues(initialValues, staticTypeName, type);
 		KnowledgeObject theObject =

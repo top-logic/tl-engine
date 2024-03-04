@@ -7,6 +7,8 @@ package com.top_logic.element.model.migration.model;
 
 import java.util.List;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -32,7 +34,7 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<RemoveTLClassGeneralization.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link RemoveTLClassGeneralization}.
@@ -76,25 +78,30 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Removing generalization extension migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
+		boolean updateTLModel = false;
 		QualifiedTypeName specialisation = getConfig().getName();
 		for (AddTLClassGeneralization.Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.removeGeneralisation(connection, specialisation, typeName);
+			boolean removed = MigrationUtils.removeGeneralisation(log, tlModel, specialisation, typeName);
 			log.info(
 				"Removed generalisation "
 					+ _util.qualifiedName(typeName) + " from "
 					+ _util.qualifiedName(specialisation));
+			updateTLModel |= removed;
 		}
+		return updateTLModel;
 	}
 
 }

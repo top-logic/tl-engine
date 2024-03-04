@@ -5,6 +5,9 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -19,6 +22,7 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.Module;
 import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
@@ -33,7 +37,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class AddTLAnnotations extends AbstractConfiguredInstance<AddTLAnnotations.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link AddTLAnnotations}.
@@ -71,37 +75,76 @@ public class AddTLAnnotations extends AbstractConfiguredInstance<AddTLAnnotation
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Adding part annotations failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		String name = getConfig().getName();
 		int moduleTypeSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 		if (moduleTypeSepIdx < 0) {
 			_util.addModuleAnnotations(log, connection, name, getConfig());
+			try {
+				MigrationUtils.addModuleAnnotations(log, tlModel, name, getConfig());
+			} catch (MigrationException ex) {
+				log.error("Unable to add annotations to module '" + name + "'.", ex);
+				return false;
+			}
 			log.info("Added annotations to module '" + name + "'.");
-			return;
+			return true;
 		}
-		Module module = _util.getTLModuleOrFail(connection, name.substring(0, moduleTypeSepIdx));
+		String moduleName = name.substring(0, moduleTypeSepIdx);
+		Module module = _util.getTLModuleOrFail(connection, moduleName);
 		int typePartSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR, moduleTypeSepIdx + 1);
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
 			_util.addTypeAnnotations(log, connection, module, typeName, getConfig());
+			try {
+				addTypeAnnotations(log, tlModel, moduleName, typeName);
+			} catch (MigrationException ex) {
+				log.error(
+					"Unable to add annotations to type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "'.", ex);
+				return false;
+			}
 			log.info("Added annotation to type '" + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + "'.");
-			return;
+			return true;
 		}
 
-		Type type = _util.getTLTypeOrFail(connection, module, name.substring(moduleTypeSepIdx + 1, typePartSepIdx));
+		String typeName = name.substring(moduleTypeSepIdx + 1, typePartSepIdx);
+		Type type = _util.getTLTypeOrFail(connection, module, typeName);
 		String partName = name.substring(typePartSepIdx + 1);
 		_util.addTypePartAnnotations(log, connection, type, partName, getConfig());
+		try {
+			addTypePartAnnotations(log, tlModel, moduleName, typeName, partName);
+		} catch (MigrationException ex) {
+			log.error("Unable to add annotations to type part '"
+					+ TLModelUtil.qualifiedTypePartName(moduleName, typeName, partName) + "'.",
+				ex);
+			return false;
+		}
+
 		log.info("Added annotation to type part '"
 				+ TLModelUtil.qualifiedTypePartName(module.getModuleName(), type.getTypeName(), partName) + "'.");
+		return true;
+	}
+
+	private void addTypePartAnnotations(Log log, Document document, String moduleName, String typeName,
+			String partName) throws MigrationException {
+		Element module = MigrationUtils.getTLModuleOrFail(document, moduleName);
+		Element type = MigrationUtils.getTLTypeOrFail(log, module, typeName);
+		MigrationUtils.addTypePartAnnotations(log, type, partName, getConfig());
+	}
+
+	private void addTypeAnnotations(Log log, Document document, String moduleName, String typeName)
+			throws MigrationException {
+		Element module = MigrationUtils.getTLModuleOrFail(document, moduleName);
+		MigrationUtils.addTypeAnnotations(log, module, typeName, getConfig());
 	}
 
 }

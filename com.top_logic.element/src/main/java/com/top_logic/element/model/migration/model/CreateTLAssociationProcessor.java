@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -18,6 +20,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 
@@ -27,7 +30,7 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<CreateTLAssociationProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link CreateTLAssociationProcessor}.
@@ -65,19 +68,30 @@ public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<Cre
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Creating association migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
 		_util.createTLAssociation(connection, typeName, getConfig());
+		boolean updateModelBaseline;
+		if (TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {
+			/* AssociationEnd is an end of an internal TLAssociation which is not defined in the
+			 * model baseline. */
+			updateModelBaseline = false;
+		} else {
+			MigrationUtils.createAssociationType(log, tlModel, typeName, getConfig());
+			updateModelBaseline = true;
+		}
 		log.info("Created association " + _util.qualifiedName(typeName));
+		return updateModelBaseline;
 	}
 
 }

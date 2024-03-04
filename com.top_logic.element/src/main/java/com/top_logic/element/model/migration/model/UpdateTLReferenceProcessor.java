@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -35,7 +37,7 @@ import com.top_logic.model.migration.data.TypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<UpdateTLReferenceProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLReferenceProcessor}.
@@ -98,16 +100,17 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Updating reference migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName referenceName = getConfig().getName();
 		Reference reference;
 		try {
@@ -117,7 +120,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				"Unable to find reference to update " + _util.qualifiedName(referenceName) + " at "
 					+ getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Type newType;
 		if (getConfig().getNewType() == null) {
@@ -154,6 +157,11 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
+			MigrationUtils.updateReference(log, tlModel,
+				referenceName, getConfig().getNewName(), getConfig().getNewType(),
+				getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
+				getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
+				getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
 			log.info("Updated reference " + _util.qualifiedName(referenceName));
 		} else {
 			_util.updateInverseReference(connection,
@@ -162,8 +170,14 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
+			MigrationUtils.updateInverseReference(log, tlModel,
+				referenceName, newReferenceName,
+				getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
+				getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
+				getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
 			log.info("Updated inverse reference " + _util.qualifiedName(referenceName));
 		}
+		return true;
 
 	}
 

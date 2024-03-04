@@ -8,6 +8,7 @@ package com.top_logic.element.config;
 import java.util.Collection;
 import java.util.List;
 
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.TagName;
@@ -25,11 +26,15 @@ public interface AssociationConfig extends AttributedTypeConfig {
 	/** Default tag for defining associations. */
 	String TAG_NAME = "association";
 
+	/** Name of configuration object {@link #getSubsets()} */
+	String SUBSETS = "subsets";
+
 	/**
 	 * Configuration of the names of the subsets of the configured {@link TLAssociation}.
 	 * 
 	 * @see TLAssociation#getSubsets()
 	 */
+	@Name(SUBSETS)
 	List<ExtendsConfig> getSubsets();
 
 	/**

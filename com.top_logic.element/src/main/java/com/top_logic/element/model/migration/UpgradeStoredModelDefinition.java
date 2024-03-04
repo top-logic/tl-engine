@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.model.migration;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,10 +14,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.top_logic.basic.Log;
-import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.xml.DOMUtil;
-import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.element.model.migration.model.MigrationUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.migration.MigrationPostProcessor;
@@ -34,27 +31,14 @@ public class UpgradeStoredModelDefinition implements MigrationPostProcessor {
 	@Override
 	public void afterMigration(Log log, KnowledgeBase kb) {
 		PooledConnection connection = KBUtils.getCurrentContext(kb).getConnection();
-		try {
-			String xml = DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY,
-				DynamicModelService.APPLICATION_MODEL_PROPERTY);
+		MigrationUtils.modifyTLModel(log, connection, document -> removeModuleContents(log, document));
+	}
 
-			if (xml != null) {
-				Document document = DOMUtil.parse(xml);
-
-				boolean changed = false;
-				changed |= removeModuleContent(log, document, "roles");
-				changed |= removeModuleContent(log, document, "factory");
-
-				if (changed) {
-					DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY,
-						DynamicModelService.APPLICATION_MODEL_PROPERTY, DOMUtil.toString(document));
-
-					log.info("Upgraded stored model by removing legacy definitions.");
-				}
-			}
-		} catch (IllegalArgumentException | SQLException ex) {
-			log.error("Cannot upgrade the stored application model baseline.");
-		}
+	private boolean removeModuleContents(Log log, Document document) {
+		boolean changed = false;
+		changed |= removeModuleContent(log, document, "roles");
+		changed |= removeModuleContent(log, document, "factory");
+		return changed;
 	}
 
 	private boolean removeModuleContent(Log log, Document document, String tagName) {

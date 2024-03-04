@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -36,7 +38,7 @@ import com.top_logic.model.migration.data.Type;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<UpdateTLDataTypeProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLDataTypeProcessor}.
@@ -101,17 +103,19 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		super(context, config);
 	}
 
+
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update datatype migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
 		Type type;
 		try {
@@ -120,7 +124,7 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 			log.info(
 				"Unable to find datatype to update " + _util.qualifiedName(typeName) + " at " + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Module newModule;
 		QualifiedTypeName newName = getConfig().getNewName();
@@ -142,7 +146,10 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		_util.updateTLDataType(connection, type, newModule, dataTypeName, getConfig().getKind(), columnType,
 			storageMapping, annotations);
 
+		MigrationUtils.updateDatatype(log, tlModel, typeName, newName, getConfig().getKind(), columnType,
+			storageMapping, annotations);
 		log.info("Updated datatype " + _util.qualifiedName(typeName));
+		return true;
 	}
 
 }

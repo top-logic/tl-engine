@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -32,7 +34,7 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<CreateTLDatatypeProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link CreateTLDatatypeProcessor}.
@@ -97,18 +99,23 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			internalDoMigration(log, connection, tlModel);
+			return true;
 		} catch (Exception ex) {
 			log.error("Creating datatype migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
 		_util.createTLDatatype(connection, typeName, getConfig().getKind(), getConfig(),
+			getConfig().getStorageMapping(),
+			getConfig());
+		MigrationUtils.createDatatype(log, tlModel, typeName, getConfig().getKind(), getConfig(),
 			getConfig().getStorageMapping(),
 			getConfig());
 		log.info("Created datatype " + _util.qualifiedName(typeName));

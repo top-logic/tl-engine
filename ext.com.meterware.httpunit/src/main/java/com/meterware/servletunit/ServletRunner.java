@@ -26,7 +26,7 @@ import java.net.MalformedURLException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import javax.xml.parsers.DocumentBuilder;
 
 import org.w3c.dom.Document;

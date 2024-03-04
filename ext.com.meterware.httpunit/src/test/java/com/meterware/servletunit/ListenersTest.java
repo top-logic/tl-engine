@@ -22,8 +22,8 @@ package com.meterware.servletunit;
 import junit.framework.TestSuite;
 import junit.framework.Assert;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 
 /**
  *

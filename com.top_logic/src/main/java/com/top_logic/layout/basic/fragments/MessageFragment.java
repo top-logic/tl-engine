@@ -47,7 +47,7 @@ public class MessageFragment implements HTMLFragment {
 
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
-		out.writeText(context.getResources().decodeMessageFromKeyWithEncodedArguments(_messageKey));
+		out.writeText(context.getResources().getString(_messageKey));
 	}
 
 }

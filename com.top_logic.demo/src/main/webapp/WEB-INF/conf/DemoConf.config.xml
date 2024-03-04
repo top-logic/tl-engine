@@ -219,6 +219,14 @@
 		<config service-class="com.top_logic.common.webfolder.ui.WebFolderUIFactory">
 			<instance max-upload-size="5M" />
 		</config>		
+		
+		<config service-class="com.top_logic.monitoring.data.TLDataBeanService">
+			<instance class="com.top_logic.monitoring.data.TLDataBeanService">
+				<mbeans>
+					<mbean class="com.top_logic.demo.monitoring.MonitorDemo" description="Dynamic MBean demonstration." />
+				</mbeans>
+			</instance>
+		</config>
 	</services>
 	
 	<configs>

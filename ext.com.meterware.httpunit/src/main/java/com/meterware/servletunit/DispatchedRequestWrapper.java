@@ -86,11 +86,11 @@ class DispatchedRequestWrapper extends HttpServletRequestWrapper {
 
 class IncludeRequestWrapper extends DispatchedRequestWrapper {
 
-    final static String REQUEST_URI  = "javax.servlet.include.request_uri";
-    final static String CONTEXT_PATH = "javax.servlet.include.context_path";
-    final static String SERVLET_PATH = "javax.servlet.include.servlet_path";
-    final static String PATH_INFO    = "javax.servlet.include.path_info";
-    final static String QUERY_STRING = "javax.servlet.include.query_string";
+    final static String REQUEST_URI  = RequestDispatcher.INCLUDE_REQUEST_URI;
+    final static String CONTEXT_PATH = RequestDispatcher.INCLUDE_CONTEXT_PATH;
+    final static String SERVLET_PATH = RequestDispatcher.INCLUDE_SERVLET_PATH;
+    final static String PATH_INFO    = RequestDispatcher.INCLUDE_PATH_INFO;
+    final static String QUERY_STRING = RequestDispatcher.INCLUDE_QUERY_STRING;
 
     private Hashtable _attributes = new Hashtable();
 

@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.col.Equality;
@@ -135,7 +136,8 @@ public class ValueEditor extends AbstractEditor {
 				uiConversion = new UIConversion(select);
 				if (optionProvider != null) {
 					final OptionMapping optionMapping = Fields.optionMapping(optionProvider);
-					if (optionMapping != IdentityOptionMapping.INSTANCE) {
+					boolean isSet = Set.class.isAssignableFrom(type);
+					if (optionMapping != IdentityOptionMapping.INSTANCE || isSet) {
 						select.set(OPTION_MAPPING, optionMapping);
 						final Mapping<Object, Object> defaultConversion = storageConversion;
 						storageConversion = new Mapping<>() {
@@ -143,9 +145,11 @@ public class ValueEditor extends AbstractEditor {
 							public Object map(Object uiValue) {
 								if (uiValue instanceof Collection<?>) {
 									Collection<?> uiCollection = (Collection<?>) uiValue;
+									Collector<Object, ?, ? extends Collection<Object>> collector =
+										isSet ? Collectors.toSet() : Collectors.toList();
 									return uiCollection.stream()
 										.map(e -> optionMapping.toSelection(defaultConversion.map(e)))
-										.collect(Collectors.toList());
+										.collect(collector);
 								} else {
 									return optionMapping.toSelection(defaultConversion.map(uiValue));
 								}

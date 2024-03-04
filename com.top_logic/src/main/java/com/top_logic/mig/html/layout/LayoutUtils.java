@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.services.simpleajax.HTMLFragment;

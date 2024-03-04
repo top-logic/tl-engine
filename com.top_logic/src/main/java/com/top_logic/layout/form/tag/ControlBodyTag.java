@@ -5,8 +5,8 @@
  */
 package com.top_logic.layout.form.tag;
 
-import javax.servlet.jsp.tagext.BodyTag;
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.BodyTag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;

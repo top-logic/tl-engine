@@ -8,8 +8,8 @@ package com.top_logic.layout.form.tag;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.IterationTag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.IterationTag;
 
 import com.top_logic.layout.form.tag.util.ShadowedAttribute;
 

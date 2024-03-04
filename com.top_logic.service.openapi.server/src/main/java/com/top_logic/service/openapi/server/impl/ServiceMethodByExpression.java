@@ -11,7 +11,7 @@ import java.util.Map;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.json.JsonUtilities;

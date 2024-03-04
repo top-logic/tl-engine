@@ -8,10 +8,10 @@ package com.top_logic.base.taglibs.basic;
 import java.io.IOException;
 import java.io.Writer;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagWriter;
@@ -89,7 +89,7 @@ public abstract class AbstractTagBase extends TagSupport {
 	 * 
 	 * @return The value returned from {@link #startElement()}.
 	 * 
-	 * @see javax.servlet.jsp.tagext.BodyTagSupport#doStartTag()
+	 * @see jakarta.servlet.jsp.tagext.BodyTagSupport#doStartTag()
 	 */
 	@Override
 	public final int doStartTag() throws JspException {
@@ -134,7 +134,7 @@ public abstract class AbstractTagBase extends TagSupport {
 	 * 
 	 * @return The value returned from {@link #endElement()}.
 	 * 
-	 * @see javax.servlet.jsp.tagext.BodyTagSupport#doEndTag()
+	 * @see jakarta.servlet.jsp.tagext.BodyTagSupport#doEndTag()
 	 */
 	@Override
 	public final int doEndTag() throws JspException {

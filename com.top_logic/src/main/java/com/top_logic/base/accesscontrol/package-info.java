@@ -7,7 +7,7 @@
  * 	Tracking of HTTP sessions and user login/logout.
  * <p>
  * 	The {@link com.top_logic.base.accesscontrol.LoginPageServlet} is called from the login page.
- * 	Logout is done by invalidating the {@link javax.servlet.http.HttpSession}.
+ * 	Logout is done by invalidating the {@link jakarta.servlet.http.HttpSession}.
  * </p>
  * </body>
  * </html>

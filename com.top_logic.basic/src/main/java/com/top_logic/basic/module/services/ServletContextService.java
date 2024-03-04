@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.Environment;
 import com.top_logic.basic.Logger;

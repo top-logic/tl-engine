@@ -5,8 +5,8 @@
  */
 package com.top_logic.base.services.simpleajax;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.basic.xml.TagWriter;
 

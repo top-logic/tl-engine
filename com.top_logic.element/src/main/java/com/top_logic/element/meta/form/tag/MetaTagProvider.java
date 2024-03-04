@@ -5,7 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.knowledge.wrap.Wrapper;

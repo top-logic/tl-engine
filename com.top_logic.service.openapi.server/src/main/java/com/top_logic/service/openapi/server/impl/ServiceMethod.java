@@ -8,7 +8,7 @@ package com.top_logic.service.openapi.server.impl;
 import java.io.IOException;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.OpenApiServer;

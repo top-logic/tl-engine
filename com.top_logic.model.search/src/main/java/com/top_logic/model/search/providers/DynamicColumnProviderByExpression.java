@@ -143,6 +143,11 @@ public class DynamicColumnProviderByExpression
 		 * columns.
 		 * </p>
 		 * 
+		 * <pre>
+		 * <code>model -> [...]</code>
+		 * </pre>
+		 * 
+		 * 
 		 * @implNote Each of the dynamically created columns is associated with its
 		 *           {@link DynamicColumnProviderByExpression#getColumnModel(ColumnConfiguration)
 		 *           column model} retrieved by this function.
@@ -159,6 +164,10 @@ public class DynamicColumnProviderByExpression
 		 * returned by the {@link #getColumns()} function. The second argument is the component's
 		 * model.
 		 * </p>
+		 * 
+		 * <pre>
+		 * <code>column -> model -> ...</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The column name is expected as result. The result can either be an internationalization
@@ -189,9 +198,13 @@ public class DynamicColumnProviderByExpression
 		 * model.
 		 * </p>
 		 * 
+		 * <pre>
+		 * <code>column -> model -> ...</code>
+		 * </pre>
+		 * 
 		 * <p>
-		 * The result of the type function must be reference to a <i>TopLogic</i> type (a primitive type
-		 * such as `tl.core:Integer`, an enumeration or any other class type.
+		 * The result of the type function must be reference to a <i>TopLogic</i> type (a primitive
+		 * type such as `tl.core:Integer`, an enumeration or any other class type.
 		 * </p>
 		 */
 		@Name(COLUMN_TYPE)
@@ -202,9 +215,14 @@ public class DynamicColumnProviderByExpression
 		 * Function retrieving the column's value.
 		 * 
 		 * <p>
-		 * The function expects two arguments. The first argument is the row object. The second
-		 * argument is the column object as retrieved by the {@link #getColumns()} function.
+		 * The function expects the row object as first argument, the column object as second
+		 * argument and the component's model as optional third argument. The column object is the
+		 * one retrieved by the {@link #getColumns()} function.
 		 * </p>
+		 * 
+		 * <pre>
+		 * <code>row -> column -> model -> ...</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The result of the function is displayed in the table cell defined by the given row and
@@ -223,10 +241,14 @@ public class DynamicColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <p>
-		 * The operation expects three arguments. The first argument is the row object. The second
-		 * argument is the column object as retrieved by the {@link #getColumns()} function. The
-		 * third argument is the new value that should be stored.
+		 * The operation expects the row object as first argument, the column object as second
+		 * argument, the new value as third argument and the component's model as optional fourth
+		 * argument. The column object is the one retrieved by the {@link #getColumns()} function.
 		 * </p>
+		 * 
+		 * <pre>
+		 * <code>row -> column -> value -> model -> ...</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The operation is executed, when an edited row is saved and the user has edited the
@@ -321,7 +343,7 @@ public class DynamicColumnProviderByExpression
 
 			column.set(COLUMN_MODEL, columnModel);
 
-			ColumnAccessor accessor = new ColumnAccessor(columnModel, _accessor, _updater);
+			ColumnAccessor accessor = new ColumnAccessor(_component, columnModel, _accessor, _updater);
 			column.setAccessor(accessor);
 
 			if (_updater != null) {
@@ -389,16 +411,19 @@ public class DynamicColumnProviderByExpression
 	}
 
 	private static final class ColumnAccessor implements Accessor<Object> {
+		private final LayoutComponent _component;
+
 		private final Object _column;
 	
 		private final QueryExecutor _accessor;
 	
 		private final QueryExecutor _updater;
-	
+
 		/**
 		 * Creates a {@link ColumnAccessor}.
 		 */
-		public ColumnAccessor(Object column, QueryExecutor accessor, QueryExecutor updater) {
+		public ColumnAccessor(LayoutComponent component, Object column, QueryExecutor accessor, QueryExecutor updater) {
+			_component = component;
 			_column = column;
 			_accessor = accessor;
 			_updater = updater;
@@ -406,7 +431,7 @@ public class DynamicColumnProviderByExpression
 	
 		@Override
 		public Object getValue(Object object, String property) {
-			return _accessor.execute(object, _column);
+			return _accessor.execute(object, _column, _component.getModel());
 		}
 	
 		@Override
@@ -415,7 +440,7 @@ public class DynamicColumnProviderByExpression
 				throw new UnsupportedOperationException(
 					"Column '" + property + "' can not be updated, no setter defined.");
 			}
-			_updater.execute(object, _column, value);
+			_updater.execute(object, _column, value, _component.getModel());
 		}
 	}
 

@@ -7,8 +7,8 @@ package com.top_logic.layout.form.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;

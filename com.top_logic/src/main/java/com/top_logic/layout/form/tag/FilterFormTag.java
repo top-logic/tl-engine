@@ -7,7 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.base.services.simpleajax.NothingCommand;
 import com.top_logic.basic.CalledFromJSP;

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.services.simpleajax.JSSnipplet;

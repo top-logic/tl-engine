@@ -7,7 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.util.ResKey;

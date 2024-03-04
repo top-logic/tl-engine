@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.form.tag.util;
 
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * Utility class to parse and expand XPath-style variable expressions of the

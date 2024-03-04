@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.form.tag;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 /**
  * Common base class for sub tags of {@link PageAreaTag}.

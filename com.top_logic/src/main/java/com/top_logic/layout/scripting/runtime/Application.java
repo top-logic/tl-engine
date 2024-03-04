@@ -10,7 +10,7 @@ import java.net.MalformedURLException;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import com.top_logic.knowledge.wrap.person.Person;
 

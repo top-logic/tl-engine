@@ -7,7 +7,7 @@ package com.top_logic.service.openapi.server.authentication;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Helper interface to enhance {@link HttpServletResponse} due to missing authorisation.

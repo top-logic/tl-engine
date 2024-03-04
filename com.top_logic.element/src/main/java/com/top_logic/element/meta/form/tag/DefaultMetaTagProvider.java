@@ -5,8 +5,8 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;

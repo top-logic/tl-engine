@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.Logger;

@@ -7,8 +7,8 @@ package com.top_logic.layout.form.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.NamedConstant;
@@ -302,7 +302,7 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
 	}
 
     /**
-     * @see javax.servlet.jsp.tagext.Tag#doStartTag()
+     * @see jakarta.servlet.jsp.tagext.Tag#doStartTag()
      */
     @Override
 	public int startElement() throws JspException {
@@ -441,7 +441,7 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
     /**
      * Overriden to close the tag and reset some members (in case of reuse).
      * 
-     * @see javax.servlet.jsp.tagext.Tag#doEndTag()
+     * @see jakarta.servlet.jsp.tagext.Tag#doEndTag()
      */
     @Override
 	public int endElement() throws JspException {

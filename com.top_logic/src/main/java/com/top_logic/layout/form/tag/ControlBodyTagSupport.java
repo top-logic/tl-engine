@@ -5,10 +5,10 @@
  */
 package com.top_logic.layout.form.tag;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyContent;
-import javax.servlet.jsp.tagext.BodyTag;
-import javax.servlet.jsp.tagext.IterationTag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyContent;
+import jakarta.servlet.jsp.tagext.BodyTag;
+import jakarta.servlet.jsp.tagext.IterationTag;
 
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.control.AbstractCompositeControl;

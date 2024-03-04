@@ -10,12 +10,12 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 import java.io.IOException;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TryCatchFinally;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TryCatchFinally;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.RequestUtil;
@@ -104,7 +104,7 @@ public class LayoutBody implements Tag, LayoutConstants, TryCatchFinally {
     }
 
     /**
-     * @see javax.servlet.jsp.tagext.Tag#doEndTag()
+     * @see jakarta.servlet.jsp.tagext.Tag#doEndTag()
      */
     @Override
 	public int doEndTag() throws JspException {
@@ -164,7 +164,7 @@ public class LayoutBody implements Tag, LayoutConstants, TryCatchFinally {
 	}
 
     /**
-     * @see javax.servlet.jsp.tagext.Tag#setPageContext(PageContext)
+     * @see jakarta.servlet.jsp.tagext.Tag#setPageContext(PageContext)
      */
     @Override
 	public void setPageContext(PageContext context) {

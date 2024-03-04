@@ -5,8 +5,8 @@
  */
 package com.top_logic.util.monitor.db;
 
-import javax.servlet.http.HttpSessionBindingEvent;
-import javax.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.http.HttpSessionBindingEvent;
+import jakarta.servlet.http.HttpSessionBindingListener;
 import javax.sql.DataSource;
 
 import com.top_logic.base.context.TLSessionContext;

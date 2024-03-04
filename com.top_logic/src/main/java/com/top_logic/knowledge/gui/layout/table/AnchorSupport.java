@@ -5,7 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.table;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Interim solution to untie the WebFolderTable from its componenet.

@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.servlet.ServletResponse;
+import jakarta.servlet.ServletResponse;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;

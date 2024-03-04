@@ -5,7 +5,7 @@
  */
 package com.top_logic.service.openapi.server.script;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * TL-Script representation of an response to deliver to an {@link HTTPResponse}.

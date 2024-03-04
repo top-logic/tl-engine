@@ -8,7 +8,7 @@ package com.top_logic.base.taglibs.basic;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.JspWriter;
 
 /**
  * This TagHandler class writes a HTML link to the stylesheet file specified

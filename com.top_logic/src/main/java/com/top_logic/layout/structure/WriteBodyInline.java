@@ -7,7 +7,7 @@ package com.top_logic.layout.structure;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -15,7 +15,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * {@link InlineContentView} calling the legacy write method
- * {@link LayoutComponent#writeBody(javax.servlet.ServletContext, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, TagWriter) }.
+ * {@link LayoutComponent#writeBody(jakarta.servlet.ServletContext, jakarta.servlet.http.HttpServletRequest, jakarta.servlet.http.HttpServletResponse, TagWriter) }.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

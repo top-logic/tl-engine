@@ -5,8 +5,8 @@
  */
 package com.top_logic.basic;
 
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 

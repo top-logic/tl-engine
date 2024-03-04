@@ -8,7 +8,7 @@ package test.com.top_logic.tool.form;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
-import javax.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServlet;
 
 import test.com.top_logic.basic.BasicTestCase;
 

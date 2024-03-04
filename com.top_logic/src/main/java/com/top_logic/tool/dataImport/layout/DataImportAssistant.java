@@ -8,8 +8,8 @@ package com.top_logic.tool.dataImport.layout;
 import java.util.ArrayList;
 import java.util.Map;
 
-import javax.servlet.http.HttpSessionBindingEvent;
-import javax.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.http.HttpSessionBindingEvent;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.base.locking.Lock;
 import com.top_logic.basic.StringServices;

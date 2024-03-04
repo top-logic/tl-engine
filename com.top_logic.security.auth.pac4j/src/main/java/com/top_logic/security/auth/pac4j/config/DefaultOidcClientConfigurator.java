@@ -8,7 +8,7 @@ package com.top_logic.security.auth.pac4j.config;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import org.pac4j.core.client.Client;
 import org.pac4j.core.context.HttpConstants;

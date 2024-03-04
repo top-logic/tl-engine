@@ -5,8 +5,8 @@
  */
 package com.top_logic.layout.form.boxes.tag;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.form.tag.ControlBodyTag;

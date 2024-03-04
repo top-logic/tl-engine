@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.form.tag.util;
 
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.layout.form.tag.AbstractTag;
 

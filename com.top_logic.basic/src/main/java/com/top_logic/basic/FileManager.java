@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.io.BinaryContent;

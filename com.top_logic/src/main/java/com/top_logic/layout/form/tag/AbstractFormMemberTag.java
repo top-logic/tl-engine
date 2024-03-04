@@ -6,7 +6,7 @@
 package com.top_logic.layout.form.tag;
 
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;

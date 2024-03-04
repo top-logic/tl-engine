@@ -5,7 +5,7 @@
  */
 package com.top_logic.reporting;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import com.top_logic.element.ElementStartStop;
 

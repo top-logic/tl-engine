@@ -225,23 +225,25 @@ public class TestFormatter extends BasicTestCase {
         assertEquals(d                      , fm.parseShortDate("2/6/67"));
 
 		Date t = DateUtil.createDate(calendarLA, 1970, Calendar.JANUARY, 1, 11, 17, 36);
-        assertEquals("11:17:36 AM"          , fm.formatTime(t));
+		// Replace all kinds of whitespaces with a blank:
+		// Different Java versions use different whitespaces as separator.
+        assertEquals("11:17:36 AM"          , fm.formatTime(t).replaceAll("\s", " "));
         assertEquals(t                      , fm.parseTime("11:17:36 AM"));
 
 		Date st = DateUtil.createDate(calendarLA, 1970, Calendar.JANUARY, 1, 11, 17, 0);
-        assertEquals("11:17 AM"             , fm.formatShortTime(st));
+        assertEquals("11:17 AM"             , fm.formatShortTime(st).replaceAll("\s", " "));
         assertEquals(st                     , fm.parseShortTime("11:17 AM"));
 
 		Date dt = DateUtil.createDate(calendarLA, 2002, Calendar.JUNE, 2, 11, 17, 36);
-		assertEquals("Jun 2, 2002, 11:17:36 AM", fm.formatDateTime(dt));
+		assertEquals("Jun 2, 2002, 11:17:36 AM", fm.formatDateTime(dt).replaceAll("\s", " "));
 		assertEquals(dt, fm.parseDateTime("Jun 2, 2002, 11:17:36 AM"));
 
 
 		Date sdt = DateUtil.createDate(calendarLA, 2002, Calendar.JUNE, 2, 11, 17, 00);
-		assertEquals("6/2/02, 11:17 AM", fm.formatShortDateTime(sdt));
+		assertEquals("6/2/02, 11:17 AM", fm.formatShortDateTime(sdt).replaceAll("\s", " "));
 		assertEquals(sdt, fm.parseShortDateTime("6/2/02, 11:17 AM"));
 
-		assertEquals("Jun 2, 2002, 11:17 AM", fm.formatMediumDateTime(sdt));
+		assertEquals("Jun 2, 2002, 11:17 AM", fm.formatMediumDateTime(sdt).replaceAll("\s", " "));
 		assertEquals(sdt, fm.parseMixedDateTime("Jun 2, 2002, 11:17 AM"));
 	}
 

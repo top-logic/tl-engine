@@ -5,7 +5,7 @@
  */
 package test.com.top_logic.mig.html;
 
-import javax.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.JspWriter;
 
 /**
  * A JspWriter that is based on a Stringbuffer suiteable for Testing.

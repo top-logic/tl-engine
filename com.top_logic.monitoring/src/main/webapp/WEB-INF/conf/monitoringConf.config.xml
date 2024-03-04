@@ -33,8 +33,8 @@
 		<config service-class="com.top_logic.monitoring.data.TLDataBeanService">
 			<instance class="com.top_logic.monitoring.data.TLDataBeanService">
 				<mbeans>
-					<mbean class="com.top_logic.monitoring.data.MonitorUser" />
-					<mbean class="com.top_logic.monitoring.data.MonitorDatabase" />
+					<mbean class="com.top_logic.monitoring.data.MonitorUser" description="Monitor data of the users." />
+					<mbean class="com.top_logic.monitoring.data.MonitorDatabase"  description="Monitor data of the knowledge-base." />
 				</mbeans>
 			</instance>
 		</config>

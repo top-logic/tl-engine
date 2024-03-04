@@ -10,7 +10,10 @@ import static com.top_logic.knowledge.search.ExpressionFactory.*;
 import java.util.Date;
 import java.util.List;
 
-import com.top_logic.basic.config.AbstractConfiguredInstance;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanConstructorInfo;
+import javax.management.MBeanOperationInfo;
+
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -28,11 +31,10 @@ import com.top_logic.util.AbstractStartStopListener;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class MonitorUser extends AbstractConfiguredInstance<MonitorUser.Config>
-		implements MonitorUserMBean, MBeanElement {
+public class MonitorUser extends DynamicMBeanElement {
 
 	/** {@link ConfigurationItem} for the {@link MonitorUser}. */
-	public interface Config extends MBeanConfiguration<MonitorUser> {
+	public interface Config extends DynamicMBeanElement.Config {
 
 		@Override
 		@StringDefault("com.top_logic.monitoring.data:name=MonitorUser")
@@ -42,9 +44,40 @@ public class MonitorUser extends AbstractConfiguredInstance<MonitorUser.Config>
 	/** {@link TypedConfiguration} constructor for {@link MonitorUser}. */
 	public MonitorUser(InstantiationContext context, Config config) {
 		super(context, config);
+
+		buildDynamicMBeanInfo(config);
 	}
 
 	@Override
+	protected MBeanConstructorInfo[] createConstructorInfo() {
+		return null;
+	}
+
+	@Override
+	protected MBeanAttributeInfo[] createAttributeInfo() {
+		MBeanAttributeInfo[] dAttributes = new MBeanAttributeInfo[1];
+
+		dAttributes[0] = new MBeanAttributeInfo(
+			"AmountLoggedInUsers", // name
+			"java.lang.Integer", // type
+			"The number of actual logged in users.", // description
+			true, // readable
+			false, // writable
+			false); // isIs
+
+		return dAttributes;
+	}
+
+	@Override
+	protected MBeanOperationInfo[] createOperationInfo() {
+		return null;
+	}
+
+	/**
+	 * Calculates the number of actual logged in users with respect to the last system start.
+	 * 
+	 * @return Number of users which are logged at this moment.
+	 */
 	public int getAmountLoggedInUsers() {
 		return ThreadContextManager.inSystemInteraction(MonitorUser.class, this::calcLoggedInUsers);
 	}

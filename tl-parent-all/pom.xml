@@ -699,14 +699,14 @@
 
 			<!-- External dependencies -->
 			<dependency>
-				<groupId>javax.servlet</groupId>
-				<artifactId>javax.servlet-api</artifactId>
-				<version>4.0.1</version>
+				<groupId>jakarta.servlet</groupId>
+				<artifactId>jakarta.servlet-api</artifactId>
+				<version>6.0.0</version>
 			</dependency>
 			<dependency>
-				<groupId>javax.servlet.jsp</groupId>
-				<artifactId>jsp-api</artifactId>
-				<version>2.2.1-b03</version>
+				<groupId>jakarta.servlet.jsp</groupId>
+				<artifactId>jakarta.servlet.jsp-api</artifactId>
+				<version>3.1.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -1496,11 +1496,11 @@
 							<rule>
 								<groupId>org.eclipse.jetty</groupId>
 								
-								<!-- Limit to Jetty 9 to avoid updating javax.servlet -->
+								<!-- Limit to Jetty 10 to avoid updating jakarta.servlet -->
 								<ignoreVersions>
 									<ignoreVersion>
 										<type>regex</type>
-										<version>(?!9\.).*</version>
+										<version>(?!10\.).*</version>
 									</ignoreVersion>								
 								</ignoreVersions>
 							</rule>

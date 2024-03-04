@@ -5,7 +5,7 @@
  */
 package com.top_logic.security.auth.pac4j.config;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import org.pac4j.core.client.Client;
 

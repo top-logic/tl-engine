@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.servlet;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.CalledFromJSP;
 

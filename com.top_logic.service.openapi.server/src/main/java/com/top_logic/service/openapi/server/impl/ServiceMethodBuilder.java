@@ -26,7 +26,7 @@ public interface ServiceMethodBuilder {
 	 *        The path the created {@link ServiceMethod} will be registered for.
 	 * @param parameters
 	 *        Parameter names that describe the arguments that will be passed to invocations, see
-	 *        {@link ServiceMethod#handleRequest(Person, java.util.Map, javax.servlet.http.HttpServletResponse)}.
+	 *        {@link ServiceMethod#handleRequest(Person, java.util.Map, jakarta.servlet.http.HttpServletResponse)}.
 	 */
 	ServiceMethod build(String path, List<String> parameters);
 

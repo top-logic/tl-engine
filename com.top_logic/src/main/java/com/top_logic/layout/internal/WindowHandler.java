@@ -9,7 +9,7 @@ import static com.top_logic.mig.html.HTMLUtil.*;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.xml.TagWriter;

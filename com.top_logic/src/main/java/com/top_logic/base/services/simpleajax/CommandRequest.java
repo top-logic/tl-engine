@@ -62,7 +62,7 @@ public class CommandRequest {
 	 * The value associated with an parameter name might be any type supported
 	 * by the {@link XMLValueDecoder}. In contrast to regular commands, which
 	 * receive their arguments through
-	 * {@link javax.servlet.ServletRequest#getParameterValues(String)}
+	 * {@link jakarta.servlet.ServletRequest#getParameterValues(String)}
 	 * and are restricted to arguments of type <code>String[]</code>,
 	 * AJAX commands may receive complex values as arguments.
 	 * </p>

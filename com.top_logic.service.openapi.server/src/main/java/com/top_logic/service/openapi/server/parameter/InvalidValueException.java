@@ -8,7 +8,7 @@ package com.top_logic.service.openapi.server.parameter;
 /**
  * {@link Exception} reporting an invalid value in a request argument.
  * 
- * @see ConcreteRequestParameter#getValue(javax.servlet.http.HttpServletRequest, java.util.Map)
+ * @see ConcreteRequestParameter#getValue(jakarta.servlet.http.HttpServletRequest, java.util.Map)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -5,7 +5,7 @@
  */
 package com.top_logic.service.openapi.client.registry.impl.response;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.hc.core5.http.ClassicHttpResponse;
 

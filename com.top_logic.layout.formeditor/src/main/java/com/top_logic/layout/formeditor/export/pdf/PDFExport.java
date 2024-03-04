@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import org.w3c.dom.Element;
 import org.xhtmlrenderer.extend.ReplacedElement;

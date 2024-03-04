@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.StringTokenizer;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormContainer;

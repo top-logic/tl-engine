@@ -7,7 +7,7 @@ package com.top_logic.mig.html.layout.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.DefaultDisplayContext;

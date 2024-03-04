@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyContent;
-import javax.servlet.jsp.tagext.BodyTagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyContent;
+import jakarta.servlet.jsp.tagext.BodyTagSupport;
 
 import com.top_logic.basic.util.ResKey;
 
@@ -85,7 +85,7 @@ public class VariableReplaceTag extends BodyTagSupport {
      * the corresponding values in the server language (via I18n
      * resources).  
      * 
-     * @see javax.servlet.jsp.tagext.IterationTag#doAfterBody()
+     * @see jakarta.servlet.jsp.tagext.IterationTag#doAfterBody()
      */
     @Override
 	public int doAfterBody() throws JspException {

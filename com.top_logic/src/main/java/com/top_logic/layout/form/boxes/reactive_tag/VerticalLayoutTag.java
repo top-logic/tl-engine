@@ -7,7 +7,7 @@ package com.top_logic.layout.form.boxes.reactive_tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.layout.form.boxes.model.Box;
 import com.top_logic.layout.form.boxes.tag.BoxTag;

@@ -5,7 +5,7 @@
  */
 package test.com.top_logic.knowledge.wrap.person;
 
-import javax.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -106,7 +106,7 @@ public class TestPersonalConfiguration extends BasicTestCase {
 	/**
 	 * Currently the personal configuration is made persistent, when session goes invalid. As this
 	 * can not be provoked in JUnit tests, the
-	 * {@link HttpSessionBindingListener#valueUnbound(javax.servlet.http.HttpSessionBindingEvent)}
+	 * {@link HttpSessionBindingListener#valueUnbound(jakarta.servlet.http.HttpSessionBindingEvent)}
 	 * is called which do the work.
 	 */
 	private void makeConfigurationPersistent(PersonalConfiguration pc) {

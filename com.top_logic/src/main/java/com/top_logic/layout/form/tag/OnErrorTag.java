@@ -7,7 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import java.util.Iterator;
 
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.layout.Control;

@@ -9,8 +9,8 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.StringWriter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.CalledFromJSP;
 

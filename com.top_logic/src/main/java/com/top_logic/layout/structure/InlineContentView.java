@@ -8,8 +8,8 @@ package com.top_logic.layout.structure;
 import java.io.IOException;
 import java.util.Collections;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.services.simpleajax.ContentReplacement;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -38,7 +38,7 @@ import com.top_logic.util.I18NConstants;
 
 /**
  * {@link Control} that embeds any legacy {@link LayoutComponent} through its
- * {@link LayoutComponent#writeBody(javax.servlet.ServletContext, HttpServletRequest, javax.servlet.http.HttpServletResponse, TagWriter)}
+ * {@link LayoutComponent#writeBody(jakarta.servlet.ServletContext, HttpServletRequest, jakarta.servlet.http.HttpServletResponse, TagWriter)}
  * method.
  * 
  * <p>

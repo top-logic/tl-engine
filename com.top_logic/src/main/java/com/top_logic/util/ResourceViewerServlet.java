@@ -11,10 +11,10 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -163,7 +163,7 @@ public class ResourceViewerServlet extends TopLogicServlet {
 
     /**
      * Reacts on an HTTP POST request, performs the method 
-     * {@link #doGet(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)}.
+     * {@link #doGet(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)}.
      */
     @Override
 	protected void doPost (HttpServletRequest request, 

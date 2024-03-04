@@ -438,6 +438,13 @@ public class MessageBox extends MessageBoxShortcuts {
 		}
 
 		/**
+		 * Defines the dialog size.
+		 */
+		public Builder layout(DisplayDimension width, DisplayDimension height) {
+			return layout(new DefaultLayoutData(width, 100, height, 100, Scrolling.AUTO));
+		}
+
+		/**
 		 * Defines whether the confirm dialog is resizable.
 		 * 
 		 * @return This {@link Builder}.

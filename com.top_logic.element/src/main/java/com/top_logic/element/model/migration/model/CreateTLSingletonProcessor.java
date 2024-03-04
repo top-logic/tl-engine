@@ -7,6 +7,9 @@ package com.top_logic.element.model.migration.model;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -25,6 +28,7 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.BranchIdType;
+import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.Module;
 
 /**
@@ -145,6 +149,18 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 			newSingleton.getID());
 		log.info("Created singleton '" + getConfig().getName() + "' for module " + _util.toString(module));
 
+		MigrationUtils.modifyTLModel(log, connection, tlModel -> addSingletonDefintion(log, tlModel));
+	}
+
+	private boolean addSingletonDefintion(Log log, Document tlModel) {
+		try {
+			Element module = MigrationUtils.getTLModuleOrFail(tlModel, getConfig().getModule());
+			MigrationUtils.addModuleSingleton(log, module, getConfig().getSingleton().getType(), getConfig().getName());
+			return true;
+		} catch (MigrationException ex) {
+			log.error("No module " + getConfig().getModule() + " available.", ex);
+			return false;
+		}
 	}
 
 }

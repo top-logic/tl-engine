@@ -9,6 +9,8 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -38,7 +40,7 @@ import com.top_logic.model.migration.data.Type;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLClassProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link DeleteTLClassProcessor}.
@@ -89,7 +91,8 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 		super(context, config);
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws SQLException, MigrationException {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel)
+			throws SQLException, MigrationException {
 		QualifiedTypeName classToDelete = getConfig().getName();
 
 		Type type;
@@ -100,7 +103,7 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 				"No class with name '" + _util.qualifiedName(classToDelete) + "' to delete available at "
 					+ getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 
 		_util.deleteTLType(connection, type, getConfig().isFailOnExistingAttributes());
@@ -123,15 +126,17 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 			log.info("Deleted " + deletedRows + " instances of type '" + _util.toString(type) + "' from table "
 				+ getConfig().getTypeTable() + ".");
 		}
+		return MigrationUtils.deleteType(log, tlModel, classToDelete);
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Delete tl class migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 

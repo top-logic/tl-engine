@@ -10,6 +10,8 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 import java.sql.SQLException;
 import java.util.Arrays;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -30,6 +32,8 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.element.meta.kbbased.PersistentStructuredTypePart;
+import com.top_logic.element.model.migration.model.MigrationUtils;
+import com.top_logic.element.model.migration.model.TLModelBaseLineMigrationProcessor;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -52,7 +56,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ChangeAttributeTargetType extends AbstractConfiguredInstance<ChangeAttributeTargetType.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration of a {@link ChangeAttributeTargetType}.
@@ -174,36 +178,39 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
 
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Migration failed with config " + getConfig(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws SQLException, MigrationException {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel)
+			throws SQLException, MigrationException {
 		QualifiedTypeName source = getConfig().getSource();
 		if (source != null) {
-			replaceAllPartTypeReferences(log, connection, source);
+			return replaceAllPartTypeReferences(log, connection, tlModel, source);
 		} else if (getConfig().getPart() == null) {
 			log.error("No source type or part given to replace type at " + getConfig().location());
+			return false;
 		} else {
-			replacePartTypeReference(log, connection, getConfig().getPart());
+			return replacePartTypeReference(log, connection, tlModel, getConfig().getPart());
 		}
 	}
 
-	private void replacePartTypeReference(Log log, PooledConnection connection, QualifiedPartName part)
-			throws SQLException, MigrationException {
+	private boolean replacePartTypeReference(Log log, PooledConnection connection, Document tlModel,
+			QualifiedPartName part) throws SQLException, MigrationException {
 		TypePart sourcePart;
 		try {
 			sourcePart = _util.getTLTypePartOrFail(connection, part);
 		} catch (MigrationException ex) {
 			log.info("Unable to find source part " + _util.qualifiedName(part) + " at " + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Type targetType;
 		try {
@@ -213,7 +220,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 				"Unable to find new target type '" + _util.qualifiedName(getConfig().getTarget()) + "' for source part "
 					+ _util.qualifiedName(part) + " at " + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		if (sourcePart.getBranch() != targetType.getBranch()) {
 			throw new MigrationException(
@@ -223,12 +230,22 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		
 		_util.updateTLStructuredTypePart(connection, sourcePart, targetType, null, null, null, null, null, null, null,
 			null, null, null, null, null);
-		
+
+		QualifiedPartName src;
+		if (getConfig() instanceof ChangeRefConfig) {
+			src = ((ChangeRefConfig) getConfig()).getReference();
+		} else {
+			src = part;
+		}
+		MigrationUtils.updateTargetType(log, tlModel, src, getConfig().getTarget());
+
 		log.info(
 			"Changed type of " + _util.qualifiedName(part) + " to " + _util.qualifiedName(getConfig().getTarget()));
+		return true;
 	}
 
-	private void replaceAllPartTypeReferences(Log log, PooledConnection connection, QualifiedTypeName source)
+	private boolean replaceAllPartTypeReferences(Log log, PooledConnection connection, Document tlModel,
+			QualifiedTypeName source)
 			throws SQLException, MigrationException {
 		Type sourceType;
 		try {
@@ -236,7 +253,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		} catch (MigrationException ex) {
 			log.info("Unable to find source type " + _util.qualifiedName(source) + " at " + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Type targetType = _util.getTLTypeOrFail(connection, getConfig().getTarget());
 		if (sourceType.getBranch() != targetType.getBranch()) {
@@ -278,9 +295,13 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 			sourceType.getTable(), sourceType.getID(),
 			targetType.getTable(), targetType.getID());
 
+		MigrationUtils.updateTypeReferences(log, tlModel, source, getConfig().getTarget());
+
 		log.info(
 			"Changed types in " + changed + " rows from " + _util.qualifiedName(source) + " to "
 				+ _util.qualifiedName(getConfig().getTarget()));
+
+		return true;
 	}
 
 }

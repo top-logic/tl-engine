@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -33,7 +35,7 @@ import com.top_logic.model.migration.data.TypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<UpdateTLPropertyProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLPropertyProcessor}.
@@ -141,16 +143,17 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update part migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		TypePart part;
 		try {
@@ -159,7 +162,7 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 			log.info(
 				"Unable to find property to update " + _util.qualifiedName(partName) + " at " + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Type newType;
 		if (getConfig().getNewType() == null) {
@@ -185,7 +188,12 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 			newType, newOwner, newLocalName,
 			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
 			getConfig());
+		MigrationUtils.updateProperty(log, tlModel, partName, newName, getConfig().getNewType(),
+			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
+			getConfig());
 		log.info("Updated part " + _util.qualifiedName(partName));
+
+		return true;
 	}
 
 }

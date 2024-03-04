@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -35,7 +37,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLClassProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link CreateTLClassProcessor}.
@@ -43,6 +45,12 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 	@TagName("create-class")
 	public interface Config
 			extends PolymorphicConfiguration<CreateTLClassProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+
+		/** Name for {@link #isAbstract()}. */
+		String ABSTRACT = ClassConfig.ABSTRACT;
+
+		/** Name for {@link #isFinal()} */
+		String FINAL = ClassConfig.FINAL;
 
 		/**
 		 * Qualified name of the new {@link TLClass}.
@@ -58,7 +66,7 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		/**
 		 * See {@link ClassConfig#isAbstract()}.
 		 */
-		@Name(ClassConfig.ABSTRACT)
+		@Name(ABSTRACT)
 		boolean isAbstract();
 
 		/**
@@ -69,7 +77,7 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		/**
 		 * See {@link ClassConfig#isFinal()}.
 		 */
-		@Name(ClassConfig.FINAL)
+		@Name(FINAL)
 		boolean isFinal();
 
 		/**
@@ -126,27 +134,32 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(context, log, connection);
+			internalDoMigration(context, log, connection, tlModel);
+			return true;
 		} catch (Exception ex) {
 			log.error("Class creation failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection, Document tlModel)
+			throws Exception {
 		QualifiedTypeName className = getConfig().getName();
 		_util.createTLClass(connection, className,
 			getConfig().isAbstract(), getConfig().isFinal(),
 			getConfig());
+		MigrationUtils.createClassType(log, tlModel, className, getConfig().isAbstract(),
+			MigrationUtils.nullIfUnset(getConfig(), Config.FINAL), getConfig());
 		log.info("Created class " + _util.qualifiedName(className));
 
-		addPrimaryGeneralization(context, log, connection, className);
+		addPrimaryGeneralization(context, log, connection, tlModel, className);
 	}
 
 	private void addPrimaryGeneralization(MigrationContext context, Log log, PooledConnection connection,
-			QualifiedTypeName newClass) {
+			Document tlModel, QualifiedTypeName newClass) {
 		QualifiedTypeName primaryGeneralization = getConfig().getPrimaryGeneralization();
 		if (primaryGeneralization == null) {
 			if (getConfig().isWithoutPrimaryGeneralization()) {
@@ -160,6 +173,12 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 			}
 			return;
 		}
+		AddTLClassGeneralization processor = primaryGeneralizationProcessor(newClass, primaryGeneralization);
+		processor.migrateTLModel(context, log, connection, tlModel);
+	}
+
+	private AddTLClassGeneralization primaryGeneralizationProcessor(QualifiedTypeName newClass,
+			QualifiedTypeName primaryGeneralization) {
 		AddTLClassGeneralization.Config addGeneralization =
 			TypedConfiguration.newConfigItem(AddTLClassGeneralization.Config.class);
 		addGeneralization.setName(newClass);
@@ -167,9 +186,7 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 			TypedConfiguration.newConfigItem(AddTLClassGeneralization.Generalization.class);
 		generalization.setType(primaryGeneralization);
 		addGeneralization.getGeneralizations().add(generalization);
-		AddTLClassGeneralization processor =
-			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(addGeneralization);
-		processor.doMigration(context, log, connection);
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(addGeneralization);
 	}
 
 }

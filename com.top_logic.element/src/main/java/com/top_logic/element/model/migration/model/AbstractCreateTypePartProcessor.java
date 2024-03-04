@@ -23,7 +23,7 @@ import com.top_logic.model.migration.data.QualifiedPartName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTypePartProcessor.Config<?>>
-		extends AbstractConfiguredInstance<C> implements MigrationProcessor {
+		extends AbstractConfiguredInstance<C> implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Typed configuration interface definition for {@link AbstractCreateTypePartProcessor}.
@@ -32,6 +32,18 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 	 */
 	public interface Config<I extends AbstractCreateTypePartProcessor<?>>
 			extends PolymorphicConfiguration<I>, AnnotatedConfig<TLAttributeAnnotation> {
+
+		/** Name for {@link #isOrdered()}. */
+		String ORDERED = PartConfig.ORDERED_PROPERTY;
+
+		/** Name for {@link #isBag()}. */
+		String BAG = PartConfig.BAG_PROPERTY;
+
+		/** Name for {@link #isMultiple()}. */
+		String MULTIPLE = PartConfig.MULTIPLE_PROPERTY;
+
+		/** Name for {@link #isMandatory()}. */
+		String MANDATORY = PartConfig.MANDATORY;
 
 		/**
 		 * Qualified name of the {@link Config}.
@@ -47,7 +59,7 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 		/**
 		 * See {@link PartConfig#getMandatory()}
 		 */
-		@Name(PartConfig.MANDATORY)
+		@Name(MANDATORY)
 		boolean isMandatory();
 
 		/**
@@ -58,7 +70,7 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 		/**
 		 * See {@link PartConfig#isMultiple()}.
 		 */
-		@Name(PartConfig.MULTIPLE_PROPERTY)
+		@Name(MULTIPLE)
 		boolean isMultiple();
 
 		/**
@@ -73,7 +85,7 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 		 * This value is unused unless the part is {@link #isMultiple() multiple}.
 		 * </p>
 		 */
-		@Name(PartConfig.BAG_PROPERTY)
+		@Name(BAG)
 		boolean isBag();
 
 		/**
@@ -88,7 +100,7 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 		 * This value is unused unless the part is {@link #isMultiple() multiple}.
 		 * </p>
 		 */
-		@Name(PartConfig.ORDERED_PROPERTY)
+		@Name(ORDERED)
 		boolean isOrdered();
 
 		/**
@@ -108,6 +120,10 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 	 */
 	public AbstractCreateTypePartProcessor(InstantiationContext context, C config) {
 		super(context, config);
+	}
+
+	protected <T> T nullIfUnset(String propertyName) {
+		return MigrationUtils.nullIfUnset(getConfig(), propertyName);
 	}
 
 }

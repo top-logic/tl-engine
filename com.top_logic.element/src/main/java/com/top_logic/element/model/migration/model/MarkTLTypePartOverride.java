@@ -9,6 +9,8 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.util.Arrays;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -37,7 +39,7 @@ import com.top_logic.model.migration.data.TypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTypePartOverride.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link MarkTLTypePartOverride}.
@@ -86,19 +88,21 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			internalDoMigration(log, connection, tlModel);
+			return true;
 		} catch (Exception ex) {
 			log.error(
 				"Marking " + _util.qualifiedName(getConfig().getName()) + " as override of "
 					+ _util.qualifiedName(getConfig().getDefinition()) + " failed at " + getConfig().location(),
 				ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedPartName definition = (getConfig().getDefinition());
 		Type partOwner = _util.getTLTypeOrFail(connection, partName);
@@ -127,6 +131,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 			definitionPart.getID());
 
 		log.info("Mark " + _util.qualifiedName(partName) + " as override of " + _util.qualifiedName(definition));
+		MigrationUtils.setOverride(log, tlModel, partName, true);
 	}
 
 }

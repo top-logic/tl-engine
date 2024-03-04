@@ -53,6 +53,7 @@ import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLLiteral;
 import com.top_logic.basic.db.sql.SQLParameter;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
@@ -227,7 +228,15 @@ public class Util {
 		_revCreate = -1;
 	}
 
-	private String toString(AnnotatedConfig<? extends TLAnnotation> annotations) {
+	/**
+	 * Serializes the given {@link AnnotatedConfig annotation} as child of an
+	 * {@link AnnotationConfigs}.
+	 * 
+	 * @return A serialized {@link AnnotationConfigs} or <code>null</code> if there are actually no
+	 *         annotations.
+	 */
+	@FrameworkInternal
+	public static String toString(AnnotatedConfig<? extends TLAnnotation> annotations) {
 		String annotationsAsStrings;
 		if (annotations == null || annotations.getAnnotations().isEmpty()) {
 			annotationsAsStrings = null;
@@ -241,7 +250,7 @@ public class Util {
 		return annotationsAsStrings;
 	}
 
-	private String writeToString(String rootTag, Class<? extends ConfigurationItem> staticType,
+	private static String writeToString(String rootTag, Class<? extends ConfigurationItem> staticType,
 			ConfigurationItem config) {
 		StringWriter storageMappingBuffer = new StringWriter();
 		try {
@@ -1945,14 +1954,22 @@ public class Util {
 		return newAnnotations;
 	}
 
+	/**
+	 * Modifies the given {@link AnnotationConfigs} (given as serialized value with root tag
+	 * "config") by adding the given increment.
+	 * 
+	 * @param persistentAnnotations
+	 *        Serialized {@link AnnotationConfigs} or empty.
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private AnnotatedConfig<? extends TLAnnotation> addAnnotations(String persistentAnnotations,
+	@FrameworkInternal
+	public static AnnotatedConfig<? extends TLAnnotation> addAnnotations(String persistentAnnotations,
 			AnnotatedConfig<? extends TLAnnotation> increment) throws ConfigurationException {
 		AnnotatedConfig newAnnotations;
 		if (persistentAnnotations.isEmpty()) {
 			newAnnotations = increment;
 		} else {
-			newAnnotations = (AnnotatedConfig) TypedConfiguration.fromString(persistentAnnotations);
+			newAnnotations = parsePersistentAnnotations(persistentAnnotations);
 			for (TLAnnotation annotation : increment.getAnnotations()) {
 				TLAnnotation formerAnnotation =
 					newAnnotations.getAnnotation(annotation.getConfigurationInterface());
@@ -1963,6 +1980,15 @@ public class Util {
 			}
 		}
 		return newAnnotations;
+	}
+
+	/**
+	 * Parses the given {@link AnnotationConfigs}, given as serialized value with root tag "config".
+	 */
+	public static AnnotationConfigs parsePersistentAnnotations(String persistentAnnotations)
+			throws ConfigurationException {
+		return TypedConfiguration.parse("config", AnnotationConfigs.class,
+			CharacterContents.newContent(persistentAnnotations));
 	}
 
 	/**
@@ -2002,8 +2028,8 @@ public class Util {
 	/**
 	 * Reads the {@link TLModule#getAnnotations()} of a {@link TLModule}.
 	 * 
-	 * @return The stored annotations object (potentially empty) or <code>null</code> the module can
-	 *         not be found.
+	 * @return The stored {@link AnnotationConfigs} object (potentially empty) or <code>null</code>
+	 *         if the module can not be found.
 	 */
 	public String getModuleAnnotations(Log log, PooledConnection con, long branch, String moduleName) throws SQLException {
 		CompiledStatement sql = query(

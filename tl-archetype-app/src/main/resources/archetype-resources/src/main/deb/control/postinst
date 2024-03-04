@@ -18,7 +18,7 @@ sed -i -e 's/{dbPasswd}/'$(cat /root/[[tl.deb.dbSchema]].db.passwd)'/g' [[tl.deb
 sed -i -e 's/{contextName}/[[tl.deb.contextName]]/g' [[tl.deb.installDir]]/apache/site.conf
 sed -i -e 's|{installDir}|[[tl.deb.installDir]]|g' [[tl.deb.installDir]]/apache/site.conf
 
-service tomcat9 start
+service tomcat10 start
 
 a2dissite 000-default.conf
 

@@ -6,4 +6,4 @@ Architecture: all
 Maintainer: [[tl.deb.maintainer]]
 Description: [[description]]
 Distribution: [[tl.deb.distribution]]
-Depends: mariadb-server,tomcat9,libmariadb-java,apache2,apg
+Depends: mariadb-server,tomcat10,libmariadb-java,apache2,apg

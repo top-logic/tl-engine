@@ -114,10 +114,10 @@ public class GenerateJavaBinding extends AbstractMojo {
 			
 			// Add hard coded profile with otherwise provided classes.
 			TLAppWar.addToClassPath(cp, resolveHelper,
-				artifactFactory.createArtifact("javax.servlet", "javax.servlet-api", "3.1.0", "runtime", "jar"));
+				artifactFactory.createArtifact("jakarta.servlet", "jakarta.servlet-api", "6.0.0", "runtime", "jar"));
 
 			TLAppWar.addToClassPath(cp, resolveHelper,
-				artifactFactory.createArtifact("javax.servlet.jsp", "jsp-api", "2.2", "runtime", "jar"));
+				artifactFactory.createArtifact("jakarta.servlet.jsp", "jakarta.servlet.jsp-api", "3.1.0", "runtime", "jar"));
 
 			ClassLoader classLoader = TLAppWar.createClassLoader(cp);
 

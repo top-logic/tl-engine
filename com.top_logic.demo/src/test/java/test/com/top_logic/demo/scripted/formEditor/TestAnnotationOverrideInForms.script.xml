@@ -742,7 +742,7 @@
 									value="1"
 								/>
 							</object>
-							<labeled-member label="Sichtbare Spalten"/>
+							<labeled-member label="Verfügbare Spalten"/>
 							<labeled-member label="Spalten"/>
 						</path>
 					</field>

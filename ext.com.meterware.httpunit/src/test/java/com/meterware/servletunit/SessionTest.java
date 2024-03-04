@@ -22,8 +22,8 @@ package com.meterware.servletunit;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import javax.servlet.http.HttpSession;
-import javax.servlet.ServletContext;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.ServletContext;
 
 
 /**

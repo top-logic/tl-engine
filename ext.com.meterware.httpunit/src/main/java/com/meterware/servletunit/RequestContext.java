@@ -26,7 +26,7 @@ import java.util.*;
 import java.net.URL;
 import java.io.UnsupportedEncodingException;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 
 /**

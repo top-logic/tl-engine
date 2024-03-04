@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import javax.servlet.http.*;
-import javax.servlet.ServletException;
+import jakarta.servlet.http.*;
+import jakarta.servlet.ServletException;
 
 import tutorial.persistence.BettingPool;
 import tutorial.persistence.BettingPoolGame;

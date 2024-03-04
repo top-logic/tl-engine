@@ -23,9 +23,9 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Hashtable;
 
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.RequestDispatcher;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.RequestDispatcher;
 
 /**
  * This class represents a request dispatched via a RequestDispatcherImpl.

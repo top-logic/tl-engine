@@ -22,8 +22,8 @@ package com.meterware.servletunit;
 import java.io.*;
 import java.util.Enumeration;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

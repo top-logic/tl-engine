@@ -2,7 +2,7 @@
 %><%@page import="com.top_logic.basic.util.ResKey"
 %><%@page language="java" session="true"
 extends="com.top_logic.util.TopLogicJspBase"
-import ="javax.servlet.http.HttpServletResponse,
+import ="jakarta.servlet.http.HttpServletResponse,
 java.util.Collections,
 java.util.Iterator,
 com.top_logic.util.Resources,

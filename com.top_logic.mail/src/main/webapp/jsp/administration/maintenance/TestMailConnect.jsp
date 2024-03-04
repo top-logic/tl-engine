@@ -1,6 +1,6 @@
 <%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
 %><%@page import="java.util.Date"
-%><%@page import="javax.servlet.jsp.JspWriter"
+%><%@page import="jakarta.servlet.jsp.JspWriter"
 %><%@page import="java.io.PrintWriter"
 %><%@page import="com.top_logic.mig.html.layout.*"
 %><%@page import="com.top_logic.basic.Logger"

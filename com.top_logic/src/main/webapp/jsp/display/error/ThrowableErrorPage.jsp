@@ -5,7 +5,8 @@
 %><%@page import="com.top_logic.layout.basic.DefaultDisplayContext"
 %><%@page language="java" isErrorPage="true" session="true"
 extends="com.top_logic.util.TopLogicJspBase"
-import ="javax.servlet.http.HttpServletResponse,
+import ="jakarta.servlet.http.HttpServletResponse,
+jakarta.servlet.RequestDispatcher,
 java.util.Enumeration,
 java.util.Date,
 java.text.SimpleDateFormat,
@@ -24,7 +25,7 @@ com.top_logic.basic.Logger,com.top_logic.basic.version.Version"
 	
 	String  uri    = (String) request.getAttribute(ErrorPage.JAVAX_SERVLET_ERROR_REQUEST_URI);
 	if (exception == null) {
-		exception = (Throwable) request.getAttribute("javax.servlet.error.exception");
+		exception = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
 	}
 	
 	String message;

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.reporting.flex.search.SearchResultStoredReportSelector;
@@ -34,12 +35,20 @@ public class ResetReportCommand extends AJAXCommandHandler {
 	public static final String COMMAND_ID = "resetStoredConfigChartReport";
 
 	/**
+	 * Configuration options for {@link ResetReportCommand}.
+	 */
+	public interface Config extends AJAXCommandHandler.Config {
+		@Override
+		@BooleanDefault(true)
+		boolean getConfirm();
+	}
+
+	/**
 	 * Creates a new {@link ResetReportCommand}. Default constructor for
 	 * {@link CommandHandlerFactory}
 	 */
 	public ResetReportCommand(InstantiationContext context, Config config) {
 		super(context, config);
-		this.confirm = true;
 	}
 
 	@Override

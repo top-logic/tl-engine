@@ -6,6 +6,7 @@
 package com.top_logic.tool.boundsec.assistent.commandhandler;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 
 
 /**
@@ -17,11 +18,17 @@ public class ConfirmedCancelAssistentCommandHandler extends CancelAssistentComma
 
     public static final String COMMAND = "confirmedAssistentCancel";
 
-    
+	/**
+	 * Configuration options for {@link ConfirmedCancelAssistentCommandHandler}.
+	 */
+	public interface Config extends CancelAssistentCommandHandler.Config {
+		@Override
+		@BooleanDefault(true)
+		boolean getConfirm();
+	}
 
     public ConfirmedCancelAssistentCommandHandler(InstantiationContext context, Config config) {
         super(context, config);
-        confirm = true;
     }
 
 }

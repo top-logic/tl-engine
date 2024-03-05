@@ -12,6 +12,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.layout.StopTaskCommand;
@@ -66,6 +67,13 @@ public class TaskTreeComponent extends TaskListeningTreeComponent {
 	@Override
 	protected boolean processTaskStateChange(TaskListenerNotification notification) {
 		return updateTableModel(notification.getTask());
+	}
+
+	@Override
+	public boolean validateModel(DisplayContext context) {
+		// initializes the table prematurely so that it is not initialized during rendering.
+		getTableViewModel();
+		return super.validateModel(context);
 	}
 
 }

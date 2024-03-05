@@ -53,10 +53,10 @@ body {
 /* < Scrollbars */
 
 code {
-	font-family: 'Inter-Regular';
-    font-size: var(--body-02-font-size);
-    line-height: var(--body-02-line-height);
-    letter-spacing: var(--body-02-letter-spacing);
+	font-family: monospace, monospace;
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
 }
 
 h5 {
@@ -1539,8 +1539,7 @@ div.mcMinimized .accText {
 }
 
 /* Tooltip Content */
-.tooltipContent,
-.tooltipContent code {
+.tooltipContent {
 	overflow-y: auto;
 	white-space: normal;
 	overflow-wrap: break-word;
@@ -1553,17 +1552,9 @@ div.mcMinimized .accText {
 }
 
 .tooltipContent * {
-	margin: 0;
 	color: var(--text-inverse);
 	line-height: 1.5 !important;
-	padding: 0 !important;
 }
-
-.tooltipContent :is(h1, h2, h3, h4, h5, h6) {
-	clear: both;
-	margin-bottom: var(--spacing-01);
-}
-
 /*
 ****					****
 ****	Error Styles	****

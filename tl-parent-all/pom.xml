@@ -32,7 +32,7 @@
 
 	<properties>
 		<tl.version>7.9.0-SNAPSHOT</tl.version>
-		<jetty.version>9.4.51.v20230217</jetty.version>
+		<jetty.version>12.0.6</jetty.version>
 		<poi.version>5.2.5</poi.version>
 		<kafka.version>3.6.1</kafka.version>
 		<zookeeper.version>3.8.3</zookeeper.version>
@@ -1060,18 +1060,18 @@
 			    <version>2.8</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-webapp</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-webapp</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>apache-jsp</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-apache-jsp</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-servlet</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-servlet</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
@@ -1494,14 +1494,14 @@
 								</ignoreVersions>
 							</rule>
 							<rule>
-								<groupId>org.eclipse.jetty</groupId>
+								<groupId>org.eclipse.jetty.ee10</groupId>
 								
 								<!-- Limit to Jetty 10 to avoid updating jakarta.servlet -->
 								<ignoreVersions>
 									<ignoreVersion>
 										<type>regex</type>
-										<version>(?!10\.).*</version>
-									</ignoreVersion>								
+										<version>(?!12\.).*</version>
+									</ignoreVersion>
 								</ignoreVersions>
 							</rule>
 							<rule>

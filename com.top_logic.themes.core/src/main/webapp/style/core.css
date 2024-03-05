@@ -219,22 +219,26 @@ a.cmdLink:visited {
 	left: 0;
 	bottom: 0;
 	right: 0;
-	border: none;
 	height: auto;
 }
 
 .ace-eclipse .ace_active-line {
-    background: var(--background);
+    background: var(--background-selected);
 }
 
 .ace-eclipse .ace_marker-layer .ace_selection {
     background: var(--script-editor-text-highlight);
 }
 
+.ace-eclipse .ace_gutter-active-line {
+	background: var(--layer-accent);
+}
+
 /* Adjust line height for the entire Ace Editor */
 .ace_editor {
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
+	border: 1px solid var(--border-subtle);
 }
 
 /* Adjust line height for the text area of the editor */

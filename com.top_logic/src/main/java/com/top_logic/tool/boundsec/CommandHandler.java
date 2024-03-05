@@ -731,7 +731,7 @@ public BoundCommandGroup getCommandGroup();
 	 * be executed.
 	 * 
 	 * <p>
-	 * The confirmation happens only, if {@link #needsConfirm()} returns <code>true</code>.
+	 * The confirmation happens only, if the result is not <code>null</code>.
 	 * </p>
 	 *
 	 * @param component
@@ -739,7 +739,8 @@ public BoundCommandGroup getCommandGroup();
 	 * @param arguments
 	 *        The command arguments, see
 	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
-	 * @return The internationalized text to display in the confirmation dialog.
+	 * @return The internationalized text to display in the confirmation dialog, or
+	 *         <code>null</code> to prevent a confirmation dialog from being displayed.
 	 */
 	public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments);
 

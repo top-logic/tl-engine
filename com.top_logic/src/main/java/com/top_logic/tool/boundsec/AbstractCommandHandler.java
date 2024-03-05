@@ -241,6 +241,9 @@ public abstract class AbstractCommandHandler implements CommandHandler {
     
     @Override
     public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments) {
+		if (!needsConfirm()) {
+			return null;
+		}
     	Object targetModel = arguments == null ? null : CommandHandlerUtil.getTargetModel(this, component, arguments);
     	
     	ResKey customKey = getConfig().getConfirmMessage();

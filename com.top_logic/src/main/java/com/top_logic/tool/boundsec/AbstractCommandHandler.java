@@ -98,7 +98,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	private String _clique;
 
     /** Flag, if this command needs special confirmation by user. */
-    protected boolean confirm;
+    private boolean confirm;
 
     private String commandID;
 

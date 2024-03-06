@@ -8,7 +8,7 @@ package com.top_logic.knowledge.gui.layout.upload;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -114,7 +114,7 @@ public class SimpleFileNameStrategy implements FileNameStrategy {
 	 *         The given {@link FileItem} cannot be named, or its client-side name violates
 	 *         constraints.
 	 */
-	public static String getFileName(FileItem anItem) throws IOException {
+	public static String getFileName(FileItem<?> anItem) throws IOException {
 
         String theName = anItem.getName();
         

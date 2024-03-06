@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -49,13 +49,15 @@ public class DefaultDataItem extends AbstractBinaryData {
 	 * 
 	 * @return a {@link BinaryData} representing the given {@link FileItem}
 	 */
-	public static BinaryData createDataItem(FileItem item) {
+	public static BinaryData createDataItem(FileItem<?> item) {
 		return new DefaultDataItem(item.getName(), new FileItemBinaryData(item), item.getContentType());
 	}
 
-	private String contentType;
-	private BinaryData data;
-	private String name;
+	private final String contentType;
+
+	private final BinaryData data;
+
+	private final String name;
 
 	/**
 	 * Creates a {@link BinaryData} based on the given data, name, and contentType

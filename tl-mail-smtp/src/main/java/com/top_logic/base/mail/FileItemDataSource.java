@@ -12,7 +12,7 @@ import java.io.OutputStream;
 
 import javax.activation.DataSource;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 /**
  * A DataSource based on a FileItem.
@@ -24,11 +24,11 @@ import org.apache.commons.fileupload.FileItem;
 public class FileItemDataSource implements DataSource {
 
     /** Object wrapped by this class. */
-    protected FileItem item;
+	protected FileItem<?> item;
 
     /** Create a MultiPartDataSource wrapping the given Multi-Part.
      */
-    public FileItemDataSource(FileItem anItem) {
+	public FileItemDataSource(FileItem<?> anItem) {
         item = anItem;
     }
 

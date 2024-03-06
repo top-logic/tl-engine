@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
@@ -434,10 +434,10 @@ public class GalleryControl extends AbstractControl implements GalleryModelListe
 	 */
 	private void performUpload(MultipartRequest request) {
 		clearUploadedItems();
-		final List<FileItem> receivedFiles = request.getFiles();
+		var receivedFiles = request.getFiles();
 		if (receivedFiles != null) {
 			for (int i = 0; i < receivedFiles.size(); i++) {
-				final FileItem fileItem = receivedFiles.get(i);
+				FileItem<?> fileItem = receivedFiles.get(i);
 
 				String fileName = DnDFileUtilities.getFileName(fileItem);
 				if (Logger.isDebugEnabled(GalleryControl.class)) {

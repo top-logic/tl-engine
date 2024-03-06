@@ -22,7 +22,7 @@ import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -834,7 +834,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 	}
 
 	private void uploadFile(DisplayContext context) throws IOException {
-		List<FileItem> files = getFiles(context);
+		var files = getFiles(context);
 
 		if (files.size() == 1) {
 			FileItemBinaryData fileItemBinaryData = getBinaryData(files.get(0));
@@ -852,7 +852,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		}
 	}
 
-	private FileItemBinaryData getBinaryData(FileItem file) {
+	private FileItemBinaryData getBinaryData(FileItem<?> file) {
 		return new FileItemBinaryData(file);
 	}
 
@@ -871,7 +871,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		return action;
 	}
 
-	private List<FileItem> getFiles(DisplayContext context) {
+	private List<? extends FileItem<?>> getFiles(DisplayContext context) {
 		HttpServletRequest asRequest = context.asRequest();
 		MultipartRequest request = (MultipartRequest) asRequest;
 

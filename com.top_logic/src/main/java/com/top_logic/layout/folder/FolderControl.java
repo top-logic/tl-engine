@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.basic.Logger;
@@ -231,10 +231,10 @@ public class FolderControl extends TableControl implements FolderListener, Conte
 
 	private void performUpload(MultipartRequest request) {
 		clearUploadedItems();
-		final List<FileItem> receivedFiles = request.getFiles();
+		var receivedFiles = request.getFiles();
 		if (receivedFiles != null) {
 			for (int i = 0; i < receivedFiles.size(); i++) {
-				final FileItem fileItem = receivedFiles.get(i);
+				FileItem<?> fileItem = receivedFiles.get(i);
 				String fileName = DnDFileUtilities.getFileName(fileItem);
 				int splitNameIndex = fileItem.getName().lastIndexOf(':');
 				String filePath = fileItem.getName().substring(0, splitNameIndex + 1);

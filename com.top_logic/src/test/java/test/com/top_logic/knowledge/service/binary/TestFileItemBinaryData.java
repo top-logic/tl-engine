@@ -15,8 +15,8 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -47,13 +47,11 @@ public class TestFileItemBinaryData extends BasicTestCase {
      * Test the main aspects of the {@link FileItemBinaryData}.
      */
     public void testMain() throws  IOException {
-        DiskFileItemFactory dfif = new DiskFileItemFactory(DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD, 
-                                       createdCleanTestDir("TestFileItemBinaryData"));  
-        
+		DiskFileItemFactory dfif = createFileItemFactory(createdCleanTestDir("TestFileItemBinaryData"));
 		File theFile = new File(
 			ModuleLayoutConstants.SRC_TEST_DIR
 				+ "/test/com/top_logic/knowledge/service/binary/TestFileItemBinaryData.java");
-        FileItem theItem = dfif.createItem("theFile", "text/plain", false, theFile.getName());
+		FileItem<?> theItem = createFileItem(dfif, theFile);
 		try (InputStream input = new FileInputStream(theFile)) {
 			try (OutputStream output = theItem.getOutputStream()) {
 				StreamUtilities.copyStreamContents(input, output);
@@ -65,7 +63,7 @@ public class TestFileItemBinaryData extends BasicTestCase {
        
 		File otherFile = new File(ModuleLayoutConstants.SRC_TEST_DIR
 				+ "/test/com/top_logic/knowledge/service/binary/TestAll.java");
-        FileItem otherItem = dfif.createItem("theFile", "text/plain", false, otherFile.getName());
+		FileItem<?> otherItem = createFileItem(dfif, otherFile);
 		try (InputStream input1 = new FileInputStream(otherFile)) {
 			try (OutputStream output = otherItem.getOutputStream()) {
 				StreamUtilities.copyStreamContents(input1, output);
@@ -101,13 +99,11 @@ public class TestFileItemBinaryData extends BasicTestCase {
      * Provoke exceptions when using {@link FileItemBinaryData}.
      */
     public void testException() throws  IOException {
-        DiskFileItemFactory dfif = new DiskFileItemFactory(DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD, 
-                createdCleanTestDir("TestFileItemBinaryData"));  
-
+		DiskFileItemFactory dfif = createFileItemFactory(createdCleanTestDir("TestFileItemBinaryData"));
 		File theFile = new File(
 			ModuleLayoutConstants.SRC_TEST_DIR
 				+ "/test/com/top_logic/knowledge/service/binary/TestFileItemBinaryData.java");
-        FileItem theItem = dfif.createItem("theFile", "text/plain", false, theFile.getName());
+		FileItem<?> theItem = createFileItem(dfif, theFile);
 		try (InputStream input = new FileInputStream(theFile)) {
 			try (OutputStream output = theItem.getOutputStream()) {
 				StreamUtilities.copyStreamContents(input, output);
@@ -124,7 +120,20 @@ public class TestFileItemBinaryData extends BasicTestCase {
         assertFalse(tmpData.equals(theFibd));
         assertFalse(theFibd.equals(tmpData)); // The Errors logged are correct.
     }
-    
+
+	private FileItem<?> createFileItem(DiskFileItemFactory fileItemFactory, File file) {
+		return fileItemFactory.fileItemBuilder()
+			.setFieldName("theFile")
+			.setContentType("text/plain")
+			.setFileName(file.getName())
+			.setFormField(false)
+			.get();
+	}
+
+	private DiskFileItemFactory createFileItemFactory(File directory) {
+		return DiskFileItemFactory.builder().setPath(directory.toPath()).get();
+	}
+
 	/**
 	 * Test suite.
 	 */

@@ -2,24 +2,36 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
 	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
 >
 	<arguments
-		closableUsingX="true"
-		createOpenerButtons="true"
-		height="500px"
-		helpID=""
-		openMaximized="false"
-		resizable="true"
-		width="800px"
+		height="200px"
+		width="600px"
 	>
+		<forms>
+			<form type="test.commandApproval:StatefulElement">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.commandApproval:StatefulElement#name"
+						type="tl.core:String"
+					>
+						<annotations>
+							<render-whole-line/>
+						</annotations>
+					</field>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.a17a80fd-aeb5-4cff-ad09-7b152095d742">
+				<en>New element</en>
+				<de>Neues Element</de>
+			</title>
+		</title>
 		<open-handler id="ID_35819e27_7736_48a6_b8b3_7c565f58b581"
 			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
-			clique="create"
-			confirm="false"
-			disabledImage=""
-			group="Create"
-			image=""
 			targetComponent="com.top_logic.demo/technical/components/commandExecutability/newElement/dialog.layout.xml#Editor"
 		>
 			<resourceKey key="dynamic.a17a80fd-aeb5-4cff-ad09-7b152095d742">
@@ -27,25 +39,8 @@
 				<de>Neues Element</de>
 			</resourceKey>
 		</open-handler>
-		<title>
-			<title key="dynamic.a17a80fd-aeb5-4cff-ad09-7b152095d742">
-				<en>New element</en>
-				<de>Neues Element</de>
-			</title>
-		</title>
-		<typeOptions
-			include-subtypes="true"
-			type="test.commandApproval:StatefulElement"
-		/>
-		<create-handler id="ID_8788c5e5_6ec0_4f9a_8d51_46678702537c"
-			clique="save"
-			confirm="false"
-			disabledImage=""
-			group="Create"
-			ignoreWarnings="default"
-			image=""
-			linkOperation=""
-		>
+		<typeOptions type="test.commandApproval:StatefulElement"/>
+		<create-handler id="ID_8788c5e5_6ec0_4f9a_8d51_46678702537c">
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/commandExecutability/operationsTable.layout.xml#Table)"/>
 			</postCreateActions>

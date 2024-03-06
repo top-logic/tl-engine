@@ -6,8 +6,12 @@
 			<classifier name="NEW"/>
 			<classifier name="ACTIVE"/>
 			<classifier name="CLOSED"/>
+			<classifier name="CANCLED"/>
 		</enum>
 		<class name="StatefulElement">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
 			<attributes>
 				<property name="name"
 					type="tl.core:String"
@@ -26,6 +30,23 @@
 						<visibility value="read-only"/>
 					</annotations>
 				</reference>
+				<property name="reason"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> $value != null || 
+    !$obj.get(`test.commandApproval:StatefulElement#stop`) || 
+    #("Für den Abbruch muss ein Grund angegeben werden"@de, 
+      "Canceling the process requires a reason."@en)]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="stop"
+					type="tl.core:Boolean"
+				/>
 			</attributes>
 		</class>
 	</module>

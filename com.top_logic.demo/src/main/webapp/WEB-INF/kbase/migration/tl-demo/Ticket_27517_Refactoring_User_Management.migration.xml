@@ -39,70 +39,58 @@
 		/>
 	</dependencies>
 	<processors>
-		<apply-patches>
-			<delete name="DemoTypes:DemoTypes.A#person"/>
-			<create-part
-				before="containment"
-				type="DemoTypes:DemoTypes.A"
-			>
-				<reference name="account"
-					kind="forwards"
-					type="tl.accounts:Person"
-				/>
-			</create-part>
-			<create-part
-				before="containment"
-				type="DemoTypes:DemoTypes.A"
-			>
-				<reference name="contact"
-					kind="forwards"
-					type="Contacts:PersonContact"
-				/>
-			</create-part>
-			<delete name="DemoTypes:DemoTypes.X#person"/>
-			<create-part
-				before="gallery"
-				type="DemoTypes:DemoTypes.X"
-			>
-				<property name="account"
-					type="tl.accounts:Person"
-				>
-					<annotations>
-						<storage-algorithm>
-							<derived-storage>
-								<expression-evaluation>
-									<chain>
-										<config-reference name="parent"/>
-										<get-value attribute="account"/>
-									</chain>
-								</expression-evaluation>
-							</derived-storage>
-						</storage-algorithm>
-					</annotations>
-				</property>
-			</create-part>
-			<create-part
-				before="gallery"
-				type="DemoTypes:DemoTypes.X"
-			>
-				<property name="contact"
-					type="Contacts:PersonContact"
-				>
-					<annotations>
-						<storage-algorithm>
-							<derived-storage>
-								<expression-evaluation>
-									<chain>
-										<config-reference name="parent"/>
-										<get-value attribute="contact"/>
-									</chain>
-								</expression-evaluation>
-							</derived-storage>
-						</storage-algorithm>
-					</annotations>
-				</property>
-			</create-part>
-		</apply-patches>
+		<delete-reference name="DemoTypes:DemoTypes.A#person"/>
+		<delete-property name="DemoTypes:DemoTypes.X#person"/>
+		<create-property name="DemoTypes:DemoTypes.X#account"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<config-reference name="parent"/>
+								<get-value attribute="account"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="DemoTypes:DemoTypes.X#contact"
+			type="Contacts:PersonContact"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<config-reference name="parent"/>
+								<get-value attribute="contact"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-reference name="DemoTypes:DemoTypes.A#account"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="DemoTypes:DemoTypes.A#contact"
+			type="Contacts:PersonContact"
+		/>
+		<reorder-part name="DemoTypes:DemoTypes.A#account"
+			before="containment"
+		/>
+		<reorder-part name="DemoTypes:DemoTypes.A#contact"
+			before="containment"
+		/>
+		<reorder-part name="DemoTypes:DemoTypes.X#account"
+			before="gallery"
+		/>
+		<reorder-part name="DemoTypes:DemoTypes.X#contact"
+			before="gallery"
+		/>
 	</processors>
 	<migration>
 		<type-mapping class=""/>

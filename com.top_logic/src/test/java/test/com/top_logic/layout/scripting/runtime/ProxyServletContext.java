@@ -31,7 +31,6 @@ import jakarta.servlet.descriptor.JspConfigDescriptor;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-@SuppressWarnings("deprecation")
 class ProxyServletContext implements ServletContext {
 
 	private final ServletContext impl;
@@ -116,37 +115,13 @@ class ProxyServletContext implements ServletContext {
 	}
 
 	@Override
-	@Deprecated
-	public Servlet getServlet(String name) throws ServletException {
-		return impl.getServlet(name);
-	}
-
-	@Override
 	public String getServletContextName() {
 		return impl.getServletContextName();
 	}
 
 	@Override
-	@Deprecated
-	public Enumeration<String> getServletNames() {
-		return impl.getServletNames();
-	}
-
-	@Override
-	@Deprecated
-	public Enumeration<Servlet> getServlets() {
-		return impl.getServlets();
-	}
-
-	@Override
 	public void log(String msg) {
 		impl.log(msg);
-	}
-
-	@Override
-	@Deprecated
-	public void log(Exception exception, String msg) {
-		impl.log(exception, msg);
 	}
 
 	@Override

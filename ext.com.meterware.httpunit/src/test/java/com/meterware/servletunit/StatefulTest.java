@@ -163,10 +163,6 @@ public class StatefulTest extends TestCase {
         assertTrue( "No attribute names in list", e.hasMoreElements() );
         assertEquals( "First attribute name", "color", e.nextElement() );
         assertTrue( "List did not end after one name", !e.hasMoreElements() );
-
-        String[] names = ic.getRequest().getSession().getValueNames();
-        assertEquals( "number of value names", 1, names.length );
-        assertEquals( "first name", "color", names[0] );
     }
 
 

@@ -217,9 +217,6 @@ public class CommentDialogComponent extends FormComponent {
 
         }
 
-        /**
-         * @see com.top_logic.tool.boundsec.AbstractCommandHandler#needsConfirm()
-         */
         @Override
         public boolean needsConfirm() {
             return false;
@@ -271,9 +268,6 @@ public class CommentDialogComponent extends FormComponent {
             }
         }
 
-        /**
-         * @see com.top_logic.tool.boundsec.AbstractCommandHandler#needsConfirm()
-         */
         @Override
         public boolean needsConfirm() {
             return false;

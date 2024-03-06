@@ -234,8 +234,10 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		return _clique;
 	}
 
-    @Override
-	public boolean needsConfirm() {
+	/**
+	 * Whether the configured or default confirmation message is shown.
+	 */
+	protected boolean needsConfirm() {
         return this.confirm;
     }
     

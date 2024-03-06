@@ -18,7 +18,6 @@ import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.layout.form.component.AbstractDeleteCommandHandler;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.error.TopLogicException;
@@ -37,7 +36,7 @@ public class StructuredElementRemoveHandler extends AbstractDeleteCommandHandler
 	public interface Config extends AbstractDeleteCommandHandler.Config {
 
 		@Override
-		@BooleanDefault(BoundCommand.NEEDS_CONFIRM)
+		@BooleanDefault(true)
 		boolean getConfirm();
 
 		@Override

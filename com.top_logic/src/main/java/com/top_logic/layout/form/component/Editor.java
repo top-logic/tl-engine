@@ -250,7 +250,7 @@ public interface Editor extends EditMode, CanApply {
 	@Override
 	default Command getApplyClosure() {
 		CommandHandler applyCommand = getApplyCommandHandler();
-		if (applyCommand == null || applyCommand.needsConfirm()) {
+		if (applyCommand == null) {
 			return null;
 		}
 	

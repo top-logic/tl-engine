@@ -39,8 +39,6 @@ public class TestAJAXCommandHandler extends TestCase {
 		TestedAJAXCommandHandler tajax = AbstractCommandHandler.newInstance(TestAJAXCommandHandler.TestedAJAXCommandHandler.class,
 			"mrProper");
         
-        assertFalse(tajax.needsConfirm());
-                
         assertEquals("mrProper", tajax.getID());
         
         try { // cannot really test this, well
@@ -61,8 +59,6 @@ public class TestAJAXCommandHandler extends TestCase {
 						"mrProper"),
 				true));
         
-        assertFalse(tajax.needsConfirm());
-                
         assertEquals("mrProper", tajax.getID());
         
         try { // cannot really test this, well

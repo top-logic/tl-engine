@@ -21,12 +21,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public interface BoundCommand extends Serializable {
 
-	/** Convenient constant to use with {@link #needsConfirm()}. */
-    public static final boolean NEEDS_CONFIRM = true;
-
-	/** Convenient constant to use with {@link #needsConfirm()}. */
-	public static final boolean NEEDS_NO_CONFIRM = false;
-
     /**
      * Return the command name of this handler.
      * 
@@ -42,17 +36,6 @@ public interface BoundCommand extends Serializable {
      *         does not belong to any group
      */
     public BoundCommandGroup getCommandGroup();
-    
-    /**
-     * Indicates to some gui that the User must confirm the command.
-     * <br />
-     * "Do you really want to shut down this application?"<br />
-     * "Do you really want to destroy the world?"<br />
-     * "Exporting may take several hours, is your coffe-machine ready?"<br />
-     * 
-     * @return true when this is some "dangerous" or "important" command
-     */
-    public boolean needsConfirm();
 
     /**
 	 * The resource key used for translation of GUI elements for this command (when available).

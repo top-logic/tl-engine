@@ -302,8 +302,6 @@ public interface CommandHandler
 
 		/**
 		 * Whether the user is asked for confirmation before the command is actually executed.
-		 * 
-		 * @see CommandHandler#needsConfirm()
 		 */
 		@Name(CONFIRM_PROPERTY)
 		boolean getConfirm();
@@ -689,13 +687,6 @@ public interface CommandHandler
 	 */
 	public static final Map<String, Object> NO_ARGS = Collections.emptyMap();
 
-	/**
-	 * Value to enable {@link Config#getConfirm()}
-	 *
-	 * @see #needsConfirm()
-	 */
-	public static final boolean NEEDS_CONFIRM = true;
-
    /**
     * Return the command name of this handler.
     * 
@@ -719,12 +710,6 @@ public BoundCommandGroup getCommandGroup();
 	 * {@link CommandHandler} is part of.
 	 */
 	String getClique();
-
-   	/**
-	 * Whether the user is asked for confirmation before the command is executed.
-	 */
-	@Override
-	public boolean needsConfirm();
 
 	/**
 	 * The message displayed to the user requesting for confirmation that the command should really

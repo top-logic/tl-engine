@@ -362,7 +362,15 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		List<DiffElement> patch = patchCreator.getPatch();
 		if (!patch.isEmpty()) {
 			Logger.info("Started incremental model upgrade: " + patch, DynamicModelService.class);
-			ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch);
+
+			ApplyModelPatch apply = new ApplyModelPatch(log, getModel(), getFactory());
+			apply.applyPatch(patch);
+			apply.complete();
+
+			Logger.info(
+				"Use the following processors in an automatic data migration to avoid the incremental model upgrade: "
+						+ apply.migrationProcessors(),
+				DynamicModelService.class);
 
 			storeModelConfig(connection);
 

@@ -122,7 +122,7 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 		super(context, config);
 	}
 
-	protected <T> T nullIfUnset(String propertyName) {
+	<T> T nullIfUnset(String propertyName) {
 		return MigrationUtils.nullIfUnset(getConfig(), propertyName);
 	}
 

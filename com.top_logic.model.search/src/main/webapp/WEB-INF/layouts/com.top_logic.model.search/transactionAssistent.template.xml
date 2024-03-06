@@ -5,7 +5,7 @@
 	assistant-for="com.top_logic.model.search/transaction.template.xml"
 	groups="dialogs"
 >
-	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.tool.boundsec.CommandHandler$ImageConfig, com.top_logic.tool.boundsec.CommandHandler$ExecutabilityConfig, com.top_logic.tool.boundsec.CommandHandler$ConfirmConfig, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$UIOptions, com.top_logic.model.search.providers.TransactionHandlerByExpression$UIOptions">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.tool.boundsec.CommandHandler$ImageConfig, com.top_logic.tool.boundsec.CommandHandler$ExecutabilityConfig, com.top_logic.tool.boundsec.CommandHandler$TargetConfig, com.top_logic.tool.boundsec.CommandHandler$ConfirmConfig, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$UIOptions, com.top_logic.model.search.providers.TransactionHandlerByExpression$UIOptions">
 		<annotations>
 			<display-inherited value="IGNORE"/>
 			<display-order>

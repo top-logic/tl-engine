@@ -263,6 +263,25 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
 	}
 
 	/**
+	 * Creates a {@link Command} that {@link #resume(DisplayContext, Map) resumes} a
+	 * {@link #suspended() suspended} execution with some property set on the
+	 * {@link DisplayContext}.
+	 * 
+	 * @see #resume(DisplayContext, Map)
+	 */
+	public <T> Command resumeContinuation(TypedAnnotatable.Property<T> property, T value) {
+		return new Command() {
+			@Override
+			public HandlerResult executeCommand(DisplayContext resumeContext) {
+				resumeContext.set(property, value);
+				HandlerResult result = resume(resumeContext, Collections.emptyMap());
+				resumeContext.reset(property);
+				return result;
+			}
+		};
+	}
+
+	/**
 	 * Same as {@link #resume(DisplayContext, Map)} without additional arguments.
 	 */
 	public final HandlerResult resume(DisplayContext resumeContext) {

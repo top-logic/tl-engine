@@ -18,6 +18,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ProcessingInfo;
 import com.top_logic.layout.ProcessingKind;
 import com.top_logic.layout.admin.component.PerformanceMonitor;
+import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.component.ComponentUtil;
@@ -93,9 +94,11 @@ public class CommandDispatcher {
 				LayoutData layout =
 					DefaultLayoutData.newLayoutData(DisplayDimension.px(400), DisplayDimension.px(150));
 
-				CommandModel ok = MessageBox.button(ButtonType.OK,
-					approveContext -> dispatchCommand(command, approved(approveContext), component, someArguments));
-				return MessageBox
+				HandlerResult suspended = HandlerResult.suspended();
+				Command continuation = suspended.resumeContinuation(COMMAND_APPROVED, Boolean.TRUE);
+				CommandModel ok = MessageBox.button(ButtonType.OK, continuation);
+
+				MessageBox
 					.newBuilder(MessageType.CONFIRM)
 					.layout(layout)
 					.message(message)
@@ -103,10 +106,8 @@ public class CommandDispatcher {
 						ScriptingRecorder.annotateAsDontRecord(ok),
 						ScriptingRecorder.annotateAsDontRecord(MessageBox.button(ButtonType.CANCEL)))
 					.confirm(context.getWindowScope());
+				return suspended;
 			}
-		} else {
-			// Do not record synthetic argument.
-			context.reset(COMMAND_APPROVED);
 		}
 
 		HandlerResult result;

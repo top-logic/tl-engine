@@ -26,8 +26,6 @@ import java.util.Hashtable;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.HttpSessionContext;
-
 
 public class ServletUnitHttpSession implements HttpSession {
 
@@ -117,14 +115,6 @@ public class ServletUnitHttpSession implements HttpSession {
         _listenerDispatcher.sendSessionDestroyed( this );
         _invalid = true;
         _values.clear();
-    }
-
-
-    /**
-     * @deprecated no replacement.
-     **/
-    public HttpSessionContext getSessionContext() {
-        return null;
     }
 
 

@@ -33,6 +33,7 @@ import java.util.Map;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -489,7 +490,22 @@ public class RequestContextTest extends HttpUnitTest {
 				throws IOException, ServletException {
 			throw new UnsupportedOperationException();
 		}
-    }
 
+		@Override
+		public String getRequestId() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getProtocolRequestId() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ServletConnection getServletConnection() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
 
 }

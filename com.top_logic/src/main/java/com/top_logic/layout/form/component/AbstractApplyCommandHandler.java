@@ -14,8 +14,8 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
@@ -26,6 +26,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -123,21 +124,17 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 	 */
 	public interface Config extends AbstractFormCommandHandler.Config {
 
-		/**
-		 * @see #isSave()
-		 */
-		String SAVE_PROPERTY = "save";
+		@Override
+		@FormattedDefault("tl.command.apply")
+		ResKey getResourceKey();
+
+		@Override
+		@StringDefault(CommandHandlerFactory.APPLY_CLIQUE)
+		String getClique();
 
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
 		CommandGroupReference getGroup();
-
-		/**
-		 * Whether an {@link EditComponent} this command is executed on should switch to view mode
-		 * after the command executed successfully.
-		 */
-		@Name(SAVE_PROPERTY)
-		boolean isSave();
 
 	}
 
@@ -303,14 +300,7 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
     @Override
 	@Deprecated
 	public ResKey getDefaultI18NKey() {
-		return (isSaveCommmand() ? I18NConstants.SAVE : I18NConstants.APPLY);
-    }
-
-    /**
-     * Flag to indicate, that this command handler is a save command handler.
-     */
-    protected boolean isSaveCommmand() {
-		return ((Config) getConfig()).isSave();
+		return I18NConstants.APPLY;
     }
 
     /**
@@ -354,28 +344,6 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 		sendEvent(model, component);
 
 		component.invalidateButtons();
-
-		switchToViewMode(component, formContext, model);
-	}
-
-	/**
-	 * Switches back to view mode, if {@link #isSaveCommmand()}.
-	 *
-	 * @param component
-	 *        The component to be updated, must not be <code>null</code>.
-	 * @param formContext
-	 *        The current {@link FormContext}.
-	 * @param model
-	 *        The object modified by this handler, must not be <code>null</code>.
-	 */
-	protected void switchToViewMode(LayoutComponent component, FormContext formContext, Object model) {
-		if (isSaveCommmand() && (component instanceof EditComponent)) {
-			EditComponent editor = (EditComponent) component;
-
-			if (!editor.isInViewMode()) {
-				editor.setViewMode();
-			}
-		}
 	}
 
     /** 

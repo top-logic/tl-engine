@@ -8,11 +8,13 @@ package com.top_logic.model.search.providers;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.component.AbstractApplyAttributedCommandHandler;
@@ -32,6 +34,7 @@ import com.top_logic.tool.boundsec.CommandHandlerUtil;
 /**
  * Apply command handler that can be extended with an operation in TL-Script.
  */
+@InApp(classifiers = "form")
 public class ApplyCommandByExpression extends DefaultApplyAttributedCommandHandler {
 
 	/**
@@ -39,7 +42,10 @@ public class ApplyCommandByExpression extends DefaultApplyAttributedCommandHandl
 	 */
 	public interface Config
 			extends AbstractApplyAttributedCommandHandler.Config, WithPostCreateActions.Config, UIOptions {
-		// Pure sum interface.
+
+		@Override
+		@StringDefault("storeAttributes")
+		String getId();
 	}
 
 	/**

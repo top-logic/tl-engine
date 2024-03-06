@@ -400,17 +400,20 @@
 							</field-values>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.CommandHandlerReference"
-							command-label="Speichern!"
-							command-name="saveIgnoreWarnings"
-							comment=""
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
 							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
 							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-							failure-message=""
 							user-id="root"
 						>
 							<arguments/>
 						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ja"
+							user-id="root"
+						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 							comment="Ensure no confirm dialog"
 							failure-message=""
@@ -835,17 +838,20 @@
 											</field-values>
 										</action>
 										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-											command-implementation-comment="com.top_logic.tool.boundsec.CommandHandlerReference"
-											command-label="Speichern!"
-											command-name="saveIgnoreWarnings"
-											comment=""
+											command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+											command-label="Speichern"
+											command-name="defaultSave"
 											component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
 											component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-											failure-message=""
 											user-id="root"
 										>
 											<arguments/>
 										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Ja"
+											user-id="root"
+										/>
 										<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 											comment=""
 											failure-message=""
@@ -1991,5 +1997,9 @@
 				</action>
 			</actions>
 		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Variable/Action-Variable-Alle loeschen.xml"
+			template-name-comment="Variable Alle loeschen"
+		/>
 	</actions>
 </action>

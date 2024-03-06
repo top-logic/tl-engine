@@ -288,7 +288,7 @@ public interface CommandHandler
 	/**
 	 * Configuration options for the confirm message of a command.
 	 */
-	public interface ConfirmConfig extends TargetConfig {
+	public interface ConfirmConfig {
 
 		/**
 		 * @see #getConfirm()
@@ -311,8 +311,8 @@ public interface CommandHandler
 		 * really be executed.
 		 * 
 		 * <p>
-		 * The message can refer to the {@link #getTarget() target model} of the command using the
-		 * <code>{0}</code> placeholder.
+		 * The message can refer to the {@link TargetConfig#getTarget() target model} of the command
+		 * using the <code>{0}</code> placeholder.
 		 * </p>
 		 * 
 		 * <p>
@@ -456,7 +456,8 @@ public interface CommandHandler
 		Config.CONFIRM_PROPERTY,
 		Config.CONFIRM_MESSAGE
 	})
-	public interface Config extends ConfigBase<CommandHandler>, ExecutabilityConfig, ConfirmConfig, CommandDefaults {
+	public interface Config
+			extends ConfigBase<CommandHandler>, ExecutabilityConfig, TargetConfig, ConfirmConfig, CommandDefaults {
 
 		/**
 		 * @see #getId()

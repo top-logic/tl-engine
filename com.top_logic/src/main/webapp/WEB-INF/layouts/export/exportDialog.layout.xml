@@ -4,7 +4,6 @@
 	titleKey="tool.export.progress.dialog.tabber"
 >
 	<dialogInfo
-		closableUsingX="false"
 		createOpenerButtons="false"
 		executability="Always"
 		height="170"

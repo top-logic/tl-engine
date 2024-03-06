@@ -741,7 +741,7 @@ public class MessageBox extends MessageBoxShortcuts {
 			HTMLFragment message, CommandModel... buttons) {
 		assert buttons != null && buttons.length > 0 : "No buttons given.";
 		
-		final DialogModel dialogModel = new DefaultDialogModel(layout, title, resizable, false, null);
+		final DialogModel dialogModel = new DefaultDialogModel(layout, title, resizable, true, null);
 
 		// Wrap actions so that the dialog is closed after each action. 
 		final List<CommandModel> wrappedButtons = new ArrayList<>(buttons.length);

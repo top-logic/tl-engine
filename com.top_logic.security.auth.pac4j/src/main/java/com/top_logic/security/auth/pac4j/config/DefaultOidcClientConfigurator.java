@@ -8,13 +8,12 @@ package com.top_logic.security.auth.pac4j.config;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import jakarta.servlet.ServletContext;
-
 import org.pac4j.core.client.Client;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.util.generator.ValueGenerator;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.oidc.metadata.StaticOidcOpMetadataResolver;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.util.ResourceRetriever;
@@ -36,6 +35,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+
+import jakarta.servlet.ServletContext;
 
 /**
  * Base class for {@link ClientConfigurator}s allowing to configure common properties.
@@ -196,8 +197,6 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * If not set, {@link #getDiscoveryURI()} must be set to dynamically retrieve the provider
 		 * configuration.
 		 * </p>
-		 * 
-		 * @see OidcConfiguration#getProviderMetadata()
 		 */
 		@Name("provider-metadata")
 		@Format(ProviderFormat.class)
@@ -317,7 +316,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		}
 		OIDCProviderMetadata providerMetadata = config.getProviderMetadata();
 		if (providerMetadata != null) {
-			odic.setProviderMetadata(providerMetadata);
+			odic.setOpMetadataResolver(new StaticOidcOpMetadataResolver(odic, providerMetadata));
 		}
 		odic.setReadTimeout(config.getReadTimeout());
 		odic.setResourceRetriever(config.getResourceRetriever());

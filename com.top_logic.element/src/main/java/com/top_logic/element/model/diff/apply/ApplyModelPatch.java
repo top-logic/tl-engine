@@ -5,16 +5,38 @@
  */
 package com.top_logic.element.model.diff.apply;
 
+import static com.top_logic.basic.config.TypedConfiguration.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.CloseableIterator;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.dob.schema.config.DBColumnType;
+import com.top_logic.element.config.AssociationConfig;
+import com.top_logic.element.config.AssociationConfig.EndConfig;
+import com.top_logic.element.config.AttributeConfig;
+import com.top_logic.element.config.ClassConfig;
+import com.top_logic.element.config.EndAspect;
+import com.top_logic.element.config.ExtendsConfig;
+import com.top_logic.element.config.InterfaceConfig;
+import com.top_logic.element.config.ModuleConfig;
+import com.top_logic.element.config.ObjectTypeConfig;
+import com.top_logic.element.config.PartConfig;
+import com.top_logic.element.config.ReferenceConfig;
+import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
 import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.model.ModelResolver;
@@ -41,6 +63,42 @@ import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdatePartType;
 import com.top_logic.element.model.diff.config.visit.DiffVisitor;
+import com.top_logic.element.model.migration.ChangeAttributeTargetType;
+import com.top_logic.element.model.migration.ChangeAttributeTargetType.ChangeRefConfig;
+import com.top_logic.element.model.migration.model.AbstractCreateTypePartProcessor;
+import com.top_logic.element.model.migration.model.AbstractEndAspectProcessor;
+import com.top_logic.element.model.migration.model.AddTLAnnotations;
+import com.top_logic.element.model.migration.model.AddTLClassGeneralization;
+import com.top_logic.element.model.migration.model.CreateInverseTLReferenceProcessor;
+import com.top_logic.element.model.migration.model.CreateTLAssociationEndProcessor;
+import com.top_logic.element.model.migration.model.CreateTLAssociationProcessor;
+import com.top_logic.element.model.migration.model.CreateTLClassProcessor;
+import com.top_logic.element.model.migration.model.CreateTLClassifierProcessor;
+import com.top_logic.element.model.migration.model.CreateTLDatatypeProcessor;
+import com.top_logic.element.model.migration.model.CreateTLEnumerationProcessor;
+import com.top_logic.element.model.migration.model.CreateTLModuleProcessor;
+import com.top_logic.element.model.migration.model.CreateTLObjectProcessor;
+import com.top_logic.element.model.migration.model.CreateTLPropertyProcessor;
+import com.top_logic.element.model.migration.model.CreateTLReferenceProcessor;
+import com.top_logic.element.model.migration.model.CreateTLSingletonProcessor;
+import com.top_logic.element.model.migration.model.DeleteTLClassProcessor;
+import com.top_logic.element.model.migration.model.DeleteTLModuleProcessor;
+import com.top_logic.element.model.migration.model.DeleteTLPropertyProcessor;
+import com.top_logic.element.model.migration.model.DeleteTLReferenceProcessor;
+import com.top_logic.element.model.migration.model.MarkTLTypePartOverride;
+import com.top_logic.element.model.migration.model.RemoveTLAnnotations;
+import com.top_logic.element.model.migration.model.RemoveTLClassGeneralization;
+import com.top_logic.element.model.migration.model.ReorderTLClassGeneralization;
+import com.top_logic.element.model.migration.model.ReorderTLTypePart;
+import com.top_logic.element.model.migration.model.SetDefaultTLClassifierProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLAnnotations;
+import com.top_logic.element.model.migration.model.UpdateTLAssociationEndProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLReferenceProcessor;
+import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.model.TLAssociation;
+import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
@@ -50,13 +108,25 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLProperty;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.security.RoleConfig;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.config.DatatypeConfig;
+import com.top_logic.model.config.EnumConfig;
+import com.top_logic.model.config.EnumConfig.ClassifierConfig;
+import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.error.TopLogicException;
@@ -67,6 +137,24 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, Void, RuntimeException> {
+
+	/**
+	 * Sequence of {@link MigrationProcessor} that can be execute to apply a model patch within a
+	 * migration.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface MigrationProcessors extends ConfigurationItem {
+
+		/**
+		 * {@link MigrationProcessor}s to execute.
+		 */
+		@DefaultContainer
+		List<PolymorphicConfiguration<? extends MigrationProcessor>> getProcessors();
+
+	}
+
+	private MigrationProcessors _processors = newConfigItem(MigrationProcessors.class);
 
 	/**
 	 * {@link DiffVisitor} computing a priority to sort {@link DiffElement}s before applying a
@@ -267,6 +355,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				+ "'.");
 			part.setAnnotation(TypedConfiguration.copy(annotation));
 		}
+
+		AddTLAnnotations.Config config = newConfigItem(AddTLAnnotations.Config.class);
+		config.setName(diff.getPart());
+		copyAnnotations(diff, config);
+		addProcessor(config);
 		return null;
 	}
 
@@ -293,6 +386,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 					+ "'.");
 			part.setAnnotation(TypedConfiguration.copy(annotation));
 		}
+
+		UpdateTLAnnotations.Config config = newConfigItem(UpdateTLAnnotations.Config.class);
+		config.setName(diff.getPart());
+		copyAnnotations(diff, config);
+		addProcessor(config);
 		return null;
 	}
 
@@ -339,6 +437,18 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Adding generalization '" + diff.getGeneralization() + "' to '" + diff.getType() + "'.");
 		int index = before == null ? generalizations.size() : generalizations.indexOf(before);
 		generalizations.add(index, generalization);
+
+		AddTLClassGeneralization.Config config = newConfigItem(AddTLClassGeneralization.Config.class);
+		QualifiedTypeName type = qTypeName(diff.getType());
+		config.setName(type);
+
+		QualifiedTypeName generalizationName = qTypeName(diff.getGeneralization());
+		config.getGeneralizations().add(newGeneralization(generalizationName));
+		addProcessor(config);
+
+		if (before != null) {
+			addReorderGeneralization(type, generalizationName, diff.getBefore());
+		}
 		return null;
 	}
 
@@ -388,7 +498,19 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		int index = before == null ? generalizations.size() : generalizations.indexOf(before);
 
 		generalizations.add(index, generalization);
+
+		addReorderGeneralization(qTypeName(diff.getType()), qTypeName(diff.getGeneralization()), diff.getBefore());
 		return null;
+	}
+
+	private void addReorderGeneralization(QualifiedTypeName type, QualifiedTypeName generalization, String before) {
+		ReorderTLClassGeneralization.Config config = newConfigItem(ReorderTLClassGeneralization.Config.class);
+		config.setType(type);
+		config.setGeneralization(generalization);
+		if (before != null) {
+			config.setBefore(qTypeName(before));
+		}
+		addProcessor(config);
 	}
 
 	@Override
@@ -423,6 +545,25 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		createSingleton(module, config);
 		return null;
+	}
+
+	@Override
+	public void createSingleton(TLModule module, SingletonConfig singleton) {
+		super.createSingleton(module, singleton);
+
+		addSingleton(module.getName(), singleton);
+	}
+
+	private void addSingleton(String module, SingletonConfig singleton) {
+		CreateTLSingletonProcessor.Config config = newConfigItem(CreateTLSingletonProcessor.Config.class);
+		config.setModule(module);
+		config.setName(singleton.getName());
+		CreateTLObjectProcessor.Config singletonConf = newConfigItem(CreateTLObjectProcessor.Config.class);
+		String typeSpec = singleton.getTypeSpec();
+		singletonConf.setType(qTypeName(typeSpec));
+		singletonConf.setTable(TLAnnotations.getTable((TLType) resolvePart(typeSpec)));
+		config.setSingleton(singletonConf);
+		addProcessor(config);
 	}
 
 	@Override
@@ -467,6 +608,113 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 		addType(module, module, diff.getType());
 		return null;
+	}
+
+	@Override
+	protected void addObjectType(TLModule module, TLScope scope, ObjectTypeConfig config) {
+		super.addObjectType(module, scope, config);
+
+		String moduleName = module.getName();
+		if (config instanceof InterfaceConfig) {
+			addObjectType(moduleName, config, Boolean.TRUE, null, Collections.emptyList());
+		} else if (config instanceof ClassConfig) {
+			ClassConfig type = (ClassConfig) config;
+			addObjectType(moduleName, config, type.isAbstract(), type.isFinal(), type.getTypes());
+		} else {
+			throw new UnreachableAssertion("Unexpected type config: " + config);
+		}
+	}
+
+	private void addObjectType(String moduleName, ObjectTypeConfig type, Boolean isAbstract, Boolean isFinal,
+			Collection<TypeConfig> innerTypes) {
+		QualifiedTypeName newClassName = qTypeName(moduleName, type.getName());
+		CreateTLClassProcessor.Config newClass = newConfigItem(CreateTLClassProcessor.Config.class);
+		newClass.setName(newClassName);
+		if (isAbstract != null) {
+			newClass.setAbstract(isAbstract.booleanValue());
+		}
+		if (isFinal != null) {
+			newClass.setFinal(isFinal.booleanValue());
+		}
+		copyAnnotations(type, newClass);
+
+		List<ExtendsConfig> generalizations = type.getGeneralizations();
+		if (generalizations.isEmpty()) {
+			newClass.setPrimaryGeneralization(qTypeName(TlModelFactory.TL_MODEL_STRUCTURE, TLObject.TL_OBJECT_TYPE));
+		} else {
+			/* Generalizations are created later. */
+			newClass.setWithoutPrimaryGeneralization(true);
+
+			AddTLClassGeneralization.Config generalizationsConfig =
+				newConfigItem(AddTLClassGeneralization.Config.class);
+			generalizationsConfig.setName(newClassName);
+			for (int i = 0; i < generalizations.size(); i++) {
+				QualifiedTypeName generalizationName =
+					getQualifiedTypeName(moduleName, generalizations.get(i).getQualifiedTypeName());
+				generalizationsConfig.getGeneralizations().add(newGeneralization(generalizationName));
+			}
+			schedule().createTypeHierarchy(() -> addProcessor(generalizationsConfig));
+		}
+
+		addProcessor(newClass);
+
+		if (!innerTypes.isEmpty()) {
+			log().info("Unable to create migration processors for inner types of type '" + newClassName + "'.",
+				Protocol.WARN);
+		}
+
+	}
+
+	private QualifiedTypeName getQualifiedTypeName(String moduleName, String typeName) {
+		if (typeName.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR) >= 0) {
+			return qTypeName(typeName);
+		}
+		return qTypeName(moduleName, typeName);
+	}
+
+	@Override
+	protected void addDataType(TLModule module, TLScope scope, DatatypeConfig config) {
+		super.addDataType(module, scope, config);
+		addDatatypeProcessor(module.getName(), config);
+	}
+
+	private void addDatatypeProcessor(String moduleName, DatatypeConfig type) {
+		CreateTLDatatypeProcessor.Config config = newConfigItem(CreateTLDatatypeProcessor.Config.class);
+		config.setName(qTypeName(moduleName, type.getName()));
+		config.setKind(type.getKind());
+		config.setStorageMapping(TypedConfiguration.copy(type.getStorageMapping()));
+		copyAnnotations(type, config);
+		copyDBColumn(type, config);
+
+		addProcessor(config);
+	}
+
+	@Override
+	protected void addEnumType(TLModule module, TLScope scope, EnumConfig config) {
+		super.addEnumType(module, scope, config);
+		addEnumProcessor(module.getName(), config);
+	}
+
+	private void addEnumProcessor(String moduleName, EnumConfig type) {
+		CreateTLEnumerationProcessor.Config config = newConfigItem(CreateTLEnumerationProcessor.Config.class);
+		QualifiedTypeName enumName = qTypeName(moduleName, type.getName());
+		config.setName(enumName);
+		copyAnnotations(type, config);
+		addProcessor(config);
+	}
+
+	@Override
+	protected void addAssociationType(TLModule module, TLScope scope, AssociationConfig config) {
+		super.addAssociationType(module, scope, config);
+		addAssociationProcessor(module.getName(), config);
+	}
+
+	private void addAssociationProcessor(String moduleName, AssociationConfig type) {
+		CreateTLAssociationProcessor.Config config = newConfigItem(CreateTLAssociationProcessor.Config.class);
+		QualifiedTypeName newAssociationName = qTypeName(moduleName, type.getName());
+		config.setName(newAssociationName);
+		copyAnnotations(type, config);
+		addProcessor(config);
 	}
 
 	@Override
@@ -579,7 +827,109 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			}
 			((TLTypePart) part).setType((TLType) type);
 		});
+
+		ChangeAttributeTargetType.Config config;
+		if (part instanceof TLReference) {
+			ChangeRefConfig changeRefConfig = newConfigItem(ChangeAttributeTargetType.ChangeRefConfig.class);
+			changeRefConfig.setReference(qTypePartName(diff.getPart()));
+			config = changeRefConfig;
+		} else {
+			config = newConfigItem(ChangeAttributeTargetType.Config.class);
+			config.setPart(qTypePartName(diff.getPart()));
+		}
+		config.setTarget(qTypeName(diff.getTypeSpec()));
+		addProcessor(config);
 		return null;
+	}
+
+	@Override
+	public TLProperty createProperty(TLStructuredType owner, AttributeConfig attributeConfig) {
+		TLProperty property = super.createProperty(owner, attributeConfig);
+
+		CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);
+		config.setType(qTypeName(attributeConfig.getTypeSpec()));
+		fillPartProcessor(config, TLModelUtil.qualifiedName(owner), attributeConfig);
+
+		addProcessor(config);
+		return property;
+	}
+
+	@Override
+	protected TLReference addReference(TLClass owner, ReferenceConfig referenceConfig,
+			TLAssociationEnd associationEnd) {
+		TLReference reference = super.addReference(owner, referenceConfig, associationEnd);
+
+		AbstractEndAspectProcessor.Config<?> config;
+		QualifiedTypeName targetType = getQualifiedTypeName(owner.getModule().getName(), referenceConfig.getTypeSpec());
+		if (referenceConfig.getKind() == ReferenceKind.BACKWARDS) {
+			CreateInverseTLReferenceProcessor.Config inverseConf =
+				newConfigItem(CreateInverseTLReferenceProcessor.Config.class);
+			inverseConf.setInverseReference(qTypePartName(targetType, referenceConfig.getInverseReference()));
+			config = inverseConf;
+		} else {
+			CreateTLReferenceProcessor.Config refConf = newConfigItem(CreateTLReferenceProcessor.Config.class);
+			refConf.setType(targetType);
+			config = refConf;
+		}
+		fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), referenceConfig);
+
+		addProcessor(config);
+		return reference;
+	}
+
+	@Override
+	protected TLAssociationEnd addAssociationEnd(TLAssociation owner, EndConfig endConfig, TLType targetType) {
+		TLAssociationEnd end = super.addAssociationEnd(owner, endConfig, targetType);
+
+		CreateTLAssociationEndProcessor.Config config = newConfigItem(CreateTLAssociationEndProcessor.Config.class);
+		config.setType(qTypeName(endConfig.getTypeSpec()));
+		fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), endConfig);
+
+		addProcessor(config);
+		return end;
+	}
+
+	private void fillEndAspectProcessor(AbstractEndAspectProcessor.Config<?> config,
+			String qOwnerName, EndAspect part) {
+		copyIfSet(part, EndAspect.COMPOSITE_PROPERTY, config::setComposite);
+		copyIfSet(part, EndAspect.AGGREGATE_PROPERTY, config::setAggregate);
+		copyIfSet(part, EndAspect.NAVIGATE_PROPERTY, config::setNavigate);
+		copyIfSet(part, EndAspect.HISTORY_TYPE_PROPERTY, config::setHistoryType);
+		fillPartProcessor(config, qOwnerName, part);
+	}
+
+	private void fillPartProcessor(AbstractCreateTypePartProcessor.Config<?> config,
+			String qOwnerName,
+			PartConfig part) {
+		QualifiedPartName qPartName = qTypePartName(qOwnerName, part.getName());
+		config.setName(qPartName);
+		copyIfSet(part, PartConfig.MULTIPLE_PROPERTY, config::setMultiple);
+		copyIfSet(part, PartConfig.ORDERED_PROPERTY, config::setOrdered);
+		copyIfSet(part, PartConfig.MANDATORY, config::setMandatory);
+		copyIfSet(part, PartConfig.BAG_PROPERTY, config::setBag);
+		copyAnnotations(part, config);
+		if (part.isOverride()) {
+			TLStructuredType owner = (TLStructuredType) resolvePart(qOwnerName);
+			TLStructuredTypePart createdPart = owner.getPartOrFail(part.getName());
+			TLStructuredTypePart definition = createdPart.getDefinition();
+
+			MarkTLTypePartOverride.Config overrideConf = newConfigItem(MarkTLTypePartOverride.Config.class);
+			overrideConf.setName(qPartName);
+			overrideConf.setDefinition(qTypePartName(definition));
+			addProcessor(overrideConf);
+		}
+	}
+
+	@Override
+	public TLModule createModule(ModuleConfig moduleConf) {
+		CreateTLModuleProcessor.Config newModule = newConfigItem(CreateTLModuleProcessor.Config.class);
+		String moduleName = moduleConf.getName();
+		newModule.setName(moduleName);
+		copyAnnotations(moduleConf, newModule);
+		addProcessor(newModule);
+
+		/* Creating module must occur before the types are created. */
+		return super.createModule(moduleConf);
 	}
 
 	@Override
@@ -617,6 +967,33 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	}
 
 	@Override
+	public void addClassifier(TLEnumeration classification, ClassifierConfig classifierConfig, TLClassifier before) {
+		super.addClassifier(classification, classifierConfig, before);
+
+		QualifiedPartName newClassifierName = classifierMigration(qTypeName(classification), classifierConfig);
+		if (before != null) {
+			addMoveTLTypePart(newClassifierName, before.getName());
+		}
+	}
+
+	private QualifiedPartName classifierMigration(QualifiedTypeName enumName, ClassifierConfig part) {
+		QualifiedPartName classifierName = qTypePartName(enumName, part.getName());
+		CreateTLClassifierProcessor.Config config = newConfigItem(CreateTLClassifierProcessor.Config.class);
+		config.setName(classifierName);
+		copyAnnotations(part, config);
+		addProcessor(config);
+
+		if (part.isDefault()) {
+			SetDefaultTLClassifierProcessor.Config setDefaultConfig =
+				newConfigItem(SetDefaultTLClassifierProcessor.Config.class);
+			setDefaultConfig.setEnumeration(enumName);
+			setDefaultConfig.setDefaultClassifier(part.getName());
+			addProcessor(setDefaultConfig);
+		}
+		return classifierName;
+	}
+
+	@Override
 	public Void visit(Delete diff, Void arg) throws RuntimeException {
 		TLObject part;
 		try {
@@ -644,6 +1021,27 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			TLModelUtil.deleteRecursive((TLModelPart) part);
 		} else {
 			part.tDelete();
+		}
+
+		if (part instanceof TLModule) {
+			DeleteTLModuleProcessor.Config config = newConfigItem(DeleteTLModuleProcessor.Config.class);
+			config.setName(diff.getName());
+			addProcessor(config);
+		} else if (part instanceof TLClass) {
+			DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
+			config.setName(qTypeName(diff.getName()));
+			addProcessor(config);
+		} else if (part instanceof TLProperty) {
+			DeleteTLPropertyProcessor.Config config = newConfigItem(DeleteTLPropertyProcessor.Config.class);
+			config.setName(qTypePartName(diff.getName()));
+			addProcessor(config);
+		} else if (part instanceof TLReference) {
+			DeleteTLReferenceProcessor.Config config = newConfigItem(DeleteTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getName()));
+			addProcessor(config);
+		} else {
+			throw new UnsupportedOperationException("No deletion for '" + diff.getName() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
 		}
 		return null;
 	}
@@ -689,6 +1087,26 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 		log().info("Updating mandatory state of '" + diff.getPart() + "' to '" + diff.isMandatory() + "'.");
 		part.setMandatory(diff.isMandatory());
+
+		if (part instanceof TLProperty) {
+			UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setMandatory(diff.isMandatory());
+			addProcessor(config);
+		} else if (part instanceof TLReference) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setMandatory(diff.isMandatory());
+			addProcessor(config);
+		} else if (part instanceof TLAssociationEnd) {
+			UpdateTLAssociationEndProcessor.Config config = newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setMandatory(diff.isMandatory());
+			addProcessor(config);
+		} else {
+			throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
+		}
 		return null;
 	}
 
@@ -730,6 +1148,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			Log.INFO);
 		classifiers.remove(moved);
 		classifiers.add(beforeClassifier == null ? classifiers.size() : classifiers.indexOf(beforeClassifier), moved);
+
+		addMoveTLTypePart(qTypePartName(diff.getClassifier()), diff.getBefore());
 		return null;
 	}
 
@@ -789,6 +1209,17 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		localParts.remove(part);
 		int index = before == null ? localParts.size() : localParts.indexOf(before);
 		localParts.add(index, part);
+
+		addMoveTLTypePart(qTypePartName(TLModelUtil.qualifiedName(part)), before == null ? null : before.getName());
+	}
+
+	private void addMoveTLTypePart(QualifiedPartName partName, String before) {
+		ReorderTLTypePart.Config config = newConfigItem(ReorderTLTypePart.Config.class);
+		config.setName(partName);
+		if (before != null) {
+			config.setBefore(before);
+		}
+		addProcessor(config);
 	}
 
 	@Override
@@ -805,6 +1236,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 		log().info("Removing annotation '" + diff.getAnnotation().getName() + "' from '" + diff.getPart() + "'.");
 		part.removeAnnotation(diff.getAnnotation());
+
+		RemoveTLAnnotations.Config config = newConfigItem(RemoveTLAnnotations.Config.class);
+		config.setName(diff.getPart());
+		RemoveTLAnnotations.AnnotationConfig toRemove = newConfigItem(RemoveTLAnnotations.AnnotationConfig.class);
+		toRemove.setAnnotationClass(diff.getAnnotation());
+		config.getAnnotations().add(toRemove);
+		addProcessor(config);
 		return null;
 	}
 
@@ -833,7 +1271,20 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		log().info("Removing generalization '" + diff.getGeneralization() + "' from '" + diff.getType() + "'.");
 		type.getGeneralizations().remove(generalization);
+
+		RemoveTLClassGeneralization.Config config = newConfigItem(RemoveTLClassGeneralization.Config.class);
+		config.setName(qTypeName(diff.getType()));
+
+		config.getGeneralizations().add(newGeneralization(qTypeName(diff.getGeneralization())));
+		addProcessor(config);
 		return null;
+	}
+
+	private static AddTLClassGeneralization.Generalization newGeneralization(QualifiedTypeName type) {
+		AddTLClassGeneralization.Generalization generalizationConf =
+			newConfigItem(AddTLClassGeneralization.Generalization.class);
+		generalizationConf.setType(type);
+		return generalizationConf;
 	}
 
 	@Override
@@ -861,6 +1312,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Making type abstract: " + diff.getType());
 		type.setAbstract(true);
 
+		UpdateTLClassProcessor.Config config = newConfigItem(UpdateTLClassProcessor.Config.class);
+		config.setName(qTypeName(diff.getType()));
+		config.setAbstract(true);
+		addProcessor(config);
 		return null;
 	}
 
@@ -886,6 +1341,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Making type concrete: " + diff.getType());
 		type.setAbstract(false);
 
+		UpdateTLClassProcessor.Config config = newConfigItem(UpdateTLClassProcessor.Config.class);
+		config.setName(qTypeName(diff.getType()));
+		config.setAbstract(false);
+		addProcessor(config);
 		return null;
 	}
 
@@ -903,7 +1362,52 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			return null;
 		}
 		part.setName(diff.getNewName());
+
+		QualifiedPartName oldName = qTypePartName(diff.getPart());
+		QualifiedPartName newName =
+			qTypePartName(qTypeName(oldName.getModuleName(), oldName.getTypeName()), diff.getNewName());
+		if (part instanceof TLProperty) {
+			UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+			config.setName(oldName);
+			config.setNewName(newName);
+			addProcessor(config);
+		} else if (part instanceof TLReference) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(oldName);
+			config.setNewName(newName);
+			addProcessor(config);
+		} else if (part instanceof TLAssociationEnd) {
+			UpdateTLAssociationEndProcessor.Config config = newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+			config.setName(oldName);
+			config.setNewName(newName);
+			addProcessor(config);
+		} else {
+			throw new UnsupportedOperationException("No rename for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
+		}
+
 		return null;
+	}
+
+	@Override
+	public void complete() {
+		super.complete();
+		new ConstraintChecker().check(log(), _processors);
+	}
+
+	/**
+	 * The created {@link MigrationProcessor}s.
+	 * 
+	 * <p>
+	 * Must not called before {@link #complete()}.
+	 * </p>
+	 */
+	public MigrationProcessors migrationProcessors() {
+		return _processors;
+	}
+
+	private boolean addProcessor(PolymorphicConfiguration<? extends MigrationProcessor> p) {
+		return _processors.getProcessors().add(p);
 	}
 
 	/**
@@ -919,6 +1423,68 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	private TLClass asClass(TLType type) {
 		return (TLClass) type;
+	}
+
+	private static QualifiedPartName qTypePartName(TLTypePart part) {
+		return qTypePartName(TLModelUtil.qualifiedName(part));
+	}
+
+	private static QualifiedPartName qTypePartName(QualifiedTypeName typeName, String partName) {
+		return qTypePartName(typeName.getName(), partName);
+	}
+
+	private static QualifiedPartName qTypePartName(String qTypeName, String partName) {
+		return qTypePartName(TLModelUtil.qualifiedTypePartName(qTypeName, partName));
+	}
+
+	private static QualifiedPartName qTypePartName(String name) {
+		QualifiedPartName qName = newConfigItem(QualifiedPartName.class);
+		qName.setName(name);
+		return qName;
+	}
+
+	private static QualifiedTypeName qTypeName(TLType type) {
+		return qTypeName(TLModelUtil.qualifiedName(type));
+	}
+
+	private static QualifiedTypeName qTypeName(String module, String typeName) {
+		return qTypeName(TLModelUtil.qualifiedName(module, typeName));
+	}
+
+	private static QualifiedTypeName qTypeName(String name) {
+		QualifiedTypeName qName = newConfigItem(QualifiedTypeName.class);
+		qName.setName(name);
+		return qName;
+	}
+
+	private static <A extends TLAnnotation> void copyAnnotations(AnnotatedConfig<A> source,
+			AnnotatedConfig<A> dest) {
+		for (A annotation : source.getAnnotations()) {
+			dest.getAnnotations().add(TypedConfiguration.copy(annotation));
+		}
+	}
+
+	private static void copyDBColumn(DBColumnType source, DBColumnType dest) {
+		dest.setDBType(source.getDBType());
+		Integer dbPrecision = source.getDBPrecision();
+		if (dbPrecision != null) {
+			dest.setDBPrecision(dbPrecision);
+		}
+		Integer dbSize = source.getDBSize();
+		if (dbSize != null) {
+			dest.setDBSize(dbSize);
+		}
+		Boolean binary = source.isBinary();
+		if (binary != null) {
+			dest.setBinary(binary);
+		}
+	}
+
+	private static <T> void copyIfSet(ConfigurationItem source, String propertyName, Consumer<T> target) {
+		PropertyDescriptor property = source.descriptor().getProperty(propertyName);
+		if (source.valueSet(property)) {
+			target.accept((T) source.value(property));
+		}
 	}
 
 }

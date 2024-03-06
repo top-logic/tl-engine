@@ -75,7 +75,6 @@
 					group="Delete"
 					resourceKey="layouts.demo.editStructureDetail.deleteMails"
 				/>
-				<reference command-id="saveIgnoreWarnings"/>
 				<reference command-id="addToClipboard"/>
 				<reference command-id="showBookmarkLink"/>
 			</buttons>

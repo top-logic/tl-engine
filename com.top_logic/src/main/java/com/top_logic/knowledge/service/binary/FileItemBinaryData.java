@@ -8,7 +8,7 @@ package com.top_logic.knowledge.service.binary;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 
@@ -23,9 +23,9 @@ import com.top_logic.basic.io.binary.AbstractBinaryData;
 public class FileItemBinaryData extends AbstractBinaryData {
 
     /** The Object wrapped by this class */
-    FileItem fileItem;
+	private final FileItem<?> fileItem;
 
-    public FileItemBinaryData(FileItem aFileItem) {
+	public FileItemBinaryData(FileItem<?> aFileItem) {
         this.fileItem = aFileItem;
     }
     

@@ -27,7 +27,6 @@ import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
@@ -61,7 +60,7 @@ public class GenericDeleteCommandHandler extends AbstractCommandHandler {
 		ThemeImage getDisabledImage();
 
 		@Override
-		@BooleanDefault(BoundCommand.NEEDS_CONFIRM)
+		@BooleanDefault(true)
 		boolean getConfirm();
 
 		@Override

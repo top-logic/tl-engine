@@ -24,7 +24,6 @@ import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -43,7 +42,7 @@ public abstract class DeclarativeApplyHandler<E extends ConfigurationItem, M> ex
 	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
-		@BooleanDefault(BoundCommand.NEEDS_NO_CONFIRM)
+		@BooleanDefault(false)
 		boolean getConfirm();
 
 		@Override

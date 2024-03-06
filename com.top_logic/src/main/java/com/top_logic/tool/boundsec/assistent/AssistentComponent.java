@@ -385,14 +385,10 @@ public class AssistentComponent extends LayoutList implements Selectable {
             if (defaultCommand != null) {
             	theCommands.add(new CommandHolder(defaultCommand, this));
             }
-            boolean needsConfirm = false;
-            for (CommandHolder cmd : theCommands) {
-                needsConfirm |= cmd.getHandler().needsConfirm();
-            }
 
 			CommandChain theCommandChain =
 				CommandChain.newInstance(CommandChain.generateID(theCommands), getDefaultCommandGroup(), theCommands,
-					theTarget, needsConfirm);
+					theTarget);
 
             // TODO every time you show the same step, a new instance will be registered. 
             // (Also results in multiple javascript functions. KHA I'm not sure about this ...)
@@ -417,7 +413,6 @@ public class AssistentComponent extends LayoutList implements Selectable {
 					SimpleBoundCommandGroup.READ,
 					Collections.singletonList(theHolder),
 					theTarget,
-					theHolder.getHandler().needsConfirm(),
 					new ExecutabilityRule() {
 						@Override
 						public ExecutableState isExecutable(LayoutComponent component, Object model, Map<String, Object> someValues) {

@@ -8,7 +8,7 @@
 		value="css:bi bi-download"
 	/>
 	<icon name="LOAD_SCRIPT"
-		value="css:bi bi-file-arrow-up-fill"
+		value="css:bi bi-folder2-open"
 	/>
 	<icon name="SAVE_SCRIPT"
 		value="css:fas fa-save"

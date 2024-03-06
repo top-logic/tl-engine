@@ -54,6 +54,16 @@ public class DefaultSaveCommandHandler extends AbstractCommandHandler {
 	}
 
 	@Override
+	public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments) {
+		ResKey result = super.getConfirmKey(component, arguments);
+		if (result != null) {
+			return result;
+		}
+
+		return getApplyHandler((Editor) component).getConfirmKey(component, arguments);
+	}
+
+	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
 		Editor editor = (Editor) aComponent;
 

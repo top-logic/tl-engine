@@ -2269,19 +2269,41 @@ h5.card-title a:focus {
 }
 
 .breadcrumbMenuVisible {
-	background: var(--layer-accent);
+	background: var(--layer);
 	border: 1px solid var(--border-subtle);
 	z-index: 5;
 }
 
-.breadcrumbMenuNode, 
-.breadcrumbMenuNode_hover {
+.breadcrumbMenuVisible .breadcrumbMenuNode {
 	cursor: pointer;
-	padding: var(--spacing-01);
+	padding: var(--spacing-02) var(--spacing-03);
 }
 
-.breadcrumbMenuNode_hover {
-	background-color: var(--layer-accent-hover);
+.breadcrumbMenuVisible .breadcrumbNodeIcon i {
+	color: var(--icon-secondary);
+	padding-right: var(--spacing-02);
+}
+
+.breadcrumbMenuVisible .breadcrumbNodeText {
+	color: var(--text-secondary);
+}
+
+.breadcrumbMenuVisible .breadcrumbMenuNode:hover {
+	background: var(--layer-hover);
+}
+
+.breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeText {
+	color: var(--text-primary);
+}
+
+.breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeIcon {
+	color: var(--icon-primary);
+}
+
+/* Needs to be on active state because focus does not work on this div element. */
+.breadcrumbMenuVisible .breadcrumbMenuNode:active {
+	background: var(--layer-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
 .breadcrumbNodeIcon {

@@ -19,6 +19,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.format.FormatDefinition;
@@ -808,8 +809,14 @@ public class DisplayAnnotations {
 	 *         {@link DefaultProvider} is configured.
 	 */
 	public static DefaultProvider getDefaultProvider(TLStructuredTypePart part) {
-		DefaultProvider localResult =
-				(DefaultProvider) part.tHandle().getAttributeValue(DEFAULT_PROVIDER_ATTRIBUTE);
+		boolean transientModel = part.tTransient();
+
+		DefaultProvider localResult;
+		if (transientModel) {
+			localResult = resolveAnnotatedDefaultProvider(part);
+		} else {
+			localResult = (DefaultProvider) part.tHandle().getAttributeValue(DEFAULT_PROVIDER_ATTRIBUTE);
+		}
 		if (localResult != null) {
 			return localResult;
 		}
@@ -824,7 +831,21 @@ public class DisplayAnnotations {
 		}
 
 		TLType type = part.getType();
-		return (DefaultProvider) type.tHandle().getAttributeValue(DEFAULT_PROVIDER_ATTRIBUTE);
+		if (transientModel) {
+			return resolveAnnotatedDefaultProvider(type);
+		} else {
+			return (DefaultProvider) type.tHandle().getAttributeValue(DEFAULT_PROVIDER_ATTRIBUTE);
+		}
+	}
+
+	private static DefaultProvider resolveAnnotatedDefaultProvider(TLModelPart part) {
+		TLDefaultValue annotation = part.getAnnotation(TLDefaultValue.class);
+		if (annotation == null) {
+			return null;
+		}
+
+		PolymorphicConfiguration<DefaultProvider> config = annotation.getProvider();
+		return TypedConfigUtil.createInstance(config);
 	}
 
 	/**

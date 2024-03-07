@@ -340,10 +340,10 @@
 		value="/tree/s.png"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED"
-		value="css:bi bi-caret-right-fill"
+		value="css:bi bi-chevron-right"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED"
-		value="css:bi bi-caret-down-fill"
+		value="css:bi bi-chevron-down"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_LEAF"
 		value="/icons/tree-leaf.png"

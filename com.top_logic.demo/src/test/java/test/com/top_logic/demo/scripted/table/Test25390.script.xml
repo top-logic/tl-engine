@@ -742,13 +742,17 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Deutsch"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Name"/>
+							<labeled-member label="Deutsch"/>
+						</path>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Details"
+						value="Deutsch"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"

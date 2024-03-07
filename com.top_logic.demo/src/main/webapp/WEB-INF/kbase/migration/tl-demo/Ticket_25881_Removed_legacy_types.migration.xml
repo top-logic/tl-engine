@@ -40,15 +40,31 @@
 		<delete-module name="UIConfig"/>
 		<delete-module name="WorkflowInstance"/>
 
-		<delete-class name="tl.legacy.tabletypes:hasInfoTable"/>
+		<delete-class name="tl.legacy.tabletypes:hasInfoTable"
+			skip-model-baseline-change="true"
+		/>
 
-		<delete-class name="tl.tables:StoredViewInfoTableInterface"/>
-		<delete-class name="tl.tables:AttributeConfigTableInterface"/>
-		<delete-class name="tl.tables:WorkflowTableInterface"/>
-		<delete-class name="tl.tables:WorkflowInstanceTableInterface"/>
-		<delete-class name="tl.tables:AttributeGroupTableInterface"/>
-		<delete-class name="tl.tables:AttributeGroupReferenceTableInterface"/>
-		<delete-class name="tl.tables:MEConfigDescriptorTableInterface"/>
+		<delete-class name="tl.tables:StoredViewInfoTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:AttributeConfigTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:WorkflowTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:WorkflowInstanceTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:AttributeGroupTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:AttributeGroupReferenceTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:MEConfigDescriptorTableInterface"
+			skip-model-baseline-change="true"
+		/>
 	</processors>
 	<migration/>
 	<post-processors/>

@@ -71,7 +71,7 @@
 			</annotations>
 		</create-class>
 		<processor class="com.top_logic.element.model.migration._25881.ExtendsTLObject"/>
-		
+
 		<create-datatype name="tl.model:TLAnnotation"
 			db_type="clob"
 			kind="Custom"
@@ -1404,49 +1404,121 @@
 			</tables>
 		</processor>
 
-		<delete-class name="tl.tables:TLTypeBaseTableInterface"/>
+		<delete-class name="tl.tables:TLTypeBaseTableInterface"
+			skip-model-baseline-change="true"
+		/>
 
-		<delete-class name="tl.legacy.tabletypes:FastList$defaultTable"/>
-		<delete-class name="tl.legacy.tabletypes:FastList.defaultTable"/>
-		<delete-class name="tl.legacy.tabletypes:FastList$moduleTable"/>
-		<delete-class name="tl.legacy.tabletypes:FastList.moduleTable"/>
-		<delete-class name="tl.legacy.tabletypes:FastListElt$ownerTable"/>
-		<delete-class name="tl.legacy.tabletypes:FastListElt.ownerTable"/>
-		<delete-class name="tl.legacy.tabletypes:FastListEltTable"/>
-		<delete-class name="tl.legacy.tabletypes:FastListTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute$definitionTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute.definitionTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute$endTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute.endTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute$ownerTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute.ownerTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute$typeTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttribute.typeTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaAttributeTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaElementTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaElement_generalizationsTable"/>
-		<delete-class name="tl.legacy.tabletypes:MetaElement_unionsTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLDatatypeTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLModelPartTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLModelTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLModule$modelTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLModule.modelTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLModuleTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLModule_singletonsTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLType$moduleTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLType.moduleTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLType$scopeTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLType.scopeTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLTypeBaseTable"/>
-		<delete-class name="tl.legacy.tabletypes:TLTypeTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastList$defaultTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FastList.defaultTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FastList$moduleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FastList.moduleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FastListElt$ownerTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FastListElt.ownerTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FastListEltTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FastListTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$definitionTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.definitionTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$endTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.endTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$ownerTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.ownerTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$typeTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.typeTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttributeTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaElementTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaElement_generalizationsTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MetaElement_unionsTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLDatatypeTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLModelPartTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLModelTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLModule$modelTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLModule.modelTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLModuleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLModule_singletonsTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLType$moduleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLType.moduleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLType$scopeTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLType.scopeTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLTypeBaseTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TLTypeTable"
+			skip-model-baseline-change="true"
+		/>
 
-		<add-class-generalizations name="tl.tables:TLTypeTableInterface">
+		<add-class-generalizations name="tl.tables:TLTypeTableInterface"
+			skip-model-baseline-change="true"
+		>
 			<generalizations>
 				<generalization type="tl.tables:TLModelPartTableInterface"/>
 			</generalizations>
 		</add-class-generalizations>
 
-		<add-class-generalizations name="tl.tables:FastListTableInterface">
+		<add-class-generalizations name="tl.tables:FastListTableInterface"
+			skip-model-baseline-change="true"
+		>
 			<generalizations>
 				<generalization type="tl.tables:TLTypeTableInterface"/>
 			</generalizations>

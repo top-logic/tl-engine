@@ -2116,7 +2116,7 @@ h5.card-title a:focus {
 
 /*
 ****						****
-****	Breadcrump syles	****
+****	Breadcrumb syles	****
 ****						****
 */
 .Header {
@@ -2229,6 +2229,17 @@ h5.card-title a:focus {
 
 .breadcrumbMenuNode_hover {
 	background-color: var(--layer-accent-hover);
+}
+
+.breadcrumbNodeIcon {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.Header .breadcrumbNodeIcon > img:first-of-type {
+	height: var(--body-02-line-height);
+    width: fit-content;
 }
 
 /*

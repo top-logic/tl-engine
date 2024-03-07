@@ -89,6 +89,9 @@
 	<boolean name="BREADCRUMB_ROOT_VISIBLE"
 		value="true"
 	/>
+	<icon name="TOP_LOGIC_WITHOUT_TEXT"
+		value="/images/TL-Logo-without-text.svg"
+	/>
 	<icon name="BREADCRUMB_ROOT_ICON"
 		value="css:bi bi-house"
 	/>
@@ -619,7 +622,7 @@
 		value="css:bi bi-bookmark-fill"
 	/>
 	<icon name="HEAD_HOME"
-		expr="%BREADCRUMB_ROOT_ICON%"
+		value="css:bi bi-house"
 	/>
 	<icon name="USER_MENU_ICON"
 		value="css:bi bi-person-fill"

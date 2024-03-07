@@ -7,10 +7,7 @@ package com.top_logic.graph.diagramjs.server.commands;
 
 import java.util.Map;
 
-import com.top_logic.basic.col.TypedAnnotatable;
-import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.graph.common.model.GraphPart;
 import com.top_logic.graph.diagramjs.server.DiagramJSGraphControl;
 import com.top_logic.graph.diagramjs.server.I18NConstants;
 import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
@@ -41,11 +38,6 @@ public class CreateEnumerationCommand extends ControlCommand {
 	private static final String Y = "y";
 
 	private static final String X = "x";
-
-	/**
-	 * Stores {@link GraphPart} bound layout informations.
-	 */
-	public static final Property<Bounds> BOUNDS = TypedAnnotatable.property(Bounds.class, BOUNDS_PROPERTY_NAME);
 
 	/**
 	 * Singleton instance of {@link CreateEnumerationCommand}.

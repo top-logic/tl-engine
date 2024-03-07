@@ -40,7 +40,7 @@
 			<layoutControl name="${namePrefix}Parameters"
 				componentName="${namePrefix}Form"
 			>
-				<layoutInfo size="150px"/>
+				<layoutInfo size="230px"/>
 				<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"
 					page="/jsp/layout/scripting/TemplateEditParameters.jsp"
 				/>

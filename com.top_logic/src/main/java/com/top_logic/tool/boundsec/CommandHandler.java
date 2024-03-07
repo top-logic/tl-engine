@@ -288,7 +288,7 @@ public interface CommandHandler
 	/**
 	 * Configuration options for the confirm message of a command.
 	 */
-	public interface ConfirmConfig {
+	public interface ConfirmConfig extends ConfigurationItem {
 
 		/**
 		 * @see #getConfirm()

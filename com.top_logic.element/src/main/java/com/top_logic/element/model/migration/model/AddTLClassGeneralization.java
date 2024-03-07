@@ -25,8 +25,11 @@ import com.top_logic.element.config.ObjectTypeConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.impl.generated.TLObjectBase;
+import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link MigrationProcessor} creating generalizations from a {@link TLClass} to a list of other
@@ -37,11 +40,15 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
 public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLClassGeneralization.Config>
 		implements TLModelBaseLineMigrationProcessor {
 
+	private static final String QUALIFIED_TL_OBJECT_NAME =
+		TLModelUtil.qualifiedName(TlModelFactory.TL_MODEL_STRUCTURE, TLObjectBase.TL_OBJECT_TYPE);
+
 	/**
 	 * Configuration options of {@link AddTLClassGeneralization}.
 	 */
 	@TagName("add-class-generalizations")
-	public interface Config extends PolymorphicConfiguration<AddTLClassGeneralization> {
+	public interface Config extends PolymorphicConfiguration<AddTLClassGeneralization>,
+			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
 
 		/**
 		 * Qualified name of the {@link TLClass} to add generalizations for.
@@ -102,25 +109,35 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection, tlModel);
-			return true;
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Adding generalization extension migration failed at " + getConfig().location(), ex);
 			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection, Document model) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document model) throws Exception {
 		QualifiedTypeName specialisation = getConfig().getName();
+		boolean updateModelBaseline = false;
 		for (Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.addGeneralisation(connection, specialisation, typeName);
-			MigrationUtils.addGeneralisation(log, model, specialisation, typeName);
+			if (getConfig().isSkipModelBaselineChange()) {
+				// skip model baseline change
+			} else if (QUALIFIED_TL_OBJECT_NAME.equals(
+				typeName.getName()) && !TlModelFactory.TL_MODEL_STRUCTURE.equals(specialisation.getModuleName())) {
+				/* TLObject extension is typically not contained in model baseline, except for
+				 * module "tl.model". */
+			} else {
+				MigrationUtils.addGeneralisation(log, model, specialisation, typeName);
+				updateModelBaseline = true;
+			}
 			log.info(
 				"Added generalisation "
 					+ _util.qualifiedName(typeName) + " to "
 					+ _util.qualifiedName(specialisation));
 		}
+		return updateModelBaseline;
 	}
 
 }

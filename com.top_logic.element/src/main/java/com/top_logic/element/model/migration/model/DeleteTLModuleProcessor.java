@@ -57,7 +57,8 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 	 * Configuration options of {@link DeleteTLModuleProcessor}.
 	 */
 	@TagName("delete-module")
-	public interface Config extends PolymorphicConfiguration<DeleteTLModuleProcessor>, NamedConfigMandatory {
+	public interface Config extends PolymorphicConfiguration<DeleteTLModuleProcessor>, NamedConfigMandatory,
+			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
 
 		/**
 		 * Whether it is a failure if the module is not empty.
@@ -115,6 +116,9 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 
 		deleteElements(log, connection, byTypeAndBranch);
 
+		if (getConfig().isSkipModelBaselineChange()) {
+			return false;
+		}
 		return MigrationUtils.deleteModule(log, tlModel, moduleName);
 	}
 

@@ -27,12 +27,12 @@
 		/>
 	</dependencies>
 	<processors>
-		<change-part-type
-			part="DemoSecurity:DemoSecurity.All$singlePersonContact#singlePersonContact"
+		<change-reference-type
+			reference="DemoSecurity:DemoSecurity.All#singlePersonContact"
 			target="Contacts:Contact.Person"
 		/>
-		<change-part-type
-			part="DemoSecurity:DemoSecurity.All$personContactList#personContactList"
+		<change-reference-type
+			reference="DemoSecurity:DemoSecurity.All#personContactList"
 			target="Contacts:Contact.Person"
 		/>
 

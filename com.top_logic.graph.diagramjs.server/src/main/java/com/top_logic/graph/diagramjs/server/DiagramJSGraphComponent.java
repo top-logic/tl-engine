@@ -46,7 +46,6 @@ import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.server.commands.CreateClassCommand;
-import com.top_logic.graph.diagramjs.server.commands.CreateEnumerationCommand;
 import com.top_logic.graph.diagramjs.server.handler.DiagramHandler;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
 import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
@@ -563,7 +562,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 
 		LayoutComponent dialog = getDialog(config.getCreateEnumerationDialogName());
 		FormComponent formComponent = (FormComponent) dialog.getComponentByName(config.getCreateEnumerationFormName());
-		formComponent.set(CreateEnumerationCommand.BOUNDS, bounds);
+		formComponent.set(CreateClassCommand.BOUNDS, bounds);
 
 		setEnumerationEditModel(formComponent);
 

@@ -3483,7 +3483,10 @@
 		value="300"
 	/>
 	<boolean name="BREADCRUMB_ROOT_VISIBLE"
-		value="false"
+		value="true"
+	/>
+	<icon name="TOP_LOGIC_WITHOUT_TEXT"
+		value="/images/TL-Logo-without-text.svg"
 	/>
 	<icon name="BREADCRUMB_ROOT_ICON"
 		value="none"

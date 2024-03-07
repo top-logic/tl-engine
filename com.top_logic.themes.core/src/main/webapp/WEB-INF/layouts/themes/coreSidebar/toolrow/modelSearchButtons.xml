@@ -9,6 +9,11 @@
 			optional="true"
 		/>
 	</params>
-
+	<include name="model/search/modelSearchButton.xml"
+		labelKey="layout.model.search.tabber"
+		renderer="${renderer}"
+		tabName="modelSearch"
+		viewName="modelSearchTab"
+	/>
 	<!-- Model search buttons are components and displayed in the sidebar anyways. -->
 </template>

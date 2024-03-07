@@ -5,6 +5,10 @@
  */
 package com.top_logic.model.migration.data;
 
+import com.top_logic.model.TLAssociation;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLType;
 
 /**
@@ -13,6 +17,22 @@ import com.top_logic.model.TLType;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface Type extends BranchIdType {
+
+	/**
+	 * Kind of a {@link Type}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	enum Kind {
+		/** A {@link TLPrimitive}. */
+		DATATYPE,
+		/** A {@link TLClass} */
+		CLASS,
+		/** A {@link TLAssociation} */
+		ASSOCIATION,
+		/** A {@link TLEnumeration} */
+		ENUM;
+	}
 
 	/**
 	 * Name of the corresponding {@link TLType}.
@@ -34,5 +54,14 @@ public interface Type extends BranchIdType {
 	 */
 	void setModule(Module module);
 
+	/**
+	 * Kind of this type.
+	 */
+	Kind getKind();
+
+	/**
+	 * Setter for {@link #getKind()}.
+	 */
+	void setKind(Kind kind);
 }
 

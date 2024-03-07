@@ -16,7 +16,8 @@
 	</dependencies>
 	<processors>
 		<!-- Delete attribute created on system boot -->
-		<delete-inverse-reference name="tl.model:TLStructuredType#localParts"/>
+		<delete-inverse-reference name="tl.model:TLStructuredType#localParts"
+		/>
 		<!-- rename original attribute -->
 		<update-inverse-reference name="tl.model:TLStructuredType#parts"
 			new-name="tl.model:TLStructuredType#localParts"

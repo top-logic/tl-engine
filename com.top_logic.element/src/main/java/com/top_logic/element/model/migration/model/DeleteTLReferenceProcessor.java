@@ -52,7 +52,8 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 	 * Configuration options of {@link DeleteTLReferenceProcessor}.
 	 */
 	@TagName("delete-reference")
-	public interface Config extends PolymorphicConfiguration<DeleteTLReferenceProcessor> {
+	public interface Config extends PolymorphicConfiguration<DeleteTLReferenceProcessor>,
+			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
 
 		/**
 		 * Qualified name of the {@link TLReference} to delete.
@@ -139,7 +140,12 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 			return false;
 		}
 		_util.deleteModelPart(connection, typePart);
-		boolean updateModelBaseline = MigrationUtils.deleteTypePart(log, tlModel, partToDelete);
+		boolean updateModelBaseline;
+		if (getConfig().isSkipModelBaselineChange()) {
+			updateModelBaseline = false;
+		} else {
+			updateModelBaseline = MigrationUtils.deleteTypePart(log, tlModel, partToDelete);
+		}
 		log.info("Deleted reference " + _util.toString(typePart));
 
 		if (!typePart.getID().equals(typePart.getDefinition())) {

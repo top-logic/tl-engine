@@ -29,6 +29,7 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedTypeName;
@@ -46,7 +47,8 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 	 * Configuration options of {@link DeleteTLClassProcessor}.
 	 */
 	@TagName("delete-class")
-	public interface Config extends PolymorphicConfiguration<DeleteTLClassProcessor> {
+	public interface Config extends PolymorphicConfiguration<DeleteTLClassProcessor>,
+			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
 
 		/**
 		 * Qualified name of the {@link TLClass} to delete.
@@ -125,6 +127,15 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 			int deletedRows = delete.executeUpdate(connection, type.getBranch(), type.getID());
 			log.info("Deleted " + deletedRows + " instances of type '" + _util.toString(type) + "' from table "
 				+ getConfig().getTypeTable() + ".");
+		}
+		if (getConfig().isSkipModelBaselineChange()) {
+			return false;
+		}
+		if (type.getKind() == Type.Kind.ASSOCIATION) {
+			if (TLStructuredTypeColumns.isSyntheticAssociationName(type.getTypeName())) {
+				// Synthetic associations are not contained in the model baseline.
+				return false;
+			}
 		}
 		return MigrationUtils.deleteType(log, tlModel, classToDelete);
 	}

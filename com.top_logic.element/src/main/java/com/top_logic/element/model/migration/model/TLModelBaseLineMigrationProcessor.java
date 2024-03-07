@@ -9,6 +9,7 @@ package com.top_logic.element.model.migration.model;
 import org.w3c.dom.Document;
 
 import com.top_logic.basic.Log;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -20,6 +21,26 @@ import com.top_logic.model.TLModel;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface TLModelBaseLineMigrationProcessor extends MigrationProcessor {
+
+	/**
+	 * Configuration for a {@link MigrationProcessor} to skip change of model base line in
+	 * exceptional cases.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface SkipModelBaselineApaption extends ConfigurationItem {
+
+		/**
+		 * Whether the model base line in the database must not be changed.
+		 * 
+		 * <p>
+		 * This configuration is an additional option for {@link MigrationProcessor} which normally
+		 * change the model baseline. Here you can configure that this does not happen in
+		 * exceptional cases.
+		 * </p>
+		 */
+		boolean isSkipModelBaselineChange();
+	}
 
 	@Override
 	default void doMigration(MigrationContext context, Log log, PooledConnection connection) {

@@ -350,6 +350,7 @@ public class Util {
 			BranchIdType.newInstance(Type.class, module.getBranch(), newIdentifier, TlModelFactory.KO_NAME_TL_CLASS);
 		type.setTypeName(className);
 		type.setModule(module);
+		type.setKind(associationType ? Type.Kind.ASSOCIATION : Type.Kind.CLASS);
 		return type;
 	}
 
@@ -590,14 +591,30 @@ public class Util {
 		if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
 			typePart = TypePart.newInstance(Reference.class,
 				branch, partID, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
-				ownerClass, partName, definitionID, ownerOrder);
+				TypePart.Kind.REFERENCE, ownerClass, partName, definitionID, ownerOrder);
 			((Reference) typePart).setEndID(endID);
 		} else {
 			typePart = TypePart.newInstance(
 				branch, partID, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
-				ownerClass, partName, definitionID, ownerOrder);
+				typePartKindFromImplAttribute(impl), ownerClass, partName, definitionID, ownerOrder);
 		}
 		return typePart;
+	}
+
+	private static TypePart.Kind typePartKindFromImplAttribute(String impl) {
+		switch (impl) {
+			case TLStructuredTypeColumns.REFERENCE_IMPL:
+				return TypePart.Kind.REFERENCE;
+			case TLStructuredTypeColumns.ASSOCIATION_END_IMPL:
+				return TypePart.Kind.ASSOCIATION_END;
+			case TLStructuredTypeColumns.CLASS_PROPERTY_IMPL:
+				return TypePart.Kind.CLASS_PROPERTY;
+			case TLStructuredTypeColumns.ASSOCIATION_PROPERTY_IMPL:
+				return TypePart.Kind.ASSOCIATION_PROPERTY;
+			default:
+				throw new IllegalArgumentException("Unexpected impl type '" + impl + "' for type part.");
+		}
+
 	}
 
 	private void internalCreateProperty(PooledConnection con, long branch, String partName, TLID partID,
@@ -892,41 +909,39 @@ public class Util {
 
 	private Type getTLDataType(PooledConnection connection, Module module, String dataTypeName)
 			throws SQLException {
-		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_PRIMITIVE, dataTypeName);
-	}
-
-	private Type getTLClass(PooledConnection connection, Module module, String className)
-			throws SQLException {
-		return getTLType(connection, module, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, className);
+		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_PRIMITIVE, Type.Kind.DATATYPE, dataTypeName);
 	}
 
 	private Type getTLEnumeration(PooledConnection connection, Module module, String enumName)
 			throws SQLException {
-		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_ENUMERATION, enumName);
+		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_ENUMERATION, Type.Kind.ENUM, enumName);
 	}
 
-	private Type getTLType(PooledConnection connection, Module module, String tlTypeTable, String typeName)
+	private Type getTLClass(PooledConnection connection, Module module, String typeName)
 			throws SQLException {
+		String tlTypeTable = ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE;
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";
+		String implAlias = "impl";
 		CompiledStatement selectClass = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "moduleId"),
-			parameterDef(DBType.STRING, "className")),
-		selectDistinct(
-			columns(
-				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias)),
-			table(SQLH.mangleDBName(tlTypeTable)),
-			and(
-				eqBranch(),
-				eqSQL(
-					column(refID(PersistentType.MODULE_REF)),
-					parameter(DBType.ID, "moduleId")),
-				eqSQL(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "moduleId"),
+				parameterDef(DBType.STRING, "typeName")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_IMPL), NO_TABLE_ALIAS, implAlias)),
+				table(SQLH.mangleDBName(tlTypeTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "moduleId")),
+					eqSQL(
 						column(SQLH.mangleDBName(TLNamed.NAME_ATTRIBUTE)),
-					parameter(DBType.STRING, "className"))))).toSql(sqlDialect);
+						parameter(DBType.STRING, "typeName"))))).toSql(sqlDialect);
 
 		try (ResultSet dbResult = selectClass.executeQuery(connection, module.getBranch(), module.getID(), typeName)) {
 			if (dbResult.next()) {
@@ -934,6 +949,54 @@ public class Util {
 					tlTypeTable);
 				type.setModule(module);
 				type.setTypeName(typeName);
+				switch (dbResult.getString(implAlias)) {
+					case TLStructuredTypeColumns.ASSOCIATION_TYPE:
+						type.setKind(Type.Kind.ASSOCIATION);
+						break;
+					case TLStructuredTypeColumns.CLASS_TYPE:
+						type.setKind(Type.Kind.CLASS);
+						break;
+					default:
+						throw new IllegalArgumentException(
+							"Unexpected impl type: " + dbResult.getString(implAlias) + " for " + type + ".");
+				}
+				return type;
+			}
+		}
+		return null;
+	}
+
+	private Type getTLType(PooledConnection connection, Module module, String tlTypeTable, Type.Kind kind,
+			String typeName)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String identifierAlias = "id";
+		CompiledStatement selectClass = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "moduleId"),
+				parameterDef(DBType.STRING, "typeName")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias)),
+				table(SQLH.mangleDBName(tlTypeTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "moduleId")),
+					eqSQL(
+						column(SQLH.mangleDBName(TLNamed.NAME_ATTRIBUTE)),
+						parameter(DBType.STRING, "typeName"))))).toSql(sqlDialect);
+
+		try (ResultSet dbResult = selectClass.executeQuery(connection, module.getBranch(), module.getID(), typeName)) {
+			if (dbResult.next()) {
+				Type type = BranchIdType.newInstance(Type.class, module.getBranch(), tlId(dbResult, identifierAlias),
+					tlTypeTable);
+				type.setModule(module);
+				type.setTypeName(typeName);
+				type.setKind(kind);
 				return type;
 			}
 		}
@@ -957,19 +1020,11 @@ public class Util {
 	}
 
 	/**
-	 * Adds all {@link TLStructuredType}s belonging to the given {@link Module}.
-	 */
-	public void addTLStructuredTypeIdentifiers(PooledConnection connection, Module module,
-			List<? super Type> searchResult) throws SQLException {
-		addTLTypeIdentifiers(connection, module, searchResult, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE);
-	}
-
-	/**
 	 * Adds all {@link TLPrimitive}s belonging to the given {@link Module}.
 	 */
 	public void addTLDataTypeIdentifiers(PooledConnection connection, Module module,
 			List<? super Type> searchResult) throws SQLException {
-		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_PRIMITIVE);
+		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_PRIMITIVE, Type.Kind.DATATYPE);
 	}
 
 	/**
@@ -977,15 +1032,70 @@ public class Util {
 	 */
 	public void addTLEnumerationIdentifiers(PooledConnection connection, Module module,
 			List<? super Type> searchResult) throws SQLException {
-		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_ENUMERATION);
+		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_ENUMERATION, Type.Kind.ENUM);
+	}
+
+	/**
+	 * Adds all {@link TLStructuredType}s belonging to the given {@link Module}.
+	 */
+	public void addTLStructuredTypeIdentifiers(PooledConnection connection, Module module,
+			List<? super Type> searchResult) throws SQLException {
+		String mo = ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE;
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String identifierAlias = "id";
+		String branchAlias = "branch";
+		String nameAlias = "name";
+		String implAlias = "impl";
+		CompiledStatement selectTLCLass = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "module")),
+			selectDistinct(
+				columns(
+					_branchSupport ? columnDef(branchColumnOrNull(), NO_TABLE_ALIAS, branchAlias)
+						: columnDef(trunkBranch(), branchAlias),
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias),
+					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_IMPL), NO_TABLE_ALIAS, implAlias)),
+				table(SQLH.mangleDBName(mo)),
+				and(
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "module")),
+					eqBranch()))).toSql(sqlDialect);
+
+		try (ResultSet dbResult =
+			selectTLCLass.executeQuery(connection, module.getBranch(), module.getID())) {
+			while (dbResult.next()) {
+				Type type = BranchIdType.newInstance(Type.class,
+					dbResult.getLong(branchAlias),
+					LongID.valueOf(dbResult.getLong(identifierAlias)),
+					mo);
+				type.setTypeName(dbResult.getString(nameAlias));
+				type.setModule(module);
+				switch (dbResult.getString(implAlias)) {
+					case TLStructuredTypeColumns.ASSOCIATION_TYPE:
+						type.setKind(Type.Kind.ASSOCIATION);
+						break;
+					case TLStructuredTypeColumns.CLASS_TYPE:
+						type.setKind(Type.Kind.CLASS);
+						break;
+					default:
+						throw new IllegalArgumentException(
+							"Unexpected impl type: " + dbResult.getString(implAlias) + " for " + type + ".");
+				}
+				searchResult.add(type);
+			}
+		}
 	}
 
 	/**
 	 * Adds all {@link TLType}s belonging to the given {@link Module}, stored in given
 	 * {@link MetaObject}.
 	 */
-	public void addTLTypeIdentifiers(PooledConnection connection, Module module,
-			List<? super Type> searchResult, String mo) throws SQLException {
+	private void addTLTypeIdentifiers(PooledConnection connection, Module module,
+			List<? super Type> searchResult, String mo, Type.Kind kind) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";
@@ -1017,6 +1127,7 @@ public class Util {
 					mo);
 				type.setTypeName(dbResult.getString(nameAlias));
 				type.setModule(module);
+				type.setKind(kind);
 				searchResult.add(type);
 			}
 		}
@@ -1518,12 +1629,12 @@ public class Util {
 				if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
 					part = TypePart.newInstance(Reference.class,
 						type.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
-						type, name, definition, order);
+						TypePart.Kind.REFERENCE, type, name, definition, order);
 					((Reference) part).setEndID(LongID.valueOf(dbResult.getLong(endIDAlias)));
 				} else {
 					part = TypePart.newInstance(TypePart.class,
 						type.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
-						type, name, definition, order);
+						typePartKindFromImplAttribute(impl), type, name, definition, order);
 				}
 				searchResult.add(part);
 			}
@@ -1564,7 +1675,8 @@ public class Util {
 				int order = dbResult.getInt(orderAlias);
 				TypePart part = TypePart.newInstance(TypePart.class,
 					enumType.getBranch(), id, TlModelFactory.KO_NAME_TL_CLASSIFIER,
-					enumType, name, IdentifierUtil.nullIdForMandatoryDatabaseColumns(), order);
+					TypePart.Kind.CLASSIFIER, enumType, name, IdentifierUtil.nullIdForMandatoryDatabaseColumns(),
+					order);
 				searchResult.add(part);
 			}
 		}
@@ -1616,12 +1728,12 @@ public class Util {
 				if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
 					part = TypePart.newInstance(Reference.class,
 						structuredType.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
-						structuredType, partName, definition, order);
+						TypePart.Kind.REFERENCE, structuredType, partName, definition, order);
 					((Reference) part).setEndID(LongID.valueOf(dbResult.getLong(endIDAlias)));
 				} else {
 					part = TypePart.newInstance(TypePart.class,
 						structuredType.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
-						structuredType, partName, definition, order);
+						typePartKindFromImplAttribute(impl), structuredType, partName, definition, order);
 				}
 				searchResult.add(part);
 			}
@@ -1682,7 +1794,8 @@ public class Util {
 				int order = dbResult.getInt(orderAlias);
 				TypePart part = TypePart.newInstance(
 					structuredType.getBranch(), id, TlModelFactory.KO_NAME_TL_CLASSIFIER,
-					structuredType, partName, IdentifierUtil.nullIdForMandatoryDatabaseColumns(), order);
+					TypePart.Kind.CLASSIFIER, structuredType, partName,
+					IdentifierUtil.nullIdForMandatoryDatabaseColumns(), order);
 				searchResult.add(part);
 			}
 		}
@@ -1885,6 +1998,7 @@ public class Util {
 			TlModelFactory.KO_NAME_TL_PRIMITIVE);
 		type.setTypeName(typeName);
 		type.setModule(module);
+		type.setKind(Type.Kind.DATATYPE);
 		return type;
 
 	}
@@ -2486,6 +2600,7 @@ public class Util {
 			BranchIdType.newInstance(Type.class, branch, newIdentifier, TlModelFactory.KO_NAME_TL_ENUMERATION);
 		enumType.setTypeName(enumName);
 		enumType.setModule(module);
+		enumType.setKind(Type.Kind.ENUM);
 		return enumType;
 	}
 
@@ -2758,7 +2873,8 @@ public class Util {
 			classifierName, sortOrder);
 		return TypePart.newInstance(
 			branch, newIdentifier, TlModelFactory.KO_NAME_TL_CLASSIFIER,
-			enumeration, classifierName, IdentifierUtil.nullIdForMandatoryDatabaseColumns(), sortOrder);
+			TypePart.Kind.CLASSIFIER, enumeration, classifierName, IdentifierUtil.nullIdForMandatoryDatabaseColumns(),
+			sortOrder);
 	}
 
 	/**

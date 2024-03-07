@@ -23,7 +23,7 @@
 				/>
 			</decorator>
 			<contentRenderer class="com.top_logic.layout.tree.renderer.ReadOnlyNavigationRenderer"
-				root-icon="theme:BREADCRUMB_ROOT_ICON"
+				root-icon="theme:TOP_LOGIC_WITHOUT_TEXT"
 				root-label="navigation.breadcrumb.rootLabel"
 				root-visible="%BREADCRUMB_ROOT_VISIBLE%"
 				separator-icon="theme:READ_ONLY_NAVIGATION_SEPARATOR_ICON"

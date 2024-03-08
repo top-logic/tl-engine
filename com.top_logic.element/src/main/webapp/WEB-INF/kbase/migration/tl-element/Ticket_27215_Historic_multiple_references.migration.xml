@@ -163,8 +163,8 @@
 				</storage-algorithm>
 			</annotations>
 		</create-property>
-		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
-			transform="/WEB-INF/kbase/migration/tl-element/Ticket_27215_Historic_multiple_references.model.transform.xslt"
+		<reorder-part name="tl.model:TLReference#historyType"
+			before="ordered"
 		/>
 	</processors>
 	<migration/>

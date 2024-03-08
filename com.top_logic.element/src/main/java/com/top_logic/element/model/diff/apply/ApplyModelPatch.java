@@ -82,6 +82,7 @@ import com.top_logic.element.model.migration.model.CreateTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.CreateTLReferenceProcessor;
 import com.top_logic.element.model.migration.model.CreateTLSingletonProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLClassProcessor;
+import com.top_logic.element.model.migration.model.DeleteTLDatatypeProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLModuleProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLReferenceProcessor;
@@ -108,6 +109,7 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLScope;
@@ -550,8 +552,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	@Override
 	public void createSingleton(TLModule module, SingletonConfig singleton) {
 		super.createSingleton(module, singleton);
-
-		addSingleton(module.getName(), singleton);
+		if (getFactory() != null) {
+			addSingleton(module.getName(), singleton);
+		}
 	}
 
 	private void addSingleton(String module, SingletonConfig singleton) {
@@ -560,8 +563,15 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		config.setName(singleton.getName());
 		CreateTLObjectProcessor.Config singletonConf = newConfigItem(CreateTLObjectProcessor.Config.class);
 		String typeSpec = singleton.getTypeSpec();
-		singletonConf.setType(qTypeName(typeSpec));
-		singletonConf.setTable(TLAnnotations.getTable((TLType) resolvePart(typeSpec)));
+		QualifiedTypeName qTypeSpec;
+		if (typeSpec.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR) < 0) {
+			// Local name
+			qTypeSpec = qTypeName(module, typeSpec);
+		} else {
+			qTypeSpec = qTypeName(typeSpec);
+		}
+		singletonConf.setType(qTypeSpec);
+		singletonConf.setTable(TLAnnotations.getTable((TLType) resolvePart(qTypeSpec.getName())));
 		config.setSingleton(singletonConf);
 		addProcessor(config);
 	}
@@ -847,7 +857,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		TLProperty property = super.createProperty(owner, attributeConfig);
 
 		CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);
-		config.setType(qTypeName(attributeConfig.getTypeSpec()));
+		config.setType(getQualifiedTypeName(owner.getModule().getName(), attributeConfig.getTypeSpec()));
 		fillPartProcessor(config, TLModelUtil.qualifiedName(owner), attributeConfig);
 
 		addProcessor(config);
@@ -882,7 +892,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		TLAssociationEnd end = super.addAssociationEnd(owner, endConfig, targetType);
 
 		CreateTLAssociationEndProcessor.Config config = newConfigItem(CreateTLAssociationEndProcessor.Config.class);
-		config.setType(qTypeName(endConfig.getTypeSpec()));
+		config.setType(getQualifiedTypeName(owner.getModule().getName(), endConfig.getTypeSpec()));
 		fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), endConfig);
 
 		addProcessor(config);
@@ -1029,6 +1039,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			addProcessor(config);
 		} else if (part instanceof TLClass) {
 			DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
+			config.setName(qTypeName(diff.getName()));
+			addProcessor(config);
+		} else if (part instanceof TLPrimitive) {
+			DeleteTLDatatypeProcessor.Config config = newConfigItem(DeleteTLDatatypeProcessor.Config.class);
 			config.setName(qTypeName(diff.getName()));
 			addProcessor(config);
 		} else if (part instanceof TLProperty) {

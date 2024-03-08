@@ -127,9 +127,6 @@
 			definition="tl.core:Author#name"
 		/>
 
-		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
-			transform="/WEB-INF/kbase/migration/tl-element/Ticket_27236_Create_Revision_Model.model.transform.xslt"
-		/>
 	</processors>
 	<migration>
 		<type-mapping class=""/>

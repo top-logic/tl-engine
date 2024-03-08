@@ -4538,7 +4538,7 @@ input.tristate {
 
 .Header .breadcrumbNodeIcon > img:first-of-type {
 	height: 12px;
-	width: fit-content;
+	width: max-content;
 }
 
 /* ============================ */

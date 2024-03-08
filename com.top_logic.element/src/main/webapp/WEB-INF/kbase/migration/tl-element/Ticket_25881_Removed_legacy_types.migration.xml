@@ -59,7 +59,6 @@
 		<update-annotations name="tl.model">
 			<annotations>
 				<package-binding interface-package="com.top_logic.model.model"/>
-				<factory value="com.top_logic.element.meta.PersistentModelFactory"/>
 			</annotations>
 		</update-annotations>
 
@@ -730,6 +729,9 @@
 			inverse-reference="tl.model:TLClassifier#owner"
 			multiple="true"
 		/>
+		<reorder-part name="tl.model:TLEnumeration#classifiers"
+			before="scope"
+		/>
 
 		<create-inverse-reference name="tl.model:TLAssociation#subsets"
 			inverse-reference="tl.model:TLAssociation#union"
@@ -738,9 +740,15 @@
 		<create-inverse-reference name="tl.model:TLAssociationEnd#reference"
 			inverse-reference="tl.model:TLReference#end"
 		/>
+		<reorder-part name="tl.model:TLAssociationEnd#reference"
+			before="composite"
+		/>
 		<create-inverse-reference name="tl.model:TLModule#singletons"
 			inverse-reference="tl.model:TLModuleSingletons#module"
 			multiple="true"
+		/>
+		<reorder-part name="tl.model:TLModule#singletons"
+			before="model"
 		/>
 
 		<!-- tl.accounts -->
@@ -759,7 +767,6 @@
 			</annotations>
 		</create-class>
 		<create-property name="tl.accounts:Person#name"
-			mandatory="true"
 			type="tl.core:String"
 		>
 			<annotations>
@@ -837,7 +844,6 @@
 			</annotations>
 		</create-class>
 		<create-reference name="tl.accounts:Person#representativeGroup"
-			multiple="false"
 			type="tl.accounts:Group"
 		>
 			<annotations>

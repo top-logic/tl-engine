@@ -29,6 +29,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -60,6 +61,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
@@ -91,6 +93,22 @@ import com.top_logic.util.model.ModelService;
 	WrapperMetaAttributeUtil.Module.class,
 })
 public class DynamicModelService extends ElementModelService implements TLFactory {
+
+	/**
+	 * Sequence of {@link MigrationProcessor} that can be execute to apply a model patch within a
+	 * migration.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface MigrationProcessors extends ConfigurationItem {
+
+		/**
+		 * {@link MigrationProcessor}s to execute.
+		 */
+		@DefaultContainer
+		List<PolymorphicConfiguration<? extends MigrationProcessor>> getProcessors();
+
+	}
 
 	/**
 	 * Property in {@link DBProperties} that stores the factory defaults of the application model.
@@ -363,18 +381,19 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		if (!patch.isEmpty()) {
 			Logger.info("Started incremental model upgrade: " + patch, DynamicModelService.class);
 
-			ApplyModelPatch apply = new ApplyModelPatch(log, getModel(), getFactory());
-			apply.applyPatch(patch);
-			apply.complete();
-
-			Logger.info(
-				"Use the following processors in an automatic data migration to avoid the incremental model upgrade: "
-						+ apply.migrationProcessors(),
-				DynamicModelService.class);
+			MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+			ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());
+			new ConstraintChecker().check(log(), processors);
 
 			storeModelConfig(connection);
 
 			Logger.info("Ended incremental model upgrade.", DynamicModelService.class);
+
+			Logger.info(
+				"Note: The following processors can be used in automatic data migration to avoid the incremental model upgrade: "
+						+ processors,
+				DynamicModelService.class);
+
 		} else {
 			Logger.info("No incremental model upgrade necessary.", DynamicModelService.class);
 		}

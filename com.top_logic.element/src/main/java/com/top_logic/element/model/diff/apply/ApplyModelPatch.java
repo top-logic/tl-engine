@@ -22,8 +22,6 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.dob.schema.config.DBColumnType;
 import com.top_logic.element.config.AssociationConfig;
 import com.top_logic.element.config.AssociationConfig.EndConfig;
@@ -140,23 +138,7 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, Void, RuntimeException> {
 
-	/**
-	 * Sequence of {@link MigrationProcessor} that can be execute to apply a model patch within a
-	 * migration.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface MigrationProcessors extends ConfigurationItem {
-
-		/**
-		 * {@link MigrationProcessor}s to execute.
-		 */
-		@DefaultContainer
-		List<PolymorphicConfiguration<? extends MigrationProcessor>> getProcessors();
-
-	}
-
-	private MigrationProcessors _processors = newConfigItem(MigrationProcessors.class);
+	private List<? super PolymorphicConfiguration<? extends MigrationProcessor>> _processors;
 
 	/**
 	 * {@link DiffVisitor} computing a priority to sort {@link DiffElement}s before applying a
@@ -295,9 +277,15 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	/**
 	 * Creates a {@link ApplyModelPatch}.
+	 * 
+	 * @param processors
+	 *        A sequence of {@link MigrationProcessor} configuration to add processors which can be
+	 *        used to apply the patch in SQL. May be <code>null</code>.
 	 */
-	public ApplyModelPatch(Protocol log, TLModel model, TLFactory factory) {
+	public ApplyModelPatch(Protocol log, TLModel model, TLFactory factory,
+			List<? super PolymorphicConfiguration<? extends MigrationProcessor>> processors) {
 		super(log, model, factory);
+		_processors = processors;
 	}
 
 	/**
@@ -313,7 +301,27 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 *        The {@link DiffElement}s to apply.
 	 */
 	public static void applyPatch(Protocol log, TLModel model, TLFactory factory, List<? extends DiffElement> patch) {
-		ApplyModelPatch apply = new ApplyModelPatch(log, model, factory);
+		applyPatch(log, model, factory, patch, null);
+	}
+
+	/**
+	 * Applies all given diffs to the given model.
+	 * 
+	 * @param log
+	 *        Protocol to write messages to.
+	 * @param model
+	 *        The {@link TLModel} to adapt.
+	 * @param factory
+	 *        {@link TLFactory} to create new elements.
+	 * @param patch
+	 *        The {@link DiffElement}s to apply.
+	 * @param processors
+	 *        Output list to fill with configurations of {@link MigrationProcessor}s that can be
+	 *        used to apply the patch in SQL.
+	 */
+	public static void applyPatch(Protocol log, TLModel model, TLFactory factory, List<? extends DiffElement> patch,
+			List<? super PolymorphicConfiguration<? extends MigrationProcessor>> processors) {
+		ApplyModelPatch apply = new ApplyModelPatch(log, model, factory, processors);
 		apply.applyPatch(patch);
 		apply.complete();
 	}
@@ -357,12 +365,17 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				+ "'.");
 			part.setAnnotation(TypedConfiguration.copy(annotation));
 		}
-
-		AddTLAnnotations.Config config = newConfigItem(AddTLAnnotations.Config.class);
-		config.setName(diff.getPart());
-		copyAnnotations(diff, config);
-		addProcessor(config);
+		if (createProcessors()) {
+			AddTLAnnotations.Config config = newConfigItem(AddTLAnnotations.Config.class);
+			config.setName(diff.getPart());
+			copyAnnotations(diff, config);
+			addProcessor(config);
+		}
 		return null;
+	}
+
+	private boolean createProcessors() {
+		return _processors != null;
 	}
 
 	@Override
@@ -389,10 +402,12 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			part.setAnnotation(TypedConfiguration.copy(annotation));
 		}
 
-		UpdateTLAnnotations.Config config = newConfigItem(UpdateTLAnnotations.Config.class);
-		config.setName(diff.getPart());
-		copyAnnotations(diff, config);
-		addProcessor(config);
+		if (createProcessors()) {
+			UpdateTLAnnotations.Config config = newConfigItem(UpdateTLAnnotations.Config.class);
+			config.setName(diff.getPart());
+			copyAnnotations(diff, config);
+			addProcessor(config);
+		}
 		return null;
 	}
 
@@ -440,16 +455,18 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		int index = before == null ? generalizations.size() : generalizations.indexOf(before);
 		generalizations.add(index, generalization);
 
-		AddTLClassGeneralization.Config config = newConfigItem(AddTLClassGeneralization.Config.class);
-		QualifiedTypeName type = qTypeName(diff.getType());
-		config.setName(type);
+		if (createProcessors()) {
+			AddTLClassGeneralization.Config config = newConfigItem(AddTLClassGeneralization.Config.class);
+			QualifiedTypeName type = qTypeName(diff.getType());
+			config.setName(type);
 
-		QualifiedTypeName generalizationName = qTypeName(diff.getGeneralization());
-		config.getGeneralizations().add(newGeneralization(generalizationName));
-		addProcessor(config);
+			QualifiedTypeName generalizationName = qTypeName(diff.getGeneralization());
+			config.getGeneralizations().add(newGeneralization(generalizationName));
+			addProcessor(config);
 
-		if (before != null) {
-			addReorderGeneralization(type, generalizationName, diff.getBefore());
+			if (before != null) {
+				addReorderGeneralization(type, generalizationName, diff.getBefore());
+			}
 		}
 		return null;
 	}
@@ -500,12 +517,14 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		int index = before == null ? generalizations.size() : generalizations.indexOf(before);
 
 		generalizations.add(index, generalization);
-
-		addReorderGeneralization(qTypeName(diff.getType()), qTypeName(diff.getGeneralization()), diff.getBefore());
+		if (createProcessors()) {
+			addReorderGeneralization(qTypeName(diff.getType()), qTypeName(diff.getGeneralization()), diff.getBefore());
+		}
 		return null;
 	}
 
 	private void addReorderGeneralization(QualifiedTypeName type, QualifiedTypeName generalization, String before) {
+		assert createProcessors();
 		ReorderTLClassGeneralization.Config config = newConfigItem(ReorderTLClassGeneralization.Config.class);
 		config.setType(type);
 		config.setGeneralization(generalization);
@@ -552,7 +571,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	@Override
 	public void createSingleton(TLModule module, SingletonConfig singleton) {
 		super.createSingleton(module, singleton);
-		if (getFactory() != null) {
+		if (getFactory() != null && createProcessors()) {
 			addSingleton(module.getName(), singleton);
 		}
 	}
@@ -624,14 +643,16 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	protected void addObjectType(TLModule module, TLScope scope, ObjectTypeConfig config) {
 		super.addObjectType(module, scope, config);
 
-		String moduleName = module.getName();
-		if (config instanceof InterfaceConfig) {
-			addObjectType(moduleName, config, Boolean.TRUE, null, Collections.emptyList());
-		} else if (config instanceof ClassConfig) {
-			ClassConfig type = (ClassConfig) config;
-			addObjectType(moduleName, config, type.isAbstract(), type.isFinal(), type.getTypes());
-		} else {
-			throw new UnreachableAssertion("Unexpected type config: " + config);
+		if (createProcessors()) {
+			String moduleName = module.getName();
+			if (config instanceof InterfaceConfig) {
+				addObjectType(moduleName, config, Boolean.TRUE, null, Collections.emptyList());
+			} else if (config instanceof ClassConfig) {
+				ClassConfig type = (ClassConfig) config;
+				addObjectType(moduleName, config, type.isAbstract(), type.isFinal(), type.getTypes());
+			} else {
+				throw new UnreachableAssertion("Unexpected type config: " + config);
+			}
 		}
 	}
 
@@ -685,7 +706,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	@Override
 	protected void addDataType(TLModule module, TLScope scope, DatatypeConfig config) {
 		super.addDataType(module, scope, config);
-		addDatatypeProcessor(module.getName(), config);
+		if (createProcessors()) {
+			addDatatypeProcessor(module.getName(), config);
+		}
 	}
 
 	private void addDatatypeProcessor(String moduleName, DatatypeConfig type) {
@@ -702,7 +725,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	@Override
 	protected void addEnumType(TLModule module, TLScope scope, EnumConfig config) {
 		super.addEnumType(module, scope, config);
-		addEnumProcessor(module.getName(), config);
+		if (createProcessors()) {
+			addEnumProcessor(module.getName(), config);
+		}
 	}
 
 	private void addEnumProcessor(String moduleName, EnumConfig type) {
@@ -716,7 +741,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	@Override
 	protected void addAssociationType(TLModule module, TLScope scope, AssociationConfig config) {
 		super.addAssociationType(module, scope, config);
-		addAssociationProcessor(module.getName(), config);
+		if (createProcessors()) {
+			addAssociationProcessor(module.getName(), config);
+		}
 	}
 
 	private void addAssociationProcessor(String moduleName, AssociationConfig type) {
@@ -838,17 +865,19 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			((TLTypePart) part).setType((TLType) type);
 		});
 
-		ChangeAttributeTargetType.Config config;
-		if (part instanceof TLReference) {
-			ChangeRefConfig changeRefConfig = newConfigItem(ChangeAttributeTargetType.ChangeRefConfig.class);
-			changeRefConfig.setReference(qTypePartName(diff.getPart()));
-			config = changeRefConfig;
-		} else {
-			config = newConfigItem(ChangeAttributeTargetType.Config.class);
-			config.setPart(qTypePartName(diff.getPart()));
+		if (createProcessors()) {
+			ChangeAttributeTargetType.Config config;
+			if (part instanceof TLReference) {
+				ChangeRefConfig changeRefConfig = newConfigItem(ChangeAttributeTargetType.ChangeRefConfig.class);
+				changeRefConfig.setReference(qTypePartName(diff.getPart()));
+				config = changeRefConfig;
+			} else {
+				config = newConfigItem(ChangeAttributeTargetType.Config.class);
+				config.setPart(qTypePartName(diff.getPart()));
+			}
+			config.setTarget(qTypeName(diff.getTypeSpec()));
+			addProcessor(config);
 		}
-		config.setTarget(qTypeName(diff.getTypeSpec()));
-		addProcessor(config);
 		return null;
 	}
 
@@ -856,11 +885,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	public TLProperty createProperty(TLStructuredType owner, AttributeConfig attributeConfig) {
 		TLProperty property = super.createProperty(owner, attributeConfig);
 
-		CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);
-		config.setType(getQualifiedTypeName(owner.getModule().getName(), attributeConfig.getTypeSpec()));
-		fillPartProcessor(config, TLModelUtil.qualifiedName(owner), attributeConfig);
+		if (createProcessors()) {
+			CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);
+			config.setType(getQualifiedTypeName(owner.getModule().getName(), attributeConfig.getTypeSpec()));
+			fillPartProcessor(config, TLModelUtil.qualifiedName(owner), attributeConfig);
 
-		addProcessor(config);
+			addProcessor(config);
+		}
 		return property;
 	}
 
@@ -869,21 +900,24 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			TLAssociationEnd associationEnd) {
 		TLReference reference = super.addReference(owner, referenceConfig, associationEnd);
 
-		AbstractEndAspectProcessor.Config<?> config;
-		QualifiedTypeName targetType = getQualifiedTypeName(owner.getModule().getName(), referenceConfig.getTypeSpec());
-		if (referenceConfig.getKind() == ReferenceKind.BACKWARDS) {
-			CreateInverseTLReferenceProcessor.Config inverseConf =
-				newConfigItem(CreateInverseTLReferenceProcessor.Config.class);
-			inverseConf.setInverseReference(qTypePartName(targetType, referenceConfig.getInverseReference()));
-			config = inverseConf;
-		} else {
-			CreateTLReferenceProcessor.Config refConf = newConfigItem(CreateTLReferenceProcessor.Config.class);
-			refConf.setType(targetType);
-			config = refConf;
-		}
-		fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), referenceConfig);
+		if (createProcessors()) {
+			AbstractEndAspectProcessor.Config<?> config;
+			QualifiedTypeName targetType =
+				getQualifiedTypeName(owner.getModule().getName(), referenceConfig.getTypeSpec());
+			if (referenceConfig.getKind() == ReferenceKind.BACKWARDS) {
+				CreateInverseTLReferenceProcessor.Config inverseConf =
+					newConfigItem(CreateInverseTLReferenceProcessor.Config.class);
+				inverseConf.setInverseReference(qTypePartName(targetType, referenceConfig.getInverseReference()));
+				config = inverseConf;
+			} else {
+				CreateTLReferenceProcessor.Config refConf = newConfigItem(CreateTLReferenceProcessor.Config.class);
+				refConf.setType(targetType);
+				config = refConf;
+			}
+			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), referenceConfig);
 
-		addProcessor(config);
+			addProcessor(config);
+		}
 		return reference;
 	}
 
@@ -891,11 +925,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	protected TLAssociationEnd addAssociationEnd(TLAssociation owner, EndConfig endConfig, TLType targetType) {
 		TLAssociationEnd end = super.addAssociationEnd(owner, endConfig, targetType);
 
-		CreateTLAssociationEndProcessor.Config config = newConfigItem(CreateTLAssociationEndProcessor.Config.class);
-		config.setType(getQualifiedTypeName(owner.getModule().getName(), endConfig.getTypeSpec()));
-		fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), endConfig);
+		if (createProcessors()) {
+			CreateTLAssociationEndProcessor.Config config = newConfigItem(CreateTLAssociationEndProcessor.Config.class);
+			config.setType(getQualifiedTypeName(owner.getModule().getName(), endConfig.getTypeSpec()));
+			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), endConfig);
 
-		addProcessor(config);
+			addProcessor(config);
+		}
 		return end;
 	}
 
@@ -932,11 +968,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	@Override
 	public TLModule createModule(ModuleConfig moduleConf) {
-		CreateTLModuleProcessor.Config newModule = newConfigItem(CreateTLModuleProcessor.Config.class);
-		String moduleName = moduleConf.getName();
-		newModule.setName(moduleName);
-		copyAnnotations(moduleConf, newModule);
-		addProcessor(newModule);
+		if (createProcessors()) {
+			CreateTLModuleProcessor.Config newModule = newConfigItem(CreateTLModuleProcessor.Config.class);
+			String moduleName = moduleConf.getName();
+			newModule.setName(moduleName);
+			copyAnnotations(moduleConf, newModule);
+			addProcessor(newModule);
+		}
 
 		/* Creating module must occur before the types are created. */
 		return super.createModule(moduleConf);
@@ -980,9 +1018,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	public void addClassifier(TLEnumeration classification, ClassifierConfig classifierConfig, TLClassifier before) {
 		super.addClassifier(classification, classifierConfig, before);
 
-		QualifiedPartName newClassifierName = classifierMigration(qTypeName(classification), classifierConfig);
-		if (before != null) {
-			addMoveTLTypePart(newClassifierName, before.getName());
+		if (createProcessors()) {
+			QualifiedPartName newClassifierName = classifierMigration(qTypeName(classification), classifierConfig);
+			if (before != null) {
+				addMoveTLTypePart(newClassifierName, before.getName());
+			}
 		}
 	}
 
@@ -1033,29 +1073,31 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			part.tDelete();
 		}
 
-		if (part instanceof TLModule) {
-			DeleteTLModuleProcessor.Config config = newConfigItem(DeleteTLModuleProcessor.Config.class);
-			config.setName(diff.getName());
-			addProcessor(config);
-		} else if (part instanceof TLClass) {
-			DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
-			config.setName(qTypeName(diff.getName()));
-			addProcessor(config);
-		} else if (part instanceof TLPrimitive) {
-			DeleteTLDatatypeProcessor.Config config = newConfigItem(DeleteTLDatatypeProcessor.Config.class);
-			config.setName(qTypeName(diff.getName()));
-			addProcessor(config);
-		} else if (part instanceof TLProperty) {
-			DeleteTLPropertyProcessor.Config config = newConfigItem(DeleteTLPropertyProcessor.Config.class);
-			config.setName(qTypePartName(diff.getName()));
-			addProcessor(config);
-		} else if (part instanceof TLReference) {
-			DeleteTLReferenceProcessor.Config config = newConfigItem(DeleteTLReferenceProcessor.Config.class);
-			config.setName(qTypePartName(diff.getName()));
-			addProcessor(config);
-		} else {
-			throw new UnsupportedOperationException("No deletion for '" + diff.getName() + "' of type '"
-					+ part.getClass().getName() + "' possible.");
+		if (createProcessors()) {
+			if (part instanceof TLModule) {
+				DeleteTLModuleProcessor.Config config = newConfigItem(DeleteTLModuleProcessor.Config.class);
+				config.setName(diff.getName());
+				addProcessor(config);
+			} else if (part instanceof TLClass) {
+				DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
+				config.setName(qTypeName(diff.getName()));
+				addProcessor(config);
+			} else if (part instanceof TLPrimitive) {
+				DeleteTLDatatypeProcessor.Config config = newConfigItem(DeleteTLDatatypeProcessor.Config.class);
+				config.setName(qTypeName(diff.getName()));
+				addProcessor(config);
+			} else if (part instanceof TLProperty) {
+				DeleteTLPropertyProcessor.Config config = newConfigItem(DeleteTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getName()));
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				DeleteTLReferenceProcessor.Config config = newConfigItem(DeleteTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getName()));
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No deletion for '" + diff.getName() + "' of type '"
+						+ part.getClass().getName() + "' possible.");
+			}
 		}
 		return null;
 	}
@@ -1102,24 +1144,27 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Updating mandatory state of '" + diff.getPart() + "' to '" + diff.isMandatory() + "'.");
 		part.setMandatory(diff.isMandatory());
 
-		if (part instanceof TLProperty) {
-			UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
-			config.setName(qTypePartName(diff.getPart()));
-			config.setMandatory(diff.isMandatory());
-			addProcessor(config);
-		} else if (part instanceof TLReference) {
-			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
-			config.setName(qTypePartName(diff.getPart()));
-			config.setMandatory(diff.isMandatory());
-			addProcessor(config);
-		} else if (part instanceof TLAssociationEnd) {
-			UpdateTLAssociationEndProcessor.Config config = newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
-			config.setName(qTypePartName(diff.getPart()));
-			config.setMandatory(diff.isMandatory());
-			addProcessor(config);
-		} else {
-			throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
-					+ part.getClass().getName() + "' possible.");
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMandatory(diff.isMandatory());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMandatory(diff.isMandatory());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMandatory(diff.isMandatory());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+						+ part.getClass().getName() + "' possible.");
+			}
 		}
 		return null;
 	}
@@ -1163,7 +1208,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		classifiers.remove(moved);
 		classifiers.add(beforeClassifier == null ? classifiers.size() : classifiers.indexOf(beforeClassifier), moved);
 
-		addMoveTLTypePart(qTypePartName(diff.getClassifier()), diff.getBefore());
+		if (createProcessors()) {
+			addMoveTLTypePart(qTypePartName(diff.getClassifier()), diff.getBefore());
+		}
 		return null;
 	}
 
@@ -1224,7 +1271,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		int index = before == null ? localParts.size() : localParts.indexOf(before);
 		localParts.add(index, part);
 
-		addMoveTLTypePart(qTypePartName(TLModelUtil.qualifiedName(part)), before == null ? null : before.getName());
+		if (createProcessors()) {
+			addMoveTLTypePart(qTypePartName(TLModelUtil.qualifiedName(part)), before == null ? null : before.getName());
+		}
 	}
 
 	private void addMoveTLTypePart(QualifiedPartName partName, String before) {
@@ -1251,12 +1300,14 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Removing annotation '" + diff.getAnnotation().getName() + "' from '" + diff.getPart() + "'.");
 		part.removeAnnotation(diff.getAnnotation());
 
-		RemoveTLAnnotations.Config config = newConfigItem(RemoveTLAnnotations.Config.class);
-		config.setName(diff.getPart());
-		RemoveTLAnnotations.AnnotationConfig toRemove = newConfigItem(RemoveTLAnnotations.AnnotationConfig.class);
-		toRemove.setAnnotationClass(diff.getAnnotation());
-		config.getAnnotations().add(toRemove);
-		addProcessor(config);
+		if (createProcessors()) {
+			RemoveTLAnnotations.Config config = newConfigItem(RemoveTLAnnotations.Config.class);
+			config.setName(diff.getPart());
+			RemoveTLAnnotations.AnnotationConfig toRemove = newConfigItem(RemoveTLAnnotations.AnnotationConfig.class);
+			toRemove.setAnnotationClass(diff.getAnnotation());
+			config.getAnnotations().add(toRemove);
+			addProcessor(config);
+		}
 		return null;
 	}
 
@@ -1286,11 +1337,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Removing generalization '" + diff.getGeneralization() + "' from '" + diff.getType() + "'.");
 		type.getGeneralizations().remove(generalization);
 
-		RemoveTLClassGeneralization.Config config = newConfigItem(RemoveTLClassGeneralization.Config.class);
-		config.setName(qTypeName(diff.getType()));
+		if (createProcessors()) {
+			RemoveTLClassGeneralization.Config config = newConfigItem(RemoveTLClassGeneralization.Config.class);
+			config.setName(qTypeName(diff.getType()));
 
-		config.getGeneralizations().add(newGeneralization(qTypeName(diff.getGeneralization())));
-		addProcessor(config);
+			config.getGeneralizations().add(newGeneralization(qTypeName(diff.getGeneralization())));
+			addProcessor(config);
+		}
 		return null;
 	}
 
@@ -1326,10 +1379,12 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Making type abstract: " + diff.getType());
 		type.setAbstract(true);
 
-		UpdateTLClassProcessor.Config config = newConfigItem(UpdateTLClassProcessor.Config.class);
-		config.setName(qTypeName(diff.getType()));
-		config.setAbstract(true);
-		addProcessor(config);
+		if (createProcessors()) {
+			UpdateTLClassProcessor.Config config = newConfigItem(UpdateTLClassProcessor.Config.class);
+			config.setName(qTypeName(diff.getType()));
+			config.setAbstract(true);
+			addProcessor(config);
+		}
 		return null;
 	}
 
@@ -1355,10 +1410,12 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		log().info("Making type concrete: " + diff.getType());
 		type.setAbstract(false);
 
-		UpdateTLClassProcessor.Config config = newConfigItem(UpdateTLClassProcessor.Config.class);
-		config.setName(qTypeName(diff.getType()));
-		config.setAbstract(false);
-		addProcessor(config);
+		if (createProcessors()) {
+			UpdateTLClassProcessor.Config config = newConfigItem(UpdateTLClassProcessor.Config.class);
+			config.setName(qTypeName(diff.getType()));
+			config.setAbstract(false);
+			addProcessor(config);
+		}
 		return null;
 	}
 
@@ -1377,27 +1434,30 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 		part.setName(diff.getNewName());
 
-		QualifiedPartName oldName = qTypePartName(diff.getPart());
-		QualifiedPartName newName =
-			qTypePartName(qTypeName(oldName.getModuleName(), oldName.getTypeName()), diff.getNewName());
-		if (part instanceof TLProperty) {
-			UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
-			config.setName(oldName);
-			config.setNewName(newName);
-			addProcessor(config);
-		} else if (part instanceof TLReference) {
-			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
-			config.setName(oldName);
-			config.setNewName(newName);
-			addProcessor(config);
-		} else if (part instanceof TLAssociationEnd) {
-			UpdateTLAssociationEndProcessor.Config config = newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
-			config.setName(oldName);
-			config.setNewName(newName);
-			addProcessor(config);
-		} else {
-			throw new UnsupportedOperationException("No rename for '" + diff.getPart() + "' of type '"
-					+ part.getClass().getName() + "' possible.");
+		if (createProcessors()) {
+			QualifiedPartName oldName = qTypePartName(diff.getPart());
+			QualifiedPartName newName =
+				qTypePartName(qTypeName(oldName.getModuleName(), oldName.getTypeName()), diff.getNewName());
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(oldName);
+				config.setNewName(newName);
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(oldName);
+				config.setNewName(newName);
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(oldName);
+				config.setNewName(newName);
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No rename for '" + diff.getPart() + "' of type '"
+						+ part.getClass().getName() + "' possible.");
+			}
 		}
 
 		return null;
@@ -1406,22 +1466,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	@Override
 	public void complete() {
 		super.complete();
-		new ConstraintChecker().check(log(), _processors);
-	}
-
-	/**
-	 * The created {@link MigrationProcessor}s.
-	 * 
-	 * <p>
-	 * Must not called before {@link #complete()}.
-	 * </p>
-	 */
-	public MigrationProcessors migrationProcessors() {
-		return _processors;
 	}
 
 	private boolean addProcessor(PolymorphicConfiguration<? extends MigrationProcessor> p) {
-		return _processors.getProcessors().add(p);
+		return _processors.add(p);
 	}
 
 	/**
@@ -1494,6 +1542,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T> void copyIfSet(ConfigurationItem source, String propertyName, Consumer<T> target) {
 		PropertyDescriptor property = source.descriptor().getProperty(propertyName);
 		if (source.valueSet(property)) {

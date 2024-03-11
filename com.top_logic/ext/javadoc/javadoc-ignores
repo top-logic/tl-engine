@@ -324,54 +324,6 @@ com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com
 com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com.top_logic.base.dsa.ldap.ServiceProviderInfo.createFromConfig
 com.top_logic.base.locking.handler.LockHandler.java: Invalid camel case word 'TokenContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.locking.service.ConfiguredLockService.java: Missing documentation: com.top_logic.base.locking.service.ConfiguredLockService.Config.TypeConfig.StrategyContainerConfig
-com.top_logic.base.merge.CommitTask.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.DeleteWrapperTask.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.DeleteWrapperTask.java: Invalid camel case word 'deleteKnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.IndexingTask.java: Documentation starts with an uppercase letter: com.top_logic.base.merge.IndexingTask
-com.top_logic.base.merge.MergeMessage.java: Invalid camel case word 'MergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeMessage.java: Invalid camel case word 'MergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeMessage.java: Invalid camel case word 'mergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeMessage.java: Missing documentation: com.top_logic.base.merge.MergeMessage.LEVEL_STRING
-com.top_logic.base.merge.MergeTreeModel.java: Invalid camel case word 'MergeTreeModelbade', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeModel.java: Invalid camel case word 'TLTreeModel', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'MergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'aMergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'aPrologMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'infoList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'postList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'theChilderrn', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.RootMergeNode.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.RootMergeNode.java: Invalid camel case word 'RootMergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetBeanTask.java: Invalid camel case word 'BeanInfos', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetBeanTask.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetBeanTask.java: Invalid camel case word 'SetBeanTask', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetWrapperTask.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetWrapperTask.java: Invalid camel case word 'SetWrapperTask', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetWrapperTask.java: Invalid camel case word 'setValue', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.Validator.java: Invalid camel case word 'MergeMessages', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.Validator.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.Validator.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Invalid camel case word 'HandlerResult', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Invalid camel case word 'performMerge', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.COMMAND_ID
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.Config
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.Config.getPerform
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.updatePerform
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeTreeComponenet', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeTreeModel', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'RootMergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'RootNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'TreeModel', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'TreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'mergeMessages', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Missing documentation: com.top_logic.base.merge.layout.MergeTreeComponenet.APPROVE_FIELD
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Missing documentation: com.top_logic.base.merge.layout.MergeTreeComponenet.MergeTreeContentRenderer
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Missing documentation: com.top_logic.base.merge.layout.MergeTreeComponenet.getDefaultResourceProviderClass
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'BufferedReader', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.

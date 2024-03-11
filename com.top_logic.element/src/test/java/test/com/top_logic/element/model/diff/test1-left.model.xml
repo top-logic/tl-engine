@@ -123,6 +123,35 @@
 				</property>
 			</attributes>
 		</class>
+
+		<!-- Class with reference-re-create changes -->
+		<class name="O">
+			<attributes>
+				<!-- Reference with "multiple" change. Change of "multiple" is currently incompatible; reference is recreated. -->
+				<reference name="ref1"
+					multiple="true"
+					type="P"
+				/>
+				<!-- Reference with "target type" change. -->
+				<reference name="ref2"
+					type="O"
+				/>
+				<reference name="ref2Inverse"
+					inverse-reference="ref2"
+					kind="backwards"
+					type="O"
+				/>
+			</attributes>
+		</class>
+		<class name="P">
+			<attributes>
+				<reference name="ref1Inverse"
+					inverse-reference="ref1"
+					kind="backwards"
+					type="O"
+				/>
+			</attributes>
+		</class>
 	</module>
 
 	<!-- Module with annotation changes -->

@@ -4648,7 +4648,6 @@ com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_
 com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_logic.layout.window.WindowTemplate.getTemplate
 com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_logic.layout.window.WindowTemplate.getWindowName
 com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_logic.layout.window.WindowTemplate.setOwner
-com.top_logic.layout.workItem.SubWorkItemRenderer.java: Missing documentation: com.top_logic.layout.workItem.SubWorkItemRenderer
 com.top_logic.mig.html.AbstractRestrainedSelectionModel.java: Missing documentation: com.top_logic.mig.html.AbstractRestrainedSelectionModel.getDeselectionFilter
 com.top_logic.mig.html.BrowserDetector.java: Invalid camel case word 'JavaScriptOK', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.html.BrowserDetector.java: Invalid camel case word 'cssOK', this may only be used within JavaDoc links or HTML code tags.

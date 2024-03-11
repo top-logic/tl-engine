@@ -5648,49 +5648,6 @@ com.top_logic.tool.export.progress.ExportProgressComponent.java: Missing documen
 com.top_logic.tool.export.progress.ExportProgressComponent.java: Missing documentation: com.top_logic.tool.export.progress.ExportProgressComponent.Config.getDownloadComp
 com.top_logic.tool.export.progress.ExportProgressComponent.java: Missing documentation: com.top_logic.tool.export.progress.ExportProgressComponent.XML_DOWNLOAD_COMPONENT
 com.top_logic.tool.export.progress.ExportProgressHandler.java: Missing documentation: com.top_logic.tool.export.progress.ExportProgressHandler.newInstance
-com.top_logic.tool.state.AbstractState.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.state.AbstractState
-com.top_logic.tool.state.AbstractState.java: Missing documentation: com.top_logic.tool.state.AbstractState.isSuccessor
-com.top_logic.tool.state.ElementStateFilter.java: Invalid camel case word 'ElementStates', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.ElementStateFilter.java: Missing documentation: com.top_logic.tool.state.ElementStateFilter
-com.top_logic.tool.state.ElementStateResourceProvider.java: Missing documentation: com.top_logic.tool.state.ElementStateResourceProvider.I18N_INSTANCE
-com.top_logic.tool.state.ProjectStateChanged.java: Invalid camel case word 'ProjectStateChanged', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.ProjectStateChanged.java: Missing documentation: com.top_logic.tool.state.ProjectStateChanged.PROJECT_STATE_CHANGED_EVENT
-com.top_logic.tool.state.ProjectStateChanged.java: Missing documentation: com.top_logic.tool.state.ProjectStateChanged.PROJECT_STATE_EVENT
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'PersistentEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'ProjectStateChangedEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'ProjectStateConfiguration', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'StateManager', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isFinal', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isFinalState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isInitalState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isInitial', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config.STATE_DESCRIPTORS_PROPERTY
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config.getInitialConfigs
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config.getStateDescriptions
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.FINISH_STATE
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.INITIAL_STATE
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.InitialConfig
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.KeyConfiguration
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.KeyConfiguration.ATTRIBUTE_KEY
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.KeyConfiguration.getKey
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.ATTRIBUTE_OWNER
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.ATTRIBUTE_STATECLASS
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.ATTRIBUTE_STEP
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getOwner
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getStateclass
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getStep
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getSuccessors
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.allowsStateChange
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.getChangeHistory
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.getState
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.getSuccessorsFor
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.isFinalState
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.isInitialState
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.isOwner
-com.top_logic.tool.state.StatefullElement.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.state.StatefullElement
-com.top_logic.tool.state.StatefullElement.java: Invalid camel case word 'StatefullElement', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.AbstractStartStopListener.java: Invalid camel case word 'DataSources', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.AbstractStartStopListener.java: Invalid camel case word 'ServletContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.AbstractStartStopListener.java: Invalid camel case word 'StartStopListener', this may only be used within JavaDoc links or HTML code tags.

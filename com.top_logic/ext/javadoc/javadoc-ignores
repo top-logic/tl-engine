@@ -1045,29 +1045,6 @@ com.top_logic.base.user.douser.DOUser.java: Invalid camel case word 'DataObject'
 com.top_logic.base.user.douser.DOUser.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.user.douser.DOUser.java: Invalid camel case word 'getName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.user.douser.DOUserResourceProvider.java: Missing documentation: com.top_logic.base.user.douser.DOUserResourceProvider
-com.top_logic.base.workItem.SubWorkItem.java: Missing documentation: com.top_logic.base.workItem.SubWorkItem.compareTo
-com.top_logic.base.workItem.SubWorkItem.java: Missing documentation: com.top_logic.base.workItem.SubWorkItem.getOriginalWorkItem
-com.top_logic.base.workItem.SubWorkItem.java: Missing documentation: com.top_logic.base.workItem.SubWorkItem.getParent
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getAssignees
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getResponsible
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getState
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getSubject
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getWorkItemType
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_ASSIGNEE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_NAME
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_RESPONSIBLE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_STATE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_SUBJECT
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_TYPE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_SELF
-com.top_logic.base.workItem.WorkItemComparator.java: Missing documentation: com.top_logic.base.workItem.WorkItemComparator.INSTANCE
-com.top_logic.base.workItem.WorkItemComparator.java: Missing documentation: com.top_logic.base.workItem.WorkItemComparator.INSTANCE_DESCENDING
-com.top_logic.base.workItem.WorkItemManager.java: Missing documentation: com.top_logic.base.workItem.WorkItemManager
-com.top_logic.base.workItem.WorkItemManager.java: Missing documentation: com.top_logic.base.workItem.WorkItemManager.getManager
-com.top_logic.base.workItem.WorkItemManager.java: Missing documentation: com.top_logic.base.workItem.WorkItemManager.getWorkItems
-com.top_logic.base.workItem.WorkItemModelBuilder.java: Missing documentation: com.top_logic.base.workItem.WorkItemModelBuilder
-com.top_logic.base.workItem.WorkItemProvider.java: Missing documentation: com.top_logic.base.workItem.WorkItemProvider.getWorkItems
 com.top_logic.common.folder.AbstractFolderTreeBuilder.java: Invalid camel case word 'userObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.common.folder.AbstractFolderTreeBuilder.java: Missing documentation: com.top_logic.common.folder.AbstractFolderTreeBuilder.isLink
 com.top_logic.common.folder.ContentComparator.java: Missing documentation: com.top_logic.common.folder.ContentComparator.INSTANCE

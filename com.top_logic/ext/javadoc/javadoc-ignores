@@ -3962,40 +3962,6 @@ com.top_logic.layout.security.SecurityProvider.java: Missing documentation: com.
 com.top_logic.layout.security.UnwrapProtectedValueReadMapping.java: Invalid camel case word 'columnSecurityProviderClass', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.layout.security.UnwrapProtectedValueReadMapping.java: Invalid camel case word 'sortKeyProvider', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.layout.security.UnwrapProtectedValueReadMapping.java: Missing documentation: com.top_logic.layout.security.UnwrapProtectedValueReadMapping.INSTANCE
-com.top_logic.layout.state.AbstractViewState.java: Invalid camel case word 'AbstractViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllButExcludedViewState.java: Invalid camel case word 'AllButExcludedViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllButExcludedViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowAllViewState.java: Invalid camel case word 'AllowAllViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowAllViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowNothingViewState.java: Invalid camel case word 'AllowNothingViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowNothingViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.DeleteOnlyViewState.java: Invalid camel case word 'DeleteOnlyViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.DeleteOnlyViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.OnlyIncludedViewState.java: Invalid camel case word 'OnlyIncludedViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.OnlyIncludedViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ReadOnlyViewState.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.layout.state.ReadOnlyViewState
-com.top_logic.layout.state.ReadOnlyViewState.java: Invalid camel case word 'ReadOnlyViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ReadOnlyViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'LayoutComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'StateManager', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'ViewStateManager', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.TAG_DEFAULT_VALUES
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.TAG_SPECIAL_VALUES
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.getDefaultValues
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.getSpecialValues
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.SpecialStateDescription
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.SpecialStateDescription.ATTRIBUTE_VIEW_NAME
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.SpecialStateDescription.getViewName
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.ATTRIBUTE_STATECLASS
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.TAG_COMMAND
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.TAG_COMMAND_GROUP
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.getCommandGroups
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.getCommands
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.getStateclass
 com.top_logic.layout.structure.AbstractContentLayouting.java: Missing documentation: com.top_logic.layout.structure.AbstractContentLayouting.createContentDisplay
 com.top_logic.layout.structure.AbstractLayoutControl.java: Invalid camel case word 'AbstractLayoutControl', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.layout.structure.BrowserWindowControl.java: Invalid camel case word 'browserWindowControl', this may only be used within JavaDoc links or HTML code tags.

@@ -102,6 +102,12 @@ public class ComponentCommand extends AbstractDynamicCommand implements CheckSco
 		HandlerResult result = CommandDispatcher.getInstance().dispatchCommand(command, context, component, theArguments);
 
 		if (result.isSuspended()) {
+			// Note: Initialize the continuation early to prevent the actual button click to be
+			// resumed. Resuming the concrete button click might not work, because the button might
+			// no longer exist, when the resume happens (e.g. if the button was displayed in a popup
+			// dialog such as a context menu or burger menu). Instead the underlying component
+			// command is resumed. This is possible independently of the concrete button that
+			// originally invoked the command.
 			result.initContinuation(command, component, theArguments);
 		}
 

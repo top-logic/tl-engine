@@ -1233,29 +1233,3 @@ com.top_logic.element.structured.wrap.Mandator.java: Missing documentation: com.
 com.top_logic.element.structured.wrap.StructuredElementWrapper.java: Missing documentation: com.top_logic.element.structured.wrap.StructuredElementWrapper.traverseUp
 com.top_logic.element.structured.wrap.StructuredElementWrapperFactory.java: Invalid camel case word 'StructuredElement', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.util.model.ElementCompatibilityService.java: Documentation starts with an uppercase letter: com.top_logic.element.util.model.ElementCompatibilityService
-com.top_logic.element.workItem.favorites.FavoritesFilter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.workItem.favorites.FavoritesFilter
-com.top_logic.element.workItem.favorites.FavoritesFilter.java: Invalid camel case word 'FavoritesFilter', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.workItem.favorites.FavoritesFilterProvider.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.workItem.favorites.FavoritesFilterProvider
-com.top_logic.element.workItem.favorites.FavoritesUtils.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.workItem.favorites.FavoritesUtils.FavoritesFilter
-com.top_logic.element.workItem.favorites.FavoritesUtils.java: Invalid camel case word 'FavoritesUtils', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.workItem.favorites.FavoritesUtils.java: Missing documentation: com.top_logic.element.workItem.favorites.FavoritesUtils.COLUMN_NAME_FAVORITE
-com.top_logic.element.workItem.favorites.FavoritesUtils.java: Missing documentation: com.top_logic.element.workItem.favorites.FavoritesUtils.FavoritesFilter.INSTANCE
-com.top_logic.element.workItem.favorites.FavoritesUtils.java: Missing documentation: com.top_logic.element.workItem.favorites.FavoritesUtils.WORK_ITEM_TYPE_FAVORITE
-com.top_logic.element.workItem.favorites.FavoritesWorkItemProvider.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.workItem.favorites.FavoritesWorkItemProvider
-com.top_logic.element.workItem.favorites.ModifiyFavoritesCommandComparator.java: Invalid camel case word 'CommandFields', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor.java: Missing documentation: com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor.WrapperFavoriteState._model
-com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor.java: Missing documentation: com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor.WrapperFavoriteState._state
-com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor.java: Missing documentation: com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor.WrapperFavoriteStateResourceProvider
-com.top_logic.element.workItem.layout.commandHandler.NewPersistentWorkItemCommandHandler.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.workItem.layout.commandHandler.NewPersistentWorkItemCommandHandler
-com.top_logic.element.workItem.layout.commandHandler.NewPersistentWorkItemCommandHandler.java: Missing documentation: com.top_logic.element.workItem.layout.commandHandler.NewPersistentWorkItemCommandHandler.COMMAND_ID
-com.top_logic.element.workItem.layout.commandHandler.NewPersistentWorkItemCommandHandler.java: Missing documentation: com.top_logic.element.workItem.layout.commandHandler.NewPersistentWorkItemCommandHandler.createWorkItem
-com.top_logic.element.workItem.wrap.PersistentWorkItemFactory.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWorkItemFactory.createWorkItem
-com.top_logic.element.workItem.wrap.PersistentWorkItemProvider.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.workItem.wrap.PersistentWorkItemProvider
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.ASSIGNEES_ATTRIBUTE
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.KO_TYPE
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.RESPONSIBLE_ATTRIBUTE
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.SUBJECT_ATTRIBUTE
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.TYPE_ATTRIBUTE
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.createWorkItem
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.getWorkitemsOfResponsible
-com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.java: Missing documentation: com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem.getWorkitemsOfSubject

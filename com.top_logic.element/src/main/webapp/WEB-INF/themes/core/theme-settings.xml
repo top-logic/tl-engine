@@ -127,12 +127,6 @@
 	<icon name="com.top_logic.element.layout.uiconfig.Icons.ADD_ROW_TOP"
 		value="/icons/addRowTop.png"
 	/>
-	<icon name="com.top_logic.element.workItem.favorites.Icons.FALSE"
-		value="css:bi bi-star"
-	/>
-	<icon name="com.top_logic.element.workItem.favorites.Icons.TRUE"
-		value="css:bi bi-star-fill"
-	/>
 	<icon name="mime.BooleanMetaAttribute"
 		value="/mimetypes/BoolMetaAttr.png"
 	/>

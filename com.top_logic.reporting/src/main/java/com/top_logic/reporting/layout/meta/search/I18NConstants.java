@@ -20,8 +20,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey DELETE_REPORT = legacyKey("reporting.report.delete");
 
-	public static ResKey ERROR_DELETE_FAILED =
-		com.top_logic.element.workItem.layout.commandHandler.I18NConstants.ERROR_COMMIT_FAILED;
+	public static ResKey ERROR_DELETE_FAILED;
 
 	public static ResKey ERROR_NO_REPORT = legacyKey("tl.executable.disabled.noReport");
 

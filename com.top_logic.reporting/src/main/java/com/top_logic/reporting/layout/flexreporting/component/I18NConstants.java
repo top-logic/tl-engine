@@ -21,8 +21,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix CHART = legacyPrefix("reporting.chart.");
 
-	public static ResKey ERROR_COMMIT_FAILED =
-		com.top_logic.element.workItem.layout.commandHandler.I18NConstants.ERROR_COMMIT_FAILED;
+	public static ResKey ERROR_COMMIT_FAILED;
 
 	public static ResKey ERROR_CREATE_FAILED = legacyKey("reporting.create.failed");
 

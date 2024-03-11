@@ -99,7 +99,13 @@ public class ComponentCommand extends AbstractDynamicCommand implements CheckSco
 		HashMap<String, Object> theArguments = new HashMap<>(arguments);
 		theArguments.put(COMMAND_MODEL_KEY, _model);
 
-		return CommandDispatcher.getInstance().dispatchCommand(command, context, component, theArguments);
+		HandlerResult result = CommandDispatcher.getInstance().dispatchCommand(command, context, component, theArguments);
+
+		if (result.isSuspended()) {
+			result.initContinuation(command, component, theArguments);
+		}
+
+		return result;
 	}
 
 	@Override

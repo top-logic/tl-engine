@@ -52,7 +52,6 @@ import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.layout.scripting.action.ApplicationAction;
-import com.top_logic.layout.state.ViewStateManager;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig;
 
 /**
@@ -200,8 +199,6 @@ public class UpdateComponentName extends XMain {
 					configWriter.write(ACTION, _globalDescriptorsByName.get(ACTION), _config);
 				} else if (_config instanceof SecurityConfig) {
 					configWriter.write(SECURITY, _globalDescriptorsByName.get(SECURITY), _config);
-				} else if (_config instanceof ViewStateManager.Config) {
-					configWriter.write(VIEW_STATE_MANAGER_TAG, ConfigurationItem.class, _config);
 				} else {
 					getProtocol().info("Unknown configuration type in file " + file.getCanonicalPath() + ".",
 						Protocol.WARN);

@@ -15,11 +15,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 
 import com.top_logic.basic.XMain;
 
@@ -124,10 +123,7 @@ public abstract class AbstractStarterMain extends XMain {
 		connector.open();
 		server.addConnector(connector);
 
-		HandlerCollection handlers = new HandlerCollection();
-		ServletContextHandler adminHandler = new ServletContextHandler(handlers, ADMIN_WEBAPP);
-		handlers.addHandler(adminHandler);
-
+		ServletContextHandler adminHandler = new ServletContextHandler(ADMIN_WEBAPP);
 		adminHandler.addServlet(new ServletHolder("stop",
 			new HttpServlet() {
 				@Override
@@ -153,7 +149,7 @@ public abstract class AbstractStarterMain extends XMain {
 			}),
 			STOP_SERVLET);
 
-		server.setHandler(handlers);
+		server.setHandler(adminHandler);
 		server.start();
 		info("Server started at port " + _port + ". Waiting for stop call: http://" + HOSTNAME + ":" + _port
 			+ ADMIN_WEBAPP + STOP_SERVLET);

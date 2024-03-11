@@ -168,6 +168,7 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 		}
 
 		data.setAttributeValue(PASSWORD_ATTR, PasswordHashingService.getInstance().createHash(password));
+		data.setAttributeValue(EXPIRED_ATTR, false);
 	}
 
 	/**

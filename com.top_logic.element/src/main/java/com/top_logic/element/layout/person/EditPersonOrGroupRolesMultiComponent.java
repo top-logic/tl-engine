@@ -73,8 +73,6 @@ import com.top_logic.tool.boundsec.wrap.Group;
  * Deletion: tree containment
  * Creation: tree containment of parent
  * 
- * TODO KHA/TSA redesign based on MergeTreeComponenet.
- * 
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 public class EditPersonOrGroupRolesMultiComponent extends EditComponent {

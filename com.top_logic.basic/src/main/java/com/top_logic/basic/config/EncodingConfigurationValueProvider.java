@@ -71,21 +71,19 @@ public class EncodingConfigurationValueProvider<T> extends ConfigurationValuePro
 
 	private CharSequence decodePropertyValue(String propertyName, CharSequence propertyValue)
 			throws ConfigurationException {
-		CharSequence decryptedCharSequence;
 		String encodedValue = propertyValue.toString();
-		try {
-			decryptedCharSequence = ConfigurationEncryption.decrypt(encodedValue);
-		} catch (RuntimeException ex) {
-			decryptedCharSequence = handleUnencryptedValue(propertyName, encodedValue, ex);
-		}
-		return decryptedCharSequence;
-	}
-
-	private CharSequence handleUnencryptedValue(String propertyName, String encodedValue, RuntimeException ex)
-			throws ConfigurationException {
 		if (encodedValue.startsWith(UNENCRYPTED_PREFIX)) {
 			return encodedValue.substring(UNENCRYPTED_PREFIX.length());
 		}
+		try {
+			return ConfigurationEncryption.decrypt(encodedValue);
+		} catch (RuntimeException ex) {
+			throw handleUndecryptableValue(propertyName, encodedValue, ex);
+		}
+	}
+
+	private ConfigurationException handleUndecryptableValue(String propertyName, String encodedValue, RuntimeException ex)
+			throws ConfigurationException {
 		StringBuilder msg = new StringBuilder();
 		msg.append("Unable to decode '");
 		msg.append(encodedValue);

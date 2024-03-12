@@ -28,7 +28,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.interpreter.ConstantFolding;
 
 /**
- * Trigger of a database preload operation.
+ * Database preload operation.
  */
 public class Preload extends GenericMethod {
 
@@ -75,13 +75,14 @@ public class Preload extends GenericMethod {
 
 		Collection<?> paths = asCollection(spec);
 		Preloader builder = new Preloader();
-		for (Object pathElements : paths) {
-			Collection<?> attrs = asCollection(pathElements);
-			for (Object attr : attrs) {
-				TLStructuredTypePart part = asTypePart(specExpr, attr);
-				PreloadContribution contribution = AttributeOperations.getStorageImplementation(part).getPreload();
-				contribution.contribute(builder);
+		for (Object entry : paths) {
+			Object element = asSingleElement(specExpr, entry);
+			if (element == null) {
+				continue;
 			}
+			TLStructuredTypePart part = asTypePart(specExpr, element);
+			PreloadContribution contribution = AttributeOperations.getStorageImplementation(part).getPreload();
+			contribution.contribute(builder);
 		}
 		return builder;
 	}
@@ -92,8 +93,8 @@ public class Preload extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<Preload> {
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor
 			.builder()
-			.mandatory("input")
-			.mandatory("paths")
+			.mandatory("objects")
+			.mandatory("attributes")
 			.mandatory("fun")
 			.build();
 

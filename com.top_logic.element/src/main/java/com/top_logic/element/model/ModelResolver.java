@@ -59,6 +59,7 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLPrimitive.Kind;
@@ -352,8 +353,8 @@ public class ModelResolver {
 					needsResort = addPart(isNew, type, partConfig, needsResort);
 				}
 			} catch (Exception e) {
-				log().error("Failed to create attribute '" + type.getName() + "." + partConfig.getName() + "' in '"
-					+ typeConfig.location() + "'.", e);
+				String qPartName = TLModelUtil.qualifiedTypePartName(type, partConfig.getName());
+				log().error("Failed to create attribute '" + qPartName + "' in '" + typeConfig.location() + "'.", e);
 			}
 		}
 		if (needsResort) {
@@ -375,12 +376,10 @@ public class ModelResolver {
 	private boolean addPart(final boolean isNew, final TLStructuredType type, PartConfig partConfig,
 			boolean needsResort) {
 		if (partConfig instanceof ReferenceConfig) {
-			boolean stepAdded =
-				handleReferenceConfig((TLClass) type, isNew, (ReferenceConfig) partConfig);
+			boolean stepAdded = handleReferenceConfig((TLClass) type, isNew, (ReferenceConfig) partConfig);
 			needsResort |= stepAdded;
 		} else if (partConfig instanceof AssociationConfig.EndConfig) {
-			boolean stepAdded =
-				handleEndConfig(type, isNew, (EndConfig) partConfig);
+			boolean stepAdded = handleEndConfig(type, isNew, (EndConfig) partConfig);
 			needsResort |= stepAdded;
 		} else {
 			createProperty(type, (AttributeConfig) partConfig);
@@ -396,12 +395,19 @@ public class ModelResolver {
 			final AssociationConfig.EndConfig endConfig) {
 		if (!(type instanceof TLAssociation)) {
 			log().error("End configuration for a non TLAssociation " + type);
+			return false;
 		}
 		// In next phase all TLTypes exists.
 		_schedule.createAssociationEnd(new Runnable() {
 
 			@Override
 			public void run() {
+				if (!isNew) {
+					if (type.getPart(endConfig.getName()) != null) {
+						log().info("Type '" + type + "' already has an end '" + endConfig.getName() + "'.", Log.WARN);
+						return;
+					}
+				}
 				// Create destination end
 				TLType targetType;
 				try {
@@ -459,6 +465,15 @@ public class ModelResolver {
 			_schedule.createReference(new Runnable() {
 				@Override
 				public void run() {
+					if (!isNew) {
+						if (type.getPart(referenceConfig.getName()) != null) {
+							log().info(
+								"Type '" + type + "' already has an reference '" + referenceConfig.getName() + "'.",
+								Log.WARN);
+							return;
+						}
+					}
+
 					TLStructuredTypePart end;
 					try {
 						TLModule module = type.getModule();
@@ -479,22 +494,33 @@ public class ModelResolver {
 			return true;
 		} else if (kind == ReferenceKind.FORWARDS || (kind == ReferenceKind.NONE && otherEndName.isEmpty())) {
 			if (referenceConfig.isOverride()) {
-				_schedule.createReferenceOverride(type, () -> createForwardsRef(type, referenceConfig));
+				_schedule.createReferenceOverride(type, () -> createForwardsRefOverride(type, referenceConfig, isNew));
 			} else {
-				_schedule.createReference(() -> createForwardsRef(type, referenceConfig));
+				_schedule.createReference(() -> createForwardsRef(type, referenceConfig, isNew));
 			}
 			return true;
 		} else {
 			if (referenceConfig.isOverride()) {
-				_schedule.createBackReferenceOverride(type, () -> createBackwardsRefOverride(type, referenceConfig));
+				_schedule.createBackReferenceOverride(type, () -> createBackwardsRefOverride(type, referenceConfig, isNew));
 			} else {
-				_schedule.createBackReference(() -> createBackwardsRef(type, referenceConfig, otherEndName));
+				_schedule.createBackReference(() -> createBackwardsRef(type, referenceConfig, otherEndName, isNew));
 			}
 			return true;
 		}
 	}
 
-	private void createBackwardsRefOverride(TLClass type, ReferenceConfig referenceConfig) {
+	private void createBackwardsRefOverride(TLClass type, ReferenceConfig referenceConfig, boolean isNew) {
+		if (!isNew) {
+			String referenceName = referenceConfig.getName();
+			if (type.getLocalClassParts()
+				.stream()
+				.map(TLNamedPart::getName)
+				.anyMatch(name -> name.equals(referenceName))) {
+				log().info("Type '" + type + "' already has a reference '" + referenceName + "'.", Log.WARN);
+				return;
+			}
+		}
+
 		TLReference reference = (TLReference) type.getPart(referenceConfig.getName());
 		TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(reference.getEnd());
 		String otherEndName = otherEnd.getName();
@@ -548,7 +574,15 @@ public class ModelResolver {
 		}
 	}
 
-	private void createBackwardsRef(TLClass type, ReferenceConfig referenceConfig, String otherEndName) {
+	private void createBackwardsRef(TLClass type, ReferenceConfig referenceConfig, String otherEndName, boolean isNew) {
+		if (!isNew) {
+			if (type.getPart(referenceConfig.getName()) != null) {
+				log().info("Type '" + type + "' already has a reference '" + referenceConfig.getName() + "'.",
+					Log.WARN);
+				return;
+			}
+		}
+
 		TLType sourceType;
 		try {
 			sourceType = lookupAttributeType(type, referenceConfig);
@@ -599,7 +633,32 @@ public class ModelResolver {
 		}
 	}
 
-	private void createForwardsRef(final TLClass type, final ReferenceConfig referenceConfig) {
+	private void createForwardsRefOverride(TLClass type, ReferenceConfig referenceConfig, boolean isNew) {
+		if (!isNew) {
+			String referenceName = referenceConfig.getName();
+			if (type.getLocalClassParts()
+				.stream()
+				.map(TLNamedPart::getName)
+				.anyMatch(name -> name.equals(referenceName))) {
+				log().info("Type '" + type + "' already has a reference '" + referenceName + "'.", Log.WARN);
+				return;
+			}
+		}
+		createForwardsRef(type, referenceConfig);
+	}
+
+	private void createForwardsRef(TLClass type, ReferenceConfig referenceConfig, boolean isNew) {
+		if (!isNew) {
+			if (type.getPart(referenceConfig.getName()) != null) {
+				log().info("Type '" + type + "' already has a reference '" + referenceConfig.getName() + "'.",
+					Log.WARN);
+				return;
+			}
+		}
+		createForwardsRef(type, referenceConfig);
+	}
+
+	private void createForwardsRef(TLClass type, ReferenceConfig referenceConfig) {
 		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), referenceConfig.getName());
 		TLModule module = type.getModule();
 

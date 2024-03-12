@@ -33,10 +33,11 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.license.LicenseTool;
 
 /**
- * Provides access to all configured SecurityDevices without knowledge of device IDs.
+ * Provides access to all configured {@link SecurityDevice} without knowledge of device IDs.
  * 
- * The TLSecurityDeviceManager provides all methods to access the configured SecurityDevices and to
- * perform requests over all devices without explicitly knowing a specific device ID.
+ * The {@link TLSecurityDeviceManager} provides all methods to access the configured
+ * {@link SecurityDevice} and to perform requests over all devices without explicitly knowing a
+ * specific device ID.
  * 
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
@@ -124,7 +125,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		_configuredDevices =
 			TypedConfiguration.<String, SecurityDevice> getInstanceMap(context, config.getSecurityDevices());
 		checkSecurityDevices(_configuredDevices);
-		_dataAccessDevices = getDataAccessDevices(context, _configuredDevices);
+		_dataAccessDevices = getDataAccessDevices(_configuredDevices);
 		_authenticationDevices = getAuthenticationDevices(context, _configuredDevices);
 		_defaultAuthenticationDevice = getDefaultAuthenticationDevice(context, config, _authenticationDevices);
 	}
@@ -143,7 +144,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 			String id = entry.getKey();
 			SecurityDevice device = entry.getValue();
 
-			SecurityDevice.Config deviceConfig = device.getConfig();
+			SecurityDevice.Config<?> deviceConfig = device.getConfig();
 			if (deviceConfig.isDisabled()) {
 				continue;
 			}
@@ -193,7 +194,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		return defaultAuthenticationDevice;
 	}
 
-	private Map<String, PersonDataAccessDevice> getDataAccessDevices(Log log, Map<String, SecurityDevice> allDevices) {
+	private Map<String, PersonDataAccessDevice> getDataAccessDevices(Map<String, SecurityDevice> allDevices) {
 		checkSecurityDevices(allDevices);
 		Map<String, PersonDataAccessDevice> result = new HashMap<>();
 		for (Entry<String, SecurityDevice> entry : allDevices.entrySet()) {
@@ -232,26 +233,22 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		super.shutDown();
 	}
 
-	 /**
-	  * the singleton instance of this manager
-	  */
+	 	/**
+		 * The singleton instance of this manager.
+		 */
 	public static synchronized TLSecurityDeviceManager getInstance(){
 		return Module.INSTANCE.getImplementationInstance();
 	}
 
 	/**
-	 * a Set of the configured PersonDataAccessDevice id's (Strings)
+	 * A set of the configured {@link PersonDataAccessDevice} id's.
 	 */
 	public Set<String> getConfiguredDataAccessDeviceIDs(){
-		Set<String> result = new HashSet<>(_dataAccessDevices.keySet());
-		if(result.isEmpty()){
-			Logger.warn("No User data access device configured!",this);
-		}
-		return result;
+		return new HashSet<>(_dataAccessDevices.keySet());
 	}
 
 	/**
-	 * a Set of the configured AuthenticationDevice id's (Strings)
+	 * A set of the configured {@link AuthenticationDevice} id's.
 	 */
 	public Set<String>  getConfiguredAuthenticationDeviceIDs(){
 		Set<String> result = new HashSet<>(_authenticationDevices.keySet());
@@ -262,10 +259,10 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	}
 
 	/**
-	 * the security device with the given ID, no matter whether it is registered as authentication-
-	 * or data access device
+	 * The {@link SecurityDevice} with the given ID, no matter whether it is registered as
+	 * authentication- or data access device.
 	 * 
-	 * @return the requested security device or null
+	 * @return the requested {@link SecurityDevice} or <code>null</code>.
 	 */
 	public SecurityDevice getSecurityDevice(String deviceID){
 		SecurityDevice aDev = getDataAccessDevice(deviceID);
@@ -274,9 +271,10 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		}
 		return aDev;
 	}
+	
 	/**
-	 * the PersonDataAccessDevice with the given ID or null
-	 * if no such device exists
+	 * The {@link PersonDataAccessDevice} with the given ID or <code>null</code> if no such device
+	 * exists.
 	 */
 	public PersonDataAccessDevice getDataAccessDevice(String deviceID){
 		try{
@@ -289,7 +287,8 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	}
 
 	/**
-	 * the AuthenticationDevice with the given ID or null if no such device exists
+	 * The {@link AuthenticationDevice} with the given ID or <code>null</code> if no such device
+	 * exists.
 	 * 
 	 * @see Person#getAuthenticationDevice()
 	 */
@@ -298,15 +297,17 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	}
 
 	/**
-	 * Used to initially assign a device to persons who dont have one (migration from older versions)
-	 * @return the configured DefaultAuthenticationDevice
+	 * Used to initially assign a device to persons who don't have one (migration from older
+	 * versions).
+	 * 
+	 * @return the configured default {@link AuthenticationDevice}
 	 */
 	public AuthenticationDevice getDefaultAuthenticationDevice(){
 		return _defaultAuthenticationDevice;
 	}
 
 	/**
-	 * a Set of all configured PersonDataAccessDevices which indicate to support write access
+	 * A set of all configured {@link PersonDataAccessDevice} which indicate to support write access
 	 */
 	public Set<String> getWritableSecurityDeviceIDs() {
 		Iterator<?> it = getConfiguredDataAccessDeviceIDs().iterator();

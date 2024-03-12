@@ -1,0 +1,57 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$objects.preload(
+    attributes: [...], 
+    fun: list -&gt; ...
+)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Lädt die angegebenen Attribute in von einer gegebenen Menge von Objekten mit einem optimierten Bulk-Ladevorgang aus der Datenbank und hält die Werte solange im Cache, bis die gegebene Funktion ausgewertet wurde.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>objects</td>
+			<td>Menge von Fachobjekten</td>
+			<td>Beschreibung des Parameters</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>attributes</td>
+			<td>Menge von Attributen und Referenzen</td>
+			<td>Beschreibung der auf allen übergebenen Objekten zu Ladenden Werte</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>fun</td>
+			<td>Funktion</td>
+			<td>Funktion die auf der Eingangsmenge nach der Ladeoperation ausgewertet wird.</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p>Es wird der Wert zurückgegeben, der von der übergebenen Funktion berechnet wird.</p>
+
+<h2>Erklärung</h2>
+
+<p>Wenn bei einer Funktionsauswertung der Wert eines Objektes abgefragt wird, kann es sein, dass der zugehörige Wert noch nicht aus der Datenbank geladen ist. In diesem Fall wird der Wert beim Zugriff geladen. Wenn eine Operation auf vielen Objekten ausgeführt wird, kann das dazu führen, dass eine Vielzahl von Datenbankzugriffen stattfindet, welche die Auswertung ausbremsen. Mit der Preload-Operation kann man dafür sorgen, dass die Ladeoperation optimiert auf einer großen Menge von Objekten im Vorfeld stattfindet, so dass die Funktionsauswertung dann schnell auf den zwischengespeicherten Werten stattfinden kann.</p>

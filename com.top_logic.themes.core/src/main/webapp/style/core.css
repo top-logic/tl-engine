@@ -2154,7 +2154,6 @@ h5.card-title a:focus {
 .breadcrumb {
 	display: flex;
 	padding: 0 var(--spacing-02);
-	gap: var(--spacing-02);
 }
 
 .tl-table__title-label .breadcrumb {
@@ -2163,9 +2162,15 @@ h5.card-title a:focus {
 }
 
 .breadcrumbNodeText {
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	padding-right: var(--spacing-02);
+}
+
+.breadcrumb .unselectableNode :last-child, 
+.breadcrumb .selectableNode :last-child {
+	padding-right: 0;
 }
 
 .breadcrumb .treeNode,
@@ -2173,7 +2178,6 @@ h5.card-title a:focus {
 .breadcrumb .treeNode .selectableNode {
 	display: inline-flex;
 	align-items: center;
-	gap: var(--spacing-02);
 }
 
 .breadcrumb .treeNode .selectableNode .breadcrumbNodeText {
@@ -2226,6 +2230,10 @@ h5.card-title a:focus {
 .breadcrumb .treeSelected .selectableNode:focus {
 	box-shadow: none;
 	outline: none;
+}
+
+.breadcrumbNodeSeparator {
+	padding: 0 var(--spacing-02);
 }
 
 .breadcrumbNodeSeparator i {
@@ -2314,6 +2322,7 @@ h5.card-title a:focus {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
+	padding-right: var(--spacing-02);
 }
 
 .Header .breadcrumbNodeIcon > img:first-of-type {

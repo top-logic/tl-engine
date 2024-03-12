@@ -181,11 +181,11 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
                 }
             }
             else {
-				Logger.error("Document does not exist yet.", Document.class);
+				Logger.info("Document does not exist yet: " + this + " | DAP: " + getDAP(), Document.class);
             }
         }
         catch (Exception ex) {
-			Logger.error("Failed to resolve full text.", ex, Document.class);
+			Logger.error("Failed to resolve full text: " + this, ex, Document.class);
         }
 	}
 

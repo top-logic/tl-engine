@@ -27,10 +27,12 @@ import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.util.Resources;
+import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.xio.importer.XmlImporter;
 import com.top_logic.xio.importer.binding.ModelBinding;
 import com.top_logic.xio.importer.binding.TransientModelBinding;
@@ -153,6 +155,7 @@ public class TestXmlImporter extends TestCase {
 
 	public static Test suite() {
 		return ModuleLicenceTestSetup
-			.setupModule(ServiceTestSetup.createSetup(TestXmlImporter.class, SearchBuilder.Module.INSTANCE));
+			.setupModule(ServiceTestSetup.createSetup(TestXmlImporter.class, SearchBuilder.Module.INSTANCE,
+				CompatibilityService.Module.INSTANCE, AttributeSettings.Module.INSTANCE));
 	}
 }

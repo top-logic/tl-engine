@@ -7,6 +7,7 @@ package com.top_logic.layout.form.component;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -19,7 +20,9 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.DefaultRefVisitor;
 import com.top_logic.layout.ModelSpec;
@@ -28,6 +31,7 @@ import com.top_logic.layout.channel.linking.Channel;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.channel.linking.ref.ComponentRef;
+import com.top_logic.layout.channel.linking.ref.NamedComponent;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -233,4 +237,88 @@ public interface PostCreateAction {
 
 	}
 
+	/**
+	 * Refreshes a specified component.
+	 * 
+	 * <p>
+	 * Normally, components are automatically refreshed when the objects they display are updated.
+	 * If this refresh works not reliably in some situations, an explicit refresh can be configured.
+	 * </p>
+	 */
+	@InApp
+	class UpdateComponent extends AbstractConfiguredInstance<UpdateComponent.Config> implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link UpdateComponent}.
+		 */
+		@TagName("updateComponent")
+		public interface Config extends PolymorphicConfiguration<UpdateComponent> {
+			/**
+			 * The component to update.
+			 */
+			@Name("target-component")
+			@Mandatory
+			@DefaultContainer
+			ComponentRef getTargetComponent();
+		}
+
+		/**
+		 * Creates a {@link UpdateComponent}.
+		 */
+		public UpdateComponent(InstantiationContext context, Config config) {
+			super(context, config);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			LayoutComponent targetComponent =
+				DefaultRefVisitor.resolveReference(getConfig().getTargetComponent(), component);
+			if (targetComponent == null) {
+				Logger.error("Cannot resolve component: " + getConfig().getTargetComponent(), UpdateComponent.class);
+				return;
+			}
+			targetComponent.invalidate();
+		}
+	}
+
+
+	/**
+	 * Jumps to a specified component by switching tabs, opening dialogs, selecting tiles.
+	 */
+	@InApp
+	class ShowComponent extends AbstractConfiguredInstance<ShowComponent.Config> implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link ShowComponent}.
+		 */
+		@TagName("showComponent")
+		public interface Config extends PolymorphicConfiguration<ShowComponent> {
+			/**
+			 * The component to show.
+			 */
+			@Name("target-component")
+			@NonNullable
+			@DefaultContainer
+			@ItemDefault(NamedComponent.class)
+			ComponentRef getTargetComponent();
+		}
+
+		/**
+		 * Creates a {@link ShowComponent}.
+		 */
+		public ShowComponent(InstantiationContext context, Config config) {
+			super(context, config);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			LayoutComponent targetComponent =
+				DefaultRefVisitor.resolveReference(getConfig().getTargetComponent(), component);
+			if (targetComponent == null) {
+				Logger.error("Cannot resolve component: " + getConfig().getTargetComponent(), ShowComponent.class);
+				return;
+			}
+			targetComponent.makeVisible();
+		}
+	}
 }

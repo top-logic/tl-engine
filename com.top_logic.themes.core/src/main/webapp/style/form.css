@@ -103,6 +103,10 @@ div.fptTitleContent {
 	padding: 0 var(--spacing-03);
 }
 
+div.fptTitleContent .tlTranslatedI18nField, div.fptTitleContent .cTextInput {
+	width: calc(100% - var(--heading-04-font-size) - 6px);
+}
+
 div.fptTitleContent, div.fptTitle input.is-input, div.fptTitle select.is-input {
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-04-font-size);

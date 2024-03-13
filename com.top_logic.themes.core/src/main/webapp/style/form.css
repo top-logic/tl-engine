@@ -74,7 +74,7 @@ div.fptBodyContent {
 	right: 0px;
 	top: 0px;
 	bottom: 0px;
-    padding: 0 var(--spacing-03);
+	padding: 0 var(--spacing-03);
 }
 
 div.fptTitle {
@@ -101,6 +101,10 @@ div.fptTitleContent {
 	display: flex;
 	align-items: center;
 	padding: 0 var(--spacing-03);
+}
+
+div.fptTitleContent .tlTranslatedI18nField, div.fptTitleContent .cTextInput {
+	width: calc(100% - var(--heading-04-font-size) - 6px);
 }
 
 div.fptTitleContent, div.fptTitle input.is-input, div.fptTitle select.is-input {

@@ -215,6 +215,7 @@
 					<provider kind="CODE" type="com.top_logic.knowledge.wrap.list.FastListElement" implementation="com.top_logic.knowledge.gui.layout.FastListElementResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.tool.boundsec.wrap.Group" implementation="com.top_logic.knowledge.gui.GroupResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.model.TLObject" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.TLModuleSingleton" implementation="com.top_logic.model.TLModuleSingleton$Label" />
 		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.person.Person" implementation="com.top_logic.knowledge.gui.layout.person.PersonResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.knowledge.wrap.unit.UnitWrapper" implementation="com.top_logic.layout.provider.UnitLabelProvider" />
 		            <provider kind="CODE" type="com.top_logic.base.user.douser.DOUser" implementation="com.top_logic.base.user.douser.DOUserResourceProvider"/>

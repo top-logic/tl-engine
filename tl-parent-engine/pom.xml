@@ -86,6 +86,7 @@
 		<module>../com.top_logic.layout.wysiwyg.highlighter</module>
 		<module>../com.top_logic.layout.wysiwyg.youtube</module>
 		<module>../com.top_logic.mail</module>
+		<module>../tl-mail-smtp</module>
 		<module>../com.top_logic.model.search</module>
 		<module>../com.top_logic.model.wysiwyg</module>
 		<module>../com.top_logic.monitoring</module>

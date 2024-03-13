@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.ComponentTestUtils;
@@ -20,6 +21,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 import test.com.top_logic.mig.html.layout.TestLayoutComponent;
 
 import com.top_logic.base.services.simpleajax.RequestLockFactory;
@@ -30,7 +32,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -38,6 +39,7 @@ import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -80,7 +82,7 @@ public class TestBoundComponent extends BasicTestCase {
 		File layout = ComponentTestUtils.getLayoutFile(TestBoundComponent.class, "testMain.xml");
 		ComponentName componentName = ComponentTestUtils.newComponentName(layout, "SchuhComponent");
         try {
-            Person guest = PersonManager.getManager().getPersonByName("guest_de");
+            Person guest = Person.byName("guest_de");
 
             TLContext context = TLContext.getContext();
             context.setCurrentPerson(guest);
@@ -222,15 +224,16 @@ public class TestBoundComponent extends BasicTestCase {
 		return PersonManagerSetup.createPersonManagerSetup(TestBoundComponent.class, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
-				Test test = suite;
+				Test test = new CreateDefaultTestPersons(suite);
 				test = ServiceTestSetup.createSetup(test, LayoutStorage.Module.INSTANCE);
 				test = ServiceTestSetup.createSetup(test, SecurityObjectProviderManager.Module.INSTANCE);
 				test = ServiceTestSetup.createSetup(test, BoundHelper.Module.INSTANCE);
 				test = ServiceTestSetup.createSetup(test, SecurityComponentCache.Module.INSTANCE);
 				test = ServiceTestSetup.createSetup(test, RequestLockFactory.Module.INSTANCE);
+				test = ServiceTestSetup.createSetup(test, CommandHandlerFactory.Module.INSTANCE);
 				return test;
 			}
 

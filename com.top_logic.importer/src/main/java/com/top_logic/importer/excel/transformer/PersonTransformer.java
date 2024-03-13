@@ -11,7 +11,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.importer.excel.AbstractExcelFileImportParser;
 import com.top_logic.importer.logger.ImportLogger;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * Transform given text into a {@link Person}.
@@ -41,7 +40,7 @@ public class PersonTransformer implements Transformer<Person> {
 		    theText = theText.trim();
 		
     		// Try to get contact via person id
-    		Person thePerson = PersonManager.getManager().getPersonByName(theText);
+    		Person thePerson = Person.byName(theText);
 
     		if (thePerson != null) {
     		    return thePerson;

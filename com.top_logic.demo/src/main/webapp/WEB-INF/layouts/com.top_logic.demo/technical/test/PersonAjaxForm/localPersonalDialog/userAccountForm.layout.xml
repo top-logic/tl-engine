@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		showNoModel="false"
+		type="tl.accounts:Person"
+	>
+		<name key="dynamic.4a9534af-8cc8-4aae-9424-02859e6524be">
+			<en>User account</en>
+			<de>Benutzerkonto</de>
+		</name>
+	</arguments>
+</config:template-call>

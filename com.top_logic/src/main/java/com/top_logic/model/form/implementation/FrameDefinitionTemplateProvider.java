@@ -110,7 +110,7 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

@@ -12,7 +12,7 @@
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge > Gruppenzuordnung"
+						tab-path="Administration > Berechtigungen > Benutzerverwaltung"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -20,34 +20,23 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="root"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#GroupsPersonTable"
-							tab-path="Administration > Zugänge > Gruppenzuordnung"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent"
-					component-name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#AdminPersonGroup2"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -55,13 +44,12 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Gruppenzuordnung > Person Gruppen zuordnen"
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Gruppen"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
-						<path>
-							<named-member name="roles"/>
-						</path>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -78,64 +66,14 @@
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
-					command-name="savePersonGroup"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent"
-					component-name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#AdminPersonGroup2"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Check displayed groups in administration"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="multi-set-equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
-						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
-							/>
-						</model>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-						<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
-							/>
-						</context-name>
-						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-							<values>
-								<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-									label="securityOwner"
-								/>
-								<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-									label="Maintenance-Mode-Nutzer"
-								/>
-								<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-									label="Demo-Administratoren"
-								/>
-							</values>
-						</local-name>
-					</expected-value>
 				</action>
 			</actions>
 		</action>
@@ -160,19 +98,19 @@
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
 						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
+							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Benutzerkonto bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
 						<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
+							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Benutzerkonto bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -190,16 +128,11 @@
 						</local-name>
 					</expected-value>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-					command-label="Schließen"
-					command-name="closeDialogInView"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
-				>
-					<arguments/>
-				</action>
+				/>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -210,15 +143,31 @@
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge > Gruppenzuordnung"
+						tab-path="Administration > Berechtigungen > Benutzerverwaltung"
 					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="root"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
+						/>
+					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent"
-					component-name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#AdminPersonGroup2"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -226,13 +175,12 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Gruppenzuordnung > Person Gruppen zuordnen"
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Gruppen"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
-						<path>
-							<named-member name="roles"/>
-						</path>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -243,85 +191,14 @@
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$ApplyPersonGroupCommand"
-					command-label="Übernehmen"
-					command-name="applyPersonGroup"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent"
-					component-name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#AdminPersonGroup2"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Check displayed groups in administration"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge > Benutzerkonten"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="multi-set-equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
-						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
-							/>
-						</model>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-						<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
-							/>
-						</context-name>
-						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-							<values>
-								<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-									label="users"
-								/>
-							</values>
-						</local-name>
-					</expected-value>
 				</action>
 			</actions>
 		</action>
@@ -346,19 +223,19 @@
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
 						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
+							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Benutzerkonto bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
 						<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Zugeordnete Gruppen"
+							label="Gruppen"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Benutzerkonto bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -370,16 +247,11 @@
 						</local-name>
 					</expected-value>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-					command-label="Schließen"
-					command-name="closeDialogInView"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
-				>
-					<arguments/>
-				</action>
+				/>
 			</actions>
 		</action>
 	</actions>

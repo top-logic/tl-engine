@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -79,6 +80,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 		BackReferenceModel.ANNOTATIONS,
 	})
 	@DisplayInherited(DisplayStrategy.IGNORE)
+	@Label("Back reference")
 	public interface BackReferenceModel extends PartModel, ReferenceConfig {
 
 		/**
@@ -102,6 +104,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 		@OptionLabels(ReferenceNames.class)
 		@DynamicMode(fun = ActiveIf.class, args = @Ref(SELECT_OTHER_END))
 		@Mandatory
+		@Label("Forwards reference")
 		TLReference getOtherEnd();
 
 		/**

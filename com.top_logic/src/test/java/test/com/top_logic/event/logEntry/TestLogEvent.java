@@ -8,8 +8,6 @@ package test.com.top_logic.event.logEntry;
 import junit.framework.Test;
 
 import com.top_logic.base.bus.MonitorEvent;
-import com.top_logic.base.security.SecurityContext;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.event.ModelTrackingService;
@@ -19,6 +17,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.TLContext;
 
 /**
  * Test Sending {@link MonitorEvent}s.
@@ -33,7 +33,7 @@ public class TestLogEvent extends TestLogHelper {
         Wrapper trigger=null;        
         Wrapper source=null;
         String type=null;
-        UserInterface user = null;
+		Person user = null;
         
         try{
             new MonitorEvent(sender, trigger, source, user, type);
@@ -74,7 +74,7 @@ public class TestLogEvent extends TestLogHelper {
             theBuse.subscribe (receiver, ModelTrackingService.getTrackingService());
             
             assertNull(receiver.getReceivedEvent());
-            MonitorEvent event = new MonitorEvent(sender, trigger, source, SecurityContext.getCurrentUser(), type); 
+			MonitorEvent event = new MonitorEvent(sender, trigger, source, TLContext.currentUser(), type);
             assertNull(receiver.getReceivedEvent());      
             sender.send(event);
             assertEquals("Event not received",event,receiver.getReceivedEvent() );

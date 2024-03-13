@@ -3,6 +3,7 @@
 <template>
 	<layout-reference resource="export/exportDialog.layout.xml"/>
 	<layout-reference resource="export/gridExportDialog.layout.xml"/>
-	<layout-reference resource="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml"/>
+	<layout-reference resource="admin/security/accounts/userSettings/dialog.layout.xml"/>
+	<layout-reference resource="admin/security/accounts/defaultFor/dialog.layout.xml"/>
 	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>
 </template>

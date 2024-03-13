@@ -29,6 +29,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -60,6 +61,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
@@ -91,6 +93,22 @@ import com.top_logic.util.model.ModelService;
 	WrapperMetaAttributeUtil.Module.class,
 })
 public class DynamicModelService extends ElementModelService implements TLFactory {
+
+	/**
+	 * Sequence of {@link MigrationProcessor} that can be execute to apply a model patch within a
+	 * migration.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface MigrationProcessors extends ConfigurationItem {
+
+		/**
+		 * {@link MigrationProcessor}s to execute.
+		 */
+		@DefaultContainer
+		List<PolymorphicConfiguration<? extends MigrationProcessor>> getProcessors();
+
+	}
 
 	/**
 	 * Property in {@link DBProperties} that stores the factory defaults of the application model.
@@ -348,9 +366,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 		TLModel oldModel;
 		try {
-			ModelConfig oldConfig = parseConfig(oldConfigXML);
-			oldModel = loadTransientModel(log, oldConfig);
-			log.checkErrors();
+			oldModel = loadTransientModel(log, oldConfigXML);
 		} catch (ConfigurationException ex) {
 			throw new IllegalStateException("Cannot parse old model configuration, no schema upgrade possible.", ex);
 		}
@@ -364,19 +380,36 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		List<DiffElement> patch = patchCreator.getPatch();
 		if (!patch.isEmpty()) {
 			Logger.info("Started incremental model upgrade: " + patch, DynamicModelService.class);
-			ApplyModelPatch apply = new ApplyModelPatch(log, getModel(), getFactory());
-			apply.applyPatch(patch);
-			apply.complete();
+
+			MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+			ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());
+			new ConstraintChecker().check(log(), processors);
 
 			storeModelConfig(connection);
 
 			Logger.info("Ended incremental model upgrade.", DynamicModelService.class);
+
+			Logger.info(
+				"Note: The following processors can be used in automatic data migration to avoid the incremental model upgrade: "
+						+ processors,
+				DynamicModelService.class);
+
 		} else {
 			Logger.info("No incremental model upgrade necessary.", DynamicModelService.class);
 		}
 	}
 
-	private ModelConfig parseConfig(String oldConfigXML) throws ConfigurationException {
+	/**
+	 * Parses the given XML as {@link ModelConfig} and instantiates a transient {@link TLModel}.
+	 */
+	public static TLModel loadTransientModel(Protocol log, String modelXML) throws ConfigurationException {
+		ModelConfig modelConfig = parseConfig(modelXML);
+		TLModel oldModel = loadTransientModel(log, modelConfig);
+		log.checkErrors();
+		return oldModel;
+	}
+
+	private static ModelConfig parseConfig(String oldConfigXML) throws ConfigurationException {
 		/* Note: Unlike the configuration which is read from the file system, the constraints are
 		 * not checked on the content from the database. This would only cause problems if a new
 		 * constraint was added */
@@ -395,7 +428,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	/**
 	 * Instantiates the given {@link ModelConfig} into a transient {@link TLModel}.
 	 */
-	public TLModel loadTransientModel(Protocol log, ModelConfig modelConfig) {
+	public static TLModel loadTransientModel(Protocol log, ModelConfig modelConfig) {
 		return loadModel(log, new TLModelImpl(), null, modelConfig);
 	}
 

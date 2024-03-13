@@ -6,6 +6,7 @@
 package test.com.top_logic.tool.boundsec.manager;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
@@ -15,6 +16,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -41,7 +43,6 @@ public class TestAccessManager  extends BasicTestCase {
      */
     public void testBoundSecurity() throws Exception {
         TLSecurityDeviceManager   sdm = TLSecurityDeviceManager.getInstance();
-        String personDataDeviceID     = sdm.getDefaultDataAccessDevice().getDeviceID();
         String authenticationDeviceID = sdm.getDefaultAuthenticationDevice().getDeviceID();
 
         Person personA = null;
@@ -53,17 +54,17 @@ public class TestAccessManager  extends BasicTestCase {
 
 		{
             // create three different persons
-            personA = pMgr.getPersonByName("AA"); 
+            personA = Person.byName("AA"); 
             if (personA == null) 
-                personA = pMgr.createPerson("AA", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+                personA = Person.create(PersistencyLayer.getKnowledgeBase(), "AA", authenticationDeviceID);
             assertTrue(KBSetup.getKnowledgeBase().commit());
 
-            personB = pMgr.getPersonByName("BB");
+            personB = Person.byName("BB");
             if (personB == null) 
-				personB = pMgr.createPerson("BB", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
-            personC = pMgr.getPersonByName("CC");
+				personB = Person.create(PersistencyLayer.getKnowledgeBase(), "BB", authenticationDeviceID);
+            personC = Person.byName("CC");
             if (personC == null)  
-				personC = pMgr.createPerson("CC", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+				personC = Person.create(PersistencyLayer.getKnowledgeBase(), "CC", authenticationDeviceID);
 
             assertTrue(KBSetup.getKnowledgeBase().commit());
 			TLContext context = TLContext.getContext();
@@ -122,13 +123,13 @@ public class TestAccessManager  extends BasicTestCase {
             assertFalse("Expected no someRole for PersonC after remove.", theAM.getRoles(personC, rootObject).contains(someRole));
     
             if (personA != null) {
-				pMgr.deleteUser(personA);
+				personA.tDelete();
             }
             if (personB != null) {
-				pMgr.deleteUser(personB);
+				personB.tDelete();
             }
             if (personC != null) {
-				pMgr.deleteUser(personC);
+				personC.tDelete();
             }
             KBSetup.getKnowledgeBase().commit();
 		}
@@ -149,7 +150,7 @@ public class TestAccessManager  extends BasicTestCase {
     	 return PersonManagerSetup.createPersonManagerSetup(TestAccessManager.class, new TestFactory() {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite theSuite = new TestSuite(suiteName);
 				theSuite.addTest(new TestAccessManager("testBoundSecurity"));
 				theSuite.addTest(new TestAccessManager("cleanup"));

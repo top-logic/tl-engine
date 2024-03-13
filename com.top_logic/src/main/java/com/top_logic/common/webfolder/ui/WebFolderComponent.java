@@ -371,7 +371,6 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		WebFolderColumnDescriptionBuilder builder = new WebFolderColumnDescriptionBuilder(canAddToClipboard, canUpdate, canDelete, getManualLocking());
 		Config config = getConfig();
 		builder.setAnalysis(config.analyzeDocuments());
-		builder.setMail(config.sendDocuments());
 		TableConfiguration columnDescriptions = builder.createWebFolderColumns();
 		return columnDescriptions;
 	}

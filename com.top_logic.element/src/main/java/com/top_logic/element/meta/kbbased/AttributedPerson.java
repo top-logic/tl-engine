@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.kbbased;
 
+import java.util.Locale;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -18,6 +19,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
+import com.top_logic.util.Country;
+import com.top_logic.util.Utils;
 
 /**
  * Person implementation that returns the dynamic person type as {@link TLObject#tType()}.
@@ -83,6 +86,31 @@ public class AttributedPerson extends Person {
 	@Override
 	public void setValue(String aKey, Object aValue) {
 		PersistentObjectImpl.setValue(this, aKey, aValue);
+	}
+
+	@Override
+	public Locale getLocale() {
+		return Utils.parseLocale((String) tValueByName(Person.LOCALE));
+	}
+
+	@Override
+	public Locale getLanguage() {
+		return (Locale) tValueByName(LANGUAGE_ATTR);
+	}
+
+	@Override
+	public void setLanguage(Locale newValue) {
+		tUpdateByName(LANGUAGE_ATTR, newValue);
+	}
+
+	@Override
+	public Country getCountry() {
+		return (Country) tValueByName(COUNTRY_ATTR);
+	}
+
+	@Override
+	public void setCountry(Country newValue) {
+		tUpdateByName(COUNTRY_ATTR, newValue);
 	}
 
 }

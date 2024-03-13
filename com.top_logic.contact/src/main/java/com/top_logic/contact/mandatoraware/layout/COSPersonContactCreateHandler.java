@@ -43,7 +43,7 @@ public class COSPersonContactCreateHandler extends PersonContactCreateHandler {
     @Override
     public Wrapper createNewObject(Map<String, Object> someValues, Wrapper aModel) {
         return this.createPersonContact((String) someValues.get(PersonContact.NAME_ATTRIBUTE), 
-                                        (String) someValues.get(PersonContact.ATT_FIRSTNAME), 
+                                        (String) someValues.get(PersonContact.FIRST_NAME), 
                                         (Mandator) someValues.get(COSContactConstants.ATTRIBUTE_MANDATOR));
     }
 

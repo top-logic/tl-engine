@@ -5,19 +5,12 @@
  */
 package com.top_logic.element.model.migration.model;
 
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
-import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.annotate.TLAttributeAnnotation;
-import com.top_logic.model.migration.data.QualifiedPartName;
 
 /**
  * {@link MigrationProcessor} handling properties like an {@link EndAspect}.
@@ -25,70 +18,71 @@ import com.top_logic.model.migration.data.QualifiedPartName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProcessor.Config<?>>
-		extends AbstractConfiguredInstance<C> implements MigrationProcessor {
+		extends AbstractCreateTypePartProcessor<C> {
 
 	/**
 	 * Typed configuration interface definition for {@link AbstractEndAspectProcessor}.
 	 * 
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
-	public interface Config<I extends AbstractEndAspectProcessor<?>>
-			extends PolymorphicConfiguration<I>, AnnotatedConfig<TLAttributeAnnotation> {
+	public interface Config<I extends AbstractEndAspectProcessor<?>> extends AbstractCreateTypePartProcessor.Config<I> {
 
-		/**
-		 * Qualified name of the {@link EndAspect}.
-		 */
-		@Mandatory
-		QualifiedPartName getName();
+		/** Name for {@link #getHistoryType()}. */
+		String HISTORY_TYPE = EndAspect.HISTORY_TYPE_PROPERTY;
 
-		/**
-		 * See {@link PartConfig#getMandatory()}
-		 */
-		@Name(PartConfig.MANDATORY)
-		boolean isMandatory();
+		/** Name for {@link #canNavigate()}. */
+		String NAVIGATE = EndAspect.NAVIGATE_PROPERTY;
+
+		/** Name for {@link #isAggregate()}. */
+		String AGGREGATE = EndAspect.AGGREGATE_PROPERTY;
+
+		/** Name for {@link #isComposite()}. */
+		String COMPOSITE = EndAspect.COMPOSITE_PROPERTY;
 
 		/**
 		 * See {@link EndAspect#isComposite()}.
 		 */
-		@Name(EndAspect.COMPOSITE_PROPERTY)
+		@Name(COMPOSITE)
 		boolean isComposite();
+
+		/**
+		 * Setter for {@link #isComposite()}.
+		 */
+		void setComposite(boolean value);
 
 		/**
 		 * See {@link EndAspect#isAggregate()}.
 		 */
-		@Name(EndAspect.AGGREGATE_PROPERTY)
+		@Name(AGGREGATE)
 		boolean isAggregate();
 
 		/**
-		 * See {@link PartConfig#isMultiple()}.
+		 * Setter for {@link #isAggregate()}.
 		 */
-		@Name(PartConfig.MULTIPLE_PROPERTY)
-		boolean isMultiple();
-
-		/**
-		 * See {@link PartConfig#isBag()}.
-		 */
-		@Name(PartConfig.BAG_PROPERTY)
-		boolean isBag();
-
-		/**
-		 * See {@link PartConfig#isOrdered()}.
-		 */
-		@Name(PartConfig.ORDERED_PROPERTY)
-		boolean isOrdered();
+		void setAggregate(boolean value);
 
 		/**
 		 * See {@link EndAspect#canNavigate()}.
 		 */
-		@Name(EndAspect.NAVIGATE_PROPERTY)
+		@Name(NAVIGATE)
 		boolean canNavigate();
+
+		/**
+		 * Setter for {@link #canNavigate()}.
+		 */
+		void setNavigate(boolean value);
 
 		/**
 		 * See {@link EndAspect#getHistoryType()}.
 		 */
-		@Name(EndAspect.HISTORY_TYPE_PROPERTY)
+		@Name(HISTORY_TYPE)
 		@Label("Historization")
 		HistoryType getHistoryType();
+
+		/**
+		 * Setter for {@link #getHistoryType()}.
+		 */
+		void setHistoryType(HistoryType value);
 	}
 
 	/**

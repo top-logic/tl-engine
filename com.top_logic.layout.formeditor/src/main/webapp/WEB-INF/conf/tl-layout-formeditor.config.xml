@@ -17,6 +17,25 @@
 				</methods>
 			</instance>
 		</config>
+		
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/SearchExpressionStructure.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-layout-formeditor/extension.Contacts.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-layout-formeditor/extension.tl.accounts.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-layout-formeditor" />
+				</modules>
+			</instance>
+		</config>
+
 	</services>
 
 	<configs>

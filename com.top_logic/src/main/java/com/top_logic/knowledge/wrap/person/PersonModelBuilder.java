@@ -45,7 +45,7 @@ public class PersonModelBuilder implements ListModelBuilder {
      */
     @Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
-        return PersonManager.getManager().getAllAlivePersons();
+		return Person.all();
     }
 
     /**

@@ -71,12 +71,12 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
         currentUserName = aName;
     }
 
-    /** 
-     * Return true when the current use is a Super user.
-     *
-     * @return alwazs false here, we do not reall know about users
-     */
-    public boolean isCurrentSuperUser() {
+    /**
+	 * Whether the owner of this context has administrative rights.
+	 * 
+	 * @see #isAdmin()
+	 */
+	protected boolean isAdminContext() {
         return false;
     }
 
@@ -124,18 +124,16 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	}
 	
 	/**
-	 * Check if the super user mode is set for the current user in the current thread.
-	 *
-	 * @return    true, if the super user mode is set or tl-admin-role applies.
+	 * Whether the super user mode is set for the current user in the current thread.
 	 */
-	public static boolean isSuperUser() {
+	public static boolean isAdmin() {
 		boolean superUser = SuperUserStateImpl.getInstance().isSuperUser();
 		if (superUser) {
 			return true;
 
 		}
-        ThreadContext This = getThreadContext();
-        return This != null && This.isCurrentSuperUser();
+		ThreadContext context = getThreadContext();
+		return context != null && context.isAdminContext();
  	}
 	
 	/**

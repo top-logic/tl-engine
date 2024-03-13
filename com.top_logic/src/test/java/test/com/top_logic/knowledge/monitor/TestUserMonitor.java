@@ -21,7 +21,6 @@ import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.bus.UserEvent;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
 import com.top_logic.event.bus.Sender;
@@ -33,7 +32,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Test case for the {@link com.top_logic.knowledge.monitor.UserMonitor}.
@@ -126,7 +125,7 @@ public class TestUserMonitor extends BasicTestCase {
         UserSession       us     = UserSession.startSession(kb, 
             "TestUserSession", "xxxxx",  "127.0.0.1", start); 
 		String testUserName = TestPersonSetup.USER_ID;
-		UserInterface dummy = PersonManager.getManager().getPersonByName(testUserName).getUser();
+		Person dummy = Person.byName(testUserName);
 		assertNotNull("Unable to get user for name " + testUserName, us);
         Sender            sender = new Sender("Testing", "TestUserMonitor");
         UserEvent         login  = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_IN);

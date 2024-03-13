@@ -7,13 +7,12 @@ package test.com.top_logic;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.TestFactoryProxy;
 import test.com.top_logic.basic.ThreadContextSetup;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
-import com.top_logic.base.security.util.SignatureService;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -34,11 +33,6 @@ public class TestPersonSetup extends ThreadContextSetup {
 	public static final String USER_ID = "test";
 
 	/**
-	 * The role of the person that is created by this setup.
-	 */
-	public static final String USER_ROLE = "user";
-
-	/**
 	 * The password of the person that is created by this setup.
 	 */
 	public static final String USER_PASSWORD = "test-password";
@@ -56,10 +50,9 @@ public class TestPersonSetup extends ThreadContextSetup {
 	protected void doSetUp() throws Exception {
 		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		{
-			_testPerson = PersonManager.getManager().createPerson(USER_ID, "dbSecurity", "dbSecurity", Boolean.FALSE);
-			_testPerson.getUser().setAttributeValue(PersonAttributes.PASSWORD,
-				SignatureService.getInstance().sign(USER_PASSWORD));
-			_testPerson.getUser().setAttributeValue(PersonAttributes.USER_ROLE, USER_ROLE);
+			PersonManager r = PersonManager.getManager();
+			_testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), USER_ID, "dbSecurity");
+			_testPerson.getAuthenticationDevice().setPassword(_testPerson, USER_PASSWORD.toCharArray());
 			tx.commit();
 		}
 	}
@@ -68,7 +61,8 @@ public class TestPersonSetup extends ThreadContextSetup {
 	protected void doTearDown() throws Exception {
 		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		{
-			PersonManager.getManager().deleteUser(_testPerson);
+			PersonManager r = PersonManager.getManager();
+			_testPerson.tDelete();
 			tx.commit();
 		}
 	}
@@ -77,7 +71,6 @@ public class TestPersonSetup extends ThreadContextSetup {
 	 * The {@link Person} that is created by this setup.
 	 * 
 	 * @see #USER_ID
-	 * @see #USER_ROLE
 	 * @see #USER_PASSWORD
 	 */
 	public static Person getTestPerson() {
@@ -98,7 +91,7 @@ public class TestPersonSetup extends ThreadContextSetup {
 		return new TestFactoryProxy(f) {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return wrap(super.createSuite(testCase, suiteName));
 			}
 		};

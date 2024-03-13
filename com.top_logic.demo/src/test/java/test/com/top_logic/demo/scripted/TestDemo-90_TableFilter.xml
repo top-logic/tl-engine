@@ -22,6 +22,22 @@
 			user-id="root"
 		>
 			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
 					command-label="Generieren..."

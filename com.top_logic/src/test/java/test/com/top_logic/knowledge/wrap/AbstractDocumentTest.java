@@ -8,10 +8,9 @@ package test.com.top_logic.knowledge.wrap;
 import java.io.File;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.DefaultTestFactory;
 import test.com.top_logic.basic.ReflectionUtils;
 import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.io.binary.TestingBinaryData;
@@ -127,19 +126,9 @@ public abstract class AbstractDocumentTest extends BasicTestCase {
 	 * Creates a factory to start modules needed to use documents
 	 */
 	public static TestFactory setupModulesForDocuments() {
-		TestFactory f = new TestFactory() {
-
-			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
-				TestSuite testSuite = new TestSuite(suiteName);
-				testSuite.addTestSuite((Class<? extends TestCase>) testCase);
-				return testSuite;
-			}
-		};
-		f =
-			ServiceTestSetup
-				.createStarterFactoryForModules(f, PersistencyLayer.Module.INSTANCE, MimeTypes.Module.INSTANCE);
-		return f;
+		return ServiceTestSetup
+			.createStarterFactoryForModules(DefaultTestFactory.INSTANCE, PersistencyLayer.Module.INSTANCE,
+				MimeTypes.Module.INSTANCE);
 	}
 
 }

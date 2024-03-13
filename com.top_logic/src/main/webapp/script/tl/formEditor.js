@@ -171,8 +171,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 		
 	  	// send move request to server
 		var elementID = node.getAttribute("data-id");
-		var elementName = node.getAttribute("data-name");
-	  	services.form.FormEditorControl.moveMember(controlId, elementID, siblingID, parentID, elementName, inEditor(node));
+	  	services.form.FormEditorControl.moveMember(controlId, elementID, siblingID, parentID, inEditor(node));
 	}
 	
 	/* get dragged element */

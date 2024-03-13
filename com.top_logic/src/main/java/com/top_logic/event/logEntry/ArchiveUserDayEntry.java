@@ -23,7 +23,6 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 
 /**
@@ -182,7 +181,7 @@ public class ArchiveUserDayEntry extends AbstractBoundWrapper implements UserDay
     @Override
 	public Person getPerson() {
 		KnowledgeObject userItem = (KnowledgeObject) this.getValue(USER_ATTR);
-		return PersonManager.getManager().getPersonByKO(userItem);
+		return userItem.getWrapper();
     }
 
     @Override

@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.model.diff.config;
 
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -12,6 +13,7 @@ import com.top_logic.model.TLStructuredTypePart;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@TagName("update-mandatory")
 public interface UpdateMandatory extends PartUpdate {
 
 	/**

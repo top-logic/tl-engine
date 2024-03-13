@@ -441,7 +441,7 @@ public class StorageAccessManager extends ElementAccessManager {
             return;
         }
         if (securityStorage.isRebuilding()) {
-			if (_rebuildStrategy == RebuildStrategy.BLOCK && !ThreadContext.isSuperUser()) {
+			if (_rebuildStrategy == RebuildStrategy.BLOCK && !ThreadContext.isAdmin()) {
                 waitForRebuilding();
             }
             else {

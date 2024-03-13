@@ -55,18 +55,6 @@ public class FormDefinitionTemplateProvider extends AbstractFormContainerProvide
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
-		return decorateContainer(createContentTemplate(context), context);
-	}
-
-	@Override
-	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
-		context.getFormEditorMapping().putMapping(context.getFormEditorControl(), getConfig());
-
-		return decorateContainer(createContentTemplate(context), context);
-	}
-
-	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
 		return contentBox(content, getWholeLine(context.getFormType()));
 	}

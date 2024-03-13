@@ -17,10 +17,7 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 
 import com.top_logic.base.security.attributes.LDAPAttributes;
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.DeviceMapping;
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringID;
 import com.top_logic.basic.TLID;
@@ -50,7 +47,7 @@ public class LDAPDataObject extends AttributesDataObject {
 
     private String          myDeviceID;
     
-    private SecurityDevice  myDevice;
+	private LDAPAuthenticationAccessDevice myDevice;
     
 	private TLID identifier;
     
@@ -64,17 +61,7 @@ public class LDAPDataObject extends AttributesDataObject {
      * @param someAttr
      *            The attributes for this instance.
      */
-    public LDAPDataObject(Attributes someAttr, String deviceID) throws NamingException{
-        this(someAttr, TLSecurityDeviceManager.getInstance().getSecurityDevice(deviceID));
-    }
-    
-    /**
-     * Creates an instance of this class.
-     * 
-     * @param someAttr
-     *            The attributes for this instance.
-     */
-    public LDAPDataObject(Attributes someAttr, SecurityDevice aDevice) throws NamingException{
+	public LDAPDataObject(Attributes someAttr, LDAPAuthenticationAccessDevice aDevice) throws NamingException {
         super(someAttr);
         this.attributeValues = new HashMap();
         this.myDeviceID = aDevice.getDeviceID();
@@ -83,7 +70,6 @@ public class LDAPDataObject extends AttributesDataObject {
         this.identifier = StringID.createRandomID (); 
         this.objectClass = _getObjectClass();
         
-        this.attributeValues.put(PersonAttributes.DATA_ACCESS_DEVICE_ID.toLowerCase(), this.myDeviceID);
         //simplified attempt of resolving / retrieving values now to avoid LDAP connects during access
         //it doesn't take multivalue attributes into account, as  we just want to support the DO interface, its enough for now
         //we lowercase the key since the jndi key value mapping was not case sensitive so we don't want it to be now

@@ -144,7 +144,7 @@ public class StoredQuery extends StoredFlexWrapper {
 		{
 			Comparator theComparator = FlexWrapperUserComparator.INSTANCE;
 			
-			if (ThreadContext.isSuperUser()) {
+			if (ThreadContext.isAdmin()) {
 				
 			    Collection allKnowledgeObjects = getDefaultKnowledgeBase().getAllKnowledgeObjects(STORED_QUERY_KO);
                 theStoredQueries = AbstractWrapper.getWrappersFromCollection(allKnowledgeObjects);

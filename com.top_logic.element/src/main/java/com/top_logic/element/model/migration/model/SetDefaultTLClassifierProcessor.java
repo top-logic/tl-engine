@@ -5,11 +5,14 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
@@ -17,8 +20,6 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.annotate.TLClassifierAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 
@@ -28,19 +29,24 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<SetDefaultTLClassifierProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link SetDefaultTLClassifierProcessor}.
 	 */
 	@TagName("set-default-classifier")
-	public interface Config
-			extends PolymorphicConfiguration<SetDefaultTLClassifierProcessor>, AnnotatedConfig<TLClassifierAnnotation> {
+	public interface Config extends PolymorphicConfiguration<SetDefaultTLClassifierProcessor> {
 
 		/**
 		 * Qualified name of the {@link TLEnumeration} to update.
 		 */
+		@Mandatory
 		QualifiedTypeName getEnumeration();
+
+		/**
+		 * Setter for {@link #getEnumeration()}.
+		 */
+		void setEnumeration(QualifiedTypeName value);
 
 		/**
 		 * Name of the classifier in {@link #getEnumeration()} that must be
@@ -49,6 +55,11 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 		 */
 		@Nullable
 		String getDefaultClassifier();
+
+		/**
+		 * Setter for {@link #getDefaultClassifier()}.
+		 */
+		void setDefaultClassifier(String value);
 
 	}
 
@@ -68,24 +79,28 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Setting default classifier migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName enumName = getConfig().getEnumeration();
 		_util.setDefaultTLClassifier(connection, enumName, getConfig().getDefaultClassifier());
+		boolean updateModelBaseline =
+			MigrationUtils.setDefaultClassifier(log, tlModel, enumName, getConfig().getDefaultClassifier());
 		if (getConfig().getDefaultClassifier() == null) {
 			log.info("Removed default classifier in " + _util.qualifiedName(enumName));
 		} else {
 			log.info("Set default classifier '" + getConfig().getDefaultClassifier() + "' in "
 				+ _util.qualifiedName(enumName));
 		}
+		return updateModelBaseline;
 	}
 
 }

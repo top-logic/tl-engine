@@ -23,7 +23,7 @@
                 <label-providers>
 		            <provider kind="MODEL" type="tl.accounts:Person">
 						<implementation class="com.top_logic.demo.layout.demo.DemoPersonResourceProvider"
-							goto-self-target="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							goto-self-target="admin/security/accounts/detailsForm.layout.xml#Form"
 						/>
 					</provider>
 		            <provider kind="CODE" type="com.top_logic.demo.layout.form.declarative.values.DemoAbstractSingleton" implementation="com.top_logic.layout.provider.label.SingletonLabelProvider" />
@@ -31,7 +31,7 @@
                 <resource-providers>
 		            <provider kind="MODEL" type="tl.accounts:Person">
 						<implementation class="com.top_logic.demo.layout.demo.DemoPersonResourceProvider"
-							goto-self-target="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							goto-self-target="admin/security/accounts/detailsForm.layout.xml#Form"
 						/>
 					</provider>
 					<provider kind="CODE" type="com.top_logic.demo.model.types.util.DemoYearGroup" implementation="com.top_logic.demo.model.types.util.DemoYearGroupResourceProvider" />
@@ -111,21 +111,6 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.base.accesscontrol.Login">
-			<instance>
-				<password-manager>
-					<password-validator>
-						<enabled>true</enabled>
-						<expiry-period>712</expiry-period>
-						<repeat-cycle>0</repeat-cycle>
-						<min-password-length>3</min-password-length>
-						<criteria-count>1</criteria-count>
-						<exclude-uids></exclude-uids>
-					</password-validator>
-				</password-manager>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
 	            <structures>
@@ -193,7 +178,7 @@
 				<handlers>
 		            <handler id="saveIgnoreWarnings" 
 		            	class="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler" 
-		            	clique="additional-apply"
+		            	clique="additional-apply" group="System"
 		            	save="true" 
 		            	resourceKey="demo.command.saveIgnoreWarnings"
 		            	ignoreWarnings="true" 
@@ -238,18 +223,6 @@
 			</instance>
 		</config>
 		
-        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
-			<instance>
-				<security-devices>
-					<security-device id="dbSecurity">
-						<initial-user-resources>
-							<initial-user-resource name="/WEB-INF/database/DemoUsers.xml"/>
-						</initial-user-resources>
-					</security-device>
-				</security-devices>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.common.webfolder.ui.WebFolderUIFactory">
 			<instance max-upload-size="5M" />
 		</config>		
@@ -278,9 +251,6 @@
 					</actions>
 				</object-type>
 			</registrations>
-		</config>
-		<config config:interface="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent$EditRelatedPersonConfig">
-			<allow-manual-contact-assigning>true</allow-manual-contact-assigning>
 		</config>
 
 		<config config:interface="com.top_logic.base.security.SecurityConfiguration">

@@ -90,7 +90,6 @@
 					<task name="DayEntryArchiverTask"  enabled="false" />
 					<task name="CheckUnusedAccountsTask" enabled="false" />
 				</tasks>
-				<kb-tasks>EMailTask</kb-tasks>
 			</instance>
 		</config>
 	</services>

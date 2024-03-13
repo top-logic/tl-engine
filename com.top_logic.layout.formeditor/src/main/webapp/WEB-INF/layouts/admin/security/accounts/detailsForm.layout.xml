@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments name="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithForm.template.i18n.detail"
+		model="selection(admin/security/accounts/accountsTable.layout.xml#Table)"
+		type="Contacts:PersonContact"
+	>
+		<buttons>
+			<button id="resetPersonalConfiguration"
+				class="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
+				clique="additional"
+				image="theme:ICON_RESET_PERSONAL_CONFIGURATION"
+			>
+				<resourceKey key="dynamic.49aa2499-5cb1-4f78-929e-4ac543b322aa">
+					<en>Reset personal configuration</en>
+					<de>Persönliche Konfiguration zurücksetzen</de>
+					<tooltip>
+						<en>Personal settings such as the start page or the selected theme are deleted. The selected language, country and time zone are retained.</en>
+						<de>Es werden persönliche Einstellungen wie z.B. die Startseite oder das ausgewählte Theme gelöscht. Die ausgewählte Sprache, Land und Zeitzone bleiben erhalten.</de>
+					</tooltip>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="account -> $account != null"/>
+				</executability>
+				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
+					<en>Are you sure they want to delete {0}'s personal settings?</en>
+					<de>Sind Sie sicher, dass Sie die persönlichen Einstellungen von {0} löschen wollen?</de>
+				</confirmMessage>
+			</button>
+			<button id="ID_d9a27df8_9c83_4318_9d56_53c2185a9543"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				confirm="false"
+				target="model(self())"
+			>
+				<resourceKey key="dynamic.5ef11993-7c72-4b2d-b8fb-24ffbea6e619">
+					<en>Delete user</en>
+					<de>Benutzer löschen</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Der Benutzer kann nicht gelöscht werden, weil sein Zugang noch aktiv ist."@de,"The user cannot be deleted because their account is still active."@en))</decision>
+					</rule-by-expression>
+				</executability>
+			</button>
+			<button id="ID_2fa7a149_7d10_46c9_90e1_b5e4db8b1378"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+			>
+				<resourceKey key="dynamic.debe8eb3-9a0a-4f33-9fcc-e8489d704213">
+					<en>Remove account</en>
+					<de>Zugang entfernen</de>
+					<tooltip>
+						<en>Removes access to the application. The user can no longer log in to the application.</en>
+						<de>Entfernt den Zugang zur Anwendung. Der Benutzer kann sich nicht mehr in der Anwendung anmelden.</de>
+					</tooltip>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="model -> $model.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="account -> $account != null"/>
+					<rule-by-expression show-disabled="true">
+						<decision>account -&gt; if ($account != currentUser(), null, #("Ein Benutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en))</decision>
+					</rule-by-expression>
+					<rule-by-expression show-disabled="true">
+						<decision>account -&gt; if ($account.get(`tl.accounts:Person#admin`) == true, #("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en), null)</decision>
+					</rule-by-expression>
+				</executability>
+				<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
+					<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>
+					<de>Möchten Sie den Zugang "{0}" wirklich löschen? "{0}" kann sich dann nicht mehr einloggen.</de>
+				</confirmMessage>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="admin/security/accounts/changePassword/dialog.layout.xml"/>
+			<layout-reference resource="admin/security/accounts/newAccount2/dialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

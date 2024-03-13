@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -198,7 +199,7 @@ public class TestDBProperties extends BasicTestCase {
         return BasicTestSetup.createBasicTestSetup(
         	DatabaseTestSetup.getDBTest(TestDBProperties.class, new TestFactory() {
 				@Override
-				public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+				public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 					Test test = new TestSuite(testCase);
 					test = DBPropertiesTableSetup.setup(test);
 					test = ServiceTestSetup.createSetup(test, DataAccessService.Module.INSTANCE);

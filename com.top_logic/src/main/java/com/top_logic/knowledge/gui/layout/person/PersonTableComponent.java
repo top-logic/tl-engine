@@ -9,7 +9,6 @@ import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
 import java.util.List;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -29,9 +28,9 @@ import com.top_logic.util.TLContext;
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
-public class PersonTableComponent extends TableComponent implements PersonAttributes {
+public class PersonTableComponent extends TableComponent {
 
-    public static final String COLUMN_AUTH_DEVICE_ID = PersonAttributes.AUTHENTICATION_DEVICE_ID;
+    public static final String COLUMN_AUTH_DEVICE_ID = Person.AUTHENTICATION_DEVICE_ID;
     public static final String COLUMN_COUNTRY = "country";
     public static final String COLUMN_LANGUAGE = "language";
     public static final String COLUMN_LAST_LOGIN = "lastLogin";

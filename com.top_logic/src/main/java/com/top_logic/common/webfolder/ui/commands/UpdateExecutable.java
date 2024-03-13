@@ -78,7 +78,7 @@ public class UpdateExecutable extends AbstractWebfolderAction {
 	}
 
 	private ExecutableState calculateExecutabilityWhenLocked(DataAccessProxy theDAP) {
-		if (TLContext.isSuperUser()) {
+		if (TLContext.isAdmin()) {
 			return ExecutableState.EXECUTABLE;
 		}
 		String theName = LockExecutable.getLocker(theDAP);

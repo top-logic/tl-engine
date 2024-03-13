@@ -339,8 +339,6 @@ com.top_logic.basic.graph.UserObjectGraph.java: Invalid camel case word 'userObj
 com.top_logic.basic.graph.UserObjectGraph.java: Missing documentation: com.top_logic.basic.graph.UserObjectGraph.UserObjectEdge.setUserObject
 com.top_logic.basic.graph.UserObjectGraph.java: Missing documentation: com.top_logic.basic.graph.UserObjectGraph.add
 com.top_logic.basic.graph.UserObjectGraph.java: Missing documentation: com.top_logic.basic.graph.UserObjectGraph.connect
-com.top_logic.basic.html.SafeHTML.java: Missing documentation: com.top_logic.basic.html.SafeHTML.isAllowedAttributeName
-com.top_logic.basic.html.SafeHTML.java: Missing documentation: com.top_logic.basic.html.SafeHTML.isAllowedTagName
 com.top_logic.basic.io.BOMAwareReader.java: Invalid camel case word 'hasBOM', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.basic.io.BOMAwareReader.java: Invalid camel case word 'skipBOM', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.basic.io.BOMAwareReader.java: Missing documentation: com.top_logic.basic.io.BOMAwareReader.init

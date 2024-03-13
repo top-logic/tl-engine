@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,firstname,ID_c5acf4ed_9e63_49d8_a1db_832698711c4a"
+		size="300px"
+		type="Contacts:PersonContact"
+	>
+		<dialogs>
+			<layout-reference resource="admin/security/accounts/newAccount/dialog.layout.xml"/>
+			<layout-reference resource="admin/security/accounts/createContact/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.98c36f50-b5a8-410c-a520-3803367d8868">
+			<en>Users</en>
+			<de>Benutzer</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`Contacts:PersonContact`)"
+			supportsElement="element->$element.instanceOf(`Contacts:PersonContact`)"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				accessor="contact -> $contact.get(`Contacts:PersonContact#account`).get(`tl.accounts:Person#name`)"
+				columnId="ID_c5acf4ed_9e63_49d8_a1db_832698711c4a"
+				columnType="tl.core:String"
+			>
+				<columnLabel key="dynamic.6781f741-32c0-4665-a2a2-dcfdf13ba081">
+					<en>User name</en>
+					<de>Benutzername</de>
+				</columnLabel>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.layout.table.model.AllVisibleColumnsProvider"
+				columns="account"
+				excluded="true"
+			/>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteSelection"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Der Benutzer kann nicht gelöscht werden, weil sein Zugang noch aktiv ist."@de,"The user cannot be deleted because their account is still active."@en))</decision>
+					</rule-by-expression>
+					<rule-by-expression show-disabled="true">
+						<decision>contact -&gt; $contact.get(`Contacts:PersonContact#account`).get(`tl.accounts:Person#admin`) ? #("Ein Administrator-Konto kann nicht gelöscht werden"@de, "An administrator account cannot be deleted"@en)  :null</decision>
+					</rule-by-expression>
+				</executability>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

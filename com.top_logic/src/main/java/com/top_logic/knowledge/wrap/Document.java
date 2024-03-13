@@ -25,11 +25,9 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.convert.converters.FormatConverter;
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.util.MetaObjectUtils;
-import com.top_logic.dsa.DAPropertyNames;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.dsa.ex.UnknownDBException;
@@ -221,8 +219,6 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 		}
 
 		try {
-			propertiesValid = false;
-
 			boolean isRepos;
 			if (theEntry.exists()) {
 				isRepos = theEntry.isRepository();
@@ -581,30 +577,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	public Object getValue(String aKey) {
         if ("changed".equals(aKey)) {
             try {
-                //return (this.getProperties().getAttributeValue(DAPropertyNames.LAST_MODIFIED));
-                
-                //dkh: do same as when AbstractWrapper tries to access LAST_MODIFIED, 
-                //     otherwise we get NullPointerexceptions
-                //     but why are props null?
-                //TODO kha please review inserted code
-                
-				DataObject theProps = this.getProperties();
-
-				// try via DAP/Properties first ... 
-				if (theProps != null) {
-					try {
-						Long propertyValue = (Long) theProps.getAttributeValue(DAPropertyNames.LAST_MODIFIED);
-						if (propertyValue != null) {
-							return propertyValue;
-						}
-					}
-					catch (NoSuchAttributeException ignored) {
-						// e.g. happens with security://
-					}
-				}
-
 				return tGetDataLong(LifecycleAttributes.MODIFIED);
-                
             }
             catch (Exception ex) {
                 Logger.error("Unable to get value for key '" + aKey + "'!", ex, this);

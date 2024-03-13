@@ -34,5 +34,11 @@ public class TimeZoneValueProvider extends AbstractConfigurationValueProvider<Ti
 		return configValue.getID();
 	}
 
+	@Override
+	public boolean isLegalValue(Object value) {
+		return value == null || value instanceof TimeZone;
+	}
+
+
 }
 

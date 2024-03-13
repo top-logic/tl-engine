@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.RearrangableTestSetup;
@@ -133,7 +134,7 @@ public class TypeProviderSetup extends RearrangableTestSetup {
 		return new TestFactoryProxy(innerFactory) {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test actualTest = super.createSuite(testCase, suiteName);
 				return new TypeProviderSetup(actualTest, multipleBranches, provider);
 			}

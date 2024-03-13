@@ -10,11 +10,13 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.element.meta.form.EditContext;
@@ -24,22 +26,29 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
- * Configured {@link Generator} that dispatches to the {@link GeneratorFactory}.
+ * {@link Generator} that delegates to a {@link Generator} in the application configuration.
+ * 
+ * <p>
+ * The {@link Generator} in the application configuration are normally special generators that are
+ * generally not reusable but are intended for a specific application case.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public final class NamedOptions implements Generator, ConfiguredInstance<NamedOptions.Config> {
+@InApp(priority = -10)
+@Label("Predefined options")
+public final class NamedOptions extends AbstractConfiguredInstance<NamedOptions.Config> implements Generator {
 
 	/**
 	 * Configuration options of {@link NamedOptions}.
 	 */
 	@TagName("config-reference")
-	public interface Config extends PolymorphicConfiguration<NamedOptions> {
+	public interface Config extends PolymorphicConfiguration<NamedOptions>, NamedConfigMandatory {
 
 		/**
-		 * The {@link Generator} name form {@link GeneratorFactory}.
+		 * Name of the {@link Generator} in the application configuration to delegate to.
 		 */
-		@Mandatory
+		@Override
 		@Options(fun = AllGeneratorNames.class)
 		String getName();
 
@@ -58,8 +67,6 @@ public final class NamedOptions implements Generator, ConfiguredInstance<NamedOp
 
 	}
 
-	private final Config _config;
-
 	private final Generator _impl;
 
 	/**
@@ -72,10 +79,12 @@ public final class NamedOptions implements Generator, ConfiguredInstance<NamedOp
 	 */
 	@CalledByReflection
 	public NamedOptions(InstantiationContext context, Config config) throws ConfigurationException {
-		_config = config;
-		Generator generator = GeneratorFactory.getGenerator(config.getName());
+		super(context, config);
+		String generatorName = config.getName();
+		Generator generator = GeneratorFactory.getGenerator(generatorName);
 		if (generator == null) {
-			throw new ConfigurationException("No such global generator: " + config.getName());
+			throw new ConfigurationException(I18NConstants.NO_SUCH_GENERATOR__NAME.fill(generatorName),
+				Config.NAME_ATTRIBUTE, generatorName);
 		}
 		_impl = generator;
 	}
@@ -83,11 +92,6 @@ public final class NamedOptions implements Generator, ConfiguredInstance<NamedOp
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
 		return _impl.generate(editContext);
-	}
-
-	@Override
-	public Config getConfig() {
-		return _config;
 	}
 
 }

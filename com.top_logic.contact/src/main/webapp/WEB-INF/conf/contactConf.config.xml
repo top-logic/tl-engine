@@ -12,21 +12,17 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.base.mail.MailHelper">
-			<instance class="com.top_logic.contact.layout.mail.ContactMailHelper"/>
-		</config>
-		
         <config service-class="com.top_logic.layout.provider.LabelProviderService">
             <instance>
                 <label-providers>
-					<provider kind="MODEL" type="Contacts:Contact.Person" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
                 </label-providers>
                 <resource-providers>
-					<provider kind="MODEL" type="Contacts:Contact.Person" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
@@ -51,6 +47,7 @@
 			<instance>
 				<bundles>
 					<bundle name="ContactMessages" />
+					<bundle name="model.Contacts.messages" />
 					<bundle name="model.tl.contact.external.messages" />
 				</bundles>
 			</instance>
@@ -97,6 +94,7 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/tl.contact.external.model.xml"/>
 					<declaration file="/WEB-INF/model/Contacts.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-contact/extension.tl.accounts.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="Contacts">
@@ -143,31 +141,37 @@
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>
-		            <handler id="resetStartPage" class="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent$ResetStartPageCommandHandler"
+		            <handler id="resetStartPage" class="com.top_logic.contact.layout.person.related.ResetStartPageCommandHandler"
 		            	group="System"
 		            	image="theme:ICON_RESET_STARTPAGE" 
 		            />
-					<handler id="contactApply" class="com.top_logic.contact.layout.ContactApplyHandler" clique="apply"/>
+					<handler id="contactApply" class="com.top_logic.contact.layout.ContactApplyHandler" clique="apply" group="System"/>
 					<handler id="contactDelete" class="com.top_logic.contact.layout.ContactDeleteHandler" clique="delete"/>
-					<handler id="personContactApply" class="com.top_logic.contact.layout.person.PersonContactApplyHandler" clique="apply"/>
+					<handler id="personContactApply" class="com.top_logic.contact.layout.person.PersonContactApplyHandler" clique="apply" group="System"/>
 					<handler id="personContactDelete" class="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler" clique="delete"/>
 					<handler id="personContactCreate" class="com.top_logic.contact.layout.person.PersonContactCreateHandler" clique="create"/>
 					<handler id="companyContactDelete" class="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler" clique="delete"/>
 					<handler id="companyContactCreate" class="com.top_logic.contact.layout.company.CompanyContactCreateHandler" clique="create"/>
-		            <!-- Override person handling to (optionally) relate them to PersonContacts --> 
-		            <handler id="applyPerson" class="com.top_logic.contact.layout.person.related.ApplyRelatedPersonCommandHandler" clique="apply"/>
-		            <handler id="newPerson" class="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler" clique="create"/>
 		            <handler id="startSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$StartSAPImportCommandHandler"/>
 		            <handler id="finishSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$FinishSAPImportCommandHandler"/>
 		            <handler id="ContactSwitchEditCommand" class="com.top_logic.contact.mandatoraware.layout.COSEditPersonContactComponent$ContactSwitchEditCommandHandler" clique="edit"/>
 				</handlers>
 			</instance>		
 		</config>
-	
+		
 		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
 			<instance class="com.top_logic.contact.layout.person.ContactPersonManager" />
 		</config>
-		
+
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance>
+				<schemes>
+					<scheme class="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme"/>
+					<scheme class="com.top_logic.contact.layout.scripting.ContactAccountConversionNaming" priority="resolve-only"/>
+				</schemes>
+			</instance>
+		</config>
+
 	</services>
 	
 	<configs>
@@ -182,9 +186,6 @@
 					</schemas>
 				</type-system>
 			</type-systems>
-		</config>
-		<config config:interface="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent$EditRelatedPersonConfig">
-			<allow-manual-contact-assigning>false</allow-manual-contact-assigning>
 		</config>
 
 		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">

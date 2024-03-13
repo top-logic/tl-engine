@@ -40,6 +40,14 @@
 					</annotations>
 				</datatype>
 				
+				<datatype name="TimeZone" db_type="varchar" db_size="8" kind="Custom">
+					<storage-mapping class="com.top_logic.element.meta.complex.TimeZoneValueProvider" />
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="TIMEZONE"/>
+					</annotations>
+				</datatype>
+				
 				<datatype name="URL" db_type="varchar" db_size="1333" kind="String">
 					<storage-mapping 
 						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 

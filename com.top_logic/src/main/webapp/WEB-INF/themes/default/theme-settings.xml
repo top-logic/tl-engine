@@ -72,7 +72,7 @@
 	/>
 	<color name="ACTIVE_ELEMENT_BORDER_COLOR"
 		value="#000000"
-	/>	
+	/>
 	<string name="ACTIVE_ELEMENT_BORDER_STYLE"
 		value="dashed"
 	/>
@@ -1236,7 +1236,7 @@
 	/>
 	<string name="IMAGE_BUTTON_BORDER_HOVER"
 		value="0"
-	/>	
+	/>
 	<icon name="IMAGES_APP_LOGO"
 		value="/images/appLogoSmall.svg"
 	/>
@@ -1381,6 +1381,9 @@
 	/>
 	<string name="com.top_logic.mig.html.layout.Icons.META_VIEWPORT"
 		value=""
+	/>
+	<icon name="com.top_logic.model.form.implementation.Icons.FORM_EDITOR_TOOL_CODE_ELEMENT"
+		value="css:fas fa-code"
 	/>
 	<icon name="MIMETYPES_GROUP_16"
 		value="/mimetypes/Group-16.png"
@@ -2194,15 +2197,6 @@
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_DISABLED"
 		value="/icons/keywordsDisabled.png"
-	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16"
-		value="/icons/mail-forward-16.png"
-	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_60"
-		value="/icons/mail-forward-60.png"
-	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_DISABLED_16"
-		value="/icons/mail-forward-disabled-16.png"
 	/>
 	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.DOCUMENT_SIMILAR_60"
 		value="/icons/document-similar-60.png"
@@ -3500,7 +3494,7 @@
 	<string name="BREADCRUMB_SEPARATOR_LABEL"
 		value=""
 	/>
-	
+
 	<color name="border-strong"
 		value="#878D96FF"
 	/>

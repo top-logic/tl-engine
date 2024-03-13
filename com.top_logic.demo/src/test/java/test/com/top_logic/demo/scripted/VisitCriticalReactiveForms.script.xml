@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Visit critical pages for reactive forms"
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Box-Layout-Demo - Complex Layout"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Layout-Framework#2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Layout-Framework#2 > Box-Layout"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Form Control Test - Many differernt Controls without a MediaQueryControl"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Layout-Framework#1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Settings - Vertical layout at phone numbers"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Persönliche Einstellungen"
+					command-name="showCurrentPersonDialog"
+					component-implementation-comment="com.top_logic.layout.component.TabComponent"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Close settings"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Storage algorithm - Generated lists with complex groups"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="DemoPlain"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							tab-path="Administration > Development > Modell Editor"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Flaches All"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							tab-path="Administration > Development > Modell Editor"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Eigenschaften"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Eigenschaften > Typ-Eigenschaften"
+						/>
+						<path>
+							<labeled-member label="Anpassungen"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.config.annotation.TLStorage"
+							/>
+						</values>
+					</value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Stoarage algorithm - Cancel"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create attribute - Lists in dialogs"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="DemoPlain"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							tab-path="Administration > Development > Modell Editor"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Flaches All"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							tab-path="Administration > Development > Modell Editor"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Attribute"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+					command-label="Neue Eigenschaft..."
+					command-name="displayDialog_createPropertyTypePartDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create Attribute - Cancel"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Control program - Complex layout in a small window"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Tech. Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Tech. Administration > Steuerprogramm"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Search - Columns layout"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Suche"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler"
+					command-label="Erweiterte Suche"
+					command-name="switchAttributedSearchScope"
+					component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+					component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Search - Cancel"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler"
+					command-label="Erweiterte Suche"
+					command-name="switchAttributedSearchScope"
+					component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+					component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

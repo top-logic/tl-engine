@@ -73,17 +73,17 @@ public class MacroTemplateProvider extends AbstractFormElementProvider<MacroPart
 	}
 
 	@Override
-	public DisplayDimension getDialogWidth() {
+	protected DisplayDimension getDialogWidth() {
 		return DisplayDimension.dim(680, DisplayUnit.PIXEL);
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return DisplayDimension.dim(470, DisplayUnit.PIXEL);
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		Expr expression = getConfig().getExpr();
 		if (expression != null) {
 			if (context.getFormMode() == FormMode.DESIGN) {

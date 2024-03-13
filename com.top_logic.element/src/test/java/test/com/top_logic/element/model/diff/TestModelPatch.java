@@ -61,18 +61,18 @@ public class TestModelPatch extends BasicTestCase {
 
 		assertEmpty(createPatch(left, right));
 
-		assertEqualsConfig(left, right);
+		assertEqualsConfig(right, left);
 	}
 
-	private void assertEqualsConfig(TLModel left, TLModel right) {
-		assertEqualConfig(config(left), config(right));
+	private void assertEqualsConfig(TLModel expected, TLModel actual) {
+		assertEqualConfig(config(expected), config(actual));
 	}
 
-	private void assertEqualConfig(ModelPartConfig left, ModelPartConfig right) {
-		boolean equals = ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(left, right);
+	private void assertEqualConfig(ModelPartConfig expected, ModelPartConfig actual) {
+		boolean equals = ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(expected, actual);
 		if (!equals) {
-			assertEquals(left.toString(), right.toString());
-			fail("Expected configuration '" + left + "' but was '" + right + "'.");
+			assertEquals(expected.toString(), actual.toString());
+			fail("Expected configuration '" + expected + "' but was '" + actual + "'.");
 		}
 	}
 
@@ -98,9 +98,7 @@ public class TestModelPatch extends BasicTestCase {
 				super.localInfo(message, verbosityLevel);
 			}
 		};
-		ApplyModelPatch apply = new ApplyModelPatch(log, left, factory);
-		apply.applyPatch(patch);
-		apply.complete();
+		ApplyModelPatch.applyPatch(log, left, factory, patch);
 	}
 
 	private List<DiffElement> createPatch(TLModel left, TLModel right) {

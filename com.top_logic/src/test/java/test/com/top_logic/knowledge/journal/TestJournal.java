@@ -19,6 +19,7 @@ import java.util.Random;
 
 import junit.extensions.ActiveTestSuite;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -897,7 +898,7 @@ public class TestJournal extends BasicTestCase {
     		
 			@SuppressWarnings("unused")
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				if (false) {
 					return new TestJournal("testJournalDeletedAssociationTarget");
 				} else {

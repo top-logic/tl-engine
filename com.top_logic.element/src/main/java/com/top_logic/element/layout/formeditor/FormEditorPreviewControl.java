@@ -27,7 +27,6 @@ import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.definition.ContainerDefinition;
@@ -114,10 +113,9 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 		String elementID = (String) arguments.get("elementID");
 		String siblingID = (String) arguments.get("siblingID");
 		String parentID = (String) arguments.get("parentID");
-		String attribute = (String) arguments.get("elementName");
 		boolean inEditor = (boolean) arguments.get("inEditor");
 
-		dynamicFormDisplayControl.moveMember(commandContext, elementID, siblingID, parentID, attribute, inEditor);
+		dynamicFormDisplayControl.moveMember(commandContext, elementID, siblingID, parentID, inEditor);
 
 	}
 
@@ -191,23 +189,17 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 	 * <li>If there is no parent it will take the root.</li>
 	 * <li>If there is no sibling it will append the element in the end of the parent-list.</li>
 	 * </ul>
-	 * 
 	 * @param elementID
 	 *        The GUI-ID to identify the {@link FormElement}.
 	 * @param siblingID
 	 *        The GUI-ID to identify the {@link FormElement}.
 	 * @param parentID
 	 *        The GUI-ID to identify the {@link ContainerDefinition}.
-	 * @param name
-	 *        <ul>
-	 *        <li>For type element: The name of the {@link TLClassPart} of the element.</li>
-	 *        <li>For type group: The String for the {@link ResKey}.</li>
-	 *        </ul>
 	 * @param inEditor
 	 *        Whether the element is dropped in the editor.
 	 */
 	public HandlerResult moveMember(DisplayContext commandContext, String elementID, String siblingID, String parentID,
-			String name, boolean inEditor) {
+			boolean inEditor) {
 		ContainerDefinition<?> form = getModel();
 		FormEditorMapping formEditorMapping = _formEditorMapping;
 		FormElement<?> element = formEditorMapping.getMapping(elementID);

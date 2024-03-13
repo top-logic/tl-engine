@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
@@ -62,7 +61,7 @@ public class StoredReport extends StoredFlexWrapper {
 		{
 			Comparator theComparator = FlexWrapperUserComparator.INSTANCE;
 			
-			if (ThreadContext.isSuperUser() || SecurityContext.isAdmin(anOwner.getUser())) {
+			if (ThreadContext.isAdmin() || Person.isAdmin(anOwner)) {
 				
 			    Collection allKnowledgeObjects = new ArrayList();
 			    Iterator theIter = getDefaultKnowledgeBase().getObjectsByAttribute(KO_TYPE, ATTRIBUTE_BO_TYPE, aBOType);

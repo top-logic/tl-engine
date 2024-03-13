@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<root>
+    <alias>
+        <entry name="%SMTP_ACTIVE%"		value="${env:smtp_active:false}" comment="Switch to disable sending of mails."/>
+        
+        <entry name="%SMTP_SERVER%"		value="${env:smtp_server:localhost}" comment="SMTP server used to send mails."/>
+		<entry name="%SMTP_PROTOCOL%"	value="${env:smtp_protocol:smtps}" />
+		<entry name="%SMTP_STARTTLS%"	value="${env:smtp_starttls:false}" />
+        <entry name="%SMTP_PORT%"		value="${env:smtp_port:-1}" comment="Port of SMTP server, -1 means default port."/>
+        <entry name="%SMTP_LOOKUP_MX%"  value="${env:smtp_lookup_mx:false}" comment="Set this true, if the given SMTP is a DNS entry."/>
+		<entry name="%SMTP_USER%"		value="${env:smtp_user:}" comment="User name for login to the SMTP server."/>
+		<entry name="%SMTP_PASS%"		value="${env:smtp_pass:}" comment="Password for SMTP server login."/>
+		<entry name="%SMTP_TIMEOUT%"    value="${env:smtp_timeout:60000}" />
+		<entry name="%SMTP_CONNECTION_TIMEOUT%"	value="${env:smtp_connection_timeout:60000}" />
+
+        <entry name="%MAIL_DOMAIN%"		value="${env:mail_domain:}" comment="Domain to use when plain username is found."/>
+        <entry name="%MAIL_SENDER%"		value="${env:mail_sender:%SMTP_USER%}"  comment="Sender of system mails ('from' address)."/>
+    </alias>
+</root>

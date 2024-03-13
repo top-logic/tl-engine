@@ -48,7 +48,6 @@ import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
-import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -87,12 +86,12 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 	}
 
 	@Override
-	public DisplayDimension getDialogWidth() {
+	protected DisplayDimension getDialogWidth() {
 		return DisplayDimension.dim(650, DisplayUnit.PIXEL);
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return DisplayDimension.dim(650, DisplayUnit.PIXEL);
 	}
 
@@ -102,15 +101,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
-		if (context.getFormMode() == FormMode.DESIGN) {
-			return designTemplate(context);
-		} else {
-			return displayTemplate(context);
-		}
-	}
-
-	private HTMLTemplateFragment displayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		TLClass targetType = OptionalTypeTemplateParameters.resolve(getConfig());
 		FormDefinitionTemplateProvider globalLayout = TypedConfigUtil.createInstance(getConfig().getLayout());
 		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
@@ -217,7 +208,8 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		}
 	}
 
-	private HTMLTemplateFragment designTemplate(FormEditorContext context) {
+	@Override
+	protected HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
 		ForeignObjects config = getConfig();
 
 		TLClass targetType = OptionalTypeTemplateParameters.resolve(config);

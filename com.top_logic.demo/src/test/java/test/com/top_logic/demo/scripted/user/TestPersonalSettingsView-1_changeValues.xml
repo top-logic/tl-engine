@@ -6,6 +6,7 @@
 	<actions>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Test with root"
+			user-id="root"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -14,48 +15,53 @@
 					command-name="showCurrentPersonDialog"
 					component-implementation-comment="com.top_logic.layout.component.TabComponent"
 					component-name="mainTabbar.layout.xml#mainTabber"
-					user-id="root"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
 				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Titel"
-									field-name="personalTitle"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Myadmin"
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Benutzername"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Profil bearbeiten"
 							/>
-						</value>
-					</field-values>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="root"
+					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.ApplyRelatedPersonCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Titel"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Profil bearbeiten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Myadmin"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
 					command-label="Übernehmen"
-					command-name="applyPerson"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
+					command-name="storeAttributes"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
@@ -63,71 +69,55 @@
 					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
 					command-label="Abbrechen"
 					command-name="nothing"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
 					inverted="false"
-					user-id="root"
 				>
-					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
-						raw-value="true"
-					>
-						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 							label="Titel"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-								tab-path=""
+								tab-path="Profil bearbeiten"
 							/>
-						</field-name>
+						</model>
 					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Myadmin"
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Myadmin"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-						tab-path=""
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Titel"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Profil bearbeiten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Admin"
 					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Titel"
-									field-name="personalTitle"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Admin"
-							/>
-						</value>
-					</field-values>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
@@ -137,31 +127,30 @@
 					command-name="showCurrentPersonDialog"
 					component-implementation-comment="com.top_logic.layout.component.TabComponent"
 					component-name="mainTabbar.layout.xml#mainTabber"
-					user-id="root"
 				>
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
 					inverted="false"
-					user-id="root"
 				>
-					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
-						raw-value="true"
-					>
-						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 							label="Titel"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-								tab-path=""
+								tab-path="Profil bearbeiten"
 							/>
-						</field-name>
+						</model>
 					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Admin"
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Admin"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+				/>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -169,175 +158,191 @@
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="fcl"
+						/>
+						<parameter name="Vorname"
+							value="Fred"
+						/>
+						<parameter name="Nachname"
+							value="Clever"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 					template="script:/Nutzer/Nutzer anmelden.xml"
 					template-name-comment="Nutzer anmelden"
 				>
 					<parameters>
-						<parameter name="Username">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="fcl"
-							/>
-						</parameter>
-						<parameter name="ProcessId">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="fcl"
-							/>
-						</parameter>
+						<parameter name="Username"
+							value="fcl"
+						/>
+						<parameter name="ProcessId"
+							value="fcl"
+						/>
 					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Persönliche Einstellungen"
-					command-name="showCurrentPersonDialog"
-					component-implementation-comment="com.top_logic.layout.component.TabComponent"
-					component-name="mainTabbar.layout.xml#mainTabber"
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					user-id="fcl"
 				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="fcl"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					user-id="fcl"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Titel"
-									field-name="personalTitle"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Myadmin"
-							/>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.ApplyRelatedPersonCommandHandler"
-					command-label="Übernehmen"
-					command-name="applyPerson"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="fcl"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
-					command-label="Abbrechen"
-					command-name="nothing"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="fcl"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-					user-id="fcl"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
-						raw-value="true"
-					>
-						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Titel"
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Persönliche Einstellungen"
+							command-name="showCurrentPersonDialog"
+							component-implementation-comment="com.top_logic.layout.component.TabComponent"
+							component-name="mainTabbar.layout.xml#mainTabber"
 						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-								tab-path=""
-							/>
-						</field-name>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Myadmin"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="fcl"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					user-id="fcl"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-						tab-path=""
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Titel"
-									field-name="personalTitle"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Admin"
-							/>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="fcl"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Persönliche Einstellungen"
-					command-name="showCurrentPersonDialog"
-					component-implementation-comment="com.top_logic.layout.component.TabComponent"
-					component-name="mainTabbar.layout.xml#mainTabber"
-					user-id="fcl"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-					user-id="fcl"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
-						raw-value="true"
-					>
-						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Titel"
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
 						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-								tab-path=""
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Benutzername"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Profil bearbeiten"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="fcl"
 							/>
-						</field-name>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Admin"
-					/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Titel"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Profil bearbeiten"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Myadmin"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
+							command-label="Übernehmen"
+							command-name="storeAttributes"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+							command-label="Abbrechen"
+							command-name="nothing"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Titel"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Profil bearbeiten"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Myadmin"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Titel"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Profil bearbeiten"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Admin"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Persönliche Einstellungen"
+							command-name="showCurrentPersonDialog"
+							component-implementation-comment="com.top_logic.layout.component.TabComponent"
+							component-name="mainTabbar.layout.xml#mainTabber"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Titel"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Profil bearbeiten"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Admin"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName"
+							value="fcl"
+						/>
+					</parameters>
 				</action>
 			</actions>
 		</action>

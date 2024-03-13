@@ -251,7 +251,7 @@
 						</field-name>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue">
-						<string><![CDATA[[quote=Administrator]Comment1 modified.[/quote]
+						<string><![CDATA[[quote=root]Comment1 modified.[/quote]
 ]]></string>
 					</expected-value>
 				</action>
@@ -269,7 +269,7 @@
 								/>
 							</field-path>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="[quote=Administrator]Comment1 modified.[/quote]  Quoted comment."
+								string="[quote=root]Comment1 modified.[/quote]  Quoted comment."
 							/>
 						</value>
 					</field-values>

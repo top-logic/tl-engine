@@ -2,7 +2,6 @@
 
 <root>
 	<alias>
-		<!-- The Reminders need this for generating external links -->
 		<entry name="%HOST%" value="http://apps.top-logic.com"/>
 
 		<!-- DB setup -->

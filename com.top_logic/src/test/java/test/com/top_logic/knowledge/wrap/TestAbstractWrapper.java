@@ -24,6 +24,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.ObjectFlag;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.identifier.ObjectReference;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
@@ -213,8 +214,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 		// Delete the test accounts.
 		{
 			Transaction tx = begin();
-			pm.deleteUser(p1);
-			pm.deleteUser(p2);
+			p1.tDelete();
+			p2.tDelete();
 			tx.commit();
 		}
 		assertEquals(p1InCreate, wrapper.get().getCreator());
@@ -305,8 +306,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 		// Delete the test accounts.
 		{
 			Transaction tx = begin();
-			pm.deleteUser(p1);
-			pm.deleteUser(p2);
+			p1.tDelete();
+			p2.tDelete();
 			tx.commit();
 		}
 		
@@ -318,8 +319,9 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 			// Test that creator and modifier do not change after deleting the accounts.
 			assertEquals(p1Id, WrapperHistoryUtils.getUnversionedIdentity(w1[0].getCreator()));
 			assertEquals(p2Id, WrapperHistoryUtils.getUnversionedIdentity(w1[0].getModifier()));
-			assertFalse(w1[0].getCreator().isAlive());
-			assertFalse(w1[0].getModifier().isAlive());
+			// Test that no non-alive people are reported.
+			assertTrue(w1[0].getCreator().tValid());
+			assertTrue(w1[0].getModifier().tValid());
 		} else {
 			assertEquals(null, w1[0].getCreator());
 			assertEquals(null, w1[0].getModifier());
@@ -328,9 +330,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 
 	private Person createPerson(PersonManager pm, String personName) {
 		TLSecurityDeviceManager sdm = TLSecurityDeviceManager.getInstance();
-		String dataAccessDeviceID = sdm.getDefaultDataAccessDevice().getDeviceID();
 		String authenticationDeviceID = sdm.getDefaultAuthenticationDevice().getDeviceID();
-		return pm.createPerson(personName, dataAccessDeviceID, authenticationDeviceID, Boolean.FALSE);
+		return Person.create(PersistencyLayer.getKnowledgeBase(), personName, authenticationDeviceID);
 	}
 
     /**

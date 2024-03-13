@@ -23,7 +23,6 @@ import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.meta.MOClass;
-import com.top_logic.dob.persist.AbstractDataManager;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AttributeLoader;
@@ -43,24 +42,24 @@ import com.top_logic.knowledge.service.db2.FlexData;
 public abstract class AbstractFlexDataManagerTest extends AbstractDBKnowledgeBaseTest {
 
 	/**
-	 * UTF-8 string with only characters for the multi-lingual plane fits into
-	 * the {@link AbstractDataManager}'s <code>varchar</code> column.
+	 * UTF-8 string with only characters for the multi-lingual plane fits into the
+	 * {@link AbstractFlexDataManager}'s <code>varchar</code> column.
 	 */
 	static final String SMALL_STRING = BasicTestCase.randomString(AbstractFlexDataManager.VARCHAR_DATA_ATTR_LEN / 2 + 10, false, false, true, false);
 	
 	/**
-	 * UTF-8 string that exactly fits into the {@link AbstractDataManager}'s
+	 * UTF-8 string that exactly fits into the {@link AbstractFlexDataManager}'s
 	 * <code>varchar</code> column.
 	 */
 	static final String MEDIUM_STRING = BasicTestCase.randomString(AbstractFlexDataManager.VARCHAR_DATA_ATTR_LEN, true, true, true, false);
 
 	/**
-	 * UTF-8 string that must safely fit into the {@link AbstractDataManager}'s
+	 * UTF-8 string that must safely fit into the {@link AbstractFlexDataManager}'s
 	 * <code>varchar</code> column.
 	 * 
 	 * <p>
-	 * Note: This make the test robust against +-1 errors in the decision when
-	 * to use the <code>varchar</code> column in the implementation.
+	 * Note: This make the test robust against +-1 errors in the decision when to use the
+	 * <code>varchar</code> column in the implementation.
 	 * </p>
 	 */
 	static final String MEDIUM_STRING_1 = BasicTestCase.randomString(AbstractFlexDataManager.VARCHAR_DATA_ATTR_LEN - 1, true, true, true, false);

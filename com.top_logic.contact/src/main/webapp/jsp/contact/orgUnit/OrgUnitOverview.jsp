@@ -6,10 +6,8 @@
 %><%@taglib uri="layout"   prefix="layout"
 %><%@taglib uri="meta"     prefix="meta"
 %><%@taglib uri="ajaxform" prefix="form"
-%><%
-String theColumns = PersonContact.NAME_ATTRIBUTE + ' ' + PersonContact.ATT_MAIL + ' ' +
-PersonContact.ATT_PHONE_OFFICE + ' ' + PersonContact.ATT_PHONE_MOBILE;
-%><layout:html>
+%><%String theColumns = PersonContact.NAME_ATTRIBUTE + ' ' + PersonContact.EMAIL + ' ' +
+PersonContact.PHONE + ' ' + PersonContact.PHONE_MOBILE;%><layout:html>
 	<layout:head>
 		
 	</layout:head>

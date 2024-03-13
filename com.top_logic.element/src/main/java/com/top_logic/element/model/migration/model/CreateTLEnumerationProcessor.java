@@ -5,11 +5,14 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -26,7 +29,7 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class CreateTLEnumerationProcessor extends AbstractConfiguredInstance<CreateTLEnumerationProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link CreateTLEnumerationProcessor}.
@@ -38,7 +41,13 @@ public class CreateTLEnumerationProcessor extends AbstractConfiguredInstance<Cre
 		/**
 		 * Qualified name of the new {@link TLEnumeration}.
 		 */
+		@Mandatory
 		QualifiedTypeName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
 
 	}
 
@@ -58,18 +67,21 @@ public class CreateTLEnumerationProcessor extends AbstractConfiguredInstance<Cre
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			internalDoMigration(log, connection, tlModel);
+			return true;
 		} catch (Exception ex) {
 			log.error("Creating enumeration migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName enumName = getConfig().getName();
 		_util.createTLEnumeration(connection, enumName, getConfig());
+		MigrationUtils.createEnumType(log, tlModel, enumName, getConfig());
 		log.info("Created enumeration " + _util.qualifiedName(enumName));
 	}
 

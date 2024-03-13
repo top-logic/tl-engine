@@ -10,7 +10,6 @@ import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -168,7 +167,7 @@ public class ReportingCommandSupport implements ReportConstants{
 			Person creator = ((StoredReport) model).getCreator();
 			Person currentUser = TLContext.getContext().getCurrentPersonWrapper();
 
-			if (!WrapperHistoryUtils.equalsUnversioned(currentUser, creator) || SecurityContext.isAdmin()) {
+			if (!WrapperHistoryUtils.equalsUnversioned(currentUser, creator) || Person.isAdmin(currentUser)) {
 				return ExecutableState.NO_EXEC_PERMISSION;
 			}
 

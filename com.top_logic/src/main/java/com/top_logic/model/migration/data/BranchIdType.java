@@ -5,8 +5,11 @@
  */
 package com.top_logic.model.migration.data;
 
+import java.util.Objects;
+
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.equal.EqualityByValue;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
@@ -21,6 +24,7 @@ public interface BranchIdType extends EqualityByValue {
 	/**
 	 * Branch in which the model part lives.
 	 */
+	@Mandatory
 	long getBranch();
 
 	/**
@@ -33,6 +37,7 @@ public interface BranchIdType extends EqualityByValue {
 	 * 
 	 * @see TLObject#tIdLocal()
 	 */
+	@Mandatory
 	TLID getID();
 
 	/**
@@ -45,6 +50,7 @@ public interface BranchIdType extends EqualityByValue {
 	 * 
 	 * @see TLObject#tTable()
 	 */
+	@Mandatory
 	String getTable();
 
 	/**
@@ -63,8 +69,8 @@ public interface BranchIdType extends EqualityByValue {
 	static <T extends BranchIdType> T newInstance(Class<T> configType, long branch, TLID id, String table) {
 		T branchIdType = TypedConfiguration.newConfigItem(configType);
 		branchIdType.setBranch(branch);
-		branchIdType.setID(id);
-		branchIdType.setTable(table);
+		branchIdType.setID(Objects.requireNonNull(id));
+		branchIdType.setTable(Objects.requireNonNull(table));
 		return branchIdType;
 	}
 

@@ -289,7 +289,6 @@ com.top_logic.element.genericimport.GenericImporterProxy.java: Documentation con
 com.top_logic.element.genericimport.GenericImporterProxy.java: Invalid camel case word 'GenericImporter', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.GenericImporterProxy.java: Invalid camel case word 'GenericImporterProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.GenericImporterProxy.java: Missing documentation: com.top_logic.element.genericimport.GenericImporterProxy.PROXY_IMPORTER
-com.top_logic.element.genericimport.GenericPersonCreateHandler.java: Missing documentation: com.top_logic.element.genericimport.GenericPersonCreateHandler
 com.top_logic.element.genericimport.GenericStructureCreateHandler.java: Missing documentation: com.top_logic.element.genericimport.GenericStructureCreateHandler
 com.top_logic.element.genericimport.GenericTwoPhaseImportTask.java: Missing documentation: com.top_logic.element.genericimport.GenericTwoPhaseImportTask
 com.top_logic.element.genericimport.GenericValueMapImpl.java: Missing documentation: com.top_logic.element.genericimport.GenericValueMapImpl
@@ -406,7 +405,6 @@ com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing do
 com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing documentation: com.top_logic.element.knowledge.search.ElementExpressionFactory.isReferencedByType
 com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing documentation: com.top_logic.element.knowledge.search.ElementExpressionFactory.metaAttribute
 com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing documentation: com.top_logic.element.knowledge.search.ElementExpressionFactory.metaElement
-com.top_logic.element.knowledge.wrap.person.ElementPersonManager.java: Missing documentation: com.top_logic.element.knowledge.wrap.person.ElementPersonManager.deleteStoredQueries
 com.top_logic.element.layout.TypeInstanceListModelBuilder.java: Documentation starts with an uppercase letter: com.top_logic.element.layout.TypeInstanceListModelBuilder
 com.top_logic.element.layout.admin.StructureDomainMapper.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.admin.StructureDomainMapper
 com.top_logic.element.layout.admin.StructureDomainMapper.java: Invalid camel case word 'StructureDomainMapper', this may only be used within JavaDoc links or HTML code tags.
@@ -456,11 +454,8 @@ com.top_logic.element.layout.genericimport.GenericDataImportProgressComponent.ja
 com.top_logic.element.layout.genericimport.GenericDataImportProgressComponent.java: Missing documentation: com.top_logic.element.layout.genericimport.GenericDataImportProgressComponent.StartImportRule
 com.top_logic.element.layout.genericimport.GenericDataImportProgressComponent.java: Missing documentation: com.top_logic.element.layout.genericimport.GenericDataImportProgressComponent.StartImportRule.INSTANCE
 com.top_logic.element.layout.genericimport.I18NConstants.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.genericimport.I18NConstants
-com.top_logic.element.layout.grid.AbstractGridHandler.java: Missing documentation: com.top_logic.element.layout.grid.AbstractGridHandler.getGridRowModel
-com.top_logic.element.layout.grid.AbstractGridHandler.java: Missing documentation: com.top_logic.element.layout.grid.AbstractGridHandler.toGridRow
 com.top_logic.element.layout.grid.AbstractGridHandler.java: Missing documentation: com.top_logic.element.layout.grid.AbstractGridHandler.toModels
 com.top_logic.element.layout.grid.AbstractGridHandler.java: Missing documentation: com.top_logic.element.layout.grid.AbstractGridHandler.toRows
-com.top_logic.element.layout.grid.AdjustableCellValueContext.java: Invalid camel case word 'AdjustableCellValueContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.grid.DefaultGridApplyHandler.java: Invalid camel case word 'AttributeUpdateContainer', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.grid.DefaultGridApplyHandler.java: Missing documentation: com.top_logic.element.layout.grid.DefaultGridApplyHandler.INSTANCE
 com.top_logic.element.layout.grid.GenericStructureCreateHandler.java: Missing documentation: com.top_logic.element.layout.grid.GenericStructureCreateHandler.Config
@@ -474,12 +469,9 @@ com.top_logic.element.layout.grid.GridComponent.java: Invalid camel case word 'G
 com.top_logic.element.layout.grid.GridComponent.java: Invalid camel case word 'MainLayout', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.AddSelectedToClipboard.COMMAND_ID
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.ClearSelectedCheckboxes.COMMAND_ID
-com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.ExportFileNameKeyDefault
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getEditComponentName
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getElementTypes
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getExcludeColumns
-com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getExportCommandName
-com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getExportSheetKey
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getGridApplyHandlerClass
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getModifier
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getOpenInEdit
@@ -487,7 +479,6 @@ com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.Config.getStructureName
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.GridApplyCommandHandler.Config
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.GridContentRenderer.DEFAULT_GRID_CELL_RENDERER
-com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.HasChangedRule.INSTANCE
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.HasMarkedGroupsRule.INSTANCE
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.HasNotVisibleMarkedGroupsRule.INSTANCE
 com.top_logic.element.layout.grid.GridComponent.java: Missing documentation: com.top_logic.element.layout.grid.GridComponent.HasTokenContextRule.INSTANCE
@@ -506,10 +497,6 @@ com.top_logic.element.layout.grid.OpenDetailDialog.java: Invalid camel case word
 com.top_logic.element.layout.grid.OpenDetailDialog.java: Missing documentation: com.top_logic.element.layout.grid.OpenDetailDialog.getObject
 com.top_logic.element.layout.grid.OpenDetailDialog.java: Missing documentation: com.top_logic.element.layout.grid.OpenDetailDialog.grid
 com.top_logic.element.layout.grid.StructuredElementTreeGridModelBuilder.java: Invalid camel case word 'TreeGrid', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.grid.TreeGridCollapseAll.java: Missing documentation: com.top_logic.element.layout.grid.TreeGridCollapseAll.COMMAND_ID
-com.top_logic.element.layout.grid.TreeGridCollapseAll.java: Missing documentation: com.top_logic.element.layout.grid.TreeGridCollapseAll.getInstance
-com.top_logic.element.layout.grid.TreeGridExpandAll.java: Missing documentation: com.top_logic.element.layout.grid.TreeGridExpandAll.COMMAND_ID
-com.top_logic.element.layout.grid.TreeGridExpandAll.java: Missing documentation: com.top_logic.element.layout.grid.TreeGridExpandAll.getInstance
 com.top_logic.element.layout.journal.JournalRenderHelper.java: Missing documentation: com.top_logic.element.layout.journal.JournalRenderHelper
 com.top_logic.element.layout.journal.JournalRenderHelper.java: Missing documentation: com.top_logic.element.layout.journal.JournalRenderHelper.encodeAttributeValue
 com.top_logic.element.layout.meta.I18NConstants.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.meta.I18NConstants
@@ -531,7 +518,6 @@ com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler.java: Missing do
 com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.java: Missing documentation: com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel.AllExtendableClassesDirect.IsExtendableType
 com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler.java: Missing documentation: com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler.createAttribute
 com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder
-com.top_logic.element.layout.meta.expression.ExpressionSelectorComponent.java: Invalid camel case word 'receiveXxx', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.meta.expression.NewExpressionCommand.java: Missing documentation: com.top_logic.element.layout.meta.expression.NewExpressionCommand.publish
 com.top_logic.element.layout.meta.expression.SaveExpressionCommand.java: Missing documentation: com.top_logic.element.layout.meta.expression.SaveExpressionCommand.addGroups
 com.top_logic.element.layout.meta.expression.SaveExpressionCommand.java: Missing documentation: com.top_logic.element.layout.meta.expression.SaveExpressionCommand.asGroups
@@ -776,7 +762,6 @@ com.top_logic.element.layout.structured.StructuredElementNoSubTypeRule.java: Inv
 com.top_logic.element.layout.structured.StructuredElementRemoveHandler.java: Invalid camel case word 'ModelTrackinUtil', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.structured.StructuredElementRemoveHandler.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.structured.StructuredElementRemoveHandler.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.structured.StructuredElementRemoveHandler.java: Invalid camel case word 'ProgressInfo', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.structured.StructuredElementTreeModel.java: Invalid camel case word 'StructuredElement', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.structured.StructuredElementTreeModel.java: Invalid camel case word 'hasChildren', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.structured.StructuredElementTreeModel.java: Missing documentation: com.top_logic.element.layout.structured.StructuredElementTreeModel.getChildCount
@@ -957,7 +942,6 @@ com.top_logic.element.meta.form.component.EditAttributedComponent.java: Missing 
 com.top_logic.element.meta.form.component.EditAttributedComponent.java: Missing documentation: com.top_logic.element.meta.form.component.EditAttributedComponent.SecurityConfiguration.metaAttribute
 com.top_logic.element.meta.form.component.EditAttributedComponent.java: Missing documentation: com.top_logic.element.meta.form.component.EditAttributedComponent.getField
 com.top_logic.element.meta.form.component.SecuredTypeTableComponent.java: Invalid camel case word 'SecuredTypeTableComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.meta.form.component.SecuredTypeTableComponent.java: Invalid camel case word 'TypeTableComponent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.form.component.SecuredTypeTableComponent.java: Missing documentation: com.top_logic.element.meta.form.component.SecuredTypeTableComponent.Config
 com.top_logic.element.meta.form.component.SecuredTypeTableComponent.java: Missing documentation: com.top_logic.element.meta.form.component.SecuredTypeTableComponent.Config.getCheckerName
 com.top_logic.element.meta.form.component.TouchMetaAttributeCommandHandler.java: Missing documentation: com.top_logic.element.meta.form.component.TouchMetaAttributeCommandHandler.COMMAND_ID
@@ -1215,7 +1199,6 @@ com.top_logic.element.model.generate.TransientModelCreator.java: Missing documen
 com.top_logic.element.model.generate.TransientModelCreator.java: Missing documentation: com.top_logic.element.model.generate.TransientModelCreator.fillModel
 com.top_logic.element.singleton.ElementSingletonManager.java: Missing documentation: com.top_logic.element.singleton.ElementSingletonManager
 com.top_logic.element.singleton.ElementSingletonManager.java: Missing documentation: com.top_logic.element.singleton.ElementSingletonManager.SINGLETON_PREFIX_STRUCTURE_ROOT
-com.top_logic.element.singleton.ElementSingletonManager.java: Missing documentation: com.top_logic.element.singleton.ElementSingletonManager.getSingletonKey
 com.top_logic.element.singleton.SingletonManager.java: Missing documentation: com.top_logic.element.singleton.SingletonManager.CLASS
 com.top_logic.element.singleton.SingletonManager.java: Missing documentation: com.top_logic.element.singleton.SingletonManager.getClassName
 com.top_logic.element.structured.StructuredElement.java: Invalid camel case word 'StructureElement', this may only be used within JavaDoc links or HTML code tags.

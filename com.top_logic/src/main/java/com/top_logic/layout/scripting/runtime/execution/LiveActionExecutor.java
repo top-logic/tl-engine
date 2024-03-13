@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
@@ -31,7 +30,6 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
@@ -361,15 +359,16 @@ public class LiveActionExecutor {
 			String processId,
 			String accountName,
 			String password, boolean master) {
-		Person account = PersonManager.getManager().getPersonByName(accountName);
+		Person account = Person.byName(accountName);
 		if (account == null) {
 			throw ApplicationAssertions.fail(action, "Account '" + accountName + "' does not exist.");
 		}
 		if (account != context.getSubSessionContext().getPerson()) {
 			// Requesting script execution in a foreign account.
-			String deviceId = account.getAuthenticationDeviceID();
-			AuthenticationDevice device =
-				TLSecurityDeviceManager.getInstance().getAuthenticationDevice(deviceId);
+			AuthenticationDevice device = account.getAuthenticationDevice();
+			if (device == null) {
+				throw ApplicationAssertions.fail(action, "No authentication device for account: " + account);
+			}
 			try (LoginCredentials login = LoginCredentials.fromUserAndPassword(account, password.toCharArray())) {
 				if (!device.authentify(login)) {
 					throw ApplicationAssertions.fail(action, "Password of script account does not match.");

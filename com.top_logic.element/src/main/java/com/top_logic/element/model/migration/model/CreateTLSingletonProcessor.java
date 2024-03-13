@@ -7,7 +7,8 @@ package com.top_logic.element.model.migration.model;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
-import java.util.Arrays;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
@@ -27,6 +28,7 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.BranchIdType;
+import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.Module;
 
 /**
@@ -54,16 +56,31 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 		String getModule();
 
 		/**
+		 * Setter for {@link #getModule()};
+		 */
+		void setModule(String value);
+
+		/**
 		 * Name of the singleton in the module.
 		 */
 		@Mandatory
 		String getName();
 
 		/**
+		 * Setter for {@link #getName()};
+		 */
+		void setName(String value);
+
+		/**
 		 * Configuration of the new singleton.
 		 */
 		@Mandatory
 		CreateTLObjectProcessor.Config getSingleton();
+
+		/**
+		 * Setter for {@link #getSingleton()}.
+		 */
+		void setSingleton(CreateTLObjectProcessor.Config value);
 
 	}
 
@@ -96,42 +113,54 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 		Module module = _util.getTLModuleOrFail(connection, getConfig().getModule());
 		BranchIdType newSingleton = _singletonCreator.createObject(connection);
 		CompiledStatement createSingleton = query(
-		parameters(
-			parameterDef(DBType.LONG, "branch"),
-			parameterDef(DBType.ID, "identifier"),
-			parameterDef(DBType.LONG, "revCreate"),
-			parameterDef(DBType.ID, "module"),
-			parameterDef(DBType.STRING, "name"),
-			parameterDef(DBType.STRING, "singletonType"),
-			parameterDef(DBType.ID, "singletonID")),
-		insert(
-			table(SQLH.mangleDBName(PersistentModuleSingletons.OBJECT_NAME)),
-			Arrays.asList(
-				BasicTypes.BRANCH_DB_NAME,
-				BasicTypes.IDENTIFIER_DB_NAME,
-				BasicTypes.REV_MAX_DB_NAME,
-				BasicTypes.REV_MIN_DB_NAME,
-				BasicTypes.REV_CREATE_DB_NAME,
+			parameters(
+				_util.branchParamDef(),
+				parameterDef(DBType.ID, "identifier"),
+				parameterDef(DBType.LONG, "revCreate"),
+				parameterDef(DBType.ID, "module"),
+				parameterDef(DBType.STRING, "name"),
+				parameterDef(DBType.STRING, "singletonType"),
+				parameterDef(DBType.ID, "singletonID")),
+			insert(
+				table(SQLH.mangleDBName(PersistentModuleSingletons.OBJECT_NAME)),
+				Util.listWithoutNull(
+					_util.branchColumnOrNull(),
+					BasicTypes.IDENTIFIER_DB_NAME,
+					BasicTypes.REV_MAX_DB_NAME,
+					BasicTypes.REV_MIN_DB_NAME,
+					BasicTypes.REV_CREATE_DB_NAME,
 					_util.refID(PersistentModuleSingletons.SOURCE_ATTR),
-				SQLH.mangleDBName(PersistentModuleSingletons.NAME_ATTR),
+					SQLH.mangleDBName(PersistentModuleSingletons.NAME_ATTR),
 					_util.refType(PersistentModuleSingletons.DEST_ATTR),
 					_util.refID(PersistentModuleSingletons.DEST_ATTR)),
-			Arrays.asList(
-				parameter(DBType.LONG, "branch"),
-				parameter(DBType.ID, "identifier"),
-				literalLong(Revision.CURRENT_REV),
-				parameter(DBType.LONG, "revCreate"),
-				parameter(DBType.LONG, "revCreate"),
-				parameter(DBType.ID, "module"),
-				parameter(DBType.STRING, "name"),
-				parameter(DBType.STRING, "singletonType"),
-				parameter(DBType.ID, "singletonID")))).toSql(connection.getSQLDialect());
+				Util.listWithoutNull(
+					_util.branchParamOrNull(),
+					parameter(DBType.ID, "identifier"),
+					literalLong(Revision.CURRENT_REV),
+					parameter(DBType.LONG, "revCreate"),
+					parameter(DBType.LONG, "revCreate"),
+					parameter(DBType.ID, "module"),
+					parameter(DBType.STRING, "name"),
+					parameter(DBType.STRING, "singletonType"),
+					parameter(DBType.ID, "singletonID")))).toSql(connection.getSQLDialect());
 
 		createSingleton.executeUpdate(connection, newSingleton.getBranch(), _util.newID(connection),
 			_util.getRevCreate(connection), module.getID(), getConfig().getName(), newSingleton.getTable(),
 			newSingleton.getID());
 		log.info("Created singleton '" + getConfig().getName() + "' for module " + _util.toString(module));
 
+		MigrationUtils.modifyTLModel(log, connection, tlModel -> addSingletonDefintion(log, tlModel));
+	}
+
+	private boolean addSingletonDefintion(Log log, Document tlModel) {
+		try {
+			Element module = MigrationUtils.getTLModuleOrFail(tlModel, getConfig().getModule());
+			MigrationUtils.addModuleSingleton(log, module, getConfig().getSingleton().getType(), getConfig().getName());
+			return true;
+		} catch (MigrationException ex) {
+			log.error("No module " + getConfig().getModule() + " available.", ex);
+			return false;
+		}
 	}
 
 }

@@ -34,6 +34,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link DefaultCreateAttributedComponent} showing the configured attributes of the first task when
@@ -143,7 +144,8 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 		GuiEngine guiEngine = GuiEngine.getInstance();
 		Lane lane = startEvent.getLane();
 		Lane targetLane = target.getLane();
-		Person currentPerson = PersonManager.getManager().getCurrentPerson();
+		PersonManager r = PersonManager.getManager();
+		Person currentPerson = TLContext.currentUser();
 		return targetLane == lane || guiEngine.isActor(currentPerson, targetLane, null);
 	}
 

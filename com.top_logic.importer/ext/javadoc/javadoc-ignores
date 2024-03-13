@@ -81,7 +81,6 @@ com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Mis
 com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.ColumnConfig.getType
 com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.ColumnConfig.getUID
 com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.Config
-com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.Config.getColumns
 com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.Config.getUID
 com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.NODE_INFO
 com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.NodeInfo.id

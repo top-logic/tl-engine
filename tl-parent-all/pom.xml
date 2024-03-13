@@ -228,13 +228,6 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
-				<artifactId>tl-dob-persist</artifactId>
-				<version>${tl.version}</version>
-				<type>test-jar</type>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>com.top-logic</groupId>
 				<artifactId>tl-basic-db-schema</artifactId>
 				<version>${tl.version}</version>
 				<type>test-jar</type>
@@ -394,11 +387,6 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
-				<artifactId>tl-dob-persist</artifactId>
-				<version>${tl.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.top-logic</groupId>
 				<artifactId>tl-doc</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -505,6 +493,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-mail</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-mail-smtp</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

@@ -18,9 +18,9 @@ import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.I18NBundleSPI;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.dob.DataObject;
 import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 
@@ -38,9 +38,6 @@ public class Resources extends DefaultBundle {
 
 	private static Property<Resources> RESOURCES = TypedAnnotatable.property(Resources.class, "resources");
 
-    /** The constant for the locale attribute at the Person KO. */
-    public static final String LOCALE                = "locale";
- 
 	/** The pattern string for the locale part of a resource file. */
 	public static final String RESOURCE_FILE_LOCALE_PATTERN =
 		"(_[(\\w\\w)&&[^(xx)]].(_[(\\w\\w)&&[^(XX)]].)?)?";
@@ -162,25 +159,26 @@ public class Resources extends DefaultBundle {
     }
 
     /**
-     * Try to find the optimum locale from a DataObject (usually a Person).
-     *
-     * Will set the LOCALE value at the TopLogicThreadInfo as a side effect.
-     *
-     * @return  The optimum locale as found in the DataObject.
-     */
-    public static Locale findBestLocale(DataObject anObject) {
-        Locale theLocale = null;
+	 * Try to find the optimum locale from a {@link Person}.
+	 *
+	 * @return The optimum locale as found in the {@link Person}.
+	 */
+	public static Locale findBestLocale(Person anObject) {
+		Locale locale = null;
         if (anObject != null) {
             try {
-                String theValue = (String) anObject.getAttributeValue(LOCALE);
-                theLocale = ResourcesModule.localeFromString(theValue);
+				Locale localeSetting = anObject.getLocale();
+				if (localeSetting == null) {
+					return getDefaultLocale();
+				}
+				locale = localeSetting;
             }
             catch (Exception ex) {
                 Logger.error ("Unable to find best locale ", ex, Resources.class);
             }
         }
-        if (theLocale == null) {
-            theLocale = getDefaultLocale();
+		if (locale == null) {
+			locale = getDefaultLocale();
             if (anObject == null) {
                 Logger.info ("Using default locale, because no object given!", Resources.class);
             }
@@ -188,7 +186,7 @@ public class Resources extends DefaultBundle {
                 Logger.info ("No locale found, using default for " + anObject, Resources.class);
             }
         }
-        return theLocale;
+		return locale;
     }
 
     /**

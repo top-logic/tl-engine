@@ -8,6 +8,7 @@ package com.top_logic.demo.layout.demo;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.knowledge.gui.layout.person.PersonResourceProvider;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
@@ -46,7 +47,7 @@ public class DemoPersonResourceProvider extends PersonResourceProvider {
 		if (anObject != TLContext.getContext().getCurrentPersonWrapper()) {
 			return super.getLink(context, anObject);
 		}
-		return GotoHandler.getJSCallStatement(context, anObject, getConfig().getGotoSelfTarget());
+		return GotoHandler.getJSCallStatement(context, ((Person) anObject).getUser(), getConfig().getGotoSelfTarget());
 	}
 
 	@Override

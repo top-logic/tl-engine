@@ -6,33 +6,15 @@
 package com.top_logic.base.security.device.interfaces;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.dob.DataObject;
+import com.top_logic.base.security.password.PasswordValidator;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * An authentication device is used to autheticate a person against.
  * 
- * @author    <a href="mailto:tri@top-logic.com">Tomate Richter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public interface AuthenticationDevice extends SecurityDevice {
-	
-	/**
-	 * Configuration interface for {@link AuthenticationDevice}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface AuthenticationDeviceConfig extends SecurityDeviceConfig {
-
-		/** Name of the configuration option {@link AuthenticationDeviceConfig#isAllowPwdChange}. */
-		String ALLOW_PWD_CHANGE_NAME = "allow-pwd-change";
-
-		/**
-		 * Whether this device enables the user to change his password within this system.
-		 */
-		@Name(ALLOW_PWD_CHANGE_NAME)
-		boolean isAllowPwdChange();
-
-	}
 
 	/**
 	 * @param login
@@ -42,12 +24,45 @@ public interface AuthenticationDevice extends SecurityDevice {
 	public boolean authentify(LoginCredentials login);
 
 	/**
-	 * @see AuthenticationDeviceConfig#isAllowPwdChange()
+	 * Whether this device supports password change.
+	 * 
+	 * @see #setPassword(Person, char[])
 	 */
-	public boolean allowPwdChange();	
+	boolean allowPwdChange();
 
 	/**
-	 * Stores the given user data, used to change the password in the authentication device
+	 * Updates the password for the given account.
+	 * 
+	 * <p>
+	 * Must only be called, if {@link #allowPwdChange()} returns <code>true</code>.
+	 * </p>
 	 */
-	public boolean updateUserData(DataObject theDo);
+	public void setPassword(Person account, char[] password);
+
+	/**
+	 * The password validation strategy for passwords.
+	 * 
+	 * <p>
+	 * Must only be called, if {@link #allowPwdChange()} returns <code>true</code>.
+	 * </p>
+	 */
+	public PasswordValidator getPasswordValidator();
+
+	/**
+	 * Requests a password change when the user logs in next time.
+	 * 
+	 * <p>
+	 * Must only be called, if {@link #allowPwdChange()} returns <code>true</code>.
+	 * </p>
+	 */
+	public void expirePassword(Person account);
+
+	/**
+	 * Whether a user should be requested to change his password.
+	 *
+	 * <p>
+	 * Must only be called, if {@link #allowPwdChange()} returns <code>true</code>.
+	 * </p>
+	 */
+	public boolean isPasswordChangeRequested(Person account, char[] password);
 }

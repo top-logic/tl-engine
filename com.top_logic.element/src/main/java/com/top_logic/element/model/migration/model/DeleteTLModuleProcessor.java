@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LongID;
@@ -49,13 +51,14 @@ import com.top_logic.util.TLContext;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTLModuleProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link DeleteTLModuleProcessor}.
 	 */
 	@TagName("delete-module")
-	public interface Config extends PolymorphicConfiguration<DeleteTLModuleProcessor>, NamedConfigMandatory {
+	public interface Config extends PolymorphicConfiguration<DeleteTLModuleProcessor>, NamedConfigMandatory,
+			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
 
 		/**
 		 * Whether it is a failure if the module is not empty.
@@ -79,12 +82,12 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 		super(context, config);
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		String moduleName = getConfig().getName();
 		Module module = _util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
 		if (module == null) {
 			log.info("No module with name '" + moduleName + "' to delete available at " + getConfig().location());
-			return;
+			return false;
 		}
 		List<BranchIdType> toDelete = new ArrayList<>();
 		toDelete.add(module);
@@ -94,7 +97,7 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 		List<Type> types = _util.getTLTypeIdentifiers(connection, module);
 		if (getConfig().isFailOnExistingTypes() && !types.isEmpty()) {
 			log.error("Module " + _util.toString(module) + " is not empty: " + _util.toString(types));
-			return;
+			return false;
 		}
 		toDelete.addAll(types);
 		for (Type type : types) {
@@ -112,6 +115,11 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 		}
 
 		deleteElements(log, connection, byTypeAndBranch);
+
+		if (getConfig().isSkipModelBaselineChange()) {
+			return false;
+		}
+		return MigrationUtils.deleteModule(log, tlModel, moduleName);
 	}
 
 	private List<BranchIdType> getTLModuleSingletons(PooledConnection connection, BranchIdType module)
@@ -120,36 +128,36 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 
 		DBHelper sqlDialect = connection.getSQLDialect();
 		String identifierAlias = "id";
-		String branchAlias = "branch";
 		String singletonIdAlias = "singletonId";
 		String singletonTypeAlias = "singletonType";
 		CompiledStatement selectTLSingleton = query(
-		parameters(
-			parameterDef(DBType.LONG, "branch"),
-			parameterDef(DBType.ID, "module")),
-		selectDistinct(
-			columns(
-				columnDef(BasicTypes.BRANCH_DB_NAME, NO_TABLE_ALIAS, branchAlias),
-				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+			parameters(
+				_util.branchParamDef(),
+				parameterDef(DBType.ID, "module")),
+			selectDistinct(
+				Util.listWithoutNull(
+					_util.branchColumnDef(),
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
 					columnDef(_util.refID(TLModuleSingleton.SINGLETON_ATTR),
-					NO_TABLE_ALIAS, singletonIdAlias),
+						NO_TABLE_ALIAS, singletonIdAlias),
 					columnDef(_util.refType(TLModuleSingleton.SINGLETON_ATTR),
-					NO_TABLE_ALIAS, singletonTypeAlias)),
-			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE_SINGLETONS)),
-			and(
-				eqSQL(
+						NO_TABLE_ALIAS, singletonTypeAlias)),
+				table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE_SINGLETONS)),
+				and(
+					eqSQL(
 						column(_util.refID(PersistentType.MODULE_REF)),
-					parameter(DBType.ID, "module")),
-				eqSQL(
-					column(BasicTypes.BRANCH_DB_NAME),
-					parameter(DBType.LONG, "branch"))))).toSql(sqlDialect);
+						parameter(DBType.ID, "module")),
+					_util.eqBranch()))).toSql(sqlDialect);
 
-		try (ResultSet moduleResult = selectTLSingleton.executeQuery(connection, module.getBranch(), module.getID())) {
+		long branch = module.getBranch();
+		try (ResultSet moduleResult = selectTLSingleton.executeQuery(connection, branch, module.getID())) {
 			while (moduleResult.next()) {
-				searchResult
-					.add(BranchIdType.newInstance(BranchIdType.class, moduleResult.getLong(branchAlias), LongID.valueOf(moduleResult.getLong(identifierAlias)), TlModelFactory.KO_NAME_TL_MODULE_SINGLETONS));
-				searchResult
-					.add(BranchIdType.newInstance(BranchIdType.class, moduleResult.getLong(branchAlias), LongID.valueOf(moduleResult.getLong(singletonIdAlias)), moduleResult.getString(singletonTypeAlias)));
+				searchResult.add(BranchIdType.newInstance(BranchIdType.class, branch,
+					LongID.valueOf(moduleResult.getLong(identifierAlias)),
+					TlModelFactory.KO_NAME_TL_MODULE_SINGLETONS));
+				searchResult.add(BranchIdType.newInstance(BranchIdType.class, branch,
+					LongID.valueOf(moduleResult.getLong(singletonIdAlias)),
+					moduleResult.getString(singletonTypeAlias)));
 			}
 		}
 		return searchResult;
@@ -166,18 +174,16 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 			for (List<BranchIdType> tmp2 : tmp1.values()) {
 				BranchIdType representative = tmp2.get(0);
 				CompiledStatement delete = query(
-				parameters(
-					parameterDef(DBType.LONG, "branch"),
-					setParameterDef("id", DBType.ID)),
-				delete(
-					table(SQLH.mangleDBName(representative.getTable())),
-					and(
-						eqSQL(
-							column(BasicTypes.BRANCH_DB_NAME),
-							parameter(DBType.LONG, "branch")),
-						inSet(
-							column(BasicTypes.IDENTIFIER_DB_NAME),
-							setParameter("id", DBType.ID))))).toSql(sqlDialect);
+					parameters(
+						_util.branchParamDef(),
+						setParameterDef("id", DBType.ID)),
+					delete(
+						table(SQLH.mangleDBName(representative.getTable())),
+						and(
+							_util.eqBranch(),
+							inSet(
+								column(BasicTypes.IDENTIFIER_DB_NAME),
+								setParameter("id", DBType.ID))))).toSql(sqlDialect);
 
 				Set<TLID> ids = tmp2.stream().map(BranchIdType::getID).collect(Collectors.toSet());
 				int deletedRows = delete.executeUpdate(connection, representative.getBranch(), ids);
@@ -188,12 +194,13 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Delete module migration failed.", ex);
+			return false;
 		}
 	}
 

@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.top_logic.base.bus.MonitorEvent;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
@@ -27,7 +26,6 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperComparator;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
@@ -258,9 +256,9 @@ public class LogEntry extends AbstractBoundWrapper {
 	 * @return The {@link Person} actor of the given event.
 	 */
     protected static KnowledgeObject getEventActor(MonitorEvent anEvent) {
-        UserInterface ui=anEvent.getUser();
+		Person ui = anEvent.getUser();
         if(ui!=null){
-			return PersonManager.getManager().getPersonByName(ui.getUserName()).tHandle();
+			return Person.byName(ui.getName()).tHandle();
         }
 		return null;
     }    

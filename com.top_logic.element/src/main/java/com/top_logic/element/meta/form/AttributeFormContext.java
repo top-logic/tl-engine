@@ -139,6 +139,7 @@ public class AttributeFormContext extends FormContext {
 
 	@Override
 	public void store() {
+		super.store();
 		_updateContainer.store();
 	}
 

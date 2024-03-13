@@ -29,44 +29,31 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="${$Loginname}"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+							name="${$Loginname}"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Passwort ändern"
-					command-name="displayDialog_AdminChangePasswordDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 						label="Neues Passwort"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
+							name="admin/security/accounts/changePassword/changePasswordForm.layout.xml#ChangePassword"
 							tab-path=""
 						/>
 					</field>
@@ -74,14 +61,12 @@
 						value="${$Passwort}"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 						label="Passwortwiederholung"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
+							name="admin/security/accounts/changePassword/changePasswordForm.layout.xml#ChangePassword"
 							tab-path=""
 						/>
 					</field>
@@ -94,8 +79,7 @@
 					command-label="Passwort ändern"
 					command-name="changePassword"
 					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-					user-id="root"
+					component-name="admin/security/accounts/changePassword/changePasswordForm.layout.xml#ChangePassword"
 				>
 					<arguments/>
 				</action>

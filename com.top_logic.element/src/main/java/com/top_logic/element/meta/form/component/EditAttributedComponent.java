@@ -302,7 +302,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 		
 		// If a attribute is given we will check the attribute security
 		if (theMAAB.metaAttribute != null) {	// Check attribute security
-			if (!TLContext.isSuperUser()) {
+			if (!TLContext.isAdmin()) {
 				if (AttributeOperations.isClassified(theMAAB.metaAttribute)) {
 					TLContext theContext = TLContext.getContext();
 			        Set<BoundRole>         theRoles  = AccessManager.getInstance().getRoles(theContext == null ? null : theContext.getCurrentPersonWrapper(), theMAAB.boundObject);

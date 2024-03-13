@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,6 +16,15 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 * Name of type <code>DemoTypes.X</code>
 	 */
 	String DEMO_TYPES_X_TYPE = "DemoTypes.X";
+
+	/**
+	 * Part <code>account</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.accounts:Person</code> in configuration.
+	 * </p>
+	 */
+	String ACCOUNT_ATTR = "account";
 
 	/**
 	 * Part <code>binary</code> of <code>DemoTypes.X</code>
@@ -261,6 +270,15 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	String COMPLEX_UNIT_ATTR = "complexUnit";
 
 	/**
+	 * Part <code>contact</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>Contacts:PersonContact</code> in configuration.
+	 * </p>
+	 */
+	String CONTACT_ATTR = "contact";
+
+	/**
 	 * Part <code>createdBy</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
@@ -477,15 +495,6 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	String MODIFIED_DATE_ATTR = "modifiedDate";
 
 	/**
-	 * Part <code>person</code> of <code>DemoTypes.X</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.accounts:Person</code> in configuration.
-	 * </p>
-	 */
-	String PERSON_ATTR = "person";
-
-	/**
 	 * Part <code>priorityTable</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
@@ -646,6 +655,13 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 * </p>
 	 */
 	String WEB_FOLDER_ATTR = "webFolder";
+
+	/**
+	 * Getter for part {@link #ACCOUNT_ATTR}.
+	 */
+	default com.top_logic.knowledge.wrap.person.Person getAccount() {
+		return (com.top_logic.knowledge.wrap.person.Person) tValueByName(ACCOUNT_ATTR);
+	}
 
 	/**
 	 * Getter for part {@link #BINARY_ATTR}.
@@ -845,6 +861,13 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	}
 
 	/**
+	 * Getter for part {@link #CONTACT_ATTR}.
+	 */
+	default com.top_logic.contact.business.PersonContact getContact() {
+		return (com.top_logic.contact.business.PersonContact) tValueByName(CONTACT_ATTR);
+	}
+
+	/**
 	 * Getter for part {@link #CREATED_BY_ATTR}.
 	 */
 	default com.top_logic.knowledge.wrap.person.Person getCreatedBy() {
@@ -1012,13 +1035,6 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default java.util.Date getModifiedDate() {
 		return (java.util.Date) tValueByName(MODIFIED_DATE_ATTR);
-	}
-
-	/**
-	 * Getter for part {@link #PERSON_ATTR}.
-	 */
-	default com.top_logic.knowledge.wrap.person.Person getPerson() {
-		return (com.top_logic.knowledge.wrap.person.Person) tValueByName(PERSON_ATTR);
 	}
 
 	/**

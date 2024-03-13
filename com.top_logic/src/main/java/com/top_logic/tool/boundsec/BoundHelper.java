@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -36,7 +35,6 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -818,16 +816,17 @@ public class BoundHelper extends ManagedClass {
         if (context == null)
             return true;   // no Context, no Security
 
-        if (ThreadContext.isSuperUser()) {
+        if (ThreadContext.isAdmin()) {
             return true;
         }
 		{
-            Person currPerson = PersonManager.getManager().getCurrentPerson();
+			Person currPerson = TLContext.currentUser();
             if (currPerson == null)
                 return false;   // no Person, no Security
 
-            if (SecurityContext.isAdmin(currPerson.getUser()))
-                return true;
+			if (Person.isAdmin(currPerson)) {
+				return true;
+			}
 
             return hasAnyRole(anObject, currPerson);
         }

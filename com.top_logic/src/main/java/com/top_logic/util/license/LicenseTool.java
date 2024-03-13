@@ -9,8 +9,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Entry point for license validation.
@@ -36,12 +35,11 @@ public abstract class LicenseTool {
 	 * </p>
 	 */
 	public static boolean moreUsersAllowed(TLLicense license, boolean restrictedUser) {
-		final TLPersonManager system = (TLPersonManager) PersonManager.getManager();
 		if (restrictedUser) {
-			int systemRestricedUsers = system.getAllAliveRestrictedPersons().size();
+			long systemRestricedUsers = Person.all().stream().filter(Person.RESTRICTED_USER_FILTER).count();
 			return systemRestricedUsers < license.getRestrictedUsers();
 		} else {
-			int systemFullUsers = system.getAllAliveFullPersons().size();
+			long systemFullUsers = Person.all().stream().filter(Person.FULL_USER_FILTER).count();
 			return systemFullUsers < license.getUsers();
 		}
 	}

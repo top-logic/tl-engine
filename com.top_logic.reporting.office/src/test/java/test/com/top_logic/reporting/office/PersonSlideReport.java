@@ -8,7 +8,6 @@ package test.com.top_logic.reporting.office;
 import java.io.File;
 import java.util.Properties;
 
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
@@ -106,11 +105,10 @@ public class PersonSlideReport extends AbstractReport {
             }
             // first get the User from the person:
             try {
-                UserInterface theUser    = thePerson.getUser();
                 String        thePath    = "/images/people/";
                 String        theSuffix  = ".jpg";
                 FileManager   theManager = FileManager.getInstance();
-				BinaryData theFile = theManager.getDataOrNull(thePath + theUser.getUserName().toLowerCase() + theSuffix);
+				BinaryData theFile = theManager.getDataOrNull(thePath + thePerson.getName().toLowerCase() + theSuffix);
 
                 if (theFile ==  null) { // no image? use default image!
                     theFile = theManager.getDataOrNull(thePath + "unknown" + theSuffix);

@@ -11,6 +11,7 @@ import java.util.HashSet;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.basic.RearrangableTestSetup;
 import test.com.top_logic.basic.TestFactory;
@@ -88,7 +89,7 @@ public class DropSequenceSetup extends RearrangableTestSetup {
 		return new TestFactoryProxy(f) {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test t = super.createSuite(testCase, suiteName);
 				t = new DropSequenceSetup(t, sequences);
 				return t;

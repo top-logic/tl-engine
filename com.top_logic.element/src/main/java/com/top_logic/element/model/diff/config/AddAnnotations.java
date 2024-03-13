@@ -12,6 +12,8 @@ import com.top_logic.model.annotate.TLAnnotation;
 
 /**
  * Describes the addition of a {@link TLAnnotation} to a {@link TLModelPart}.
+ * 
+ * @see SetAnnotations
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

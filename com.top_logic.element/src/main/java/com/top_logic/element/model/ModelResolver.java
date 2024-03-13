@@ -196,96 +196,129 @@ public class ModelResolver {
 	 */
 	public void addType(TLModule module, TLScope scope, TypeConfig config) {
 		if (config instanceof ObjectTypeConfig) {
-			ObjectTypeConfig typeConfig = (ObjectTypeConfig) config;
-			TLClass existingType = (TLClass)
-			this.lookupType(scope, HolderType.THIS, module.getName(), typeConfig.getName());
-			if (existingType == null) {
-				TLClass newType = TLModelUtil.addClass(module, scope, typeConfig.getName());
-				boolean isAbstract;
-				boolean isFinal;
-				if (typeConfig instanceof ClassConfig) {
-					ClassConfig classConfig = (ClassConfig) typeConfig;
-
-					isAbstract = classConfig.isAbstract();
-					isFinal = classConfig.isFinal();
-				} else {
-					isAbstract = true;
-					isFinal = false;
-
-				}
-				newType.setAbstract(isAbstract);
-				newType.setFinal(isFinal);
-
-				addAnnotations(newType, typeConfig);
-
-				_schedule.createTypeHierarchy(new NewType(module, scope, newType, typeConfig));
-				_schedule.createParts(newType, new CreateParts(module, scope, newType, typeConfig, true));
-			} else {
-				_schedule.createParts(existingType, new CreateParts(module, scope, existingType, typeConfig, false));
-			}
+			addObjectType(module, scope, (ObjectTypeConfig) config);
 		} else if (config instanceof DatatypeConfig) {
-			DatatypeConfig typeConfig = (DatatypeConfig) config;
-
-			String datatypeName = typeConfig.getName();
-			TLPrimitive existing = (TLPrimitive) module.getType(datatypeName);
-			if (existing == null) {
-				Kind kind = typeConfig.getKind();
-				StorageMapping<?> storageMapping = createInstance(typeConfig.getStorageMapping());
-				TLPrimitive newPrimitive =
-					TLModelUtil.addDatatype(module, module, datatypeName, kind, storageMapping);
-				newPrimitive.setDBType(typeConfig.getDBType());
-				newPrimitive.setDBSize(typeConfig.getDBSize());
-				newPrimitive.setDBPrecision(typeConfig.getDBPrecision());
-				newPrimitive.setBinary(typeConfig.isBinary());
-
-				addAnnotations(newPrimitive, typeConfig);
-			}
+			addDataType(module, scope, (DatatypeConfig) config);
 		} else if (config instanceof EnumConfig) {
-			TLType existing = module.getType(config.getName());
-			if (existing != null) {
-				return;
-			}
-			EnumConfig enumConfig = (EnumConfig) config;
-
-			TLEnumeration classification = TLModelUtil.addEnumeration(module, scope, enumConfig.getName());
-			addAnnotations(classification, enumConfig);
-			
-			List<ClassifierConfig> classifierConfigs = enumConfig.getClassifiers();
-			for (ClassifierConfig classifierConfig : classifierConfigs) {
-				addClassifier(classification, classifierConfig);
-			}
+			addEnumType(module, scope, (EnumConfig) config);
 		} else if (config instanceof AssociationConfig) {
-			AssociationConfig associationConfig = (AssociationConfig) config;
-			String interfaceName = associationConfig.getName();
-
-			TLAssociation existingType =
-				(TLAssociation) lookupType(scope, HolderType.THIS, module.getName(), interfaceName);
-			if (existingType == null) {
-				TLAssociation newType =
-					TLModelUtil.addAssociation(module, scope, interfaceName);
-
-				for (TLTypeAnnotation annotation : associationConfig.getAnnotations()) {
-					newType.setAnnotation(annotation);
-				}
-
-				_schedule.createTypeHierarchy(new NewAssociation(module, scope, newType, associationConfig));
-			} else {
-				_schedule.createTypeHierarchy(new CreateParts(module, scope, existingType, associationConfig, false));
-			}
+			addAssociationType(module, scope, (AssociationConfig) config);
 		} else {
 			log().error("Unsupported type configuration '" + config.getConfigurationInterface() + "'.");
 		}
 	}
 
 	/**
-	 * Creates a new {@link TLClassifier} in the given {@link TLEnumeration}.
+	 * Creates a new {@link TLAssociation} in the given {@link TLScope} assigned to the given
+	 * {@link TLModule}.
 	 */
-	public void addClassifier(TLEnumeration classification, ClassifierConfig classifierConfig) {
+	protected void addAssociationType(TLModule module, TLScope scope, AssociationConfig config) {
+		String interfaceName = config.getName();
+
+		TLAssociation existingType =
+			(TLAssociation) lookupType(scope, HolderType.THIS, module.getName(), interfaceName);
+		if (existingType == null) {
+			TLAssociation newType =
+				TLModelUtil.addAssociation(module, scope, interfaceName);
+
+			for (TLTypeAnnotation annotation : config.getAnnotations()) {
+				newType.setAnnotation(annotation);
+			}
+
+			_schedule.createTypeHierarchy(new NewAssociation(module, scope, newType, config));
+		} else {
+			_schedule.createTypeHierarchy(new CreateParts(module, scope, existingType, config, false));
+		}
+	}
+
+	/**
+	 * Creates a new {@link TLEnumeration} in the given {@link TLScope} assigned to the given
+	 * {@link TLModule}.
+	 */
+	protected void addEnumType(TLModule module, TLScope scope, EnumConfig config) {
+		TLType existing = module.getType(config.getName());
+		if (existing != null) {
+			return;
+		}
+
+		TLEnumeration classification = TLModelUtil.addEnumeration(module, scope, config.getName());
+		addAnnotations(classification, config);
+
+		List<ClassifierConfig> classifierConfigs = config.getClassifiers();
+		for (ClassifierConfig classifierConfig : classifierConfigs) {
+			addClassifier(classification, classifierConfig);
+		}
+	}
+
+	/**
+	 * Creates a new {@link TLPrimitive} in the given {@link TLScope} assigned to the given
+	 * {@link TLModule}.
+	 */
+	protected void addDataType(TLModule module, TLScope scope, DatatypeConfig config) {
+		String datatypeName = config.getName();
+		TLPrimitive existing = (TLPrimitive) module.getType(datatypeName);
+		if (existing == null) {
+			Kind kind = config.getKind();
+			StorageMapping<?> storageMapping = createInstance(config.getStorageMapping());
+			TLPrimitive newPrimitive =
+				TLModelUtil.addDatatype(module, scope, datatypeName, kind, storageMapping);
+			newPrimitive.setDBType(config.getDBType());
+			newPrimitive.setDBSize(config.getDBSize());
+			newPrimitive.setDBPrecision(config.getDBPrecision());
+			newPrimitive.setBinary(config.isBinary());
+
+			addAnnotations(newPrimitive, config);
+		}
+	}
+
+	/**
+	 * Creates a new {@link TLClass} in the given {@link TLScope} assigned to the given
+	 * {@link TLModule}.
+	 */
+	protected void addObjectType(TLModule module, TLScope scope, ObjectTypeConfig config) {
+		TLClass existingType = (TLClass)
+		this.lookupType(scope, HolderType.THIS, module.getName(), config.getName());
+		if (existingType == null) {
+			TLClass newType = TLModelUtil.addClass(module, scope, config.getName());
+			boolean isAbstract;
+			boolean isFinal;
+			if (config instanceof ClassConfig) {
+				ClassConfig classConfig = (ClassConfig) config;
+
+				isAbstract = classConfig.isAbstract();
+				isFinal = classConfig.isFinal();
+			} else {
+				isAbstract = true;
+				isFinal = false;
+
+			}
+			newType.setAbstract(isAbstract);
+			newType.setFinal(isFinal);
+
+			addAnnotations(newType, config);
+
+			_schedule.createTypeHierarchy(new NewType(module, scope, newType, config));
+			_schedule.createParts(newType, new CreateParts(module, scope, newType, config, true));
+		} else {
+			_schedule.createParts(existingType, new CreateParts(module, scope, existingType, config, false));
+		}
+	}
+
+	/**
+	 * Appends new {@link TLClassifier} to the given {@link TLEnumeration}.
+	 * 
+	 * @see #addClassifier(TLEnumeration, ClassifierConfig, TLClassifier)
+	 */
+	public final void addClassifier(TLEnumeration classification, ClassifierConfig classifierConfig) {
 		addClassifier(classification, classifierConfig, null);
 	}
 
 	/**
-	 * Creates a new {@link TLClassifier} before the given onein the given {@link TLEnumeration}.
+	 * Creates a new {@link TLClassifier} before the given one in the given {@link TLEnumeration}.
+	 * 
+	 * @param before
+	 *        May be <code>null</code> in which case the new classifier is appended to the list of
+	 *        classifiers.
 	 */
 	public void addClassifier(TLEnumeration classification, ClassifierConfig classifierConfig, TLClassifier before) {
 		TLClassifier classifier = _model.createClassifier(classifierConfig.getName());
@@ -324,7 +357,7 @@ public class ModelResolver {
 			}
 		}
 		if (needsResort) {
-			_schedule.reorderProperties(newResortStep(type, typeConfig));
+			_schedule.reorderProperties(() -> resort(type, typeConfig));
 		}
 	}
 
@@ -377,50 +410,41 @@ public class ModelResolver {
 					log().error("Unable to determine target type for association end: " + ex.getMessage(), ex);
 					return;
 				}
-				String attributeName = endConfig.getName();
-				TLAssociationEnd end = TLModelUtil.addEnd((TLAssociation) type, attributeName, targetType);
-				installConfiguration(end, endConfig);
+				addAssociationEnd((TLAssociation) type, endConfig, targetType);
 			}
 
 		});
 		return true;
 	}
 
-	Runnable newResortStep(final TLStructuredType type, final AttributedTypeConfig typeConfig) {
-		return new Runnable() {
-
+	void resort(TLStructuredType type, AttributedTypeConfig typeConfig) {
+		Collection<PartConfig> attributes = typeConfig.getAttributes();
+		final Map<String, Integer> attributeIndex = MapUtil.newMap(attributes.size());
+		int index = 0;
+		for (PartConfig attribute : attributes) {
+			attributeIndex.put(attribute.getName(), index++);
+		}
+		List<TLStructuredTypePart> localParts = new ArrayList<>(type.getLocalParts());
+		Collections.sort(localParts, new Comparator<TLStructuredTypePart>() {
 			@Override
-			public void run() {
-				Collection<PartConfig> attributes = typeConfig.getAttributes();
-				final Map<String, Integer> attributeIndex = MapUtil.newMap(attributes.size());
-				int index = 0;
-				for (PartConfig attribute : attributes) {
-					attributeIndex.put(attribute.getName(), index++);
-				}
-				List<TLStructuredTypePart> localParts = new ArrayList<>(type.getLocalParts());
-				Collections.sort(localParts, new Comparator<TLStructuredTypePart>() {
-					@Override
-					public int compare(TLStructuredTypePart o1, TLStructuredTypePart o2) {
-						String name1 = o1.getName();
-						String name2 = o2.getName();
-						Integer index1 = attributeIndex.get(name1);
-						Integer index2 = attributeIndex.get(name2);
-						if (index1 == null || index2 == null) {
-							return name1.compareTo(name2);
-						} else {
-							return index1.compareTo(index2);
-						}
-					}
-				});
-				if (!localParts.isEmpty() && !(localParts.get(0) instanceof TransientObject)) {
-					OrderedLinkUtil.updateIndices(localParts, KBBasedMetaAttribute.OWNER_REF_ORDER_ATTR);
+			public int compare(TLStructuredTypePart o1, TLStructuredTypePart o2) {
+				String name1 = o1.getName();
+				String name2 = o2.getName();
+				Integer index1 = attributeIndex.get(name1);
+				Integer index2 = attributeIndex.get(name2);
+				if (index1 == null || index2 == null) {
+					return name1.compareTo(name2);
 				} else {
-					type.getLocalParts().clear();
-					((Collection) type.getLocalParts()).addAll(localParts);
+					return index1.compareTo(index2);
 				}
 			}
-
-		};
+		});
+		if (!localParts.isEmpty() && !(localParts.get(0) instanceof TransientObject)) {
+			OrderedLinkUtil.updateIndices(localParts, KBBasedMetaAttribute.OWNER_REF_ORDER_ATTR);
+		} else {
+			type.getLocalParts().clear();
+			((Collection) type.getLocalParts()).addAll(localParts);
+		}
 	}
 
 	private boolean handleReferenceConfig(final TLClass type, final boolean isNew,
@@ -462,128 +486,117 @@ public class ModelResolver {
 			return true;
 		} else {
 			if (referenceConfig.isOverride()) {
-				_schedule.createBackReferenceOverride(type, createBackwardsRefOverride(type, referenceConfig));
+				_schedule.createBackReferenceOverride(type, () -> createBackwardsRefOverride(type, referenceConfig));
 			} else {
-				_schedule.createBackReference(createBackwardsRef(type, referenceConfig, otherEndName));
+				_schedule.createBackReference(() -> createBackwardsRef(type, referenceConfig, otherEndName));
 			}
 			return true;
 		}
 	}
 
-	private Runnable createBackwardsRefOverride(TLClass type, ReferenceConfig referenceConfig) {
-		return new Runnable() {
+	private void createBackwardsRefOverride(TLClass type, ReferenceConfig referenceConfig) {
+		TLReference reference = (TLReference) type.getPart(referenceConfig.getName());
+		TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(reference.getEnd());
+		String otherEndName = otherEnd.getName();
 
-			@Override
-			public void run() {
-				TLReference reference = (TLReference) type.getPart(referenceConfig.getName());
-				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(reference.getEnd());
-				String otherEndName = otherEnd.getName();
+		TLType sourceType;
+		try {
+			sourceType = lookupAttributeType(type, referenceConfig);
+		} catch (ConfigurationException ex) {
+			log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
+			return;
+		}
 
-				TLType sourceType;
-				try {
-					sourceType = lookupAttributeType(type, referenceConfig);
-				} catch (ConfigurationException ex) {
-					log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
-					return;
-				}
+		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), otherEndName);
+		TLModule module = type.getModule();
 
-				String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), otherEndName);
-				TLModule module = type.getModule();
+		TLType associationType = module.getType(associationName);
+		TLAssociationEnd sourceEnd;
+		if (associationType == null) {
+			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
 
-				TLType associationType = module.getType(associationName);
-				TLAssociationEnd sourceEnd;
-				if (associationType == null) {
-					TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
+			// Add source end
+			TLAssociationEnd targetEnd = TLModelUtil.addEnd(association, otherEndName, type);
+			targetEnd.setMultiple(true);
 
-					// Add source end
-					TLAssociationEnd targetEnd = TLModelUtil.addEnd(association, otherEndName, type);
-					targetEnd.setMultiple(true);
-
-					// Create destination end
-					sourceEnd =
-						TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
-				} else {
-					List<TLAssociationEnd> ends = TLModelUtil.getEnds((TLAssociation) associationType);
-					if (ends.isEmpty()) {
-						log().error("No ends found for " + associationType);
-					}
-
-					TLAssociationEnd end = ends.get(0);
-					if (TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME.equals(end.getName())) {
-						sourceEnd = end;
-					} else {
-						sourceEnd = TLModelUtil.getOtherEnd(end);
-					}
-				}
-
-				try {
-					addReference(type, referenceConfig, sourceEnd);
-				} catch (IllegalArgumentException ex) {
-					log().error(
-						"In back reference '" + referenceConfig.getName()
-							+ "', associtiation end could not be implemented by reference in type '"
-							+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
-						ex);
-					return;
-				}
+			// Create destination end
+			sourceEnd =
+				TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
+		} else {
+			List<TLAssociationEnd> ends = TLModelUtil.getEnds((TLAssociation) associationType);
+			if (ends.isEmpty()) {
+				log().error("No ends found for " + associationType);
 			}
-		};
+
+			TLAssociationEnd end = ends.get(0);
+			if (TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME.equals(end.getName())) {
+				sourceEnd = end;
+			} else {
+				sourceEnd = TLModelUtil.getOtherEnd(end);
+			}
+		}
+
+		try {
+			addReference(type, referenceConfig, sourceEnd);
+		} catch (IllegalArgumentException ex) {
+			log().error(
+				"In back reference '" + referenceConfig.getName()
+						+ "', associtiation end could not be implemented by reference in type '"
+						+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
+				ex);
+			return;
+		}
 	}
 
-	private Runnable createBackwardsRef(final TLClass type, final ReferenceConfig referenceConfig,
-			final String otherEndName) {
-		return new Runnable() {
-			@Override
-			public void run() {
-				TLType sourceType;
-				try {
-					sourceType = lookupAttributeType(type, referenceConfig);
-				} catch (ConfigurationException ex) {
-					log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
-					return;
-				}
-				if (!(sourceType instanceof TLClass)) {
-					if (sourceType == null) {
-						log().error("No type found for back reference '" + referenceConfig.getName() + "' at '"
-							+ referenceConfig.location() + "'.");
-					} else {
-						log().error("In back reference '" + referenceConfig.getName() + "', type '"
-							+ sourceType.getName() + "' is not a TLClass at '" + referenceConfig.location() + "'.");
-					}
-					return;
-				}
-
-				TLReference destinationRef = (TLReference) ((TLClass) sourceType).getPart(otherEndName);
-				if (destinationRef == null) {
-					// Reference not found.
-					log().error("In back reference '" + referenceConfig.getName() + "', destination reference '"
-						+ otherEndName + "' in type '" + qualifiedName(sourceType) + "' not found in '"
+	private void createBackwardsRef(TLClass type, ReferenceConfig referenceConfig, String otherEndName) {
+		TLType sourceType;
+		try {
+			sourceType = lookupAttributeType(type, referenceConfig);
+		} catch (ConfigurationException ex) {
+			log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
+			return;
+		}
+		if (!(sourceType instanceof TLClass)) {
+			if (sourceType == null) {
+				log().error("No type found for back reference '" + referenceConfig.getName() + "' at '"
 						+ referenceConfig.location() + "'.");
-					return;
-				}
-
-				TLAssociationEnd destinationEnd = destinationRef.getEnd();
-
-				TLType destinationType = destinationEnd.getType();
-				if (!(destinationType instanceof TLClass)) {
-					log().error("In back reference " + referenceConfig.getName() + "', destination type '"
-						+ destinationType + "' of corresponding forward reference '" + otherEndName
-						+ "' is not a class in '" + referenceConfig.location() + "'.");
-					return;
-				}
-
-				TLAssociationEnd sourceEnd = TLModelUtil.getOtherEnd(destinationEnd);
-				try {
-					addReference(type, referenceConfig, sourceEnd);
-				} catch (IllegalArgumentException ex) {
-					log().error(
-						"In back reference '" + referenceConfig.getName()
-							+ "', associtiation end could not be implemented by reference in type '"
-							+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.", ex);
-					return;
-				}
+			} else {
+				log().error("In back reference '" + referenceConfig.getName() + "', type '"
+						+ sourceType.getName() + "' is not a TLClass at '" + referenceConfig.location() + "'.");
 			}
-		};
+			return;
+		}
+
+		TLReference destinationRef = (TLReference) ((TLClass) sourceType).getPart(otherEndName);
+		if (destinationRef == null) {
+			// Reference not found.
+			log().error("In back reference '" + referenceConfig.getName() + "', destination reference '"
+					+ otherEndName + "' in type '" + qualifiedName(sourceType) + "' not found in '"
+					+ referenceConfig.location() + "'.");
+			return;
+		}
+
+		TLAssociationEnd destinationEnd = destinationRef.getEnd();
+
+		TLType destinationType = destinationEnd.getType();
+		if (!(destinationType instanceof TLClass)) {
+			log().error("In back reference " + referenceConfig.getName() + "', destination type '"
+					+ destinationType + "' of corresponding forward reference '" + otherEndName
+					+ "' is not a class in '" + referenceConfig.location() + "'.");
+			return;
+		}
+
+		TLAssociationEnd sourceEnd = TLModelUtil.getOtherEnd(destinationEnd);
+		try {
+			addReference(type, referenceConfig, sourceEnd);
+		} catch (IllegalArgumentException ex) {
+			log().error(
+				"In back reference '" + referenceConfig.getName()
+						+ "', associtiation end could not be implemented by reference in type '"
+						+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
+				ex);
+			return;
+		}
 	}
 
 	private void createForwardsRef(final TLClass type, final ReferenceConfig referenceConfig) {
@@ -602,8 +615,10 @@ public class ModelResolver {
 			TLType targetType;
 			try {
 				targetType = lookupAttributeType(type, referenceConfig);
-			} catch (ConfigurationException ex) {
-				log().error("Unable to determine target type for reference: " + ex.getMessage(), ex);
+			} catch (ConfigurationException | TopLogicException ex) {
+				log().error("Unable to determine target type " + referenceConfig.getTypeSpec() + " for reference "
+						+ TLModelUtil.qualifiedTypePartName(type, referenceConfig.getName()),
+					ex);
 				return;
 			}
 			TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceConfig.getName(), targetType);
@@ -616,10 +631,38 @@ public class ModelResolver {
 		}
 	}
 
-	void addReference(TLClass owner, ReferenceConfig referenceConfig, TLAssociationEnd associationEnd) {
+	/**
+	 * Adds a new {@link TLAssociationEnd} to the given {@link TLAssociation}.
+	 * 
+	 * @param owner
+	 *        Owner of the new {@link TLAssociationEnd}.
+	 * @param endConfig
+	 *        Definition of the new {@link TLAssociationEnd}.
+	 * @param targetType
+	 *        {@link TLAssociationEnd#getType() Target type} of the end.
+	 */
+	protected TLAssociationEnd addAssociationEnd(TLAssociation owner, AssociationConfig.EndConfig endConfig, TLType targetType) {
+		String attributeName = endConfig.getName();
+		TLAssociationEnd newEnd = TLModelUtil.addEnd(owner, attributeName, targetType);
+		installConfiguration(newEnd, endConfig);
+		return newEnd;
+	}
+
+	/**
+	 * Adds a new {@link TLReference} to the given {@link TLClass}.
+	 * 
+	 * @param owner
+	 *        Owner of the new {@link TLReference}.
+	 * @param referenceConfig
+	 *        Definition of the new {@link TLReference}.
+	 * @param associationEnd
+	 *        {@link TLAssociationEnd} to implement by the new {@link TLReference}.
+	 */
+	protected TLReference addReference(TLClass owner, ReferenceConfig referenceConfig, TLAssociationEnd associationEnd) {
 		String partName = referenceConfig.getName();
 		TLReference newReference = TLModelUtil.addReference(owner, partName, associationEnd);
 		configureClassPart(newReference, referenceConfig);
+		return newReference;
 	}
 
 	private abstract static class AbstractCompletion implements Runnable {
@@ -1024,17 +1067,13 @@ public class ModelResolver {
 			throw new ConfigurationError(ex);
 		}
 
-		return addProperty(type, config, contentType);
-	}
-
-	private TLProperty addProperty(TLStructuredType owner, AttributeConfig propertyConfig, TLType contentType) {
-		String partName = propertyConfig.getName();
-		TLProperty newProperty = TLModelUtil.addProperty(owner, partName, contentType);
-		if (owner instanceof TLAssociation) {
-			installConfiguration(newProperty, propertyConfig);
+		String partName = config.getName();
+		TLProperty newProperty = TLModelUtil.addProperty(type, partName, contentType);
+		if (type instanceof TLAssociation) {
+			installConfiguration(newProperty, config);
 			return newProperty;
 		}
-		configureClassPart((TLClassPart) newProperty, propertyConfig);
+		configureClassPart((TLClassPart) newProperty, config);
 		return newProperty;
 	}
 

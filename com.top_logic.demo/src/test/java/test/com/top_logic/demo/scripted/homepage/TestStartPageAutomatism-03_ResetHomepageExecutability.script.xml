@@ -17,11 +17,11 @@
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -33,8 +33,7 @@
 						label="Startseite beim Logout setzen"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-							tab-path=""
+							tab-path="Profil bearbeiten"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -42,11 +41,11 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -61,27 +60,20 @@
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent$ResetStartPageCommandHandler"
-					command-label="Startseite zurücksetzen"
-					command-name="resetStartPage"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+					executable="false"
 					reason-key="tl.executable.hidden"
 					user-id="root"
 				>
-					<arguments/>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+						label="Startseite zurücksetzen"
+					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-					command-label="Schließen"
-					command-name="closeDialogInView"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
-				>
-					<arguments/>
-				</action>
+				/>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
@@ -97,11 +89,11 @@
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -113,8 +105,7 @@
 						label="Startseite beim Logout setzen"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-							tab-path=""
+							tab-path="Profil bearbeiten"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -122,11 +113,11 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -141,26 +132,19 @@
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent$ResetStartPageCommandHandler"
-					command-label="Startseite zurücksetzen"
-					command-name="resetStartPage"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+					executable="true"
 					user-id="root"
 				>
-					<arguments/>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+						label="Persönliche Konfiguration zurücksetzen"
+					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-					command-label="Schließen"
-					command-name="closeDialogInView"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 					user-id="root"
-				>
-					<arguments/>
-				</action>
+				/>
 			</actions>
 		</action>
 	</actions>

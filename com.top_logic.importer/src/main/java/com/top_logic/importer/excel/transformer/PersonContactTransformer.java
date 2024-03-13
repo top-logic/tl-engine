@@ -14,7 +14,6 @@ import com.top_logic.contact.business.PersonContact;
 import com.top_logic.importer.excel.AbstractExcelFileImportParser;
 import com.top_logic.importer.logger.ImportLogger;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.LabelProviderService;
 
@@ -131,7 +130,7 @@ public class PersonContactTransformer implements Transformer<PersonContact> {
 	protected PersonContact getPersonContactByMail(ExcelContext aContext, String columnName, String aMail) {
 		for (Object theContact : ContactFactory.getInstance().getAllContactsUnsorted(ContactFactory.PERSON_TYPE)) {
 			PersonContact thePerson = (PersonContact) theContact;
-			String        theMail   = thePerson.getMail();
+			String        theMail   = thePerson.getEMail();
 
 			if (!StringServices.isEmpty(theMail) && aMail.equals(theMail)) {
 				return thePerson;
@@ -142,7 +141,7 @@ public class PersonContactTransformer implements Transformer<PersonContact> {
 	}
 
     protected Person getPerson(String aName) {
-        return PersonManager.getManager().getPersonByName(aName);
+        return Person.byName(aName);
     }
 
 }

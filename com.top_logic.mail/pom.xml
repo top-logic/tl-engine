@@ -27,6 +27,16 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-contact</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-mail-smtp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-element</artifactId>
     </dependency>
 	<dependency>

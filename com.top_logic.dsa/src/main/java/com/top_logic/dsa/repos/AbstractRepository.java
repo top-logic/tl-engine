@@ -493,7 +493,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 
         String theLocker = fInfo.getLocker();
 
-		if (!user.equals(theLocker) && !ThreadContext.isSuperUser()) { // superuser may unlock any file
+		if (!user.equals(theLocker) && !ThreadContext.isAdmin()) { // superuser may unlock any file
             return false; 
         }
 

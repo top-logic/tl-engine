@@ -6,6 +6,7 @@
 package test.com.top_logic.dob.persist;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.DatabaseTestSetup;
@@ -143,7 +144,7 @@ public class DataManagerTestSetup extends RearrangableThreadContextSetup {
 	public static Test getDMTest(Class testCase, final DataManagerFactory dmFactory, TestFactory f) {
 		return DatabaseTestSetup.getDBTest(testCase, new TestFactoryProxy(f) {
 			@Override
-			public Test createSuite(Class testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return createDataManagerTestSetup(super.createSuite(testCase, suiteName), dmFactory);
 			}
 		});

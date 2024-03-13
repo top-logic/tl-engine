@@ -5,19 +5,13 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
-import java.util.Date;
 import java.util.Map;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
-import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.base.security.password.PasswordValidator;
-import com.top_logic.base.security.password.PasswordValidator.ValidationResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
@@ -106,7 +100,7 @@ public class ChangePasswordComponent extends FormComponent {
 		formContext.addMember(requireChange);
 
 		PasswordValidator validator = getPasswordValidator();
-		if (changingOwnPassword || !validator.canExpire(getCurrentPerson())) {
+		if (changingOwnPassword || validator.isExcluded(getCurrentPerson())) {
 			requireChange.setVisible(false);
 		}
 
@@ -154,35 +148,15 @@ public class ChangePasswordComponent extends FormComponent {
 	private boolean isPasswordValidationEnabled() {
 		PasswordValidator validator = getPasswordValidator();
 		Person currentPerson = getCurrentPerson();
-		return validator.isEnabled() && !validator.isExcluded(currentPerson);
+		return !validator.isExcluded(currentPerson);
 	}
 
-	private static PasswordValidator getPasswordValidator() {
-		return PasswordManager.getInstance().getPwdValidator();
+	private PasswordValidator getPasswordValidator() {
+		return getCurrentPerson().getAuthenticationDevice().getPasswordValidator();
 	}
 
 	private Person getCurrentPerson() {
 		return (Person) getModel();
-	}
-
-	/**
-	 * Check, if the changing of password is allowed for the given user.
-	 * 
-	 * @param aPerson
-	 *        The person to change the password for, must not be <code>null</code>
-	 * @return <code>true</code>, if password change is allowed.
-	 */
-	protected boolean allowPwdChange(Person aPerson) {
-		{
-			String theID = aPerson.getAuthenticationDeviceID();
-			AuthenticationDevice theDevice = SecurityDeviceFactory.getAuthenticationDevice(theID);
-			boolean hasChangeAccess = ((EditPersonComponent) getDialogParent()).hasDeleteAccess(aPerson);
-
-			return (theDevice != null)
-				&& theDevice.allowPwdChange()
-				&& (TLContext.getContext().getCurrentUserName().equals(aPerson.getName())
-				|| hasChangeAccess);
-		}
 	}
 
 	/**
@@ -208,10 +182,10 @@ public class ChangePasswordComponent extends FormComponent {
 			FormComponent form = (FormComponent) aComponent;
 			FormContext formContext = form.getFormContext();
 
+			AuthenticationDevice device = account.getAuthenticationDevice();
 			if (formContext.hasMember(OLD_PASSWORD)) {
 				char[] oldPassword = ((String) formContext.getField(OLD_PASSWORD).getValue()).toCharArray();
 
-				AuthenticationDevice device = getAuthenticationDevice(account);
 				try (LoginCredentials login = LoginCredentials.fromUserAndPassword(account, oldPassword)) {
 					boolean oldPasswordValid = device.authentify(login);
 					if (!oldPasswordValid) {
@@ -231,37 +205,13 @@ public class ChangePasswordComponent extends FormComponent {
 				return error(I18NConstants.EMPTY_PASSWORD_DISALLOWED);
 			}
 			try (LoginCredentials newLogin = LoginCredentials.fromUserAndPassword(account, newPassword1.toCharArray())) {
-				PasswordValidator pwdValidator = getPasswordValidator();
-				ValidationResult validatorResult = pwdValidator.validatePwd(newLogin);
-				switch (validatorResult) {
-					case OK: {
-						break;
-					}
-					case CONTENT_INVALID:
-						return error(
-							I18NConstants.INVALID_PASSWORD_CONTENT__SPECIALS.fill(pwdValidator.getNumberContentCrit()));
-					case TO_SHORT:
-						return error(I18NConstants.PASSWORD_TOO_SHORT__CHARS.fill(pwdValidator.getMinPwdLength()));
-					case USED_BEFORE:
-						return error(I18NConstants.PASSWORD_USED_BEFORE);
-					default: {
-						throw new UnreachableAssertion("Unexpected validator result: " + validatorResult);
-					}
-				}
-
 				Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
 				try {
-					PasswordManager passwordManager = PasswordManager.getInstance();
-					boolean updateOK = passwordManager.setPassword(newLogin);
-					if (!updateOK) {
-						return error(I18NConstants.PASSWORD_CHANGE_FAILED);
-					}
+					device.setPassword(account, newLogin.getPassword());
 
 					Boolean requireChange = (Boolean) formContext.getField(REQUIRE_CHANGE).getValue();
 					if (Utils.isTrue(requireChange)) {
-						passwordManager.expirePassword(account);
-					} else {
-						account.setLastPasswordChange(new Date());
+						device.expirePassword(account);
 					}
 
 					tx.commit();
@@ -304,9 +254,6 @@ public class ChangePasswordComponent extends FormComponent {
 		private static final ExecutableState NO_EXEC_EXTERNALY_DEFINED =
 			ExecutableState.createDisabledState(I18NConstants.NO_PASSWORD_CHANGE_EXTERNALLY_DEFINED);
 
-		private static final ExecutableState NO_EXEC_READ_ONLY =
-			ExecutableState.createDisabledState(I18NConstants.NO_PASSWORD_CHANGE_READ_ONLY);
-
 		private PasswordChangePossible() {
 			// Singleton constructor.
 		}
@@ -317,33 +264,14 @@ public class ChangePasswordComponent extends FormComponent {
 			if (person == null) {
 				return ExecutableState.NOT_EXEC_HIDDEN;
 			}
-			AuthenticationDevice device = getAuthenticationDevice(person);
+			AuthenticationDevice device = person.getAuthenticationDevice();
 			if (device == null) {
 				return NO_EXEC_NO_DEVICE;
 			}
 			else if (!device.allowPwdChange()) {
 				return NO_EXEC_EXTERNALY_DEFINED;
 			}
-			PersonDataAccessDevice dataDevice = getPersonDataAccessDevice(person);
-			if (dataDevice == null || dataDevice.isReadOnly()) {
-				return NO_EXEC_READ_ONLY;
-			}
 			return ExecutableState.EXECUTABLE;
 		}
-
 	}
-
-	static AuthenticationDevice getAuthenticationDevice(Person person) {
-		String authDevice;
-		authDevice = person.getAuthenticationDeviceID();
-		AuthenticationDevice device = SecurityDeviceFactory.getAuthenticationDevice(authDevice);
-		return device;
-	}
-
-	static PersonDataAccessDevice getPersonDataAccessDevice(Person person) {
-		String dataDevice = person.getDataAccessDeviceID();
-		PersonDataAccessDevice device = SecurityDeviceFactory.getPersonAccessDevice(dataDevice);
-		return device;
-	}
-
 }

@@ -18,6 +18,18 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en The value must be a qualified type part name. A qualified type part name has the format
+	 *     "[module]:[type]#[part]": {0}
+	 */
+	public static ResKey1 ERROR_INVALID_QUALIFIED_TYPE_PART_NAME__VALUE;
+
+	/**
+	 * @en The value must be a qualified type name. A qualified type name has the format
+	 *     "[module]:[type]": {0}
+	 */
+	public static ResKey1 ERROR_INVALID_QUALIFIED_TYPE_NAME__VALUE;
+
 	public static ResKey1 ERROR_INVALID_PART_REFERENCE__VALUE;
 
 	public static ResKey2 ERROR_NOT_A_CLASS__VALUE_ACTUAL;

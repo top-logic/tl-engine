@@ -150,40 +150,27 @@
 							<arguments>
 								<argument name="view">
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
-										value="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+										value="admin/security/accounts/detailsForm.layout.xml#Form"
 									/>
 								</argument>
 								<argument name="goto_object">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-										table="Person"
-									>
-										<branch config:interface=""/>
-										<revision config:interface=""/>
-										<attributes>
-											<attribute name="name">
-												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="TestGotoWithSecurity"
-												/>
-											</attribute>
-										</attributes>
-									</value>
+									<value config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+										name="TestGotoWithSecurity"
+									/>
 								</argument>
 							</arguments>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="TestGotoWithSecurity"
 							visible="true"
 						/>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-							command-label="Schließen"
-							command-name="closeDialogInView"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							user-id="TestGotoWithSecurity"
 						>
-							<arguments/>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo"
+							/>
 						</action>
 					</actions>
 				</action>
@@ -211,7 +198,7 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Super, Administrator"
+								label="root"
 							/>
 						</values>
 					</value>
@@ -256,7 +243,7 @@
 							label="Benutzername"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+								name="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/userAccountForm.layout.xml#Form"
 								tab-path=""
 							/>
 						</model>
@@ -266,8 +253,8 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/userAccountForm.layout.xml#Form"
 					user-id="TestGotoWithSecurity"
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -301,13 +288,13 @@
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
 							comment="Test that component local goto target is used for standard goto."
-							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/userAccountForm.layout.xml#Form"
 							user-id="TestGotoWithSecurity"
 							visible="true"
 						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/userAccountForm.layout.xml#Form"
 							user-id="TestGotoWithSecurity"
 						/>
 					</actions>

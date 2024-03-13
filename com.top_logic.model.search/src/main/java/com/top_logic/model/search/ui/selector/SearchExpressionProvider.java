@@ -8,7 +8,6 @@ package com.top_logic.model.search.ui.selector;
 import java.util.Collection;
 import java.util.List;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.Provider;
@@ -63,7 +62,7 @@ public class SearchExpressionProvider implements Provider<List<SearchExpressionI
 	}
 
 	private boolean showEveryonesSearches() {
-		return ThreadContext.isSuperUser() || SecurityContext.isAdmin(TLContext.getContext().getCurrentUser());
+		return ThreadContext.isAdmin() || Person.isAdmin(TLContext.getContext().getPerson());
 	}
 
 	private List<SearchExpressionImpl> getAllStoredSearches() {

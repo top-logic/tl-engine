@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.accounts">
+		<class name="Person">
+			<attributes>
+				<reference name="groups">
+					<annotations>
+						<default-value>
+							<default-by-expression
+								in-transaction="true"
+								value="all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#defaultGroup`))"
+							/>
+						</default-value>
+					</annotations>
+				</reference>
+				<property name="firstName">
+					<annotations>
+						<storage-algorithm>
+							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#firstname`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="lastName">
+					<annotations>
+						<storage-algorithm>
+							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#name`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="restrictedUser">
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check>value -&gt; object -&gt; if ($value &amp;&amp; $object.get(`tl.accounts:Person#admin`) == true, #("Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."@de, "A user cannot be an administrator and restricted at the same time."@en))</check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="admin">
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check>value -&gt; object -&gt; if ($value &amp;&amp; $object.get(`tl.accounts:Person#restrictedUser`) == true, #("Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."@de, "A user cannot be an administrator and restricted at the same time."@en))</check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

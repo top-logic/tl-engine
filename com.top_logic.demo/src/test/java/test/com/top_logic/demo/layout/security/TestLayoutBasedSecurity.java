@@ -104,16 +104,13 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 		Transaction tx = kBase.beginTransaction();
 		// Create a test roles on root
 		testRole = BoundedRole.createBoundedRole("testSec", kBase);
-		String personDataDeviceID = TLSecurityDeviceManager.getInstance().getDefaultDataAccessDevice().getDeviceID();
 		String authenticationDeviceID =
 			TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
 
 		// Create test users if necessary
-		test1Person = PersonManager.getManager().getPersonByName("testSec", kBase);
+		test1Person = Person.byName(kBase, "testSec");
 		if (test1Person == null) {
-			test1Person =
-				PersonManager.getManager().createPerson("testSec", kBase, personDataDeviceID, authenticationDeviceID,
-					Boolean.FALSE);
+			test1Person = Person.create(kBase, "testSec", authenticationDeviceID);
 		}
 
 		if (null == SecurityComponentCache.getSecurityComponent(toComponentName("testPLD"))) {

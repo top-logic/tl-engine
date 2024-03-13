@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Reloadable;
@@ -185,12 +184,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
      *         otherwise
      */
     protected boolean isSuperUser(Person aPerson) {
-		{
-            if (SecurityContext.isSuperUser(aPerson == null ? null : aPerson.getUser())) {
-                return true;
-            }
-        }
-        return false;
+		return aPerson != null && Person.isAdmin(aPerson);
     }
 
 	public Collection<String> getStructureNames() {

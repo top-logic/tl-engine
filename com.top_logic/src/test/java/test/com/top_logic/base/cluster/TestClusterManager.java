@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.TLTestSetup;
@@ -743,7 +744,7 @@ public class TestClusterManager extends BasicTestCase {
 		Test test = DatabaseTestSetup.getDBTest(TestClusterManager.class, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				Test innerTest = suite;

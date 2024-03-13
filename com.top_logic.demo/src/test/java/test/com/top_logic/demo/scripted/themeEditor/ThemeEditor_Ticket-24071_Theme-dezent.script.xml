@@ -8,53 +8,15 @@
 			comment="Dezent Theme auswählen"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Persönliche Einstellungen"
-					command-name="showCurrentPersonDialog"
-					component-implementation-comment="com.top_logic.layout.component.TabComponent"
-					component-name="mainTabbar.layout.xml#mainTabber"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Theme aendern.xml"
+					template-name-comment="Nutzer Theme aendern"
 				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Theme"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Benutzerkonto bearbeiten"
+					<parameters>
+						<parameter name="Theme"
+							value="Dezent (Modern)"
 						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Dezent (Modern)"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
-				>
-					<arguments/>
+					</parameters>
 				</action>
 			</actions>
 		</action>
@@ -67,16 +29,12 @@
 					template-name-comment="Nutzer anmelden"
 				>
 					<parameters>
-						<parameter name="Username">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
-						<parameter name="ProcessId">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root-1"
-							/>
-						</parameter>
+						<parameter name="Username"
+							value="root"
+						/>
+						<parameter name="ProcessId"
+							value="root-1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -99,7 +57,7 @@
 							label="Theme"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Benutzerkonto bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</model>
 					</actual-value>
@@ -108,7 +66,7 @@
 							label="Theme"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Benutzerkonto bearbeiten"
+								tab-path="Profil bearbeiten"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -126,53 +84,15 @@
 			comment="Theme zurücksetzen"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Persönliche Einstellungen"
-					command-name="showCurrentPersonDialog"
-					component-implementation-comment="com.top_logic.layout.component.TabComponent"
-					component-name="mainTabbar.layout.xml#mainTabber"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Theme aendern.xml"
+					template-name-comment="Nutzer Theme aendern"
 				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Theme"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Benutzerkonto bearbeiten"
+					<parameters>
+						<parameter name="Theme"
+							value="Demo Modern"
 						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Demo Modern"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					user-id="root"
-				>
-					<arguments/>
+					</parameters>
 				</action>
 			</actions>
 		</action>

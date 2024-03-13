@@ -16,19 +16,48 @@
 </annotations>
 <attributes>
 	<mo_attribute att_name="name"   att_type="String" 	mandatory="true" />
-	<mo_attribute att_name="locale" att_type="String" 	mandatory="false" />
-	<mo_attribute att_name="pwdhistory"	    att_type="String"	mandatory="false" db_size="1333" hidden="true" />
-	<mo_attribute att_name="lastPwdChange"	att_type="Date"	    mandatory="false" hidden="true"/>
+	<mo_attribute att_name="country" att_type="String" 	mandatory="false" />
+	<mo_attribute att_name="language" att_type="String" 	mandatory="false" />
+	<mo_attribute att_name="timezone" att_type="String" 	mandatory="false" />
 	<mo_attribute att_name="unusedNotified" att_type="Boolean"  mandatory="false" />
-	<mo_attribute att_name="wasAlive" att_type="Boolean" mandatory="false" />
-	<mo_attribute att_name="dataDeviceID" att_type="String" mandatory="false" />
 	<mo_attribute att_name="authDeviceID" att_type="String" mandatory="false" />	
 	<mo_attribute att_name="restrictedUser" att_type="Boolean" mandatory="false" />	
+	<mo_attribute att_name="admin" att_type="Boolean" mandatory="false" />	
 </attributes>
 	<index>
 		<mo_index name="name" unique="true">
 			<index-parts>
 				<index_part name="name"/>
+			</index-parts>
+		</mo_index>
+	</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="Password" super_class="KnowledgeObject" versioned="false" db_name="PASSWORD">
+	<annotations>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+			<binding application-type="com.top_logic.knowledge.wrap.DefaultWrapper"/>
+		</annotation>
+	</annotations>
+	<attributes>
+	    <reference att_name="account"
+	    	by-value="false"
+	    	mandatory="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="Person"
+		/>
+		<mo_attribute att_name="password" att_type="String" db_size="254" mandatory="true" />
+		<mo_attribute att_name="expired" att_type="Boolean" mandatory="false"/>
+		<mo_attribute att_name="history" att_type="String" mandatory="false" db_size="4095" hidden="true" />
+	</attributes>
+	<index>
+		<mo_index name="account" unique="true">
+			<index-parts>
+				<index_part name="account"/>
 			</index-parts>
 		</mo_index>
 	</index>
@@ -100,10 +129,12 @@
 	<source
 		override="true"
 		target-type="Person"
+		deletion-policy="delete-referer" 
 	/>
 	<destination
 		override="true"
 		target-type="PersonalConfiguration"
+		is-container="true"
 	/>
 </attributes>
 </association>

@@ -4,7 +4,6 @@
         <section name="root">
             <entry name="initials" value="root"/>             
             <entry name="username" value="root"/>             
-            <entry name="userrole" value="user,tl.admin,R.admin, admin"/>
             <entry name="givenName" value="Administrator"/>
             <entry name="sn" value="Super"/>             
             <entry name="personalTitle" value="Admin"/>

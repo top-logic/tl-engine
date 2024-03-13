@@ -13,6 +13,10 @@
 	<filter>
 		<filter-name>Pac4jSecurityFilter</filter-name>
 		<filter-class>org.pac4j.jee.filter.SecurityFilter</filter-class>
+		<init-param>
+		  <param-name>configFactory</param-name>
+		  <param-value>com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory$TLPac4jConfigFactory</param-value> 
+		</init-param>
 	</filter>
 
 	<filter>

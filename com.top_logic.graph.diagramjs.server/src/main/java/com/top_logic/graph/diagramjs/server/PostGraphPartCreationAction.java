@@ -5,8 +5,11 @@
  */
 package com.top_logic.graph.diagramjs.server;
 
+import java.util.Collections;
+
 import com.top_logic.graph.common.model.GraphPart;
 import com.top_logic.graph.common.model.Node;
+import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.server.commands.CreateClassCommand;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
 import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
@@ -35,11 +38,14 @@ public class PostGraphPartCreationAction implements PostCreateAction {
 	public void handleNew(LayoutComponent component, Object newModel) {
 		DiagramJSGraphComponent graphComponent = getDiagramJSGraphComponent(component);
 
-		GraphPart newPart = graphComponent.getGraphModel().getGraphPart(newModel);
+		SharedGraph graph = graphComponent.getGraphModel();
+		GraphPart newPart = graph.getGraphPart(newModel);
 
 		if (newPart instanceof Node) {
 			GraphModelUtil.applyBounds((Node) newPart, getCreatedBounds(component));
 		}
+
+		graph.setSelectedGraphParts(Collections.singleton(newPart));
 	}
 
 	private Bounds getCreatedBounds(LayoutComponent component) {

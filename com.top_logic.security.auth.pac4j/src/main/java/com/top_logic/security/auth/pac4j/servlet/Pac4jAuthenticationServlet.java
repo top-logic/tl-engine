@@ -10,12 +10,13 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.pac4j.core.context.JEEContext;
+import org.pac4j.core.config.Config;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
+import org.pac4j.jee.context.JEEContext;
+import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.jee.filter.SecurityFilter;
 import org.pac4j.oidc.profile.OidcProfile;
 
@@ -57,11 +58,14 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 		UserProfile profile = profileHandle.get();
 
 		String clientName = profile.getClientName();
-		Pac4jConfigFactory<?> pac4j = Pac4jConfigFactory.getInstance();
-		UserNameExtractor userNameExtractor = pac4j.getUserNameExtractor(clientName);
-		String userName = userNameExtractor.getUserName((CommonProfile) profile);
-		ExternalUserMapping userMapping = pac4j.getUserMapping(clientName);
+		String userName = getUserName(profile, clientName);
+		ExternalUserMapping userMapping = Pac4jConfigFactory.getInstance().getUserMapping(clientName);
 		return LoginCredentials.fromUser(userMapping.findAccountForExternalName(userName));
+	}
+
+	private String getUserName(UserProfile profile, String clientName) {
+		UserNameExtractor userNameExtractor = Pac4jConfigFactory.getInstance().getUserNameExtractor(clientName);
+		return userNameExtractor.getUserName((CommonProfile) profile);
 	}
 
 	@Override
@@ -76,8 +80,12 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	}
 
 	private Optional<UserProfile> userProfile(HttpServletRequest request, HttpServletResponse response) {
+		Pac4jConfigFactory<?> configFactory = Pac4jConfigFactory.getInstance();
+		Config config = configFactory.getPac4jConfig();
+
 		WebContext context = new JEEContext(request, response);
-		ProfileManager manager = new ProfileManager(context, JEESessionStore.INSTANCE);
+		ProfileManager manager = config.getProfileManagerFactory().apply(context, new JEESessionStore());
+		manager.setConfig(config);
 		return manager.getProfile();
 	}
 

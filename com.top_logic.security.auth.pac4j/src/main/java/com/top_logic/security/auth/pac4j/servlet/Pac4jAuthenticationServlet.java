@@ -50,13 +50,15 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	@Override
 	protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request, HttpServletResponse response)
 			throws ForwardRequiredException, LoginDeniedException, LoginFailedException {
-		Optional<UserProfile> profileHandle = userProfile(request, response);
+		Optional<UserProfile> profileHandle = getUserProfile(request, response);
 		if (!profileHandle.isPresent()) {
 			throw new LoginDeniedException("No user profile retrieved.");
 		}
+		return getLoginCredentials(profileHandle);
+	}
 
+	private LoginCredentials getLoginCredentials(Optional<UserProfile> profileHandle) {
 		UserProfile profile = profileHandle.get();
-
 		String clientName = profile.getClientName();
 		String userName = getUserName(profile, clientName);
 		ExternalUserMapping userMapping = Pac4jConfigFactory.getInstance().getUserMapping(clientName);
@@ -72,17 +74,15 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	protected void loginUser(Person person, HttpServletRequest request, HttpServletResponse response)
 			throws InMaintenanceModeException {
 		super.loginUser(person, request, response);
-		UserProfile userProfile = userProfile(request, response).get();
+		UserProfile userProfile = getUserProfile(request, response).get();
 		if (userProfile instanceof OidcProfile) {
 			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 			installUserTokens(new Pac4jUserTokens(displayContext, (OidcProfile) userProfile));
 		}
 	}
 
-	private Optional<UserProfile> userProfile(HttpServletRequest request, HttpServletResponse response) {
-		Pac4jConfigFactory<?> configFactory = Pac4jConfigFactory.getInstance();
-		Config config = configFactory.getPac4jConfig();
-
+	private Optional<UserProfile> getUserProfile(HttpServletRequest request, HttpServletResponse response) {
+		Config config = Pac4jConfigFactory.getInstance().getPac4jConfig();
 		WebContext context = new JEEContext(request, response);
 		ProfileManager manager = config.getProfileManagerFactory().apply(context, new JEESessionStore());
 		manager.setConfig(config);

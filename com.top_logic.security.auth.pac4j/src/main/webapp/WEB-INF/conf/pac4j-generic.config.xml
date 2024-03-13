@@ -12,6 +12,7 @@
 						<client-id>%PAC_CLIENT_ID%</client-id>
 						<secret>%PAC_SECRET%</secret>
 						<discovery-uri>%PAC_DISCOVERY_URI%</discovery-uri>
+						<client-authentication-method>%PAC_CLIENT_AUTHENTICATION_METHOD%</client-authentication-method>
 					</client>
 				</clients>
 			</instance>

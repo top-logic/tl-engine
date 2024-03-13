@@ -1073,7 +1073,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			String name = diff.getName();
 			int partSeparatorIndex = name.lastIndexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR);
 
-			TLModule module = (TLModule) resoveQName(name.substring(0, partSeparatorIndex));
+			TLModule module = (TLModule) resolveQName(name.substring(0, partSeparatorIndex));
 			String singletonName = name.substring(partSeparatorIndex + 1);
 
 			// Clear veto reference.

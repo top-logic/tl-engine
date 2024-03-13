@@ -133,6 +133,7 @@ String appSubtitle = (com.top_logic.layout.Icons.HIDE_APP_TITLE_ON_LOGIN_PAGE.ge
 
 	<body onload="doOnload();">
 		<form name="LoginPage"
+			accept-charset="utf-8"
 			action="<%=contextPath + ApplicationPages.getInstance().getLoginServletPath()%>"
 			method="post"
 		>

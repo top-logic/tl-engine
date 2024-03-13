@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27662_singleton_delete_veto"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26190_single_drop_targets_to_list"
+			module="tl"
+		/>
+		<dependency name="Ticket_27764_missing_type_for_association_properties"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+            transform="/WEB-INF/kbase/migration/tl-layout-formeditor/Ticket_27517_Refactoring_User_Management.db.xslt"
+        />
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

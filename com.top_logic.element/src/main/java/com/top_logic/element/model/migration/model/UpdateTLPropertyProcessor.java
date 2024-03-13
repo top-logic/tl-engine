@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -17,7 +19,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
-import com.top_logic.model.TLProperty;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.migration.Util;
@@ -33,7 +35,7 @@ import com.top_logic.model.migration.data.TypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<UpdateTLPropertyProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLPropertyProcessor}.
@@ -42,13 +44,32 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 	 */
 	@TagName("update-property")
 	public interface Config
-			extends PolymorphicConfiguration<UpdateTLPropertyProcessor>, AnnotatedConfig<TLAttributeAnnotation> {
+			extends PolymorphicConfiguration<UpdateTLPropertyProcessor>, UpdateTypePartConfig {
 
 		/**
-		 * Qualified name of the {@link TLProperty} to update.
+		 * See {@link PartConfig#getTypeSpec()}.
+		 */
+		QualifiedTypeName getNewType();
+
+	}
+
+	/**
+	 * Configuration to update properties of a {@link TLTypePart}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface UpdateTypePartConfig extends AnnotatedConfig<TLAttributeAnnotation> {
+
+		/**
+		 * Qualified name of the {@link TLTypePart} to update.
 		 */
 		@Mandatory
 		QualifiedPartName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedPartName value);
 
 		/**
 		 * New name for the given property, including new module and new owner.
@@ -56,9 +77,9 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		QualifiedPartName getNewName();
 
 		/**
-		 * See {@link PartConfig#getTypeSpec()}.
+		 * Setter for {@link #getNewName()}.
 		 */
-		QualifiedTypeName getNewType();
+		void setNewName(QualifiedPartName value);
 
 		/**
 		 * See {@link PartConfig#getMandatory()}.
@@ -67,10 +88,20 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		Boolean isMandatory();
 
 		/**
+		 * Setter for {@link #isMandatory()}.
+		 */
+		void setMandatory(Boolean value);
+
+		/**
 		 * See {@link PartConfig#isMultiple()}.
 		 */
 		@Name(PartConfig.MULTIPLE_PROPERTY)
 		Boolean isMultiple();
+
+		/**
+		 * Setter for {@link #isMultiple()}.
+		 */
+		void setMultiple(Boolean value);
 
 		/**
 		 * See {@link PartConfig#isOrdered()}.
@@ -79,10 +110,20 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		Boolean isOrdered();
 
 		/**
+		 * Setter for {@link #isOrdered()}.
+		 */
+		void setOrdered(Boolean value);
+
+		/**
 		 * See {@link PartConfig#isBag()}.
 		 */
 		@Name(PartConfig.BAG_PROPERTY)
 		Boolean isBag();
+
+		/**
+		 * Setter for {@link #isBag()}.
+		 */
+		void setBag(Boolean value);
 
 	}
 
@@ -102,16 +143,17 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update part migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		TypePart part;
 		try {
@@ -120,7 +162,7 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 			log.info(
 				"Unable to find property to update " + _util.qualifiedName(partName) + " at " + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Type newType;
 		if (getConfig().getNewType() == null) {
@@ -146,7 +188,12 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 			newType, newOwner, newLocalName,
 			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
 			getConfig());
+		MigrationUtils.updateProperty(log, tlModel, partName, newName, getConfig().getNewType(),
+			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
+			getConfig());
 		log.info("Updated part " + _util.qualifiedName(partName));
+
+		return true;
 	}
 
 }

@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.Set;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
@@ -308,7 +309,7 @@ public class TestCurrency extends BasicTestCase {
         TestFactory startCurrencyModule = ServiceTestSetup.createStarterFactoryForModules(new TestFactory() {
 			
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				return new TestCurrencySetup(suite);

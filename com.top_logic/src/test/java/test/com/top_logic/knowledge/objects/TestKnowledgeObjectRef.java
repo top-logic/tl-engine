@@ -6,8 +6,14 @@
 package test.com.top_logic.knowledge.objects;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -101,7 +107,14 @@ public class TestKnowledgeObjectRef extends BasicTestCase  {
      * the suite of tests to perform
      */
     public static Test suite () {
-        return KBSetup.getKBTest(TestKnowledgeObjectRef.class);
+		TestFactory testFactory = new TestFactory() {
+
+			@Override
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
+				return new CreateDefaultTestPersons(new TestSuite(testCase, suiteName));
+			}
+		};
+		return PersonManagerSetup.createPersonManagerSetup(TestKnowledgeObjectRef.class, testFactory);
     }
 
     /**

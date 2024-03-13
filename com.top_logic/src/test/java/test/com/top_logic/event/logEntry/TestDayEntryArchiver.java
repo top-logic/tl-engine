@@ -172,7 +172,7 @@ public class TestDayEntryArchiver extends TestLogHelper {
             int expectedCount = 0;
             Random rand = new Random(0x192837465L);
 
-            int alive = PersonManager.getManager().getAllAlivePersons().size();
+			int alive = Person.all().size();
 
             cal.add(Calendar.MINUTE, -10 * MASS_EVENTS);
             final KnowledgeBase kBase = KBSetup.getKnowledgeBase();
@@ -206,7 +206,7 @@ public class TestDayEntryArchiver extends TestLogHelper {
 			Calendar cal = CalendarUtil.createCalendar();
 			TestedArchiver archiver = new TestedArchiver(TestedArchiver.class.getName());
 			initTaskLog(archiver);
-            int alive = PersonManager.getManager().getAllAlivePersons().size();
+			int alive = Person.all().size();
 
             cal.add(Calendar.SECOND, -MASS_EVENTS);
             int expectedCount = MASS_EVENTS * alive;
@@ -235,7 +235,7 @@ public class TestDayEntryArchiver extends TestLogHelper {
 			Calendar cal = CalendarUtil.createCalendar();
 			TestedArchiver archiver = new TestedArchiver(TestedArchiver.class.getName());
 			initTaskLog(archiver);
-            List<Person>   alivePersons = PersonManager.getManager().getAllAlivePersons();
+			List<Person> alivePersons = Person.all();
             int            alive        = alivePersons.size();
 
             cal.add(Calendar.HOUR_OF_DAY, -MASS_EVENTS);

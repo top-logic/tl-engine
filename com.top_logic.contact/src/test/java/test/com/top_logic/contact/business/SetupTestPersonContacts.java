@@ -35,7 +35,7 @@ public class SetupTestPersonContacts extends BasicTestCase {
         for (int i=0;i < infos.length;i++) {
             newContact = fac.createNewPersonContact(infos[i][1],infos[i][0]);
             if (infos[i][2] != null) {
-                newContact.setValue(PersonContact.ATT_TITLE,infos[i][2]);
+                newContact.setValue(PersonContact.TITLE,infos[i][2]);
             }
         }
         if (newContact != null) {

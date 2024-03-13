@@ -97,9 +97,6 @@ com.top_logic.dob.meta.MOIndexImpl.java: Invalid camel case word 'MOIndexImpl', 
 com.top_logic.dob.meta.MOIndexImpl.java: Invalid camel case word 'uniqeFlag', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.dob.meta.MOPartImpl.java: Invalid camel case word 'MetaObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.dob.meta.MOPartImpl.java: Missing documentation: com.top_logic.dob.meta.MOPartImpl.checkUpdate
-com.top_logic.dob.meta.MOReference.java: Missing documentation: com.top_logic.dob.meta.MOReference.DeletionPolicy.noSuchPolicy
-com.top_logic.dob.meta.MOReference.java: Missing documentation: com.top_logic.dob.meta.MOReference.HistoryType.noSuchType
-com.top_logic.dob.meta.MOReference.java: Missing documentation: com.top_logic.dob.meta.MOReference.ReferencePart.noSuchPart
 com.top_logic.dob.meta.MORepository.java: Invalid camel case word 'DatabaseSchemata', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.dob.meta.MORepository.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.dob.meta.MORepository.java: Invalid camel case word 'MetaObject', this may only be used within JavaDoc links or HTML code tags.

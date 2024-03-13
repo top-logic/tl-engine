@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.query;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -44,15 +43,8 @@ public class PublishedFlexWrapperLabelProvider implements LabelProvider {
 			    Person      theUser    = TLContext.getContext().getCurrentPersonWrapper();
 			    Person      theCreator = theWrapper.getCreator();
     			if (!WrapperHistoryUtils.getUnversionedIdentity(theUser).equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator))) {
-    				if (TLContext.isSuperUser() || SecurityContext.isAdmin(theUser.getUser())) {
-    				    String theSuffix = "";
-    				    if (theCreator.wasAlive()) {
-							theSuffix = " (" + theCreator.getLastName() + ", " + theCreator.getFirstName() + ")";
-    				    }
-    				    else {
-    				        theSuffix = " (" + theCreator.getName() + ")";
-    				    }
-    				    theLabel += theSuffix;
+					if (TLContext.isAdmin() || Person.isAdmin(theUser)) {
+						theLabel += " (" + theCreator.getFullName() + ")";
     				}
     				else {
     					theLabel = PUBLISHED_MARKER + theLabel;

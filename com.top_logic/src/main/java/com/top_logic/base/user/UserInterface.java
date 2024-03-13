@@ -6,134 +6,103 @@
  */
 package com.top_logic.base.user;
 
-import com.top_logic.base.security.authorisation.roles.ACL;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.dob.DataObject;
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.Locale;
 
+import com.top_logic.basic.col.NullSafeComparator;
 
 /**
- * Interface for userobjects within <i>TopLogic</i>.
+ * Additional account information.
  *
- * A user is basically a dataobject. This interface only allows 
- * easier access to it's attributes. It can be used as dataobject 
- * anyway.
- *
- * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
+ * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public interface UserInterface extends DataObject {
+public interface UserInterface {
 
-    /**
-     * getter for username, i.e. the login-name.
-     * As such this is the unique ID of this user  which is the same
-     * as Person::getName() for the according person.
-     * This name / id connects a user to a person ! 
-     * @return the username of this user
-     */
-    public String getUserName ();
+    /** The attribute "username", i.e. login name */
+	String USER_NAME     = "username";
+
+	/** @see #getTitle() */
+	String TITLE = "title";
+
+	/** @see #getName() */
+	String NAME = "name";
+
+	/** @see #getFirstName() */
+	String FIRST_NAME = "firstname";
+
+	/** @see #getEMail() */
+	String EMAIL = "email";
+
+	/** @see #getPhone() */
+	String PHONE = "phone";
+
+	/**
+	 * Login ID of the user.
+	 */
+	String getUserName();
 
     /**
      * the firstname of this user
      */
-    public String getFirstName ();
+	String getFirstName();
+
+	/**
+	 * @see #getFirstName()
+	 */
+	void setFirstName(String value);
 
     /**
-     * the lastname of this user
-     */
-    public String getLastName ();
+	 * The family name the user.
+	 */
+	String getName();
 
-    /**
-     * get a formatted String for Username, should be "Title FirstName LastName".
-     * @return the fullname of this user
-     */
-    public String getFullName ();
+	/**
+	 * @see #getName()
+	 */
+	void setName(String value);
     
 	/**
-	 * get formatted username: Lastname, Title Firstname.
-	 * Suppress Title via param includeTitle
-	 * 
-	 * @param  includeTitle true to include, false to suppress 
-	 * @return formatted username
+	 * The e-mail of the user that the system may send mails to, if the user must be notified.
 	 */
-	public String getNameAs_LastTitleFirst(boolean includeTitle);
+	String getEMail();
 
 	/**
-	 * Is this user restricted or not.
+	 * @see #getEMail()
 	 */
-	@BooleanDefault(false)
-	public Boolean isRestricted();
-
-    /**
-     * the roles of this user as String sparated by ','
-     */
-    public String getRoleString ();
-
-    /**
-     * the roles of this user as HashSet
-     */
-    public ACL getACLRoles ();           
-
-    /**
-     * the object class of this user (should be always "person")
-     */
-    public String getObjectClass ();
-
-    /**
-     * the password of this user
-     */
-    public String getPassword ();
-
-     /**
-     * the internal email of this user
-     */
-    public String getInternalMail ();
-
-    /**
-     * the external email of this user
-     */
-    public String getExternalMail ();
-
-    /**
-     * the customer name of this user
-     */
-    public String getCustomerName ();
+	void setEMail(String value);
 
     /**
      * the title of this user
      */
-    public String getTitle ();
+	String getTitle();
 
-    /**
-     * the organization unit of this user
-     */
-    public String getOrgUnit ();
+	/**
+	 * @see #getTitle()
+	 */
+	void setTitle(String value);
 
     /**
      * the internal number of this user
      */
-    public String getInternalNumber ();
+	String getPhone();
 
-    /**
-     * the external number of this user
-     */
-    public String getExternalNumber ();
+	/**
+	 * @see #getPhone()
+	 */
+	void setPhone(String value);
 
-    /**
-     * the mobile number of this user
-     */
-    public String getMobileNumber ();
+	/**
+	 * {@link Comparator} establishing a convenient order for the UI.
+	 */
+	public static Comparator<? super UserInterface> comparator(Locale l) {
+		Collator collator = Collator.getInstance(l);
+		Comparator<String> nullSafe = new NullSafeComparator<>(collator, false);
 
-    /**
-     * the private number of this user
-     */
-    public String getPrivateNumber ();
+		return Comparator
+			.comparing(UserInterface::getName, collator)
+			.thenComparing(UserInterface::getFirstName, nullSafe)
+			.thenComparing(UserInterface::getTitle, nullSafe);
+	}
 
-    /**
-     * the encapsulated DataObject (if any)
-     */
-    public DataObject getDataObject ();
-    
-    /**
-     * the ID of the device this user data object originates from
-     */
-    public String getDataAccessDeviceID();
 }

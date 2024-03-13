@@ -7,7 +7,7 @@ package com.top_logic.model.form.definition;
 
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.model.form.implementation.FormEditorTemplateProvider;
 
 /**
  * Definition of visual properties of form container contents.
@@ -17,7 +17,7 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Abstract
-public interface ContainerProperties<T extends FormElementTemplateProvider> extends FormElement<T> {
+public interface ContainerProperties<T extends FormEditorTemplateProvider> extends FormElement<T> {
 
 	/** Configuration name for the value of the {@link #getColumns()}. */
 	String COLUMNS = "columns";

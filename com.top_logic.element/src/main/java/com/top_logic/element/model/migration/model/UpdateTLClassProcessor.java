@@ -8,6 +8,8 @@ package com.top_logic.element.model.migration.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -36,7 +38,7 @@ import com.top_logic.model.migration.data.Type;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLClassProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLClassProcessor}.
@@ -53,22 +55,51 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		QualifiedTypeName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * New name of the class including the new module.
 		 */
 		@Nullable
 		QualifiedTypeName getNewName();
 
 		/**
+		 * Setter for {@link #getNewName()}.
+		 */
+		void setNewName(QualifiedTypeName value);
+
+		/**
 		 * See {@link ClassConfig#isAbstract()}.
+		 * 
+		 * <p>
+		 * If the value is not set, the value in the database remains unchanged.
+		 * </p>
 		 */
 		@Name(ClassConfig.ABSTRACT)
-		boolean isAbstract();
+		Boolean isAbstract();
+
+		/**
+		 * Setter for {@link #isAbstract()}.
+		 */
+		void setAbstract(Boolean value);
 
 		/**
 		 * See {@link ClassConfig#isFinal()}.
+		 * 
+		 * <p>
+		 * If the value is not set, the value in the database remains unchanged.
+		 * </p>
 		 */
 		@Name(ClassConfig.FINAL)
-		boolean isFinal();
+		Boolean isFinal();
+
+		/**
+		 * Setter for {@link #isFinal()}.
+		 */
+		void setFinal(Boolean value);
+
 	}
 
 	private Util _util;
@@ -87,16 +118,17 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update class migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
 		Type type;
 		try {
@@ -105,7 +137,7 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 			log.info(
 				"Unable to find class to update " + _util.qualifiedName(typeName) + " at " + getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Module newModule;
 		QualifiedTypeName newName = getConfig().getNewName();
@@ -120,8 +152,10 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		} else {
 			className = newName.getTypeName();
 		}
-		_util.updateTLStructuredType(connection, type, newModule, className, getConfig().isAbstract(),
-			getConfig().isFinal(), getConfig());
+		_util.updateTLStructuredType(connection, type, newModule, className,
+			getConfig().isAbstract(), getConfig().isFinal(), getConfig());
+		MigrationUtils.updateClass(log, tlModel, typeName, newName,
+			getConfig().isAbstract(), getConfig().isFinal(), getConfig());
 		log.info("Updated type " + _util.qualifiedName(typeName));
 
 		if (newModule != null || className != null) {
@@ -145,6 +179,7 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 				}
 			}
 		}
+		return true;
 	}
 
 }

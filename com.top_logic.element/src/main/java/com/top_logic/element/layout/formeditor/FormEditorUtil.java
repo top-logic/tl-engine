@@ -239,10 +239,13 @@ public class FormEditorUtil {
 	 *        The {@link FormDefinition} describing the form to display.
 	 */
 	public static void createAttributes(FormEditorContext context, FormDefinition formDefinition) {
+		if (context.getFormMode() == FormMode.DESIGN) {
+			throw new IllegalArgumentException("Create attributes must not be called in design mode.");
+		}
 		FormContainer contentGroup = context.getContentGroup();
 		if (formDefinition != null) {
 			FormDefinitionTemplateProvider formProvider = TypedConfigUtil.createInstance(formDefinition);
-			HTMLTemplateFragment formTemplate = formProvider.createDisplayTemplate(context);
+			HTMLTemplateFragment formTemplate = formProvider.createTemplate(context);
 			template(contentGroup, div(formTemplate));
 		} else {
 			template(contentGroup, div());

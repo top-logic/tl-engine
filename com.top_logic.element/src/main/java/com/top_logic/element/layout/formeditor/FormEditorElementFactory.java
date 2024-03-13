@@ -22,6 +22,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormEditorElementTemplateProvider;
+import com.top_logic.model.form.implementation.FormEditorTemplateProvider;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -53,7 +54,7 @@ public class FormEditorElementFactory {
 			FormElement<?> def, Function<? super FormElement<?>, HandlerResult> okHandle,
 			DialogClosedListener dialogCloseListener, TLStructuredType editedType) {
 
-		FormElementTemplateProvider formElement = TypedConfigUtil.createInstance(def);
+		FormEditorTemplateProvider formElement = TypedConfigUtil.createInstance(def);
 
 		ResKey dialogTitle = dialogTitle(formElement, editedType);
 
@@ -71,7 +72,7 @@ public class FormEditorElementFactory {
 		return dialog.open(commandContext);
 	}
 
-	private static ResKey dialogTitle(FormElementTemplateProvider formElement, TLStructuredType editedType) {
+	private static ResKey dialogTitle(FormEditorTemplateProvider formElement, TLStructuredType editedType) {
 		FormEditorContext formEditorContext = new FormEditorContext.Builder()
 			.formMode(FormMode.CREATE)
 			.formType(editedType)

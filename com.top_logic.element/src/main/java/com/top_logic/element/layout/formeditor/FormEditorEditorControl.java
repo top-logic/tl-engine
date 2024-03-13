@@ -149,7 +149,7 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 				.editMode(_isInEditMode)
 				.build();
 
-			FormEditorUtil.template(fc, div(formImpl.createDesignTemplate(formContext)));
+			FormEditorUtil.template(fc, div(formImpl.createTemplate(formContext)));
 		} else {
 			FormEditorUtil.template(fc, div());
 		}

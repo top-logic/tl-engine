@@ -70,7 +70,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		OtherAttributes config = getConfig();
 
 		FormMode formMode = context.getFormMode();
@@ -190,7 +190,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return GroupDefinitionTemplateProvider.HEIGHT;
 	}
 

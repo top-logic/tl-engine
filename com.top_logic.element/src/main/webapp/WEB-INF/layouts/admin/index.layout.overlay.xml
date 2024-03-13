@@ -3,8 +3,7 @@
 <arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<components>
 		<layout-reference
-			config:position="after"
-			config:reference="admin/persons/index.layout.xml"
+			config:position="begin"
 			resource="admin/security/index.layout.xml"
 		/>
 	</components>

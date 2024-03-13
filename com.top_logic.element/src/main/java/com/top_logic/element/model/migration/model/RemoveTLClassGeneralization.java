@@ -7,12 +7,14 @@ package com.top_logic.element.model.migration.model;
 
 import java.util.List;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -32,7 +34,7 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<RemoveTLClassGeneralization.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link RemoveTLClassGeneralization}.
@@ -47,27 +49,17 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 		QualifiedTypeName getName();
 
 		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * The extended types.
 		 */
 		@Name(ObjectTypeConfig.GENERALIZATIONS)
 		@EntryTag(ExtendsConfig.TAG_NAME)
-		List<Generalization> getGeneralizations();
-	}
-
-	/**
-	 * Configuration of a generalization.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface Generalization extends ConfigurationItem {
-
-		/**
-		 * The extended type.
-		 */
-		@Mandatory
-		@Name(ExtendsConfig.TYPE)
-		QualifiedTypeName getType();
-
+		@DefaultContainer
+		List<AddTLClassGeneralization.Generalization> getGeneralizations();
 	}
 
 	private Util _util;
@@ -86,25 +78,30 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Removing generalization extension migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
+		boolean updateTLModel = false;
 		QualifiedTypeName specialisation = getConfig().getName();
-		for (Generalization generalization : getConfig().getGeneralizations()) {
+		for (AddTLClassGeneralization.Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.removeGeneralisation(connection, specialisation, typeName);
+			boolean removed = MigrationUtils.removeGeneralisation(log, tlModel, specialisation, typeName);
 			log.info(
 				"Removed generalisation "
 					+ _util.qualifiedName(typeName) + " from "
 					+ _util.qualifiedName(specialisation));
+			updateTLModel |= removed;
 		}
+		return updateTLModel;
 	}
 
 }

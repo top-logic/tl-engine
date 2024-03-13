@@ -981,9 +981,9 @@
 						<value>
 							<field-path>
 								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
-									field-label-comment="person"
+									field-label-comment="account"
 								>
-									<attribute-ref attribute-name="person">
+									<attribute-ref attribute-name="account">
 										<type type-name="DemoTypes.A">
 											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
 										</type>
@@ -1001,7 +1001,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 								<list>
 									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Super, Administrator"
+										label="root"
 									/>
 								</list>
 							</value>
@@ -2381,9 +2381,9 @@
 						<value>
 							<field-path>
 								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
-									field-label-comment="person"
+									field-label-comment="account"
 								>
-									<attribute-ref attribute-name="person">
+									<attribute-ref attribute-name="account">
 										<type type-name="DemoTypes.X">
 											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
 										</type>
@@ -2393,7 +2393,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 								<list>
 									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Super, Administrator"
+										label="root"
 									/>
 								</list>
 							</value>

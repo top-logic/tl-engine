@@ -119,7 +119,7 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return DisplayDimension.dim(500, DisplayUnit.PIXEL);
 	}
 
@@ -129,28 +129,30 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		if (_delegate != null) {
 			TLObject foreignItem = getForeignObject(context.getModel());
 			TLClass formType = OptionalTypeTemplateParameters.resolve(getConfig());
 			HTMLTemplateFragment template;
 			if (foreignItem != null) {
 				context = new FormEditorContext.Builder(context)
+					.formMode(FormMode.EDIT)
 					.formType(formType)
 					.concreteType(foreignItem.tType())
 					.model(foreignItem)
 					.build();
-				template = _delegate.createDisplayTemplate(context);
+				template = _delegate.createTemplate(context);
 			} else if (context.getFormMode() == FormMode.DESIGN) {
 				/* In Design mode the default input field should be displayed. As an attribute of an
 				 * "different" object is displayed, a domain must be set. */
 				context = new FormEditorContext.Builder(context)
+					.formMode(FormMode.CREATE) // No element available, therefore not EDIT
 					.formType(formType)
 					.concreteType(null)
 					.model(null)
 					.domain(StringServices.randomUUID())
 					.build();
-				template = _delegate.createDisplayTemplate(context);
+				template = _delegate.createTemplate(context);
 			} else {
 				/* There is no item to store changed value to. Therefore the user must not try to
 				 * set a value. */

@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -18,6 +20,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.Module;
@@ -30,7 +33,7 @@ import com.top_logic.model.migration.data.Type;
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
 public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<UpdateTLAssociationProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLAssociationProcessor}.
@@ -68,16 +71,17 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(com.top_logic.model.migration.Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update association migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
 		Type association;
 		try {
@@ -87,7 +91,7 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 				"Unable to find association to update " + _util.qualifiedName(typeName) + " at "
 					+ getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Module newModule;
 		QualifiedTypeName newName = getConfig().getNewName();
@@ -106,6 +110,16 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 		_util.updateTLStructuredType(connection, association, newModule, newAssociationName, null,
 			null, (String) null);
 		log.info("Updated association " + _util.toString(association));
+
+		boolean updateModelBaseline;
+		if (TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {
+			/* Internal TLAssociation which is not defined in the model baseline. */
+			updateModelBaseline = false;
+		} else {
+			MigrationUtils.updateAssociation(log, tlModel, typeName, newName, getConfig());
+			updateModelBaseline = true;
+		}
+		return updateModelBaseline;
 	}
 
 }

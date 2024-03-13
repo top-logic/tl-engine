@@ -151,12 +151,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public String getName() {
-		return getConfig().getAttribute();
-	}
-
-	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		TLStructuredType type = context.getFormType();
 		TLStructuredTypePart part = attribute(context);
 		if (part != null) {
@@ -328,17 +323,19 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public boolean isVisible(TLStructuredType type, FormMode formMode) {
+	public boolean isVisible(FormEditorContext context) {
+		TLStructuredType type = context.getFormType();
+		FormMode formMode = context.getFormMode();
 		return calculateVisibility(getPart(type), getConfig().getVisibility(), formMode) != null;
 	}
 
 	@Override
-	public DisplayDimension getDialogWidth() {
+	protected DisplayDimension getDialogWidth() {
 		return WIDTH;
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

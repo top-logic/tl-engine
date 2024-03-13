@@ -68,10 +68,35 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		String getTable();
 
 		/**
+		 * Setter for {@link #getTable()}.
+		 */
+		void setTable(String value);
+
+		/**
 		 * {@link TLObject#tType() Type} of the new created object.
 		 */
 		@Mandatory
 		QualifiedTypeName getType();
+
+		/**
+		 * Setter {@link #getType()}.
+		 */
+		void setType(QualifiedTypeName value);
+
+		/**
+		 * Whether the {@link #getTable() table} has no {@link PersistentObject#TYPE_REF} column.
+		 * 
+		 * <p>
+		 * A table that stores entries for exactly one type may have no type column. The
+		 * {@link PersistentObject#TYPE_REF} is computed in this case.
+		 * </p>
+		 */
+		boolean hasNoTypeColumn();
+
+		/**
+		 * Setter for {@link #hasNoTypeColumn()}.
+		 */
+		void setNoTypeColumn(boolean value);
 
 		/**
 		 * Table values for the new object.
@@ -99,12 +124,24 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		 * </p>
 		 */
 		@Name(COLUMN)
+		@Mandatory
 		String getColumn();
+
+		/**
+		 * Setter for {@link #getColumn()}.
+		 */
+		void setColumn(String column);
 
 		/**
 		 * Database type of the column.
 		 */
+		@Mandatory
 		DBType getColumnType();
+
+		/**
+		 * Setter for {@link #getColumnType()}.
+		 */
+		void setColumnType(DBType value);
 
 		/**
 		 * Formatted value for {@link #getColumn()}.
@@ -121,6 +158,11 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		String getValue();
 
 		/**
+		 * Setter for {@link #getValue()}.
+		 */
+		void setValue(String value);
+
+		/**
 		 * Supplier for the value for {@link #getColumn()}.
 		 * 
 		 * <p>
@@ -132,6 +174,11 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		 * @see #getValue()
 		 */
 		PolymorphicConfiguration<? extends Supplier<?>> getValueSupplier();
+
+		/**
+		 * Setter for {@link #getValue()}.
+		 */
+		void setValueSupplier(PolymorphicConfiguration<? extends Supplier<?>> value);
 	}
 
 	private final Map<String, Object> _values = new LinkedHashMap<>();
@@ -201,8 +248,16 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		List<SQLExpression> values = new ArrayList<>();
 		List<Object> arguments = new ArrayList<>();
 
-		columns.add(BasicTypes.BRANCH_DB_NAME);
-		values.add(literalLong(branch));
+		parameterDefs.add(_util.branchParamDef());
+		String branchColumn = _util.branchColumnOrNull();
+		if (branchColumn != null) {
+			columns.add(branchColumn);
+		}
+		SQLExpression branchParam = _util.branchParamOrNull();
+		if (branchParam != null) {
+			values.add(branchParam);
+		}
+		arguments.add(literalLong(branch));
 		
 		parameterDefs.add(parameterDef(DBType.ID, "identifier"));
 		columns.add(BasicTypes.IDENTIFIER_DB_NAME);
@@ -219,10 +274,12 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		values.add(parameter(DBType.LONG, "revCreate"));
 		arguments.add(_util.getRevCreate(connection));
 		
-		parameterDefs.add(parameterDef(DBType.ID, "typeID"));
-		columns.add(_util.refID(PersistentObject.TYPE_REF));
-		values.add(parameter(DBType.ID, "typeID"));
-		arguments.add(type.getID());
+		if (!getConfig().hasNoTypeColumn()) {
+			parameterDefs.add(parameterDef(DBType.ID, "typeID"));
+			columns.add(_util.refID(PersistentObject.TYPE_REF));
+			values.add(parameter(DBType.ID, "typeID"));
+			arguments.add(type.getID());
+		}
 		
 		for (Value additionalValue: getConfig().getValues()) {
 			DBType columnType = additionalValue.getColumnType();
@@ -234,11 +291,11 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		}
 		
 		CompiledStatement createObj = query(
-		parameterDefs,
-		insert(
-			table(SQLH.mangleDBName(getConfig().getTable())),
-			columns,
-			values)).toSql(sqlDialect);
+			parameterDefs,
+			insert(
+				table(SQLH.mangleDBName(getConfig().getTable())),
+				columns,
+				values)).toSql(sqlDialect);
 
 		createObj.executeUpdate(connection, arguments.toArray());
 		return BranchIdType.newInstance(BranchIdType.class, branch, newID, getConfig().getTable());

@@ -12,6 +12,7 @@ import java.util.Locale;
 
 import com.top_logic.base.mail.MailHelper;
 import com.top_logic.base.mail.MailHelper.SendMailResult;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.FileManager;
@@ -93,10 +94,14 @@ public class MailUnusedAccountCheck extends UnusedAccountCheck {
      *        a reminder (<code>false</code>)
      */
     protected void sendEmail(Person person, int dayDiff, boolean deleteAccount) {
-		String emailAdress = person.getInternalMail();
+		UserInterface user = person.getUser();
+		if (user == null) {
+			return;
+		}
+		String emailAdress = user.getEMail();
         if (!StringServices.isEmpty(emailAdress)) try {
 				int deleteDayCount = getConfig().getDeleteDayCount();
-            Locale locale = Resources.findBestLocale(person.tHandle());
+				Locale locale = Resources.findBestLocale(person);
             String filename = "/WEB-INF/reportTemplates/html/";
             if (deleteAccount) {
                 filename += "DeleteAccountTemplate";

@@ -14,7 +14,7 @@
 	<processors>
 		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor">
 			<rewriter class="com.top_logic.layout.tools.rewrite.XSLTLayoutRewrite"
-				transform="WEB-INF/kbase/migration/tl/Ticket_26365_Update_layout_configuration.xslt"
+				transform="/WEB-INF/kbase/migration/tl/Ticket_26365_Update_layout_configuration.xslt"
 			>
 				<templates>
 					<template value="com.top_logic/selector.template.xml"/>

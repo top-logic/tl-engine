@@ -16,48 +16,31 @@
 	</t:head>
 	<t:body>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment=""
-			failure-message=""
-			user-id=""
-			window-name=""
+			user-id="${$Tester}"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Persönliche Einstellungen"
 					command-name="showCurrentPersonDialog"
-					comment=""
 					component-implementation-comment="com.top_logic.layout.component.TabComponent"
 					component-name="mainTabbar.layout.xml#mainTabber"
-					failure-message=""
-					window-name=""
 				>
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
-					command-label="Persönliche Einstellungen zurücksetzen"
+					command-label="Persönliche Konfiguration zurücksetzen"
 					command-name="resetPersonalConfiguration"
-					comment=""
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					failure-message=""
-					window-name=""
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-					command-label="Schließen"
-					command-name="closeDialogInView"
-					comment=""
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-					component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-					failure-message=""
-					window-name=""
-				>
-					<arguments/>
-				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+				/>
 			</actions>
 		</action>
 	</t:body>

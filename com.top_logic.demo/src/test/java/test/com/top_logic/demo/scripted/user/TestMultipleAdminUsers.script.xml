@@ -36,47 +36,39 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
+					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="root"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+					user-id="root"
 				>
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
-					mode="IMMUTABLE"
+					mode="DISABLED"
+					user-id="root"
 				>
 					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 						label="Administrator"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</model-name>
 				</action>
@@ -84,8 +76,8 @@
 					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
 					command-label="Abbrechen"
 					command-name="nothing"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -101,34 +93,23 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root2"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Root"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -140,7 +121,7 @@
 						label="Administrator"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -154,7 +135,7 @@
 						label="Eingeschränktes Benutzerkonto"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -166,23 +147,23 @@
 					validity="ERROR"
 				>
 					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Eingeschränktes Benutzerkonto"
+						label="Administrator"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
-					error="Höchstens dieses Feld oder eines der folgenden Felder (Administrator) darf ausgefüllt werden, aber nicht mehr als eins."
+					error="Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."
 					error-pattern=""
 					user-id="root"
 				>
 					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Eingeschränktes Benutzerkonto"
+						label="Administrator"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</model-name>
 				</action>
@@ -191,23 +172,23 @@
 					validity="ERROR"
 				>
 					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Administrator"
+						label="Eingeschränktes Benutzerkonto"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
-					error="Höchstens dieses Feld oder eines der folgenden Felder (Eingeschränktes Benutzerkonto) darf ausgefüllt werden, aber nicht mehr als eins."
+					error="Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."
 					error-pattern=""
 					user-id="root"
 				>
 					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Administrator"
+						label="Eingeschränktes Benutzerkonto"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</model-name>
 				</action>
@@ -218,7 +199,7 @@
 						label="Eingeschränktes Benutzerkonto"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -229,8 +210,8 @@
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -246,35 +227,24 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="root"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
 					executable="false"
-					reason-key="admin.person.edit.noSelfDelete"
 					user-id="root"
 				>
+					<reason-key>#("Ein Benutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en)</reason-key>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-						label="Löschen..."
+						label="Zugang entfernen"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -282,35 +252,24 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root2"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Root"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
 					executable="false"
-					reason-key="class.com.top_logic.knowledge.gui.layout.person.I18NConstants.ERROR_CANNOT_DELETE_ADMIN_USER"
 					user-id="root"
 				>
+					<reason-key>#("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en)</reason-key>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
-						label="Löschen..."
+						label="Zugang entfernen"
 					/>
 				</action>
 			</actions>
@@ -356,34 +315,23 @@
 					change-kind="ABSOLUTE"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root3"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+							name="root3"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
@@ -392,7 +340,7 @@
 						label="Administrator"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -403,8 +351,8 @@
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
@@ -419,45 +367,34 @@
 					change-kind="ABSOLUTE"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="root2"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+							name="root2"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
-					mode="IMMUTABLE"
+					mode="DISABLED"
 				>
 					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 						label="Administrator"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</model-name>
 				</action>
@@ -465,8 +402,8 @@
 					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
 					command-label="Abbrechen"
 					command-name="nothing"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
@@ -508,7 +445,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Gruppen"
+								tab-path="Administration > Berechtigungen > Gruppen"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -577,7 +514,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Gruppenzuordnung"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -585,34 +522,23 @@
 							user-id="root"
 						>
 							<selection>
-								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-									table="Person"
-								>
-									<branch config:interface=""/>
-									<revision config:interface=""/>
-									<attributes>
-										<attribute name="name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="userAdmin"
-											/>
-										</attribute>
-									</attributes>
-								</selectee>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Admin"
+								/>
 								<selection-state boolean="true"/>
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#GroupsPersonTable"
-									tab-path="Administration > Zugänge > Gruppenzuordnung"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 								/>
 							</selection-model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent"
-							component-name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#AdminPersonGroup2"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -620,31 +546,30 @@
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 							user-id="root"
 						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Zugänge > Gruppenzuordnung > Person Gruppen zuordnen"
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Gruppen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 								/>
-								<path>
-									<named-member name="roles"/>
-								</path>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="userAdmins"
+										label="users"
 									/>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="users"
+										label="userAdmins"
 									/>
 								</values>
 							</value>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
-							command-name="savePersonGroup"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent"
-							component-name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#AdminPersonGroup2"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -815,8 +740,8 @@
 										<named-member name="tree"/>
 									</path>
 								</context-model>
-								<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Zugänge"
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Administration > Berechtigungen"
 								/>
 							</model-name>
 						</action>
@@ -835,8 +760,8 @@
 										<named-member name="tree"/>
 									</path>
 								</context-model>
-								<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Benutzerkonten"
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Administration > Berechtigungen > Benutzerverwaltung"
 								/>
 							</model-name>
 						</action>
@@ -844,7 +769,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="userAdminRole: Administration > Zugänge > Benutzerkonten (Lesen)"
+								label="userAdminRole: Administration > Berechtigungen > Benutzerverwaltung (Anlegen)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
@@ -858,7 +783,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="userAdminRole: Administration > Zugänge > Benutzerkonten (Anlegen)"
+								label="userAdminRole: Administration > Berechtigungen > Benutzerverwaltung (Löschen)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
@@ -872,7 +797,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="userAdminRole: Administration > Zugänge > Benutzerkonten (Löschen)"
+								label="userAdminRole: Administration > Berechtigungen > Benutzerverwaltung (Exportieren)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
@@ -886,7 +811,21 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="userAdminRole: Administration > Zugänge > Benutzerkonten (Ändern)"
+								label="userAdminRole: Administration > Berechtigungen > Benutzerverwaltung (Ändern)"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="userAdminRole: Administration > Berechtigungen > Benutzerverwaltung (Lesen)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
@@ -926,7 +865,6 @@
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 			template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
 			template-name-comment="Nutzer Anlegen"
-			user-id="root"
 		>
 			<parameters>
 				<parameter name="Loginname"
@@ -946,62 +884,34 @@
 					change-kind="ABSOLUTE"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<branch config:interface=""/>
-							<revision config:interface=""/>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="realUser"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="realUser"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Administrator"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
-							/>
-						</model>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="false"
-					/>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
-					mode="IMMUTABLE"
+					mode="DISABLED"
 				>
 					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 						label="Administrator"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+							tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 						/>
 					</model-name>
 				</action>
@@ -1009,8 +919,8 @@
 					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
 					command-label="Abbrechen"
 					command-name="nothing"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 				>
 					<arguments/>
 				</action>
@@ -1041,7 +951,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Benutzerkonten"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -1049,34 +959,23 @@
 							user-id="root"
 						>
 							<selection>
-								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-									table="Person"
-								>
-									<branch config:interface=""/>
-									<revision config:interface=""/>
-									<attributes>
-										<attribute name="name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="root2"
-											/>
-										</attribute>
-									</attributes>
-								</selectee>
+								<selectee config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+									name="root2"
+								/>
 								<selection-state boolean="true"/>
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-									tab-path="Administration > Zugänge > Benutzerkonten"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 								/>
 							</selection-model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -1088,7 +987,7 @@
 								label="Administrator"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -1099,8 +998,8 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -1126,34 +1025,23 @@
 							user-id="root"
 						>
 							<selection>
-								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-									table="Person"
-								>
-									<branch config:interface=""/>
-									<revision config:interface=""/>
-									<attributes>
-										<attribute name="name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="root3"
-											/>
-										</attribute>
-									</attributes>
-								</selectee>
+								<selectee config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+									name="root3"
+								/>
 								<selection-state boolean="true"/>
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-									tab-path="Administration > Zugänge > Benutzerkonten"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 								/>
 							</selection-model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -1165,7 +1053,7 @@
 								label="Administrator"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Zugänge > Benutzerkonten > Benutzerkonto bearbeiten"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -1176,8 +1064,8 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -1252,7 +1140,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Gruppen"
+								tab-path="Administration > Berechtigungen > Gruppen"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -1268,7 +1156,7 @@
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminEditGroup_Table"
-									tab-path="Administration > Zugänge > Gruppen"
+									tab-path="Administration > Berechtigungen > Gruppen"
 								/>
 							</selection-model-name>
 						</action>

@@ -9,7 +9,7 @@ import javax.servlet.ServletContext;
 
 import org.pac4j.core.client.Client;
 
-import com.top_logic.base.security.device.interfaces.SecurityDevice.SecurityDeviceConfig;
+import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -63,12 +63,14 @@ public interface ClientConfigurator {
 		 * </p>
 		 * 
 		 * <p>
-		 * A user that is authenticated by this client must be found in the <i>TopLogic</i> domain with
-		 * the configured name to be accepted by the system.
+		 * A user that is authenticated by this client must be found in the <i>TopLogic</i> domain
+		 * with the configured name to be accepted by the system. To be concrete, the user that is
+		 * authenticated by this client must be managed by a {@link PersonDataAccessDevice} with the
+		 * same domain name as given here.
 		 * </p>
 		 * 
 		 * @see Pac4jConfigFactory#getDomain(String)
-		 * @see SecurityDeviceConfig#getDomain()
+		 * @see PersonDataAccessDevice#getDomainName()
 		 */
 		@Name(DOMAIN)
 		@Nullable

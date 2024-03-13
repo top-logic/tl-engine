@@ -269,7 +269,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Bound
      *              is not empty.
      */
     protected boolean checkAccess(TLContext context, BoundObject model, BoundCommandGroup aCmdGroup) {
-		if (TLContext.isSuperUser()) {
+		if (TLContext.isAdmin()) {
             return true;    // bypass bound security for SuperUsers
         }
 		Person currentPerson = context.getPerson();

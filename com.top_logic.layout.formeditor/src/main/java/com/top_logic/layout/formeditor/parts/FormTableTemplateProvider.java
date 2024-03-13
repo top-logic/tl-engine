@@ -152,7 +152,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		TLObject model = context.getModel();
 		String fieldName = fieldName();
 		FormContainer contentGroup = context.getContentGroup();
@@ -416,12 +416,12 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	@Override
-	public DisplayDimension getDialogWidth() {
+	protected DisplayDimension getDialogWidth() {
 		return WIDTH;
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

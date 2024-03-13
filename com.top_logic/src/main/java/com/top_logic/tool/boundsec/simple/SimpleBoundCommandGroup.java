@@ -243,7 +243,7 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
 	 *         command group} <code>group</code>
 	 */
 	public static boolean isAllowedCommandGroup(Person person, BoundCommandGroup group) {
-		if (ThreadContext.isSuperUser()) {
+		if (ThreadContext.isAdmin()) {
 			return true;
 		}
 		if (!person.isRestrictedUser().booleanValue()) {

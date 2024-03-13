@@ -267,13 +267,13 @@ public class SAPPersonImporter extends DataObjectImportTask  {
         } 
         else { // Update ?
             logInfo("Processing " + theMessage, null);
-            changed = !Utils.equals(aDo.getAttributeValue(COLUMNS[2]),  thePerson.getValue(COSPersonContact.ATT_TITLE))
-			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[5]),  thePerson.getValue(COSPersonContact.ATT_POSITION))
-			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[6]),  thePerson.getValue(COSPersonContact.ATT_PHONE_OFFICE))
-			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[7]),  thePerson.getValue(COSPersonContact.ATT_PHONE_MOBILE))			           
-			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[8]),  thePerson.getValue(COSPersonContact.ATT_PHONE_PRIVATE))
+            changed = !Utils.equals(aDo.getAttributeValue(COLUMNS[2]),  thePerson.getValue(COSPersonContact.TITLE))
+			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[5]),  thePerson.getValue(COSPersonContact.POSITION))
+			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[6]),  thePerson.getValue(COSPersonContact.PHONE))
+			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[7]),  thePerson.getValue(COSPersonContact.PHONE_MOBILE))			           
+			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[8]),  thePerson.getValue(COSPersonContact.PHONE_PRIVATE))
 			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[9]),  thePerson.getValue(COSPersonContact.ATT_FAX))
-			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[10]), thePerson.getValue(COSPersonContact.ATT_MAIL))
+			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[10]), thePerson.getValue(COSPersonContact.EMAIL))
 			       //TODO KBU SEC/CHECK REIMPLEMENT
 //			       || maybeownerB != null && !Utils.equals(maybeownerB, thePerson.getValue(COSPersonContact.ATT_MAYBEOWNER))	// TODO KBU check boolean!
 			       || !Utils.equals(aDo.getAttributeValue(COLUMNS[12]), thePerson.getValue(COSPersonContact.REMARKS_ATTRIBUTE));
@@ -293,13 +293,13 @@ public class SAPPersonImporter extends DataObjectImportTask  {
         }
 
         if (changed) { // includes created ...
-        	thePerson.setValue(COSPersonContact.ATT_TITLE,         aDo.getAttributeValue(COLUMNS[2]));
-		    thePerson.setValue(COSPersonContact.ATT_POSITION,      aDo.getAttributeValue(COLUMNS[5]));
-		    thePerson.setValue(COSPersonContact.ATT_PHONE_OFFICE,  aDo.getAttributeValue(COLUMNS[6]));
-		    thePerson.setValue(COSPersonContact.ATT_PHONE_MOBILE,  aDo.getAttributeValue(COLUMNS[7]));
-		    thePerson.setValue(COSPersonContact.ATT_PHONE_PRIVATE, aDo.getAttributeValue(COLUMNS[8]));
+        	thePerson.setValue(COSPersonContact.TITLE,         aDo.getAttributeValue(COLUMNS[2]));
+		    thePerson.setValue(COSPersonContact.POSITION,      aDo.getAttributeValue(COLUMNS[5]));
+		    thePerson.setValue(COSPersonContact.PHONE,  aDo.getAttributeValue(COLUMNS[6]));
+		    thePerson.setValue(COSPersonContact.PHONE_MOBILE,  aDo.getAttributeValue(COLUMNS[7]));
+		    thePerson.setValue(COSPersonContact.PHONE_PRIVATE, aDo.getAttributeValue(COLUMNS[8]));
 		    thePerson.setValue(COSPersonContact.ATT_FAX,           aDo.getAttributeValue(COLUMNS[9]));
-		    thePerson.setValue(COSPersonContact.ATT_MAIL,          aDo.getAttributeValue(COLUMNS[10]));
+		    thePerson.setValue(COSPersonContact.EMAIL,          aDo.getAttributeValue(COLUMNS[10]));
 		    //TODO KBU SEC/CHECK REIMPLEMENT
 //            if (maybeownerB != null) {
 //            	thePerson.setValue(COSPersonContact.ATT_MAYBEOWNER, maybeownerB);

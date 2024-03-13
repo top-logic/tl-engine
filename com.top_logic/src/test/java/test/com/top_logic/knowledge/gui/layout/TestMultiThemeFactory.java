@@ -20,8 +20,8 @@ import com.top_logic.gui.MultiThemeFactory;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 import com.top_logic.util.TLContext;
 
 
@@ -50,7 +50,7 @@ public class TestMultiThemeFactory extends BasicTestCase {
     public void testGetCurrentThemeWithoutInitializedContext() {
 		TLContext.pushSuperUser();
         try {
-            Person root = TLPersonManager.getManager().getRoot();
+            Person root = PersonManager.getManager().getRoot();
 			TLContext theContext = TLContext.getContext();
             theContext.setCurrentPerson(root);
 

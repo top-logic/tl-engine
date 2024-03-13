@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
@@ -16,6 +18,7 @@ import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
@@ -43,6 +46,11 @@ public class CreateTLAssociationEndProcessor
 		@Name(PartConfig.TYPE_SPEC)
 		QualifiedTypeName getType();
 
+		/**
+		 * Setter for {@link #getType()}.
+		 */
+		void setType(QualifiedTypeName value);
+
 
 	}
 
@@ -62,16 +70,17 @@ public class CreateTLAssociationEndProcessor
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Creating association end migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
 		_util.createTLAssociationEnd(log, connection, partName,
@@ -81,7 +90,20 @@ public class CreateTLAssociationEndProcessor
 			getConfig().isOrdered(),
 			getConfig().canNavigate(), getConfig().getHistoryType(), getConfig());
 
+		boolean updateModelBaseline;
+		if (TLStructuredTypeColumns.isSyntheticAssociationName(partName.getTypeName())) {
+			/* AssociationEnd is an end of an internal TLAssociation which is not defined in the
+			 * model baseline. */
+			updateModelBaseline = false;
+		} else {
+			MigrationUtils.createEnd(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
+				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
+				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
+				nullIfUnset(Config.HISTORY_TYPE), getConfig());
+			updateModelBaseline = true;
+		}
 		log.info("Created part " + _util.qualifiedName(partName));
+		return updateModelBaseline;
 	}
 
 }

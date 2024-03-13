@@ -23,7 +23,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.MappedList;
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.dsa.DataAccessProxy;
@@ -67,12 +66,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 
     /** Cached access to the DataAccessProxy */
     protected transient DataAccessProxy   dap;
-
-    /** Cached Properties from the DAP (if availeable) */
-    protected transient DataObject        properties;
-    
-    /** Indicates that the properties are valid (even) when null */
-    protected transient boolean           propertiesValid;
 
     /**
 	 * Construct an instance wrapped around the specified
@@ -156,29 +149,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
         return theDSN;
     }
     
-    /** return the properties of the underlying DAP if possible.
-     * 
-     * @return null when DAP is invalid.
-     */
-    @Override
-	public DataObject getProperties() {
-        checkInvalid();
-        if (propertiesValid) {
-            return properties;
-        }
-
-        DataAccessProxy theDAP = getDAP();
-		if (theDAP != null) {
-			if (theDAP.exists()) {
-				properties = theDAP.getProperties();
-			}
-        }
-
-		propertiesValid = true; // even if null
-
-		return properties;
-    }
-
     /** 
      * Call this when the Physical resource was changed externally 
      * 
@@ -189,8 +159,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
      */
     public void resetDAP() {
         dap              = null;
-        properties       = null;
-        propertiesValid  = false;
     }
 
     /**

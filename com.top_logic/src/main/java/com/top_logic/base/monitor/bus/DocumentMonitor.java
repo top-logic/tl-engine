@@ -12,7 +12,6 @@ import java.util.List;
 
 import com.top_logic.base.bus.DocumentEvent;
 import com.top_logic.base.bus.MonitorEvent;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
@@ -24,6 +23,7 @@ import com.top_logic.event.bus.BusEvent;
 import com.top_logic.event.bus.IReceiver;
 import com.top_logic.event.bus.Sender;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Listener of {@link com.top_logic.base.bus.UserEvent}s.
@@ -210,7 +210,7 @@ public class DocumentMonitor extends DefaultMonitor implements IReceiver {
         if (theUser != null) {
 			Wrapper messageKO = MonitorEvent.getWrapper(theMessageType, theMessageID);
 			Wrapper sourceKO = MonitorEvent.getWrapper(theSourceType, theSourceID);
-            UserInterface   theUserI  = MonitorEvent.getUser (theUser);
+			Person theUserI = MonitorEvent.getUser(theUser);
 
             if (messageKO == null|| sourceKO  == null || theUserI  == null) {
                     Logger.warn("Unable to recreate correct Event "

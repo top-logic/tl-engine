@@ -10,8 +10,6 @@ import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.util.Date;
 
-import com.top_logic.base.user.UserInterface;
-import com.top_logic.base.user.UserService;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
@@ -24,6 +22,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * The monitor event is used to publish messages of changes on the system.
@@ -55,7 +54,7 @@ public class MonitorEvent extends BusEvent {
     private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss.SSS";
 
     /** The user executing the monitorable event. */
-    private UserInterface user;
+	private Person user;
 
     /** The date, the event occured. */
     private Date date;
@@ -72,10 +71,10 @@ public class MonitorEvent extends BusEvent {
     /**
 	 * Creates a {@link MonitorEvent} with current date.
 	 * 
-	 * @see #MonitorEvent(Sender, Object, Object, UserInterface, Date, String)
+	 * @see #MonitorEvent(Sender, Object, Object, Person, Date, String)
 	 */
     public MonitorEvent (Sender aSender, Object aMessage, 
-                         Object aSource, UserInterface aUser,   
+			Object aSource, Person aUser,
                          String aType) {
        this (aSender, aMessage, aSource, aUser, new Date(), aType);
     }
@@ -98,7 +97,7 @@ public class MonitorEvent extends BusEvent {
 	 *        The type of the message to be sent.
 	 */
     public MonitorEvent (Sender aSender, Object aMessage, 
-                         Object aSource, UserInterface aUser,   
+			Object aSource, Person aUser,
                          Date aDate,     String aType) {
        super (aSender, aSender.getService (), aType, aMessage);
 
@@ -146,7 +145,7 @@ public class MonitorEvent extends BusEvent {
     /**
 	 * Setter for {@link #getUser()}
 	 */
-    protected void setUser (UserInterface aUser) {
+	protected void setUser(Person aUser) {
          this.user = aUser;
     }      
 
@@ -156,7 +155,7 @@ public class MonitorEvent extends BusEvent {
 	 * @return The user performing the action. May be <code>null</code>, e.g. when the action was
 	 *         initiated by system.
 	 */
-    public UserInterface getUser () {
+	public Person getUser() {
          return (this.user);
     }
     
@@ -257,12 +256,12 @@ public class MonitorEvent extends BusEvent {
         }
     }
     
-    public static UserInterface getUser (String aName) {
+	public static Person getUser(String aName) {
         if ("not available".equals (aName)) {
             return (null);
         }
         else {
-            return (UserService.getUser (aName));
+			return Person.byName(aName);
         }
     }    
     
@@ -275,8 +274,8 @@ public class MonitorEvent extends BusEvent {
      *          no user could be extracted.
      */
     public static String getUser (Object anObject) {
-        if (anObject instanceof UserInterface) {
-            return (((UserInterface) anObject).getUserName ());
+		if (anObject instanceof Person) {
+			return (((Person) anObject).getName());
         }
         if (anObject != null) {
             return (anObject.toString ());

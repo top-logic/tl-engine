@@ -8,141 +8,31 @@
 			comment="Benutzer anlegen"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
-					command-label="Neu..."
-					command-name="displayDialog_newPersonDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Benutzername"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Neues Benutzerkonto"
+					<parameters>
+						<parameter name="Loginname"
+							value="ThemeEditor"
 						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="ThemeEditor"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Vorname"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Neues Benutzerkonto"
+						<parameter name="Vorname"
+							value="Eddy"
 						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Eddy"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Nachname"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Neues Benutzerkonto"
+						<parameter name="Nachname"
+							value="Theme"
 						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Theme"
-					/>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler"
-					command-label="Erstellen"
-					command-name="newPerson"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
 				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Passwort ändern"
-					command-name="displayDialog_AdminChangePasswordDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Neues Passwort"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-							tab-path=""
+					<parameters>
+						<parameter name="Loginname"
+							value="ThemeEditor"
 						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="root1234"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Passwortwiederholung"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-							tab-path=""
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="root1234"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent$ApplyPasswordCommand"
-					command-label="Passwort ändern"
-					command-name="changePassword"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-					user-id="root"
-				>
-					<arguments/>
+					</parameters>
 				</action>
 			</actions>
 		</action>
@@ -337,6 +227,22 @@
 						tab-path="Administration > Berechtigungen > Benutzerrechte"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="ThemeEditor"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Berechtigungen > Benutzerrechte > Benutzerkonten"
+						/>
+					</selection-model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
@@ -390,26 +296,26 @@
 							value="ThemeEditor"
 						/>
 						<parameter name="ProcessId"
-							value="tester"
+							value="ThemeEditor"
 						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="tester"
+					user-id="ThemeEditor"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="tester"
+					user-id="ThemeEditor"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="tester"
+					user-id="ThemeEditor"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Theme Editor"
@@ -425,12 +331,12 @@
 							command-name="displayDialog_themEditorCreateThemeDialog"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 								label="ID"
@@ -445,7 +351,7 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 								label="Erweitert"
@@ -469,7 +375,7 @@
 							command-name="createTheme"
 							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateTheme"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
@@ -479,7 +385,7 @@
 							command-name="switchToAJAXEdit"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorSettingsForm"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
@@ -489,7 +395,7 @@
 							command-name="nothing"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorSettingsForm"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
@@ -500,7 +406,7 @@
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Theme Editor > Variablen"
@@ -512,12 +418,12 @@
 							command-name="displayDialog_themEditorCreateVariableDialog"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorVariablesTable"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 								label="Name"
@@ -532,7 +438,7 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 								label="Wert"
@@ -552,7 +458,7 @@
 							command-name="createThemeVariable"
 							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateVariable"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
@@ -563,7 +469,7 @@
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Theme Editor > Styles"
@@ -575,12 +481,12 @@
 							command-name="addStyleSheet"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorStylesTable"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 								label="Name der Stylesheet-Datei"
@@ -594,7 +500,7 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 							component-name="rootLayout#masterFrame"
 							label="Erstellen"
-							user-id="tester"
+							user-id="ThemeEditor"
 						/>
 					</actions>
 				</action>
@@ -603,7 +509,7 @@
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Theme Editor > Ressourcen"
@@ -615,12 +521,12 @@
 							command-name="createResourceFolder"
 							component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorFolderTree"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 								label="Verzeichnispfad"
@@ -634,7 +540,7 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 							component-name="rootLayout#masterFrame"
 							label="Erstellen"
-							user-id="tester"
+							user-id="ThemeEditor"
 						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
@@ -642,12 +548,12 @@
 							command-name="displayDialog_themEditorResourceUploadDialog"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceList"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 								label="Ressourcen-Datei"
@@ -673,7 +579,7 @@
 							command-name="upload"
 							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 							component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceUploadForm"
-							user-id="tester"
+							user-id="ThemeEditor"
 						>
 							<arguments/>
 						</action>
@@ -682,7 +588,7 @@
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 					template="script:/Nutzer/Nutzer abmelden.xml"
 					template-name-comment="Nutzer abmelden"
-					user-id="tester"
+					user-id="ThemeEditor"
 				/>
 			</actions>
 		</action>
@@ -694,54 +600,15 @@
 					comment="Benutzer löschen"
 				>
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Nutzer-loeschen-byName.xml"
+							template-name-comment="Nutzer loeschen byName"
 						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Zugänge > Benutzerkonten"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-							change-kind="ABSOLUTE"
-							user-id="root"
-						>
-							<selection>
-								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-									table="Person"
-								>
-									<attributes>
-										<attribute name="name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="ThemeEditor"
-											/>
-										</attribute>
-									</attributes>
-								</selectee>
-								<selection-state boolean="true"/>
-							</selection>
-							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-									tab-path="Administration > Zugänge > Benutzerkonten"
+							<parameters>
+								<parameter name="userName"
+									value="ThemeEditor"
 								/>
-							</selection-model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-							command-label="Löschen..."
-							command-name="deletePerson"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-							component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-							user-id="root"
-						>
-							<arguments/>
+							</parameters>
 						</action>
 					</actions>
 				</action>

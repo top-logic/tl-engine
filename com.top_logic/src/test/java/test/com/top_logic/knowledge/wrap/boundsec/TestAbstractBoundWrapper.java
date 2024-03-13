@@ -15,6 +15,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
@@ -26,7 +27,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -67,8 +67,8 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
 			ConcreteBoundWrapper boundObject = new ConcreteBoundWrapper(doc.tHandle());
                                                                     
             // Now we have the wrapper, let's test it
-            person1 = PersonManager.getManager().getPersonByName("guest_de", theKB);
-            person2 = PersonManager.getManager().getPersonByName("guest_en", theKB);
+            person1 = Person.byName(theKB, "guest_de");
+            person2 = Person.byName(theKB, "guest_en");
             role1=BoundedRole.createBoundedRole("superMan", theKB);
             role2=BoundedRole.createBoundedRole("heroOfTheDay", theKB);
             role3=BoundedRole.createBoundedRole("hotLatina", theKB);
@@ -164,6 +164,7 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
      */
     public static Test suite () {
 		Test t = new TestSuite(TestAbstractBoundWrapper.class);
+		t = new CreateDefaultTestPersons(t);
 		t = ServiceTestSetup.createSetup(t, MimeTypes.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(t);
     }

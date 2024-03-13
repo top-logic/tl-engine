@@ -11,24 +11,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.element.meta.kbbased.AbstractWrapperResolver;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.search.RevisionQuery;
-import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AbstractQueryCache;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.QueryCache;
 import com.top_logic.knowledge.service.db2.SimpleQuery;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
@@ -57,10 +52,6 @@ public class ContactFactory extends AbstractWrapperResolver {
     /** The name of the structure we use */
     public static final String STRUCTURE_NAME      = "Contacts";
 
-    /** Cache KA from Person to Contact (reverse of {@link PersonContact#PERSON_ATTR} */
-	private static final AssociationSetQuery<KnowledgeAssociation> CONTACT_ATTR = AssociationQuery.createIncomingQuery(
-            "contact", PersonContact.ASS_NAME_TO_PERSON);
-
 	private final ConcurrentHashMap<String, QueryCache<?>> _caches = new ConcurrentHashMap<>();
 
 	@Override
@@ -77,18 +68,22 @@ public class ContactFactory extends AbstractWrapperResolver {
     }
 
     /**
-     * Factory method to create a new PersonContact.
-     *
-     * @param aName the name of the new PersonContact
-     * @param aFirstname the first name of the new PersonContact
-     * @return the created PersonContact
-     */
+	 * Factory method to create a new {@link PersonContact}.
+	 *
+	 * @param aName
+	 *        The name of the new {@link PersonContact}.
+	 * @param aFirstname
+	 *        The first name of the new {@link PersonContact}. May be <code>null</code>.
+	 * @return The created {@link PersonContact}.
+	 */
     public PersonContact createNewPersonContact (String aName, String aFirstname) {
-        if (aName == null || aFirstname == null) {
-            throw new IllegalArgumentException ("Name and firstname must not be null.");
+		if (aName == null) {
+			throw new IllegalArgumentException("Name must not be null.");
         }
         PersonContact theContact = (PersonContact)createNewContact(aName, PERSON_TYPE);
-        theContact.setValue(PersonContact.ATT_FIRSTNAME, aFirstname);
+		if (aFirstname != null) {
+			theContact.setFirstName(aFirstname);
+		}
         return theContact;
     }   
 
@@ -234,7 +229,7 @@ public class ContactFactory extends AbstractWrapperResolver {
 		if (aPerson == null) {
 			return null;
 		}
-        return (PersonContact) CollectionUtil.getFirst(AbstractWrapper.resolveWrappers(aPerson, CONTACT_ATTR));
+		return (PersonContact) aPerson.getUser();
     }
 
 }

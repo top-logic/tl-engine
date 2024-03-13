@@ -17,9 +17,9 @@
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
-			command-name="switchToAJAXEdit"
-			component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-			component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+			command-name="customEdit"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 			user-id="root"
 		>
 			<arguments/>
@@ -34,7 +34,7 @@
 					label="Theme"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Benutzerkonto bearbeiten"
+						tab-path="Profil bearbeiten"
 					/>
 				</model>
 			</actual-value>
@@ -43,7 +43,7 @@
 					label="Theme"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Benutzerkonto bearbeiten"
+						tab-path="Profil bearbeiten"
 					/>
 				</context-name>
 				<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -59,21 +59,16 @@
 			command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
 			command-label="Abbrechen"
 			command-name="nothing"
-			component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-			component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 			user-id="root"
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-			command-label="Schließen"
-			command-name="closeDialogInView"
-			component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-			component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+		<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 			user-id="root"
-		>
-			<arguments/>
-		</action>
+		/>
 	</actions>
 </action>

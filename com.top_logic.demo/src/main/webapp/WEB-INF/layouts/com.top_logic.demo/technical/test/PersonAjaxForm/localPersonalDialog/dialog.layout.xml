@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_74c5a211_d5d2_4fc7_9dca_7b109eed2aab"
+	>
+		<title>
+			<title key="dynamic.abba6650-7df1-413c-99d9-fee2736b3581">
+				<en>Local personal dialog</en>
+				<de>Lokaler Personendialog</de>
+			</title>
+		</title>
+		<open-handler id="ID_53bd6142_a110_41f3_9f8c_000a4cb95361"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		>
+			<resourceKey key="dynamic.abba6650-7df1-413c-99d9-fee2736b3581">
+				<en>Local personal dialog</en>
+				<de>Lokaler Personendialog</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

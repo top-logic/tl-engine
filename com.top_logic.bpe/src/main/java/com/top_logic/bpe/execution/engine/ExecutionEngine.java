@@ -46,6 +46,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.util.TLContext;
 
 /**
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
@@ -568,7 +569,8 @@ public class ExecutionEngine {
 		activeTokens.remove(toRemove);
 		if (toRemove != null) {
 			toRemove.setFinishDate(new Date());
-			toRemove.setFinishBy(PersonManager.getManager().getCurrentPerson());
+			PersonManager r = PersonManager.getManager();
+			toRemove.setFinishBy(TLContext.currentUser());
 		}
 		if (toAdd != null) {
 			activeTokens.add(toAdd);

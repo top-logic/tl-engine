@@ -31,8 +31,7 @@ import com.top_logic.basic.time.TimeZones;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.version.Version;
-import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ReadOnlyAccessor;
@@ -438,14 +437,14 @@ public class ApplicationMonitorComponent extends FormComponent {
 	private List<Property> getLicenceInfo() {
 		final List<Property> result = new ArrayList<>();
 
-		final TLPersonManager system = (TLPersonManager) PersonManager.getManager();
 		final TLLicense license = LicenseTool.getInstance().getLicense();
 		final Formatter format = HTMLFormatter.getInstance();
 
 		int licenseFullUsers = license.getUsers();
 		int licenseRestricedUsers = license.getRestrictedUsers();
-		int systemFullUsers = system.getAllAliveFullPersons().size();
-		int systemRestricedUsers = system.getAllAliveRestrictedPersons().size();
+		List<Person> allPersons = Person.all();
+		long systemFullUsers = allPersons.stream().filter(Person.FULL_USER_FILTER).count();
+		long systemRestricedUsers = allPersons.stream().filter(Person.RESTRICTED_USER_FILTER).count();
 
 		result.add(property(PRODUCT_TYPE, LicenseTool.productType()));
 		result.add(property(LICENCE_STATE, resource(LicenseTool.licenseState(license))));

@@ -78,10 +78,23 @@ public interface TLStructuredTypeColumns {
 
 	/**
 	 * Name of an internal association implementing a {@link TLReference}.
+	 * 
+	 * @see #isSyntheticAssociationName(String)
 	 */
 	@FrameworkInternal
 	static String syntheticAssociationName(String typeName, String referenceName) {
 		return typeName + "$" + referenceName;
+	}
+
+	/**
+	 * Whether the given name is the name of an internal association implementing a
+	 * {@link TLReference}.
+	 * 
+	 * @see #syntheticAssociationName(String, String)
+	 */
+	@FrameworkInternal
+	static boolean isSyntheticAssociationName(String name) {
+		return name.indexOf('$') >= 0;
 	}
 
 }

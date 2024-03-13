@@ -346,7 +346,7 @@ public class CommentDialogComponent extends FormComponent {
                         if (theCreator != null) {
                             Person thePerson = TLContext.getContext().getCurrentPersonWrapper();
 
-                            return WrapperHistoryUtils.equalsUnversioned(theCreator, thePerson) || TLContext.isSuperUser()
+                            return WrapperHistoryUtils.equalsUnversioned(theCreator, thePerson) || TLContext.isAdmin()
                                 ? ExecutableState.EXECUTABLE
                                 : ExecutableState.NOT_EXEC_HIDDEN;
                         }

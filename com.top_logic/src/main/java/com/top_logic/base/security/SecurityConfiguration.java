@@ -5,9 +5,7 @@
  */
 package com.top_logic.base.security;
 
-import com.top_logic.base.security.authorisation.symbols.Authorisation;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.tool.boundsec.LayoutSecurityConfiguration;
 
@@ -23,12 +21,6 @@ public interface SecurityConfiguration extends ConfigurationItem {
 	 */
 	@ItemDefault
 	LayoutSecurityConfiguration getLayout();
-
-	/**
-	 * {@link Authorisation} instance of the application.
-	 */
-	@InstanceFormat
-	Authorisation getAuthorisation();
 
 }
 

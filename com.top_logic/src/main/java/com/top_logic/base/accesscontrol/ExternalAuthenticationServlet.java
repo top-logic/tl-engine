@@ -22,7 +22,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.DispatchException;
 import com.top_logic.util.Resources;
 
@@ -194,7 +193,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	 *         If the login is not valid.
 	 */
 	protected void checkUser(String domainName, String userName) throws LoginDeniedException {
-		PersonDataAccessDevice accessDevice = getAccessDevice(domainName, userName);
+		PersonDataAccessDevice accessDevice = getDataDevice(domainName, userName);
 		if (accessDevice == null) {
 			throw new LoginDeniedException("No unique data access device for user '" + userName + "'.");
 		}
@@ -217,21 +216,21 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			}
 		}
 	
-		Person user = PersonManager.getManager().getPersonByName(userName);
+		Person user = Person.byName(userName);
 		if (user == null) {
 			throw new LoginDeniedException("User '" + userName + "' does not exist.");
-		} else if (user.isAlive()) {
+		} else if (!user.isAlive()) {
+			throw new LoginDeniedException("User '" + userName + "' is not alive.");
+		} else {
 			try {
-				String personDeviceId = user.getDataAccessDeviceID();
+				String personDeviceId = user.getAuthenticationDeviceID();
 				if (!personDeviceId.equals(deviceId)) {
-					throw new LoginDeniedException("Missmatch of access device IDs, expected '" + personDeviceId
+					throw new LoginDeniedException("Missmatch of authentication device IDs, expected '" + personDeviceId
 						+ "', got '" + deviceId + "'.");
 				}
 			} catch (Exception e) {
 				Logger.error("unable to get device Id from person", e, ExternalAuthenticationServlet.class);
 			}
-		} else {
-			throw new LoginDeniedException("User '" + userName + "' is not alive.");
 		}
 	    
 		Logger.debug(
@@ -242,7 +241,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	/**
 	 * The {@link PersonDataAccessDevice} linked to the currently executing authentication method.
 	 */
-	protected PersonDataAccessDevice getAccessDevice(String domain, String userName) {
+	protected PersonDataAccessDevice getDataDevice(String domain, String userName) {
 		if (StringServices.isEmpty(userName)) {
 			Logger.debug("No user name given.", ExternalAuthenticationServlet.class);
 			return null;
@@ -369,7 +368,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	 * Calls {@link Person#getFullName()}.
 	 */
 	protected static String getLoginName(Person person) {
-		return person.getUser().getUserName();
+		return person.getName();
 	}
 
 }

@@ -6,6 +6,7 @@
 package test.com.top_logic.knowledge.journal;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.TestFactoryProxy;
@@ -53,7 +54,7 @@ class JournalTestSetup extends ThreadContextSetup {
 	static Test suite(Class<? extends Test> testClass, TestFactory factory) {
 		return KBSetup.getKBTest(testClass, new TestFactoryProxy(factory) {
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				Test innerTest = super.createSuite(testCase, suiteName);
 				innerTest = new JournalTestSetup(innerTest);
 				innerTest =

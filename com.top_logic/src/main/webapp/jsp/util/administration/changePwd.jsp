@@ -2,7 +2,6 @@
 %><%@taglib uri="basic" prefix="basic"
 %><%@page import="com.top_logic.base.accesscontrol.I18NConstants"
 %><%@page import="com.top_logic.base.accesscontrol.LoginPageServlet"
-%><%@page import="com.top_logic.base.security.password.PasswordManager"
 %><%@page import="com.top_logic.base.security.password.PasswordValidator"
 %><%@page import="com.top_logic.basic.xml.TagUtil"
 %><%@page import="com.top_logic.basic.util.ResKey"
@@ -12,26 +11,23 @@
 %><%@page import="com.top_logic.layout.ResPrefix"
 %><%@page import="com.top_logic.tool.boundsec.commandhandlers.GotoHandler"
 %><%@page import="com.top_logic.util.Resources"
-%><%
-String uid = request.getParameter("username");
-Person account = PersonManager.getManager().getPersonByName(uid);
-PasswordValidator validator = PasswordManager.getInstance().getPwdValidator();
+%><%String uid = request.getParameter("username");
+Person account = Person.byName(uid);
+PasswordValidator validator = account.getAuthenticationDevice().getPasswordValidator();
 String loginUrl = "/servlet/login";
 String contextPath = request.getContextPath();
 ResKey messageKey = (ResKey) request.getAttribute(LoginPageServlet.MESSAGE_ATTR);
 Resources res = Resources.getInstance();
 String message = messageKey == null ? null : res.getString(messageKey);
-String title = StringServices.nonNull(account.getTitle());
-String firstName = StringServices.nonNull(account.getFirstName());
-String lastName = StringServices.nonNull(account.getLastName());
+String title = StringServices.nonNull(account.getUser().getTitle());
+String firstName = StringServices.nonNull(account.getUser().getFirstName());
+String lastName = StringServices.nonNull(account.getUser().getName());
 String fullName = title + " " + firstName + " " + lastName;
-boolean pwdExpired = validator.isPasswordExpired(account);
 
 //saving goto params to restore them in formular
 String paramComponent = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_COMPONENT));
 String paramId = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_ID));
-String paramType = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_TYPE));
-%>
+String paramType = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_TYPE));%>
 <basic:html>
 	<head>
 		<meta name="viewport"

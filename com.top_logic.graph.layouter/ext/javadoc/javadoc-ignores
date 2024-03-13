@@ -1,4 +1,3 @@
-com.top_logic.graph.layouter.LayoutContext.java: Invalid camel case word 'TableInterface', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.graph.layouter.algorithm.GraphAlgorithm.java: Missing documentation: com.top_logic.graph.layouter.algorithm.GraphAlgorithm.setGraph
 com.top_logic.graph.layouter.algorithm.coordinates.horizontal.HorizontalCoordinateAlgorithm.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.HorizontalCoordinateAlgorithm.setHorizontalNodeCoordinates
 com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.alignNode

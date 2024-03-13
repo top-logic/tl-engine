@@ -51,6 +51,7 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.format.BuiltInFormats;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.ByteArrayStream;
@@ -540,7 +541,21 @@ public class DynamicComponentDefinition {
 		switch (property.kind()) {
 			case DERIVED: {
 				Object value = parameters.value(property);
-				inlineArguments.put(propertyName, new StringValue(propertyName, value == null ? "" : value.toString()));
+				String stringValue;
+				if (value == null) {
+					stringValue = "";
+				} else {
+					// value may have primitive type for which a ConfigurationValueProvider may
+					// exist.
+					ConfigurationValueProvider primitiveValueProvider =
+						BuiltInFormats.getPrimitiveValueProvider(value.getClass());
+					if (primitiveValueProvider != null) {
+						stringValue = primitiveValueProvider.getSpecification(value);
+					} else {
+						stringValue = value.toString();
+					}
+				}
+				inlineArguments.put(propertyName, new StringValue(propertyName, stringValue));
 				break;
 			}
 			case PLAIN: {

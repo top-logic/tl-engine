@@ -17,6 +17,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 /**
  * Helper to journal Document events
@@ -69,8 +70,9 @@ public class DocumentJournalSupport {
                     JournalEntry theEntry  = new JournalEntryImpl(KBUtils.getWrappedObjectName(((Wrapper)aJournallable)), theMOName, 1);
                     String       theDocMsg = Resources.getInstance().getString(I18NConstants.DOCUMENT_EVENT_TYPES.key(aType)) + " " + theDocName + " " + aVersion;
                     theEntry.addAttribute(new MessageJournalAttributeEntryImpl(theDocMsg, theMOName, "read", theDocMsg));
+					PersonManager r = PersonManager.getManager();
                     
-                    JournalLine  theLine   = new JournalLine(PersonManager.getManager().getCurrentPerson().getName(), 1);
+                    JournalLine  theLine   = new JournalLine(TLContext.currentUser().getName(), 1);
                     theLine.add(theEntry);
                     
                     JournalManager.getInstance().journal(theLine);

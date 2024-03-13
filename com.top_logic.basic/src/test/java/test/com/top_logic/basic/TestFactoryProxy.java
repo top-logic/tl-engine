@@ -6,6 +6,7 @@
 package test.com.top_logic.basic;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 /**
  * Proxy for a TestFactory.
@@ -24,7 +25,7 @@ public class TestFactoryProxy implements TestFactory {
 	}
 
 	@Override
-	public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+	public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 		return _innerFactory.createSuite(testCase, suiteName);
 	}
 

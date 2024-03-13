@@ -6,6 +6,7 @@
 package test.com.top_logic.basic;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 /**
  * Factory for test suites.
@@ -24,6 +25,6 @@ public interface TestFactory {
 	 * 
 	 * @return a test case
 	 */
-	Test createSuite(Class<? extends Test> testCase, String suiteName);
+	Test createSuite(Class<? extends TestCase> testCase, String suiteName);
 
 }

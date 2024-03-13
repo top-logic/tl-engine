@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
@@ -42,6 +44,11 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 		@Name(PartConfig.TYPE_SPEC)
 		QualifiedTypeName getType();
 
+		/**
+		 * Setter for {@link #getType()}
+		 */
+		void setType(QualifiedTypeName value);
+
 	}
 
 	private Util _util;
@@ -60,16 +67,18 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			internalDoMigration(log, connection, tlModel);
+			return true;
 		} catch (Exception ex) {
 			log.error("Creating part migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
 		_util.createTLReference(log,
@@ -80,6 +89,10 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 			getConfig().canNavigate(),
 			getConfig().getHistoryType(), getConfig());
 
+		MigrationUtils.createReference(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
+			nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
+			nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
+			nullIfUnset(Config.HISTORY_TYPE), getConfig(), null);
 		log.info("Created reference " + _util.qualifiedName(partName));
 	}
 

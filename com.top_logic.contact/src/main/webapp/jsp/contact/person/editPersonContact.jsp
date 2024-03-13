@@ -30,8 +30,8 @@ com.top_logic.basic.xml.TagWriter"
 			<meta:group>
 				<form:groupCell titleKeySuffix="basicAttributes">
 					<form:descriptionContainer>
-						<meta:inputCell name="<%=PersonContact.ATT_TITLE%>"/>
-						<meta:inputCell name="<%=PersonContact.ATT_FIRSTNAME%>"/>
+						<meta:inputCell name="<%=PersonContact.TITLE%>"/>
+						<meta:inputCell name="<%=PersonContact.FIRST_NAME%>"/>
 						<meta:inputCell name="<%=PersonContact.NAME_ATTRIBUTE%>"/>
 					</form:descriptionContainer>
 
@@ -56,24 +56,24 @@ com.top_logic.basic.xml.TagWriter"
 								<form:popup name="<%=EditPersonContactComponent.PARAM_REPRESENTATIVES%>"/>
 							</form:descriptionCell>
 						<%}%>
-						<meta:inputCell name="<%=PersonContact.ATT_POSITION%>"/>
+						<meta:inputCell name="<%=PersonContact.POSITION%>"/>
 					</form:descriptionContainer>
 				</form:groupCell>
 
 				<form:groupCell titleKeySuffix="contactAttributes">
 					<form:descriptionContainer>
-						<meta:inputCell name="<%=PersonContact.ATT_PHONE_MOBILE%>"/>
-						<meta:inputCell name="<%=PersonContact.ATT_PHONE_OFFICE%>"/>
-						<meta:inputCell name="<%=PersonContact.ATT_PHONE_PRIVATE%>"/>
+						<meta:inputCell name="<%=PersonContact.PHONE_MOBILE%>"/>
+						<meta:inputCell name="<%=PersonContact.PHONE%>"/>
+						<meta:inputCell name="<%=PersonContact.PHONE_PRIVATE%>"/>
 					</form:descriptionContainer>
 
 					<form:descriptionContainer>
-						<meta:inputCell name="<%=PersonContact.ATT_BOSS%>"/>
-						<meta:inputCell name="<%=PersonContact.ATT_COMPANY%>"/>
-						<meta:inputCell name="<%=PersonContact.ATT_FAX%>"/>
+						<meta:inputCell name="<%=PersonContact.BOSS%>"/>
+						<meta:inputCell name="<%=PersonContact.COMPANY%>"/>
+						<meta:inputCell name="<%=PersonContact.FAX%>"/>
 					</form:descriptionContainer>
 
-					<meta:inputCell name="<%=PersonContact.ATT_MAIL%>"/>
+					<meta:inputCell name="<%=PersonContact.EMAIL%>"/>
 
 					<meta:input name="<%=PersonContact.REMARKS_ATTRIBUTE %>"
 						textareaCols="116"

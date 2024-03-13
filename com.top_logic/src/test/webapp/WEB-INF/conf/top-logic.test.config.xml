@@ -70,14 +70,6 @@
 			/>
 		</config>
 	
-		<config service-class="com.top_logic.dob.persist.DataManager">
-			<instance class="com.top_logic.dob.persist.EncryptedDataManager"
-				algorithm="AES"
-				key="5ef76046a5915196aa6ff8daf87c97e3"
-				connection-pool="default"
-			/>
-		</config>
-	
 		<config service-class="com.top_logic.knowledge.journal.JournalManager">
 			<instance class="com.top_logic.knowledge.journal.JournalManager" 
 				connection-pool="default"
@@ -323,16 +315,12 @@
 					<handler id="assistentBackward" class="com.top_logic.tool.boundsec.assistent.commandhandler.BackwardAssistentCommandHandler"/>
 					<handler id="assistentCancel" class="com.top_logic.tool.boundsec.assistent.commandhandler.CancelAssistentCommandHandler"/>
 					<handler id="assistentFinish" class="com.top_logic.tool.boundsec.assistent.commandhandler.FinishAssistentCommandHandler"/>
-					<handler id="applyPerson" class="com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler"/>
-					<handler id="deletePerson" class="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"/>
-					<handler id="newPerson" class="com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler"/>
 					<handler id="applyRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$ApplyRoleCommand"/>
 					<handler id="deleteRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"/>
 					<handler id="newRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleCommand"/>
 					<handler id="applyPersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$ApplyPersonGroupCommand"/>
 					<handler id="savePersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"/>
 					<handler id="switchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"/>
-					<handler id="refreshPersonsCommand" class="com.top_logic.knowledge.gui.layout.person.RefreshPersonsCommandHandler"/>
 					
 					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"/>
 					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"/>
@@ -513,7 +501,6 @@
 						</task>
 					</task>
 				</tasks>
-				<kb-tasks>EMailTask</kb-tasks>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.knowledge.service.KnowledgeBaseFactory">
@@ -528,21 +515,6 @@
 				<schemes>
 					<scheme class="test.com.top_logic.layout.scripting.recorder.ref.FakeModelNamingScheme"/>
 				</schemes>
-			</instance>
-		</config>
-		
-        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
-			<instance>
-				<security-devices>
-					<security-device 
-						id="dbSecurity"
-					>
-						<mappings>
-							<mapping key="genericMapping" value="/WEB-INF/database/bos/genericMapping.properties"/>
-							<mapping key="person" value="/WEB-INF/database/bos/person.properties"/>
-						</mappings>
-					</security-device>
-				</security-devices>
 			</instance>
 		</config>
 		
@@ -593,8 +565,6 @@
 						<declaration resource="webinf://kbase/TestJournalMeta.xml"/>
 					</declarations>
 					<data config:override="true">
-						<definition resource="webinf://kbase/KBDataRoot.xml"/>
-						<definition resource="webinf://kbase/KBDataTestAccounts.xml"/>
 						<definition resource="webinf://kbase/KBDataUnit.xml"/>
 						<definition resource="webinf://kbase/KBDataTestCurrency.xml"/>
 						<definition resource="webinf://kbase/KBDataTest.xml"/>

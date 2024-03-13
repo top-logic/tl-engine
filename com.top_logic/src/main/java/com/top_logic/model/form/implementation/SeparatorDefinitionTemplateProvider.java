@@ -62,7 +62,7 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		boolean visible = getConfig() != null ? getConfig().getVisible().booleanValue() : true;
 		String visibleCss = visible ? " visible" : "";
 
@@ -70,7 +70,7 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 

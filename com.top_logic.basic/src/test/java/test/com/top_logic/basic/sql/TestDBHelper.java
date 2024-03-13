@@ -28,6 +28,7 @@ import java.util.List;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -1403,7 +1404,7 @@ public class TestDBHelper extends AbstractConnectionTest {
     		fac = new TestFactory() {
     			
     			@Override
-    			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+    			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
     				return TestSuite.createTest(testCase, "testSpecialDateFunctions");
     			}
     		};

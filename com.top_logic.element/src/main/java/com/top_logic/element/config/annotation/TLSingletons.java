@@ -23,9 +23,12 @@ import com.top_logic.model.config.TLModuleAnnotation;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@TagName("singletons")
+@TagName(TLSingletons.TAG_NAME)
 @InApp
 public interface TLSingletons extends TLModuleAnnotation {
+
+	/** Tag name for {@link TLSingletons} annotation. */
+	String TAG_NAME = "singletons";
 
 	/** Property name of {@link #getSingletons()}. */
 	String SINGLETONS = "singletons";

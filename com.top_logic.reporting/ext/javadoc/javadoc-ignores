@@ -1021,12 +1021,6 @@ com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation:
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.FIELD_PREFIX
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.FIELD_TABLE
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.GOTO_HANDLER_ID
-com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.GRAD0
-com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.GRAD1
-com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.GRAD2
-com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.GRAD3
-com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.GRAD4
-com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.GRADIENT_COLORS
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.PAYMENT_ACCUMULATED
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.PROVIDER
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.QUERY_SELECTION_FIELD
@@ -1037,7 +1031,6 @@ com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation:
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.SHOW_LABELS_FIELD
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.X_AXIS_OPTIONS_I18N_KEY
 com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.Y_AXIS_OPTIONS_I18N_KEY
-com.top_logic.reporting.report.util.ReportConstants.java: Missing documentation: com.top_logic.reporting.report.util.ReportConstants.theme
 com.top_logic.reporting.report.util.ReportUtilities.java: Invalid camel case word 'ReportUtilities', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.reporting.report.util.ReportUtilities.java: Invalid camel case word 'TimeSeriesChartConfigurator', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.reporting.report.util.ReportUtilities.java: Missing documentation: com.top_logic.reporting.report.util.ReportUtilities.PATH_DELETE_IMG

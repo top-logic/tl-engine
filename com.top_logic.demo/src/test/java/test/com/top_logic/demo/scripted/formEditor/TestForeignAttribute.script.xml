@@ -8,6 +8,22 @@
 			comment="Setup"
 		>
 			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="fcl"
+						/>
+						<parameter name="Vorname"
+							value="Fred"
+						/>
+						<parameter name="Nachname"
+							value="Clever"
+						/>
+					</parameters>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					comment="Create type"
 				>
@@ -143,7 +159,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="Personen"
+										label="Person"
 									/>
 								</values>
 							</value>
@@ -680,7 +696,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="Super, Administrator"
+										label="root"
 									/>
 								</values>
 							</value>
@@ -722,7 +738,7 @@
 								<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 									<values>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-											label="Super, Administrator"
+											label="root"
 										/>
 									</values>
 								</local-name>
@@ -732,7 +748,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Fach. Administration > Personen"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -747,8 +763,7 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
-									tab-path="Administration > Fach. Administration > Personen"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
 								/>
 							</selection-model-name>
 						</action>
@@ -762,7 +777,7 @@
 									label="Vorgesetzter"
 								>
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Fach. Administration > Personen > Person bearbeiten"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 									/>
 								</model>
 							</actual-value>
@@ -771,13 +786,13 @@
 									label="Vorgesetzter"
 								>
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Fach. Administration > Personen > Person bearbeiten"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 									/>
 								</context-name>
 								<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 									<values>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-											label="Super, Administrator"
+											label="root"
 										/>
 									</values>
 								</local-name>
@@ -786,9 +801,9 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
-							component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -800,7 +815,7 @@
 								label="Vorgesetzter"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Fach. Administration > Personen > Person bearbeiten"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -815,8 +830,8 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
-							component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -897,9 +912,9 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
-							component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -911,7 +926,7 @@
 								label="Vorgesetzter"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Fach. Administration > Personen > Person bearbeiten"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
@@ -920,8 +935,8 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
-							component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -1175,6 +1190,16 @@
 						/>
 						<parameter name="name"
 							value="TestForeignAttribute"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName"
+							value="fcl"
 						/>
 					</parameters>
 				</action>

@@ -270,7 +270,7 @@ public class CreateModelPatch {
 
 		@Override
 		public Void visit(Update<? extends TLClassPart> op, Void arg) {
-			addPartUpdate(op.getLeft(), op.getRight());
+			addPartUpdate(op.getLeft(), op.getRight(), op.getRightSuccessor());
 			return null;
 		}
 
@@ -472,7 +472,7 @@ public class CreateModelPatch {
 
 	final void addPatchEnumeration(TLEnumeration model, TLEnumeration other) {
 		List<DiffOp<TLClassifier>> diff =
-			CollectionDiff.diffList(TLNamedPart::getName, model.getClassifiers(), other.getClassifiers());
+			CreateModelPatch.diffList(model.getClassifiers(), other.getClassifiers());
 
 		for (DiffOp<TLClassifier> op : diff) {
 			op.visit(_classifiersDiff, null);
@@ -512,14 +512,11 @@ public class CreateModelPatch {
 		}
 	}
 
-	void addPartUpdate(TLStructuredTypePart left, TLStructuredTypePart right) {
+	void addPartUpdate(TLStructuredTypePart left, TLStructuredTypePart right, TLClassPart rightSuccessor) {
 		if (!isCompatiblePart(left, right)) {
 			delete(left);
 
-			List<? extends TLStructuredTypePart> localParts = right.getOwner().getLocalParts();
-			int index = localParts.indexOf(right);
-			TLStructuredTypePart before = index < localParts.size() - 1 ? localParts.get(index + 1) : null;
-			createStructuredTypePart(right, before);
+			createStructuredTypePart(right, rightSuccessor);
 			return;
 		}
 
@@ -538,7 +535,9 @@ public class CreateModelPatch {
 
 		MoveStructuredTypePart move = TypedConfiguration.newConfigItem(MoveStructuredTypePart.class);
 		move.setPart(TLModelUtil.qualifiedName(left));
-		move.setBefore(before == null ? null : before.getName());
+		if (before != null) {
+			move.setBefore(before.getName());
+		}
 		addDiff(move);
 	}
 
@@ -686,14 +685,16 @@ public class CreateModelPatch {
 		CreateStructuredTypePart result = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
 		result.setType(TLModelUtil.qualifiedName(model.getOwner()));
 		result.setPart((PartConfig) model.visit(_configExtractor, null));
-		result.setBefore(before == null ? null : before.getName());
+		if (before != null) {
+			result.setBefore(before.getName());
+		}
 		addDiff(result);
 	}
 
 	final void createClassifier(TLClassifier created, TLClassifier before) {
 		CreateClassifier result = TypedConfiguration.newConfigItem(CreateClassifier.class);
 		result.setType(TLModelUtil.qualifiedName(created.getOwner()));
-		result.setClassifier(_configExtractor.visitClassifier(created, null));
+		result.setClassifierConfig(_configExtractor.visitClassifier(created, null));
 		result.setBefore(before == null ? null : before.getName());
 		addDiff(result);
 	}

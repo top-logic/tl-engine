@@ -46,6 +46,7 @@ import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link DefaultEditAttributedComponent} that displays the configured attributes for a given
@@ -170,7 +171,8 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			private Person _currentPerson;
 
 			public ActorFilter() {
-				_currentPerson = PersonManager.getManager().getCurrentPerson();
+				PersonManager r = PersonManager.getManager();
+				_currentPerson = TLContext.currentUser();
 			}
 
 			@Override

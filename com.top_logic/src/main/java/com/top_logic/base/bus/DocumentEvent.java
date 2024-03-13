@@ -11,9 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.base.security.UserSecurityException;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.event.bus.Sender;
 import com.top_logic.knowledge.objects.InvalidLinkException;
@@ -23,6 +21,8 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.TLContext;
 
 /**
  * The Event which should be used to make Changes of Documents available
@@ -42,7 +42,7 @@ public class DocumentEvent extends MonitorEvent {
      */
     private DocumentEvent (Sender aSender, 
                            Wrapper aDocument, 
-                           UserInterface aUser,   
+			Person aUser,
 			String aType) {
 		super(aSender, aDocument, getSourceWrapper(aDocument), aUser, aType);
 
@@ -67,7 +67,7 @@ public class DocumentEvent extends MonitorEvent {
 	 *        The type of the emssage to be sent.
 	 */
     public DocumentEvent (Sender aSender, Wrapper aDocument, 
-                         Wrapper aWebfolder, UserInterface aUser,   
+			Wrapper aWebfolder, Person aUser,
                          Date aDate,     String aType) {
 		super(aSender, aDocument, aWebfolder, aUser, aDate, aType);
        // Logger.debug("DocumentEvent created.",this);
@@ -111,7 +111,7 @@ public class DocumentEvent extends MonitorEvent {
                                                   String kindOfEvent) 
                                                 throws UserSecurityException, 
                                                        Exception {
-        UserInterface aUser = SecurityContext.getCurrentUser ();
+		Person aUser = TLContext.currentUser();
 
         if (aUser == null) {
             throw new UserSecurityException ("No current user set in " +

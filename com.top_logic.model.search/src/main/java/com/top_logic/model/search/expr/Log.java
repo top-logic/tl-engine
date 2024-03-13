@@ -60,7 +60,7 @@ public class Log extends GenericMethod {
 		}
 		Person user = context.getCurrentPersonWrapper();
 		if (user != null) {
-			return user.getUser().getUserName();
+			return user.getName();
 		}
 		return context.getContextId();
 	}

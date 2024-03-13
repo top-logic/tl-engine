@@ -36,7 +36,6 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * DB accessor frontend for managing {@link ExternalContact}s.
@@ -261,7 +260,7 @@ public class ExternalContacts implements Reloadable {
     	
     	String theUNo = aContact.getUNumber();
     	if (!StringServices.isEmpty(theUNo)) {
-    		return PersonManager.getManager().getPersonByName(theUNo);
+    		return Person.byName(theUNo);
     	}
     	
     	return null;

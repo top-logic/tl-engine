@@ -9,6 +9,7 @@ import java.sql.SQLException;
 
 import junit.extensions.ActiveTestSuite;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.TestFactory;
@@ -27,7 +28,7 @@ public class TestBLOBDataManager extends AbstractDataManagerTest {
 
     private static final TestFactory TEST_FACTORY = new TestFactory() {
 		@Override
-		public Test createSuite(Class testCase, String suiteName) {
+		public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 			TestSuite suite = new ActiveTestSuite(suiteName);
 	        suite.addTestSuite(TestBLOBDataManager.class);
 	        suite.addTest(TestUtils.tryEnrichTestnames(new TestBLOBDataManager("testMassStore"), "ActiveTestSuite"));

@@ -16,11 +16,9 @@
 			template-name-comment="Create A"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="MultiUser"
-					/>
-				</parameter>
+				<parameter name="Name"
+					value="MultiUser"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -28,83 +26,32 @@
 			template-name-comment="Nutzer Anlegen"
 		>
 			<parameters>
-				<parameter name="ergebnis">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="foobar"
-					/>
-				</parameter>
-				<parameter name="Loginname">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="foobar"
-					/>
-				</parameter>
-				<parameter name="Vorname">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="foo"
-					/>
-				</parameter>
-				<parameter name="Nachname">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="bar"
-					/>
-				</parameter>
+				<parameter name="ergebnis"
+					value="foobar"
+				/>
+				<parameter name="Loginname"
+					value="foobar"
+				/>
+				<parameter name="Vorname"
+					value="foo"
+				/>
+				<parameter name="Nachname"
+					value="bar"
+				/>
 			</parameters>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Setze Passwort"
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Nutzer/Passwort setzen.xml"
+			template-name-comment="Passwort setzen"
 		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Passwort ändern"
-					command-name="displayDialog_AdminChangePasswordDialog"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Neues Passwort"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-							tab-path=""
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="foobar123"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Passwortwiederholung"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-							tab-path=""
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="foobar123"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent$ApplyPasswordCommand"
-					command-label="Passwort ändern"
-					command-name="changePassword"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-			</actions>
+			<parameters>
+				<parameter name="Loginname"
+					value="foobar"
+				/>
+				<parameter name="Passwort"
+					value="foobar123"
+				/>
+			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Rollenprofil"
@@ -405,64 +352,14 @@
 		<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
 			user-id="foobar1"
 		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Delete user"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Zugänge"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
-							table="Person"
-						>
-							<attributes>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="foobar"
-									/>
-								</attribute>
-							</attributes>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
-							tab-path="Administration > Zugänge > Benutzerkonten"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-					command-label="Löschen..."
-					command-name="deletePerson"
-					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
-					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-			</actions>
-		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="script:/Variable/Action-Variable-Loeschen.xml"
-			template-name-comment="Variable Loeschen"
+			template="script:Nutzer/Nutzer-loeschen-byName.xml"
+			template-name-comment="Nutzer loeschen byName"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="foobar"
-					/>
-				</parameter>
+				<parameter name="userName"
+					value="foobar"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -470,11 +367,19 @@
 			template-name-comment="Variable Loeschen"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="MultiUser"
-					/>
-				</parameter>
+				<parameter name="Name"
+					value="foobar"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Variable/Action-Variable-Loeschen.xml"
+			template-name-comment="Variable Loeschen"
+		>
+			<parameters>
+				<parameter name="Name"
+					value="MultiUser"
+				/>
 			</parameters>
 		</action>
 	</actions>

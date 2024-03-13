@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -12,24 +14,15 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
-import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.func.misc.AlwaysFalse;
 import com.top_logic.basic.func.misc.AlwaysNull;
 import com.top_logic.basic.func.misc.AlwaysTrue;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.dob.meta.MOReference.HistoryType;
-import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLReference;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
@@ -44,25 +37,15 @@ import com.top_logic.model.migration.data.TypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<UpdateTLReferenceProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLReferenceProcessor}.
 	 */
 	@TagName("update-reference")
 	public interface Config extends PolymorphicConfiguration<UpdateTLReferenceProcessor>,
-			AnnotatedConfig<TLAttributeAnnotation> {
-
-		/**
-		 * Qualified name of the {@link TLReference}.
-		 */
-		@Mandatory
-		QualifiedPartName getName();
-
-		/**
-		 * New name of the reference, including new module and owner.
-		 */
-		QualifiedPartName getNewName();
+			UpdateTLAssociationEndProcessor.UpdateEndAspectConfig,
+			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
 
 		/**
 		 * Qualified name of the target type.
@@ -70,57 +53,6 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 		 * @see PartConfig#getTypeSpec()
 		 */
 		QualifiedTypeName getNewType();
-
-		/**
-		 * See {@link PartConfig#getMandatory()}
-		 */
-		@Name(PartConfig.MANDATORY)
-		Boolean isMandatory();
-
-		/**
-		 * See {@link EndAspect#isComposite()}.
-		 */
-		@Name(EndAspect.COMPOSITE_PROPERTY)
-		Boolean isComposite();
-
-		/**
-		 * See {@link EndAspect#isAggregate()}.
-		 */
-		@Name(EndAspect.AGGREGATE_PROPERTY)
-		Boolean isAggregate();
-
-		/**
-		 * See {@link PartConfig#isMultiple()}.
-		 */
-		@Name(PartConfig.MULTIPLE_PROPERTY)
-		Boolean isMultiple();
-
-		/**
-		 * See {@link PartConfig#isBag()}.
-		 */
-		@Name(PartConfig.BAG_PROPERTY)
-		Boolean isBag();
-
-		/**
-		 * See {@link PartConfig#isOrdered()}.
-		 */
-		@Name(PartConfig.ORDERED_PROPERTY)
-		Boolean isOrdered();
-
-		/**
-		 * See {@link EndAspect#canNavigate()}.
-		 */
-		@Name(EndAspect.NAVIGATE_PROPERTY)
-		Boolean canNavigate();
-
-		/**
-		 * See {@link EndAspect#getHistoryType()}.
-		 */
-		@Name(EndAspect.HISTORY_TYPE_PROPERTY)
-		@NullDefault
-		@Nullable
-		@Label("Historization")
-		HistoryType getHistoryType();
 
 		/**
 		 * Whether the reference to update is an inverse reference.
@@ -169,16 +101,17 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Updating reference migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName referenceName = getConfig().getName();
 		Reference reference;
 		try {
@@ -188,7 +121,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				"Unable to find reference to update " + _util.qualifiedName(referenceName) + " at "
 					+ getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 		Type newType;
 		if (getConfig().getNewType() == null) {
@@ -211,6 +144,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 		} else {
 			newReferenceName = newName.getPartName();
 		}
+		boolean updateModelBaseline;
 		if (!getConfig().isInverse()) {
 			Type newOwner;
 			if (newName == null || (referenceName.getModuleName().equals(newName.getModuleName())
@@ -225,6 +159,16 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
+			if (getConfig().isSkipModelBaselineChange()) {
+				updateModelBaseline = false;
+			} else {
+				MigrationUtils.updateReference(log, tlModel,
+					referenceName, getConfig().getNewName(), getConfig().getNewType(),
+					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
+					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
+					getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+				updateModelBaseline = true;
+			}
 			log.info("Updated reference " + _util.qualifiedName(referenceName));
 		} else {
 			_util.updateInverseReference(connection,
@@ -233,8 +177,19 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
+			if (getConfig().isSkipModelBaselineChange()) {
+				updateModelBaseline = false;
+			} else {
+				MigrationUtils.updateInverseReference(log, tlModel,
+					referenceName, newReferenceName,
+					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
+					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
+					getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+				updateModelBaseline = true;
+			}
 			log.info("Updated inverse reference " + _util.qualifiedName(referenceName));
 		}
+		return updateModelBaseline;
 
 	}
 

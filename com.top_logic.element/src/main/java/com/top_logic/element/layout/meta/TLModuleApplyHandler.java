@@ -73,10 +73,7 @@ public class TLModuleApplyHandler extends DeclarativeApplyHandler<EditModel, TLM
 
 		if (!patch.isEmpty()) {
 			Protocol log = new LogProtocol(TLModuleApplyHandler.class);
-			ApplyModelPatch apply =
-				new ApplyModelPatch(log, module.getModel(), ModelService.getInstance().getFactory());
-			apply.applyPatch(patch);
-			apply.complete();
+			ApplyModelPatch.applyPatch(log, module.getModel(), ModelService.getInstance().getFactory(), patch);
 			log.checkErrors();
 		}
 

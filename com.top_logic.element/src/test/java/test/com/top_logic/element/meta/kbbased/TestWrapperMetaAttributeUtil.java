@@ -8,6 +8,7 @@ package test.com.top_logic.element.meta.kbbased;
 import java.util.List;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -129,7 +130,7 @@ public class TestWrapperMetaAttributeUtil extends BasicTestCase {
 		TestFactory f = new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return new Setup(new TestSuite(testCase));
 			}
 		};

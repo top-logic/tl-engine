@@ -702,9 +702,13 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
-				<reference name="person"
+				<reference name="account"
 					kind="forwards"
 					type="tl.accounts:Person"
+				/>
+				<reference name="contact"
+					kind="forwards"
+					type="Contacts:PersonContact"
 				/>
 				<reference name="containment"
 					composite="true"
@@ -2225,7 +2229,7 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
-				<property name="person"
+				<property name="account"
 					type="tl.accounts:Person"
 				>
 					<annotations>
@@ -2234,7 +2238,23 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="person"/>
+										<get-value attribute="account"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="contact"
+					type="Contacts:PersonContact"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="contact"/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>

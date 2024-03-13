@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		defaultFor="tl.accounts:Person"
+		helpID="ID_b8e7cb8b_d58e_4990_bddd_8fea1d1937ef"
+		with-security-configuration="true"
+	>
+		<title>
+			<title key="dynamic.ca8b7df3-e7a4-4e1b-8898-cec1b4115464">
+				<en>Person</en>
+				<de>Person</de>
+			</title>
+		</title>
+		<open-handler id="ID_148a929d_8675_4da6_be4b_ba247b823a51"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		>
+			<resourceKey key="dynamic.ca8b7df3-e7a4-4e1b-8898-cec1b4115464">
+				<en>Person</en>
+				<de>Person</de>
+			</resourceKey>
+		</open-handler>
+		<security-label key="dynamic.0a640b3d-d901-499a-9aff-22ce27b42c75">
+			<en>Person</en>
+			<de>Person</de>
+		</security-label>
+		<components>
+			<layout-reference resource="admin/security/accounts/defaultFor/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

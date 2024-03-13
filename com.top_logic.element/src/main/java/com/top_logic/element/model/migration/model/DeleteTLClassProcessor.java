@@ -9,6 +9,8 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -22,12 +24,12 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedTypeName;
@@ -39,19 +41,25 @@ import com.top_logic.model.migration.data.Type;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLClassProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link DeleteTLClassProcessor}.
 	 */
 	@TagName("delete-class")
-	public interface Config extends PolymorphicConfiguration<DeleteTLClassProcessor> {
+	public interface Config extends PolymorphicConfiguration<DeleteTLClassProcessor>,
+			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
 
 		/**
 		 * Qualified name of the {@link TLClass} to delete.
 		 */
 		@Mandatory
 		QualifiedTypeName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
 
 		/**
 		 * Whether it is a failure if the class is not empty.
@@ -85,7 +93,8 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 		super(context, config);
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws SQLException, MigrationException {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel)
+			throws SQLException, MigrationException {
 		QualifiedTypeName classToDelete = getConfig().getName();
 
 		Type type;
@@ -96,7 +105,7 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 				"No class with name '" + _util.qualifiedName(classToDelete) + "' to delete available at "
 					+ getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 
 		_util.deleteTLType(connection, type, getConfig().isFailOnExistingAttributes());
@@ -104,32 +113,41 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 
 		if (getConfig().getTypeTable() != null) {
 			CompiledStatement delete = query(
-			parameters(
-				parameterDef(DBType.LONG, "branch"),
-				parameterDef(DBType.ID, "type")),
-			delete(
-				table(SQLH.mangleDBName(getConfig().getTypeTable())),
-				and(
-					eqSQL(
-						column(BasicTypes.BRANCH_DB_NAME),
-						parameter(DBType.LONG, "branch")),
-					eqSQL(
+				parameters(
+					_util.branchParamDef(),
+					parameterDef(DBType.ID, "type")),
+				delete(
+					table(SQLH.mangleDBName(getConfig().getTypeTable())),
+					and(
+						_util.eqBranch(),
+						eqSQL(
 							column(_util.refID(PersistentObject.TYPE_REF)),
-						parameter(DBType.ID, "type"))))).toSql(connection.getSQLDialect());
+							parameter(DBType.ID, "type"))))).toSql(connection.getSQLDialect());
 
 			int deletedRows = delete.executeUpdate(connection, type.getBranch(), type.getID());
 			log.info("Deleted " + deletedRows + " instances of type '" + _util.toString(type) + "' from table "
 				+ getConfig().getTypeTable() + ".");
 		}
+		if (getConfig().isSkipModelBaselineChange()) {
+			return false;
+		}
+		if (type.getKind() == Type.Kind.ASSOCIATION) {
+			if (TLStructuredTypeColumns.isSyntheticAssociationName(type.getTypeName())) {
+				// Synthetic associations are not contained in the model baseline.
+				return false;
+			}
+		}
+		return MigrationUtils.deleteType(log, tlModel, classToDelete);
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Delete tl class migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 

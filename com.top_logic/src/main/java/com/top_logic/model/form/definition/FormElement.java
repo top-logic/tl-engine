@@ -12,20 +12,20 @@ import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
-import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.model.form.implementation.FormEditorTemplateProvider;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Definition of a form content.
  * 
  * <p>
- * A {@link FormElement} is rendered through its {@link FormElementTemplateProvider} implementation.
+ * A {@link FormElement} is rendered through its {@link FormEditorTemplateProvider} implementation.
  * </p>
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 @Abstract
-public interface FormElement<T extends FormElementTemplateProvider>
+public interface FormElement<T extends FormEditorTemplateProvider>
 		extends PolymorphicConfiguration<T>, ConfigPart, FormContextDefinition {
 
 	/**

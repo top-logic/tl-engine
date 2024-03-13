@@ -12,10 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
-import com.top_logic.base.security.SecurityContext;
-import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -32,7 +29,6 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.monitor.FailedLogin;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -67,12 +63,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		 */
 		@Name("log-failed-logins")
 		boolean getLogFailedLogins();
-
-		/**
-		 * The {@link PasswordManager} to use.
-		 */
-		@Name("password-manager")
-		PolymorphicConfiguration<PasswordManager> getPasswordManager();
 
 		/**
 		 * The {@link PasswordHashingService} to use.
@@ -225,8 +215,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	/** Flag indicating to log failed logins. */
 	private boolean logFailedLogins = false;
 
-	private final PasswordManager _passwordManager;
-
 	private final PasswordHashingService _passwordHashing;
 
 	private final ComponentName _componentLeavingMaintenanceMode;
@@ -239,7 +227,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	public Login(InstantiationContext context, Config config) {
 		super(context, config);
 		logFailedLogins = config.getLogFailedLogins();
-		_passwordManager = context.getInstance(config.getPasswordManager());
 		_passwordHashing = context.getInstance(config.getPasswordHashing());
 
 		_componentLeavingMaintenanceMode = config.getComponentLeavingMaintenanceMode();
@@ -254,13 +241,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			}
 		}
 		_commandGroupLeavingMaintenanceMode = leavingCommandGoup;
-	}
-
-	/**
-	 * The {@link PasswordManager} to use.
-	 */
-	public PasswordManager getPasswordManager() {
-		return _passwordManager;
 	}
 
     /**
@@ -303,7 +283,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			}
 			return noLogin(userName, aRequest, reason);
 		}
-		Person thePerson = TLPersonManager.getManager().getPersonByName(userName);
+		Person thePerson = Person.byName(userName);
 		if (thePerson == null || !thePerson.isAlive()) {
 			// no such person known to the system or person not longer alive
 			return this.noLogin(userName, aRequest, FailedLogin.REASON_UNKNOWN_PERSON);
@@ -335,10 +315,9 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	public void loginFromExternalAuth(HttpServletRequest aRequest, HttpServletResponse response, Person aUser)
 			throws Exception {
         boolean debug = Logger.isDebugEnabled(this);
-		String theName = aUser.getDataAccessDeviceID() + "\\" + aUser.getUser().getUserName();
 		checkAllowedGroups(aUser);
         if (debug) {
-            Logger.debug("Get new Session for user "+ theName, this);
+			Logger.debug("Get new Session for user " + aUser.getName(), this);
         }
         // always get a new session for the User...
         SessionService.getInstance().loginUser(aRequest, response, aUser);
@@ -366,24 +345,15 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	private AuthenticationDevice getAuthenticationDevice(LoginCredentials credentials)
 			throws LoginDeniedException, LoginFailedException {
-		String theAuthenticationDeviceId = getAuthenticationDeviceId(credentials);
-		if (StringServices.isEmpty(theAuthenticationDeviceId)) {
+		AuthenticationDevice authenticationDevice = credentials.getPerson().getAuthenticationDevice();
+		if (authenticationDevice == null) {
 			// Person has no device to authenticate against
 			throw new LoginDeniedException(FailedLogin.REASON_NO_AUTH_DEVICE);
 		}
-		AuthenticationDevice theDevice = SecurityDeviceFactory.getAuthenticationDevice(theAuthenticationDeviceId);
-		if (theDevice == null) {
-			String message = "Authentication device '" + theAuthenticationDeviceId + "' cannot be found.";
-			throw new LoginFailedException(message);
-		}
-		return theDevice;
+		return authenticationDevice;
 	}
 
-	private String getAuthenticationDeviceId(LoginCredentials credentials) {
-		return credentials.getPerson().getAuthenticationDeviceID();
-	}
-
-    /**
+	/**
 	 * Attempt to login the specified user.
 	 *
 	 * @param aRequest
@@ -402,19 +372,13 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	public boolean login(HttpServletRequest aRequest, HttpServletResponse response, LoginCredentials login)
 			throws InMaintenanceModeException, MaxUsersExceededException {
 		Person person = login.getPerson();
-		String theAuthDevice = person.getAuthenticationDeviceID();
-		if (StringServices.isEmpty(theAuthDevice)) {
+		AuthenticationDevice authDevice = person.getAuthenticationDevice();
+		if (authDevice == null) {
 			// Person has no device to authenticate against
 			return noLogin(person, aRequest, FailedLogin.REASON_NO_AUTH_DEVICE);
 		}
 		try {
-			AuthenticationDevice theDevice = SecurityDeviceFactory.getAuthenticationDevice(theAuthDevice);
-
-			if (theDevice == null) {
-				Logger.error("Authentication device '" + theAuthDevice + "' cannot be found.", this);
-				return noLogin(person, aRequest, FailedLogin.REASON_AUTH_DEVICE_NOT_FOUND);
-			}
-			boolean authenticated = theDevice.authentify(login);
+			boolean authenticated = authDevice.authentify(login);
 			if (authenticated) {
 				checkAllowedGroups(person);
 				HttpSession loginUser = SessionService.getInstance().loginUser(aRequest, response, person);
@@ -463,7 +427,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			if (allowedGroups == null) {
 				return;
 			}
-			if (SecurityContext.isAdmin(aPerson.getUser())) {
+			if (Person.isAdmin(aPerson)) {
 				// Administrator may always log in.
 				return;
 			}

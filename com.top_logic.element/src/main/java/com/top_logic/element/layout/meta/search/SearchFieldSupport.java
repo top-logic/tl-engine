@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MappedComparator;
@@ -353,7 +352,8 @@ public class SearchFieldSupport {
 				// root or owner can modify published queries
 				// for the owner the unversioned identity must be compared, otherwise it wont be equal
 				// even for the "same" person
-				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser).equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || SecurityContext.isAdmin()) {
+				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || Person.isAdmin(theCurrentUser)) {
 					boolean isPublished;
 					
 					if (groupAssociations.isEmpty()) {

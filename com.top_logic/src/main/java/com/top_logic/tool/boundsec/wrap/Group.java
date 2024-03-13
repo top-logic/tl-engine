@@ -34,7 +34,6 @@ import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
@@ -75,6 +74,9 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 
     /** The KO attribute used to store the system Group flag. */
     public static final String GROUP_SYSTEM      = "isSystem";
+
+	/** The KO attribute used to store the "is default group" flag. */
+	public static final String GROUP_DEFAULT = "defaultGroup";
 
     /** The name of the KnowledgeAssociation between a BoundObject and a Group
      *  used to say that a person belongs to that group.*/
@@ -227,10 +229,30 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Sets the name of this instance.
-     *
-     * @param    aName    The name to be set.
-     */
+	 * Check if this is a default group, i.e. a group in which each user is a member
+	 *
+	 * @return true if this is a default group
+	 */
+	public boolean isDefaultGroup() {
+		return tGetDataBooleanValue(GROUP_DEFAULT);
+	}
+
+	/**
+	 * Setter for {@link #isDefaultGroup()}.
+	 *
+	 * @param isDefault
+	 *        Whether this is a default group.
+	 */
+	public void setDefaultGroup(boolean isDefault) {
+		this.tSetData(GROUP_DEFAULT, Boolean.valueOf(isDefault));
+	}
+
+	/**
+	 * Sets the name of this instance.
+	 *
+	 * @param aName
+	 *        The name to be set.
+	 */
     @Override
 	public void setName(String aName) {
         this.setValue(NAME_ATTRIBUTE, aName);
@@ -329,35 +351,20 @@ public class Group extends AbstractBoundWrapper implements IGroup {
         return getAll(aKB, FilterFactory.trueFilter());
     }
 
-    /**
-	 * Get all Group for the given KnowledgeBase , matching the given filter criteria
-	 * 
-	 * @param aKB
-	 *        the KnowledgeBase to fetch the Group from.
-	 * @return A list of Groups, never null. Includes representative groups depending on
-	 *         configuration of personmanager
-	 */
-	public static final List<Group> getAll(KnowledgeBase aKB, Filter<? super Group> aFilter) {
-    	boolean returnRepresentativeGroups = PersonManager.getManager().returnRepresentativeGroups();
-		return getAll(aKB, aFilter, returnRepresentativeGroups);
-	}
-
 	/**
 	 * Get all Group for the given KnowledgeBase , matching the given filter criteria
 	 * 
 	 * @param aKB
 	 *        the KnowledgeBase to fetch the Group from.
-	 * @param includeRepresentativeGroups Flag to include representative groups regardless of configuration
 	 * @return A list of Groups, never null.
 	 */
-	public static final List<Group> getAll(KnowledgeBase aKB, Filter<? super Group> aFilter,
-			boolean includeRepresentativeGroups) {
+	public static final List<Group> getAll(KnowledgeBase aKB, Filter<? super Group> aFilter) {
 		Collection<KnowledgeObject> allKOs = aKB.getAllKnowledgeObjects(Group.OBJECT_NAME);
 		List<Group> result = new ArrayList<>(allKOs.size());
 		Iterator<KnowledgeObject> koIter = allKOs.iterator();
         while (koIter.hasNext()) {
 			Group aGroup = (Group) WrapperFactory.getWrapper(koIter.next());
-        	if(aFilter.accept(aGroup) && (!aGroup.isRepresentativeGroup() || includeRepresentativeGroups))
+			if (aFilter.accept(aGroup) && !aGroup.isRepresentativeGroup())
             result.add(aGroup);
         }
         Collections.sort(result, WrapperNameComparator.getInstance());

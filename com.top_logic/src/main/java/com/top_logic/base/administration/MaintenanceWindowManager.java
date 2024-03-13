@@ -18,7 +18,6 @@ import com.top_logic.base.cluster.ClusterManager;
 import com.top_logic.base.cluster.ClusterManager.PropertyType;
 import com.top_logic.base.cluster.ClusterManagerListener;
 import com.top_logic.base.services.InitialGroupManager;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.NamedConstant;
@@ -423,11 +422,10 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
         SessionService sessions = SessionService.getInstance();
 		Collection<String> sessionIDs = sessions.getSessionIDs();
 		for (String sessionID : sessionIDs) {
-			UserInterface theUser = sessions.getUser(sessionID);
+			Person theUser = sessions.getUser(sessionID);
             try {
-                Person thePerson = PersonManager.getManager().getPersonByUser(theUser);
 				try {
-					_login.checkAllowedGroups(thePerson);
+					_login.checkAllowedGroups(theUser);
 				} catch (InMaintenanceModeException ex) {
 					// person can not login, therefore log out person.
 					sessions.invalidateSession(sessionID);
@@ -435,7 +433,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
             } catch (Exception e) {
 				StringBuilder logoutFailed = new StringBuilder();
 				logoutFailed.append("Failed to log out user ");
-				logoutFailed.append(theUser.getUserName());
+				logoutFailed.append(theUser.getName());
 				logoutFailed.append(".");
 				Logger.error(logoutFailed.toString(), e, MaintenanceWindowManager.class);
             }

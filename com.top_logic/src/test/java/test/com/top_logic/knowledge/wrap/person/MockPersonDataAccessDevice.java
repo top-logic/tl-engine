@@ -10,15 +10,16 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.dob.DataObject;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
@@ -33,7 +34,7 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends AuthenticationDeviceConfig, PersonDataAccessDeviceConfig {
+	public interface Config extends AuthenticationDevice.Config, PersonDataAccessDevice.Config {
 
 		@Override
 		@BooleanDefault(true)
@@ -67,8 +68,13 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public SecurityDeviceConfig getConfig() {
+	public Config getConfig() {
 		return _config;
+	}
+
+	@Override
+	public String getAuthenticationDeviceID() {
+		return getDeviceID();
 	}
 
 	@Override
@@ -92,21 +98,7 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public DeviceMapping getMapping(String objectClass) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return null;
-	}
-
-	@Override
-	public DeviceMapping getMapping(List objectClasses) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return null;
-	}
-
-	@Override
-	public List getAllUserData() {
+	public List<UserInterface> getAllUserData() {
 		return availableUsers;
 	}
 
@@ -123,47 +115,13 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public DataObject getUserData(String name) {
+	public UserInterface getUserData(String name) {
 		for (UserInterface user : availableUsers) {
 			if (user.getUserName().equals(name)) {
 				return user;
 			}
 		}
 		return null;
-	}
-
-	@Override
-	public boolean createUserEntry(DataObject aDo) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
-	}
-
-	@Override
-	public boolean updateUserData(DataObject theDo) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
-	}
-
-	@Override
-	public boolean renameUserData(String oldID, String newID) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
-	}
-
-	@Override
-	public boolean deleteUserData(String aName) {
-		Iterator<UserInterface> allUsers = availableUsers.iterator();
-		while (allUsers.hasNext()) {
-			UserInterface user = allUsers.next();
-			if (StringServices.equals(user.getUserName(), aName)) {
-				allUsers.remove();
-				return true;
-			}
-		}
-		return false;
 	}
 
 	@Override
@@ -179,25 +137,37 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public boolean isReadOnly() {
-		return _config.isReadOnly();
-	}
-
-	@Override
-	public boolean allowExternalAuthentication() {
-		return _config.isAllowExtAuthentication();
+	public List<Person> synchronizeUsers(KnowledgeBase kb) {
+		throw new UnsupportedOperationException("Method is not implemented");
 	}
 
 	@Override
 	public boolean authentify(LoginCredentials login) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
+		throw new UnsupportedOperationException("Method is not implemented");
 	}
 
 	@Override
 	public boolean allowPwdChange() {
-		return _config.isAllowPwdChange();
+		return false;
 	}
 
+	@Override
+	public void setPassword(Person account, char[] password) {
+		throw new UnsupportedOperationException("Method is not implemented");
+	}
+
+	@Override
+	public void expirePassword(Person account) {
+		throw new UnsupportedOperationException("Method is not implemented");
+	}
+
+	@Override
+	public PasswordValidator getPasswordValidator() {
+		throw new UnsupportedOperationException("Method is not implemented");
+	}
+
+	@Override
+	public boolean isPasswordChangeRequested(Person account, char[] password) {
+		return false;
+	}
 }

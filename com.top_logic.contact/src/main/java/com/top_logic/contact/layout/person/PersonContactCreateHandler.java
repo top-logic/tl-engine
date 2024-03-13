@@ -30,7 +30,7 @@ public class PersonContactCreateHandler extends AbstractCreateAttributedCommandH
     @Override
     public Wrapper createNewObject(Map<String, Object> someValues, Wrapper aModel) {
         return this.createPersonContact((String) someValues.get(PersonContact.NAME_ATTRIBUTE), 
-                                        (String) someValues.get(PersonContact.ATT_FIRSTNAME));
+                                        (String) someValues.get(PersonContact.FIRST_NAME));
     }
 
     /**

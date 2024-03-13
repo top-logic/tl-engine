@@ -33,7 +33,6 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.util.PersonComparator;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.form.CheckException;
@@ -49,6 +48,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
+import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -178,9 +178,11 @@ public class EditGroupComponent extends EditComponent {
             theFC.addMember(theField);
         }
         
-		List<Person> possibleMembers = PersonManager.getManager().getAllAlivePersons();
+		List<Person> possibleMembers = Person.all();
 		SelectField memberField = newSelectField(FORM_FIELD_MEMBERS, possibleMembers, MULTIPLE, members, !IMMUTABLE);
-		memberField.setOptionComparator(new PersonComparator());
+		memberField.setTableConfigurationProvider(
+			GenericTableConfigurationProvider.getTableConfigurationProvider(Person.PERSON_TYPE));
+		memberField.setOptionComparator(PersonComparator.getInstance());
 		makeConfigurable(memberField);
 		theFC.addMember(memberField);
         
@@ -493,7 +495,7 @@ public class EditGroupComponent extends EditComponent {
 		public boolean check(Object aValue) throws CheckException {
 			{
 				// explicit check all Group names including representative groups
-				List theGroups = Group.getAll(PersistencyLayer.getKnowledgeBase(), FilterFactory.trueFilter(), true);
+				List theGroups = Group.getAll(PersistencyLayer.getKnowledgeBase(), FilterFactory.trueFilter());
                 Set  theNames  = new HashSet(theGroups.size());
                 for (int i=0; i<theGroups.size(); i++) {
                     theNames.add(((Group) theGroups.get(i)).getName());

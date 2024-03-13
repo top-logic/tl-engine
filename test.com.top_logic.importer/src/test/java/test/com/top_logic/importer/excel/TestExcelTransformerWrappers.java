@@ -13,10 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
+import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.ThreadContextDecorator;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.contact.business.CreateDefaultTestContacts;
 
 import com.top_logic.base.office.excel.ExcelContext;
 import com.top_logic.basic.CollectionUtil;
@@ -254,12 +256,14 @@ public class TestExcelTransformerWrappers extends AbstractTestExcelTransformer {
     }
 
     public static Test suite() {
-        Test theTest = ServiceTestSetup.createSetup(ThreadContextDecorator.INSTANCE, TestExcelTransformerWrappers.class,
+		Test test = new TestSuite(TestExcelTransformerWrappers.class);
+		test = new CreateDefaultTestContacts(test);
+		test = ServiceTestSetup.createSetup(ThreadContextDecorator.INSTANCE, test,
 			LabelProviderService.Module.INSTANCE,
 			NumberHandlerFactory.Module.INSTANCE,
 			ModelService.Module.INSTANCE);
 
-        return PersonManagerSetup.createPersonManagerSetup(theTest);
+		return PersonManagerSetup.createPersonManagerSetup(test);
     }
 }
 

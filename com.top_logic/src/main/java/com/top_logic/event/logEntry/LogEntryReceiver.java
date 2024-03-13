@@ -152,7 +152,7 @@ public class LogEntryReceiver extends AbstractReceiver {
         try{
           
             Object      theSource = anEvent.getMessage();
-            List        res       = personManager.getAllAlivePersons();
+			List res = Person.all();
             
             if (res.isEmpty()) {
                 Logger.warn("No alive Persons, check PersonManager",this);

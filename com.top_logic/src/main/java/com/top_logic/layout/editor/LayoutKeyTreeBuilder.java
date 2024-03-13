@@ -14,6 +14,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableBuilder;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -41,7 +42,8 @@ public class LayoutKeyTreeBuilder extends DefaultTreeTableBuilder {
 	}
 
 	private Collection<String> getReferencedLayoutKeys(String layoutKey) throws ConfigurationException {
-		Person currentPerson = PersonManager.getManager().getCurrentPerson();
+		PersonManager r = PersonManager.getManager();
+		Person currentPerson = TLContext.currentUser();
 
 		return LayoutTemplateUtils.getReferencedLayoutKeys(currentPerson, layoutKey);
 	}

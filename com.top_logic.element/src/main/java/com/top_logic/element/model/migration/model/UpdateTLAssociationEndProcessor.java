@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.migration.model;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -18,12 +20,11 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
-import com.top_logic.element.config.PartConfig;
+import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor.UpdateTypePartConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociationEnd;
-import com.top_logic.model.annotate.AnnotatedConfig;
-import com.top_logic.model.config.TLTypeAnnotation;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
@@ -35,30 +36,24 @@ import com.top_logic.model.migration.data.TypePart;
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
 public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<UpdateTLAssociationEndProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link UpdateTLAssociationEndProcessor}.
 	 */
 	@TagName("update-association-end")
-	public interface Config
-			extends PolymorphicConfiguration<UpdateTLAssociationEndProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+	public interface Config extends PolymorphicConfiguration<UpdateTLAssociationEndProcessor>, UpdateEndAspectConfig {
 
-		/**
-		 * Qualified name of the {@link TLAssociationEnd} to update.
-		 */
-		QualifiedPartName getName();
+		// sum interface
 
-		/**
-		 * New name of the association end.
-		 */
-		QualifiedPartName getNewName();
+	}
 
-		/**
-		 * See {@link PartConfig#getMandatory()}
-		 */
-		@Name(PartConfig.MANDATORY)
-		Boolean isMandatory();
+	/**
+	 * {@link UpdateTypePartConfig} for association end aspects.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface UpdateEndAspectConfig extends UpdateTypePartConfig {
 
 		/**
 		 * See {@link EndAspect#isComposite()}.
@@ -71,24 +66,6 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		 */
 		@Name(EndAspect.AGGREGATE_PROPERTY)
 		Boolean isAggregate();
-
-		/**
-		 * See {@link PartConfig#isMultiple()}.
-		 */
-		@Name(PartConfig.MULTIPLE_PROPERTY)
-		Boolean isMultiple();
-
-		/**
-		 * See {@link PartConfig#isBag()}.
-		 */
-		@Name(PartConfig.BAG_PROPERTY)
-		Boolean isBag();
-
-		/**
-		 * See {@link PartConfig#isOrdered()}.
-		 */
-		@Name(PartConfig.ORDERED_PROPERTY)
-		Boolean isOrdered();
 
 		/**
 		 * See {@link EndAspect#canNavigate()}.
@@ -122,16 +99,18 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update association end migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName endName = getConfig().getName();
 		TypePart associationEnd;
 		try {
@@ -141,7 +120,7 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 				"Unable to find association end to update " + _util.qualifiedName(endName) + " at "
 					+ getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 
 		QualifiedPartName newName = getConfig().getNewName();
@@ -156,6 +135,21 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
 			null, null);
+
+		boolean updateModelBaseline;
+		if (TLStructuredTypeColumns.isSyntheticAssociationName(endName.getTypeName())) {
+			/* AssociationEnd is an end of an internal TLAssociation which is not defined in the
+			 * model baseline. */
+			updateModelBaseline = false;
+		} else {
+			MigrationUtils.updateAssociationEnd(log, tlModel, endName, newName, null,
+				getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
+				getConfig().isMultiple(),
+				getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
+				getConfig());
+			updateModelBaseline = true;
+		}
+		return updateModelBaseline;
 	}
 
 }

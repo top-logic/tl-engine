@@ -7,6 +7,7 @@ package test.com.top_logic.base.user;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -16,38 +17,24 @@ import junit.framework.Test;
 import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
-import com.top_logic.base.user.UserFullNameComparator;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.dob.simple.ExampleDataObject;
 import com.top_logic.util.TLContext;
 
 /**
- * Testcase for the {@link UserFullNameComparator}.
+ * Testcase for {@link UserInterface#comparator(Locale)}.
  * 
- * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
+ * @author <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
 public class TestUserFullNameComparator extends BasicTestCase {
-
-    /**
-     * Check if Equals method holds its promise.
-     */
-    public void testEquals() {
-        UserFullNameComparator ufnUp   = new UserFullNameComparator(true);
-        UserFullNameComparator ufnDown = new UserFullNameComparator(false);
-        
-        assertEquals(ufnUp  , ufnUp);
-        assertEquals(ufnDown, ufnDown);
-        assertFalse(ufnUp   .equals(ufnDown));
-        assertFalse(ufnDown.equals(ufnUp));
-    }
 
     /**
      * Check if Collating actually works
      */
     public void testCollating() {
         String[] attrNames = new String[] 
-         { PersonAttributes.SUR_NAME, PersonAttributes.GIVEN_NAME, PersonAttributes.USER_NAME};
+		{ UserInterface.NAME, UserInterface.FIRST_NAME, UserInterface.USER_NAME };
         
         DOUser alm = DOUser.getInstance(
             new ExampleDataObject( attrNames,
@@ -75,20 +62,18 @@ public class TestUserFullNameComparator extends BasicTestCase {
                
 		TLContext tcxt = TLContext.getContext();
 
-		tcxt.setCurrentLocale(Locale.GERMAN);
-		testSort(list(alm, atm, anm, aum, wfm, emy));
+		testSort(Locale.GERMAN, list(alm, atm, anm, aum, wfm, emy));
 
 		Locale swedish = new Locale("sv");
 		if (!list(Locale.getAvailableLocales()).contains(swedish)) {
 			fail("No test for usage of correct Locale available.");
 		}
 		/* In Sweden ö is an own letter at the end of the alphabet. */
-		tcxt.setCurrentLocale(swedish);
-		testSort(list(alm, atm, anm, emy, aum, wfm));
+		testSort(swedish, list(alm, atm, anm, emy, aum, wfm));
 	}
 
-	private void testSort(List<DOUser> expectedSortedList) {
-		UserFullNameComparator ufnc = new UserFullNameComparator();
+	private void testSort(Locale locale, List<DOUser> expectedSortedList) {
+		Comparator<? super UserInterface> ufnc = UserInterface.comparator(locale);
 		List<DOUser> theList = new ArrayList<>(expectedSortedList);
 
 		Random random = new Random(hashCode());

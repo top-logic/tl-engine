@@ -8,7 +8,7 @@ package com.top_logic.knowledge.wrap.person.infouser;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.mig.html.HTMLConstants;
@@ -37,11 +37,11 @@ public class LicenceOverviewUtil implements HTMLConstants {
 
 	@CalledFromJSP
 	public void writeLicenceOverview(DisplayContext context, TagWriter out) throws Exception {
-		writeStandardLicenceOverview(context, out, PersonManager.getManager());
+		writeStandardLicenceOverview(context, out);
 
     }
 
-	private void writeStandardLicenceOverview(DisplayContext context, TagWriter out, PersonManager mgr)
+	private void writeStandardLicenceOverview(DisplayContext context, TagWriter out)
 			throws Exception {
         out.beginTag(TABLE);
         {
@@ -69,7 +69,7 @@ public class LicenceOverviewUtil implements HTMLConstants {
                 out.endBeginTag();
                 {
 
-                    out.writeText(HTMLFormatter.getInstance().formatInt(mgr.getAllAlivePersons().size()));
+					out.writeText(HTMLFormatter.getInstance().formatInt(Person.all().size()));
                     out.writeText(NBSP);
                     out.writeText("/");
                     out.writeText(NBSP);

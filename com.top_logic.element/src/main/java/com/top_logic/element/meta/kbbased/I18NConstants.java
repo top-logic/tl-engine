@@ -32,6 +32,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Problem setting attribute value ''{0}'' to ''{1}''. */
 	public static ResKey2 ERROR_SETTING_VALUE__ATTRIBUTE_VALUE;
 
+	/** @en There is no generator with name ''{0}''. */
+	public static ResKey1 NO_SUCH_GENERATOR__NAME;
+
     static {
         initConstants(I18NConstants.class);
     }

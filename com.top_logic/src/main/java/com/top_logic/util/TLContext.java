@@ -12,9 +12,6 @@ import java.util.TimeZone;
 import com.top_logic.base.context.SubSessionListener;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.security.authorisation.roles.ACL;
-import com.top_logic.base.security.authorisation.roles.RoleManager;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.AbstractSubSessionContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -110,7 +107,7 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 			newTimeZone = null;
 		} else {
 			newContextId = TLSessionContext.contextId(person);
-			newLocale = findBestLocale(person);
+			newLocale = Resources.findBestLocale(person);
 			newTimeZone = person.getTimeZone();
 		}
 		resetPersonalConfiguration();
@@ -129,10 +126,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 
 	private void internalSetContextId(String contextID) {
 		super.setContextId(contextID);
-	}
-
-	private Locale findBestLocale(Person person) {
-		return Resources.findBestLocale(person.tHandle());
 	}
 
 	@Override
@@ -188,19 +181,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		return null;
 	}
 
-    /** 
-     * Get the the user currently logged in.
-     *
-     * @return null only just before successful login.
-     */
-	public final UserInterface getCurrentUser() {
-		Person currentPerson = getPerson();
-		if (currentPerson != null) {
-			return currentPerson.getUser();
-		}
-		return null;
-    }
-    
 	/**
 	 * Same as {@link TLSessionContext#getOriginalUser()} of {@link #getSessionContext() session
 	 * context}.
@@ -244,15 +224,10 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		throw new UnsupportedOperationException("Username must not be set. Set Person to SessionContext.");
     }
 
-	/**
-	 * Check if the current user is an administrator (tl-admin).
-	 * 
-	 * @return true, if user's roles contain tl-admin
-	 */
-    @Override
-	public boolean isCurrentSuperUser() {
-		return isAdmin(getCurrentPersonWrapper());
-    }
+	@Override
+	protected boolean isAdminContext() {
+		return Person.isAdmin(getPerson());
+	}
 
 	@Override
 	public void setSessionBranch(Branch sessionBranch) {
@@ -269,21 +244,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
     public static TLContext getContext() {
         return (TLContext) ThreadContext.getThreadContext();
     }
-
-	/**
-	 * Check if the given user is an administrator (tl-admin).
-	 *
-	 * @return    true, if user's roles contain tl-admin
-	 */
-	public static boolean isAdmin(Person aUser) {
-		if (aUser == null || !aUser.isAlive()) {
-			return false;
-		}
-
-		ACL theACL = aUser.getACLRoles();
-
-		return ((theACL != null) && theACL.hasRole(RoleManager.ADMIN_ROLE));
-	}
 
 	@Override
 	public TLSessionContext getSessionContext() {
@@ -367,6 +327,18 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 			Logger.error("Unable to trigger listener '" + listener + "' with subsession '" + this + "'.",
 				ex, AbstractSubSessionContext.class);
 		}
+	}
+
+	/**
+	 * The user currently logged in.
+	 */
+	public static Person currentUser() {
+		TLContext context = getContext();
+	
+		if (context != null) {
+			return context.getPerson();
+	    }
+		return null;
 	}
 
 	/**

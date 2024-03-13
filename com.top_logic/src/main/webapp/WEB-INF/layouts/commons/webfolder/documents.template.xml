@@ -21,7 +21,6 @@
 					<property name="hasClipboardCommand"/>
 					<property name="hasZipDownloadCommand"/>
 					<property name="analyzeDocuments"/>
-					<property name="sendDocuments"/>
 
 					<property name="isSecurityMaster"/>
 					<property name="securityObject"/>
@@ -71,10 +70,6 @@
 			default="false"
 			type="Boolean"
 		/>
-		<property name="sendDocuments"
-			default="false"
-			type="Boolean"
-		/>
 	</properties>
 
 	<component class="com.top_logic.common.webfolder.ui.WebFolderComponent"
@@ -92,7 +87,6 @@
 		name="Folder"
 		resPrefix="class.com.top_logic.common.webfolder.ui.I18NConstants.TABLE"
 		securityObject="${securityObject}"
-		sendDocuments="${sendDocuments}"
 		titleKey="${name}"
 		toolbar="true"
 		updateDocuments="${updateDocuments}"

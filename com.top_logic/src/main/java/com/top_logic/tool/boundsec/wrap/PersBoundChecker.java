@@ -48,7 +48,7 @@ public class PersBoundChecker extends AbstractBoundChecker {
             BoundCommandGroup aCmdGroup) {
 		{
             // Always allow root and such users ...
-			if (TLContext.isAdmin(aPerson)) {
+			if (Person.isAdmin(aPerson)) {
                 return true;
             }
         }

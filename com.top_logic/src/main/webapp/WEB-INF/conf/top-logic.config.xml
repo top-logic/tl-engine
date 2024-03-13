@@ -10,7 +10,6 @@
 				   <module key="com.top_logic.base.time.TimeRangeService$Module" value="true"/>
 				   <module key="com.top_logic.basic.io.BasicFileLog$Module" value="true"/>
 				   <module key="com.top_logic.util.CachePolicy$Module" value="true"/>
-				   <module key="com.top_logic.base.mail.MailHelper$Module" value="true"/>
 				   <module key="com.top_logic.layout.scripting.recorder.ScriptingRecorder$Module" value="true"/>
 				   <module key="com.top_logic.base.accesscontrol.Login$Module" value="true"/>
 			       <module key="com.top_logic.common.webfolder.ui.WebFolderUIFactory$Module" value="true" />
@@ -38,9 +37,7 @@
 			       <module key="com.top_logic.knowledge.journal.JournalManager$Module" value="true"/>
 			       <module key="com.top_logic.event.logEntry.LogEntryConfiguration$Module" value="true"/>
 			       <module key="com.top_logic.base.administration.LoggerAdminBean$Module" value="true"/>
-			       <module key="com.top_logic.base.mail.MailSenderService$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.wrap.person.PersonManager$Module" value="true"/>
-			       <module key="com.top_logic.base.security.device.SecurityDeviceFactory$Module" value="true"/>
 			       <module key="com.top_logic.util.sched.Scheduler$Module" value="true"/>
 				   <module key="com.top_logic.tool.export.ExportHandlerRegistry$Module" value="false"/>
 			       <module key="com.top_logic.tool.export.ExportQueueManager$Module" value="true"/>
@@ -85,10 +82,6 @@
 				enabled="%tl_enable_scripting%"
 				recordImplementationDetails="true"
 			/>
-		</config>
-		
-		<config service-class="com.top_logic.base.mail.MailHelper">
-			<instance class="com.top_logic.base.mail.MailHelper"/>
 		</config>
 		
 		<config service-class="com.top_logic.base.accesscontrol.SessionService">
@@ -317,7 +310,7 @@
 						<global aspect="com.top_logic.util.AbstractStartStopListener"/>
 					</operation>
 					<operation name="initUsers">
-						<global aspect="com.top_logic.knowledge.wrap.person.TLPersonManager"/>
+						<global aspect="com.top_logic.knowledge.wrap.person.PersonManager"/>
 					</operation>
 				</global>
 			</instance>
@@ -401,32 +394,6 @@
 			<instance class="com.top_logic.knowledge.wrap.WebFolderFactory"
 				create-physical-resource="immediate"
 			/>
-		</config>
-	
-		<config service-class="com.top_logic.base.mail.MailSenderService">
-			<instance class="com.top_logic.base.mail.MailSenderService"
-				startup-notification-receivers=""
-				startup-notification-subject=""
-				startup-notification-body=""
-				
-				activated="%SMTP_ACTIVE%"
-				
-				server="%SMTP_SERVER%"
-				lookup-mx-record="%SMTP_LOOKUP_MX%"
-				port="%SMTP_PORT%"
-				user="%SMTP_USER%"
-				password="%SMTP_PASS%"
-				
-				mail-domain="%MAIL_DOMAIN%"
-				from-address="%MAIL_SENDER%"
-			>
-				<options>
-					<option name="mail.transport.protocol" value="%SMTP_PROTOCOL%" />
-					<option name="mail.smtp.starttls.enable" value="%SMTP_STARTTLS%" />
-					<option name="mail.smtp.timeout" value="%SMTP_TIMEOUT%" />
-					<option name="mail.smtp.connectiontimeout" value="%SMTP_CONNECTION_TIMEOUT%" />
-				</options>
-			</instance>
 		</config>
 	
 		<config service-class="com.top_logic.tool.export.ExportQueueManager">
@@ -605,19 +572,19 @@
 				<security-devices>
 					<security-device 
 						id="dbSecurity"
-						type="auth-with-data"
 						class="com.top_logic.base.security.device.db.DBAuthenticationAccessDevice"
-						read-only="false"
-						allow-pwd-change="true"
-						allow-ext-authentication="false"
 					>
+						<password-validator>
+							<enabled>true</enabled>
+							<expiry-period>365</expiry-period>
+							<repeat-cycle>3</repeat-cycle>
+							<min-password-length>8</min-password-length>
+							<criteria-count>2</criteria-count>
+							<exclude-uids></exclude-uids>
+						</password-validator>
 						<initial-user-resources>
 							<initial-user-resource name="/WEB-INF/database/Users.xml"/>
 						</initial-user-resources>
-						<mappings>
-							<mapping key="genericMapping" value="/WEB-INF/database/bos/genericMapping.properties"/>
-							<mapping key="person" value="/WEB-INF/database/bos/person.properties"/>
-						</mappings>		
 					</security-device>
 				</security-devices>
 			</instance>
@@ -726,16 +693,6 @@
 		<config service-class="com.top_logic.base.accesscontrol.Login">
 			<instance class="com.top_logic.base.accesscontrol.Login">
 				<log-failed-logins>true</log-failed-logins>
-				<password-manager>
-					<password-validator>
-						<enabled>true</enabled>
-						<expiry-period>365</expiry-period>
-						<repeat-cycle>3</repeat-cycle>
-						<min-password-length>8</min-password-length>
-						<criteria-count>2</criteria-count>
-						<exclude-uids></exclude-uids>
-					</password-validator>
-				</password-manager>
 				
 				<component-leaving-maintenance-mode>com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindow</component-leaving-maintenance-mode>
 				<command-group-leaving-maintenance-mode>Write</command-group-leaving-maintenance-mode>
@@ -1090,7 +1047,7 @@
 				</cliques>
 				<handlers>
 		            <handler id="applyRoleRights" class="com.top_logic.tool.boundsec.gui.profile.ApplyRolesCommandHandler"
-		            	clique="apply"
+		            	clique="apply" group="System"
 		            />
 		            <handler id="AllOn" class="com.top_logic.event.layout.ToggleAllCommand"
 		            	value="true" 
@@ -1145,9 +1102,9 @@
 						resourceKey="tl.command.delete"
 						clique="delete"/>
 					<handler id="defaultSave" class="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 					<handler id="restrictedDefaultSave" class="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 					<handler id="invalidate" class="com.top_logic.layout.form.component.InvalidateCommand"
 						clique="refresh"/>
 					
@@ -1241,12 +1198,6 @@
 						clique="finish"/>
 
 					<handler id="switchAssistentShow" class="com.top_logic.tool.boundsec.assistent.commandhandler.ShowAssistentCommandHandler"/>
-					<handler id="applyPerson" class="com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler"
-						clique="apply"/>
-					<handler id="deletePerson" class="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
-						clique="delete"/>
-					<handler id="newPerson" class="com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler"
-						clique="create"/>
 					<handler id="resetPersonalConfiguration" 
 						class="com.top_logic.knowledge.gui.layout.person.ResetPersonalConfiguration"
 						image="theme:ICON_RESET_PERSONAL_CONFIGURATION"
@@ -1256,17 +1207,17 @@
 					<handler id="deleteDGroup" class="com.top_logic.layout.admin.component.EditGroupComponent$DeleteGroupCommandHandler"
 						clique="delete"/>
 					<handler id="applyDGroup" class="com.top_logic.layout.admin.component.EditGroupComponent$ApplyGroupCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="applyRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$ApplyRoleCommand"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="deleteRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 						clique="delete"/>
 					<handler id="newRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleCommand"
 						clique="create"/>
 					<handler id="applyPersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$ApplyPersonGroupCommand"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="savePersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"
-						clique="save"/>
+						clique="save" group="System"/>
 					<handler id="switchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 						clique="edit"
 					>
@@ -1285,9 +1236,6 @@
 						clique="edit"/>
 					<handler id="nullModelSwitchToAJAXEdit" class="com.top_logic.layout.form.component.NullModelSwitchEditCommandHandler"
 						clique="edit"/>
-					<handler id="refreshPersonsCommand" class="com.top_logic.knowledge.gui.layout.person.RefreshPersonsCommandHandler"
-						clique="refresh"/>
-					
 					<handler id="listSwitchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 						clique="edit">
 						<executability>
@@ -1296,15 +1244,15 @@
 						</executability>
 					</handler>
 					<handler id="ApplyList" class="com.top_logic.layout.admin.component.EditListComponent$ListApplyCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="ApplySimpleList" class="com.top_logic.layout.admin.component.SimpleEditListComponent$SimpleListApplyCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="CreateNewList" class="com.top_logic.layout.admin.component.EditListComponent$NewListCommandHandler"
 						clique="create"/>
 					<handler id="DeleteList" class="com.top_logic.layout.admin.component.EditListComponent$DeleteListCommandHandler"
 						clique="delete"/>
 					<handler id="applyCurrencyList" class="com.top_logic.layout.currency.EditCurrencyListComponent$ApplyCurrencyCommand"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					
 					<handler id="EnterMaintenanceWindow" class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowCommandHandler"
 						resourceKey="main.admin.maintenanceWindow.enterDialog.EnterMaintenanceWindow"
@@ -1323,7 +1271,7 @@
 					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"
 						clique="refresh"/>
 					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"
-						clique="save"/>
+						clique="save" group="System"/>
 					
 					<handler id="ChoiceChartCommand" class="com.top_logic.base.chart.component.ChoiceJFreeChartComponent$ChoiceChartCommand"/>
 					<handler id="refreshFilters" class="com.top_logic.base.chart.flex.control.FilterRefreshCommandHandler"
@@ -1354,7 +1302,7 @@
 					/>
 					
 					<handler id="applyCheckerRoles" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ApplyRolesProfile"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="expandRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
 						clique="expand" image="theme:ICONS_EXPAND_ALL" disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" />
 					<handler id="collapseRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$CollapseAllCommandHandler"
@@ -1365,7 +1313,7 @@
 					<handler id="newUnit" class="com.top_logic.layout.unit.NewUnitCommandHandler"
 						clique="create"/>
 					<handler id="applyUnit" class="com.top_logic.layout.unit.ApplyUnitCommandHandler"
-						clique="apply"/>
+						clique="apply" group="System"/>
 					<handler id="deleteUnit" class="com.top_logic.layout.unit.DeleteUnitCommandHandler"
 						clique="delete"/>
 					         
@@ -1557,8 +1505,6 @@
 			<instance class="com.top_logic.knowledge.wrap.person.TLPersonManager"
 					  super-user-name="root"
 					  person-name-pattern="[-_a-zA-Z0-9@\.]+"
-					  token-timeout="5400000"
-					  show-representative-groups="false"
 					  >
 			</instance>
 		</config>
@@ -1612,8 +1558,9 @@
 					</task>
 					<task class="com.top_logic.knowledge.wrap.person.RefreshUsersTask"
 						name="RefreshUsersTask"
-						run-on-startup="false" >
+						run-on-startup="true" >
 						<schedules>
+							<on-startup/>
 							<periodically
 								interval="2h"
 								start-time="00:30"
@@ -2000,7 +1947,6 @@
 			            <declaration resource="webinf://kbase/ListMeta.xml" />
 			            <declaration resource="webinf://kbase/UnitMeta.xml" />
 			            <declaration resource="webinf://kbase/LogEntryMeta.xml" /> 
-			            <declaration resource="webinf://kbase/UsersMeta.xml" /> 
 			            <declaration resource="webinf://kbase/LayoutMeta.xml" /> 
 			            <declaration resource="webinf://kbase/TemplateLayoutMeta.xml" /> 
 					</declarations>
@@ -2021,7 +1967,6 @@
 						</provider>
 					</providers>
 					<data>
-						<definition resource="webinf://kbase/KBDataRoot.xml"/>
 						<definition resource="webinf://kbase/KBDataUnit.xml"/>
 						<definition resource="webinf://kbase/KBData.xml"/>
 					</data>
@@ -2210,9 +2155,6 @@
 			<layout>
 				<collector class="com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupCollector" />
 			</layout>
-			<authorisation class="com.top_logic.base.security.authorisation.symbols.file.FileAuthorisation">
-				<symbols resource="/WEB-INF/database/Symbols.xml" />
-			</authorisation>
 		</config>
 		
 		<config config:interface="com.top_logic.base.office.excel.ExcelAccess$GlobalConfig">

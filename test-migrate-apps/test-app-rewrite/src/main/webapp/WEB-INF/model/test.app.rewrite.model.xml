@@ -36,13 +36,7 @@
 							attribute="single"
 							fullQualifiedName="test.app.rewrite:MyType#single"
 							type="test.app.rewrite:MyOtherType"
-						>
-							<annotations>
-								<storage-algorithm>
-									<foreign-key-storage storage-attribute="single" storage-type="MyInstances"/>
-								</storage-algorithm>
-							</annotations>
-						</field>
+						/>
 						<field
 							attribute="multiple"
 							fullQualifiedName="test.app.rewrite:MyType#multiple"
@@ -61,7 +55,16 @@
 					kind="forwards"
 					navigate="true"
 					type="MyOtherType"
-				/>
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="single"
+								storage-type="MyInstances"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
 				<reference name="multiple"
 					kind="forwards"
 					multiple="true"

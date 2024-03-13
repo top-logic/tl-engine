@@ -17,6 +17,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.contact.business.CreateDefaultTestContacts;
 
 import com.top_logic.base.mail.MailHelper;
 import com.top_logic.base.mail.MailSenderService;
@@ -73,11 +74,11 @@ public class TestUserMailBatch extends BasicTestCase {
 	 * Tests the tests are correctly configured.
 	 */
 	private void checkUserExists(String userName, String userMailAddress) {
-		Person person = _personManager.getPersonByName(userName);
+		Person person = Person.byName(userName);
 		assertNotNull("Person is created because user is defined in Users.test.xml", person);
 		UserInterface user = person.getUser();
 		assertNotNull("User is defined in Users.test.xml", user);
-		assertEquals("Email is defined in Users.test.xml", userMailAddress, user.getInternalMail());
+		assertEquals("Email is defined in Users.test.xml", userMailAddress, user.getEMail());
 	}
     
    /**
@@ -103,6 +104,7 @@ public class TestUserMailBatch extends BasicTestCase {
     */
     public static Test suite () {
         Test innerTest = new TestSuite(TestUserMailBatch.class);
+		innerTest = new CreateDefaultTestContacts(innerTest);
 		innerTest = ServiceTestSetup.createSetup(innerTest,
 			MailSenderService.Module.INSTANCE,
 			MailReceiverService.Module.INSTANCE,

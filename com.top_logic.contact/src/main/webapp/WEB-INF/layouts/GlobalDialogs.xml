@@ -3,5 +3,4 @@
 <template>
 	<layout-reference resource="export/exportDialog.layout.xml"/>
 	<layout-reference resource="export/gridExportDialog.layout.xml"/>
-	<layout-reference resource="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml"/>
 </template>

@@ -116,7 +116,7 @@ public class ConfigurationWriter {
 	 * @param localName
 	 *        Configuration element name that should be used as root element.
 	 */
-	public void write(String localName, Class<? extends ConfigurationItem> staticType, ConfigurationItem item)
+	public final void write(String localName, Class<? extends ConfigurationItem> staticType, ConfigurationItem item)
 			throws XMLStreamException {
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(staticType);
 		write(localName, descriptor, item);

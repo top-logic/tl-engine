@@ -62,7 +62,7 @@ public class TitleDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		return contentBox(tag(level(), resource(title())));
 	}
 
@@ -76,7 +76,7 @@ public class TitleDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	@Override
-	public DisplayDimension getDialogHeight() {
+	protected DisplayDimension getDialogHeight() {
 		return HEIGHT;
 	}
 }

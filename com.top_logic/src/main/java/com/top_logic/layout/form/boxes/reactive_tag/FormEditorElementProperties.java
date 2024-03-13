@@ -42,10 +42,6 @@ public class FormEditorElementProperties {
 	public static final Property<Boolean> FORM_EDITOR_IS_TOOL =
 		TypedAnnotatable.property(Boolean.class, "isTool");
 
-	/** The name for the label of the form editor element. */
-	public static final Property<String> FORM_EDITOR_NAME =
-		TypedAnnotatable.property(String.class, "name");
-
 	/** The label text for the element inside the toolbar of the form editor. */
 	public static final Property<ResKey> FORM_EDITOR_LABEL =
 		TypedAnnotatable.property(ResKey.class, "label");

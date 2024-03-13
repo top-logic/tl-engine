@@ -25,7 +25,6 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.util.PersonComparator;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
@@ -97,7 +96,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
 	@Override
 	public List<String> getExcludeList() {
 		List<String> excludeList = super.getExcludeList();
-		excludeList.add(PersonContact.ATT_FULLNAME);
+		excludeList.add(PersonContact.FULLNAME);
 		return excludeList;
 	}
 
@@ -120,16 +119,16 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
     		    Person thePerson = theContact.getPerson();
     		    theContext.addMember(ConstantFieldProvider.INSTANCE.createField(FIELD_PERSON, thePerson));
                 // Disable only when Person wasAlive when when last checked
-                if (thePerson != null && thePerson.tValid() && thePerson.wasAlive()) {
-					TLClass theMetaElement = (TLClass) theContact.tType();
+				if (thePerson != null && thePerson.tValid()) {
+					TLClass theMetaElement = theContact.tType();
     
-                    disableAttribute(theContext, PersonContact.ATT_FIRSTNAME    , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.FIRST_NAME    , theContact, theMetaElement);
                     disableAttribute(theContext, PersonContact.NAME_ATTRIBUTE   , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_MAIL         , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_TITLE        , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_PHONE_MOBILE , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_PHONE_OFFICE , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_PHONE_PRIVATE, theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.EMAIL         , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.TITLE        , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.PHONE_MOBILE , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.PHONE , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.PHONE_PRIVATE, theContact, theMetaElement);
                     
                     Group theRepresentativeGroup = thePerson.getRepresentativeGroup();
                     if (theRepresentativeGroup != null) {
@@ -137,12 +136,12 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
                             @Override
 							protected List initInstance() {
 								// No need to create sorted list, because field gets comparator.
-								return PersonManager.getManager().getAllPersonsList();
+								return Person.all();
                             }
                         };
 
                         SelectField theRepresentativeField = FormFactory.newSelectField(PARAM_REPRESENTATIVES, thePersons, true, false);
-						theRepresentativeField.setOptionComparator(new PersonComparator());
+						theRepresentativeField.setOptionComparator(PersonComparator.getInstance());
                     	theRepresentativeField.setAsSelection(new ArrayList(theRepresentativeGroup.getMembers()));
                     	theContext.addMember(theRepresentativeField);
                     }
@@ -196,7 +195,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
         if (aModel instanceof PersonContact) {
 			try {
 				TLClass   theME = MetaElementFactory.getInstance().getGlobalMetaElement(ContactFactory.STRUCTURE_NAME, this.getMetaElementName());
-				TLStructuredTypePart theMA = MetaElementUtil.getMetaAttribute(theME, PersonContact.ATT_BOSS);
+				TLStructuredTypePart theMA = MetaElementUtil.getMetaAttribute(theME, PersonContact.BOSS);
 
 				theResult.addAll(AttributeOperations.getReferers((PersonContact) aModel, theMA));
 			}

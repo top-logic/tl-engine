@@ -10,8 +10,11 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.w3c.dom.Document;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,7 +26,6 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -39,7 +41,7 @@ import com.top_logic.model.migration.data.TypePart;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<DeleteTLPropertyProcessor.Config>
-		implements MigrationProcessor {
+		implements TLModelBaseLineMigrationProcessor {
 
 	/**
 	 * Configuration options of {@link DeleteTLPropertyProcessor}.
@@ -52,6 +54,11 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 		 */
 		@Mandatory
 		QualifiedPartName getName();
+
+		/**
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedPartName value);
 
 		/**
 		 * The list of {@link MetaObject tables} in which the the owner type of {@link #getName()}
@@ -82,7 +89,7 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 		super(context, config);
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws SQLException {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws SQLException {
 		QualifiedPartName partToDelete = getConfig().getName();
 
 		TypePart typePart;
@@ -93,49 +100,64 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 				"No part with name '" + _util.qualifiedName(partToDelete) + "' to delete available at "
 					+ getConfig().location(),
 				Log.WARN);
-			return;
+			return false;
 		}
 
 		_util.deleteModelPart(connection, typePart);
+		boolean updateModelBaseline = deleteTypePartFromModelBaseline(log, tlModel, partToDelete, typePart);
 		log.info("Deleted model part " + _util.toString(typePart));
 
 		if (!typePart.getID().equals(typePart.getDefinition())) {
 			// attribute is an overridden attribute. Nothing to do more.
-			return;
+			return updateModelBaseline;
 		}
 		if (!getConfig().getTypeTables().isEmpty()) {
 			CompiledStatement delete = query(
-			parameters(
-				parameterDef(DBType.LONG, "branch"),
-				parameterDef(DBType.STRING, "attr"),
-				setParameterDef("types", DBType.STRING)),
-			delete(
-				table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
-				and(
-					eqSQL(
-						column(BasicTypes.BRANCH_DB_NAME),
-						parameter(DBType.LONG, "branch")),
-					eqSQL(
-						column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
-						parameter(DBType.STRING, "attr")),
-					inSet(
-						column(AbstractFlexDataManager.TYPE_DBNAME),
-						setParameter("types", DBType.STRING))))).toSql(connection.getSQLDialect());
+				parameters(
+					_util.branchParamDef(),
+					parameterDef(DBType.STRING, "attr"),
+					setParameterDef("types", DBType.STRING)),
+				delete(
+					table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
+					and(
+						_util.eqBranch(),
+						eqSQL(
+							column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
+							parameter(DBType.STRING, "attr")),
+						inSet(
+							column(AbstractFlexDataManager.TYPE_DBNAME),
+							setParameter("types", DBType.STRING))))).toSql(connection.getSQLDialect());
 
 			int deletedRows =
 				delete.executeUpdate(connection, typePart.getBranch(), partToDelete.getPartName(),
 					getConfig().getTypeTables());
 			log.info("Deleted " + deletedRows + " assignments for deleted part " + _util.toString(typePart));
 		}
+		return updateModelBaseline;
+	}
+
+	private boolean deleteTypePartFromModelBaseline(Log log, Document tlModel, QualifiedPartName partName,
+			TypePart part) {
+		switch (part.getKind()) {
+			case ASSOCIATION_END:
+			case ASSOCIATION_PROPERTY:
+				return false;
+			case CLASSIFIER:
+			case CLASS_PROPERTY:
+			case REFERENCE:
+				return MigrationUtils.deleteTypePart(log, tlModel, partName);
+		}
+		throw new UnreachableAssertion("Uncovered kind: " + part.getKind());
 	}
 
 	@Override
-	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.get(Util.PROPERTY);
-			internalDoMigration(log, connection);
+			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Delete tl property migration failed at " + getConfig().location(), ex);
+			return false;
 		}
 	}
 

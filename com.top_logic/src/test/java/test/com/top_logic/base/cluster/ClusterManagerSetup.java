@@ -6,6 +6,7 @@
 package test.com.top_logic.base.cluster;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 
 import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.TestFactoryProxy;
@@ -55,7 +56,7 @@ public class ClusterManagerSetup {
 		return new TestFactoryProxy(innerFactory) {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				return setupClusterManager(super.createSuite(testCase, suiteName));
 			}
 		};

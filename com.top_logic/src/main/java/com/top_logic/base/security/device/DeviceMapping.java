@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
-import com.top_logic.base.security.device.interfaces.SecurityDevice.SecurityDeviceConfig;
+import com.top_logic.base.security.device.ldap.LDAPAuthenticationAccessDevice;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -18,9 +18,10 @@ import com.top_logic.basic.StringServices;
 /**
  * Translate internal attribute names to name used in external Devices.
  *
- * A Device Mapping can translate internal attribute names to their corresponding names as used in an external DataAccessDevice
- *  
- * @author    <a href="mailto:tri@top-logic.com">Thomat Trichter</a>
+ * A Device Mapping can translate internal attribute names to their corresponding names as used in
+ * an external {@link LDAPAuthenticationAccessDevice}
+ * 
+ * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public class DeviceMapping extends Properties {
 	
@@ -35,7 +36,7 @@ public class DeviceMapping extends Properties {
 	
 	/**
 	 * @param mappings
-	 *        See {@link SecurityDeviceConfig#getMappings()}.
+	 *        See {@link LDAPAuthenticationAccessDevice#getMapping(String)}.
 	 * @param objectClass
 	 *        the type of object for which this mapping is requested - may not be empty
 	 */

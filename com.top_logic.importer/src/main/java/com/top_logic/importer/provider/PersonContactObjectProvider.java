@@ -13,9 +13,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.importer.base.ObjectProvider;
 import com.top_logic.importer.text.TextImportParser;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
@@ -54,7 +54,7 @@ public class PersonContactObjectProvider implements ObjectProvider {
                 return null;
             }
             else { 
-                return PersonContact.getPersonContact(PersonManager.getManager().getPersonByName(theString));
+                return PersonContact.getPersonContact(Person.byName(theString));
             }
         }
     }

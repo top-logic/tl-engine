@@ -10,11 +10,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstanceAccess;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.element.config.AssociationConfig;
 import com.top_logic.element.config.AssociationConfig.EndConfig;
 import com.top_logic.element.config.AttributeConfig;
@@ -91,7 +96,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 	}
 
 	private void extractModuleConfig(ModuleConfig moduleConfig, TLModule module) {
-		moduleConfig.setName(module.getName());
+		copyIfDifferent(moduleConfig::getName, moduleConfig::setName, module.getName());
 		for (TLType type : sorted(module.getTypes())) {
 			TypeConfig typeConfig = createTypeConfig(type);
 			if (typeConfig == null) {
@@ -125,7 +130,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 	}
 
 	private void fill(SingletonConfig singletonConfig, TLModuleSingleton singleton) {
-		singletonConfig.setName(singleton.getName());
+		copyIfDifferent(singletonConfig::getName, singletonConfig::setName, singleton.getName());
 	}
 
 	private static <T extends ConfigurationItem> T create(Class<T> type) {
@@ -136,15 +141,16 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 	public TypeConfig visitPrimitive(TLPrimitive model, Void arg) {
 		DatatypeConfig config = create(DatatypeConfig.class);
 		extractTypeConfig(config, model);
+		// Mandatory property
 		config.setKind(model.getKind());
 		@SuppressWarnings("unchecked")
 		PolymorphicConfiguration<StorageMapping<?>> storageConfig =
 			(PolymorphicConfiguration<StorageMapping<?>>) InstanceAccess.INSTANCE.getConfig(model.getStorageMapping());
-		config.setStorageMapping(storageConfig);
-		config.setBinary(model.isBinary());
-		config.setDBType(model.getDBType());
-		config.setDBPrecision(model.getDBPrecision());
-		config.setDBSize(model.getDBSize());
+		copyIfDifferent(config::getStorageMapping, config::setStorageMapping, storageConfig);
+		copyIfDifferent(config::isBinary, config::setBinary, model.isBinary());
+		copyIfDifferent(config::getDBType, config::setDBType, model.getDBType());
+		copyIfDifferent(config::getDBPrecision, config::setDBPrecision, model.getDBPrecision());
+		copyIfDifferent(config::getDBSize, config::setDBSize, model.getDBSize());
 		return config;
 	}
 
@@ -170,7 +176,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 	}
 
 	private void extractClassifierConfig(ClassifierConfig config, TLClassifier model) {
-		config.setName(model.getName());
+		copyIfDifferent(config::getName, config::setName, model.getName());
 		extractAnnotations(config, model);
 	}
 
@@ -181,7 +187,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 			config = create(InterfaceConfig.class);
 		} else {
 			ClassConfig classConfig = create(ClassConfig.class);
-			classConfig.setFinal(model.isFinal());
+			copyIfDifferent(classConfig::isFinal, classConfig::setFinal, model.isFinal());
 			config = classConfig;
 		}
 		extractAttributedTypeConfig(config, model);
@@ -227,7 +233,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 	}
 
 	private void extractTypeName(TypeConfig config, TLNamedPart model) {
-		config.setName(model.getName());
+		copyIfDifferent(config::getName, config::setName, model.getName());
 	}
 
 	private <A extends TLAnnotation> void extractAnnotations(AnnotatedConfig<A> config, TLModelPart model) {
@@ -250,23 +256,24 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 		ReferenceConfig config = create(ReferenceConfig.class);
 		boolean override = extractPartConfig(config, model);
 		if (!override) {
-			config.setNavigate(model.getEnd().canNavigate());
-			config.setAggregate(model.getEnd().isAggregate());
-			config.setComposite(model.getEnd().isComposite());
-			config.setHistoryType(model.getEnd().getHistoryType());
-			config.setKind(kind(model));
+			copyIfDifferent(config::canNavigate, config::setNavigate, model.getEnd().canNavigate());
+			copyIfDifferent(config::isAggregate, config::setAggregate, model.getEnd().isAggregate());
+			copyIfDifferent(config::isComposite, config::setComposite, model.getEnd().isComposite());
+			copyIfDifferent(config::getHistoryType, config::setHistoryType, model.getEnd().getHistoryType());
+			copyIfDifferent(config::getKind, config::setKind, kind(model));
 			if (TLModelUtil.getEnds(model.getEnd().getOwner()).size() == 2) {
 				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(model.getEnd());
 				TLReference inverseReference = otherEnd.getReference();
 				if (inverseReference != null) {
-					config.setInverseReference(inverseReference.getName());
+					copyIfDifferent(config::getInverseReference, config::setInverseReference,
+						inverseReference.getName());
 				}
 			} else {
-				config.setEndName(TLModelUtil.qualifiedName(model.getEnd()));
+				copyIfDifferent(config::getEndName, config::setEndName, TLModelUtil.qualifiedName(model.getEnd()));
 			}
 		} else {
 			if (kind(model) == ReferenceKind.BACKWARDS) {
-				config.setKind(ReferenceKind.BACKWARDS);
+				copyIfDifferent(config::getKind, config::setKind, ReferenceKind.BACKWARDS);
 			}
 		}
 		return config;
@@ -294,10 +301,10 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 		EndConfig config = create(EndConfig.class);
 		boolean override = extractPartConfig(config, model);
 		if (!override) {
-			config.setNavigate(model.canNavigate());
-			config.setAggregate(model.isAggregate());
-			config.setComposite(model.isComposite());
-			config.setHistoryType(model.getHistoryType());
+			copyIfDifferent(config::canNavigate, config::setNavigate, model.canNavigate());
+			copyIfDifferent(config::isAggregate, config::setAggregate, model.isAggregate());
+			copyIfDifferent(config::isComposite, config::setComposite, model.isComposite());
+			copyIfDifferent(config::getHistoryType, config::setHistoryType, model.getHistoryType());
 		}
 		return config;
 	}
@@ -306,17 +313,17 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 		extractAnnotations(config, model);
 		extractPartAspectConfig(config, model);
 		boolean override = model.isOverride();
-		config.setOverride(override);
+		copyIfDifferent(config::isOverride, config::setOverride, override);
 
 		TLType valueType = model.getType();
 		TLModule module = model.getOwner().getModule();
 		config.setTypeSpec(typeRef(module, valueType));
 
 		if (!override) {
-			config.setMandatory(model.isMandatory());
-			config.setMultiple(model.isMultiple());
-			config.setOrdered(model.isOrdered());
-			config.setBag(model.isBag());
+			copyIfDifferent(config::getMandatory, config::setMandatory, model.isMandatory());
+			copyIfDifferent(config::isMultiple, config::setMultiple, model.isMultiple());
+			copyIfDifferent(config::isOrdered, config::setOrdered, model.isOrdered());
+			copyIfDifferent(config::isBag, config::setBag, model.isBag());
 		}
 		return override;
 	}
@@ -326,7 +333,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 	}
 
 	private void extractPartAspectConfig(PartAspect config, TLNamedPart model) {
-		config.setName(model.getName());
+		copyIfDifferent(config::getName, config::setName, model.getName());
 	}
 
 	private static <T extends TLNamedPart> List<T> sorted(Collection<T> collection) {
@@ -435,4 +442,29 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 		return result;
 	}
 
+	private static void copyIfDifferent(Supplier<String> getter, Consumer<String> setter, String value) {
+		if (Utils.equals(StringServices.nonEmpty(value), StringServices.nonEmpty(getter.get()))) {
+			return;
+		}
+		setter.accept(value);
+	}
+
+	private static <T> void copyIfDifferent(Supplier<T> getter, Consumer<T> setter, T value) {
+		if (Utils.equals(value, getter.get())) {
+			return;
+		}
+		setter.accept(value);
+	}
+
+	private static void copyIfDifferent(BooleanSupplier getter, BooleanConsumer setter, boolean value) {
+		if (value == getter.getAsBoolean()) {
+			return;
+		}
+		setter.accept(value);
+	}
+
+	@FunctionalInterface
+	private interface BooleanConsumer {
+		void accept(boolean value);
+	}
 }

@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.model.form.implementation.FormEditorTemplateProvider;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 
 /**
@@ -20,7 +21,7 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 @Abstract
-public interface ContainerDefinition<T extends FormElementTemplateProvider> extends ContainerProperties<T> {
+public interface ContainerDefinition<T extends FormEditorTemplateProvider> extends ContainerProperties<T> {
 
 	/** The name of the property {@link #getContent()}. */
 	String CONTENT = "content";

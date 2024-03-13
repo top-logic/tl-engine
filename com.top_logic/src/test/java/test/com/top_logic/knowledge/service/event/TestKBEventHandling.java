@@ -15,7 +15,6 @@ import junit.textui.TestRunner;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.basic.Logger;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -86,9 +85,9 @@ public class TestKBEventHandling extends BasicTestCase {
 		object1.setAttributeValue(Person.NAME_ATTRIBUTE, "old1");
 		object2.setAttributeValue(Person.NAME_ATTRIBUTE, "old2");
 		object3.setAttributeValue(Person.NAME_ATTRIBUTE, "old3");
-		object1.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE1));
-		object2.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE1));
-		object3.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE1));
+		object1.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE1));
+		object2.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE1));
+		object3.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE1));
 		setUpTx.commit();
     } 
     
@@ -195,7 +194,7 @@ public class TestKBEventHandling extends BasicTestCase {
 			@Override
 			public Modification notifyUpcomingDeletion(KnowledgeBase kb, KnowledgeItem item) {
 				if (object3.isAlive()) {
-					object3.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE2));
+					object3.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE2));
 				}
 				return Modification.NONE;
 			}
@@ -204,7 +203,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
 		kb.addModificationListener(l);
 		try {
-			Object previousValue = object3.getAttributeValue(PersonAttributes.LOCALE);
+			Object previousValue = object3.getAttributeValue(Person.LOCALE);
 			Transaction delTx = kb.beginTransaction();
 			try {
 				try {
@@ -218,7 +217,7 @@ public class TestKBEventHandling extends BasicTestCase {
 				assertTrue(object2.isAlive());
 				assertTrue(object3.isAlive());
 				assertTrue(object3.isAlive());
-				assertEquals(previousValue, object3.getAttributeValue(PersonAttributes.LOCALE));
+				assertEquals(previousValue, object3.getAttributeValue(Person.LOCALE));
 			} finally {
 				delTx.rollback();
 			}
@@ -299,8 +298,8 @@ public class TestKBEventHandling extends BasicTestCase {
 		listener1.resetCounts();
 
 		final Transaction failingTX = kBase.beginTransaction();
-		object1.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE3));
-		object2.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE3));
+		object1.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
+		object2.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
 		try {
 			failingTX.commit();
 			fail("expected listener has veto");
@@ -309,20 +308,20 @@ public class TestKBEventHandling extends BasicTestCase {
 		}
 		assertEquals("Number of changed objects wrong.", 3, listener1.count);
 		assertEquals("Wrong value for object1.", Utils.formatLocale(LOCALE1),
-			object1.getAttributeValue(PersonAttributes.LOCALE));
+			object1.getAttributeValue(Person.LOCALE));
 
 		// test without veto
 		listener1.setVeto(false);
 		listener1.resetCounts();
 
 		final Transaction successFullTX = kBase.beginTransaction();
-		object1.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE3));
-		object2.setAttributeValue(PersonAttributes.LOCALE, Utils.formatLocale(LOCALE3));
+		object1.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
+		object2.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
 		successFullTX.commit();
 
 		assertEquals("Number of dirty objects wrong.", 3, listener1.count);
 		assertEquals("Wrong value for object1.", Utils.formatLocale(LOCALE3),
-			object1.getAttributeValue(PersonAttributes.LOCALE));
+			object1.getAttributeValue(Person.LOCALE));
 
 	}
 

@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
@@ -1607,12 +1608,11 @@ public class TestElementAccessManager extends BasicTestCase {
     }
 
     private Person initPerson(String aID) {
-        String personDataDeviceID = TLSecurityDeviceManager.getInstance().getDefaultDataAccessDevice().getDeviceID();
         String authenticationDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
         PersonManager pMgr = PersonManager.getManager();
-        Person thePerson = pMgr.getPersonByName(aID);
+        Person thePerson = Person.byName(aID);
         if (thePerson == null)
-			thePerson = pMgr.createPerson(aID, personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+			thePerson = Person.create(PersistencyLayer.getKnowledgeBase(), aID, authenticationDeviceID);
         else fail("Person '" + aID + "' exists already.");
         return thePerson;
     }
@@ -1629,7 +1629,8 @@ public class TestElementAccessManager extends BasicTestCase {
      */
 	private void removePerson(Person aPerson) {
         if (aPerson != null && aPerson.tValid()) {
-			PersonManager.getManager().deleteUser(aPerson);
+			PersonManager r = PersonManager.getManager();
+			aPerson.tDelete();
         }
     }
 
@@ -1731,7 +1732,7 @@ public class TestElementAccessManager extends BasicTestCase {
 
 					@SuppressWarnings("unused")
 					@Override
-					public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+					public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 						TestSuite suite = new TestSuite(testCase);
 						suite.setName(suiteName);
 						Test innerTest = suite;

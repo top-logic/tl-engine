@@ -7,8 +7,6 @@ package com.top_logic.model.migration;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,10 +15,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
@@ -29,15 +30,21 @@ import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigBuilder;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationWriter;
+import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
@@ -46,6 +53,7 @@ import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLLiteral;
 import com.top_logic.basic.db.sql.SQLParameter;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
@@ -63,6 +71,7 @@ import com.top_logic.knowledge.service.db2.RowLevelLockingSequenceManager;
 import com.top_logic.knowledge.service.db2.SourceReference;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
+import com.top_logic.knowledge.util.OrderedLinkUtil.IndexRangeTooShort;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.knowledge.wrap.list.FastListElement;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -106,6 +115,7 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.migration.data.Reference;
 import com.top_logic.model.migration.data.ToString;
 import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypeGeneralization;
 import com.top_logic.model.migration.data.TypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
@@ -117,8 +127,42 @@ import com.top_logic.util.TLContext;
  */
 public class Util {
 
-	/** @see #createTLClassifier(PooledConnection, QualifiedPartName, int, AnnotatedConfig) */
-	public static final int NO_SORT_ORDER = -1;
+	/**
+	 * The order value of an element.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	@FrameworkInternal
+	public interface OrderValue extends NamedConfiguration {
+
+		/**
+		 * Optional local identifier for the element.
+		 */
+		@Override
+		String getName();
+
+		/**
+		 * The order value of the element.
+		 */
+		@Mandatory
+		int getOrder();
+
+		/**
+		 * Setter for {@link #getOrder()}.
+		 */
+		void setOrder(int value);
+
+		/**
+		 * Creates a new {@link OrderValue} with the given values.
+		 */
+		static OrderValue create(String name, int order) {
+			OrderValue result = TypedConfiguration.newConfigItem(OrderValue.class);
+			result.setName(name);
+			result.setOrder(order);
+			return result;
+		}
+
+	}
 
 	private long _stopId = 0;
 
@@ -184,22 +228,37 @@ public class Util {
 		_revCreate = -1;
 	}
 
-	private String toString(AnnotatedConfig<? extends TLAnnotation> annotations) throws XMLStreamException {
+	/**
+	 * Serializes the given {@link AnnotatedConfig annotation} as child of an
+	 * {@link AnnotationConfigs}.
+	 * 
+	 * @return A serialized {@link AnnotationConfigs} or <code>null</code> if there are actually no
+	 *         annotations.
+	 */
+	@FrameworkInternal
+	public static String toString(AnnotatedConfig<? extends TLAnnotation> annotations) {
 		String annotationsAsStrings;
 		if (annotations == null || annotations.getAnnotations().isEmpty()) {
 			annotationsAsStrings = null;
 		} else {
 			ConfigBuilder sink = TypedConfiguration.createConfigBuilder(AnnotationConfigs.class);
 			ConfigCopier.fillDeepCopy(annotations, sink, SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY);
-			try (StringWriter out = new StringWriter()) {
-				new ConfigurationWriter(out).write("config", ConfigurationItem.class, sink);
-				annotationsAsStrings = out.toString();
-			} catch (IOException ex) {
-				// StringWriter does not throw IOException!
-				throw new IOError(ex);
-			}
+			AnnotationConfigs annotationsCopy =
+				(AnnotationConfigs) sink.createConfig(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY);
+			annotationsAsStrings = writeToString("config", ConfigurationItem.class, annotationsCopy);
 		}
 		return annotationsAsStrings;
+	}
+
+	private static String writeToString(String rootTag, Class<? extends ConfigurationItem> staticType,
+			ConfigurationItem config) {
+		StringWriter storageMappingBuffer = new StringWriter();
+		try {
+			new ConfigurationWriter(storageMappingBuffer).write(rootTag, staticType, config);
+		} catch (XMLStreamException ex) {
+			throw new RuntimeException(ex);
+		}
+		return storageMappingBuffer.toString();
 	}
 
 	/**
@@ -211,7 +270,7 @@ public class Util {
 	public Type createTLClass(PooledConnection con, QualifiedTypeName className,
 			boolean isAbstract, boolean isFinal,
 			AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLStructuredType(con, TLContext.TRUNK_ID,
 			className.getModuleName(), className.getTypeName(),
 			isAbstract, isFinal,
@@ -291,6 +350,7 @@ public class Util {
 			BranchIdType.newInstance(Type.class, module.getBranch(), newIdentifier, TlModelFactory.KO_NAME_TL_CLASS);
 		type.setTypeName(className);
 		type.setModule(module);
+		type.setKind(associationType ? Type.Kind.ASSOCIATION : Type.Kind.CLASS);
 		return type;
 	}
 
@@ -302,7 +362,7 @@ public class Util {
 	 */
 	public Type createTLAssociation(PooledConnection con, QualifiedTypeName associationName,
 			AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLStructuredType(con, TLContext.TRUNK_ID,
 			associationName.getModuleName(), associationName.getTypeName(),
 			null, null,
@@ -318,9 +378,9 @@ public class Util {
 	 *        Qualified name of the type of the {@link TLProperty}.
 	 */
 	public TypePart createTLProperty(Log log, PooledConnection con, QualifiedPartName name,
-			QualifiedTypeName target, boolean isMandatory, boolean isMultiple, Boolean bag,
-			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			QualifiedTypeName target, boolean isMandatory, boolean isMultiple, boolean bag,
+			boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			throws SQLException, MigrationException {
 		return createTLProperty(log, con,
 			TLContext.TRUNK_ID, name.getModuleName(), name.getTypeName(),
 			name.getPartName(), target.getModuleName(),
@@ -345,20 +405,18 @@ public class Util {
 	public TypePart createTLProperty(Log log, PooledConnection con,
 			long branch, String module, String className,
 			String partName, String targetModule,
-			String targetType, boolean mandatory, boolean multiple, Boolean bag,
-			Boolean ordered, String annotations)
+			String targetType, boolean mandatory, boolean multiple, boolean bag,
+			boolean ordered, String annotations)
 			throws SQLException, MigrationException {
+		Boolean bagValue;
+		Boolean orderedValue;
 		if (multiple) {
-			if (bag == null) {
-				bag = Boolean.FALSE;
-			}
-			if (ordered == null) {
-				ordered = Boolean.FALSE;
-			}
+			bagValue = Boolean.valueOf(bag);
+			orderedValue = Boolean.valueOf(ordered);
 		} else {
 			// Only set if multiple
-			bag = null;
-			ordered = null;
+			bagValue = null;
+			orderedValue = null;
 		}
 		TLID partID = newID(con);
 		TLID definitionID = partID;
@@ -371,8 +429,8 @@ public class Util {
 
 		return createTLStructuredTypePart(log, con, branch, module, className, partName, partID,
 			targetModule, targetType, TLStructuredTypeColumns.CLASS_PROPERTY_IMPL, endID, definitionID,
-			mandatory, composite, aggregate, multiple, bag,
-			ordered, navigate, historyType, annotations);
+			mandatory, composite, aggregate, multiple, bagValue,
+			orderedValue, navigate, historyType, annotations);
 	}
 
 	/**
@@ -388,7 +446,7 @@ public class Util {
 			QualifiedTypeName target, boolean mandatory, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
 			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLAssociationEnd(log, con,
 			TLContext.TRUNK_ID, assEnd.getModuleName(), assEnd.getTypeName(),
 			assEnd.getPartName(), target.getModuleName(),
@@ -531,24 +589,32 @@ public class Util {
 
 		TypePart typePart;
 		if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
-			typePart = BranchIdType.newInstance(Reference.class,
-				branch,
-				partID,
-				ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
-			typePart.setOwner(ownerClass);
-			typePart.setPartName(partName);
-			typePart.setDefinition(definitionID);
+			typePart = TypePart.newInstance(Reference.class,
+				branch, partID, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+				TypePart.Kind.REFERENCE, ownerClass, partName, definitionID, ownerOrder);
 			((Reference) typePart).setEndID(endID);
 		} else {
-			typePart = BranchIdType.newInstance(TypePart.class,
-				branch,
-				partID,
-				ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
-			typePart.setOwner(ownerClass);
-			typePart.setPartName(partName);
-			typePart.setDefinition(definitionID);
+			typePart = TypePart.newInstance(
+				branch, partID, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+				typePartKindFromImplAttribute(impl), ownerClass, partName, definitionID, ownerOrder);
 		}
 		return typePart;
+	}
+
+	private static TypePart.Kind typePartKindFromImplAttribute(String impl) {
+		switch (impl) {
+			case TLStructuredTypeColumns.REFERENCE_IMPL:
+				return TypePart.Kind.REFERENCE;
+			case TLStructuredTypeColumns.ASSOCIATION_END_IMPL:
+				return TypePart.Kind.ASSOCIATION_END;
+			case TLStructuredTypeColumns.CLASS_PROPERTY_IMPL:
+				return TypePart.Kind.CLASS_PROPERTY;
+			case TLStructuredTypeColumns.ASSOCIATION_PROPERTY_IMPL:
+				return TypePart.Kind.ASSOCIATION_PROPERTY;
+			default:
+				throw new IllegalArgumentException("Unexpected impl type '" + impl + "' for type part.");
+		}
+
 	}
 
 	private void internalCreateProperty(PooledConnection con, long branch, String partName, TLID partID,
@@ -632,27 +698,37 @@ public class Util {
 			composite, aggregate, ordered, bag, navigate, historyType == null ? null : historyType.getExternalName());
 	}
 
-	private List<Integer> getOrders(PooledConnection con, long branch, TLID ownerId, String orderAttribute,
+	private List<OrderValue> getOrders(PooledConnection con, long branch, TLID ownerId,
+			String orderAttribute, String nameAttribute,
 			String table, String ownerRef) throws SQLException {
+		SQLExpression nameValue;
+		if (nameAttribute != null) {
+			nameValue = column(SQLH.mangleDBName(nameAttribute));
+		} else {
+			nameValue = literalNull(DBType.STRING);
+		}
 		CompiledStatement selectMaxOrder = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "ownerID")),
-		selectDistinct(
-			columns(
-				columnDef(column(SQLH.mangleDBName(orderAttribute)))),
-			table(SQLH.mangleDBName(table)),
-			and(
-				eqBranch(),
-				eqSQL(
-					column(
-						refID(ownerRef)),
-					parameter(DBType.ID, "ownerID"))),
-			orders(order(false, column(SQLH.mangleDBName(orderAttribute)))))).toSql(con.getSQLDialect());
-		List<Integer> attributeOrders = new ArrayList<>();
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "ownerID")),
+			selectDistinct(
+				columns(
+					columnDef(nameValue),
+					columnDef(column(SQLH.mangleDBName(orderAttribute)))),
+				table(SQLH.mangleDBName(table)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(
+							refID(ownerRef)),
+						parameter(DBType.ID, "ownerID"))),
+				orders(order(false, column(SQLH.mangleDBName(orderAttribute)))))).toSql(con.getSQLDialect());
+		List<OrderValue> attributeOrders = new ArrayList<>();
 		try (ResultSet dbResult = selectMaxOrder.executeQuery(con, branch, ownerId)) {
 			while (dbResult.next()) {
-				attributeOrders.add(dbResult.getInt(1));
+				String name = dbResult.getString(1);
+				int order = dbResult.getInt(2);
+				attributeOrders.add(OrderValue.create(name, order));
 			}
 		}
 		return attributeOrders;
@@ -663,7 +739,7 @@ public class Util {
 	 */
 	public Module createTLModule(PooledConnection con, String moduleName,
 			AnnotatedConfig<TLModuleAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLModule(con, TLContext.TRUNK_ID, moduleName, toString(annotations));
 	}
 
@@ -833,41 +909,39 @@ public class Util {
 
 	private Type getTLDataType(PooledConnection connection, Module module, String dataTypeName)
 			throws SQLException {
-		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_PRIMITIVE, dataTypeName);
-	}
-
-	private Type getTLClass(PooledConnection connection, Module module, String className)
-			throws SQLException {
-		return getTLType(connection, module, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, className);
+		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_PRIMITIVE, Type.Kind.DATATYPE, dataTypeName);
 	}
 
 	private Type getTLEnumeration(PooledConnection connection, Module module, String enumName)
 			throws SQLException {
-		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_ENUMERATION, enumName);
+		return getTLType(connection, module, TlModelFactory.KO_NAME_TL_ENUMERATION, Type.Kind.ENUM, enumName);
 	}
 
-	private Type getTLType(PooledConnection connection, Module module, String tlTypeTable, String typeName)
+	private Type getTLClass(PooledConnection connection, Module module, String typeName)
 			throws SQLException {
+		String tlTypeTable = ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE;
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";
+		String implAlias = "impl";
 		CompiledStatement selectClass = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "moduleId"),
-			parameterDef(DBType.STRING, "className")),
-		selectDistinct(
-			columns(
-				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias)),
-			table(SQLH.mangleDBName(tlTypeTable)),
-			and(
-				eqBranch(),
-				eqSQL(
-					column(refID(PersistentType.MODULE_REF)),
-					parameter(DBType.ID, "moduleId")),
-				eqSQL(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "moduleId"),
+				parameterDef(DBType.STRING, "typeName")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_IMPL), NO_TABLE_ALIAS, implAlias)),
+				table(SQLH.mangleDBName(tlTypeTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "moduleId")),
+					eqSQL(
 						column(SQLH.mangleDBName(TLNamed.NAME_ATTRIBUTE)),
-					parameter(DBType.STRING, "className"))))).toSql(sqlDialect);
+						parameter(DBType.STRING, "typeName"))))).toSql(sqlDialect);
 
 		try (ResultSet dbResult = selectClass.executeQuery(connection, module.getBranch(), module.getID(), typeName)) {
 			if (dbResult.next()) {
@@ -875,6 +949,54 @@ public class Util {
 					tlTypeTable);
 				type.setModule(module);
 				type.setTypeName(typeName);
+				switch (dbResult.getString(implAlias)) {
+					case TLStructuredTypeColumns.ASSOCIATION_TYPE:
+						type.setKind(Type.Kind.ASSOCIATION);
+						break;
+					case TLStructuredTypeColumns.CLASS_TYPE:
+						type.setKind(Type.Kind.CLASS);
+						break;
+					default:
+						throw new IllegalArgumentException(
+							"Unexpected impl type: " + dbResult.getString(implAlias) + " for " + type + ".");
+				}
+				return type;
+			}
+		}
+		return null;
+	}
+
+	private Type getTLType(PooledConnection connection, Module module, String tlTypeTable, Type.Kind kind,
+			String typeName)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String identifierAlias = "id";
+		CompiledStatement selectClass = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "moduleId"),
+				parameterDef(DBType.STRING, "typeName")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias)),
+				table(SQLH.mangleDBName(tlTypeTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "moduleId")),
+					eqSQL(
+						column(SQLH.mangleDBName(TLNamed.NAME_ATTRIBUTE)),
+						parameter(DBType.STRING, "typeName"))))).toSql(sqlDialect);
+
+		try (ResultSet dbResult = selectClass.executeQuery(connection, module.getBranch(), module.getID(), typeName)) {
+			if (dbResult.next()) {
+				Type type = BranchIdType.newInstance(Type.class, module.getBranch(), tlId(dbResult, identifierAlias),
+					tlTypeTable);
+				type.setModule(module);
+				type.setTypeName(typeName);
+				type.setKind(kind);
 				return type;
 			}
 		}
@@ -898,19 +1020,11 @@ public class Util {
 	}
 
 	/**
-	 * Adds all {@link TLStructuredType}s belonging to the given {@link Module}.
-	 */
-	public void addTLStructuredTypeIdentifiers(PooledConnection connection, Module module,
-			List<? super Type> searchResult) throws SQLException {
-		addTLTypeIdentifiers(connection, module, searchResult, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE);
-	}
-
-	/**
 	 * Adds all {@link TLPrimitive}s belonging to the given {@link Module}.
 	 */
 	public void addTLDataTypeIdentifiers(PooledConnection connection, Module module,
 			List<? super Type> searchResult) throws SQLException {
-		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_PRIMITIVE);
+		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_PRIMITIVE, Type.Kind.DATATYPE);
 	}
 
 	/**
@@ -918,15 +1032,70 @@ public class Util {
 	 */
 	public void addTLEnumerationIdentifiers(PooledConnection connection, Module module,
 			List<? super Type> searchResult) throws SQLException {
-		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_ENUMERATION);
+		addTLTypeIdentifiers(connection, module, searchResult, TlModelFactory.KO_NAME_TL_ENUMERATION, Type.Kind.ENUM);
+	}
+
+	/**
+	 * Adds all {@link TLStructuredType}s belonging to the given {@link Module}.
+	 */
+	public void addTLStructuredTypeIdentifiers(PooledConnection connection, Module module,
+			List<? super Type> searchResult) throws SQLException {
+		String mo = ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE;
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String identifierAlias = "id";
+		String branchAlias = "branch";
+		String nameAlias = "name";
+		String implAlias = "impl";
+		CompiledStatement selectTLCLass = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "module")),
+			selectDistinct(
+				columns(
+					_branchSupport ? columnDef(branchColumnOrNull(), NO_TABLE_ALIAS, branchAlias)
+						: columnDef(trunkBranch(), branchAlias),
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias),
+					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_IMPL), NO_TABLE_ALIAS, implAlias)),
+				table(SQLH.mangleDBName(mo)),
+				and(
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "module")),
+					eqBranch()))).toSql(sqlDialect);
+
+		try (ResultSet dbResult =
+			selectTLCLass.executeQuery(connection, module.getBranch(), module.getID())) {
+			while (dbResult.next()) {
+				Type type = BranchIdType.newInstance(Type.class,
+					dbResult.getLong(branchAlias),
+					LongID.valueOf(dbResult.getLong(identifierAlias)),
+					mo);
+				type.setTypeName(dbResult.getString(nameAlias));
+				type.setModule(module);
+				switch (dbResult.getString(implAlias)) {
+					case TLStructuredTypeColumns.ASSOCIATION_TYPE:
+						type.setKind(Type.Kind.ASSOCIATION);
+						break;
+					case TLStructuredTypeColumns.CLASS_TYPE:
+						type.setKind(Type.Kind.CLASS);
+						break;
+					default:
+						throw new IllegalArgumentException(
+							"Unexpected impl type: " + dbResult.getString(implAlias) + " for " + type + ".");
+				}
+				searchResult.add(type);
+			}
+		}
 	}
 
 	/**
 	 * Adds all {@link TLType}s belonging to the given {@link Module}, stored in given
 	 * {@link MetaObject}.
 	 */
-	public void addTLTypeIdentifiers(PooledConnection connection, Module module,
-			List<? super Type> searchResult, String mo) throws SQLException {
+	private void addTLTypeIdentifiers(PooledConnection connection, Module module,
+			List<? super Type> searchResult, String mo, Type.Kind kind) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";
@@ -958,6 +1127,7 @@ public class Util {
 					mo);
 				type.setTypeName(dbResult.getString(nameAlias));
 				type.setModule(module);
+				type.setKind(kind);
 				searchResult.add(type);
 			}
 		}
@@ -976,7 +1146,7 @@ public class Util {
 			QualifiedTypeName target, boolean mandatory, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
 			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws XMLStreamException, SQLException, MigrationException {
+			throws SQLException, MigrationException {
 		return createTLReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), target.getModuleName(),
@@ -1042,7 +1212,7 @@ public class Util {
 			QualifiedPartName inverseReference, boolean mandatory, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered,
 			boolean navigate, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createInverseTLReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), inverseReference.getModuleName(), inverseReference.getTypeName(),
@@ -1137,7 +1307,7 @@ public class Util {
 	 */
 	public Reference createTLEndReference(Log log, PooledConnection con,
 			QualifiedPartName reference, QualifiedPartName assEnd, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws XMLStreamException, SQLException, MigrationException {
+			throws SQLException, MigrationException {
 		return createTLEndReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), assEnd.getModuleName(), assEnd.getTypeName(),
@@ -1316,33 +1486,33 @@ public class Util {
 
 	private int newAttributeOrder(PooledConnection con, long branch, TLID ownerId) throws SQLException {
 		String orderAttribute = ApplicationObjectUtil.OWNER_REF_ORDER_ATTR;
+		String nameAttribute = TLNamed.NAME_ATTRIBUTE;
 		String table = ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE;
 		String ownerRef = ApplicationObjectUtil.META_ELEMENT_ATTR;
-		return newOrderValue(con, branch, ownerId, orderAttribute, table, ownerRef);
+		return newOrderValue(con, branch, ownerId, orderAttribute, nameAttribute, table, ownerRef);
 	}
 
 	private int newGeneralizationOrder(PooledConnection con, long branch, TLID ownerId) throws SQLException {
 		String orderAttribute = TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER;
+		String nameAttribute = null;
 		String table = ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS;
 		String ownerRef = SourceReference.REFERENCE_SOURCE_NAME;
-		return newOrderValue(con, branch, ownerId, orderAttribute, table, ownerRef);
+		return newOrderValue(con, branch, ownerId, orderAttribute, nameAttribute, table, ownerRef);
 	}
 
 	private int newOrderValue(PooledConnection con, long branch, TLID ownerId, String orderAttribute,
-			String table, String ownerRef) throws SQLException {
-		List<Integer> orders = getOrders(con, branch, ownerId, orderAttribute, table, ownerRef);
-		int ownerOrder;
-		if (orders.isEmpty()) {
-			ownerOrder = OrderedLinkUtil.MAX_ORDER / 2;
-		} else {
-			Integer maxOrder = orders.get(orders.size() - 1);
-			if (OrderedLinkUtil.MAX_ORDER == maxOrder.intValue()) {
-				ownerOrder = orders.get(0) - 1;
-			} else {
-				ownerOrder = maxOrder.intValue() + 1;
+			String nameAttribute, String table, String ownerRef) throws SQLException {
+		List<OrderValue> orders = getOrders(con, branch, ownerId, orderAttribute, nameAttribute, table, ownerRef);
+		for (int i = orders.size(); i >= 0; i--) {
+			int insertOrder;
+			try {
+				insertOrder = OrderedLinkUtil.getInsertOrder(orders, orders.size(), OrderValue::getOrder);
+			} catch (IndexRangeTooShort ex) {
+				continue;
 			}
+			return insertOrder;
 		}
-		return ownerOrder;
+		throw new UnreachableAssertion("At least one sort order must be available.");
 	}
 
 	/**
@@ -1420,48 +1590,51 @@ public class Util {
 		String implAlias = "impl";
 		String endIDAlias = "endId";
 		String definitionAlias = "definition";
+		String orderAlias = "order";
 		CompiledStatement selectParts = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "owner")),
-		selectDistinct(
-			columns(
-				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
-				columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias),
-				columnDef(SQLH.mangleDBName(ApplicationObjectUtil.IMPLEMENTATION_NAME), NO_TABLE_ALIAS,
-					implAlias),
-				columnDef(refID(TLReference.END_ATTR), NO_TABLE_ALIAS, endIDAlias),
-				columnDef(refID(TLStructuredTypePart.DEFINITION_ATTR), NO_TABLE_ALIAS, definitionAlias)),
-			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
-			and(
-				eqSQL(
-					column(refID(ApplicationObjectUtil.META_ELEMENT_ATTR)),
-					parameter(DBType.ID, "owner")),
-				eqBranch()))).toSql(sqlDialect);
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "owner")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias),
+					columnDef(SQLH.mangleDBName(ApplicationObjectUtil.IMPLEMENTATION_NAME), NO_TABLE_ALIAS,
+						implAlias),
+					columnDef(refID(TLReference.END_ATTR), NO_TABLE_ALIAS, endIDAlias),
+					columnDef(refID(TLStructuredTypePart.DEFINITION_ATTR), NO_TABLE_ALIAS, definitionAlias),
+					columnDef(SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR), NO_TABLE_ALIAS,
+						orderAlias)
+					),
+				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
+				and(
+					eqSQL(
+						column(refID(ApplicationObjectUtil.META_ELEMENT_ATTR)),
+						parameter(DBType.ID, "owner")),
+					eqBranch()),
+				orders(
+					order(false, column(SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR))))))
+						.toSql(sqlDialect);
 
 		List<TypePart> searchResult = new ArrayList<>();
 		try (ResultSet dbResult =
 			selectParts.executeQuery(connection, type.getBranch(), type.getID())) {
 			while (dbResult.next()) {
+				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
+				TLID definition = readMandatoryTLIDColumn(dbResult, definitionAlias);
+				String name = dbResult.getString(nameAlias);
 				String impl = dbResult.getString(implAlias);
+				int order = dbResult.getInt(orderAlias);
 				TypePart part;
 				if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
-					part = BranchIdType.newInstance(Reference.class,
-						type.getBranch(),
-						LongID.valueOf(dbResult.getLong(identifierAlias)),
-						ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
-					part.setOwner(type);
-					part.setPartName(dbResult.getString(nameAlias));
-					part.setDefinition(LongID.valueOf(dbResult.getLong(definitionAlias)));
+					part = TypePart.newInstance(Reference.class,
+						type.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+						TypePart.Kind.REFERENCE, type, name, definition, order);
 					((Reference) part).setEndID(LongID.valueOf(dbResult.getLong(endIDAlias)));
 				} else {
-					part = BranchIdType.newInstance(TypePart.class,
-						type.getBranch(),
-						LongID.valueOf(dbResult.getLong(identifierAlias)),
-						ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
-					part.setOwner(type);
-					part.setPartName(dbResult.getString(nameAlias));
-					part.setDefinition(LongID.valueOf(dbResult.getLong(definitionAlias)));
+					part = TypePart.newInstance(TypePart.class,
+						type.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+						typePartKindFromImplAttribute(impl), type, name, definition, order);
 				}
 				searchResult.add(part);
 			}
@@ -1474,32 +1647,36 @@ public class Util {
 
 		String identifierAlias = "id";
 		String nameAlias = "name";
+		String orderAlias = "order";
 		CompiledStatement selectParts = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "owner")),
-		selectDistinct(
-			columns(
-				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
-				columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias)),
-			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_CLASSIFIER)),
-			and(
-				eqSQL(
-					column(refID(FastListElement.OWNER_ATTRIBUTE)),
-					parameter(DBType.ID, "owner")),
-				eqBranch()))).toSql(sqlDialect);
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "owner")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLNamed.NAME_ATTRIBUTE), NO_TABLE_ALIAS, nameAlias),
+					columnDef(FastListElement.ORDER_DB_NAME, NO_TABLE_ALIAS, orderAlias)),
+				table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_CLASSIFIER)),
+				and(
+					eqSQL(
+						column(refID(FastListElement.OWNER_ATTRIBUTE)),
+						parameter(DBType.ID, "owner")),
+					eqBranch()),
+				orders(
+					order(false, column(FastListElement.ORDER_DB_NAME))))).toSql(sqlDialect);
 
 		List<TypePart> searchResult = new ArrayList<>();
 		try (ResultSet dbResult =
 			selectParts.executeQuery(connection, enumType.getBranch(), enumType.getID())) {
 			while (dbResult.next()) {
-				TypePart part = BranchIdType.newInstance(TypePart.class,
-					enumType.getBranch(),
-					LongID.valueOf(dbResult.getLong(identifierAlias)),
-					TlModelFactory.KO_NAME_TL_CLASSIFIER);
-				part.setOwner(enumType);
-				part.setPartName(dbResult.getString(nameAlias));
-				part.setDefinition(IdentifierUtil.nullIdForMandatoryDatabaseColumns());
+				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
+				String name = dbResult.getString(nameAlias);
+				int order = dbResult.getInt(orderAlias);
+				TypePart part = TypePart.newInstance(TypePart.class,
+					enumType.getBranch(), id, TlModelFactory.KO_NAME_TL_CLASSIFIER,
+					TypePart.Kind.CLASSIFIER, enumType, name, IdentifierUtil.nullIdForMandatoryDatabaseColumns(),
+					order);
 				searchResult.add(part);
 			}
 		}
@@ -1511,10 +1688,10 @@ public class Util {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";
-		String nameAlias = "name";
 		String implAlias = "impl";
 		String endIDAlias = "endId";
 		String definitionAlias = "definition";
+		String orderAlias = "order";
 		CompiledStatement selectPart = query(
 		parameters(
 			branchParamDef(),
@@ -1523,11 +1700,12 @@ public class Util {
 		selectDistinct(
 			columns(
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
-				columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias),
 				columnDef(SQLH.mangleDBName(ApplicationObjectUtil.IMPLEMENTATION_NAME), NO_TABLE_ALIAS,
 					implAlias),
 				columnDef(refID(TLReference.END_ATTR), NO_TABLE_ALIAS, endIDAlias),
-				columnDef(refID(TLStructuredTypePart.DEFINITION_ATTR), NO_TABLE_ALIAS, definitionAlias)),
+					columnDef(refID(TLStructuredTypePart.DEFINITION_ATTR), NO_TABLE_ALIAS, definitionAlias),
+					columnDef(SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR), NO_TABLE_ALIAS,
+						orderAlias)),
 			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 			and(
 				eqBranch(),
@@ -1542,25 +1720,20 @@ public class Util {
 		try (ResultSet dbResult =
 			selectPart.executeQuery(connection, structuredType.getBranch(), structuredType.getID(), partName)) {
 			while (dbResult.next()) {
+				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
+				TLID definition = readMandatoryTLIDColumn(dbResult, definitionAlias);
 				String impl = dbResult.getString(implAlias);
+				int order = dbResult.getInt(orderAlias);
 				TypePart part;
 				if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
-					part = BranchIdType.newInstance(Reference.class,
-						structuredType.getBranch(),
-						LongID.valueOf(dbResult.getLong(identifierAlias)),
-						ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
-					part.setOwner(structuredType);
-					part.setPartName(dbResult.getString(nameAlias));
-					part.setDefinition(LongID.valueOf(dbResult.getLong(definitionAlias)));
+					part = TypePart.newInstance(Reference.class,
+						structuredType.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+						TypePart.Kind.REFERENCE, structuredType, partName, definition, order);
 					((Reference) part).setEndID(LongID.valueOf(dbResult.getLong(endIDAlias)));
 				} else {
-					part = BranchIdType.newInstance(TypePart.class,
-						structuredType.getBranch(),
-						LongID.valueOf(dbResult.getLong(identifierAlias)),
-						ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
-					part.setOwner(structuredType);
-					part.setPartName(dbResult.getString(nameAlias));
-					part.setDefinition(LongID.valueOf(dbResult.getLong(definitionAlias)));
+					part = TypePart.newInstance(TypePart.class,
+						structuredType.getBranch(), id, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+						typePartKindFromImplAttribute(impl), structuredType, partName, definition, order);
 				}
 				searchResult.add(part);
 			}
@@ -1576,12 +1749,24 @@ public class Util {
 		}
 	}
 
+	private TLID readMandatoryTLIDColumn(ResultSet dbResult, String columnAlias) throws SQLException {
+		long colValue = dbResult.getLong(columnAlias);
+		assert !dbResult.wasNull() : "Column is not null.";
+		TLID id;
+		if (colValue == ((LongID) IdentifierUtil.nullIdForMandatoryDatabaseColumns()).longValue()) {
+			id = IdentifierUtil.nullIdForMandatoryDatabaseColumns();
+		} else {
+			id = LongID.valueOf(colValue);
+		}
+		return id;
+	}
+
 	private TypePart getTLClassifier(PooledConnection connection, Type structuredType, String partName)
 			throws SQLException, MigrationException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";
-		String nameAlias = "name";
+		String orderAlias = "order";
 		CompiledStatement selectPart = query(
 		parameters(
 			branchParamDef(),
@@ -1590,7 +1775,7 @@ public class Util {
 		selectDistinct(
 			columns(
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
-				columnDef(SQLH.mangleDBName(TLNamed.NAME), NO_TABLE_ALIAS, nameAlias)),
+					columnDef(FastListElement.ORDER_DB_NAME, NO_TABLE_ALIAS, orderAlias)),
 			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_CLASSIFIER)),
 			and(
 				eqBranch(),
@@ -1605,13 +1790,12 @@ public class Util {
 		try (ResultSet dbResult =
 			selectPart.executeQuery(connection, structuredType.getBranch(), structuredType.getID(), partName)) {
 			while (dbResult.next()) {
-				TypePart part = BranchIdType.newInstance(TypePart.class,
-					structuredType.getBranch(),
-					LongID.valueOf(dbResult.getLong(identifierAlias)),
-					TlModelFactory.KO_NAME_TL_CLASSIFIER);
-				part.setOwner(structuredType);
-				part.setPartName(dbResult.getString(nameAlias));
-				part.setDefinition(IdentifierUtil.nullIdForMandatoryDatabaseColumns());
+				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
+				int order = dbResult.getInt(orderAlias);
+				TypePart part = TypePart.newInstance(
+					structuredType.getBranch(), id, TlModelFactory.KO_NAME_TL_CLASSIFIER,
+					TypePart.Kind.CLASSIFIER, structuredType, partName,
+					IdentifierUtil.nullIdForMandatoryDatabaseColumns(), order);
 				searchResult.add(part);
 			}
 		}
@@ -1628,56 +1812,71 @@ public class Util {
 
 	/**
 	 * Retrieves the generalization links for the given {@link TLClass}.
-	 * 
-	 * <p>
-	 * Note: The result does not contain the actual generalizations, but only the links.
-	 * </p>
 	 */
-	public List<BranchIdType> getTLClassGeneralizationLinks(PooledConnection connection, Type specialization)
+	public List<TypeGeneralization> getTLClassGeneralizationLinks(PooledConnection connection, Type specialization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, specialization,
-			SourceReference.REFERENCE_SOURCE_NAME);
+		return getTLClassGeneralizationsOrSpecializations(connection, specialization, false);
 	}
 
 	/**
 	 * Retrieves the specialization links for the given {@link TLClass}.
-	 * <p>
-	 * Note: The result does not contain the actual specializations, but only the links.
-	 * </p>
 	 */
-	public List<BranchIdType> getTLClassSpecializationLinks(PooledConnection connection, Type generalization)
+	public List<TypeGeneralization> getTLClassSpecializationLinks(PooledConnection connection, Type generalization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, generalization,
-			DestinationReference.REFERENCE_DEST_NAME);
+		return getTLClassGeneralizationsOrSpecializations(connection, generalization, true);
 	}
 
-	private List<BranchIdType> getTLClassGeneralizationsOrSpecializations(PooledConnection connection,
-			Type source, String reference) throws SQLException {
+	private List<TypeGeneralization> getTLClassGeneralizationsOrSpecializations(PooledConnection connection,
+			Type source, boolean getDestination) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
-		String identifierAlias = "id";
-		CompiledStatement selectTLStructuredTypePart = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "tlClass")),
-		selectDistinct(
-			columns(
-				columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias)),
-			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS)),
-			and(
-				eqSQL(
-					column(refID(reference)),
-					parameter(DBType.ID, "tlClass")),
-				eqBranch()))).toSql(sqlDialect);
+		String givenColumn;
+		String otherColumn;
+		if (getDestination) {
+			givenColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+			otherColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
+		} else {
+			givenColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
+			otherColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+		}
 
-		List<BranchIdType> searchResult = new ArrayList<>();
+		String identifierAlias = "id";
+		String otherAlias = "other";
+		String orderAlias = "order";
+		CompiledStatement selectTLStructuredTypePart = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "tlClass")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(otherColumn, NO_TABLE_ALIAS, otherAlias),
+					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER),
+						NO_TABLE_ALIAS, orderAlias)),
+				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS)),
+				and(
+					eqSQL(
+						column(givenColumn),
+						parameter(DBType.ID, "tlClass")),
+					eqBranch()))).toSql(sqlDialect);
+
+		List<TypeGeneralization> searchResult = new ArrayList<>();
 		try (ResultSet dbResult =
 			selectTLStructuredTypePart.executeQuery(connection, source.getBranch(), source.getID())) {
 			while (dbResult.next()) {
-				searchResult.add(BranchIdType.newInstance(BranchIdType.class,
+				TypeGeneralization generalization = BranchIdType.newInstance(TypeGeneralization.class,
 					source.getBranch(),
 					LongID.valueOf(dbResult.getLong(identifierAlias)),
-					ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS));
+					ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS);
+				if (getDestination) {
+					generalization.setSource(source.getID());
+					generalization.setDestination(LongID.valueOf(dbResult.getLong(otherAlias)));
+				} else {
+					generalization.setSource(LongID.valueOf(dbResult.getLong(otherAlias)));
+					generalization.setDestination(source.getID());
+				}
+				generalization.setOrder(dbResult.getInt(orderAlias));
+				searchResult.add(generalization);
 			}
 		}
 		return searchResult;
@@ -1685,11 +1884,8 @@ public class Util {
 
 	/**
 	 * Retrieves the generalization links for the given {@link TLType}.
-	 * <p>
-	 * Note: The result does not contain the actual generalizations, but only the links.
-	 * </p>
 	 */
-	public List<BranchIdType> getGeneralizations(PooledConnection connection, Type type) throws SQLException {
+	public List<TypeGeneralization> getGeneralizations(PooledConnection connection, Type type) throws SQLException {
 		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_ENUMERATION)) {
 			// no generalizations for enumerations
 			return Collections.emptyList();
@@ -1706,11 +1902,8 @@ public class Util {
 
 	/**
 	 * Retrieves the specialization links for the given {@link TLType}.
-	 * <p>
-	 * Note: The result does not contain the actual specializations, but only the links.
-	 * </p>
 	 */
-	public List<BranchIdType> getSpecializations(PooledConnection connection, Type type) throws SQLException {
+	public List<TypeGeneralization> getSpecializations(PooledConnection connection, Type type) throws SQLException {
 		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_ENUMERATION)) {
 			// no specializations for enumerations
 			return Collections.emptyList();
@@ -1730,7 +1923,7 @@ public class Util {
 	 */
 	public Type createTLDatatype(PooledConnection connection, QualifiedTypeName type, Kind kind,
 			DBColumnType dbType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
-			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException, MigrationException, XMLStreamException {
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException, MigrationException {
 		return createTLDatatype(connection, TLContext.TRUNK_ID, type.getModuleName(), type.getTypeName(), kind,
 			dbType, storageMapping, toString(annotations));
 	}
@@ -1740,7 +1933,7 @@ public class Util {
 	 */
 	public Type createTLDatatype(PooledConnection con, long branch, String moduleName, String typeName,
 			Kind kind, DBColumnType dbType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
-			String annotations) throws SQLException, MigrationException, XMLStreamException {
+			String annotations) throws SQLException, MigrationException {
 		Module module = getTLModuleOrFail(con, branch, moduleName);
 		TLID newIdentifier = newID(con);
 		Long revCreate = getRevCreate(con);
@@ -1805,18 +1998,111 @@ public class Util {
 			TlModelFactory.KO_NAME_TL_PRIMITIVE);
 		type.setTypeName(typeName);
 		type.setModule(module);
+		type.setKind(Type.Kind.DATATYPE);
 		return type;
 
 	}
 
-	private String toString(PolymorphicConfiguration<StorageMapping<?>> storageMapping)
-			throws XMLStreamException {
+	private String toString(PolymorphicConfiguration<StorageMapping<?>> storageMapping) {
 		if (storageMapping == null) {
 			return null;
 		}
-		StringWriter storageMappingBuffer = new StringWriter();
-		new ConfigurationWriter(storageMappingBuffer).write("config", PolymorphicConfiguration.class, storageMapping);
-		return storageMappingBuffer.toString();
+		return writeToString("config", PolymorphicConfiguration.class, storageMapping);
+	}
+
+	/**
+	 * Removes the given annotations from {@link TLModule#getAnnotations()}.
+	 */
+	public void removeModuleAnnotations(Log log, PooledConnection con, String moduleName,
+			Collection<Class<? extends TLAnnotation>> toRemove)
+			throws SQLException, MigrationException {
+		String moduleAnnotations = getModuleAnnotations(log, con, TLContext.TRUNK_ID, moduleName);
+		if (moduleAnnotations == null) {
+			log.info("No module with name '" + moduleName + "' found.", Protocol.WARN);
+			return;
+		}
+		AnnotatedConfig<? extends TLAnnotation> newAnnotations;
+		try {
+			newAnnotations = removeAnnotations(moduleAnnotations, toRemove);
+		} catch (ConfigurationException ex) {
+			throw new MigrationException("Unable to parse annotations for module '" + moduleName + "'.", ex);
+		}
+		updateModuleAnnotations(con, moduleName, newAnnotations);
+	}
+
+	/**
+	 * Adds the given annotations increment to {@link TLModule#getAnnotations()}.
+	 */
+	public void addModuleAnnotations(Log log, PooledConnection con, String moduleName,
+			AnnotatedConfig<? extends TLAnnotation> increment)
+			throws SQLException, MigrationException {
+		String moduleAnnotations = getModuleAnnotations(log, con, TLContext.TRUNK_ID, moduleName);
+		if (moduleAnnotations == null) {
+			log.info("No module with name '" + moduleName + "' found.", Protocol.WARN);
+			return;
+		}
+		AnnotatedConfig<? extends TLAnnotation> newAnnotations;
+		try {
+			newAnnotations = addAnnotations(moduleAnnotations, increment);
+		} catch (ConfigurationException ex) {
+			throw new MigrationException("Unable to parse annotations for module '" + moduleName + "'.", ex);
+		}
+		updateModuleAnnotations(con, moduleName, newAnnotations);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private AnnotatedConfig<? extends TLAnnotation> removeAnnotations(String persistentAnnotations,
+			Collection<Class<? extends TLAnnotation>> toRemove) throws ConfigurationException {
+		AnnotatedConfig newAnnotations;
+		if (persistentAnnotations.isEmpty()) {
+			newAnnotations = TypedConfiguration.newConfigItem(AnnotatedConfig.class);
+		} else {
+			newAnnotations = (AnnotatedConfig) TypedConfiguration.fromString(persistentAnnotations);
+			for (Class<? extends TLAnnotation> annotationType : toRemove) {
+				TLAnnotation formerAnnotation = newAnnotations.getAnnotation(annotationType);
+				if (formerAnnotation != null) {
+					newAnnotations.getAnnotations().remove(formerAnnotation);
+				}
+			}
+		}
+		return newAnnotations;
+	}
+
+	/**
+	 * Modifies the given {@link AnnotationConfigs} (given as serialized value with root tag
+	 * "config") by adding the given increment.
+	 * 
+	 * @param persistentAnnotations
+	 *        Serialized {@link AnnotationConfigs} or empty.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@FrameworkInternal
+	public static AnnotatedConfig<? extends TLAnnotation> addAnnotations(String persistentAnnotations,
+			AnnotatedConfig<? extends TLAnnotation> increment) throws ConfigurationException {
+		AnnotatedConfig newAnnotations;
+		if (persistentAnnotations.isEmpty()) {
+			newAnnotations = increment;
+		} else {
+			newAnnotations = parsePersistentAnnotations(persistentAnnotations);
+			for (TLAnnotation annotation : increment.getAnnotations()) {
+				TLAnnotation formerAnnotation =
+					newAnnotations.getAnnotation(annotation.getConfigurationInterface());
+				if (formerAnnotation != null) {
+					newAnnotations.getAnnotations().remove(formerAnnotation);
+				}
+				newAnnotations.getAnnotations().add(TypedConfiguration.copy(annotation));
+			}
+		}
+		return newAnnotations;
+	}
+
+	/**
+	 * Parses the given {@link AnnotationConfigs}, given as serialized value with root tag "config".
+	 */
+	public static AnnotationConfigs parsePersistentAnnotations(String persistentAnnotations)
+			throws ConfigurationException {
+		return TypedConfiguration.parse("config", AnnotationConfigs.class,
+			CharacterContents.newContent(persistentAnnotations));
 	}
 
 	/**
@@ -1824,7 +2110,7 @@ public class Util {
 	 */
 	public void updateModuleAnnotations(PooledConnection con, String moduleName,
 			AnnotatedConfig<? extends TLAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateModuleAnnotations(con, TLContext.TRUNK_ID, moduleName, toString(annotations));
 	}
 
@@ -1834,24 +2120,154 @@ public class Util {
 	public void updateModuleAnnotations(PooledConnection con, long branch, String moduleName,
 			String annotations) throws SQLException {
 		CompiledStatement sql = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.STRING, "name"),
-			parameterDef(DBType.STRING, "annotations")),
-		update(
-			table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE)),
-			and(
-				eqBranch(),
-				eqSQL(
-					column(SQLH.mangleDBName(TLModule.NAME_ATTR)),
-					parameter(DBType.STRING, "name"))),
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.STRING, "name"),
+				parameterDef(DBType.STRING, "annotations")),
+			update(
+				table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(SQLH.mangleDBName(TLModule.NAME_ATTR)),
+						parameter(DBType.STRING, "name"))),
 				listWithoutNull(
-				SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
+					SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
 				listWithoutNull(
-				parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
+					parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, branch, moduleName, annotations);
+	}
 
+	/**
+	 * Reads the {@link TLModule#getAnnotations()} of a {@link TLModule}.
+	 * 
+	 * @return The stored {@link AnnotationConfigs} object (potentially empty) or <code>null</code>
+	 *         if the module can not be found.
+	 */
+	public String getModuleAnnotations(Log log, PooledConnection con, long branch, String moduleName) throws SQLException {
+		CompiledStatement sql = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.STRING, "name")),
+			select(
+				columns(
+					columnDef(BasicTypes.REV_MAX_DB_NAME),
+					columnDef(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE))),
+				table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(SQLH.mangleDBName(TLModule.NAME_ATTR)),
+						parameter(DBType.STRING, "name"))),
+				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
+					.toSql(con.getSQLDialect());
+
+		try (ResultSet result = sql.executeQuery(con, branch, moduleName)) {
+			if (result.next()) {
+				long revMax = result.getLong(1);
+				String annotations = StringServices.nonNull(result.getString(2));
+				if (result.next()) {
+					if (revMax == Revision.CURRENT_REV) {
+						log.info(
+							"Multiple entries for module '" + moduleName
+									+ "' found. Use annotations of 'current' row.");
+					} else {
+						log.info(
+							"Multiple entries for module '" + moduleName
+									+ "' found. Use annotations of row with revMax '" + revMax + "'.");
+					}
+				}
+				return annotations;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Removes the given annotations from {@link TLType#getAnnotations()}.
+	 */
+	public void removeTypeAnnotations(Log log, PooledConnection con, Module module, String typeName,
+			Collection<Class<? extends TLAnnotation>> toRemove)
+			throws SQLException, MigrationException {
+		boolean success = false;
+		if (!success) {
+			success = removeTypeAnnotations(log, con, module, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, typeName,
+				toRemove);
+		}
+		if (!success) {
+			success =
+				removeTypeAnnotations(log, con, module, TlModelFactory.KO_NAME_TL_ENUMERATION, typeName, toRemove);
+		}
+		if (!success) {
+			success =
+				removeTypeAnnotations(log, con, module, TlModelFactory.KO_NAME_TL_PRIMITIVE, typeName, toRemove);
+		}
+		if (!success) {
+			String qTypeName = TLModelUtil.qualifiedName(module.getModuleName(), typeName);
+			log.info("No type '" + qTypeName + "' found.", Protocol.WARN);
+		}
+	}
+
+	/**
+	 * Adds the given annotations increment to {@link TLType#getAnnotations()}.
+	 */
+	public void addTypeAnnotations(Log log, PooledConnection con, Module module, String typeName,
+			AnnotatedConfig<? extends TLAnnotation> increment)
+			throws SQLException, MigrationException {
+		boolean success = false;
+		if (!success) {
+			success = addTypeAnnotations(log, con, module, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, typeName,
+				increment);
+		}
+		if (!success) {
+			success =
+				addTypeAnnotations(log, con, module, TlModelFactory.KO_NAME_TL_ENUMERATION, typeName, increment);
+		}
+		if (!success) {
+			success =
+				addTypeAnnotations(log, con, module, TlModelFactory.KO_NAME_TL_PRIMITIVE, typeName, increment);
+		}
+		if (!success) {
+			String qTypeName = TLModelUtil.qualifiedName(module.getModuleName(), typeName);
+			log.info("No type '" + qTypeName + "' found.", Protocol.WARN);
+		}
+	}
+
+	private boolean removeTypeAnnotations(Log log, PooledConnection con, Module module, String table, String typeName,
+			Collection<Class<? extends TLAnnotation>> toRemove)
+			throws SQLException, MigrationException {
+		String currentAnnotations = getTypeAnnotations(log, con, module, table, typeName);
+		if (currentAnnotations == null) {
+			return false;
+		}
+		AnnotatedConfig<? extends TLAnnotation> newAnnotations;
+		try {
+			newAnnotations = removeAnnotations(currentAnnotations, toRemove);
+		} catch (ConfigurationException ex) {
+			String qTypeName = TLModelUtil.qualifiedName(module.getModuleName(), typeName);
+			throw new MigrationException("Unable to parse annotations for type '" + qTypeName + "'.", ex);
+		}
+		updateTypeAnnotations(con, module, table, typeName, toString(newAnnotations));
+		return true;
+	}
+
+	private boolean addTypeAnnotations(Log log, PooledConnection con, Module module, String table, String typeName,
+			AnnotatedConfig<? extends TLAnnotation> annotations)
+			throws SQLException, MigrationException {
+		String currentAnnotations = getTypeAnnotations(log, con, module, table, typeName);
+		if (currentAnnotations == null) {
+			return false;
+		}
+		AnnotatedConfig<? extends TLAnnotation> newAnnotations;
+		try {
+			newAnnotations = addAnnotations(currentAnnotations, annotations);
+		} catch (ConfigurationException ex) {
+			String qTypeName = TLModelUtil.qualifiedName(module.getModuleName(), typeName);
+			throw new MigrationException("Unable to parse annotations for type '" + qTypeName + "'.", ex);
+		}
+		updateTypeAnnotations(con, module, table, typeName, toString(newAnnotations));
+		return true;
 	}
 
 	/**
@@ -1859,7 +2275,7 @@ public class Util {
 	 */
 	public void updateTypeAnnotations(PooledConnection con, Module module, String typeName,
 			AnnotatedConfig<? extends TLAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTypeAnnotations(con, module, typeName, toString(annotations));
 	}
 
@@ -1876,71 +2292,243 @@ public class Util {
 	private void updateTypeAnnotations(PooledConnection con, Module module, String typeTable, String typeName,
 			String annotations) throws SQLException {
 		CompiledStatement sql = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "module"),
-			parameterDef(DBType.STRING, "name"),
-			parameterDef(DBType.STRING, "annotations")),
-		update(
-			table(SQLH.mangleDBName(typeTable)),
-			and(
-				eqBranch(),
-				eqSQL(
-					column(refID(PersistentType.MODULE_REF)),
-					parameter(DBType.ID, "module")),
-				eqSQL(
-					column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
-					parameter(DBType.STRING, "name"))),
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "module"),
+				parameterDef(DBType.STRING, "name"),
+				parameterDef(DBType.STRING, "annotations")),
+			update(
+				table(SQLH.mangleDBName(typeTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "module")),
+					eqSQL(
+						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
+						parameter(DBType.STRING, "name"))),
 				listWithoutNull(
-				SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
+					SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
 				listWithoutNull(
-				parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
+					parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, module.getBranch(), module.getID(), typeName, annotations);
 	}
 
+	private String getTypeAnnotations(Log log, PooledConnection con, Module module, String typeTable, String typeName)
+			throws SQLException {
+		CompiledStatement sql = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "module"),
+				parameterDef(DBType.STRING, "name")),
+			select(
+				columns(
+					columnDef(BasicTypes.REV_MAX_DB_NAME),
+					columnDef(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE))),
+				table(SQLH.mangleDBName(typeTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentType.MODULE_REF)),
+						parameter(DBType.ID, "module")),
+					eqSQL(
+						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
+						parameter(DBType.STRING, "name"))),
+				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
+
+		try (ResultSet result = sql.executeQuery(con, module.getBranch(), module.getID(), typeName)) {
+			if (result.next()) {
+				long revMax = result.getLong(1);
+				String annotations = StringServices.nonNull(result.getString(2));
+				if (result.next()) {
+					if (revMax == Revision.CURRENT_REV) {
+						log.info(
+							"Multiple entries for type '" + TLModelUtil.qualifiedName(module.getModuleName(), typeName)
+									+ "' found. Use annotations of 'current' row.");
+					} else {
+						log.info(
+							"Multiple entries for type '" + TLModelUtil.qualifiedName(module.getModuleName(), typeName)
+									+ "' found. Use annotations of row with revMax '" + revMax + "'.");
+					}
+				}
+				return annotations;
+			}
+		}
+		return null;
+	}
+
 	/**
-	 * Sets the {@link TLModule#getAnnotations()} of a {@link TLTypePart}.
+	 * Removes the given annotations from{@link TLTypePart#getAnnotations()}.
+	 */
+	public void removeTypePartAnnotations(Log log, PooledConnection con, Type owner, String partName,
+			Collection<Class<? extends TLAnnotation>> toRemove)
+			throws SQLException, MigrationException {
+		boolean success = false;
+		if (!success) {
+			success = removeTypePartAnnotations(log, con, owner, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+				partName, toRemove);
+		}
+		if (!success) {
+			success =
+				removeTypePartAnnotations(log, con, owner, TlModelFactory.KO_NAME_TL_CLASSIFIER, partName, toRemove);
+		}
+		if (!success) {
+			String qPartName =
+				TLModelUtil.qualifiedName(owner.getModule().getModuleName(), owner.getTypeName(), partName);
+			log.info("No type part '" + qPartName + "' found.", Protocol.WARN);
+		}
+	}
+
+	/**
+	 * Adds the given annotations increment to {@link TLTypePart#getAnnotations()}.
+	 */
+	public void addTypePartAnnotations(Log log, PooledConnection con, Type owner, String partName,
+			AnnotatedConfig<? extends TLAnnotation> increment)
+			throws SQLException, MigrationException {
+		boolean success = false;
+		if (!success) {
+			success = addTypePartAnnotations(log, con, owner, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE,
+				partName, increment);
+		}
+		if (!success) {
+			success =
+				addTypePartAnnotations(log, con, owner, TlModelFactory.KO_NAME_TL_CLASSIFIER, partName, increment);
+		}
+		if (!success) {
+			String qPartName = TLModelUtil.qualifiedName(owner.getModule().getModuleName(), owner.getTypeName(), partName);
+			log.info("No type part '" + qPartName + "' found.", Protocol.WARN);
+		}
+	}
+
+	private boolean removeTypePartAnnotations(Log log, PooledConnection con, Type owner, String table, String partName,
+			Collection<Class<? extends TLAnnotation>> toRemove)
+			throws SQLException, MigrationException {
+		String currentAnnotations = getTypePartAnnotations(log, con, owner, table, partName);
+		if (currentAnnotations == null) {
+			return false;
+		}
+		AnnotatedConfig<? extends TLAnnotation> newAnnotations;
+		try {
+			newAnnotations = removeAnnotations(currentAnnotations, toRemove);
+		} catch (ConfigurationException ex) {
+			String qTypePartName =
+				TLModelUtil.qualifiedName(owner.getModule().getModuleName(), owner.getTypeName(), partName);
+			throw new MigrationException("Unable to parse annotations for type part '" + qTypePartName + "'.", ex);
+		}
+		updateTypePartAnnotations(con, owner, table, partName, toString(newAnnotations));
+		return true;
+	}
+
+	private boolean addTypePartAnnotations(Log log, PooledConnection con, Type owner, String table, String partName,
+			AnnotatedConfig<? extends TLAnnotation> annotations)
+			throws SQLException, MigrationException {
+		String currentAnnotations = getTypePartAnnotations(log, con, owner, table, partName);
+		if (currentAnnotations == null) {
+			return false;
+		}
+		AnnotatedConfig<? extends TLAnnotation> newAnnotations;
+		try {
+			newAnnotations = addAnnotations(currentAnnotations, annotations);
+		} catch (ConfigurationException ex) {
+			String qTypePartName =
+				TLModelUtil.qualifiedName(owner.getModule().getModuleName(), owner.getTypeName(), partName);
+			throw new MigrationException("Unable to parse annotations for type part '" + qTypePartName + "'.", ex);
+		}
+		updateTypePartAnnotations(con, owner, table, partName, toString(newAnnotations));
+		return true;
+	}
+
+	/**
+	 * Sets the {@link TLTypePart#getAnnotations()} of a {@link TLTypePart}.
 	 */
 	public void updateTypePartAnnotations(PooledConnection con, Type owner, String partName,
 			AnnotatedConfig<? extends TLAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTypePartAnnotations(con, owner, partName, toString(annotations));
 	}
 
 	/**
-	 * Sets the {@link TLModule#getAnnotations()} of a {@link TLTypePart}.
+	 * Sets the {@link TLTypePart#getAnnotations()} of a {@link TLTypePart}.
 	 */
 	public void updateTypePartAnnotations(PooledConnection con, Type owner, String partName,
 			String annotations) throws SQLException {
-		updateTypeAnnotations(con, owner, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE, partName, annotations);
-		updateTypeAnnotations(con, owner, TlModelFactory.KO_NAME_TL_CLASSIFIER, partName, annotations);
+		updateTypePartAnnotations(con, owner, ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE, partName, annotations);
+		updateTypePartAnnotations(con, owner, TlModelFactory.KO_NAME_TL_CLASSIFIER, partName, annotations);
 	}
 
-	private void updateTypeAnnotations(PooledConnection con, Type owner, String partTable, String partName,
+	private void updateTypePartAnnotations(PooledConnection con, Type owner, String partTable, String partName,
 			String annotations) throws SQLException {
 		CompiledStatement sql = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "owner"),
-			parameterDef(DBType.STRING, "name"),
-			parameterDef(DBType.STRING, "annotations")),
-		update(
-			table(SQLH.mangleDBName(partTable)),
-			and(
-				eqBranch(),
-				eqSQL(
-					column(refID(PersistentTypePart.OWNER_ATTR)),
-					parameter(DBType.ID, "owner")),
-				eqSQL(
-					column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
-					parameter(DBType.STRING, "name"))),
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "owner"),
+				parameterDef(DBType.STRING, "name"),
+				parameterDef(DBType.STRING, "annotations")),
+			update(
+				table(SQLH.mangleDBName(partTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentTypePart.OWNER_ATTR)),
+						parameter(DBType.ID, "owner")),
+					eqSQL(
+						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
+						parameter(DBType.STRING, "name"))),
 				listWithoutNull(
-				SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
+					SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE)),
 				listWithoutNull(
-				parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
+					parameter(DBType.STRING, "annotations")))).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, owner.getBranch(), owner.getID(), partName, annotations);
+	}
+
+	private String getTypePartAnnotations(Log log, PooledConnection con, Type owner, String partTable, String partName)
+			throws SQLException {
+		CompiledStatement sql = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "owner"),
+				parameterDef(DBType.STRING, "name")),
+			select(
+				columns(
+					columnDef(BasicTypes.REV_MAX_DB_NAME),
+					columnDef(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE))),
+				table(SQLH.mangleDBName(partTable)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(refID(PersistentTypePart.OWNER_ATTR)),
+						parameter(DBType.ID, "owner")),
+					eqSQL(
+						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
+						parameter(DBType.STRING, "name"))),
+				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
+
+		try (ResultSet result = sql.executeQuery(con, owner.getBranch(), owner.getID(), partName)) {
+			if (result.next()) {
+				long revMax = result.getLong(1);
+				String annotations = StringServices.nonNull(result.getString(2));
+				if (result.next()) {
+					if (revMax == Revision.CURRENT_REV) {
+						log.info(
+							"Multiple entries for part '"
+									+ TLModelUtil.qualifiedName(owner.getModule().getModuleName(), owner.getTypeName(),
+										partName)
+									+ "' found. Use annotations of 'current' row.");
+					} else {
+						log.info(
+							"Multiple entries for part '"
+									+ TLModelUtil.qualifiedName(owner.getModule().getModuleName(), owner.getTypeName(),
+										partName)
+									+ "' found. Use annotations of row with revMax '" + revMax + "'.");
+					}
+				}
+				return annotations;
+			}
+		}
+		return null;
+
 	}
 
 	/**
@@ -1951,7 +2539,7 @@ public class Util {
 	 */
 	public Type createTLEnumeration(PooledConnection con, QualifiedTypeName enumName,
 			AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+			throws SQLException, MigrationException {
 		return createTLEnumeration(con, TLContext.TRUNK_ID,
 			enumName.getModuleName(), enumName.getTypeName(),
 			toString(annotations));
@@ -2012,7 +2600,198 @@ public class Util {
 			BranchIdType.newInstance(Type.class, branch, newIdentifier, TlModelFactory.KO_NAME_TL_ENUMERATION);
 		enumType.setTypeName(enumName);
 		enumType.setModule(module);
+		enumType.setKind(Type.Kind.ENUM);
 		return enumType;
+	}
+
+	/**
+	 * Reorders the {@link TLStructuredTypePart}s such that the part is in the order directly before
+	 * the part <code>before</code>. If <code>before</code> is <code>null</code>, the part is moved
+	 * to the end of the list.
+	 */
+	public void reorderTLStructuredTypePart(PooledConnection con, Type structuredType, String part, String before)
+			throws SQLException, MigrationException {
+		if (part.equals(before)) {
+			throw new MigrationException("Can not move part before itself: " + part);
+		}
+		List<TypePart> parts = getTLStructuredTypeParts(con, structuredType);
+		int partIndex = findPart(parts, part, structuredType);
+		int beforeIndex;
+		if (before == null) {
+			beforeIndex = parts.size();
+		} else {
+			beforeIndex = findPart(parts, before, structuredType);
+		}
+		if (partIndex == beforeIndex - 1) {
+			// Already at correct position.
+			return;
+		}
+		TypePart movedPart = parts.remove(partIndex);
+		if (partIndex < beforeIndex) {
+			parts.add(beforeIndex-1, movedPart);
+		} else {
+			parts.add(beforeIndex, movedPart);
+		}
+		Set<TypePart> changed = new HashSet<>();
+		Function<TypePart, Number> getter = TypePart::getOrder;
+		BiConsumer<TypePart, Integer> setter = (p, o) -> {
+			int newOrder = o.intValue();
+			if (newOrder != p.getOrder()) {
+				p.setOrder(newOrder);
+				changed.add(p);
+			}
+		};
+		OrderedLinkUtil.updateIndices(parts, getter, setter);
+		for (TypePart change : changed) {
+			updateTLStructuredTypePartSortOrder(con, change, change.getOrder());
+		}
+
+	}
+
+	private int findPart(List<? extends TypePart> parts, String part, Type owner) throws MigrationException {
+		for (int i = 0; i < parts.size(); i++) {
+			if (part.equals(parts.get(i).getPartName())) {
+				return i;
+			}
+		}
+		throw new MigrationException("No part with name '" + part + "' found in '" + toString(owner) + "'.");
+	}
+
+	/**
+	 * Reorders the generalization links of a {@link Type} such that the generalization type is in
+	 * the order directly before the type <code>before</code>. If <code>before</code> is
+	 * <code>null</code>, the generalization is moved to the end of the list.
+	 */
+	public void reorderTLTypeGeneralization(PooledConnection con, Type specialization, Type generalization,
+			Type before) throws SQLException, MigrationException {
+		if (generalization.equals(before)) {
+			throw new MigrationException("Can not move generalization before itself: " + generalization);
+		}
+		List<TypeGeneralization> generalizations = getGeneralizations(con, specialization);
+		int generalizationIdx = findGeneralization(specialization, generalizations, generalization);
+		int beforeIndex;
+		if (before == null) {
+			beforeIndex = generalizations.size();
+		} else {
+			beforeIndex = findGeneralization(specialization, generalizations, before);
+		}
+		if (generalizationIdx == beforeIndex - 1) {
+			// Already at correct position.
+			return;
+		}
+		TypeGeneralization movedGeneralization = generalizations.remove(generalizationIdx);
+		if (generalizationIdx < beforeIndex) {
+			generalizations.add(beforeIndex - 1, movedGeneralization);
+		} else {
+			generalizations.add(beforeIndex, movedGeneralization);
+		}
+		Set<TypeGeneralization> changed = new HashSet<>();
+		Function<TypeGeneralization, Number> getter = TypeGeneralization::getOrder;
+		BiConsumer<TypeGeneralization, Integer> setter = (p, o) -> {
+			int newOrder = o.intValue();
+			if (newOrder != p.getOrder()) {
+				p.setOrder(newOrder);
+				changed.add(p);
+			}
+		};
+		OrderedLinkUtil.updateIndices(generalizations, getter, setter);
+		for (TypeGeneralization change : changed) {
+			updateTypeGeneralizationSortOrder(con, change, change.getOrder());
+		}
+
+	}
+
+	private int findGeneralization(Type specialization, List<? extends TypeGeneralization> generalizations,
+			Type generalization) throws MigrationException {
+		TLID id = generalization.getID();
+		for (int i = 0; i < generalizations.size(); i++) {
+			if (id.equals(generalizations.get(i).getDestination())) {
+				return i;
+			}
+		}
+		throw new MigrationException(
+			"Type '" + toString(generalization) + "' is not a generalization of '" + toString(specialization) + "'.");
+	}
+
+	/**
+	 * Reorders the {@link TLClassifier}s such that the classifier is in the order directly before
+	 * the classifier <code>before</code>. If <code>before</code> is <code>null</code>, the
+	 * classifier is moved to the end of the list.
+	 */
+	public void reorderTLClassifier(PooledConnection con, Type enumType, String classifier, String before)
+			throws SQLException, MigrationException {
+		if (classifier.equals(before)) {
+			throw new MigrationException("Can not move classifier before itself: " + classifier);
+		}
+		List<TypePart> tlClassifiers = getTLClassifiers(con, enumType);
+		int classifierIndex = findPart(tlClassifiers, classifier, enumType);
+		int beforeIndex;
+		if (before == null) {
+			beforeIndex = tlClassifiers.size();
+		} else {
+			beforeIndex = findPart(tlClassifiers, before, enumType);
+		}
+		if (classifierIndex == beforeIndex - 1) {
+			// Already at correct position.
+			return;
+		}
+		TypePart movedClassifier = tlClassifiers.get(classifierIndex);
+		// First move classifier away to avoid duplicate-key constraint.
+		updateTLClassifierSortOrder(con, movedClassifier, tlClassifiers.size());
+		int targetOrder;
+		if (classifierIndex < beforeIndex) {
+			targetOrder = beforeIndex == tlClassifiers.size() ? beforeIndex : tlClassifiers.get(beforeIndex).getOrder() - 1;
+			for (int i = classifierIndex + 1; i < beforeIndex; i++) {
+				TypePart tlClassifier = tlClassifiers.get(i);
+				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() - 1);
+			}
+		} else {
+			assert beforeIndex < classifierIndex;
+			targetOrder = tlClassifiers.get(beforeIndex).getOrder();
+			for (int i = beforeIndex; i < classifierIndex; i++) {
+				TypePart tlClassifier = tlClassifiers.get(i);
+				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() + 1);
+			}
+		}
+		updateTLClassifierSortOrder(con, movedClassifier, targetOrder);
+	}
+
+	private void updateTypeGeneralizationSortOrder(PooledConnection con, TypeGeneralization part, int newSortOrder)
+			throws SQLException {
+		updateSortOrder(con, part, SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER),
+			newSortOrder);
+	}
+
+	private void updateTLClassifierSortOrder(PooledConnection con, TypePart part, int newSortOrder)
+			throws SQLException {
+		updateSortOrder(con, part, FastListElement.ORDER_DB_NAME, newSortOrder);
+	}
+
+	private void updateTLStructuredTypePartSortOrder(PooledConnection con, BranchIdType part, int sortOrder)
+			throws SQLException {
+		updateSortOrder(con, part, SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR), sortOrder);
+	}
+
+	private void updateSortOrder(PooledConnection con, BranchIdType part, String orderColumn, int newSortOrder)
+			throws SQLException {
+		DBHelper sqlDialect = con.getSQLDialect();
+		CompiledStatement updateStmt = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "identifier"),
+				parameterDef(DBType.INT, "order")),
+			update(
+				table(SQLH.mangleDBName(part.getTable())),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(BasicTypes.IDENTIFIER_DB_NAME),
+						parameter(DBType.ID, "identifier"))),
+				listWithoutNull(
+					orderColumn),
+				listWithoutNull(
+					parameter(DBType.INT, "order")))).toSql(sqlDialect);
+		updateStmt.executeUpdate(con, part.getBranch(), part.getID(), newSortOrder);
 	}
 
 	/**
@@ -2020,20 +2799,16 @@ public class Util {
 	 * 
 	 * @param classifierName
 	 *        Name of the {@link TLClassifier} to create.
-	 * @param sortOrder
-	 *        Sort order of the new classifier. If {@link #NO_SORT_ORDER}, the new TLCLasifier will
-	 *        be the last one.
 	 */
-	public TypePart createTLClassifier(PooledConnection con, QualifiedPartName classifierName, int sortOrder,
-			AnnotatedConfig<TLClassifierAnnotation> annotations)
-			throws SQLException, MigrationException, XMLStreamException {
+	public TypePart createTLClassifier(PooledConnection con, QualifiedPartName classifierName,
+			AnnotatedConfig<TLClassifierAnnotation> annotations) throws SQLException, MigrationException {
 		return createTLClassifier(con, TLContext.TRUNK_ID,
-			classifierName.getModuleName(), classifierName.getTypeName(), classifierName.getPartName(), sortOrder,
+			classifierName.getModuleName(), classifierName.getTypeName(), classifierName.getPartName(),
 			toString(annotations));
 	}
 
 	/**
-	 * Creates a new {@link TLEnumeration}.
+	 * Creates a new {@link TLClassifier}.
 	 * 
 	 * @param moduleName
 	 *        Name of the module of the new classifier to create.
@@ -2043,8 +2818,7 @@ public class Util {
 	 *        Name of the new classifier.
 	 */
 	public TypePart createTLClassifier(PooledConnection con, long branch, String moduleName, String enumName,
-			String classifierName, int sortOrder,
-			String annotations) throws SQLException, MigrationException {
+			String classifierName, String annotations) throws SQLException, MigrationException {
 		DBHelper sqlDialect = con.getSQLDialect();
 
 		Module module = getTLModuleOrFail(con, branch, moduleName);
@@ -2053,14 +2827,13 @@ public class Util {
 			throw new MigrationException(
 				"No enumeration with name '" + enumName + "' found in module " + toString(module));
 		}
-		if (sortOrder == NO_SORT_ORDER) {
-			List<Integer> orders = getOrders(con, branch, enumeration.getID(), FastListElement.ORDER_DB_NAME,
-				TlModelFactory.KO_NAME_TL_CLASSIFIER, FastListElement.OWNER_ATTRIBUTE);
-			if (orders.isEmpty()) {
-				sortOrder = 0;
-			} else {
-				sortOrder = orders.get(orders.size() - 1) + 1;
-			}
+		List<OrderValue> orders = getOrders(con, branch, enumeration.getID(), FastListElement.ORDER_DB_NAME,
+			PersistentTypePart.NAME_ATTR, TlModelFactory.KO_NAME_TL_CLASSIFIER, FastListElement.OWNER_ATTRIBUTE);
+		int sortOrder;
+		if (orders.isEmpty()) {
+			sortOrder = 0;
+		} else {
+			sortOrder = orders.get(orders.size() - 1).getOrder() + 1;
 		}
 		TLID newIdentifier = newID(con);
 		Long revCreate = getRevCreate(con);
@@ -2098,12 +2871,10 @@ public class Util {
 				parameter(DBType.INT, "sortOrder")))).toSql(sqlDialect);
 		createClassifier.executeUpdate(con, branch, newIdentifier, revCreate, annotations, enumeration.getID(),
 			classifierName, sortOrder);
-		TypePart classifierType =
-			BranchIdType.newInstance(TypePart.class, branch, newIdentifier, TlModelFactory.KO_NAME_TL_CLASSIFIER);
-		classifierType.setOwner(enumeration);
-		classifierType.setPartName(classifierName);
-		classifierType.setDefinition(IdentifierUtil.nullIdForMandatoryDatabaseColumns());
-		return classifierType;
+		return TypePart.newInstance(
+			branch, newIdentifier, TlModelFactory.KO_NAME_TL_CLASSIFIER,
+			TypePart.Kind.CLASSIFIER, enumeration, classifierName, IdentifierUtil.nullIdForMandatoryDatabaseColumns(),
+			sortOrder);
 	}
 
 	/**
@@ -2224,7 +2995,7 @@ public class Util {
 	public void updateTLProperty(PooledConnection con, TypePart part, Type newType, Type newOwner,
 			String newName, Boolean mandatory, Boolean multiple, Boolean bag,
 			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTLStructuredTypePart(con, part, newType, newOwner, newName, mandatory, null, null, multiple, bag,
 			ordered, null, null, toString(annotations), null);
 	}
@@ -2244,7 +3015,7 @@ public class Util {
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
 			Boolean ordered, Boolean navigate, HistoryType historyType,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		TLID endID = null;
 		if (newEnd != null) {
 			endID = newEnd.getID();
@@ -2276,7 +3047,7 @@ public class Util {
 			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
 			Boolean ordered, Boolean navigate, HistoryType historyType,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
-			throws SQLException, XMLStreamException, MigrationException {
+			throws SQLException, MigrationException {
 
 		TLID endID = null;
 		if (newEnd != null) {
@@ -2479,7 +3250,7 @@ public class Util {
 	 */
 	public void updateTLStructuredType(PooledConnection con, Type type, Module newModule, String newName,
 			Boolean isAbstract, Boolean isFinal, AnnotatedConfig<TLTypeAnnotation> annotations)
-			throws SQLException, XMLStreamException {
+			throws SQLException {
 		updateTLStructuredType(con, type, newModule, newName, isAbstract, isFinal, toString(annotations));
 	}
 
@@ -2554,7 +3325,7 @@ public class Util {
 	 */
 	public void updateTLDataType(PooledConnection con, Type type, Module newModule, String newName, Kind kind,
 			DBColumnType columnType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
-			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException, XMLStreamException {
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException {
 		String dbType;
 		Integer dbSize;
 		Integer dbPrecision;
@@ -2822,7 +3593,13 @@ public class Util {
 	 */
 	@SafeVarargs
 	public static <T> List<T> listWithoutNull(T... values) {
-		List<T> result = Arrays.asList(values);
+		return listWithoutNull(Arrays.asList(values));
+	}
+
+	/**
+	 * Filters the given list such that no <code>null</code> values are contained.
+	 */
+	public static <T> List<T> listWithoutNull(List<T> result) {
 		if (result.contains(null)) {
 			return result.stream().filter(Objects::nonNull).collect(Collectors.toList());
 		}

@@ -24,8 +24,5 @@
         <TokenSchema Nummer="1" Typ="exampleGlobalToken" Sperrtyp="exclusiv" Wirkungsbereich="definedInDeklaration"/>
         <TokenSchema Nummer="2" Typ="exampleToken"       Sperrtyp="shared"   Wirkungsbereich="local"/>
     </KontextSchema>
-    <KontextSchema Instanziierungsbereich="any" ID="RefreshUsersTask">
-        <TokenSchema Nummer="1" 	Typ="RefreshUsersToken" 	Sperrtyp="exclusiv" 	Wirkungsbereich="local"/>
-    </KontextSchema>
 </KontextSchemata>
 </ConcurrencySchema>

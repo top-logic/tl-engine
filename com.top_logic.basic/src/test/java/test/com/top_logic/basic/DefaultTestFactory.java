@@ -6,6 +6,7 @@
 package test.com.top_logic.basic;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
@@ -27,7 +28,7 @@ public final class DefaultTestFactory implements TestFactory {
 	}
 	
 	@Override
-	public Test createSuite(Class testCase, String suiteName) {
+	public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 		return new TestSuite(testCase, suiteName);
 	}
 }

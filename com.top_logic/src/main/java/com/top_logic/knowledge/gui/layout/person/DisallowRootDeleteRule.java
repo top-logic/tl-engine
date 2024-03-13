@@ -7,7 +7,6 @@ package com.top_logic.knowledge.gui.layout.person;
 
 import java.util.Map;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -34,7 +33,7 @@ public class DisallowRootDeleteRule implements ExecutabilityRule {
 	@Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
 		{
-			if (model instanceof Person && SecurityContext.isSuperUser(((Person) model).getUser())) {
+			if (model instanceof Person && Person.isAdmin(((Person) model))) {
 				return ExecutableState.createDisabledState(I18NConstants.ERROR_CANNOT_DELETE_ADMIN_USER);
 			}
 		}

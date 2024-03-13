@@ -9,7 +9,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.annotate.security.RoleConfig;
 
 /**
- * {@link DiffElement} requesting the creation of a new singleton.
+ * {@link DiffElement} requesting the creation of a new role.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -17,7 +17,7 @@ import com.top_logic.model.annotate.security.RoleConfig;
 public interface CreateRole extends Create, ModulePartDiff {
 
 	/**
-	 * Configuration of the new singleton to create within {@link #getModule()}.
+	 * Configuration of the new role to create within {@link #getModule()}.
 	 */
 	RoleConfig getRole();
 

@@ -9,10 +9,13 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import junit.framework.Test;
+import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
+import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
 import com.top_logic.base.ocr.PDFUploadBatch;
 import com.top_logic.base.ocr.TLPDFCompress;
@@ -27,7 +30,6 @@ import com.top_logic.knowledge.objects.DCMetaData;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.TLContext;
 
 /**
@@ -59,7 +61,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         try {
             // TODO TRI fix this bug please
             ThreadContext.pushSuperUser();
-            Person ocrPerson = PersonManager.getManager().getPersonByName("root");
+            Person ocrPerson = Person.byName("root");
             assertTrue(ocrPerson.getKnowledgeBase().commit());
         } finally  {
             ThreadContext.popSuperUser();
@@ -117,7 +119,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         try {
             // TODO TRI fix this bug please
             ThreadContext.pushSuperUser();
-            Person ocrPerson = PersonManager.getManager().getPersonByName("dau");
+            Person ocrPerson = Person.byName("dau");
             assertTrue(ocrPerson.getKnowledgeBase().commit());
         } finally  {
             ThreadContext.popSuperUser();
@@ -175,7 +177,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         try {
             // TODO TRI fix this bug please
             ThreadContext.pushSuperUser();
-            Person ocrPerson = PersonManager.getManager().getPersonByName("dau");
+            Person ocrPerson = Person.byName("dau");
             assertTrue(ocrPerson.getKnowledgeBase().commit());
         } finally  {
             ThreadContext.popSuperUser();
@@ -257,7 +259,9 @@ public class TestPDFUploadBatch extends BasicTestCase {
      * the suite of test to execute.
      */
     public static Test suite () {
-		return KBSetup.getSingleKBTest(TestPDFUploadBatch.class);
+		Test test = new TestSuite(TestPDFUploadBatch.class);
+		test = new CreateDefaultTestPersons(test);
+		return PersonManagerSetup.createPersonManagerSetup(test);
     }
 
     /**

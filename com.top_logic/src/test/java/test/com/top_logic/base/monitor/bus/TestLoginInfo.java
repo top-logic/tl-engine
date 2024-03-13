@@ -9,14 +9,14 @@ import java.util.Date;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.base.monitor.bus.LoginInfo;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
-import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Check the functionality of the LoginInfo class.
@@ -29,7 +29,7 @@ public class TestLoginInfo extends BasicTestCase {
 	private static final String DEFAULT_USER = TestPersonSetup.USER_ID;
 
     /** The user to be used for this test. */
-    private UserInterface user;
+	private Person user;
 
     /**
      * Constructor for the specific test case.
@@ -109,7 +109,7 @@ public class TestLoginInfo extends BasicTestCase {
 	protected void setUp () throws Exception {
         super.setUp (); //setup TLTestCase
 
-        this.user = PersonManager.getManager().getPersonByName(DEFAULT_USER).getUser();
+		this.user = Person.byName(DEFAULT_USER);
     }
 
     @Override

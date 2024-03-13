@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.TestingConnectionPoolRegistryAccess.PoolRef;
@@ -411,7 +412,7 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	 *        The test case class.
 	 * @return the wrapped test suite.
 	 */
-	public static Test getDBTest(Class<? extends Test> testCase) {
+	public static Test getDBTest(Class<? extends TestCase> testCase) {
 		return getDBTest(testCase, DefaultTestFactory.INSTANCE);
 	}
 
@@ -426,7 +427,7 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	 *        class.
 	 * @return the wrapped test suite.
 	 */
-	public static Test getDBTest(Class<? extends Test> testCase, TestFactory f) {
+	public static Test getDBTest(Class<? extends TestCase> testCase, TestFactory f) {
 		TestSuite result = new TestSuite(testCase.getName());
 		if (useOnlyDefaultDB()) {
 			result.addTest(newTest(testCase, DEFAULT_DB, f));
@@ -445,11 +446,11 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 		return wrap(result);
 	}
 
-	private static DatabaseTestSetup newTest(Class<? extends Test> testCase, DBType db, TestFactory f) {
+	private static DatabaseTestSetup newTest(Class<? extends TestCase> testCase, DBType db, TestFactory f) {
 		return newTest(testCase, db, f, db.toString());
 	}
 
-	private static DatabaseTestSetup newTest(Class<? extends Test> testCase, DBType db, TestFactory f,
+	private static DatabaseTestSetup newTest(Class<? extends TestCase> testCase, DBType db, TestFactory f,
 			String testNameAppendix) {
 		DatabaseTestSetup setup = createSetup(testCase, db, f);
 		if (!StringServices.isEmpty(testNameAppendix)) {
@@ -468,7 +469,7 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	 *        The database to use.
 	 * @return the wrapped test.
 	 */
-	public static Test getDBTest(Class<? extends Test> testCase, DBType dbType) {
+	public static Test getDBTest(Class<? extends TestCase> testCase, DBType dbType) {
 		return getDBTest(testCase, dbType, DefaultTestFactory.INSTANCE);
 	}
 
@@ -485,7 +486,7 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	 *        class.
 	 * @return the wrapped test.
 	 */
-	public static Test getDBTest(Class<? extends Test> testCase, DBType dbType, TestFactory f) {
+	public static Test getDBTest(Class<? extends TestCase> testCase, DBType dbType, TestFactory f) {
 		return getDBTest(testCase, dbType, f, null);
 	}
 
@@ -504,7 +505,7 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	 * 
 	 * @return the wrapped test.
 	 */
-	public static Test getDBTest(Class<? extends Test> testCase, DBType dbType, TestFactory f, String testNameAppendix) {
+	public static Test getDBTest(Class<? extends TestCase> testCase, DBType dbType, TestFactory f, String testNameAppendix) {
 		return wrap(newTest(testCase, dbType, f, testNameAppendix));
 	}
 
@@ -517,7 +518,7 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 			innerTest, ConnectionPoolRegistry.Module.INSTANCE));
 	}
 
-	private static DatabaseTestSetup createSetup(Class<? extends Test> testCase, DBType dbType, TestFactory f) {
+	private static DatabaseTestSetup createSetup(Class<? extends TestCase> testCase, DBType dbType, TestFactory f) {
 		return createSetup(f.createSuite(testCase, testCase.getName() + " with " + dbType), dbType);
 	}
 

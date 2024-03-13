@@ -3,59 +3,17 @@
 <template>
 	<params>
 		<param name="namePrefix"/>
-		<param name="columnDefinitions">
-			<columns>
-				<column name="givenName"/>
-				<column name="sn"/>
-				<column name="username"
-					visible="false"
-				/>
-				<column name="initials"
-					visible="false"
-				/>
-				<column name="mail"
-					visible="false"
-				/>
-				<column name="otherMailbox"
-					visible="false"
-				/>
-				<column name="personalTitle"
-					visible="false"
-				/>
-				<column name="telephoneNumber"
-					visible="false"
-				/>
-				<column name="otherTelephone"
-					visible="false"
-				/>
-				<column name="mobile"
-					visible="false"
-				/>
-				<column name="lastLogin"
-					accessor="com.top_logic.knowledge.gui.layout.person.PersonTableComponent$LastLoginAccessor"
-					filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
-					visible="false"
-				/>
-				<column name="dataDeviceID"
-					visible="false"
-				/>
-				<column name="authDeviceID"
-					visible="false"
-				/>
-				<column name="restrictedUser"
-					filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
-					visible="false"
-				/>
-			</columns>
-		</param>
+		<param name="columnDefinitions"
+			optional="true"
+		/>
 		<param name="columns"
-			value="sn,givenName"
+			value="firstName, lastName, name"
 		/>
 		<param name="fixedColumns"
 			value="0"
 		/>
 		<param name="defaultSortOrder"
-			value="sn"
+			value="name"
 		/>
 		<param name="columnWidth"
 			value="186px"
@@ -83,7 +41,7 @@
 		</param>
 	</params>
 
-	<component class="com.top_logic.knowledge.gui.layout.person.PersonTableComponent"
+	<component class="com.top_logic.layout.table.component.TableComponent"
 		buttonComponent="${exportButtonComponent}"
 		isSecurityMaster="${isSecurityMaster}"
 		modelBuilder="${builderClass}"
@@ -97,6 +55,7 @@
 	>
 		<table
 			columnCustomization="selection"
+			columnsDefinitions="${columnDefinitions}"
 			defaultColumns="${columns}"
 			defaultSortOrder="${defaultSortOrder}"
 			fixedColumns="${fixedColumns}"
@@ -104,11 +63,9 @@
 			showTitle="true"
 		>
 			<column-default
-				accessor="com.top_logic.knowledge.wrap.person.PersonAccessor"
 				columnWidth="${columnWidth}"
 				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			/>
-			${columnDefinitions}
 		</table>
 		<buttons>
 			<button id="exportExcel"

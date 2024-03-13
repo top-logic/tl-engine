@@ -24,7 +24,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * Information about the session of a user.
@@ -109,7 +108,7 @@ public class UserSession extends AbstractWrapper {
         String theUser = this.getUsername();
 
         if (theUser != null) {
-            return (PersonManager.getManager().getPersonByName(theUser));
+            return (Person.byName(theUser));
         }
         else {
             return (null);

@@ -33,7 +33,6 @@ import com.top_logic.knowledge.gui.WrapperResourceProvider;
 import com.top_logic.knowledge.gui.layout.person.PersonResourceProvider;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
@@ -355,7 +354,7 @@ public class ShowSecurityComponent extends FormComponent {
 
 			@Override
 			protected List<? extends Person> initInstance() {
-				return PersonManager.getManager().getAllAlivePersons();
+				return Person.all();
 			}
 		};
 	}

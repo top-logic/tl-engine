@@ -57,7 +57,7 @@ public class EmptyCellDefinitionTemplateProvider extends AbstractFormElementProv
 	}
 
 	@Override
-	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		return contentBox(
 			div(css(inputCellCSS(context) + " " + ReactiveFormCSS.RF_EMPTY_CELL), empty()),
 			getWholeLine(context.getFormType()));

@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.wrap.person;
 
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.layout.LabelProvider;
 
 /**
@@ -34,8 +35,34 @@ public class CommonPersonLabelProvider implements LabelProvider {
 
 		Person person = (Person) object;
 
-		return person.getUser().getUserName() + "(" +
-			person.getUser().getNameAs_LastTitleFirst(false) + ")";
+		String userInfo = CommonPersonLabelProvider.getLabelNameTitleFirst(person, false);
+		return person.getName() + (userInfo != null ? "(" + userInfo + ")" : "");
+	}
+
+	/**
+	 * Formatted username: last name, title first name.
+	 * 
+	 * @param includeTitle
+	 *        Whether to to the title.
+	 * @return formatted user name
+	 */
+	public static String getLabelNameTitleFirst(Person person, boolean includeTitle) {
+		if (person == null) {
+			return null;
+		}
+
+		UserInterface user = person.getUser();
+		if (user == null) {
+			return null;
+		}
+
+		StringBuffer name = new StringBuffer();
+		name.append(user.getName()).append(", ");
+		if (includeTitle) {
+			name.append(user.getTitle()).append(' ');
+		}
+		name.append(user.getFirstName());
+		return name.toString();
 	}
 
 }

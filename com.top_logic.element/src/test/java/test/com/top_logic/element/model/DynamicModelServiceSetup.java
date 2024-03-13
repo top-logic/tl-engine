@@ -8,6 +8,7 @@ package test.com.top_logic.element.model;
 import static com.top_logic.basic.config.ConfigurationSchemaConstants.*;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.CustomConfigurationDecorator;
@@ -82,7 +83,7 @@ public class DynamicModelServiceSetup {
 		Test kbTest = KBSetup.getKBTestWithoutSetups(testClass, new TestFactory() {
 
 			@Override
-			public Test createSuite(Class<? extends Test> testCase, String suiteName) {
+			public Test createSuite(Class<? extends TestCase> testCase, String suiteName) {
 				TestSuite suite = new TestSuite(testCase);
 				suite.setName(suiteName);
 				Test innerTest = suite;

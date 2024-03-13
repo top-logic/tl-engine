@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,6 +16,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * Name of type <code>DemoTypes.A</code>
 	 */
 	String DEMO_TYPES_A_TYPE = "DemoTypes.A";
+
+	/**
+	 * Part <code>account</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.accounts:Person</code> in configuration.
+	 * </p>
+	 */
+	String ACCOUNT_ATTR = "account";
 
 	/**
 	 * Part <code>binary</code> of <code>DemoTypes.A</code>
@@ -286,6 +295,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * </p>
 	 */
 	String COMPLEX_UNIT_ATTR = "complexUnit";
+
+	/**
+	 * Part <code>contact</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>Contacts:PersonContact</code> in configuration.
+	 * </p>
+	 */
+	String CONTACT_ATTR = "contact";
 
 	/**
 	 * Part <code>containment</code> of <code>DemoTypes.A</code>
@@ -657,15 +675,6 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String PASSWORD_ATTR = "password";
 
 	/**
-	 * Part <code>person</code> of <code>DemoTypes.A</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.accounts:Person</code> in configuration.
-	 * </p>
-	 */
-	String PERSON_ATTR = "person";
-
-	/**
 	 * Part <code>priorityTable</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -907,6 +916,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * </p>
 	 */
 	String XML_ATTR = "xml";
+
+	/**
+	 * Getter for part {@link #ACCOUNT_ATTR}.
+	 */
+	default com.top_logic.knowledge.wrap.person.Person getAccount() {
+		return (com.top_logic.knowledge.wrap.person.Person) tValueByName(ACCOUNT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ACCOUNT_ATTR}.
+	 */
+	default void setAccount(com.top_logic.knowledge.wrap.person.Person newValue) {
+		tUpdateByName(ACCOUNT_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #BINARY_ATTR}.
@@ -1558,6 +1581,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void setComplexUnit(com.top_logic.model.TLObject newValue) {
 		tUpdateByName(COMPLEX_UNIT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CONTACT_ATTR}.
+	 */
+	default com.top_logic.contact.business.PersonContact getContact() {
+		return (com.top_logic.contact.business.PersonContact) tValueByName(CONTACT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CONTACT_ATTR}.
+	 */
+	default void setContact(com.top_logic.contact.business.PersonContact newValue) {
+		tUpdateByName(CONTACT_ATTR, newValue);
 	}
 
 	/**
@@ -2233,20 +2270,6 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void setPassword(com.top_logic.base.security.util.Password newValue) {
 		tUpdateByName(PASSWORD_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #PERSON_ATTR}.
-	 */
-	default com.top_logic.knowledge.wrap.person.Person getPerson() {
-		return (com.top_logic.knowledge.wrap.person.Person) tValueByName(PERSON_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #PERSON_ATTR}.
-	 */
-	default void setPerson(com.top_logic.knowledge.wrap.person.Person newValue) {
-		tUpdateByName(PERSON_ATTR, newValue);
 	}
 
 	/**

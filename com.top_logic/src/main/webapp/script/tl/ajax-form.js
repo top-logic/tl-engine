@@ -1525,14 +1525,13 @@ services.form = {
 	},
 
 	FormEditorControl : {
-		moveMember : function(controlID, elementID, siblingID, parentID, elementName, inEditor, showWait, serverResponseCallback) {
+		moveMember : function(controlID, elementID, siblingID, parentID, inEditor, showWait, serverResponseCallback) {
 			services.ajax.execute("dispatchControlCommand", {
 				controlCommand : "moveMember",
 				controlID : controlID,
 				elementID : elementID,
 				siblingID : siblingID,
 				parentID : parentID,
-				elementName : elementName,
 				inEditor : inEditor
 			}, showWait, serverResponseCallback);
 		},

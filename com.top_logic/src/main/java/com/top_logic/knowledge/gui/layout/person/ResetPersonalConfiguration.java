@@ -7,7 +7,6 @@ package com.top_logic.knowledge.gui.layout.person;
 
 import java.util.Map;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -25,7 +24,6 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
 import com.top_logic.util.TLContext;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Reset the Personal Configuration assuming the underlying model is a Person.
@@ -64,23 +62,20 @@ public class ResetPersonalConfiguration extends AbstractCommandHandler {
 	}
 
 	@Override
-	public HandlerResult handleCommand(DisplayContext aContext,
-			LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
-		try {
-			Person thePerson = getPersonFromComponenet(aComponent);
-			TLContext theContext = TLContext.getContext();
-			if (thePerson != null && theContext != null) {
-				try (Transaction tx = thePerson.getKnowledgeBase().beginTransaction()) {
-					if (thePerson == theContext.getCurrentPersonWrapper()) {
-						forgetTransientConfiguration(theContext);
-					}
-					dropPersonalConfigurationWrapper(thePerson);
-					tx.commit();
-				}
+	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
+			Map<String, Object> someArguments) {
+		Person account = (Person) model;
+		if (account == null) {
+			throw new IllegalArgumentException("No account given.");
+		}
+
+		try (Transaction tx = account.getKnowledgeBase().beginTransaction()) {
+			TLContext tlContext = TLContext.getContext();
+			if (tlContext != null && account == tlContext.getPerson()) {
+				forgetTransientConfiguration(tlContext);
 			}
-		} catch (Exception any) {
-			Logger.error("Failed to ResetPersonalConfiguration", any);
-			throw new TopLogicException(ResetPersonalConfiguration.class, "save.failed", any);
+			dropPersonalConfigurationWrapper(account);
+			tx.commit();
 		}
         
 		aComponent.invalidate();
@@ -102,24 +97,6 @@ public class ResetPersonalConfiguration extends AbstractCommandHandler {
 		if (theConf != null) {
 			theConf.tDelete();
 		}
-	}
-
-	/**
-	 * Extract a Person as model from aComponent.
-	 * 
-	 * This can be used to derive the Person from some other Model (e.g. a PersonContact).
-	 * 
-	 * @return null in case no Person can be resolved from aComponent
-	 */
-	private Person getPersonFromComponenet(LayoutComponent aComponent) {
-		Object theModel =  aComponent.getModel();
-		if (theModel instanceof Person) {
-			return (Person) theModel;
-		}
-		if (theModel != null) {
-			Logger.warn("Could not resolve a Person from " + theModel, ResetPersonalConfiguration.class);
-		}
-		return null;
 	}
 	
 	/**

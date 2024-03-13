@@ -8,6 +8,22 @@
 			comment="Setup objects."
 		>
 			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="fcl"
+						/>
+						<parameter name="Vorname"
+							value="Fred"
+						/>
+						<parameter name="Nachname"
+							value="Clever"
+						/>
+					</parameters>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					comment="Setup plain objects."
 				>
@@ -800,7 +816,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Super"
+									name="root"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -1002,7 +1018,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Super"
+									name="root"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -1121,18 +1137,14 @@
 									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
 										table="Contact"
 									>
-										<branch config:interface=""/>
-										<revision config:interface=""/>
 										<attributes>
 											<attribute name="name">
 												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Super"
+													value="root"
 												/>
 											</attribute>
 											<attribute name="firstname">
-												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administrator"
-												/>
+												<value config:interface=""/>
 											</attribute>
 										</attributes>
 										<type config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
@@ -3150,6 +3162,16 @@
 							<arguments/>
 						</action>
 					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName"
+							value="fcl"
+						/>
+					</parameters>
 				</action>
 			</actions>
 		</action>

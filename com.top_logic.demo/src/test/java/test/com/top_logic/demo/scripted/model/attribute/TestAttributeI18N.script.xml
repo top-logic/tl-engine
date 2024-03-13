@@ -9,16 +9,12 @@
 			template-name-comment="Element Anlegen"
 		>
 			<parameters>
-				<parameter name="ergebnis">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="TestAttributeI18N"
-					/>
-				</parameter>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="TestAttributeI18N"
-					/>
-				</parameter>
+				<parameter name="ergebnis"
+					value="TestAttributeI18N"
+				/>
+				<parameter name="Name"
+					value="TestAttributeI18N"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -294,71 +290,25 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Persönliche Einstellungen"
-							command-name="showCurrentPersonDialog"
-							component-implementation-comment="com.top_logic.layout.component.TabComponent"
-							component-name="mainTabbar.layout.xml#mainTabber"
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Action-Nutzer-Sprache aendern.xml"
+							template-name-comment="Nutzer Sprache aendern"
 						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Sprache"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Benutzerkonto bearbeiten"
+							<parameters>
+								<parameter name="Sprache"
+									value="Deutsch"
 								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="de"
-									/>
-								</values>
-							</value>
+							</parameters>
 						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Action-Nutzer-Land aendern.xml"
+							template-name-comment="Nutzer Land aendern"
 						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Land"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Benutzerkonto bearbeiten"
+							<parameters>
+								<parameter name="Land"
+									value="Österreich"
 								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="AT"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-							command-label="Speichern"
-							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-							user-id="root"
-						>
-							<arguments/>
+							</parameters>
 						</action>
 					</actions>
 				</action>
@@ -371,16 +321,12 @@
 					template-name-comment="Nutzer anmelden"
 				>
 					<parameters>
-						<parameter name="Username">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
-						<parameter name="ProcessId">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
+						<parameter name="Username"
+							value="root"
+						/>
+						<parameter name="ProcessId"
+							value="root"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -447,71 +393,25 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Persönliche Einstellungen"
-							command-name="showCurrentPersonDialog"
-							component-implementation-comment="com.top_logic.layout.component.TabComponent"
-							component-name="mainTabbar.layout.xml#mainTabber"
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Action-Nutzer-Sprache aendern.xml"
+							template-name-comment="Nutzer Sprache aendern"
 						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Sprache"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Benutzerkonto bearbeiten"
+							<parameters>
+								<parameter name="Sprache"
+									value="Englisch"
 								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="en"
-									/>
-								</values>
-							</value>
+							</parameters>
 						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Action-Nutzer-Land aendern.xml"
+							template-name-comment="Nutzer Land aendern"
 						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Land"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Benutzerkonto bearbeiten"
+							<parameters>
+								<parameter name="Land"
+									value="Vereinigtes Königreich"
 								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="GB"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-							command-label="Speichern"
-							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
-							user-id="root"
-						>
-							<arguments/>
+							</parameters>
 						</action>
 					</actions>
 				</action>
@@ -524,16 +424,12 @@
 					template-name-comment="Nutzer anmelden"
 				>
 					<parameters>
-						<parameter name="Username">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
-						<parameter name="ProcessId">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
+						<parameter name="Username"
+							value="root"
+						/>
+						<parameter name="ProcessId"
+							value="root"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -602,7 +498,7 @@
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Show personal settings"
+							command-label="Personal settings"
 							command-name="showCurrentPersonDialog"
 							component-implementation-comment="com.top_logic.layout.component.TabComponent"
 							component-name="mainTabbar.layout.xml#mainTabber"
@@ -613,9 +509,9 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 							command-label="Edit"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -627,13 +523,13 @@
 								label="Language"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit user account"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="en"
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="English"
 									/>
 								</values>
 							</value>
@@ -645,13 +541,13 @@
 								label="Country"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit user account"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="US"
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="United States"
 									/>
 								</values>
 							</value>
@@ -660,8 +556,8 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Save"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -677,16 +573,12 @@
 					template-name-comment="Nutzer anmelden"
 				>
 					<parameters>
-						<parameter name="Username">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
-						<parameter name="ProcessId">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
+						<parameter name="Username"
+							value="root"
+						/>
+						<parameter name="ProcessId"
+							value="root"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -755,7 +647,7 @@
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Show personal settings"
+							command-label="Personal settings"
 							command-name="showCurrentPersonDialog"
 							component-implementation-comment="com.top_logic.layout.component.TabComponent"
 							component-name="mainTabbar.layout.xml#mainTabber"
@@ -766,9 +658,9 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 							command-label="Edit"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -780,13 +672,13 @@
 								label="Language"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit user account"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="de"
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="German"
 									/>
 								</values>
 							</value>
@@ -798,13 +690,13 @@
 								label="Country"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Edit user account"
+									tab-path="Edit profile"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="DE"
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Germany"
 									/>
 								</values>
 							</value>
@@ -813,8 +705,8 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Save"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
-							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
 							user-id="root"
 						>
 							<arguments/>
@@ -830,16 +722,12 @@
 					template-name-comment="Nutzer anmelden"
 				>
 					<parameters>
-						<parameter name="Username">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
-						<parameter name="ProcessId">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="root"
-							/>
-						</parameter>
+						<parameter name="Username"
+							value="root"
+						/>
+						<parameter name="ProcessId"
+							value="root"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -1018,11 +906,9 @@
 			template-name-comment="Element Loeschen"
 		>
 			<parameters>
-				<parameter name="kontext">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="TestAttributeI18N"
-					/>
-				</parameter>
+				<parameter name="kontext"
+					value="TestAttributeI18N"
+				/>
 			</parameters>
 		</action>
 	</actions>

@@ -394,7 +394,7 @@
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 				<values>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-						label="Super, Administrator"
+						label="root"
 					/>
 				</values>
 			</value>
@@ -470,7 +470,7 @@
 				<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 					<values>
 						<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-							label="Super, Administrator"
+							label="root"
 						/>
 					</values>
 				</local-name>

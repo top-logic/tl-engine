@@ -18,7 +18,6 @@ import java.io.Writer;
 import java.util.Date;
 
 import com.top_logic.base.bus.MonitorEvent;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfiguredInstance;
@@ -26,6 +25,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.event.bus.AbstractReceiver;
 import com.top_logic.event.bus.BusEvent;
+import com.top_logic.knowledge.wrap.person.Person;
 
 
 
@@ -170,7 +170,7 @@ public abstract class DefaultMonitor extends AbstractReceiver implements Configu
 
         if (anEvent instanceof MonitorEvent) {
             MonitorEvent theEvent  = (MonitorEvent) anEvent;
-            UserInterface user = theEvent.getUser ();
+			Person user = theEvent.getUser();
 			String userName;
 			if (user != null) {
 				userName = user.getFullName();

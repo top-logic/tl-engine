@@ -5,11 +5,10 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
-import com.top_logic.base.security.SecurityContext;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
 
 /**
@@ -19,16 +18,12 @@ public class IsCurrentPersonOrRootFilter implements Filter {
 
 	@Override
 	public boolean accept(Object aObject) {
-		
-		if (ThreadContext.isSuperUser()) {
+		if (ThreadContext.isAdmin()) {
 			return true;
 		}
 		
-		{
-			UserInterface theSelected = ((Person) aObject).getUser();
-			
-			return Utils.equals(theSelected, SecurityContext.getCurrentUser());
-		}
+		Person selectedUser = ((Person) aObject);
+		return Utils.equals(selectedUser, TLContext.currentUser());
 	}
 
 }

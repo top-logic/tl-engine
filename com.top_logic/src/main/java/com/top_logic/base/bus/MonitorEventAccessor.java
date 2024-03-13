@@ -5,9 +5,8 @@
  */
 package com.top_logic.base.bus;
 
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.event.bus.Sender;
-import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Accessor;
 
 /**
@@ -51,9 +50,9 @@ public class MonitorEventAccessor implements Accessor {
             return theEvent.getSourceObject();         
         }
         else if (PROPERTY_USER.equals(aProperty)) {
-            UserInterface user = theEvent.getUser();
+			Person user = theEvent.getUser();
 			if (user != null) {
-				return PersonManager.getManager().getPersonByName(user.getUserName());
+				return user;
 			} else {
 				return null;
 			}

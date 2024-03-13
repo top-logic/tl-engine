@@ -10,6 +10,7 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.function.Function;
 
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
@@ -23,7 +24,6 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -34,7 +34,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public abstract class AbstractFormElementProvider<T extends FormElement<?>> extends AbstractConfiguredInstance<T>
-		implements FormElementTemplateProvider {
+		implements FormEditorTemplateProvider {
 
 	/**
 	 * Default dialog width of the configuration dialog of a {@link FormElementTemplateProvider}.
@@ -61,8 +61,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	/** The context of the form. */
 	private InstantiationContext _context;
 
-	private boolean _isInEditMode;
-
 	private String _id;
 
 	/** Prefix for UUID for ResKeys. */
@@ -78,13 +76,17 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 		_context = context;
 	}
 	
-	@Override
-	public DisplayDimension getDialogWidth() {
+	/**
+	 * Returns the width of the dialog to edit the attributes.
+	 */
+	protected DisplayDimension getDialogWidth() {
 		return DIALOG_WIDTH;
 	}
 
-	@Override
-	public DisplayDimension getDialogHeight() {
+	/**
+	 * Returns the height of the dialog to edit the attributes.
+	 */
+	protected DisplayDimension getDialogHeight() {
 		return DIALOG_HEIGHT;
 	}
 
@@ -129,16 +131,13 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 		// Hook for subclasses.
 	}
 
-	@Override
-	public Class<T> getFormElementType() {
+	/**
+	 * The class of the {@link FormElement} configuration created by this provider.
+	 */
+	protected Class<T> getFormElementType() {
 		@SuppressWarnings("unchecked")
 		Class<T> result = (Class<T>) getConfig().getConfigurationInterface();
 		return result;
-	}
-
-	@Override
-	public String getName() {
-		return null;
 	}
 
 	@Override
@@ -154,13 +153,48 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	}
 
 	@Override
-	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
-		_isInEditMode = context.isInEditMode();
-		setID(context.getFrameScope().createNewID());
-		context.getFormEditorMapping().putMapping(getID(), getConfig());
-		HTMLTemplateFragment formTemplate = createDisplayTemplate(context);
+	public HTMLTemplateFragment createTemplate(FormEditorContext context) {
+		FormMode formMode = context.getFormMode();
+		if (formMode == null) {
+			// No explicit mode required. Assume it is for display.
+			return createDisplayTemplate(context);
+		}
+		switch (formMode) {
+			case DESIGN:
+				setID(context.getFrameScope().createNewID());
+				context.getFormEditorMapping().putMapping(getID(), getConfig());
+				HTMLTemplateFragment formTemplate = createDesignTemplate(context);
 
-		return FormEditorElementTemplateProvider.wrapFormEditorElement(formTemplate, this, context);
+				return FormEditorElementTemplateProvider.wrapFormEditorElement(formTemplate, this, context);
+			case CREATE:
+			case EDIT:
+				return createDisplayTemplate(context);
+		}
+		throw new UnreachableAssertion("Uncovered mode " + formMode);
+	}
+
+	/**
+	 * Creates a {@link HTMLTemplateFragment} for elements of a form. The template defines how the
+	 * elements are visually represented at the GUI.
+	 * 
+	 * @param context
+	 *        The {@link FormEditorContext} to create the template.
+	 * 
+	 * @return The created template.
+	 */
+	protected abstract HTMLTemplateFragment createDisplayTemplate(FormEditorContext context);
+
+	/**
+	 * Creates a {@link HTMLTemplateFragment} for elements of a form inside of a form editor. The
+	 * template creates a wrapper to hold all information necessary for the form editor.
+	 * 
+	 * @param context
+	 *        The {@link FormEditorContext} to create the template.
+	 * 
+	 * @return The {@link HTMLTemplateFragment} for this element and all its children.
+	 */
+	protected HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
+		return createDisplayTemplate(context);
 	}
 
 	/**
@@ -184,23 +218,9 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 		return _context;
 	}
 
-	/**
-	 * Returns whether the editor is in edit mode.
-	 * 
-	 * @return Whether the editor is in edit mode.
-	 */
-	protected boolean isInEditMode() {
-		return _isInEditMode;
-	}
-
 	@Override
 	public boolean openDialog() {
 		return false;
-	}
-
-	@Override
-	public boolean isVisible(TLStructuredType type, FormMode formMode) {
-		return true;
 	}
 
 }

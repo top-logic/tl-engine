@@ -30,6 +30,7 @@ import junit.textui.TestRunner;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.contact.business.CreateDefaultTestContacts;
 
 import com.top_logic.base.mail.I18NConstants;
 import com.top_logic.base.mail.MailHelper;
@@ -38,6 +39,7 @@ import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mail.proxy.MailReceiver;
 import com.top_logic.mail.proxy.MailReceiverService;
@@ -216,8 +218,8 @@ public class TestMailHelper extends BasicTestCase {
         
         //resolve address from Person
         PersonManager thePM = PersonManager.getManager();
-        receiver.add(thePM.getPersonByName("root"));     // support@top-logic.com
-        receiver.add(thePM.getPersonByName("guest_de")); // null
+		receiver.add(Person.byName("dau")); // info3@top-logic.com
+        receiver.add(Person.byName("guest_de")); // null
         
         theAddresses = theHelper.getEmailAddresses(receiver, invalidAddresses);
         assertEquals(1, theAddresses.size());
@@ -227,8 +229,8 @@ public class TestMailHelper extends BasicTestCase {
         
         //resolve address from Group
         Group theGroup = Group.createGroup("testmailuser");
-        theGroup.addMember(thePM.getPersonByName("root")); // support@top-logic.com
-        theGroup.addMember(thePM.getPersonByName("guest_de")); // null
+		theGroup.addMember(Person.byName("dau")); // info3@top-logic.com
+        theGroup.addMember(Person.byName("guest_de")); // null
         
         receiver.add(theGroup);
         theAddresses = theHelper.getEmailAddresses(receiver, invalidAddresses);
@@ -458,6 +460,7 @@ public class TestMailHelper extends BasicTestCase {
      */
      public static Test suite () {
         Test innerTest = new TestSuite(TestMailHelper.class);
+		innerTest = new CreateDefaultTestContacts(innerTest);
 		innerTest = ServiceTestSetup.createSetup(innerTest,
 			MailSenderService.Module.INSTANCE,
 			MailReceiverService.Module.INSTANCE,

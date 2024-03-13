@@ -43,7 +43,7 @@
 			<form:groupCell titleKeySuffix="user">
 				<form:cell wholeLine="true">
 					<form:table name="<%=EditGroupComponent.FORM_FIELD_MEMBERS %>"
-						columnNames="name mail telephoneNumber mobile"
+						columnNames="firstName lastName name"
 						initialSortColumn="1"
 					/>
 					<form:error name="members"/>

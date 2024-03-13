@@ -16,7 +16,6 @@ import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.config.InstantiationContext;
@@ -153,22 +152,6 @@ public class TLContextManager extends ThreadContextManager {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Returns the {@link UserInterface user} for the given {@link TLSessionContext}.
-	 * 
-	 * <p>
-	 * More formerly returns the {@link Person#getUser() user} for the
-	 * {@link TLSubSessionContext#getPerson() person} currently logged in.
-	 * </p>
-	 */
-	public static UserInterface getUser(TLSubSessionContext context) {
-		Person currentPerson = context.getPerson();
-		if (currentPerson == null) {
-			return null;
-		}
-		return currentPerson.getUser();
 	}
 
 	/**

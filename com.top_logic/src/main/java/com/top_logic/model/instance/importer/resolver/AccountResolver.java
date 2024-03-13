@@ -38,7 +38,7 @@ public class AccountResolver implements InstanceResolver {
 
 	@Override
 	public TLObject resolve(String kind, String id) {
-		return _pm.getPersonByName(id);
+		return Person.byName(id);
 	}
 
 	@Override

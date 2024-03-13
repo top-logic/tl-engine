@@ -72,13 +72,10 @@ import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.ModelKind;
-import com.top_logic.model.TLAssociation;
-import com.top_logic.model.TLAssociationPart;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.generated.TlModelFactory;
@@ -794,6 +791,50 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	@Override
+	protected void handleTLObjectUpdates(Stream<? extends TLObject> updated) {
+		if (hasGraphModel()) {
+			SharedGraph graphModel = getGraphModel();
+
+			updated.forEach(object -> {
+				if (object instanceof TLClass) {
+					handleTLObjectGeneralizationsUpdate(graphModel, (TLClass) object);
+				}
+			});
+		}
+	}
+
+	private void handleTLObjectGeneralizationsUpdate(SharedGraph graphModel, TLClass clazz) {
+		List<TLClass> generalizations = clazz.getGeneralizations();
+		GraphPart graphPart = graphModel.getGraphPart(clazz);
+
+		if (graphPart instanceof Node) {
+			GraphModelUtil.removeGraphParts(graphModel, getNonExistingEdgesInModel(generalizations, (Node) graphPart));
+		}
+	}
+
+	/**
+	 * Returns a set of {@link Edge}'s that exist in the {@link GraphModel} but not in its
+	 * underlying business model.
+	 * 
+	 * <p>
+	 * The graph model have to be updated by removing those edges.
+	 * </p>
+	 */
+	private Set<Edge> getNonExistingEdgesInModel(List<TLClass> generalizations, Node node) {
+		Set<Edge> generalizationEdgesToRemove = new HashSet<>();
+
+		for (Edge outgoingEdge : node.getOutgoingEdges()) {
+			Object tag = outgoingEdge.getTag();
+
+			if (tag instanceof TLInheritance && !generalizations.contains(((TLInheritance) tag).getTarget())) {
+				generalizationEdgesToRemove.add(outgoingEdge);
+			}
+		}
+
+		return generalizationEdgesToRemove;
+	}
+
+	@Override
 	protected void handleTLObjectDeletions(Stream<? extends TLObject> deleted) {
 		if (hasGraphModel()) {
 			SharedGraph graphModel = getGraphModel();
@@ -822,13 +863,6 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 
 	private boolean belongsToDisplayedModule(TLObject object) {
 		return GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule;
-	}
-
-	/**
-	 * Only a {@link GraphPart} for a {@link TLReference} business object is build.
-	 */
-	private boolean isSupportedObject(TLObject object) {
-		return !(object instanceof TLAssociation || object instanceof TLAssociationPart);
 	}
 
 	@Override

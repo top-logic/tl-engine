@@ -14,6 +14,8 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link SearchExpression} testing the concrete type of an instance.
  * 
+ * @see DynamicInstanceOf
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class InstanceOf extends TypeCheck implements BooleanExpression {
@@ -31,13 +33,19 @@ public class InstanceOf extends TypeCheck implements BooleanExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		Object value = getValue().evalWith(definitions, args);
-		if (!(value instanceof TLObject)) {
+		SearchExpression inputExpr = getValue();
+		Object value = inputExpr.evalWith(definitions, args);
+
+		return isInstanceOf(value, inputExpr, getCheckType());
+	}
+
+	static Object isInstanceOf(Object input, SearchExpression inputExpr, TLStructuredType expectedType) {
+		if (!(input instanceof TLObject)) {
 			return false;
 		}
-
-		TLObject item = asTLObject(value);
-		return TLModelUtil.isCompatibleInstance(getCheckType(), item);
+	
+		TLObject item = asTLObject(inputExpr, input);
+		return TLModelUtil.isCompatibleInstance(expectedType, item);
 	}
 
 	@Override

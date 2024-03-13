@@ -5,3 +5,5 @@ db-default.xml
 personContactCSVImporter.xml
 personContactExcelImporter.xml
 InitialRoleRules.config.xml
+pac4j-keycloak.xml
+pac4j-keycloak-demo.xml

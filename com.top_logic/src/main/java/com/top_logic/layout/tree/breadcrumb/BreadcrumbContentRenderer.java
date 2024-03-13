@@ -55,6 +55,9 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 
 	private static final String NODE_SEPARATOR_CSS = "breadcrumbNodeSeparator";
 
+	/**
+	 * CSS-Class for text elements in Breadcrumbs
+	 */
 	public static final String NODE_TEXT_CSS = "breadcrumbNodeText";
 
 	private static final String NODE_ICON_CSS = "breadcrumbNodeIcon";

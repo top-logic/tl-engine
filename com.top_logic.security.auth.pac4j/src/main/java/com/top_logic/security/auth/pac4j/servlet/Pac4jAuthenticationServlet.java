@@ -44,25 +44,32 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	@Override
 	protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request, HttpServletResponse response)
 			throws ForwardRequiredException, LoginDeniedException, LoginFailedException {
-		Pac4jConfigFactory<?> configFactory = Pac4jConfigFactory.getInstance();
-		Config config = configFactory.getPac4jConfig();
-
-		WebContext context = new JEEContext(request, response);
-		ProfileManager manager = config.getProfileManagerFactory().apply(context, new JEESessionStore());
-		manager.setConfig(config);
-
-		Optional<UserProfile> profileHandle = manager.getProfile();
+		Optional<UserProfile> profileHandle = getProfile(request, response);
 		if (!profileHandle.isPresent()) {
 			throw new LoginDeniedException("No user profile retrieved.");
 		}
-
-		UserProfile profile = profileHandle.get();
-
-		String clientName = profile.getClientName();
-		String domain = configFactory.getDomain(clientName);
-		UserNameExtractor userNameExtractor = configFactory.getUserNameExtractor(clientName);
-		String userName = userNameExtractor.getUserName((CommonProfile) profile);
-		return LoginCredentials.fromUsernameAndDomain(userName, domain);
+		return getLoginCredentials(profileHandle);
 	}
 
+	private Optional<UserProfile> getProfile(HttpServletRequest request, HttpServletResponse response) {
+		Config config = Pac4jConfigFactory.getInstance().getPac4jConfig();
+		WebContext context = new JEEContext(request, response);
+		ProfileManager manager = config.getProfileManagerFactory().apply(context, new JEESessionStore());
+		manager.setConfig(config);
+		return manager.getProfile();
+	}
+
+	private String getUserName(UserProfile profile, String clientName) {
+		UserNameExtractor userNameExtractor = Pac4jConfigFactory.getInstance().getUserNameExtractor(clientName);
+		return userNameExtractor.getUserName((CommonProfile) profile);
+	}
+
+	private LoginCredentials getLoginCredentials(Optional<UserProfile> profileHandle) {
+		UserProfile profile = profileHandle.get();
+		String clientName = profile.getClientName();
+		String userName = getUserName(profile, clientName);
+		String domain = Pac4jConfigFactory.getInstance().getDomain(clientName);
+		return LoginCredentials.fromUsernameAndDomain(userName, domain);
+	}
 }
+

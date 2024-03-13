@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.TypedConfiguration;
@@ -53,7 +52,7 @@ public class FormDefinitionUtil {
 		if (type instanceof TLClass) {
 			return TLModelUtil.getReflexiveTransitiveGeneralizations((TLClass) type)
 				.stream()
-				.map(parentClazz -> getFormDefinitionTemplate(parentClazz).orElse(null))
+				.map(FormDefinitionUtil::getFormDefinitionTemplate)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 		}
@@ -61,10 +60,17 @@ public class FormDefinitionUtil {
 		return Collections.emptyList();
 	}
 
-	private static Optional<FormDefinitionTemplate> getFormDefinitionTemplate(TLClass clazz) {
-		return Optional.ofNullable(getFormAnnotation(clazz))
-			.map(annotatedForm -> new FormDefinitionTemplate(MetaLabelProvider.INSTANCE.getLabel(
-				clazz), annotatedForm.getForm()));
+	private static FormDefinitionTemplate getFormDefinitionTemplate(TLClass clazz) {
+		TLFormDefinition formAnnotation = getFormAnnotation(clazz);
+		if (formAnnotation == null) {
+			return null;
+		}
+
+		FormDefinition form = formAnnotation.getForm();
+		if (form == null) {
+			return null;
+		}
+		return new FormDefinitionTemplate(MetaLabelProvider.INSTANCE.getLabel(clazz), form);
 	}
 
 	/**

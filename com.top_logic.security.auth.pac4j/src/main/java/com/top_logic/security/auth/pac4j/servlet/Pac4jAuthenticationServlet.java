@@ -10,12 +10,13 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.pac4j.core.context.JEEContext;
+import org.pac4j.core.config.Config;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
+import org.pac4j.jee.context.JEEContext;
+import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.jee.filter.SecurityFilter;
 
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
@@ -43,8 +44,13 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	@Override
 	protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request, HttpServletResponse response)
 			throws ForwardRequiredException, LoginDeniedException, LoginFailedException {
+		Pac4jConfigFactory<?> configFactory = Pac4jConfigFactory.getInstance();
+		Config config = configFactory.getPac4jConfig();
+
 		WebContext context = new JEEContext(request, response);
-		ProfileManager manager = new ProfileManager(context, JEESessionStore.INSTANCE);
+		ProfileManager manager = config.getProfileManagerFactory().apply(context, new JEESessionStore());
+		manager.setConfig(config);
+
 		Optional<UserProfile> profileHandle = manager.getProfile();
 		if (!profileHandle.isPresent()) {
 			throw new LoginDeniedException("No user profile retrieved.");
@@ -53,11 +59,10 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 		UserProfile profile = profileHandle.get();
 
 		String clientName = profile.getClientName();
-		Pac4jConfigFactory<?> pac4j = Pac4jConfigFactory.getInstance();
-		String domain = pac4j.getDomain(clientName);
-		UserNameExtractor userNameExtractor = pac4j.getUserNameExtractor(clientName);
+		String domain = configFactory.getDomain(clientName);
+		UserNameExtractor userNameExtractor = configFactory.getUserNameExtractor(clientName);
 		String userName = userNameExtractor.getUserName((CommonProfile) profile);
 		return LoginCredentials.fromUsernameAndDomain(userName, domain);
 	}
-	
+
 }

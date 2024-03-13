@@ -72,11 +72,18 @@ public class NavigationRenderer extends BreadcrumbContentRenderer {
 	@Override
 	protected void writeNodeText(DisplayContext context, TagWriter out, BreadcrumbControl breadcrumb, Object currentNode) throws IOException {
 		if (currentNode.equals(breadcrumb.getTree().getRoot()) && getRootLabel() != null) {
-			out.writeText(Resources.getInstance().getString(getRootLabel()));
+			String label = Resources.getInstance().getString(getRootLabel());
+			if (label != null && !label.isEmpty()) {
+				out.beginTag(SPAN, CLASS_ATTR, NODE_TEXT_CSS);
+				out.writeText(label);
+				out.endTag(SPAN);
+			}
 		} else {
 			final TLTreeNode<?> node = (TLTreeNode<?>) currentNode;
 			final Card userObject = (Card) node.getBusinessObject();
+			out.beginTag(SPAN, CLASS_ATTR, NODE_TEXT_CSS);
 			userObject.writeCardInfo(context, out);
+			out.endTag(SPAN);
 		}
 	}
 

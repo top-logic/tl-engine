@@ -55,7 +55,10 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 
 	private static final String NODE_SEPARATOR_CSS = "breadcrumbNodeSeparator";
 
-	private static final String NODE_TEXT_CSS = "breadcrumbNodeText";
+	/**
+	 * CSS-Class for text elements in Breadcrumbs
+	 */
+	public static final String NODE_TEXT_CSS = "breadcrumbNodeText";
 
 	private static final String NODE_ICON_CSS = "breadcrumbNodeIcon";
 
@@ -310,12 +313,8 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 	 *         If writing fails due to an IO problem.
 	 */
 	protected void writeNodeContent(DisplayContext context, TagWriter out, BreadcrumbControl breadcrumb, Object currentNode) throws IOException {
-		out.beginTag(SPAN, CLASS_ATTR, NODE_ICON_CSS);
 		writeTypeImage(context, out, breadcrumb, currentNode);
-		out.endTag(SPAN);
-		out.beginTag(SPAN, CLASS_ATTR, NODE_TEXT_CSS);
 		writeNodeText(context, out, breadcrumb, currentNode);
-		out.endTag(SPAN);
 	}
 
 	/**
@@ -360,7 +359,9 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 	protected void writeTypeImage(DisplayContext context, TagWriter out, BreadcrumbControl breadcrumb, Object currentNode) throws IOException {
 		ThemeImage nodeImage = getNodeIcon(breadcrumb, currentNode);
 		if (nodeImage != null) {
+			out.beginTag(SPAN, CLASS_ATTR, NODE_ICON_CSS);
 			nodeImage.write(context, out);
+			out.endTag(SPAN);
 		}
 	}
 
@@ -398,7 +399,9 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 	protected void writeNodeText(DisplayContext context, TagWriter out, BreadcrumbControl breadcrumb, Object currentNode) throws IOException {
 		String nodeText = getNodeLabel(breadcrumb, currentNode);
 		if (nodeText != null) {
+			out.beginTag(SPAN, CLASS_ATTR, NODE_TEXT_CSS);
 			out.writeText(nodeText);
+			out.endTag(SPAN);
 		}
 	}
 

@@ -65,7 +65,11 @@ public class BreadcrumbComponentTreeContentRenderer extends BreadcrumbContentRen
 
 	private void writeComponentTitle(TagWriter out, LayoutComponent component) {
 		String nodeText = Resources.getInstance().getString(component.getTitleKey());
-		out.writeText(nodeText);
+		if (nodeText != null) {
+			out.beginTag(SPAN, CLASS_ATTR, NODE_TEXT_CSS);
+			out.writeText(nodeText);
+			out.endTag(SPAN);
+		}
 	}
 
 }

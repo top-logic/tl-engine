@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.HttpJspPage;
 
+import com.top_logic.basic.StringServices;
+
 /**
  * Super class for JSP's that may not be used with a valid session. Typically usage is within a
  * login or logout jsp.
@@ -70,6 +72,10 @@ public abstract class NoContextJspBase extends NoContextServlet implements HttpJ
 
 	@Override
 	protected void doService(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		/* Set character encoding to ensure the content is always delivered in UTF-8, independent of
+		 * the default in the container. */
+		resp.setCharacterEncoding(StringServices.UTF8);
+
 		_jspService(req, resp);
 	}
 

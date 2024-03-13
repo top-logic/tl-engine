@@ -193,7 +193,10 @@ public class LoginPageServlet extends NoContextServlet {
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
 		throws IOException, ServletException {
-		
+		/* interpret content as UTF-8, independent of the default encoding of the container. The
+		 * login.jsp delivers the content in UTF-8, so the content is expected to be in UTF-8. */
+		request.setCharacterEncoding(StringServices.UTF8);
+
 		if (_enableChecks) {
 			String protection = response.getHeader(HttpSecureHeaderFilter.X_XSS_PROTECTION);
 			if (protection == null || protection.isEmpty()) {

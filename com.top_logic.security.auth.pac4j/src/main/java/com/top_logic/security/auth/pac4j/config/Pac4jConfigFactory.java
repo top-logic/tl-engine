@@ -12,9 +12,11 @@ import java.util.Map;
 
 import jakarta.servlet.ServletContext;
 
+import org.pac4j.core.adapter.FrameworkAdapter;
 import org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
+import org.pac4j.core.config.ConfigFactory;
 import org.pac4j.core.http.url.DefaultUrlResolver;
 import org.pac4j.core.http.url.UrlResolver;
 import org.pac4j.core.util.Pac4jConstants;
@@ -35,9 +37,9 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
 
 /**
- * <i>TopLogic</i> module builing the pac4j configuration.
+ * <i>TopLogic</i> module building the pac4j configuration.
  * 
- * @see org.pac4j.core.config.Config#INSTANCE
+ * @see org.pac4j.core.config.Config
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -65,7 +67,26 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 
 	}
 
-	private Collection<ClientConfigurator> _clientConfigurators;
+	/**
+	 * The {@link ConfigFactory} used by Pac4j.
+	 * <p>
+	 * This is used in the 'web.xml' or the 'web-fragment.xml' as value for the parameter
+	 * 'configFactory' of the 'Pac4jSecurityFilter'. The {@link Pac4jConfigFactory} cannot be used,
+	 * as every {@link ConfigFactory} needs to have a default constructor.
+	 * </p>
+	 */
+	public static class TLPac4jConfigFactory implements ConfigFactory {
+
+		@Override
+		public org.pac4j.core.config.Config build(Object... parameters) {
+			return Pac4jConfigFactory.getInstance().getPac4jConfig();
+		}
+
+	}
+
+	private final Collection<ClientConfigurator> _clientConfigurators;
+
+	private org.pac4j.core.config.Config _pac4jConfig;
 
 	/**
 	 * Creates a {@link Pac4jConfigFactory} from configuration.
@@ -114,14 +135,13 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	protected void startUp() {
 		super.startUp();
 
-		org.pac4j.core.config.Config
-			.setConfig(buildPac4jConfig(ServletContextService.getInstance().getServletContext()));
+		_pac4jConfig = buildPac4jConfig(ServletContextService.getInstance().getServletContext());
 	}
 
 	/**
 	 * Creates the pac4j configuration.
 	 * 
-	 * @see org.pac4j.core.config.Config#INSTANCE
+	 * @see org.pac4j.core.config.Config
 	 */
 	protected org.pac4j.core.config.Config buildPac4jConfig(ServletContext context) {
 		List<Client> clientList = new ArrayList<>();
@@ -143,6 +163,7 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 		final org.pac4j.core.config.Config config = new org.pac4j.core.config.Config(clients);
 
 		config.addAuthorizer("admin", new RequireAnyRoleAuthorizer("ROLE_ADMIN"));
+		FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
 		return config;
 	}
 
@@ -175,6 +196,11 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 			callbackUrl = context.getContextPath() + callbackUrl;
 		}
 		return callbackUrl;
+	}
+
+	/** The {@link org.pac4j.core.config.Config} to be used. */
+	public org.pac4j.core.config.Config getPac4jConfig() {
+		return _pac4jConfig;
 	}
 
 	/**

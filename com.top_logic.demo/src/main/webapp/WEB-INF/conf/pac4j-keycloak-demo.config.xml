@@ -6,7 +6,8 @@
 			<instance>
 				<security-devices>
 					<security-device id="dbSecurity">
-						<allow-ext-authentication>true</allow-ext-authentication>
+						<!-- TODO Ticket #27784: Disable Single-Sign-On because of #27517. -->
+						<!-- <allow-ext-authentication>true</allow-ext-authentication> -->
 					</security-device>
 				</security-devices>
 			</instance>

@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -74,12 +75,6 @@ public class MultipartRequest extends HttpServletRequestWrapper {
 
 	private final FileItemFactory<?> _fileItemFactory;
 
-    /**
-     * Directory used to temporary save the files.
-     * may be null indicating the System tmp-area.
-     */
-    private File                         dir; // TODO KHA create a 
-
     /** Map of the "normal" parameters found in the wrapped request. */
 	private Map<String, String[]> parameters;
 
@@ -108,15 +103,19 @@ public class MultipartRequest extends HttpServletRequestWrapper {
                                    ") bigger than allowed (" + aSize + ")");
         }
 
-        // null is ok, will use system directory ...
-        if (aDir != null) {
-            if (!aDir.mkdirs () || !aDir.isDirectory () || aDir.canWrite ()) {
-                throw new IOException ("Invalid Directory " + aDir);
-            }
-            this.dir = aDir;
-        }
-		_fileItemFactory = DiskFileItemFactory.builder().setPath(dir.toPath()).get();
+		Path tempDirectory = getTempDirectory(aDir);
+		_fileItemFactory = DiskFileItemFactory.builder().setPath(tempDirectory).get();
     }
+
+	private Path getTempDirectory(File directory) throws IOException {
+		if (directory == null) {
+			return createTempDir().toPath();
+		}
+		if (!directory.mkdirs() || !directory.isDirectory() || directory.canWrite()) {
+			throw new IOException("Invalid Directory " + directory);
+		}
+		return directory.toPath();
+	}
 
     /**
      * Constructs MultipartRequest with DEFAULT_MAX_POST_SIZE.
@@ -286,7 +285,6 @@ public class MultipartRequest extends HttpServletRequestWrapper {
      * 
      * Can be removed when commons file Upload becomes JDK1.5 aware.
      */
-    @SuppressWarnings("unchecked")
 	private static List<? extends FileItem<?>> parseRequest(JakartaServletFileUpload<?, ?> theUpload,
 			HttpServletRequest request) throws FileUploadException {
         return theUpload.parseRequest(request);
@@ -368,20 +366,6 @@ public class MultipartRequest extends HttpServletRequestWrapper {
 			return theList;
          }
 		return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    /**
-     * Returns the directory to be used for temporary storage of the
-     * uploaded files.
-     *
-     * @return    The directory to be used.
-     */
-    File getTempDir () {
-        if (this.dir == null) {
-            this.dir = this.createTempDir ();
-        }
-
-        return (this.dir);
     }
 
     /**

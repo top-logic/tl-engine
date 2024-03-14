@@ -6,7 +6,6 @@
 			<instance>
 				<security-devices>
 					<security-device id="dbSecurity">
-						<domain>tl-demo-keycloak-users</domain>
 						<allow-ext-authentication>true</allow-ext-authentication>
 					</security-device>
 				</security-devices>

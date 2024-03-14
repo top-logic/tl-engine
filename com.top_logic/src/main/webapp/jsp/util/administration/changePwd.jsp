@@ -197,6 +197,7 @@ String paramType = StringServices.nonEmpty(request.getParameter(GotoHandler.COMM
 				</div>
 
 				<form name="changePwd"
+					accept-charset="utf-8"
 					action="<%=contextPath%><%=loginUrl%>"
 					method="post"
 				>

@@ -937,10 +937,6 @@
 		expr=""
 		value="colored:tl-icon row-top-add icon-first-lightgrey"
 	/>
-	<icon name="com.top_logic.element.workItem.favorites.Icons.TRUE"
-		expr=""
-		value="colored:tl-icon star-circle"
-	/>
 	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_ERROR"
 		expr=""
 		value="colored:tl-icon error icon-red"

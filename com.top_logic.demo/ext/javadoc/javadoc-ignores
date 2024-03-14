@@ -31,11 +31,6 @@ com.top_logic.demo.knowledge.test.layout.EditTreeDemo.java: Missing documentatio
 com.top_logic.demo.knowledge.test.layout.EditTreeDemo.java: Missing documentation: com.top_logic.demo.knowledge.test.layout.EditTreeDemo.NODE_NAME_FIELD
 com.top_logic.demo.knowledge.test.layout.EditTreeDemo.java: Missing documentation: com.top_logic.demo.knowledge.test.layout.EditTreeDemo.NODE_NAME_PREFIX
 com.top_logic.demo.knowledge.test.layout.EditTreeDemo.java: Missing documentation: com.top_logic.demo.knowledge.test.layout.EditTreeDemo.findNode
-com.top_logic.demo.knowledge.test.layout.MergeTreeDemo.java: Invalid camel case word 'DemoValidator', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.demo.knowledge.test.layout.MergeTreeDemo.java: Invalid camel case word 'MergeTreeComponenet', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.demo.knowledge.test.layout.MergeTreeDemo.java: Invalid camel case word 'MergeTreeDemo', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.demo.knowledge.test.layout.MergeTreeDemo.java: Invalid camel case word 'aList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.demo.knowledge.test.layout.MergeTreeDemo.java: Missing documentation: com.top_logic.demo.knowledge.test.layout.MergeTreeDemo.Config
 com.top_logic.demo.layout.demo.DemoAJAXProgressComponent.java: Documentation starts with an uppercase letter: com.top_logic.demo.layout.demo.DemoAJAXProgressComponent.ResetProgressBar
 com.top_logic.demo.layout.demo.DemoAJAXProgressComponent.java: Invalid camel case word 'AJAXProgressComponent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.demo.layout.demo.DemoAJAXProgressComponent.java: Invalid camel case word 'DemoProgressBar', this may only be used within JavaDoc links or HTML code tags.

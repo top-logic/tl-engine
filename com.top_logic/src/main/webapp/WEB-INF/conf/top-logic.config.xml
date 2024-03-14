@@ -206,7 +206,6 @@
 		            <provider kind="CODE" type="com.top_logic.common.folder.model.FolderNode" implementation="com.top_logic.common.folder.ui.ContentDefinitionResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.common.folder.impl.FileFolderDefinition" implementation="com.top_logic.layout.provider.NamedLabelProvider" />
 		            <provider kind="CODE" type="com.top_logic.mig.html.layout.LayoutComponent" implementation="com.top_logic.mig.html.layout.LayoutComponentLabelProvider" />
-		            <provider kind="CODE" type="com.top_logic.tool.state.AbstractState" implementation="com.top_logic.tool.state.ElementStateResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.currency.Amount" implementation="com.top_logic.knowledge.wrap.currency.AmountLabelProvider" />
 
 		            <provider kind="CODE" type="com.top_logic.tool.boundsec.wrap.BoundedRole" implementation="com.top_logic.knowledge.gui.BoundedRoleResourceProvider" />
@@ -242,7 +241,6 @@
 		            <provider kind="CODE" type="com.top_logic.event.bus.Channel" implementation="com.top_logic.event.layout.ChannelResourceProvider"/>
 		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.currency.Amount" implementation="com.top_logic.knowledge.wrap.currency.AmountLabelProvider" />
 		
-		            <provider kind="CODE" type="com.top_logic.tool.state.AbstractState" implementation="com.top_logic.tool.state.ElementStateResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.model.TLObject" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider"/>
 		            <provider kind="CODE" type="com.top_logic.layout.table.CellObject" implementation="com.top_logic.layout.table.CellObjectResourceProvider" />
 		

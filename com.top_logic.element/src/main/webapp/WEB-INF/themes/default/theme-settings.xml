@@ -124,12 +124,6 @@
 	<icon name="com.top_logic.element.layout.uiconfig.Icons.ADD_ROW_TOP"
 		value="/icons/addRowTop.png"
 	/>
-	<icon name="com.top_logic.element.workItem.favorites.Icons.FALSE"
-		value="colored:tl-icon star"
-	/>
-	<icon name="com.top_logic.element.workItem.favorites.Icons.TRUE"
-		value="colored:tl-icon star icon-yellow"
-	/>
 	<icon name="mime.BooleanMetaAttribute"
 		value="/mimetypes/BoolMetaAttr.png"
 	/>

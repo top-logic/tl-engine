@@ -324,54 +324,6 @@ com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com
 com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com.top_logic.base.dsa.ldap.ServiceProviderInfo.createFromConfig
 com.top_logic.base.locking.handler.LockHandler.java: Invalid camel case word 'TokenContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.locking.service.ConfiguredLockService.java: Missing documentation: com.top_logic.base.locking.service.ConfiguredLockService.Config.TypeConfig.StrategyContainerConfig
-com.top_logic.base.merge.CommitTask.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.DeleteWrapperTask.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.DeleteWrapperTask.java: Invalid camel case word 'deleteKnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.IndexingTask.java: Documentation starts with an uppercase letter: com.top_logic.base.merge.IndexingTask
-com.top_logic.base.merge.MergeMessage.java: Invalid camel case word 'MergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeMessage.java: Invalid camel case word 'MergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeMessage.java: Invalid camel case word 'mergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeMessage.java: Missing documentation: com.top_logic.base.merge.MergeMessage.LEVEL_STRING
-com.top_logic.base.merge.MergeTreeModel.java: Invalid camel case word 'MergeTreeModelbade', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeModel.java: Invalid camel case word 'TLTreeModel', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'MergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'aMergeMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'aPrologMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'infoList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'postList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.MergeTreeNode.java: Invalid camel case word 'theChilderrn', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.RootMergeNode.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.RootMergeNode.java: Invalid camel case word 'RootMergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetBeanTask.java: Invalid camel case word 'BeanInfos', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetBeanTask.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetBeanTask.java: Invalid camel case word 'SetBeanTask', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetWrapperTask.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetWrapperTask.java: Invalid camel case word 'SetWrapperTask', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.SetWrapperTask.java: Invalid camel case word 'setValue', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.Validator.java: Invalid camel case word 'MergeMessages', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.Validator.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.Validator.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Invalid camel case word 'HandlerResult', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Invalid camel case word 'MergeTreeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Invalid camel case word 'performMerge', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.COMMAND_ID
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.Config
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.Config.getPerform
-com.top_logic.base.merge.layout.MergePerformHandler.java: Missing documentation: com.top_logic.base.merge.layout.MergePerformHandler.updatePerform
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeTreeComponenet', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeTreeModel', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'MergeTreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'RootMergeNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'RootNode', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'TreeModel', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'TreeNodes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Invalid camel case word 'mergeMessages', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Missing documentation: com.top_logic.base.merge.layout.MergeTreeComponenet.APPROVE_FIELD
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Missing documentation: com.top_logic.base.merge.layout.MergeTreeComponenet.MergeTreeContentRenderer
-com.top_logic.base.merge.layout.MergeTreeComponenet.java: Missing documentation: com.top_logic.base.merge.layout.MergeTreeComponenet.getDefaultResourceProviderClass
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'BufferedReader', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
@@ -1093,29 +1045,6 @@ com.top_logic.base.user.douser.DOUser.java: Invalid camel case word 'DataObject'
 com.top_logic.base.user.douser.DOUser.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.user.douser.DOUser.java: Invalid camel case word 'getName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.user.douser.DOUserResourceProvider.java: Missing documentation: com.top_logic.base.user.douser.DOUserResourceProvider
-com.top_logic.base.workItem.SubWorkItem.java: Missing documentation: com.top_logic.base.workItem.SubWorkItem.compareTo
-com.top_logic.base.workItem.SubWorkItem.java: Missing documentation: com.top_logic.base.workItem.SubWorkItem.getOriginalWorkItem
-com.top_logic.base.workItem.SubWorkItem.java: Missing documentation: com.top_logic.base.workItem.SubWorkItem.getParent
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getAssignees
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getResponsible
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getState
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getSubject
-com.top_logic.base.workItem.WorkItem.java: Missing documentation: com.top_logic.base.workItem.WorkItem.getWorkItemType
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_ASSIGNEE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_NAME
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_RESPONSIBLE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_STATE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_SUBJECT
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_KEY_TYPE
-com.top_logic.base.workItem.WorkItemAccessor.java: Missing documentation: com.top_logic.base.workItem.WorkItemAccessor.ATTRIBUTE_SELF
-com.top_logic.base.workItem.WorkItemComparator.java: Missing documentation: com.top_logic.base.workItem.WorkItemComparator.INSTANCE
-com.top_logic.base.workItem.WorkItemComparator.java: Missing documentation: com.top_logic.base.workItem.WorkItemComparator.INSTANCE_DESCENDING
-com.top_logic.base.workItem.WorkItemManager.java: Missing documentation: com.top_logic.base.workItem.WorkItemManager
-com.top_logic.base.workItem.WorkItemManager.java: Missing documentation: com.top_logic.base.workItem.WorkItemManager.getManager
-com.top_logic.base.workItem.WorkItemManager.java: Missing documentation: com.top_logic.base.workItem.WorkItemManager.getWorkItems
-com.top_logic.base.workItem.WorkItemModelBuilder.java: Missing documentation: com.top_logic.base.workItem.WorkItemModelBuilder
-com.top_logic.base.workItem.WorkItemProvider.java: Missing documentation: com.top_logic.base.workItem.WorkItemProvider.getWorkItems
 com.top_logic.common.folder.AbstractFolderTreeBuilder.java: Invalid camel case word 'userObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.common.folder.AbstractFolderTreeBuilder.java: Missing documentation: com.top_logic.common.folder.AbstractFolderTreeBuilder.isLink
 com.top_logic.common.folder.ContentComparator.java: Missing documentation: com.top_logic.common.folder.ContentComparator.INSTANCE
@@ -4010,40 +3939,6 @@ com.top_logic.layout.security.SecurityProvider.java: Missing documentation: com.
 com.top_logic.layout.security.UnwrapProtectedValueReadMapping.java: Invalid camel case word 'columnSecurityProviderClass', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.layout.security.UnwrapProtectedValueReadMapping.java: Invalid camel case word 'sortKeyProvider', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.layout.security.UnwrapProtectedValueReadMapping.java: Missing documentation: com.top_logic.layout.security.UnwrapProtectedValueReadMapping.INSTANCE
-com.top_logic.layout.state.AbstractViewState.java: Invalid camel case word 'AbstractViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllButExcludedViewState.java: Invalid camel case word 'AllButExcludedViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllButExcludedViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowAllViewState.java: Invalid camel case word 'AllowAllViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowAllViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowNothingViewState.java: Invalid camel case word 'AllowNothingViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.AllowNothingViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.DeleteOnlyViewState.java: Invalid camel case word 'DeleteOnlyViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.DeleteOnlyViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.OnlyIncludedViewState.java: Invalid camel case word 'OnlyIncludedViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.OnlyIncludedViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ReadOnlyViewState.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.layout.state.ReadOnlyViewState
-com.top_logic.layout.state.ReadOnlyViewState.java: Invalid camel case word 'ReadOnlyViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ReadOnlyViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewState.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'LayoutComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'StateManager', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'ViewState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Invalid camel case word 'ViewStateManager', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.TAG_DEFAULT_VALUES
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.TAG_SPECIAL_VALUES
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.getDefaultValues
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.Config.getSpecialValues
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.SpecialStateDescription
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.SpecialStateDescription.ATTRIBUTE_VIEW_NAME
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.SpecialStateDescription.getViewName
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.ATTRIBUTE_STATECLASS
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.TAG_COMMAND
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.TAG_COMMAND_GROUP
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.getCommandGroups
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.getCommands
-com.top_logic.layout.state.ViewStateManager.java: Missing documentation: com.top_logic.layout.state.ViewStateManager.StateDescription.getStateclass
 com.top_logic.layout.structure.AbstractContentLayouting.java: Missing documentation: com.top_logic.layout.structure.AbstractContentLayouting.createContentDisplay
 com.top_logic.layout.structure.AbstractLayoutControl.java: Invalid camel case word 'AbstractLayoutControl', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.layout.structure.BrowserWindowControl.java: Invalid camel case word 'browserWindowControl', this may only be used within JavaDoc links or HTML code tags.
@@ -4753,7 +4648,6 @@ com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_
 com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_logic.layout.window.WindowTemplate.getTemplate
 com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_logic.layout.window.WindowTemplate.getWindowName
 com.top_logic.layout.window.WindowTemplate.java: Missing documentation: com.top_logic.layout.window.WindowTemplate.setOwner
-com.top_logic.layout.workItem.SubWorkItemRenderer.java: Missing documentation: com.top_logic.layout.workItem.SubWorkItemRenderer
 com.top_logic.mig.html.AbstractRestrainedSelectionModel.java: Missing documentation: com.top_logic.mig.html.AbstractRestrainedSelectionModel.getDeselectionFilter
 com.top_logic.mig.html.BrowserDetector.java: Invalid camel case word 'JavaScriptOK', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.html.BrowserDetector.java: Invalid camel case word 'cssOK', this may only be used within JavaDoc links or HTML code tags.
@@ -5754,49 +5648,6 @@ com.top_logic.tool.export.progress.ExportProgressComponent.java: Missing documen
 com.top_logic.tool.export.progress.ExportProgressComponent.java: Missing documentation: com.top_logic.tool.export.progress.ExportProgressComponent.Config.getDownloadComp
 com.top_logic.tool.export.progress.ExportProgressComponent.java: Missing documentation: com.top_logic.tool.export.progress.ExportProgressComponent.XML_DOWNLOAD_COMPONENT
 com.top_logic.tool.export.progress.ExportProgressHandler.java: Missing documentation: com.top_logic.tool.export.progress.ExportProgressHandler.newInstance
-com.top_logic.tool.state.AbstractState.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.state.AbstractState
-com.top_logic.tool.state.AbstractState.java: Missing documentation: com.top_logic.tool.state.AbstractState.isSuccessor
-com.top_logic.tool.state.ElementStateFilter.java: Invalid camel case word 'ElementStates', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.ElementStateFilter.java: Missing documentation: com.top_logic.tool.state.ElementStateFilter
-com.top_logic.tool.state.ElementStateResourceProvider.java: Missing documentation: com.top_logic.tool.state.ElementStateResourceProvider.I18N_INSTANCE
-com.top_logic.tool.state.ProjectStateChanged.java: Invalid camel case word 'ProjectStateChanged', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.ProjectStateChanged.java: Missing documentation: com.top_logic.tool.state.ProjectStateChanged.PROJECT_STATE_CHANGED_EVENT
-com.top_logic.tool.state.ProjectStateChanged.java: Missing documentation: com.top_logic.tool.state.ProjectStateChanged.PROJECT_STATE_EVENT
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'PersistentEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'ProjectStateChangedEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'ProjectStateConfiguration', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'StateManager', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isFinal', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isFinalState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isInitalState', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Invalid camel case word 'isInitial', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config.STATE_DESCRIPTORS_PROPERTY
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config.getInitialConfigs
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.Config.getStateDescriptions
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.FINISH_STATE
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.INITIAL_STATE
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.InitialConfig
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.KeyConfiguration
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.KeyConfiguration.ATTRIBUTE_KEY
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.KeyConfiguration.getKey
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.ATTRIBUTE_OWNER
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.ATTRIBUTE_STATECLASS
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.ATTRIBUTE_STEP
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getOwner
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getStateclass
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getStep
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.StateDescription.getSuccessors
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.allowsStateChange
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.getChangeHistory
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.getState
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.getSuccessorsFor
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.isFinalState
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.isInitialState
-com.top_logic.tool.state.StateManager.java: Missing documentation: com.top_logic.tool.state.StateManager.isOwner
-com.top_logic.tool.state.StatefullElement.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.state.StatefullElement
-com.top_logic.tool.state.StatefullElement.java: Invalid camel case word 'StatefullElement', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.AbstractStartStopListener.java: Invalid camel case word 'DataSources', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.AbstractStartStopListener.java: Invalid camel case word 'ServletContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.AbstractStartStopListener.java: Invalid camel case word 'StartStopListener', this may only be used within JavaDoc links or HTML code tags.

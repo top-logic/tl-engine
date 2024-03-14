@@ -45,7 +45,6 @@
 		            <provider kind="CODE" type="com.top_logic.element.structured.StructuredElement" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.Wrapper" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.element.boundsec.manager.rule.RoleRule" implementation="com.top_logic.element.boundsec.manager.rule.RoleRuleResourceProvider" />
-		            <provider kind="CODE" type="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteState" implementation="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteStateResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.element.layout.grid.GridTreeTableNode" implementation="com.top_logic.element.layout.grid.GridTreeTableNodeResourceProvider">
 						<!-- Is used by the scripting for creating and resolving CompactLabelPaths in the TreeGrid. -->
 					</provider>
@@ -64,7 +63,6 @@
                 </label-providers>
                 <resource-providers>
 					<provider kind="CODE" type="com.top_logic.element.structured.StructuredElement" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
-					<provider kind="CODE" type="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteState" implementation="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteStateResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder$ModuleContainer" implementation="com.top_logic.element.layout.meta.ModuleContainerResourceProvider" />
                 </resource-providers>
             </instance>

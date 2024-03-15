@@ -11,10 +11,10 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Store;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Store;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;

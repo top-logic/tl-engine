@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 import javax.activation.DataSource;
-import javax.mail.Address;
-import javax.mail.internet.InternetAddress;
+import jakarta.mail.Address;
+import jakarta.mail.internet.InternetAddress;
 
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CollectionUtil;

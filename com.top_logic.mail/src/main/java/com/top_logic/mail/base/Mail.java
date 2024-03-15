@@ -8,7 +8,7 @@ package com.top_logic.mail.base;
 import java.util.Collection;
 import java.util.Date;
 
-import javax.mail.Address;
+import jakarta.mail.Address;
 
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;

@@ -7,14 +7,14 @@ package com.top_logic.mail.proxy;
 
 import java.io.IOException;
 
-import javax.mail.BodyPart;
-import javax.mail.Flags;
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Flags;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
 
 import com.top_logic.base.mail.MailHelper;
 import com.top_logic.basic.Logger;

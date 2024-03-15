@@ -5,8 +5,8 @@
  */
 package com.top_logic.mail.proxy;
 
-import javax.mail.Flags.Flag;
-import javax.mail.Message;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Message;
 
 import com.top_logic.util.error.TopLogicException;
 

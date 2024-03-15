@@ -5,10 +5,10 @@
  */
 package com.top_logic.mail.proxy.exchange;
 
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
 
 import com.top_logic.mail.proxy.AbstractMailServerMessage;
 

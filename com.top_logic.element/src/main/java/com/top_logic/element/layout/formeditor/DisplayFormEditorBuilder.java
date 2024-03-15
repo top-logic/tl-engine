@@ -7,6 +7,7 @@ package com.top_logic.element.layout.formeditor;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.function.Supplier;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
@@ -182,7 +184,13 @@ public class DisplayFormEditorBuilder {
 					FormDefinition newFormDefinition =
 						((FormDefinitionTemplate) newValueList.get(0)).getFormDefinition();
 					FormDefinition copy = TypedConfiguration.copy(newFormDefinition);
-					editedFormDefinition.setContent(copy.getContent());
+					List<PolymorphicConfiguration<? extends FormElementTemplateProvider>> content =
+						new ArrayList<>(copy.getContent());
+
+					// Clear to allow re-use of contents.
+					copy.setContent(Collections.emptyList());
+
+					editedFormDefinition.setContent(content);
 				}
 			}
 		});

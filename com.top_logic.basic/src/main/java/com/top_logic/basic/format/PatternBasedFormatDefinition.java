@@ -18,15 +18,15 @@ import com.top_logic.basic.config.annotation.Mandatory;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public abstract class PatternBasedFormatDefinition<T extends PatternBasedFormatDefinition<T>> extends
-		FormatDefinition<T> {
+public abstract class PatternBasedFormatDefinition<C extends PatternBasedFormatDefinition.Config<?>>
+		extends FormatDefinition<C> {
 
 	/**
 	 * Configuration of {@link PatternBasedFormatDefinition}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config<T> extends FormatDefinition.Config<T> {
+	public interface Config<I> extends FormatDefinition.Config<I> {
 
 		/**
 		 * The pattern to create {@link Format} from.
@@ -47,20 +47,13 @@ public abstract class PatternBasedFormatDefinition<T extends PatternBasedFormatD
 	 * @throws ConfigurationException
 	 *         iff configuration is invalid.
 	 */
-	public PatternBasedFormatDefinition(InstantiationContext context, Config<T> config) throws ConfigurationException {
+	public PatternBasedFormatDefinition(InstantiationContext context, C config) throws ConfigurationException {
 		super(context, config);
-	}
-
-	/**
-	 * Type safe access to configuration.
-	 */
-	protected Config<T> config() {
-		return (Config<T>) getConfig();
 	}
 
 	@Override
 	public String getPattern() {
-		return config().getPattern();
+		return getConfig().getPattern();
 	}
 
 

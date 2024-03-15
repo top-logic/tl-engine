@@ -20,7 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DateFormatDefinition extends AbstractDateFormatDefinition<DateFormatDefinition> {
+public class DateFormatDefinition extends AbstractDateFormatDefinition<DateFormatDefinition.Config> {
 
 	/**
 	 * Configuration of a {@link DateFormatDefinition}.
@@ -61,11 +61,7 @@ public class DateFormatDefinition extends AbstractDateFormatDefinition<DateForma
 	 */
 	public DateFormatDefinition(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
-		_style = config().getStyle().intValue();
-	}
-
-	private Config config() {
-		return (Config) getConfig();
+		_style = config.getStyle().intValue();
 	}
 
 	@Override

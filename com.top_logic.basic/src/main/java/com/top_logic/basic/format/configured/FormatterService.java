@@ -22,10 +22,15 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
 
 /**
- * The {@link Formatter} service implementation.
+ * Service providing global formats referenced by other parts of the application.
+ * 
+ * <p>
+ * E.g. format annotations to model elements can refere to formats defined here.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Format configurations")
 public final class FormatterService extends ConfiguredManagedClass<FormatterService.Config> {
 
 	/**

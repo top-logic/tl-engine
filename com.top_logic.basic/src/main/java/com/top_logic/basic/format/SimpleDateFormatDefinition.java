@@ -24,7 +24,7 @@ import com.top_logic.basic.time.TimeZones;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SimpleDateFormatDefinition extends PatternBasedFormatDefinition<SimpleDateFormatDefinition> {
+public class SimpleDateFormatDefinition extends PatternBasedFormatDefinition<SimpleDateFormatDefinition.Config> {
 
 	/**
 	 * Configuration of a {@link SimpleDateFormatDefinition}.
@@ -83,15 +83,11 @@ public class SimpleDateFormatDefinition extends PatternBasedFormatDefinition<Sim
 	}
 
 	@Override
-	protected Config config() {
-		return (Config) super.config();
-	}
-
-	@Override
-	public Format newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
+	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
 		SimpleDateFormat format = new SimpleDateFormat(getPattern(), locale);
-		format.setLenient(config().isLenient());
-		if (config().getUserTimeZone()) {
+		Config config = getConfig();
+		format.setLenient(config.isLenient());
+		if (config.getUserTimeZone()) {
 			format.setTimeZone(timeZone);
 		} else {
 			format.setTimeZone(TimeZones.systemTimeZone());

@@ -26,7 +26,8 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DecimalFormatDefinition extends PatternBasedFormatDefinition<DecimalFormatDefinition> {
+public class DecimalFormatDefinition<C extends DecimalFormatDefinition.Config<?>>
+		extends PatternBasedFormatDefinition<C> {
 
 	/**
 	 * Configuration interface for {@link DecimalFormatDefinition}.
@@ -34,7 +35,7 @@ public class DecimalFormatDefinition extends PatternBasedFormatDefinition<Decima
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PatternBasedFormatDefinition.Config<DecimalFormatDefinition> {
+	public interface Config<I extends DecimalFormatDefinition<?>> extends PatternBasedFormatDefinition.Config<I> {
 
 		/**
 		 * Tag name to identify {@link DecimalFormatDefinition} in a polymorphic list.
@@ -82,7 +83,7 @@ public class DecimalFormatDefinition extends PatternBasedFormatDefinition<Decima
 	 * @throws ConfigurationException
 	 *         iff configuration is invalid.
 	 */
-	public DecimalFormatDefinition(InstantiationContext context, Config config) throws ConfigurationException {
+	public DecimalFormatDefinition(InstantiationContext context, C config) throws ConfigurationException {
 		super(context, config);
 
 		_roundingMode = config.getRoundingMode();
@@ -91,14 +92,10 @@ public class DecimalFormatDefinition extends PatternBasedFormatDefinition<Decima
 	}
 
 	@Override
-	protected Config config() {
-		return (Config) super.config();
-	}
-
-	@Override
-	public Format newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
-		NumberFormat format = new DecimalFormat(getPattern(), DecimalFormatSymbols.getInstance(locale));
-		format.setRoundingMode(_roundingMode == null ? config.getRoundingMode() : _roundingMode);
+	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
+		DecimalFormat displayFormat = new DecimalFormat(getPattern(), DecimalFormatSymbols.getInstance(locale));
+		NumberFormat format = displayFormat;
+		format.setRoundingMode(_roundingMode == null ? globalConfig.getRoundingMode() : _roundingMode);
 		if (_normalize) {
 			format = NormalizingFormat.newInstance(format);
 		}

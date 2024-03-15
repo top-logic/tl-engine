@@ -19,7 +19,7 @@ import com.top_logic.basic.config.annotation.TagName;
 /**
  * {@link FormatDefinition} that allows to specify a separate parsing format.
  */
-public class NormalizingFormatDefinition<T extends NormalizingFormatDefinition<?>> extends FormatDefinition<T> {
+public class NormalizingFormatDefinition<C extends NormalizingFormatDefinition.Config<?>> extends FormatDefinition<C> {
 
 	/**
 	 * Configuration options for {@link NormalizingFormatDefinition}.
@@ -51,7 +51,7 @@ public class NormalizingFormatDefinition<T extends NormalizingFormatDefinition<?
 	/**
 	 * Creates a {@link NormalizingFormatDefinition}.
 	 */
-	public NormalizingFormatDefinition(InstantiationContext context, Config<T> config) throws ConfigurationException {
+	public NormalizingFormatDefinition(InstantiationContext context, C config) throws ConfigurationException {
 		super(context, config);
 
 		_format = context.getInstance(config.getFormat());
@@ -59,9 +59,9 @@ public class NormalizingFormatDefinition<T extends NormalizingFormatDefinition<?
 	}
 
 	@Override
-	public Format newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
-		Format parser = _parser.newFormat(config, timeZone, locale);
-		Format format = _format.newFormat(config, timeZone, locale);
+	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
+		Format parser = _parser.newFormat(globalConfig, timeZone, locale);
+		Format format = _format.newFormat(globalConfig, timeZone, locale);
 
 		return new Format() {
 			@Override

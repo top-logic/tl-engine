@@ -22,12 +22,13 @@ import com.top_logic.basic.time.TimeZones;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractDateFormatDefinition<T> extends FormatDefinition<T> {
+public abstract class AbstractDateFormatDefinition<C extends AbstractDateFormatDefinition.Config<?>>
+		extends FormatDefinition<C> {
 
 	/**
 	 * Common configuration options for all {@link AbstractDateFormatDefinition}s.
 	 */
-	public interface Config<T> extends FormatDefinition.Config<T> {
+	public interface Config<I extends AbstractDateFormatDefinition<?>> extends FormatDefinition.Config<I> {
 
 		/**
 		 * @see #getLenientParsing()
@@ -79,24 +80,21 @@ public abstract class AbstractDateFormatDefinition<T> extends FormatDefinition<T
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public AbstractDateFormatDefinition(InstantiationContext context, Config<T> config) throws ConfigurationException {
+	public AbstractDateFormatDefinition(InstantiationContext context, C config) throws ConfigurationException {
 		super(context, config);
 	}
 
 	@Override
-	public final DateFormat newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
+	public final DateFormat newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
 		DateFormat result = internalCreateFormat(locale);
-		result.setLenient(config().getLenientParsing().toBoolean(config.getLenientParsing()));
-		if (config().getUserTimeZone()) {
+		C config = getConfig();
+		result.setLenient(config.getLenientParsing().toBoolean(globalConfig.getLenientParsing()));
+		if (config.getUserTimeZone()) {
 			result.setTimeZone(timeZone);
 		} else {
 			result.setTimeZone(TimeZones.systemTimeZone());
 		}
 		return result;
-	}
-
-	private Config<T> config() {
-		return (Config<T>) getConfig();
 	}
 
 	/**

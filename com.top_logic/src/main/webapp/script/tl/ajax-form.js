@@ -3348,7 +3348,7 @@ services.form = {
 
 			let prevActive = button.parentElement.classList.contains(this.activeCl);
 			button.parentElement.classList.toggle(this.activeCl);
-
+			
 			if (prevActive) {
 				this.closeDD(button, ddBox);
 				if (this.mutObserver) {
@@ -3384,7 +3384,7 @@ services.form = {
 		},
 
 		closeDD: function(button, ddBox) {
-			// reset chevron to default (right)
+			// remove button direction
 			button.classList.remove("down");
 			button.classList.remove("up");
 

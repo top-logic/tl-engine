@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/treegrid.template.xml"
 >
 	<arguments
@@ -13,9 +13,6 @@
 		rootVisible="false"
 		type="test.dnd.dropon:Processor"
 	>
-		<dialogs>
-			<layout-reference resource="com.top_logic.demo/technical/components/dropOn/newProcessor/dialog.layout.xml"/>
-		</dialogs>
 		<name key="dynamic.c1ccc4ff-77bf-4db3-8c99-3af8e378c83c">
 			<en>Processor table</en>
 			<de>Bearbeitertabelle</de>
@@ -51,6 +48,27 @@
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
 			/>
+			<button id="ID_1636a126_adee_4cdd_a987_859c03c6b6ab"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique="moveRight"
+				group="System"
+				image="css:bi bi-arrow-right"
+				operation="null"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.e96d1d1a-66e6-499a-8ade-daabe2d8689c">
+					<en>Show other tab</en>
+					<de>Zeige anderen Tab</de>
+				</resourceKey>
+				<postCreateActions>
+					<showComponent>
+						<global-target name="com.top_logic.demo/technical/components/dropOn/tree/tabLayout.layout.xml#TabLayout"/>
+					</showComponent>
+				</postCreateActions>
+			</button>
 		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dropOn/newProcessor/dialog.layout.xml"/>
+		</dialogs>
 	</arguments>
 </config:template-call>

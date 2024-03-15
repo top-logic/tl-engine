@@ -157,12 +157,14 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 			try (Transaction tx = beginTransaction()) {
 				if (aComponent instanceof FormHandler) {
 					FormContext formContext = ((FormHandler) aComponent).getFormContext();
-					boolean ok = formContext.checkAll();
-					if (!ok) {
-						return AbstractApplyCommandHandler.createErrorResult(formContext);
-					}
+					if (formContext != null) {
+						boolean ok = formContext.checkAll();
+						if (!ok) {
+							return AbstractApplyCommandHandler.createErrorResult(formContext);
+						}
 
-					formContext.store();
+						formContext.store();
+					}
 				}
 
 				result = _operation.execute(model);

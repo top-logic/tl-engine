@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
 	<arguments model="selection(com.top_logic.demo/technical/components/dropOn/processorsTree.layout.xml#Tree)">
@@ -10,6 +10,25 @@
 			<en>Details</en>
 			<de>Eigenschaften</de>
 		</name>
+		<buttons>
+			<button id="ID_0f2576fe_c33b_4279_ad95_3e862b94acc9"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique="moveLeft"
+				image="css:bi bi-arrow-left"
+				operation="null"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.07fcf2e5-1868-43b4-a5dd-12271b83cc6f">
+					<en>Show previous tab</en>
+					<de>Zeige vorherigen Tab</de>
+				</resourceKey>
+				<postCreateActions>
+					<showComponent>
+						<global-target name="com.top_logic.demo/technical/components/dropOn/treeGrid/tabLayout.layout.xml#TabLayout"/>
+					</showComponent>
+				</postCreateActions>
+			</button>
+		</buttons>
 		<forms>
 			<form type="test.dnd.dropon:Processor">
 				<formDefinition>

@@ -23,7 +23,9 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.messagebox.MessageBox;
@@ -139,7 +141,6 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 	private HandlerResult updateStandardForm(DisplayContext context, GUIEditorDialog guiEditorDialog,
 			LayoutComponent component, TLStructuredType type, FormComponent form) {
-		String message = context.getResources().getString(com.top_logic.mig.html.layout.I18NConstants.STORE_FOR_MODEL);
 		FormDefinition formDefinition = guiEditorDialog.getFormDefinition();
 
 		CommandModel yes =
@@ -150,8 +151,11 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 			MessageBox.button(ButtonType.NO, denyContext -> denyUpdateStandardForm(component, formDefinition, type));
 		// Do not record click on button
 		ScriptingRecorder.annotateAsDontRecord(no);
-
-		return MessageBox.confirm(context, MessageType.CONFIRM, message, yes, no);
+		return MessageBox.newBuilder(MessageType.CONFIRM)
+			.message(Fragments.htmlSource(com.top_logic.mig.html.layout.I18NConstants.STORE_FOR_MODEL))
+			.layout(DisplayDimension.px(400), DisplayDimension.px(200))
+			.buttons(yes, no)
+			.confirm(context.getWindowScope());
 	}
 
 	private HandlerResult confirmUpdateStandardForm(FormComponent component, FormDefinition formDefinition,

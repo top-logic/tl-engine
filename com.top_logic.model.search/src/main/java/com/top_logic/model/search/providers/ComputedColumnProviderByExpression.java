@@ -42,6 +42,7 @@ import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.ColumnInfo;
 import com.top_logic.layout.table.provider.ColumnProviderConfig;
 import com.top_logic.layout.table.provider.generic.ColumnInfoFactory;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
@@ -112,8 +113,13 @@ public class ComputedColumnProviderByExpression
 		 * Function retrieving the column's value.
 		 * 
 		 * <p>
-		 * The function expects the row object as single argument.
+		 * The function expects the row object as first argument and the component's model as
+		 * optional second argument.
 		 * </p>
+		 * 
+		 * <pre>
+		 * <code>row -> model -> ...</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The result of the function is displayed in the table cell defined by this column provider
@@ -132,9 +138,13 @@ public class ComputedColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <p>
-		 * The operation expects the row object as first argument and the new value that should be
-		 * stored as second argument.
+		 * The operation expects the row object as first argument, the new value that should be
+		 * stored as second argument and the component's model as optional third arguments.
 		 * </p>
+		 * 
+		 * <pre>
+		 * <code>row -> value -> model -> ...</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The operation is executed, when an edited row is saved and the user has edited the
@@ -161,6 +171,8 @@ public class ComputedColumnProviderByExpression
 
 	private final TLType _columnType;
 
+	private LayoutComponent _component;
+
 	/**
 	 * Creates a {@link ComputedColumnProviderByExpression} from configuration.
 	 * 
@@ -177,6 +189,7 @@ public class ComputedColumnProviderByExpression
 		_accessor = QueryExecutor.compile(config.getAccessor());
 		_updater = QueryExecutor.compileOptional(config.getUpdater());
 		_columnType = config.getColumnType().resolveType();
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 	}
 
 	@Override
@@ -199,7 +212,7 @@ public class ComputedColumnProviderByExpression
 		 * attribute, the column info is built for. */
 		column.setCellExistenceTester(AllCellsExist.INSTANCE);
 
-		ColumnAccessor accessor = new ColumnAccessor(_accessor, _updater);
+		ColumnAccessor accessor = new ColumnAccessor(_component, _accessor, _updater);
 		column.setAccessor(accessor);
 
 		if (_updater != null) {
@@ -253,6 +266,8 @@ public class ComputedColumnProviderByExpression
 	}
 
 	private static final class ColumnAccessor implements Accessor<Object> {
+		private final LayoutComponent _component;
+
 		private final QueryExecutor _accessor;
 
 		private final QueryExecutor _updater;
@@ -260,14 +275,15 @@ public class ComputedColumnProviderByExpression
 		/**
 		 * Creates a {@link ColumnAccessor}.
 		 */
-		public ColumnAccessor(QueryExecutor accessor, QueryExecutor updater) {
+		public ColumnAccessor(LayoutComponent component, QueryExecutor accessor, QueryExecutor updater) {
+			_component = component;
 			_accessor = accessor;
 			_updater = updater;
 		}
 
 		@Override
 		public Object getValue(Object object, String property) {
-			return _accessor.execute(object);
+			return _accessor.execute(object, _component.getModel());
 		}
 
 		@Override
@@ -276,7 +292,7 @@ public class ComputedColumnProviderByExpression
 				throw new UnsupportedOperationException(
 					"Column '" + property + "' can not be updated, no setter defined.");
 			}
-			_updater.execute(object, value);
+			_updater.execute(object, value, _component.getModel());
 		}
 	}
 }

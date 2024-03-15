@@ -18,26 +18,26 @@
 			<de>Entwicklungsprojekte</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="model->all(`test.dynamictable:Development`)"
-			modelForElement="null"
+			elements="model -> all(`test.dynamictable:Development`)"
+			modelForElement="element -> model -> $model"
 			supportsElement="element->$element.instanceOf(`test.dynamictable:Development`)"
 			supportsModel="true"
 		/>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.model.search.providers.DynamicColumnProviderByExpression"
-				columnLabel="c -> $c.get(`test.dynamictable:Objective#name`)"
-				columnType="`tl.core:Integer`"
+				columnLabel="column -> model -> $column.get(`test.dynamictable:Objective#name`)"
+				columnType="column -> model -> `tl.core:Integer`"
 				idPrefix="c82f7cbb-a3cd-4e81-8525-ed312166424f"
 			>
-				<columns><![CDATA[all(`test.dynamictable:Objective`)
+				<columns><![CDATA[model -> all(`test.dynamictable:Objective`)
   .sort(comparator(
     x -> $x.get(`test.dynamictable:Objective#name`)))]]></columns>
-				<accessor><![CDATA[row -> column -> 
+				<accessor><![CDATA[row -> column -> model -> 
   $row.get(`test.dynamictable:Development#ratings`)
     .filter(link -> $link.get(`test.dynamictable:Rating#objective`) == $column)
     .singleElement()
     .get(`test.dynamictable:Rating#value`)]]></accessor>
-				<updater><![CDATA[row -> column -> value -> {
+				<updater><![CDATA[row -> column -> value -> model -> {
   link = $row.get(`test.dynamictable:Development#ratings`)
     .filter(link -> $link.get(`test.dynamictable:Rating#objective`) == $column)
     .singleElement();
@@ -64,7 +64,7 @@
 						<de>Hier wird die Bewertung mit dem höchsten Wert angezeigt.</de>
 					</tooltip>
 				</columnLabel>
-				<accessor><![CDATA[row -> 
+				<accessor><![CDATA[row -> model -> 
   $row.get(`test.dynamictable:Development#ratings`)
   .map(link -> $link.get(`test.dynamictable:Rating#value`))
   .max()]]></accessor>
@@ -100,7 +100,6 @@
 			/>
 			<button id="ID_d4ec0533_f936_4d06_b621_dfccfb3ac9fc"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
-				clique="refresh"
 			>
 				<resourceKey key="dynamic.fe62bf65-0eb7-4fe9-ad43-ab8c60a784e2">
 					<en>Update</en>
@@ -109,7 +108,6 @@
 			</button>
 			<button id="ID_ebef0d83_187c_4c3e_b35f_6932c15f1fdd"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
-				clique="delete"
 				target="selection(self())"
 			>
 				<resourceKey key="dynamic.fe4cc45d-3b7d-4679-8f2a-eeabe0b4bbce">

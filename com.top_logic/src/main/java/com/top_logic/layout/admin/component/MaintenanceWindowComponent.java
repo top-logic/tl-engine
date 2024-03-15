@@ -31,7 +31,6 @@ import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -262,7 +261,7 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(BoundCommand.NEEDS_CONFIRM)
+			@BooleanDefault(true)
 			boolean getConfirm();
 
 			@Override
@@ -353,7 +352,7 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(BoundCommand.NEEDS_CONFIRM)
+			@BooleanDefault(true)
 			boolean getConfirm();
 
 			@Override

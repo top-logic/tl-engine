@@ -147,9 +147,6 @@ public class DeleteHandler extends AbstractCommandHandler {
         return (new String[] {OBJECT_ID, TYPE, CONTAINER_ID});
     }
 
-    /**
-     * @see com.top_logic.tool.boundsec.BoundCommand#needsConfirm()
-     */
     @Override
 	public boolean needsConfirm() {
         return (true);

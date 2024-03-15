@@ -10,9 +10,8 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
-import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.AbstractLayoutTest;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -33,7 +32,6 @@ import com.top_logic.layout.basic.check.NoCheckScopeProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.SimpleComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -49,7 +47,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TestAbstractCommandHandler extends BasicTestCase {
+public class TestAbstractCommandHandler extends AbstractLayoutTest {
 
 	public static final String CHECK_CONFIGURED_VALUE = "checkConfiguredValue";
 
@@ -94,7 +92,7 @@ public class TestAbstractCommandHandler extends BasicTestCase {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(BoundCommand.NEEDS_CONFIRM)
+			@BooleanDefault(true)
 			boolean getConfirm();
 
 			@Override
@@ -239,7 +237,7 @@ public class TestAbstractCommandHandler extends BasicTestCase {
 		assertEquals("TestAbstractCommandHandlerDefaults", handler.getID());
 		assertEquals(SimpleBoundCommandGroup.READ, handler.getCommandGroup());
 		assertEquals("default key", Resources.getInstance().getString(handler.getResourceKey(null)));
-		assertFalse(handler.needsConfirm());
+		assertNull(handler.getConfirmKey(null, Collections.emptyMap()));
 		assertNull(handler.getImage(null));
 		assertNull(handler.getNotExecutableImage(null));
 		assertEquals(ExecutableState.EXECUTABLE,
@@ -254,7 +252,7 @@ public class TestAbstractCommandHandler extends BasicTestCase {
 		assertEquals("TestAbstractCommandHandlerConfigured", handler.getID());
 		assertEquals(SimpleBoundCommandGroup.SYSTEM, handler.getCommandGroup());
 		assertEquals("my.resource.key", handler.getResourceKey(null).getKey());
-		assertTrue(handler.needsConfirm());
+		assertNotNull(handler.getConfirmKey(null, Collections.emptyMap()));
 		assertEquals("/my-image.png", handler.getImage(null).toEncodedForm());
 		assertEquals("/my-disabled-image.png", handler.getNotExecutableImage(null).toEncodedForm());
 		assertEquals(ExecutableState.EXECUTABLE,
@@ -270,7 +268,7 @@ public class TestAbstractCommandHandler extends BasicTestCase {
 
 		assertEquals(SimpleBoundCommandGroup.WRITE, handler.getCommandGroup());
 		assertEquals("legacy default key", Resources.getInstance().getString(handler.getResourceKey(null)));
-		assertTrue(handler.needsConfirm());
+		assertNotNull(handler.getConfirmKey(null, Collections.emptyMap()));
 		assertEquals(ExecutableState.NOT_EXEC_HIDDEN,
 			handler.isExecutable(null, null, Collections.<String, Object> emptyMap()));
 		assertEquals(
@@ -286,7 +284,7 @@ public class TestAbstractCommandHandler extends BasicTestCase {
 
 		assertEquals(SimpleBoundCommandGroup.SYSTEM, handler.getCommandGroup());
 		assertEquals("my.resource.key", handler.getResourceKey(null).getKey());
-		assertFalse(handler.needsConfirm());
+		assertNull(handler.getConfirmKey(null, Collections.emptyMap()));
 		assertEquals(ExecutableState.NOT_EXEC_HIDDEN,
 			handler.isExecutable(null, null, Collections.<String, Object> emptyMap()));
 		assertEquals(
@@ -353,8 +351,7 @@ public class TestAbstractCommandHandler extends BasicTestCase {
 	}
 
 	public static Test suite() {
-		return ModuleLicenceTestSetup.setupModule(ServiceTestSetup.createSetup(TestAbstractCommandHandler.class,
-			CommandHandlerFactory.Module.INSTANCE));
+		return suite(TestAbstractCommandHandler.class);
 	}
 
 }

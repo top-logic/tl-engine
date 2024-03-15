@@ -63,11 +63,6 @@ public abstract class CommandHandlerProxy
 	}
 
 	@Override
-	public boolean needsConfirm() {
-		return impl().needsConfirm();
-	}
-
-	@Override
 	public boolean isConcurrent() {
 		return impl().isConcurrent();
 	}

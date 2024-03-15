@@ -2,17 +2,53 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments
-		defaultFor=""
-		model="selection(com.top_logic.demo/technical/components/commandExecutability/operationsTable.layout.xml#Table)"
-		saveClosesDialog="true"
-		type=""
-	>
+	<arguments model="selection(com.top_logic.demo/technical/components/commandExecutability/operationsTable.layout.xml#Table)">
 		<name key="dynamic.6c5fd73a-dac3-4a0d-9f96-19a9539707a6">
 			<en>Details</en>
 			<de>Details</de>
 		</name>
+		<buttons>
+			<button class="com.top_logic.model.search.providers.ApplyCommandByExpression"
+				confirm="true"
+			>
+				<confirmMessage key="dynamic.33571ff3-4df7-47b3-a053-3a5b823cb06b">
+					<en>Do you really want to save the changes?</en>
+					<de>Wollen Sie die Änderungen wirklich speichern?</de>
+				</confirmMessage>
+				<additional-operation><![CDATA[model -> if ($model.get(`test.commandApproval:StatefulElement#stop`), {
+    $model.set(`test.commandApproval:StatefulElement#state`, `test.commandApproval:OperationState#CANCLED`)
+})]]></additional-operation>
+				<dynamic-confirm><![CDATA[model -> form -> if ($form.get(`test.commandApproval:StatefulElement#stop`), 
+	#("Möchten Sie {0} wirklich abbrechen?"@de, "Do you really want to cancel {0}?"@en).fill($model))]]></dynamic-confirm>
+			</button>
+		</buttons>
+		<forms>
+			<form type="test.commandApproval:StatefulElement">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.commandApproval:StatefulElement#name"
+						type="tl.core:String"
+					>
+						<annotations>
+							<render-whole-line/>
+						</annotations>
+					</field>
+					<field
+						attribute="stop"
+						fullQualifiedName="test.commandApproval:StatefulElement#stop"
+						type="tl.core:Boolean"
+					/>
+					<field
+						attribute="reason"
+						fullQualifiedName="test.commandApproval:StatefulElement#reason"
+						type="tl.core:Text"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
 	</arguments>
 </config:template-call>

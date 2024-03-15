@@ -337,13 +337,11 @@
 					</field-values>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.CommandHandlerReference"
-					command-label="Speichern!"
-					command-name="saveIgnoreWarnings"
-					comment=""
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
 					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-					failure-message=""
 					user-id="root"
 				>
 					<arguments/>

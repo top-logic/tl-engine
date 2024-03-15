@@ -47,8 +47,14 @@ class SuspendedResult extends HandlerResult {
 	@Override
 	public void appendContinuation(Command continuation) {
 		assert isSuspended() : "Not suspended.";
-		assert _resumeContinuation == null : "Only a single additional continuation.";
-		_resumeContinuation = continuation;
+		Command existing = _resumeContinuation;
+		_resumeContinuation = existing == null ? continuation : (context) -> {
+			HandlerResult first = existing.executeCommand(context);
+			if (!first.isSuccess()) {
+				return first;
+			}
+			return continuation.executeCommand(context);
+		};
 	}
 
 	@Override

@@ -2,7 +2,7 @@
 
 <config:template
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	groups="commons"
+	groups="form,commons"
 >
 	<properties extends="com.top_logic.element.layout.formeditor.builder.EditFormBuilder$UIOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.layout.form.component.edit.EditMode$Config, com.top_logic.layout.form.component.edit.CanLock$Config">
 		<annotations>

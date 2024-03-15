@@ -6,6 +6,7 @@
 package com.top_logic.basic.format.configured;
 
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -13,6 +14,8 @@ import java.util.concurrent.ConcurrentMap;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.format.FormatDefinition;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -80,6 +83,8 @@ public final class FormatterService extends ConfiguredManagedClass<FormatterServ
 	private final ThreadLocal<ConcurrentMap<ZoneAndLocale, Formatter>> _threadInstances =
 		new ThreadLocal<>();
 
+	private Map<String, FormatDefinition<?>> _formats;
+
 	/**
 	 * Creates a {@link Formatter} from configuration.
 	 * 
@@ -91,6 +96,8 @@ public final class FormatterService extends ConfiguredManagedClass<FormatterServ
 	@CalledByReflection
 	public FormatterService(InstantiationContext context, Config config) {
 		super(context, config);
+
+		_formats = TypedConfiguration.getInstanceMap(context, config.getFormats());
 	}
 
 	/**
@@ -123,14 +130,14 @@ public final class FormatterService extends ConfiguredManagedClass<FormatterServ
 	 * @return The new formatter.
 	 */
 	protected Formatter createFormatter(TimeZone timeZone, Locale locale) {
-		return new Formatter(getConfig(), timeZone, locale);
+		return new Formatter(getConfig(), timeZone, locale, _formats);
 	}
 
 	/**
 	 * Resolves the {@link FormatDefinition} with the given ID from the configuration.
 	 */
 	public FormatDefinition<?> getFormatDefinition(String id) {
-		return getConfig().getFormats().get(id);
+		return _formats.get(id);
 	}
 
 	/**

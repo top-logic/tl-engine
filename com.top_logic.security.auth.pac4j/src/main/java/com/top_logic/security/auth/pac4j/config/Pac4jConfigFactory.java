@@ -20,6 +20,7 @@ import org.pac4j.core.config.ConfigFactory;
 import org.pac4j.core.http.url.DefaultUrlResolver;
 import org.pac4j.core.http.url.UrlResolver;
 import org.pac4j.core.util.Pac4jConstants;
+import org.pac4j.jee.filter.SecurityFilter;
 
 import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
@@ -70,9 +71,10 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	/**
 	 * The {@link ConfigFactory} used by Pac4j.
 	 * <p>
-	 * This is used in the 'web.xml' or the 'web-fragment.xml' as value for the parameter
-	 * 'configFactory' of the 'Pac4jSecurityFilter'. The {@link Pac4jConfigFactory} cannot be used,
-	 * as every {@link ConfigFactory} needs to have a default constructor.
+	 * This is used in the <code>web.xml</code> or the <code>web-fragment.xml</code> as value for
+	 * the parameter <code>configFactory</code> of the {@link SecurityFilter}. The
+	 * {@link Pac4jConfigFactory} cannot be used, as every {@link ConfigFactory} needs to have a
+	 * default constructor.
 	 * </p>
 	 */
 	public static class TLPac4jConfigFactory implements ConfigFactory {

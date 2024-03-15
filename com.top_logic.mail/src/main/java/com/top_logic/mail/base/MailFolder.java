@@ -5,7 +5,7 @@
  */
 package com.top_logic.mail.base;
 
-import javax.mail.event.MessageCountListener;
+import jakarta.mail.event.MessageCountListener;
 
 import com.top_logic.knowledge.wrap.ContainerWrapper;
 import com.top_logic.mail.proxy.MailMessage;

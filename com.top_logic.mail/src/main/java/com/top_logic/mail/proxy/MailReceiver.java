@@ -17,16 +17,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import javax.mail.Flags;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Store;
-import javax.mail.StoreClosedException;
-import javax.mail.event.ConnectionEvent;
-import javax.mail.event.ConnectionListener;
-import javax.mail.search.SearchTerm;
+import jakarta.mail.Flags;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Store;
+import jakarta.mail.StoreClosedException;
+import jakarta.mail.event.ConnectionEvent;
+import jakarta.mail.event.ConnectionListener;
+import jakarta.mail.search.SearchTerm;
 
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.basic.Logger;
@@ -173,7 +173,7 @@ public class MailReceiver implements ConnectionListener {
      * Reset all references to mail server.
      * 
      * @param    anEvent    The event notifying the closing of the connection.
-     * @see      javax.mail.event.ConnectionListener#closed(javax.mail.event.ConnectionEvent)
+     * @see      jakarta.mail.event.ConnectionListener#closed(jakarta.mail.event.ConnectionEvent)
      */
     @Override
 	public void closed(ConnectionEvent anEvent) {
@@ -194,7 +194,7 @@ public class MailReceiver implements ConnectionListener {
      * Reset all references to mail server.
      * 
      * @param    anEvent    The event notifying the disconnecting from mail server.
-     * @see      javax.mail.event.ConnectionListener#disconnected(javax.mail.event.ConnectionEvent)
+     * @see      jakarta.mail.event.ConnectionListener#disconnected(jakarta.mail.event.ConnectionEvent)
      */
     @Override
 	public void disconnected(ConnectionEvent anEvent) {

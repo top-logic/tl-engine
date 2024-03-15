@@ -7,7 +7,7 @@ package test.com.top_logic.mail.base;
 
 import java.util.Collection;
 
-import javax.mail.MessagingException;
+import jakarta.mail.MessagingException;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

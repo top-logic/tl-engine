@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
-import javax.mail.internet.ContentDisposition;
+import jakarta.mail.internet.ContentDisposition;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -378,7 +378,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		ContentDisposition contentDisposition;
 		try {
 			contentDisposition = new ContentDisposition(sContentDisposition);
-		} catch (javax.mail.internet.ParseException ex) {
+		} catch (jakarta.mail.internet.ParseException ex) {
 			throw new InvalidValueException("Invalid content disposition: " + sContentDisposition, ex);
 		}
 

@@ -31,8 +31,8 @@
       <artifactId>tl-service-openapi-common</artifactId>
     </dependency>
 	<dependency>
-	    <groupId>javax.mail</groupId>
-	    <artifactId>javax.mail-api</artifactId>
+	    <groupId>jakarta.mail</groupId>
+	    <artifactId>jakarta.mail-api</artifactId>
 	</dependency>
 
     <dependency>

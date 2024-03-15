@@ -5,17 +5,17 @@
  */
 package com.top_logic.mail.connect;
 
-import javax.mail.FetchProfile;
-import javax.mail.Flags;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.URLName;
-import javax.mail.event.ConnectionListener;
-import javax.mail.event.FolderListener;
-import javax.mail.event.MessageChangedListener;
-import javax.mail.event.MessageCountListener;
-import javax.mail.search.SearchTerm;
+import jakarta.mail.FetchProfile;
+import jakarta.mail.Flags;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.URLName;
+import jakarta.mail.event.ConnectionListener;
+import jakarta.mail.event.FolderListener;
+import jakarta.mail.event.MessageChangedListener;
+import jakarta.mail.event.MessageCountListener;
+import jakarta.mail.search.SearchTerm;
 
 /**
  * Debugging class for simulating a broken communication to the mail server ({@link TLStore#checkConnect(String)}.

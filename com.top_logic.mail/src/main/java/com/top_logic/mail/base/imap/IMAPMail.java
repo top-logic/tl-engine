@@ -12,8 +12,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.mail.Address;
-import javax.mail.Message;
+import jakarta.mail.Address;
+import jakarta.mail.Message;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;

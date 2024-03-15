@@ -230,7 +230,7 @@
 		value="/images/noPreviewImage.png"
 	/>
 	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
-		value="css:bi bi-list"
+		value="css:bi bi-three-dots-vertical"
 	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.BURGER_COMMANDS_ICONS"
 		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
@@ -284,10 +284,10 @@
 		value="css:bi bi-fullscreen"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MINIMIZE"
-		value="css:bi bi-chevron-down"
+		value="css:bi bi-dash-lg"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE"
-		value="css:bi bi-chevron-right"
+		value="css:bi bi-plus-lg"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED"
 		value="css:bi bi-fullscreen-exit"
@@ -308,7 +308,7 @@
 		expr="%IMAGE_BUTTONS_SEARCH22%"
 	/>
 	<icon name="com.top_logic.layout.tabbar.Icons.TAB_BAR_COMMANDS_MENU"
-		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
+		value="css:bi bi-list"
 	/>
 	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH"
 		value="40px"
@@ -490,9 +490,6 @@
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.HIDE_DERIVED_RESOURCES"
 		expr="%ICONS_MOVE_ROW_TO_TOP%"
-	/>
-	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.SELECT_TYPE"
-		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.TRANSLATE"
 		expr="%IMAGE_BUTTONS_DOC_TRANSLATE%"
@@ -1794,6 +1791,9 @@
 	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.HIDE_TILE_COMMAND"
 		value="css:far fa-eye-slash"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CHEVRON_EXPAND"
+		value="css:bi bi-chevron-expand"
 	/>
 
 	<!-- Style Tokens -->

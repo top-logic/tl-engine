@@ -2553,6 +2553,17 @@ span.tbGroup,
     display: inline-flex;
 }
 
+.cCollapsibleButtons::before {
+	border-left: 1px solid var(--border-subtle);
+	margin-left: var(--spacing-02);
+	height: calc(var(--COLLAPSIBLE_IMAGE_HEIGHT) - var(--spacing-02) * 2);
+	content: " ";
+}
+
+.cCollapsibleCollapsed .cCollapsibleButtons::before {
+	content: none;
+}
+
 .tbGroup.cImageButton input {
 	height: 1.5rem;
 	width: 1.5rem;

@@ -17,11 +17,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;

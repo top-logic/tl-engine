@@ -7,8 +7,8 @@ package test.com.top_logic.mail.base;
 
 import java.util.Collections;
 
-import javax.mail.Address;
-import javax.mail.MessagingException;
+import jakarta.mail.Address;
+import jakarta.mail.MessagingException;
 
 import junit.framework.Test;
 import junit.textui.TestRunner;

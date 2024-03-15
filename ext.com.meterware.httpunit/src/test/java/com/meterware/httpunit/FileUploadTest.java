@@ -29,9 +29,9 @@ import java.net.URLEncoder;
 
 import javax.activation.DataSource;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMultipart;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMultipart;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

@@ -7,8 +7,8 @@ package test.com.top_logic.mail.base;
 
 import static test.com.top_logic.mail.base.MailTestUtils.*;
 
-import javax.mail.Folder;
-import javax.mail.MessagingException;
+import jakarta.mail.Folder;
+import jakarta.mail.MessagingException;
 
 import junit.framework.AssertionFailedError;
 

@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;

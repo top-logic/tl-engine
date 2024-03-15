@@ -771,33 +771,17 @@
 			
 			<!-- Only good for compiling against, provides no mail implementations. -->
 			<dependency>
-			    <groupId>javax.mail</groupId>
-			    <artifactId>javax.mail-api</artifactId>
-			    <version>1.6.2</version>
+			    <groupId>jakarta.mail</groupId>
+			    <artifactId>jakarta.mail-api</artifactId>
+			    <version>2.1.3</version>
 			    <scope>provided</scope>
-			    
-			    <exclusions>
-			    	<!-- Note: Must include javax.activation:javax.activation-api instead. -->
-			    	<exclusion>
-			    		<groupId>javax.activation</groupId>
-			    		<artifactId>activation</artifactId>
-			    	</exclusion>
-			    </exclusions>
 			</dependency>
 			
 			<!-- The actual mail implementation. Might be already be installed in the container running the application. -->
 			<dependency>
-				<groupId>com.sun.mail</groupId>
-				<artifactId>javax.mail</artifactId>
-				<version>1.6.2</version>
-				
-				<exclusions>
-			    	<!-- Note: Must include javax.activation:javax.activation-api instead. -->
-			    	<exclusion>
-			    		<groupId>javax.activation</groupId>
-			    		<artifactId>activation</artifactId>
-			    	</exclusion>
-				</exclusions>
+				<groupId>org.eclipse.angus</groupId>
+				<artifactId>angus-mail</artifactId>
+				<version>2.0.3</version>
 			</dependency>
 			
 			<dependency>

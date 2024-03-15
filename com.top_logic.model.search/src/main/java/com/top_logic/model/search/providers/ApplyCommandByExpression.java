@@ -58,7 +58,7 @@ public class ApplyCommandByExpression extends DefaultApplyAttributedCommandHandl
 		 * values.
 		 * 
 		 * <p>
-		 * The function receives the current form data as first and the component's model as second
+		 * The function receives the component's model as first and the current form data as second
 		 * argument. When this operation is called, values have already been transfered from the
 		 * form data to the model object.
 		 * </p>
@@ -75,7 +75,7 @@ public class ApplyCommandByExpression extends DefaultApplyAttributedCommandHandl
 		 * Function computing a confirm message.
 		 * 
 		 * <p>
-		 * The function receives the current form data as first and the component's model as second
+		 * The function receives the component's model as first and the current form data as second
 		 * argument.
 		 * </p>
 		 * 

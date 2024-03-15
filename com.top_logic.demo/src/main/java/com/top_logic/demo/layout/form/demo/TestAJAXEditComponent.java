@@ -9,7 +9,6 @@ import java.util.Date;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.time.CalendarUtil;
@@ -20,6 +19,7 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
+import com.top_logic.layout.form.component.Editor;
 import com.top_logic.layout.form.constraints.ComparisonDependency;
 import com.top_logic.layout.form.constraints.IntRangeConstraint;
 import com.top_logic.layout.form.model.FormContext;
@@ -144,21 +144,18 @@ public class TestAJAXEditComponent extends EditComponent implements ModelProvide
 	 */
 	public static class SaveCommand extends StoreCommand {
 
-		/** Config interface for {@link SaveCommand}. */
-		public interface Config extends StoreCommand.Config {
-
-			@Override
-			@BooleanDefault(true)
-			boolean isSave();
-
-		}
-
 		private static final String ID = "TestAJAXEditComponent_Save";
 
 		public SaveCommand(InstantiationContext context, Config config) {
 			super(context, config);
 		}
 
+	    @Override
+		protected void updateComponent(LayoutComponent component, FormContext formContext, Object model) {
+			super.updateComponent(component, formContext, model);
+
+			((Editor) component).setEditMode(false);
+	    }
 	}
 	
 	/**

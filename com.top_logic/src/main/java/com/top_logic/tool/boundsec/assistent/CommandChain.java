@@ -37,7 +37,7 @@ public class CommandChain extends AbstractCommandHandler {
 
 	private static String		ID			= "commandChain";
 
-	private List				commandList	= new ArrayList(2);
+	private List<CommandHolder> commandList = new ArrayList<>(2);
 	
 	/**
 	 * Chains sometimes target other components that the original one.
@@ -52,22 +52,16 @@ public class CommandChain extends AbstractCommandHandler {
 
 	public static CommandChain newInstance(String aCommandID, BoundCommandGroup aGroup, List someCommandHolders,
 			LayoutComponent aTarget) {
-		return newInstance(aCommandID, aGroup, someCommandHolders, aTarget, false);
+		return newInstance(aCommandID, aGroup, someCommandHolders, aTarget, null, null);
 	}
 
-	public static CommandChain newInstance(String aCommandID, BoundCommandGroup aGroup, List someCommandHolders,
-			LayoutComponent aTarget, boolean withConfirm) {
-		return newInstance(aCommandID, aGroup, someCommandHolders, aTarget, withConfirm, null, null);
-	}
-
-	public static CommandChain newInstance(String aCommandID, BoundCommandGroup aGroup, List someCommandHolders,
-			LayoutComponent aTarget, boolean withConfirm, ExecutabilityRule rule, ResKey i18nKey) {
+	public static CommandChain newInstance(String aCommandID, BoundCommandGroup aGroup,
+			List<CommandHolder> someCommandHolders,
+			LayoutComponent aTarget, ExecutabilityRule rule, ResKey i18nKey) {
 		CommandChain result = newInstance(
-			updateConfirm(
-				updateGroup(
-					AbstractCommandHandler.<Config> createConfig(CommandChain.class, aCommandID),
-					aGroup),
-				withConfirm));
+			updateGroup(
+				AbstractCommandHandler.<Config> createConfig(CommandChain.class, aCommandID),
+				aGroup));
 		result.commandList = someCommandHolders;
 		result.target = aTarget;
 		result.setRule(getCustomExecutabilityRule(rule, someCommandHolders));
@@ -111,10 +105,10 @@ public class CommandChain extends AbstractCommandHandler {
 			Object model, Map<String, Object> someArguments) {
 
 		HandlerResult theResult = null;
-		Iterator iter = this.commandList.iterator();
+		Iterator<CommandHolder> iter = this.commandList.iterator();
 		boolean closeDialog = false;
 		while (iter.hasNext() && (theResult == null || theResult.isSuccess())) {
-			CommandHolder theHolder = (CommandHolder) iter.next();
+			CommandHolder theHolder = iter.next();
 			CommandHandler theHandler = theHolder.getHandler();
 			LayoutComponent theTarget = theHolder.getTargetComponent();
 
@@ -201,7 +195,7 @@ public class CommandChain extends AbstractCommandHandler {
 
 	@Override
 	public CommandScriptWriter getCommandScriptWriter(LayoutComponent component) {
-		return ((CommandHolder) commandList.get(0)).getHandler().getCommandScriptWriter(component);
+		return commandList.get(0).getHandler().getCommandScriptWriter(component);
 	}
 
 	/**
@@ -225,6 +219,20 @@ public class CommandChain extends AbstractCommandHandler {
 		return new MergedExecutabilityRule(commandList);
 	}
 	
+	@Override
+	public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments) {
+		ResKey result = super.getConfirmKey(component, arguments);
+		if (result == null) {
+			for (CommandHolder cmd : commandList) {
+				ResKey subResult = cmd.getHandler().getConfirmKey(component, arguments);
+				if (subResult != null) {
+					return subResult;
+				}
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * The MergedExecutabilityRule expects a list of {@link CommandHolder}s.
 	 * The executability of this rule depends on the executability of the

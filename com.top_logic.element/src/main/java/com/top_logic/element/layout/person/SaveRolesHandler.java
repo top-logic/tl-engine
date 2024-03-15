@@ -6,6 +6,9 @@
 package com.top_logic.element.layout.person;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.layout.form.component.Editor;
+import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * Corresponding save handler for {@link ApplyRolesHandler}.
@@ -16,15 +19,14 @@ public class SaveRolesHandler extends ApplyRolesHandler {
 
     public static final String COMMAND_ID = "savePersonOrGroupRoles";
 
-    
-    
-
     public SaveRolesHandler(InstantiationContext context, Config config) {
         super(context, config);
     }
 
     @Override
-	protected boolean isSaveCommmand() {
-        return true;
+	protected void updateComponent(LayoutComponent component, FormContext formContext, Object model) {
+		super.updateComponent(component, formContext, model);
+
+		((Editor) component).setEditMode(false);
     }
 }

@@ -176,13 +176,6 @@
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>
-		            <handler id="saveIgnoreWarnings" 
-		            	class="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler" 
-		            	clique="additional-apply" group="System"
-		            	save="true" 
-		            	resourceKey="demo.command.saveIgnoreWarnings"
-		            	ignoreWarnings="true" 
-		            />
 		            <handler id="clearSelection"
 						class="com.top_logic.demo.layout.demo.table.ClearSelectionCommand"
 						image="theme:ICON_BROOM"

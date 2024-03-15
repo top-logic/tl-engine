@@ -26,6 +26,13 @@ public abstract class VetoException extends Exception {
 	private Command continuationCommand;
 
 	/**
+	 * Creates a {@link VetoException}.
+	 */
+	public VetoException() {
+		super();
+	}
+
+	/**
 	 * @param command
 	 *        - that shall be executed, if the veto is revoked
 	 */
@@ -37,9 +44,8 @@ public abstract class VetoException extends Exception {
 	 * @see #setContinuationCommand(Command)
 	 */
 	public Command getContinuationCommand() {
-		// Lazified, because the getter is usualled called before the setter
+		// Added indirection, because the getter is usually called before the setter
 		return new Command() {
-
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {
 				return continuationCommand.executeCommand(context);

@@ -18,6 +18,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ProcessingInfo;
 import com.top_logic.layout.ProcessingKind;
 import com.top_logic.layout.admin.component.PerformanceMonitor;
+import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.component.ComponentUtil;
@@ -87,24 +88,26 @@ public class CommandDispatcher {
 	 */
 	public final HandlerResult dispatchCommand(CommandHandler command, DisplayContext context,
 			LayoutComponent component, Map<String, Object> someArguments) {
-		if (command.needsConfirm() && !context.get(COMMAND_APPROVED)) {
-			LayoutData layout =
-				DefaultLayoutData.newLayoutData(DisplayDimension.px(400), DisplayDimension.px(150));
+		if (!context.get(COMMAND_APPROVED)) {
 			ResKey message = CommandHandlerUtil.getConfirmKey(command, component, someArguments);
+			if (message != null) {
+				LayoutData layout =
+					DefaultLayoutData.newLayoutData(DisplayDimension.px(400), DisplayDimension.px(150));
 
-			CommandModel ok = MessageBox.button(ButtonType.OK,
-				approveContext -> dispatchCommand(command, approved(approveContext), component, someArguments));
-			return MessageBox
-				.newBuilder(MessageType.CONFIRM)
-				.layout(layout)
-				.message(message)
-				.buttons(
-					ScriptingRecorder.annotateAsDontRecord(ok),
-					ScriptingRecorder.annotateAsDontRecord(MessageBox.button(ButtonType.CANCEL)))
-				.confirm(context.getWindowScope());
-		} else {
-			// Do not record synthetic argument.
-			context.reset(COMMAND_APPROVED);
+				HandlerResult suspended = HandlerResult.suspended();
+				Command continuation = suspended.resumeContinuation(COMMAND_APPROVED, Boolean.TRUE);
+				CommandModel ok = MessageBox.button(ButtonType.OK, continuation);
+
+				MessageBox
+					.newBuilder(MessageType.CONFIRM)
+					.layout(layout)
+					.message(message)
+					.buttons(
+						ScriptingRecorder.annotateAsDontRecord(ok),
+						ScriptingRecorder.annotateAsDontRecord(MessageBox.button(ButtonType.CANCEL)))
+					.confirm(context.getWindowScope());
+				return suspended;
+			}
 		}
 
 		HandlerResult result;
@@ -118,7 +121,6 @@ public class CommandDispatcher {
 				if (event != null) {
 					event.setAction(wrapWithExpectedFailure(context, result, event.getAction()));
 				}
-
 			}
 		} else {
 			// Do actual dispatch

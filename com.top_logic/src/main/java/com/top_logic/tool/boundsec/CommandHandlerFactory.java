@@ -405,6 +405,11 @@ public final class CommandHandlerFactory extends ManagedClass {
 	public static final String CANCEL_CLIQUE = "cancel";
 
 	/**
+	 * Well-known {@link Config#getCliques() clique} for apply-like commands.
+	 */
+	public static final String APPLY_CLIQUE = "apply";
+
+	/**
 	 * Well-known {@link Config#getCliques() clique} for save-like commands.
 	 */
 	public static final String SAVE_CLIQUE = "save";

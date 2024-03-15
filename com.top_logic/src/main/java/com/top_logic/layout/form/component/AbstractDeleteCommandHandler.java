@@ -25,7 +25,6 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -66,7 +65,7 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
-		@BooleanDefault(BoundCommand.NEEDS_CONFIRM)
+		@BooleanDefault(true)
 		boolean getConfirm();
 
 		@Override
@@ -83,8 +82,6 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 
     /** 
      * Create a Command with {@link SimpleBoundCommandGroup#DELETE} 
-     * 
-     * This will imply {@link BoundCommand#NEEDS_CONFIRM}
      */
     public AbstractDeleteCommandHandler(InstantiationContext context, Config config) {
 		super(context, config);

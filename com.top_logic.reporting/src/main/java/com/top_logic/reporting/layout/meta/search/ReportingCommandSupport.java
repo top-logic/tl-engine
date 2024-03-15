@@ -13,6 +13,7 @@ import javax.xml.stream.XMLStreamException;
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.expression.SaveExpressionCommand;
@@ -179,11 +180,20 @@ public class ReportingCommandSupport implements ReportConstants{
     	
     	public static final String COMMAND_ID = "resetStoredReport";
     	
-    	
+		/**
+		 * Configuration options for
+		 * {@link ReportingCommandSupport.ResetStoredReportCommandHandler}.
+		 */
+		public interface Config extends AJAXCommandHandler.Config {
+
+			@Override
+			@BooleanDefault(true)
+			boolean getConfirm();
+
+		}
     	
 		public ResetStoredReportCommandHandler(InstantiationContext context, Config config) {
 	        super(context, config);
-	        this.confirm = true;
         }
 
 		@Override

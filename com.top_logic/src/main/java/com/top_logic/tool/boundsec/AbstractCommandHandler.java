@@ -98,7 +98,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	private String _clique;
 
     /** Flag, if this command needs special confirmation by user. */
-    protected boolean confirm;
+    private boolean confirm;
 
     private String commandID;
 
@@ -234,13 +234,18 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		return _clique;
 	}
 
-    @Override
-	public boolean needsConfirm() {
+	/**
+	 * Whether the configured or default confirmation message is shown.
+	 */
+	protected boolean needsConfirm() {
         return this.confirm;
     }
     
     @Override
     public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments) {
+		if (!needsConfirm()) {
+			return null;
+		}
     	Object targetModel = arguments == null ? null : CommandHandlerUtil.getTargetModel(this, component, arguments);
     	
     	ResKey customKey = getConfig().getConfirmMessage();

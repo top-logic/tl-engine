@@ -288,7 +288,7 @@ public interface CommandHandler
 	/**
 	 * Configuration options for the confirm message of a command.
 	 */
-	public interface ConfirmConfig extends TargetConfig {
+	public interface ConfirmConfig extends ConfigurationItem {
 
 		/**
 		 * @see #getConfirm()
@@ -302,8 +302,6 @@ public interface CommandHandler
 
 		/**
 		 * Whether the user is asked for confirmation before the command is actually executed.
-		 * 
-		 * @see CommandHandler#needsConfirm()
 		 */
 		@Name(CONFIRM_PROPERTY)
 		boolean getConfirm();
@@ -313,8 +311,8 @@ public interface CommandHandler
 		 * really be executed.
 		 * 
 		 * <p>
-		 * The message can refer to the {@link #getTarget() target model} of the command using the
-		 * <code>{0}</code> placeholder.
+		 * The message can refer to the {@link TargetConfig#getTarget() target model} of the command
+		 * using the <code>{0}</code> placeholder.
 		 * </p>
 		 * 
 		 * <p>
@@ -458,7 +456,8 @@ public interface CommandHandler
 		Config.CONFIRM_PROPERTY,
 		Config.CONFIRM_MESSAGE
 	})
-	public interface Config extends ConfigBase<CommandHandler>, ExecutabilityConfig, ConfirmConfig, CommandDefaults {
+	public interface Config
+			extends ConfigBase<CommandHandler>, ExecutabilityConfig, TargetConfig, ConfirmConfig, CommandDefaults {
 
 		/**
 		 * @see #getId()
@@ -689,13 +688,6 @@ public interface CommandHandler
 	 */
 	public static final Map<String, Object> NO_ARGS = Collections.emptyMap();
 
-	/**
-	 * Value to enable {@link Config#getConfirm()}
-	 *
-	 * @see #needsConfirm()
-	 */
-	public static final boolean NEEDS_CONFIRM = true;
-
    /**
     * Return the command name of this handler.
     * 
@@ -720,18 +712,12 @@ public BoundCommandGroup getCommandGroup();
 	 */
 	String getClique();
 
-   	/**
-	 * Whether the user is asked for confirmation before the command is executed.
-	 */
-	@Override
-	public boolean needsConfirm();
-
 	/**
 	 * The message displayed to the user requesting for confirmation that the command should really
 	 * be executed.
 	 * 
 	 * <p>
-	 * The confirmation happens only, if {@link #needsConfirm()} returns <code>true</code>.
+	 * The confirmation happens only, if the result is not <code>null</code>.
 	 * </p>
 	 *
 	 * @param component
@@ -739,7 +725,8 @@ public BoundCommandGroup getCommandGroup();
 	 * @param arguments
 	 *        The command arguments, see
 	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
-	 * @return The internationalized text to display in the confirmation dialog.
+	 * @return The internationalized text to display in the confirmation dialog, or
+	 *         <code>null</code> to prevent a confirmation dialog from being displayed.
 	 */
 	public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments);
 

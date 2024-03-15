@@ -5,11 +5,8 @@
  */
 package com.top_logic.service.openapi.server.parameter;
 
-import static com.top_logic.basic.shared.string.StringServicesShared.*;
-
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -20,16 +17,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.mail.internet.ContentDisposition;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.Part;
+
+import org.apache.commons.fileupload2.core.MultipartInput;
+import org.apache.commons.fileupload2.core.MultipartInput.MalformedStreamException;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -89,6 +90,8 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	private static final String CONTENT_DISPOSITION_HEADER = "Content-Disposition";
 
 	private static final String FORM_DATA_DISPOSITION = "form-data";
+
+	private static final Pattern HEADER = Pattern.compile("([^:]*):\\s*(.*)\\R?");
 
 	/**
 	 * Configuration options for {@link MultiPartBodyParameter}.
@@ -254,7 +257,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 				}
 			}
 			throw new UnreachableAssertion("Uncovered case: " + getConfig().getTransferType());
-		} catch (IOException | ServletException ex) {
+		} catch (IOException ex) {
 			throw new InvalidValueException("Unable to read content from stream.", ex);
 		}
 		
@@ -338,20 +341,37 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		}
 	}
 
-	private Map<?, ?> parseMultiPartFormData(HttpServletRequest req)
-			throws IOException, InvalidValueException, ServletException {
+	private Map<?, ?> parseMultiPartFormData(HttpServletRequest req) throws IOException, InvalidValueException {
 		String characterEncoding = req.getCharacterEncoding();
 		Map<String, Object> values = new HashMap<>();
-		for (Part part : req.getParts()) {
-			addValue(values, part, characterEncoding);
+		try {
+			MultipartInput multipartStream = parseMultipartBody(req, characterEncoding);
+			boolean nextPart = multipartStream.skipPreamble();
+			while (nextPart) {
+				addValue(values, multipartStream, characterEncoding);
+				nextPart = multipartStream.readBoundary();
+			}
+		} catch (RuntimeException | InvalidValueException e) {
+			throw e;
 		}
 		return values;
 	}
 
-	private void addValue(Map<String, Object> values, Part part, String defaultEncoding)
+	private void addValue(Map<String, Object> values, MultipartInput stream, String defaultEncoding)
 			throws IOException, InvalidValueException {
-		String sContentDisposition = part.getHeader(CONTENT_DISPOSITION_HEADER);
-		if (isEmpty(sContentDisposition)) {
+		String sContentDisposition = StringServices.EMPTY_STRING;
+		String contentType = StringServices.EMPTY_STRING;
+		String headers = stream.readHeaders();
+		Matcher headerMatcher = HEADER.matcher(headers);
+		while (headerMatcher.find()) {
+			String headerName = headerMatcher.group(1);
+			if (headerName.equalsIgnoreCase(CONTENT_DISPOSITION_HEADER)) {
+				sContentDisposition = headerMatcher.group(2);
+			} else if (headerName.equalsIgnoreCase(CONTENT_TYPE_HEADER)) {
+				contentType = headerMatcher.group(2);
+			}
+		}
+		if (sContentDisposition.isEmpty()) {
 			throw new InvalidValueException(
 				"Missing header '" + CONTENT_DISPOSITION_HEADER + "' for multi-part request.");
 		}
@@ -371,13 +391,12 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 			throw new InvalidValueException("Missing parameter '" + CONTENT_DISPOSITION_NAME_PARAM
 					+ "' in content disposition header:  " + sContentDisposition);
 		}
-		String contentType = part.getHeader(CONTENT_TYPE_HEADER);
 		ParameterConfiguration bodyPartDefinition = parts().get(fieldName);
 		if (bodyPartDefinition == null) {
 			// Unspecified content.
 			Object value;
-			if (isEmpty(contentType)) {
-				value = readBinary(part.getInputStream(), fileName(contentDisposition), BinaryData.CONTENT_TYPE_OCTET_STREAM);
+			if (contentType.isEmpty()) {
+				value = readBinary(stream, fileName(contentDisposition), BinaryData.CONTENT_TYPE_OCTET_STREAM);
 			} else {
 				MimeType mimeType = parseMimeType(contentType);
 				String charSet = mimeType.getParameter("charset");
@@ -385,35 +404,35 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 					charSet = defaultEncoding;
 				}
 				if (MIME_TYPE_ANY_TEXT.match(mimeType)) {
-					value = readString(part.getInputStream(), charSet);
+					value = readString(stream, charSet);
 				} else if (MIME_TYPE_JSON.match(mimeType)) {
-					String stringValue = readString(part.getInputStream(), charSet);
+					String stringValue = readString(stream, charSet);
 					try {
 						value = JSON.fromString(stringValue);
 					} catch (com.top_logic.basic.json.JSON.ParseException ex) {
 						throw new InvalidValueException("Invalid JSON value: " + stringValue, ex);
 					}
 				} else {
-					value = readBinary(part.getInputStream(), fileName(contentDisposition), mimeType.getBaseType());
+					value = readBinary(stream, fileName(contentDisposition), mimeType.getBaseType());
 				}
 			}
 			addValue(values, fieldName, value, false);
 		} else {
 			Object value;
 			if (bodyPartDefinition.getFormat() == ParameterFormat.BINARY) {
-				if (isEmpty(contentType)) {
-					value = readBinary(part.getInputStream(), fileName(contentDisposition), BinaryData.CONTENT_TYPE_OCTET_STREAM);
+				if (contentType.isEmpty()) {
+					value = readBinary(stream, fileName(contentDisposition), BinaryData.CONTENT_TYPE_OCTET_STREAM);
 				} else {
 					MimeType mimeType = parseMimeType(contentType);
 					String charSet = mimeType.getParameter("charset");
 					if (charSet == null) {
 						charSet = defaultEncoding;
 					}
-					value = readBinary(part.getInputStream(), fileName(contentDisposition), mimeType.getBaseType());
+					value = readBinary(stream, fileName(contentDisposition), mimeType.getBaseType());
 				}
 			} else {
 				String charSet;
-				if (isEmpty(contentType)) {
+				if (contentType.isEmpty()) {
 					charSet = defaultEncoding;
 				} else {
 					MimeType mimeType = parseMimeType(contentType);
@@ -424,7 +443,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 				}
 				/* ParameterFormat#BINARY is handled above. */
 				ParameterFormat format = bodyPartDefinition.getFormat();
-				value = parse(readString(part.getInputStream(), charSet), format, bodyPartDefinition.getName());
+				value = parse(readString(stream, charSet), format, bodyPartDefinition.getName());
 			}
 			addValue(values, fieldName, value, bodyPartDefinition.isMultiple());
 		}
@@ -450,9 +469,10 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		return contentDisposition.getParameter(CONTENT_DISPOSITION_FILENAME_PARAM);
 	}
 
-	private String readString(InputStream inputStream, String charSet) throws IOException, UnsupportedEncodingException {
+	private String readString(MultipartInput stream, String charSet)
+			throws MalformedStreamException, IOException, UnsupportedEncodingException {
 		ByteArrayStream out = new ByteArrayStream();
-		inputStream.transferTo(out);
+		stream.readBodyData(out);
 		String value;
 		if (charSet == null) {
 			value = new String(out.getOrginalByteBuffer(), 0, out.size());
@@ -462,16 +482,26 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		return value;
 	}
 
-	private ByteArrayStream readBinary(InputStream inputStream, String name, String contentType)
-			throws IOException {
+	private ByteArrayStream readBinary(MultipartInput stream, String name, String contentType)
+			throws MalformedStreamException, IOException {
 		ByteArrayStream content;
 		if (name == null) {
 			content = new ByteArrayStream();
 		} else {
 			content = new InMemoryBinaryData(contentType, name);
 		}
-		inputStream.transferTo(content);
+		stream.readBodyData(content);
 		return content;
+	}
+
+	private MultipartInput parseMultipartBody(HttpServletRequest req, String characterEncoding)
+			throws IOException, InvalidValueException {
+		String contentType = req.getContentType();
+		MimeType mimeType = parseMimeType(contentType);
+		return new MultipartInput.Builder()
+			.setInputStream(req.getInputStream())
+			.setBoundary(getBoundary(mimeType, characterEncoding))
+			.get();
 	}
 
 	private MimeType parseMimeType(String contentType) throws InvalidValueException {
@@ -482,6 +512,21 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 			throw new InvalidValueException("Invalid mime type: " + contentType, ex);
 		}
 		return mimeType;
+	}
+
+	private byte[] getBoundary(MimeType mimeType, String characterEncoding)
+			throws UnsupportedEncodingException, InvalidValueException {
+		String boundaryParam = mimeType.getParameter("boundary");
+		if (boundaryParam == null) {
+			throw new InvalidValueException("Missing boundary in mime type: " + mimeType);
+		}
+		byte[] boundary;
+		if (characterEncoding != null) {
+			boundary = boundaryParam.getBytes(characterEncoding);
+		} else {
+			boundary = boundaryParam.getBytes();
+		}
+		return boundary;
 	}
 
 	/**

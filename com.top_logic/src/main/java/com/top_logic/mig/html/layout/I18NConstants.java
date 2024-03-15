@@ -74,7 +74,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 READ_CONTENT_ERROR;
 
 	/**
-	 * Message to ask whether the created form should be stored for the model.
+	 * @en Would you like to set the form as the standard form of this type?
+	 * 
+	 *     <p>
+	 *     Note: The standard form for a type is stored as annotation at the type, not within the
+	 *     displaying component. Updating the standard form of a type updates all forms displaying
+	 *     that type that does not define a specialized form.
+	 *     </p>
 	 */
 	public static ResKey STORE_FOR_MODEL;
 

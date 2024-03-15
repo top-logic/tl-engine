@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.activation.FileTypeMap;
+import jakarta.activation.FileTypeMap;
 
 import com.top_logic.basic.io.binary.BinaryData;
 
@@ -40,7 +40,7 @@ public class HashedFileTypeMap extends FileTypeMap {
 	}
 
 	/**
-	 * @see javax.activation.FileTypeMap#getContentType(File)
+	 * @see jakarta.activation.FileTypeMap#getContentType(File)
 	 */
 	@Override
 	public String getContentType(File aFile) {

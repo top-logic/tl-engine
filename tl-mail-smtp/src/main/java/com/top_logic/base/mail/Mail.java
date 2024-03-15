@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.activation.FileDataSource;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.activation.FileDataSource;
 import jakarta.mail.Address;
 import jakarta.mail.BodyPart;
 import jakarta.mail.MessagingException;

@@ -16,8 +16,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Stack;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
 import jakarta.mail.BodyPart;
 import jakarta.mail.Flags.Flag;
 import jakarta.mail.Folder;

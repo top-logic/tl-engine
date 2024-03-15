@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.activation.FileTypeMap;
+import jakarta.activation.FileTypeMap;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 

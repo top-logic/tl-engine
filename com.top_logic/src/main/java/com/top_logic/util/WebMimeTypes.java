@@ -5,7 +5,7 @@
  */
 package com.top_logic.util;
 
-import javax.activation.FileTypeMap;
+import jakarta.activation.FileTypeMap;
 import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.Logger;

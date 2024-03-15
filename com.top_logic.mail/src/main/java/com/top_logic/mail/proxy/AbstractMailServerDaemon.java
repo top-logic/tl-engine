@@ -539,9 +539,9 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		if (!folder.isOpen()) {
 			return true;
 		}
-		/* Check that store is still connected. com.sun.mail.imap.IMAPStore uses this method to
-		 * verify that the server does not have terminated the connection. After call of this method
-		 * and the result is false, the folder is not longer usable. */
+		/* Check that store is still connected. IMAPStore uses this method to verify that the server
+		 * does not have terminated the connection. After call of this method and the result is
+		 * false, the folder is not longer usable. */
 		Store store = folder.getStore();
 		if (!store.isConnected()) {
 			return true;

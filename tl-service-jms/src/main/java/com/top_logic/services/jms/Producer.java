@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;

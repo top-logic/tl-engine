@@ -44,17 +44,16 @@
 		<scope>runtime</scope>
 	</dependency>
 	
-	<!-- Replacement for excluded dependency of com.sun.mail:jakarta.mail -->
 	<!-- API only, implementation, see below.-->
 	<dependency>
-		<groupId>javax.activation</groupId>
-		<artifactId>javax.activation-api</artifactId>
+		<groupId>jakarta.activation</groupId>
+		<artifactId>jakarta.activation-api</artifactId>
 	</dependency>
 	
 	<!-- The actual activation implementation, in case the container does not provide one. -->
 	<dependency>
-	    <groupId>com.sun.activation</groupId>
-	    <artifactId>javax.activation</artifactId>
+		<groupId>org.eclipse.angus</groupId>
+		<artifactId>angus-activation</artifactId>
 		<scope>runtime</scope>
 	</dependency>
     

@@ -11,8 +11,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.List;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;

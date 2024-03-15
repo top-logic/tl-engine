@@ -14,7 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.activation.DataSource;
+import jakarta.activation.DataSource;
 import jakarta.mail.Address;
 import jakarta.mail.internet.InternetAddress;
 

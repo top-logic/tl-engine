@@ -1,0 +1,57 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$objects.preload(
+    attributes: [...], 
+    fun: list -&gt; ...
+)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Loads the specified attributes of a given set of objects from the database with an optimized bulk load and keeps the values in the cache until the given function has been evaluated.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>objects</td>
+			<td>Set of objects</td>
+			<td>The objects whose attributes are to be loaded.</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>attributes</td>
+			<td>Set of attributes and references</td>
+			<td>Attributes that are to be loaded on all given objects.</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>fun</td>
+			<td>Function</td>
+			<td>Function that is evaluated on the input set after the load operation.</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p>The value calculated by the given function is returned.</p>
+
+<h2>Explanation</h2>
+
+<p>If the value of an object is queried during a function evaluation, it is possible that the corresponding value has not yet been loaded from the database. In this case, the value is loaded on access. If an operation is executed on many objects, this can lead to a large number of database accesses, which slow down the evaluation. The preload operation can be used to ensure that the load operation is optimized on a large number of objects in advance so that the function evaluation can then take place quickly on the temporarily stored values.</p>

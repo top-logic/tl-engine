@@ -10,22 +10,29 @@ import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.ArithmeticExpr;
+import com.top_logic.model.search.expr.Call;
 import com.top_logic.model.search.expr.Compare;
 import com.top_logic.model.search.expr.CompareOp;
+import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.GetDay;
 import com.top_logic.model.search.expr.IfElse;
 import com.top_logic.model.search.expr.IsEmpty;
 import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Lambda;
 import com.top_logic.model.search.expr.Length;
 import com.top_logic.model.search.expr.ListExpr;
 import com.top_logic.model.search.expr.Literal;
@@ -37,6 +44,7 @@ import com.top_logic.model.search.expr.SingleElement;
 import com.top_logic.model.search.expr.Singleton;
 import com.top_logic.model.search.expr.Size;
 import com.top_logic.model.search.expr.Union;
+import com.top_logic.model.search.expr.Var;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
@@ -60,17 +68,16 @@ public class ConstantFolding {
 	 * @return The transformed expression.
 	 */
 	public static SearchExpression transform(SearchExpression expr) {
-		return expr.visit(Fold.INSTANCE, null);
+		return expr.visit(new Fold(), null);
 	}
 
 	private static class Fold extends Rewriter<Void> {
 
-		/**
-		 * Singleton {@link ConstantFolding.Fold} instance.
-		 */
-		public static final Fold INSTANCE = new Fold();
+		private final Map<NamedConstant, Object> _bindings = new HashMap<>();
 
-		private Fold() {
+		private final List<SearchExpression> _stack = new ArrayList<>();
+
+		Fold() {
 			// Singleton constructor.
 		}
 
@@ -278,8 +285,8 @@ public class ConstantFolding {
 		protected SearchExpression composeIfElse(IfElse expr, Void arg, SearchExpression conditionResult,
 				SearchExpression ifResult, SearchExpression elseResult) {
 			if (isLiteral(conditionResult)) {
-				Boolean decision = literalBoolean(conditionResult);
-				if (decision != null && decision.booleanValue()) {
+				boolean decision = literalBoolean(conditionResult);
+				if (decision) {
 					return expr.getIfClause();
 				} else {
 					return expr.getElseClause();
@@ -327,6 +334,17 @@ public class ConstantFolding {
 			if (!expr.isSideEffectFree()) {
 				return super.composeGenericMethod(expr, arg, argumentsResult);
 			}
+
+			// Make get access static.
+			if (expr instanceof DynamicGet) {
+				SearchExpression property = argumentsResult.get(1);
+				if (isLiteral(property)) {
+					return access(argumentsResult.get(0), (TLStructuredTypePart) literalValue(property));
+				} else {
+					return super.composeGenericMethod(expr, arg, argumentsResult);
+				}
+			}
+
 			for (SearchExpression argExpr : argumentsResult) {
 				if (!isLiteral(argExpr)) {
 					return super.composeGenericMethod(expr, arg, argumentsResult);
@@ -346,26 +364,104 @@ public class ConstantFolding {
 			}
 		}
 
-		private static boolean isLiteral(SearchExpression result) {
-			return result instanceof Literal;
+		@Override
+		public SearchExpression visitCall(Call expr, Void arg) {
+			SearchExpression argument = descendPart(expr, arg, expr.getArgument());
+			push(argument);
+			SearchExpression function = descendPart(expr, arg, expr.getFunction());
+			SearchExpression top = pop();
+
+			if (top == null) {
+				return function;
+			} else {
+				// Keep function call.
+				return composeCall(expr, arg, function, top);
+			}
 		}
 
-		private static boolean literalBoolean(SearchExpression leftResult) {
-			return SearchExpression.isTrue(literalValue(leftResult));
+		private SearchExpression pop() {
+			return _stack.remove(_stack.size() - 1);
 		}
 
-		private boolean isEmptyCollection(SearchExpression baseResult) {
-			return literalCollection(baseResult).isEmpty();
+		@Override
+		public SearchExpression visitLambda(Lambda expr, Void arg) {
+			if (_stack.isEmpty()) {
+				// The result is a function value.
+				return super.visitLambda(expr, arg);
+			}
+
+			SearchExpression top = pop();
+
+			SearchExpression result;
+			if (isLiteral(top)) {
+				NamedConstant key = expr.getKey();
+
+				_bindings.put(key, literalValue(top));
+				super.visitLambda(expr, arg);
+				_bindings.remove(key);
+
+				// Remove call.
+				result = expr.getBody();
+				push(null);
+			} else {
+				// Keep call.
+				result = super.visitLambda(expr, arg);
+
+				push(top);
+			}
+			return result;
 		}
 
-		private static Collection<?> literalCollection(SearchExpression leftResult) {
-			return SearchExpression.asCollection(literalValue(leftResult));
+		private void push(SearchExpression top) {
+			_stack.add(top);
 		}
 
-		private static Object literalValue(SearchExpression leftResult) {
-			return ((Literal) leftResult).getValue();
-		}
+		@Override
+		protected SearchExpression composeVar(Var expr, Void arg) {
+			NamedConstant key = expr.getKey();
 
+			Object value = _bindings.get(key);
+			if (value != null || _bindings.containsKey(key)) {
+				return literal(value);
+			}
+
+			return super.composeVar(expr, arg);
+		}
 	}
 
+	/**
+	 * Whether the given {@link SearchExpression} represents a literal value.
+	 */
+	public static boolean isLiteral(SearchExpression result) {
+		return result instanceof Literal;
+	}
+
+	/**
+	 * The literal value represented by the given {@link SearchExpression} converted to boolean.
+	 */
+	public static boolean literalBoolean(SearchExpression leftResult) {
+		return SearchExpression.isTrue(literalValue(leftResult));
+	}
+
+	/**
+	 * Whether the literal value represented by the given {@link SearchExpression} can be
+	 * interpreted as empty collection.
+	 */
+	public static boolean isEmptyCollection(SearchExpression baseResult) {
+		return literalCollection(baseResult).isEmpty();
+	}
+
+	/**
+	 * The literal value represented by the given {@link SearchExpression} as collection.
+	 */
+	public static Collection<?> literalCollection(SearchExpression leftResult) {
+		return SearchExpression.asCollection(literalValue(leftResult));
+	}
+
+	/**
+	 * The literal value represented by the given {@link SearchExpression}.
+	 */
+	public static Object literalValue(SearchExpression leftResult) {
+		return ((Literal) leftResult).getValue();
+	}
 }

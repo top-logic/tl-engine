@@ -184,7 +184,7 @@ public class ReportingCommandSupport implements ReportConstants{
 		 * Configuration options for
 		 * {@link ReportingCommandSupport.ResetStoredReportCommandHandler}.
 		 */
-		public interface Configextends extends AJAXCommandHandler.Config {
+		public interface Config extends AJAXCommandHandler.Config {
 
 			@Override
 			@BooleanDefault(true)

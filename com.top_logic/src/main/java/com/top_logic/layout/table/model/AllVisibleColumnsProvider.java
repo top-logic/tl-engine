@@ -6,16 +6,16 @@
 package com.top_logic.layout.table.model;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
@@ -31,6 +31,7 @@ import com.top_logic.layout.table.provider.ColumnOptionMapping;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @InApp
+@Label("Available columns")
 public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 		implements ConfiguredInstance<AllVisibleColumnsProvider.Config<?>> {
 
@@ -58,14 +59,14 @@ public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 		 */
 		@Options(fun = AllColumnsForConfiguredTypes.class, mapping = ColumnOptionMapping.class)
 		@OptionLabels(ColumnOptionLabelProvider.class)
-		@Format(CommaSeparatedStrings.class)
+		@Format(CommaSeparatedStringSet.class)
 		@Name(COLUMNS)
-		List<String> getColumns();
+		Set<String> getColumns();
 
 		/**
 		 * Setter for {@link #getColumns()}.
 		 */
-		void setColumns(List<String> columns);
+		void setColumns(Set<String> columns);
 
 		/**
 		 * Whether the selected {@link #getColumns()} must be excluded from the selectable columns.

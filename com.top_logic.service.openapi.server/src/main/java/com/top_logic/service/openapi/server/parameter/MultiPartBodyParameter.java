@@ -20,8 +20,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 import jakarta.mail.internet.ContentDisposition;
 
 import jakarta.servlet.http.HttpServletRequest;

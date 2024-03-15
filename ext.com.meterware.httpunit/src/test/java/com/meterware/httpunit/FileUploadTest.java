@@ -27,7 +27,7 @@ import java.io.*;
 import java.util.StringTokenizer;
 import java.net.URLEncoder;
 
-import javax.activation.DataSource;
+import jakarta.activation.DataSource;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeBodyPart;

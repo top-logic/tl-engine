@@ -7,7 +7,7 @@ package test.com.top_logic.layout.scripting.runtime;
 
 import java.io.IOException;
 
-import javax.activation.FileTypeMap;
+import jakarta.activation.FileTypeMap;
 import jakarta.servlet.ServletContext;
 import javax.xml.parsers.ParserConfigurationException;
 

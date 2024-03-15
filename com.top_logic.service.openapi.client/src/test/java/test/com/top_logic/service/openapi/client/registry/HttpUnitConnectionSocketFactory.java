@@ -26,8 +26,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 import jakarta.servlet.ServletException;
 
 import org.apache.hc.client5.http.socket.ConnectionSocketFactory;

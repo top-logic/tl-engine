@@ -118,7 +118,7 @@ public class TestDataAccessProxyDataSource extends TestCase {
 
 		DataAccessProxyDataSource dapds = new DataAccessProxyDataSource(entry);
 		String expectedForUnknown = "application/octet-stream";
-		assertEquals("javax.activation.DataSource.getContentType() suggested '" + expectedForUnknown
+		assertEquals("jakarta.activation.DataSource.getContentType() suggested '" + expectedForUnknown
 				+ "' for unknown content types.", expectedForUnknown, dapds.getContentType());
 
 	}

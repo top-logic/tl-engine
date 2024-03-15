@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.diff.CollectionDiff;
 import com.top_logic.basic.col.diff.SetDiff;
@@ -63,6 +64,7 @@ import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypeVisitor;
@@ -517,6 +519,7 @@ public class CreateModelPatch {
 			delete(left);
 
 			createStructuredTypePart(right, rightSuccessor);
+			reCreateInverseReference(left, right);
 			return;
 		}
 
@@ -528,6 +531,7 @@ public class CreateModelPatch {
 			delete(left);
 
 			createStructuredTypePart(right, before);
+			reCreateInverseReference(left, right);
 			return;
 		}
 
@@ -541,6 +545,55 @@ public class CreateModelPatch {
 		addDiff(move);
 	}
 
+	/**
+	 * When a {@link TLReference} is deleted, and there is a back reference for it, the back
+	 * reference is automatically deleted. Therefore it must be ensured that it is also recreated.
+	 */
+	private void reCreateInverseReference(TLStructuredTypePart left, TLStructuredTypePart right) {
+		if (!isReference(left)) {
+			// No reference => no back reference.
+			return;
+		}
+		TLReference referenceToDelete = (TLReference) left;
+		boolean isForwardsReference = TLModelUtil.isForwardReference(referenceToDelete);
+		if (!isForwardsReference) {
+			// Back reference => ignore.
+			return;
+		}
+		TLReference inverse = TLModelUtil.getForeignName(referenceToDelete);
+		if (inverse == null) {
+			// No inverse reference defined.
+			return;
+		}
+		TLType newInverseOwner = right.getType();
+		if (newInverseOwner.getModelKind() != ModelKind.CLASS) {
+			// New target type is not a structured type. No inverse reference can be created.
+			return;
+		}
+		TLStructuredTypePart before;
+		if (TLModelUtil.qualifiedName(newInverseOwner).equals(TLModelUtil.qualifiedName(left.getType()))) {
+			// Try to find the correct place the list of children
+			List<? extends TLStructuredTypePart> localParts = inverse.getOwner().getLocalParts();
+			int inverseIndex = localParts.indexOf(inverse);
+			if (inverseIndex < 0) {
+				Logger.warn(
+					"Inverse reference '" + inverse + "' is not part of its owner '" + inverse.getOwner() + "'.",
+					CreateModelPatch.class);
+				return;
+			}
+			if (inverseIndex < localParts.size() - 1) {
+				before = localParts.get(inverseIndex + 1);
+			} else {
+				// last child
+				before = null;
+			}
+		} else {
+			// inverse reference must be moved to new type. No reference can be determined.
+			before = null;
+		}
+
+		createStructuredTypePart(inverse, (TLStructuredType) newInverseOwner, before);
+	}
 	private void addPartChanges(TLStructuredTypePart left, TLStructuredTypePart right) {
 		processAnnotationChanges(left, right);
 
@@ -557,11 +610,19 @@ public class CreateModelPatch {
 	private boolean isCompatiblePart(TLStructuredTypePart left, TLStructuredTypePart right) {
 		return ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(storageConfig(left), storageConfig(right)) &&
 			isCompatibleValueType(left.getType(), right.getType()) &&
-			(left.getModelKind() != ModelKind.PROPERTY
+				(!isProperty(left)
 				|| isCompatibleProperty((TLProperty) left, (TLProperty) right))
 			&&
-			(left.getModelKind() != ModelKind.REFERENCE
+				(!isReference(left)
 				|| isCompatibleReference((TLReference) left, (TLReference) right));
+	}
+
+	private boolean isProperty(TLStructuredTypePart part) {
+		return part.getModelKind() == ModelKind.PROPERTY;
+	}
+
+	private boolean isReference(TLStructuredTypePart part) {
+		return part.getModelKind() == ModelKind.REFERENCE;
 	}
 
 	private boolean isCompatibleValueType(TLType left, TLType right) {
@@ -682,8 +743,13 @@ public class CreateModelPatch {
 	}
 
 	final void createStructuredTypePart(TLStructuredTypePart model, TLStructuredTypePart before) {
+		createStructuredTypePart(model, model.getOwner(), before);
+	}
+
+	private void createStructuredTypePart(TLStructuredTypePart model, TLStructuredType newOwner,
+			TLStructuredTypePart before) {
 		CreateStructuredTypePart result = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
-		result.setType(TLModelUtil.qualifiedName(model.getOwner()));
+		result.setType(TLModelUtil.qualifiedName(newOwner));
 		result.setPart((PartConfig) model.visit(_configExtractor, null));
 		if (before != null) {
 			result.setBefore(before.getName());

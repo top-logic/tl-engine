@@ -754,23 +754,6 @@
 						/>
 					</selection-model-name>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Modell Editor > Instanzen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
-					command-label="Löschen..."
-					command-name="deleteInstance"
-					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
 					user-id="root"

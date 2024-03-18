@@ -816,6 +816,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#WEIGHT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getWeightDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.WEIGHT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#XML_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getXmlDemoTypesAAttr() {

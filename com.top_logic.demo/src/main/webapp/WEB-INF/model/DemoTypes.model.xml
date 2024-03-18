@@ -883,6 +883,25 @@
 						</format>
 					</annotations>
 				</property>
+				<property name="weight"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<format>
+							<normalizing-format>
+								<format class="com.top_logic.basic.format.DecimalFormatDefinition"
+									normalize="true"
+									pattern="#,###,##0 g"
+									result-type="long"
+								/>
+								<parser class="com.top_logic.basic.format.NumberFormatDefinition"
+									result-type="long"
+									style="integer"
+								/>
+							</normalizing-format>
+						</format>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="A">

@@ -918,6 +918,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String WEB_FOLDER_ATTR = "webFolder";
 
 	/**
+	 * Part <code>weight</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String WEIGHT_ATTR = "weight";
+
+	/**
 	 * Part <code>xml</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -2781,6 +2790,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void setWebFolder(com.top_logic.knowledge.wrap.WebFolder newValue) {
 		tUpdateByName(WEB_FOLDER_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #WEIGHT_ATTR}.
+	 */
+	default Integer getWeight() {
+		return (Integer) tValueByName(WEIGHT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #WEIGHT_ATTR}.
+	 */
+	default void setWeight(Integer newValue) {
+		tUpdateByName(WEIGHT_ATTR, newValue);
 	}
 
 	/**

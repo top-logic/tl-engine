@@ -13,6 +13,7 @@ import java.util.TimeZone;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.time.TimeZones;
@@ -24,6 +25,7 @@ import com.top_logic.basic.time.TimeZones;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Date format")
 public class SimpleDateFormatDefinition extends PatternBasedFormatDefinition<SimpleDateFormatDefinition.Config> {
 
 	/**

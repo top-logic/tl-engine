@@ -23,8 +23,6 @@ import java.util.TimeZone;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.MapUtil;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.format.FormatConfig;
 import com.top_logic.basic.format.FormatDefinition;
 import com.top_logic.basic.time.CalendarUtil;
@@ -35,19 +33,6 @@ import com.top_logic.basic.time.CalendarUtil;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class Formatter {
-
-	/**
-	 * Configuration options for {@link Formatter}.
-	 */
-	public interface Config extends FormatConfig {
-
-		/**
-		 * {@link FormatDefinition}s indexed by their IDs.
-		 */
-		@Key(FormatDefinition.Config.ID_NAME)
-		Map<String, PolymorphicConfiguration<? extends FormatDefinition<?>>> getFormats();
-
-	}
 
 	/**
 	 * Default format ID for {@link #formatNumber(Number)}.

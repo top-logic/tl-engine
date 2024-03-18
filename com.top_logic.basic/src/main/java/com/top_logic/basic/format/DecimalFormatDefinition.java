@@ -15,6 +15,7 @@ import java.util.TimeZone;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
@@ -26,6 +27,7 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Decimal format")
 public class DecimalFormatDefinition<C extends DecimalFormatDefinition.Config<?>>
 		extends PatternBasedFormatDefinition<C> {
 
@@ -93,13 +95,20 @@ public class DecimalFormatDefinition<C extends DecimalFormatDefinition.Config<?>
 
 	@Override
 	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
-		DecimalFormat displayFormat = new DecimalFormat(getPattern(), DecimalFormatSymbols.getInstance(locale));
-		NumberFormat format = displayFormat;
-		format.setRoundingMode(_roundingMode == null ? globalConfig.getRoundingMode() : _roundingMode);
+		NumberFormat format = createDisplayFormat(globalConfig, locale);
 		if (_normalize) {
 			format = NormalizingFormat.newInstance(format);
 		}
 		return _resultType.adapt(format);
+	}
+
+	/**
+	 * Creates the (non-normalizing) base format.
+	 */
+	protected DecimalFormat createDisplayFormat(FormatConfig globalConfig, Locale locale) {
+		DecimalFormat displayFormat = new DecimalFormat(getPattern(), DecimalFormatSymbols.getInstance(locale));
+		displayFormat.setRoundingMode(_roundingMode == null ? globalConfig.getRoundingMode() : _roundingMode);
+		return displayFormat;
 	}
 
 }

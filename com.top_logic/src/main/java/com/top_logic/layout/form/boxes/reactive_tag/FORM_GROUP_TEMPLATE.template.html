@@ -6,14 +6,14 @@
 >
 	<tl:if test="hasLegend || collapsible || hasMenu">
 		<div class="rf_header">
-			<tl:if test="collapsible">
-				<span class="frmGroupExpand">{toggleButton}</span>
-			</tl:if>
 			<tl:if test="hasLegend">
 				{title}
 			</tl:if>
 			<tl:if test="hasMenu">
 				<span class="rf_menu">{menuButton}</span>
+			</tl:if>
+			<tl:if test="collapsible">
+				<span class="frmGroupExpand">{toggleButton}</span>
 			</tl:if>
 		</div>
 	</tl:if>

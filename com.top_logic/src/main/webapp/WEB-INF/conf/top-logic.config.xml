@@ -194,6 +194,7 @@
 		            <provider kind="CODE" type="java.lang.Enum" implementation="com.top_logic.layout.provider.EnumLabelProvider" />
 		            <provider kind="CODE" type="java.lang.Class" implementation="com.top_logic.layout.provider.label.ClassLabelProvider" />
 		            <provider kind="CODE" type="java.util.TimeZone" implementation="com.top_logic.layout.provider.label.TimeZoneLabelProvider" />
+		            <provider kind="CODE" type="java.util.Currency" implementation="com.top_logic.layout.currency.CurrencyLabels" />
 		            <provider kind="CODE" type="java.util.Collection" implementation="com.top_logic.layout.provider.CollectionLabelProvider" />
 
 		            <provider kind="CODE" type="com.top_logic.basic.TLID" implementation="com.top_logic.layout.provider.label.TLIDLabelProvider" />
@@ -276,6 +277,51 @@
 			</instance>
 		</config>
 		
+   		<config service-class="com.top_logic.basic.format.configured.FormatterService">
+			<instance>
+				<formats>
+					<format id="euro">
+						<label key="dynamic.25dd72bd-8b33-4211-9b0d-a39a6fe25b28">
+							<en>Currency (€)</en>
+							<de>Währung (€)</de>
+						</label>
+						<normalizing-format>
+							<format class="com.top_logic.layout.currency.CurrencyFormatDefinition"
+								currency="EUR"
+								normalize="true"
+								pattern="###,###,###,###,##0.00 ¤"
+								result-type="double"
+							/>
+							<parser class="com.top_logic.basic.format.DecimalFormatDefinition"
+								normalize="true"
+								pattern="0.00"
+								result-type="double"
+							/>
+						</normalizing-format>
+					</format>
+					<format id="dollar">
+						<label key="dynamic.ac9e9d7f-bcfe-4fbe-9ff1-663c576f6d6e">
+							<en>Currency ($)</en>
+							<de>Währung ($)</de>
+						</label>
+						<normalizing-format>
+							<format class="com.top_logic.layout.currency.CurrencyFormatDefinition"
+								currency="USD"
+								normalize="true"
+								pattern="¤0.00"
+								result-type="double"
+							/>
+							<parser class="com.top_logic.basic.format.DecimalFormatDefinition"
+								normalize="true"
+								pattern="0.00"
+								result-type="double"
+							/>
+						</normalizing-format>
+					</format>
+				</formats>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.base.locking.token.TokenService">
 			<instance class="com.top_logic.base.locking.token.PersistentTokenService"
 				report-lock-owner-details="false"

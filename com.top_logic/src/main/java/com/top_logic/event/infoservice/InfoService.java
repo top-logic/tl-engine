@@ -329,6 +329,9 @@ public class InfoService {
 	 * Shows a {@link HTMLFragment} as item in info area.
 	 */
 	public static void show(HTMLFragment infoItem) {
+		if (!DefaultDisplayContext.hasDisplayContext()) {
+			return;
+		}
 		getLogEntries().add(infoItem);
 	}
 

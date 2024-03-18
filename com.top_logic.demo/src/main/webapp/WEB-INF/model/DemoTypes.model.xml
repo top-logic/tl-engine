@@ -866,6 +866,13 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<property name="cost"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format-ref="euro"/>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="A">

@@ -14,11 +14,13 @@ import java.util.TimeZone;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
  * {@link FormatDefinition} that allows to specify a separate parsing format.
  */
+@Label("Format with separate parser")
 public class NormalizingFormatDefinition<C extends NormalizingFormatDefinition.Config<?>> extends FormatDefinition<C> {
 
 	/**
@@ -37,7 +39,10 @@ public class NormalizingFormatDefinition<C extends NormalizingFormatDefinition.C
 		 * 
 		 * <p>
 		 * The format can be specified as alternative (simplified) format to make user input more
-		 * easy.
+		 * convenient. E.g. when formatting a value with a currency symbol, it is best not to expect
+		 * the user to enter that symbol, but complete the value with the currency symbol after the
+		 * user has entered the plain number. To accomplish that, use a format with a currenc symbol
+		 * and a parsing format without it.
 		 * </p>
 		 */
 		PolymorphicConfiguration<FormatDefinition<?>> getParser();

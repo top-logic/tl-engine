@@ -14,6 +14,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 
@@ -24,6 +25,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Predefined number format")
 public class NumberFormatDefinition extends FormatDefinition<NumberFormatDefinition.Config> {
 
 	/**

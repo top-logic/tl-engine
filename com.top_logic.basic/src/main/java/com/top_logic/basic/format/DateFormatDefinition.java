@@ -10,6 +10,7 @@ import java.util.Locale;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 
@@ -20,6 +21,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Predefined date format")
 public class DateFormatDefinition extends AbstractDateFormatDefinition<DateFormatDefinition.Config> {
 
 	/**

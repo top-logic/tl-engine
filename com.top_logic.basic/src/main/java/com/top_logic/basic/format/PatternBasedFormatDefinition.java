@@ -26,7 +26,7 @@ public abstract class PatternBasedFormatDefinition<C extends PatternBasedFormatD
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config<I> extends FormatDefinition.Config<I> {
+	public interface Config<I extends PatternBasedFormatDefinition<?>> extends FormatDefinition.Config<I> {
 
 		/**
 		 * The pattern to create {@link Format} from.

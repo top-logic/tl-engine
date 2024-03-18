@@ -13,14 +13,16 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.format.configured.FormatterService;
 
 /**
  * Configured definition (and factory) for a {@link Format}.
  * 
  * <p>
- * formats are instantiated using {@link #newFormat(FormatConfig, TimeZone, Locale)}.
+ * Acutal formats are instantiated using {@link #newFormat(FormatConfig, TimeZone, Locale)}.
  * </p>
+ * 
+ * @see FormatterService
  * 
  * @since 5.7.4
  * 
@@ -32,16 +34,7 @@ public abstract class FormatDefinition<C extends FormatDefinition.Config<?>> ext
 	 * Configuration of a {@link FormatDefinition}.
 	 */
 	public interface Config<I> extends PolymorphicConfiguration<I> {
-
-		/** Name of the "id" property. */
-		String ID_NAME = "id";
-
-		/**
-		 * The id under which this {@link FormatDefinition} is known.
-		 */
-		@Name(ID_NAME)
-		String getId();
-
+		// Pure marker interface.
 	}
 
 	/**

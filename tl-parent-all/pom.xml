@@ -962,12 +962,24 @@
 			          <groupId>xalan</groupId>
 			          <artifactId>xalan</artifactId>
 			        </exclusion>
-				</exclusions> 
+					<exclusion>
+						<!-- Don't include 'com.sun.activation:jakarta.activation', as it collides with 'jakarta.activation:jakarta.activation-api'. -->
+						<groupId>com.sun.activation</groupId>
+						<artifactId>jakarta.activation</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
 			    <version>11.4.9</version>
+				<exclusions>
+					<exclusion>
+						<!-- Don't include 'com.sun.activation:jakarta.activation', as it collides with 'jakarta.activation:jakarta.activation-api'. -->
+						<groupId>com.sun.activation</groupId>
+						<artifactId>jakarta.activation</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 			    <groupId>com.fasterxml.jackson.core</groupId>

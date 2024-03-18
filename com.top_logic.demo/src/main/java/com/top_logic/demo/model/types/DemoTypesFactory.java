@@ -347,6 +347,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#COST_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getCostDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.COST_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#CREATED_BY_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getCreatedByDemoTypesAAttr() {

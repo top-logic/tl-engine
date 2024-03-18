@@ -315,6 +315,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String CONTAINMENT_ATTR = "containment";
 
 	/**
+	 * Part <code>cost</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Double</code> in configuration.
+	 * </p>
+	 */
+	String COST_ATTR = "cost";
+
+	/**
 	 * Part <code>createdBy</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -1638,6 +1647,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void removeContainment(com.top_logic.demo.model.plain.A oldValue) {
 		tRemoveByName(CONTAINMENT_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #COST_ATTR}.
+	 */
+	default Double getCost() {
+		return (Double) tValueByName(COST_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #COST_ATTR}.
+	 */
+	default void setCost(Double newValue) {
+		tUpdateByName(COST_ATTR, newValue);
 	}
 
 	/**

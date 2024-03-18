@@ -423,10 +423,11 @@ public class EditorUtils {
 			cssClass += " " + additionalCSS;
 		}
 		return div(css(cssClass),
-			span(css("dfListIcon"), iconTemplate),
 			span(css(FormConstants.FLEXIBLE_CSS_CLASS), titleContent),
 			span(css(FormConstants.FIXED_RIGHT_CSS_CLASS),
-				member(LIST_REMOVE)));
+				member(LIST_REMOVE)),
+			span(css("dfListIcon"), iconTemplate));
+
 	}
 
 	/**

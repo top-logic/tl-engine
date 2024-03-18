@@ -53,11 +53,11 @@
 							<value-template type="test.htmltemplate:Tank">
 								<template><![CDATA[<div style="display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: var(--spacing-05); background-color: var(--layer); border-radius: var(--corner-radius);">
     <div class="cCollapsibleHeader" style="width: 100%; background-color: var(--layer-accent); padding: 0 var(--spacing-03);">
-        <div class="cCollapsibleToolbar">
-            <div class="cToolbar">{menuButton}{deleteButton}</div>
-        </div>
         <div class="cCollapsibleTitle">
             {titleform}
+        </div>
+        <div class="cCollapsibleToolbar">
+            <div class="cToolbar">{menuButton}{deleteButton}</div>
         </div>
     </div>
 <div onclick="{openProperties}" style="cursor:pointer;">

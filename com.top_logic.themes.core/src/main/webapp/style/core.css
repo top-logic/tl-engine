@@ -2464,7 +2464,6 @@ div.treeNode.treeSelected.dndInsertInto {
 */
 .cCollapsibleHeader {
 	display: flex;
-	flex-direction: row-reverse;
 	align-items: center;
 	justify-content: space-between;
 	background-color: var(--layer-accent);

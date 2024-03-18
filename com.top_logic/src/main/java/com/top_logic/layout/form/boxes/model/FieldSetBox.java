@@ -319,7 +319,7 @@ public class FieldSetBox extends ProxyBox implements CollapsedListener {
 			return;
 		}
 		if (collapsible) {
-			legendBox.setContentRenderer(concat(span(EXPAND_CSS_CLASS, _toggle), span(TITLE_TEXT_CSS_CLASS, legend)));
+			legendBox.setContentRenderer(concat(span(TITLE_TEXT_CSS_CLASS, legend), span(EXPAND_CSS_CLASS, _toggle)));
 		} else {
 			legendBox.setContentRenderer(span(TITLE_TEXT_CSS_CLASS, legend));
 		}

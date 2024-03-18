@@ -7,7 +7,6 @@ package com.top_logic.model.search.configured;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -28,7 +27,6 @@ public class QueryExecutorMethod extends GenericMethod {
 
 	private Function<List<TLType>, TLType> _typeComputation = argumentTypes -> null;
 
-	private BooleanSupplier _sideEffectFree;
 	
 	/**
 	 * Creates a {@link QueryExecutorMethod}.
@@ -39,14 +37,10 @@ public class QueryExecutorMethod extends GenericMethod {
 	 *        See {@link #getName()}.
 	 * @param arguments
 	 *        See {@link #getArguments()}.
-	 * @param sideEffectFree
-	 *        Whether the given {@link QueryExecutor executor} has no side effects.
 	 */
-	QueryExecutorMethod(Supplier<QueryExecutor> executor, String name, SearchExpression[] arguments,
-			BooleanSupplier sideEffectFree) {
+	QueryExecutorMethod(Supplier<QueryExecutor> executor, String name, SearchExpression[] arguments) {
 		super(name, arguments);
 		_executor = executor;
-		_sideEffectFree = sideEffectFree;
 	}
 
 	/**
@@ -68,8 +62,7 @@ public class QueryExecutorMethod extends GenericMethod {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		QueryExecutorMethod configuredMethod =
-			new QueryExecutorMethod(_executor, getName(), arguments, _sideEffectFree);
+		QueryExecutorMethod configuredMethod = new QueryExecutorMethod(_executor, getName(), arguments);
 		configuredMethod.setTypeComputation(getTypeComputation());
 		return configuredMethod;
 	}
@@ -91,7 +84,7 @@ public class QueryExecutorMethod extends GenericMethod {
 
 	@Override
 	public boolean isSideEffectFree() {
-		return _sideEffectFree.getAsBoolean();
+		return false;
 	}
 
 	/**

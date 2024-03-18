@@ -12,13 +12,11 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.compile.transform.HasSideEffects;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptorBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ConfiguredMethodBuilder} that creates {@link SearchExpression} based on a configured
@@ -40,8 +38,6 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 
 	private QueryExecutor _executor;
 
-	private Boolean _hasSideEffect;
-
 	private final ArgumentDescriptor _descriptor;
 
 	/**
@@ -60,16 +56,7 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 	@Override
 	public void resolveExternalRelations() {
 		Expr expr = createBaseExpression();
-		if (ModelService.Module.INSTANCE.isActive()) {
-			_hasSideEffect = computeHasSideEffects(expr);
-		} else {
-			/* Computed lazy in #isSideEffectFree(). */
-		}
 		_executor = QueryExecutor.compile(expr);
-	}
-
-	private Boolean computeHasSideEffects(Expr expr) {
-		return QueryExecutor.compileExpr(expr).visit(HasSideEffects.INSTANCE, null);
 	}
 
 	private ArgumentDescriptor createArgumentDescriptor() {
@@ -111,14 +98,7 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 		 * before the Executor is resolved. */
 		/* Note: "sideeffectfree" must not be used direct, because it needs the ModelService which
 		 * is eventually not yet started. */
-		return new QueryExecutorMethod(this::getExecutor, getConfig().getName(), args, this::isSideEffectFree);
-	}
-
-	private boolean isSideEffectFree() {
-		if (_hasSideEffect == null) {
-			_hasSideEffect = computeHasSideEffects(createBaseExpression());
-		}
-		return !_hasSideEffect.booleanValue();
+		return new QueryExecutorMethod(this::getExecutor, getConfig().getName(), args);
 	}
 
 	private QueryExecutor getExecutor() {

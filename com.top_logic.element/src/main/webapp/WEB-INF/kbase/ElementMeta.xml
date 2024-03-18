@@ -169,7 +169,7 @@
 	    	branch-global="false" 
 	    	monomorphic="false" 
 	    	is-container="false" 
-	    	deletion-policy="delete-referer" 
+	    	deletion-policy="veto" 
 	    	target-type="TLObject"
 	    	/>
 		</attributes>

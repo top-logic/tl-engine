@@ -21,6 +21,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModelVisitor;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -45,6 +46,7 @@ import com.top_logic.model.visit.DefaultTLModelVisitor;
  */
 public class TLModelPartDeletionChecker extends DefaultTLModelVisitor<Void, Void> {
 
+	private Collection<TLObject> _toBeDeletedSingletons = new HashSet<>();
 	private Collection<TLType> _toBeDeletedTypes = new HashSet<>();
 
 	private Set<Pair<TLModelPart, ResKey>> _deleteConflictingModelParts = new HashSet<>();
@@ -98,8 +100,14 @@ public class TLModelPartDeletionChecker extends DefaultTLModelVisitor<Void, Void
 
 	private void checkTypeInstances(TLClass model) {
 		try (CloseableIterator<TLObject> instanceIt = MetaElementUtil.iterateDirectInstances(model, TLObject.class)) {
-			if (instanceIt.hasNext()) {
+			while (instanceIt.hasNext()) {
+				if (_toBeDeletedSingletons.contains(instanceIt.next())) {
+					// A singleton will be deleted together with its module.
+					continue;
+				}
+
 				addConflictingPart(model, I18NConstants.ERROR_DELETE_TYPE_WITH_INSTANCES__TYPE.fill(model.getName()));
+				break;
 			}
 		}
 	}
@@ -141,6 +149,10 @@ public class TLModelPartDeletionChecker extends DefaultTLModelVisitor<Void, Void
 
 	@Override
 	public Void visitModule(TLModule model, Void arg) {
+		for (TLModuleSingleton singletonRef : model.getSingletons()) {
+			_toBeDeletedSingletons.add(singletonRef.getSingleton());
+		}
+
 		for (TLModelPart part : model.getDatatypes()) {
 			part.visit(this, arg);
 		}

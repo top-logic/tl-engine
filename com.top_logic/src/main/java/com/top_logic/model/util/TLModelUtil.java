@@ -390,10 +390,12 @@ public class TLModelUtil {
 			// Note: The singletons must be deleted before the modules types, because the singleton
 			// normally uses a type of its module.
 			for (TLModuleSingleton link : model.getSingletons()) {
+				TLObject oldSingleton = link.getSingleton();
+
 				// Note: The singleton link must be destroyed before deleting the singleton object,
 				// because registered singletons cannot be deleted.
-				TLObject oldSingleton = link.getSingleton();
-				link.tDelete();
+				model.removeSingleton(link.getName());
+
 				deleteTLObject(oldSingleton);
 			}
 			for (TLModelPart part : copy(model.getDatatypes())) {

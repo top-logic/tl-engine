@@ -400,7 +400,9 @@
 				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Typhierarchie erstellen"
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 					user-id="root"
@@ -590,7 +592,9 @@
 				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Contents überschreiben."
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
@@ -765,7 +769,9 @@
 				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Contents in S überschreiben."
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
@@ -940,7 +946,9 @@
 				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Singleton WURZEL erstellen."
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
@@ -1071,7 +1079,9 @@
 				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Prüfe, dass Singelton existiert."
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
 					failure-expected="false"
@@ -1139,7 +1149,9 @@
 				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teste Verswendung von Singleton im Layout."
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
@@ -1876,32 +1888,6 @@
 						<path>
 							<named-member name="fieldTable"/>
 						</path>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
-					command-label="Löschen..."
-					command-name="deleteInstance"
-					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > test.singleton > S > R"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
-						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

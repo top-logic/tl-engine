@@ -16,14 +16,18 @@
 				<set-part-annotation  module="DemoTypes" type="DemoTypes.A" attribute="date2">
 					<annotations>
 						<annotations>
-							<format format="d. MMMMM y"/>
+							<format>
+								<custom-date pattern="d. MMMMM y"/>
+							</format>
 						</annotations>
 					</annotations>
 				</set-part-annotation>
 				<set-part-annotation  module="DemoTypes" type="DemoTypes.X" attribute="date2">
 					<annotations>
 						<annotations>
-							<format format="d. MMMMM y"/>
+							<format>
+								<custom-date pattern="d. MMMMM y"/>
+							</format>
 							<storage-algorithm>
 								<derived-storage>
 									<expression-evaluation>

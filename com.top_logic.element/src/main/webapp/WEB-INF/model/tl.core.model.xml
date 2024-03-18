@@ -210,7 +210,9 @@
 					<annotations>
 						<config-type value="DATE_TIME"/>
 						<search-range value="true"/>
-						<format format-ref="medium-date-time"/>
+						<format>
+							<format-ref format-id="medium-date-time"/>
+						</format>
 					</annotations>
 				</datatype>
 			
@@ -282,7 +284,9 @@
 									</derived-storage>
 								</storage-algorithm>
 								<delete-protected/>
-								<format format-ref="date-time"/>
+								<format>
+									<format-ref format-id="date-time"/>
+								</format>
 							</annotations>
 						</property>
 						<property name="author"

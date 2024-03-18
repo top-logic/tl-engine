@@ -38,7 +38,9 @@
 				>
 					<annotations>
 						<annotations>
-							<format format="d. MMMMM y"/>
+							<format>
+								<custom-date pattern="d. MMMMM y"/>
+							</format>
 							<storage-algorithm>
 								<primitive-storage storage-mapping="com.top_logic.element.meta.complex.DateToLongMapping"/>
 							</storage-algorithm>

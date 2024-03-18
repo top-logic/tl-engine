@@ -152,7 +152,9 @@
    .average()]]></expr>
 							</query>
 						</storage-algorithm>
-						<format format="0"/>
+						<format>
+							<decimal pattern="0"/>
+						</format>
 					</annotations>
 				</property>
 			</attributes>

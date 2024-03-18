@@ -28,12 +28,13 @@ import com.top_logic.basic.format.configured.FormatterService;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public abstract class FormatDefinition<C extends FormatDefinition.Config<?>> extends AbstractConfiguredInstance<C> {
+public abstract class FormatDefinition<C extends FormatDefinition.Config<?>> extends AbstractConfiguredInstance<C>
+		implements FormatFactory {
 
 	/**
 	 * Configuration of a {@link FormatDefinition}.
 	 */
-	public interface Config<I> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends FormatDefinition<?>> extends PolymorphicConfiguration<I> {
 		// Pure marker interface.
 	}
 
@@ -51,28 +52,6 @@ public abstract class FormatDefinition<C extends FormatDefinition.Config<?>> ext
 	public FormatDefinition(InstantiationContext context, C config) throws ConfigurationException {
 		super(context, config);
 	}
-
-	/**
-	 * Creates the {@link Format}.
-	 * 
-	 * @param globalConfig
-	 *        The global configuration, that can be used as fallback for local wildcards.
-	 * @param timeZone
-	 *        The {@link TimeZone} to create {@link Format} for. Usage of this variable depends on
-	 *        the kind of the {@link Format}.
-	 * @param locale
-	 *        The {@link Locale} to create {@link Format} for. Usage of this variable depends on the
-	 *        kind of the {@link Format}.
-	 */
-	public abstract Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale);
-
-	/**
-	 * Returns the pattern string used to create {@link Format}
-	 * 
-	 * @return May be <code>null</code>, in case the {@link Format} that are created are not pattern
-	 *         based.
-	 */
-	public abstract String getPattern();
 
 }
 

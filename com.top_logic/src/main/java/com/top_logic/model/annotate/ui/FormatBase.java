@@ -10,13 +10,13 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.format.configured.Formatter;
+import com.top_logic.basic.format.FormatFactory;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLCollator;
@@ -28,27 +28,17 @@ import com.top_logic.util.TLCollator;
  */
 public interface FormatBase extends ConfigurationItem {
 
-	/** see {@link #getFormat()} */
-	String FORMAT_PROPERTY = "format";
-
-	/** see {@link #getFormatReference()} */
-	String FORMAT_REFERENCE_PROPERTY = "format-ref";
+	/**
+	 * @see #getDefinition()
+	 */
+	String DEFINITION = "definition";
 
 	/**
-	 * Display values of this attribute according to this literal format.
+	 * Definition of the format to use.
 	 */
-	@Name(FORMAT_PROPERTY)
-	String getFormat();
-
-	/**
-	 * Display values of this attribute according to this referenced format.
-	 * 
-	 * @see Formatter#getFormat(String)
-	 */
-	@Name(FORMAT_REFERENCE_PROPERTY)
-	@Options(fun = FormatOptions.class)
-	@OptionLabels(FormatLabel.class)
-	String getFormatReference();
+	@Name(DEFINITION)
+	@DefaultContainer
+	PolymorphicConfiguration<? extends FormatFactory> getDefinition();
 
 	/**
 	 * Option provider that allows to select from all globally defined {@link FormDefinition}s.

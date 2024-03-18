@@ -396,7 +396,9 @@
 					type="tl.core:Date"
 				>
 					<annotations>
-						<format format="d. MMMMM y"/>
+						<format>
+							<custom-date pattern="d. MMMMM y"/>
+						</format>
 						<storage-algorithm>
 							<primitive-storage>
 								<storage-mapping class="com.top_logic.element.meta.complex.DateToLongMapping"/>
@@ -431,14 +433,18 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="decimal"/>
+						<format>
+							<format-ref format-id="decimal"/>
+						</format>
 					</annotations>
 				</property>
 				<property name="floatPercent"
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="percent"/>
+						<format>
+							<format-ref format-id="percent"/>
+						</format>
 						<input-size value="4"/>
 					</annotations>
 				</property>
@@ -446,7 +452,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format="#,###,###0.000"/>
+						<format>
+							<decimal pattern="#,###,###0.000"/>
+						</format>
 						<value-range
 							max="10.0"
 							min="-10.0"
@@ -870,7 +878,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="euro"/>
+						<format>
+							<format-ref format-id="euro"/>
+						</format>
 					</annotations>
 				</property>
 			</attributes>
@@ -1681,7 +1691,9 @@
 					type="tl.core:Date"
 				>
 					<annotations>
-						<format format="d. MMMMM y"/>
+						<format>
+							<custom-date pattern="d. MMMMM y"/>
+						</format>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>
@@ -1762,7 +1774,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="decimal"/>
+						<format>
+							<format-ref format-id="decimal"/>
+						</format>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>
@@ -1779,7 +1793,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="percent"/>
+						<format>
+							<format-ref format-id="percent"/>
+						</format>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>
@@ -1796,7 +1812,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format="#,###,###0.000"/>
+						<format>
+							<decimal pattern="#,###,###0.000"/>
+						</format>
 						<value-range
 							max="10.0"
 							min="-10.0"

@@ -174,7 +174,9 @@
 						<options>
 							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
 						</options>
-						<format format="'#'#"/>
+						<format>
+							<decimal pattern="'#'#"/>
+						</format>
 					</annotations>
 				</property>
 				<property name="min"

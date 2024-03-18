@@ -5,16 +5,20 @@
  */
 package com.top_logic.layout.table.filter;
 
+import java.text.Format;
 import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.format.FormatFactory;
+import com.top_logic.basic.format.configured.FormatterService;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.component.AbstractTableFilterProvider;
 import com.top_logic.layout.table.component.TableFilterProvider;
@@ -66,29 +70,19 @@ public abstract class ComparableTableFilterProvider extends AbstractTableFilterP
 	}
 
 	private static FormatProvider createFormatProvider(InstantiationContext context, Config config) {
-		String formatReference = config.getFormatReference();
-		if (!StringServices.isEmpty(formatReference)) {
-			checkNoLiteralFormat(context, config);
-			ReferenceFormatProvider referenceFormatProvider = new ReferenceFormatProvider(formatReference);
-			referenceFormatProvider.setReferenceSource(config.location().toString());
-			return referenceFormatProvider;
+		PolymorphicConfiguration<? extends FormatFactory> definition = config.getDefinition();
+		if (definition != null) {
+			FormatFactory factory = context.getInstance(definition);
+			return new FormatProvider() {
+				@Override
+				public Format getFormat(ColumnConfiguration column) {
+					return factory.newFormat(FormatterService.getInstance().getConfig(), ThreadContext.getTimeZone(),
+						ThreadContext.getLocale());
+				}
+			};
 		}
 
-		String literalFormat = config.getFormat();
-		if (!StringServices.isEmpty(literalFormat)) {
-			PatternFormatProvider patternFormatProvider = new PatternFormatProvider(literalFormat);
-			patternFormatProvider.setPatternSource(config.location().toString());
-			return patternFormatProvider;
-		}
 		return GenericFormatProvider.INSTANCE;
-	}
-
-	private static void checkNoLiteralFormat(InstantiationContext context, Config config) {
-		if (!StringServices.isEmpty(config.getFormat())) {
-			context.error("Either a reference or a literal format must be given for table filter in '"
-				+ config.location().toString()
-					+ "', not both.");
-		}
 	}
 
 	/**

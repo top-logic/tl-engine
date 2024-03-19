@@ -24,7 +24,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.AbstractControlBase;
-import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -32,7 +31,6 @@ import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.component.TabComponent.TabbedLayoutComponent;
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ButtonRenderer;
 import com.top_logic.layout.form.control.IButtonRenderer;
@@ -143,41 +141,44 @@ public class MegaMenuTabConfig
 		}
 
 		TabComponent entriesTabComponent = (TabComponent) layoutComponent;
-		if (isButtonVisible(entriesTabComponent) || entriesTabComponent.getChildCount() == 0) {
+		if (isOpenSelectListButtonVisible(entriesTabComponent) || entriesTabComponent.getChildCount() == 0) {
 			return Fragments.empty();
 		}
 
-		ArrayList<LayoutComponent> entriesList = getVisibleChildren(entriesTabComponent);
-		if (entriesList.isEmpty()) {
+		List<LayoutComponent> menuEntries = getVisibleChildren(entriesTabComponent);
+		if (menuEntries.isEmpty()) {
 			return Fragments.empty();
 		}
 
-		SelectField megaMenu = FormFactory.newSelectField("navigationButton", entriesList, false, false);
-		megaMenu.setMandatory(true);
+		SelectField selectList = FormFactory.newSelectField("navigationButton", menuEntries, false, false);
+		selectList.setMandatory(true);
 
-		addTabBarListener(entriesTabComponent, megaMenu);
-		addValueEventListener(megaMenu);
-		ButtonControl megaMenuButton =
-			instantiateMegaMenuButton(layoutComponent, entriesTabComponent, entriesList, megaMenu);
-
-		return megaMenuButton;
+		entriesTabComponent.getTabBarModel().addTabBarListener(new megaMenuTabBarListener(selectList));
+		selectList.addValueListener((field, oldValue, newValue) -> addValueEventListener(field, newValue));
+		return instantiateMegaMenuButton(layoutComponent, entriesTabComponent, menuEntries, selectList);
 	}
 
 	private ButtonControl instantiateMegaMenuButton(LayoutComponent layoutComponent, TabComponent entriesTabComponent,
-			ArrayList<LayoutComponent> entriesList, SelectField megaMenu) {
-		AbstractCommandModel mainTabbarCommand = createCommandToWritePopup(layoutComponent, entriesList, megaMenu);
-		ButtonControl megaMenuButton = new ButtonControl(mainTabbarCommand, _renderer);
+			List<LayoutComponent> menuEntries, SelectField selectList) {
+		AbstractCommandModel openSelectListCommand =
+			createCommandToWritePopup(layoutComponent, menuEntries, selectList);
+		ButtonControl openSelectListButton = new ButtonControl(openSelectListCommand, _renderer);
 
 		TabConfig tabInfo = entriesTabComponent.getParent().getConfig().getTabInfo();
 		ThemeImage tabImage = tabInfo.getImage();
-		mainTabbarCommand.setImage(tabImage);
-		mainTabbarCommand.setLabel(Resources.getInstance().getString(tabInfo.getLabel(), null));
-		addVisibilityListener(entriesTabComponent, megaMenu, megaMenuButton);
-		return megaMenuButton;
+		openSelectListCommand.setImage(tabImage);
+		openSelectListCommand.setLabel(Resources.getInstance().getString(tabInfo.getLabel(), null));
+		addVisibilityListener(entriesTabComponent, selectList, openSelectListButton);
+		return openSelectListButton;
 	}
 
+	private void addVisibilityListener(TabComponent tabComponent, SelectField selectList,
+			ButtonControl openSelectListButton) {
+		openSelectListButton.addListener(AbstractControlBase.ATTACHED_PROPERTY, (sender, oldValue,
+				newValue) -> handleAttachEvent(sender, newValue, tabComponent, selectList, openSelectListButton));
+	}
 
-	private boolean isButtonVisible(TabComponent entriesTabComponent) {
+	private boolean isOpenSelectListButtonVisible(TabComponent entriesTabComponent) {
 		LayoutComponent currentChild = entriesTabComponent;
 		LayoutComponent current = entriesTabComponent.getParent();
 
@@ -189,66 +190,48 @@ public class MegaMenuTabConfig
 		return !((TabComponent) current).canBeVisible(currentChild);
 	}
 
-	private ArrayList<LayoutComponent> getVisibleChildren(TabComponent entriesTabComponent) {
-		ArrayList<LayoutComponent> mainTabList = new ArrayList<>();
+	private List<LayoutComponent> getVisibleChildren(TabComponent entriesTabComponent) {
+		List<LayoutComponent> tabList = new ArrayList<>();
 		for (int i = 0; i < entriesTabComponent.getChildCount(); i++) {
-			if (entriesTabComponent.canBeVisible(entriesTabComponent.getChild(i))) {
-				mainTabList.add(entriesTabComponent.getChild(i));
+			LayoutComponent child = entriesTabComponent.getChild(i);
+			if (entriesTabComponent.canBeVisible(child)) {
+				tabList.add(child);
 			}
 		}
-		return mainTabList;
-	}
-
-	private void addTabBarListener(TabComponent entriesTabComponent, SelectField megaMenu) {
-		TabBarListener listener = new TabBarListener() {
-
-			@Override
-			public void notifySelectionChanged(SingleSelectionModel model, Object formerlySelectedObject,
-					Object selectedObject) {
-				if (selectedObject == null) {
-					megaMenu.setAsSingleSelection(null);
-				} else {
-					LayoutComponent component = ((TabbedLayoutComponent) selectedObject).getContent();
-					megaMenu.setAsSingleSelection(component);
-				}
-			}
-
-			@Override
-			public void notifyCardsChanged(TabBarModel sender, List<Card> oldAllCards) {
-				// Nothing to do
-			}
-
-			@Override
-			public void inactiveCardChanged(TabBarModel sender, Card aCard) {
-				// Nothing to do
-			}
-
-		};
-
-		entriesTabComponent.getTabBarModel().addTabBarListener(listener);
+		return tabList;
 	}
 
 	private AbstractCommandModel createCommandToWritePopup(LayoutComponent layoutComponent,
-			ArrayList<LayoutComponent> mainTabList, SelectField megaMenu) {
+			List<LayoutComponent> tabList, SelectField selectList) {
 		return new AbstractCommandModel() {
 
 			{
-				/* Won't record pressing the mega menu button as opening the administration view
-				 * action. */
+				/**
+				 * This code ensures that the act of pressing the button is not recorded by the
+				 * script recorder. This is necessary because the desired recording is the selection
+				 * made within the selection list and the subsequent opening of the selected view,
+				 * not the button press itself. The script recorder captures only the initial
+				 * action, ignoring subsequent actions triggered by the button press. Therefore,
+				 * this implementation aims to record the view that gets opened as a result of
+				 * making a selection from the selection list, bypassing the button press action
+				 * that merely shows the selection list popup. This approach ensures that the actual
+				 * user interaction of interest, which is the selection and view opening, is
+				 * captured for script recording purposes.
+				 */
 				ScriptingRecorder.annotateAsDontRecord(this);
 			}
 
 			@Override
 			protected HandlerResult internalExecuteCommand(DisplayContext context) {
-				ButtonControl buttonControl = context.get(Command.EXECUTING_CONTROL);
-				String buttonControlID = buttonControl.getID();
+				ButtonControl openSelectListButton = context.get(Command.EXECUTING_CONTROL);
+				String openSelectListButtonID = openSelectListButton.getID();
 
-				int nbrOfOptionElements = mainTabList.size();
+				int nbrOfOptionElements = tabList.size();
 
 				boolean isGridNeeded = nbrOfOptionElements > 4;
 				PopupDialogControl popupDialog =
 					MegaMenuPopupDialogCreater.createPopupDialog(context, isGridNeeded,
-						buttonControl.getFrameScope(), buttonControlID);
+						openSelectListButton.getFrameScope(), openSelectListButtonID);
 
 				popupDialog.setContent(new HTMLFragment() {
 
@@ -263,8 +246,9 @@ public class MegaMenuTabConfig
 						out.endBeginTag();
 
 						for (int i = 0; i < nbrOfOptionElements; i++) {
-							LayoutComponent currOption = mainTabList.get(i);
-							MegaMenuOptionControl option = new MegaMenuOptionControl(currOption, megaMenu, popupDialog);
+							LayoutComponent currOption = tabList.get(i);
+							MegaMenuOptionControl option =
+								new MegaMenuOptionControl(currOption, selectList, popupDialog);
 							option.write(context1, out);
 						}
 						out.endTag(HTMLConstants.DIV);
@@ -281,57 +265,82 @@ public class MegaMenuTabConfig
 		};
 	}
 
-	private void addValueEventListener(SelectField megaMenu) {
-		megaMenu.addValueListener(new ValueListener() {
-			@Override
-			public void valueChanged(FormField field, Object oldValue, Object newValue) {
-				SelectField megaMenu = (SelectField) field;
-				if (!CollectionUtil.isEmptyOrNull((Collection<?>) newValue)) {
-					LayoutComponent singleSelection = (LayoutComponent) megaMenu.getSingleSelection();
-					if (ScriptingRecorder.isRecordingActive()) {
-						TabComponent tabComponent =
-							(TabComponent) singleSelection.getMainLayout().getComponentByName(_componentName);
-						boolean before = LayoutComponentResolver
-							.allowResolvingHiddenComponents(DefaultDisplayContext.getDisplayContext(), true);
-						try {
-							ScriptingRecorder.recordTabSwitch(tabComponent,
-								tabComponent.getChildList().indexOf(singleSelection));
-						} finally {
-							LayoutComponentResolver
-								.allowResolvingHiddenComponents(DefaultDisplayContext.getDisplayContext(), before);
-						}
-					}
-					singleSelection.makeVisible();
-				}
-			}
-		});
+	private void addValueEventListener(FormField field, Object newValue) {
+		SelectField selectList = (SelectField) field;
+		if (!CollectionUtil.isEmptyOrNull((Collection<?>) newValue)) {
+			LayoutComponent singleSelection = (LayoutComponent) selectList.getSingleSelection();
+			handleScriptRecordingEvents(singleSelection);
+			singleSelection.makeVisible();
+		}
 	}
 
-	private void addVisibilityListener(TabComponent tabComponent, SelectField megaMenu, ButtonControl megaMenuButton) {
-		megaMenuButton.addListener(AbstractControlBase.ATTACHED_PROPERTY, new AttachedPropertyListener() {
-			VisibilityListener _visibilityListener = new VisibilityListener() {
-				@Override
-				public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
-					if (sender instanceof TabComponent) {
-						LayoutComponent currComponent = (LayoutComponent) sender;
-						// Executes when user is leaving the currently opened tab.
-						if (_componentName.equals(currComponent.getName()) && !newVisibility) {
-							megaMenu.setAsSingleSelection(null);
-						}
-					}
-					megaMenuButton.requestRepaint();
-					return Bubble.BUBBLE;
-				}
-			};
+	private void handleScriptRecordingEvents(LayoutComponent singleSelection) {
+		if (ScriptingRecorder.isRecordingActive()) {
+			TabComponent tabComponent =
+				(TabComponent) singleSelection.getMainLayout().getComponentByName(_componentName);
+			boolean before = LayoutComponentResolver
+				.allowResolvingHiddenComponents(DefaultDisplayContext.getDisplayContext(), true);
+			try {
+				ScriptingRecorder.recordTabSwitch(tabComponent,
+					tabComponent.getChildList().indexOf(singleSelection));
+			} finally {
+				LayoutComponentResolver
+					.allowResolvingHiddenComponents(DefaultDisplayContext.getDisplayContext(), before);
+			}
+		}
+	}
 
-			@Override
-			public void handleAttachEvent(AbstractControlBase sender, Boolean oldValue, Boolean newValue) {
-				if (newValue) {
-					tabComponent.addListener(LayoutComponent.VISIBILITY_EVENT, _visibilityListener);
-				} else {
-					tabComponent.removeListener(LayoutComponent.VISIBILITY_EVENT, _visibilityListener);
+	private void handleAttachEvent(AbstractControlBase sender, Boolean newValue, TabComponent tabComponent,
+			SelectField selectList, ButtonControl openSelectListButton) {
+		VisibilityListener visibilityListener = createVisibilityListener(selectList, openSelectListButton);
+		if (newValue) {
+			tabComponent.addListener(LayoutComponent.VISIBILITY_EVENT, visibilityListener);
+		} else {
+			tabComponent.removeListener(LayoutComponent.VISIBILITY_EVENT, visibilityListener);
+		}
+	}
+
+	private VisibilityListener createVisibilityListener(SelectField selectList, ButtonControl openSelectListButton) {
+		return (sender, oldVisibility, newVisibility) -> {
+			if (sender instanceof TabComponent) {
+				LayoutComponent currComponent = (LayoutComponent) sender;
+				// Executes when user is leaving the currently opened tab.
+				if (_componentName.equals(currComponent.getName()) && !newVisibility) {
+					selectList.setAsSingleSelection(null);
 				}
 			}
-		});
+			openSelectListButton.requestRepaint();
+			return Bubble.BUBBLE;
+		};
 	}
+
+	private static class megaMenuTabBarListener implements TabBarListener {
+		private final SelectField selectList;
+
+		public megaMenuTabBarListener(SelectField selectList) {
+			this.selectList = selectList;
+		}
+
+		@Override
+		public void notifySelectionChanged(SingleSelectionModel model, Object formerlySelectedObject,
+				Object selectedObject) {
+			if (selectedObject == null) {
+				selectList.setAsSingleSelection(null);
+			} else {
+				LayoutComponent component = ((TabbedLayoutComponent) selectedObject).getContent();
+				selectList.setAsSingleSelection(component);
+			}
+		}
+
+		@Override
+		public void notifyCardsChanged(TabBarModel sender, List<Card> oldAllCards) {
+			// Nothing to do
+		}
+
+		@Override
+		public void inactiveCardChanged(TabBarModel sender, Card aCard) {
+			// Nothing to do
+		}
+	}
+
 }

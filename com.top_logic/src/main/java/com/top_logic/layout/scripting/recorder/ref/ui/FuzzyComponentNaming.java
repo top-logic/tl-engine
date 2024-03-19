@@ -7,6 +7,7 @@ package com.top_logic.layout.scripting.recorder.ref.ui;
 
 import static com.top_logic.basic.col.TransformIterators.*;
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,10 +19,13 @@ import com.top_logic.basic.col.BooleanFlag;
 import com.top_logic.basic.col.DescendantDFSIterator;
 import com.top_logic.basic.col.TreeView;
 import com.top_logic.basic.col.search.SearchResult;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.WindowScope;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.AJAXComponent;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -101,6 +105,10 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 
 	@Override
 	public LayoutComponent locateModel(ActionContext context, Name name) {
+		return locateModel(context.getDisplayContext(), name);
+	}
+
+	private LayoutComponent locateModel(DisplayContext context, Name name) {
 		List<String> componentLabels = name.getTabPath();
 		LayoutComponent layout = getRootLayout(context);
 		for (int i = 0, componentNamesSize = componentLabels.size(); i < componentNamesSize;) {
@@ -211,8 +219,8 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 		return searchResult.getSingleResult("Search for component " + title + " failed.");
 	}
 
-	private LayoutComponent getRootLayout(ActionContext context) {
-		WindowScope windowScope = context.getDisplayContext().getWindowScope();
+	private LayoutComponent getRootLayout(DisplayContext context) {
+		WindowScope windowScope = context.getWindowScope();
 		LayoutComponent topLevelComponent = ScriptingUtil.getComponent(windowScope);
 		for (DialogWindowControl activeDialog : getDialogs(windowScope)) {
 			if (activeDialog.getDialogModel() instanceof DialogComponent) {
@@ -231,8 +239,11 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 
 	@Override
 	protected boolean isCompatibleModel(LayoutComponent model) {
-		LayoutComponent parent = model.getParent();
-		return parent == null || parent.isVisible();
+		Name name = TypedConfiguration.newConfigItem(Name.class);
+		DisplayContext context = DefaultDisplayContext.getDisplayContext();
+		initName(name, model);
+		Object resolved = locateModel(context, name);
+		return resolved == model;
 	}
 
 	@Override

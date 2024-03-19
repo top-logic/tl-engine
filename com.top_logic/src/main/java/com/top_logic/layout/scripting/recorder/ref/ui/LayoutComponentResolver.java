@@ -8,6 +8,7 @@ package com.top_logic.layout.scripting.recorder.ref.ui;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
@@ -18,8 +19,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * {@link LayoutComponent}.
  * 
  * <p>
- * Implementor must call {@link #checkVisible(ActionContext, ConfigurationItem, LayoutComponent)} to
- * ensure that the resolved component is visible.
+ * Implementor must call {@link #checkVisible(DisplayContext, ConfigurationItem, LayoutComponent)}
+ * to ensure that the resolved component is visible.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -57,7 +58,14 @@ public interface LayoutComponentResolver {
 	 * @return Former value.
 	 */
 	static boolean allowResolvingHiddenComponents(ActionContext context, boolean value) {
-		return context.getDisplayContext().set(ALLOW_RESOLVING_HIDDEN, value);
+		return allowResolvingHiddenComponents(context.getDisplayContext(), value);
+	}
+
+	/**
+	 * @see #allowResolvingHiddenComponents(ActionContext, boolean)
+	 */
+	static boolean allowResolvingHiddenComponents(DisplayContext context, boolean value) {
+		return context.set(ALLOW_RESOLVING_HIDDEN, value);
 	}
 
 	/**
@@ -75,12 +83,19 @@ public interface LayoutComponentResolver {
 	 *        Resolved component. May be <code>null</code>, when such a component does not exist.
 	 */
 	default void checkVisible(ActionContext context, ConfigurationItem contextConfig, LayoutComponent component) {
+		checkVisible(context.getDisplayContext(), contextConfig, component);
+	}
+
+	/**
+	 * @see #checkVisible(ActionContext, ConfigurationItem, LayoutComponent)
+	 */
+	default void checkVisible(DisplayContext context, ConfigurationItem contextConfig, LayoutComponent component) {
 		if (component == null) {
 			// Component could not be found. That may be intended, e.g. to check for non-existence.
 			// If it is not intended, later code fails (hopefully).
 			return;
 		}
-		if (context.getDisplayContext().get(ALLOW_RESOLVING_HIDDEN)) {
+		if (context.get(ALLOW_RESOLVING_HIDDEN)) {
 			// Resolving hidden components allowed.
 			return;
 		}

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27917_Inverse_Reference_Creation"
+		module="tl-layout-formeditor"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26190_single_drop_targets_to_list"
+			module="tl"
+		/>
+		<dependency name="Ticket_27662_singleton_delete_veto"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-layout-formeditor"
+		/>
+	</dependencies>
+	<processors>
+		<update-reference name="tl.accounts:Group#members"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="true"
+			navigate="true"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="Contacts:PersonContact#account"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="false"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="tl.model:TLClass#specializations"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="true"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="tl.model:TLModel#modules"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="true"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="tl.model:TLScope#types"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="true"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="tl.model:TLEnumeration#classifiers"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="true"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="tl.model:TLAssociation#subsets"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="true"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="tl.model:TLAssociationEnd#reference"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="false"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+		<update-reference name="tl.model:TLModule#singletons"
+			aggregate="false"
+			bag="false"
+			mandatory="false"
+			multiple="true"
+			navigate="false"
+			ordered="false"
+			skip-model-baseline-change="true"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

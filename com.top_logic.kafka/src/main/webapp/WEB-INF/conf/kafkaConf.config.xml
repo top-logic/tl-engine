@@ -90,7 +90,9 @@
         <config service-class="com.top_logic.basic.format.configured.FormatterService">
 			<instance class="com.top_logic.basic.format.configured.FormatterService">
 				<formats>
-					<custom-date id="kafka-message-timestamp" pattern="dd.MM.yyyy HH:mm:ss.SSS" />
+					<format id="kafka-message-timestamp">
+						<custom-date pattern="dd.MM.yyyy HH:mm:ss.SSS" />
+					</format>
 				</formats>
 			</instance>
 		</config>

@@ -646,6 +646,9 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
     
 	@Override
 	protected void shutDown() {
+		for (SessionInfo info : new ArrayList<>(_sessionMap.values())) {
+			invalidateSession(info.getSessionId());
+		}
 		_sessionMap.clear();
 		_sender = null;
 		super.shutDown();

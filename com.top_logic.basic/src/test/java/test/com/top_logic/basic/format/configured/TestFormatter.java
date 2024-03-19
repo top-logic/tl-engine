@@ -531,13 +531,10 @@ public class TestFormatter extends BasicTestCase {
         parallelTest(3,new ExecutionFactory() {
             @Override
 			public Execution createExecution(int aId) {
-                return new Execution() {
-                    @Override
-					public void run() throws Exception {
-						testGermanFormatNumbers();
-						testGermanFormatDates();
-                    }
-                };
+				return () -> {
+					testGermanFormatNumbers();
+					testGermanFormatDates();
+				};
             }
         });
     }
@@ -549,13 +546,10 @@ public class TestFormatter extends BasicTestCase {
         parallelTest(3,new ExecutionFactory() {
             @Override
 			public Execution createExecution(int aId) {
-                return new Execution() {
-                    @Override
-					public void run() throws Exception {
-						testUSFormatNumbers();
-						testUSFormatDates();
-                    }
-                };
+				return () -> {
+					testUSFormatNumbers();
+					testUSFormatDates();
+				};
             }
         });
     }

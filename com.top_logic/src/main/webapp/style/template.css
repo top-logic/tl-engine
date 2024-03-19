@@ -4784,16 +4784,12 @@ td.tl-table__cell .cDataItem li {
 }
 
 .tooltipContent * {
-	margin: 0;
 	color: white;
 	line-height: 1.5 !important;
-	padding: 0 !important;
 }
 
 .tooltipContent :is(h1, h2, h3, h4, h5, h6) {
 	text-align: center;
-	clear: both;
-	margin-bottom: 8px;
 }
 
 /* ==================================== */

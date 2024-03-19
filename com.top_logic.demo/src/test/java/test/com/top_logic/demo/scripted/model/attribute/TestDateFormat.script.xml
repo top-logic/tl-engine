@@ -121,7 +121,7 @@
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Format"
+							label="Muster"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"

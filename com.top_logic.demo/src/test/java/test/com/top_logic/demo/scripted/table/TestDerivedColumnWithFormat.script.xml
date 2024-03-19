@@ -238,8 +238,45 @@
 		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 			user-id="root"
 		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<named-member name="modelBox0"/>
+					<named-member name="modelContent0"/>
+					<labeled-member label="Spaltenkonfigurationen"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="3"
+						/>
+					</object>
+					<labeled-member label="Berechnete Spalte"/>
+					<labeled-member label="Anpassungen"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="0"
+						/>
+					</object>
+					<labeled-member label="Formatierung"/>
+					<labeled-member label="Definition"/>
+					<named-member name="outerContainer"/>
+					<labeled-member label="Definition"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.basic.format.DecimalFormatDefinition"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
 			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Format"
+				label="Muster"
 			>
 				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 			</field>

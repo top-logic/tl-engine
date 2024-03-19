@@ -1417,6 +1417,11 @@ div.cal_zoom_inAnimation {
 	align-items: stretch;
 }
 
+.cIntegerInput input,
+.cTextInput.num input {
+	text-align: right;
+}
+
 .cDecoratedCell,
 .cExpandableTextInput,
 .cBlockTextInput {

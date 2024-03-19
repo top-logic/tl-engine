@@ -771,7 +771,7 @@
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="2"
+						value="3"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"

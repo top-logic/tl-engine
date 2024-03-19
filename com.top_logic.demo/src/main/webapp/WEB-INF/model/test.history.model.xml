@@ -10,6 +10,9 @@
 			<classifier name="COMPLETED"/>
 		</enum>
 		<class name="Milestone">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
 			<annotations>
 				<form-definition>
 					<form>
@@ -96,6 +99,9 @@
 			</attributes>
 		</class>
 		<class name="Project">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
 			<annotations>
 				<form-definition>
 					<form>
@@ -160,6 +166,9 @@
 			</attributes>
 		</class>
 		<class name="Report">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
 			<annotations>
 				<table name="test.history.Report"/>
 			</annotations>

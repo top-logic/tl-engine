@@ -35,6 +35,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.shared.string.StringServicesShared;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.basic.util.RegExpUtil;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -43,6 +44,12 @@ import com.top_logic.basic.util.ResKey;
  * @author  <a href="kha@top-logic.com">Klaus Halfmann</a>
  */
 public abstract class StringServices extends StringServicesShared {
+
+	/**
+	 * The unicode <a href="https://en.wikipedia.org/wiki/Non-breaking_space">narrow no-break
+	 * space</a> character.
+	 */
+	public static final char NARROW_NO_BREAK_SPACE = '\u202F';
 
 	/** Instance of an empty string */
     public static final String EMPTY_STRING = "";
@@ -2477,8 +2484,12 @@ public abstract class StringServices extends StringServicesShared {
     }
 
     /**
-	 * Removes leading and tailing white space and replaces successive white
-	 * space (' ', '\t', '\f', '\n', and '\r') with a single space character.
+	 * Removes leading and tailing white space and replaces successive white space (' ', '\t', '\f',
+	 * '\n', and '\r') with a single space character.
+	 * <p>
+	 * See {@link RegExpUtil#normalizeWhitespace(String)} for a non-trimming variant that
+	 * additionally handles unicode characters.
+	 * </p>
 	 * 
 	 * @param s
 	 *        the string to normalize

@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
+import com.top_logic.basic.format.configured.FormatterService;
 
 /**
  * {@link PatternBasedFormatDefinition} creating {@link DecimalFormat}s.
@@ -48,7 +49,7 @@ public class DecimalFormatDefinition<C extends DecimalFormatDefinition.Config<?>
 		 * The {@link RoundingMode} to use.
 		 * 
 		 * <p>
-		 * The default value is {@link RoundingMode#HALF_EVEN} (the Java built-in value).
+		 * The default value is defined application-wide by the {@link FormatterService}.
 		 * </p>
 		 */
 		@Nullable

@@ -42,7 +42,7 @@ public class MBeanNameConstraint extends ValueConstraint<String> {
 	private ResKey checkPattern(PropertyModel<String> propertyModel) {
 		String name = propertyModel.getValue();
 
-		if (!name.matches(NAME_PATTERN + "(\\:name\\=)" + NAME_PATTERN + "+")) {
+		if (name != null && !name.matches(NAME_PATTERN + "(\\:name\\=)" + NAME_PATTERN + "+")) {
 			return I18NConstants.WRONG_PATTERN_MBEAN_NAME;
 		}
 

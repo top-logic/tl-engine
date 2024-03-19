@@ -267,7 +267,7 @@ if [[ "$SKIP_CONTAINER" != "true" ]] ; then
 		sudo chown :$USER /root/.docker/config.json
 		sudo chmod g+r /root/.docker/config.json
 	fi
-	$DRY_RUN $RUN pull docker.top-logic.com/tomcat:10.1-jdk17-openjdk:latest
+	$DRY_RUN $RUN pull docker.top-logic.com/tomcat:10.1-jdk17-openjdk
 	
 	echo
 	echo "=== Building docker image ==="

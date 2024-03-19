@@ -35,7 +35,11 @@ table.tblTableNoBorder {
 	margin: 0;
 }
 
-td.tblRight {
+td.tblRight .px-1 {
+	justify-content: end;
+}
+
+table td.tblRight .px-1 span.lFlexible > input {
 	text-align: right;
 }
 
@@ -74,15 +78,15 @@ a.tl-table__title:visited {
 
 th.tblTitleRight {
 	background: var(--layer-accent);
-	color:            var(--text-primary);
+	color: var(--text-primary);
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
-	padding:          2px;
-	border-color:     var(--border-strong);
-	text-align:       right;
-	border-left:      none;
+	padding: 2px;
+	border-color: var(--border-strong);
+	text-align: right;
+	border-left: none;
 }
 
 .tl-table__title-toolbar {
@@ -1055,11 +1059,6 @@ table td span.lFlexible > select {
  frozen tables (e.g. needed for gallery edit dialog). */
 .tl-table__title span.lFlexible select {
 	width: auto;
-}
-
-table td span.lFlexible > input {
-	/* Display editable values adjusted to the right in columns that are right aligned. */
-	text-align: inherit;
 }
 
 table td .cDatetime .lFlexible {

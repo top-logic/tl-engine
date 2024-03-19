@@ -33,6 +33,8 @@ public class MonitorByExpression extends DynamicMBeanElement {
 
 	private List<OperationParameter> _parameters;
 
+	private Object _result;
+
 	/** {@link ConfigurationItem} for the {@link MonitorByExpression}. */
 	public interface Config extends DynamicMBeanElement.Config {
 
@@ -71,7 +73,17 @@ public class MonitorByExpression extends DynamicMBeanElement {
 
 	@Override
 	protected MBeanAttributeInfo[] createAttributeInfo() {
-		return null;
+		MBeanAttributeInfo[] dAttributes = new MBeanAttributeInfo[1];
+
+		dAttributes[0] = new MBeanAttributeInfo(
+			"Result", // name
+			"java.lang.Object", // type
+			"The result of the query.", // description
+			true, // readable
+			false, // writable
+			false); // isIs
+
+		return dAttributes;
 	}
 
 	@Override
@@ -97,7 +109,12 @@ public class MonitorByExpression extends DynamicMBeanElement {
 		return dOperations;
 	}
 
-	/** Executes the configured script with its given parameters. */
+	/** Returns the result of the query. */
+	public Object getResult() {
+		return _result;
+	}
+
+	/** Executes the configured script with its given parameters. Maybe called by reflection. */
 	public Object execute(Object... args) {
 		Object[] arguments;
 		if (args.length == 1 && args[0] instanceof Object[]) {
@@ -108,7 +125,9 @@ public class MonitorByExpression extends DynamicMBeanElement {
 			arguments = args;
 		}
 
-		return _impl.execute(arguments);
+		_result = _impl.execute(arguments);
+
+		return _result;
 	}
 
 }

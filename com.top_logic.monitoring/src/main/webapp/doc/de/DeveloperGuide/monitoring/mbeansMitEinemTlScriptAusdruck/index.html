@@ -1,0 +1,74 @@
+<p> </p>
+
+<p>In TopLogic gibt es die Möglichkeit MBeans zu erstellen, die einen TL-Script Ausdruck beinhalten, der mit einer beliebigen Anzahl an Parametern angereichert werden und ausgewertet werden kann. So können InApp MBeans erstellt und konfiguriert werden.</p>
+
+<p>Über den <strong>Service "TLDataBeanService"</strong> im Serve-Editor können "MBean mit einem TL-Script-Ausdruck" (<strong>MonitorByExpression</strong>) ausgewählt werden. Dieser muss wie in <em>Tabelle 1</em> zu sehen konfiguriert werden.</p>
+
+<table border="0" class="tlDocTable" style="width:1000.78px">
+	<thead>
+		<tr>
+			<th scope="col">Name</th>
+			<th scope="col">Typ</th>
+			<th scope="col" style="width:705px">Beschreibung</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Name</td>
+			<td>String</td>
+			<td style="width:705px">Eindeutiger Name des MBeans nach dem Muster "<em>domain:key=property</em>".</td>
+		</tr>
+		<tr>
+			<td>Beschreibung</td>
+			<td>String</td>
+			<td style="width:705px">Beschreibungstext, der an der Oberfläche zu diesem MBean angezeigt werden soll.</td>
+		</tr>
+		<tr>
+			<td>Implementierung</td>
+			<td>Expr</td>
+			<td style="width:705px">TL-Script Ausdruck, der ausgewertet werden soll.</td>
+		</tr>
+		<tr>
+			<td>Liste von Parametern</td>
+			<td>Parameter-Liste</td>
+			<td style="width:705px">
+			<p>Es müssen genauso viele Parameter erstellt werden, die für den TL-Script Ausdruck benötigt werden. Sie werden in genau der Reihenfolge an den TL-Script-Ausdruck weitergegeben.</p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><em>Tabelle 1: Konfiguration eines MBeans mit einem TL-Script-Ausdruck.</em></p>
+
+<p>Jeder benötigte Parameter muss erstellt und wie in <em>Tabelle 2</em> zu sehen konfiguriert werden.</p>
+
+<table border="0" class="tlDocTable" style="width:1001.78px">
+	<thead>
+		<tr>
+			<th scope="col" style="width:115px">Name</th>
+			<th scope="col" style="width:83px">Typ</th>
+			<th scope="col" style="width:703px">Beschreibung</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td style="width:115px">Name</td>
+			<td style="width:83px">String</td>
+			<td style="width:703px">Der Parameter benötigt einen Namen, der jedoch irrelevant für den TL Script Ausdruck ist.</td>
+		</tr>
+		<tr>
+			<td style="width:115px">Beschreibung</td>
+			<td style="width:83px">String</td>
+			<td style="width:703px">Beschreibungstext, der an der Oberfläche zu diesem Parameter angezeigt werden soll.</td>
+		</tr>
+		<tr>
+			<td style="width:115px">Typ</td>
+			<td style="width:83px">Boolean / Number / String</td>
+			<td style="width:703px">Der Typ des Parameters.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><em>Tabelle 2: Konfiguration eines Parameters.</em></p>
+
+<p><em></em>Nun können diese Parameter z. B. über JConsole befüllt werden. Dazu wird eine <strong>execute()-Operation </strong>angeboten, die auch das Ergebnis zurückliefert. Dieses Ergebnis wird auch gleichzeitig im <strong>Attribut result</strong> gespeichert.</p>

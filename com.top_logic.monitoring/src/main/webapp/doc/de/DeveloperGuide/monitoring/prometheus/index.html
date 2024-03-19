@@ -1,0 +1,57 @@
+<p>Über Promethus können die Attribute der MBeans über einen Zeitraum getrackt und auf einfache Art und Weise graphisch dargestellt werden. Dazu wird ein JMX Exporter benötigt.</p>
+
+<p><img src="ref:screenshot_prometheus_klein_51723.png" style="opacity:1" /></p>
+
+<p><em>Bild 1: Screenshot eines von Prometheus erstellten Graphen über die Anzahl der eingeloggten Benutzer des MBeans MonitorUser.</em></p>
+
+<h2>Starten des Prometheus Java Agent</h2>
+
+<p>Zunächst muss der gewünschte <strong>JMX Prometheus Java Agent</strong> heruntergeladen werden. Durch ihn werden die Daten der MBeans exportiert.</p>
+
+<p><a href="https://github.com/prometheus/jmx_exporter/releases">https://github.com/prometheus/jmx_exporter/releases</a></p>
+
+<p>Des weiteren wird eine Konfiguration benötigt. Eine minimale <strong>Konfiguration config.yaml</strong> sieht wie folgt aus:</p>
+
+<pre>
+<code class="language-xml">rules:
+- pattern: ".*"</code></pre>
+
+<p>Zum Starten kann in Eclipse eine <strong>Launch Konfiguration</strong> geschrieben werden. Dazu muss</p>
+
+<pre>
+<code>-javaagent:Pfad_zum_Java_Agent=Portnummer:Pfad_zur_Konfiguration</code></pre>
+
+<p>in die entsprechenden <strong>VM Argumente</strong> eingetragen werden. <em>Pfad_zum_Java_Agent</em>, <em>Portnummer</em> und <em>Pfad_zur_Konfiguration</em> sind hierbei zu ersetzen.</p>
+
+<p>Nach dem Start der Applikation können die <strong>Metriken</strong> können nun unter</p>
+
+<pre>
+<code>http://localhost:Portnummer/metrics</code></pre>
+
+<p>eingesehen werden.</p>
+
+<h2>Prometheus starten</h2>
+
+<p>Als erstes muss Prometheus heruntergeladen werden.</p>
+
+<p><a href="https://prometheus.io/download/">https://prometheus.io/download/</a></p>
+
+<p>In der <strong>prometheus.yml</strong> kann nun zusätzlich der JMX Exporter konfiguriert werden:</p>
+
+<pre>
+<code class="language-xml">- job_name: 'jmx-exporter'
+    static_configs:
+      - targets: ['localhost:8080']</code></pre>
+
+<p>Hier ist als Target die Applikation anzugeben von der die Daten der MBeans entnommen werden können.</p>
+
+<p>Der nächste Schritt ist das Starten von Prometheus. Standardmäßig ist Prometheus nun unter</p>
+
+<pre>
+<code>http://localhost:9090</code></pre>
+
+<p>erreichbar.</p>
+
+<p><img src="ref:screenshot_prometheus_erklaerung_klein_23848.png" style="opacity:1" /></p>
+
+<p><em>Bild 2: Erklärung der Prometheus-Oberfläche. 1) Auswählen der Metrik. 2) Laden der Metrik. 3) Tab zur graphischen Auswertung. 4) Beobachtungszeit. 5) Startzeitpunkt. 6) Auswertungsintervall. 7) Verschiedene Darstellungen.</em></p>

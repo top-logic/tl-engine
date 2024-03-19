@@ -1,0 +1,192 @@
+<p>​Um eigene Dynamic MBeans in Top Logic zu erzeugen, muss die abstrakte Klasse DynamicMBeanElement erweitert werden.</p>
+
+<h2>Konstruktor</h2>
+
+<p>Damit auch die Werte der jeweiligen Konfigurationen berücksichtigt werden können, muss jede Dynamic MBean selbst die Methode</p>
+
+<pre>
+<code class="language-java">buildDynamicMBeanInfo(config)</code></pre>
+
+<p>der Oberklasse in ihrem Konstruktor aufrufen.</p>
+
+<h2>ConstructorInfo</h2>
+
+<p>Konstruktoren, die dem MBean zugehörig angezeigt und beschrieben werden sollen, müssen als ConstructorInfo erstellt und registriert werden.</p>
+
+<pre>
+<code class="language-java">MBeanConstructorInfo[] createConstructorInfo()</code></pre>
+
+<h2>AttributeInfo</h2>
+
+<p>Alle Attribute, die das MBean zur Verfügung stellen soll, müssen als Array über die Methode</p>
+
+<pre>
+<code class="language-java">MBeanAttributeInfo[] createAttributeInfo()</code></pre>
+
+<p>zurück gegeben werden.</p>
+
+<p>Ein MBeanAttributeInfo wird aus folgenden Eigenschaften gebaut:</p>
+
+<table border="0" class="tlDocTable" style="width:847.778px">
+	<thead>
+		<tr>
+			<th scope="col" style="width:123px">Name</th>
+			<th scope="col" style="width:28px">Typ</th>
+			<th scope="col" style="width:569px">Beschreibung</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td style="width:123px">name</td>
+			<td style="width:28px">String</td>
+			<td style="width:569px">Methodenname ohne Prefix (get/is/set).</td>
+		</tr>
+		<tr>
+			<td style="width:123px">type</td>
+			<td style="width:28px">String</td>
+			<td style="width:569px">Klasse des Attributes.</td>
+		</tr>
+		<tr>
+			<td style="width:123px">description</td>
+			<td style="width:28px">String</td>
+			<td style="width:569px">Beschreibungstext, der an der Oberfläche zu diesem Attribut angezeigt werden soll.</td>
+		</tr>
+		<tr>
+			<td style="width:123px">isReadable</td>
+			<td style="width:28px">Boolean</td>
+			<td style="width:569px">Gibt es einen Getter?</td>
+		</tr>
+		<tr>
+			<td style="width:123px">isWritable</td>
+			<td style="width:28px">Boolean</td>
+			<td style="width:569px">Gibt es einen Setter?</td>
+		</tr>
+		<tr>
+			<td style="width:123px">isIs</td>
+			<td style="width:28px">Boolean</td>
+			<td style="width:569px">Beginnt der Getter mit einem "is"?</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><em>Tabelle 1: Eigenschaften des MBeanAttributeInfo.</em></p>
+
+<p>Über Java-Reflexion werden die entsprechenden Methoden gesucht und aufgerufen.</p>
+
+<h2>OperationInfo</h2>
+
+<p>Alle öffentlichen Methoden (mit Ausnahme der Getter und Setter), die über das MBean angesteuert werden können müssen über die Methode</p>
+
+<pre>
+<code class="language-java">MBeanOperationInfo[] createOperationInfo()</code></pre>
+
+<p>zurückgegeben werden.</p>
+
+<p>Ein MBeanOperationInfo besteht aus folgenden Eigenschaften:</p>
+
+<table border="0" class="tlDocTable" style="width:849.778px">
+	<thead>
+		<tr>
+			<th scope="col" style="width:120px">Name</th>
+			<th scope="col" style="width:124px"> </th>
+			<th scope="col" style="width:476px"> </th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td style="width:120px">name</td>
+			<td style="width:124px">String</td>
+			<td style="width:476px">Methodenname.</td>
+		</tr>
+		<tr>
+			<td style="width:120px">description</td>
+			<td style="width:124px">String</td>
+			<td style="width:476px">Beschreibungstext, der an der Oberfläche zu diesem Attribut angezeigt werden soll.</td>
+		</tr>
+		<tr>
+			<td style="width:120px">signature</td>
+			<td style="width:124px">MBeanParameterInfo[]</td>
+			<td style="width:476px">Menge der Parameter der Methode.</td>
+		</tr>
+		<tr>
+			<td style="width:120px">type</td>
+			<td style="width:124px">String</td>
+			<td style="width:476px">Rückgabetyp der Methode.</td>
+		</tr>
+		<tr>
+			<td style="width:120px">impact</td>
+			<td style="width:124px">int</td>
+			<td style="width:476px">
+			<p>Auswirkungen der Methode:</p>
+
+			<ul>
+				<li>INFO (gibt einen Wert zurück, aber verändert nichts),</li>
+				<li>ACTION (verändert einen Wert, aber gibt nichts zurück),</li>
+				<li>ACTION_INFO (verändert einen Wert und gibt etwas zurück),</li>
+				<li>UNKNOWN (alles andere).</li>
+			</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><em>Tabelle 2: Eigenschaften des MBeanOperationInfo.</em></p>
+
+<p>Für die einzelnen Parameter müssen MBeanParameterInfo Objekte erstellt werden.</p>
+
+<table border="0" class="tlDocTable" style="width:844.778px">
+	<thead>
+		<tr>
+			<th scope="col" style="width:120px"> </th>
+			<th scope="col" style="width:12px"> </th>
+			<th scope="col" style="width:583px"> </th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td style="width:120px">name</td>
+			<td style="width:12px">String</td>
+			<td style="width:583px">Name des Parameters.</td>
+		</tr>
+		<tr>
+			<td style="width:120px">type</td>
+			<td style="width:12px">String</td>
+			<td style="width:583px">Typ des Parameters.</td>
+		</tr>
+		<tr>
+			<td style="width:120px">description</td>
+			<td style="width:12px">String</td>
+			<td style="width:583px">Beschreibungstext, der an der Oberfläche zu diesem Attribut angezeigt werden soll.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><em>Tabelle 3: Eigenschaften des MBeanParameterInfo.</em></p>
+
+<h2>Konfiguration</h2>
+
+<p>Außerdem muss die Koniguration des neuen Dynamic MBean <strong>DynamicMBeanElement.Config</strong> erweitern, um die Namens-Eigenschaft mit einem eigenen Default überschreiben zu können, da jeder Name (<strong>ObjectName</strong>) der MBeans eindeutig sein muss. Ein Name besteht dabei aus folgendem Muster:</p>
+
+<pre>
+<code>domain:key=property</code></pre>
+
+<p>In Bild 1 kann gesehen werden, wie der Pfad aus Domain und Name-Property aufgebaut wird.</p>
+
+<p><img src="ref:image_23512.png" style="opacity:1" /></p>
+
+<p><em>Bild 1: Veranschaulichung des Aufbaus eines MBean-Namens.</em></p>
+
+<h2>Registrierung am MBean-Server</h2>
+
+<p>Um die MBean aufrufen zu können, muss sie am MBean-Server registriert werden. Dieser wird in der Service-Klasse TLDataBeanService erzeugt. Über die Anwendungskonfiguration können die MBeans übergeben werden.</p>
+
+<pre>
+<code class="language-xml">&lt;config service-class="com.top_logic.monitoring.data.TLDataBeanService"&gt;
+	&lt;instance class="com.top_logic.monitoring.data.TLDataBeanService"&gt;
+		&lt;mbeans&gt;
+			&lt;mbean class="..."  description="..." /&gt;
+		&lt;/mbeans&gt;
+	&lt;/instance&gt;
+&lt;/config&gt;</code></pre>
+
+<p><em>Codebeispiel 1: Konfigurationseintrag zur Registierung der MBeans.</em>​</p>

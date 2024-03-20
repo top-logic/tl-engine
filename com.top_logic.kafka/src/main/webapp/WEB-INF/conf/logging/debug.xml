@@ -129,11 +129,6 @@
 		>
 			<AppenderRef ref="FILE_APPENDER"/>
 		</Logger>
-		<Logger name="com.top_logic.base.accesscontrol.J2eeRemoteUserAuthenticationServlet"
-			level="debug"
-		>
-			<AppenderRef ref="FILE_APPENDER"/>
-		</Logger>
 
 		<Root level="info">
 			<AppenderRef ref="FILE_APPENDER">

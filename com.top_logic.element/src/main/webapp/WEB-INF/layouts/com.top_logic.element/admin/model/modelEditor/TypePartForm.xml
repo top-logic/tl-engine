@@ -95,14 +95,6 @@
 					</annotation>
 				</annotations>
 			</property>
-
-			<property name="com.top_logic.model.annotate.ui.FormatBase#format-ref">
-				<annotations>
-					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
-						fun="com.top_logic.element.layout.meta.FormatOptions"
-					/>
-				</annotations>
-			</property>
 		</customizations>
 	</modelBuilder>
 </template>

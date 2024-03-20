@@ -76,9 +76,10 @@
 								columnWidth="80px"
 							>
 								<filterProvider class="com.top_logic.layout.table.filter.NumberTableFilterProvider"
-									format-ref="percent"
 									show-option-entries="false"
-								/>
+								>
+									<format-ref format-id="percent"/>
+								</filterProvider>
 							</column>
 							<column name="long"
 								columnWidth="80px"

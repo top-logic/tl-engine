@@ -14,7 +14,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
@@ -22,11 +21,10 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.format.FormatDefinition;
-import com.top_logic.basic.format.NormalizedParsingDecimalFormat;
+import com.top_logic.basic.format.FormatFactory;
 import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.format.configured.FormatterService;
-import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.ModelKind;
@@ -50,7 +48,6 @@ import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.config.annotation.MainProperties;
 import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.TLContext;
 
 /**
  * Factory for model display annotations.
@@ -328,24 +325,14 @@ public class DisplayAnnotations {
 		if (formatAnnotation == null) {
 			return null;
 		}
-		String formatReference = formatAnnotation.getFormatReference();
-		if (!StringServices.isEmpty(formatReference)) {
-			checkNoLiteralFormat(formatAnnotation);
 
-			FormatDefinition<?> format = FormatterService.getInstance().getFormatDefinition(formatReference);
-			if (format != null) {
-				return format.getPattern();
-			} else {
-				throw handleGlobalFormatNotFound(formatReference);
-			}
+		PolymorphicConfiguration<? extends FormatFactory> definition = formatAnnotation.getDefinition();
+		if (definition != null) {
+			FormatFactory factory = TypedConfigUtil.createInstance(definition);
+			return factory.getPattern();
 		}
 
-		String literalFormat = formatAnnotation.getFormat();
-		if (!StringServices.isEmpty(literalFormat)) {
-			return literalFormat;
-		}
 		return null;
-
 	}
 
 	/**
@@ -393,26 +380,18 @@ public class DisplayAnnotations {
 			return null;
 		}
 
-		String formatReference = formatAnnotation.getFormatReference();
-		if (!StringServices.isEmpty(formatReference)) {
-			return referencedFormat(formatAnnotation, formatReference);
+		PolymorphicConfiguration<? extends FormatFactory> definition = formatAnnotation.getDefinition();
+		if (definition != null) {
+			return makeFormat(definition);
 		}
 
-		String literalFormat = formatAnnotation.getFormat();
-		if (!StringServices.isEmpty(literalFormat)) {
-			return literalDateFormat(literalFormat);
-		}
 		return null;
 	}
 
-	private static java.text.Format literalDateFormat(String literalFormat)
-			throws ConfigurationException {
-		try {
-			return CalendarUtil.newSimpleDateFormat(literalFormat);
-		} catch (IllegalArgumentException ex) {
-			// thrown by SimpleDateFormat if pattern is invalid
-			throw handleIllegalFormatPattern(literalFormat);
-		}
+	private static java.text.Format makeFormat(PolymorphicConfiguration<? extends FormatFactory> definition) {
+		FormatFactory factory = TypedConfigUtil.createInstance(definition);
+		return factory.newFormat(FormatterService.getInstance().getConfig(), ThreadContext.getTimeZone(),
+			ThreadContext.getLocale());
 	}
 
 	/**
@@ -456,60 +435,12 @@ public class DisplayAnnotations {
 			return null;
 		}
 
-		String formatReference = formatAnnotation.getFormatReference();
-		if (!StringServices.isEmpty(formatReference)) {
-			return referencedFormat(formatAnnotation, formatReference);
+		PolymorphicConfiguration<? extends FormatFactory> definition = formatAnnotation.getDefinition();
+		if (definition != null) {
+			return makeFormat(definition);
 		}
 
-		String literalFormat = formatAnnotation.getFormat();
-		if (!StringServices.isEmpty(literalFormat)) {
-			return literalNumberFormat(literalFormat);
-		}
 		return null;
-	}
-
-	private static java.text.Format literalNumberFormat(String literalFormat)
-			throws ConfigurationException {
-		try {
-			return NormalizedParsingDecimalFormat.getNormalizingInstance(literalFormat, TLContext.getLocale());
-		} catch (IllegalArgumentException ex) {
-			// thrown by DecimalFormat if pattern is invalid
-			throw handleIllegalFormatPattern(literalFormat);
-		}
-	}
-
-	private static java.text.Format referencedFormat(Format formatAnnotation, String formatReference) throws ConfigurationException {
-		checkNoLiteralFormat(formatAnnotation);
-		java.text.Format format = HTMLFormatter.getInstance().getFormat(formatReference);
-		if (format != null) {
-			return format;
-		} else {
-			throw handleGlobalFormatNotFound(formatReference);
-		}
-	}
-
-	private static void checkNoLiteralFormat(Format formatAnnotation)
-			throws ConfigurationException {
-		if (!StringServices.isEmpty(formatAnnotation.getFormat())) {
-			throw new ConfigurationException("Either a reference or a literal format must be given, not both.");
-		}
-	}
-
-	private static ConfigurationException handleGlobalFormatNotFound(String formatReference)
-			throws ConfigurationException {
-		StringBuilder error = new StringBuilder();
-		error.append("No global format found for given reference '");
-		error.append(formatReference);
-		error.append("' configured.");
-		throw new ConfigurationException(error.toString());
-	}
-
-	private static ConfigurationException handleIllegalFormatPattern(String formatPattern)
-			throws ConfigurationException {
-		StringBuilder error = new StringBuilder();
-		error.append("Invalid format pattern: ");
-		error.append(formatPattern);
-		throw new ConfigurationException(error.toString());
 	}
 
 	/**

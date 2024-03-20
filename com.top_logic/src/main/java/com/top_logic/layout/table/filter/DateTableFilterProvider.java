@@ -9,7 +9,6 @@ import java.text.Format;
 import java.util.Date;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.table.component.TableFilterProvider;
 import com.top_logic.layout.table.model.ColumnConfiguration;
@@ -33,15 +32,6 @@ public class DateTableFilterProvider extends ComparableTableFilterProvider {
 	@CalledByReflection
 	public DateTableFilterProvider(InstantiationContext context, Config config) {
 		super(context, config);
-		checkNoLiteralFormat(context, config);
-	}
-
-	private void checkNoLiteralFormat(InstantiationContext context, Config config) {
-		if (!StringServices.isEmpty(config.getFormat())) {
-			context.error("Literal format is not allowed for date table filter in '"
-				+ config.location().toString()
-				+ "'. Use format references instead.");
-		}
 	}
 
 	/**

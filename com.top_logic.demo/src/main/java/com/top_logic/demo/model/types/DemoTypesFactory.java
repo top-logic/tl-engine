@@ -347,6 +347,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#COST_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getCostDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.COST_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#CREATED_BY_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getCreatedByDemoTypesAAttr() {
@@ -806,6 +813,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLReference getWebFolderDemoTypesAAttr() {
 		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.WEB_FOLDER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#WEIGHT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getWeightDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.WEIGHT_ATTR);
 	}
 
 	/**

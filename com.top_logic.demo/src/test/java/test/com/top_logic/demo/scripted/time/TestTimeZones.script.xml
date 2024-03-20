@@ -18,11 +18,9 @@
 							template-name-comment="Create A"
 						>
 							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="TestTimeZones"
-									/>
-								</parameter>
+								<parameter name="Name"
+									value="TestTimeZones"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -249,17 +247,55 @@
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 							user-id="root"
 						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+								<path>
+									<labeled-member label="Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Anpassungen"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="0"
+										/>
+									</object>
+									<labeled-member label="Formatierung"/>
+									<labeled-member label="Definition"/>
+									<named-member name="outerContainer"/>
+									<labeled-member label="Definition"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.model.annotate.ui.GloballyDefinedFormat"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Format-Name"
+								label="Format-ID"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
 									tab-path=""
 								/>
 							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="date-time"
-							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="date-time"
+									/>
+								</values>
+							</value>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
@@ -314,11 +350,9 @@
 							template-name-comment="Create C"
 						>
 							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="TestTimeZone_C"
-									/>
-								</parameter>
+								<parameter name="Name"
+									value="TestTimeZone_C"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

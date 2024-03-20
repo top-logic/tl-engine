@@ -14,12 +14,14 @@ import java.util.TimeZone;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
  * {@link FormatDefinition} that allows to specify a separate parsing format.
  */
-public class NormalizingFormatDefinition<T extends NormalizingFormatDefinition<?>> extends FormatDefinition<T> {
+@Label("Format with separate parser")
+public class NormalizingFormatDefinition<C extends NormalizingFormatDefinition.Config<?>> extends FormatDefinition<C> {
 
 	/**
 	 * Configuration options for {@link NormalizingFormatDefinition}.
@@ -37,7 +39,10 @@ public class NormalizingFormatDefinition<T extends NormalizingFormatDefinition<?
 		 * 
 		 * <p>
 		 * The format can be specified as alternative (simplified) format to make user input more
-		 * easy.
+		 * convenient. E.g. when formatting a value with a currency symbol, it is best not to expect
+		 * the user to enter that symbol, but complete the value with the currency symbol after the
+		 * user has entered the plain number. To accomplish that, use a format with a currenc symbol
+		 * and a parsing format without it.
 		 * </p>
 		 */
 		PolymorphicConfiguration<FormatDefinition<?>> getParser();
@@ -51,7 +56,7 @@ public class NormalizingFormatDefinition<T extends NormalizingFormatDefinition<?
 	/**
 	 * Creates a {@link NormalizingFormatDefinition}.
 	 */
-	public NormalizingFormatDefinition(InstantiationContext context, Config<T> config) throws ConfigurationException {
+	public NormalizingFormatDefinition(InstantiationContext context, C config) throws ConfigurationException {
 		super(context, config);
 
 		_format = context.getInstance(config.getFormat());
@@ -59,9 +64,9 @@ public class NormalizingFormatDefinition<T extends NormalizingFormatDefinition<?
 	}
 
 	@Override
-	public Format newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
-		Format parser = _parser.newFormat(config, timeZone, locale);
-		Format format = _format.newFormat(config, timeZone, locale);
+	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
+		Format parser = _parser.newFormat(globalConfig, timeZone, locale);
+		Format format = _format.newFormat(globalConfig, timeZone, locale);
 
 		return new Format() {
 			@Override

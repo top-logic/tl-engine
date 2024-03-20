@@ -396,7 +396,9 @@
 					type="tl.core:Date"
 				>
 					<annotations>
-						<format format="d. MMMMM y"/>
+						<format>
+							<custom-date pattern="d. MMMMM y"/>
+						</format>
 						<storage-algorithm>
 							<primitive-storage>
 								<storage-mapping class="com.top_logic.element.meta.complex.DateToLongMapping"/>
@@ -431,14 +433,18 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="decimal"/>
+						<format>
+							<format-ref format-id="decimal"/>
+						</format>
 					</annotations>
 				</property>
 				<property name="floatPercent"
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="percent"/>
+						<format>
+							<format-ref format-id="percent"/>
+						</format>
 						<input-size value="4"/>
 					</annotations>
 				</property>
@@ -446,7 +452,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format="#,###,###0.000"/>
+						<format>
+							<decimal pattern="#,###,###0.000"/>
+						</format>
 						<value-range
 							max="10.0"
 							min="-10.0"
@@ -864,6 +872,34 @@
     resource(icon:"css:fas fa-search-plus", label:#("Search me on Google!"@en, "Such mich mit Google!"@de), url:"http://www.google.com/search?q=" + $x.get(`DemoTypes:A#name`))]]></expr>
 							</query>
 						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="cost"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format>
+							<format-ref format-id="euro"/>
+						</format>
+					</annotations>
+				</property>
+				<property name="weight"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<format>
+							<normalizing-format>
+								<format class="com.top_logic.basic.format.DecimalFormatDefinition"
+									normalize="true"
+									pattern="#,###,##0 g"
+									result-type="long"
+								/>
+								<parser class="com.top_logic.basic.format.NumberFormatDefinition"
+									result-type="long"
+									style="integer"
+								/>
+							</normalizing-format>
+						</format>
 					</annotations>
 				</property>
 			</attributes>
@@ -1674,7 +1710,9 @@
 					type="tl.core:Date"
 				>
 					<annotations>
-						<format format="d. MMMMM y"/>
+						<format>
+							<custom-date pattern="d. MMMMM y"/>
+						</format>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>
@@ -1755,7 +1793,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="decimal"/>
+						<format>
+							<format-ref format-id="decimal"/>
+						</format>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>
@@ -1772,7 +1812,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format-ref="percent"/>
+						<format>
+							<format-ref format-id="percent"/>
+						</format>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>
@@ -1789,7 +1831,9 @@
 					type="tl.core:Double"
 				>
 					<annotations>
-						<format format="#,###,###0.000"/>
+						<format>
+							<decimal pattern="#,###,###0.000"/>
+						</format>
 						<value-range
 							max="10.0"
 							min="-10.0"

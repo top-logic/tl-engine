@@ -23,7 +23,6 @@ import java.util.TimeZone;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.MapUtil;
-import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.format.FormatConfig;
 import com.top_logic.basic.format.FormatDefinition;
 import com.top_logic.basic.time.CalendarUtil;
@@ -34,19 +33,6 @@ import com.top_logic.basic.time.CalendarUtil;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class Formatter {
-
-	/**
-	 * Configuration options for {@link Formatter}.
-	 */
-	public interface Config extends FormatConfig {
-
-		/**
-		 * Returns the {@link FormatDefinition} known by the application indexed by its id.
-		 */
-		@Key(FormatDefinition.Config.ID_NAME)
-		Map<String, FormatDefinition<?>> getFormats();
-
-	}
 
 	/**
 	 * Default format ID for {@link #formatNumber(Number)}.
@@ -183,14 +169,17 @@ public class Formatter {
 	 *        The {@link TimeZone} of the {@link DateFormat}s encapsulated by this formatter.
 	 * @param locale
 	 *        The locale of the formats encapsulated by this formatter.
+	 * @param formats
+	 *        All defined {@link FormatDefinition}s.
 	 */
-	protected Formatter(Config config, TimeZone timeZone, Locale locale) {
+	protected Formatter(FormatConfig config, TimeZone timeZone, Locale locale,
+			Map<String, FormatDefinition<?>> formats) {
 		_timeZone = timeZone;
 		_locale = locale;
 		_formatConfig = config;
 
-		_sharedFormats = createSharedFormats(config.getFormats());
-		_wrappedFormats = createWrapperFormats(config.getFormats());
+		_sharedFormats = createSharedFormats(formats);
+		_wrappedFormats = createWrapperFormats(formats);
 
 		_sharedNumberFormat = sharedNumberFormatNonNull(NUMBER_STYLE);
 		_wrappedNumberFormat = getNumberFormatNonNull(NUMBER_STYLE);

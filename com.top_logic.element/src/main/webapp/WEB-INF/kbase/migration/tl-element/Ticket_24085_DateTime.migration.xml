@@ -21,7 +21,9 @@
 			<annotations>
 				<config-type value="DATE_TIME"/>
 				<search-range value="true"/>
-				<format format-ref="medium-date-time"/>
+				<format>
+					<format-ref format-id="medium-date-time"/>
+				</format>
 			</annotations>
 		</create-datatype>
 	</processors>

@@ -280,86 +280,166 @@
 			</instance>
 		</config>
 		 
-        <config service-class="com.top_logic.basic.format.configured.FormatterService">
-			<instance class="com.top_logic.basic.format.configured.FormatterService">
-				<lenient>true</lenient>
-				<rounding-mode>HALF_UP</rounding-mode>
-				
+   		<config service-class="com.top_logic.basic.format.configured.FormatterService">
+			<instance class="com.top_logic.basic.format.configured.FormatterService"
+				lenient="true"
+				rounding-mode="HALF_UP"
+			>
 				<formats>
-					<number id="number"
-						style="number"
-					/>
-					<number id="long"
-						result-type="long"
-						style="integer"
-					/>
-					<decimal id="double"
-						normalize="true" 
-						pattern="#,##0.00" 
-						result-type="double"
-					/>
-					
-					<normalizing-format id="percent">
-						<format class="com.top_logic.basic.format.NumberFormatDefinition" style="percent" />
-						
-						<parser class="com.top_logic.basic.format.PercentFormatDefinition">
-							<format class="com.top_logic.basic.format.NumberFormatDefinition" style="number" />
-						</parser>
-					</normalizing-format>
-
-					<date id="date"
-						lenient="default"
-						style="medium"
-					/>
-					<!--
-						Must use custom date for Excel date, because POI 
-						needs a SimpleDateFormat which is only build for a custom date 
-					-->
-					<custom-date id="excelDate"
-						pattern="dd.MM.yyyy"
-					/>
-					<time id="time"
-						lenient="default"
-						style="medium"
-					/>
-					<date-time id="date-time"
-						date-style="medium"
-						lenient="default"
-						time-style="medium"
-					/>
-					
-					<date-time id="medium-date-time">
-						<date-style>medium</date-style>
-						<time-style>short</time-style>
-						<lenient>default</lenient>
-					</date-time>
-					
-					<date id="short-date">
-						<style>short</style>
-						<lenient>default</lenient>
-					</date>
-					<time id="short-time">
-						<style>short</style>
-						<lenient>default</lenient>
-					</time>
-					<date-time id="short-date-time">
-						<date-style>short</date-style>
-						<time-style>short</time-style>
-						<lenient>default</lenient>
-					</date-time>
-					
-					<decimal id="decimal"
-						normalize="true" 
-						pattern="###,###,###,###,##0.00"
-					/>
-					<decimal id="integer"
-						result-type="long" 
-						pattern="###,###,###,###,##0"
-					/>
-					<decimal id="percentage"
-						normalize="true" 
-						pattern="###,###,###,###,##0.00 %"
-					/>
+					<format id="number">
+						<label key="dynamic.cf6ecbf4-0fdd-4f90-b9eb-9c74dff4004b">
+							<en>Number</en>
+							<de>Zahl</de>
+						</label>
+						<number style="number"/>
+					</format>
+					<format id="long">
+						<label key="dynamic.da667b7d-fc00-4fe8-9673-07da24e16e06">
+							<en>Integer (without separator)</en>
+							<de>Ganzzahl (ohne Trenner)</de>
+						</label>
+						<number
+							result-type="long"
+							style="integer"
+						/>
+					</format>
+					<format id="double">
+						<label key="dynamic.280e819c-f2bb-40bc-940e-fa05240ff68b">
+							<en>Two decimal places (thousands separator only)</en>
+							<de>Zwei Nachkommastellen (nur Tausendertrenner)</de>
+						</label>
+						<decimal
+							normalize="true"
+							pattern="#,##0.00"
+							result-type="double"
+						/>
+					</format>
+					<format id="percent">
+						<label key="dynamic.0e2f9cf6-ae45-45f4-865b-14e2d9e5ecb9">
+							<en>Percentage</en>
+							<de>Prozentangabe</de>
+						</label>
+						<normalizing-format>
+							<format class="com.top_logic.basic.format.NumberFormatDefinition"
+								style="percent"
+							/>
+							<parser class="com.top_logic.basic.format.PercentFormatDefinition">
+								<format class="com.top_logic.basic.format.NumberFormatDefinition"
+									style="number"
+								/>
+							</parser>
+						</normalizing-format>
+					</format>
+					<format id="date">
+						<label key="dynamic.428b7cc5-034b-49ab-83bd-86e8a9825664">
+							<en>Date (medium)</en>
+							<de>Datum (mittel)</de>
+						</label>
+						<date
+							lenient="default"
+							style="medium"
+						/>
+					</format>
+					<format id="excelDate">
+						<label key="dynamic.47f94c8d-2297-41da-a8c8-ba774bb988eb">
+							<en>Date (Excel)</en>
+							<de>Datum (Excel)</de>
+						</label>
+						<custom-date pattern="dd.MM.yyyy"/>
+					</format>
+					<format id="time">
+						<label key="dynamic.a2bb55b6-6023-4d6a-b090-41c06ff10bc1">
+							<en>Time (medium)</en>
+							<de>Zeit (mittel)</de>
+						</label>
+						<time
+							lenient="default"
+							style="medium"
+						/>
+					</format>
+					<format id="date-time">
+						<label key="dynamic.c9a2b682-def9-4886-94e0-9d5227b0ec57">
+							<en>Date with time (medium)</en>
+							<de>Datum mit Uhrzeit (mittel)</de>
+						</label>
+						<date-time
+							date-style="medium"
+							lenient="default"
+							time-style="medium"
+						/>
+					</format>
+					<format id="medium-date-time">
+						<label key="dynamic.fed19e2c-d43e-44c7-89a1-e0eeeb1fff28">
+							<en>Date with time (medium/short)</en>
+							<de>Datum mit Uhrzeit (mittel/kurz)</de>
+						</label>
+						<date-time
+							date-style="medium"
+							lenient="default"
+							time-style="short"
+						/>
+					</format>
+					<format id="short-date">
+						<label key="dynamic.fd38b636-24fc-4f72-8c26-4cd1d4ef91ea">
+							<en>Date (short)</en>
+							<de>Datum (kurz)</de>
+						</label>
+						<date
+							lenient="default"
+							style="short"
+						/>
+					</format>
+					<format id="short-time">
+						<label key="dynamic.a0e29947-b392-4128-8f0b-6eec3470831c">
+							<en>Time (short)</en>
+							<de>Zeit (kurz)</de>
+						</label>
+						<time
+							lenient="default"
+							style="short"
+						/>
+					</format>
+					<format id="short-date-time">
+						<label key="dynamic.c0548bad-7b16-47bf-85f5-9b212ec91143">
+							<en>Date with time (short)</en>
+							<de>Datum mit Uhrzeit (kurz)</de>
+						</label>
+						<date-time
+							date-style="short"
+							lenient="default"
+							time-style="short"
+						/>
+					</format>
+					<format id="decimal">
+						<label key="dynamic.d0cc57a7-84cc-4542-a9cf-2f2846614135">
+							<en>Two decimal places</en>
+							<de>Zwei Nachkommastellen</de>
+						</label>
+						<decimal
+							normalize="true"
+							pattern="###,###,###,###,##0.00"
+						/>
+					</format>
+					<format id="integer">
+						<label key="dynamic.0408299b-2fac-4e77-b158-d50edd9b5633">
+							<en>Integer with separators</en>
+							<de>Ganzzahl mit Trennern</de>
+						</label>
+						<decimal
+							pattern="###,###,###,###,##0"
+							result-type="long"
+						/>
+					</format>
+					<format id="percentage">
+						<label key="dynamic.e134c051-e2a1-4175-a213-50cfe712af95">
+							<en>Percentage (old)</en>
+							<de>Prozentangabe (alt)</de>
+						</label>
+						<decimal
+							normalize="true"
+							pattern="###,###,###,###,##0.00 %"
+						/>
+					</format>
 				</formats>
 			</instance>
 		</config>

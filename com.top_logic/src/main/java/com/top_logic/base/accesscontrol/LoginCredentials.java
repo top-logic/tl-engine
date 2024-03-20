@@ -16,7 +16,6 @@ import com.top_logic.knowledge.wrap.person.Person;
  * <ul>
  * <li>The obligatory username (login name of the user)</li>
  * <li>Maybe an password (Is not used in most cases of Single Sign On.)</li>
- * <li>Maybe a domainName</li>
  * <li>The person corresponding to the given username.</li>
  * </ul>
  * Depending on the method used to login (Normal / various version of Single Sign On) a different
@@ -31,22 +30,11 @@ public class LoginCredentials implements AutoCloseable {
 
 	private final char[] _password;
 
-	private final String _domainName;
-
 	private final Person _person;
 
 	/**
-	 * @param username
-	 *        Must not be <code>null</code> or the empty string.
-	 * @throws LoginDeniedException
-	 *         If the userName is <code>null</code>, or resolving a person with that name throws
-	 *         a {@link LoginDeniedException}.
-	 */
-	public static LoginCredentials fromUsername(String username) {
-		return new LoginCredentials(username, null, null);
-	}
-
-	/**
+	 * Creates a {@link LoginCredentials} for the {@link Person} with the given name and password.
+	 * 
 	 * @param username
 	 *        Must not be <code>null</code> or the empty string.
 	 * @throws LoginDeniedException
@@ -54,10 +42,12 @@ public class LoginCredentials implements AutoCloseable {
 	 *         {@link LoginDeniedException}.
 	 */
 	public static LoginCredentials fromUsernameAndPassword(String username, char[] password) {
-		return new LoginCredentials(username, password, null);
+		return new LoginCredentials(username, password);
 	}
 
 	/**
+	 * Creates a {@link LoginCredentials} for the given {@link Person} with the given password.
+	 * 
 	 * @param user
 	 *        Must be an {@link Person#isAlive() alive} not <code>null</code> person.
 	 * 
@@ -69,14 +59,16 @@ public class LoginCredentials implements AutoCloseable {
 	}
 
 	/**
-	 * @param username
-	 *        Must not be <code>null</code> or the empty string.
+	 * Creates a {@link LoginCredentials} for the given {@link Person} without password.
+	 * 
+	 * @param user
+	 *        Must be an {@link Person#isAlive() alive} not <code>null</code> person.
+	 * 
 	 * @throws LoginDeniedException
-	 *         If the userName is <code>null</code>, or resolving a person with that name throws
-	 *         a {@link LoginDeniedException}.
+	 *         If the user is <code>null</code> or not alive.
 	 */
-	public static LoginCredentials fromUsernameAndDomain(String username, String domain) {
-		return new LoginCredentials(username, null, domain);
+	public static LoginCredentials fromUser(Person user) {
+		return new LoginCredentials(user, null);
 	}
 
 	/**
@@ -92,7 +84,6 @@ public class LoginCredentials implements AutoCloseable {
 		_person = checkPerson(user);
 		_username = _person.getName();
 		_password = password;
-		_domainName = null;
 	}
 
 	/**
@@ -100,17 +91,14 @@ public class LoginCredentials implements AutoCloseable {
 	 *        Must not be <code>null</code> or the empty string.
 	 * @param password
 	 *        Is allowed to be <code>null</code>.
-	 * @param domainName
-	 *        Is allowed to be <code>null</code>.
 	 * @throws LoginDeniedException
 	 *         If the userName is <code>null</code>, or resolving a person with that name throws
 	 *         a {@link LoginDeniedException}.
 	 */
-	protected LoginCredentials(String username, char[] password, String domainName) {
+	protected LoginCredentials(String username, char[] password) {
 		_person = retrievePersonChecked(username);
 		_username = username;
 		_password = password;
-		_domainName = domainName;
 	}
 
 	/** Never <code>null</code>. */
@@ -126,11 +114,6 @@ public class LoginCredentials implements AutoCloseable {
 	/** Can be <code>null</code> */
 	public char[] getPassword() {
 		return _password;
-	}
-
-	/** Can be <code>null</code> */
-	public String getDomainName() {
-		return _domainName;
 	}
 
 	/**

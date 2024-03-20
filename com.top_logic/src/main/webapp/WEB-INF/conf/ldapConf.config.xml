@@ -11,8 +11,6 @@
 						id="LdapSecurity"
 						class="com.top_logic.base.security.device.ldap.LDAPAuthenticationAccessDevice"
 						read-only="true"
-						allow-ext-authentication="true"
-						domain="%LDAP_DOMAIN%"
 					>
 						<access-service
 							parse-nested-groups="%LDAP_NESTED_GROUPS%"

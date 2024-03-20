@@ -19,6 +19,7 @@ import org.pac4j.core.profile.UserProfile;
 import org.pac4j.jee.filter.SecurityFilter;
 
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
+import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
@@ -54,10 +55,10 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 
 		String clientName = profile.getClientName();
 		Pac4jConfigFactory<?> pac4j = Pac4jConfigFactory.getInstance();
-		String domain = pac4j.getDomain(clientName);
 		UserNameExtractor userNameExtractor = pac4j.getUserNameExtractor(clientName);
 		String userName = userNameExtractor.getUserName((CommonProfile) profile);
-		return LoginCredentials.fromUsernameAndDomain(userName, domain);
+		ExternalUserMapping userMapping = pac4j.getUserMapping(clientName);
+		return LoginCredentials.fromUser(userMapping.findAccountForExternalName(userName));
 	}
 	
 }

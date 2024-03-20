@@ -18,8 +18,6 @@ public interface ExternalAuthentication extends ConfigurationItem {
 
 	String XML_KEY_EXTAUTH_ACTIVATE = "isEnabled";
 
-	String XML_KEY_ALLOW_NO_DOMAIN = "allowNoDomain";
-
 	String XML_KEY_REUSE_SESSION = "reuseSession";
 
 	@Name(XML_KEY_REQUEST_HEADER)
@@ -27,9 +25,6 @@ public interface ExternalAuthentication extends ConfigurationItem {
 
 	@Name(XML_KEY_EXTAUTH_ACTIVATE)
 	boolean getIsEnabled();
-
-	@Name(XML_KEY_ALLOW_NO_DOMAIN)
-	boolean getAllowNoDomain();
 
 	@Name(XML_KEY_REUSE_SESSION)
 	boolean getReuseSession();

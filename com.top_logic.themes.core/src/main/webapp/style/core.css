@@ -1827,29 +1827,33 @@ span.ltcCounting input {
 	width: 16rem;
 	overflow: hidden;
 	cursor: pointer;
+	position: relative;
 }
 
-.card:hover {
-	box-shadow: var(--shadow-menu);
+.card:active {
 	background-color: var(--layer-active);
 }
 
-.card:hover .previewBoxOuter {
+.card:active .previewBoxOuter {
 	background-color: var(--background-active);
 }
 
-.card:hover {
-	box-shadow: var(--shadow-menu);
+.card:active h5.card-title,
+.card:active .card-text {
 	background-color: var(--layer-active);
 }
 
-.card:hover h5.card-title,
-.card:hover .card-text {
-	background-color: var(--layer-active);
+.card:hover {
+	box-shadow: var(--shadow-menu);
+}
+
+.card .cButton {
+	position: absolute;
+	right: var(--spacing-03);
+	top: var(--spacing-03);
 }
 
 .previewBoxOuter {
-    order: 1;
     width: 100%;
     height: 0;
     padding-bottom: 100%;

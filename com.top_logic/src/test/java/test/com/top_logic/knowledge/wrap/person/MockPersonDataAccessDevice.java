@@ -93,11 +93,6 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public String getDomainName() {
-		return _config.getDomain();
-	}
-
-	@Override
 	public List<UserInterface> getAllUserData() {
 		return availableUsers;
 	}

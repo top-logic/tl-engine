@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 
@@ -27,26 +26,8 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 */
 	public interface Config<I extends PersonDataAccessDevice> extends SecurityDevice.Config<I> {
 
-		/** @see #getDomain() */
-		String DOMAIN_ATTRIBUTE = "domain";
-
-		/**
-		 * Configuration name for option
-		 * {@link Config#isAllowExtAuthentication}.
-		 */
-		String ALLOW_EXT_AUTHENTICATION_PROPERTY = "allow-ext-authentication";
-
 		/** Configuration name for option {@link Config#isReadOnly()}. */
 		String READ_ONLY_PROPERTY = "read-only";
-
-		/**
-		 * Domain name of the device.
-		 * 
-		 * @see PersonDataAccessDevice#getDomainName()
-		 */
-		@Name(DOMAIN_ATTRIBUTE)
-		@Nullable
-		String getDomain();
 
 		/**
 		 * Whether this {@link PersonDataAccessDevice} is read-only.
@@ -60,29 +41,6 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 		@Name(READ_ONLY_PROPERTY)
 		boolean isReadOnly();
 
-		/**
-		 * Whether users of this device may be granted access to the system trusting an external
-		 * authentication system (such as authentication done by the servlet container).
-		 */
-		@Name(ALLOW_EXT_AUTHENTICATION_PROPERTY)
-		boolean isAllowExtAuthentication();
-
-	}
-
-	/**
-	 * The domain name of this device.
-	 * 
-	 * <p>
-	 * A device associates its domain name to users managed by the device. This may be used to
-	 * restrict authentication methods to users associated with certain domains.
-	 * </p>
-	 * 
-	 * <p>
-	 * A value of <code>null</code> means not to associate any domain to managed users.
-	 * </p>
-	 */
-	default String getDomainName() {
-		return ((Config<?>) getConfig()).getDomain();
 	}
 
 	/**
@@ -111,13 +69,6 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 */
 	default boolean isReadOnly() {
 		return ((Config<?>) getConfig()).isReadOnly();
-	}
-
-	/**
-	 * @see Config#isAllowExtAuthentication()
-	 */
-	default boolean allowExternalAuthentication() {
-		return ((Config<?>) getConfig()).isAllowExtAuthentication();
 	}
 
 	/**

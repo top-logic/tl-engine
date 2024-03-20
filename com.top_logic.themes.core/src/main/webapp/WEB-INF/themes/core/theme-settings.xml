@@ -232,6 +232,9 @@
 	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
 		value="css:bi bi-list"
 	/>
+	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.BURGER_COMMANDS_ICONS"
+		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
+	/>
 	<icon name="com.top_logic.layout.basic.Icons.BUTTON_REFRESH"
 		expr="%ICONS_BUTTON_REFRESH%"
 	/>
@@ -1788,6 +1791,9 @@
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.PDF_MISSING"
 		value="bi bi-question-square-fill missingPDFIcon"
+	/>
+	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.HIDE_TILE_COMMAND"
+		value="css:far fa-eye-slash"
 	/>
 
 	<!-- Style Tokens -->

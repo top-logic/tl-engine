@@ -15,10 +15,6 @@ com.top_logic.base.accesscontrol.ExternalAuthenticationServlet.java: Missing doc
 com.top_logic.base.accesscontrol.ExternalAuthenticationServlet.java: Missing documentation: com.top_logic.base.accesscontrol.ExternalAuthenticationServlet.isExtAuthEnabled
 com.top_logic.base.accesscontrol.Login.java: Invalid camel case word 'InMaintenanceModeException', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.Login.java: Missing documentation: com.top_logic.base.accesscontrol.Login.login
-com.top_logic.base.accesscontrol.LoginCredentials.java: Missing documentation: com.top_logic.base.accesscontrol.LoginCredentials.fromUserAndPassword
-com.top_logic.base.accesscontrol.LoginCredentials.java: Missing documentation: com.top_logic.base.accesscontrol.LoginCredentials.fromUsername
-com.top_logic.base.accesscontrol.LoginCredentials.java: Missing documentation: com.top_logic.base.accesscontrol.LoginCredentials.fromUsernameAndDomain
-com.top_logic.base.accesscontrol.LoginCredentials.java: Missing documentation: com.top_logic.base.accesscontrol.LoginCredentials.fromUsernameAndPassword
 com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'AuthenticationService', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'DispatcherService', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'LoginErrorPage', this may only be used within JavaDoc links or HTML code tags.

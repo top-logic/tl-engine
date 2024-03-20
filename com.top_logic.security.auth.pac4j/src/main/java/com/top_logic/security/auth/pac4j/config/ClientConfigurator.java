@@ -9,14 +9,16 @@ import javax.servlet.ServletContext;
 
 import org.pac4j.core.client.Client;
 
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
+import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Configurable factory for authentication {@link Client} from the pac4j library.
@@ -36,11 +38,6 @@ public interface ClientConfigurator {
 		String NAME = "name";
 
 		/**
-		 * @see #getDomain()
-		 */
-		String DOMAIN = "domain";
-
-		/**
 		 * The {@link Client#getName() name} of the authentication client.
 		 * 
 		 * <p>
@@ -56,33 +53,20 @@ public interface ClientConfigurator {
 		public String getName();
 
 		/**
-		 * The <i>TopLogic</i> authentication domain name, the client is used for.
-		 * 
-		 * <p>
-		 * If not specified, the value defaults to {@link #getName()}.
-		 * </p>
-		 * 
-		 * <p>
-		 * A user that is authenticated by this client must be found in the <i>TopLogic</i> domain
-		 * with the configured name to be accepted by the system. To be concrete, the user that is
-		 * authenticated by this client must be managed by a {@link PersonDataAccessDevice} with the
-		 * same domain name as given here.
-		 * </p>
-		 * 
-		 * @see Pac4jConfigFactory#getDomain(String)
-		 * @see PersonDataAccessDevice#getDomainName()
-		 */
-		@Name(DOMAIN)
-		@Nullable
-		public String getDomain();
-
-		/**
 		 * Strategy for extracting a local user name from the authentication result.
 		 */
 		@InstanceFormat
 		@InstanceDefault(DefaultUserNameExtractor.class)
 		@ImplementationClassDefault(ConfigurableUserNameExtractor.class)
 		UserNameExtractor getUserNameExtractor();
+
+		/**
+		 * Algorithm retrieving the {@link Person} for the user name in the authentication system.
+		 */
+		@InstanceFormat
+		@NonNullable
+		@InstanceDefault(DefaultExternalUserMapping.class)
+		ExternalUserMapping getUserMapping();
 
 	}
 

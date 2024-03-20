@@ -6,7 +6,6 @@
         <entry name="%LDAP_PRINCIPAL%" value="you@your.domain"/>
         <entry name="%LDAP_CREDENTIAL%" value="your-password"/>
         
-        <entry name="%LDAP_DOMAIN%" value="YOUR_DOMAIN"/>
         <entry name="%LDAP_BASE_DN%" value="DC=YourDC"/>
         <entry name="%LDAP_FILTER%" value="(objectClass=Person)" comment="Filter is applied to group members. When no group given, this query alone is used to determine user entries"/>
         

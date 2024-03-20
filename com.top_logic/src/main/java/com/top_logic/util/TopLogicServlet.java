@@ -311,7 +311,7 @@ public class TopLogicServlet extends HttpServlet {
 	 *        the current {@link DisplayContext}
 	 */
 	protected void doPerformanceMeasuring(long startTime, TLInteractionContext aContext) {
-		if (PerformanceMonitor.isEnabled()) {
+		if (PerformanceMonitor.isEnabled() && aContext != null) {
 			ProcessingInfo processingInfo = aContext.getProcessingInfo();
 			ResKey commandInfo = processingInfo.getCommandName();
 			Object contextInfo = processingInfo.getComponentName();

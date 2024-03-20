@@ -136,7 +136,7 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	@Override
 	public boolean synthesizeModelEvents() {
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		if (subSession.isLocked()) {
+		if (subSession == null || subSession.isLocked()) {
 			/* Sub session is currently locked. No updates must occur. */
 			return false;
 		}

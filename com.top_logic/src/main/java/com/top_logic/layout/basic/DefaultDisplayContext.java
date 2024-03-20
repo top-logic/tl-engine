@@ -134,6 +134,16 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 		return getDisplayContext(pageContext.getRequest());
 	}
 	
+	/**
+	 * Whether a {@link DisplayContext} is currently available.
+	 */
+	public static boolean hasDisplayContext() {
+		return hasDisplayContext(null);
+	}
+
+	/**
+	 * Whether a {@link DisplayContext} is available for the given request.
+	 */
 	public static boolean hasDisplayContext(HttpServletRequest request) {
 		return lookupDisplayContext(request) != null;
 	}

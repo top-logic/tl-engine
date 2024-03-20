@@ -70,7 +70,7 @@ public abstract class TaskListeningTreeComponent extends AbstractTaskTreeTableCo
 
 	@Override
 	public boolean isModelValid() {
-		return hasTreeTableData() && _modelValid && !_updates.hasNext();
+		return super.isModelValid() && _modelValid && !_updates.hasNext();
 	}
 
 	/**

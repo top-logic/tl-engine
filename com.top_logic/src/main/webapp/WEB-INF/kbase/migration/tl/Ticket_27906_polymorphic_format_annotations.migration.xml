@@ -12,27 +12,10 @@
 		/>
 	</dependencies>
 	<processors>
-		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
-			transform="/WEB-INF/kbase/migration/tl/Ticket_27906_polymorphic_format_annotations.model.xslt"
-		/>
-		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
-			column="annotations"
-			table="MetaAttribute"
-			transform="/WEB-INF/kbase/migration/tl/Ticket_27906_polymorphic_format_annotations.model.xslt"
-		/>
-		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
-			column="annotations"
-			table="TLDatatype"
-			transform="/WEB-INF/kbase/migration/tl/Ticket_27906_polymorphic_format_annotations.model.xslt"
-		/>
 		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
 			column="arguments"
 			table="TemplateLayouts"
 			transform="/WEB-INF/kbase/migration/tl/Ticket_27906_polymorphic_format_annotations.model.xslt"
 		/>
 	</processors>
-	<migration>
-		<type-mapping class=""/>
-	</migration>
-	<post-processors/>
 </migration>

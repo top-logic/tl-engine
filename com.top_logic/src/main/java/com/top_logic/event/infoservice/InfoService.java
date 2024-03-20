@@ -85,12 +85,13 @@ public class InfoService {
 	 */
 	public static void logError(DisplayContext context, ResKey userMessage, String logMessage,
 			Throwable throwable, Object caller) {
-		if (!context.isSet(InfoService.ERROR_DISPLAYED)) {
-			String errorDetail = errorDetail(logMessage, throwable);
-			Logger.error(errorDetail, throwable, caller);
-
-			showError(new InfoServiceItemMessageFragment(userMessage, ResKey.text(errorDetail)));
-			context.set(InfoService.ERROR_DISPLAYED, true);
+		String errorDetail = errorDetail(logMessage, throwable);
+		Logger.error(errorDetail, throwable, caller);
+		if (context != null) {
+			if (!context.isSet(InfoService.ERROR_DISPLAYED)) {
+				showError(new InfoServiceItemMessageFragment(userMessage, ResKey.text(errorDetail)));
+				context.set(InfoService.ERROR_DISPLAYED, true);
+			}
 		}
 	}
 
@@ -329,6 +330,9 @@ public class InfoService {
 	 * Shows a {@link HTMLFragment} as item in info area.
 	 */
 	public static void show(HTMLFragment infoItem) {
+		if (!DefaultDisplayContext.hasDisplayContext()) {
+			return;
+		}
 		getLogEntries().add(infoItem);
 	}
 

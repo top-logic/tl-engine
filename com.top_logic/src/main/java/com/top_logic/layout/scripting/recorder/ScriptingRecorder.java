@@ -255,7 +255,11 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	 * Whether the script recorder is currently recording actions.
 	 */
 	public static boolean isRecordingActive() {
-		return isEnabled() && TLContextManager.getSession().get(RECORDING_ACTIVE);
+		if (!isEnabled()) {
+			return false;
+		}
+		TLSessionContext session = TLContextManager.getSession();
+		return session != null && session.get(RECORDING_ACTIVE);
 	}
 
 	/**

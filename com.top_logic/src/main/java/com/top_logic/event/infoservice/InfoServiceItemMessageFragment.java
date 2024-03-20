@@ -8,12 +8,10 @@ package com.top_logic.event.infoservice;
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.WithPropertiesDelegate;
 import com.top_logic.layout.basic.WithPropertiesDelegateFactory;
@@ -30,7 +28,7 @@ public class InfoServiceItemMessageFragment extends WithPropertiesBase implement
 
 	private HTMLFragment _description;
 
-	private String _detail;
+	private HTMLFragment _detail;
 
 	private static final WithPropertiesDelegate DELEGATE =
 		WithPropertiesDelegateFactory.lookup(InfoServiceItemMessageFragment.class);
@@ -72,21 +70,7 @@ public class InfoServiceItemMessageFragment extends WithPropertiesBase implement
 	public InfoServiceItemMessageFragment(HTMLFragment description, HTMLFragment detail) {
 		super(DELEGATE);
 		_description = description;
-		_detail = bufferDetail(detail);
-	}
-
-	private String bufferDetail(HTMLFragment detail) {
-		if (detail == null) {
-			return "";
-		}
-		TagWriter out = new TagWriter();
-		try {
-			detail.write(DefaultDisplayContext.getDisplayContext(), out);
-		} catch (IOException ex) {
-			Logger.error(ex.getMessage(), ex, InfoServiceItemMessageFragment.class);
-			return "Failed to write details: " + ex.getMessage();
-		}
-		return out.toString();
+		_detail = detail;
 	}
 
 	private static boolean isNotEmpty(ResKey resourceKey) {
@@ -113,7 +97,7 @@ public class InfoServiceItemMessageFragment extends WithPropertiesBase implement
 	 */
 	@TemplateVariable("doesDetailsExist")
 	public boolean doesDetailsExist() {
-		return !_detail.isBlank();
+		return _detail != null;
 	}
 
 	/**
@@ -127,12 +111,9 @@ public class InfoServiceItemMessageFragment extends WithPropertiesBase implement
 	/**
 	 * Writes the detailed message.
 	 */
-	@SuppressWarnings("deprecation")
 	@TemplateVariable("detailsMessage")
-	public void writeDetails(TagWriter out) throws IOException {
-		// Detail is created by the tagwriter in the constructor.
-		// The content will be quoted hence it's safe to use this method.
-		out.writeContent(_detail);
+	public void writeDetails(DisplayContext context, TagWriter out) throws IOException {
+		_detail.write(context, out);
 	}
 
 }

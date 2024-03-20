@@ -242,6 +242,28 @@ a.is-action {
 	list-style-type: none;	
 }
 
+.collapsed .frmGroupExpand::before {
+	content: none;
+}
+	
+.frmGroupExpand::before {
+	display: inline-flex;
+	vertical-align: middle;
+	border-left: 1px solid var(--border-subtle);
+	margin-right: var(--spacing-02);
+	height: calc(var(--COLLAPSIBLE_IMAGE_HEIGHT) - var(--spacing-02) * 2);
+	content: " ";
+}
+
+.dfListIcon::before {
+	display: inline-flex;
+	vertical-align: middle;
+	border-left: 1px solid var(--border-subtle);
+	margin-right: var(--spacing-02);
+	height: calc(var(--COLLAPSIBLE_IMAGE_HEIGHT) - var(--spacing-02) * 2);
+	content: " ";
+}
+
 .frmGroupExpand a {
 	color: var(--icon-primary);
 }

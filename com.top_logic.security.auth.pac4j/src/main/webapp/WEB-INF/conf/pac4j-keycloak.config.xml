@@ -11,6 +11,7 @@
 						<secret>%PAC_SECRET%</secret>
 						<base-uri>%PAC_KEYCLOAK_BASE_URI%</base-uri>
 						<realm>%PAC_KEYCLOAK_REALM%</realm>
+						<client-authentication-method>%PAC_CLIENT_AUTHENTICATION_METHOD%</client-authentication-method>
 					</keycloak>
 				</clients>
 			</instance>

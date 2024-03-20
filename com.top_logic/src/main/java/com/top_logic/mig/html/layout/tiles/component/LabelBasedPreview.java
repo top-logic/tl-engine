@@ -109,9 +109,9 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 			}
 			HTMLFragment preview = concat(
 				label,
-				commands(tile),
 				description,
-				previewContent);
+				previewContent,
+				commands(tile));
 			if (InlineList.isEmpty(errors)) {
 				if (interaction.get(ERROR).booleanValue()) {
 					return div(CSS_PREVIEW_ERROR, preview);

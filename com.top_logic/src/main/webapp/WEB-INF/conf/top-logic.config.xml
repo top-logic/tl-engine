@@ -2221,7 +2221,6 @@
 		
 		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
 			isEnabled="false"
-			allowNoDomain="false"
 			reuseSession="false"
 		/>
 		

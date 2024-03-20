@@ -334,7 +334,12 @@
 
 .fotorama__caption__wrap {
   background-color: var(--layer);
-  padding: var(--spacing-01) var(--spacing-03); }
+  padding: var(--spacing-01) var(--spacing-03);
+  font-family: 'Inter-Regular';
+  font-size: var(--body-01-font-size);
+  line-height: var(--body-01-line-height);
+  letter-spacing: var(--body-01-letter-spacing);
+}
 
 @-webkit-keyframes spinner {
   0% {
@@ -541,6 +546,10 @@
   right: -10px; }
 .fotorama__stage.fotorama__shadows--right:after, .fotorama__nav.fotorama__shadows--right:after {
   right: 0; }
+
+.fotorama__nav-wrap {
+  padding-top: var(--spacing-03);
+}
 
 .fotorama--fullscreen .fotorama__stage:before, .fotorama--fullscreen .fotorama__stage:after,
 .fotorama--fullscreen .fotorama__nav:before,

@@ -8,6 +8,7 @@
         <entry name="%PAC_DOMAIN%" value="${env:tl_pac_domain}" />
         <entry name="%PAC_CLIENT_ID%" value="${env:tl_pac_client_id}" />
         <entry name="%PAC_SECRET%" value="${env:tl_pac_secret}" />
+        <entry name="%PAC_CLIENT_AUTHENTICATION_METHOD%" value="${env:tl_pac_client_authentication_method:client_secret_basic}" />
 	</alias>
 
 	<properties>

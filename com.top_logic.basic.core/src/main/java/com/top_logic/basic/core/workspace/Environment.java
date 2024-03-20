@@ -5,6 +5,7 @@
  */
 package com.top_logic.basic.core.workspace;
 
+import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -216,8 +217,12 @@ public class Environment {
 	 * Whether this files runs within a jar file.
 	 */
 	public static boolean isJarFile() {
-		String base = Environment.class.getProtectionDomain().getCodeSource()
-			.getLocation().getFile();
+		URL location = Environment.class.getProtectionDomain().getCodeSource().getLocation();
+		if (location == null) {
+			// Happens in Tomcat 11.0 with jdk21-openjdk
+			return true;
+		}
+		String base = location.getFile();
 
 		return (base.endsWith(".jar") || base.indexOf(".jar!") > 0);
 	}

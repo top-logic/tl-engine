@@ -81,7 +81,9 @@
 					</derived-storage>
 				</storage-algorithm>
 				<delete-protected/>
-				<format format-ref="date-time"/>
+				<format>
+					<format-ref format-id="date-time"/>
+				</format>
 			</annotations>
 		</create-property>
 		<create-property name="tl.core:Revision#author"

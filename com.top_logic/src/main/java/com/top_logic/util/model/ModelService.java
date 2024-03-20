@@ -36,6 +36,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -96,7 +97,8 @@ import com.top_logic.util.model.check.StringSizeCheck;
 	PersistencyLayer.Module.class,
 	ResourcesModule.Module.class,
 	Settings.Module.class,
-	AttributeSettings.Module.class
+	AttributeSettings.Module.class,
+	FormatterService.Module.class,
 })
 public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>> implements CommitChecker {
 

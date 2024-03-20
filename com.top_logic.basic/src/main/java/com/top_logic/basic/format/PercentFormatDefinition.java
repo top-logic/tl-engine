@@ -15,11 +15,13 @@ import java.util.TimeZone;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 
 /**
  * {@link FormatDefinition} that wraps a number format with a value adjustment (division by 100.0).
  */
-public class PercentFormatDefinition extends FormatDefinition<PercentFormatDefinition> {
+@Label("Percentage format")
+public class PercentFormatDefinition extends FormatDefinition<PercentFormatDefinition.Config<?>> {
 
 	/**
 	 * Configuration options for {@link PercentFormatDefinition}.
@@ -40,7 +42,7 @@ public class PercentFormatDefinition extends FormatDefinition<PercentFormatDefin
 	/**
 	 * Creates a {@link PercentFormatDefinition}.
 	 */
-	public PercentFormatDefinition(InstantiationContext context, Config<PercentFormatDefinition> config)
+	public PercentFormatDefinition(InstantiationContext context, Config<?> config)
 			throws ConfigurationException {
 		super(context, config);
 
@@ -48,8 +50,8 @@ public class PercentFormatDefinition extends FormatDefinition<PercentFormatDefin
 	}
 
 	@Override
-	public Format newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
-		Format inner = _format.newFormat(config, timeZone, locale);
+	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
+		Format inner = _format.newFormat(globalConfig, timeZone, locale);
 		return new NumberFormat() {
 			@Override
 			public Number parse(String source, ParsePosition parsePosition) {

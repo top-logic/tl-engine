@@ -49,40 +49,72 @@
 		</config>
 	
         <config service-class="com.top_logic.basic.format.configured.FormatterService">
-			<instance class="com.top_logic.basic.format.configured.FormatterService">
+			<instance>
 				<lenient>false</lenient>
 				
 				<formats>
-					<decimal id="testDecimal"
-						normalize="true"
-						pattern="###,###,###,###,##0.00"
-						rounding-mode="HALF_UP"
-					/>
-					<decimal id="testRawDecimal"
-						normalize="false"
-						pattern="###,###,###,###,##0.00"
-						rounding-mode="HALF_UP"
-					/>
-					<decimal id="testDouble"
-						normalize="true"
-						pattern="###,###,###,###,##0.00"
-						result-type="double"
-						rounding-mode="HALF_UP"
-					/>
-					<decimal id="testLong"
-						pattern="###,###,###,###,##0"
-						result-type="long"
-						rounding-mode="HALF_UP"
-					/>
-					<custom-date id="testDateUserTime" pattern="dd.MM.yyyy HH'h'" user-time-zone="true"/>
-					<custom-date id="testDate" pattern="dd.MM.yyyy HH'h'" user-time-zone="false"/>
-					<custom-date id="testNoTimeZoneButLocale" pattern="YYYY ww dd.MM.yyyy HH:mm" user-time-zone="false"/>
-					<date-time id="testDateTime" date-style="medium" time-style="medium"/>
-					<number id="testCurrency" style="currency" />
-					<number id="testPercent" style="percent" />
-					<format id="testGeneric"
-						class="com.top_logic.basic.format.GenericFormatDefinition"
-						format-class="java.text.ChoiceFormat" pattern="1.0&lt;is 1+|2&lt;is more than 2." />
+					<format id="testDecimal">
+						<decimal
+							normalize="true"
+							pattern="###,###,###,###,##0.00"
+							rounding-mode="HALF_UP"
+						/>
+					</format>
+					
+					<format id="testRawDecimal">
+						<decimal
+							normalize="false"
+							pattern="###,###,###,###,##0.00"
+							rounding-mode="HALF_UP"
+						/>
+					</format>
+					
+					<format id="testDouble">
+						<decimal
+							normalize="true"
+							pattern="###,###,###,###,##0.00"
+							result-type="double"
+							rounding-mode="HALF_UP"
+						/>
+					</format>
+					
+					<format id="testLong">
+						<decimal
+							pattern="###,###,###,###,##0"
+							result-type="long"
+							rounding-mode="HALF_UP"
+						/>
+					</format>
+					
+					<format id="testDateUserTime">
+						<custom-date pattern="dd.MM.yyyy HH'h'" user-time-zone="true"/>
+					</format>
+					
+					<format id="testDate">
+						<custom-date pattern="dd.MM.yyyy HH'h'" user-time-zone="false"/>
+					</format>
+					
+					<format id="testNoTimeZoneButLocale">
+						<custom-date pattern="YYYY ww dd.MM.yyyy HH:mm" user-time-zone="false"/>
+					</format>
+					
+					<format id="testDateTime">
+						<date-time date-style="medium" time-style="medium"/>
+					</format>
+					
+					<format id="testCurrency">
+						<number style="currency" />
+					</format>
+					
+					<format id="testPercent">
+						<number style="percent" />
+					</format>
+					
+					<format id="testGeneric">
+						<definition
+							class="com.top_logic.basic.format.GenericFormatDefinition"
+							format-class="java.text.ChoiceFormat" pattern="1.0&lt;is 1+|2&lt;is more than 2." />
+					</format>
 				</formats>
 			</instance>
 		</config>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27906_polymorphic_format_annotations"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_27662_singleton_delete_veto"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl/Ticket_27906_polymorphic_format_annotations.model.xslt"
+		/>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="annotations"
+			table="MetaAttribute"
+			transform="/WEB-INF/kbase/migration/tl/Ticket_27906_polymorphic_format_annotations.model.xslt"
+		/>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="annotations"
+			table="TLDatatype"
+			transform="/WEB-INF/kbase/migration/tl/Ticket_27906_polymorphic_format_annotations.model.xslt"
+		/>
+	</processors>
+</migration>

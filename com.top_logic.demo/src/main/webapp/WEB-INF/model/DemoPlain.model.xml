@@ -168,7 +168,9 @@
 							type="tl.core:Double"
 						>
 							<annotations>
-								<format format="#,###,###0.000"/>
+								<format>
+									<decimal pattern="#,###,###0.000"/>
+								</format>
 								<value-range
 									max="10.0"
 									min="-10.0"

@@ -28,7 +28,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class GenericFormatDefinition extends PatternBasedFormatDefinition<GenericFormatDefinition> {
+public class GenericFormatDefinition extends PatternBasedFormatDefinition<GenericFormatDefinition.Config> {
 
 	private static final Class<?>[] FORMAT_CONSTRUCTOR_SIGNATURE = new Class[] { String.class };
 
@@ -80,13 +80,8 @@ public class GenericFormatDefinition extends PatternBasedFormatDefinition<Generi
 	}
 
 	@Override
-	protected Config config() {
-		return (Config) super.config();
-	}
-
-	@Override
 	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
-		Config config = config();
+		Config config = getConfig();
 		try {
 			Format format =
 				ConfigUtil.newInstance(config.getFormatClass(), FORMAT_CONSTRUCTOR_SIGNATURE, getPattern());

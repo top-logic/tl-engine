@@ -45,11 +45,7 @@ public interface FormatConfig extends ConfigurationItem {
 	void setLenientParsing(boolean value);
 
 	/**
-	 * The {@link RoundingMode} to use.
-	 * 
-	 * <p>
-	 * The default value is {@link RoundingMode#HALF_EVEN} (the Java built-in value).
-	 * </p>
+	 * The {@link RoundingMode} to use if a format does not define one.
 	 */
 	@Name(ROUNDING_MODE)
 	RoundingMode getRoundingMode();

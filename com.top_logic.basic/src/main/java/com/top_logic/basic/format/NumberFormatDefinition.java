@@ -14,6 +14,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 
@@ -24,7 +25,8 @@ import com.top_logic.basic.config.annotation.TagName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class NumberFormatDefinition extends FormatDefinition<NumberFormatDefinition> {
+@Label("Predefined number format")
+public class NumberFormatDefinition extends FormatDefinition<NumberFormatDefinition.Config> {
 
 	/**
 	 * Style definition of the {@link NumberFormat} to create.
@@ -109,17 +111,13 @@ public class NumberFormatDefinition extends FormatDefinition<NumberFormatDefinit
 		super(context, config);
 	}
 
-	private Config config() {
-		return (Config) getConfig();
-	}
-
 	@Override
-	public Format newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
-		return config().getResultType().adapt(createFormat(locale));
+	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
+		return getConfig().getResultType().adapt(createFormat(locale));
 	}
 
 	private NumberFormat createFormat(Locale locale) throws UnreachableAssertion {
-		switch (config().getStyle()) {
+		switch (getConfig().getStyle()) {
 			case CURRENCY:
 				return NumberFormat.getCurrencyInstance(locale);
 			case INTEGER:
@@ -129,7 +127,7 @@ public class NumberFormatDefinition extends FormatDefinition<NumberFormatDefinit
 			case PERCENT:
 				return NumberFormat.getPercentInstance(locale);
 			default:
-				throw NumberStyle.noSuchNumberStyle(config().getStyle());
+				throw NumberStyle.noSuchNumberStyle(getConfig().getStyle());
 		}
 	}
 

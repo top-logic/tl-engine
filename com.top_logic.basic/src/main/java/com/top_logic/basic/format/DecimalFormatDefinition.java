@@ -15,9 +15,11 @@ import java.util.TimeZone;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
+import com.top_logic.basic.format.configured.FormatterService;
 
 /**
  * {@link PatternBasedFormatDefinition} creating {@link DecimalFormat}s.
@@ -26,7 +28,9 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DecimalFormatDefinition extends PatternBasedFormatDefinition<DecimalFormatDefinition> {
+@Label("Decimal format")
+public class DecimalFormatDefinition<C extends DecimalFormatDefinition.Config<?>>
+		extends PatternBasedFormatDefinition<C> {
 
 	/**
 	 * Configuration interface for {@link DecimalFormatDefinition}.
@@ -34,7 +38,7 @@ public class DecimalFormatDefinition extends PatternBasedFormatDefinition<Decima
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PatternBasedFormatDefinition.Config<DecimalFormatDefinition> {
+	public interface Config<I extends DecimalFormatDefinition<?>> extends PatternBasedFormatDefinition.Config<I> {
 
 		/**
 		 * Tag name to identify {@link DecimalFormatDefinition} in a polymorphic list.
@@ -45,7 +49,7 @@ public class DecimalFormatDefinition extends PatternBasedFormatDefinition<Decima
 		 * The {@link RoundingMode} to use.
 		 * 
 		 * <p>
-		 * The default value is {@link RoundingMode#HALF_EVEN} (the Java built-in value).
+		 * The default value is defined application-wide by the {@link FormatterService}.
 		 * </p>
 		 */
 		@Nullable
@@ -82,7 +86,7 @@ public class DecimalFormatDefinition extends PatternBasedFormatDefinition<Decima
 	 * @throws ConfigurationException
 	 *         iff configuration is invalid.
 	 */
-	public DecimalFormatDefinition(InstantiationContext context, Config config) throws ConfigurationException {
+	public DecimalFormatDefinition(InstantiationContext context, C config) throws ConfigurationException {
 		super(context, config);
 
 		_roundingMode = config.getRoundingMode();
@@ -91,18 +95,21 @@ public class DecimalFormatDefinition extends PatternBasedFormatDefinition<Decima
 	}
 
 	@Override
-	protected Config config() {
-		return (Config) super.config();
-	}
-
-	@Override
-	public Format newFormat(FormatConfig config, TimeZone timeZone, Locale locale) {
-		NumberFormat format = new DecimalFormat(getPattern(), DecimalFormatSymbols.getInstance(locale));
-		format.setRoundingMode(_roundingMode == null ? config.getRoundingMode() : _roundingMode);
+	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
+		NumberFormat format = createDisplayFormat(globalConfig, locale);
 		if (_normalize) {
 			format = NormalizingFormat.newInstance(format);
 		}
 		return _resultType.adapt(format);
+	}
+
+	/**
+	 * Creates the (non-normalizing) base format.
+	 */
+	protected DecimalFormat createDisplayFormat(FormatConfig globalConfig, Locale locale) {
+		DecimalFormat displayFormat = new DecimalFormat(getPattern(), DecimalFormatSymbols.getInstance(locale));
+		displayFormat.setRoundingMode(_roundingMode == null ? globalConfig.getRoundingMode() : _roundingMode);
+		return displayFormat;
 	}
 
 }

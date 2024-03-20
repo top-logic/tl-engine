@@ -855,13 +855,13 @@
 		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="ICONS_EXPAND_ALL"
-		value="css:bi bi-chevron-expand"
+		value="css:bi bi-chevron-double-down"
 	/>
 	<icon name="ICONS_EXPAND_ALL_DISABLED"
 		expr="%ICONS_EXPAND_ALL%"
 	/>
 	<icon name="ICONS_COLLAPSE_ALL"
-		value="css:bi bi-chevron-contract"
+		value="css:bi bi-chevron-double-up"
 	/>
 	<icon name="ICONS_COLLAPSE_ALL_DISABLED"
 		expr="%ICONS_COLLAPSE_ALL%"

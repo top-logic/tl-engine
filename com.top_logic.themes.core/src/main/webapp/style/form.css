@@ -3,6 +3,11 @@
 ****	Form styles		****
 ****					****
 */
+form[name="ChangePassword_FormContext"] .cTextInput input {
+	width: 100%;
+	padding: 0;
+}
+
 .frmBody h1 {
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-04-font-size);

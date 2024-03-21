@@ -6487,9 +6487,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	border: 1px solid #DFE6F0;
 	border-radius: var(--GROUP_RADIUS);
 	margin-bottom: 10px;
-    min-width: -moz-min-content;    /* Firefox */
-    min-width: -webkit-min-content; /* Chrome */
-    min-width: min-content;
+	min-width: -moz-min-content;    /* Firefox */
+	min-width: -webkit-min-content; /* Chrome */
+	min-width: min-content;
+	height: max-content;
 }
 
 .rf_groupCell.noLegend {

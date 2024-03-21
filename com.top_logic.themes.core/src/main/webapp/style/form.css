@@ -490,6 +490,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	color: var(--text-primary);
 }
 
+.dfEntryTitle label {
+	margin-right: var(--spacing-02);
+}
+
 .dfEntryTitle.colored:hover {
 	background: var(--layer-accent-hover);
 }
@@ -498,6 +502,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .dfEntryTitle.colored:hover .lFixedRight a {
 	background: none;
 }
+
+
 
 div.dfListAdd {
 	margin-top: var(--spacing-02);
@@ -749,9 +755,10 @@ div.dfListAdd {
 	grid-gap: 0px;
 	border: 1px solid var(--border-subtle);
 	margin-top: var(--spacing-02);
-    min-width: -moz-min-content;    /* Firefox */
-    min-width: -webkit-min-content; /* Chrome */
-    min-width: min-content;
+	min-width: -moz-min-content;    /* Firefox */
+	min-width: -webkit-min-content; /* Chrome */
+	min-width: min-content;
+	height: max-content;
 }
 
 .rf_groupCell .rf_groupCell {

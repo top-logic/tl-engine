@@ -12,9 +12,12 @@ import java.util.Set;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.list.FastListElementCollectionComparator;
 import com.top_logic.layout.Accessor;
+import com.top_logic.layout.form.control.ChoiceControl;
+import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.provider.SelectControlProvider;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.table.filter.DefaultClassificationTableFilterProvider;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
@@ -107,9 +110,18 @@ public class EnumColumn extends ReferenceColumn {
 				return SelectionControlProvider.SELECTION_INSTANCE;
 			case POP_UP:
 				return SelectionControlProvider.SELECTION_INSTANCE;
-			default:
-				throw ClassificationPresentation.noSuchEnum(presentation);
+			case RADIO:
+				return (field, style) -> newChoiceControl(field, Orientation.VERTICAL);
+			case RADIO_INLINE:
+				return (field, style) -> newChoiceControl(field, Orientation.HORIZONTAL);
 		}
+		throw ClassificationPresentation.noSuchEnum(presentation);
+	}
+
+	private ChoiceControl newChoiceControl(Object field, Orientation orientation) {
+		ChoiceControl choice = new ChoiceControl((SelectField) field);
+		choice.setOrientation(orientation);
+		return choice;
 	}
 
 	private ClassificationPresentation getClassificationPresentation() {

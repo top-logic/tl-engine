@@ -819,6 +819,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String TEXT4000_ATTR = "text4000";
 
 	/**
+	 * Part <code>time</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Time</code> in configuration.
+	 * </p>
+	 */
+	String TIME_ATTR = "time";
+
+	/**
 	 * Part <code>timeUnit</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -2585,6 +2594,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void setText4000(String newValue) {
 		tUpdateByName(TEXT4000_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TIME_ATTR}.
+	 */
+	default java.util.Date getTime() {
+		return (java.util.Date) tValueByName(TIME_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TIME_ATTR}.
+	 */
+	default void setTime(java.util.Date newValue) {
+		tUpdateByName(TIME_ATTR, newValue);
 	}
 
 	/**

@@ -10,7 +10,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
-import junit.framework.TestCase;
+import junit.framework.Test;
+
+import test.com.top_logic.layout.AbstractLayoutTest;
 
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.config.ConfigurationException;
@@ -31,7 +33,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @SuppressWarnings("javadoc")
-public class TestHTMLTemplates extends TestCase {
+public class TestHTMLTemplates extends AbstractLayoutTest {
 
 	public void testTemplateExpressions() throws IOException, ConfigurationException {
 		MapWithProperties properties = new MapWithProperties();
@@ -439,6 +441,24 @@ public class TestHTMLTemplates extends TestCase {
 							new MapWithProperties().define("name", "Schulze")))));
 	}
 
+	public void testListAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>third</b>",
+			html("<b>{value[2]}</b>",
+				new MapWithProperties().define("value", Arrays.asList("first", "second", "third"))));
+	}
+
+	public void testInvalidAccess() throws ConfigurationException, IOException {
+		assertContains("Value 'entry' has no properties to access",
+			html("<b>{value.foo}</b>",
+				new MapWithProperties().define("value", "entry")));
+		assertContains("The value 'foo' is not of the expected type",
+			html("<b>{value['foo']}</b>",
+				new MapWithProperties().define("value", Collections.emptyList())));
+		assertContains("The value '3' is not of the expected type",
+			html("<b>{value[3]}</b>",
+				new MapWithProperties().define("value", new MapWithProperties())));
+	}
+
 	private String html(String template, WithProperties properties) throws IOException, ConfigurationException {
 		HTMLTemplate parsedTemplate = parse(template);
 		Set<String> accessedVariables = parsedTemplate.getVariables();
@@ -478,8 +498,8 @@ public class TestHTMLTemplates extends TestCase {
 		return writer.toString();
 	}
 
-	private DisplayContext displayContext() {
-		return null;
+	public static Test suite() {
+		return suite(TestHTMLTemplates.class);
 	}
 
 }

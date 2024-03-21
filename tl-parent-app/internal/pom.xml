@@ -166,13 +166,19 @@
 			    <dependency>
 					<groupId>com.top-logic</groupId>
 					<artifactId>bos-deepl</artifactId>
-					<version>7.7.0</version>
+					<version>0.0.27517-SNAPSHOT</version>
 			    </dependency>
 
 			    <dependency>
 			      <groupId>com.top-logic</groupId>
 			      <artifactId>bos-ldap</artifactId>
-			      <version>7.7.0</version>
+			      <version>0.0.27517-SNAPSHOT</version>
+			    </dependency>
+			    
+			    <dependency>
+			      <groupId>com.top-logic</groupId>
+			      <artifactId>bos-openid</artifactId>
+			      <version>0.0.27517-SNAPSHOT</version>
 			    </dependency>
 	  		</dependencies>
 	  	</profile>

@@ -45,9 +45,8 @@ public class EnumerationTagProvider extends AbstractReferenceTagProvider {
 				return createChoiceDisplay(member, Orientation.VERTICAL);
 			case RADIO_INLINE:
 				return createChoiceDisplay(member, Orientation.HORIZONTAL);
-			default:
-				throw ClassificationPresentation.noSuchEnum(presentation);
 		}
+		throw ClassificationPresentation.noSuchEnum(presentation);
 	}
 
 }

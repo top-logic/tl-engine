@@ -413,6 +413,32 @@ public class TestHTMLTemplates extends TestCase {
 		assertTrue(template.getVariables().contains("hasWarning"));
 	}
 
+	public void testPropertyAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>Maier</b>",
+			html("<b>{user.name}</b>",
+				new MapWithProperties().define("user", new MapWithProperties().define("name", "Maier"))));
+		assertEquals("<b>Schulze</b>",
+			html("<b>{user.senior.name}</b>",
+				new MapWithProperties().define("user",
+					new MapWithProperties()
+						.define("name", "Maier")
+						.define("senior",
+							new MapWithProperties().define("name", "Schulze")))));
+	}
+
+	public void testMapAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>Maier</b>",
+			html("<b>{user['name']}</b>",
+				new MapWithProperties().define("user", new MapWithProperties().define("name", "Maier"))));
+		assertEquals("<b>Schulze</b>",
+			html("<b>{user['senior']['name']}</b>",
+				new MapWithProperties().define("user",
+					new MapWithProperties()
+						.define("name", "Maier")
+						.define("senior",
+							new MapWithProperties().define("name", "Schulze")))));
+	}
+
 	private String html(String template, WithProperties properties) throws IOException, ConfigurationException {
 		HTMLTemplate parsedTemplate = parse(template);
 		Set<String> accessedVariables = parsedTemplate.getVariables();

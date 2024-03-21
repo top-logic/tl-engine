@@ -15,9 +15,11 @@ import com.top_logic.knowledge.wrap.list.FastListElementComparator;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
+import com.top_logic.layout.form.control.ChoiceControl;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
@@ -41,12 +43,29 @@ public class ClassificationFieldProvider extends AbstractSelectFieldProvider {
 			case POP_UP:
 			case DROP_DOWN:
 				return getDropDownField(editContext, fieldName);
+			case RADIO:
+				return getRadioField(editContext, fieldName, Orientation.VERTICAL);
+			case RADIO_INLINE:
+				return getRadioField(editContext, fieldName, Orientation.HORIZONTAL);
 			default:
 				throw ClassificationPresentation.noSuchEnum(presentation);
 		}
 	}
 
-	private FormMember getDropDownField(final EditContext editContext, String fieldName) {
+	private FormMember getRadioField(EditContext editContext, String fieldName, Orientation orientation) {
+		SelectField readioField = getDropDownField(editContext, fieldName);
+		readioField.setOptionLabelProvider(MetaResourceProvider.INSTANCE);
+		readioField.setControlProvider((field, style) -> createChoiceControl((SelectField) field, orientation));
+		return readioField;
+	}
+
+	private ChoiceControl createChoiceControl(SelectField field, Orientation orientation) {
+		ChoiceControl control = new ChoiceControl(field);
+		control.setOrientation(orientation);
+		return control;
+	}
+
+	private SelectField getDropDownField(final EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		boolean isSearch = editContext.isSearchUpdate();

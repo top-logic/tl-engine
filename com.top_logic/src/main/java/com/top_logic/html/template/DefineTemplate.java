@@ -14,13 +14,7 @@ import com.top_logic.layout.template.WithProperties;
 /**
  * {@link HTMLTemplateFragment} binding a local variable during rendering of it's content.
  */
-public class DefineTemplate implements RawTemplateFragment {
-
-	private final String _var;
-
-	private final TemplateExpression _expression;
-
-	private HTMLTemplateFragment _content;
+public class DefineTemplate extends ScopeTemplate implements RawTemplateFragment {
 
 	/**
 	 * Creates a {@link DefineTemplate}.
@@ -33,45 +27,15 @@ public class DefineTemplate implements RawTemplateFragment {
 	 *        See {@link #getContent()}.
 	 */
 	public DefineTemplate(String var, TemplateExpression expression, RawTemplateFragment content) {
-		_var = var;
-		_expression = expression;
-		_content = content;
-	}
-
-	/**
-	 * The variable to bind.
-	 */
-	public String getVar() {
-		return _var;
-	}
-
-	/**
-	 * The expression that generates the value of the variable to bind.
-	 */
-	public TemplateExpression getExpression() {
-		return _expression;
-	}
-
-	/**
-	 * The contents to render with the variable bound to the value computed by the expression.
-	 */
-	public HTMLTemplateFragment getContent() {
-		return _content;
-	}
-
-	/**
-	 * @see #getContent()
-	 */
-	public void setContent(HTMLTemplateFragment content) {
-		_content = content;
+		super(var, expression, content);
 	}
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, WithProperties properties) throws IOException {
-		LocalVariable localVariables = new LocalVariable(_var, properties);
-		Object value = _expression.eval(context, properties);
+		LocalVariable localVariables = new LocalVariable(getVar(), properties);
+		Object value = getExpression().eval(context, properties);
 		localVariables.setValue(value);
-		_content.write(context, out, localVariables);
+		getContent().write(context, out, localVariables);
 	}
 
 	@Override

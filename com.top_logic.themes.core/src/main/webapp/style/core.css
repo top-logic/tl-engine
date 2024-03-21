@@ -222,6 +222,10 @@ a.cmdLink:visited {
 	height: auto;
 }
 
+.popupEditField .cError {
+	position: relative;
+}
+
 .ace-eclipse .ace_active-line {
     background: var(--background-selected);
 }
@@ -239,6 +243,10 @@ a.cmdLink:visited {
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	border: 1px solid var(--border-subtle);
+}
+
+.error .ace_editor {
+	border: 1px solid var(--support-danger);
 }
 
 /* Adjust line height for the text area of the editor */

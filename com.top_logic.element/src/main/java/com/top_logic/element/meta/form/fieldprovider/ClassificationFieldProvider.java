@@ -15,11 +15,8 @@ import com.top_logic.knowledge.wrap.list.FastListElementComparator;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
-import com.top_logic.layout.form.control.ChoiceControl;
-import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.provider.MetaResourceProvider;
-import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
@@ -39,63 +36,35 @@ public class ClassificationFieldProvider extends AbstractSelectFieldProvider {
 			editContext.getAnnotation(ClassificationDisplay.class), editContext.isMultiple());
 		switch (presentation) {
 			case CHECKLIST:
-				return getCheckListField(editContext, fieldName);
 			case POP_UP:
 			case DROP_DOWN:
-				return getDropDownField(editContext, fieldName);
 			case RADIO:
-				return getRadioField(editContext, fieldName, Orientation.VERTICAL);
 			case RADIO_INLINE:
-				return getRadioField(editContext, fieldName, Orientation.HORIZONTAL);
+				return getSelectField(editContext, fieldName);
 		}
 		throw ClassificationPresentation.noSuchEnum(presentation);
 	}
 
-	private FormMember getRadioField(EditContext editContext, String fieldName, Orientation orientation) {
-		SelectField readioField = getDropDownField(editContext, fieldName);
-		readioField.setOptionLabelProvider(MetaResourceProvider.INSTANCE);
-		readioField.setControlProvider((field, style) -> createChoiceControl((SelectField) field, orientation));
-		return readioField;
-	}
-
-	private ChoiceControl createChoiceControl(SelectField field, Orientation orientation) {
-		ChoiceControl control = new ChoiceControl(field);
-		control.setOrientation(orientation);
-		return control;
-	}
-
-	private SelectField getDropDownField(final EditContext editContext, String fieldName) {
+	private SelectField getSelectField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		boolean isSearch = editContext.isSearchUpdate();
 
-		Constraint mandatoryChecker = isMandatory ? GenericMandatoryConstraint.SINGLETON
-			: null;
+		Constraint mandatoryChecker = isMandatory ? GenericMandatoryConstraint.SINGLETON : null;
 
 		boolean isMultiple = editContext.isMultiple();
 		boolean isOrdered = editContext.isOrdered();
 
-		SelectField selectField =
-			newSelectField(fieldName, Collections.EMPTY_LIST, isMultiple, isOrdered, isSearch, isMandatory,
-			mandatoryChecker, isDisabled, true);
-		initField(selectField, editContext);
-		return selectField;
+		SelectField field = newSelectField(fieldName, Collections.EMPTY_LIST, isMultiple, isOrdered, isSearch,
+			isMandatory, mandatoryChecker, isDisabled, true);
+		initField(field, editContext);
+		return field;
 	}
 
-	private static FormMember getCheckListField(final EditContext editContext,
-			String fieldName) {
-		boolean isDisabled = editContext.isDisabled();
-	
-		SelectField selectField = FormFactory.newSelectField(fieldName, Collections.EMPTY_LIST, true, isDisabled);
-		initField(selectField, editContext);
-		selectField.setOptionLabelProvider(MetaResourceProvider.INSTANCE);
-
-		return selectField;
-	}
-
-	private static void initField(final SelectField selectField, final EditContext editContext) {
-		selectField.setOptionModel(AttributeOperations.allOptions(editContext));
-		selectField.setOptionComparator(new FastListElementComparator(new TLCollator()));
+	private static void initField(SelectField field, EditContext editContext) {
+		field.setOptionModel(AttributeOperations.allOptions(editContext));
+		field.setOptionComparator(new FastListElementComparator(new TLCollator()));
+		field.setOptionLabelProvider(MetaResourceProvider.INSTANCE);
 	}
 
 }

@@ -51,8 +51,11 @@ public abstract class TypeSpec {
 	/** Qualified name for the core date type. */
 	public static final String DATE_TYPE = "tl.core:Date";
 
-	/** Qualified name for the core date with time type. */
+	/** Qualified name for the core date with date time type. */
 	public static final String DATE_TIME_TYPE = "tl.core:DateTime";
+
+	/** Qualified name for the core date with time type. */
+	public static final String TIME_TYPE = "tl.core:Time";
 
 	/** Qualified name for the core binary type. */
 	public static final String BINARY_TYPE = "tl.core:Binary";

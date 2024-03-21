@@ -18,6 +18,8 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 /**
  * {@link ComparableTableFilterProvider} for {@link Date} values where the time value is
  * significant.
+ * 
+ * @see TimeTableFilterProvider
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

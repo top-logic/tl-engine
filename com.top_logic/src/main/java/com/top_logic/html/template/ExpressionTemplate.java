@@ -8,9 +8,12 @@ package com.top_logic.html.template;
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.TagWriter.State;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.DispatchingRenderer;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.template.WithProperties;
@@ -19,6 +22,14 @@ import com.top_logic.layout.template.WithProperties;
  * {@link HTMLTemplateFragment} that renders a {@link TemplateExpression template-computed value}.
  */
 public class ExpressionTemplate implements RawTemplateFragment {
+
+	/**
+	 * {@link DisplayContext} property defining the {@link Renderer} for arbitrary objects to be
+	 * used for the current rendering.
+	 */
+	@SuppressWarnings("unchecked")
+	public static final Property<Renderer<Object>> RENDERER =
+		TypedAnnotatable.propertyRaw(Renderer.class, "renderer", DispatchingRenderer.INSTANCE);
 
 	private final TemplateExpression _expression;
 
@@ -72,7 +83,7 @@ public class ExpressionTemplate implements RawTemplateFragment {
 		} else {
 			switch (out.getState()) {
 				case ELEMENT_CONTENT:
-					DispatchingRenderer.INSTANCE.write(context, out, value);
+					context.get(RENDERER).write(context, out, value);
 					break;
 
 				default:

@@ -5,6 +5,7 @@
  */
 package com.top_logic.html.template.expr;
 
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.html.template.TemplateExpression;
@@ -12,6 +13,7 @@ import com.top_logic.html.template.TemplateNode;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Access to a model variable to be either directly rendered or used in a
@@ -62,7 +64,7 @@ public class IndexAccessExpression extends TemplateNode implements TemplateExpre
 			return baseValue;
 		}
 		if (baseValue instanceof WithProperties) {
-			String property = (String) indexValue;
+			String property = as(String.class, indexValue, this);
 			try {
 				return ((WithProperties) baseValue).getPropertyValue(property);
 			} catch (NoSuchPropertyException ex) {
@@ -72,8 +74,25 @@ public class IndexAccessExpression extends TemplateNode implements TemplateExpre
 		if (baseValue instanceof Map<?, ?>) {
 			return ((Map<?, ?>) baseValue).get(indexValue);
 		}
+		if (baseValue instanceof List<?>) {
+			return ((List<?>) baseValue).get(as(Number.class, indexValue, this).intValue());
+		}
 
-		throw new IllegalArgumentException("Value '" + baseValue + "' has no properties to access.");
+		throw new TopLogicException(
+			I18NConstants.ERROR_VALUE_HAS_NO_PROPERTIES__VALUE_LOCATION.fill(baseValue, location(this)));
+	}
+
+	static <T> T as(Class<T> type, Object value, TemplateNode expr) {
+		if (type.isInstance(value)) {
+			return type.cast(value);
+		}
+
+		throw new TopLogicException(
+			I18NConstants.ERROR_UNEXPECTED_TYPE__VALUE_TYPE_LOCATION.fill(value, type, location(expr)));
+	}
+
+	static Object location(TemplateNode expr) {
+		return I18NConstants.LOCATION__LINE_COL.fill(expr.getLine(), expr.getColumn());
 	}
 
 	@Override

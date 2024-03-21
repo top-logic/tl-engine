@@ -12,6 +12,7 @@ import com.top_logic.html.template.TemplateNode;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Access to a model variable to be either directly rendered or used in a
@@ -67,7 +68,8 @@ public class PropertyAccessExpression extends TemplateNode implements TemplateEx
 			return ((Map<?, ?>) baseValue).get(_name);
 		}
 
-		throw new IllegalArgumentException("Value '" + baseValue + "' has no properties.");
+		throw new TopLogicException(I18NConstants.ERROR_VALUE_HAS_NO_PROPERTIES__VALUE_LOCATION.fill(baseValue,
+			IndexAccessExpression.location(this)));
 	}
 
 	@Override

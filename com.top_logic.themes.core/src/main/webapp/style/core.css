@@ -584,6 +584,10 @@ div.fltList {
 	word-break: break-word;
 }
 
+.defaultFilterContainer .cDatetime {
+	flex-wrap: wrap;
+}
+
 .defaultFilterContainer .cDatetime input {
 	width: 65px;
 }

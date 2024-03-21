@@ -240,11 +240,6 @@ span.can-edit {
 	display: none;
 }
 
-input.is-action,
-a.is-action {
-	margin-left: 2px;
-}
-
 /*.is-onerror*/.no-error .is-error {
 	display: none;
 }
@@ -1506,15 +1501,20 @@ div.cal_zoom_inAnimation {
     }
 }
 
-.cDateInput, .cTimeInput {
+.cDatetime, 
+.cDateInput, 
+.cTimeInput {
 	display: inline-flex;
 	align-items: center;
 }
 
-.cDatetime {
-	display: inline-flex;
-	flex-wrap: wrap;
-	align-items: center;
+.cDatetime .timePart {
+	background: transparent;
+}
+
+.timePart span.cDatetimeTime:not(:empty)::before {
+	content: "\2013";
+	padding: 0 var(--spacing-02);
 }
 
 .cIntegerInput.num {

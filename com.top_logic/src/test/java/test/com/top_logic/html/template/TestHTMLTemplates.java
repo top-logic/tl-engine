@@ -8,8 +8,11 @@ package test.com.top_logic.html.template;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
-import junit.framework.TestCase;
+import junit.framework.Test;
+
+import test.com.top_logic.layout.AbstractLayoutTest;
 
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.config.ConfigurationException;
@@ -20,6 +23,7 @@ import com.top_logic.html.template.I18NConstants;
 import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.template.MapWithProperties;
+import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.util.error.TopLogicException;
 
@@ -29,7 +33,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @SuppressWarnings("javadoc")
-public class TestHTMLTemplates extends TestCase {
+public class TestHTMLTemplates extends AbstractLayoutTest {
 
 	public void testTemplateExpressions() throws IOException, ConfigurationException {
 		MapWithProperties properties = new MapWithProperties();
@@ -170,6 +174,14 @@ public class TestHTMLTemplates extends TestCase {
 	public void testForeachTag() throws IOException, ConfigurationException {
 		String template =
 			"<a><tl:foreach elements=\"x : values\"><b>{x}</b></tl:foreach></a>";
+		assertEquals(
+			"<a><b>1</b><b>2</b><b>3</b></a>",
+			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
+	}
+
+	public void testForeachAttribute() throws IOException, ConfigurationException {
+		String template =
+			"<a><b tl:foreach=\"x : values\">{x}</b></a>";
 		assertEquals(
 			"<a><b>1</b><b>2</b><b>3</b></a>",
 			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
@@ -403,8 +415,75 @@ public class TestHTMLTemplates extends TestCase {
 		assertTrue(template.getVariables().contains("hasWarning"));
 	}
 
+	public void testPropertyAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>Maier</b>",
+			html("<b>{user.name}</b>",
+				new MapWithProperties().define("user", new MapWithProperties().define("name", "Maier"))));
+		assertEquals("<b>Schulze</b>",
+			html("<b>{user.senior.name}</b>",
+				new MapWithProperties().define("user",
+					new MapWithProperties()
+						.define("name", "Maier")
+						.define("senior",
+							new MapWithProperties().define("name", "Schulze")))));
+	}
+
+	public void testMapAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>Maier</b>",
+			html("<b>{user['name']}</b>",
+				new MapWithProperties().define("user", new MapWithProperties().define("name", "Maier"))));
+		assertEquals("<b>Schulze</b>",
+			html("<b>{user['senior']['name']}</b>",
+				new MapWithProperties().define("user",
+					new MapWithProperties()
+						.define("name", "Maier")
+						.define("senior",
+							new MapWithProperties().define("name", "Schulze")))));
+	}
+
+	public void testListAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>third</b>",
+			html("<b>{value[2]}</b>",
+				new MapWithProperties().define("value", Arrays.asList("first", "second", "third"))));
+	}
+
+	public void testInvalidAccess() throws ConfigurationException, IOException {
+		assertContains("Value 'entry' has no properties to access",
+			html("<b>{value.foo}</b>",
+				new MapWithProperties().define("value", "entry")));
+		assertContains("The value 'foo' is not of the expected type",
+			html("<b>{value['foo']}</b>",
+				new MapWithProperties().define("value", Collections.emptyList())));
+		assertContains("The value '3' is not of the expected type",
+			html("<b>{value[3]}</b>",
+				new MapWithProperties().define("value", new MapWithProperties())));
+	}
+
 	private String html(String template, WithProperties properties) throws IOException, ConfigurationException {
-		return render(parse(template), properties);
+		HTMLTemplate parsedTemplate = parse(template);
+		Set<String> accessedVariables = parsedTemplate.getVariables();
+
+		// Only allow access to properties that are requested by the template. In the real
+		// application, only requested properties are actually computed for a template.
+		WithProperties filter = new WithProperties() {
+			@Override
+			public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
+				if (accessedVariables.contains(propertyName)) {
+					return properties.getPropertyValue(propertyName);
+				}
+				return WithProperties.super.getPropertyValue(propertyName);
+			}
+
+			@Override
+			public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
+				if (accessedVariables.contains(propertyName)) {
+					properties.renderProperty(context, out, propertyName);
+					return;
+				}
+				WithProperties.super.renderProperty(context, out, propertyName);
+			}
+		};
+		return render(parsedTemplate, filter);
 	}
 
 	private HTMLTemplate parse(String template) throws ConfigurationException {
@@ -419,8 +498,8 @@ public class TestHTMLTemplates extends TestCase {
 		return writer.toString();
 	}
 
-	private DisplayContext displayContext() {
-		return null;
+	public static Test suite() {
+		return suite(TestHTMLTemplates.class);
 	}
 
 }

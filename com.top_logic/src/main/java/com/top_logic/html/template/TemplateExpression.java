@@ -11,6 +11,7 @@ import com.top_logic.html.template.expr.DivExpression;
 import com.top_logic.html.template.expr.EqExpression;
 import com.top_logic.html.template.expr.GeExpression;
 import com.top_logic.html.template.expr.GtExpression;
+import com.top_logic.html.template.expr.IndexAccessExpression;
 import com.top_logic.html.template.expr.LiteralExpression;
 import com.top_logic.html.template.expr.ModExpression;
 import com.top_logic.html.template.expr.MulExpression;
@@ -18,6 +19,7 @@ import com.top_logic.html.template.expr.NegExpression;
 import com.top_logic.html.template.expr.NotExpression;
 import com.top_logic.html.template.expr.NullExpression;
 import com.top_logic.html.template.expr.OrExpression;
+import com.top_logic.html.template.expr.PropertyAccessExpression;
 import com.top_logic.html.template.expr.StringLiteral;
 import com.top_logic.html.template.expr.SubExpression;
 import com.top_logic.html.template.expr.TestExpression;
@@ -89,6 +91,12 @@ public interface TemplateExpression {
 
 		/** Visit method for {@link VariableExpression}s. */
 		R visit(VariableExpression expr, A arg);
+
+		/** Visit method for {@link PropertyAccessExpression}s. */
+		R visit(PropertyAccessExpression expr, A arg);
+
+		/** Visit method for {@link IndexAccessExpression}s. */
+		R visit(IndexAccessExpression expr, A arg);
 	}
 
 	/**

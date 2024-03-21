@@ -30,6 +30,7 @@ import com.top_logic.html.template.expr.DivExpression;
 import com.top_logic.html.template.expr.EqExpression;
 import com.top_logic.html.template.expr.GeExpression;
 import com.top_logic.html.template.expr.GtExpression;
+import com.top_logic.html.template.expr.IndexAccessExpression;
 import com.top_logic.html.template.expr.LiteralExpression;
 import com.top_logic.html.template.expr.LiteralText;
 import com.top_logic.html.template.expr.ModExpression;
@@ -38,6 +39,7 @@ import com.top_logic.html.template.expr.NegExpression;
 import com.top_logic.html.template.expr.NotExpression;
 import com.top_logic.html.template.expr.NullExpression;
 import com.top_logic.html.template.expr.OrExpression;
+import com.top_logic.html.template.expr.PropertyAccessExpression;
 import com.top_logic.html.template.expr.StringLiteral;
 import com.top_logic.html.template.expr.SubExpression;
 import com.top_logic.html.template.expr.TestExpression;
@@ -258,19 +260,50 @@ public class HTMLTemplateUtils {
 	static class StructureBuilder
 			implements RawTemplateFragment.Visitor<Void, Stack<TagContext>>, TemplateExpression.Visitor<Void, Void> {
 
-		private final Set<String> _variables = new HashSet<>();
+		private final Set<String> _accessedVariables = new HashSet<>();
 
 		private boolean _inAttribute;
+
+		/**
+		 * Collects accessed global variables in the visited {@link HTMLTemplateFragment}.
+		 */
+		private final RawTemplateFragment.Visitor<Void, Void> _varAnalyzer = new DescendingTemplateVisitor<>() {
+			@Override
+			public Void visit(ConditionalTemplate template, Void arg) {
+				visitExpr(template.getTest());
+				return super.visit(template, arg);
+			}
+
+			@Override
+			public Void visit(DefineTemplate template, Void arg) {
+				visitExpr(template.getExpression());
+				return super.visit(template, arg);
+			}
+
+			public Void visit(ForeachTemplate template, Void arg) {
+				visitExpr(template.getExpression());
+				return super.visit(template, arg);
+			}
+
+			public Void visit(ExpressionTemplate template, Void arg) {
+				visitExpr(template.getExpression());
+				return super.visit(template, arg);
+			}
+
+			private void visitExpr(TemplateExpression expression) {
+				expression.visit(StructureBuilder.this, null);
+			}
+		};
 
 		public StructureBuilder() {
 			// Singleton constructor.
 		}
 
 		/**
-		 * Names of all used variables in the analyzed template.
+		 * Names of all accessed global variables in the analyzed template.
 		 */
 		public Set<String> getVariables() {
-			return _variables;
+			return _accessedVariables;
 		}
 
 		public HTMLTemplateFragment build(RawTemplateFragment raw) {
@@ -439,6 +472,10 @@ public class HTMLTemplateUtils {
 					SpecialStartTag specialStart = (SpecialStartTag) start;
 					TagTemplate inner = new TagTemplate(specialStart.getInner(), context.toContent());
 					HTMLTemplateFragment tag = specialStart.getBuilder().build(inner);
+					if (tag instanceof RawTemplateFragment) {
+						RawTemplateFragment raw = (RawTemplateFragment) tag;
+						raw.visit(_varAnalyzer, null);
+					}
 					append(stack, tag);
 				} else {
 					append(stack, new TagTemplate(start, context.toContent()));
@@ -467,14 +504,26 @@ public class HTMLTemplateUtils {
 
 		@Override
 		public Void visit(ForeachTemplate template, Stack<TagContext> stack) {
-			template.setContent(descend(template.getContent(), stack));
-			append(stack, template);
-			return null;
+			return visitScope(template, stack);
 		}
 
 		@Override
 		public Void visit(DefineTemplate template, Stack<TagContext> stack) {
+			return visitScope(template, stack);
+		}
+
+		private Void visitScope(ScopeTemplate template, Stack<TagContext> stack) {
+			String localVar = template.getVar();
+			boolean accessedOutside = _accessedVariables.contains(localVar);
+
+			template.getExpression().visit(this, null);
 			template.setContent(descend(template.getContent(), stack));
+
+			if (!accessedOutside) {
+				// If the locally defined variable was accessed from within the content, this does
+				// not count to the accessed global variables.
+				_accessedVariables.remove(localVar);
+			}
 			append(stack, template);
 			return null;
 		}
@@ -488,7 +537,7 @@ public class HTMLTemplateUtils {
 
 		@Override
 		public Void visit(VariableTemplate template, Stack<TagContext> stack) {
-			_variables.add(template.getName());
+			_accessedVariables.add(template.getName());
 			append(stack, template);
 			return null;
 		}
@@ -601,7 +650,20 @@ public class HTMLTemplateUtils {
 
 		@Override
 		public Void visit(VariableExpression expr, Void arg) {
-			_variables.add(expr.getName());
+			_accessedVariables.add(expr.getName());
+			return null;
+		}
+
+		@Override
+		public Void visit(PropertyAccessExpression expr, Void arg) {
+			expr.getBase().visit(this, arg);
+			return null;
+		}
+
+		@Override
+		public Void visit(IndexAccessExpression expr, Void arg) {
+			expr.getBase().visit(this, arg);
+			expr.getIndex().visit(this, arg);
 			return null;
 		}
 	}

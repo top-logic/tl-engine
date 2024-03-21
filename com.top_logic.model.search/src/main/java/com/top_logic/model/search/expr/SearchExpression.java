@@ -26,7 +26,9 @@ import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -839,7 +841,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		if (value instanceof String) {
 			return ThemeImage.internalDecode((String) value);
 		}
-		throw new TopLogicException(I18NConstants.ERROR_NOT_A_THEME_IMAGE__VALUE__EXPR.fill(value, this));
+		return MetaResourceProvider.INSTANCE.getImage(value, Flavor.DEFAULT);
 	}
 
 	@Override

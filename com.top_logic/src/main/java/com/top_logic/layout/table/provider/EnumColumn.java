@@ -107,6 +107,10 @@ public class EnumColumn extends ReferenceColumn {
 				return SelectionControlProvider.SELECTION_INSTANCE;
 			case POP_UP:
 				return SelectionControlProvider.SELECTION_INSTANCE;
+			case RADIO:
+				return (field, style) -> newChoiceControl(field, Orientation.VERTICAL);
+			case RADIO_INLINE:
+				return (field, style) -> newChoiceControl(field, Orientation.HORIZONTAL);
 			default:
 				throw ClassificationPresentation.noSuchEnum(presentation);
 		}

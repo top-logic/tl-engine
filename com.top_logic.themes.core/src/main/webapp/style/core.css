@@ -1838,6 +1838,10 @@ span.ltcCounting input {
 	position: relative;
 }
 
+.card:first-of-type {
+    margin-left: 0;
+}
+
 .card:active {
 	background-color: var(--layer-active);
 }
@@ -1858,7 +1862,7 @@ span.ltcCounting input {
 .card .cButton {
 	position: absolute;
 	right: var(--spacing-03);
-	top: var(--spacing-03);
+	top: calc(var(--body-02-line-height) - var(--spacing-02));
 }
 
 .previewBoxOuter {

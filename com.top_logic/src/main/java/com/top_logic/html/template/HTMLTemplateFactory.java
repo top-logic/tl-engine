@@ -24,6 +24,7 @@ import com.top_logic.html.template.expr.DivExpression;
 import com.top_logic.html.template.expr.EqExpression;
 import com.top_logic.html.template.expr.GeExpression;
 import com.top_logic.html.template.expr.GtExpression;
+import com.top_logic.html.template.expr.IndexAccessExpression;
 import com.top_logic.html.template.expr.LiteralExpression;
 import com.top_logic.html.template.expr.LiteralText;
 import com.top_logic.html.template.expr.ModExpression;
@@ -32,6 +33,7 @@ import com.top_logic.html.template.expr.NegExpression;
 import com.top_logic.html.template.expr.NotExpression;
 import com.top_logic.html.template.expr.NullExpression;
 import com.top_logic.html.template.expr.OrExpression;
+import com.top_logic.html.template.expr.PropertyAccessExpression;
 import com.top_logic.html.template.expr.StringLiteral;
 import com.top_logic.html.template.expr.SubExpression;
 import com.top_logic.html.template.expr.TestExpression;
@@ -220,6 +222,20 @@ public class HTMLTemplateFactory {
 	 */
 	public VariableExpression variable(Token name) {
 		return new VariableExpression(name.beginLine, name.beginColumn, name.image);
+	}
+
+	/**
+	 * Creates a variable access expression.
+	 */
+	public TemplateExpression access(Token start, TemplateExpression base, String property) {
+		return new PropertyAccessExpression(start.beginLine, start.beginColumn, base, property);
+	}
+
+	/**
+	 * Creates a variable access expression.
+	 */
+	public TemplateExpression access(Token start, TemplateExpression base, TemplateExpression index) {
+		return new IndexAccessExpression(start.beginLine, start.beginColumn, base, index);
 	}
 
 	/**

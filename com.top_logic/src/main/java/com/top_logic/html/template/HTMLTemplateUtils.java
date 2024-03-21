@@ -30,6 +30,7 @@ import com.top_logic.html.template.expr.DivExpression;
 import com.top_logic.html.template.expr.EqExpression;
 import com.top_logic.html.template.expr.GeExpression;
 import com.top_logic.html.template.expr.GtExpression;
+import com.top_logic.html.template.expr.IndexAccessExpression;
 import com.top_logic.html.template.expr.LiteralExpression;
 import com.top_logic.html.template.expr.LiteralText;
 import com.top_logic.html.template.expr.ModExpression;
@@ -38,6 +39,7 @@ import com.top_logic.html.template.expr.NegExpression;
 import com.top_logic.html.template.expr.NotExpression;
 import com.top_logic.html.template.expr.NullExpression;
 import com.top_logic.html.template.expr.OrExpression;
+import com.top_logic.html.template.expr.PropertyAccessExpression;
 import com.top_logic.html.template.expr.StringLiteral;
 import com.top_logic.html.template.expr.SubExpression;
 import com.top_logic.html.template.expr.TestExpression;
@@ -649,6 +651,19 @@ public class HTMLTemplateUtils {
 		@Override
 		public Void visit(VariableExpression expr, Void arg) {
 			_accessedVariables.add(expr.getName());
+			return null;
+		}
+
+		@Override
+		public Void visit(PropertyAccessExpression expr, Void arg) {
+			expr.getBase().visit(this, arg);
+			return null;
+		}
+
+		@Override
+		public Void visit(IndexAccessExpression expr, Void arg) {
+			expr.getBase().visit(this, arg);
+			expr.getIndex().visit(this, arg);
 			return null;
 		}
 	}

@@ -50,10 +50,12 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.DispatchingRenderer;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
@@ -331,7 +333,8 @@ public class HTMLTemplateFormProvider
 	/**
 	 * {@link HTMLFragment} displaying a {@link TLObject} using a {@link HTMLTemplateFragment}.
 	 */
-	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener, ContextMenuOwner {
+	private final class TLObjectFragment extends AbstractVisibleControl
+			implements ModelListener, ContextMenuOwner, Renderer<Object> {
 
 		private final FormEditorContext _form;
 
@@ -376,31 +379,13 @@ public class HTMLTemplateFormProvider
 					TLStructuredTypePart part = _model.tType().getPart(varName);
 					if (part != null) {
 						Object value = _model.tValue(part);
-						_args.put(varName, wrap(_form, value));
+						_args.put(varName, value);
 					}
 				} else {
 					LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());
 					Object value = varDef.eval(component, _form, _model);
-					_args.put(varName, wrap(_form, value));
+					_args.put(varName, value);
 				}
-			}
-		}
-
-		private Object wrap(FormEditorContext form, Object value) {
-			if (value instanceof TLObject) {
-				TLObject obj = (TLObject) value;
-				TLStructuredType valueType = obj.tType();
-				Template valueTemplate = _templateByType.get(valueType);
-				if (valueTemplate != null) {
-					return new TLObjectFragment(form, valueTemplate, obj);
-				} else {
-					return value;
-				}
-			} else if (value instanceof Collection<?>) {
-				return new CollectionFragment(
-					((Collection<?>) value).stream().map(e -> wrap(form, e)).collect(Collectors.toList()));
-			} else {
-				return value;
 			}
 		}
 
@@ -411,7 +396,30 @@ public class HTMLTemplateFormProvider
 
 		@Override
 		protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-			_fragment.write(context, out, this);
+			Renderer<Object> before = context.set(ExpressionTemplate.RENDERER, this);
+			try {
+				_fragment.write(context, out, this);
+			} finally {
+				if (before == null) {
+					context.reset(ExpressionTemplate.RENDERER);
+				} else {
+					context.set(ExpressionTemplate.RENDERER, before);
+				}
+			}
+		}
+
+		@Override
+		public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
+			if (value instanceof TLObject) {
+				TLObject obj = (TLObject) value;
+				TLStructuredType valueType = obj.tType();
+				Template valueTemplate = _templateByType.get(valueType);
+				if (valueTemplate != null) {
+					new TLObjectFragment(_form, valueTemplate, obj).write(context, out);
+					return;
+				}
+			}
+			DispatchingRenderer.INSTANCE.write(context, out, value);
 		}
 
 		@Override

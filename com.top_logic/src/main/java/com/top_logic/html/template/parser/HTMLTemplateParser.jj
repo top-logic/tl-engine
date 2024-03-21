@@ -143,6 +143,9 @@ TOKEN:
 | < MUL:"*" >
 | < DIV:"/" >
 | < MOD: "%" >
+| < DOT: "." >
+| < OPEN_BRACE: "[" >
+| < CLOSE_BRACE: "]" >
 | < OPEN: "(" >
 | < CLOSE: ")" >
 | < STRING : "'" (~[ "'", "\\" ])* "'" >
@@ -382,10 +385,25 @@ TemplateExpression negatedExpr() :
   TemplateExpression expr;
 }
 {
-  ( <NOT> expr=atomicExpression() { expr = _f.not(expr); }
+  ( <NOT> expr=accessExpression() { expr = _f.not(expr); }
   | <MINUS> expr=atomicExpression() { expr = _f.neg(expr); }
-  | expr=atomicExpression()
+  | expr=accessExpression()
   )
+  { return expr; }
+}
+
+TemplateExpression accessExpression() :
+{
+  TemplateExpression expr;
+  TemplateExpression index;
+  Token t;
+}
+{
+  expr=atomicExpression()
+  (
+    < DOT > t = < VARIABLE_NAME > { expr = _f.access(t, expr, t.image); }
+  | t = < OPEN_BRACE > index = templateExpression() <CLOSE_BRACE > { expr = _f.access(t, expr, index); }
+  )*
   { return expr; }
 }
 

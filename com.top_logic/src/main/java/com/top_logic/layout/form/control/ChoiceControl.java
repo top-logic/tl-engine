@@ -285,7 +285,4 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 		return SelectFieldUtils.getOptionAndSelectionOuterJoinOrdered(field);
 	}
 
-	private List<?> getSelectionListOrdered(SelectField field) {
-		return SelectFieldUtils.getSelectionListSorted(field);
-	}
 }

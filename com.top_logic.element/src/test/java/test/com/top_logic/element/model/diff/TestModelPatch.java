@@ -15,15 +15,18 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.Log;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
+import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.model.DefaultModelFactory;
 import com.top_logic.element.model.ModelResolver;
 import com.top_logic.element.model.PersistentTLModel;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
 import com.top_logic.element.model.diff.compare.CreateModelPatch;
+import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.export.ModelConfigExtractor;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -31,10 +34,14 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLModule;
+import com.top_logic.model.TLType;
+import com.top_logic.model.access.IdentityMapping;
 import com.top_logic.model.config.ModelPartConfig;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * Test for {@link CreateModelPatch} and {@link ApplyModelPatch}.
@@ -130,6 +137,29 @@ public class TestModelPatch extends BasicTestCase {
 		return PersistencyLayer.getKnowledgeBase();
 	}
 
+	public void testAnnotationUpdate() {
+		TLModelImpl leftModel = annotationUpdateModel();
+		
+		TLModelImpl rightModel = annotationUpdateModel();
+		TLType type = rightModel.getModule("m1").getType("c1");
+		ConfigType configType = TypedConfiguration.newConfigItem(ConfigType.class);
+		configType.setValue("C1_TYPE");
+		type.setAnnotation(configType);
+		
+		AddAnnotations addAnnotations = TypedConfiguration.newConfigItem(AddAnnotations.class);
+		addAnnotations.setPart("m1:c1");
+		addAnnotations.getAnnotations().add(TypedConfiguration.copy(configType));
+
+		List<DiffElement> patch = createPatch(leftModel, rightModel);
+		assertConfigEquals(list(addAnnotations), patch);
+	}
+
+	private TLModelImpl annotationUpdateModel() {
+		TLModelImpl model = new TLModelImpl();
+		TLModule m1 = TLModelUtil.addModule(model, "m1");
+		TLModelUtil.addDatatype(m1, "c1", IdentityMapping.INSTANCE);
+		return model;
+	}
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestModelPatch.class);
 	}

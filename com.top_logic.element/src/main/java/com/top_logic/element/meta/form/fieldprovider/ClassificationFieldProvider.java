@@ -47,9 +47,8 @@ public class ClassificationFieldProvider extends AbstractSelectFieldProvider {
 				return getRadioField(editContext, fieldName, Orientation.VERTICAL);
 			case RADIO_INLINE:
 				return getRadioField(editContext, fieldName, Orientation.HORIZONTAL);
-			default:
-				throw ClassificationPresentation.noSuchEnum(presentation);
 		}
+		throw ClassificationPresentation.noSuchEnum(presentation);
 	}
 
 	private FormMember getRadioField(EditContext editContext, String fieldName, Orientation orientation) {

@@ -16,3 +16,7 @@
 	border: none;
 	height: auto;
 }
+
+.popupEditField .cError {
+	position: relative;
+}

@@ -26,6 +26,10 @@
 	border: var(--ERROR_BORDER);
 }
 
+.popupEditField .error .ace_editor {
+	border: var(--ERROR_BORDER);
+}
+
 .error .ace_editor textarea,
 .error-annotation .ace_editor textarea { 
 	border: initial; 

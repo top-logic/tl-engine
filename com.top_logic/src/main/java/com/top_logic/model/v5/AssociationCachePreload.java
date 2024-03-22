@@ -52,7 +52,7 @@ public class AssociationCachePreload implements PreloadOperation {
 				TLObject wrapper = (TLObject) obj;
 				// It does only make sense to retrieve wrapped objects from wrappers,
 				// which are alive and therefore fetchable.
-				if (wrapper.tValid()) {
+				if (PreloadOperation.canFetch(wrapper)) {
 					baseKOs.add((KnowledgeObject) wrapper.tHandle());
 				}
 			}
@@ -81,7 +81,7 @@ public class AssociationCachePreload implements PreloadOperation {
 		for (Object baseObject : baseObjects) {
 			// Can only retrieve knowledge base from living wrappers
 			TLObject wrapper = (TLObject) baseObject;
-			if (wrapper.tValid()) {
+			if (PreloadOperation.canFetch(wrapper)) {
 				return wrapper.tKnowledgeBase();
 			}
 		}

@@ -95,7 +95,7 @@ public class ReferencePreload implements PreloadOperation {
 				BulkIdLoad bulkIdLoad = new BulkIdLoad(kb);
 				bulkIdLoad.addAll(referencedKeys);
 				List<KnowledgeItem> loadedItems = bulkIdLoad.load();
-				references = WrapperFactory.getWrappersForKOsGeneric((Collection) loadedItems);
+				references = WrapperFactory.getWrappersForKOsGeneric(loadedItems);
 			}
 		}
 
@@ -156,7 +156,7 @@ public class ReferencePreload implements PreloadOperation {
 			TLObject wrapper = (TLObject) obj;
 			// It does only make sense to retrieve wrapped objects from wrappers,
 			// which are alive and therefore fetchable.
-			if (wrapper.tValid()) {
+			if (PreloadOperation.canFetch(wrapper)) {
 				baseKOs.add((KnowledgeObject) wrapper.tHandle());
 			}
 		}

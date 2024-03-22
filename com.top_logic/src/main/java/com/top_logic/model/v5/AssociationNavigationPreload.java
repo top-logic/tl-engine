@@ -21,6 +21,7 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.export.PreloadContext;
+import com.top_logic.model.export.PreloadOperation;
 
 /**
  * {@link AssociationCachePreload} that also fetches the objects on the other end.
@@ -57,7 +58,7 @@ public class AssociationNavigationPreload extends AssociationCachePreload {
 		for (Object baseObject : baseObjects) {
 			TLObject wrapper = (TLObject) baseObject;
 			// Only valid wrappers (still alive) can be used to resolve links
-			if (wrapper.tValid()) {
+			if (PreloadOperation.canFetch(wrapper)) {
 				Collection<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(wrapper, query);
 				for (KnowledgeAssociation link : links) {
 					DBObjectKey key;

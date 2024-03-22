@@ -57,7 +57,7 @@
 		<xsl:copy>
 			<xsl:apply-templates select="@* | node()"/>
 			
-			<format-ref format-id="@format-ref"/>
+			<format-ref format-id="{@format-ref}"/>
 		</xsl:copy>
 	</xsl:template>
 

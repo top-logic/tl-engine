@@ -8,6 +8,7 @@ package com.top_logic.model.export;
 import java.util.Collection;
 
 import com.top_logic.layout.table.model.NoPrepare;
+import com.top_logic.model.TLObject;
 
 /**
  * Operation that prepares the access to a number of base objects.
@@ -53,5 +54,12 @@ public interface PreloadOperation extends PreloadContribution {
 	@Override
 	default void contribute(PreloadBuilder preloadBuilder) {
 		preloadBuilder.addPreload(this);
+	}
+
+	/**
+	 * Whether the given object can be fetched from the database (valid and not transient).
+	 */
+	public static boolean canFetch(TLObject wrapper) {
+		return wrapper.tValid() && !wrapper.tTransient();
 	}
 }

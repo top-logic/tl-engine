@@ -176,7 +176,10 @@ public class DefaultStructuredElementTreeModelBuilder extends AbstractTreeModelB
 			public void prepare(PreloadContext context, Collection<?> baseObjects) {
 				try (SubtreeLoader subtreeLoader = new SubtreeLoader(context)) {
 					for (Object baseObject : baseObjects) {
-						subtreeLoader.loadTree((StructuredElement) baseObject, 2);
+						StructuredElement node = (StructuredElement) baseObject;
+						if (PreloadOperation.canFetch(node)) {
+							subtreeLoader.loadTree(node, 2);
+						}
 					}
 				}
 			}

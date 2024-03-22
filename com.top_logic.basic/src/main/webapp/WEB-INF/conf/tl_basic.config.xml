@@ -353,7 +353,7 @@
 							<de>Zeit (mittel)</de>
 						</label>
 						<time
-							lenient="default"
+							lenient="false"
 							style="medium"
 						/>
 					</format>
@@ -395,7 +395,7 @@
 							<de>Zeit (kurz)</de>
 						</label>
 						<time
-							lenient="default"
+							lenient="false"
 							style="short"
 						/>
 					</format>

@@ -111,6 +111,8 @@
 
 	<build>
 		<plugins>
+		
+			<!-- Call explicitly with: mvn javacc:javacc@generate-javacc -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>javacc-maven-plugin</artifactId>

@@ -173,10 +173,18 @@ public class TestHTMLTemplates extends AbstractLayoutTest {
 
 	public void testForeachTag() throws IOException, ConfigurationException {
 		String template =
-			"<a><tl:foreach elements=\"x : values\"><b>{x}</b></tl:foreach></a>";
+			"<a><tl:foreach elements=\"x, iter : values\"><b>{iter.index}: {x}</b></tl:foreach></a>";
 		assertEquals(
-			"<a><b>1</b><b>2</b><b>3</b></a>",
+			"<a><b>0: 1</b><b>1: 2</b><b>2: 3</b></a>",
 			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
+	}
+
+	public void testForeachIterationTag() throws IOException, ConfigurationException {
+		String template =
+			"<a><tl:foreach elements=\"x, iter : values\">{iter.index}: {iter.current}<tl:if test=\"!iter.last\">, </tl:if></tl:foreach></a>";
+		assertEquals(
+			"<a>0: a, 1: b, 2: c</a>",
+			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList("a", "b", "c")))));
 	}
 
 	public void testForeachAttribute() throws IOException, ConfigurationException {
@@ -189,10 +197,10 @@ public class TestHTMLTemplates extends AbstractLayoutTest {
 
 	public void testTagLoop() throws IOException, ConfigurationException {
 		String template =
-			"<a><b tl:foreach=\"x : values\">{x}</b></a>";
+			"<a><b tl:foreach=\"x, iter : values\">{iter.count}: {iter.current}<tl:if test=\"!iter.last\">, </tl:if></b></a>";
 		assertEquals(
-			"<a><b>1</b><b>2</b><b>3</b></a>",
-			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
+			"<a><b>1: a, </b><b>2: b, </b><b>3: c</b></a>",
+			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList("a", "b", "c")))));
 	}
 
 	public void testWithTag() throws IOException, ConfigurationException {

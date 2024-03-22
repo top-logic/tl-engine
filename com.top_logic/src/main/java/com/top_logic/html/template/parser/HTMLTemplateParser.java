@@ -9,13 +9,7 @@ package com.top_logic.html.template.parser;
 
 import java.util.List;
 
-import com.top_logic.html.template.ConditionalTemplate;
-import com.top_logic.html.template.EmptyTemplate;
-import com.top_logic.html.template.HTMLTemplateFactory;
-import com.top_logic.html.template.RawTemplateFragment;
-import com.top_logic.html.template.StartTagTemplate;
-import com.top_logic.html.template.TagAttributeTemplate;
-import com.top_logic.html.template.TemplateExpression;
+import com.top_logic.html.template.*;
 
 /**
  * Parser for html template expressions.
@@ -465,7 +459,7 @@ result = _f.nullLiteral(t);
     throw new Error("Missing return statement in function");
 }
 
-  final public RawTemplateFragment startTag() throws ParseException {Token t, v;
+  final public RawTemplateFragment startTag() throws ParseException {Token t, v, iter = null;
   TagAttributeTemplate attribute;
   StartTagTemplate result;
   TemplateExpression expression;
@@ -508,14 +502,24 @@ result = _f.conditionalTag(result, expression); token_source.SwitchTo(TAG);
           jj_consume_token(SPECIAL_ATTR_EQ);
           jj_consume_token(SPECIAL_ATTR_VALUE);
           t = jj_consume_token(VARIABLE_NAME);
+          switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+          case COMMA:{
+            jj_consume_token(COMMA);
+            iter = jj_consume_token(VARIABLE_NAME);
+            break;
+            }
+          default:
+            jj_la1[17] = jj_gen;
+            ;
+          }
           jj_consume_token(EXPRESSION_ELSE);
           expression = templateExpression();
           jj_consume_token(SPECIAL_VALUE_END);
-result = _f.foreachTag(result, t.image, expression); token_source.SwitchTo(TAG);
+result = _f.foreachTag(result, t.image, iter == null ? null : iter.image, expression); token_source.SwitchTo(TAG);
           break;
           }
         default:
-          jj_la1[17] = jj_gen;
+          jj_la1[18] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -531,7 +535,7 @@ result.setEmpty(true);
         break;
         }
       default:
-        jj_la1[18] = jj_gen;
+        jj_la1[19] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -563,7 +567,7 @@ top = current = null;
           break;
           }
         default:
-          jj_la1[19] = jj_gen;
+          jj_la1[20] = jj_gen;
           break label_8;
         }
         jj_consume_token(WHEN_TAG);
@@ -592,7 +596,7 @@ ConditionalTemplate outer = current;
         break;
         }
       default:
-        jj_la1[20] = jj_gen;
+        jj_la1[21] = jj_gen;
 content = EmptyTemplate.INSTANCE;
       }
       jj_consume_token(CHOOSE_END);
@@ -621,6 +625,16 @@ token_source.SwitchTo(SPECIAL);
       jj_consume_token(SPECIAL_EQ);
       jj_consume_token(SPECIAL_VALUE_START);
       v = jj_consume_token(VARIABLE_NAME);
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case COMMA:{
+        jj_consume_token(COMMA);
+        iter = jj_consume_token(VARIABLE_NAME);
+        break;
+        }
+      default:
+        jj_la1[22] = jj_gen;
+        ;
+      }
       jj_consume_token(EXPRESSION_ELSE);
       expression = templateExpression();
       jj_consume_token(SPECIAL_VALUE_END);
@@ -628,7 +642,7 @@ token_source.SwitchTo(SPECIAL);
       jj_consume_token(SPECIAL_CLOSE);
       content = html();
       jj_consume_token(FOREACH_END);
-{if ("" != null) return _f.foreachTag(v.image, expression, content);}
+{if ("" != null) return _f.foreachTag(v.image, iter == null ? null : iter.image, expression, content);}
       break;
       }
     case TEXT_TAG:{
@@ -639,7 +653,7 @@ token_source.SwitchTo(SPECIAL);
       break;
       }
     default:
-      jj_la1[21] = jj_gen;
+      jj_la1[23] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -672,7 +686,7 @@ content=attributeContent();
         break;
         }
       default:
-        jj_la1[22] = jj_gen;
+        jj_la1[24] = jj_gen;
         break label_9;
       }
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -704,7 +718,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
         break;
         }
       default:
-        jj_la1[23] = jj_gen;
+        jj_la1[25] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -722,7 +736,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
   public Token jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[24];
+  final private int[] jj_la1 = new int[26];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static private int[] jj_la1_2;
@@ -734,16 +748,16 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	   jj_la1_init_3();
 	}
 	private static void jj_la1_init_0() {
-	   jj_la1_0 = new int[] {0x396a960,0x396a960,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2a940,0x0,0x0,};
+	   jj_la1_0 = new int[] {0x396a960,0x396a960,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2a940,0x0,0x0,};
 	}
 	private static void jj_la1_init_1() {
-	   jj_la1_1 = new int[] {0x0,0x0,0x10000,0x8000,0x1000,0x800,0x3f00000,0x3f00000,0xc000000,0xc000000,0x70000000,0x70000000,0x8086700,0x80000000,0x80000000,0x6700,0x0,0x0,0x0,0x4,0x8,0x0,0x0,0x0,};
+	   jj_la1_1 = new int[] {0x0,0x0,0x10000,0x8000,0x1000,0x800,0x3f00000,0x3f00000,0xc000000,0xc000000,0x70000000,0x70000000,0x8086700,0x80000000,0x80000000,0x6700,0x0,0x0,0x0,0x0,0x4,0x8,0x0,0x0,0x0,0x0,};
 	}
 	private static void jj_la1_init_2() {
-	   jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x14,0x1,0x1,0x14,0x8600,0x8600,0x6000,0x0,0x0,0x0,0x0,0x0,};
+	   jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x28,0x2,0x2,0x28,0x10c00,0x1,0x10c00,0xc000,0x0,0x0,0x1,0x0,0x0,0x0,};
 	}
 	private static void jj_la1_init_3() {
-	   jj_la1_3 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1e8,0x1e8,};
+	   jj_la1_3 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3d0,0x3d0,};
 	}
 
   /** Constructor with InputStream. */
@@ -757,7 +771,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 24; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 26; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -771,7 +785,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 24; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 26; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -781,7 +795,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 24; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 26; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -799,7 +813,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 24; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 26; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -808,7 +822,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 24; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 26; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -817,7 +831,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 24; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 26; i++) jj_la1[i] = -1;
   }
 
   private Token jj_consume_token(int kind) throws ParseException {
@@ -861,19 +875,19 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 	   return (jj_ntk = jj_nt.kind);
   }
 
-	private java.util.List<int[]> jj_expentries = new java.util.ArrayList<>();
+  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<>();
   private int[] jj_expentry;
   private int jj_kind = -1;
 
   /** Generate ParseException. */
   public ParseException generateParseException() {
 	 jj_expentries.clear();
-	 boolean[] la1tokens = new boolean[108];
+	 boolean[] la1tokens = new boolean[109];
 	 if (jj_kind >= 0) {
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
 	 }
-	 for (int i = 0; i < 24; i++) {
+	 for (int i = 0; i < 26; i++) {
 	   if (jj_la1[i] == jj_gen) {
 		 for (int j = 0; j < 32; j++) {
 		   if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -891,7 +905,7 @@ result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT)
 		 }
 	   }
 	 }
-	 for (int i = 0; i < 108; i++) {
+	 for (int i = 0; i < 109; i++) {
 	   if (la1tokens[i]) {
 		 jj_expentry = new int[1];
 		 jj_expentry[0] = i;

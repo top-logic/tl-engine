@@ -65,7 +65,8 @@ public class DateExpr extends GenericMethod {
 		int year = asInt(context, arguments[0]);
 		int month = asInt(context, arguments[1]);
 		int day = asInt(context, arguments[2]);
-		calendar.set(year, month, day);
+		calendar.set(year, month, day, 0, 0, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
 	}
 
 	/**

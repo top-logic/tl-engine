@@ -67,6 +67,9 @@ public abstract class LegacyFlexWrapper extends AbstractBoundWrapper implements 
 			for (Object obj : baseObjects) {
 				if (obj instanceof LegacyFlexWrapper) {
 					LegacyFlexWrapper wrapper = (LegacyFlexWrapper) obj;
+					if (!PreloadOperation.canFetch(wrapper)) {
+						continue;
+					}
 					FlexData cachedGlobalState = wrapper.getCachedGlobalState();
 					if (cachedGlobalState == null) {
 						wrappers.add(wrapper);

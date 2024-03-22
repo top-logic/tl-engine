@@ -194,8 +194,9 @@ public class HTMLTemplateFactory {
 	/**
 	 * Creates a looping tag.
 	 */
-	public StartTagTemplate foreachTag(StartTagTemplate inner, String var, TemplateExpression expression) {
-		return new SpecialStartTag(inner, new ForeachBuilder(var, expression));
+	public StartTagTemplate foreachTag(StartTagTemplate inner, String var, String iteration,
+			TemplateExpression expression) {
+		return new SpecialStartTag(inner, new ForeachBuilder(var, iteration, expression));
 	}
 
 	/**
@@ -278,13 +279,16 @@ public class HTMLTemplateFactory {
 	 *
 	 * @param var
 	 *        The local variable to define.
+	 * @param iteration
+	 *        The iteration variable to define.
 	 * @param expression
 	 *        The expression computing a list of elements to iterate.
 	 * @param content
 	 *        The content template to evaluate for each element.
 	 */
-	public RawTemplateFragment foreachTag(String var, TemplateExpression expression, RawTemplateFragment content) {
-		return new ForeachTemplate(var, expression, content);
+	public RawTemplateFragment foreachTag(String var, String iteration, TemplateExpression expression,
+			RawTemplateFragment content) {
+		return new ForeachTemplate(var, iteration, expression, content);
 	}
 
 	/**

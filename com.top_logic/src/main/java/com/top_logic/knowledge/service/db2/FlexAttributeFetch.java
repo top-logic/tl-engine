@@ -51,7 +51,7 @@ public final class FlexAttributeFetch implements PreloadOperation {
 		for (Object obj : baseObjects) {
 			if (obj instanceof TLObject) {
 				TLObject object = (TLObject) obj;
-				if (!object.tTransient()) {
+				if (PreloadOperation.canFetch(object)) {
 					knowledgeItems.add(object.tHandle());
 				}
 			}

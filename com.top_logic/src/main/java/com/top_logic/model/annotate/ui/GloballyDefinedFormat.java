@@ -73,6 +73,11 @@ public class GloballyDefinedFormat<C extends GloballyDefinedFormat.Config<?>> ex
 
 	@Override
 	public Format newFormat(FormatConfig globalConfig, TimeZone timeZone, Locale locale) {
+		if (_delegate == null) {
+			String formatId = getConfig().getFormatId();
+			throw new IllegalStateException("There is no global format with ID '" + formatId + "'.");
+		}
+
 		return _delegate.newFormat(globalConfig, timeZone, locale);
 	}
 

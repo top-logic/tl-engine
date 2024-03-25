@@ -2611,6 +2611,14 @@ span.disabled .ddwttDropBtn {
 	text-align: left;
 }
 
+img.ddwttItemIcon {
+	height: 1em;
+	object-fit: contain;
+	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
+	vertical-align: middle;
+	align-self: center;
+}
+
 .ddwttItem .ddwttItemLabel {
 	display: inline-block;}
 

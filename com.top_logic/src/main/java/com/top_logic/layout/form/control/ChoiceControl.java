@@ -274,7 +274,7 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-				SelectFieldUtils.writeSelectionAsTextImmutable(out, field);
+			SelectFieldUtils.getOptionRenderer(field).write(context, out, field.getSingleSelection());
 		}
 		out.endTag(DIV);
 	}

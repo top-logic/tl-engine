@@ -63,9 +63,30 @@ public class CreateConfigurationDialog<C extends ConfigurationItem> extends Abst
 	 */
 	public CreateConfigurationDialog(Class<? extends C> type, DefaultDialogModel dialogModel,
 			Function<? super C, HandlerResult> okHandle) {
+		this(type, dialogModel, okHandle, null);
+	}
+
+	/**
+	 * Creates a {@link CreateConfigurationDialog}.
+	 * 
+	 * @param type
+	 *        The {@link ConfigurationItem} to instantiate.
+	 * @param dialogModel
+	 *        The dimensions of the created dialog.
+	 * @param okHandle
+	 *        Function that is called with the result item.
+	 * @param base
+	 *        Configuration to copy its values from.
+	 */
+	public CreateConfigurationDialog(Class<? extends C> type, DefaultDialogModel dialogModel,
+			Function<? super C, HandlerResult> okHandle, C base) {
 		super(dialogModel);
 		setOkHandle(okHandle);
-		_model = TypedConfiguration.newConfigItem(type);
+		if(base != null) {
+			_model = TypedConfiguration.copy(base);
+		} else {
+			_model = TypedConfiguration.newConfigItem(type);
+		}
 	}
 
 	@Override

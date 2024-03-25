@@ -19,6 +19,7 @@ import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.structure.DefaultDialogModel;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -57,15 +58,36 @@ public class CreateConfigurationDialog<C extends ConfigurationItem> extends Abst
 	 * @param type
 	 *        The {@link ConfigurationItem} to instantiate.
 	 * @param dialogModel
-	 *        The dimensions of the created dialog.
+	 *        The {@link DialogModel} of this dialog.
 	 * @param okHandle
 	 *        Function that is called with the result item.
 	 */
 	public CreateConfigurationDialog(Class<? extends C> type, DefaultDialogModel dialogModel,
 			Function<? super C, HandlerResult> okHandle) {
+		this(type, dialogModel, okHandle, null);
+	}
+
+	/**
+	 * Creates a {@link CreateConfigurationDialog}.
+	 * 
+	 * @param type
+	 *        The {@link ConfigurationItem} to instantiate.
+	 * @param dialogModel
+	 *        The {@link DialogModel} of this dialog.
+	 * @param okHandle
+	 *        Function that is called with the result item.
+	 * @param base
+	 *        Configuration to copy its values from.
+	 */
+	public CreateConfigurationDialog(Class<? extends C> type, DefaultDialogModel dialogModel,
+			Function<? super C, HandlerResult> okHandle, C base) {
 		super(dialogModel);
 		setOkHandle(okHandle);
-		_model = TypedConfiguration.newConfigItem(type);
+		if(base != null) {
+			_model = TypedConfiguration.copy(base);
+		} else {
+			_model = TypedConfiguration.newConfigItem(type);
+		}
 	}
 
 	@Override

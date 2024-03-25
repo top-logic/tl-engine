@@ -19,6 +19,7 @@ import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.structure.DefaultDialogModel;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -57,7 +58,7 @@ public class CreateConfigurationDialog<C extends ConfigurationItem> extends Abst
 	 * @param type
 	 *        The {@link ConfigurationItem} to instantiate.
 	 * @param dialogModel
-	 *        The dimensions of the created dialog.
+	 *        The {@link DialogModel} of this dialog.
 	 * @param okHandle
 	 *        Function that is called with the result item.
 	 */
@@ -72,7 +73,7 @@ public class CreateConfigurationDialog<C extends ConfigurationItem> extends Abst
 	 * @param type
 	 *        The {@link ConfigurationItem} to instantiate.
 	 * @param dialogModel
-	 *        The dimensions of the created dialog.
+	 *        The {@link DialogModel} of this dialog.
 	 * @param okHandle
 	 *        Function that is called with the result item.
 	 * @param base

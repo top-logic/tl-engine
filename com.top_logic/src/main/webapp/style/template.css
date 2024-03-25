@@ -1829,6 +1829,15 @@ img.cChoice-icon {
 	align-self: center;
 }
 
+img.type-image {
+	margin-left: 0.5em;
+	height: 1em;
+	object-fit: contain;
+	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
+	vertical-align: middle;
+	align-self: center;
+}
+
 .cChoice-horizontal > .cChoice-option {
 	/* Wrap options for horizontal choices. Use inline-block instead of inline to prevent wrapping between radio and label. */
 	display: inline-block;

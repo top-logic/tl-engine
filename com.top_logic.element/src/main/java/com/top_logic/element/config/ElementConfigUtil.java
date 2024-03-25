@@ -18,10 +18,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.element.config.annotation.TLSingletons;
 import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.model.TLModule;
-import com.top_logic.model.TLType;
-import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.config.JavaClass;
 import com.top_logic.model.config.ScopeConfig;
@@ -190,58 +187,6 @@ public class ElementConfigUtil {
 			return StringServices.EMPTY_STRING;
 		}
 		return annotation.getClassName();
-	}
-
-	/**
-	 * {@link InstancePresentation#getIcon()}, or <code>null</code>, if it's not defined.
-	 */
-	public static ThemeImage getDefaultIconOrNull(TLType type) {
-		return getIcon(type);
-	}
-
-	private static ThemeImage getIcon(TLType type) {
-		InstancePresentation instancePresentation = instancePresentation(type);
-		if (instancePresentation == null) {
-			return null;
-		}
-		return instancePresentation.getIcon();
-	}
-
-	private static InstancePresentation instancePresentation(TLType type) {
-		return TLAnnotations.getAnnotation(type, InstancePresentation.class);
-	}
-
-	/**
-	 * {@link InstancePresentation#getLargeIcon()}, or <code>null</code>, if it's not defined.
-	 */
-	public static ThemeImage getLargeIconOrNull(TLType self) {
-		return getLargeIcon(self);
-	}
-
-	private static ThemeImage getLargeIcon(TLType self) {
-		InstancePresentation instancePresentation = instancePresentation(self);
-		if (instancePresentation == null) {
-			return null;
-		}
-		return instancePresentation.getLargeIcon();
-	}
-
-	/**
-	 * {@link InstancePresentation#getExpandedIconOrEmpty()}, or
-	 * {@link InstancePresentation#getIcon()}, if the former is not given.
-	 */
-	public static ThemeImage getOpenedIconWithDefaultAsFallback(TLType type) {
-		ThemeImage openedIcon = getExpandedIconOrEmpty(type);
-
-		return openedIcon != null ? openedIcon : ElementConfigUtil.getDefaultIconOrNull(type);
-	}
-
-	private static ThemeImage getExpandedIconOrEmpty(TLType type) {
-		InstancePresentation instancePresentation = instancePresentation(type);
-		if (instancePresentation == null) {
-			return null;
-		}
-		return instancePresentation.getExpandedIconOrEmpty();
 	}
 
 	public static String getDefaultSingletonType(ModuleConfig moduleConfig) {

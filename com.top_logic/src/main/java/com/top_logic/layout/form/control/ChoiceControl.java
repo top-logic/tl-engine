@@ -18,6 +18,8 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -27,6 +29,8 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.model.utility.OptionModelListener;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
+import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.css.CssUtil;
 
 /**
  * {@link Control} displaying a {@link SelectField} as collection of radio buttons or checkboxes.
@@ -39,6 +43,9 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 		AbstractFormFieldControl.COMMANDS,
 		new ControlCommand[] {
 		});
+
+	/** The CSS class added to the XML tag of the icon of every option. */
+	public static final String CSS_CLASS_ICON = "cChoice-icon";
 
 	/**
 	 * Default orientation, if nothing was set explicit.
@@ -92,18 +99,24 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 			String optionName = "o" + optionIndex;
 			String widgetID = getID() + "-" + optionName;
 
+			LabelProvider labelProvider = field.getOptionLabelProvider();
+			ThemeImage image = getIcon(labelProvider, option);
+			String cssClass = getCssClass(labelProvider, option);
+			if (labelProvider instanceof ResourceProvider) {
+				ResourceProvider resourceProvider = (ResourceProvider) labelProvider;
+				image = resourceProvider.getImage(option, null);
+				cssClass = resourceProvider.getCssClass(option);
+			} else {
+				cssClass = null;
+			}
+
 			out.beginBeginTag(DIV);
-			out.writeAttribute(CLASS_ATTR, "cChoice-option");
+			CssUtil.writeCombinedCssClasses(out, "cChoice-option", cssClass);
 			out.endBeginTag();
 			{
 				if (labelsLeft) {
-					out.beginBeginTag(SPAN);
-					out.writeAttribute(CLASS_ATTR, "cChoice-labelLeft");
-					out.endBeginTag();
-					{
-						writeLabel(context, out, field, option, widgetID);
-					}
-					out.endTag(SPAN);
+					writeIcon(context, out, image);
+					writeLabelSpan(context, out, field, option, widgetID);
 				}
 
 				out.beginBeginTag(INPUT);
@@ -135,14 +148,10 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 
 				if (! labelsLeft) {
                     if (indent) {
-						out.beginBeginTag(SPAN);
-						out.writeAttribute(CLASS_ATTR, "cChoice-labelRight");
-						out.endBeginTag();
-						{
-							writeLabel(context, out, field, option, widgetID);
-						}
-						out.endTag(SPAN);
+						writeIcon(context, out, image);
+						writeLabelSpan(context, out, field, option, widgetID);
                     } else {
+						writeIcon(context, out, image);
 						writeLabel(context, out, field, option, widgetID);
                     }
 				}
@@ -150,6 +159,27 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 			out.endTag(DIV);
 		}
 		out.endTag(DIV);
+	}
+
+	/** The CSS class for the given option, or null. */
+	protected String getCssClass(LabelProvider labelProvider, Object model) {
+		if (labelProvider instanceof ResourceProvider) {
+			return ((ResourceProvider) labelProvider).getCssClass(model);
+		}
+		return null;
+	}
+
+	/**
+	 * The {@link ThemeImage} for the given option.
+	 * <p>
+	 * May be {@link ThemeImage#none()} or <code>null</code>.
+	 * </p>
+	 */
+	protected ThemeImage getIcon(LabelProvider labelProvider, Object model) {
+		if (labelProvider instanceof ResourceProvider) {
+			return ((ResourceProvider) labelProvider).getImage(model, null);
+		}
+		return ThemeImage.none();
 	}
 
 	@Override
@@ -247,6 +277,30 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 				SelectFieldUtils.writeSelectionAsTextImmutable(out, field);
 		}
 		out.endTag(DIV);
+	}
+
+	private void writeIcon(DisplayContext context, TagWriter out, ThemeImage image) throws IOException {
+		if (image == null || image.equals(ThemeImage.none())) {
+			return;
+		}
+		XMLTag icon = image.toIcon();
+
+		icon.beginBeginTag(context, out);
+		out.writeAttribute(HTMLConstants.CLASS_ATTR, CSS_CLASS_ICON);
+		icon.endBeginTag(context, out);
+		icon.endTag(context, out);
+	}
+
+	private void writeLabelSpan(DisplayContext context, TagWriter out, SelectField field, Object option, String widgetID)
+			throws IOException {
+		String cssClassLabelPosition = labelsLeft ? "cChoice-labelLeft" : "cChoice-labelRight";
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, cssClassLabelPosition);
+		out.endBeginTag();
+		{
+			writeLabel(context, out, field, option, widgetID);
+		}
+		out.endTag(SPAN);
 	}
 
 	private void writeLabel(DisplayContext context, TagWriter out, SelectField field, Object option, String widgetID)

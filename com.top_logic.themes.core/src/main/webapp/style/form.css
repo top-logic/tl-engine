@@ -2021,6 +2021,15 @@ span.bcc-option, .cChoice-option {
 	cursor: default;
 }
 
+img.cChoice-icon {
+	margin-left: 0.5em;
+	height: 1em;
+	object-fit: contain;
+	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
+	vertical-align: middle;
+	align-self: center;
+}
+
 .cSelectOption,
 .cCheckbox {
 	display: inline-flex;

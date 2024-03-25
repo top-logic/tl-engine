@@ -1802,12 +1802,6 @@ a.input-image {
 }
 
 /* CheckboxControl */
-.cCheckbox {
-}
-
-/* ChoiceControl */
-.cChoice {
-}
 
 .cChoice input,
 .cChoice label {
@@ -1824,6 +1818,15 @@ a.input-image {
 	/* Some distance between radio button and label. */
 	padding-right: 5px;
 	padding-left: 5px;
+}
+
+img.cChoice-icon {
+	margin-left: 0.5em;
+	height: 1em;
+	object-fit: contain;
+	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
+	vertical-align: middle;
+	align-self: center;
 }
 
 .cChoice-horizontal > .cChoice-option {

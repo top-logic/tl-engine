@@ -6,10 +6,12 @@
 package com.top_logic.element.layout.grid;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.search.SearchResult;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.util.Utils;
@@ -111,6 +113,17 @@ public class GridTreeTableNodeLabelNaming
 	}
 
 	static final String NAME_COLUMN_NAME = AbstractWrapper.NAME_ATTRIBUTE;
+
+	@Override
+	protected boolean isCompatibleModel(GridTreeTableNode node) {
+		GridComponent grid = getGrid(node);
+		Maybe<? extends ModelName> modelName = ModelResolver.buildModelNameIfAvailable(grid);
+		if (!modelName.hasValue()) {
+			return false;
+		}
+		Collection<String> labelPath = getStringPathFromRoot(node, grid);
+		return !(labelPath.contains(null) || labelPath.contains(""));
+	}
 
 	@Override
 	protected void initName(GridNodeLabelName name, GridTreeTableNode node) {

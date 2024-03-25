@@ -346,8 +346,7 @@ public class DropDownControl extends AbstractSelectControl {
 		icon.writeWithCss(context, out, "ddwttItemIcon");
 	}
 
-	private void renderItemLabel(TagWriter out, FormField dropdown, Object item)
-			throws IOException {
+	private void renderItemLabel(TagWriter out, FormField dropdown, Object item) {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "ddwttItemLabel");
 		out.endBeginTag();

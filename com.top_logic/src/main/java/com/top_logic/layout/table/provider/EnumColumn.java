@@ -12,12 +12,9 @@ import java.util.Set;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.list.FastListElementCollectionComparator;
 import com.top_logic.layout.Accessor;
-import com.top_logic.layout.form.control.ChoiceControl;
-import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.provider.SelectControlProvider;
-import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.table.filter.DefaultClassificationTableFilterProvider;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
@@ -94,34 +91,34 @@ public class EnumColumn extends ReferenceColumn {
 		ClassificationPresentation presentation = getClassificationPresentation();
 		switch (presentation) {
 			case DROP_DOWN:
-				if (isMultiple()) {
-					/* Do not display multiple selection with select control. The reason is that the
-					 * displayed box with the options would destroy the table layout. */
-					return SelectionControlProvider.SELECTION_INSTANCE;
-				} else {
-					if (isMandatory()) {
-						return SelectControlProvider.INSTANCE_WITHOUT_CLEAR;
-					} else {
-						return SelectControlProvider.INSTANCE;
-					}
-				}
+				return getDropDownControlProvider();
 			case CHECKLIST:
 				// TODO Ticket #20011: Display checklists as in forms.
 				return SelectionControlProvider.SELECTION_INSTANCE;
 			case POP_UP:
 				return SelectionControlProvider.SELECTION_INSTANCE;
 			case RADIO:
-				return (field, style) -> newChoiceControl(field, Orientation.VERTICAL);
 			case RADIO_INLINE:
-				return (field, style) -> newChoiceControl(field, Orientation.HORIZONTAL);
+				/* Radio buttons can only be displayed properly in tables if they are few and have
+				 * short labels. To avoid problems with too big content, tables use therefore always
+				 * a drop down instead of radio buttons. */
+				return getDropDownControlProvider();
 		}
 		throw ClassificationPresentation.noSuchEnum(presentation);
 	}
 
-	private ChoiceControl newChoiceControl(Object field, Orientation orientation) {
-		ChoiceControl choice = new ChoiceControl((SelectField) field);
-		choice.setOrientation(orientation);
-		return choice;
+	private ControlProvider getDropDownControlProvider() {
+		if (isMultiple()) {
+			/* Do not display multiple selection with select control. The reason is that the
+			 * displayed box with the options would destroy the table layout. */
+			return SelectionControlProvider.SELECTION_INSTANCE;
+		} else {
+			if (isMandatory()) {
+				return SelectControlProvider.INSTANCE_WITHOUT_CLEAR;
+			} else {
+				return SelectControlProvider.INSTANCE;
+			}
+		}
 	}
 
 	private ClassificationPresentation getClassificationPresentation() {

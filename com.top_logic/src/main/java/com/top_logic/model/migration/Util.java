@@ -1256,23 +1256,23 @@ public class Util {
 			internalCreateTLReference(log, con, branch, module, type, refName, selfEnd.getID(), annotations);
 
 		CompiledStatement sql = query(
-		parameters(
-			branchParamDef(),
-			parameterDef(DBType.ID, "endID"),
-			parameterDef(DBType.BOOLEAN, "mandatory"),
-			parameterDef(DBType.BOOLEAN, "composite"),
-			parameterDef(DBType.BOOLEAN, "aggregate"),
-			parameterDef(DBType.BOOLEAN, "multiple"),
-			parameterDef(DBType.BOOLEAN, "bag"),
-			parameterDef(DBType.BOOLEAN, "ordered"),
-			parameterDef(DBType.BOOLEAN, "navigate")),
-		update(
-			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
-			and(
-				eqBranch(),
-				eqSQL(
-					column(refID(TLReference.END_ATTR)),
-					parameter(DBType.ID, "endID"))),
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "endID"),
+				parameterDef(DBType.BOOLEAN, "mandatory"),
+				parameterDef(DBType.BOOLEAN, "composite"),
+				parameterDef(DBType.BOOLEAN, "aggregate"),
+				parameterDef(DBType.BOOLEAN, "multiple"),
+				parameterDef(DBType.BOOLEAN, "bag"),
+				parameterDef(DBType.BOOLEAN, "ordered"),
+				parameterDef(DBType.BOOLEAN, "navigate")),
+			update(
+				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(BasicTypes.IDENTIFIER_DB_NAME),
+						parameter(DBType.ID, "endID"))),
 				listWithoutNull(
 					SQLH.mangleDBName(TLAssociationEnd.MANDATORY_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR),
@@ -1282,13 +1282,13 @@ public class Util {
 					SQLH.mangleDBName(TLAssociationEnd.ORDERED_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
 				listWithoutNull(
-				parameter(DBType.BOOLEAN, "mandatory"),
-				parameter(DBType.BOOLEAN, "composite"),
-				parameter(DBType.BOOLEAN, "aggregate"),
-				parameter(DBType.BOOLEAN, "multiple"),
-				parameter(DBType.BOOLEAN, "bag"),
-				parameter(DBType.BOOLEAN, "ordered"),
-				parameter(DBType.BOOLEAN, "navigate")))).toSql(con.getSQLDialect());
+					parameter(DBType.BOOLEAN, "mandatory"),
+					parameter(DBType.BOOLEAN, "composite"),
+					parameter(DBType.BOOLEAN, "aggregate"),
+					parameter(DBType.BOOLEAN, "multiple"),
+					parameter(DBType.BOOLEAN, "bag"),
+					parameter(DBType.BOOLEAN, "ordered"),
+					parameter(DBType.BOOLEAN, "navigate")))).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, branch, selfEnd.getID(), mandatory, composite, aggregate, multiple, bag, ordered,
 			navigate);

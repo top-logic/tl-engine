@@ -3,11 +3,6 @@
 ****	Form styles		****
 ****					****
 */
-form[name="ChangePassword_FormContext"] .cTextInput input {
-	width: 100%;
-	padding: 0;
-}
-
 .frmBody h1 {
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-04-font-size);
@@ -1558,10 +1553,10 @@ span.cIconSelect .input-image.cannot-edit i {
 	padding: 0 var(--spacing-03);
 	height: 2rem;
 	box-sizing: border-box;
-	max-width: 100%;
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
+	width: 100%;
 }
 
 .cTextInput textarea,

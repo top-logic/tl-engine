@@ -55,6 +55,11 @@ public class I18NConstants extends I18NConstantsBase {
 	@CalledByReflection
 	public static ResKey1 CREATE_OBJECT_DEFAULT_LABEL;
 
+	/**
+	 * @en Invalid field mode '{0}', expected values are: {1}
+	 */
+	public static ResKey2 ERROR_MODE__VALUE_OPTIONS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

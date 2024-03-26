@@ -17,12 +17,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Configuration;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -33,6 +35,7 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.LegacyTypeCodes;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -46,6 +49,7 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormContextProxy;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
@@ -59,10 +63,14 @@ import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.TLConstraints;
+import com.top_logic.model.annotate.TLDynamicVisibility;
 import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.form.definition.FormVisibility;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -169,6 +177,54 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 			if (result instanceof FormField) {
 				FormField field = (FormField) result;
+
+				TLDynamicVisibility modeAnnotation = attribute.getAnnotation(TLDynamicVisibility.class);
+				if (modeAnnotation != null) {
+					ModeSelector modeSelector = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+						.getInstance(modeAnnotation.getModeSelector());
+
+					TLObject object = update.getOverlay();
+
+					class Observer implements ValueListener, Sink<Pointer>, Consumer<FormMember> {
+						@Override
+						public void add(Pointer p) {
+							TLFormObject overlay = (TLFormObject) p.object();
+							AttributeUpdate dependentUpdate = overlay.getUpdate(p.attribute());
+							dependentUpdate.withField(this);
+						}
+
+						@Override
+						public void accept(FormMember f) {
+							if (f instanceof FormField) {
+								((FormField) f).addValueListener(this);
+							}
+						}
+
+						@Override
+						public void valueChanged(FormField changedField, Object oldValue, Object newValue) {
+							FormVisibility mode = modeSelector.getMode(object, attribute);
+							mode.applyTo(result);
+							switch (mode) {
+								case READ_ONLY:
+									// Reset to original value to prevent modifying values by
+									// temporarily activating fields.
+									((FormField) result).reset();
+									break;
+								case HIDDEN:
+									// Clear value to prevent leaking irrelevant values into the
+									// model.
+									((FormField) result).setValue(null);
+									break;
+								default:
+									break;
+							}
+
+							modeSelector.traceDependencies(object, attribute, this);
+						}
+					}
+
+					new Observer().valueChanged(null, null, null);
+				}
 
 				TLConstraints annotation = attribute.getAnnotation(TLConstraints.class);
 				if (annotation != null) {

@@ -74,7 +74,6 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	private static final String XML_KEY_EXTAUTH_ACTIVATE = "isEnabled";
 	private static final String XML_KEY_REUSE_SESSION = "reuseSession";
 
-	private String req_header_name;
 	private boolean extAuthEnabled;
 	private boolean reuseSession;
 
@@ -84,7 +83,6 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	public ExternalAuthenticationServlet() {
 		ExternalAuthentication cfg = ApplicationConfig.getInstance().getConfig(ExternalAuthentication.class);
 
-		req_header_name = cfg.getHeaderKey();
 		extAuthEnabled = cfg.getIsEnabled();
 		reuseSession = cfg.getReuseSession();
 	}
@@ -148,10 +146,6 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			loginUser(credentials.getPerson(), request, response);
 		}
 		forwardToStartPage(request, response);
-	}
-
-	protected String getRequestHeaderName() {
-		return req_header_name;
 	}
 
 	protected boolean isExtAuthEnabled() {

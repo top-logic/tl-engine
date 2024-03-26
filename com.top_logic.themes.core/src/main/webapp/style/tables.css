@@ -1083,7 +1083,10 @@ table td .cTimeInput input {
     text-align: center;
 }
 
-.tl-table__cell .timePart span.cDatetimeTime:not(:empty)::before {
+/* Removes the hyphen from the element, because it fits
+and looks better without it in a table cell.
+*/
+.tl-table__cell .timePart .cDatetimeTime.active:not(:empty)::before {
 	content: "";
 	padding-right: 0;
 	padding-left: 0;

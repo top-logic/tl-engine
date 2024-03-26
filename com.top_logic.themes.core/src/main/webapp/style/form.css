@@ -1396,14 +1396,10 @@ div.cal_zoom_inAnimation {
     }
 }
 
-.cDateInput, .cTimeInput {
+.cDatetime, 
+.cDateInput, 
+.cTimeInput {
 	display: inline-flex;
-	align-items: center;
-}
-
-.cDatetime {
-	display: inline-flex;
-	flex-wrap: wrap;
 	align-items: center;
 }
 

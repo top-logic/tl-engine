@@ -56,11 +56,11 @@ Here is something that looks like the contents of the hr title, but is not.
 		personalizationName="bar"
 	>
 		<form:cellTitle raw="true">
-			<span class="dfToolbar">
-				<basic:image icon="<%= Icons.INFO %>"/>
-			</span>
 			<span>
 				Cell with a border setting contrary to the current theme
+			</span>
+			<span class="dfToolbar">
+				<basic:image icon="<%= Icons.INFO %>"/>
 			</span>
 		</form:cellTitle>
 

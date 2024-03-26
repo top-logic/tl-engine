@@ -245,6 +245,10 @@ a.is-action {
 .collapsed .frmGroupExpand::before {
 	content: none;
 }
+
+.frmGroupExpand {
+	margin-left: auto;
+}
 	
 .frmGroupExpand::before {
 	display: inline-flex;
@@ -567,10 +571,6 @@ div.dfListAdd {
 }
 
 /* filter */
-.fltContent .rf_groupCell.collapsed {
-	height: 2rem;
-}
-
 .fltContent .rf_columnsLayout > .rf_line,
 .fltContent .rf_columnsLayout.cols1 > *:not(body),
 .cMediaQuery.dflSize0 .fltContent .rf_columnsLayout > *:not(body),
@@ -739,10 +739,6 @@ div.dfListAdd {
 	margin-right: 5px;
 }
 
-.fltContent .rf_label {
-	font-weight:normal;
-}
-
 .rf_inputCell .rightAlign {
 	text-align: right;
 	padding-right: 5px;
@@ -777,21 +773,14 @@ div.dfListAdd {
 	border: 0px;
 }
 
-.fltContent .rf_groupCell {
-    border-top:1px solid var(--background);
-    border-right:1px solid var(--background);
-    border-bottom:1px solid var(--button-secondary);
-    border-left:1px solid var(--button-secondary); 
-	border-radius: 0px;
-    position:relative;
-    padding: 0.5em;
+.fltContent .dfToolbar {
+	margin-left: auto;
 }
 
 .rf_groupCell .rf_header {
     grid-row: 1;
     grid-column: 1;
     display: flex;
-    justify-content: space-between;
     align-items: center;
     gap: var(--spacing-02);
     background: var(--layer-accent);
@@ -810,8 +799,7 @@ div.dfListAdd {
 	text-decoration: none;
 }
 
-.rf_groupCell.noLegend > .rf_header,
-.fltContent .rf_groupCell .rf_header {
+.rf_groupCell.noLegend > .rf_header {
 	background: transparent;
 }
 

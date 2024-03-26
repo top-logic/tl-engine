@@ -72,7 +72,6 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage COLORLINE;
 
-//	@DefaultValue("css:bi bi-chevron-expand")
 	public static ThemeImage CHEVRON_EXPAND;
 
 	public static ThemeImage FAST_BACKWARD;

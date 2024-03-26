@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.Logger;
@@ -173,6 +174,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	private FormMember _field;
 
+	private Consumer<FormMember> _fieldInitializer;
+
 	/**
 	 * Creates a {@link AttributeUpdate}.
 	 *
@@ -203,10 +206,29 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	/**
 	 * The {@link FormMember} that was built for this {@link AttributeUpdate}, or <code>null</code>
-	 * if an field was built yet.
+	 * if no field was not built yet.
 	 */
 	public FormMember getField() {
 		return _field;
+	}
+
+	/**
+	 * Adds an initializer for this update's field.
+	 * 
+	 * <p>
+	 * The initializer is called, when the field for this update becomes available.
+	 * </p>
+	 */
+	public void withField(Consumer<FormMember> fieldInitializer) {
+		if (_field != null) {
+			fieldInitializer.accept(_field);
+		} else {
+			Consumer<FormMember> before = _fieldInitializer;
+			_fieldInitializer = before == null ? fieldInitializer : f -> {
+				before.accept(f);
+				fieldInitializer.accept(f);
+			};
+		}
 	}
 
 	@Override
@@ -232,6 +254,10 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	public void initField(FormMember field) {
 		assert _field == null : "Must not create multiple fields for the same update.";
 		_field = field;
+		if (_fieldInitializer != null) {
+			_fieldInitializer.accept(_field);
+			_fieldInitializer = null;
+		}
 	}
 
     @Override

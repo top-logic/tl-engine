@@ -1970,7 +1970,7 @@ span.bcc-option, .cChoice-option {
     gap: var(--spacing-02);
 }
 
-.cChoice-vertical {
+.cChoice-vertical.active {
 	display: inline-flex;
 	flex-direction: column;
 	gap: var(--spacing-02);

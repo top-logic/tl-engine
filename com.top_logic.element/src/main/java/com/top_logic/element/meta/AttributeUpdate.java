@@ -223,11 +223,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		if (_field != null) {
 			fieldInitializer.accept(_field);
 		} else {
-			Consumer<FormMember> before = _fieldInitializer;
-			_fieldInitializer = before == null ? fieldInitializer : f -> {
-				before.accept(f);
-				fieldInitializer.accept(f);
-			};
+			_fieldInitializer =
+				_fieldInitializer == null ? fieldInitializer : _fieldInitializer.andThen(fieldInitializer);
 		}
 	}
 

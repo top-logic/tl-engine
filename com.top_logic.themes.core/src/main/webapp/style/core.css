@@ -2464,7 +2464,6 @@ div.treeNode.treeSelected.dndInsertInto {
 */
 .cCollapsibleHeader {
 	display: flex;
-	flex-direction: row-reverse;
 	align-items: center;
 	justify-content: space-between;
 	background-color: var(--layer-accent);
@@ -2518,8 +2517,8 @@ div.treeNode.treeSelected.dndInsertInto {
 
 /* for when the toolbar is collapsed */
 .cCollapsibleHorizontal .cCollapsibleHeader {
-	flex-direction: column;
-	justify-content: flex-start;
+	flex-direction: column-reverse;
+	justify-content: start;
 	align-items: unset;
 }
 
@@ -2551,6 +2550,17 @@ span.tbGroup,
 .cCollapsibleButtons,
 .cCollapsibleToolbar {
     display: inline-flex;
+}
+
+.cCollapsibleButtons::before {
+	border-left: 1px solid var(--border-subtle);
+	margin-left: var(--spacing-02);
+	height: calc(var(--COLLAPSIBLE_IMAGE_HEIGHT) - var(--spacing-02) * 2);
+	content: " ";
+}
+
+.cCollapsibleCollapsed .cCollapsibleButtons::before {
+	content: none;
 }
 
 .tbGroup.cImageButton input {

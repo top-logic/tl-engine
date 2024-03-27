@@ -6487,9 +6487,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	border: 1px solid #DFE6F0;
 	border-radius: var(--GROUP_RADIUS);
 	margin-bottom: 10px;
-    min-width: -moz-min-content;    /* Firefox */
-    min-width: -webkit-min-content; /* Chrome */
-    min-width: min-content;
+	min-width: -moz-min-content;    /* Firefox */
+	min-width: -webkit-min-content; /* Chrome */
+	min-width: min-content;
+	height: max-content;
 }
 
 .rf_groupCell.noLegend {
@@ -7743,7 +7744,8 @@ div.dirtyHandlingDialog .changes {
 	text-overflow: ellipsis;
 }
 
-.ddwttChevron::after {
+/* Chevron */
+.ddwttDropBtn::after {
 	display: inline-block;
 	position: relative;
 	height: 0.5em;
@@ -7757,12 +7759,12 @@ div.dirtyHandlingDialog .changes {
 	flex-shrink: 0;
 }
 
-.ddwttChevron.up:after {
+.ddwttDropBtn.up:after {
 	top: 0.125em;
 	transform: rotate(-45deg);
 }
 
-.ddwttChevron.down:after {
+.ddwttDropBtn.down:after {
 	top: -0.125em;
 	transform: rotate(135deg);
 }

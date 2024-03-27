@@ -6,6 +6,8 @@
 	<div class="cCollapsibleHeader"
 		data-layout-size="{!collapsed ? toolbarLayoutSize}"
 	>
+		<div class="cCollapsibleTitle">{title}</div>
+		
 		<div class="cCollapsibleToolbar">
 			<tl:if test="!collapsed">{toolbar}</tl:if>
 			
@@ -14,8 +16,6 @@
 				<tl:if test="showMaximize">{maximizeButton}</tl:if>
 			</span>
 		</div>
-		
-		<div class="cCollapsibleTitle">{title}</div>
 	</div>
 	<tl:if test="!collapsed">{child}</tl:if>
 </div>

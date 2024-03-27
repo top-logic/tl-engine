@@ -40,18 +40,18 @@
 					personalizationName="bar"
 				>
 					<form:cellTitle raw="true">
+						<span class="<%=GroupCellTag.TITLE_TEXT_CSS_CLASS %>">
+							<form:label name="<%=TestBoxesComponent.GROUP2_GROUP%>"
+								colon="false"
+							/>
+						</span>
+						
 						<span class="dfToolbar">
 							<form:scope name="<%=TestBoxesComponent.GROUP2_GROUP %>">
 								<form:command name="<%=TestBoxesComponent.RESET_BUTTON %>"
 									renderer="<%=ImageButtonRenderer.INSTANCE%>"
 								/>
 							</form:scope>
-						</span>
-
-						<span class="<%=GroupCellTag.TITLE_TEXT_CSS_CLASS %>">
-							<form:label name="<%=TestBoxesComponent.GROUP2_GROUP%>"
-								colon="false"
-							/>
 						</span>
 					</form:cellTitle>
 

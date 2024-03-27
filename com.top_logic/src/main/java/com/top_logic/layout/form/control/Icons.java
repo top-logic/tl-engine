@@ -72,6 +72,8 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage COLORLINE;
 
+	public static ThemeImage CHEVRON_EXPAND;
+
 	public static ThemeImage FAST_BACKWARD;
 
 	public static ThemeImage FAST_FORWARD;

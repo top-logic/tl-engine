@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
@@ -6,7 +6,9 @@
 			<instance>
 				<clients>
 					<client name="pac4j-generic">
-						<domain>%PAC_DOMAIN%</domain>
+						<user-mapping class="com.top_logic.base.accesscontrol.LDAPUserMapping"
+							ldap="LdapSecurity"
+						/>
 						<client-id>%PAC_CLIENT_ID%</client-id>
 						<secret>%PAC_SECRET%</secret>
 						<discovery-uri>%PAC_DISCOVERY_URI%</discovery-uri>

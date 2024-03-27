@@ -1,6 +1,5 @@
 db-mysql.xml
 db-mysql55.xml
 pac4j-google.xml
-google-openid-demo.xml
 enable-debug.xml
 config.xml

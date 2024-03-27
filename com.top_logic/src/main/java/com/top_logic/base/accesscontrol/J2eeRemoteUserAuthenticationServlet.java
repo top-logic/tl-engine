@@ -9,9 +9,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
-import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Login via J2EE remote user authentication.
@@ -19,7 +24,46 @@ import com.top_logic.basic.StringServices;
  * @author <a href="mailto:tri@top-loigc.com">Thomas Richter</a>
  */
 public class J2eeRemoteUserAuthenticationServlet extends ExternalAuthenticationServlet {
-    
+
+	/**
+	 * Configuration for the authentication server that identifies the user via the request.
+	 * 
+	 * @see J2eeRemoteUserAuthenticationServlet
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface Config extends ConfigurationItem {
+
+		/**
+		 * Name of the request header which contains the remote user.
+		 * 
+		 * <p>
+		 * If no header name is set, the remote user is directly taken from the request.
+		 * </p>
+		 * 
+		 * @see HttpServletRequest#getRemoteUser()
+		 */
+		String getRequestHeaderName();
+
+		/**
+		 * Algorithm retrieving the {@link Person} for the user name in the authentication system.
+		 */
+		@InstanceFormat
+		@NonNullable
+		@InstanceDefault(DefaultExternalUserMapping.class)
+		ExternalUserMapping getUserMapping();
+
+	}
+
+	private Config _config;
+
+	/**
+	 * This constructor creates a new {@link J2eeRemoteUserAuthenticationServlet}.
+	 */
+	public J2eeRemoteUserAuthenticationServlet() {
+		_config = ApplicationConfig.getInstance().getConfig(Config.class);
+	}
+
 	/**
      * Checks with the given request if the requesting user is authentified
      * against the domain specified in web.xml Authentification check was done
@@ -42,20 +86,17 @@ public class J2eeRemoteUserAuthenticationServlet extends ExternalAuthenticationS
 			String message = "No remote user provided by request. Transparent authentication will be denied.";
 			throw new LoginDeniedException(message);
         }
-		// separating domain and username...
-		int sepIdx = remoteUser.lastIndexOf("\\");
-		if (sepIdx > 0) {
-			String domainName = remoteUser.substring(0, sepIdx);
-			String userName = remoteUser.substring(sepIdx + 1);
-			return LoginCredentials.fromUsernameAndDomain(userName, domainName);
-		} else {
-			if (!isAllowAuthWithoutDomain()) {
-				String message = "Remote user given in unexpected format. Transparent login probably will not work."
-					+ " Expected format is: DOMAIN_NAME\\Username -given was " + remoteUser;
-				throw new LoginFailedException(message);
-			}
-			return LoginCredentials.fromUsername(remoteUser);
-		}
+
+		Person account = getUserMapping().findAccountForExternalName(remoteUser);
+		return LoginCredentials.fromUser(account);
+	}
+
+	private String getRequestHeaderName() {
+		return _config.getRequestHeaderName();
+	}
+
+	private ExternalUserMapping getUserMapping() {
+		return _config.getUserMapping();
 	}
 
 }

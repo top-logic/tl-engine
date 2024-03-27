@@ -19,6 +19,8 @@ import org.pac4j.core.http.url.DefaultUrlResolver;
 import org.pac4j.core.http.url.UrlResolver;
 import org.pac4j.core.util.Pac4jConstants;
 
+import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
+import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -95,23 +97,17 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	}
 
 	/**
-	 * The (configured) <i>TopLogic</i> domain name for which the authentication device authenticates
-	 * users.
+	 * The {@link ExternalUserMapping} for the given {@link Client#getName() client name}.
 	 * 
-	 * @see ClientConfigurator.Config#getDomain()
+	 * @see ClientConfigurator.Config#getUserMapping()
 	 */
-	public String getDomain(String clientName) {
+	public ExternalUserMapping getUserMapping(String clientName) {
 		ClientConfigurator.Config<?> clientConfig = getConfig().getClients().get(clientName);
 		if (clientConfig == null) {
 			Logger.error("No such client configured: " + clientName, Pac4jConfigFactory.class);
-			return clientName;
+			return DefaultExternalUserMapping.INSTANCE;
 		}
-		String result = clientConfig.getDomain();
-		if (result == null) {
-			// Default as described in the domain config option.
-			return clientName;
-		}
-		return result;
+		return clientConfig.getUserMapping();
 	}
 
 	@Override
@@ -128,7 +124,6 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	 * @see org.pac4j.core.config.Config#INSTANCE
 	 */
 	protected org.pac4j.core.config.Config buildPac4jConfig(ServletContext context) {
-		@SuppressWarnings("rawtypes")
 		List<Client> clientList = new ArrayList<>();
 		for (ClientConfigurator configurator : _clientConfigurators) {
 			Client client = configurator.createClient(context);

@@ -54,7 +54,8 @@ public class BasicAuthenticationServlet extends ExternalAuthenticationServlet {
 	}
 
 	@Override
-	protected void checkLoginCredentials(LoginCredentials credentials, HttpServletRequest request)
+	protected void checkLoginCredentials(LoginCredentials credentials, HttpServletRequest request,
+			HttpServletResponse response)
 			throws InMaintenanceModeException, LoginDeniedException, LoginFailedException {
 		Login.getInstance().checkLoginByPassword(credentials);
 	}

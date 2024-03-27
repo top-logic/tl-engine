@@ -320,6 +320,9 @@ public class CreateModelPatch {
 		SetDiff<TLModule> diff = CreateModelPatch.diffSet(left.getModules(), right.getModules());
 
 		processCreateDelete(diff);
+		for (Update<? extends TLNamedPart> updated : diff.getUpdated()) {
+			processAnnotationChanges(updated);
+		}
 		for (Update<TLModule> update : diff.getUpdated()) {
 			addPatch(update.getLeft(), update.getRight());
 		}
@@ -473,6 +476,8 @@ public class CreateModelPatch {
 	}
 
 	final void addPatchEnumeration(TLEnumeration model, TLEnumeration other) {
+		processAnnotationChanges(model, other);
+
 		List<DiffOp<TLClassifier>> diff =
 			CreateModelPatch.diffList(model.getClassifiers(), other.getClassifiers());
 
@@ -482,6 +487,8 @@ public class CreateModelPatch {
 	}
 
 	final void addPatchClass(TLClass left, TLClass right) {
+		processAnnotationChanges(left, right);
+
 		boolean wasAbstract = left.isAbstract();
 		boolean isAbstract = right.isAbstract();
 		if (wasAbstract != isAbstract) {
@@ -663,9 +670,6 @@ public class CreateModelPatch {
 		}
 		for (TLNamedPart created : diff.getCreated()) {
 			created.visit(_creator, null);
-		}
-		for (Update<? extends TLNamedPart> updated : diff.getUpdated()) {
-			processAnnotationChanges(updated);
 		}
 	}
 

@@ -258,8 +258,8 @@ public class ItemEditor implements Editor {
 			String parent = "..";
 			if (singleOption) {
 				legend = fragment(
-					span(css(TOOLBAR_CSS_CLASS), member(OPTIONS_NAME)),
-					span(css(ITEM_TITLE_CSS_CLASS), label(parent), htmlTemplate(errorBlock)));
+					span(css(ITEM_TITLE_CSS_CLASS), label(parent), htmlTemplate(errorBlock)),
+					span(css(TOOLBAR_CSS_CLASS), member(OPTIONS_NAME)));
 			} else {
 				legend = fragment(span(css(ITEM_TITLE_CSS_CLASS), labelWithColon(parent), htmlTemplate(errorBlock),
 					member(OPTIONS_NAME)));

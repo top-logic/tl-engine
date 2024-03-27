@@ -1326,6 +1326,7 @@ div.dirtyHandlingDialog .changes {
 .px-1 .tl-radio-checkbox-container {
 	display: flex;
 	justify-content: center;
+	flex-grow: 1;
 }
 
 .px-1 .cPopupSelect.cannot-edit {

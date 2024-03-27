@@ -16,8 +16,6 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
-	public static ThemeImage SELECT_TYPE;
-
 	public static ThemeImage TRANSLATE;
 
 	public static ThemeImage DISPLAY_DERIVED_RESOURCES;

@@ -176,7 +176,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void renderDropDownButton(DisplayContext context, TagWriter out, FormField dropdown) throws IOException {
 		out.beginBeginTag(BUTTON);
-		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn ddwttChevron");
+		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn");
 		if (dropdown.isDisabled()) {
 			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
 		}
@@ -186,6 +186,10 @@ public class DropDownControl extends AbstractSelectControl {
 		out.endBeginTag();
 		{
 			renderButtonContent(context, out);
+			ThemeImage icon = com.top_logic.layout.form.control.Icons.CHEVRON_EXPAND;
+			if (icon != null) {
+				icon.writeWithCss(context, out, "ddwttChevron");
+			}
 		}
 		out.endTag(BUTTON);
 	}
@@ -224,7 +228,6 @@ public class DropDownControl extends AbstractSelectControl {
 			out.endBeginTag();
 			out.writeText(label);
 			out.endTag(SPAN);
-
 		}
 		out.endTag(SPAN);
 	}

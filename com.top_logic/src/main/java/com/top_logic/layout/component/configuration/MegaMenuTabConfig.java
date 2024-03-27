@@ -27,6 +27,7 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.component.TabComponent.TabbedLayoutComponent;
@@ -36,6 +37,7 @@ import com.top_logic.layout.form.control.ButtonRenderer;
 import com.top_logic.layout.form.control.IButtonRenderer;
 import com.top_logic.layout.form.control.MegaMenuControl.MegaMenuPopupDialogCreater;
 import com.top_logic.layout.form.control.MegaMenuOptionControl;
+import com.top_logic.layout.form.control.PopupMenuButtonControl;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -46,6 +48,7 @@ import com.top_logic.layout.structure.PopupDialogControl.VerticalPopupPosition;
 import com.top_logic.layout.tabbar.TabBarModel;
 import com.top_logic.layout.tabbar.TabBarModel.TabBarListener;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
+import com.top_logic.layout.tabbar.TabbarUtil;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.Card;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -252,6 +255,28 @@ public class MegaMenuTabConfig
 							option.write(context1, out);
 						}
 						out.endTag(HTMLConstants.DIV);
+
+						writePopupField(layoutComponent, context, out);
+
+					}
+
+					private void writePopupField(LayoutComponent layoutComponent, DisplayContext context, TagWriter out)
+							throws IOException {
+						if (layoutComponent instanceof TabComponent) {
+
+							out.beginBeginTag(HTMLConstants.DIV);
+							out.writeAttribute(HTMLConstants.CLASS_ATTR, "rightContent");
+							out.endBeginTag();
+
+							Menu allCommands = ((TabComponent) layoutComponent).getTabBarModel().getBurgerMenu();
+							PopupMenuButtonControl popupControl = TabbarUtil.createPopupControl(allCommands);
+							if (popupControl != null) {
+								popupControl.write(context, out);
+							}
+
+
+							out.endTag(HTMLConstants.DIV);
+						}
 					}
 				});
 				context.getWindowScope().openPopupDialog(popupDialog);

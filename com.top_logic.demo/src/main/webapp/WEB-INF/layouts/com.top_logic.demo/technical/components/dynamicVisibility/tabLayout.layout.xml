@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_d3d052fb_d8d5_496f_9c9a_4c4dae6cc15c">
+		<tabLabel key="dynamic.5002f62e-5736-4ea0-b173-2ebdb295b981">
+			<en>Dynamic Visibility</en>
+			<de>Dynamische Sichtbarkeit</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicVisibility/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -231,6 +231,7 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 		.add(CLASS_PROPERTY)
 		.add(DISABLED_PROPERTY)
 		.add(IMMUTABLE_PROPERTY)
+		.add(ADDED_TO_PARENT)
 		.add(REMOVED_FROM_PARENT)
 		.add(Focusable.FOCUS_PROPERTY)
 		.add(VisibilityModel.VISIBLE_PROPERTY)

@@ -53,7 +53,7 @@ public final class PatternInput extends AbstractDisplayValue {
 		appendSelectionFieldId(out, frameScope);
 		out.append(',');
 		appendPageChangeId(out, frameScope);
-		out.append(");");
+		out.append(")");
 	}
 
 	private void appendPatternFieldIds(Appendable out) throws IOException {

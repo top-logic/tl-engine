@@ -36,6 +36,6 @@ public final class PatternTextInput extends AbstractDisplayValue {
 	public void append(DisplayContext context, Appendable out) throws IOException {
 		out.append(FormConstants.TEXT_INPUT_CONTROL_CLASS + ".handleOnChange(this, ");
 		TagUtil.writeJsString(out, (_patternFieldControl.getID()));
-		out.append(");");
+		out.append(")");
 	}
 }

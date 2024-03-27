@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Configuration;
@@ -34,8 +33,8 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.element.meta.AttributeUpdateContainer.Handle;
 import com.top_logic.element.meta.LegacyTypeCodes;
-import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -185,20 +184,8 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 					TLObject object = update.getOverlay();
 
-					class Observer implements ValueListener, Sink<Pointer>, Consumer<FormMember> {
-						@Override
-						public void add(Pointer p) {
-							TLFormObject overlay = (TLFormObject) p.object();
-							AttributeUpdate dependentUpdate = overlay.getUpdate(p.attribute());
-							dependentUpdate.withField(this);
-						}
-
-						@Override
-						public void accept(FormMember f) {
-							if (f instanceof FormField) {
-								((FormField) f).addValueListener(this);
-							}
-						}
+					class Observer implements ValueListener, Sink<Pointer> {
+						private final List<AttributeUpdateContainer.Handle> _handles = new ArrayList<>();
 
 						@Override
 						public void valueChanged(FormField changedField, Object oldValue, Object newValue) {
@@ -219,7 +206,21 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 									break;
 							}
 
+							removeListeners();
+
 							modeSelector.traceDependencies(object, attribute, this);
+						}
+
+						private void removeListeners() {
+							for (Handle handle : _handles) {
+								handle.release();
+							}
+							_handles.clear();
+						}
+
+						@Override
+						public void add(Pointer p) {
+							_handles.add(updateContainer.addValueListener(p.object(), p.attribute(), this));
 						}
 					}
 

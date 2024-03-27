@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.dynamicmode">
+		<class name="Acquisition">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="price"
+					mandatory="true"
+					type="tl.core:Double"
+				/>
+				<property name="reason"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+								<selector><![CDATA[obj -> 
+    $obj.get(`test.dynamicmode:Acquisition#price`) +
+    $obj.get(`test.dynamicmode:Acquisition#positions`).get(`test.dynamicmode:Position#value`).sum() >= 10000 ? "mandatory" : "hidden"]]></selector>
+							</mode-selector>
+						</dynamic-visibility>
+					</annotations>
+				</property>
+				<reference name="positions"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Position"
+				/>
+			</attributes>
+		</class>
+		<class name="Position">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="value"
+					mandatory="true"
+					type="tl.core:Double"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

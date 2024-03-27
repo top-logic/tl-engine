@@ -739,6 +739,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#TIME_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getTimeDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.TIME_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#TIME_UNIT_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getTimeUnitDemoTypesAAttr() {
@@ -1464,6 +1471,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getTextDemoTypesXAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.TEXT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesX#TIME_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLProperty getTimeDemoTypesXAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.TIME_ATTR);
 	}
 
 	/**

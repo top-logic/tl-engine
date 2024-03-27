@@ -585,6 +585,15 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	String TEXT_ATTR = "text";
 
 	/**
+	 * Part <code>time</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Time</code> in configuration.
+	 * </p>
+	 */
+	String TIME_ATTR = "time";
+
+	/**
 	 * Part <code>typedSetOrdered</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
@@ -1108,6 +1117,13 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default String getText() {
 		return (String) tValueByName(TEXT_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #TIME_ATTR}.
+	 */
+	default java.util.Date getTime() {
+		return (java.util.Date) tValueByName(TIME_ATTR);
 	}
 
 	/**

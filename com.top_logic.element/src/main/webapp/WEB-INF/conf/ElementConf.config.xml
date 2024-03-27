@@ -338,13 +338,28 @@
 						config-name="TIME"
 						legacy-type-code="2"
 					>
-						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DateFieldProvider"/>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.TimeFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
 						<export-binding>
 							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
 								format="com.top_logic.basic.config.format.DateValueProvider"
 							/>
 						</export-binding>
-						<tag-provider impl="com.top_logic.element.meta.form.tag.DateTagProvider"/>
+						<column-info>
+							<filterProvider class="com.top_logic.layout.table.filter.TimeTableFilterProvider"
+								separate-option-display-threshold="3"
+							/>
+							<comparator class="com.top_logic.basic.col.TimeComparator$UserTimeComparator"/>
+							<descendingComparator class="com.top_logic.basic.col.InverseComparator">
+								<base-comparator class="com.top_logic.basic.col.TimeComparator$UserTimeComparator"/>
+							</descendingComparator>
+							<configurators>
+								<configurator class="com.top_logic.layout.table.provider.generic.FormatLabelProviderConfigurator"/>
+							</configurators>
+						</column-info>
+						<format>
+							<format-ref format-id="short-time"/>
+						</format>
 					</attribute-setting>
 
 					<attribute-setting config-name="LONG">

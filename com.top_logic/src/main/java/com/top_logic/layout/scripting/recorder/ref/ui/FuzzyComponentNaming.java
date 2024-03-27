@@ -194,7 +194,6 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 		if (name.getName() != null) {
 			layout = findComponent(layout, name.getName(), componentLabels);
 		}
-		checkVisible(context, name, layout);
 		return layout;
 	}
 

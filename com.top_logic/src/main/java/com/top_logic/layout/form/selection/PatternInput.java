@@ -45,7 +45,7 @@ public final class PatternInput extends AbstractDisplayValue {
 	public void append(DisplayContext context, Appendable out) throws IOException {
 		FrameScope frameScope = context.getExecutionScope().getFrameScope();
 
-		out.append("return services.form.SelectionControl.PatternField.handleInput(arguments[0],");
+		out.append("services.form.SelectionControl.PatternField.handleInput(arguments[0],");
 		appendPatternFieldIds(out);
 		out.append(',');
 		appendOptionFieldId(out, frameScope);

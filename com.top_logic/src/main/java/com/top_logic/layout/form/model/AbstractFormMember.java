@@ -617,10 +617,15 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 		
 		if (container == null) {
 			firePropertyChanged(REMOVED_FROM_PARENT, self(), this.parent, container);
+
+			// Remove parent last, to allow observing the event also from the parent container.
+			this.parent = container;
 		} else {
+			// Set parent first, to allow observing the event also from the parent container.
+			this.parent = container;
+
 			firePropertyChanged(ADDED_TO_PARENT, self(), this.parent, container);
 		}
-		this.parent = container;
 
 		// Since the parent's display mode decides about this member's display
 		// mode, the display mode must be adjusted, if the parent relationship

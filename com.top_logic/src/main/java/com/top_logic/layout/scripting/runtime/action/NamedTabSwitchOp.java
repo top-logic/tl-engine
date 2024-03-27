@@ -6,7 +6,10 @@
 package com.top_logic.layout.scripting.runtime.action;
 
 
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
+
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -89,20 +92,28 @@ public final class NamedTabSwitchOp extends ComponentActionOp<NamedTabSwitch> {
 	 * 
 	 * @return {@link #NOTHING_FOUND}, if none of the cards has the given label.
 	 */
-	public static int findCardIndexByLabel(TabComponent tabComponent, String cardName) {
+	public static int findCardIndexByLabel(TabComponent tabComponent, String label) {
+		Set<Integer> matches = set();
 		List<Card> allCards = getCards(tabComponent);
-		int firstFoundIndex = NOTHING_FOUND;
-		for (int n = 0, cnt = allCards.size(); n < cnt; n++) {
-			Card card = allCards.get(n);
+		for (int i = 0; i < allCards.size(); i++) {
+			Card card = allCards.get(i);
+			if (tabComponent.getTabBar().isInactive(card)) {
+				continue;
+			}
 			TabInfo tabInfo = (TabInfo) card.getCardInfo();
-			if (cardName.equals(tabInfo.getLabel())) {
-				firstFoundIndex = n;
-				if (!tabComponent.getTabBar().isInactive(card)) {
-					return n;
-				}
+			if (label.equals(tabInfo.getLabel())) {
+				matches.add(i);
 			}
 		}
-		return firstFoundIndex;
+		if (matches.isEmpty()) {
+			return NOTHING_FOUND;
+		}
+		if (matches.size() > 1) {
+			List<Card> collisions = list();
+			matches.forEach(index -> collisions.add(allCards.get(index)));
+			throw new RuntimeException("Found multiple visible tabs with the label '" + label + "': " + collisions);
+		}
+		return matches.iterator().next();
 	}
 
 	private static List<Card> getCards(TabComponent tabComponent) {

@@ -1214,7 +1214,31 @@ button.moveOption {
 
 .tl-mega-menu-grid-container .pdlgContent,
 .tl-mega-menu-flex-container .pdlgContent {
+	display: flex;
 	overflow: hidden !important;
+}
+
+.tl-mega-menu-grid-container .rightContent,
+.tl-mega-menu-flex-container .rightContent {
+	background: var(--layer);
+}
+
+.tl-mega-menu-grid-container .rightContent:hover,
+.tl-mega-menu-flex-container .rightContent:hover {
+	background: var(--layer-hover);
+}
+
+.tl-mega-menu-grid-container .cButton.cImageButton,
+.tl-mega-menu-flex-container .cButton.cImageButton {
+	height: 100%;
+}
+
+.tl-mega-menu-grid-container .cButton.cImageButton a,
+.tl-mega-menu-flex-container .cButton.cImageButton a {
+	height: 100%;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .tl-mega-menu__option,

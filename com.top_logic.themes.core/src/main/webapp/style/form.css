@@ -1553,10 +1553,10 @@ span.cIconSelect .input-image.cannot-edit i {
 	padding: 0 var(--spacing-03);
 	height: 2rem;
 	box-sizing: border-box;
-	max-width: 100%;
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
+	width: 100%;
 }
 
 .cTextInput textarea,

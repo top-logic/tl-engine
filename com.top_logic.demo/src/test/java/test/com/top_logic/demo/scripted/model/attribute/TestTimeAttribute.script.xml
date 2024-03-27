@@ -1,0 +1,1402 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Nutzer/Action-Nutzer-Zeitzone aendern und ausloggen.xml"
+			template-name-comment="Nutzer Zeitzone aendern und ausloggen"
+		>
+			<parameters>
+				<parameter name="Zeitzone"
+					value="(UTC-03:00) Araguaina"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+					command-label="Generieren..."
+					command-name="generateTypes"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name des generierten Wurzelelementes"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestTimeAttributes"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Anzahl der generierten Kinder"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+						value="5"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Generieren"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTimeAttributes"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTimeAttributes > A0"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="time"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="11:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="time"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="11:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="time"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+						value="1970-01-01T14:00:00.000Z"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="time"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="11:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="time"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="24:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment="Lenient is not allowed: 24:00 is not a valid time"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="time"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="time"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="rrr"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment="Not a time"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="time"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTimeAttributes > A1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="time"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="13:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
+					command-label="Übernehmen"
+					command-name="elementApply"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTimeAttributes > A2"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="time"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="15:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTimeAttributes"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+					columns="Zeilenselektion,Kommandos,Name,string,time"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SortTableColumnOp"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</model-name>
+					<sort-orders>
+						<sort-order
+							ascending="true"
+							column="time"
+						/>
+					</sort-orders>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="0"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SortTableColumnOp"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</model-name>
+					<sort-orders>
+						<sort-order
+							ascending="false"
+							column="time"
+						/>
+					</sort-orders>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="3"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="4"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="time"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="11:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="time"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="13:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="time"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="15:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A0"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="time"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="11:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="time"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="13:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A2"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="time"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="15:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="gridCancelEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Tabelle"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+					columns="Zeilenselektion,Name,boolean,time"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > Tabelle"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="time"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Tabelle"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="11:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="time"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Tabelle"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="13:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="time"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Tabelle"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="A2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="15:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Administration"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
+  twoDigits = numberFormat("00");
+  fourDigits = numberFormat("0000");
+  cal = all(`DemoTypes:BNotUnderA`)
+      .filter(a -> $a.get(`DemoTypes:BNotUnderA#name`) == "TestTimeAttributes").singleElement()
+      .get(`tl.element:StructuredElementContainer#children`)
+      .filter(a -> $a.get(`DemoTypes:A#name`) == "A0").singleElement()
+      .get(`DemoTypes:A#time`).toUserCalendar();
+  $twoDigits.format($cal.day()) + "-" + $twoDigits.format($cal.month() + 1) + "-" + $fourDigits.format($cal.year()) + " " + $twoDigits.format($cal.hour()) + ":" + $twoDigits.format($cal.minute());
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="01-01-1970 11:00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test different timezone"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Nutzer/Action-Nutzer-Zeitzone aendern und ausloggen.xml"
+							template-name-comment="Nutzer Zeitzone aendern und ausloggen"
+						>
+							<parameters>
+								<parameter name="Zeitzone"
+									value="(UTC+07:00) Tomsk"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path=""
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTimeAttributes"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTimeAttributes > A0"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="time"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="21:00"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTimeAttributes > A1"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="time"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="23:00"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTimeAttributes > A2"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="time"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="01:00"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTimeAttributes"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SortTableColumnOp"
+							label="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</model-name>
+							<sort-orders>
+								<sort-order
+									ascending="true"
+									column="time"
+								/>
+							</sort-orders>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="A2"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="0"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="A0"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="1"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="A1"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="2"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+  twoDigits = numberFormat("00");
+  fourDigits = numberFormat("0000");
+  cal = all(`DemoTypes:BNotUnderA`)
+      .filter(a -> $a.get(`DemoTypes:BNotUnderA#name`) == "TestTimeAttributes").singleElement()
+      .get(`tl.element:StructuredElementContainer#children`)
+      .filter(a -> $a.get(`DemoTypes:A#name`) == "A2").singleElement()
+      .get(`DemoTypes:A#time`).toUserCalendar();
+  $twoDigits.format($cal.day()) + "-" + $twoDigits.format($cal.month() + 1) + "-" + $fourDigits.format($cal.year()) + " " + $twoDigits.format($cal.hour()) + ":" + $twoDigits.format($cal.minute());
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen"
+							command-name="executeSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+									<path>
+										<named-member name="result"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="0"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="02-01-1970 01:00"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Tabelle"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Tabelle zurücksetzen"
+							user-id="root"
+						>
+							<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > Tabelle"
+								/>
+							</business-object>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Tabelle zurücksetzen"
+							user-id="root"
+						>
+							<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Strukturen > Typendemo > Grid > Gridansicht der Kinder des selektierten Baumknotens"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</default-table-data-owner>
+							</business-object>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTimeAttributes"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+							command-label="Löschen..."
+							command-name="elementRemove"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+							command-label="Abbrechen"
+							command-name="nothing"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+							template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Nutzer/Action-Nutzer-Zeitzone zuruecksetzen und ausloggen.xml"
+			template-name-comment="Nutzer Zeitzone zuruecksetzen und ausloggen"
+		/>
+	</actions>
+</action>

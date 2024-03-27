@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+	</t:head>
+	<t:body>
+		<t:invoke template="script:Nutzer/Action-Nutzer-Zeitzone aendern und ausloggen.xml">
+			<t:parameter name="Zeitzone"
+				value="(UTC-08:00) Pacific Time (USA, Kanada)"
+			/>
+		</t:invoke>
+	</t:body>
+</t:template>

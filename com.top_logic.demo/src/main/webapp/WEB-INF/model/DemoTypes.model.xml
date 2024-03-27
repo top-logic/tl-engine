@@ -902,6 +902,9 @@
 						</format>
 					</annotations>
 				</property>
+				<property name="time"
+					type="tl.core:Time"
+				/>
 			</attributes>
 		</interface>
 		<class name="A">
@@ -2384,6 +2387,22 @@
 									<chain>
 										<config-reference name="parent"/>
 										<get-value attribute="i18NHTMLNormal"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="time"
+					type="tl.core:Time"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="time"/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>

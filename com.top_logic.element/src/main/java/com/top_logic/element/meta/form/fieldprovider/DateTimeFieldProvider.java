@@ -5,8 +5,7 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
-import java.util.Date;
-
+import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
@@ -15,9 +14,10 @@ import com.top_logic.layout.form.model.DateTimeField;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link Date}.
+ * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link TypeSpec#DATE_TIME_TYPE}.
  * 
  * @see DateFieldProvider
+ * @see TimeFieldProvider
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -14,22 +14,12 @@ import com.top_logic.basic.config.annotation.Name;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public interface ExternalAuthentication extends ConfigurationItem {
-	String XML_KEY_REQUEST_HEADER = "HeaderKey";
-
 	String XML_KEY_EXTAUTH_ACTIVATE = "isEnabled";
-
-	String XML_KEY_ALLOW_NO_DOMAIN = "allowNoDomain";
 
 	String XML_KEY_REUSE_SESSION = "reuseSession";
 
-	@Name(XML_KEY_REQUEST_HEADER)
-	String getHeaderKey();
-
 	@Name(XML_KEY_EXTAUTH_ACTIVATE)
 	boolean getIsEnabled();
-
-	@Name(XML_KEY_ALLOW_NO_DOMAIN)
-	boolean getAllowNoDomain();
 
 	@Name(XML_KEY_REUSE_SESSION)
 	boolean getReuseSession();

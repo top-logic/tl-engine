@@ -5,9 +5,9 @@
 	<alias>
         <entry name="%PAC_CALLBACK_URL%" value="${env:tl_pac_callback_url:/servlet/callback}" />
         <entry name="%PAC_CALLBACK_ABSOLUTE%" value="${env:tl_pac_callback_absolute:false}" />
-        <entry name="%PAC_DOMAIN%" value="${env:tl_pac_domain}" />
         <entry name="%PAC_CLIENT_ID%" value="${env:tl_pac_client_id}" />
         <entry name="%PAC_SECRET%" value="${env:tl_pac_secret}" />
+        <entry name="%PAC_CLIENT_AUTHENTICATION_METHOD%" value="${env:tl_pac_client_authentication_method:client_secret_basic}" />
 	</alias>
 
 	<properties>

@@ -358,7 +358,6 @@ a.accEntry:hover,
 .sblButtons .mtbGroup .cButton:not(.cmdLinkDisabled) a:hover {
 	background: var(--layer-hover);
 	text-decoration: none;
-	box-shadow: none;
 }
 
 a.accEntry.accSelected, 

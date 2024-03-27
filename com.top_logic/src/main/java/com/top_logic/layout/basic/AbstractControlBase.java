@@ -1126,7 +1126,11 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 		 */
 		@Override
 		public void validate(DisplayContext context, UpdateQueue queue, AbstractControlBase obj) {
-			obj.internalRevalidate(context, queue);
+			try {
+				obj.internalRevalidate(context, queue);
+			} catch (Exception ex) {
+				Logger.error("Failed to revalidate: " + obj, ex, AbstractControlBase.class);
+			}
 		}
 
 	}

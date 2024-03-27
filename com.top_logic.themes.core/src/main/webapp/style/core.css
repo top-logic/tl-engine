@@ -1819,6 +1819,7 @@ span.ltcCounting input {
 .tileRow {
 	display: flex;
 	flex-wrap: wrap;
+	gap: var(--spacing-03);
 }
 
 .card {
@@ -1826,7 +1827,7 @@ span.ltcCounting input {
 	flex-direction: column;
 	background: var(--layer);
 	border: 1px solid var(--border-subtle);
-	margin: var(--spacing-02) var(--spacing-03);
+	margin: var(--spacing-02) 0;
 	padding-bottom: var(--spacing-03);
 	min-width: 0px;
 	background-clip: border-box;
@@ -1858,7 +1859,7 @@ span.ltcCounting input {
 .card .cButton {
 	position: absolute;
 	right: var(--spacing-03);
-	top: var(--spacing-03);
+	top: calc(var(--body-02-line-height) - var(--spacing-02));
 }
 
 .previewBoxOuter {

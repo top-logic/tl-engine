@@ -1316,7 +1316,6 @@ div.dirtyHandlingDialog .changes {
 .px-1 {
 	padding-right: var(--spacing-02) !important;
 	padding-left: var(--spacing-02) !important;
-    height: inherit;
     display: inline-flex;
     align-items: center;
     width: 100%;

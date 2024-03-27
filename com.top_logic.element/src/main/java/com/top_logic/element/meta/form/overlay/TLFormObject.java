@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.meta.form.overlay;
 
+import java.util.function.Consumer;
+
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
@@ -97,5 +99,11 @@ public interface TLFormObject extends TLObject, UpdateFactory {
 	default Media getOutputMedia() {
 		return Media.BROWSER;
 	}
+
+	/**
+	 * Registers a callback that is executed exactly once after an {@link AttributeUpdate} for the
+	 * given attribute becomes available.
+	 */
+	void withUpdate(TLStructuredTypePart attribute, Consumer<AttributeUpdate> callback);
 
 }

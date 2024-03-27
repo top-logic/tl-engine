@@ -24,6 +24,7 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -282,6 +283,10 @@ public class AttributeUpdateContainer {
 	 *         {@link AttributeUpdate}s for its attributes to display.
 	 */
 	public TLFormObject editObject(TLObject object) {
+		if (object instanceof TLFormObject) {
+			return (TLFormObject) object;
+		}
+
 		FormObjectOverlay existingOverlay = _edits.get(object);
 		if (existingOverlay != null) {
 			return existingOverlay;
@@ -663,4 +668,55 @@ public class AttributeUpdateContainer {
 		store();
 	}
 
+	/**
+	 * Adds a value listener to the form field displaying the given object's property.
+	 */
+	public Handle addValueListener(TLObject object, TLStructuredTypePart attribute, ValueListener listener) {
+		return new Handle() {
+			private FormField _field;
+
+			private boolean _released;
+
+			Handle install() {
+				TLFormObject overlay = editObject(object);
+				overlay.withUpdate(attribute, u -> {
+					if (_released) {
+						return;
+					}
+					u.withField(f -> {
+						if (_released) {
+							return;
+						}
+
+						if (f instanceof FormField) {
+							_field = (FormField) f;
+							_field.addValueListener(listener);
+						}
+					});
+				});
+
+				return this;
+			}
+
+			@Override
+			public void release() {
+				if (_field != null) {
+					_field.removeValueListener(listener);
+				}
+				_released = true;
+			}
+		}.install();
+	}
+
+	/**
+	 * Handle that allows to release a registration done before.
+	 * 
+	 * @see AttributeUpdateContainer#addValueListener(TLObject, TLStructuredTypePart, ValueListener)
+	 */
+	public interface Handle {
+		/**
+		 * Releases the former registration.
+		 */
+		void release();
+	}
 }

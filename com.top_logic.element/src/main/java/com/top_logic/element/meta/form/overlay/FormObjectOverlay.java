@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.element.meta.AttributeOperations;
@@ -53,6 +54,8 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	private final TLStructuredType _type;
 
 	private Map<TLStructuredTypePart, AttributeUpdate> _updates = new HashMap<>();
+
+	private Map<TLStructuredTypePart, Consumer<AttributeUpdate>> _updateFutures;
 
 	private FormContainer _formContainer;
 
@@ -107,11 +110,39 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 		return _updates.get(part);
 	}
 
+	@Override
+	public void withUpdate(TLStructuredTypePart attribute, Consumer<AttributeUpdate> callback) {
+		AttributeUpdate update = getUpdate(attribute);
+		if (update == null) {
+			Map<TLStructuredTypePart, Consumer<AttributeUpdate>> futures = mkUpdateFutures();
+			Consumer<AttributeUpdate> clash = futures.put(attribute, callback);
+			if (clash != null) {
+				futures.put(attribute, clash.andThen(callback));
+			}
+		} else {
+			callback.accept(update);
+		}
+	}
+
+	private Map<TLStructuredTypePart, Consumer<AttributeUpdate>> mkUpdateFutures() {
+		if (_updateFutures == null) {
+			_updateFutures = new HashMap<>();
+		}
+		return _updateFutures;
+	}
+
 	/**
 	 * Adds the given {@link AttributeUpdate} to this object.
 	 */
 	private final void addUpdate(AttributeUpdate update) {
-		_updates.put(update.getAttribute(), update);
+		TLStructuredTypePart attribute = update.getAttribute();
+		_updates.put(attribute, update);
+		if (_updateFutures != null) {
+			Consumer<AttributeUpdate> future = _updateFutures.remove(attribute);
+			if (future != null) {
+				future.accept(update);
+			}
+		}
 	}
 
 	@Override

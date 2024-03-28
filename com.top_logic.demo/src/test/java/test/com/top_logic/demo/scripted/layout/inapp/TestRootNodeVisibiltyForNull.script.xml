@@ -57,29 +57,22 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-							<list>
-								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="TestRootNodeVisibilityForNull"
-								/>
-							</list>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestRootNodeVisibilityForNull"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Demodaten"
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
 						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Demoobjekt anlegen"
-					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-					component-name="com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid"
+					component-name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
 					user-id="root"
 				>
 					<arguments/>
@@ -505,16 +498,16 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface=""/>
-						<selection-state boolean="false"/>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+							<list/>
+						</selectee>
+						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Demodaten"
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
 						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
 					</selection-model-name>
 				</action>
 			</actions>
@@ -660,29 +653,22 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-							<list>
-								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="TestRootNodeVisibiltyForNull_Child1"
-								/>
-							</list>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestRootNodeVisibilityForNull > TestRootNodeVisibiltyForNull_Child1"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Demodaten"
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
 						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
 					command-label="Löschen"
-					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-					component-name="com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid"
+					component-name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
 					user-id="root"
 				>
 					<arguments/>
@@ -692,29 +678,22 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-							<list>
-								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="TestRootNodeVisibilityForNull"
-								/>
-							</list>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestRootNodeVisibilityForNull"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Demodaten"
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
 						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
 					command-label="Löschen"
-					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-					component-name="com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid"
+					component-name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
 					user-id="root"
 				>
 					<arguments/>

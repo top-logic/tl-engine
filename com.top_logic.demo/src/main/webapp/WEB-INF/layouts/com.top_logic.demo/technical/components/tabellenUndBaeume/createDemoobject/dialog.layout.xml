@@ -15,7 +15,7 @@
 		<open-handler id="ID_9738b8f2_ff08_4527_9fe3_dbdb4eea0350"
 			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
 			image="css:fas fa-plus"
-			target="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+			target="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
 			targetComponent="com.top_logic.demo/technical/components/tabellenUndBaeume/createDemoobject/dialog.layout.xml#Editor"
 		>
 			<resourceKey key="dynamic.9a4e7ecb-5854-46aa-964a-641bf159bdb4">

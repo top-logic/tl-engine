@@ -7,7 +7,7 @@
 >
 	<arguments
 		defaultColumns="name"
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.b7e1370a-fe10-475f-bdd9-e06a66a257fa">

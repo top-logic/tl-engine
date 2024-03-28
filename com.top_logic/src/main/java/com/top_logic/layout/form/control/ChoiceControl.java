@@ -47,6 +47,8 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 	/** The CSS class added to the XML tag of the icon of every option. */
 	public static final String CSS_CLASS_ICON = "cChoice-icon";
 
+	private static final String CSS_CLASS_OPTION = "cChoice-option";
+
 	/**
 	 * Default orientation, if nothing was set explicit.
 	 */
@@ -111,7 +113,7 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 			}
 
 			out.beginBeginTag(DIV);
-			CssUtil.writeCombinedCssClasses(out, "cChoice-option", cssClass);
+			CssUtil.writeCombinedCssClasses(out, CSS_CLASS_OPTION, cssClass);
 			out.endBeginTag();
 			{
 				if (labelsLeft) {
@@ -274,7 +276,7 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			SelectFieldUtils.getOptionRenderer(field).write(context, out, field.getSingleSelection());
+			SelectFieldUtils.writeSelectionImmutable(context, out, field, CSS_CLASS_OPTION);
 		}
 		out.endTag(DIV);
 	}

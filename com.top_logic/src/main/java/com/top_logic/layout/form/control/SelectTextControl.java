@@ -58,6 +58,8 @@ public class SelectTextControl extends AbstractSelectControl {
 			OpenSelector.INSTANCE,
 		});
 
+	private static final String CSS_CLASS_OPTION = "option";
+
 	private static final String SELECTED_VALUE = "valueDisplay";
 
 	private Renderer<Object> _selectionRenderer;
@@ -96,7 +98,7 @@ public class SelectTextControl extends AbstractSelectControl {
 					Object option = selection.get(i);
 					out.beginBeginTag(SPAN);
 					out.writeAttribute(ID_ATTR, getOptionSpanId(option));
-					out.writeAttribute(CLASS_ATTR, "option");
+					out.writeAttribute(CLASS_ATTR, CSS_CLASS_OPTION);
 					out.endBeginTag();
 					
 					if (_selectionRenderer != null) {
@@ -145,7 +147,7 @@ public class SelectTextControl extends AbstractSelectControl {
 					_selectionRenderer.write(context, out, selectionList);
 				} else {
 					try {
-						SelectFieldUtils.writeSelectionAsTextImmutable(out, field);
+						SelectFieldUtils.writeSelectionImmutable(context, out, field, CSS_CLASS_OPTION);
 					} catch (Throwable throwable) {
 						try {
 							produceErrorOutput(context, out, throwable);
@@ -315,7 +317,7 @@ public class SelectTextControl extends AbstractSelectControl {
 
 	private static class ClearSelection extends ControlCommand {
 
-		static final String OPTION_KEY = "option";
+		static final String OPTION_KEY = CSS_CLASS_OPTION;
 
 		private static final String CLEAR_COMMAND = "clearSelection";
 

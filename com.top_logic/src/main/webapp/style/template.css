@@ -1844,6 +1844,24 @@ img.type-image {
 	padding-right: 5px;
 }
 
+.cChoice-horizontal > .cChoice-option::after {
+	content: ";";
+}
+
+.cChoice-horizontal > .cChoice-option:last-child::after {
+	content: "";
+}
+
+.cChoice-vertical {
+	display: inline-flex;
+	flex-direction: column;
+	gap: var(--spacing-02);
+}
+
+.cChoice-horizontal .cChoice-option label {
+	padding-right: 0; /* Remove the space between the label and a potential option separator */
+}
+
 div.menuTitle {
 	background: var(--TITLEBAR_BACKGROUND_COLLAPSED);
 	display: flex;

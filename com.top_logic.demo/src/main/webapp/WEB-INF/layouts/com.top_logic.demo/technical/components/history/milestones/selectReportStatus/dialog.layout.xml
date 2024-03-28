@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/transaction.template.xml"
+>
+	<arguments
+		formType="test.history:VersionSelectForm"
+		height="250px"
+		width="400px"
+	>
+		<title>
+			<title key="dynamic.e20118c7-e4dc-4088-8a0f-2356b73b1cdb">
+				<en>Select report status</en>
+				<de>Berichtsstand auswählen</de>
+			</title>
+		</title>
+		<open-handler id="ID_916d454d_bd16_4ce5_92f1_73da521e5394"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			group="Write"
+			image="css:fas fa-code-branch"
+			targetComponent="com.top_logic.demo/technical/components/history/milestones/selectReportStatus/dialog.layout.xml#Form"
+		>
+			<resourceKey key="dynamic.e20118c7-e4dc-4088-8a0f-2356b73b1cdb">
+				<en>Select report status</en>
+				<de>Berichtsstand auswählen</de>
+			</resourceKey>
+			<executability>
+				<rule-by-expression decision="model -> $model.revision() == currentRevision()"/>
+			</executability>
+		</open-handler>
+		<transactionHandler id="perform"
+			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+			clique="apply"
+			closeDialog="true"
+			confirm="false"
+			confirmMessage=""
+			group="Write"
+			image="theme:ICONS_BUTTON_OK"
+		>
+			<resourceKey key="dynamic.e20118c7-e4dc-4088-8a0f-2356b73b1cdb">
+				<en>Select report status</en>
+				<de>Berichtsstand auswählen</de>
+			</resourceKey>
+			<postCreateActions>
+				<setModel target="model(dialogParent())"/>
+			</postCreateActions>
+			<operation><![CDATA[form -> $form
+    .get(`test.history:VersionSelectForm#version`)
+    .get(`test.history:Report#version`)]]></operation>
+		</transactionHandler>
+	</arguments>
+</config:template-call>

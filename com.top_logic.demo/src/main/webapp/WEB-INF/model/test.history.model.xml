@@ -213,6 +213,46 @@
 						<create-visibility value="hidden"/>
 					</annotations>
 				</property>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[report -> "V " + $report
+    .get(`test.history:Report#id`)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="VersionSelectForm">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="version"
+							fullQualifiedName="test.history:VersionSelectForm#version"
+							type="test.history:Report"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="version"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Report"
+				>
+					<annotations>
+						<reference-display value="drop-down"/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

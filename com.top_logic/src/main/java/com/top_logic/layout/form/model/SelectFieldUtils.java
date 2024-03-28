@@ -541,7 +541,7 @@ public class SelectFieldUtils {
 	}
 
 	/**
-	 * Appends an end-user-readable internationalised text describing the current selection in
+	 * Appends an end-user-readable internationalized text describing the current selection in
 	 * immutable mode.
 	 * 
 	 * <p>

@@ -288,6 +288,8 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 
 	private C _config;
 
+	private String _separator;
+
 	/**
 	 * Create a {@link ResourceRenderer} form configuration.
 	 * 
@@ -322,6 +324,14 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 		_useLink = useLink;
 		_useToolTip = useToolTip;
 		_useImage = useImage;
+	}
+
+	/** @see LayoutConfig#getCollectionSeparator() */
+	public String getSeparator() {
+		if (_separator == null) {
+			_separator = ApplicationConfig.getInstance().getConfig(LayoutConfig.class).getCollectionSeparator();
+		}
+		return _separator;
 	}
 
 	@Override

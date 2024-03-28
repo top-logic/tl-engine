@@ -7,7 +7,7 @@
 >
 	<arguments>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml">
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml">
 				<layoutInfo size="300px"/>
 			</layout-reference>
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tabbar.layout.xml"/>

@@ -5,22 +5,25 @@
 	final="true"
 	template="com.top_logic/tree.template.xml"
 >
-	<arguments
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
-		partnerGroup="TreePartner"
-	>
-		<name key="dynamic.1a37e14d-3702-4007-ac26-0c907ad0b3fc">
-			<de>Kinder</de>
+	<arguments rootVisible="false">
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/createDemoobject/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.4bbd3b56-5ae3-400c-86fe-4d11a0bbda0b">
+			<en>Context</en>
+			<de>Kontext</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
 			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
-			finite="true"
-			leafPredicate="false"
-			modelPredicate="true"
-			modelQuery="node -> model -> $model"
 			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
-			rootNode="x -> $x"
+			rootNode="`DemoTypes#ROOT`"
 		/>
+		<buttons>
+			<button id="ID_08806ddb_a53d_42ec_947d_f82dc2bb5bb8"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
 	</arguments>
 </config:template-call>

@@ -6,7 +6,7 @@
 	template="com.top_logic/tree.template.xml"
 >
 	<arguments
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
 		multiSelection="true"
 	>
 		<name key="dynamic.3573a6e2-59b8-4733-8918-40b98c3a8cfc">

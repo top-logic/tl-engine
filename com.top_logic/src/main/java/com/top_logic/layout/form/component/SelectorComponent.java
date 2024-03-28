@@ -31,6 +31,7 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -168,7 +169,8 @@ public class SelectorComponent extends AbstractSelectorComponent {
 		super(context, config);
 
 		_optionBuilder = context.getInstance(config.getOptionBuilder());
-		_labelProvider = withDefault(context.getInstance(config.getOptionLabelProvider()), MetaLabelProvider.INSTANCE);
+		_labelProvider =
+			withDefault(context.getInstance(config.getOptionLabelProvider()), MetaResourceProvider.INSTANCE);
 		_defaultSelectionProvider =
 			withDefault(context.getInstance(config.getDefaultSelectionProvider()), ListSelectionProvider.FIRST_VALUE);
 	}

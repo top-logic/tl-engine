@@ -1962,15 +1962,24 @@ input[type="checkbox"]:focus {
 */
 .cBooleanChoice, .cChoice-horizontal {
     display: inline-flex;
+    flex-wrap: wrap;
     gap: var(--spacing-03);
 }
 
-span.bcc-option, .cChoice-option {
+.cChoice-icon {
+	margin-left: 0.5em;
+}
+
+span.bcc-option {
     display: inline-flex;
     gap: var(--spacing-02);
 }
 
-.cChoice-vertical.active {
+.cChoice-option {
+	display: inline-flex;
+}
+
+.cChoice-vertical {
 	display: inline-flex;
 	flex-direction: column;
 	gap: var(--spacing-02);
@@ -1979,6 +1988,13 @@ span.bcc-option, .cChoice-option {
 .cChoice-option label {
 	color: var(--text-primary);
 	cursor: pointer;
+	margin-left: var(--spacing-02);
+	padding: 0; /* Remove the space between the label and a potential option separator */
+}
+
+.cChoice-option input[type=checkbox] {
+	display: inline;
+	align-self: center;
 }
 
 .cChoice-horizontal.disabled label,
@@ -1989,6 +2005,14 @@ span.bcc-option, .cChoice-option {
 
 .cChoice-horizontal.disabled, .cChoice-vertical.disabled {
 	color: var(--text-disabled);
+}
+
+.cChoice-horizontal > .cChoice-option::after {
+	content: ";";
+}
+
+.cChoice-horizontal > .cChoice-option:last-child::after {
+	content: "";
 }
 
 .cChoice-horizontal.disabled input[type="radio"], 
@@ -2022,21 +2046,19 @@ span.bcc-option, .cChoice-option {
 }
 
 img.cChoice-icon {
-	margin-left: 0.5em;
 	height: 1em;
 	object-fit: contain;
-	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
-	vertical-align: middle;
 	align-self: center;
 }
 
 img.type-image {
-	margin-left: 0.5em;
 	height: 1em;
 	object-fit: contain;
-	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
-	vertical-align: middle;
 	align-self: center;
+}
+
+.tl-table__cell .type-image {
+	margin-left: var(--spacing-02);
 }
 
 .cSelectOption,
@@ -2623,8 +2645,6 @@ span.disabled .ddwttDropBtn {
 img.ddwttItemIcon {
 	height: 1em;
 	object-fit: contain;
-	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
-	vertical-align: middle;
 	align-self: center;
 }
 

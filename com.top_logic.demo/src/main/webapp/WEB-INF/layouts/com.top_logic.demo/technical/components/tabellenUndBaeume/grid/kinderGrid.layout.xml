@@ -7,7 +7,7 @@
 >
 	<arguments
 		defaultColumns="name"
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
 		partnerGroup="GridPartner"
 		type="DemoTypes:DemoTypes.All"
 	>

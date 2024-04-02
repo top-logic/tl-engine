@@ -223,7 +223,7 @@ public class TypeGenerator {
 						stringSet.add("GeneratedString_" + rand.nextInt());
 					}
 					Set<TLClassifier> checkListElement = createWrapperValues(TLClassifier.class,
-						DemoTypesFactory.getChecklistDemoTypesAAttr(), rand, 1);
+						DemoTypesFactory.getChecklistDemoTypesAAttr(), rand, 4);
 					child.setChecklist(checkListElement);
 					Set<TLClassifier> checkListMultiElement = createWrapperValues(TLClassifier.class,
 						DemoTypesFactory.getChecklistMultiDemoTypesAAttr(), rand, 4);
@@ -231,11 +231,8 @@ public class TypeGenerator {
 					child.setChecklistSingle(createChecklistSingleValue(rand));
 					child.setStringSet(stringSet);
 
-					Set<Person> person = createWrapperValues(Person.class,
-						DemoTypesFactory.getAccountDemoTypesAAttr(), rand, 1);
-					if (!person.isEmpty()) {
-						child.setAccount(person.iterator().next());
-					}
+					Person person = createWrapperValue(Person.class, DemoTypesFactory.getAccountDemoTypesAAttr(), rand);
+					child.setAccount(person);
 					sendCreateEvent(child);
 
 					for (int n = 0; n < 2; n++) {

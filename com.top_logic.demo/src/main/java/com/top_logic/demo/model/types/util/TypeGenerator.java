@@ -5,6 +5,9 @@
  */
 package com.top_logic.demo.model.types.util;
 
+import static java.lang.Math.*;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -107,6 +110,12 @@ public class TypeGenerator {
 	 * </p>
 	 */
 	private static final double NULL_PROBABILITY = 0.25;
+
+	/**
+	 * The maximum number of values that should be generated for attributes which store a
+	 * {@link Collection} of values.
+	 */
+	private static final int MAX_COLLECTION_VALUES = 10;
 
 	static int NUMBER_OF_CHILDREN = 20;
 
@@ -223,10 +232,10 @@ public class TypeGenerator {
 						stringSet.add("GeneratedString_" + rand.nextInt());
 					}
 					Set<TLClassifier> checkListElement = createWrapperValues(TLClassifier.class,
-						DemoTypesFactory.getChecklistDemoTypesAAttr(), rand, 4);
+						DemoTypesFactory.getChecklistDemoTypesAAttr(), rand, MAX_COLLECTION_VALUES);
 					child.setChecklist(checkListElement);
 					Set<TLClassifier> checkListMultiElement = createWrapperValues(TLClassifier.class,
-						DemoTypesFactory.getChecklistMultiDemoTypesAAttr(), rand, 4);
+						DemoTypesFactory.getChecklistMultiDemoTypesAAttr(), rand, MAX_COLLECTION_VALUES);
 					child.setChecklistMulti(checkListMultiElement);
 					child.setChecklistSingle(createChecklistSingleValue(rand));
 					child.setStringSet(stringSet);
@@ -252,7 +261,7 @@ public class TypeGenerator {
 				for (StructuredElement child : generatedRoot.getChildren()) {
 					DemoTypesA ANode = (DemoTypesA) child;
 					ANode.setStructure(createWrapperValues(C.class,
-						DemoTypesFactory.getStructureDemoTypesAAttr(), rand, 4));
+						DemoTypesFactory.getStructureDemoTypesAAttr(), rand, MAX_COLLECTION_VALUES));
 					C singleStructure = createWrapperValue(C.class,
 						DemoTypesFactory.getSingleStructureDemoTypesAAttr(), rand);
 					if (singleStructure != null) {
@@ -295,6 +304,7 @@ public class TypeGenerator {
 		if (options.getOptionCount() == 0) {
 			return Collections.emptySet();
 		}
+		maxElementCount = min(maxElementCount, options.getOptionCount());
 		int currentElementCount = rand.nextInt(maxElementCount + 1);
 		Set<E> selectedWrappers = new HashSet<>();
 		if (options instanceof ListOptionModel) {

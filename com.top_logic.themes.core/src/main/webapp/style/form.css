@@ -32,12 +32,12 @@
 	margin-left: auto;
 }
 
-.mboxContent .dfContent {
+.dfContent {
 	flex-grow: 2;
 	align-self: center;
 }
 
-.mboxContent .dfContent .dfItemTitle {
+.dfContent .dfItemTitle {
 	display: flex;
 }
 
@@ -499,7 +499,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .dfEntryTitle.colored:hover {
-	background: var(--layer-accent-hover);
+	background: var(--layer-hover);
 }
 
 .dfEntryTitle.colored .lFixedRight,
@@ -507,7 +507,9 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	background: none;
 }
 
-
+.dfEntryTitle.colored .lFixedRight {
+	padding-right: var(--spacing-02);
+}
 
 div.dfListAdd {
 	margin-top: var(--spacing-02);
@@ -700,15 +702,6 @@ div.dfListAdd {
 	grid-template-rows: 24px 1fr;
 	line-height: 24px;
 	margin-bottom: 0;
-}
-
-/* indent all lines but the first */
-                                        .rf_labelAbove.rf_inputCell:not(.keepInline)                  > :nth-child(n+2),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
-.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > :nth-child(n+2)  {
-	padding-left: var(--spacing-01);
 }
 
 .rf_inputCell .ace_editor div,

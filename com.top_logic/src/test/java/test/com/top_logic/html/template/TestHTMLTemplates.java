@@ -8,6 +8,7 @@ package test.com.top_logic.html.template;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -20,6 +21,7 @@ import com.top_logic.html.template.I18NConstants;
 import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.template.MapWithProperties;
+import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.util.error.TopLogicException;
 
@@ -170,6 +172,14 @@ public class TestHTMLTemplates extends TestCase {
 	public void testForeachTag() throws IOException, ConfigurationException {
 		String template =
 			"<a><tl:foreach elements=\"x : values\"><b>{x}</b></tl:foreach></a>";
+		assertEquals(
+			"<a><b>1</b><b>2</b><b>3</b></a>",
+			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
+	}
+
+	public void testForeachAttribute() throws IOException, ConfigurationException {
+		String template =
+			"<a><b tl:foreach=\"x : values\">{x}</b></a>";
 		assertEquals(
 			"<a><b>1</b><b>2</b><b>3</b></a>",
 			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
@@ -404,7 +414,30 @@ public class TestHTMLTemplates extends TestCase {
 	}
 
 	private String html(String template, WithProperties properties) throws IOException, ConfigurationException {
-		return render(parse(template), properties);
+		HTMLTemplate parsedTemplate = parse(template);
+		Set<String> accessedVariables = parsedTemplate.getVariables();
+
+		// Only allow access to properties that are requested by the template. In the real
+		// application, only requested properties are actually computed for a template.
+		WithProperties filter = new WithProperties() {
+			@Override
+			public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
+				if (accessedVariables.contains(propertyName)) {
+					return properties.getPropertyValue(propertyName);
+				}
+				return WithProperties.super.getPropertyValue(propertyName);
+			}
+
+			@Override
+			public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
+				if (accessedVariables.contains(propertyName)) {
+					properties.renderProperty(context, out, propertyName);
+					return;
+				}
+				WithProperties.super.renderProperty(context, out, propertyName);
+			}
+		};
+		return render(parsedTemplate, filter);
 	}
 
 	private HTMLTemplate parse(String template) throws ConfigurationException {

@@ -7,16 +7,22 @@
 >
 	<arguments
 		defaultColumns="name"
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
-		partnerGroup="GridPartner"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.0cdfb198-d435-469b-9f03-3a219220f703">
 			<de>Kinder</de>
 		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/versionSelector.layout.xml#Selector"/>
+			</channel>
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"/>
+			</channel>
+		</model>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="model -> $model.get(`tl.element:StructuredElementContainer#children`)"
-			modelForElement="listElement -> $listElement.get(`DemoTypes:DemoTypes.All#parent`)"
+			elements="x -> $x[1].inRevision($x[0]).get(`tl.element:StructuredElementContainer#children`)"
+			modelForElement="listElement -> x -> [$x[0], $listElement.get(`DemoTypes:DemoTypes.All#parent`)]"
 			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 			supportsModel="true"
 		/>

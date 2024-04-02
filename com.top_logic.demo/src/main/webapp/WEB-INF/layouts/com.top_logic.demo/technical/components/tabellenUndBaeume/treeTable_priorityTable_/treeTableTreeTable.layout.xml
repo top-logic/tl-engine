@@ -7,7 +7,6 @@
 >
 	<arguments
 		defaultColumns="name"
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.b7e1370a-fe10-475f-bdd9-e06a66a257fa">
@@ -18,12 +17,20 @@
 				<de>"Kinder" eines Knotens sind die Werte des Attributes "priorityTable"</de>
 			</tooltip>
 		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/versionSelector.layout.xml#Selector"/>
+			</channel>
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"/>
+			</channel>
+		</model>
 		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
 			children="node->$node.get(`DemoTypes:DemoTypes.A#priorityTable`)"
 			finite="false"
 			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
 			parents="node->$node.referers(`DemoTypes:DemoTypes.A#priorityTable`)"
-			rootNode="model -> $model"
+			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
 	</arguments>
 </config:template-call>

@@ -252,10 +252,6 @@
 			</layout>
 		</config>
 		
-		<config config:interface="com.top_logic.element.meta.form.component.EditAttributedComponent$GlobalConfig"
-			show-compare-command="true"
-		/>
-		
 		<config config:interface="com.top_logic.layout.tree.renderer.LogoutTimerControl$Config"
 			counting-seconds="-10"
 		>

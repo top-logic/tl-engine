@@ -97,7 +97,6 @@
 									<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
 										defaultFor="${defaultFor}"
 										master="${namePrefix}VersionSelector"
-										show-compare-command="false"
 										structure="${structure}"
 									>
 										<exportDialogs>

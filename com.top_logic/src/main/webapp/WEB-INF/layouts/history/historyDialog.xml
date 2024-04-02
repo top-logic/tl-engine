@@ -41,7 +41,7 @@
 			width="800"
 		>
 			<open-handler id="displayDialog_${namePrefix}ShowHistoryDialog"
-				clique="history"
+				clique="additional"
 				group="${openerCommandGroup}"
 				image="theme:ICONS_HISTORY"
 				resourceKey="${defaultI18n}"

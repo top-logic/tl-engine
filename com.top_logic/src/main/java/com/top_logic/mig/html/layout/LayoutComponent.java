@@ -167,7 +167,6 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 import com.top_logic.tool.boundsec.assistent.AssistentStepInfo;
 import com.top_logic.tool.boundsec.assistent.CommandChain;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
-import com.top_logic.tool.boundsec.commandhandlers.ShowCurrentRevisionCommandHandler;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.ReferenceManager;
 import com.top_logic.util.Resources;
@@ -585,11 +584,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@InstanceDefault(ContentLayouting.class)
 		Layouting getContentLayouting();
 		
-		@Override
-		default void modifyIntrinsicCommands(CommandRegistry registry) {
-			registry.registerButton(ShowCurrentRevisionCommandHandler.COMMAND_ID);
-		}
-
 		/**
 		 * Adds {@link BoundCommandGroup}s to the given collection, to be able to configure rights
 		 * for them.

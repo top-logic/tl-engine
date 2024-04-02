@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments>
+		<titleKey key="dynamic.6778263a-6785-46f6-98ed-642d4587df7b">
+			<en>Version</en>
+			<de>Version</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="none()"
+		/>
+	</arguments>
+</config:template-call>

@@ -43,7 +43,7 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 	/**
 	 * Configuration options for {@link ModeSelectorByExpression}.
 	 */
-	@TagName("constraint-by-expression")
+	@TagName("mode-by-expression")
 	public interface Config<I extends ModeSelectorByExpression<?>> extends PolymorphicConfiguration<I> {
 
 		/**
@@ -58,7 +58,7 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 		 * 
 		 * @see FormVisibility
 		 */
-		Expr getSelector();
+		Expr getFunction();
 
 	}
 
@@ -74,8 +74,8 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 	public ModeSelectorByExpression(InstantiationContext context, C config) {
 		super(context, config);
 
-		_selector = QueryExecutor.compile(config.getSelector());
-		_selectorAnalyzer = ScriptTracer.compile(model(), config.getSelector());
+		_selector = QueryExecutor.compile(config.getFunction());
+		_selectorAnalyzer = ScriptTracer.compile(model(), config.getFunction());
 	}
 
 	private static TLModel model() {

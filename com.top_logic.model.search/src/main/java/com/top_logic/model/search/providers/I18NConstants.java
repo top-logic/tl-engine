@@ -56,7 +56,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CREATE_OBJECT_DEFAULT_LABEL;
 
 	/**
-	 * @en Invalid field mode '{0}', expected values are: {1}
+	 * @en Invalid field mode "{0}", possible values are: {1}
 	 */
 	public static ResKey2 ERROR_MODE__VALUE_OPTIONS;
 

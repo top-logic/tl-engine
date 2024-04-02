@@ -20,9 +20,9 @@
 					<annotations>
 						<dynamic-visibility>
 							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
-								<selector><![CDATA[obj -> 
+								<function><![CDATA[obj -> 
     $obj.get(`test.dynamicmode:Acquisition#price`) +
-    $obj.get(`test.dynamicmode:Acquisition#positions`).get(`test.dynamicmode:Position#value`).sum() >= 10000 ? "mandatory" : "hidden"]]></selector>
+    $obj.get(`test.dynamicmode:Acquisition#positions`).get(`test.dynamicmode:Position#value`).sum() >= 10000 ? "mandatory" : "hidden"]]></function>
 							</mode-selector>
 						</dynamic-visibility>
 					</annotations>

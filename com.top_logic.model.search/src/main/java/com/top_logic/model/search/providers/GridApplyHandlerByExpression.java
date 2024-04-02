@@ -93,7 +93,11 @@ public class GridApplyHandlerByExpression extends DefaultGridApplyHandler
 
 	@Override
 	public boolean allowEdit(GridComponent component, Object rowObject) {
-		return _canEdit == null ? true : asBoolean(_canEdit.execute(rowObject, component.getModel()));
+		if (_canEdit == null) {
+			return super.allowEdit(component, rowObject);
+		}
+
+		return asBoolean(_canEdit.execute(rowObject, component.getModel()));
 	}
 
 	private static boolean asBoolean(Object result) {

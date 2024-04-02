@@ -11,6 +11,7 @@ import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.model.TLClassifier;
@@ -348,6 +349,18 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
 				}
 			}
 		}
+	}
+
+	@Override
+	public int compareTo(Wrapper other) {
+		if (!(other instanceof FastListElement)) {
+			return super.compareTo(other);
+		}
+		FastListElement otherClassifier = (FastListElement) other;
+		if (getOwner().isOrdered()) {
+			return Integer.compare(getIndex(), otherClassifier.getIndex());
+		}
+		return getLabel().compareTo(otherClassifier.getLabel());
 	}
 
 }

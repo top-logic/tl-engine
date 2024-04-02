@@ -102,7 +102,6 @@ import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
 import com.top_logic.mig.html.SelectionUtil;
-import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.model.TLClass;
@@ -221,13 +220,6 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 		@Override
 		PolymorphicConfiguration<? extends ListModelBuilder> getModelBuilder();
-
-		@Override
-		default void modifyIntrinsicCommands(CommandRegistry registry) {
-			BuilderComponent.Config.super.modifyIntrinsicCommands(registry);
-			registry.registerButton(OpenTableComponentCompareViewCommand.COMMAND_NAME);
-		}
-
 	}
 
     /** Configuration name for excluded columns attribute. */

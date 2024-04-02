@@ -1043,7 +1043,6 @@
 						image="theme:ICONS_ADD_BUTTON"
 						disabledImage="theme:ICONS_ADD_BUTTON_DISABLED"						
 					/>
-					<clique name="history" display="menu"/>
 					<clique name="tableConfig" display="menu"/>
 					<clique name="settings" display="menu"
 						image="theme:ICONS_GEAR"
@@ -1386,11 +1385,8 @@
 					/>
 		            <handler id="runGarbageCollection" class="com.top_logic.knowledge.monitor.MemoryObserverTableComponent$RunGarbargeCollectionCommand"
 						clique="additional"/>
-					<handler id="showCurrentRevision" class="com.top_logic.tool.boundsec.commandhandlers.ShowCurrentRevisionCommandHandler"
-						clique="history"/>
 					
 					<handler id="openStructureEditCompareView" class="com.top_logic.layout.form.treetable.component.OpenStructureEditCompareViewCommand"/>
-					<handler id="openTableComponentCompareView" class="com.top_logic.layout.table.component.OpenTableComponentCompareViewCommand"/>
 					<handler id="switchToOverlayCompareView" class="com.top_logic.layout.table.tree.compare.OverlayCompareCommand"/>
 					<handler id="switchToSideBySideCompareView" class="com.top_logic.layout.table.tree.compare.SideBySideCompareCommand"/>
 					<handler id="showNextChange" class="com.top_logic.layout.table.tree.compare.ShowNextChangeCommand"/>

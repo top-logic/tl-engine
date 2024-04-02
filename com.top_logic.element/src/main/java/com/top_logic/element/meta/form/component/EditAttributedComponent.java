@@ -16,10 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -58,7 +56,6 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.mig.html.HTMLUtil;
-import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -104,9 +101,6 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 		/** Name of {@link #getExcludeAttributes()}. */
 		String EXCLUDE_ATTRIBUTES_NAME = "excludeAttributes";
 
-		/** Name of the {@link #getShowCompareCommand()}. */
-		String SHOW_COMPARE_COMMAND_NAME = "show-compare-command";
-
 		/** name of the configuration property {@link #getExcludeSubtypes()}. */
 		String EXCLUDE_SUBTYPES_NAME = "exclude-subtypes";
 
@@ -124,13 +118,6 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 		@Name(EXCLUDE_SUBTYPES_NAME)
 		@BooleanDefault(false)
 		boolean getExcludeSubtypes();
-
-		/**
-		 * Whether the {@link AttributedCompareCommandHandler#COMMAND_ID compare command} should be
-		 * shown.
-		 */
-		@Name(SHOW_COMPARE_COMMAND_NAME)
-		Boolean getShowCompareCommand();
 
 		/**
 		 * Name of the attributes not to include in the {@link FormContext}.
@@ -163,35 +150,6 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 		@Override
 		@StringDefault(DefaultApplyAttributedCommandHandler.COMMAND_ID)
 		String getApplyCommand();
-
-		@Override
-		default void modifyIntrinsicCommands(CommandRegistry registry) {
-			Boolean showCompareCommand = getShowCompareCommand();
-			if (showCompareCommand == null) {
-				GlobalConfig globalConfig = ApplicationConfig.getInstance().getConfig(GlobalConfig.class);
-				showCompareCommand = Boolean.valueOf(globalConfig.getShowCompareCommand());
-			}
-			if (showCompareCommand.booleanValue()) {
-				registry.registerButton(AttributedCompareCommandHandler.COMMAND_ID);
-			}
-			EditComponent.Config.super.modifyIntrinsicCommands(registry);
-
-		}
-
-	}
-
-	/**
-	 * Global configuration options for all {@link EditAttributedComponent}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface GlobalConfig extends ConfigurationItem {
-
-		/**
-		 * @see Config#getShowCompareCommand()
-		 */
-		@Name(Config.SHOW_COMPARE_COMMAND_NAME)
-		boolean getShowCompareCommand();
 
 	}
 

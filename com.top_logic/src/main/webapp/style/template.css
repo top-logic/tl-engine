@@ -1848,6 +1848,9 @@ div.menuTitleContents {
 }
 
 div.cCollapsibleHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 	color: var(--TITLEBAR_COLOR);
 	vertical-align: middle;
 	padding: var(--COLLAPSIBLE_HEADER_PADDING);
@@ -1885,6 +1888,25 @@ div.cCollapsibleToolbar {
 	float: right;
 }
 
+/* for when the toolbar is collapsed */
+.cCollapsibleHorizontal .cCollapsibleHeader {
+	flex-direction: column-reverse;
+	justify-content: start;
+	align-items: unset;
+}
+
+.cCollapsibleHorizontal .cCollapsibleToolbar {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	padding-right: 0px;
+}
+
+/* Makes it visible when it's in a collapsed title state. */
+.cCollapsibleHorizontal .ddwttDropBtn {
+	max-width: none;
+}
+
 span.tbGroup,
 span.cCollapsibleButtons {
 	margin-left: 4px;
@@ -1901,19 +1923,15 @@ div.cCollapsibleHorizontal .cCollapsibleTitle {
 	transform: rotate(90deg);
 	transform-origin: 0 100%;
 	overflow: visible;
+	padding-left: 0px;
+}
+
+.cCollapsibleHorizontal .cCollapsibleButtons .cButton {
+    margin-left: 0;
 }
 
 span.cCollapsibleButtons span.cButton {
 	margin-left: 2px;
-}
-
-div.cCollapsibleHorizontal span.cCollapsibleButtons span.cButton {
-	margin-left: 0px;
-}
-
-div.cCollapsibleHorizontal div.cCollapsibleToolbar {
-	padding-right: 0px;
-	padding-left: 1px;
 }
 
 div.cCollapsibleHorizontal span.cCollapsibleButtons {
@@ -2237,6 +2255,16 @@ div.fltContainer td.frmGroupTitleContentCollapsed {
 
 span.frmGroupExpand {
 	padding-left: 3px;
+	margin-left: auto;
+}
+
+.frmGroupExpand::before {
+    display: inline-flex;
+    vertical-align: middle;
+    border-left: 1px solid #c4c7cc;
+    margin-right: 5px;
+    height: calc(var(--COLLAPSIBLE_IMAGE_HEIGHT) - 5px * 2);
+    content: " ";
 }
 
 span.frmGroupTitleText {
@@ -5303,17 +5331,31 @@ span.configuredTooltipLabel {
 	content: " ";
 }
 
-div.dfToolbar {
-	float: right;
+.dfModeFull .dfListCommands,
+.dfEntryTitle .lFixedRight {
+	display: flex;
+	margin-left: auto;
 }
 
-span.dfToolbar {
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%);
-	right: 0px;
-	text-align: right;
-	width: 22px;	
+.rf_header .dfContent .dfItemTitle {
+    display: flex;
+}
+
+.dfItemTitle {
+    text-overflow: ellipsis;
+    white-space: initial;
+    overflow: hidden;
+}
+
+.rf_header .dfContent {
+    flex-grow: 2;
+    align-self: center;
+}
+
+.rf_header .dfContent .dfToolbar {
+    display: flex;
+    gap: .25rem;
+    margin-left: auto;
 }
 
 /* In the compact mode, all but the outermost dfList should have indent. */
@@ -5358,8 +5400,7 @@ div.dfEntryTitle label {
 	margin-right: 0.5em;
 }
 
-.rf_header > .rf_menu,
-.dfModeFull span.dfListCommands {
+.rf_header > .rf_menu {
 	position: absolute;
 	right: 0px;
 }
@@ -6517,7 +6558,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .rf_groupCell .rf_header {
 	border-radius: var(--GROUP_TITLE_RADIUS);
-	padding-left: 0px;
+	padding-left: 10px;
 	padding-right: 10px;
 	background: var(--GROUP_TITLE_BACKGROUND); 
 	color: var(--GROUP_LABEL_COLOR);
@@ -7716,7 +7757,7 @@ div.dirtyHandlingDialog .changes {
 	height: 20px;
 }
 
-.rf_header .ddwttChevron::after {
+.rf_header .ddwttDropBtn::after {
 	color: var(--GROUP_LABEL_COLOR);
 }
 

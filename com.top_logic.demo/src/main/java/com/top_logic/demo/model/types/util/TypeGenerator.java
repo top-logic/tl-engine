@@ -79,6 +79,7 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -240,7 +241,7 @@ public class TypeGenerator {
 					child.setChecklistSingle(createChecklistSingleValue(rand));
 					child.setStringSet(stringSet);
 
-					Person person = createWrapperValue(Person.class, DemoTypesFactory.getAccountDemoTypesAAttr(), rand);
+					Person person = createWrapperValueNullable(Person.class, DemoTypesFactory.getAccountDemoTypesAAttr(), rand);
 					child.setAccount(person);
 					sendCreateEvent(child);
 
@@ -292,7 +293,7 @@ public class TypeGenerator {
 
 	private static TLClassifier createChecklistSingleValue(Random random) {
 		TLStructuredTypePart attribute = DemoTypesFactory.getChecklistSingleDemoTypesAAttr();
-		return createWrapperValue(TLClassifier.class, attribute, random);
+		return createWrapperValueNullable(TLClassifier.class, attribute, random);
 	}
 
 	private static <E extends TLObject> Set<E> createWrapperValues(Class<E> contentType,
@@ -327,11 +328,16 @@ public class TypeGenerator {
 		return selectedWrappers;
 	}
 
-	private static <E extends TLObject> E createWrapperValue(Class<E> contentType, TLStructuredTypePart attribute,
-			Random rand) {
+	private static <E extends TLObject> E createWrapperValueNullable(Class<E> contentType,
+			TLStructuredTypePart attribute, Random rand) {
 		if (rand.nextFloat() < NULL_PROBABILITY) {
 			return null;
 		}
+		return createWrapperValue(contentType, attribute, rand);
+	}
+
+	private static <E extends TLObject> E createWrapperValue(Class<E> contentType, TLStructuredTypePart attribute,
+			Random rand) {
 		OptionModel<?> options = AttributeOperations.allOptions(SimpleEditContext.createContext(attribute));
 		if (options.getOptionCount() == 0) {
 			return null;

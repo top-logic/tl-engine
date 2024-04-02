@@ -97,6 +97,17 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class TypeGenerator {
 
+	/**
+	 * The minimum chance for <code>null</code> or the empty value.
+	 * <p>
+	 * This is used to increase the chance for the empty value. When there are many options the
+	 * choose from, the chance for the empty value would be very low. But that is unwanted, as the
+	 * empty value is a special value which appears often in real data and therefore needs to be
+	 * tested thoroughly.
+	 * </p>
+	 */
+	private static final double NULL_PROBABILITY = 0.25;
+
 	static int NUMBER_OF_CHILDREN = 20;
 
 	public static class GenerateDemoTypes extends AbstractCommandHandler {
@@ -280,6 +291,9 @@ public class TypeGenerator {
 
 	private static <E extends TLObject> Set<E> createWrapperValues(Class<E> contentType,
 			TLStructuredTypePart attribute, Random rand, int maxElementCount) {
+		if (rand.nextFloat() < NULL_PROBABILITY) {
+			return Collections.emptySet();
+		}
 		OptionModel<?> options = AttributeOperations.allOptions(SimpleEditContext.createContext(attribute));
 		if (options.getOptionCount() == 0) {
 			return Collections.emptySet();
@@ -308,6 +322,9 @@ public class TypeGenerator {
 
 	private static <E extends TLObject> E createWrapperValue(Class<E> contentType, TLStructuredTypePart attribute,
 			Random rand) {
+		if (rand.nextFloat() < NULL_PROBABILITY) {
+			return null;
+		}
 		OptionModel<?> options = AttributeOperations.allOptions(SimpleEditContext.createContext(attribute));
 		if (options.getOptionCount() == 0) {
 			return null;

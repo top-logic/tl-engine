@@ -13,9 +13,12 @@ import com.top_logic.layout.I18NConstantsBase;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en Opening the window failed.
+	 * @tooltip The expansion of template "{0}" failed.
+	 */
 	public static ResKey1 WINDOW_TEMPLATE_INSTANTIATION_FAILED__TEMPLATE;
 
 	static {

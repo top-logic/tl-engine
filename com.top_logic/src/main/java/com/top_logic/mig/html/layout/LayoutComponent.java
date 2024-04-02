@@ -118,6 +118,7 @@ import com.top_logic.layout.component.dnd.ComponentDropTarget;
 import com.top_logic.layout.component.dnd.NoComponentDrop;
 import com.top_logic.layout.form.control.AbstractButtonControl;
 import com.top_logic.layout.form.control.ButtonControl;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.I18NConstants;
 import com.top_logic.layout.scripting.recorder.DynamicRecordable;
@@ -182,7 +183,8 @@ import com.top_logic.util.error.ErrorHandlingHelper;
 @Label("Component")
 public abstract class LayoutComponent extends ModelEventAdapter
 		implements IComponent, NamedModel, FrameScope,
-		LayoutConstants, ToolBarOwner, Expandable, LazyTypedAnnotatableMixin, Cloneable, DynamicRecordable {
+		LayoutConstants, ToolBarOwner, Expandable, LazyTypedAnnotatableMixin, Cloneable, DynamicRecordable,
+		VisibilityModel {
 
 	/**
 	 * {@link ConfigurationItem} containing some of the methods in {@link LayoutComponent.Config}
@@ -1981,7 +1983,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * 
 	 * @return true when component has a Parent and is marked as visible.
 	 */
-    public boolean isVisible() {
+	@Override
+	public boolean isVisible() {
         /* defense programming... it is nice to have it... believe me (skr) */
 		return getParent() != null && _isVisible();
     }
@@ -2000,7 +2003,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
      *
      * @param aVisible The visibility to set
      */
-    public void setVisible(boolean aVisible) {
+	@Override
+	public void setVisible(boolean aVisible) {
 
 //        /* ensure to set all dialogs to invisible when opener component
 //         * becomes invisible.

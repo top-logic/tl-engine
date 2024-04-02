@@ -63,8 +63,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_NOT_A_RES_KEY__VALUE__EXPR;
 
-	public static ResKey2 ERROR_NOT_A_THEME_IMAGE__VALUE__EXPR;
-
 	/**
 	 * @en Encoding value of expression {1} failed: {0}
 	 */

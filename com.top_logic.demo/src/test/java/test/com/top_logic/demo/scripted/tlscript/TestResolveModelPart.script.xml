@@ -173,7 +173,7 @@
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-						<value>resolveModelPart("tl5.enum:demo.federalstates")</value>
+						<value>resolveModelPart("DemoTypes:demo.federalstates")</value>
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -204,7 +204,7 @@
 							</path>
 						</table>
 						<row-object config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
-							ref="tl5.enum:demo.federalstates"
+							ref="DemoTypes:demo.federalstates"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -222,7 +222,7 @@
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-						<value>resolveModelPart("tl5.enum:demo.federalstates#demo.federalstate.he")</value>
+						<value>resolveModelPart("DemoTypes:demo.federalstates#Hesse")</value>
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -253,11 +253,11 @@
 							</path>
 						</table>
 						<row-object config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
-							ref="tl5.enum:demo.federalstates#demo.federalstate.he"
+							ref="DemoTypes:demo.federalstates#Hesse"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="demo.federalstate.he"
+						value="Hesse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"

@@ -24,12 +24,12 @@
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
  singleton = `DemoTypes#ROOT`;
- classifier = `tl5.enum:demo.federalstates#demo.federalstate.bb`;
+ classifier = `DemoTypes:demo.federalstates#Brandenburg`;
  singletonInstanceOfType = $singleton.instanceOf(`DemoTypes:Root`);
  historicSingletonInstanceOfType = $singleton.inRevision($singleton.createRevision()).instanceOf(`DemoTypes:Root`);
  historicSingletonInstanceOfDifferentType = $singleton.inRevision($singleton.createRevision()).instanceOf(`DemoTypes:A`);
- classifierInstanceOfEnum = $classifier.instanceOf(`tl5.enum:demo.federalstates`);
- historicClassifierInstanceOfEnum = $classifier.inRevision($classifier.modifiedRevision()).instanceOf(`tl5.enum:demo.federalstates`);
+ classifierInstanceOfEnum = $classifier.instanceOf(`DemoTypes:demo.federalstates`);
+ historicClassifierInstanceOfEnum = $classifier.inRevision($classifier.modifiedRevision()).instanceOf(`DemoTypes:demo.federalstates`);
  historicClassifierInstanceOfDifferentEnum = $classifier.inRevision($classifier.modifiedRevision()).instanceOf(`tl5.enum:demo.systemList`);
  !$singletonInstanceOfType ? "Singleton must be instance of its type." :
  (!$historicSingletonInstanceOfType ? "Historic singleton must be instance of its current type.": 

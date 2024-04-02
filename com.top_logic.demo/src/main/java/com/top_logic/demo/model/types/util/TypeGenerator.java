@@ -5,6 +5,7 @@
  */
 package com.top_logic.demo.model.types.util;
 
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static java.lang.Math.*;
 
 import java.util.Collection;
@@ -239,6 +240,8 @@ public class TypeGenerator {
 						DemoTypesFactory.getChecklistMultiDemoTypesAAttr(), rand, MAX_COLLECTION_VALUES);
 					child.setChecklistMulti(checkListMultiElement);
 					child.setChecklistSingle(createChecklistSingleValue(rand));
+					fillClassificationAttributes(rand, child);
+
 					child.setStringSet(stringSet);
 
 					Person person = createWrapperValueNullable(Person.class, DemoTypesFactory.getAccountDemoTypesAAttr(), rand);
@@ -276,6 +279,51 @@ public class TypeGenerator {
 			throw new TopLogicException(TypeGenerator.class, "generationFailed", ex);
 		}
 		return true;
+	}
+
+	private static void fillClassificationAttributes(Random random, DemoTypesA demoA) {
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationSingleDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationLocalDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationSingleLegacyDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationMultiDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationSinglePopupDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationMultiDropdownDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSingleDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSinglePopupDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSingleRadioDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSingleRadioInlineDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiDropdownDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiRadioDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiRadioInlineDemoTypesAAttr());
+
+	}
+
+	private static void fillRandomlyWithClassifiers(Random random, DemoTypesA demoA, TLClassPart attribute) {
+		if (attribute.isMultiple()) {
+			List<?> chosenClassifiers = randomClassifiers(random, attribute);
+			if (attribute.isMandatory() && chosenClassifiers.isEmpty()) {
+				demoA.tUpdate(attribute, list(randomClassifier(random, attribute)));
+				return;
+			}
+			demoA.tUpdate(attribute, chosenClassifiers);
+		} else {
+			if (!attribute.isMandatory() && random.nextDouble() < NULL_PROBABILITY) {
+				return;
+			}
+			demoA.tUpdate(attribute, randomClassifier(random, attribute));
+		}
+	}
+
+	private static List<TLClassifier> randomClassifiers(Random random, TLClassPart attribute) {
+		List<TLClassifier> chosenClassifiers =
+			list(createWrapperValues(TLClassifier.class, attribute, random, MAX_COLLECTION_VALUES));
+		Collections.shuffle(chosenClassifiers, random);
+		return chosenClassifiers;
+	}
+
+	private static TLClassifier randomClassifier(Random random, TLClassPart attribute) {
+		return createWrapperValue(TLClassifier.class, attribute, random);
 	}
 
 	private static void createXChild(StructuredElement parent, String name) {

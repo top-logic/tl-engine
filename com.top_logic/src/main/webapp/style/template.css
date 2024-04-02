@@ -1851,7 +1851,8 @@ img.type-image {
 .cChoice-vertical {
 	display: inline-flex;
 	flex-direction: column;
-	gap: var(--spacing-02);
+	column-gap: var(--spacing-03);
+	row-gap: var(--spacing-02);
 }
 
 .cChoice-horizontal .cChoice-option label {

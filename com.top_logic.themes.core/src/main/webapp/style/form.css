@@ -1963,7 +1963,8 @@ input[type="checkbox"]:focus {
 .cBooleanChoice, .cChoice-horizontal {
     display: inline-flex;
     flex-wrap: wrap;
-    gap: var(--spacing-03);
+	column-gap: var(--spacing-03);
+	row-gap: var(--spacing-02);
 }
 
 .cChoice-icon {
@@ -1972,13 +1973,15 @@ input[type="checkbox"]:focus {
 
 span.bcc-option {
     display: inline-flex;
-    gap: var(--spacing-02);
+	column-gap: var(--spacing-03);
+	row-gap: var(--spacing-02);
 }
 
 .cChoice-vertical {
 	display: inline-flex;
 	flex-direction: column;
-	gap: var(--spacing-02);
+	column-gap: var(--spacing-03);
+	row-gap: var(--spacing-02);
 }
 
 .cChoice-option label {

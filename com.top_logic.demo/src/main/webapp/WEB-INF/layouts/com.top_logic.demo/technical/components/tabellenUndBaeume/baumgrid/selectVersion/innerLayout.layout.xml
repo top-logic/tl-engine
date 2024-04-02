@@ -7,10 +7,9 @@
 >
 	<arguments>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/innerLayout2.layout.xml">
-				<layoutInfo size="300px"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/baumgrid/selectVersion/versionSelector.layout.xml">
+				<layoutInfo/>
 			</layout-reference>
-			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tabbar.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

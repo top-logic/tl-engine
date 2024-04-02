@@ -24,7 +24,6 @@ import com.top_logic.layout.processor.LayoutResolver;
 import com.top_logic.layout.processor.StringValue;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.CreateComponentParameter;
-import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.LayoutUtils;
@@ -131,7 +130,7 @@ public class WindowTemplate extends LayoutComponent {
 	 * 
 	 * @return The new window with the contents described by this template.
 	 */
-	public WindowComponent instantiate(InstantiationContext context, Layout parent, LayoutComponent opener) {
+	public WindowComponent instantiate(InstantiationContext context, LayoutComponent opener) {
 		try {
 			if (getWindowInfo().getMultipleWindows()) {
 				// ensure that the name of the new WindowComponent and all

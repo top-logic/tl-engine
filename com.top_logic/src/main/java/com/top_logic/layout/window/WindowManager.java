@@ -372,7 +372,7 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 			// Create and open a new window.
 			InstantiationContext instantiationContext = new DefaultInstantiationContext(WindowManager.class);
 			window = instantiationContext.deferredReferenceCheck(() -> {
-				WindowComponent newWin = template.instantiate(instantiationContext, getHolder(), opener);
+				WindowComponent newWin = template.instantiate(instantiationContext, opener);
 				newWin.accessibleComponentsResolved(instantiationContext);
 				return newWin;
 			});

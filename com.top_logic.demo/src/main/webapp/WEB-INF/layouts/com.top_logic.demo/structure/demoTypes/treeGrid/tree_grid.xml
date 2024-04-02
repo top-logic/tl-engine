@@ -118,6 +118,9 @@
 						nodeType="C"
 						resourceKey="layouts.demo.table.tree_grid.newCChild"
 					/>
+					<button id="openGridCompareView"
+						class="com.top_logic.element.layout.grid.OpenGridCompareViewCommand"
+					/>
 					${additionalButtons}
 				</buttons>
 				<tables>

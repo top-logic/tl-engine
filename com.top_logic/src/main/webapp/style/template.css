@@ -1811,10 +1811,6 @@ a.input-image {
 }
 
 .cChoice label {
-	/* Correctly align when wrapping short labels. */
-	/* This is required for horizontal displays and is also useful for vertical displays if the label is very short. In this case, the clickable area is enlarged. */
-	min-width: 10ex;
-	
 	/* Some distance between radio button and label. */
 	padding-right: 5px;
 	padding-left: 5px;

@@ -1975,10 +1975,6 @@ span.bcc-option {
     gap: var(--spacing-02);
 }
 
-.cChoice-option {
-	display: inline-flex;
-}
-
 .cChoice-vertical {
 	display: inline-flex;
 	flex-direction: column;
@@ -1990,11 +1986,6 @@ span.bcc-option {
 	cursor: pointer;
 	margin-left: var(--spacing-02);
 	padding: 0; /* Remove the space between the label and a potential option separator */
-}
-
-.cChoice-option input[type=checkbox] {
-	display: inline;
-	align-self: center;
 }
 
 .cChoice-horizontal.disabled label,

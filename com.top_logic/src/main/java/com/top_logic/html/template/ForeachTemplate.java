@@ -17,13 +17,7 @@ import com.top_logic.layout.template.WithProperties;
  * A template expanding a {@link #getContent()} multiple times in the context of a bound loop
  * variable.
  */
-public class ForeachTemplate implements RawTemplateFragment {
-
-	private final String _var;
-
-	private final TemplateExpression _expression;
-
-	private HTMLTemplateFragment _content;
+public class ForeachTemplate extends ScopeTemplate implements RawTemplateFragment {
 
 	/**
 	 * Creates a {@link ForeachTemplate}.
@@ -32,51 +26,21 @@ public class ForeachTemplate implements RawTemplateFragment {
 	 *        See {@link #getVar()}.
 	 * @param expression
 	 *        See {@link #getExpression()}.
-	 * @param inner
+	 * @param content
 	 *        See {@link #getContent()}
 	 */
-	public ForeachTemplate(String var, TemplateExpression expression, HTMLTemplateFragment inner) {
-		_var = var;
-		_expression = expression;
-		_content = inner;
-	}
-
-	/**
-	 * The local variable to define.
-	 */
-	public String getVar() {
-		return _var;
-	}
-
-	/**
-	 * The expression computing a list of elements to iterate.
-	 */
-	public TemplateExpression getExpression() {
-		return _expression;
-	}
-
-	/**
-	 * The content template to evaluate for each element.
-	 */
-	public HTMLTemplateFragment getContent() {
-		return _content;
-	}
-
-	/**
-	 * @see #getContent()
-	 */
-	public void setContent(HTMLTemplateFragment content) {
-		_content = content;
+	public ForeachTemplate(String var, TemplateExpression expression, HTMLTemplateFragment content) {
+		super(var, expression, content);
 	}
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, WithProperties properties) throws IOException {
-		LocalVariable localVariable = new LocalVariable(_var, properties);
+		LocalVariable localVariable = new LocalVariable(getVar(), properties);
 
-		Collection<?> elements = asCollection(_expression.eval(context, properties));
+		Collection<?> elements = asCollection(getExpression().eval(context, properties));
 		for (Object x : elements) {
 			localVariable.setValue(x);
-			_content.write(context, out, localVariable);
+			getContent().write(context, out, localVariable);
 		}
 	}
 

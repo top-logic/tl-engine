@@ -65,12 +65,17 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
+		Object input = arguments[0];
+		if (input == null) {
+			return null;
+		}
+
 		Object arg = asSingleElement(arguments[1]);
 		if (arg == null) {
 			throw new TopLogicException(I18NConstants.ERROR_REVISION_ARGUMENT_NULL__EXPR.fill(this));
 		} else if (arg instanceof Revision) {
 			Revision revision = (Revision) arg;
-			return evalPotentialFlatMap(definitions, arguments[0], revision);
+			return evalPotentialFlatMap(definitions, input, revision);
 		} else {
 			long commitNumber = asLong(arg);
 
@@ -79,16 +84,16 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 					I18NConstants.ERROR_NEGATIVE_COMMIT_NR__EXPR_COMMIT.fill(this, commitNumber));
 			}
 			if (commitNumber == Revision.INITIAL.getCommitNumber()) {
-				return evalPotentialFlatMap(definitions, arguments[0], Revision.INITIAL);
+				return evalPotentialFlatMap(definitions, input, Revision.INITIAL);
 			}
 			if (commitNumber == Revision.CURRENT.getCommitNumber()) {
-				return evalPotentialFlatMap(definitions, arguments[0], Revision.CURRENT);
+				return evalPotentialFlatMap(definitions, input, Revision.CURRENT);
 			}
 			if (commitNumber > HistoryUtils.getHistoryManager().getSessionRevision()) {
 				throw new TopLogicException(
 					I18NConstants.ERROR_UNKNOWN_COMMIT_NR__EXPR_COMMIT.fill(this, commitNumber));
 			}
-			return evalPotentialFlatMap(definitions, arguments[0], HistoryUtils.getRevision(commitNumber));
+			return evalPotentialFlatMap(definitions, input, HistoryUtils.getRevision(commitNumber));
 		}
 	}
 

@@ -13,6 +13,8 @@ import com.top_logic.model.util.Pointer;
 
 /**
  * Algorithm computing a dynamic form field mode for displaying a model attribute value.
+ * 
+ * @see TLDynamicVisibility#getModeSelector()
  */
 public interface ModeSelector {
 

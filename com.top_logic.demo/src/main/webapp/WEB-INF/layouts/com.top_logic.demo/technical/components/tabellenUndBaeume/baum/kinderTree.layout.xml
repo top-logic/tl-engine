@@ -5,13 +5,18 @@
 	final="true"
 	template="com.top_logic/tree.template.xml"
 >
-	<arguments
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)"
-		partnerGroup="TreePartner"
-	>
+	<arguments partnerGroup="TreePartner">
 		<name key="dynamic.1a37e14d-3702-4007-ac26-0c907ad0b3fc">
 			<de>Kinder</de>
 		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/versionSelector.layout.xml#Selector"/>
+			</channel>
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"/>
+			</channel>
+		</model>
 		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
 			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
 			finite="true"
@@ -20,7 +25,7 @@
 			modelQuery="node -> model -> $model"
 			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
-			rootNode="x -> $x"
+			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
 	</arguments>
 </config:template-call>

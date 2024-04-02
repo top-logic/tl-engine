@@ -28,6 +28,7 @@
 			modelPredicate="true"
 			modelQuery="node -> model -> $model"
 			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			nodesToUpdate="null"
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>

@@ -156,7 +156,7 @@
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
-					expected-failure-message="Component 'com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Layout' cannot be displayed"
+					expected-failure-message="Script execution failed: Search for component Instanzen failed. Expected to find exactly one result but found nothing."
 					failure-message="Instance browser is not visible on TLModules"
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
@@ -201,7 +201,7 @@
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
-					expected-failure-message="Component 'com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Layout' cannot be displayed"
+					expected-failure-message="Script execution failed: Search for component Instanzen failed. Expected to find exactly one result but found nothing."
 					failure-message="Instance browser is not visible on TLModules"
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">

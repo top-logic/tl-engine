@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		size="300px"
+		type="test.dynamicmode:Acquisition"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicVisibility/createObject/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.1841feba-6663-490a-b486-443ea5d1df7c">
+			<en>Acquisitions</en>
+			<de>Anschaffungen</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.dynamicmode:Acquisition`)"
+			supportsElement="element->$element.instanceOf(`test.dynamicmode:Acquisition`)"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteSelection"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

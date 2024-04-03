@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
 		<annotations>
 			<display-order>
 				<value>
@@ -16,10 +16,12 @@
 					<property name="expandSelected"/>
 					<property name="multiSelection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
-
 					<property name="isSecurityMaster"/>
-					<property name="securityObject"/>
 
+					<property name="showMaximize"/>
+					<property name="showMinimize"/>
+
+					<property name="securityObject"/>
 					<property name="partnerGroup"/>
 
 					<property name="dragSource"/>
@@ -117,6 +119,8 @@
 		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
 		show-only-selectable-nodes="${showOnlySelectableNodes}"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
 		titleKey="${name}"
 	>
 		<selectionModelFactory multiple="${multiSelection}"/>

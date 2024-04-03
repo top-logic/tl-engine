@@ -154,8 +154,10 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 		}
 		_util.updateTLStructuredType(connection, type, newModule, className,
 			getConfig().isAbstract(), getConfig().isFinal(), getConfig());
-		MigrationUtils.updateClass(log, tlModel, typeName, newName,
-			getConfig().isAbstract(), getConfig().isFinal(), getConfig());
+		if (tlModel != null) {
+			MigrationUtils.updateClass(log, tlModel, typeName, newName,
+				getConfig().isAbstract(), getConfig().isFinal(), getConfig());
+		}
 		log.info("Updated type " + _util.qualifiedName(typeName));
 
 		if (newModule != null || className != null) {

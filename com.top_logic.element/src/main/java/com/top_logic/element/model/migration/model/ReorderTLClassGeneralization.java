@@ -146,7 +146,9 @@ public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<Reo
 		}
 		_util.reorderTLTypeGeneralization(connection, specialization, generalization, before);
 		boolean updateModelBaseline =
-			MigrationUtils.reorderGeneralisation(log, tlModel, getConfig().getType(), getConfig().getGeneralization(),
+			tlModel == null ? false
+				: MigrationUtils.reorderGeneralisation(log, tlModel, getConfig().getType(),
+					getConfig().getGeneralization(),
 				getConfig().getBefore());
 		StringBuilder info = new StringBuilder("Generalization link '");
 		info.append(_util.toString(specialization)).append(" <-> ").append(_util.toString(generalization));

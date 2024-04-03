@@ -153,6 +153,10 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 	}
 
 	private boolean addSingletonDefintion(Log log, Document tlModel) {
+		if (tlModel != null) {
+			return false;
+		}
+
 		try {
 			Element module = MigrationUtils.getTLModuleOrFail(tlModel, getConfig().getModule());
 			MigrationUtils.addModuleSingleton(log, module, getConfig().getSingleton().getType(), getConfig().getName());

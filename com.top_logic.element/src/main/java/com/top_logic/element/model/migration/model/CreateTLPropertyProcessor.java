@@ -81,9 +81,11 @@ public class CreateTLPropertyProcessor extends AbstractCreateTypePartProcessor<C
 		_util.createTLProperty(log, connection, partName,
 			targetType, getConfig().isMandatory(), getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig());
-		MigrationUtils.createAttribute(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
-			nullIfUnset(Config.MULTIPLE), nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED),
-			getConfig());
+		if (tlModel != null) {
+			MigrationUtils.createAttribute(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
+				nullIfUnset(Config.MULTIPLE), nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED),
+				getConfig());
+		}
 		log.info("Created part " + _util.qualifiedName(partName));
 	}
 

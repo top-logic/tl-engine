@@ -113,9 +113,9 @@ public class MigrationUtils {
 	 * @param connection
 	 *        Connection to access the database.
 	 * @param modification
-	 *        {@link Function} receiving the parsed model definition. The function can modify the
-	 *        document and returns whether changes were made. If changes were made, the document is
-	 *        stored to the database.
+	 *        {@link Function} receiving the parsed model definition, or <code>null</code>, if no
+	 *        model baseline exists. The function can modify the document and returns whether
+	 *        changes were made. If changes were made, the document is stored to the database.
 	 */
 	public static void modifyTLModel(Log log, PooledConnection connection,
 			Function<Document, Boolean> modification) {
@@ -124,24 +124,25 @@ public class MigrationUtils {
 			xml = DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY,
 				DynamicModelService.APPLICATION_MODEL_PROPERTY);
 		} catch (IllegalArgumentException | SQLException ex) {
-			log.error("Cannot read the stored application model baseline.");
-			return;
-		}
-
-		if (xml == null) {
-			return;
+			log.info("Cannot read the stored application model baseline.", Log.WARN);
+			xml = null;
 		}
 
 		Document document;
-		try {
-			document = DOMUtil.parse(xml);
-		} catch (IllegalArgumentException ex) {
-			log.error("Invalid model baseline: " + xml, ex);
-			return;
+		if (xml == null) {
+			document = null;
+		} else {
+			try {
+				document = DOMUtil.parse(xml);
+			} catch (IllegalArgumentException ex) {
+				log.error("Invalid model baseline: " + xml, ex);
+				return;
+			}
 		}
+
 		boolean changed = modification.apply(document);
 
-		if (changed) {
+		if (document != null && changed) {
 			try {
 				DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY,
 					DynamicModelService.APPLICATION_MODEL_PROPERTY, DOMUtil.toString(document));

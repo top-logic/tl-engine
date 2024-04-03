@@ -116,20 +116,20 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 		}
 	}
 
-	private boolean internalDoMigration(Log log, PooledConnection connection, Document model) throws Exception {
+	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName specialisation = getConfig().getName();
 		boolean updateModelBaseline = false;
 		for (Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.addGeneralisation(connection, specialisation, typeName);
-			if (getConfig().isSkipModelBaselineChange()) {
+			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 				// skip model baseline change
 			} else if (QUALIFIED_TL_OBJECT_NAME.equals(
 				typeName.getName()) && !TlModelFactory.TL_MODEL_STRUCTURE.equals(specialisation.getModuleName())) {
 				/* TLObject extension is typically not contained in model baseline, except for
 				 * module "tl.model". */
 			} else {
-				MigrationUtils.addGeneralisation(log, model, specialisation, typeName);
+				MigrationUtils.addGeneralisation(log, tlModel, specialisation, typeName);
 				updateModelBaseline = true;
 			}
 			log.info(

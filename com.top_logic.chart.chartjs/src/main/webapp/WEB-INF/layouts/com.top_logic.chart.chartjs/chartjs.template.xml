@@ -4,7 +4,10 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+		<annotations>
+			<display-inherited value="APPEND"/>
+		</annotations>
 		<property name="name"
 			type="ResKey"
 		>
@@ -78,6 +81,8 @@
 		model="${model}"
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
 		titleKey="${name}"
 		toolbar="true"
 	>

@@ -76,7 +76,7 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Öffne Baum-Grid"
-					command-name="displayDialog_TreeGridInDialogtreeGridDialog"
+					command-name="displayDialog_TreeGridInDialogtreeGridLayout"
 					comment=""
 					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 					component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"

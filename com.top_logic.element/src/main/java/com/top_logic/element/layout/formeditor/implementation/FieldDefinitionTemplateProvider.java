@@ -158,7 +158,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 			createImageProvider(part);
 			FieldDefinition fieldDefinition = getConfig();
 			FormVisibility visibility = calculateVisibility(part, fieldDefinition.getVisibility(), context.getFormMode());
-			if(visibility != null) {
+			if (visibility != FormVisibility.HIDDEN) {
 				FormMember member = addMember(context.getFormContext(), context.getContentGroup(), context.getModel(),
 					type, part, context.getDomain(), visibility, fieldDefinition);
 				if (member != null) {
@@ -216,6 +216,8 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 					setDisabled(attributeContext, type, part, model, false);
 					break;
 				}
+				case HIDDEN:
+				case DISABLED:
 				case READ_ONLY: {
 					setDisabled(attributeContext, type, part, model, true);
 					break;
@@ -313,20 +315,21 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				} else {
 					return FormVisibility.EDITABLE;
 				}
+			case MANDATORY:
+				return FormVisibility.MANDATORY;
 			case HIDDEN:
-				return null;
+				return FormVisibility.HIDDEN;
 			case READ_ONLY:
 				return FormVisibility.READ_ONLY;
-			default:
-				throw new UnreachableAssertion("Unexpected visibility " + annotatedVisibility);
 		}
+		throw new UnreachableAssertion("Unexpected visibility " + annotatedVisibility);
 	}
 
 	@Override
 	public boolean isVisible(FormEditorContext context) {
 		TLStructuredType type = context.getFormType();
 		FormMode formMode = context.getFormMode();
-		return calculateVisibility(getPart(type), getConfig().getVisibility(), formMode) != null;
+		return calculateVisibility(getPart(type), getConfig().getVisibility(), formMode) != FormVisibility.HIDDEN;
 	}
 
 	@Override

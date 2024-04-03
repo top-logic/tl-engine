@@ -93,7 +93,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 						continue;
 					}
 					FormVisibility visibility = calculateVisibility(part, FormVisibility.DEFAULT, formMode);
-					if (visibility == null) {
+					if (visibility == FormVisibility.HIDDEN) {
 						// Hidden.
 						continue;
 					}

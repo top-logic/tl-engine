@@ -128,7 +128,8 @@ public class RemoveTLAnnotations extends AbstractConfiguredInstance<RemoveTLAnno
 		int moduleTypeSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 		if (moduleTypeSepIdx < 0) {
 			_util.removeModuleAnnotations(log, connection, name, toRemove);
-			boolean updateModelBaseline = MigrationUtils.removeModuleAnnotations(log, tlModel, name, toRemove);
+			boolean updateModelBaseline =
+				tlModel == null ? false : MigrationUtils.removeModuleAnnotations(log, tlModel, name, toRemove);
 			log.info("Removed annotations from module " + name + ".");
 			return updateModelBaseline;
 		}
@@ -138,7 +139,7 @@ public class RemoveTLAnnotations extends AbstractConfiguredInstance<RemoveTLAnno
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
 			_util.removeTypeAnnotations(log, connection, module, typeName, toRemove);
-			boolean updateModelBaseline =
+			boolean updateModelBaseline = tlModel == null ? false :
 				MigrationUtils.removeTypeAnnotations(log, tlModel, moduleName, typeName, toRemove);
 			log.info(
 				"Removed annotation from type " + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + ".");
@@ -149,7 +150,7 @@ public class RemoveTLAnnotations extends AbstractConfiguredInstance<RemoveTLAnno
 		Type type = _util.getTLTypeOrFail(connection, module, typeName);
 		String partName = name.substring(typePartSepIdx + 1);
 		_util.removeTypePartAnnotations(log, connection, type, partName, toRemove);
-		boolean updateModelBaseline =
+		boolean updateModelBaseline = tlModel == null ? false :
 			MigrationUtils.removeTypePartAnnotations(log, tlModel, moduleName, typeName, partName, toRemove);
 		log.info("Removed annotation from type part "
 			+ TLModelUtil.qualifiedName(module.getModuleName(), type.getTypeName(), partName) + ".");

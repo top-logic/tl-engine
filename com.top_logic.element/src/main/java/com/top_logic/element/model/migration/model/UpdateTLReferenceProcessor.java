@@ -159,7 +159,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
-			if (getConfig().isSkipModelBaselineChange()) {
+			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 				updateModelBaseline = false;
 			} else {
 				MigrationUtils.updateReference(log, tlModel,
@@ -177,7 +177,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
-			if (getConfig().isSkipModelBaselineChange()) {
+			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 				updateModelBaseline = false;
 			} else {
 				MigrationUtils.updateInverseReference(log, tlModel,

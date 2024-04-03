@@ -79,7 +79,9 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName classifierName = getConfig().getName();
 		_util.createTLClassifier(connection, classifierName, getConfig());
-		MigrationUtils.createClassifier(log, tlModel, classifierName, getConfig());
+		if (tlModel != null) {
+			MigrationUtils.createClassifier(log, tlModel, classifierName, getConfig());
+		}
 		log.info("Created classifier " + _util.qualifiedName(classifierName));
 	}
 

@@ -146,8 +146,10 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		_util.updateTLDataType(connection, type, newModule, dataTypeName, getConfig().getKind(), columnType,
 			storageMapping, annotations);
 
-		MigrationUtils.updateDatatype(log, tlModel, typeName, newName, getConfig().getKind(), columnType,
-			storageMapping, annotations);
+		if (tlModel != null) {
+			MigrationUtils.updateDatatype(log, tlModel, typeName, newName, getConfig().getKind(), columnType,
+				storageMapping, annotations);
+		}
 		log.info("Updated datatype " + _util.qualifiedName(typeName));
 		return true;
 	}

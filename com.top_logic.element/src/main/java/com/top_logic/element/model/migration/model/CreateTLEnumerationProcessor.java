@@ -81,7 +81,9 @@ public class CreateTLEnumerationProcessor extends AbstractConfiguredInstance<Cre
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName enumName = getConfig().getName();
 		_util.createTLEnumeration(connection, enumName, getConfig());
-		MigrationUtils.createEnumType(log, tlModel, enumName, getConfig());
+		if (tlModel != null) {
+			MigrationUtils.createEnumType(log, tlModel, enumName, getConfig());
+		}
 		log.info("Created enumeration " + _util.qualifiedName(enumName));
 	}
 

@@ -91,7 +91,7 @@ public class CreateTLAssociationEndProcessor
 			getConfig().canNavigate(), getConfig().getHistoryType(), getConfig());
 
 		boolean updateModelBaseline;
-		if (TLStructuredTypeColumns.isSyntheticAssociationName(partName.getTypeName())) {
+		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(partName.getTypeName())) {
 			/* AssociationEnd is an end of an internal TLAssociation which is not defined in the
 			 * model baseline. */
 			updateModelBaseline = false;

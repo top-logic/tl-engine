@@ -68,7 +68,9 @@ public class CreateTLModuleProcessor extends AbstractConfiguredInstance<CreateTL
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		_util.createTLModule(connection, getConfig().getName(), getConfig());
-		MigrationUtils.createModule(log, tlModel, getConfig().getName(), getConfig());
+		if (tlModel != null) {
+			MigrationUtils.createModule(log, tlModel, getConfig().getName(), getConfig());
+		}
 		log.info("Created module " + getConfig().getName());
 	}
 

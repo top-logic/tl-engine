@@ -82,7 +82,7 @@ public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<Cre
 		QualifiedTypeName typeName = getConfig().getName();
 		_util.createTLAssociation(connection, typeName, getConfig());
 		boolean updateModelBaseline;
-		if (TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {
+		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {
 			/* AssociationEnd is an end of an internal TLAssociation which is not defined in the
 			 * model baseline. */
 			updateModelBaseline = false;

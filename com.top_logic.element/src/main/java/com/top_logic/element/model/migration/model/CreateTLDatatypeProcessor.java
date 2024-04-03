@@ -115,9 +115,11 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 		_util.createTLDatatype(connection, typeName, getConfig().getKind(), getConfig(),
 			getConfig().getStorageMapping(),
 			getConfig());
-		MigrationUtils.createDatatype(log, tlModel, typeName, getConfig().getKind(), getConfig(),
-			getConfig().getStorageMapping(),
-			getConfig());
+		if (tlModel != null) {
+			MigrationUtils.createDatatype(log, tlModel, typeName, getConfig().getKind(), getConfig(),
+				getConfig().getStorageMapping(),
+				getConfig());
+		}
 		log.info("Created datatype " + _util.qualifiedName(typeName));
 	}
 

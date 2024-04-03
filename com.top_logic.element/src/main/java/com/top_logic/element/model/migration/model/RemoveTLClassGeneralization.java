@@ -94,7 +94,8 @@ public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<Remo
 		for (AddTLClassGeneralization.Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.removeGeneralisation(connection, specialisation, typeName);
-			boolean removed = MigrationUtils.removeGeneralisation(log, tlModel, specialisation, typeName);
+			boolean removed =
+				tlModel == null ? false : MigrationUtils.removeGeneralisation(log, tlModel, specialisation, typeName);
 			log.info(
 				"Removed generalisation "
 					+ _util.qualifiedName(typeName) + " from "

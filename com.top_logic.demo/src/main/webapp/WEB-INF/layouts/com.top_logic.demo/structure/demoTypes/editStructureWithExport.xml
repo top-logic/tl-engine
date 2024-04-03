@@ -223,7 +223,8 @@
 								/>
 								<buttons>
 									<button id="openTableComponentCompareView"
-										class="com.top_logic.layout.table.component.OpenTableComponentCompareViewCommand"/>
+										class="com.top_logic.layout.table.component.OpenTableComponentCompareViewCommand"
+									/>
 								</buttons>
 							</tableView>
 							<include name="com.top_logic.demo/structure/demoTypes/treeTable/tree_table_shared.xml"

@@ -1621,7 +1621,7 @@ public class Util {
 			selectParts.executeQuery(connection, type.getBranch(), type.getID())) {
 			while (dbResult.next()) {
 				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
-				TLID definition = readMandatoryTLIDColumn(dbResult, definitionAlias);
+				TLID definition = readTLIDColumn(dbResult, definitionAlias, id);
 				String name = dbResult.getString(nameAlias);
 				String impl = dbResult.getString(implAlias);
 				int order = dbResult.getInt(orderAlias);
@@ -1721,7 +1721,7 @@ public class Util {
 			selectPart.executeQuery(connection, structuredType.getBranch(), structuredType.getID(), partName)) {
 			while (dbResult.next()) {
 				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
-				TLID definition = readMandatoryTLIDColumn(dbResult, definitionAlias);
+				TLID definition = readTLIDColumn(dbResult, definitionAlias, id);
 				String impl = dbResult.getString(implAlias);
 				int order = dbResult.getInt(orderAlias);
 				TypePart part;
@@ -1749,9 +1749,11 @@ public class Util {
 		}
 	}
 
-	private TLID readMandatoryTLIDColumn(ResultSet dbResult, String columnAlias) throws SQLException {
+	private TLID readTLIDColumn(ResultSet dbResult, String columnAlias, TLID defaultValue) throws SQLException {
 		long colValue = dbResult.getLong(columnAlias);
-		assert !dbResult.wasNull() : "Column is not null.";
+		if (dbResult.wasNull()) {
+			return defaultValue;
+		}
 		TLID id;
 		if (colValue == ((LongID) IdentifierUtil.nullIdForMandatoryDatabaseColumns()).longValue()) {
 			id = IdentifierUtil.nullIdForMandatoryDatabaseColumns();

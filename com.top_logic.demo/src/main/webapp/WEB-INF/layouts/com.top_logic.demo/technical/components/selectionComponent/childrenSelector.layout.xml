@@ -5,7 +5,11 @@
 	final="true"
 	template="com.top_logic/selector.template.xml"
 >
-	<arguments model="selection(com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector)">
+	<arguments
+		model="selection(com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector)"
+		showMaximize="false"
+		showMinimize="false"
+	>
 		<titleKey key="dynamic.f95ec3ac-7153-46f8-a17c-23bfd212dd36">
 			<en>Children</en>
 			<de>Kinder</de>

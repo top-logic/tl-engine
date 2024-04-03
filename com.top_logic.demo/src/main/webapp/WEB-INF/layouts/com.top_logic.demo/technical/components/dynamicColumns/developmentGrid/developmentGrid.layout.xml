@@ -2,11 +2,12 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
 		defaultColumns="name"
+		showMaximize="true"
 		type="test.dynamictable:Development"
 	>
 		<dialogs>

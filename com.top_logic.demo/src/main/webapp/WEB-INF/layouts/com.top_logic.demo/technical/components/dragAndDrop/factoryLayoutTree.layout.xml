@@ -9,6 +9,7 @@
 		defaultSelection="false"
 		expandSelected="false"
 		multiSelection="true"
+		showMaximize="true"
 	>
 		<name key="dynamic.12d2a28d-00f2-4b67-96d4-7a20ec6e09c4">
 			<en>Factory layout</en>
@@ -105,7 +106,6 @@
 		<buttons>
 			<button id="ID_81961406_c00a_4c18_9610_4f8b3c65c413"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
-				clique="delete"
 				target="selection(self())"
 			>
 				<resourceKey key="dynamic.e8d279a3-cbd2-4c50-8ea5-7b07f9fed86e">

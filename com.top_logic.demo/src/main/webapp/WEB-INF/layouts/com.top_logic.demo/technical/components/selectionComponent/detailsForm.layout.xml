@@ -5,7 +5,11 @@
 	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments model="selection(com.top_logic.demo/technical/components/selectionComponent/childrenSelector.layout.xml#Selector)">
+	<arguments
+		model="selection(com.top_logic.demo/technical/components/selectionComponent/childrenSelector.layout.xml#Selector)"
+		showMaximize="true"
+		showMinimize="false"
+	>
 		<name key="dynamic.76e00ac6-38e5-43de-9375-340fabd0f3ed">
 			<en>Details</en>
 			<de>Details</de>

@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.binding.xml;
 
-import com.top_logic.model.DerivedTLTypePart;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -140,11 +139,6 @@ public interface TLModelBindingConstants {
 	 * @see TLTypePart#getType()
 	 */
 	String TYPE_PART_TYPE_ATTR = "type";
-
-	/**
-	 * @see DerivedTLTypePart#isDerived()
-	 */
-	String TYPE_PART_DERIVED_ATTR = "derived";
 	
 	/**
 	 * @see TLProperty

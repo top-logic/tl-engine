@@ -276,7 +276,6 @@ public class ModelReader {
 		TLProperty property = TLModelUtil.addProperty(type, name, null);
 		
 		setTypeName(((TLModule) type.getScope()).getName(), property, typeSpec);
-		property.setDerived(readBoolean(TYPE_PART_DERIVED_ATTR));
 		
 		readAnnotationContents(property);
 		assert PROPERTY_ELEMENT.equals(reader.getLocalName());
@@ -301,8 +300,6 @@ public class ModelReader {
 	private void readReferenceContents(TLClass clazz) throws XMLStreamException {
 		String name = readStringMandatory(NAMED_ELEMENT_NAME_ATTR);
 		final TLReference reference = TLModelUtil.addReference(clazz, name, null);
-		
-		reference.setDerived(readBoolean(TYPE_PART_DERIVED_ATTR));
 		
 		addPart(readString(ID_ATTR), reference);
 

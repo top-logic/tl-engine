@@ -342,7 +342,6 @@ public class ModelWriter extends DefaultDescendingTLModelVisitor<XMLStreamWriter
 			writeStartElement(writer, hasAnnotations, NS_MODEL, PROPERTY_ELEMENT);
 			writer.writeAttribute(NAMED_ELEMENT_NAME_ATTR, model.getName());
 			writeTypeReference(writer, TYPE_PART_TYPE_ATTR, model.getOwner(), model.getType());
-			writeBoolean(writer, TYPE_PART_DERIVED_ATTR, model.isDerived());
 			
 			writeAnnotations(model, writer);
 			Void result = super.visitProperty(model, writer);
@@ -374,7 +373,6 @@ public class ModelWriter extends DefaultDescendingTLModelVisitor<XMLStreamWriter
 				} else {
 					writeEndReference(writer, model, model.getEnd());
 				}
-				writeBoolean(writer, TYPE_PART_DERIVED_ATTR, model.isDerived());
 				
 				writeAnnotations(model, writer);
 				super.visitReference(model, writer);

@@ -514,7 +514,6 @@ public abstract class AbstractStartStopListener implements ServletContextListene
         // help the RMI Process(es) to calm down
         // From jdk141/docs/guide/rmi/faq.html#noexit
         System.gc();
-        System.runFinalization();
 
 //        // release default connection a clean way.
 //        this.closeStmCache();

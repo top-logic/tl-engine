@@ -39,6 +39,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.InlineMap;
@@ -3765,31 +3766,31 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	public void setExpansionState(ExpansionState newState) {
 		assert newState != null;
 
-		ExpansionState oldState;
-		switch (newState) {
-			case NORMALIZED:
-				if (_initiallyMinimized) {
-					oldState = set(EXPANSION_STATE, newState);
-				} else {
-					oldState = reset(EXPANSION_STATE);
-				}
-				break;
-			case MAXIMIZED:
-				oldState = set(EXPANSION_STATE, newState);
-				break;
-			case MINIMIZED:
-				if (_initiallyMinimized) {
-					oldState = reset(EXPANSION_STATE);
-				} else {
-					oldState = set(EXPANSION_STATE, newState);
-				}
-				break;
-			default:
-				throw ExpansionState.noSuchExpansionState(newState);
-		}
+		ExpansionState oldState = computeOldState(newState);
+
 		saveExpansionState(newState);
 
 		firePropertyChanged(Expandable.STATE, this, nonNull(oldState), newState);
+	}
+
+	private ExpansionState computeOldState(ExpansionState newState) throws UnreachableAssertion {
+		switch (newState) {
+			case NORMALIZED:
+				if (_initiallyMinimized) {
+					return set(EXPANSION_STATE, newState);
+				} else {
+					return reset(EXPANSION_STATE);
+				}
+			case MAXIMIZED:
+				return set(EXPANSION_STATE, newState);
+			case MINIMIZED:
+				if (_initiallyMinimized) {
+					return reset(EXPANSION_STATE);
+				} else {
+					return set(EXPANSION_STATE, newState);
+				}
+		}
+		throw ExpansionState.noSuchExpansionState(newState);
 	}
 
 	private void saveExpansionState(ExpansionState state) {

@@ -42,9 +42,4 @@ public abstract class ConfiguredAttributeImpl extends KBBasedMetaAttribute {
 		return storageImplementation.isReadOnly();
 	}
 
-	@Override
-	public void setDerived(boolean value) {
-		throw new UnsupportedOperationException();
-	}
-
 }

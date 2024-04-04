@@ -568,29 +568,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		}
     }
     
-    /** helper function to limit deprecation warning to one place.*/
-	protected static final void stop(SchedulerEntry entry) {
-		Logger.error("Stopping " + entry.getTask().getName(), Scheduler.class);
-		entry.getThread().stop();
-    }
-    
-    
-	/**
-	 * Stop all {@link Task}s that are still active.
-	 * 
-	 * Called when Scheduler is going down.
-	 */
-	protected synchronized void stopStillActive() {
-		Iterator<SchedulerEntry> entriesIterator = getActiveEntries().iterator();
-		while (entriesIterator.hasNext()) {
-			SchedulerEntry entry = entriesIterator.next();
-			ScheduledThread thread = entry.getThread();
-			if ((thread != null) && thread.isAlive()) {
-				stop(entry);
-			}
-		}
-    }
-
 	/** Starts the given task. */
 	protected void startTask(SchedulerEntry entry) {
 		Task task = entry.getTask();
@@ -912,8 +889,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				Logger.error("Interupted while handleOvertime()", this);
             }
 			if (entry.getThread().isAlive()) {
-				Logger.error("Failed to signalStop() to " + theCulprit + " calling stop()", this);
-				stop(entry);
+				Logger.error("Failed to signalStop() to " + theCulprit + ".", this);
             }
         }
         
@@ -1716,8 +1692,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			runCount = getActiveEntries().size();
         }
         if (runCount > 0) {
-			status.append(" Stopping ").append(runCount).append(" Tasks");
-			stopStillActive();
+			status.append(" The following tasks failed to stop: ").append(runCount);
         }
         Logger.info(status.toString(), this);
     }

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<settings>
+	<string name="THEME_NAME"
+		value="Core (Sidebar) Condensed"
+	/>
+	<dim name="SIDEBAR_WIDTH"
+		value="200px"
+	/>
+	<dim name="SIDEBAR_WIDTH_MINIMIZED"
+		value="40px"
+	/>
+	<size name="TABLE_TITLE_HEIGHT"
+		value="28px"
+	/>
+	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
+		value="height: 24px;"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_FOOTER_HEIGHT"
+		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_HEADER_ROW_HEIGHT"
+		value="28px"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT"
+		value="24px"
+	/>
+	<size name="table-height"
+		expr="%com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT"
+		expr="%TABLE_TITLE_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TREE_TABLE_TITLE_HEIGHT"
+		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
+	/>
+	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE"
+		value="16"
+	/>
+	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE"
+		value="16"
+	/>
+	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
+		value="360"
+	/>
+	<int name="QUICK_SEARCH_MAX_RESULTS"
+		value="40"
+	/>
+	<int name="VERSION_ROW_HEIGHT"
+		value="16"
+	/>
+	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
+		value="40px"
+	/>
+	<int name="MAIN_LAYOUT_SIDE_BORDER"
+		value="32"
+	/>
+	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
+		value="32"
+	/>
+	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
+	/>
+	<int name="MAINTAINANCE_BAR_HEIGHT"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
+	/>
+	<int name="TOOL_ROW_HEIGHT"
+		value="72"
+	/>
+	<int name="MAIN_TAB_BAR_HEIGHT"
+		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
+	/>
+	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
+		value="40"
+	/>
+	<size name="tabbar-height"
+		value="32px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH"
+		value="28px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_HEIGHT"
+		value="28px"
+	/>
+	<size name="com.top_logic.layout.layoutRenderer.Icons.POPUP_TITLE_HEIGHT"
+		value="28px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_TITLE_HEIGHT"
+		value="28px"
+	/>
+	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
+		value="10px"
+	/>
+	<!--
+		Needs to be that high because every filter element is being used in an HTML element with the
+		same css classes even when the layout for the page is totally different.
+	-->
+	<int name="FILTER_SINGLE_LINE_HEIGHT"
+		value="64"
+	/>
+	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
+		value="64"
+	/>
+	
+	<string name="spacing-01"
+		value=".25rem"
+	/>
+	<string name="spacing-02"
+		value=".25rem"
+	/>
+	<string name="spacing-03"
+		value=".5rem"
+	/>
+	<string name="spacing-04"
+		value="1rem"
+	/>
+	<string name="spacing-05"
+		value="1.5rem"
+	/>
+	<string name="spacing-06"
+		value="2rem"
+	/>
+	<string name="spacing-07"
+		value="3rem"
+	/>
+</settings>
+

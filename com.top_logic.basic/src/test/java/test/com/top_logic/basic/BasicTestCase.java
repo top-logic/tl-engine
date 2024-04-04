@@ -1611,9 +1611,6 @@ public class BasicTestCase extends TestCase implements InContext {
 					elapsed += System.currentTimeMillis();
 					waitTime -= elapsed;
 					if (waitTime <= 0) {
-						// Last resort to free resources.
-						executor.stop();
-						
 						throw new AssertionFailedError(optionalMessagePrefix(message) +
 							"Test execution did not terminate in time.");
 					}

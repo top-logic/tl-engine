@@ -7,16 +7,16 @@ package com.top_logic.services.jms;
 
 import java.io.Closeable;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.thread.ThreadContextManager;
-
 import jakarta.jms.Destination;
 import jakarta.jms.JMSConsumer;
 import jakarta.jms.JMSContext;
 import jakarta.jms.Message;
 import jakarta.jms.Topic;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
  * Base class for a JMS Consumer (fetches messages from a queue).

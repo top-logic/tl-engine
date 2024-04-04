@@ -106,8 +106,6 @@ public class I18NRuntimeException extends RuntimeException implements I18NFailur
 	public final String getMessage() {
 		try {
 			return getMessageUnsafe();
-		} catch (ThreadDeath exception) {
-			throw exception; // Never ignore ThreadDeath.
 		} catch (Throwable exception) {
 			addSuppressed(exception);
 			/* Resolving the message key failed: Print its toString() representation instead. If an

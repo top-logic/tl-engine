@@ -128,10 +128,6 @@ public class LuceneThread extends Thread {
 			+ " But indexing, deleting and queries might fail or produce invalid results from now on."
 			+ " Cause: " + exception.getMessage();
 		indexIsUntrustworthy(new RuntimeException(message, exception));
-		if (exception instanceof ThreadDeath) {
-			Logger.error("Lucene indexing Thread was killed by ThreadDeath!", exception, LuceneThread.class);
-			throw (ThreadDeath) exception;
-		}
 		long sleepTime = Math.round(sleepTimeGenerator.next());
 		Logger.info(
 			"Because of the error that just happend, to avoid spamming the logs with errors, Lucene will sleep for "

@@ -706,9 +706,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		Task task = entry.getTask();
 		try {
 			return tryStartTaskUnsafe(entry);
-		} catch (ThreadDeath ex) {
-			// Don't try to repair anything, as this thread is dying anyway.
-			throw ex;
 		} catch (Throwable ex) {
 			logError("Failed to start task '" + task.getName() + "'. The task might be in an inconsistent state."
 				+ " That can cause duplicate, missing or wrong executions.", ex);
@@ -1397,8 +1394,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
     protected void dispatch() {
 		try {
 			dispatchUnsafe();
-		} catch (ThreadDeath ex) {
-			throw ex;
 		} catch (Throwable ex) {
 			Logger.error("Scheduler failed. It might be in an inconsistent or broken state, "
 				+ "but will try to continue its work and fix its state. Cause: " + ex.getMessage(),
@@ -1527,10 +1522,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				Logger.error("Fix failed: Scheduler failed to leave the maintenance mode."
 					+ " It will try again later. Cause: " + reason.getMessage(), reason, Scheduler.class);
 			}
-		} catch (ThreadDeath ex) {
-			Logger.error("Fix failed: Scheduler failed to leave the maintenance mode."
-				+ " It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-			throw ex;
 		} catch (Throwable ex) {
 			Logger.error("Fix failed: Scheduler failed to leave the maintenance mode."
 				+ " It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -1551,10 +1542,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				fixesIterator.remove();
 				Logger.info(
 					"Applied Fix: Removed cluster lock for task '" + task.getName() + "'.", Scheduler.class);
-			} catch (ThreadDeath ex) {
-				Logger.error("Fix failed: Scheduler failed to remove cluster lock for task '" + task.getName()
-					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-				throw ex;
 			} catch (Throwable ex) {
 				Logger.error("Fix failed: Scheduler failed to remove cluster lock for task '" + task.getName()
 					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -1587,10 +1574,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				task.getLog().taskDied(I18NConstants.TASK_DONE_WITHOUT_RESULT);
 				fixesIterator.remove();
 				Logger.info("Applied Fix: Wrote task end result for task '" + task.getName() + "'.", Scheduler.class);
-			} catch (ThreadDeath ex) {
-				Logger.error("Fix failed: Scheduler failed to write missing result for task '" + task.getName()
-					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-				throw ex;
 			} catch (Throwable ex) {
 				Logger.error("Fix failed: Scheduler failed to write missing result for task '" + task.getName()
 					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -1628,10 +1611,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 					Logger.error("Fix failed: Scheduler failed to fix log of task '" + task.getName()
 						+ "', will try again later. Cause: " + reason.getMessage(), reason, Scheduler.class);
 				}
-			} catch (ThreadDeath ex) {
-				Logger.error("Fix failed: Scheduler failed to fix log of task '" + task.getName()
-					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-				throw ex;
 			} catch (Throwable ex) {
 				Logger.error("Fix failed: Scheduler failed to fix log of task '" + task.getName()
 					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -2084,8 +2063,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 						DBProperties.GLOBAL_PROPERTY, getPropertyNameTaskBlock(task),
 						Boolean.valueOf(isBlocked).toString());
 					return RetryResult.createSuccess();
-				} catch (ThreadDeath ex) {
-					throw ex;
 				} catch (Throwable ex) {
 					return RetryResult.createFailure(ex);
 				}

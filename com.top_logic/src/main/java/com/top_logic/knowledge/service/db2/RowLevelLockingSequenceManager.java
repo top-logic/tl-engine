@@ -51,9 +51,6 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 			long nextNumber = nextSequenceNumber(dbHelper, connection, retryCount, sequenceId);
 			connection.commit();
 			return nextNumber;
-		} catch (ThreadDeath ex) {
-			// Make sure the following catch block does not interfere with ThreadDeath.
-			throw ex;
 		} catch (SQLException | RuntimeException | Error ex) {
 			throw new RuntimeException("Failed to create an id for sequence '" + sequenceId + "'."
 				+ " Cause: " + ex.getMessage(), ex);
@@ -66,9 +63,6 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 	private void rollbackInFinally(PooledConnection connection) {
 		try {
 			connection.rollback();
-		} catch (ThreadDeath ex) {
-			// Make sure the following catch block does not interfere with ThreadDeath.
-			throw ex;
 		} catch (SQLException | RuntimeException | Error ex) {
 			// Don't throw exceptions in the surrounding "finally" block.
 			Logger.error("Failed to rollback transaction. Cause: " + ex.getMessage(), ex);

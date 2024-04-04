@@ -398,9 +398,6 @@ public class KBDataProducerTask extends StateHandlingTask<KBDataProducerTask.Con
 			_resumeTime = System.currentTimeMillis() + calcErrorPause();
 			ResKey messageKey = getMessageUnhandledException(progress);
 			getLog().taskEnded(ResultType.ERROR, messageKey, exception);
-			if (exception instanceof ThreadDeath) {
-				throw exception;
-			}
 		} finally {
 			setLastRevisionLock(lastSentRevisionAtDate);
 		}

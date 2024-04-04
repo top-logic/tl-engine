@@ -48,8 +48,6 @@ class StreamIOConverter {
 	public static void produce(BinaryDataSource source, OutputStream out) {
 		try {
 			source.deliverTo(out);
-		} catch (ThreadDeath ex) {
-			throw ex;
 		} catch (Throwable ex) {
 			Logger.error("Faild to create output: " + source, ex, StreamIOConverter.class);
 		} finally {

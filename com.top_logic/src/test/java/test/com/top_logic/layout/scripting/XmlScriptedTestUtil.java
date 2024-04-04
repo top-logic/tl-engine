@@ -136,8 +136,6 @@ public class XmlScriptedTestUtil {
 	public static Test createTest(ScriptedTestParameters parameters, File scriptXml) {
 		try {
 			return createTestInternal(parameters, scriptXml);
-		} catch (ThreadDeath ex) {
-			throw ex;
 		} catch (RuntimeException | Error ex) {
 			String testName = "Creating a ScriptedTest for file: '" + scriptXml.getName() + "'";
 			String message = "Creating a ScriptedTest failed. Cause: " + ex.getMessage();

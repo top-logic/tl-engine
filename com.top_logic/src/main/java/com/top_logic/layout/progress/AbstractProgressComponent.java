@@ -258,8 +258,6 @@ public abstract class AbstractProgressComponent extends FormComponent {
 				}
 				try {
 					_progressComponent.finishParent();
-				} catch (ThreadDeath ex) {
-					throw ex;
 				} catch (Throwable ex) {
 					InfoService.logError(I18NConstants.PROGRESS_FAILED, "Progress failed in '"
 						+ _progressComponent.getName() + "': " + _progressComponent.getLocation(), ex,

@@ -646,14 +646,18 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 	@Override
 	protected void detachInvalidated() {
 		if (!getFieldModel().isImmutable()) {
+			/* ID must be fetched outside the client action: When this control is removed from the
+			 * client, it is detached and the ID is reset before the client action is executed. */
+			String controlId = getID();
 			getScope().getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					String contentId = getID() + CONTENT_SUFFIX;
-
 					out.append(WYSIWYG_CLEANUP_METHOD_BEGIN);
-					TagUtil.writeJsString(out, contentId);
+					TagUtil.beginJsString(out);
+					out.append(controlId);
+					out.append(CONTENT_SUFFIX);
+					TagUtil.endJsString(out);
 					out.append(METHOD_END);
 				}
 

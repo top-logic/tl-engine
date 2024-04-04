@@ -91,9 +91,6 @@ public class LogUtil {
 		LogConfigurator.getInstance().addLogMark(key, value);
 		try {
 			runnable.run();
-		} catch (ThreadDeath exception) {
-			/* Never stop or wrap ThreadDeath. */
-			throw exception;
 		} catch (Throwable exception) {
 			throw new LogMarkRuntimeException(key, value, exception);
 		} finally {
@@ -112,9 +109,6 @@ public class LogUtil {
 		LogConfigurator.getInstance().addLogMark(key, value);
 		try {
 			return supplier.get();
-		} catch (ThreadDeath exception) {
-			/* Never stop or wrap ThreadDeath. */
-			throw exception;
 		} catch (Throwable exception) {
 			throw new LogMarkRuntimeException(key, value, exception);
 		} finally {

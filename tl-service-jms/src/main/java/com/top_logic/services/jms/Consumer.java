@@ -85,7 +85,7 @@ public abstract class Consumer<C extends Consumer.Config<?>> extends AbstractCon
 					return;
 				}
 				Logger.error(I18NConstants.ERROR_RECEIVING_MSG__NAME.fill(_name) + " " + ex.getMessage(), ex, this);
-				if (ex instanceof InterruptedException || ex instanceof ThreadDeath) {
+				if (ex instanceof InterruptedException) {
 					Logger.info("Stopping consumer " + _name + ".", Consumer.class);
 					close();
 					return;

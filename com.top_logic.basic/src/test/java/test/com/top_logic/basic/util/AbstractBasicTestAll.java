@@ -113,8 +113,6 @@ public abstract class AbstractBasicTestAll {
 	final Test buildSuiteInternal() {
 		try {
 			return getTests();
-		} catch (ThreadDeath ex) {
-			throw ex;
 		} catch (RuntimeException | Error ex) {
 			String testName = getClass().getSimpleName();
 			String message = "Failed to build the test suite. Cause: " + ex.getMessage();

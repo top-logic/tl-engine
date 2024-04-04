@@ -164,7 +164,6 @@ extends="com.top_logic.util.TopLogicJspBase"
 				</table>
 				<hr/>
 				<%
-				System.runFinalization();
 				System.gc();
 				Thread.yield();
 				%>

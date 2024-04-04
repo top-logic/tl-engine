@@ -1,0 +1,84 @@
+.rf_groupCell .rf_header,
+.dfEntryTitle.colored {
+    height: 1.75rem;
+}
+
+.rf_groupCell {
+    margin-top: var(--spacing-03);
+}
+
+.tl-table__footer-pager,
+.tl-table__footer-counter {
+	height: 1.75rem;
+}
+
+.cTextInput input, 
+.cIntegerInput.num input, 
+.cExpandableTextInput input, 
+.cBlockTextInput input, 
+.cPopupSelect input, 
+.cDateInput input, 
+.cTimeInput input {
+    height: 1.5rem;
+}
+
+.quickSearch .cTextInput input {
+	height: 2rem;
+}
+
+.ddwttDropBtn {
+    height: 1.5rem;
+}
+
+.lFixedRight a:not(.lFlexible), .lFixedRight:not(.timePart) span:not(.lFlexible), .lFixedRight span span:not(.lFlexible), .lFixedRight .fChoose:not(.lFlexible) {
+	height: 1.5rem;
+    width: 1.5rem;
+}
+
+.input-image i {
+	font-size: var(--body-01-font-size);
+}
+
+.cmdButtons .cButton, .cButton.cmdButton, .cButton.cmdButtonDisabled, .cDefaultButton button, .cDefaultButton button:disabled, .tlButtonScrollContainer .tlDropdownButton, .sxButtons .tlButton, .cButton.bcPopup, .cButton.cLinkButton.cmdLink, .cButton.cLinkButton.cmdLinkDisabled, .fltSubContent .cMenuButton.menuEntryEnabled, .fltSubContent .cMenuButton.menuEntryDisabled {
+    height: 1.5rem;
+}
+
+.tlTabbarContainer {
+    justify-content: flex-start;
+}
+
+.tcrNode .treeNode {
+    height: 1.5rem;
+}
+
+.BreadCrumbOuter {
+	font-family: 'Inter-Regular';
+    font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
+}
+
+.Header .breadcrumbNodeIcon > img:first-of-type {
+    height: var(--body-01-line-height);
+}
+
+.cMenuButton {
+    line-height: var(--body-02-line-height);
+    display: table-row;
+}
+
+.cMenuButton i {
+    font-size: var(--body-02-font-size);
+}
+
+.menuEntryCell:first-child, .menuEntryCell img.menuEntryImage {
+    width: var(--body-02-font-size);
+}
+
+.accIcon i {
+    font-size: var(--body-02-font-size);
+}
+
+div.accNode a.accEntry, a.accEntry, a.accEntry:link, a.accEntry:visited, a.accEntry:active {
+    padding: var(--spacing-02) var(--spacing-04);
+}

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Test #27969 - User Settings for everyone"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="Test_27969_User"
+						/>
+						<parameter name="ergebnis"
+							value="Test_27969_User"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="Test_27969_User"
+						/>
+						<parameter name="Passwort"
+							value="Test_27969_User"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="Test_27969_User"
+						/>
+						<parameter name="ProcessId"
+							value="Test_27969_User"
+						/>
+						<parameter name="Password"
+							value="Test_27969_User"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test that the 'User Settings' dialog can be opened and edited"
+			user-id="Test_27969_User"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Persönliche Einstellungen"
+					command-name="showCurrentPersonDialog"
+					component-implementation-comment="com.top_logic.layout.component.TabComponent"
+					component-name="mainTabbar.layout.xml#mainTabber"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test that the 'session log' dialog export can be used"
+			user-id="Test_27969_User"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Sitzungslog..."
+					command-name="openLogLinesSessionDialog"
+					component-implementation-comment="com.top_logic.layout.component.TabComponent"
+					component-name="mainTabbar.layout.xml#mainTabber"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+					command-label="Nach Excel exportieren..."
+					command-name="exportExcel"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml#logLinesTable"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml#logLinesTable"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Loeschen.xml"
+					template-name-comment="Nutzer Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Test_27969_User"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

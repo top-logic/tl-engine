@@ -463,6 +463,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		log().info("Adding generalization '" + diff.getGeneralization() + "' to '" + diff.getType() + "'.");
 		int index = before == null ? generalizations.size() : generalizations.indexOf(before);
+		if (index < 0) {
+			log().info("Referenced generalization '" + before + "' not found in '" + diff.getType() + "', appending.");
+			index = 0;
+		}
 		generalizations.add(index, generalization);
 
 		if (createProcessors()) {

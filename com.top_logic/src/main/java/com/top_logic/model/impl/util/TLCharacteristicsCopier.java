@@ -28,7 +28,7 @@ public class TLCharacteristicsCopier {
 	 * @param destination
 	 *        Is not allowed to be null.
 	 */
-	public static void copyCharacteristics(TLClassPart source, TLClassPart destination) {
+	public static void copyCharacteristics(TLStructuredTypePart source, TLStructuredTypePart destination) {
 		assert destination.getName().equals(source.getName());
 		copyCharacteristicsInternal(source, destination);
 		assert TLModelUtil.isReference(destination) == TLModelUtil.isReference(source);

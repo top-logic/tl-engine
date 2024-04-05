@@ -14,6 +14,7 @@ import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.ErrorIgnoringProtocol;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
@@ -104,9 +105,24 @@ public class TestModelPatch extends BasicTestCase {
 	private void assertCopyWithoutDiff(String fixture) {
 		TLModel model = loadModelTransient(fixture);
 		TLModel copy = ModelCopy.copy(model);
+		TLModel copy2 = copyDumpLoad(model);
 
 		assertEmpty(createPatch(model, copy));
 		assertEqualsConfig(model, copy);
+
+		assertEmpty(createPatch(model, copy2));
+		assertEqualsConfig(model, copy2);
+	}
+
+	private TLModel copyDumpLoad(TLModel model) {
+		TLModelImpl result = new TLModelImpl();
+
+		ModelConfig config = (ModelConfig) model.visit(new ModelConfigExtractor(), null);
+		ModelResolver modelResolver = new ModelResolver(new ErrorIgnoringProtocol(), result, null);
+		modelResolver.createModel(config);
+		modelResolver.complete();
+
+		return result;
 	}
 
 	private void assertEqualsConfig(TLModel expected, TLModel actual) {

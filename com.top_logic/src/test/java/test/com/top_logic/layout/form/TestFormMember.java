@@ -5,6 +5,10 @@
  */
 package test.com.top_logic.layout.form;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import junit.framework.Test;
 
 import test.com.top_logic.TLTestSetup;
@@ -12,11 +16,14 @@ import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.layout.ResPrefix;
+import com.top_logic.layout.form.AddedListener;
+import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ImmutablePropertyListener;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.IntField;
 import com.top_logic.layout.form.model.StringField;
 
@@ -175,6 +182,22 @@ public class TestFormMember extends BasicTestCase {
 
 		assertFalse(field.removeCssClass("baz"));
 		assertNull(field.getCssClasses());
+	}
+
+	public void testObserveAdd() {
+		FormGroup group = new FormGroup("group", ResPrefix.forTest("group"));
+		List<FormMember> added = new ArrayList<>();
+		AddedListener listener = new AddedListener() {
+			@Override
+			public Bubble handleAddedToParent(FormMember sender, FormContainer newParent) {
+				added.add(sender);
+				return Bubble.BUBBLE;
+			}
+		};
+		group.addListener(FormMember.ADDED_TO_PARENT, listener);
+		StringField field = FormFactory.newStringField("string");
+		group.addMember(field);
+		assertEquals(Arrays.asList(field), added);
 	}
 
 	public static Test suite() {

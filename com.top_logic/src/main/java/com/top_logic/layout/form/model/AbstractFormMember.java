@@ -612,15 +612,22 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	 */
 	/*package protected*/
 	void setParent(FormContainer container) {
-		if ((container != null) && (this.parent != null)) 
+		FormContainer oldContainer = this.parent;
+
+		if ((container != null) && (oldContainer != null)) 
 			throw new IllegalStateException("form member "+this.getQualifiedName()+" is still a member of another group");
 		
 		if (container == null) {
-			firePropertyChanged(REMOVED_FROM_PARENT, self(), this.parent, container);
+			firePropertyChanged(REMOVED_FROM_PARENT, self(), oldContainer, container);
+
+			// Remove parent last, to allow observing the event also from the parent container.
+			this.parent = container;
 		} else {
-			firePropertyChanged(ADDED_TO_PARENT, self(), this.parent, container);
+			// Set parent first, to allow observing the event also from the parent container.
+			this.parent = container;
+
+			firePropertyChanged(ADDED_TO_PARENT, self(), oldContainer, container);
 		}
-		this.parent = container;
 
 		// Since the parent's display mode decides about this member's display
 		// mode, the display mode must be adjusted, if the parent relationship

@@ -1084,7 +1084,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		
 		if (part instanceof TLClass) {
 			TLClass type = (TLClass) part;
-			if (!type.isAbstract()) {
+			if (!type.isAbstract() && !type.tTransient()) {
 				try (CloseableIterator<TLObject> it = directInstances(type)) {
 					if (it.hasNext()) {
 						log().info("Merge conflict deleting '" + type + "': Instances exist.");

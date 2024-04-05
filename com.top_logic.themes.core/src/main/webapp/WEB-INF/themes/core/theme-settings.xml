@@ -292,6 +292,9 @@
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED"
 		value="css:bi bi-fullscreen-exit"
 	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_POP_OUT"
+		expr="%ICONS_OPEN_SELECTOR%"
+	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__EXPERT_MODE_BUTTON"
 		value="css:bi bi-keyboard-fill"
 	/>

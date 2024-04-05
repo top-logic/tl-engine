@@ -61,6 +61,11 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 		@Name(Config.COMPONENT_NAME)
 		ComponentName getComponentName();
 
+		/**
+		 * Setter for {@link #getComponentName()}.
+		 */
+		void setComponentName(ComponentName name);
+
 		@Override
 		@ClassDefault(LayoutControlComponent.class)
 		Class<LayoutControlComponent> getImplementationClass();

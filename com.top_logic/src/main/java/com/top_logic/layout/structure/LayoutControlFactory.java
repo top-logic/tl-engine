@@ -249,8 +249,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		if (toolbarModel != null) {
 			ToolbarOptions toolbarConfig = toolbarModel.getConfig();
 			CollapsibleControl result =
-				new CollapsibleControl(toolbarModel.getTitleKey(), toolbarModel, shouldMaximize,
-					toolbarConfig.getShowMaximize(), toolbarConfig.getShowMinimize());
+				new CollapsibleControl(toolbarModel.getTitleKey(), toolbarModel, shouldMaximize, toolbarConfig);
 			result.getToolbar().setShowMaximizeDefault(clearShowMaximize(component));
 			
 			ToolBar before = _contextToolbar;

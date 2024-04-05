@@ -6,7 +6,6 @@
 package com.top_logic.layout.structure;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -30,10 +29,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class TableWithSidebar extends ConfiguredLayoutControlProvider<TableWithSidebar.Config> {
 
 	private final DisplayDimension _filterWidth;
-
-	private final Decision _showMaximize;
-
-	private final Decision _showMinimize;
 
 	private final boolean _initiallyMinimized;
 
@@ -72,8 +67,6 @@ public class TableWithSidebar extends ConfiguredLayoutControlProvider<TableWithS
 	public TableWithSidebar(InstantiationContext context, Config config) {
 		super(context, config);
 		_filterWidth = config.getFilterWidth();
-		_showMaximize = config.getShowMaximize();
-		_showMinimize = config.getShowMinimize();
 		_initiallyMinimized = config.isInitiallyMinimized();
 	}
 
@@ -89,8 +82,7 @@ public class TableWithSidebar extends ConfiguredLayoutControlProvider<TableWithS
 		container.setChildControl(layout);
 
 		final CollapsibleControl collapsibleControl =
-			new CollapsibleControl(I18NConstants.TABLE_FILTER_TITLE, model, false,
-				_showMaximize, _showMinimize);
+			new CollapsibleControl(I18NConstants.TABLE_FILTER_TITLE, model, false, getConfig());
 		collapsibleControl.getToolbar().setShowMaximizeDefault(false);
 
 		final ControlBasedTableDataProvider tableControlProvider =

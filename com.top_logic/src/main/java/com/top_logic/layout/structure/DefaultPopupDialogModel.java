@@ -46,7 +46,8 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	public DefaultPopupDialogModel(HTMLFragment dialogTitle, LayoutData layout, int borderWidth, String borderColor,
 			String CssClass) {
 		_toolBar =
-			new DefaultToolBar(this, new DefaultExpandable(), dialogTitle, false, Decision.FALSE, Decision.FALSE);
+			new DefaultToolBar(this, new DefaultExpandable(), dialogTitle, false, Decision.FALSE, Decision.FALSE,
+				Decision.FALSE);
 		this.layout = layout;
 		isClosed = false;
 		hasTitleBar = (dialogTitle != null);

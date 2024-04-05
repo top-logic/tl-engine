@@ -128,10 +128,6 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 
 	private final boolean _toolbar;
 
-	private final Decision _showMaximize;
-
-	private final Decision _showMinimize;
-
 	private final boolean _initiallyMinimized;
 
 	private boolean _hasSidebar;
@@ -151,8 +147,6 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 		_toolbar = config.hasToolbar() || _hasSidebar;
 		_isSidebarMinimized = config.isSidebarMinimized();
 		_sidebarWidth = config.getSidebarWidth();
-		_showMaximize = config.getShowMaximize();
-		_showMinimize = config.getShowMinimize();
 		_initiallyMinimized = config.isInitiallyMinimized();
 	}
 
@@ -181,7 +175,8 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 			new PersonalizingExpandable(component.getName() + "." + _tableFieldName + ".sidebarCollapsedState",
 				_isSidebarMinimized);
 		final CollapsibleControl collapsibleControl =
-			new CollapsibleControl(I18NConstants.TABLE_FILTER_TITLE, model, false, Decision.FALSE, Decision.TRUE);
+			new CollapsibleControl(I18NConstants.TABLE_FILTER_TITLE, model, false, Decision.FALSE, Decision.TRUE,
+				Decision.FALSE);
 
 		TableFilterOverviewControl tableFilterOverviewControl =
 			new TableFilterOverviewControl(collapsibleControl.getToolbar(),
@@ -227,8 +222,7 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 		};
 		if (_toolbar) {
 			ResKey titleKey = component.getTitleKey(_tableFieldName);
-			CollapsibleControl collapsibleControl =
-				new CollapsibleControl(titleKey, model, true, _showMaximize, _showMinimize);
+			CollapsibleControl collapsibleControl = new CollapsibleControl(titleKey, model, true, getConfig());
 			component.setToolbar(_tableFieldName, collapsibleControl.getToolbar());
 			collapsibleControl.getToolbar().setShowMinimizeDefault(false);
 			collapsibleControl.setChildControl(layoutAdapter);

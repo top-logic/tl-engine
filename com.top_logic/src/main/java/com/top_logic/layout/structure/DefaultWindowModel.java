@@ -28,7 +28,8 @@ public class DefaultWindowModel extends DefaultLayoutModel implements WindowMode
 
 	public DefaultWindowModel(LayoutData layoutData, HTMLFragment title) {
 		super(layoutData);
-		_toolbar = new DefaultToolBar(this, new DefaultExpandable(), title, true, Decision.TRUE, Decision.FALSE);
+		_toolbar = new DefaultToolBar(this, new DefaultExpandable(), title, true, Decision.TRUE, Decision.FALSE,
+			Decision.FALSE);
 		this.titleBarShown = title != null;
 
 		Theme theme = ThemeFactory.getTheme();

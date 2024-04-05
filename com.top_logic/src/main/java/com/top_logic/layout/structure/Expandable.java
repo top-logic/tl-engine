@@ -58,14 +58,19 @@ public interface Expandable extends PropertyObservable {
 		NORMALIZED,
 	
 		/**
-		 * The content is not displayed.
+		 * The content is taken out of normal flow and displayed minimized.
 		 */
 		MINIMIZED,
 	
 		/**
 		 * The content is taken out of normal flow and displayed maximized.
 		 */
-		MAXIMIZED;
+		MAXIMIZED,
+
+		/**
+		 * The content is not displayed.
+		 */
+		HIDDEN;
 
 		/**
 		 * Throws an {@link UnreachableAssertion} that no such {@link Expandable.ExpansionState}
@@ -80,6 +85,7 @@ public interface Expandable extends PropertyObservable {
 		 */
 		public ExpansionState toggleMinimized() {
 			switch (this) {
+				case HIDDEN:
 				case MAXIMIZED:
 					return NORMALIZED;
 				case MINIMIZED:

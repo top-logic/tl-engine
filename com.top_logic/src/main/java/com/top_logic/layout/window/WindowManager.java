@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.Configuration;
 import com.top_logic.basic.ConfigurationError;
@@ -22,6 +23,8 @@ import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.AbstractDisplayValue;
@@ -35,19 +38,29 @@ import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.URLBuilder;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.WindowScope;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.internal.WindowHandler;
 import com.top_logic.layout.internal.WindowId;
 import com.top_logic.layout.internal.WindowRegistry;
 import com.top_logic.layout.scripting.action.ActionFactory;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
+import com.top_logic.layout.structure.ContainerControl;
+import com.top_logic.layout.structure.DefaultLayoutData;
+import com.top_logic.layout.structure.LayoutControl;
+import com.top_logic.layout.structure.LayoutControlAdapter;
+import com.top_logic.layout.structure.LayoutData;
+import com.top_logic.layout.structure.Scrolling;
+import com.top_logic.layout.structure.WrappingControl;
 import com.top_logic.layout.window.WindowCloseActionOp.WindowCloseAction;
 import com.top_logic.mig.html.HTMLUtil;
+import com.top_logic.mig.html.layout.ComponentInstantiationContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.ModelEventListener;
+import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -167,6 +180,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * @since 5.7
  */
 public class WindowManager extends WindowRegistry<WindowHandler> {
+
+	private static final LayoutData HIDDEN_DATA =
+		new DefaultLayoutData(DisplayDimension.ZERO, 0, DisplayDimension.ZERO, 0, Scrolling.NO);
 
 	private static final ComponentName GLOBAL_WINDOW_CONTAINER_NAME =
 		ComponentName.newName(LayoutUtils.MAINTABBAR_NAME_SCOPE, "mainTabber");
@@ -403,6 +419,158 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 		opener.doFireModelEvent(window, opener, ModelEventListener.WINDOW_OPENED);
 
 		return window;
+	}
+
+	/**
+	 * Displays the given content in an external window.
+	 * 
+	 * <p>
+	 * The given {@link LayoutControl} is removed from its parent and displayed in a new
+	 * {@link WindowComponent}. When the window is closed, the {@link LayoutControl} is re-added to
+	 * its parent.
+	 * </p>
+	 * 
+	 * <p>
+	 * The given {@link LayoutControl} is not simply removed from its parent but replaced with an
+	 * placeholder control with size 0.
+	 * </p>
+	 *
+	 * @param content
+	 *        The content to display in an external window.
+	 * @param closeAction
+	 *        Additional {@link Runnable action} that is executed when the external window is
+	 *        closed.
+	 * @return The {@link WindowComponent} displaying the content.
+	 */
+	public WindowComponent displayInWindow(DisplayContext context, LayoutControl content, Runnable closeAction) {
+		MainLayout mainLayout = context.getLayoutContext().getMainLayout();
+
+		ComponentName windowName = windowName(content);
+
+		WindowComponent window = getWindowByName(windowName);
+		if (window == null) {
+			// Create and open a new window.
+			ComponentInstantiationContext instantiationContext = new ComponentInstantiationContext(
+				new DefaultInstantiationContext(WindowManager.class), mainLayout);
+			window = instantiationContext
+				.deferredReferenceCheck(
+					() -> createWindowComponent(instantiationContext, windowName, content, closeAction, mainLayout));
+			try {
+				instantiationContext.checkErrors();
+			} catch (ConfigurationException ex) {
+				throw new ConfigurationError(ex);
+			}
+
+			registerWindow(window);
+			installURLContext(window);
+
+			openWindow(context, window);
+		} else {
+			focusWindow(window);
+			window.getChild(0).invalidate();
+		}
+
+		return window;
+	}
+
+	private ComponentName windowName(LayoutControl content) {
+		return ComponentName.newName("win_external", content.getID());
+	}
+
+	private WindowComponent createWindowComponent(ComponentInstantiationContext context, ComponentName windowName,
+			LayoutControl content, Runnable closeAction, MainLayout mainLayout) {
+		// Instantiate the new window.
+		WindowComponent.Config config = TypedConfiguration.newConfigItem(WindowComponent.Config.class);
+		config.setName(windowName);
+		config.setWindowInfo(TypedConfiguration.newConfigItem(WindowInfo.class));
+
+		WindowComponent window;
+		try {
+			window = new WindowComponent(context, config);
+		} catch (ConfigurationException exception) {
+			throw new ConfigurationError(exception);
+		}
+		window.init(null, mainLayout);
+
+		window.createSubComponents(context);
+		window.accessibleComponentsResolved(context);
+
+		Runnable reinstallAction = removeChild(content.getParent(), content);
+
+		window.getLayoutControl().setChildControl(content);
+		window.addListener(VisibilityModel.VISIBLE_PROPERTY, new VisibilityListener() {
+
+			@Override
+			public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
+				boolean windowClosed = !newVisibility.booleanValue();
+				if (windowClosed) {
+					closeAction.run();
+					window.removeListener(VisibilityModel.VISIBLE_PROPERTY, this);
+					window.getLayoutControl().setChildControl(null);
+					reinstallAction.run();
+				}
+				return Bubble.BUBBLE;
+			}
+		});
+		return window;
+	}
+
+	private Runnable removeChild(LayoutControl parent, LayoutControl child) {
+		if (parent instanceof WrappingControl<?>) {
+			WrappingControl<?> wrapper = (WrappingControl<?>) parent;
+			wrapper.setChildControl(placeholderControl(child));
+			return () -> wrapper.setChildControl(child);
+		} else if (parent instanceof ContainerControl<?>) {
+			ContainerControl<?> container = (ContainerControl<?>) parent;
+			int formerIndex = container.getChildren().indexOf(child);
+			container.removeChild(child);
+			container.addChild(formerIndex, placeholderControl(child));
+			return () -> {
+				List<? extends LayoutControl> containerChildren = container.getChildren();
+				for (int i = 0; i < containerChildren.size(); i++) {
+					LayoutControl c = containerChildren.get(i);
+					if (isPlaceholderControlFor(c, child)) {
+						container.removeChild(c);
+						container.addChild(i, child);
+						return;
+					}
+				}
+			};
+		} else {
+			throw new UnsupportedOperationException(
+				"A parent of type '" + parent.getClass().getName() + "' has no children");
+		}
+	}
+
+	private boolean isPlaceholderControlFor(LayoutControl placeholder, LayoutControl orig) {
+		if (placeholder instanceof LayoutControlAdapter) {
+			HTMLFragment wrapped = ((LayoutControlAdapter) placeholder).getWrappedView();
+			if (wrapped instanceof EmptyData) {
+				return ((EmptyData) wrapped)._replaced == orig;
+			}
+		}
+		return false;
+	}
+
+	private LayoutControl placeholderControl(LayoutControl child) {
+		LayoutControlAdapter placeHolder = new LayoutControlAdapter(new EmptyData(child));
+		placeHolder.setConstraint(HIDDEN_DATA);
+		return placeHolder;
+	}
+
+	private static class EmptyData implements HTMLFragment {
+
+		LayoutControl _replaced;
+
+		EmptyData(LayoutControl replaced) {
+			_replaced = replaced;
+		}
+
+		@Override
+		public void write(DisplayContext context, TagWriter out) throws IOException {
+			// empty
+		}
+
 	}
 
 	/**

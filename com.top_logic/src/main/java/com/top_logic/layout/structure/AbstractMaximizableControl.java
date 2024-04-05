@@ -160,6 +160,8 @@ public abstract class AbstractMaximizableControl<I extends AbstractMaximizableCo
 				return canMaximize();
 			case MINIMIZED:
 				return canCollapse();
+			case HIDDEN:
+				return oldState != ExpansionState.HIDDEN;
 			case NORMALIZED:
 				switch (oldState) {
 					case MAXIMIZED:
@@ -168,6 +170,8 @@ public abstract class AbstractMaximizableControl<I extends AbstractMaximizableCo
 						return canCollapse();
 					case NORMALIZED:
 						return false;
+					case HIDDEN:
+						return true;
 				}
 				throw new UnreachableAssertion("No such state: " + oldState);
 		}

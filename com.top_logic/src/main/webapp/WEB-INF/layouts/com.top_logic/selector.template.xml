@@ -25,6 +25,7 @@
 
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
+					<property name="showPopOut"/>
 
 					<property name="defaultSelectionProvider"/>
 
@@ -75,6 +76,7 @@
 		selection="${selection}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
 		titleKey="${titleKey}"
 		types="${types}"
 	>

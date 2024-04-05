@@ -16,6 +16,10 @@ import com.top_logic.util.Resources;
  */
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en Display in external window
+	 */
+	public static ResKey POP_OUT_VIEW_TEXT;
 
 	/**
 	 * @en Collapse

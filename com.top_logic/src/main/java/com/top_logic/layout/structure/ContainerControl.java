@@ -78,17 +78,47 @@ public abstract class ContainerControl<I extends ContainerControl<?>> extends Ab
 	}
 
 	/**
-	 * This method adds a {@link LayoutControl} to the list of this {@link ContainerControl}.
+	 * This method adds a {@link LayoutControl} to the the end of this {@link ContainerControl}.
 	 * 
-	 * @param aLayout
-	 *            if <code>null</code> the given {@link LayoutControl} will be ignored.
+	 * @see #addChild(int, LayoutControl)
 	 */
 	public void addChild(LayoutControl aLayout) {
-		LayoutControl newChild = aLayout;
-		_children.add(newChild);
-		((AbstractLayoutControl<?>) newChild).initParent(this);
-		childAdded(newChild);
+		addChild(_children.size(), aLayout);
+	}
+
+	/**
+	 * This method adds a {@link LayoutControl} to the list of this {@link ContainerControl} at the
+	 * given position.
+	 * 
+	 * @param index
+	 *        Index in {@link #getChildren()} to add child.
+	 * @param child
+	 *        The child to add.
+	 */
+	public void addChild(int index, LayoutControl child) {
+		_children.add(index, child);
+		((AbstractLayoutControl<?>) child).initParent(this);
+		childAdded(child);
 		requestRepaint();
+	}
+
+	/**
+	 * Removes the given child from the list of children.
+	 *
+	 * @param child
+	 *        The child to remove.
+	 * 
+	 * @return Whether the child was removed.
+	 */
+	public boolean removeChild(LayoutControl child) {
+		boolean removed = _children.remove(child);
+		if (removed) {
+			childRemoved(child);
+			child.detach();
+			((AbstractLayoutControl<?>) child).resetParent();
+			requestRepaint();
+		}
+		return removed;
 	}
 
 	/**

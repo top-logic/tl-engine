@@ -11,9 +11,10 @@
 		<div class="cCollapsibleToolbar">
 			<tl:if test="!collapsed">{toolbar}</tl:if>
 			
-			<span class="cCollapsibleButtons" tl:if="showCollapse or showMaximize">
+			<span class="cCollapsibleButtons" tl:if="showCollapse or showMaximize or showPopOut">
 				<tl:if test="showCollapse">{collapseButton}</tl:if>
 				<tl:if test="showMaximize">{maximizeButton}</tl:if>
+				<tl:if test="showPopOut">{popOutButton}</tl:if>
 			</span>
 		</div>
 	</div>

@@ -3781,6 +3781,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				} else {
 					return reset(EXPANSION_STATE);
 				}
+			case HIDDEN:
 			case MAXIMIZED:
 				return set(EXPANSION_STATE, newState);
 			case MINIMIZED:

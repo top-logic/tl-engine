@@ -9,7 +9,7 @@ import com.top_logic.basic.listener.PropertyListener;
 
 /**
  * {@link PropertyListener} for observing {@link ToolBar#canMaximize()},
- * {@link ToolBar#showMaximize()}, and {@link ToolBar#showMinimize()}.
+ * {@link ToolBar#showMaximize()}, {@link ToolBar#showMinimize()}, and {@link ToolBar#showPopOut()}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

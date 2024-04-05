@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -120,13 +119,13 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 	@Override
 	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
 		if (!_isValid) {
-			actions.add(createCheckboxUpdate());
+			actions.add(new JSSnipplet(createCheckboxUpdate()));
 
 			_isValid = true;
 		}
 	}
 
-	private ClientAction createCheckboxUpdate() {
+	private DynamicText createCheckboxUpdate() {
 		Set<?> selection = selectionModel().getSelection();
 
 		if (selection.isEmpty()) {
@@ -138,8 +137,8 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		}
 	}
 
-	private ClientAction createCheckboxUpdate(boolean checked, boolean indeterminate) {
-		return new JSSnipplet(new DynamicText() {
+	private DynamicText createCheckboxUpdate(boolean checked, boolean indeterminate) {
+		return new DynamicText() {
 			
 			@Override
 			public void append(DisplayContext context, Appendable out) throws IOException {
@@ -150,7 +149,7 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 				out.append("checkbox.indeterminate = " + String.valueOf(indeterminate) + ";");
 			}
 
-		});
+		};
 	}
 
 	@Override
@@ -179,7 +178,9 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		 * indeterminate. This is only possible using javascript by setting the indeterminate
 		 * property of the dom node. 
 		 */
-		getFrameScope().addClientAction(createCheckboxUpdate());
+		HTMLUtil.beginScriptAfterRendering(out);
+		createCheckboxUpdate().append(context, out);
+		HTMLUtil.endScriptAfterRendering(out);
 	}
 
 	@Override

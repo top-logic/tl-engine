@@ -112,6 +112,16 @@ public interface TLPrimitive extends DBColumnType, TLPrimitiveBase {
 	 */
 	StorageMapping<?> getStorageMapping();
 
+	/**
+	 * Updates the {@link #getStorageMapping()}.
+	 * 
+	 * <p>
+	 * Note: This operation is only safe during migrations. Under no circumstances, this method must
+	 * be used during production.
+	 * </p>
+	 */
+	void setStorageMapping(StorageMapping<?> value);
+
 	@Override
 	default ModelKind getModelKind() {
 		return ModelKind.DATATYPE;

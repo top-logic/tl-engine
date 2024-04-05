@@ -123,7 +123,12 @@ public abstract class AbstractProtocol extends ProtocolChain {
 		return hasError;
 	}
 	
-	private void setError(Throwable ex) {
+	/**
+	 * Flags this {@link Protocol} with an error.
+	 * 
+	 * @see #hasErrors()
+	 */
+	protected void setError(Throwable ex) {
 		hasError = true;
 		if (firstProblem == null) {
 			firstProblem = ex;

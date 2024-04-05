@@ -3,10 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.basic;
-
-import com.top_logic.basic.BufferingProtocol;
-import com.top_logic.basic.Protocol;
+package com.top_logic.basic;
 
 /**
  * {@link BufferingProtocol} that treats errors as infos.
@@ -37,5 +34,9 @@ public class ErrorIgnoringProtocol extends BufferingProtocol {
 		out(s);
 	}
 
+	@Override
+	protected void setError(Throwable ex) {
+		// Ignore.
+	}
 }
 

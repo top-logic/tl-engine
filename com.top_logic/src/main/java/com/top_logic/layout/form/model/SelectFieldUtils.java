@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ExceptionUtil;
 import com.top_logic.basic.Logger;
@@ -671,7 +669,7 @@ public class SelectFieldUtils {
 			out.append(getOptionLabelFailsafe(field, theSel.get(i), labelErrors));
 		}
 
-		if (!CollectionUtils.isEmpty(labelErrors)) {
+		if (!CollectionUtil.isEmpty(labelErrors)) {
 			RuntimeException labelException = ExceptionUtil.createException(
 				"Error occured during rendering of options of field '" + field.getQualifiedName() + "'.",
 				labelErrors);

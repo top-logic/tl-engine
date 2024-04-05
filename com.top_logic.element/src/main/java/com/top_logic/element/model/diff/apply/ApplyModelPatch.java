@@ -1136,8 +1136,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				config.setName(qTypePartName(diff.getName()));
 				addProcessor(config);
 			} else {
-				throw new UnsupportedOperationException("No deletion for '" + diff.getName() + "' of type '"
-						+ part.getClass().getName() + "' possible.");
+				log().info(
+					"No deletion supported for '" + diff.getName() + "' of type '" + part.getClass().getName() + "'.");
 			}
 		}
 		return null;

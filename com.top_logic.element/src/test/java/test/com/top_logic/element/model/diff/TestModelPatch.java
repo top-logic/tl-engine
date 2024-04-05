@@ -22,6 +22,7 @@ import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.model.DefaultModelFactory;
+import com.top_logic.element.model.ModelCopy;
 import com.top_logic.element.model.ModelResolver;
 import com.top_logic.element.model.PersistentTLModel;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
@@ -69,6 +70,43 @@ public class TestModelPatch extends BasicTestCase {
 		assertEmpty(createPatch(left, right));
 
 		assertEqualsConfig(right, left);
+	}
+
+	public void testPatchTransient() {
+		doTestTransient("test1-left.model.xml", "test1-right.model.xml");
+	}
+
+	public void testPatchOverrideTransient() {
+		doTestTransient("test-override-left.model.xml", "test-override-right.model.xml");
+	}
+
+	public void testPatchRefDeleteTransient() {
+		doTestTransient("test-refdelete-left.model.xml", "test-refdelete-right.model.xml");
+	}
+
+	private void doTestTransient(String leftFixture, String rightFixture) {
+		TLModel left = loadModelTransient(leftFixture);
+		TLModel right = loadModelTransient(rightFixture);
+
+		List<DiffElement> patch = createPatch(left, right);
+		applyPatch(left, new DefaultModelFactory(), patch);
+
+		assertEmpty(createPatch(left, right));
+		assertEqualsConfig(right, left);
+	}
+
+	public void testCopy() {
+		assertCopyWithoutDiff("test1-left.model.xml");
+		assertCopyWithoutDiff("test1-right.model.xml");
+		assertCopyWithoutDiff("test-override-left.model.xml");
+	}
+
+	private void assertCopyWithoutDiff(String fixture) {
+		TLModel model = loadModelTransient(fixture);
+		TLModel copy = ModelCopy.copy(model);
+
+		assertEmpty(createPatch(model, copy));
+		assertEqualsConfig(model, copy);
 	}
 
 	private void assertEqualsConfig(TLModel expected, TLModel actual) {

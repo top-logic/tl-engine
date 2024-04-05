@@ -18,7 +18,7 @@ public class TLPrimitiveImpl extends AbstractTLType implements TLPrimitive {
 
 	private final Kind kind;
 
-	private final StorageMapping<?> _storageMapping;
+	private StorageMapping<?> _storageMapping;
 
 	private DBType _dbType;
 
@@ -43,6 +43,11 @@ public class TLPrimitiveImpl extends AbstractTLType implements TLPrimitive {
 	@Override
 	public StorageMapping<?> getStorageMapping() {
 		return _storageMapping;
+	}
+
+	@Override
+	public void setStorageMapping(StorageMapping<?> value) {
+		_storageMapping = value;
 	}
 
 	@Override

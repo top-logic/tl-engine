@@ -55,6 +55,11 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		QualifiedTypeName getName();
 
 		/**
+		 * @see #getName()
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * New name of the data type including the new module.
 		 */
 		@Nullable
@@ -85,6 +90,11 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		@DefaultContainer
 		@Nullable
 		PolymorphicConfiguration<StorageMapping<?>> getStorageMapping();
+
+		/**
+		 * @see #getStorageMapping()
+		 */
+		void setStorageMapping(PolymorphicConfiguration<StorageMapping<?>> value);
 
 	}
 

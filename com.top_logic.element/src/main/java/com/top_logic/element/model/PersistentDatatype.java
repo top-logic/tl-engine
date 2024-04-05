@@ -90,6 +90,11 @@ public class PersistentDatatype extends DynamicType implements TLPrimitive, TLPr
 	}
 
 	@Override
+	public void setStorageMapping(StorageMapping<?> value) {
+		tSetData(TLPrimitiveColumns.STORAGE_MAPPING, value);
+	}
+
+	@Override
 	public DBType getDBType() {
 		try {
 			return DBTypeFormat.INSTANCE.getValue(TLPrimitiveColumns.DB_TYPE_ATTR,

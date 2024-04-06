@@ -473,6 +473,10 @@ public class CalendarControl extends AbstractConstantControl {
 
 		private static final String SELECTED_CSS_CLASS = "cal_sel";
 
+		private static final String CAL_VIEW_SWITCH_CSS_CLASS = "cal_view_switch";
+
+		private static final String CAL_VIEW_SWITCH_HEADER_CSS_CLASS = "cal_view_switch_header";
+
 		protected static final String OTHER_RANGE_CSS_CLASS = "cal_om";
 
 		/**
@@ -624,23 +628,24 @@ public class CalendarControl extends AbstractConstantControl {
 				}
 				out.endTag(ANCHOR);
 
-				out.writeText(NBSP);
-
 				ResKey upKey = _mode.upKey();
 				if (upKey != null) {
 					String tooltip = context.getResources().getString(upKey);
 
 					out.beginBeginTag(ANCHOR);
+					out.writeAttribute(CLASS_ATTR, CAL_VIEW_SWITCH_CSS_CLASS);
 					_control.writeOnClickDirection(out, Navigation.ZOOM_OUT, null);
 					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
 					out.writeAttribute(HREF_ATTR, "#");
 					out.endBeginTag();
 				}
 				{
+					out.beginBeginTag(SPAN);
+					out.writeAttribute(CLASS_ATTR, CAL_VIEW_SWITCH_HEADER_CSS_CLASS);
+					out.endBeginTag();
 					writeHeader(context, out);
-
+					out.endTag(SPAN);
 					if (_mode != Mode.CENTURY) {
-						out.writeText(NBSP);
 						Icons.ARROW_UP.writeWithCss(context, out, FormConstants.INPUT_IMAGE_CSS_CLASS);
 					}
 				}

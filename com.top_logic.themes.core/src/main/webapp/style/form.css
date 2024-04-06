@@ -1213,19 +1213,26 @@ div.cal_root {
 	overflow: hidden;	
 }
 
-div.cal_root, div.cal_view {
+div.cal_root, 
+div.cal_view {
 	position: absolute;
 	left: 0px;
 	top: 0px;
 	bottom: 0px;
 	right:  0px;
+}
+
+div.cal_view {
 	display: flex;
 	flex-direction: column;
 }
 
 .cal_titlebar {
 	display: flex;
-	justify-content: space-around;
+	padding: var(--spacing-01);
+	align-items: center;
+	gap: var(--spacing-02);
+	justify-content: space-evenly;
 }
 
 .cal_titlebar a {
@@ -1239,16 +1246,39 @@ div.cal_root, div.cal_view {
 .cal_leftNav {
 	order: 1;
 	align-self: center;
+	display: inline-flex;
+	gap: var(--spacing-02);
+	align-items: center;
 }
 
 .cal_header {
 	order: 2;
 	align-self: center;
+	display: inline-flex;
+	gap: var(--spacing-02);
+	align-items: center;
 }
 
 .cal_rightNav {
 	order: 3;
 	align-self: center;
+	display: inline-flex;
+	gap: var(--spacing-02);
+	align-items: center;
+}
+
+.cal_view_switch {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);	
+}
+
+.cal_view_switch_header {
+	white-space: nowrap;
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-01-font-size);
+	line-height: var(--heading-compact-01-line-height);
+	letter-spacing: var(--heading-compact-01-letter-spacing);
 }
 
 div.cal_content, table.cal_fixed {
@@ -1259,6 +1289,10 @@ div.cal_content, table.cal_fixed {
 	background-color: var(--layer); 
 }
 
+.cCalendar .disabled {
+	color: var(--text-on-color-disabled);
+}
+
 div.cal_content {
 	background: var(--layer);
 }
@@ -1266,6 +1300,16 @@ div.cal_content {
 table.cal_table {
 	border-width: 0px;
 	width: 100%;
+	padding: 0 var(--spacing-01) var(--spacing-01) var(--spacing-01);
+}
+
+th.cal_th {
+	border-style: none;
+	padding: var(--spacing-01) 0;
+	font-family: 'Inter-Regular';
+    font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
 }
 
 td.cal_cell {
@@ -1274,6 +1318,12 @@ td.cal_cell {
 	cursor: pointer;
 	margin: 0;
 	padding: 0;
+	height: 2rem;
+    width: 2rem;
+    font-family: 'Inter-Regular';
+    font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
 }
 
 td.cal_cell:hover {
@@ -1285,10 +1335,24 @@ td.cal_cell a {
 	/* Without display block, tab navigation through `cal_range` tables does not work. */
 	display: block;
 	color: inherit;
+
 }
 
 td.cal_cell a:hover {
+	color: var(--text-primary);
 	text-decoration: none;
+}
+
+td.cal_cell a:focus {
+	outline: none;
+}
+
+/* Current day */
+td.cal_now {
+	border-color: var(--border-strong);
+	border-style: solid;
+	border-width: 1px;
+	color: var(--text-primary);
 }
 
 /* Weekday */
@@ -1303,7 +1367,7 @@ td.cal_sel {
 }
 
 /* Weekends */
-td.cal_we {
+td.cal_we:not(.cal_sel) {
 	color: var(--text-placeholder);
 }
 
@@ -1311,6 +1375,7 @@ td.cal_we {
 td.cal_wn, td.cal_wn:hover {
 	background-color: var(--layer-accent-active);
 	color: var(--text-on-color);
+	cursor: default;
 }
 
 /* Days of past or next month */

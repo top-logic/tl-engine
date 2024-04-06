@@ -215,6 +215,12 @@ public class Icons extends IconsBase {
 	@DefaultValue("16")
 	public static ThemeVar<Integer> TAB_COMPONENT_DEFAULT_TAB_HEIGHT;
 
+	@DefaultValue("160")
+	public static ThemeVar<Integer> CALENDAR_POPUP_HEIGHT;
+
+	@DefaultValue("240")
+	public static ThemeVar<Integer> CALENDAR_POPUP_WIDTH;
+
 	@DefaultValue("3")
 	public static ThemeVar<Integer> MEGA_MENU_BORDER_WIDTH;
 

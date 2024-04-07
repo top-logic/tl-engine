@@ -15,8 +15,7 @@
 
 	<group name="custom">
 		<views>
-			<include name="toolrow/modelSearchButtons.xml"
-				entryRenderer="${entryRenderer}"
+			<include name="toolrow/searchButtonsLegacy.xml"
 				renderer="${renderer}"
 			/>
 

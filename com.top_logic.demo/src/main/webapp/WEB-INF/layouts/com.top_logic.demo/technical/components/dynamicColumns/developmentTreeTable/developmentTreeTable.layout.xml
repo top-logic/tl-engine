@@ -2,20 +2,19 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
 	template="com.top_logic/treetable.template.xml"
 >
 	<arguments
 		defaultColumns="name"
-		defaultSelection="true"
-		expandRoot="true"
-		expandSelected="true"
-		isSecurityMaster="false"
-		model=""
-		partnerGroup=""
-		rootVisible="true"
 		securityObject="securityRoot"
-		type="test.dynamictable:AllDevelopments, test.dynamictable:Development"
+		showMaximize="true"
+		type="test.dynamictable:AllDevelopments,test.dynamictable:Development"
 	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/createDevelopment/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/createRating/dialog.layout.xml"/>
+		</dialogs>
 		<name key="dynamic.d262555e-3b6e-43ca-93fc-a41ef01876a5">
 			<en>Development projects</en>
 			<de>Entwicklungsprojekte</de>
@@ -43,7 +42,6 @@
 			<configurationProvider class="com.top_logic.model.search.providers.DynamicColumnProviderByExpression"
 				columnLabel="c -> $c.get(`test.dynamictable:Objective#name`)"
 				columnType="`tl.core:Integer`"
-				columnVisibility="visible"
 				idPrefix="ID_39ed8a82_1b39_4b3a_8a69_82cabc263597"
 			>
 				<columns><![CDATA[all(`test.dynamictable:Objective`)
@@ -72,8 +70,6 @@
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="ID_ae2f9251_45d4_475d_9de0_82bd188fc128"
 				columnType="tl.core:Integer"
-				columnVisibility="visible"
-				updater=""
 			>
 				<columnLabel key="dynamic.a55145b0-4c22-49a9-bb5f-9ed36e8a0b1f">
 					<en>Best rating</en>
@@ -89,12 +85,8 @@
 			<button id="ID_3ad17cf3_b3be_4b7f_9425_393bc0cbc2ef"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 				clique=""
-				concurrent="false"
-				confirm="false"
 				disabledImage=""
-				group="System"
 				image="css:fas fa-sync"
-				read-only="false"
 			>
 				<resourceKey key="dynamic.73337f20-a5e3-4254-8a57-a8a487677857">
 					<en>Update</en>
@@ -102,9 +94,5 @@
 				</resourceKey>
 			</button>
 		</buttons>
-		<dialogs>
-			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/createDevelopment/dialog.layout.xml"/>
-			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/createRating/dialog.layout.xml"/>
-		</dialogs>
 	</arguments>
 </config:template-call>

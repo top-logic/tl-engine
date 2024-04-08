@@ -8,6 +8,7 @@
 	<arguments
 		defaultColumns="name"
 		multiSelection="true"
+		showMaximize="true"
 		type="test.dnd:Library,test.dnd:NamedPlanElement"
 	>
 		<name key="dynamic.3aca3423-5a31-478b-ac28-a910bb0019d4">

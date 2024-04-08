@@ -9,6 +9,8 @@
 		model="selection(com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector)"
 		multiple="true"
 		presentation="pop-up-list"
+		showMaximize="false"
+		showMinimize="false"
 	>
 		<titleKey key="dynamic.604e4e88-f2d4-4d77-9b7d-2707fc0e7bea">
 			<en>Standard multiple selection</en>

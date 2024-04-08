@@ -140,89 +140,97 @@ public interface HTMLTemplateParserConstants {
   /** RegularExpression Id. */
   int MOD = 62;
   /** RegularExpression Id. */
-  int OPEN = 63;
+  int DOT = 63;
   /** RegularExpression Id. */
-  int CLOSE = 64;
+  int COMMA = 64;
   /** RegularExpression Id. */
-  int STRING = 65;
+  int OPEN_BRACE = 65;
   /** RegularExpression Id. */
-  int TAG_SPACE = 66;
+  int CLOSE_BRACE = 66;
   /** RegularExpression Id. */
-  int TAG_TAB = 67;
+  int OPEN = 67;
   /** RegularExpression Id. */
-  int TAG_CR = 68;
+  int CLOSE = 68;
   /** RegularExpression Id. */
-  int TAG_NL = 69;
+  int STRING = 69;
   /** RegularExpression Id. */
-  int IF_ATTR = 70;
+  int TAG_SPACE = 70;
   /** RegularExpression Id. */
-  int FOREACH_ATTR = 71;
+  int TAG_TAB = 71;
   /** RegularExpression Id. */
-  int ATTRIBUTE_EQ = 72;
+  int TAG_CR = 72;
   /** RegularExpression Id. */
-  int QUOT_START = 73;
+  int TAG_NL = 73;
   /** RegularExpression Id. */
-  int TAG_END = 74;
+  int IF_ATTR = 74;
   /** RegularExpression Id. */
-  int END_EMPTY_TAG = 75;
+  int FOREACH_ATTR = 75;
   /** RegularExpression Id. */
-  int ATTRIBUTE_NAME = 76;
+  int ATTRIBUTE_EQ = 76;
   /** RegularExpression Id. */
-  int AttributeNameStartChar = 77;
+  int QUOT_START = 77;
   /** RegularExpression Id. */
-  int AttributeNameChar = 78;
+  int TAG_END = 78;
   /** RegularExpression Id. */
-  int AttributeName = 79;
+  int END_EMPTY_TAG = 79;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_SPACE = 80;
+  int ATTRIBUTE_NAME = 80;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_TAB = 81;
+  int AttributeNameStartChar = 81;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_CR = 82;
+  int AttributeNameChar = 82;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_NL = 83;
+  int AttributeName = 83;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_EQ = 84;
+  int SPECIAL_ATTR_SPACE = 84;
   /** RegularExpression Id. */
-  int SPECIAL_ATTR_VALUE = 85;
+  int SPECIAL_ATTR_TAB = 85;
   /** RegularExpression Id. */
-  int SPECIAL_SPACE = 86;
+  int SPECIAL_ATTR_CR = 86;
   /** RegularExpression Id. */
-  int SPECIAL_TAB = 87;
+  int SPECIAL_ATTR_NL = 87;
   /** RegularExpression Id. */
-  int SPECIAL_CR = 88;
+  int SPECIAL_ATTR_EQ = 88;
   /** RegularExpression Id. */
-  int SPECIAL_NL = 89;
+  int SPECIAL_ATTR_VALUE = 89;
   /** RegularExpression Id. */
-  int TEST_ATTR = 90;
+  int SPECIAL_SPACE = 90;
   /** RegularExpression Id. */
-  int ELEMENTS_ATTR = 91;
+  int SPECIAL_TAB = 91;
   /** RegularExpression Id. */
-  int DEF_ATTR = 92;
+  int SPECIAL_CR = 92;
   /** RegularExpression Id. */
-  int SPECIAL_EQ = 93;
+  int SPECIAL_NL = 93;
   /** RegularExpression Id. */
-  int SPECIAL_VALUE_START = 94;
+  int TEST_ATTR = 94;
   /** RegularExpression Id. */
-  int SPECIAL_CLOSE = 95;
+  int ELEMENTS_ATTR = 95;
   /** RegularExpression Id. */
-  int EMBEDD_ATTR = 96;
+  int DEF_ATTR = 96;
   /** RegularExpression Id. */
-  int QUOT_END = 97;
+  int SPECIAL_EQ = 97;
   /** RegularExpression Id. */
-  int ATTRIBUTE_TEXT = 98;
+  int SPECIAL_VALUE_START = 98;
   /** RegularExpression Id. */
-  int ATTRIBUTE_EntityRef = 99;
+  int SPECIAL_CLOSE = 99;
   /** RegularExpression Id. */
-  int ATTRIBUTE_CharRef = 100;
+  int EMBEDD_ATTR = 100;
   /** RegularExpression Id. */
-  int ATTRIBUTE_CharRefHex = 101;
+  int QUOT_END = 101;
   /** RegularExpression Id. */
-  int ATTRIBUTE_NameStartChar = 102;
+  int ATTRIBUTE_TEXT = 102;
   /** RegularExpression Id. */
-  int ATTRIBUTE_NameChar = 103;
+  int ATTRIBUTE_EntityRef = 103;
   /** RegularExpression Id. */
-  int ATTRIBUTE_Name = 104;
+  int ATTRIBUTE_CharRef = 104;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_CharRefHex = 105;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_NameStartChar = 106;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_NameChar = 107;
+  /** RegularExpression Id. */
+  int ATTRIBUTE_Name = 108;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -304,6 +312,10 @@ public interface HTMLTemplateParserConstants {
     "\"*\"",
     "\"/\"",
     "\"%\"",
+    "\".\"",
+    "\",\"",
+    "\"[\"",
+    "\"]\"",
     "\"(\"",
     "\")\"",
     "<STRING>",

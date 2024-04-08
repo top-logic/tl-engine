@@ -628,7 +628,7 @@ public class CreateModelPatch {
 	}
 
 	private boolean isCompatiblePart(TLStructuredTypePart left, TLStructuredTypePart right) {
-		return ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(storageConfig(left), storageConfig(right)) &&
+		return
 			isCompatibleValueType(left.getType(), right.getType()) &&
 				(!isProperty(left)
 				|| isCompatibleProperty((TLProperty) left, (TLProperty) right))

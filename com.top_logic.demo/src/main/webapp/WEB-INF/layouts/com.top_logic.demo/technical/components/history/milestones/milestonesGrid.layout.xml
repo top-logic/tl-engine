@@ -39,6 +39,9 @@
 					<en>New milestone</en>
 					<de>Neuer Meilenstein</de>
 				</resourceKey>
+				<executability>
+					<rule-by-expression decision="project -> $project.revision() == currentRevision()"/>
+				</executability>
 				<checkScopeProvider/>
 				<type-options
 					include-subtypes="false"

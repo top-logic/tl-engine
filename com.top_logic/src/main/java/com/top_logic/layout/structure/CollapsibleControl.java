@@ -198,6 +198,12 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	protected void internalNotifyExpansionStateChanged(Expandable sender, ExpansionState oldValue,
 			ExpansionState newValue) {
 		super.internalNotifyExpansionStateChanged(sender, oldValue, newValue);
+		if (newValue == ExpansionState.HIDDEN) {
+			DisplayContext context = DefaultDisplayContext.getDisplayContext();
+			MainLayout mainLayout = context.getLayoutContext().getMainLayout();
+			mainLayout.getWindowManager().displayInWindow(context, CollapsibleControl.this,
+				() -> setExpansionState(oldValue));
+		}
 		updateButtons();
 	}
 
@@ -244,7 +250,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	private class PopOut extends AbstractCommandModel {
+	private class PopOut extends AbstractCommandModel implements DynamicRecordable {
 
 		public PopOut() {
 			setImage(com.top_logic.layout.structure.Icons.WINDOW_POP_OUT);
@@ -255,11 +261,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 
 		@Override
 		protected HandlerResult internalExecuteCommand(DisplayContext context) {
-			MainLayout mainLayout = context.getLayoutContext().getMainLayout();
-			ExpansionState currentExpansionState = getExpansionState();
-			mainLayout.getWindowManager().displayInWindow(context, CollapsibleControl.this,
-				() -> setExpansionState(currentExpansionState));
-			setExpansionState(ExpansionState.HIDDEN);
+			setAndRecordExpansionState(context, ExpansionState.HIDDEN);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
@@ -269,17 +271,6 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 
 		public Toggle() {
 			update();
-		}
-
-		protected void setExpansionState(DisplayContext context, ExpansionState state) {
-			CollapsibleControl.this.setExpansionState(state);
-			if (ScriptingRecorder.isRecordingActive()) {
-				Maybe<? extends ModelName> ownerName = ModelResolver.buildModelNameIfAvailable(
-					DefaultDisplayContext.getDisplayContext().getWindowScope(), getToolbar().getModel());
-				if (ownerName.hasValue()) {
-					ScriptingRecorder.recordCollapseToolbar(ownerName.get(), state);
-				}
-			}
 		}
 
 		protected abstract void update();
@@ -307,7 +298,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		 * @see #reset()
 		 */
 		void setCollapsed(DisplayContext context, boolean collapsed) {
-			setExpansionState(context,
+			setAndRecordExpansionState(context,
 				collapsed ? Expandable.ExpansionState.MINIMIZED : Expandable.ExpansionState.NORMALIZED);
 		}
 
@@ -337,7 +328,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		}
 
 		private void setMaximized(DisplayContext context, boolean maximize) {
-			setExpansionState(context,
+			setAndRecordExpansionState(context,
 				maximize ? Expandable.ExpansionState.MAXIMIZED : Expandable.ExpansionState.NORMALIZED);
 		}
 
@@ -352,6 +343,17 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 			ResKey tooltipKey = maximized ? I18NConstants.RESTORE_WINDOW : I18NConstants.MAXIMIZE_WINDOW;
 			setTooltip(Resources.getInstance().getString(tooltipKey));
 			setLabel(Resources.getInstance().getString(tooltipKey));
+		}
+	}
+
+	void setAndRecordExpansionState(DisplayContext context, ExpansionState state) {
+		CollapsibleControl.this.setExpansionState(state);
+		if (ScriptingRecorder.isRecordingActive()) {
+			Maybe<? extends ModelName> ownerName = ModelResolver.buildModelNameIfAvailable(
+				DefaultDisplayContext.getDisplayContext().getWindowScope(), getToolbar().getModel());
+			if (ownerName.hasValue()) {
+				ScriptingRecorder.recordCollapseToolbar(ownerName.get(), state);
+			}
 		}
 	}
 

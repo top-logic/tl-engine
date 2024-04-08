@@ -30,11 +30,13 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.CompositeContentHandler;
 import com.top_logic.layout.ContentHandler;
+import com.top_logic.layout.DefaultIdentifierSource;
 import com.top_logic.layout.DefaultUpdateQueue;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.FrameScope;
+import com.top_logic.layout.IdentifierSource;
 import com.top_logic.layout.URLBuilder;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.WindowScope;
@@ -57,6 +59,7 @@ import com.top_logic.mig.html.layout.ComponentInstantiationContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.ModelEventListener;
@@ -228,6 +231,12 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	private final ArrayList<String> closedWindows;
 
 	private final Layout holder;
+
+	/**
+	 * {@link IdentifierSource} creating new IDs for component name delivered in
+	 * {@link #newExternalWindowName()}.
+	 */
+	private final IdentifierSource _externalWindowCounter = new DefaultIdentifierSource();
 
 	/**
 	 * De-serializing constructor.
@@ -445,7 +454,7 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	public WindowComponent displayInWindow(DisplayContext context, LayoutControl content, Runnable closeAction) {
 		MainLayout mainLayout = context.getLayoutContext().getMainLayout();
 
-		ComponentName windowName = windowName(content);
+		ComponentName windowName = newWindowName(content);
 
 		WindowComponent window = getWindowByName(windowName);
 		if (window == null) {
@@ -473,8 +482,24 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 		return window;
 	}
 
-	private ComponentName windowName(LayoutControl content) {
-		return ComponentName.newName("win_external", content.getID());
+	private ComponentName newWindowName(LayoutControl content) {
+		ComponentName windowName;
+		Object model = content.getModel();
+		if (model instanceof LayoutComponent) {
+			ComponentName name = ((LayoutComponent) model).getName();
+			if (LayoutConstants.isSyntheticName(name)) {
+				windowName = newExternalWindowName();
+			} else {
+				windowName = ComponentName.newName("win_external_" + name.scope(), name.localName());
+			}
+		} else {
+			windowName = newExternalWindowName();
+		}
+		return windowName;
+	}
+
+	private ComponentName newExternalWindowName() {
+		return ComponentName.newName("win_external", _externalWindowCounter.createNewID());
 	}
 
 	private WindowComponent createWindowComponent(ComponentInstantiationContext context, ComponentName windowName,

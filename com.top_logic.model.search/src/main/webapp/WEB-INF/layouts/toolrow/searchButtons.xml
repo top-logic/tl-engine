@@ -11,8 +11,8 @@
 	</params>
 
 	<include name="model/search/modelSearchButton.xml"
+		renderer="${renderer}"
 		tabName="modelSearch"
 		viewName="modelSearchTab"
-		renderer="${renderer}"
 	/>
 </template>

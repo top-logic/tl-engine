@@ -82,3 +82,7 @@
 div.accNode a.accEntry, a.accEntry, a.accEntry:link, a.accEntry:visited, a.accEntry:active {
     padding: var(--spacing-02) var(--spacing-04);
 }
+
+.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
+	grid-gap: unset;
+}

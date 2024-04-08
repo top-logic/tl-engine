@@ -23,6 +23,7 @@ import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
+import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Utils;
@@ -179,6 +180,12 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		 * property of the dom node. 
 		 */
 		getFrameScope().addClientAction(createCheckboxUpdate());
+	}
+
+	@Override
+	protected void writeControlClassesContent(Appendable out) throws IOException {
+		HTMLUtil.appendCSSClass(out, "tl-table__cell-checkbox");
+		super.writeControlClassesContent(out);
 	}
 
 	private void writeOnMouseDown(TagWriter out) throws IOException {

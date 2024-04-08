@@ -1615,6 +1615,10 @@ span.cIconSelect .input-image.cannot-edit i {
 	word-wrap: break-word;
 	word-break: break-word;
 	width: 100%;
+	font-family: 'Inter-Regular';
+    font-size: var(--body-02-font-size);
+    line-height: var(--body-02-line-height);
+    letter-spacing: var(--body-02-letter-spacing);
 }
 
 .cTextInput textarea,

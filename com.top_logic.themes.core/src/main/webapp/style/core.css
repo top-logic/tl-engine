@@ -2465,6 +2465,7 @@ div.treeNode.treeSelected.dndInsertInto {
 	overflow: hidden;
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
+	border-bottom: 2px solid var(--border-subtle);
 }
 
 .cCollapsibleToolbar {
@@ -2513,6 +2514,7 @@ div.treeNode.treeSelected.dndInsertInto {
 	flex-direction: column-reverse;
 	justify-content: start;
 	align-items: unset;
+	border-bottom: none;
 }
 
 .cCollapsibleHorizontal .cCollapsibleTitle {

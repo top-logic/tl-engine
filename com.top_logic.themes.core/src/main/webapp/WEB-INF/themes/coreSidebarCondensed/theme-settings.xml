@@ -53,7 +53,7 @@
 		value="40px"
 	/>
 	<int name="MAIN_LAYOUT_SIDE_BORDER"
-		value="32"
+		value="16"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
 		value="32"

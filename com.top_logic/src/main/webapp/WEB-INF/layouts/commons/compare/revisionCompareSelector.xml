@@ -26,7 +26,7 @@
 				<columns>
 					<column name="name"
 						accessor="com.top_logic.layout.IdentityAccessor"
-						labelProvider="com.top_logic.layout.provider.label.RevisionLabelProvider"
+						labelProvider="com.top_logic.layout.provider.label.RevisionResourceProvider"
 					/>
 					<column name="date"
 						accessor="com.top_logic.layout.compare.RevisionAccessor$DateAccessor"

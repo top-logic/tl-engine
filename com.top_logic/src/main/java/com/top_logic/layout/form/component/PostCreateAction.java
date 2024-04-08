@@ -318,6 +318,7 @@ public interface PostCreateAction {
 				Logger.error("Cannot resolve component: " + getConfig().getTargetComponent(), ShowComponent.class);
 				return;
 			}
+			targetComponent.setModel(newModel);
 			targetComponent.makeVisible();
 		}
 	}

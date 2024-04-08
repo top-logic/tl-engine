@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments>
+		<titleKey key="dynamic.6a3f37d1-2872-483a-9628-381a689ca273">
+			<en>Version</en>
+			<de>Version</de>
+		</titleKey>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script>
+				<expr><![CDATA[[
+    currentRevision()
+]]]></expr>
+			</script>
+		</model>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model ->$model"
+		/>
+		<buttons>
+			<button id="ID_8aae36a4_62e2_43c1_ba6a_2e7ff9930ca9"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				image="css:fas fa-camera"
+				operation="model -> $model.concat(revisionAt(now()))"
+			>
+				<resourceKey key="dynamic.5e9e47ab-bc23-479d-bcb5-62f4a97afd46">
+					<en>Create snapshot</en>
+					<de>Zustand festhalten</de>
+					<tooltip>
+						<en>Creates a version of the current status. After further changes, you can return to this version.</en>
+						<de>Legt eine Version des aktuellen Zustandes an. Nach weiteren Änderungen kann zu diesem Versionsstand zurückgekehrt werrden.</de>
+					</tooltip>
+				</resourceKey>
+				<postCreateActions>
+					<setModel target="model(self())"/>
+				</postCreateActions>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

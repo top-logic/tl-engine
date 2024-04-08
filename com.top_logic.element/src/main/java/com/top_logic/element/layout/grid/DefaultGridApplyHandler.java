@@ -6,12 +6,14 @@
 package com.top_logic.element.layout.grid;
 
 import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.ColumnConfiguration;
+import com.top_logic.model.TLObject;
 
 /**
  * Default {@link GridApplyHandler}, which stores the changes of the used AttributeUpdateContainer.
@@ -47,7 +49,7 @@ public class DefaultGridApplyHandler implements GridApplyHandler {
 
 	@Override
 	public boolean allowEdit(GridComponent component, Object rowObject) {
-		return true;
+		return !(rowObject instanceof TLObject) || ((TLObject) rowObject).tHistoryContext() == Revision.CURRENT_REV;
 	}
 
 }

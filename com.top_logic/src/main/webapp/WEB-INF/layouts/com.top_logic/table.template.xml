@@ -19,7 +19,7 @@
 					<property name="defaultSelection"/>
 					<property name="multiSelection"/>
 					<property name="isSecurityMaster"/>
-					
+
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 

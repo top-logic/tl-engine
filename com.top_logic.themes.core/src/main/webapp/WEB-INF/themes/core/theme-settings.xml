@@ -67,7 +67,7 @@
 		value="64px"
 	/>
 	<int name="MAIN_LAYOUT_SIDE_BORDER"
-		value="32"
+		value="16"
 	/>
 	<icon name="com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR"
 		value="css:bi bi-binoculars-fill"

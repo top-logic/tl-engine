@@ -651,6 +651,232 @@
 		<reorder-part name="tl.accounts:Person#firstName"/>
 		<reorder-part name="tl.accounts:Person#lastName"/>
 		<reorder-part name="Contacts:PersonContact#account"/>
+		
+		<!-- More migrations that where missing in the past. -->
+		<remove-annotations name="tl5.enum:tl.yesno">
+		  <annotation class="com.top_logic.model.config.annotation.EnumScope"/>
+		</remove-annotations>
+		<remove-annotations name="tl5.enum:tl.yesnoundef">
+		  <annotation class="com.top_logic.model.config.annotation.EnumScope"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company">
+		  <annotation class="com.top_logic.model.config.annotation.MainProperties"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company">
+		  <annotation class="com.top_logic.model.annotate.InstancePresentation"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Person">
+		  <annotation class="com.top_logic.model.config.annotation.MainProperties"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Person">
+		  <annotation class="com.top_logic.model.annotate.InstancePresentation"/>
+		</remove-annotations>
+		<remove-annotations name="tl.element:Attributed">
+		  <annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-annotations name="Tag:Tag.all">
+		  <annotation class="com.top_logic.model.annotate.InstancePresentation"/>
+		</remove-annotations>
+		<remove-class-generalizations name="tl.imagegallery:GalleryImage">
+		  <generalization type="tl.tables:GalleryImageTableInterface"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="SearchExpressionStructure:SearchExpressionNode">
+		  <generalization type="tl.tables:SearchExpressionTableTableInterface"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="Contacts:CompanyContact">
+		  <generalization type="tl.tables:ContactTableInterface"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="Contacts:PersonContact">
+		  <generalization type="tl.tables:ContactTableInterface"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="Tag:Tag">
+		  <generalization type="tl.tables:TagTableInterface"/>
+		</remove-class-generalizations>
+		<add-class-generalizations name="tl.imagegallery:GalleryImage">
+		  <generalizations>
+		    <generalization type="tl.model:TLObject"/>
+		  </generalizations>
+		</add-class-generalizations>
+		<update-datatype name="tl.core:Binary">
+		  <storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+		    application-type="com.top_logic.basic.io.binary.BinaryDataSource"
+		  />
+		</update-datatype>
+		<update-datatype name="tl.model.wysiwyg:Html">
+		  <storage-mapping class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorageMapping"/>
+		</update-datatype>
+		<add-annotations name="tl.core:Byte">
+		  <annotations>
+		    <supports-multiple/>
+		    <css-class value="num"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Short">
+		  <annotations>
+		    <supports-multiple/>
+		    <css-class value="num"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Integer">
+		  <annotations>
+		    <supports-multiple/>
+		    <css-class value="num"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Long">
+		  <annotations>
+		    <supports-multiple/>
+		    <css-class value="num"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Float">
+		  <annotations>
+		    <supports-multiple/>
+		    <css-class value="num"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Double">
+		  <annotations>
+		    <supports-multiple/>
+		    <css-class value="num"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Name">
+		  <annotations>
+		    <supports-multiple/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Key">
+		  <annotations>
+		    <supports-multiple/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:String">
+		  <annotations>
+		    <supports-multiple/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Text">
+		  <annotations>
+		    <multi-line/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:DateTime">
+		  <annotations>
+		    <search-options>
+		      <literals>
+		        <literal config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+		      </literals>
+		      <operators>
+		        <operator class="com.top_logic.model.search.ui.model.operator.ComparableCompare$Impl"
+		          kind="GE"
+		        >
+		          <comparison-value config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+		        </operator>
+		        <operator class="com.top_logic.model.search.ui.model.operator.ComparableCompare$Impl"
+		          kind="LE"
+		        >
+		          <comparison-value config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+		        </operator>
+		        <operator class="com.top_logic.model.search.ui.model.operator.ComparableRangeCompare$Impl"
+		          kind="IN_RANGE"
+		        >
+		          <lower-bound config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+		          <upper-bound config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+		        </operator>
+		      </operators>
+		    </search-options>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.imagegallery:GalleryImage">
+		  <annotations>
+		    <config-type value="GALLERY"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.folder:WebFolder">
+		  <annotations>
+		    <default-value>
+		      <provider class="com.top_logic.element.structured.util.FolderDefaultProvider"/>
+		    </default-value>
+		    <label-position value="hide-label"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.folder:Document">
+		  <annotations>
+		    <dynamic-icon>
+		      <icon-provider class="com.top_logic.layout.provider.icon.BinaryDataIconProvider"/>
+		    </dynamic-icon>
+		  </annotations>
+		</add-annotations>
+		<update-property name="tl.accounts:Person#name"
+		  mandatory="true"
+		/>
+		<add-annotations name="tl.model.wysiwyg:Html">
+		  <annotations>
+		    <storage-algorithm>
+		      <implementation class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorage"/>
+		    </storage-algorithm>
+		    <render-whole-line/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.model:TLClass#generalizations">
+		  <annotations>
+		    <constraints>
+		      <constraint class="com.top_logic.model.util.NoAttributeCycle"/>
+		    </constraints>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Company">
+		  <annotations>
+		    <instance-presentation
+		      icon="theme:MIMETYPES_COMPANY_CONTACT_16"
+		      large-icon="theme:MIMETYPES_LARGE_COMPANY_CONTACT_60"
+		    />
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:CompanyContact">
+		  <annotations>
+		    <main-properties properties="name,city,email,phone"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Person">
+		  <annotations>
+		    <instance-presentation
+		      expanded-icon="theme:MIMETYPES_PERSON_CONTACT_16"
+		      icon="theme:MIMETYPES_PERSON_CONTACT_16"
+		      large-icon="theme:MIMETYPES_LARGE_PERSON_CONTACT_60"
+		    />
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:PersonContact">
+		  <annotations>
+		    <main-properties properties="name,email,phone,phone_mobile"/>
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.element:Attributed">
+		  <annotations>
+		    <implementation-binding
+		      class-name="com.top_logic.element.meta.kbbased.AttributedWrapper"
+		      interface-name="com.top_logic.model.TLObject"
+		    />
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="tl.element:StructuredElementContainer">
+		  <annotations>
+		    <implementation-binding
+		      class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"
+		      interface-name="com.top_logic.element.structured.StructuredElement"
+		    />
+		  </annotations>
+		</add-annotations>
+		<add-annotations name="Tag:Tag.all">
+		  <annotations>
+		    <instance-presentation
+		      expanded-icon="theme:MIMETYPES_TAG"
+		      icon="theme:MIMETYPES_TAG"
+		    />
+		  </annotations>
+		</add-annotations>
 	</processors>
 	<migration>
 		<type-mapping class=""/>

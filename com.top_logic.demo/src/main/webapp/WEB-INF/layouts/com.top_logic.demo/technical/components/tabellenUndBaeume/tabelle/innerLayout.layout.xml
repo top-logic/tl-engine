@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic/contentLayout.template.xml"
 >
 	<arguments orientation="VERTICAL">
@@ -11,7 +11,7 @@
 				<layoutInfo/>
 			</layout-reference>
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tabelle/tableSelectionSelector.layout.xml">
-				<layoutInfo/>
+				<layoutInfo size="80px"/>
 			</layout-reference>
 		</components>
 	</arguments>

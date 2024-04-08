@@ -8,15 +8,22 @@
 	<arguments
 		defaultColumns="name"
 		defaultSelection="false"
-		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
 		multiSelection="true"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.14a04e58-efd2-4dd5-b208-d6f8077dcffb">
 			<de>Kinder</de>
 		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/versionSelector.layout.xml#Selector"/>
+			</channel>
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"/>
+			</channel>
+		</model>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="model -> $model.get(`tl.element:StructuredElementContainer#children`)"
+			elements="x -> $x[1].inRevision($x[0]).get(`tl.element:StructuredElementContainer#children`)"
 			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 		/>
 		<buttons>

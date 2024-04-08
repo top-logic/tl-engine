@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		height="100px"
+		helpID="ID_d919084a_9802_4a80_8f89_a0eb5f2e111a"
+		width="300px"
+	>
+		<title>
+			<title key="dynamic.d66428ac-729e-401e-ae98-2b5a7323e07f">
+				<en>Select version</en>
+				<de>Version auswählen</de>
+			</title>
+		</title>
+		<open-handler id="ID_d4540dc6_ccbd_4c0e_8831_25a8d6b17e4c"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-code-branch"
+			target="model(self())"
+		>
+			<resourceKey key="dynamic.d66428ac-729e-401e-ae98-2b5a7323e07f">
+				<en>Select version</en>
+				<de>Version auswählen</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/baumgrid/selectVersion/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

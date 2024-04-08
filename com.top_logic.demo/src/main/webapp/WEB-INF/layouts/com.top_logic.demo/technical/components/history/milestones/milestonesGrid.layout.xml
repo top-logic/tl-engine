@@ -2,17 +2,17 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
 		defaultColumns="name,dependsOn,openDependencies,date,status,completed"
-		detailComponent=""
-		isSecurityMaster="false"
 		model="selection(com.top_logic.demo/technical/components/history/projekteTable.layout.xml#Table)"
-		multiSelection="false"
-		showDetailOpener="false"
 		type="test.history:Milestone"
 	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/milestones/selectReportStatus/dialog.layout.xml"/>
+		</dialogs>
 		<name key="dynamic.115df59b-d2d0-4c9e-b826-797fceb3e61d">
 			<en>Milestones</en>
 			<de>Meilensteine</de>
@@ -29,39 +29,52 @@
 			/>
 			<button id="ID_f4890b73_f465_4280_937a_e52bfcf5d5aa"
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
-				clique="create"
-				confirm="false"
 				createContext="model->$model"
 				disabledImage=""
-				group="Create"
 				image=""
 				initOperation="project -> milestone -> $project.add(`test.history:Project#milestones`, $milestone)"
 				typeChooser="false"
 			>
-				<checkScopeProvider/>
 				<resourceKey key="dynamic.c3a8e5d5-3ee6-4c40-aa45-e2c45f379677">
 					<en>New milestone</en>
 					<de>Neuer Meilenstein</de>
 				</resourceKey>
-				<type-options class="com.top_logic.element.layout.create.ConstantCreateTypeOptions"
+				<executability>
+					<rule-by-expression decision="project -> $project.revision() == currentRevision()"/>
+				</executability>
+				<checkScopeProvider/>
+				<type-options
 					include-subtypes="false"
 					type="test.history:Milestone"
 				/>
 			</button>
 			<button id="ID_3c9d531b_ab63_4c7f_a900_10e04494ae66"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
-				clique="refresh"
-				concurrent="false"
-				confirm="false"
 				disabledImage=""
-				group="System"
 				image=""
-				read-only="false"
 			>
 				<resourceKey key="dynamic.511dcaf0-9b0e-4cdd-9401-0cc36f69263e">
 					<en>Refresh</en>
 					<de>Aktualisieren</de>
 				</resourceKey>
+			</button>
+			<button id="ID_bca688c0_f861_4ab5_a58b_23f94b2c662f"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				group="System"
+				image="css:fas fa-step-forward"
+				operation="model -> $model.inCurrent()"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.fb39f64d-53da-4b85-83b0-10aef76fedbf">
+					<en>Show current version</en>
+					<de>Aktuelle Version anzeigen</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="model -> $model.revision() != currentRevision()"/>
+				</executability>
+				<postCreateActions>
+					<setModel target="model(self())"/>
+				</postCreateActions>
 			</button>
 		</buttons>
 	</arguments>

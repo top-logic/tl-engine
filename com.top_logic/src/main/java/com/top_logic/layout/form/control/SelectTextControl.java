@@ -147,7 +147,7 @@ public class SelectTextControl extends AbstractSelectControl {
 					_selectionRenderer.write(context, out, selectionList);
 				} else {
 					try {
-						SelectFieldUtils.writeSelectionImmutable(context, out, field, CSS_CLASS_OPTION);
+						SelectFieldUtils.writeSelectionImmutable(context, out, field);
 					} catch (Throwable throwable) {
 						try {
 							produceErrorOutput(context, out, throwable);

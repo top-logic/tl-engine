@@ -270,13 +270,13 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 
 	@Override
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
-		SelectField field = (SelectField) getModel();
+		FormField field = (FormField) getModel();
 
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			SelectFieldUtils.writeSelectionImmutable(context, out, field, CSS_CLASS_OPTION);
+			SelectFieldUtils.writeSelectionImmutable(context, out, field);
 		}
 		out.endTag(DIV);
 	}

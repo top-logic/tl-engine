@@ -115,9 +115,12 @@ public class OpenCalendarControl extends AbstractFormFieldControl {
 		 */
 		private void openCalendarDialog(DisplayContext commandContext, OpenCalendarControl dateControl) {
 			// Create dialog model
+			int popupHeight = com.top_logic.layout.form.control.Icons.CALENDAR_POPUP_HEIGHT.get();
+			int popupWidth = com.top_logic.layout.form.control.Icons.CALENDAR_POPUP_WIDTH.get();
+
 			PopupDialogModel dialogModel = new DefaultPopupDialogModel(
 				null,
-				new DefaultLayoutData(dim(240, DisplayUnit.PIXEL), 100, dim(160, DisplayUnit.PIXEL), 100,
+				new DefaultLayoutData(dim(popupWidth, DisplayUnit.PIXEL), 100, dim(popupHeight, DisplayUnit.PIXEL), 100,
 					Scrolling.AUTO),
 				1);
 

@@ -1579,10 +1579,6 @@ div.dirtyHandlingDialog .changes {
 	overflow-x: auto;
 }
 
-th.cal_th {
-	border-style: none;
-}
-
 tr.tl-table__row:last-child > td, .tl-table__header tr {
 	border-bottom: var(--TR_TBLTR_LASTROW_BORDERBOTTOM);	
 }

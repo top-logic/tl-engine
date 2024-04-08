@@ -98,6 +98,13 @@
 			</instance>
 		</config>
 		
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-model-wysiwyg" />
+				</modules>
+			</instance>
+		</config>
 	</services>
 	
 	<configs>

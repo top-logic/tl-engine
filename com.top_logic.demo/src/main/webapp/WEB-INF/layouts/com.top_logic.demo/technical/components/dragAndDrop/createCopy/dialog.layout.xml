@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/transaction.template.xml"
+>
+	<arguments formType="test.dnd:NamedPlanElement">
+		<title>
+			<title key="dynamic.c4e54b20-5f65-4e4d-9d6a-1025eea12400">
+				<en>Create copy</en>
+				<de>Kopie erstellen</de>
+			</title>
+		</title>
+		<open-handler id="ID_0c8e3477_8652_4209_a1bb_ad23ec68931f"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique="internal"
+			group="Write"
+			image="css:far fa-copy"
+			target="model(com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Dialog)"
+			targetComponent="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+		>
+			<resourceKey key="dynamic.c4e54b20-5f65-4e4d-9d6a-1025eea12400">
+				<en>Create copy</en>
+				<de>Kopie erstellen</de>
+			</resourceKey>
+		</open-handler>
+		<initialization><![CDATA[formObject -> contextModel -> {
+  draggedObject = $contextModel[0][0];
+  newName = $draggedObject.get(`test.dnd:NamedPlanElement#name`) + '_Kopie';
+  $formObject.set(`test.dnd:NamedPlanElement#name`, $newName);
+}]]></initialization>
+		<transactionHandler id="perform"
+			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+			clique="apply"
+			closeDialog="true"
+			confirm="false"
+			confirmMessage=""
+			group="Write"
+			image="theme:ICONS_BUTTON_OK"
+		>
+			<resourceKey key="dynamic.c4e54b20-5f65-4e4d-9d6a-1025eea12400">
+				<en>Create copy</en>
+				<de>Kopie erstellen</de>
+			</resourceKey>
+			<postCreateActions/>
+			<operation><![CDATA[formObject -> contextModel -> {
+  draggedObjects = $contextModel[0];
+  parent = $contextModel[1];
+  reference = $contextModel[2];
+
+  handleDrop = source -> parent -> reference -> {
+    ref = switch($parent.type()) {
+	  `test.dnd:Root`: `test.dnd:Root#factories`;
+	  `test.dnd:Factory`: `test.dnd:Factory#floors`;
+	  `test.dnd:Floor`: `test.dnd:Floor#locations`;
+	  `test.dnd:Location`: `test.dnd:Location#entry`;
+	};
+	
+	root = $source.recursion(x -> $x.container()).lastElement();
+					    
+	switch ($root.type()) {
+	  `test.dnd:Library`: {
+	    copy = $source.copy();
+	    newName = $formObject.get(`test.dnd:NamedPlanElement#name`);
+	    $copy.set(`test.dnd:NamedPlanElement#name`, $newName);
+	    if ($parent.type() == `test.dnd:Location`, $parent.set($ref, $copy), {
+		  // Create from template
+		  children = $parent.get($ref);
+		  referenceIndex = $reference == null ? $children.size() : $children.elementIndex($reference);
+		  $parent.add($ref, $referenceIndex, $copy);
+		  $copy;
+	    });
+	  };
+	  `test.dnd:Root`: {
+	    if($parent.type() == `test.dnd:Location`, $parent.set($ref, $source), {
+	      // Move in plan
+		  if ($source != $reference, {
+		    // Never try to insert an element before itself, because it is first 
+			// removed and then re-inserted. When inserting an element before itself, 
+			// Re-insertion fails, because the reference was removed in first operation. 
+			oldParent = $source.referers($ref);
+			oldChildren = $oldParent.get($ref);
+			$oldParent.set($ref, $oldChildren.filter(x -> $x != $source));
+					        
+			children = $parent.get($ref);
+			referenceIndex = $reference == null ? $children.size() : $children.elementIndex($reference);
+			$parent.add($ref, $referenceIndex, $source);
+			$source;
+		  })
+		});
+	  };
+	}
+  };
+	
+  $draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject, $parent, $reference));
+}]]></operation>
+		</transactionHandler>
+	</arguments>
+</config:template-call>

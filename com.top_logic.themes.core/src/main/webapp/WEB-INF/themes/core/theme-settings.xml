@@ -1236,7 +1236,7 @@
 		expr="%ICONS_MOVE_ROW_RIGHT%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_UP"
-		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
+		value="css:bi bi-caret-up-fill"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FAST_BACKWARD"
 		expr="%ICONS_BUTTON_BACKWARD%"
@@ -1330,6 +1330,12 @@
 	/>
 	<size name="com.top_logic.layout.basic.Icons.DIRTY_DIALOG_HEIGHT"
 		value="350px"
+	/>
+	<int name="com.top_logic.layout.form.control.Icons.CALENDAR_POPUP_HEIGHT"
+		value="264"
+	/>
+	<int name="com.top_logic.layout.form.control.Icons.CALENDAR_POPUP_WIDTH"
+		value="264"
 	/>
 	<!-- Form spacings -->
 	<dim name="RF_FIRST_COLUMN_WIDTH"

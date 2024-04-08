@@ -951,8 +951,8 @@ table td span.cDecoratedCell .lFixedLeft {
 	align-items: center;
 }
 
-table td span.cDecoratedCell .lFlexible {
-	padding: 0 var(--spacing-02);
+table td span.cDecoratedCell {
+	gap: var(--spacing-02);
 }
 
 .cDecoratedCell .treeType {
@@ -1320,6 +1320,7 @@ div.dirtyHandlingDialog .changes {
     align-items: center;
     width: 100%;
     box-sizing: border-box;
+    vertical-align: middle;
 }
 
 .px-1 .tl-radio-checkbox-container {
@@ -1445,6 +1446,14 @@ div.dirtyHandlingDialog .changes {
 	justify-content: space-between;
 	align-items: stretch;
 	min-height: var(--table-height);
+}
+
+.tl-table__cell-checkbox {
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .tblSelected .tl-table__cell {

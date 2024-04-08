@@ -2131,19 +2131,22 @@ h5.card-title a:focus {
     align-self: flex-start;
     background: var(--layer);
     width: 100%;
+    padding: var(--spacing-02) 0;
 }
 
 .BreadCrumbOuter .Left {
-	flex-grow: 2;
-	padding: var(--spacing-02);
+    flex-grow: 2;
+    align-self: center;
+    padding: 0 var(--spacing-02);
 }
 
 .breadCrumbRight {
     flex-grow: 1;
     display: inline-flex;
     flex-direction: row-reverse;
+    align-items: center;
     gap: var(--spacing-02);
-    padding: 0.5rem;
+    padding: 0 var(--spacing-03);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
@@ -2206,9 +2209,6 @@ h5.card-title a:focus {
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus {
     color: var(--link-primary-hover);
-	/*
-	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
-	*/
 	outline-offset: -1px;
 }
 
@@ -2465,6 +2465,7 @@ div.treeNode.treeSelected.dndInsertInto {
 	overflow: hidden;
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
+	border-bottom: 2px solid var(--border-subtle);
 }
 
 .cCollapsibleToolbar {
@@ -2513,6 +2514,7 @@ div.treeNode.treeSelected.dndInsertInto {
 	flex-direction: column-reverse;
 	justify-content: start;
 	align-items: unset;
+	border-bottom: none;
 }
 
 .cCollapsibleHorizontal .cCollapsibleTitle {

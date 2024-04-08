@@ -2,6 +2,10 @@
 
 <template>
 	<params>
+		<!-- Pass 'null' as 'securityProviderClass if every user should be able to see this layout. -->
+		<param name="securityProviderClass"
+			value="securityRoot"
+		/>
 		<param name="defaultSortOrder"
 			value="severity:descending, time:descending"
 		/>
@@ -31,7 +35,7 @@
 	<tableView name="logLinesTable"
 		resPrefix="layouts.admin.technical.logs.logging.logLinesTable."
 		resetInvisible="true"
-		securityProviderClass="securityRoot"
+		securityProviderClass="${securityProviderClass}"
 	>
 		<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"/>
 		<tabInfo label="admin.logs.entries"/>

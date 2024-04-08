@@ -143,6 +143,10 @@ TOKEN:
 | < MUL:"*" >
 | < DIV:"/" >
 | < MOD: "%" >
+| < DOT: "." >
+| < COMMA: "," >
+| < OPEN_BRACE: "[" >
+| < CLOSE_BRACE: "]" >
 | < OPEN: "(" >
 | < CLOSE: ")" >
 | < STRING : "'" (~[ "'", "\\" ])* "'" >
@@ -382,10 +386,25 @@ TemplateExpression negatedExpr() :
   TemplateExpression expr;
 }
 {
-  ( <NOT> expr=atomicExpression() { expr = _f.not(expr); }
+  ( <NOT> expr=accessExpression() { expr = _f.not(expr); }
   | <MINUS> expr=atomicExpression() { expr = _f.neg(expr); }
-  | expr=atomicExpression()
+  | expr=accessExpression()
   )
+  { return expr; }
+}
+
+TemplateExpression accessExpression() :
+{
+  TemplateExpression expr;
+  TemplateExpression index;
+  Token t;
+}
+{
+  expr=atomicExpression()
+  (
+    < DOT > t = < VARIABLE_NAME > { expr = _f.access(t, expr, t.image); }
+  | t = < OPEN_BRACE > index = templateExpression() <CLOSE_BRACE > { expr = _f.access(t, expr, index); }
+  )*
   { return expr; }
 }
 
@@ -411,7 +430,7 @@ TemplateExpression atomicExpression() :
 
 RawTemplateFragment startTag() :
 {
-  Token t, v;
+  Token t, v, iter = null;
   TagAttributeTemplate attribute;
   StartTagTemplate result;
   TemplateExpression expression;
@@ -427,8 +446,8 @@ RawTemplateFragment startTag() :
     }
   | <IF_ATTR> <SPECIAL_ATTR_EQ> <SPECIAL_ATTR_VALUE> expression=templateExpression() <SPECIAL_VALUE_END>
     { result = _f.conditionalTag(result, expression); token_source.SwitchTo(TAG); }
-  | <FOREACH_ATTR> <SPECIAL_ATTR_EQ> <SPECIAL_ATTR_VALUE> t=<VARIABLE_NAME> <EXPRESSION_ELSE> expression=templateExpression() <SPECIAL_VALUE_END>
-    { result = _f.foreachTag(result, t.image, expression); token_source.SwitchTo(TAG); }
+  | <FOREACH_ATTR> <SPECIAL_ATTR_EQ> <SPECIAL_ATTR_VALUE> t=<VARIABLE_NAME> ( <COMMA> iter=<VARIABLE_NAME>)? <EXPRESSION_ELSE> expression=templateExpression() <SPECIAL_VALUE_END>
+    { result = _f.foreachTag(result, t.image, iter == null ? null : iter.image, expression); token_source.SwitchTo(TAG); }
   )*
   ( < END_EMPTY_TAG >
     { result.setEmpty(true); }
@@ -476,11 +495,11 @@ RawTemplateFragment startTag() :
   { return _f.withTag(v.image, expression, content); }
 | <FOREACH_TAG>
   <ELEMENTS_ATTR> <SPECIAL_EQ>
-  <SPECIAL_VALUE_START> v=<VARIABLE_NAME> <EXPRESSION_ELSE> expression=templateExpression() <SPECIAL_VALUE_END> { token_source.SwitchTo(SPECIAL); }
+  <SPECIAL_VALUE_START> v=<VARIABLE_NAME> ( <COMMA> iter=<VARIABLE_NAME>)? <EXPRESSION_ELSE> expression=templateExpression() <SPECIAL_VALUE_END> { token_source.SwitchTo(SPECIAL); }
   <SPECIAL_CLOSE>
   content=html()
   < FOREACH_END >
-  { return _f.foreachTag(v.image, expression, content); }
+  { return _f.foreachTag(v.image, iter == null ? null : iter.image, expression, content); }
 | < TEXT_TAG >
   t=< TEXT_CONTENT >
   < TEXT_END >

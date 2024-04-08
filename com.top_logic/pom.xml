@@ -111,6 +111,29 @@
 
 	<build>
 		<plugins>
+		
+			<!-- Call explicitly with: mvn javacc:javacc@generate-javacc -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>javacc-maven-plugin</artifactId>
+				<version>3.0.1</version>
+				
+				<executions>
+					<execution>
+						<id>generate-javacc</id>
+						<goals>
+							<goal>javacc</goal>
+						</goals>
+						<phase>none</phase>
+					</execution>
+				</executions>
+				
+				<configuration>
+					<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+					<outputDirectory>${basedir}/src/main/java</outputDirectory>
+				</configuration>
+			</plugin>
+		
 			<!-- SpotBugs -->
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
@@ -120,5 +143,41 @@
 				</configuration>
 			</plugin>
 		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.codehaus.mojo
+										</groupId>
+										<artifactId>
+											javacc-maven-plugin
+										</artifactId>
+										<versionRange>
+											[3.0.1,)
+										</versionRange>
+										<goals>
+											<goal>javacc</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>

@@ -35,4 +35,12 @@ public class MapWithProperties extends HashMap<String, Object> implements WithPr
 		throw new IllegalArgumentException(
 			"No such property '" + propertyName + "', available properties are " + getAvailableProperties() + ".");
 	}
+
+	/**
+	 * Defines a property and returns the object itself.
+	 */
+	public final MapWithProperties define(String key, Object value) {
+		put(key, value);
+		return this;
+	}
 }

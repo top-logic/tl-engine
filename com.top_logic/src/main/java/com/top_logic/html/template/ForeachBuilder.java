@@ -12,19 +12,22 @@ public class ForeachBuilder implements TemplateEnhancer {
 
 	private final String _var;
 
+	private final String _iteration;
+
 	private final TemplateExpression _expression;
 
 	/**
 	 * Creates a {@link ForeachBuilder}.
 	 */
-	public ForeachBuilder(String var, TemplateExpression expression) {
+	public ForeachBuilder(String var, String iteration, TemplateExpression expression) {
 		_var = var;
+		_iteration = iteration;
 		_expression = expression;
 	}
 
 	@Override
 	public HTMLTemplateFragment build(HTMLTemplateFragment inner) {
-		return new ForeachTemplate(_var, _expression, inner);
+		return new ForeachTemplate(_var, _iteration, _expression, inner);
 	}
 
 }

@@ -10,7 +10,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
-import junit.framework.TestCase;
+import junit.framework.Test;
+
+import test.com.top_logic.layout.AbstractLayoutTest;
 
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.config.ConfigurationException;
@@ -31,7 +33,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @SuppressWarnings("javadoc")
-public class TestHTMLTemplates extends TestCase {
+public class TestHTMLTemplates extends AbstractLayoutTest {
 
 	public void testTemplateExpressions() throws IOException, ConfigurationException {
 		MapWithProperties properties = new MapWithProperties();
@@ -171,10 +173,18 @@ public class TestHTMLTemplates extends TestCase {
 
 	public void testForeachTag() throws IOException, ConfigurationException {
 		String template =
-			"<a><tl:foreach elements=\"x : values\"><b>{x}</b></tl:foreach></a>";
+			"<a><tl:foreach elements=\"x, iter : values\"><b class=\"{iter.even ? 'even' : 'odd'}\">{iter.index}: {x}</b></tl:foreach></a>";
 		assertEquals(
-			"<a><b>1</b><b>2</b><b>3</b></a>",
+			"<a><b class=\"odd\">0: 1</b><b class=\"even\">1: 2</b><b class=\"odd\">2: 3</b></a>",
 			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
+	}
+
+	public void testForeachIterationTag() throws IOException, ConfigurationException {
+		String template =
+			"<a><tl:foreach elements=\"x, iter : values\">{iter.index}: {iter.current}<tl:if test=\"!iter.last\">, </tl:if></tl:foreach></a>";
+		assertEquals(
+			"<a>0: a, 1: b, 2: c</a>",
+			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList("a", "b", "c")))));
 	}
 
 	public void testForeachAttribute() throws IOException, ConfigurationException {
@@ -187,10 +197,10 @@ public class TestHTMLTemplates extends TestCase {
 
 	public void testTagLoop() throws IOException, ConfigurationException {
 		String template =
-			"<a><b tl:foreach=\"x : values\">{x}</b></a>";
+			"<a><b tl:foreach=\"x, iter : values\">{iter.count}: {iter.current}<tl:if test=\"!iter.last\">, </tl:if></b></a>";
 		assertEquals(
-			"<a><b>1</b><b>2</b><b>3</b></a>",
-			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
+			"<a><b>1: a, </b><b>2: b, </b><b>3: c</b></a>",
+			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList("a", "b", "c")))));
 	}
 
 	public void testWithTag() throws IOException, ConfigurationException {
@@ -413,6 +423,50 @@ public class TestHTMLTemplates extends TestCase {
 		assertTrue(template.getVariables().contains("hasWarning"));
 	}
 
+	public void testPropertyAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>Maier</b>",
+			html("<b>{user.name}</b>",
+				new MapWithProperties().define("user", new MapWithProperties().define("name", "Maier"))));
+		assertEquals("<b>Schulze</b>",
+			html("<b>{user.senior.name}</b>",
+				new MapWithProperties().define("user",
+					new MapWithProperties()
+						.define("name", "Maier")
+						.define("senior",
+							new MapWithProperties().define("name", "Schulze")))));
+	}
+
+	public void testMapAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>Maier</b>",
+			html("<b>{user['name']}</b>",
+				new MapWithProperties().define("user", new MapWithProperties().define("name", "Maier"))));
+		assertEquals("<b>Schulze</b>",
+			html("<b>{user['senior']['name']}</b>",
+				new MapWithProperties().define("user",
+					new MapWithProperties()
+						.define("name", "Maier")
+						.define("senior",
+							new MapWithProperties().define("name", "Schulze")))));
+	}
+
+	public void testListAccess() throws ConfigurationException, IOException {
+		assertEquals("<b>third</b>",
+			html("<b>{value[2]}</b>",
+				new MapWithProperties().define("value", Arrays.asList("first", "second", "third"))));
+	}
+
+	public void testInvalidAccess() throws ConfigurationException, IOException {
+		assertContains("Value 'entry' has no properties to access",
+			html("<b>{value.foo}</b>",
+				new MapWithProperties().define("value", "entry")));
+		assertContains("The value 'foo' is not of the expected type",
+			html("<b>{value['foo']}</b>",
+				new MapWithProperties().define("value", Collections.emptyList())));
+		assertContains("The value '3' is not of the expected type",
+			html("<b>{value[3]}</b>",
+				new MapWithProperties().define("value", new MapWithProperties())));
+	}
+
 	private String html(String template, WithProperties properties) throws IOException, ConfigurationException {
 		HTMLTemplate parsedTemplate = parse(template);
 		Set<String> accessedVariables = parsedTemplate.getVariables();
@@ -452,8 +506,8 @@ public class TestHTMLTemplates extends TestCase {
 		return writer.toString();
 	}
 
-	private DisplayContext displayContext() {
-		return null;
+	public static Test suite() {
+		return suite(TestHTMLTemplates.class);
 	}
 
 }

@@ -51,7 +51,7 @@ public class ForeachTemplate extends ScopeTemplate implements RawTemplateFragmen
 	 * <dd>The current iteration index, starting with 0.</dd>
 	 * 
 	 * <dt>count</dt>
-	 * <dd>The current iteration index, starting with 1.</dd>
+	 * <dd>The number of the current iteration, starting with 1.</dd>
 	 * 
 	 * <dt>size</dt>
 	 * <dd>The total amount of elements in the iterated variable.</dd>
@@ -60,7 +60,8 @@ public class ForeachTemplate extends ScopeTemplate implements RawTemplateFragmen
 	 * <dd>The current iteration value.</dd>
 	 * 
 	 * <dt>even/odd</dt>
-	 * <dd>Whether the current iteration is even or odd.</dd>
+	 * <dd>Whether the current iteration count is even or odd. The first iteration is odd, the
+	 * second is even, and so on.</dd>
 	 * 
 	 * <dt>first</dt>
 	 * <dd>Whether the current iteration is the first one.</dd>
@@ -169,7 +170,7 @@ public class ForeachTemplate extends ScopeTemplate implements RawTemplateFragmen
 		 */
 		@TemplateVariable("even")
 		public boolean isEven() {
-			return _index % 2 == 0;
+			return getCount() % 2 == 0;
 		}
 
 		/**
@@ -177,7 +178,7 @@ public class ForeachTemplate extends ScopeTemplate implements RawTemplateFragmen
 		 */
 		@TemplateVariable("odd")
 		public boolean isOdd() {
-			return _index % 2 == 1;
+			return getCount() % 2 == 1;
 		}
 
 		/**

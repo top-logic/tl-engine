@@ -43,7 +43,9 @@
 				<en>Create copy</en>
 				<de>Kopie erstellen</de>
 			</resourceKey>
-			<postCreateActions/>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/dragAndDrop/factoryLayoutTree.layout.xml#Tree)"/>
+			</postCreateActions>
 			<operation><![CDATA[formObject -> contextModel -> {
   draggedObjects = $contextModel[0];
   parent = $contextModel[1];

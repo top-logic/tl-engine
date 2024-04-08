@@ -298,15 +298,6 @@ public class SelectTextControl extends AbstractSelectControl {
 		return (SelectField) super.getModel();
 	}
 
-	private void writeOnClick(TagWriter out, String optionID) throws IOException {
-		out.beginAttribute(ONCLICK_ATTR);
-		out.append("return ");
-		JSObject arguments = new JSObject(ClearSelection.OPTION_KEY, new JSString(optionID));
-		getClearSelectionCommand().writeInvokeExpression(out, this, arguments);
-		out.append(';');
-		out.endAttribute();
-	}
-
 	private String getOptionID(Object option) {
 		return getSelectField().getOptionID(option);
 	}

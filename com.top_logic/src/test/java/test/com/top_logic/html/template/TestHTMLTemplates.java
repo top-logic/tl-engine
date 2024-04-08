@@ -173,9 +173,9 @@ public class TestHTMLTemplates extends AbstractLayoutTest {
 
 	public void testForeachTag() throws IOException, ConfigurationException {
 		String template =
-			"<a><tl:foreach elements=\"x, iter : values\"><b>{iter.index}: {x}</b></tl:foreach></a>";
+			"<a><tl:foreach elements=\"x, iter : values\"><b class=\"{iter.even ? 'even' : 'odd'}\">{iter.index}: {x}</b></tl:foreach></a>";
 		assertEquals(
-			"<a><b>0: 1</b><b>1: 2</b><b>2: 3</b></a>",
+			"<a><b class=\"odd\">0: 1</b><b class=\"even\">1: 2</b><b class=\"odd\">2: 3</b></a>",
 			html(template, WithProperties.fromMap(Collections.singletonMap("values", Arrays.asList(1, 2, 3)))));
 	}
 

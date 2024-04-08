@@ -96,7 +96,9 @@
 			</annotations>
 			<classifier name="Brandenburg">
 				<annotations>
+					<!-- Some states should be displayed without their flag to test whether the spacing is correct without icons, too.
 					<instance-presentation icon="/images/federalstates/Brandenburg.svg"/>
+					-->
 				</annotations>
 			</classifier>
 			<classifier name="Bremen">
@@ -111,7 +113,9 @@
 			</classifier>
 			<classifier name="Hesse">
 				<annotations>
+					<!--
 					<instance-presentation icon="/images/federalstates/Hesse.svg"/>
+					-->
 				</annotations>
 			</classifier>
 			<classifier name="Hamburg">
@@ -126,7 +130,9 @@
 			</classifier>
 			<classifier name="Thuringia">
 				<annotations>
+					<!--
 					<instance-presentation icon="/images/federalstates/Thuringia.svg"/>
+					-->
 				</annotations>
 			</classifier>
 			<classifier name="Lower_Saxony">
@@ -141,7 +147,9 @@
 			</classifier>
 			<classifier name="Saxony">
 				<annotations>
+					<!--
 					<instance-presentation icon="/images/federalstates/Saxony.svg"/>
+					-->
 				</annotations>
 			</classifier>
 			<classifier name="Rhineland-Palatinate">
@@ -171,7 +179,9 @@
 			</classifier>
 			<classifier name="Bavaria">
 				<annotations>
+					<!--
 					<instance-presentation icon="/images/federalstates/Bavaria.svg"/>
+					-->
 				</annotations>
 			</classifier>
 		</enum>

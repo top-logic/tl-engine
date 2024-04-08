@@ -1851,8 +1851,14 @@ img.type-image {
 .cChoice-vertical {
 	display: inline-flex;
 	flex-direction: column;
-	column-gap: var(--spacing-03);
-	row-gap: var(--spacing-02);
+}
+
+.cChoice-vertical.cannot-edit {
+	flex-direction: row;
+}
+
+.cChoice-vertical.cannot-edit span {
+	margin-right: 0.5em;
 }
 
 .cChoice-horizontal .cChoice-option label {
@@ -7763,9 +7769,15 @@ div.dirtyHandlingDialog .changes {
 	The prefix stands for "DropDown With ToolTip". */
 .ddwttContainer {
 	position: relative;
-	text-align: center;
 	cursor: default;
 	margin: 0 !important;
+}
+
+
+.ddwttContainer.active {
+	display: inline-flex;
+	flex-wrap: wrap;
+	row-gap: 0.5em;
 }
 
 .dfContent .ddwttContainer::before, .dfContent .ddwttContainer::after {
@@ -7896,7 +7908,7 @@ div.dirtyHandlingDialog .changes {
 }
 
 .ddwttImmutableItem {
-	display: inline;
+	display: inline-flex;
 	text-align: left;
 }
 
@@ -7919,13 +7931,14 @@ img.ddwttItemIcon {
 }
 
 /* Tags */
-.ddwttTagLoc, .ddwttTag {
-	display: inline-flex;
-	width: fit-content;
-	text-align: left;
+.ddwttTagLoc {
+	display: contents;
 }
 
 .ddwttTag {
+	display: inline-flex;
+	width: fit-content;
+	text-align: left;
 	margin-right: 8px;
 	border: 1px solid var(--border-subtle);
 	border-radius: 4px;

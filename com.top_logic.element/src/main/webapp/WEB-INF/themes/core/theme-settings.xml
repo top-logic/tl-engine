@@ -110,13 +110,13 @@
 		expr="%com.top_logic.element.comment.layout.Icons.EDIT%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
-		value="css:bi bi-save2-fill"
+		value="css:bi bi-floppy2-fill"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
 		expr="%com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_MODIFIED"
-		value="css:bi bi-save-fill"
+		expr="%com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON%"
 	/>
 	<icon name="com.top_logic.element.layout.meta.search.quick.Icons.SEARCH"
 		expr="%ICONS_BUTTON_SEARCH%"

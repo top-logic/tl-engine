@@ -936,7 +936,7 @@
 		expr="%IMAGE_BUTTONS_I18N_RELOAD22%"
 	/>
 	<icon name="SAVE_SERVICE_CONFIGURATION"
-		value="css:bi bi-save-fill"
+		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="RESET_SERVICE_CONFIGURATION"
 		expr="%ICON_UNDO%"
@@ -1074,7 +1074,7 @@
 		expr="%ICONS_BUTTON_CONTINUE%"
 	/>
 	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_OK_IMAGE"
-		expr="%ICONS_BUTTON_SAVE%"
+		expr="%ICONS_BUTTON_OK%"
 	/>
 	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_OK_IMAGE_DISABLED"
 		expr="%com.top_logic.layout.messagebox.Icons.BUTTON_OK_IMAGE%"

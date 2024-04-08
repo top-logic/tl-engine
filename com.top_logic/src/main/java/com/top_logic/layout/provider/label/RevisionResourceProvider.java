@@ -18,7 +18,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class RevisionLabelProvider extends AbstractResourceProvider {
+public class RevisionResourceProvider extends AbstractResourceProvider {
 
 	@Override
 	public String getLabel(Object object) {

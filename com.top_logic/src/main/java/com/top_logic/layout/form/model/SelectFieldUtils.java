@@ -577,36 +577,36 @@ public class SelectFieldUtils {
 	}
 
 	/**
-	 * Writes the value of the {@link FormField} in immutable mode, i.e. without a HTML field it.
+	 * Writes the value of the {@link FormField} in immutable mode, i.e. without a HTML field.
 	 * <p>
-	 * The field is is not always a {@link SelectField} but might also be a {@link BooleanField} for
+	 * The field is not always a {@link SelectField} but might also be a {@link BooleanField} for
 	 * example.
 	 * </p>
 	 */
 	public static void writeSelectionImmutable(DisplayContext context, TagWriter out, FormField field)
 			throws IOException {
-		writeSelectionImmutable(context, out, field, null);
+		writeSelectionImmutable(context, out, field, null, null);
 	}
 
 	/**
-	 * Writes the value of the {@link FormField} in immutable mode, i.e. without a HTML field it.
+	 * Writes the value of the {@link FormField} in immutable mode, i.e. without a HTML field.
 	 * <p>
-	 * The field is is not always a {@link SelectField} but might also be a {@link BooleanField} for
+	 * The field is not always a {@link SelectField} but might also be a {@link BooleanField} for
 	 * example.
 	 * </p>
 	 */
 	public static void writeSelectionImmutable(DisplayContext context, TagWriter out, FormField field,
-			String entriesCssClass) throws IOException {
+			Renderer<Object> optionRenderer, String entriesCssClass) throws IOException {
+		Renderer<Object> nonNullRenderer = optionRenderer != null ? optionRenderer : getOptionRenderer(field);
+		String separator = SelectFieldUtils.getCollectionSeparator(field);
 		for (Object value : getSelectionList(field)) {
-			/* Don't use the renderer for the list as a whole: It would write a separator between
-			 * the entries. But that is not correct when the entries are placed below each other by
-			 * the CSS. It has to be defined in the CSS whether a separator is used. */
 			out.beginBeginTag(SPAN);
 			if (!StringServices.isEmpty(entriesCssClass)) {
 				out.writeAttribute(CLASS_ATTR, entriesCssClass);
 			}
 			out.endBeginTag();
-			getOptionRenderer(field).write(context, out, value);
+			nonNullRenderer.write(context, out, value);
+			out.writeText(separator);
 			out.endTag(SPAN);
 		}
 	}

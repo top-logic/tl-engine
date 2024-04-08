@@ -13,9 +13,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.tree.dnd.BusinessObjectTreeDrop;
@@ -48,6 +48,8 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 
 	private final List<PostCreateAction> _postCreateActions;
 
+	private final boolean _inTransaction;
+
 	LayoutComponent _contextComponent;
 
 	/**
@@ -65,6 +67,7 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 		_handleDrop = QueryExecutor.compile(kb, model, config.getHandleDrop());
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
+		_inTransaction = config.getInTransaction();
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -85,9 +88,11 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 	 */
 	public void handleDrop(Collection<?> droppedObjects, Args dropArguments) {
 		Object createdObject;
-		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+
+		if (_inTransaction) {
+			createdObject = KBUtils.inTransaction(() -> _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments)));
+		} else {
 			createdObject = _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments));
-			transaction.commit();
 		}
 
 		/* Ensure that components have received the model created event, before the new object is

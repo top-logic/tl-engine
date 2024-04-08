@@ -28,10 +28,10 @@
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="showDetailOpener"/>
 					<property name="isSecurityMaster"/>
-					
+
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
-					
+
 					<property name="securityObject"/>
 
 					<property name="editExecutability"/>

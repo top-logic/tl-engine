@@ -23,10 +23,10 @@
 					<property name="multiSelection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="isSecurityMaster"/>
-					
+
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
-					
+
 					<property name="securityObject"/>
 
 					<property name="dragSource"/>

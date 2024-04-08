@@ -22,10 +22,10 @@
 					<property name="alphabeticalOrder"/>
 					<property name="defaultSelection"/>
 					<property name="isSecurityMaster"/>
-					
+
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
-					
+
 					<property name="defaultSelectionProvider"/>
 
 					<property name="securityObject"/>

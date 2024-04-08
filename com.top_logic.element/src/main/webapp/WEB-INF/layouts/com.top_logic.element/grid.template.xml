@@ -22,7 +22,7 @@
 					<property name="defaultSelection"/>
 					<property name="showDetailOpener"/>
 					<property name="isSecurityMaster"/>
-					
+
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 

@@ -376,7 +376,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 					DynamicModelService.class);
 
 				MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
-				ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), getFactory(), patch,
+				ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), null, patch,
 					processors.getProcessors());
 				new ConstraintChecker().check(log(), processors);
 

@@ -371,8 +371,18 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 			List<DiffElement> patch = patchCreator.getPatch();
 			if (!patch.isEmpty()) {
 				Logger.info(
-					"Restoring missing model baseline, not adjusting existing model to configuration, patch follows:\n"
+					"Restoring missing model baseline, diff to existing model follows:\n"
 						+ patch.stream().map(Object::toString).collect(Collectors.joining("\n")),
+					DynamicModelService.class);
+
+				MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+				ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), getFactory(), patch,
+					processors.getProcessors());
+				new ConstraintChecker().check(log(), processors);
+
+				Logger.info(
+					"The following migration would adjust the existing model to the current configuration:\n"
+						+ processors,
 					DynamicModelService.class);
 			}
 		}

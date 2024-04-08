@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.component.Selectable$SelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.component.Selectable$SelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster">
 		<annotations>
 			<display-order>
 				<value>
@@ -22,6 +22,10 @@
 					<property name="defaultSelection"/>
 					<property name="showDetailOpener"/>
 					<property name="isSecurityMaster"/>
+
+					<property name="showMaximize"/>
+					<property name="showMinimize"/>
+
 					<property name="securityObject"/>
 
 					<property name="editExecutability"/>
@@ -143,6 +147,8 @@
 		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
 		showDetailOpener="${showDetailOpener}"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
 		titleKey="${name}"
 	>
 		<modifier class="com.top_logic.element.layout.meta.TemplateFormContextModificator"

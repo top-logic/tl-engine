@@ -8,6 +8,8 @@
 	<arguments
 		multiple="true"
 		presentation="pop-up-list"
+		showMaximize="false"
+		showMinimize="false"
 	>
 		<titleKey key="dynamic.66062e0f-64a2-4e4d-9908-9ea2c0020773">
 			<en>Context</en>

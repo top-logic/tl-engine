@@ -2,10 +2,14 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.chart.chartjs/chartjs.template.xml"
 >
-	<arguments model="selection(com.top_logic.demo/chartJS/contextTree.layout.xml#Tree)">
+	<arguments
+		model="selection(com.top_logic.demo/chartJS/contextTree.layout.xml#Tree)"
+		showMaximize="true"
+		showMinimize="false"
+	>
 		<name key="dynamic.96a7abfa-0cf8-43ef-8fdf-ec3ae5b72587">
 			<en>Classifications</en>
 			<de>Klassifikationen</de>

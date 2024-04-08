@@ -9,6 +9,8 @@
 		model="selection(com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector)"
 		multiple="true"
 		presentation="pop-up-list"
+		showMaximize="false"
+		showMinimize="false"
 	>
 		<titleKey key="dynamic.5383dc25-cada-4474-8f31-d4dd6f1170aa">
 			<en>Potential blank selection</en>

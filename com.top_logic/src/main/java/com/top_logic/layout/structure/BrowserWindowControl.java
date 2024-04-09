@@ -350,7 +350,6 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		dialogs.remove(dialog);
 		dropLayerScope(dialog);
 		disableTopmostDialog(false);
-		dialog.detach();
 		// dialogs are in general points of no return in history
 		pop();
 	}
@@ -406,42 +405,36 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 		popupDialogs.remove(popupIndex);
 		popupDialogsToClose.add(aDialog);
-		aDialog.detach();
 	}
 	
-	@Override
-	protected void beforeRendering(DisplayContext context) {
-		super.beforeRendering(context);
-
-		unregisterAllPopupDialogs();
-	}
-
 	/**
-	 * Unregisters all open popup dialogs (they are already removed from the client-side view).
+	 * Unregisters all open popup dialogs. All popups are already removed from the client-side view.
+	 * Therefore, no client update is necessary.
 	 */
 	/*package protected*/ final void unregisterAllPopupDialogs() {
 		for (int i = popupDialogs.size() - 1; i >= 0; i--) {
-			// Note: The popup is removed from the currently open popups fist: This prevents
+			// Note: The popup is removed from the currently open popups list: This prevents
 			// marshalling a close request back to the client, because the popup is already
 			// removed from the client-side view.
 			PopupDialogControl popup = popupDialogs.remove(i);
-			close(popup);			
+			closeDirect(popup);
 		}
 	}
 	
 	/**
-	 * This method unregisters a specified open popup dialog
+	 * This method unregisters a specified open popup dialog. The popup was already removed from the
+	 * client-side view. Therefore, no client update is necessary.
 	 */
 	/*package protected*/ final void unregisterSinglePopupDialog(String popupID) {
 		int size = popupDialogs.size();
 		for(int i = 0; i < size; i++) {
 			PopupDialogControl popup = popupDialogs.get(i);
 			if(popup.getID().equals(popupID)) {
-				// Note: The popup is removed from the currently open popups fist: This prevents
+				// Note: The popup is removed from the currently open popups list: This prevents
 				// marshalling a close request back to the client, because the popup is already
 				// removed from the client-side view.
 				popupDialogs.remove(i);
-				close(popup);
+				closeDirect(popup);
 				return;
 			}
 		}
@@ -452,18 +445,17 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 	}
 	
-	private void close(PopupDialogControl popup) {
-		popup.getPopupDialogModel().setClosed();
+	private void closeDirect(PopupDialogControl popup) {
+		popup.getModel().setClosed();
 		popup.detach();
 	}
 
 	/**
 	 * This method unregisters all open popup dialogs, and marks them as removable from the gui
-	 *
 	 */
 	private final void unregisterAndCloseAllPopupDialogs() {
 		for (int i = popupDialogs.size() - 1; i >= 0; i--) {
-			close(popupDialogs.get(i));
+			popupDialogs.get(i).getModel().setClosed();
 		}
 		assert popupDialogs.isEmpty() : "All popups must have been closed.";
 	}
@@ -480,7 +472,8 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		// Closed popup dialogs
 		int size = popupDialogsToClose.size();
 		for (int i = 0; i < size; i++) {
-			actions.add(new ElementReplacement(popupDialogsToClose.get(i).getID(), Fragments.empty()));
+			PopupDialogControl popupDialog = popupDialogsToClose.get(i);
+			actions.add(new ElementReplacement(popupDialog.getID(), Fragments.empty()));
 		}
 
 		// Opened popup dialogs
@@ -514,20 +507,18 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 		
 		// Clear update markers
-		clearPopups();
+		dropIncrementalPopupUpdates();
 	}
 
-	private void clearPopups() {
+	private void dropIncrementalPopupUpdates() {
 		popupDialogsToOpen.clear();
+		popupDialogsToClose.forEach(PopupDialogControl::detach);
 		popupDialogsToClose.clear();
 	}
 
-	@Override
-	protected void handleRepaintRequested(UpdateQueue actions) {
-		super.handleRepaintRequested(actions);
-
-		dropUpdates();
-		clearPopups();
+	private void dropIncrementalUpdates() {
+		dropIncrementalDialogUpdates();
+		dropIncrementalPopupUpdates();
 	}
 
 	/**
@@ -565,7 +556,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 			actions.add(new PropertyUpdate(DIALOG_ANCHOR, CLASS_PROPERTY, new ConstantDisplayValue(NO_DIALOG_OPENED_CLASS)));
 		}
 		
-		dropUpdates();
+		dropIncrementalDialogUpdates();
 		
 		for (DialogWindowControl dialog: dialogsView) {
 			if (dialog.isInvalid()) {
@@ -574,7 +565,8 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 	}
 
-	private void dropUpdates() {
+	private void dropIncrementalDialogUpdates() {
+		dialogsToClose.forEach(DialogWindowControl::detach);
 		dialogsToClose.clear();
 		dialogsToOpen.clear();
 	}
@@ -719,15 +711,15 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	@Override
 	protected void attachRevalidated() {
 		super.attachRevalidated();
-		/*
-		 * drop updates is not performed in detachInvalidated() since after
-		 * requestRepaint() dialogs can still be opened
-		 */
-		dropUpdates();
+		/* Drop updates for dialogs and popups that are potentially added in detached state. */
+		dropIncrementalUpdates();
 	}
 	
 	@Override
 	protected void detachInvalidated() {
+		/* Drop updates to ensure controls are detached. */
+		dropIncrementalUpdates();
+
 		/* Detach all dialogs. That does not happens automatically since they don't live in the
 		 * scope spanned by this control. */
 		for (Control control : layerScopes.keySet()) {

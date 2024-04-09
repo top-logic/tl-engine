@@ -150,12 +150,6 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 
 	private final WithPropertiesDelegate _propertyDelegate;
 
-	/**
-	 * the {@link FrameScope} which was used to create the id of this control. may be
-	 * <code>null</code> if {@link #getID()} was created during rendering.
-	 */
-	private FrameScope externalFrameScope;
-
 	public AbstractControlBase(Map<String, ControlCommand> commandsByName) {
 		this.commandsByName = CollectionUtil.nonNull(commandsByName);
 		_propertyDelegate = WithPropertiesDelegateFactory.lookup(getClass());
@@ -203,7 +197,8 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 			assert oldScope != null : this + " is attached but has no scope.";
 			if (scope != oldScope) {
 				// Already attached to another scope and therefore registered as listener there.
-				throw new IllegalArgumentException(this + " already attached to another scope.");
+				throw new IllegalArgumentException("This " + AbstractControlBase.class.getName() + " '"
+						+ this.toString() + "' is already attached to another scope.");
 			}
 
 			return false;
@@ -211,7 +206,6 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 
 		setScope(scope);
 
-		fetchID(scope.getFrameScope());
 		scope.addUpdateListener(this);
 		if (hasCommands()) {
 			scope.getFrameScope().addCommandListener(this);
@@ -234,18 +228,26 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	}
 
 	/**
-	 * installs the {@link #getID() id} of this {@link AbstractControlBase}.
-	 * After a call of this method {@link #getID()} will return the document
-	 * unique id of this control.
+	 * Installs the {@link #getID() id} of this {@link AbstractControlBase}. After a call of this
+	 * method {@link #getID()} will return the document unique id of this control.
 	 * 
 	 * @param frameScope
-	 *        must be the {@link FrameScope} of the {@link ControlScope} using
-	 *        to register this control. must not be <code>null</code>
+	 *        Must be the {@link FrameScope} of the {@link ControlScope} using to register this
+	 *        control. Must not be <code>null</code>.
+	 * 
+	 * @throws IllegalArgumentException
+	 *         if it is not possible to use the given {@link FrameScope}.
 	 */
 	public void fetchID(FrameScope frameScope) {
-		if (this.id == null) {
-			this.id = frameScope.createNewID();
-			this.externalFrameScope = frameScope;
+		if (isAttached()) {
+			if (frameScope != getScope().getFrameScope()) {
+				throw new IllegalArgumentException("This " + AbstractControlBase.class.getName() + " '"
+						+ this.toString() + "' is attached to a different FrameScope.");
+			}
+			return;
+		}
+		if (id == null) {
+			id = frameScope.createNewID();
 		}
 	}
 
@@ -261,26 +263,19 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	 */
 	private ControlScope setScope(ControlScope newScope) {
 		ControlScope oldScope = _scope;
+		assert oldScope == null || newScope == null : "No direct scope change";
+
 		_scope = newScope;
 
-		if (newScope != null && oldScope != null) {
-			FrameScope newFrameScope = newScope.getFrameScope();
-			if (oldScope.getFrameScope() != newFrameScope) {
-				/* If this AbstractControlBase is not attached it is just necessary to get an
-				 * ControlScope with the same FrameScope to ensure that the ID of this Control is
-				 * already valid. It is possible to get a ControlScope with the same FrameScope as
-				 * the FrameScope of my ControlScope. E.g. a Control x was build and provides an
-				 * ControlScope for some Control y. The Control y was cached but Control x was
-				 * rebuild and therefore during rendering it provided a new ControlScope for y. */
-				throw new IllegalArgumentException("This " + AbstractControlBase.class + " '" + this.toString()
-						+ "' has a Scope with a different FrameScope!");
+		if (newScope != null) {
+			if (id == null) {
+				id = newScope.getFrameScope().createNewID();
+			} else {
+				/* Id was already fetched before! */
 			}
-			if (externalFrameScope != null && externalFrameScope != newFrameScope) {
-				throw new IllegalArgumentException("This " + AbstractControlBase.class + " '" + this.toString()
-						+ "' has gotten an ID by a FrameScope different to the new one!");
-			}
+		} else {
+			id = null;
 		}
-
 		return oldScope;
 	}
 
@@ -382,7 +377,8 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	@Override
 	public final String getID() {
 		if (id == null) {
-			throw new IllegalStateException("Control has no id!. Method is called before initial write occured or fetchID() was called.");
+			throw new IllegalStateException(
+				"Control has no id!. Method is called before initial write occured, fetchID() was called, or after detach.");
 		}
 		return id;
 	}
@@ -1020,9 +1016,8 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	@Override
 	public final FrameScope getFrameScope() {
 		if (_scope == null) {
-			/* Control is not rendered yet. ID may be fetched before, so the later FrameScope is
-			 * already known. */
-			return externalFrameScope;
+			throw new IllegalStateException("This " + AbstractControlBase.class.getName() + " '"
+					+ this.toString() + "' is not attached to a control scope!");
 		}
 		return _scope.getFrameScope();
 	}

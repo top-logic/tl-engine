@@ -34,6 +34,11 @@ public class Icons extends IconsBase {
 	 */
 	public static ThemeImage WINDOW_MINIMIZE;
 
+	/**
+	 * Image to display a view in a separate window.
+	 */
+	public static ThemeImage WINDOW_POP_OUT;
+
 	@DefaultValue("22")
 	public static ThemeVar<Integer> WINDOWLAYOUT_BAR_HEIGHT;
 

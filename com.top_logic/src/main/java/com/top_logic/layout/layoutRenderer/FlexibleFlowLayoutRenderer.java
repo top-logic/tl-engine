@@ -56,6 +56,9 @@ public class FlexibleFlowLayoutRenderer extends FlowLayoutRenderer {
 		Orientation orientation = flowLayout.getOrientation();
 		for (int index = 0, size = layoutChildren.size(); index < size; index++) {
 			LayoutControl childLayout = layoutChildren.get(index);
+			if (flowLayout.isHidden(childLayout)) {
+				continue;
+			}
 			childLayout.write(context, out);
 			if ((index < size - 1) && childLayout.isResizable() && layoutChildren.get(index + 1).isResizable()) {
 				boolean separatorCollapsed =

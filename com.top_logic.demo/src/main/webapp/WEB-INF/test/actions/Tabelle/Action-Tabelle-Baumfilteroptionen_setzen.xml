@@ -56,100 +56,30 @@
 						/>
 					</model-name>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
-						context-name="filterOptions"
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Übergeordnete Elemente anzeigen"
 					>
-						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
-							<path>
-								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment=""
-									field-name="fieldTable"
-								/>
-							</path>
-							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="${$Komponente}"
-								tab-path="${$Pfad}"
-							/>
-						</table-name>
-					</model-name>
-					<field-values>
-						<value>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-								boolean="${$Eltern anzeigen}"
-							/>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment=""
-									field-name="filterOptionsContent"
-								/>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Übergeordnete Elemente anzeigen"
-									field-name="includeParents"
-								/>
-							</field-path>
-						</value>
-					</field-values>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="${$Eltern anzeigen}"
+					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
-						context-name="filterOptions"
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Untergeordnete Elemente anzeigen"
 					>
-						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
-							<path>
-								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment=""
-									field-name="fieldTable"
-								/>
-							</path>
-							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="${$Komponente}"
-								tab-path="${$Pfad}"
-							/>
-						</table-name>
-					</model-name>
-					<field-values>
-						<value>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-								boolean="${$Kinder anzeigen}"
-							/>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment=""
-									field-name="filterOptionsContent"
-								/>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Untergeordnete Elemente anzeigen"
-									field-name="includeChildren"
-								/>
-							</field-path>
-						</value>
-					</field-values>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="${$Kinder anzeigen}"
+					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-					failure-expected="false"
-				>
-					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Übernehmen"
-					>
-						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
-							context-name="filterOptions"
-						>
-							<table-name config:interface="com.top_logic.layout.form.FormMemberName">
-								<path>
-									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-										field-label-comment=""
-										field-name="fieldTable"
-									/>
-								</path>
-								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="${$Komponente}"
-									tab-path="${$Pfad}"
-								/>
-							</table-name>
-						</component>
-					</model-name>
-				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+				/>
 			</actions>
 		</action>
 	</t:body>

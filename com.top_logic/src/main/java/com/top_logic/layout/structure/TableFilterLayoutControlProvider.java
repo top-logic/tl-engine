@@ -6,7 +6,6 @@
 package com.top_logic.layout.structure;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -27,10 +26,6 @@ public class TableFilterLayoutControlProvider
 		extends ConfiguredLayoutControlProvider<TableFilterLayoutControlProvider.Config> {
 
 	private final ComponentName _maximizeRoot;
-
-	private final Decision _showMaximize;
-
-	private final Decision _showMinimize;
 
 	private final boolean _initiallyMinimized;
 
@@ -57,8 +52,6 @@ public class TableFilterLayoutControlProvider
 	public TableFilterLayoutControlProvider(InstantiationContext context, Config config) {
 		super(context, config);
 		_maximizeRoot = config.getMaximizeRoot();
-		_showMaximize = config.getShowMaximize();
-		_showMinimize = config.getShowMinimize();
 		_initiallyMinimized = config.isInitiallyMinimized();
 	}
 
@@ -82,7 +75,7 @@ public class TableFilterLayoutControlProvider
 			model = new PersonalizingExpandable(component.getName() + ".toolbarCollapsedState", _initiallyMinimized);
 		}
 		final CollapsibleControl collapsibleControl =
-			new CollapsibleControl(I18NConstants.TABLE_FILTER_TITLE, model, false, _showMaximize, _showMinimize);
+			new CollapsibleControl(I18NConstants.TABLE_FILTER_TITLE, model, false, getConfig());
 		collapsibleControl.getToolbar().setShowMaximizeDefault(hasMaximizeRoot);
 
 		final ControlBasedTableDataProvider tableDataProvider =

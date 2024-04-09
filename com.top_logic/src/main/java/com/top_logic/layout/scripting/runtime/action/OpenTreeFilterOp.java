@@ -48,7 +48,8 @@ public class OpenTreeFilterOp extends TableActionOp<OpenTreeFilter> {
 	protected void internalProcess(ActionContext context, TableControl table, Object argument) {
 		TableData tableData = table.getTableData();
 		OpenFilterOptionsCommand command = new OpenFilterOptionsCommand(tableData);
-		command.showPopup(context.getDisplayContext(), findToolbarHandler(context, tableData));
+		command.executeCommand(context.getDisplayContext());
+//		command.showPopup(context.getDisplayContext(), findToolbarHandler(context, tableData));
 	}
 
 	private PopupHandler findToolbarHandler(ActionContext context, TableData tableData) {

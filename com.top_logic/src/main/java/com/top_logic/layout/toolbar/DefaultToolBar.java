@@ -43,6 +43,11 @@ public class DefaultToolBar extends PropertyObservableBase implements ToolBar {
 	 */
 	private static final boolean DEFAULT_SHOW_MINIMIZE = true;
 
+	/**
+	 * Default value for {@link #showPopOut()}.
+	 */
+	private static final boolean DEFAULT_SHOW_POP_OUT = false;
+
 	private static final int OFFSET = 1024;
 
 	/**
@@ -64,9 +69,13 @@ public class DefaultToolBar extends PropertyObservableBase implements ToolBar {
 
 	private Decision _showMinimize;
 
+	private Decision _showPopOut;
+
 	private boolean _showMinimizeDefault = DEFAULT_SHOW_MINIMIZE;
 
 	private boolean _showMaximizeDefault = DEFAULT_SHOW_MAXIMIZE;
+
+	private boolean _showPopOutDefault = DEFAULT_SHOW_POP_OUT;
 
 	private Expandable _model;
 
@@ -79,7 +88,7 @@ public class DefaultToolBar extends PropertyObservableBase implements ToolBar {
 	 *        See {@link #getModel()}
 	 */
 	public DefaultToolBar(Object owner, Expandable model) {
-		this(owner, model, Fragments.empty(), true, Decision.DEFAULT, Decision.DEFAULT);
+		this(owner, model, Fragments.empty(), true, Decision.DEFAULT, Decision.DEFAULT, Decision.DEFAULT);
 	}
 
 	/**
@@ -95,13 +104,16 @@ public class DefaultToolBar extends PropertyObservableBase implements ToolBar {
 	 *        See {@link #showMaximize()}, {@link #setShowMaximizeDefault(boolean)}.
 	 * @param showMinimize
 	 *        See {@link #showMinimize()}, {@link #setShowMinimizeDefault(boolean)}.
+	 * @param showPopOut
+	 *        See {@link #showPopOut()}, {@link #setShowPopOutDefault(boolean)}.
 	 */
 	public DefaultToolBar(Object owner, Expandable model, HTMLFragment title, boolean canMaximize,
-			Decision showMaximize, Decision showMinimize) {
+			Decision showMaximize, Decision showMinimize, Decision showPopOut) {
 		_model = model;
 		_canMaximize = canMaximize;
 		_showMaximize = showMaximize;
 		_showMinimize = showMinimize;
+		_showPopOut = showPopOut;
 		_owner = Utils.requireNonNull(owner);
 		_title = title;
 	}
@@ -176,6 +188,31 @@ public class DefaultToolBar extends PropertyObservableBase implements ToolBar {
 		boolean oldValue = showMinimize();
 		_showMinimizeDefault = showMinimize;
 		boolean newValue = showMinimize();
+		if (newValue != oldValue) {
+			notifyListeners(ToolBar.OPTIONS, this, oldValue, newValue);
+		}
+	}
+
+	@Override
+	public boolean showPopOut() {
+		return _showPopOut.toBoolean(_showPopOutDefault);
+	}
+
+	@Override
+	public void setShowPopOut(Decision showPopOut) {
+		boolean oldValue = showPopOut();
+		_showPopOut = showPopOut;
+		boolean newValue = showPopOut();
+		if (newValue != oldValue) {
+			notifyListeners(ToolBar.OPTIONS, this, oldValue, newValue);
+		}
+	}
+
+	@Override
+	public void setShowPopOutDefault(boolean showPopOut) {
+		boolean oldValue = showPopOut();
+		_showPopOutDefault = showPopOut;
+		boolean newValue = showPopOut();
 		if (newValue != oldValue) {
 			notifyListeners(ToolBar.OPTIONS, this, oldValue, newValue);
 		}

@@ -1033,9 +1033,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	private void createLayoutControl() {
 		Set<Entry<LayoutComponent, DialogComponent>> openedDialogs;
 		String oldId;
-		if (layoutControl != null) {
+		if (layoutControl != null && layoutControl.isAttached()) {
 			/* Check whether the control was already rendered. If not, getting the id will fail. */
-			oldId = (layoutControl.getFrameScope() == null) ? null : layoutControl.getID();
+			oldId = layoutControl.getID();
 			layoutControl.detach();
 			openedDialogs = getDialogSupport().getOpenedDialogs().entrySet();
 		} else {

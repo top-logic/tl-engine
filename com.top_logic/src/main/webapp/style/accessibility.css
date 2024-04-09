@@ -3,7 +3,7 @@ body input:focus,
 body .mandatory input[type='radio']:focus,
 body button:focus,
 body textarea:focus,
-body select:focus,
+body select.tl-select:focus,
 body a.cmdButton:focus {
 	outline-style: var(--ACTIVE_ELEMENT_BORDER_STYLE);
 	outline-color: var(--ACTIVE_ELEMENT_BORDER_COLOR);

@@ -44,6 +44,7 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.css.CssUtil;
 
 /**
  * Drop-down selection list view of a {@link FormField} model.
@@ -51,6 +52,11 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SelectControl extends AbstractSelectControl implements OptionModelListener {
+
+	private static final String CSS_SELECT = "tl-select";
+
+	private static final String CSS_SELECT_CLASSES =
+		CssUtil.joinCssClasses(FormConstants.IS_INPUT_CSS_CLASS, CSS_SELECT);
 
 	private static final String CURRENT_SELECTION_DATA_ATTRIBUTE =
 		HTMLConstants.DATA_ATTRIBUTE_PREFIX + "currentselection";
@@ -306,7 +312,7 @@ public class SelectControl extends AbstractSelectControl implements OptionModelL
 			// Input element
 			out.beginBeginTag(SELECT);
 			writeInputIdAttr(out);
-			out.writeAttribute(CLASS_ATTR, FormConstants.IS_INPUT_CSS_CLASS);
+			out.writeAttribute(CLASS_ATTR, CSS_SELECT_CLASSES);
 			writeQualifiedNameAttribute(out);
 			
 			writeOnChange(out);

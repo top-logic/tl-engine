@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.structure;
 
+import static java.util.Collections.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -73,6 +75,7 @@ import com.top_logic.layout.basic.FragmentRenderer;
 import com.top_logic.layout.basic.KeyCodeHandler;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.basic.timer.TimerControl;
+import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.history.HistoryControl;
 import com.top_logic.layout.history.HistoryEntry;
 import com.top_logic.layout.layoutRenderer.BrowserWindowRenderer;
@@ -82,6 +85,7 @@ import com.top_logic.layout.window.WindowManager;
 import com.top_logic.mig.html.layout.CommandDispatcher;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
@@ -1242,7 +1246,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 					} else {
 						final DialogModel dialogModel = getActiveDialog().getDialogModel();
 						if (dialogModel.hasCloseButton()) {
-							return dialogModel.getCloseAction().executeCommand(commandContext);
+							return execute(dialogModel.getCloseAction(), commandContext);
 						} else {
 							return HandlerResult.DEFAULT_RESULT;
 						}
@@ -1261,7 +1265,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 						DialogModel dialogModel = getActiveDialog().getDialogModel();
 						Command defaultCommand = dialogModel.getDefaultCommand();
 						if (defaultCommand != null) {
-							return defaultCommand.executeCommand(commandContext);
+							return execute(defaultCommand, commandContext);
 						}
 						return dispatchEvent(commandContext, LayoutComponent::getDefaultCommand, getActiveDialog());
 					}
@@ -1310,8 +1314,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 			LayoutComponent component = ((ContentControl) control).getModel();
 			CommandHandler handler = commandProvider.apply(component);
 			if (handler != null) {
-				Map<String, Object> noArgs = Collections.emptyMap();
-				if (!CommandDispatcher.resolveExecutableState(handler, component, noArgs).isExecutable()) {
+				if (!isExecutable(handler, component)) {
 					// Prevent error, if command temporarily not executable.
 					return HandlerResult.DEFAULT_RESULT;
 				}
@@ -1330,6 +1333,30 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private HandlerResult execute(Command command, DisplayContext commandContext) {
+		if (isExecutable(command, commandContext)) {
+			return command.executeCommand(commandContext);
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private boolean isExecutable(Command command, DisplayContext displayContext) {
+		if (command instanceof CommandField) {
+			CommandField field = (CommandField) command;
+			return field.isExecutable();
+		}
+		if (command instanceof CommandHandler) {
+			CommandHandler handler = (CommandHandler) command;
+			return isExecutable(handler, MainLayout.getComponent(displayContext));
+		}
+		return true;
+	}
+
+	private boolean isExecutable(CommandHandler command, LayoutComponent component) {
+		Map<String, Object> noArgs = emptyMap();
+		return CommandDispatcher.resolveExecutableState(command, component, noArgs).isExecutable();
 	}
 
 	/**

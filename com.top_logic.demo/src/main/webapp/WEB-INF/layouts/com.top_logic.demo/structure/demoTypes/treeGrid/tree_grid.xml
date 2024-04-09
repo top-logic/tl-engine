@@ -30,7 +30,7 @@
 		/>
 	</params>
 
-	<layout name="${namePrefix}treeGridDialog"
+	<layout name="${namePrefix}treeGridLayout"
 		horizontal="true"
 	>
 		<componentControlProvider class="com.top_logic.layout.structure.MaximizableLayout"/>
@@ -48,7 +48,7 @@
 				defaultSelection="false"
 				elementTypes="${elementTypes}"
 				isSecurityMaster="true"
-				maximizeRoot="${namePrefix}treeGridDialog"
+				maximizeRoot="${namePrefix}treeGridLayout"
 				model="${model}"
 				modelBuilder="${modelBuilder}"
 				modifier="com.top_logic.demo.edit.DemoFormContextModificator"

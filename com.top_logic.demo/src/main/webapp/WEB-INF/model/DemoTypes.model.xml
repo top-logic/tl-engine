@@ -90,6 +90,101 @@
 				</annotations>
 			</classifier>
 		</enum>
+		<enum name="demo.federalstates">
+			<annotations>
+				<unordered-enum/>
+			</annotations>
+			<classifier name="Brandenburg">
+				<annotations>
+					<!-- Some states should be displayed without their flag to test whether the spacing is correct without icons, too.
+					<instance-presentation icon="/images/federalstates/Brandenburg.svg"/>
+					-->
+				</annotations>
+			</classifier>
+			<classifier name="Bremen">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Bremen.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Berlin">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Berlin.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Hesse">
+				<annotations>
+					<!--
+					<instance-presentation icon="/images/federalstates/Hesse.svg"/>
+					-->
+				</annotations>
+			</classifier>
+			<classifier name="Hamburg">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Hamburg.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Schleswig-Holstein">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Schleswig-Holstein.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Thuringia">
+				<annotations>
+					<!--
+					<instance-presentation icon="/images/federalstates/Thuringia.svg"/>
+					-->
+				</annotations>
+			</classifier>
+			<classifier name="Lower_Saxony">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Lower Saxony.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Saarland">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Saarland.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Saxony">
+				<annotations>
+					<!--
+					<instance-presentation icon="/images/federalstates/Saxony.svg"/>
+					-->
+				</annotations>
+			</classifier>
+			<classifier name="Rhineland-Palatinate">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Rhineland-Palatinate.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Saxony-Anhalt">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Saxony-Anhalt.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Mecklenburg-Western_Pomerania">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Mecklenburg-Western Pomerania.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Baden-Wuerttemberg">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/Baden-Wuerttemberg.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="North_Rhine-Westphalia">
+				<annotations>
+					<instance-presentation icon="/images/federalstates/North Rhine-Westphalia.svg"/>
+				</annotations>
+			</classifier>
+			<classifier name="Bavaria">
+				<annotations>
+					<!--
+					<instance-presentation icon="/images/federalstates/Bavaria.svg"/>
+					-->
+				</annotations>
+			</classifier>
+		</enum>
 		<interface name="AChild">
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
@@ -334,27 +429,61 @@
 				<reference name="classificationUnorderedMulti"
 					kind="forwards"
 					multiple="true"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				/>
 				<reference name="classificationUnorderedSingle"
 					kind="forwards"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				/>
 				<reference name="classificationUnorderedSinglePopup"
 					kind="forwards"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				>
 					<annotations>
 						<classification-display value="pop-up"/>
 					</annotations>
 				</reference>
+				<reference name="classificationUnorderedSingleRadio"
+					kind="forwards"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio"/>
+					</annotations>
+				</reference>
+				<reference name="classificationUnorderedSingleRadioInline"
+					kind="forwards"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio-inline"/>
+					</annotations>
+				</reference>
 				<reference name="classificationUnorderedMultiDropdown"
 					kind="forwards"
 					multiple="true"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				>
 					<annotations>
 						<classification-display/>
+					</annotations>
+				</reference>
+				<reference name="classificationUnorderedMultiRadio"
+					kind="forwards"
+					multiple="true"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio"/>
+					</annotations>
+				</reference>
+				<reference name="classificationUnorderedMultiRadioInline"
+					kind="forwards"
+					multiple="true"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio-inline"/>
 					</annotations>
 				</reference>
 				<reference name="collection"
@@ -1547,7 +1676,7 @@
 				</property>
 				<property name="classificationUnorderedMulti"
 					multiple="true"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				>
 					<annotations>
 						<storage-algorithm>
@@ -1563,7 +1692,7 @@
 					</annotations>
 				</property>
 				<property name="classificationUnorderedSingle"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				>
 					<annotations>
 						<storage-algorithm>
@@ -1579,7 +1708,7 @@
 					</annotations>
 				</property>
 				<property name="classificationUnorderedSinglePopup"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				>
 					<annotations>
 						<storage-algorithm>
@@ -1594,9 +1723,43 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<reference name="classificationUnorderedSingleRadio"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedSingleRadio"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="classificationUnorderedSingleRadioInline"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio-inline"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedSingleRadioInline"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
 				<property name="classificationUnorderedMultiDropdown"
 					multiple="true"
-					type="tl5.enum:demo.federalstates"
+					type="demo.federalstates"
 				>
 					<annotations>
 						<storage-algorithm>
@@ -1611,6 +1774,42 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<reference name="classificationUnorderedMultiRadio"
+					multiple="true"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedMultiRadio"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="classificationUnorderedMultiRadioInline"
+					multiple="true"
+					type="demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="radio-inline"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedMultiRadioInline"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
 				<property name="collection"
 					multiple="true"
 					type="tl.model:TLObject"

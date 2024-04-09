@@ -58,6 +58,8 @@ public class SelectTextControl extends AbstractSelectControl {
 			OpenSelector.INSTANCE,
 		});
 
+	private static final String CSS_CLASS_OPTION = "option";
+
 	private static final String SELECTED_VALUE = "valueDisplay";
 
 	private Renderer<Object> _selectionRenderer;
@@ -96,7 +98,7 @@ public class SelectTextControl extends AbstractSelectControl {
 					Object option = selection.get(i);
 					out.beginBeginTag(SPAN);
 					out.writeAttribute(ID_ATTR, getOptionSpanId(option));
-					out.writeAttribute(CLASS_ATTR, "option");
+					out.writeAttribute(CLASS_ATTR, CSS_CLASS_OPTION);
 					out.endBeginTag();
 					
 					if (_selectionRenderer != null) {
@@ -145,7 +147,7 @@ public class SelectTextControl extends AbstractSelectControl {
 					_selectionRenderer.write(context, out, selectionList);
 				} else {
 					try {
-						SelectFieldUtils.writeSelectionAsTextImmutable(out, field);
+						SelectFieldUtils.writeSelectionImmutable(context, out, field);
 					} catch (Throwable throwable) {
 						try {
 							produceErrorOutput(context, out, throwable);
@@ -296,15 +298,6 @@ public class SelectTextControl extends AbstractSelectControl {
 		return (SelectField) super.getModel();
 	}
 
-	private void writeOnClick(TagWriter out, String optionID) throws IOException {
-		out.beginAttribute(ONCLICK_ATTR);
-		out.append("return ");
-		JSObject arguments = new JSObject(ClearSelection.OPTION_KEY, new JSString(optionID));
-		getClearSelectionCommand().writeInvokeExpression(out, this, arguments);
-		out.append(';');
-		out.endAttribute();
-	}
-
 	private String getOptionID(Object option) {
 		return getSelectField().getOptionID(option);
 	}
@@ -315,7 +308,7 @@ public class SelectTextControl extends AbstractSelectControl {
 
 	private static class ClearSelection extends ControlCommand {
 
-		static final String OPTION_KEY = "option";
+		static final String OPTION_KEY = CSS_CLASS_OPTION;
 
 		private static final String CLEAR_COMMAND = "clearSelection";
 

@@ -81,6 +81,7 @@ import com.top_logic.element.model.migration.model.CreateTLReferenceProcessor;
 import com.top_logic.element.model.migration.model.CreateTLSingletonProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLClassProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLDatatypeProcessor;
+import com.top_logic.element.model.migration.model.DeleteTLEnumerationProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLModuleProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.DeleteTLReferenceProcessor;
@@ -1089,6 +1090,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				addProcessor(config);
 			} else if (part instanceof TLClass) {
 				DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
+				config.setName(qTypeName(diff.getName()));
+				addProcessor(config);
+			} else if (part instanceof TLEnumeration) {
+				DeleteTLEnumerationProcessor.Config config = newConfigItem(DeleteTLEnumerationProcessor.Config.class);
 				config.setName(qTypeName(diff.getName()));
 				addProcessor(config);
 			} else if (part instanceof TLPrimitive) {

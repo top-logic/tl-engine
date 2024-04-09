@@ -47,6 +47,91 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String MIDDLE_OPTION_DEMO_ENUM_CLASSIFIER = "MiddleOption";
 
 	/**
+	 * Name of the enumeration <code>demo.federalstates</code> in module {@value #DEMO_TYPES_STRUCTURE}.
+	 */
+	public static final String DEMO_FEDERALSTATES_ENUM = "demo.federalstates";
+
+	/**
+	 * Name of the classifier <code>Baden-Wuerttemberg</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String BADEN_WUERTTEMBERG_DEMO_FEDERALSTATES_CLASSIFIER = "Baden-Wuerttemberg";
+
+	/**
+	 * Name of the classifier <code>Bavaria</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String BAVARIA_DEMO_FEDERALSTATES_CLASSIFIER = "Bavaria";
+
+	/**
+	 * Name of the classifier <code>Berlin</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String BERLIN_DEMO_FEDERALSTATES_CLASSIFIER = "Berlin";
+
+	/**
+	 * Name of the classifier <code>Brandenburg</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String BRANDENBURG_DEMO_FEDERALSTATES_CLASSIFIER = "Brandenburg";
+
+	/**
+	 * Name of the classifier <code>Bremen</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String BREMEN_DEMO_FEDERALSTATES_CLASSIFIER = "Bremen";
+
+	/**
+	 * Name of the classifier <code>Hamburg</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String HAMBURG_DEMO_FEDERALSTATES_CLASSIFIER = "Hamburg";
+
+	/**
+	 * Name of the classifier <code>Hesse</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String HESSE_DEMO_FEDERALSTATES_CLASSIFIER = "Hesse";
+
+	/**
+	 * Name of the classifier <code>Lower_Saxony</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String LOWER_SAXONY_DEMO_FEDERALSTATES_CLASSIFIER = "Lower_Saxony";
+
+	/**
+	 * Name of the classifier <code>Mecklenburg-Western_Pomerania</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String MECKLENBURG_WESTERN_POMERANIA_DEMO_FEDERALSTATES_CLASSIFIER = "Mecklenburg-Western_Pomerania";
+
+	/**
+	 * Name of the classifier <code>North_Rhine-Westphalia</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String NORTH_RHINE_WESTPHALIA_DEMO_FEDERALSTATES_CLASSIFIER = "North_Rhine-Westphalia";
+
+	/**
+	 * Name of the classifier <code>Rhineland-Palatinate</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String RHINELAND_PALATINATE_DEMO_FEDERALSTATES_CLASSIFIER = "Rhineland-Palatinate";
+
+	/**
+	 * Name of the classifier <code>Saarland</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String SAARLAND_DEMO_FEDERALSTATES_CLASSIFIER = "Saarland";
+
+	/**
+	 * Name of the classifier <code>Saxony</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String SAXONY_DEMO_FEDERALSTATES_CLASSIFIER = "Saxony";
+
+	/**
+	 * Name of the classifier <code>Saxony-Anhalt</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String SAXONY_ANHALT_DEMO_FEDERALSTATES_CLASSIFIER = "Saxony-Anhalt";
+
+	/**
+	 * Name of the classifier <code>Schleswig-Holstein</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String SCHLESWIG_HOLSTEIN_DEMO_FEDERALSTATES_CLASSIFIER = "Schleswig-Holstein";
+
+	/**
+	 * Name of the classifier <code>Thuringia</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static final String THURINGIA_DEMO_FEDERALSTATES_CLASSIFIER = "Thuringia";
+
+	/**
 	 * Name of the data type <code>DemoTime</code> in module {@value #DEMO_TYPES_STRUCTURE}.
 	 */
 	public static final String DEMO_TIME_TYPE = "DemoTime";
@@ -277,6 +362,20 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedMultiRadioDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedMultiRadioInlineDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#CLASSIFICATION_UNORDERED_SINGLE_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLReference getClassificationUnorderedSingleDemoTypesAAttr() {
@@ -288,6 +387,20 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLReference getClassificationUnorderedSinglePopupDemoTypesAAttr() {
 		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.CLASSIFICATION_UNORDERED_SINGLE_POPUP_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedSingleRadioDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedSingleRadioInlineDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR);
 	}
 
 	/**
@@ -1180,6 +1293,20 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesX#CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedMultiRadioDemoTypesXAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesXType().getPart(DemoTypesX.CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesX#CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedMultiRadioInlineDemoTypesXAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesXType().getPart(DemoTypesX.CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesX#CLASSIFICATION_UNORDERED_SINGLE_ATTR} of {@link DemoTypesX}.
 	 */
 	public static com.top_logic.model.TLProperty getClassificationUnorderedSingleDemoTypesXAttr() {
@@ -1191,6 +1318,20 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getClassificationUnorderedSinglePopupDemoTypesXAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.CLASSIFICATION_UNORDERED_SINGLE_POPUP_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesX#CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedSingleRadioDemoTypesXAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesXType().getPart(DemoTypesX.CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesX#CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLReference getClassificationUnorderedSingleRadioInlineDemoTypesXAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesXType().getPart(DemoTypesX.CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR);
 	}
 
 	/**
@@ -1646,6 +1787,125 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLClassifier getMiddleOptionDemoEnumClassifier() {
 		return getDemoEnumEnum().getClassifier(MIDDLE_OPTION_DEMO_ENUM_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup {@value #DEMO_FEDERALSTATES_ENUM} enumeration.
+	 */
+	public static com.top_logic.model.TLEnumeration getDemoFederalstatesEnum() {
+		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DEMO_FEDERALSTATES_ENUM);
+	}
+
+	/**
+	 * Lookup classifier {@value #BADEN_WUERTTEMBERG_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getBadenWuerttembergDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(BADEN_WUERTTEMBERG_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #BAVARIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getBavariaDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(BAVARIA_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #BERLIN_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getBerlinDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(BERLIN_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #BRANDENBURG_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getBrandenburgDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(BRANDENBURG_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #BREMEN_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getBremenDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(BREMEN_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #HAMBURG_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getHamburgDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(HAMBURG_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #HESSE_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getHesseDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(HESSE_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #LOWER_SAXONY_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getLowerSaxonyDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(LOWER_SAXONY_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #MECKLENBURG_WESTERN_POMERANIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getMecklenburgWesternPomeraniaDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(MECKLENBURG_WESTERN_POMERANIA_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #NORTH_RHINE_WESTPHALIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getNorthRhineWestphaliaDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(NORTH_RHINE_WESTPHALIA_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #RHINELAND_PALATINATE_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getRhinelandPalatinateDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(RHINELAND_PALATINATE_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #SAARLAND_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getSaarlandDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(SAARLAND_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #SAXONY_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getSaxonyDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(SAXONY_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #SAXONY_ANHALT_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getSaxonyAnhaltDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(SAXONY_ANHALT_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #SCHLESWIG_HOLSTEIN_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getSchleswigHolsteinDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(SCHLESWIG_HOLSTEIN_DEMO_FEDERALSTATES_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #THURINGIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getThuringiaDemoFederalstatesClassifier() {
+		return getDemoFederalstatesEnum().getClassifier(THURINGIA_DEMO_FEDERALSTATES_CLASSIFIER);
 	}
 
 	/**

@@ -5,6 +5,10 @@
  */
 package com.top_logic.demo.model.types.util;
 
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
+import static java.lang.Math.*;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -76,6 +80,7 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -96,6 +101,23 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class TypeGenerator {
+
+	/**
+	 * The minimum chance for <code>null</code> or the empty value.
+	 * <p>
+	 * This is used to increase the chance for the empty value. When there are many options the
+	 * choose from, the chance for the empty value would be very low. But that is unwanted, as the
+	 * empty value is a special value which appears often in real data and therefore needs to be
+	 * tested thoroughly.
+	 * </p>
+	 */
+	private static final double NULL_PROBABILITY = 0.25;
+
+	/**
+	 * The maximum number of values that should be generated for attributes which store a
+	 * {@link Collection} of values.
+	 */
+	private static final int MAX_COLLECTION_VALUES = 10;
 
 	static int NUMBER_OF_CHILDREN = 20;
 
@@ -212,19 +234,18 @@ public class TypeGenerator {
 						stringSet.add("GeneratedString_" + rand.nextInt());
 					}
 					Set<TLClassifier> checkListElement = createWrapperValues(TLClassifier.class,
-						DemoTypesFactory.getChecklistDemoTypesAAttr(), rand, 1);
+						DemoTypesFactory.getChecklistDemoTypesAAttr(), rand, MAX_COLLECTION_VALUES);
 					child.setChecklist(checkListElement);
 					Set<TLClassifier> checkListMultiElement = createWrapperValues(TLClassifier.class,
-						DemoTypesFactory.getChecklistMultiDemoTypesAAttr(), rand, 4);
+						DemoTypesFactory.getChecklistMultiDemoTypesAAttr(), rand, MAX_COLLECTION_VALUES);
 					child.setChecklistMulti(checkListMultiElement);
 					child.setChecklistSingle(createChecklistSingleValue(rand));
+					fillClassificationAttributes(rand, child);
+
 					child.setStringSet(stringSet);
 
-					Set<Person> person = createWrapperValues(Person.class,
-						DemoTypesFactory.getAccountDemoTypesAAttr(), rand, 1);
-					if (!person.isEmpty()) {
-						child.setAccount(person.iterator().next());
-					}
+					Person person = createWrapperValueNullable(Person.class, DemoTypesFactory.getAccountDemoTypesAAttr(), rand);
+					child.setAccount(person);
 					sendCreateEvent(child);
 
 					for (int n = 0; n < 2; n++) {
@@ -244,7 +265,7 @@ public class TypeGenerator {
 				for (StructuredElement child : generatedRoot.getChildren()) {
 					DemoTypesA ANode = (DemoTypesA) child;
 					ANode.setStructure(createWrapperValues(C.class,
-						DemoTypesFactory.getStructureDemoTypesAAttr(), rand, 4));
+						DemoTypesFactory.getStructureDemoTypesAAttr(), rand, MAX_COLLECTION_VALUES));
 					C singleStructure = createWrapperValue(C.class,
 						DemoTypesFactory.getSingleStructureDemoTypesAAttr(), rand);
 					if (singleStructure != null) {
@@ -258,6 +279,51 @@ public class TypeGenerator {
 			throw new TopLogicException(TypeGenerator.class, "generationFailed", ex);
 		}
 		return true;
+	}
+
+	private static void fillClassificationAttributes(Random random, DemoTypesA demoA) {
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationSingleDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationLocalDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationSingleLegacyDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationMultiDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationSinglePopupDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationMultiDropdownDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSingleDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSinglePopupDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSingleRadioDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedSingleRadioInlineDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiDropdownDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiRadioDemoTypesAAttr());
+		fillRandomlyWithClassifiers(random, demoA, DemoTypesFactory.getClassificationUnorderedMultiRadioInlineDemoTypesAAttr());
+
+	}
+
+	private static void fillRandomlyWithClassifiers(Random random, DemoTypesA demoA, TLClassPart attribute) {
+		if (attribute.isMultiple()) {
+			List<?> chosenClassifiers = randomClassifiers(random, attribute);
+			if (attribute.isMandatory() && chosenClassifiers.isEmpty()) {
+				demoA.tUpdate(attribute, list(randomClassifier(random, attribute)));
+				return;
+			}
+			demoA.tUpdate(attribute, chosenClassifiers);
+		} else {
+			if (!attribute.isMandatory() && random.nextDouble() < NULL_PROBABILITY) {
+				return;
+			}
+			demoA.tUpdate(attribute, randomClassifier(random, attribute));
+		}
+	}
+
+	private static List<TLClassifier> randomClassifiers(Random random, TLClassPart attribute) {
+		List<TLClassifier> chosenClassifiers =
+			list(createWrapperValues(TLClassifier.class, attribute, random, MAX_COLLECTION_VALUES));
+		Collections.shuffle(chosenClassifiers, random);
+		return chosenClassifiers;
+	}
+
+	private static TLClassifier randomClassifier(Random random, TLClassPart attribute) {
+		return createWrapperValue(TLClassifier.class, attribute, random);
 	}
 
 	private static void createXChild(StructuredElement parent, String name) {
@@ -275,15 +341,19 @@ public class TypeGenerator {
 
 	private static TLClassifier createChecklistSingleValue(Random random) {
 		TLStructuredTypePart attribute = DemoTypesFactory.getChecklistSingleDemoTypesAAttr();
-		return createWrapperValue(TLClassifier.class, attribute, random);
+		return createWrapperValueNullable(TLClassifier.class, attribute, random);
 	}
 
 	private static <E extends TLObject> Set<E> createWrapperValues(Class<E> contentType,
 			TLStructuredTypePart attribute, Random rand, int maxElementCount) {
+		if (rand.nextFloat() < NULL_PROBABILITY) {
+			return Collections.emptySet();
+		}
 		OptionModel<?> options = AttributeOperations.allOptions(SimpleEditContext.createContext(attribute));
 		if (options.getOptionCount() == 0) {
 			return Collections.emptySet();
 		}
+		maxElementCount = min(maxElementCount, options.getOptionCount());
 		int currentElementCount = rand.nextInt(maxElementCount + 1);
 		Set<E> selectedWrappers = new HashSet<>();
 		if (options instanceof ListOptionModel) {
@@ -304,6 +374,14 @@ public class TypeGenerator {
 			}
 		}
 		return selectedWrappers;
+	}
+
+	private static <E extends TLObject> E createWrapperValueNullable(Class<E> contentType,
+			TLStructuredTypePart attribute, Random rand) {
+		if (rand.nextFloat() < NULL_PROBABILITY) {
+			return null;
+		}
+		return createWrapperValue(contentType, attribute, rand);
 	}
 
 	private static <E extends TLObject> E createWrapperValue(Class<E> contentType, TLStructuredTypePart attribute,

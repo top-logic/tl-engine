@@ -8,6 +8,8 @@ package com.top_logic.model;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.model.impl.generated.TLClassifierBase;
+import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.util.Resources;
 
 /**
  * A classifier of an {@link TLEnumeration}.
@@ -59,6 +61,11 @@ public interface TLClassifier extends TLClassifierBase {
 	@Override
 	default <R, A> R visitTypePart(TLTypePartVisitor<R, A> v, A arg) {
 		return v.visitClassifier(this, arg);
+	}
+
+	/** The label in the language of the current session. */
+	public default String getLabel() {
+		return Resources.getInstance().getString(TLModelNamingConvention.classifierKey(this));
 	}
 
 }

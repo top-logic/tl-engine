@@ -14,7 +14,6 @@
 					<classification name="tl.beacon.three" mode="use" />
 					<classification name="demo.attribute.classifier.global" mode="use" />
 					<classification name="demo.attribute.classifier.local" mode="use" />
-					<classification name="demo.federalstates" mode="use" />
 				</classifications>
 			</instance>
 		</config>

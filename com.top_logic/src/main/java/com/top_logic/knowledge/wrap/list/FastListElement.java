@@ -5,12 +5,14 @@
  */
 package com.top_logic.knowledge.wrap.list;
 
+import java.text.Collator;
 import java.util.List;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.model.TLClassifier;
@@ -18,6 +20,7 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.internal.PersistentTypePart;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
 
 /**
  * FastListElements are elements of a {@link FastList}. 
@@ -348,6 +351,19 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
 				}
 			}
 		}
+	}
+
+	@Override
+	public int compareTo(Wrapper other) {
+		if (!(other instanceof FastListElement)) {
+			return super.compareTo(other);
+		}
+		FastListElement otherClassifier = (FastListElement) other;
+		if (getOwner().isOrdered()) {
+			return Integer.compare(getIndex(), otherClassifier.getIndex());
+		}
+		Collator collator = Collator.getInstance(TLContext.getLocale());
+		return collator.compare(getLabel(), otherClassifier.getLabel());
 	}
 
 }

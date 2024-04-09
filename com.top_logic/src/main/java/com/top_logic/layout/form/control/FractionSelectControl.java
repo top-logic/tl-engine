@@ -78,7 +78,7 @@ public class FractionSelectControl extends SelectControl {
 			out.writeText(HTMLConstants.NBSP);
 			out.writeText(HTMLConstants.NBSP);
 
-			SelectFieldUtils.writeSelectionAsTextImmutable(out, field);
+			SelectFieldUtils.writeSelectionImmutable(context, out, field);
 		}
 		out.endTag(SPAN);
 	}

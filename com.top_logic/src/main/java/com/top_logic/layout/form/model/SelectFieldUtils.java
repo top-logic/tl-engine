@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.form.model;
 
+import static com.top_logic.mig.html.HTMLConstants.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,11 +18,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ExceptionUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.col.CustomComparator;
 import com.top_logic.basic.col.LazyListModifyable;
@@ -29,7 +30,9 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ResourceRenderer;
@@ -536,7 +539,7 @@ public class SelectFieldUtils {
 	}
 
 	/**
-	 * Appends an end-user-readable internationalised text describing the current selection in
+	 * Appends an end-user-readable internationalized text describing the current selection in
 	 * immutable mode.
 	 * 
 	 * <p>
@@ -571,6 +574,41 @@ public class SelectFieldUtils {
 	public static <T extends Appendable> T writeSelectionAsText(T out, FormField field, String separator)
 			throws IOException {
 		return internalWriteSelectionAsText(out, field, true, separator);
+	}
+
+	/**
+	 * Writes the value of the {@link FormField} in immutable mode, i.e. without a HTML field.
+	 * <p>
+	 * The field is not always a {@link SelectField} but might also be a {@link BooleanField} for
+	 * example.
+	 * </p>
+	 */
+	public static void writeSelectionImmutable(DisplayContext context, TagWriter out, FormField field)
+			throws IOException {
+		writeSelectionImmutable(context, out, field, null, null);
+	}
+
+	/**
+	 * Writes the value of the {@link FormField} in immutable mode, i.e. without a HTML field.
+	 * <p>
+	 * The field is not always a {@link SelectField} but might also be a {@link BooleanField} for
+	 * example.
+	 * </p>
+	 */
+	public static void writeSelectionImmutable(DisplayContext context, TagWriter out, FormField field,
+			Renderer<Object> optionRenderer, String entriesCssClass) throws IOException {
+		Renderer<Object> nonNullRenderer = optionRenderer != null ? optionRenderer : getOptionRenderer(field);
+		String separator = SelectFieldUtils.getCollectionSeparator(field);
+		for (Object value : getSelectionList(field)) {
+			out.beginBeginTag(SPAN);
+			if (!StringServices.isEmpty(entriesCssClass)) {
+				out.writeAttribute(CLASS_ATTR, entriesCssClass);
+			}
+			out.endBeginTag();
+			nonNullRenderer.write(context, out, value);
+			out.writeText(separator);
+			out.endTag(SPAN);
+		}
 	}
 
 	/**
@@ -631,7 +669,7 @@ public class SelectFieldUtils {
 			out.append(getOptionLabelFailsafe(field, theSel.get(i), labelErrors));
 		}
 
-		if (!CollectionUtils.isEmpty(labelErrors)) {
+		if (!CollectionUtil.isEmpty(labelErrors)) {
 			RuntimeException labelException = ExceptionUtil.createException(
 				"Error occured during rendering of options of field '" + field.getQualifiedName() + "'.",
 				labelErrors);

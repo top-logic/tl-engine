@@ -7,17 +7,17 @@ package com.top_logic.mig.html.layout.tiles.control;
 
 import java.util.List;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.layout.structure.ContentControl;
+import com.top_logic.layout.structure.ComponentWrappingControl;
 import com.top_logic.layout.structure.ContextMenuLayoutControlProvider;
 import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
+import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutFactory;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.mig.html.layout.ChildrenChangedListener;
@@ -111,8 +111,9 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 	}
 
 	private LayoutControl createContainerControl(LayoutComponent component) {
-		ContentControl control = createContentWithMenu(component);
-		RootTileComponent container = (RootTileComponent) component;
+		RootTileComponent rootComponent = (RootTileComponent) component;
+		ComponentWrappingControl control =
+			ComponentWrappingControl.create(component, contextMenu().createContextMenuProvider(component));
 		DisplayPathListener displayPathListener = new DisplayPathListener() {
 
 			@Override
@@ -135,7 +136,7 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 			@Override
 			public Bubble notifyChildrenChanged(LayoutContainer sender, List<LayoutComponent> oldChildren,
 					List<LayoutComponent> newValue) {
-				List<LayoutComponent> displayedPath = container.displayedPath();
+				List<LayoutComponent> displayedPath = rootComponent.displayedPath();
 				if (displayedPath.isEmpty()) {
 					return Bubble.BUBBLE;
 				}
@@ -150,7 +151,7 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 						 * not resolved yet. In this case, the commands would not be created and no
 						 * commands would be added to the control's toolbar. */
 						displayedComponent.getMainLayout().getLayoutContext().notifyInvalid(context -> {
-							setView(control, container, displayedPath);
+							setView(control, rootComponent, displayedPath);
 						});
 						break;
 					}
@@ -160,30 +161,30 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 			}
 
 		};
-		container.addListener(RootTileComponent.DISPLAYED_PATH_PROPERTY, displayPathListener);
-		container.addListener(RootTileComponent.CHILDREN_PROPERTY, childrenChangeListener);
-		container.set(CLEANUP_ACTION, () -> {
-			container.removeListener(RootTileComponent.CHILDREN_PROPERTY, childrenChangeListener);
-			container.removeListener(RootTileComponent.DISPLAYED_PATH_PROPERTY, displayPathListener);
+		rootComponent.addListener(RootTileComponent.DISPLAYED_PATH_PROPERTY, displayPathListener);
+		rootComponent.addListener(RootTileComponent.CHILDREN_PROPERTY, childrenChangeListener);
+		rootComponent.set(CLEANUP_ACTION, () -> {
+			rootComponent.removeListener(RootTileComponent.CHILDREN_PROPERTY, childrenChangeListener);
+			rootComponent.removeListener(RootTileComponent.DISPLAYED_PATH_PROPERTY, displayPathListener);
 		});
 
-		setView(control, container, container.displayedPath());
+		setView(control, rootComponent, rootComponent.displayedPath());
 		return control;
 	}
 
-	void setView(ContentControl control, RootTileComponent rootTile, List<LayoutComponent> displayPath) {
-		control.setView(createView(rootTile, displayPath));
+	void setView(ComponentWrappingControl control, RootTileComponent rootTile, List<LayoutComponent> displayPath) {
+		control.setChildControl(createView(rootTile, displayPath));
 		control.requestRepaint();
 	}
 
-	private HTMLFragment createView(RootTileComponent sender, List<LayoutComponent> displayedPath) {
+	private LayoutControl createView(RootTileComponent sender, List<LayoutComponent> displayedPath) {
 		MainLayout mainLayout = sender.getMainLayout();
 		LayoutFactory layoutFactory = mainLayout.getLayoutFactory();
 
 		if (displayedPath.isEmpty()) {
 			LayoutComponent child = sender.getChild();
 			if (child == null) {
-				return Fragments.empty();
+				return new LayoutControlAdapter(Fragments.empty());
 			}
 			return layoutFactory.createLayout(child, sender.getToolBar());
 		}

@@ -1807,6 +1807,12 @@
 
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->
+	<color name="sb-track-color"
+		value="#c4c7cc"
+	/>
+	<color name="sb-thumb-color"
+		value="#2968c8"
+	/>
 	<color name="background"
 		value="#ffffff"
 	/>
@@ -2099,5 +2105,8 @@
 	/>
 	<string name="corner-radius"
 		value="0.25rem"
+	/>
+	<string name="sb-size"
+		value="4px"
 	/>
 </settings>

@@ -1005,11 +1005,6 @@
         <rtexprvalue>true</rtexprvalue>
     </attribute>
     <attribute>
-        <name>unsafeHTML</name>
-        <required>false</required>
-        <rtexprvalue>true</rtexprvalue>
-    </attribute>
-    <attribute>
         <name>onfocus</name>
         <required>false</required>
         <rtexprvalue>true</rtexprvalue>
@@ -1105,11 +1100,6 @@
     </attribute>
     <attribute>
 	    <name>multiLine</name>
-    	<required>false</required>
-        <rtexprvalue>true</rtexprvalue>
-    </attribute>
-    <attribute>
-	    <name>unsafeHTML</name>
     	<required>false</required>
         <rtexprvalue>true</rtexprvalue>
     </attribute>

@@ -140,7 +140,6 @@ public class BlockTextInputTag extends TextInputTag {
         if (!StringServices.isEmpty(onInput)) {
 			theControl.setOnInput(new ConstantDisplayValue(onInput));
 		}
-        theControl.setUnsafeHTML(unsafeHTML);
         theControl.setType(this.type);
         if (tabindex.isSet())
             theControl.setTabIndex(tabindex.get());

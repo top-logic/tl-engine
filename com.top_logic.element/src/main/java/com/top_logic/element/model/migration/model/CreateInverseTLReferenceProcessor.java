@@ -85,11 +85,13 @@ public class CreateInverseTLReferenceProcessor
 			inverseReference, getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
 			getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig());
 		
-		MigrationUtils.createBackReference(log, tlModel, reference, inverseReference, nullIfUnset(Config.MANDATORY),
-			nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
-			nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
-			nullIfUnset(Config.HISTORY_TYPE), getConfig(),
-			null);
+		if (tlModel != null) {
+			MigrationUtils.createBackReference(log, tlModel, reference, inverseReference, nullIfUnset(Config.MANDATORY),
+				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
+				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
+				nullIfUnset(Config.HISTORY_TYPE), getConfig(),
+				null);
+		}
 		log.info("Created inverse reference " + _util.qualifiedName(reference) + " for reference "
 			+ _util.qualifiedName(inverseReference));
 	}

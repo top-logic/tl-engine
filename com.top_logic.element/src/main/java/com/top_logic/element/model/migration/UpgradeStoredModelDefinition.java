@@ -34,10 +34,13 @@ public class UpgradeStoredModelDefinition implements MigrationPostProcessor {
 		MigrationUtils.modifyTLModel(log, connection, document -> removeModuleContents(log, document));
 	}
 
-	private boolean removeModuleContents(Log log, Document document) {
+	private boolean removeModuleContents(Log log, Document tlModel) {
+		if (tlModel == null) {
+			return false;
+		}
 		boolean changed = false;
-		changed |= removeModuleContent(log, document, "roles");
-		changed |= removeModuleContent(log, document, "factory");
+		changed |= removeModuleContent(log, tlModel, "roles");
+		changed |= removeModuleContent(log, tlModel, "factory");
 		return changed;
 	}
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model>
+
+	<module name="m0">
+		<class name="A">
+			<attributes>
+			</attributes>
+		</class>
+
+		<class name="B">
+			<attributes>
+			</attributes>			
+		</class>
+	</module>
+</model>

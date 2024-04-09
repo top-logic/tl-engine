@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27517_Refactoring_User_Management"
+		module="tl-model-wysiwyg"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<add-annotations name="tl.model.wysiwyg:Html">
+		  <annotations>
+		    <storage-algorithm>
+		      <implementation class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorage"/>
+		    </storage-algorithm>
+		    <render-whole-line/>
+		  </annotations>
+		</add-annotations>
+		<update-datatype name="tl.model.wysiwyg:Html">
+		  <storage-mapping class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorageMapping"/>
+		</update-datatype>
+	</processors>
+	<migration>
+	</migration>
+	<post-processors/>
+</migration>

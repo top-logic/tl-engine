@@ -26,11 +26,11 @@ import org.w3c.dom.Document;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
-import test.com.top_logic.basic.ErrorIgnoringProtocol;
 import test.com.top_logic.basic.ExpectedFailureProtocol;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.ErrorIgnoringProtocol;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.config.ConfigurationDescriptor;

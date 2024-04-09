@@ -247,7 +247,7 @@ public class TLModelUtil {
 		private Void unlinkWholeReference(TLReference model, Object arg, TLAssociation owner) {
 			TLReference inverseReference = TLModelUtil.getForeignName(model);
 
-			if (inverseReference != null) {
+			if (inverseReference != null && inverseReference.tValid()) {
 				super.visitReference(inverseReference, arg);
 			}
 
@@ -280,6 +280,13 @@ public class TLModelUtil {
 
 		private UnlinkPartVisitor() {
 			// singleton instance
+		}
+
+		@Override
+		public Void visitReference(TLReference model, Object arg) {
+			Void result = super.visitReference(model, arg);
+			model.setEnd(null);
+			return result;
 		}
 
 		@Override

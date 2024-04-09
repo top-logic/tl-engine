@@ -71,6 +71,11 @@ public class Ticket26554MakeWebFolderReferencesCompositions implements Migration
 				eq(literalString("tl.folder"), column("NAME"))),
 			Long.class);
 
+		if (folderModuleId == null) {
+			log.info("Skipping folder migration due to missing 'tl.folder' module.");
+			return;
+		}
+
 		Long folderTypeId = processor.querySingleValue(
 			select(
 				columns(columnDef("IDENTIFIER")),

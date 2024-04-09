@@ -90,11 +90,13 @@ public class AddTLAnnotations extends AbstractConfiguredInstance<AddTLAnnotation
 		int moduleTypeSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 		if (moduleTypeSepIdx < 0) {
 			_util.addModuleAnnotations(log, connection, name, getConfig());
-			try {
-				MigrationUtils.addModuleAnnotations(log, tlModel, name, getConfig());
-			} catch (MigrationException ex) {
-				log.error("Unable to add annotations to module '" + name + "'.", ex);
-				return false;
+			if (tlModel != null) {
+				try {
+					MigrationUtils.addModuleAnnotations(log, tlModel, name, getConfig());
+				} catch (MigrationException ex) {
+					log.error("Unable to add annotations to module '" + name + "'.", ex);
+					return false;
+				}
 			}
 			log.info("Added annotations to module '" + name + "'.");
 			return true;
@@ -105,12 +107,15 @@ public class AddTLAnnotations extends AbstractConfiguredInstance<AddTLAnnotation
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
 			_util.addTypeAnnotations(log, connection, module, typeName, getConfig());
-			try {
-				addTypeAnnotations(log, tlModel, moduleName, typeName);
-			} catch (MigrationException ex) {
-				log.error(
-					"Unable to add annotations to type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "'.", ex);
-				return false;
+			if (tlModel != null) {
+				try {
+					addTypeAnnotations(log, tlModel, moduleName, typeName);
+				} catch (MigrationException ex) {
+					log.error(
+						"Unable to add annotations to type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "'.",
+						ex);
+					return false;
+				}
 			}
 			log.info("Added annotation to type '" + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + "'.");
 			return true;
@@ -120,13 +125,15 @@ public class AddTLAnnotations extends AbstractConfiguredInstance<AddTLAnnotation
 		Type type = _util.getTLTypeOrFail(connection, module, typeName);
 		String partName = name.substring(typePartSepIdx + 1);
 		_util.addTypePartAnnotations(log, connection, type, partName, getConfig());
-		try {
-			addTypePartAnnotations(log, tlModel, moduleName, typeName, partName);
-		} catch (MigrationException ex) {
-			log.error("Unable to add annotations to type part '"
+		if (tlModel != null) {
+			try {
+				addTypePartAnnotations(log, tlModel, moduleName, typeName, partName);
+			} catch (MigrationException ex) {
+				log.error("Unable to add annotations to type part '"
 					+ TLModelUtil.qualifiedTypePartName(moduleName, typeName, partName) + "'.",
-				ex);
-			return false;
+					ex);
+				return false;
+			}
 		}
 
 		log.info("Added annotation to type part '"

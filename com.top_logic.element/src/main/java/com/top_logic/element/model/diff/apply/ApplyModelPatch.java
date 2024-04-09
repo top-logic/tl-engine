@@ -6,6 +6,7 @@
 package com.top_logic.element.model.diff.apply;
 
 import static com.top_logic.basic.config.TypedConfiguration.*;
+import static com.top_logic.basic.config.misc.TypedConfigUtil.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +61,7 @@ import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdatePartType;
+import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 import com.top_logic.element.model.diff.config.visit.DiffVisitor;
 import com.top_logic.element.model.migration.ChangeAttributeTargetType;
 import com.top_logic.element.model.migration.ChangeAttributeTargetType.ChangeRefConfig;
@@ -94,6 +96,7 @@ import com.top_logic.element.model.migration.model.SetDefaultTLClassifierProcess
 import com.top_logic.element.model.migration.model.UpdateTLAnnotations;
 import com.top_logic.element.model.migration.model.UpdateTLAssociationEndProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLDataTypeProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLReferenceProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -116,6 +119,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.security.RoleConfig;
@@ -187,6 +191,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		@Override
 		public Integer visit(CreateClassifier diff, Void arg) throws RuntimeException {
+			return 30;
+		}
+
+		@Override
+		public Integer visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
 			return 30;
 		}
 
@@ -454,6 +463,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		log().info("Adding generalization '" + diff.getGeneralization() + "' to '" + diff.getType() + "'.");
 		int index = before == null ? generalizations.size() : generalizations.indexOf(before);
+		if (index < 0) {
+			log().info("Referenced generalization '" + before + "' not found in '" + diff.getType() + "', appending.");
+			index = 0;
+		}
 		generalizations.add(index, generalization);
 
 		if (createProcessors()) {
@@ -721,6 +734,20 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		copyDBColumn(type, config);
 
 		addProcessor(config);
+	}
+
+	@Override
+	public Void visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
+		TLPrimitive target = (TLPrimitive) TLModelUtil.findType(getModel(), diff.getType());
+		StorageMapping<?> storageMapping = createInstance(diff.getStorageMapping());
+		target.setStorageMapping(storageMapping);
+		if (createProcessors()) {
+			UpdateTLDataTypeProcessor.Config config = newConfigItem(UpdateTLDataTypeProcessor.Config.class);
+			config.setName(qTypeName(target.getModule().getName(), target.getName()));
+			config.setStorageMapping(TypedConfiguration.copy(diff.getStorageMapping()));
+			addProcessor(config);
+		}
+		return null;
 	}
 
 	@Override
@@ -1057,7 +1084,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		
 		if (part instanceof TLClass) {
 			TLClass type = (TLClass) part;
-			if (!type.isAbstract()) {
+			if (!type.isAbstract() && !type.tTransient()) {
 				try (CloseableIterator<TLObject> it = directInstances(type)) {
 					if (it.hasNext()) {
 						log().info("Merge conflict deleting '" + type + "': Instances exist.");
@@ -1109,8 +1136,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				config.setName(qTypePartName(diff.getName()));
 				addProcessor(config);
 			} else {
-				throw new UnsupportedOperationException("No deletion for '" + diff.getName() + "' of type '"
-						+ part.getClass().getName() + "' possible.");
+				log().info(
+					"No deletion supported for '" + diff.getName() + "' of type '" + part.getClass().getName() + "'.");
 			}
 		}
 		return null;

@@ -92,7 +92,7 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName enumName = getConfig().getEnumeration();
 		_util.setDefaultTLClassifier(connection, enumName, getConfig().getDefaultClassifier());
-		boolean updateModelBaseline =
+		boolean updateModelBaseline = tlModel == null ? false : 
 			MigrationUtils.setDefaultClassifier(log, tlModel, enumName, getConfig().getDefaultClassifier());
 		if (getConfig().getDefaultClassifier() == null) {
 			log.info("Removed default classifier in " + _util.qualifiedName(enumName));

@@ -128,7 +128,7 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 			log.info("Deleted " + deletedRows + " instances of type '" + _util.toString(type) + "' from table "
 				+ getConfig().getTypeTable() + ".");
 		}
-		if (getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 			return false;
 		}
 		if (type.getKind() == Type.Kind.ASSOCIATION) {

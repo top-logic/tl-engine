@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.BufferingProtocol;
@@ -347,10 +348,44 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	private void initModel(PooledConnection connection) throws SQLException {
 		// No old model, initial setup or legacy upgrade.
 
+		TLModel dbModel = getModel();
+		boolean initialSetup = dbModel.getModules().isEmpty();
+
 		Protocol log = log();
-		ModelResolver modelResolver = new ModelResolver(log, getModel(), getFactory());
+		ModelResolver modelResolver = new ModelResolver(log, dbModel, getFactory());
 		modelResolver.createModel(_modelConfig);
 		modelResolver.complete();
+
+		if (!initialSetup) {
+			// The model baseline was lost, the current configuration is used as new baseline, but
+			// there may be missing migrations due to the missing baseline. Compare the current
+			// model in the database with a model setup from the configuration. Any difference may
+			// be an indication for a missing migration.
+
+			TLModel baselineModel = loadTransientModel(log, _modelConfig);
+			log.checkErrors();
+
+			CreateModelPatch patchCreator = new CreateModelPatch();
+			patchCreator.addPatch(dbModel, baselineModel);
+
+			List<DiffElement> patch = patchCreator.getPatch();
+			if (!patch.isEmpty()) {
+				Logger.info(
+					"Restoring missing model baseline, diff to existing model follows:\n"
+						+ patch.stream().map(Object::toString).collect(Collectors.joining("\n")),
+					DynamicModelService.class);
+
+				MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+				ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), null, patch,
+					processors.getProcessors());
+				new ConstraintChecker().check(log(), processors);
+
+				Logger.info(
+					"The following migration would adjust the existing model to the current configuration:\n"
+						+ processors,
+					DynamicModelService.class);
+			}
+		}
 
 		storeModelConfig(connection);
 	}

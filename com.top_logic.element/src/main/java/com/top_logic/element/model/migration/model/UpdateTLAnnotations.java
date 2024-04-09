@@ -87,7 +87,8 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 		int moduleTypeSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 		if (moduleTypeSepIdx < 0) {
 			_util.updateModuleAnnotations(connection, name, getConfig());
-			boolean updateModelBaseline = MigrationUtils.setModuleAnnotations(log, tlModel, name, getConfig());
+			boolean updateModelBaseline =
+				tlModel == null ? false : MigrationUtils.setModuleAnnotations(log, tlModel, name, getConfig());
 			log.info("Updated annotation of module " + name + ".");
 			return updateModelBaseline;
 		}
@@ -97,7 +98,7 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
 			_util.updateTypeAnnotations(connection, module, typeName, getConfig());
-			boolean updateModelBaseline =
+			boolean updateModelBaseline = tlModel == null ? false :
 				MigrationUtils.setTypeAnnotations(log, tlModel, moduleName, typeName, getConfig());
 			log.info("Updated annotation of type " + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + ".");
 			return updateModelBaseline;
@@ -107,7 +108,7 @@ public class UpdateTLAnnotations extends AbstractConfiguredInstance<UpdateTLAnno
 		Type type = _util.getTLTypeOrFail(connection, module, typeName);
 		String partName = name.substring(typePartSepIdx + 1);
 		_util.updateTypePartAnnotations(connection, type, partName, getConfig());
-		boolean updateModelBaseline =
+		boolean updateModelBaseline = tlModel == null ? false :
 			MigrationUtils.setTypePartAnnotations(log, tlModel, moduleName, typeName, partName, getConfig());
 		log.info("Updated annotation of type part "
 				+ TLModelUtil.qualifiedTypePartName(module.getModuleName(), type.getTypeName(), partName) + ".");

@@ -151,8 +151,10 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		_util.createTLClass(connection, className,
 			getConfig().isAbstract(), getConfig().isFinal(),
 			getConfig());
-		MigrationUtils.createClassType(log, tlModel, className, getConfig().isAbstract(),
-			MigrationUtils.nullIfUnset(getConfig(), Config.FINAL), getConfig());
+		if (tlModel != null) {
+			MigrationUtils.createClassType(log, tlModel, className, getConfig().isAbstract(),
+				MigrationUtils.nullIfUnset(getConfig(), Config.FINAL), getConfig());
+		}
 		log.info("Created class " + _util.qualifiedName(className));
 
 		addPrimaryGeneralization(context, log, connection, tlModel, className);

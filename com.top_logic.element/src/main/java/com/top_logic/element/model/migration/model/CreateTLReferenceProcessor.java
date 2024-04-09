@@ -89,10 +89,12 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 			getConfig().canNavigate(),
 			getConfig().getHistoryType(), getConfig());
 
-		MigrationUtils.createReference(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
-			nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
-			nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
-			nullIfUnset(Config.HISTORY_TYPE), getConfig(), null);
+		if (tlModel != null) {
+			MigrationUtils.createReference(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
+				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
+				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
+				nullIfUnset(Config.HISTORY_TYPE), getConfig(), null);
+		}
 		log.info("Created reference " + _util.qualifiedName(partName));
 	}
 

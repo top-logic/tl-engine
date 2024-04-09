@@ -4,7 +4,7 @@
 }
 
 body {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);
@@ -60,35 +60,35 @@ code {
 }
 
 h5 {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-01-font-size);
 	line-height: var(--heading-compact-01-line-height);
 	letter-spacing: var(--heading-compact-01-letter-spacing);
 }
 
 h4 {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
 }
 
 h3 {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
 }
 
 h2 {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
 }
 
 h1 {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-05-font-size);
 	line-height: var(--heading-05-line-height);
 	letter-spacing: var(--heading-05-letter-spacing);
@@ -651,7 +651,7 @@ div.fltList {
 }
 
 .checkboxMultiSelectNoEntries {
-    font-family: 'Inter-SemiBold';
+    font-family: var(--font-family-bold);
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1167,7 +1167,7 @@ button.moveOption {
 	gap: var(--spacing-02);
 	justify-content: center;
 	align-items: center;
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: .875rem;
 	font-weight: 400;
 	color: var(--button-secondary);
@@ -1275,14 +1275,14 @@ button.moveOption {
 }
 
 .tl-mega-menu__option-label {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-02-font-size);
 	line-height: var(--heading-02-line-height);
 	letter-spacing: var(--heading-02-letter-spacing);
 }
 
 .tl-mega-menu__option-tooltip {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
     font-size: .875rem;
     font-weight: 400;
 }
@@ -1311,7 +1311,7 @@ button.moveOption {
 
 .tl-mega-menu__option-label--immutable {
 	color: var(--text-primary);
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
     font-size: .875rem;
     font-weight: 400;
 }
@@ -1373,7 +1373,7 @@ div.sxError {
 
 div.sxMessage,
 div.sxFailure {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -1381,7 +1381,7 @@ div.sxFailure {
 }
 
 div.sxButtons {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1668,7 +1668,7 @@ div.mcMinimized .accText {
 }
 
 .tl-info-service-item__header-type-message {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1909,7 +1909,7 @@ h5.card-title {
 
 h5.card-title a {
 	color: var(--text-primary);
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -1928,7 +1928,7 @@ h5.card-title a:focus {
 .card-text {
 	order: 3;
 	color: var(--text-primary);
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -2473,7 +2473,7 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleTitle {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -2729,7 +2729,7 @@ div.ssiContentArea {
 	height: 2rem; /* 32px height */
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);

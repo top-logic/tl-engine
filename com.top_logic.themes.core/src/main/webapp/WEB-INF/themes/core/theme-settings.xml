@@ -2025,6 +2025,12 @@
 		value="4rem"
 	/>
 	<!-- Typography Tokens -->
+	<string name="font-family-regular"
+		value="'Inter-Regular'"
+	/>
+	<string name="font-family-bold"
+		value="'Inter-SemiBold'"
+	/>
 	<string name="body-01-font-size"
 		value=".75rem"
 	/>

@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.wrap.list;
 
+import java.text.Collator;
 import java.util.List;
 
 import com.top_logic.basic.TLID;
@@ -19,6 +20,7 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.internal.PersistentTypePart;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
 
 /**
  * FastListElements are elements of a {@link FastList}. 
@@ -360,7 +362,8 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
 		if (getOwner().isOrdered()) {
 			return Integer.compare(getIndex(), otherClassifier.getIndex());
 		}
-		return getLabel().compareTo(otherClassifier.getLabel());
+		Collator collator = Collator.getInstance(TLContext.getLocale());
+		return collator.compare(getLabel(), otherClassifier.getLabel());
 	}
 
 }

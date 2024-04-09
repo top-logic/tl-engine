@@ -4,7 +4,7 @@
 ****					****
 */
 .frmBody h1 {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -12,7 +12,7 @@
 
 .rf_header,
 .dfEntryTitle {
-    font-family: 'Inter-SemiBold';
+    font-family: var(--font-family-bold);
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -108,7 +108,7 @@ div.fptTitleContent .tlTranslatedI18nField, div.fptTitleContent .cTextInput {
 }
 
 div.fptTitleContent, div.fptTitle input.is-input, div.fptTitle select.is-input {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -922,7 +922,7 @@ div.dfListAdd {
 	white-space: nowrap;
 	text-overflow: ellipsis;
     overflow: hidden;
-    font-family: 'Inter-Regular';
+    font-family: var(--font-family-regular);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);
     letter-spacing: var(--body-02-letter-spacing);
@@ -1275,7 +1275,7 @@ div.cal_view {
 
 .cal_view_switch_header {
 	white-space: nowrap;
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-01-font-size);
 	line-height: var(--heading-compact-01-line-height);
 	letter-spacing: var(--heading-compact-01-letter-spacing);
@@ -1306,7 +1306,7 @@ table.cal_table {
 th.cal_th {
 	border-style: none;
 	padding: var(--spacing-01) 0;
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
     font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -1320,7 +1320,7 @@ td.cal_cell {
 	padding: 0;
 	height: 2rem;
     width: 2rem;
-    font-family: 'Inter-Regular';
+    font-family: var(--font-family-regular);
     font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -1615,7 +1615,7 @@ span.cIconSelect .input-image.cannot-edit i {
 	word-wrap: break-word;
 	word-break: break-word;
 	width: 100%;
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);
     letter-spacing: var(--body-02-letter-spacing);
@@ -2494,7 +2494,7 @@ a.input-image.tristate.tBoolean {
 }
 
 .ddwttDropBtn {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);
@@ -2583,7 +2583,7 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttSearch {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);

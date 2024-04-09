@@ -231,13 +231,15 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		_util.updateTLStructuredTypePart(connection, sourcePart, targetType, null, null, null, null, null, null, null,
 			null, null, null, null, null);
 
-		QualifiedPartName src;
-		if (getConfig() instanceof ChangeRefConfig) {
-			src = ((ChangeRefConfig) getConfig()).getReference();
-		} else {
-			src = part;
+		if (tlModel != null) {
+			QualifiedPartName src;
+			if (getConfig() instanceof ChangeRefConfig) {
+				src = ((ChangeRefConfig) getConfig()).getReference();
+			} else {
+				src = part;
+			}
+			MigrationUtils.updateTargetType(log, tlModel, src, getConfig().getTarget());
 		}
-		MigrationUtils.updateTargetType(log, tlModel, src, getConfig().getTarget());
 
 		log.info(
 			"Changed type of " + _util.qualifiedName(part) + " to " + _util.qualifiedName(getConfig().getTarget()));
@@ -295,7 +297,9 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 			sourceType.getTable(), sourceType.getID(),
 			targetType.getTable(), targetType.getID());
 
-		MigrationUtils.updateTypeReferences(log, tlModel, source, getConfig().getTarget());
+		if (tlModel != null) {
+			MigrationUtils.updateTypeReferences(log, tlModel, source, getConfig().getTarget());
+		}
 
 		log.info(
 			"Changed types in " + changed + " rows from " + _util.qualifiedName(source) + " to "

@@ -90,7 +90,6 @@ public class SeparateDataClasses extends ModelTransformation {
 
 	private TLProperty copyProperty(TLProperty orig, TLStructuredType to) {
 		TLProperty copy = TLModelUtil.addProperty(to, orig.getName(), orig.getType());
-		copy.setDerived(orig.isDerived());
 		copyAnnotations(orig, copy);
 		
 		return copy;

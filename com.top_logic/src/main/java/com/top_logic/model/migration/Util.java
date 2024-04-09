@@ -1344,10 +1344,10 @@ public class Util {
 	/**
 	 * Removes a generalisation for the given specialisation.
 	 */
-	public void removeGeneralisation(PooledConnection con, QualifiedTypeName specialisation,
+	public void removeGeneralisation(Log log, PooledConnection con, QualifiedTypeName specialisation,
 			QualifiedTypeName generalisation)
 			throws SQLException, MigrationException {
-		removeGeneralisation(con, TLContext.TRUNK_ID,
+		removeGeneralisation(log, con, TLContext.TRUNK_ID,
 			specialisation.getModuleName(), specialisation.getTypeName(),
 			generalisation.getModuleName(), generalisation.getTypeName());
 	}
@@ -1355,20 +1355,28 @@ public class Util {
 	/**
 	 * Removes a generalisation for the given specialisation.
 	 */
-	public void removeGeneralisation(PooledConnection con, long branch, String specialisationModule,
-			String specialisationName, String generalisationModule, String generalisationName)
+	public void removeGeneralisation(Log log, PooledConnection con, long branch, String specialisationModule,
+			String specialisationName, String generalisationModuleName, String generalisationName)
 			throws SQLException, MigrationException {
-		Type generalization = getTLClass(con, getTLModuleOrFail(con, generalisationModule), generalisationName);
+		Module generalisationModule = getTLModule(con, TLContext.TRUNK_ID, generalisationModuleName);
+		if (generalisationModule == null) {
+			log.info("No such generalization "
+				+ TLModelUtil.qualifiedName(generalisationModuleName, generalisationName) + " in "
+				+ TLModelUtil.qualifiedName(specialisationModule, specialisationName) + ", skipping removal.");
+			return;
+		}
+		Type generalization = getTLClass(con, generalisationModule, generalisationName);
 		if (generalization == null) {
-			throw new MigrationException("No generalization "
-				+ TLModelUtil.qualifiedName(generalisationModule, generalisationName) + " found for specialization "
-				+ TLModelUtil.qualifiedName(specialisationModule, specialisationName) + ".");
+			log.info("No such generalization "
+				+ TLModelUtil.qualifiedName(generalisationModuleName, generalisationName) + " in "
+				+ TLModelUtil.qualifiedName(specialisationModule, specialisationName) + ", skipping removal.");
+			return;
 		}
 		Type specialization = getTLClass(con, getTLModuleOrFail(con, specialisationModule), specialisationName);
 		if (specialization == null) {
 			throw new MigrationException("No specialization "
 				+ TLModelUtil.qualifiedName(specialisationModule, specialisationName) + " found for generalization "
-				+ TLModelUtil.qualifiedName(generalisationModule, generalisationName) + ".");
+				+ TLModelUtil.qualifiedName(generalisationModuleName, generalisationName) + ".");
 		}
 
 		CompiledStatement delete = query(
@@ -1388,7 +1396,6 @@ public class Util {
 					parameter(DBType.ID, "generalization"))))).toSql(con.getSQLDialect());
 
 		delete.executeUpdate(con, branch, specialization.getID(), generalization.getID());
-
 	}
 
 	/**
@@ -1621,7 +1628,7 @@ public class Util {
 			selectParts.executeQuery(connection, type.getBranch(), type.getID())) {
 			while (dbResult.next()) {
 				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
-				TLID definition = readMandatoryTLIDColumn(dbResult, definitionAlias);
+				TLID definition = readTLIDColumn(dbResult, definitionAlias, id);
 				String name = dbResult.getString(nameAlias);
 				String impl = dbResult.getString(implAlias);
 				int order = dbResult.getInt(orderAlias);
@@ -1721,7 +1728,7 @@ public class Util {
 			selectPart.executeQuery(connection, structuredType.getBranch(), structuredType.getID(), partName)) {
 			while (dbResult.next()) {
 				TLID id = LongID.valueOf(dbResult.getLong(identifierAlias));
-				TLID definition = readMandatoryTLIDColumn(dbResult, definitionAlias);
+				TLID definition = readTLIDColumn(dbResult, definitionAlias, id);
 				String impl = dbResult.getString(implAlias);
 				int order = dbResult.getInt(orderAlias);
 				TypePart part;
@@ -1749,9 +1756,11 @@ public class Util {
 		}
 	}
 
-	private TLID readMandatoryTLIDColumn(ResultSet dbResult, String columnAlias) throws SQLException {
+	private TLID readTLIDColumn(ResultSet dbResult, String columnAlias, TLID defaultValue) throws SQLException {
 		long colValue = dbResult.getLong(columnAlias);
-		assert !dbResult.wasNull() : "Column is not null.";
+		if (dbResult.wasNull()) {
+			return defaultValue;
+		}
 		TLID id;
 		if (colValue == ((LongID) IdentifierUtil.nullIdForMandatoryDatabaseColumns()).longValue()) {
 			id = IdentifierUtil.nullIdForMandatoryDatabaseColumns();

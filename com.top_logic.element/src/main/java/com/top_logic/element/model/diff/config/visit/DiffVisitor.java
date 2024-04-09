@@ -27,6 +27,7 @@ import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdatePartType;
+import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 
 /**
  * Visitor interface for the {@link DiffElement} hierarchy.
@@ -102,5 +103,8 @@ public interface DiffVisitor<R, A, E extends Throwable> {
 
 	/** Visit case for {@link UpdatePartType}. */
 	R visit(UpdatePartType diff, A arg) throws E;
+
+	/** Visit case for {@link UpdateStorageMapping}. */
+	R visit(UpdateStorageMapping diff, A arg) throws E;
 
 }

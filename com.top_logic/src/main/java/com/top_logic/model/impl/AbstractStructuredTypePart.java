@@ -15,7 +15,6 @@ import com.top_logic.model.ModelKind;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -48,11 +47,6 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 	private StorageDetail _storage;
 
 	private TLType _type;
-
-	/**
-	 * @see TLReference#isDerived()
-	 */
-	private Boolean _derived;
 
 	AbstractStructuredTypePart(TLModel model, String name) {
 		super(model, name);
@@ -133,24 +127,12 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 
 	@Override
 	public final boolean isDerived() {
-		if (_derived == null) {
-			_derived = getInitialDerived();
-		}
-		return _derived;
-	}
-
-	private boolean getInitialDerived() {
 		StorageDetail storage = getStorageImplementation();
 		if (storage == null) {
 			/* Happens during tests in "com.top_logic". */
 			return false;
 		}
 		return storage.isReadOnly();
-	}
-
-	@Override
-	public final void setDerived(boolean value) {
-		_derived = value;
 	}
 
 	@Override

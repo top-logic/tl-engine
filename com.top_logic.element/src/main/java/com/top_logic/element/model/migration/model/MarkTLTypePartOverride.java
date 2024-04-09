@@ -130,8 +130,11 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 		sql.executeUpdate(connection, partOwner.getBranch(), partOwner.getID(), partName.getPartName(),
 			definitionPart.getID());
 
+		if (tlModel != null) {
+			MigrationUtils.setOverride(log, tlModel, partName, true);
+		}
+
 		log.info("Mark " + _util.qualifiedName(partName) + " as override of " + _util.qualifiedName(definition));
-		MigrationUtils.setOverride(log, tlModel, partName, true);
 	}
 
 }

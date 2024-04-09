@@ -116,7 +116,7 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 
 		deleteElements(log, connection, byTypeAndBranch);
 
-		if (getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 			return false;
 		}
 		return MigrationUtils.deleteModule(log, tlModel, moduleName);

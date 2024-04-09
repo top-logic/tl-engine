@@ -58,7 +58,8 @@ public interface TLModelBaseLineMigrationProcessor extends MigrationProcessor {
 	 * @param connection
 	 *        The connection to the database to modify
 	 * @param tlModel
-	 *        The parsed model base line from the database.
+	 *        The parsed model base line from the database, or <code>null</code> if no model
+	 *        baseline exists.
 	 * 
 	 * @return Whether the given {@link Document model} has been adapted and needs to be written to
 	 *         the database.

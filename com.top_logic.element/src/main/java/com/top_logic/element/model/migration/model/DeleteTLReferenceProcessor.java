@@ -141,7 +141,7 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 		}
 		_util.deleteModelPart(connection, typePart);
 		boolean updateModelBaseline;
-		if (getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 			updateModelBaseline = false;
 		} else {
 			updateModelBaseline = MigrationUtils.deleteTypePart(log, tlModel, partToDelete);

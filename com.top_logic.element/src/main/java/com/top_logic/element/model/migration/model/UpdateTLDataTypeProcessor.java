@@ -55,6 +55,11 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		QualifiedTypeName getName();
 
 		/**
+		 * @see #getName()
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
 		 * New name of the data type including the new module.
 		 */
 		@Nullable
@@ -85,6 +90,11 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		@DefaultContainer
 		@Nullable
 		PolymorphicConfiguration<StorageMapping<?>> getStorageMapping();
+
+		/**
+		 * @see #getStorageMapping()
+		 */
+		void setStorageMapping(PolymorphicConfiguration<StorageMapping<?>> value);
 
 	}
 
@@ -146,8 +156,10 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		_util.updateTLDataType(connection, type, newModule, dataTypeName, getConfig().getKind(), columnType,
 			storageMapping, annotations);
 
-		MigrationUtils.updateDatatype(log, tlModel, typeName, newName, getConfig().getKind(), columnType,
-			storageMapping, annotations);
+		if (tlModel != null) {
+			MigrationUtils.updateDatatype(log, tlModel, typeName, newName, getConfig().getKind(), columnType,
+				storageMapping, annotations);
+		}
 		log.info("Updated datatype " + _util.qualifiedName(typeName));
 		return true;
 	}

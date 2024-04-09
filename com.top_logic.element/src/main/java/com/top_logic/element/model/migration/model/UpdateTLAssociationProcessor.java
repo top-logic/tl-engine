@@ -112,7 +112,7 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 		log.info("Updated association " + _util.toString(association));
 
 		boolean updateModelBaseline;
-		if (TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {
+		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {
 			/* Internal TLAssociation which is not defined in the model baseline. */
 			updateModelBaseline = false;
 		} else {

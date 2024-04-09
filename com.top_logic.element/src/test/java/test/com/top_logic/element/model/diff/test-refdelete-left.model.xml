@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model>
+
+	<module name="m0">
+		<class name="A">
+			<attributes>
+				<reference name="b" type="B"/>
+				<reference name="y" type="B" inverse-reference="x" kind="backwards"/>
+			</attributes>
+		</class>
+
+		<class name="B">
+			<attributes>
+				<reference name="a" type="A" inverse-reference="b" kind="backwards"/>
+				<reference name="x" type="A"/>
+			</attributes>			
+		</class>
+	</module>
+</model>

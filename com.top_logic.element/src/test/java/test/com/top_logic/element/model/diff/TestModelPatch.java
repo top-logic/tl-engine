@@ -14,6 +14,7 @@ import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.ErrorIgnoringProtocol;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
@@ -22,6 +23,7 @@ import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.model.DefaultModelFactory;
+import com.top_logic.element.model.ModelCopy;
 import com.top_logic.element.model.ModelResolver;
 import com.top_logic.element.model.PersistentTLModel;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
@@ -69,6 +71,58 @@ public class TestModelPatch extends BasicTestCase {
 		assertEmpty(createPatch(left, right));
 
 		assertEqualsConfig(right, left);
+	}
+
+	public void testPatchTransient() {
+		doTestTransient("test1-left.model.xml", "test1-right.model.xml");
+	}
+
+	public void testPatchOverrideTransient() {
+		doTestTransient("test-override-left.model.xml", "test-override-right.model.xml");
+	}
+
+	public void testPatchRefDeleteTransient() {
+		doTestTransient("test-refdelete-left.model.xml", "test-refdelete-right.model.xml");
+	}
+
+	private void doTestTransient(String leftFixture, String rightFixture) {
+		TLModel left = loadModelTransient(leftFixture);
+		TLModel right = loadModelTransient(rightFixture);
+
+		List<DiffElement> patch = createPatch(left, right);
+		applyPatch(left, new DefaultModelFactory(), patch);
+
+		assertEmpty(createPatch(left, right));
+		assertEqualsConfig(right, left);
+	}
+
+	public void testCopy() {
+		assertCopyWithoutDiff("test1-left.model.xml");
+		assertCopyWithoutDiff("test1-right.model.xml");
+		assertCopyWithoutDiff("test-override-left.model.xml");
+	}
+
+	private void assertCopyWithoutDiff(String fixture) {
+		TLModel model = loadModelTransient(fixture);
+		TLModel copy = ModelCopy.copy(model);
+		TLModel copy2 = copyDumpLoad(model);
+
+		assertEmpty(createPatch(model, copy));
+		assertEqualsConfig(model, copy);
+
+		assertEmpty(createPatch(model, copy2));
+		assertEqualsConfig(model, copy2);
+	}
+
+	private TLModel copyDumpLoad(TLModel model) {
+		TLModelImpl result = new TLModelImpl();
+
+		ModelConfig config = (ModelConfig) model.visit(new ModelConfigExtractor(), null);
+		ModelResolver modelResolver = new ModelResolver(new ErrorIgnoringProtocol(), result, null);
+		modelResolver.createModel(config);
+		modelResolver.complete();
+
+		return result;
 	}
 
 	private void assertEqualsConfig(TLModel expected, TLModel actual) {

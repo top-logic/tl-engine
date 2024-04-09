@@ -104,7 +104,8 @@ public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<Delete
 		}
 
 		_util.deleteModelPart(connection, typePart);
-		boolean updateModelBaseline = deleteTypePartFromModelBaseline(log, tlModel, partToDelete, typePart);
+		boolean updateModelBaseline =
+			tlModel == null ? false : deleteTypePartFromModelBaseline(log, tlModel, partToDelete, typePart);
 		log.info("Deleted model part " + _util.toString(typePart));
 
 		if (!typePart.getID().equals(typePart.getDefinition())) {

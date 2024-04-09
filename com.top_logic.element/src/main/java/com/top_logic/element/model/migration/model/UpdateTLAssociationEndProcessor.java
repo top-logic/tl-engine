@@ -137,7 +137,7 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 			null, null);
 
 		boolean updateModelBaseline;
-		if (TLStructuredTypeColumns.isSyntheticAssociationName(endName.getTypeName())) {
+		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(endName.getTypeName())) {
 			/* AssociationEnd is an end of an internal TLAssociation which is not defined in the
 			 * model baseline. */
 			updateModelBaseline = false;

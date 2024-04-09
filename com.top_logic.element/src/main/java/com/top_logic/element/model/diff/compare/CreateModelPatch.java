@@ -47,6 +47,7 @@ import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 import com.top_logic.element.model.export.ModelConfigExtractor;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.StorageDetail;
@@ -68,6 +69,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypeVisitor;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.annotate.security.TLRoleDefinitions;
@@ -460,6 +462,18 @@ public class CreateModelPatch {
 
 	final void addPatchPrimitive(TLPrimitive model, TLPrimitive right) {
 		if (isCompatiblePrimitive(model, right)) {
+			if (!Utils.equals(model.getStorageMapping(), right.getStorageMapping())) {
+				UpdateStorageMapping update = TypedConfiguration.newConfigItem(UpdateStorageMapping.class);
+				update.setType(TLModelUtil.qualifiedName(model));
+
+				@SuppressWarnings("unchecked")
+				PolymorphicConfiguration<StorageMapping<?>> mappingConfig =
+					(PolymorphicConfiguration<StorageMapping<?>>) InstanceAccess.INSTANCE
+						.getConfig(right.getStorageMapping());
+				update.setStorageMapping(mappingConfig);
+				addDiff(update);
+			}
+
 			processAnnotationChanges(model, right);
 		} else {
 			delete(model);
@@ -471,8 +485,7 @@ public class CreateModelPatch {
 		return Utils.equals(left.getDBPrecision(), right.getDBPrecision()) &&
 			Utils.equals(left.getDBSize(), right.getDBSize()) &&
 			Utils.equals(left.getDBType(), right.getDBType()) &&
-			Utils.equals(left.getKind(), right.getKind()) &&
-			Utils.equals(left.getStorageMapping(), right.getStorageMapping());
+			Utils.equals(left.getKind(), right.getKind());
 	}
 
 	final void addPatchEnumeration(TLEnumeration model, TLEnumeration other) {
@@ -615,7 +628,7 @@ public class CreateModelPatch {
 	}
 
 	private boolean isCompatiblePart(TLStructuredTypePart left, TLStructuredTypePart right) {
-		return ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(storageConfig(left), storageConfig(right)) &&
+		return
 			isCompatibleValueType(left.getType(), right.getType()) &&
 				(!isProperty(left)
 				|| isCompatibleProperty((TLProperty) left, (TLProperty) right))

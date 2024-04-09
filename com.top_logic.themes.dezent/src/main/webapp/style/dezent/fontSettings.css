@@ -41,7 +41,7 @@
 html,
 body,
 table td,
-select,
+select.tl-select,
 h1, h2, h3, h4, h5,
 th.tl-table__cell,
 .tl-table__title,

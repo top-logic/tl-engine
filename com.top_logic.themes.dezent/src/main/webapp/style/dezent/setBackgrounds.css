@@ -78,7 +78,7 @@ a.accEntry:hover
 .tabBar .tab,
 .searchIrrelevant input,
 .searchIrrelevant textarea,
-.searchIrrelevant select,
+.searchIrrelevant select.tl-select,
 
 .Footer,
 .Footer .FooterStatus,

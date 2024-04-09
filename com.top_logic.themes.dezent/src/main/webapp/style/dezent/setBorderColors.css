@@ -1,6 +1,6 @@
 div.pdlgWindow,
-span.active.mandatory > span.lFlexible > select:not( [multiple="multiple"] ),
-span.active > span.lFlexible > select:focus:not( [multiple="multiple"] ),
+span.active.mandatory > span.lFlexible > select.tl-select:not( [multiple="multiple"] ),
+span.active > span.lFlexible > select.tl-select:focus:not( [multiple="multiple"] ),
 fieldset
 {
     border-color: var(--LAYOUT_MAIN_COLOR);
@@ -25,7 +25,7 @@ div.rf_groupCell > .rf_content > div:last-child
     border-bottom: 1px solid var(--TL-iron);
 }
 
-select:not( [multiple="multiple"] )
+select.tl-select:not( [multiple="multiple"] )
 {
     border: 1px solid var(--border-subtle);
 }
@@ -40,18 +40,18 @@ select:not( [multiple="multiple"] )
 .cIconChooser .input-image,
 .searchIrrelevant input:not(.input-image):not(.fltButton):not([type="image"]),
 .searchIrrelevant textarea,
-.searchIrrelevant select:not( [multiple="multiple"] ),
+.searchIrrelevant select.tl-select:not( [multiple="multiple"] ),
 input:not(.input-image):not(.fltButton):not(#quickSearch-input):not(.is-upload):not( [type="image"] ),
 textarea,
 table.gridTable td,
-select
+select.tl-select
 {
     border: 1px solid var(--TL-iron);
 }
 
 .searchIrrelevant.error input:not(.input-image):not(.fltButton):not([type="image"]),
 .searchIrrelevant.error textarea,
-.searchIrrelevant.error select:not( [multiple="multiple"] ),
+.searchIrrelevant.error select.tl-select:not( [multiple="multiple"] ),
 .error input:not(.input-image):not(.fltButton):not(#quickSearch-input):not(.is-upload):not( [type="image"] )
 {
 	outline: var(--ERROR_OUTLINE);
@@ -60,10 +60,10 @@ select
 
 .searchIrrelevant.warning input:not(.input-image):not(.fltButton):not([type="image"]),
 .searchIrrelevant.warning textarea,
-.searchIrrelevant.warning select:not( [multiple="multiple"] ),
+.searchIrrelevant.warning select.tl-select:not( [multiple="multiple"] ),
 .warning input:not(.input-image):not(.fltButton):not(#quickSearch-input):not(.is-upload):not( [type="image"] ),
 .warning textarea,
-.warning select,
+.warning select.tl-select,
 .warning .ace_editor
 {
 	outline: var(--WARNING_OUTLINE);
@@ -78,9 +78,9 @@ select
 .error input.is-input { border: 2px solid var(--TL-cerise); }
 
 span.mandatory:not(.error) > span > input:not(.input-image):not(.fltButton):not(#quickSearch-input):not(.is-upload):not([type="image"]),
-span.mandatory:not(.error) > span.lFlexible > select:not( [multiple="multiple"] ),
-.rf_header select,
-.mandatory:not(.error) select
+span.mandatory:not(.error) > span.lFlexible > select.tl-select:not( [multiple="multiple"] ),
+.rf_header select.tl-select,
+.mandatory:not(.error) select.tl-select
 {
     border: 1px solid var(--LAYOUT_MAIN_COLOR);
 }

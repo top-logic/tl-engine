@@ -1265,13 +1265,13 @@ tr.tblFilterIndirectMatch td {
 
 tr.tblFilterIndirectMatch td,
 tr.tblFilterIndirectMatch td input, 
-tr.tblFilterIndirectMatch td select,
+tr.tblFilterIndirectMatch td select.tl-select,
 tr.tblFilterIndirectMatch td label {
 	font-style: italic;
 }
 
 tr.tblFilterIndirectMatch td img,
-tr.tblFilterIndirectMatch td select,
+tr.tblFilterIndirectMatch td select.tl-select,
 tr.tblFilterIndirectMatch td input {
 	opacity: 0.6;
 	
@@ -1284,7 +1284,7 @@ tr.tblFilterNotValidated {
 
 tr.tblFilterNotValidated td,
 tr.tblFilterNotValidated td input,
-tr.tblFilterNotValidated td select,
+tr.tblFilterNotValidated td select.tl-select,
 tr.tblFilterNotValidated td label {
 	font-style: italic;
 }
@@ -1506,13 +1506,13 @@ table.tl-table td span.lFlexibleCustom {
 	width: 100%;
 }
 
-table td span.lFlexible > select {
+table td span.lFlexible > select.tl-select {
 	width: 100%;
 }
 
 /* Use default width for select fields in title of
  frozen tables (e.g. needed for gallery edit dialog). */
-.tl-table__title span.lFlexible select {
+.tl-table__title span.lFlexible select.tl-select {
 	width: auto;
 }
 
@@ -2465,26 +2465,26 @@ div.frmBody {
 
 .searchIrrelevant input,
 .searchIrrelevant textarea,
-.searchIrrelevant select {
+.searchIrrelevant select.tl-select {
 	background-color: var(--S_FIELD_UNRELEVANT);
 	color: var(--S_TXT_UNRELEVANT);
 }
 
 .searchPositive input,
 .searchPositive textarea,
-.searchPositive select {
+.searchPositive select.tl-select {
 	background-color: var(--S_FIELD_RELEVANT);
 	color: var(--S_TXT_RELEVANT);
 }
 
 .searchNegative input,
 .searchNegative textarea,
-.searchNegative select {
+.searchNegative select.tl-select {
 	background-color: var(--S_FIELD_NEGATED);
 	color: var(--S_TXT_RELEVANT);
 }
 
-.mandatory input, .mandatory select, .mandatory textarea, .mandatory .megaMenuButton  {
+.mandatory input, .mandatory select.tl-select, .mandatory textarea, .mandatory .megaMenuButton  {
     background-color: var(--MANDATORY_FIELD_BG);
 }
 
@@ -4078,7 +4078,7 @@ body.IE7 .button_minus { top: 14px; }
 body.IE6 .button_plus { top: 3px; }
 body.IE6 .button_minus { top: 14px; }
 
-select 		{	font-size:10pt;
+select.tl-select 		{	font-size:10pt;
 			}
 
 dt {font-weight:bold;}
@@ -6608,7 +6608,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	background: transparent;
 }
 
-.rf_groupCell .rf_header select,
+.rf_groupCell .rf_header select.tl-select,
 .rf_groupCell .rf_header label {
 	color: var(--GROUP_LABEL_COLOR);
     font-weight: bold;

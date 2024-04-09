@@ -73,7 +73,7 @@ public class DeleteTLEnumerationProcessor extends AbstractConfiguredInstance<Del
 		_util.deleteTLType(connection, type, getConfig().isFailOnExistingClassifiers());
 		log.info("Deleted TLEnumeration '" + _util.toString(type) + "'.");
 
-		if (getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 			return false;
 		}
 		return MigrationUtils.deleteType(log, tlModel, classToDelete);

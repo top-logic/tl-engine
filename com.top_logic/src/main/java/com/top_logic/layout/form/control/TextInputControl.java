@@ -67,8 +67,6 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 
 	private DynamicText onInput;
 
-    private boolean unsafeHTML;
-    
     private String type;
 
     private int maxLengthShown = -1;
@@ -205,20 +203,6 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
         requestRepaint();
     }
 
-    /**
-     * Requests to output the input text as unquoted HTML fragment.
-     * 
-     * @deprecated This opens a cross site scripting vulnerability in the
-     *             application and should not/must not be used. This property is
-     *             currently only used for displaying FCKEditor output. Whether
-     *             this is safe is not yet clear.
-     */
-    @Deprecated
-	public void setUnsafeHTML(boolean unsafeHTML) {
-        this.unsafeHTML = unsafeHTML;
-        requestRepaint();
-    }
-    
 	@Override
 	protected String getTypeCssClass() {
 		return "cTextInput";
@@ -447,17 +431,12 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 		WikiWrite.wikiWrite(out, value);
 	}
 
-	@SuppressWarnings("deprecation")
-	private void writeValueText(TagWriter out, String value) throws IOException {
+	private void writeValueText(TagWriter out, String value) {
 		if (isPasswordInput()) {
 			out.writeText(passwordReplacement(value));
 			return;
 		}
-        if (unsafeHTML) {
-            out.writeContent(value);
-        } else {
-            out.writeText(value);
-        }
+		out.writeText(value);
     }
 
 	private boolean isPasswordInput() {

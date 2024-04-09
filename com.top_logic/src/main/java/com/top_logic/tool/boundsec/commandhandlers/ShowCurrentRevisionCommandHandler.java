@@ -9,12 +9,17 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.HasCurrentRevisionRule;
@@ -30,6 +35,19 @@ public class ShowCurrentRevisionCommandHandler extends AJAXCommandHandler {
 
     /** ID this command can be called by application. */
     public static final String COMMAND_ID = "showCurrentRevision";
+
+	/**
+	 * Configuration options for {@link ShowCurrentRevisionCommandHandler}.
+	 */
+	public interface Config extends AJAXCommandHandler.Config {
+		@Override
+		@FormattedDefault(SimpleBoundCommandGroup.SYSTEM_NAME)
+		CommandGroupReference getGroup();
+
+		@Override
+		@StringDefault(CommandHandlerFactory.ADDITIONAL_GROUP)
+		String getClique();
+	}
 
     /** 
      * Creates a {@link ShowCurrentRevisionCommandHandler}.

@@ -957,16 +957,6 @@
 						expand="false"
 						image="theme:ICONS_COLLAPSE_ALL"
 					/>
-					<handler 
-						id="historicAttributedViewCommand"
-						class="com.top_logic.element.meta.form.component.AttributedCompareCommandHandler"
-						clique="history"
-						image="theme:ICONS_COMPARE"
-					/>
-					<handler 
-						id="openGridCompareView"
-						class="com.top_logic.element.layout.grid.OpenGridCompareViewCommand"
-					/>
 					<handler id="configureCreateFormDefinitionCommand" class="com.top_logic.element.layout.formeditor.ConfigureCreateFormDefinitionCommand"
 						image="theme:com.top_logic.layout.Icons.CONFIGURE_FORM_DEFINITION_COMMAND"
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"

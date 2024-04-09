@@ -15,9 +15,6 @@
 		<param name="master"
 			value="${structure}Tree"
 		/>
-		<param name="show-compare-command"
-			value=""
-		/>
 	</params>
 
 	<include name="element/editStructureDetail.xml"
@@ -27,7 +24,6 @@
 		modifier="com.top_logic.demo.edit.DemoFormContextModificator"
 		namePrefix="${namePrefix}"
 		page="/jsp/demo/EditStructuredElement.jsp"
-		show-compare-command="${show-compare-command}"
 		structure="${structure}"
 	>
 		<createForms>
@@ -74,6 +70,9 @@
 					clique="delete"
 					group="Delete"
 					resourceKey="layouts.demo.editStructureDetail.deleteMails"
+				/>
+				<button id="showCurrentRevision"
+					class="com.top_logic.tool.boundsec.commandhandlers.ShowCurrentRevisionCommandHandler"
 				/>
 				<reference command-id="addToClipboard"/>
 				<reference command-id="showBookmarkLink"/>

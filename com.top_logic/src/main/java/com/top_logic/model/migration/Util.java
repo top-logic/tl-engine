@@ -3528,8 +3528,7 @@ public class Util {
 	
 		List<TypePart> tlTypeParts = getTLTypeParts(connection, type);
 		if (!tlTypeParts.isEmpty() && failOnExistingAttributes) {
-			throw new MigrationException(
-				"Class '" + toString(type) + "' has parts " + toString(tlTypeParts));
+			throw new MigrationException("Type '" + toString(type) + "' has parts: " + toString(tlTypeParts));
 		}
 		toDelete.addAll(tlTypeParts);
 		toDelete.addAll(getGeneralizations(connection, type));

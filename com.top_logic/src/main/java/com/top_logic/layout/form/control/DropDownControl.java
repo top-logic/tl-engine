@@ -69,6 +69,8 @@ public class DropDownControl extends AbstractSelectControl {
 	 */
 	public static final String DROPDOWN_CONTROL_CLASS = FormConstants.FORM_PACKAGE + ".DropDownControl";
 
+	private static final String CSS_CLASS_IMMUTABLE_ITEM = "ddwttImmutableItem";
+
 	private final boolean _preventClear;
 
 	private final IDBuilder _idBuilder = new IDBuilder();
@@ -436,44 +438,15 @@ public class DropDownControl extends AbstractSelectControl {
 
 	@Override
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
-		FormField dropdown = getFieldModel();
-		String separator = SelectFieldUtils.getCollectionSeparator(dropdown);
-		List<?> selection = SelectFieldUtils.getSelectionList(dropdown);
-		boolean first = true;
+		FormField field = (FormField) getModel();
 
-		out.beginBeginTag(SPAN);
+		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			if (selection.isEmpty()) {
-				out.append(SelectFieldUtils.getEmptySelectionLabelImmutable(dropdown));
-			}
-			
-			if (_selectionRenderer != null) {
-				_selectionRenderer.write(context, out, selection);
-			} else {
-				for (Object item : selection) {
-					if (first) {
-						first = false;
-					} else {
-						out.append(separator);
-					}
-					renderImmutableItem(context, out, dropdown, item);
-				}
-			}
+			SelectFieldUtils.writeSelectionImmutable(context, out, field, _selectionRenderer, CSS_CLASS_IMMUTABLE_ITEM);
 		}
-		out.endTag(SPAN);
-	}
-
-	private void renderImmutableItem(DisplayContext context, TagWriter out, FormField dropdown, Object item)
-			throws IOException {
-		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, "ddwttImmutableItem");
-		out.endBeginTag();
-		{
-			SelectFieldUtils.getOptionRenderer(dropdown).write(context, out, item);
-		}
-		out.endTag(SPAN);
+		out.endTag(DIV);
 	}
 
 	@Override

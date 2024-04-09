@@ -1802,12 +1802,6 @@ a.input-image {
 }
 
 /* CheckboxControl */
-.cCheckbox {
-}
-
-/* ChoiceControl */
-.cChoice {
-}
 
 .cChoice input,
 .cChoice label {
@@ -1817,19 +1811,58 @@ a.input-image {
 }
 
 .cChoice label {
-	/* Correctly align when wrapping short labels. */
-	/* This is required for horizontal displays and is also useful for vertical displays if the label is very short. In this case, the clickable area is enlarged. */
-	min-width: 10ex;
-	
 	/* Some distance between radio button and label. */
 	padding-right: 5px;
 	padding-left: 5px;
+}
+
+img.cChoice-icon {
+	margin-left: 0.5em;
+	height: 1em;
+	object-fit: contain;
+	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
+	vertical-align: middle;
+	align-self: center;
+}
+
+img.type-image {
+	margin-left: 0.5em;
+	height: 1em;
+	object-fit: contain;
+	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
+	vertical-align: middle;
+	align-self: center;
 }
 
 .cChoice-horizontal > .cChoice-option {
 	/* Wrap options for horizontal choices. Use inline-block instead of inline to prevent wrapping between radio and label. */
 	display: inline-block;
 	padding-right: 5px;
+}
+
+.cChoice-horizontal > .cChoice-option::after {
+	content: ";";
+}
+
+.cChoice-horizontal > .cChoice-option:last-child::after {
+	content: "";
+}
+
+.cChoice-vertical {
+	display: inline-flex;
+	flex-direction: column;
+}
+
+.cChoice-vertical.cannot-edit {
+	flex-direction: row;
+}
+
+.cChoice-vertical.cannot-edit span {
+	margin-right: 0.5em;
+}
+
+.cChoice-horizontal .cChoice-option label {
+	padding-right: 0; /* Remove the space between the label and a potential option separator */
 }
 
 div.menuTitle {
@@ -7736,9 +7769,15 @@ div.dirtyHandlingDialog .changes {
 	The prefix stands for "DropDown With ToolTip". */
 .ddwttContainer {
 	position: relative;
-	text-align: center;
 	cursor: default;
 	margin: 0 !important;
+}
+
+
+.ddwttContainer.active {
+	display: inline-flex;
+	flex-wrap: wrap;
+	row-gap: 0.5em;
 }
 
 .dfContent .ddwttContainer::before, .dfContent .ddwttContainer::after {
@@ -7869,7 +7908,7 @@ div.dirtyHandlingDialog .changes {
 }
 
 .ddwttImmutableItem {
-	display: inline;
+	display: inline-flex;
 	text-align: left;
 }
 
@@ -7878,19 +7917,28 @@ div.dirtyHandlingDialog .changes {
 	padding-left: 3px;
 }
 
+img.ddwttItemIcon {
+	height: 1em;
+	object-fit: contain;
+	/* Depending on the style of the container tag, either 'vertical-align' or 'align-self' is necessary. */
+	vertical-align: middle;
+	align-self: center;
+}
+
 .ddwttItem .ddwttItemLabel {
 	display: inline-block;
 	cursor: default;
 }
 
 /* Tags */
-.ddwttTagLoc, .ddwttTag {
-	display: inline-flex;
-	width: fit-content;
-	text-align: left;
+.ddwttTagLoc {
+	display: contents;
 }
 
 .ddwttTag {
+	display: inline-flex;
+	width: fit-content;
+	text-align: left;
 	margin-right: 8px;
 	border: 1px solid var(--border-subtle);
 	border-radius: 4px;

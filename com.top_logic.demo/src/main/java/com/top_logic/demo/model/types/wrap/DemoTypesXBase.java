@@ -192,7 +192,7 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 * Part <code>classificationUnorderedMulti</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_MULTI_ATTR = "classificationUnorderedMulti";
@@ -201,16 +201,34 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 * Part <code>classificationUnorderedMultiDropdown</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_MULTI_DROPDOWN_ATTR = "classificationUnorderedMultiDropdown";
 
 	/**
+	 * Part <code>classificationUnorderedMultiRadio</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR = "classificationUnorderedMultiRadio";
+
+	/**
+	 * Part <code>classificationUnorderedMultiRadioInline</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR = "classificationUnorderedMultiRadioInline";
+
+	/**
 	 * Part <code>classificationUnorderedSingle</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_SINGLE_ATTR = "classificationUnorderedSingle";
@@ -219,10 +237,28 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 * Part <code>classificationUnorderedSinglePopup</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_SINGLE_POPUP_ATTR = "classificationUnorderedSinglePopup";
+
+	/**
+	 * Part <code>classificationUnorderedSingleRadio</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR = "classificationUnorderedSingleRadio";
+
+	/**
+	 * Part <code>classificationUnorderedSingleRadioInline</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR = "classificationUnorderedSingleRadioInline";
 
 	/**
 	 * Part <code>collection</code> of <code>DemoTypes.X</code>
@@ -819,6 +855,22 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	}
 
 	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<com.top_logic.model.TLClassifier> getClassificationUnorderedMultiRadio() {
+		return (java.util.Set<com.top_logic.model.TLClassifier>) tValueByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<com.top_logic.model.TLClassifier> getClassificationUnorderedMultiRadioInline() {
+		return (java.util.Set<com.top_logic.model.TLClassifier>) tValueByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR);
+	}
+
+	/**
 	 * Getter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_ATTR}.
 	 */
 	default com.top_logic.model.TLClassifier getClassificationUnorderedSingle() {
@@ -830,6 +882,20 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default com.top_logic.model.TLClassifier getClassificationUnorderedSinglePopup() {
 		return (com.top_logic.model.TLClassifier) tValueByName(CLASSIFICATION_UNORDERED_SINGLE_POPUP_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getClassificationUnorderedSingleRadio() {
+		return (com.top_logic.model.TLClassifier) tValueByName(CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getClassificationUnorderedSingleRadioInline() {
+		return (com.top_logic.model.TLClassifier) tValueByName(CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR);
 	}
 
 	/**

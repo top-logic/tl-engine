@@ -604,7 +604,7 @@ public class SelectControl extends AbstractSelectControl implements OptionModelL
 					_selectionRenderer.write(context, out, selectionList);
 				} else {
 					try {
-						SelectFieldUtils.writeSelectionAsTextImmutable(out, field);
+						SelectFieldUtils.writeSelectionImmutable(context, out, field);
 					} catch (Throwable throwable) {
 						try {
 							produceErrorOutput(context, out, throwable);

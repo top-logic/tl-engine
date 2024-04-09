@@ -28,8 +28,7 @@ import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.TLContext;
 
 /**
- * Simple Implemenation of the {@link com.top_logic.tool.boundsec.BoundChecker} 
- * interface.
+ * Simple implementation of the {@link com.top_logic.tool.boundsec.BoundChecker} interface.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */

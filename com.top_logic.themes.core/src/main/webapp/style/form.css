@@ -1960,25 +1960,35 @@ input[type="checkbox"]:focus {
 ****	ChoiceControl, bbc-option styles	****
 ****										****
 */
-.cBooleanChoice, .cChoice-horizontal {
+.cBooleanChoice, .cChoice, .ddwttContainer.cannot-edit {
     display: inline-flex;
-    gap: var(--spacing-03);
+    flex-wrap: wrap;
+	column-gap: var(--spacing-02);
+	row-gap: var(--spacing-02);
 }
 
-span.bcc-option, .cChoice-option {
-    display: inline-flex;
-    gap: var(--spacing-02);
+.cChoice-icon {
+	margin-left: 0.5em;
 }
 
+span.bcc-option {
+    display: inline-flex;
+	column-gap: var(--spacing-02);
+	row-gap: var(--spacing-02);
+}
 .cChoice-vertical {
-	display: inline-flex;
 	flex-direction: column;
-	gap: var(--spacing-02);
+}
+
+.cChoice-vertical.cannot-edit {
+	flex-direction: row;
 }
 
 .cChoice-option label {
 	color: var(--text-primary);
 	cursor: pointer;
+	margin-left: var(--spacing-02);
+	padding: 0; /* Remove the space between the label and a potential option separator */
 }
 
 .cChoice-horizontal.disabled label,
@@ -1989,6 +1999,14 @@ span.bcc-option, .cChoice-option {
 
 .cChoice-horizontal.disabled, .cChoice-vertical.disabled {
 	color: var(--text-disabled);
+}
+
+.cChoice-horizontal > .cChoice-option::after {
+	content: ";";
+}
+
+.cChoice-horizontal > .cChoice-option:last-child::after {
+	content: "";
 }
 
 .cChoice-horizontal.disabled input[type="radio"], 
@@ -2019,6 +2037,22 @@ span.bcc-option, .cChoice-option {
 .cChoice-vertical.disabled input[type="checkbox"]:checked::before {
 	background-color: var(--icon-disabled);
 	cursor: default;
+}
+
+img.cChoice-icon {
+	height: 1em;
+	object-fit: contain;
+	align-self: center;
+}
+
+img.type-image {
+	height: 1em;
+	object-fit: contain;
+	align-self: center;
+}
+
+.tl-table__cell .type-image {
+	margin-left: var(--spacing-02);
 }
 
 .cSelectOption,
@@ -2439,6 +2473,11 @@ a.input-image.tristate.tBoolean {
 	margin: 0 !important;
 }
 
+.ddwttContainer.active {
+	display: inline-flex;
+	flex-wrap: wrap;
+}
+
 .dfContent .ddwttContainer::before, .dfContent .ddwttContainer::after {
 	content: " ";
 }
@@ -2598,8 +2637,14 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttImmutableItem {
-	display: inline;
+	display: inline-flex;
 	text-align: left;
+}
+
+img.ddwttItemIcon {
+	height: 1em;
+	object-fit: contain;
+	align-self: center;
 }
 
 .ddwttItem .ddwttItemLabel {
@@ -2611,24 +2656,22 @@ span.disabled .ddwttDropBtn {
 }
 
 /* Tags */
-.ddwttTagLoc,
+.ddwttTagLoc {
+	display: contents;
+}
+
 .ddwttTag {
 	display: inline-flex;
 	width: fit-content;
 	align-items: center;
 	justify-content: center;
-}
-
-.ddwttTag {
 	height: 2rem;
 	border: 1px solid var(--border-subtle);
 	box-sizing: border-box;
 	padding: 0 var(--spacing-02);
-	border: 1px solid var(--border-subtle);
-	padding: 0 var(--spacing-02);
 	margin-right: var(--spacing-02);
+	margin-bottom: var(--spacing-02);
 	gap: var(--spacing-02);
-	box-sizing: border-box;
 }
 
 .ddwttTagX {

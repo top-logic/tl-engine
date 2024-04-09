@@ -210,7 +210,7 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * Part <code>classificationUnorderedMulti</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_MULTI_ATTR = "classificationUnorderedMulti";
@@ -219,16 +219,34 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * Part <code>classificationUnorderedMultiDropdown</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_MULTI_DROPDOWN_ATTR = "classificationUnorderedMultiDropdown";
 
 	/**
+	 * Part <code>classificationUnorderedMultiRadio</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR = "classificationUnorderedMultiRadio";
+
+	/**
+	 * Part <code>classificationUnorderedMultiRadioInline</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR = "classificationUnorderedMultiRadioInline";
+
+	/**
 	 * Part <code>classificationUnorderedSingle</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_SINGLE_ATTR = "classificationUnorderedSingle";
@@ -237,10 +255,28 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * Part <code>classificationUnorderedSinglePopup</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:demo.federalstates</code> in configuration.
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
 	 * </p>
 	 */
 	String CLASSIFICATION_UNORDERED_SINGLE_POPUP_ATTR = "classificationUnorderedSinglePopup";
+
+	/**
+	 * Part <code>classificationUnorderedSingleRadio</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR = "classificationUnorderedSingleRadio";
+
+	/**
+	 * Part <code>classificationUnorderedSingleRadioInline</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>DemoTypes:demo.federalstates</code> in configuration.
+	 * </p>
+	 */
+	String CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR = "classificationUnorderedSingleRadioInline";
 
 	/**
 	 * Part <code>collection</code> of <code>DemoTypes.A</code>
@@ -1441,6 +1477,92 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	}
 
 	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<com.top_logic.model.TLClassifier> getClassificationUnorderedMultiRadio() {
+		return (java.util.Set<com.top_logic.model.TLClassifier>) tValueByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.Set<com.top_logic.model.TLClassifier> getClassificationUnorderedMultiRadioModifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.Set<com.top_logic.model.TLClassifier> result = (java.util.Set<com.top_logic.model.TLClassifier>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR}.
+	 */
+	default void setClassificationUnorderedMultiRadio(java.util.Set<com.top_logic.model.TLClassifier> newValue) {
+		tUpdateByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR} reference.
+	 */
+	default void addClassificationUnorderedMultiRadio(com.top_logic.model.TLClassifier newValue) {
+		tAddByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR} reference.
+	 */
+	default void removeClassificationUnorderedMultiRadio(com.top_logic.model.TLClassifier oldValue) {
+		tRemoveByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<com.top_logic.model.TLClassifier> getClassificationUnorderedMultiRadioInline() {
+		return (java.util.Set<com.top_logic.model.TLClassifier>) tValueByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.Set<com.top_logic.model.TLClassifier> getClassificationUnorderedMultiRadioInlineModifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.Set<com.top_logic.model.TLClassifier> result = (java.util.Set<com.top_logic.model.TLClassifier>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR}.
+	 */
+	default void setClassificationUnorderedMultiRadioInline(java.util.Set<com.top_logic.model.TLClassifier> newValue) {
+		tUpdateByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR} reference.
+	 */
+	default void addClassificationUnorderedMultiRadioInline(com.top_logic.model.TLClassifier newValue) {
+		tAddByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR} reference.
+	 */
+	default void removeClassificationUnorderedMultiRadioInline(com.top_logic.model.TLClassifier oldValue) {
+		tRemoveByName(CLASSIFICATION_UNORDERED_MULTI_RADIO_INLINE_ATTR, oldValue);
+	}
+
+	/**
 	 * Getter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_ATTR}.
 	 */
 	default com.top_logic.model.TLClassifier getClassificationUnorderedSingle() {
@@ -1466,6 +1588,34 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void setClassificationUnorderedSinglePopup(com.top_logic.model.TLClassifier newValue) {
 		tUpdateByName(CLASSIFICATION_UNORDERED_SINGLE_POPUP_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getClassificationUnorderedSingleRadio() {
+		return (com.top_logic.model.TLClassifier) tValueByName(CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR}.
+	 */
+	default void setClassificationUnorderedSingleRadio(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(CLASSIFICATION_UNORDERED_SINGLE_RADIO_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getClassificationUnorderedSingleRadioInline() {
+		return (com.top_logic.model.TLClassifier) tValueByName(CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR}.
+	 */
+	default void setClassificationUnorderedSingleRadioInline(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(CLASSIFICATION_UNORDERED_SINGLE_RADIO_INLINE_ATTR, newValue);
 	}
 
 	/**

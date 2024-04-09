@@ -31,6 +31,8 @@ import com.top_logic.model.config.TLTypeAnnotation;
  *           attributes with atomic value types that are entered by a selecting from a list of
  *           options.
  * 
+ * @see ReferenceDisplay
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("classification-display")
@@ -66,6 +68,8 @@ public interface ClassificationDisplay extends TLAttributeAnnotation, TLTypeAnno
 
 	/**
 	 * Presentation of options for an attribute with enumerated values.
+	 * 
+	 * @see ReferencePresentation
 	 */
 	public enum ClassificationPresentation implements ExternallyNamed {
 

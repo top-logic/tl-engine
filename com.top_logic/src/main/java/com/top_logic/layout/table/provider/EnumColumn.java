@@ -91,24 +91,33 @@ public class EnumColumn extends ReferenceColumn {
 		ClassificationPresentation presentation = getClassificationPresentation();
 		switch (presentation) {
 			case DROP_DOWN:
-				if (isMultiple()) {
-					/* Do not display multiple selection with select control. The reason is that the
-					 * displayed box with the options would destroy the table layout. */
-					return SelectionControlProvider.SELECTION_INSTANCE;
-				} else {
-					if (isMandatory()) {
-						return SelectControlProvider.INSTANCE_WITHOUT_CLEAR;
-					} else {
-						return SelectControlProvider.INSTANCE;
-					}
-				}
+				return getDropDownControlProvider();
 			case CHECKLIST:
 				// TODO Ticket #20011: Display checklists as in forms.
 				return SelectionControlProvider.SELECTION_INSTANCE;
 			case POP_UP:
 				return SelectionControlProvider.SELECTION_INSTANCE;
-			default:
-				throw ClassificationPresentation.noSuchEnum(presentation);
+			case RADIO:
+			case RADIO_INLINE:
+				/* Radio buttons can only be displayed properly in tables if they are few and have
+				 * short labels. To avoid problems with too big content, tables use therefore always
+				 * a drop down instead of radio buttons. */
+				return getDropDownControlProvider();
+		}
+		throw ClassificationPresentation.noSuchEnum(presentation);
+	}
+
+	private ControlProvider getDropDownControlProvider() {
+		if (isMultiple()) {
+			/* Do not display multiple selection with select control. The reason is that the
+			 * displayed box with the options would destroy the table layout. */
+			return SelectionControlProvider.SELECTION_INSTANCE;
+		} else {
+			if (isMandatory()) {
+				return SelectControlProvider.INSTANCE_WITHOUT_CLEAR;
+			} else {
+				return SelectControlProvider.INSTANCE;
+			}
 		}
 	}
 

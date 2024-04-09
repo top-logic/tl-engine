@@ -40,13 +40,7 @@ public abstract class PopupCommand implements Command {
 	@Override
 	public final HandlerResult executeCommand(DisplayContext context) {
 		ButtonControl executingControl = context.get(EXECUTING_CONTROL);
-		if (executingControl.isAttached()) {
-			return showPopup(context,
-				new DefaultPopupHandler(executingControl.getFrameScope(), executingControl.getID()));
-		} else {
-			// The opening button has already been disposed.
-			return showPopup(context, new DefaultPopupHandler(executingControl.getFrameScope(), null));
-		}
+		return showPopup(context, new DefaultPopupHandler(executingControl.getFrameScope(), executingControl.getID()));
 	}
 
 }

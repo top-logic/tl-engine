@@ -39,6 +39,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.InlineMap;
@@ -118,6 +119,7 @@ import com.top_logic.layout.component.dnd.ComponentDropTarget;
 import com.top_logic.layout.component.dnd.NoComponentDrop;
 import com.top_logic.layout.form.control.AbstractButtonControl;
 import com.top_logic.layout.form.control.ButtonControl;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.I18NConstants;
 import com.top_logic.layout.scripting.recorder.DynamicRecordable;
@@ -182,7 +184,8 @@ import com.top_logic.util.error.ErrorHandlingHelper;
 @Label("Component")
 public abstract class LayoutComponent extends ModelEventAdapter
 		implements IComponent, NamedModel, FrameScope,
-		LayoutConstants, ToolBarOwner, Expandable, LazyTypedAnnotatableMixin, Cloneable, DynamicRecordable {
+		LayoutConstants, ToolBarOwner, Expandable, LazyTypedAnnotatableMixin, Cloneable, DynamicRecordable,
+		VisibilityModel {
 
 	/**
 	 * {@link ConfigurationItem} containing some of the methods in {@link LayoutComponent.Config}
@@ -1981,7 +1984,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * 
 	 * @return true when component has a Parent and is marked as visible.
 	 */
-    public boolean isVisible() {
+	@Override
+	public boolean isVisible() {
         /* defense programming... it is nice to have it... believe me (skr) */
 		return getParent() != null && _isVisible();
     }
@@ -2000,7 +2004,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
      *
      * @param aVisible The visibility to set
      */
-    public void setVisible(boolean aVisible) {
+	@Override
+	public void setVisible(boolean aVisible) {
 
 //        /* ensure to set all dialogs to invisible when opener component
 //         * becomes invisible.
@@ -3761,31 +3766,32 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	public void setExpansionState(ExpansionState newState) {
 		assert newState != null;
 
-		ExpansionState oldState;
-		switch (newState) {
-			case NORMALIZED:
-				if (_initiallyMinimized) {
-					oldState = set(EXPANSION_STATE, newState);
-				} else {
-					oldState = reset(EXPANSION_STATE);
-				}
-				break;
-			case MAXIMIZED:
-				oldState = set(EXPANSION_STATE, newState);
-				break;
-			case MINIMIZED:
-				if (_initiallyMinimized) {
-					oldState = reset(EXPANSION_STATE);
-				} else {
-					oldState = set(EXPANSION_STATE, newState);
-				}
-				break;
-			default:
-				throw ExpansionState.noSuchExpansionState(newState);
-		}
+		ExpansionState oldState = computeOldState(newState);
+
 		saveExpansionState(newState);
 
 		firePropertyChanged(Expandable.STATE, this, nonNull(oldState), newState);
+	}
+
+	private ExpansionState computeOldState(ExpansionState newState) throws UnreachableAssertion {
+		switch (newState) {
+			case NORMALIZED:
+				if (_initiallyMinimized) {
+					return set(EXPANSION_STATE, newState);
+				} else {
+					return reset(EXPANSION_STATE);
+				}
+			case HIDDEN:
+			case MAXIMIZED:
+				return set(EXPANSION_STATE, newState);
+			case MINIMIZED:
+				if (_initiallyMinimized) {
+					return reset(EXPANSION_STATE);
+				} else {
+					return set(EXPANSION_STATE, newState);
+				}
+		}
+		throw ExpansionState.noSuchExpansionState(newState);
 	}
 
 	private void saveExpansionState(ExpansionState state) {

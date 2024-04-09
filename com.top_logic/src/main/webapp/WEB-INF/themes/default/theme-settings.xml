@@ -2987,6 +2987,9 @@
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED"
 		expr="%com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE%"
 	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_POP_OUT"
+		expr="%com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER%"
+	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.BURGER_COMMANDS_ICONS"
 		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>

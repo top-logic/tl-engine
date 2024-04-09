@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.version.Version;
 import com.top_logic.basic.xml.TagWriter;
@@ -29,6 +30,7 @@ import com.top_logic.layout.basic.component.AJAXSupport;
 import com.top_logic.layout.basic.component.BasicAJAXSupport;
 import com.top_logic.layout.basic.component.ControlComponent.DispatchAction;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.internal.WindowRegistry;
 import com.top_logic.layout.structure.BrowserWindowControl;
 import com.top_logic.layout.structure.LayoutFactory;
@@ -75,12 +77,16 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 			registry.registerCommand(DispatchAction.COMMAND_NAME);
 		}
 
+		@Override
+		@ClassDefault(WindowComponent.class)
+		Class<? extends LayoutComponent> getImplementationClass();
+
 	}
 
 	/**
 	 * The {@link LayoutComponent} that opened this window.
 	 */
-	private LayoutComponent _opener;
+	private VisibilityModel _visibilityModel;
 
 	private final BasicAJAXSupport basicAJAXSupport = new BasicAJAXSupport();
 
@@ -103,9 +109,12 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 
 	/**
 	 * The component that opened this window.
+	 * 
+	 * @return May be <code>null</code> if this {@link WindowComponent} was not opened by a
+	 *         {@link LayoutComponent}.
 	 */
 	public LayoutComponent getOpener() {
-		return _opener;
+		return _visibilityModel instanceof LayoutComponent ? (LayoutComponent) _visibilityModel : null;
 	}
 
 	@Override
@@ -117,28 +126,41 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 	 * @see #getOpener()
 	 */
 	public void setOpener(LayoutComponent opener) {
-		boolean closeOnParentInvisibility = this.getWindowInfo().getCloseIfParentBecomesInvisible();
-		if (closeOnParentInvisibility && (_opener != null)) {
-			_opener.removeListener(LayoutComponent.VISIBILITY_EVENT, this);
+		init(opener, opener != null ? opener.getMainLayout() : null);
+	}
+
+	/**
+	 * Initialises this {@link WindowComponent}.
+	 *
+	 * @param visibilityModel
+	 *        A {@link VisibilityModel} to observe. If {@link #closeIfParentBecomesInvisible()} then
+	 *        this window is closed when the visibility model becomes invisible. May be
+	 *        <code>null</code> if not {@link #closeIfParentBecomesInvisible()}.
+	 * @param mainLayout
+	 *        The {@link MainLayout} where the component is registered to.
+	 */
+	public void init(VisibilityModel visibilityModel, MainLayout mainLayout) {
+		boolean closeOnParentInvisibility = closeIfParentBecomesInvisible();
+		if (closeOnParentInvisibility && (_visibilityModel != null)) {
+			_visibilityModel.removeListener(LayoutComponent.VISIBILITY_EVENT, this);
 		}
-		if (opener != null) {
-			MainLayout mainLayout = opener.getMainLayout();
-			registerMainLayout(mainLayout);
-		} else {
-			registerMainLayout(null);
+		registerMainLayout(mainLayout);
+		_visibilityModel = visibilityModel;
+		if (closeOnParentInvisibility && (_visibilityModel != null)) {
+			_visibilityModel.addListener(LayoutComponent.VISIBILITY_EVENT, this);
 		}
-		_opener = opener;
-		if (closeOnParentInvisibility && (_opener != null)) {
-			_opener.addListener(LayoutComponent.VISIBILITY_EVENT, this);
-		}
+	}
+
+	private boolean closeIfParentBecomesInvisible() {
+		return this.getWindowInfo().getCloseIfParentBecomesInvisible();
 	}
 
 	@Override
 	public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
-		if (sender != _opener) {
+		if (sender != _visibilityModel) {
 			return Bubble.BUBBLE;
 		}
-		if (!this.getWindowInfo().getCloseIfParentBecomesInvisible()) {
+		if (!closeIfParentBecomesInvisible()) {
 			return Bubble.BUBBLE;
 		}
 		if (!newVisibility) {
@@ -151,11 +173,10 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 	protected void becomingInvisible() {
 		super.becomingInvisible();
 		
-		if (this.getWindowInfo().getCloseIfParentBecomesInvisible()) {
+		if (closeIfParentBecomesInvisible()) {
 			// de-register from further notifications. Re-opening the window will
 			// again add the listener.
-			LayoutComponent r = getOpener();
-			r.removeListener(LayoutComponent.VISIBILITY_EVENT, this);
+			_visibilityModel.removeListener(LayoutComponent.VISIBILITY_EVENT, this);
 		}
 	}
 
@@ -330,9 +351,10 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 			 */
 			layoutControl.detach();
 		}
-		LayoutComponent r = getOpener();
-		// don't react if already closed
-		r.removeListener(LayoutComponent.VISIBILITY_EVENT, this);
+		if (closeIfParentBecomesInvisible()) {
+			// don't react if already closed
+			_visibilityModel.removeListener(LayoutComponent.VISIBILITY_EVENT, this);
+		}
 
 		setOpener(null);
 	}

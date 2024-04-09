@@ -36,6 +36,7 @@
 		resPrefix="layouts.admin.technical.logs.logging.logLinesTable."
 		resetInvisible="true"
 		securityProviderClass="${securityProviderClass}"
+		showPopOut="true"
 	>
 		<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"/>
 		<tabInfo label="admin.logs.entries"/>

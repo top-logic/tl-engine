@@ -148,6 +148,12 @@ public class FlexibleFlowLayoutControl extends FlowLayoutControl<FlexibleFlowLay
 	}
 
 	/**
+	 * Whether the given child control is considered to be hidden.
+	 */
+	public boolean isHidden(LayoutControl child) {
+		return ((child instanceof Expandable) && ((Expandable) child).getExpansionState() == ExpansionState.HIDDEN);
+	}
+	/**
 	 * {@link ControlCommand} updating the user defined size {@link FixedFlowLayoutControl} children
 	 * a change on the UI.
 	 */
@@ -216,4 +222,5 @@ public class FlexibleFlowLayoutControl extends FlowLayoutControl<FlexibleFlowLay
 	public FlexibleFlowLayoutControl self() {
 		return this;
 	}
+
 }

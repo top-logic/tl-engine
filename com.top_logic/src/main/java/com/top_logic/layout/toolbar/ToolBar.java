@@ -40,12 +40,15 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 	/** @see #minimized() */
 	public static final String MINIMIZED = "minimized";
 
+	/** @see #hidden() */
+	public static final String HIDDEN = "hidden";
+
 	/** @see #menuButton() */
 	public static final String MENU_BUTTON = "menuButton";
 
 	/**
-	 * Property key for observing the options {@link #canMaximize()}, {@link #showMaximize()}, and
-	 * {@link #showMinimize()}.
+	 * Property key for observing the options {@link #canMaximize()}, {@link #showMaximize()},
+	 * {@link #showMinimize()}, and {@link #showPopOut()}.
 	 */
 	static final EventType<ToolbarOptionsListener, ToolBar, Boolean> OPTIONS =
 		new EventType<>("options") {
@@ -194,8 +197,8 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 	/**
 	 * The default value for the {@link #showMaximize()} Decision.
 	 * 
-	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean, Decision,
-	 *      Decision)
+	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean,
+	 *      Decision,Decision, Decision)
 	 */
 	void setShowMaximizeDefault(boolean showMaximizeDefault);
 
@@ -212,10 +215,28 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 	/**
 	 * The default value for the {@link #showMinimize()} {@link Decision}.
 	 * 
-	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean, Decision,
-	 *      Decision)
+	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean,
+	 *      Decision,Decision, Decision)
 	 */
 	void setShowMinimizeDefault(boolean showMinimize);
+
+	/**
+	 * Whether the "pop out view" button is shown in the toolbar.
+	 */
+	boolean showPopOut();
+
+	/**
+	 * @see #showPopOut()
+	 */
+	void setShowPopOut(Decision showPopOut);
+
+	/**
+	 * The default value for the {@link #showPopOut()} {@link Decision}.
+	 * 
+	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean,
+	 *      Decision,Decision, Decision)
+	 */
+	void setShowPopOutDefault(boolean showPopOut);
 
 	@Override
 	default Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
@@ -228,6 +249,8 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 				return maximized();
 			case MINIMIZED:
 				return minimized();
+			case HIDDEN:
+				return hidden();
 			case MENU_BUTTON:
 				return menuButton();
 		}
@@ -246,6 +269,13 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 	 */
 	default boolean minimized() {
 		return getModel().getExpansionState() == ExpansionState.MINIMIZED;
+	}
+
+	/**
+	 * Whether the toolbar's owner is hidden.
+	 */
+	default boolean hidden() {
+		return getModel().getExpansionState() == ExpansionState.HIDDEN;
 	}
 
 	/**

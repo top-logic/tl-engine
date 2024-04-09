@@ -83,6 +83,7 @@
 		securityProviderClass="${securityProviderClass}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
 		titleKey="${name}"
 		toolbar="true"
 	>

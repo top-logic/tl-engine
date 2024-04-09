@@ -31,19 +31,9 @@
 		</t:parameters>
 	</t:head>
 	<t:body>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment=""
-			failure-message=""
-			user-id=""
-			window-name=""
-		>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.OpenTreeFilterOp"
-					comment=""
-					failure-message=""
-					user-id=""
-					window-name=""
-				>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTreeFilterOp">
 					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
 						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
@@ -59,120 +49,36 @@
 				</action>
 				<t:if condition=" !#equals($Uebergeordnete, &quot;&quot;)">
 					<t:then>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id=""
-							window-name=""
-						>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment=""
-											field-name="filterOptionsContent"
-										/>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Übergeordnete Elemente anzeigen"
-											field-name="includeParents"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-										boolean="${$Uebergeordnete}"
-									/>
-								</value>
-							</field-values>
-							<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
-								context-name="filterOptions"
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Übergeordnete Elemente anzeigen"
 							>
-								<table-name config:interface="com.top_logic.layout.form.FormMemberName">
-									<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
-										tab-path="Strukturen > Typendemo > TreeGrid"
-									/>
-									<path>
-										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment=""
-											field-name="fieldTable"
-										/>
-									</path>
-								</table-name>
-							</model-name>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="${$Uebergeordnete}"
+							/>
 						</action>
 					</t:then>
 				</t:if>
 				<t:if condition=" !#equals($Untergeordnete, &quot;&quot;)">
 					<t:then>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id=""
-							window-name=""
-						>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment=""
-											field-name="filterOptionsContent"
-										/>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Untergeordnete Elemente anzeigen"
-											field-name="includeChildren"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-										boolean="${$Untergeordnete}"
-									/>
-								</value>
-							</field-values>
-							<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
-								context-name="filterOptions"
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Untergeordnete Elemente anzeigen"
 							>
-								<table-name config:interface="com.top_logic.layout.form.FormMemberName">
-									<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
-										tab-path="Strukturen > Typendemo > TreeGrid"
-									/>
-									<path>
-										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment=""
-											field-name="fieldTable"
-										/>
-									</path>
-								</table-name>
-							</model-name>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="${$Untergeordnete}"
+							/>
 						</action>
 					</t:then>
 				</t:if>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-					comment=""
-					failure-expected="false"
-					failure-message=""
-					user-id=""
-					window-name=""
-				>
-					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Übernehmen"
-					>
-						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
-							context-name="filterOptions"
-						>
-							<table-name config:interface="com.top_logic.layout.form.FormMemberName">
-								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
-									tab-path="Strukturen > Typendemo > TreeGrid"
-								/>
-								<path>
-									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-										field-label-comment=""
-										field-name="fieldTable"
-									/>
-								</path>
-							</table-name>
-						</component>
-					</model-name>
-				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+				/>
 			</actions>
 		</action>
 	</t:body>

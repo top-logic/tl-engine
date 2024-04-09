@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.structure;
 
-import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.mig.html.layout.Layout;
@@ -19,10 +18,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class CollapsibleControlProvider extends ConfiguredLayoutControlProvider<CollapsibleControlProvider.Config> {
 	
-	private final Decision _showMaximize;
-
-	private final Decision _showMinimize;
-
 	/**
 	 * Configuration options of {@link CollapsibleControlProvider}.
 	 */
@@ -36,14 +31,12 @@ public class CollapsibleControlProvider extends ConfiguredLayoutControlProvider<
 	 */
 	public CollapsibleControlProvider(InstantiationContext context, Config config) {
 		super(context, config);
-		_showMaximize = config.getShowMaximize();
-		_showMinimize = config.getShowMinimize();
 	}
 
 	@Override
 	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
 		CollapsibleControl control =
-			new CollapsibleControl(component.getTitleKey(), component, true, _showMaximize, _showMinimize);
+			new CollapsibleControl(component.getTitleKey(), component, true, getConfig());
 		LayoutControl contentControl = strategy.createDefaultLayout(component);
 		control.setChildControl(contentControl);
 		return control;

@@ -27,6 +27,11 @@ public interface ToolbarOptions extends ConfigurationItem {
 	String SHOW_MINIMIZE = "showMinimize";
 
 	/**
+	 * @see #getShowPopOut()
+	 */
+	String SHOW_POP_OUT = "showPopOut";
+
+	/**
 	 * Whether the maximize button is shown in the toolbar.
 	 */
 	@Name(SHOW_MAXIMIZE)
@@ -44,8 +49,19 @@ public interface ToolbarOptions extends ConfigurationItem {
 	Decision getShowMinimize();
 
 	/**
-	 * @see #getShowMaximize()
+	 * @see #getShowMinimize()
 	 */
 	void setShowMinimize(Decision value);
+
+	/**
+	 * Whether the button to display the content in a separate window is shown in the toolbar.
+	 */
+	@Name(SHOW_POP_OUT)
+	Decision getShowPopOut();
+
+	/**
+	 * @see #getShowPopOut()
+	 */
+	void setShowPopOut(Decision value);
 
 }

@@ -23,12 +23,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey CHANGE_COLUMN_SIZE;
 	
-	/** Apply button in filter options dialog. */
-	public static ResKey FILTER_OPTIONS_APPLY;
-
-	/** Cancel button in filter options dialog. */
-	public static ResKey FILTER_OPTIONS_CANCEL;
-
 	/** Filter options dialog title. */
 	public static ResKey FILTER_OPTIONS_TITLE;
 

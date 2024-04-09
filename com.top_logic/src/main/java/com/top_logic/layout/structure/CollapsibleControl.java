@@ -34,6 +34,7 @@ import com.top_logic.layout.toolbar.TitleControl;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -62,7 +63,28 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 
 	private ToggleMaximized _maximize;
 
+	private PopOut _popOut;
+
 	private final ToolBar _toolbar;
+
+	/**
+	 * Creates a {@link CollapsibleControl}.
+	 * 
+	 * @param titleKey
+	 *        Resource key to render in the title area.
+	 * @param model
+	 *        The {@link Expandable} model to observe.
+	 * @param canMaximize
+	 *        See {@link ToolBar#canMaximize()}.
+	 * @param toolbarOptions
+	 *        Configuration of the toolbar.
+	 * @see AbstractLayoutControl#AbstractLayoutControl(Map)
+	 */
+	public CollapsibleControl(ResKey titleKey, Expandable model, boolean canMaximize,
+			ToolbarOptions toolbarOptions) {
+		this(titleKey, model, canMaximize, toolbarOptions.getShowMaximize(), toolbarOptions.getShowMinimize(),
+			toolbarOptions.getShowPopOut());
+	}
 
 	/**
 	 * Creates a {@link CollapsibleControl}.
@@ -77,11 +99,13 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	 *        See {@link ToolBar#showMaximize()}.
 	 * @param showMinimize
 	 *        See {@link ToolBar#showMinimize()}.
+	 * @param showPopOut
+	 *        See {@link ToolBar#showPopOut()}.
 	 * @see AbstractLayoutControl#AbstractLayoutControl(Map)
 	 */
 	public CollapsibleControl(ResKey titleKey, Expandable model, boolean canMaximize,
-			Decision showMaximize, Decision showMinimize) {
-		this(titleKey, model, NO_COMMANDS, canMaximize, showMaximize, showMinimize);
+			Decision showMaximize, Decision showMinimize, Decision showPopOut) {
+		this(titleKey, model, NO_COMMANDS, canMaximize, showMaximize, showMinimize, showPopOut);
 	}
 
 	/**
@@ -95,12 +119,14 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	 */
 	protected CollapsibleControl(ResKey titleKey, Expandable model,
 			Map<String, ControlCommand> commandsByName,
-			boolean canMaximize, Decision showMaximize, Decision showMinimize) {
+			boolean canMaximize, Decision showMaximize, Decision showMinimize, Decision showPopOut) {
 		super(model, commandsByName);
 
-		_toolbar = new DefaultToolBar(this, model, new ResourceText(titleKey), canMaximize, showMaximize, showMinimize);
+		_toolbar = new DefaultToolBar(this, model, new ResourceText(titleKey), canMaximize, showMaximize, showMinimize,
+			showPopOut);
 		_maximize = new ToggleMaximized();
 		_collapse = new ToggleMinimized();
+		_popOut = new PopOut();
 	}
 
 	/**
@@ -115,6 +141,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		_toolbar = toolbar;
 		_maximize = new ToggleMaximized();
 		_collapse = new ToggleMinimized();
+		_popOut = new PopOut();
 	}
 
 	/**
@@ -171,6 +198,12 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	protected void internalNotifyExpansionStateChanged(Expandable sender, ExpansionState oldValue,
 			ExpansionState newValue) {
 		super.internalNotifyExpansionStateChanged(sender, oldValue, newValue);
+		if (newValue == ExpansionState.HIDDEN) {
+			DisplayContext context = DefaultDisplayContext.getDisplayContext();
+			MainLayout mainLayout = context.getLayoutContext().getMainLayout();
+			mainLayout.getWindowManager().displayInWindow(context, CollapsibleControl.this,
+				() -> setExpansionState(oldValue));
+		}
 		updateButtons();
 	}
 
@@ -188,7 +221,14 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	 */
 	@TemplateVariable("collapsed")
 	public final boolean isCollapsed() {
+		if (isDisplayedInExternalWindow()) {
+			return false;
+		}
 		return canCollapse() && getExpansionState() == Expandable.ExpansionState.MINIMIZED;
+	}
+
+	private boolean isDisplayedInExternalWindow() {
+		return getExpansionState() == ExpansionState.HIDDEN;
 	}
 
 	/**
@@ -205,21 +245,32 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		return _maximize;
 	}
 
+	/**
+	 * Command to display this control in an external window.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	private class PopOut extends AbstractCommandModel implements DynamicRecordable {
+
+		public PopOut() {
+			setImage(com.top_logic.layout.structure.Icons.WINDOW_POP_OUT);
+			ResKey tooltipKey = I18NConstants.POP_OUT_VIEW_TEXT;
+			setTooltip(Resources.getInstance().getString(tooltipKey));
+			setLabel(Resources.getInstance().getString(tooltipKey));
+		}
+
+		@Override
+		protected HandlerResult internalExecuteCommand(DisplayContext context) {
+			setAndRecordExpansionState(context, ExpansionState.HIDDEN);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+	}
+
 	private abstract class Toggle extends AbstractCommandModel implements DynamicRecordable {
 
 		public Toggle() {
 			update();
-		}
-
-		protected void setExpansionState(DisplayContext context, ExpansionState state) {
-			CollapsibleControl.this.setExpansionState(state);
-			if (ScriptingRecorder.isRecordingActive()) {
-				Maybe<? extends ModelName> ownerName = ModelResolver.buildModelNameIfAvailable(
-					DefaultDisplayContext.getDisplayContext().getWindowScope(), getToolbar().getModel());
-				if (ownerName.hasValue()) {
-					ScriptingRecorder.recordCollapseToolbar(ownerName.get(), state);
-				}
-			}
 		}
 
 		protected abstract void update();
@@ -247,7 +298,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		 * @see #reset()
 		 */
 		void setCollapsed(DisplayContext context, boolean collapsed) {
-			setExpansionState(context,
+			setAndRecordExpansionState(context,
 				collapsed ? Expandable.ExpansionState.MINIMIZED : Expandable.ExpansionState.NORMALIZED);
 		}
 
@@ -277,7 +328,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		}
 
 		private void setMaximized(DisplayContext context, boolean maximize) {
-			setExpansionState(context,
+			setAndRecordExpansionState(context,
 				maximize ? Expandable.ExpansionState.MAXIMIZED : Expandable.ExpansionState.NORMALIZED);
 		}
 
@@ -292,6 +343,17 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 			ResKey tooltipKey = maximized ? I18NConstants.RESTORE_WINDOW : I18NConstants.MAXIMIZE_WINDOW;
 			setTooltip(Resources.getInstance().getString(tooltipKey));
 			setLabel(Resources.getInstance().getString(tooltipKey));
+		}
+	}
+
+	void setAndRecordExpansionState(DisplayContext context, ExpansionState state) {
+		CollapsibleControl.this.setExpansionState(state);
+		if (ScriptingRecorder.isRecordingActive()) {
+			Maybe<? extends ModelName> ownerName = ModelResolver.buildModelNameIfAvailable(
+				DefaultDisplayContext.getDisplayContext().getWindowScope(), getToolbar().getModel());
+			if (ownerName.hasValue()) {
+				ScriptingRecorder.recordCollapseToolbar(ownerName.get(), state);
+			}
 		}
 	}
 
@@ -352,6 +414,9 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	 */
 	@TemplateVariable("showCollapse")
 	public boolean showCollapse() {
+		if (isDisplayedInExternalWindow()) {
+			return false;
+		}
 		boolean showCollapse = false;
 		LayoutControl parent = getParent();
 		if (parent instanceof FlowLayoutControl) {
@@ -375,6 +440,9 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	 */
 	@TemplateVariable("showMaximize")
 	public boolean showMaximize() {
+		if (isDisplayedInExternalWindow()) {
+			return false;
+		}
 		boolean showMaximize = false;
 		if (!isCollapsed()) {
 			if (hasCockpit() && getToolbar().showMaximize()) {
@@ -390,5 +458,27 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	@TemplateVariable("maximizeButton")
 	public ButtonControl getMaximizeButton() {
 		return new ButtonControl(getMaximize());
+	}
+
+	/**
+	 * Whether a "pop out view"-button should be rendered.
+	 */
+	@TemplateVariable("showPopOut")
+	public boolean showDisplayExternal() {
+		if (isDisplayedInExternalWindow()) {
+			return false;
+		}
+		if (!getToolbar().showPopOut()) {
+			return false;
+		}
+		return !isMaximized();
+	}
+
+	/**
+	 * The button that allows displaying the contents in an external window.
+	 */
+	@TemplateVariable("popOutButton")
+	public ButtonControl getDisplayExternalButton() {
+		return new ButtonControl(_popOut);
 	}
 }

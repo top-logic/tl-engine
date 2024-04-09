@@ -20,6 +20,7 @@
 
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
+					<property name="showPopOut"/>
 
 					<property name="securityObject"/>
 					<property name="partnerGroup"/>
@@ -121,6 +122,7 @@
 		show-only-selectable-nodes="${showOnlySelectableNodes}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
 		titleKey="${name}"
 	>
 		<selectionModelFactory multiple="${multiSelection}"/>

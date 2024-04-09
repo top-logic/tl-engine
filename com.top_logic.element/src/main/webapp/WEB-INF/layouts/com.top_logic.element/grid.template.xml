@@ -25,6 +25,7 @@
 
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
+					<property name="showPopOut"/>
 
 					<property name="securityObject"/>
 
@@ -149,6 +150,7 @@
 		showDetailOpener="${showDetailOpener}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
 		titleKey="${name}"
 	>
 		<modifier class="com.top_logic.element.layout.meta.TemplateFormContextModificator"

@@ -29,22 +29,21 @@
 .dfEntryTitle .lFixedRight {
 	display: flex;
 	gap: var(--spacing-01);
-	margin-left: auto;
 }
 
 .dfContent {
-	flex-grow: 2;
+	overflow: hidden;
 	align-self: center;
 }
 
-.dfContent .dfItemTitle {
+.dfItemTitle {
 	display: flex;
+	flex-grow: 2;
 }
 
 .mboxContent .dfContent .dfToolbar {
 	display: flex;
 	gap: var(--spacing-01);
-	margin-left: auto;
 }
 
 .dfListCommands .cOnExpandedControl {
@@ -159,6 +158,10 @@ div.fptIconBar > span.fptIconOverlay > i {
     color: black;
 }
 
+.rf_header .cLabel {
+	display: flex;
+}
+
 .rf_label .cLabel label {
 	color: var(--text-secondary);
 	word-break: break-all;
@@ -247,7 +250,23 @@ a.is-action {
 }
 
 .frmGroupExpand {
+	display: inline-flex;
+}
+
+.rf_header > .rf_keepInline {
+	display: flex;
+	flex-grow: 2;
+}
+
+.rf_keepInline + .frmGroupExpand,
+.frmGroupExpand:first-child,
+.rf_header >:nth-child(2),
+.dfEntryTitle :nth-child(2) {
 	margin-left: auto;
+}
+
+.dfEntryTitle > .lFlexible {
+	flex-grow: 2;
 }
 	
 .frmGroupExpand::before {
@@ -259,7 +278,11 @@ a.is-action {
 	content: " ";
 }
 
-.dfListIcon::before {
+.dfListCollapseIcon {
+	display: inline-flex;
+}
+
+.dfListCollapseIcon::before {
 	display: inline-flex;
 	vertical-align: middle;
 	border-left: 1px solid var(--border-subtle);
@@ -499,16 +522,12 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .dfEntryTitle.colored:hover {
-	background: var(--layer-hover);
+	background: var(--layer-accent-hover);
 }
 
 .dfEntryTitle.colored .lFixedRight,
 .dfEntryTitle.colored:hover .lFixedRight a {
 	background: none;
-}
-
-.dfEntryTitle.colored .lFixedRight {
-	padding-right: var(--spacing-02);
 }
 
 div.dfListAdd {
@@ -766,10 +785,6 @@ div.dfListAdd {
 	border: 0px;
 }
 
-.fltContent .dfToolbar {
-	margin-left: auto;
-}
-
 .rf_groupCell .rf_header {
     grid-row: 1;
     grid-column: 1;
@@ -785,7 +800,7 @@ div.dfListAdd {
 }
 
 .rf_groupCell .rf_header:hover {
-	background: var(--layer-hover);
+	background: var(--layer-accent-hover);
 }
 
 .rf_groupCell .rf_header a:hover {
@@ -799,8 +814,10 @@ div.dfListAdd {
 .rf_groupCell .rf_header select.tl-select,
 .rf_groupCell .rf_header label {
 	color: var(--GROUP_LABEL_COLOR);
-    font-weight: bold;
-    margin-bottom: 0px;
+	font-weight: bold;
+	margin-bottom: 0px;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .rf_inputCell label {
@@ -1611,10 +1628,10 @@ span.cIconSelect .input-image.cannot-edit i {
 	padding: 0 var(--spacing-03);
 	height: 2rem;
 	box-sizing: border-box;
+	max-width: 100%;
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
-	width: 100%;
 	font-family: var(--font-family-regular);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);

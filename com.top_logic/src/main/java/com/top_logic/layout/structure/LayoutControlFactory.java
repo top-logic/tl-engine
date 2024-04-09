@@ -137,16 +137,15 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	 * Annotation property for {@link LayoutComponent#set(Property, Object)}.
 	 * 
 	 * <p>
-	 * It annotates a component <code>B</code> to a component <code>A</code>, if the component
-	 * <code>A</code> should be wrapped with a toolbar layout for the toolbar owner <code>B</code>.
-	 * A toolbar layout can be minimized, if there are sibling components in the directly
-	 * surrounding layout. The minimization state is stored at the minimization lead component
-	 * <code>B</code>.
+	 * It annotates a component <code>B</code> to a surrounding layout <code>A</code>, if the
+	 * component <code>A</code> should be display a toolbar on behalf of <code>B</code>. A toolbar
+	 * can be minimized, if there are sibling components in the directly surrounding layout. The
+	 * minimization state is stored at the minimization lead component <code>B</code>.
 	 * </p>
 	 */
 	private static final Property<LayoutComponent> TOOLBAR_FOR = TypedAnnotatable.property(LayoutComponent.class, "toolbarFor");
 
-	private static final Property<Boolean> SHOW_MAXIMIZE = TypedAnnotatable.property(Boolean.class, "showMinimize");
+	private static final Property<Boolean> SHOW_MAXIMIZE = TypedAnnotatable.property(Boolean.class, "showMaximize");
 
 	/**
 	 * Annotation property for {@link LayoutComponent#set(Property, Object)}.

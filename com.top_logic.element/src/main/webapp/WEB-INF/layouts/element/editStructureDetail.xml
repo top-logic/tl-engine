@@ -60,9 +60,6 @@
 		<param name="editRoot"
 			value="false"
 		/>
-		<param name="show-compare-command"
-			value=""
-		/>
 		<param name="subConfiguration">
 			<!-- Empty by default. -->
 		</param>
@@ -91,7 +88,6 @@
 				page="${page}"
 				resPrefix="element.structure.edit."
 				securityProviderClass="${securityProvider}"
-				show-compare-command="${show-compare-command}"
 				showNoModel="${showNoModel}"
 				structure="${structure}"
 				titleKey="layouts.element.editStructureDetail.editTitle.${structure}"

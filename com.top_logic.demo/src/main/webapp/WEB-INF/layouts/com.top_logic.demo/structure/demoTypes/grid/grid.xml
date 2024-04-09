@@ -51,6 +51,9 @@
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
 						exportNameKey="/sTypes_Demo.xlsx"
 					/>
+					<button id="openGridCompareView"
+						class="com.top_logic.element.layout.grid.OpenGridCompareViewCommand"
+					/>
 					${buttons}
 				</buttons>
 

@@ -83,7 +83,7 @@
 
 .tlTabBar .activeTabLabel {
 	color: var(--text-primary);
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -91,7 +91,7 @@
 
 .tlTabBar .tabLabel {
 	color: var(--text-secondary);
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);
     letter-spacing: var(--body-02-letter-spacing);
@@ -174,7 +174,7 @@ div.mcMinimized .sblTitle img {
 }
 
 .sblTitleName {
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -185,7 +185,7 @@ div.mcMinimized .sblTitle img {
 }
 
 .sblTitleVersion {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -257,7 +257,7 @@ div.mcMinimized .sblTitle img {
 
 /* For collapsed sidebar */
 .mcMinimized .licenseView .licenseContent {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);

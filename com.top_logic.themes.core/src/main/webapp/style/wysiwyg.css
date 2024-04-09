@@ -72,7 +72,7 @@
 
 .tlDocTable th {
 	color: var(--text-primary);
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);

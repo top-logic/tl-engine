@@ -63,7 +63,7 @@ a.tl-table__title:visited {
     gap: var(--spacing-02);
 	background: var(--layer-accent);
 	color: var(--text-primary);
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -79,7 +79,7 @@ a.tl-table__title:visited {
 th.tblTitleRight {
 	background: var(--layer-accent);
 	color: var(--text-primary);
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -178,7 +178,7 @@ th.tblCounterNoBorder {
 }
 
 .tl-table__footer-pager .ddwttDropBtn {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
     font-size: var(--body-01-font-size);
     line-height: var(--body-0-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -201,7 +201,7 @@ td.tl-table__cell {
 
 th.tl-table__cell {
     color: var(--text-primary);
-	font-family: 'Inter-SemiBold';
+	font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1392,7 +1392,7 @@ div.dirtyHandlingDialog .changes {
 	justify-content: center;
 	background: var(--layer-accent);
 	color: var(--text-primary);
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -1598,7 +1598,7 @@ table.tl-table--fixed td.tl-table__cell--selected.treeTableTd {
 
 th.treeTableTh {
     color: var(--text-primary);
-    font-family: 'Inter-SemiBold';
+    font-family: var(--font-family-bold);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);

@@ -708,6 +708,16 @@
 						object-label="Alle Fabrikelemente"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
 				<action class="com.top_logic.model.search.providers.OrderedTreeDropActionOp"
 					user-id="root"
 				>
@@ -741,7 +751,7 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 1"
+								node="Fabrik 1_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -749,6 +759,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -762,7 +782,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1"
+							label-path="Fabrik 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -781,7 +801,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -821,11 +841,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 1"
+								node="Fabrik 1_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 1"
+								node="Ebene 1_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -833,6 +853,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -846,7 +876,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -865,7 +895,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1 > Ort 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie > Ort 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -905,11 +935,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 1"
+								node="Fabrik 1_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 1"
+								node="Ebene 1_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -917,6 +947,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -930,7 +970,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -949,7 +989,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1 > Ort 2"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie > Ort 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -989,7 +1029,7 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 1"
+								node="Fabrik 1_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -997,6 +1037,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.model.search.providers.OrderedTreeDropActionOp"
 					user-id="root"
@@ -1031,11 +1081,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 1"
+								node="Fabrik 1_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 2"
+								node="Ebene 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1043,6 +1093,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1056,7 +1116,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1075,7 +1135,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2 > Ort 1"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie > Ort 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1115,11 +1175,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 1"
+								node="Fabrik 1_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 2"
+								node="Ebene 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1127,6 +1187,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1140,7 +1210,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1159,7 +1229,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2 > Ort 2"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie > Ort 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1200,6 +1270,16 @@
 						object-label="Alle Fabrikelemente"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
 				<action class="com.top_logic.model.search.providers.OrderedTreeDropActionOp"
 					user-id="root"
 				>
@@ -1233,7 +1313,7 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1241,6 +1321,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1254,7 +1344,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2"
+							label-path="Fabrik 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1273,7 +1363,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1313,11 +1403,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 1"
+								node="Ebene 1_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1325,6 +1415,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1338,7 +1438,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1357,7 +1457,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1 > Ort 1"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie > Ort 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1397,11 +1497,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 1"
+								node="Ebene 1_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1409,6 +1509,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1422,7 +1532,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1441,7 +1551,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1 > Ort 2"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie > Ort 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1481,7 +1591,7 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1489,6 +1599,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1502,7 +1622,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2"
+							label-path="Fabrik 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1521,7 +1641,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1561,11 +1681,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 2"
+								node="Ebene 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1573,6 +1693,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1586,7 +1716,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1605,7 +1735,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2 > Ort 1"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie > Ort 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1645,11 +1775,11 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 2"
+								node="Ebene 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1657,6 +1787,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
@@ -1670,7 +1810,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1689,7 +1829,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2 > Ort 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie > Ort 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
@@ -1771,15 +1911,15 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 							<entry
 								attribute="floors"
-								node="Ebene 2"
+								node="Ebene 2_Kopie"
 							/>
 							<entry
 								attribute="locations"
-								node="Ort 2"
+								node="Ort 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
@@ -1787,6 +1927,16 @@
 							object-label="Alle Fabrikelemente"
 						/>
 					</drop-position-parent>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
 					expand="true"
@@ -1798,7 +1948,7 @@
 						/>
 					</model-name>
 					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-						label-path="Fabrik 2 > Ebene 2 > Ort 2"
+						label-path="Fabrik 2_Kopie > Ebene 2_Kopie > Ort 2_Kopie"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -1807,7 +1957,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2 > Ort 2 > Eingang"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie > Ort 2_Kopie > Eingang_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1854,7 +2004,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1"
+							label-path="Fabrik 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1873,7 +2023,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2"
+							label-path="Fabrik 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1892,7 +2042,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1911,7 +2061,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1930,7 +2080,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1949,7 +2099,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1968,7 +2118,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1 > Ort 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie > Ort 1_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1987,7 +2137,7 @@
 							/>
 						</context>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2 > Ort 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie > Ort 2_Kopie"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -2022,7 +2172,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1"
+							label-path="Fabrik 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2038,7 +2188,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2054,7 +2204,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1 > Ort 1"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie > Ort 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2070,7 +2220,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 1 > Ort 2"
+							label-path="Fabrik 1_Kopie > Ebene 1_Kopie > Ort 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2086,7 +2236,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2102,7 +2252,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2 > Ort 1"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie > Ort 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2118,7 +2268,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1 > Ebene 2 > Ort 2"
+							label-path="Fabrik 1_Kopie > Ebene 2_Kopie > Ort 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2134,7 +2284,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2"
+							label-path="Fabrik 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2150,7 +2300,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2166,7 +2316,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1 > Ort 1"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie > Ort 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2182,7 +2332,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 1 > Ort 2"
+							label-path="Fabrik 2_Kopie > Ebene 1_Kopie > Ort 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2198,7 +2348,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2214,7 +2364,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2 > Ort 1"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie > Ort 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2230,7 +2380,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2 > Ebene 2 > Ort 2"
+							label-path="Fabrik 2_Kopie > Ebene 2_Kopie > Ort 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2256,7 +2406,7 @@
 						/>
 					</model-name>
 					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-						label-path="Fabrik 1"
+						label-path="Fabrik 1_Kopie"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -2300,7 +2450,7 @@
 						<path>
 							<entry
 								attribute="factories"
-								node="Fabrik 2"
+								node="Fabrik 2_Kopie"
 							/>
 						</path>
 						<root config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
@@ -2350,6 +2500,16 @@
 						structure="test.dnd"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+					command-label="Kopie erstellen"
+					command-name="perform"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
 					inverted="false"
@@ -2369,38 +2529,6 @@
 						int="4"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 3"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
-						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Drag &amp; Drop > Fabrikplan"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 4"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
-						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Drag &amp; Drop > Fabrikplan"
-						/>
-					</selection-model-name>
-				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -2413,7 +2541,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 1"
+							label-path="Fabrik 1_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2438,7 +2566,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 2"
+							label-path="Fabrik 2_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2463,7 +2591,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 3"
+							label-path="Fabrik 3_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2488,7 +2616,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="Fabrik 4"
+							label-path="Fabrik 3_Kopie"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

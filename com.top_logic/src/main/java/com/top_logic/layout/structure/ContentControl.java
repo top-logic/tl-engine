@@ -108,15 +108,11 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 		setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
 	}
 
+	/**
+	 * The {@link LayoutComponent} which is written by this {@link ContentControl}.
+	 */
 	@Override
 	public LayoutComponent getModel() {
-		return _component;
-	}
-
-	/**
-	 * the {@link LayoutComponent} which is written by this {@link ContentControl}
-	 */
-	public final LayoutComponent getBusinessComponent() {
 		return _component;
 	}
 
@@ -165,10 +161,9 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	/**
 	 * This method returns a view for rendering the content of the business component.
 	 * 
-	 * @return a view for the business component. If no view was explicit set the returned
-	 *         view is an {@link IFrameLayout} of its {@link #getBusinessComponent()
-	 *         business component}, unless the business component is an instance of
-	 *         {@link ControlRepresentable} in which case this method delegates to
+	 * @return a view for the business component. If no view was explicit set the returned view is
+	 *         an {@link IFrameLayout} of its component, unless the business component is an
+	 *         instance of {@link ControlRepresentable} in which case this method delegates to
 	 *         {@link ControlRepresentable#getRenderingControl() the rendering control of the
 	 *         component}.
 	 * @see IFrameLayout
@@ -176,8 +171,9 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	 */
 	public HTMLFragment getView() {
 		if (_view == null) {
-			if (getBusinessComponent() instanceof ControlRepresentable) {
-				return ((ControlRepresentable) getBusinessComponent()).getRenderingControl();
+			LayoutComponent component = getModel();
+			if (component instanceof ControlRepresentable) {
+				return ((ControlRepresentable) component).getRenderingControl();
 			}
 			_view = new IFrameLayout(_component, IFrameLayout.FULL_SIZE, IFrameLayout.FULL_SIZE,
 				getConstraint().getScrollable());
@@ -216,8 +212,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	}
 	
 	/**
-	 * attaches a listener to its {@link #getBusinessComponent() business
-	 * component} to react on {@link LayoutComponent#invalidate()}.
+	 * attaches a listener to its component to react on {@link LayoutComponent#invalidate()}.
 	 * 
 	 * @see AbstractControlBase#internalAttach()
 	 */
@@ -285,7 +280,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	 * Whether the {@link DropTarget} of the displayed component is enabled.
 	 */
 	public boolean dropEnabled() {
-		LayoutComponent component = getBusinessComponent();
+		LayoutComponent component = getModel();
 		ComponentDropTarget dropTarget = component.getConfig().getDropTarget();
 		return dropTarget.dropEnabled(component);
 	}
@@ -319,7 +314,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 		@Override
 		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
 			ContentControl contentControl = (ContentControl) control;
-			LayoutComponent component = contentControl.getBusinessComponent();
+			LayoutComponent component = contentControl.getModel();
 			ComponentDropTarget dropTarget = component.getConfig().getDropTarget();
 			if (!dropTarget.dropEnabled(component)) {
 				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);

@@ -31,7 +31,7 @@ public class ComponentInspector extends GuiInspectorCommand<ContentControl, Layo
 	@Override
 	protected LayoutComponent findInspectedGuiElement(ContentControl control, Map<String, Object> arguments)
 			throws AssertionError {
-		return control.getBusinessComponent();
+		return control.getModel();
 	}
 
 	@Override

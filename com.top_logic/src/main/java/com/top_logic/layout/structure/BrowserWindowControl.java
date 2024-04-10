@@ -67,6 +67,7 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.CommandHandlerCommand;
 import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlRenderer;
@@ -1351,12 +1352,20 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 			CommandHandler handler = (CommandHandler) command;
 			return isExecutable(handler, MainLayout.getComponent(displayContext));
 		}
+		if (command instanceof CommandHandlerCommand) {
+			CommandHandlerCommand adapter = (CommandHandlerCommand) command;
+			return isExecutable(adapter.getCommand(), adapter.getComponent(), adapter.getArguments());
+		}
 		return true;
 	}
 
 	private boolean isExecutable(CommandHandler command, LayoutComponent component) {
 		Map<String, Object> noArgs = emptyMap();
-		return CommandDispatcher.resolveExecutableState(command, component, noArgs).isExecutable();
+		return isExecutable(command, component, noArgs);
+	}
+
+	private boolean isExecutable(CommandHandler command, LayoutComponent component, Map<String, Object> arguments) {
+		return CommandDispatcher.resolveExecutableState(command, component, arguments).isExecutable();
 	}
 
 	/**

@@ -45,7 +45,7 @@ public class DynamicInstanceOf extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object input = arguments[0];
 		SearchExpression inputExpr = getArguments()[0];
-		TLStructuredType expectedType = asStructuredType(arguments[1], getArguments()[1]);
+		TLStructuredType expectedType = asStructuredTypeNonNull(arguments[1], getArguments()[1]);
 
 		return InstanceOf.isInstanceOf(input, inputExpr, expectedType);
 	}

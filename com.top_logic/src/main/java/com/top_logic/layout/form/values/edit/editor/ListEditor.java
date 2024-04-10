@@ -395,15 +395,14 @@ public class ListEditor implements Editor {
 		if (titleProperty == null) {
 			return div(
 				css("dfListEntry"),
-				EditorUtils.titleWithIconAndRemove(
-					htmlTemplate(Icons.ITEM_ICON),
+				EditorUtils.titleWithRemove(
 					label(EditorUtils.LIST_ITEM_GROUP),
 					"colored"),
 				div(css(ReactiveFormCSS.RF_COLUMNS_LAYOUT), member(EditorUtils.LIST_ITEM_GROUP, embedd())));
 		} else {
 			return div(
 				css("dfListEntry"),
-				EditorUtils.titleWithIconAndRemove(
+				EditorUtils.titleWithCollapseAndRemove(
 						member(EditorUtils.LIST_ITEM_GROUP, MemberStyle.NONE, toggleButtonCP()),
 						member(EditorUtils.LIST_ITEM_GROUP, MemberStyle.NONE,
 							titleFragment(polymorphicOptions, titleProperty)),

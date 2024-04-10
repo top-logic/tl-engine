@@ -1907,6 +1907,7 @@ div.cCollapsibleHorizontal div.cCollapsibleHeader {
 }
 
 .cCollapsibleTitle {
+	display: inline-block;
 	white-space: nowrap;
 	padding-left: 4px;
 	line-height: var(--COLLAPSIBLE_IMAGE_HEIGHT);
@@ -5370,17 +5371,15 @@ span.configuredTooltipLabel {
 	margin-left: auto;
 }
 
-.rf_header .dfContent .dfItemTitle {
-    display: flex;
-}
-
 .dfItemTitle {
+	display: flex;
     text-overflow: ellipsis;
     white-space: initial;
     overflow: hidden;
 }
 
 .rf_header .dfContent {
+	display: flex;
     flex-grow: 2;
     align-self: center;
 }
@@ -5389,6 +5388,10 @@ span.configuredTooltipLabel {
     display: flex;
     gap: .25rem;
     margin-left: auto;
+}
+
+.collapsed .dfToolbar {
+	display: none;
 }
 
 /* In the compact mode, all but the outermost dfList should have indent. */
@@ -5424,7 +5427,7 @@ div.dfEntryTitle label {
 	margin-bottom: 0px;
 }
 
-.dfModeFull span.dfListIcon {
+.dfModeFull span.dfListCollapseIcon {
 	position: absolute;
 	left: -25px;
 }
@@ -5461,6 +5464,7 @@ div.dfEntryHeader {
 	display: flex;
 	gap: 3px;
 	align-items: center;
+	font-weight: bold;
 }
 
 .rf_inputCell.rf_noLabel  > .rf_cell,

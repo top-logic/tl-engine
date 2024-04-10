@@ -59,7 +59,6 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.util.Resources;
 
 /**
@@ -188,17 +187,15 @@ public class EditorUtils {
 	}
 
 	private static HTMLTemplateFragment mapEntryTemplate() {
-		return EditorUtils.titleWithIconAndRemove(
-			htmlTemplate(Icons.ITEM_ICON),
-			div(member(EditorUtils.LIST_ITEM_GROUP, div(css(ReactiveFormCSS.RF_COLUMNS_LAYOUT),
-				fieldBox(MAP_KEY_MEMBER_NAME),
-				fieldBox(MAP_VALUE_MEMBER_NAME)))),
-			null);
+		return fragment(
+			EditorUtils.titleWithRemove(member(EditorUtils.LIST_ITEM_GROUP, fieldBoxNoLabel(MAP_KEY_MEMBER_NAME)),
+				null),
+			EditorUtils.entryContent(member(EditorUtils.LIST_ITEM_GROUP, fieldBoxNoLabel(MAP_VALUE_MEMBER_NAME)),
+				null));
 	}
 
 	private static HTMLTemplateFragment listEntryTemplate() {
-		return EditorUtils.titleWithIconAndRemove(
-			htmlTemplate(Icons.ITEM_ICON),
+		return EditorUtils.titleWithRemove(
 			span(member(EditorUtils.LIST_ITEM_GROUP), member(EditorUtils.LIST_ITEM_GROUP, MemberStyle.ERROR)),
 			null);
 	}
@@ -406,17 +403,37 @@ public class EditorUtils {
 	}
 
 	/**
-	 * Creates a {@link HTMLTemplateFragment} to render an list entry title with an icon on the left
-	 * side and a {@link #LIST_REMOVE remove} command on the right side.
+	 * Creates a {@link HTMLTemplateFragment} to render an list entry title with a
+	 * {@link #LIST_REMOVE remove} command on the right side.
 	 * 
-	 * @param iconTemplate
-	 *        Template to render the "icon" of the title.
 	 * @param titleContent
 	 *        The content of the title.
 	 * @param additionalCSS
 	 *        Optional CSS class to use for the title {@link HTMLConstants#DIV}.
 	 */
-	public static HTMLTemplateFragment titleWithIconAndRemove(HTMLTemplateFragment iconTemplate,
+	public static HTMLTemplateFragment titleWithRemove(HTMLTemplateFragment titleContent, CharSequence additionalCSS) {
+		String cssClass = "dfEntryTitle";
+		if (!StringServices.isEmpty(additionalCSS)) {
+			cssClass += " " + additionalCSS;
+		}
+		return div(css(cssClass),
+			span(css(FormConstants.FLEXIBLE_CSS_CLASS), titleContent),
+			span(css(FormConstants.FIXED_RIGHT_CSS_CLASS),
+				member(LIST_REMOVE)));
+	}
+
+	/**
+	 * Creates a {@link HTMLTemplateFragment} to render an list entry title with a collapse icon on
+	 * the right side and a {@link #LIST_REMOVE remove} command on the right side.
+	 * 
+	 * @param iconTemplate
+	 *        Template to render the "collapse icon" of the title.
+	 * @param titleContent
+	 *        The content of the title.
+	 * @param additionalCSS
+	 *        Optional CSS class to use for the title {@link HTMLConstants#DIV}.
+	 */
+	public static HTMLTemplateFragment titleWithCollapseAndRemove(HTMLTemplateFragment iconTemplate,
 			HTMLTemplateFragment titleContent, CharSequence additionalCSS) {
 		String cssClass = "dfEntryTitle";
 		if (!StringServices.isEmpty(additionalCSS)) {
@@ -426,8 +443,24 @@ public class EditorUtils {
 			span(css(FormConstants.FLEXIBLE_CSS_CLASS), titleContent),
 			span(css(FormConstants.FIXED_RIGHT_CSS_CLASS),
 				member(LIST_REMOVE)),
-			span(css("dfListIcon"), iconTemplate));
-
+			span(css("dfListCollapseIcon"), iconTemplate));
+	}
+	
+	/**
+	 * Creates a {@link HTMLTemplateFragment} to render an list entry title with a
+	 * {@link #LIST_REMOVE remove} command on the right side.
+	 * 
+	 * @param entryContent
+	 *        The content of the title.
+	 * @param additionalCSS
+	 *        Optional CSS class to use for the title {@link HTMLConstants#DIV}.
+	 */
+	public static HTMLTemplateFragment entryContent(HTMLTemplateFragment entryContent, CharSequence additionalCSS) {
+		String cssClass = "dfEntryContent";
+		if (!StringServices.isEmpty(additionalCSS)) {
+			cssClass += " " + additionalCSS;
+		}
+		return div(css(cssClass), entryContent);
 	}
 
 	/**

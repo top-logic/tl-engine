@@ -6,7 +6,6 @@
 package com.top_logic.layout.form.model;
 
 import static com.top_logic.layout.form.FormConstants.*;
-import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -43,6 +42,7 @@ import com.top_logic.layout.form.UINonBlocking;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.WarningsChangedListener;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
+import com.top_logic.layout.form.control.DateTimeControl;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -54,10 +54,6 @@ import com.top_logic.util.ToBeValidated;
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class DateTimeField extends CompositeField {
-
-	private static final String DATE_TIME_CLASS = "cDatetime";
-
-	private static final String TIME_CSS_CLASS = "timePart";
 
 	static final String DAY_CLASS = "cDatetimeDay";
 
@@ -464,13 +460,8 @@ public class DateTimeField extends CompositeField {
 		addMember(timeField);
 		addMember(dateField);
 		
-		template(this,
-			span(css(DATE_TIME_CLASS),
-				span(css(FLEXIBLE_CSS_CLASS), member(DAY_FIELD)),
-				span(css(FIXED_RIGHT_CSS_CLASS + " " + TIME_CSS_CLASS), member(TIME_FIELD))));
-
+		setControlProvider(DateTimeControl.CP.INSTANCE);
 		addErrorWarningsUpdater(dateField, dayField, timeField);
-
 		addListeners(dayField, timeField);
 	}
 

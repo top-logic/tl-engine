@@ -1070,36 +1070,14 @@ table td .cDatetime .lFlexible {
 	width: fit-content !important;
 }
 
-table td .cDatetime .cDateInput input {
-	width: 7rem !important;
+table td .cDatetime .cDateInput input,
+table td .cDatetime .cTimeInput input {
 	padding-right: 0;
     padding-left: 0;
-    text-align: center;
 }
 
 table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
 	width: fit-content !important;
-}
-
-table td .cTimeInput input {
-    width: 3em !important;
-    padding-right: 0;
-    padding-left: 0;
-    text-align: center;
-}
-
-/* Removes the hyphen from the element, because it fits
-and looks better without it in a table cell.
-*/
-.tl-table__cell .timePart .cDatetimeTime.active:not(:empty)::before {
-	content: "";
-	padding-right: 0;
-	padding-left: 0;
-}
-
-.tl-table__cell .timePart .cDatetimeTime:not(:empty)::before {
-	content: ",";
-	padding: 0 var(--spacing-01) 0 0;
 }
 
 table td span.lFlexible > input:not([type="image"]) {

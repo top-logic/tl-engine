@@ -242,6 +242,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	protected void fillButtons(List<CommandModel> buttons) {
 		_cancel = addCancel(buttons);
 		_ok = addOk(buttons);
+		getDialogModel().setDefaultCommand(_ok);
 
 		// Handled explicitly to await progress.
 		ScriptingRecorder.annotateAsDontRecord(_ok);

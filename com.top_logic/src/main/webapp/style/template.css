@@ -1969,6 +1969,9 @@ span.cCollapsibleButtons span.cButton {
 }
 
 div.cCollapsibleHorizontal span.cCollapsibleButtons {
+	display: inline-flex;
+	flex-direction: column;
+	gap: 5px;
 	margin-left: 0px;
 	margin-right: 0px;
 	padding-right: 0px;

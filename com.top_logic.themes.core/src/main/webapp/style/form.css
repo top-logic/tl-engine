@@ -18,6 +18,10 @@
     letter-spacing: var(--heading-compact-02-letter-spacing);
 }
 
+.dfEntryTitle {
+	display: flex;
+}
+
 .dfItemTitle {
     text-overflow: ellipsis;
     white-space: initial;
@@ -44,6 +48,10 @@
 .mboxContent .dfContent .dfToolbar {
 	display: flex;
 	gap: var(--spacing-01);
+}
+
+.collapsed .dfToolbar {
+	display: none;
 }
 
 .dfListCommands .cOnExpandedControl {
@@ -261,7 +269,7 @@ a.is-action {
 .rf_keepInline + .frmGroupExpand,
 .frmGroupExpand:first-child,
 .rf_header >:nth-child(2),
-.dfEntryTitle :nth-child(2) {
+.dfEntryTitle >:nth-child(2) {
 	margin-left: auto;
 }
 
@@ -528,6 +536,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .dfEntryTitle.colored .lFixedRight,
 .dfEntryTitle.colored:hover .lFixedRight a {
 	background: none;
+}
+
+.dfEntryTitle:not(.colored) > .lFixedRight {
+	background: inherit;
 }
 
 div.dfListAdd {

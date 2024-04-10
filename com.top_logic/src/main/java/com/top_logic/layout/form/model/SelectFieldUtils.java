@@ -599,14 +599,20 @@ public class SelectFieldUtils {
 			Renderer<Object> optionRenderer, String entriesCssClass) throws IOException {
 		Renderer<Object> nonNullRenderer = optionRenderer != null ? optionRenderer : getOptionRenderer(field);
 		String separator = SelectFieldUtils.getCollectionSeparator(field);
-		for (Object value : getSelectionList(field)) {
+		List<?> selection = getSelectionList(field);
+		int position = 0;
+		int last = selection.size() - 1;
+		for (Object value : selection) {
 			out.beginBeginTag(SPAN);
 			if (!StringServices.isEmpty(entriesCssClass)) {
 				out.writeAttribute(CLASS_ATTR, entriesCssClass);
 			}
 			out.endBeginTag();
 			nonNullRenderer.write(context, out, value);
-			out.writeText(separator);
+			if (position < last) {
+				out.writeText(separator);
+			}
+			position += 1;
 			out.endTag(SPAN);
 		}
 	}

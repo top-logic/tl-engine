@@ -53,19 +53,22 @@ public class TestResKey extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		
+		Map<String, String> fallbackMap = new HashMap<>();
+		fallbackMap.put("message1.existing", "Message1({0})");
+		fallbackMap.put("message1.existing.suffix", "MessageSuffix1({0})");
+		fallbackMap.put("message2.existing", "Message2({0}, {1})");
+		fallbackMap.put("test.com.top_logic.basic.util.TestResKey.SomeEnum.A", "First choice");
+		fallbackMap.put("test.com.top_logic.basic.util.TestResKey.SomeEnum.B", "Second choice");
+		fallbackMap.put("test.com.top_logic.basic.util.TestResKey.SomeEnum.C", "Third choice");
+		fallbackMap.put("testFallbackNesting.1.1", "Translation of: testFallbackNesting.1.1");
+		fallbackMap.put("testFallbackNesting.1.2", "Translation of: testFallbackNesting.1.2");
+		fallbackMap.put("testFallbackNesting.1.3", "Translation of: testFallbackNesting.1.3");
+		fallbackMap.put("testFallbackNesting.2.2", "Translation of: testFallbackNesting.2.2");
+		BundleForTest fallbackBundle = new BundleForTest(fallbackMap, Locale.CHINESE);
+
 		Map<String, String> map = new HashMap<>();
 		map.put("foo.bar.existing", "FooBarExisting");
 		map.put("foo.bar.deprecated.existing", "FooBarDeprecatedExisting");
-		map.put("message1.existing", "Message1({0})");
-		map.put("message1.existing.suffix", "MessageSuffix1({0})");
-		map.put("message2.existing", "Message2({0}, {1})");
-		map.put("test.com.top_logic.basic.util.TestResKey.SomeEnum.A", "First choice");
-		map.put("test.com.top_logic.basic.util.TestResKey.SomeEnum.B", "Second choice");
-		map.put("test.com.top_logic.basic.util.TestResKey.SomeEnum.C", "Third choice");
-		map.put("testFallbackNesting.1.1", "Translation of: testFallbackNesting.1.1");
-		map.put("testFallbackNesting.1.2", "Translation of: testFallbackNesting.1.2");
-		map.put("testFallbackNesting.1.3", "Translation of: testFallbackNesting.1.3");
-		map.put("testFallbackNesting.2.2", "Translation of: testFallbackNesting.2.2");
 		map.put("testFallbackNesting.2.3", "Translation of: testFallbackNesting.2.3");
 		map.put("testFallbackNesting.3.3", "Translation of: testFallbackNesting.3.3");
 		map.put("testFallbackWithFallbackSuffix.2.suffix.2", "Translation of: testFallbackWithFallbackSuffix.2.suffix.2");
@@ -78,7 +81,7 @@ public class TestResKey extends TestCase {
 		map.put("testTooltip.keyWithTooltip.tooltip", "Translation of: testTooltip.keyWithTooltip.tooltip");
 		map.put("testTooltip.keyWithoutTooltip", "Translation of: testTooltip.keyWithoutTooltip");
 
-		_bundle = new BundleForTest(map, Locale.ENGLISH);
+		_bundle = new BundleForTest(map, Locale.ENGLISH, fallbackBundle);
 	}
 
 	public void testResolve() {
@@ -355,6 +358,16 @@ public class TestResKey extends TestCase {
 		// assertNotEquals(key1, ResKey.fallback(key1, ResKey.internalCreate("key2")));
 	}
 
+	public void testWithoutFallbackLanguage() {
+		assertResolve("FooBarExisting", _bundle, ResKey.internalCreate("foo.bar.existing"), false);
+		assertResolve("Message1(FooBarExisting)", _bundle,
+			ResKey.internalCreate("message1.existing").asResKey1().fill(ResKey.internalCreate("foo.bar.existing")),
+			true);
+		assertResolve(null, _bundle,
+			ResKey.internalCreate("message1.existing").asResKey1().fill(ResKey.internalCreate("foo.bar.existing")),
+			false);
+	}
+
 	public void testFallbackInArgument() {
 		Object[] arguments = { ResKey.fallback(
 			ResKey.internalCreate("foo.bar.missing"),
@@ -455,11 +468,15 @@ public class TestResKey extends TestCase {
 	}
 
 	private void assertResolve(String expected, BundleForTest bundle, ResKey resKey) {
-		assertEquals(expected, resKey.resolve(bundle, resKey));
+		assertResolve(expected, bundle, resKey, true);
+	}
+
+	private void assertResolve(String expected, BundleForTest bundle, ResKey resKey, boolean withFallback) {
+		assertEquals(expected, resKey.resolve(bundle, resKey, withFallback));
 
 		ResKey encoded = ResKey.decode(ResKey.encode(resKey));
 		assertEquals("Decoded key not same.", resKey, encoded);
-		assertEquals("Decoded key does not resolve.", expected, encoded.resolve(bundle, resKey));
+		assertEquals("Decoded key does not resolve.", expected, encoded.resolve(bundle, resKey, withFallback));
 	}
 
 	static final class BundleForTest implements I18NBundleSPI {
@@ -525,8 +542,15 @@ public class TestResKey extends TestCase {
 		}
 
 		@Override
-		public String lookup(String key) {
-			return _map.get(key);
+		public String lookup(String key, boolean withFallbackBundle) {
+			String value = _map.get(key);
+			if (value != null || _map.containsKey(key)) {
+				return value;
+			}
+			if (withFallbackBundle && _fallback != null) {
+				return _fallback.lookup(key, withFallbackBundle);
+			}
+			return value;
 		}
 	
 		@Override
@@ -579,10 +603,19 @@ public class TestResKey extends TestCase {
 
 		@Override
 		public String getString(ResKey aKey) {
-			if (aKey == null) {
+			return internalGetString(aKey, true);
+		}
+
+		@Override
+		public String getStringWithoutFallback(ResKey key) {
+			return internalGetString(key, false);
+		}
+
+		private String internalGetString(ResKey key, boolean withFallback) {
+			if (key == null) {
 				return StringServices.EMPTY_STRING;
 			}
-			return aKey.resolve(this, aKey);
+			return key.resolve(this, key, withFallback);
 		}
 
 		@Override

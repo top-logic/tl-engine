@@ -39,24 +39,24 @@ public interface I18NBundle {
 	Set<String> getLocalKeys();
 
 	/**
-	 * Get the string for the given key out from the ResourceBundle. If there is no definition for
-	 * this key, the key will be returned in brackets.
+	 * Get the string for the given key out from the {@link I18NBundle}. If there is no definition
+	 * for this key, the key will be returned in brackets.
 	 * 
 	 * @param aKey
-	 *        characterize the properties files.
-	 * @return A string object from ResourceBundle.
+	 *        the key to get resource for.
+	 * @return A resource from this {@link I18NBundle}.
 	 */
 	String getString(ResKey aKey);
 
 	/**
-	 * Get the string for the given key out from the ResourceBundle. If there is no definition for
-	 * this key, the key will be returned in brackets.
+	 * Get the string for the given key out from the {@link I18NBundle}. If there is no definition
+	 * for this key, the key will be returned in brackets.
 	 * 
 	 * @param aKey
-	 *        Characterize the properties files.
+	 *        the key to get resource for.
 	 * @param aDefault
-	 *        The default name, if no entry found.
-	 * @return A string object from ResourceBundle.
+	 *        The default value, if no entry found.
+	 * @return A resource from this {@link I18NBundle}.
 	 */
 	default String getString(ResKey aKey, String aDefault) {
 		return getStringWithDefaultKey(aKey, ResKey.text(aDefault));
@@ -127,5 +127,19 @@ public interface I18NBundle {
 			return getString(ResKey.message(aKey, someValues));
 		}
 	}
+
+	/**
+	 * Resolves the resource for the given key.
+	 * 
+	 * <p>
+	 * In contrast to {@link #getString(ResKey)}, this method does not resolves the given key in a
+	 * potential fallback locale.
+	 * </p>
+	 *
+	 * @param key
+	 *        The key to resolve.
+	 * @return The resource for the key, or <code>null</code> if nothing can be found.
+	 */
+	String getStringWithoutFallback(ResKey key);
 
 }

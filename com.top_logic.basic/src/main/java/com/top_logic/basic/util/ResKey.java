@@ -107,10 +107,26 @@ public abstract class ResKey {
 	 * @param origKey
 	 *        The initially resolved key (e.g. if a key chain with fall-back keys is being resolved,
 	 *        the original key is the key that was tried to resolve first.)
+	 * @param withFallbackBundle
+	 *        Whether the key must resolve relative to the {@link I18NBundleSPI#getFallback()
+	 *        fallback bundle} if no value can be found.
 	 */
 	@FrameworkInternal
-	public final String resolve(I18NBundleSPI bundle, ResKey origKey) {
-		return internalResolve(bundle, directInternal(), fallback(), origKey);
+	public final String resolve(I18NBundleSPI bundle, ResKey origKey, boolean withFallbackBundle) {
+		DirectKey directKey = directInternal();
+		ResKey defaultKey = fallback();
+
+		String value = directKey.lookupDirect(bundle, origKey, withFallbackBundle);
+		if (value != null || !directKey.nullMeansMissing(bundle, origKey)) {
+			return value;
+		} else if (defaultKey != null) {
+			return defaultKey.resolve(bundle, origKey, withFallbackBundle);
+		} else if (!withFallbackBundle) {
+			return value;
+		} else {
+			bundle.handleUnknownKey(origKey);
+			return origKey.unknown(bundle);
+		}
 	}
 
 	@Override
@@ -987,9 +1003,9 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback) {
 			String key = getKey();
-			return bundle.lookup(key);
+			return bundle.lookup(key, withFallback);
 		}
 		
 		/**
@@ -997,7 +1013,7 @@ public abstract class ResKey {
 		 * 
 		 * <p>
 		 * This method can be used to determine whether the <code>null</code> result of
-		 * {@link #lookupDirect(I18NBundleSPI, ResKey)} means that there is no resource for the key.
+		 * {@link #lookupDirect(I18NBundleSPI, ResKey, boolean)} means that there is no resource for the key.
 		 * </p>
 		 * 
 		 * @param bundle
@@ -1005,7 +1021,7 @@ public abstract class ResKey {
 		 * @param origKey
 		 *        The top-most key that is currently being resolved.
 		 * @return <code>true</code> iff a null value in
-		 *         {@link #lookupDirect(I18NBundleSPI, ResKey)} means that there is no resource.
+		 *         {@link #lookupDirect(I18NBundleSPI, ResKey, boolean)} means that there is no resource.
 		 */
 		protected boolean nullMeansMissing(I18NBundleSPI bundle, ResKey origKey) {
 			return true;
@@ -1086,7 +1102,7 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback) {
 			if (_unknown) {
 				return null;
 			}
@@ -1120,13 +1136,13 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
-			String directResult = _direct.lookupDirect(bundle, origKey);
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallbackBundle) {
+			String directResult = _direct.lookupDirect(bundle, origKey, withFallbackBundle);
 			if (directResult != null || !_direct.nullMeansMissing(bundle, origKey)) {
 				return directResult;
 			}
 
-			return _fallback.lookupDirect(bundle, origKey);
+			return _fallback.lookupDirect(bundle, origKey, withFallbackBundle);
 		}
 
 		@Override
@@ -1229,8 +1245,8 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
-			String result = _key.lookupDirect(bundle, origKey);
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback) {
+			String result = _key.lookupDirect(bundle, origKey, withFallback);
 			if (result != null || !_key.nullMeansMissing(bundle, origKey)) {
 				bundle.handleDeprecatedKey(_key, origKey);
 			}
@@ -1304,7 +1320,7 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback) {
 			return null;
 		}
 
@@ -1406,8 +1422,8 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
-			String value = _messageKey.lookupDirect(bundle, origKey);
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback) {
+			String value = _messageKey.lookupDirect(bundle, origKey, withFallback);
 			if (value != null) {
 				// if a value for the key exists: format as usual
 				TLMessageFormat theFormat = new TLMessageFormat(value, bundle.getLocale());
@@ -1449,10 +1465,10 @@ public abstract class ResKey {
 				localized = argument;
 			} else if (argument instanceof ResKey) {
 				ResKey keyArgument = (ResKey) argument;
-				localized = keyArgument.resolve(bundle, keyArgument);
+				localized = keyArgument.resolve(bundle, keyArgument, true);
 			} else if (argument instanceof Enum<?>) {
 				ResKey keyArgument = forEnum((Enum<?>) argument);
-				localized = keyArgument.resolve(bundle, keyArgument);
+				localized = keyArgument.resolve(bundle, keyArgument, true);
 			} else if (argument instanceof Collection<?>) {
 				localized = localizeCollection(bundle, argument);
 			} else if (argument instanceof TupleFactory.Tuple) {
@@ -1613,7 +1629,7 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback) {
 			return _literalText;
 		}
 
@@ -1687,11 +1703,11 @@ public abstract class ResKey {
 		}
 
 		@Override
-		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey) {
+		protected String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback) {
 			I18NBundleSPI lookup = bundle;
 			do {
 				String result = _translations.get(lookup.getLocale());
-				if (result != null) {
+				if (result != null || !withFallback) {
 					return result;
 				}
 
@@ -1940,42 +1956,22 @@ public abstract class ResKey {
 	}
 
 	/**
-	 * Internal access, must not be used by the application.
-	 * 
-	 * @param directKey
-	 *        The key to actually resolve.
-	 * @param defaultKey
-	 *        The key to continue resolution with, if no resource was associated with the actually
-	 *        resolved key.
-	 * @param origKey
-	 *        The original key the resolution process has started with.
-	 */
-	private String internalResolve(I18NBundleSPI bundle, DirectKey directKey, ResKey defaultKey, ResKey origKey) {
-		String value = directKey.lookupDirect(bundle, origKey);
-		if (value != null || !directKey.nullMeansMissing(bundle, origKey)) {
-			return value;
-		} else if (defaultKey != null) {
-			return defaultKey.resolve(bundle, origKey);
-		} else {
-			bundle.handleUnknownKey(origKey);
-			return origKey.unknown(bundle);
-		}
-	}
-
-	/**
 	 * Looks up the value of this key in the given bundle.
 	 * 
 	 * @param bundle
 	 *        The resource bundle to use.
 	 * @param origKey
 	 *        The top-most key that is currently being resolved.
+	 * @param withFallback
+	 *        Whether the {@link I18NBundleSPI#getFallback() fallback bundle} is used when no
+	 *        translation can be found.
 	 * @return The value for this key in the given bundle. A value <code>null</code> means either
 	 *         that the given bundle has no resource for the given key, or the value of the given
 	 *         key is <code>null</code>.
 	 * 
 	 * @see DirectKey#nullMeansMissing(I18NBundleSPI, ResKey)
 	 */
-	protected abstract String lookupDirect(I18NBundleSPI bundle, ResKey origKey);
+	protected abstract String lookupDirect(I18NBundleSPI bundle, ResKey origKey, boolean withFallback);
 
 	/**
 	 * Creates a resource debugging representation of this {@link ResKey}.

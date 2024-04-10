@@ -147,10 +147,10 @@ public class IDEResources extends DefaultResourcesModule {
 		}
 
 		@Override
-		public String lookup(String key) {
+		public String lookup(String key, boolean withFallbackBundle) {
 			((IDEResources) owner()).handleResolve(key);
 
-			return super.lookup(key);
+			return super.lookup(key, withFallbackBundle);
 		}
 
 	}

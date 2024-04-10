@@ -410,16 +410,33 @@ public class HTMLTemplateFormProvider
 
 		@Override
 		public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
+			writeObject(context, out, value);
+		}
+
+		private void writeObject(DisplayContext context, TagWriter out, Object value) throws IOException {
 			if (value instanceof TLObject) {
-				TLObject obj = (TLObject) value;
-				TLStructuredType valueType = obj.tType();
-				Template valueTemplate = _templateByType.get(valueType);
-				if (valueTemplate != null) {
-					new TLObjectFragment(_form, valueTemplate, obj).write(context, out);
-					return;
+				applyTemplates(context, out, (TLObject) value);
+			} else if (value instanceof Collection<?>) {
+				for (Object element : (Collection<?>) value) {
+					writeObject(context, out, element);
 				}
+			} else {
+				writeValue(context, out, value);
 			}
-			DispatchingRenderer.INSTANCE.write(context, out, value);
+		}
+
+		private void applyTemplates(DisplayContext context, TagWriter out, TLObject obj) throws IOException {
+			TLStructuredType valueType = obj.tType();
+			Template valueTemplate = _templateByType.get(valueType);
+			if (valueTemplate != null) {
+				new TLObjectFragment(_form, valueTemplate, obj).write(context, out);
+			} else {
+				writeValue(context, out, obj);
+			}
+		}
+
+		private void writeValue(DisplayContext context, TagWriter out, Object obj) throws IOException {
+			DispatchingRenderer.INSTANCE.write(context, out, obj);
 		}
 
 		@Override

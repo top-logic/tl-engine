@@ -6,12 +6,16 @@
 package com.top_logic.mig.html.layout;
 
 import static com.top_logic.basic.col.filter.FilterFactory.*;
+import static java.util.Collections.*;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.layout.DisplayContext;
@@ -27,7 +31,6 @@ import com.top_logic.layout.structure.LayoutControlFactory;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
-import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -154,16 +157,16 @@ public class DialogComponent extends AbstractDialogModel {
 		_content = dialogContent;
 	}
 
-	public static DialogComponent newDialog(LayoutComponent aDialogContent, DialogInfo aDialogInfo,
+	public static DialogComponent newDialog(LayoutComponent dialogContent, DialogInfo aDialogInfo,
 			HTMLFragment aDialogTitle) {
-		if (aDialogContent == null) {
+		if (dialogContent == null) {
 			throw new IllegalArgumentException("'aDialogContent' must not be 'null'.");
 		}
 		if (aDialogInfo == null) {
 			throw new IllegalArgumentException("'aDialogInfo' must not be 'null'.");
 		}
 
-		DialogComponent dialogComponent = new DialogComponent(aDialogContent,
+		DialogComponent dialogComponent = new DialogComponent(dialogContent,
 			new DefaultLayoutData(aDialogInfo),
 			aDialogTitle,
 			aDialogInfo.isResizable(),
@@ -188,11 +191,38 @@ public class DialogComponent extends AbstractDialogModel {
 		if (command != null) {
 			return command;
 		}
-		CommandHandler handler = getContentComponent().getDefaultCommand();
-		if (handler == null) {
-			return null;
+		/* This has to be resolved dynamically, as for example in dialogs with tabs the default
+		 * command might depend on the selected tab. */
+		return findUnambiguousDefaultCommand(getContentComponent());
+	}
+
+	private static Command findUnambiguousDefaultCommand(LayoutComponent dialogContent) {
+		Set<Command> defaultCommands = collectDefaultCommands(dialogContent);
+		if (defaultCommands.size() == 1) {
+			return CollectionUtil.getFirst(defaultCommands);
 		}
-		return new CommandHandlerCommand(handler, getContentComponent());
+		/* Either no or multiple default commands. */
+		return null;
+	}
+
+	private static Set<Command> collectDefaultCommands(LayoutComponent component) {
+		if (component.getDefaultCommand() != null) {
+			return Set.of(new CommandHandlerCommand(component.getDefaultCommand(), component));
+		}
+		if (component instanceof LayoutContainer) {
+			return collectDefaultCommands((LayoutContainer) component);
+		}
+		return emptySet();
+	}
+
+	private static Set<Command> collectDefaultCommands(LayoutContainer component) {
+		Set<Command> commands = new HashSet<>();
+		for (LayoutComponent child : component.getChildList()) {
+			if (child.isVisible()) {
+				commands.addAll(collectDefaultCommands(child));
+			}
+		}
+		return commands;
 	}
 
 	@Override

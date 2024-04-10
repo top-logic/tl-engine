@@ -4,8 +4,8 @@ div.fptSubtitleContent
     line-height: 20px;
 }
 
-div.fptSubtitleContent > span > span > select:not([multiple="multiple"]),
-div.rf_cell > span > span.lFlexible > select:not([multiple="multiple"])
+div.fptSubtitleContent > span > span > select.tl-select:not([multiple="multiple"]),
+div.rf_cell > span > span.lFlexible > select.tl-select:not([multiple="multiple"])
 {
     padding: 0 1.9em 0 0.2em;
 }
@@ -121,17 +121,17 @@ td.tl-table_cell:nth-child(2) .tblCellInnerSpacer
 .ColorChooser,
 .searchIrrelevant input:not(.input-image):not(.fltButton):not( [type="image"] ),
 .searchIrrelevant textarea,
-.searchIrrelevant select:not( [multiple="multiple"] ),
+.searchIrrelevant select.tl-select:not( [multiple="multiple"] ),
 input:not(.input-image):not(.fltButton):not(#quickSearch-input):not( [type="image"] ):not(#icon-search-input):not(#icon-input-input):not(name*='pageInput.cpi'),
 textarea:not(.is-input),
 .rf_inputCell textarea.is-input,
-select:not( [multiple="multiple"] )
+select.tl-select:not( [multiple="multiple"] )
 {
     padding: 2px 8px 4px 8px;
 }
 
 .tl-table__footer-pager > span.cTextInput > .lFlexible > input.is-input,
-.tl-table__footer-pager > span.cDropdownSelect > .lFlexible > select:not([multiple="multiple"]) {
+.tl-table__footer-pager > span.cDropdownSelect > .lFlexible > select.tl-select:not([multiple="multiple"]) {
     font-size: 12px;
     line-height: 17px;
     padding: 1px 16px 1px 8px;
@@ -142,7 +142,7 @@ select:not( [multiple="multiple"] )
     padding-right: 8px;
 }
 
-.tl-table__footer-pager > span.cDropdownSelect > .lFlexible > select:not([multiple="multiple"]) {
+.tl-table__footer-pager > span.cDropdownSelect > .lFlexible > select.tl-select:not([multiple="multiple"]) {
     padding-right: 16px;
 }
 

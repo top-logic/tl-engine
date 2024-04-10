@@ -796,7 +796,7 @@ div.dfListAdd {
 	background: transparent;
 }
 
-.rf_groupCell .rf_header select,
+.rf_groupCell .rf_header select.tl-select,
 .rf_groupCell .rf_header label {
 	color: var(--GROUP_LABEL_COLOR);
     font-weight: bold;
@@ -1675,8 +1675,8 @@ span.cIconSelect .input-image.cannot-edit i {
 .error-annotation.active.cBeacon, /* AND selector --> .error-annotation AND .cBeacon */
 .error.cDataItem iframe, /* AND selector --> .error AND .cDataItem */
 .error-annotation.cDataItem iframe, /* AND selector --> .error-annotation AND .cDataItem */
-.error select, 
-.error-annotation select, 
+.error select.tl-select, 
+.error-annotation select.tl-select, 
 .error textarea,
 .error-annotation textarea,
 .error .ace_editor,
@@ -1704,8 +1704,8 @@ span.cIconSelect .input-image.cannot-edit i {
 .warning-annotation.active.cBeacon,
 .warning.cDataItem iframe,
 .warning-annotation.cDataItem iframe,
-.warning select, 
-.warning-annotation select, 
+.warning select.tl-select, 
+.warning-annotation select.tl-select, 
 .warning textarea,
 .warning-annotation textarea,
 .warning .ace_editor,
@@ -1760,11 +1760,11 @@ cDataItem iframe:focus,
 .warning.cDataItem iframe:focus,
 .error-annotation.cDataItem iframe:focus,
 .warning-annotation.cDataItem iframe:focus,
-select:focus,
-.error select:focus, 
-.warning select:focus, 
-.error-annotation select:focus, 
-.warning-annotation select:focus, 
+select.tl-select:focus,
+.error select.tl-select:focus, 
+.warning select.tl-select:focus, 
+.error-annotation select.tl-select:focus, 
+.warning-annotation select.tl-select:focus, 
 textarea:focus,
 .error textarea:focus,
 .warning textarea:focus,
@@ -1795,7 +1795,7 @@ textarea:focus,
 .cBlockTextInput.disabled input,
 .cBlockTextInput.disabled textarea,
 .cPopupSelect.disabled input,
-.cDropdownSelect.disabled select,
+.cDropdownSelect.disabled select.tl-select,
 .cDateInput.disabled input,
 .cTimeInput.disabled input {
 	color: var(--text-disabled);
@@ -1811,7 +1811,7 @@ textarea:focus,
 	color: var(--text-disabled);
 }
 
-select:not([multiple="multiple"]) {
+select.tl-select:not([multiple="multiple"]) {
 	-webkit-appearance: none;
 	appearance: none;
 	color: var(--text-primary);
@@ -1828,19 +1828,19 @@ select:not([multiple="multiple"]) {
     background-color: var(--field);
 }
 
-select:not([multiple="multiple"]):disabled {
+select.tl-select:not([multiple="multiple"]):disabled {
     background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
     background-position: calc(100% - 10px) center, calc(100% - 5px) center;
     background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
 }
 
-.rf_header select,
-select:focus:not( [multiple="multiple"] ) {
+.rf_header select.tl-select,
+select.tl-select:focus:not( [multiple="multiple"] ) {
 	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
 }
 
-span.disabled > span.lFlexible > select:not( [multiple="multiple"] ) {
+span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
 }
 
@@ -2756,21 +2756,21 @@ img.ddwttItemIcon {
 
 .searchIrrelevant input,
 .searchIrrelevant textarea,
-.searchIrrelevant select {
+.searchIrrelevant select.tl-select {
 	color: var(--text-primary);
 	background: var(--field);
 }
 
 .searchPositive input,
 .searchPositive textarea,
-.searchPositive select {
+.searchPositive select.tl-select {
 	color: var(--text-primary);
 	background: var(--notification-success-background);
 }
 
 .searchNegative input,
 .searchNegative textarea,
-.searchNegative select {
+.searchNegative select.tl-select {
 	color: var(--text-primary);
 	background: var(--notification-danger-background);
 }

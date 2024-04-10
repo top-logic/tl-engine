@@ -9,7 +9,7 @@ a.cmdButtonDisabled:active,
 .cIconChooser .input-image,
 .searchIrrelevant input,
 .searchIrrelevant textarea,
-.searchIrrelevant select,
+.searchIrrelevant select.tl-select,
 span.cButton .input-image,
 span.cImageButton .input-image,
 .cDownload .input-image,
@@ -22,7 +22,7 @@ span.input-image,
 a.is-action,
 input,
 textarea,
-select
+select.tl-select
 {
     border-radius: 4px;
 }

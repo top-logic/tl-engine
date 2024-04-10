@@ -16,7 +16,7 @@ span.accIcon.input-image
 .cIntegerInput input.is-input,
 .lFlexible input.is-input,
 .lFlexible input.is-popup,
-select:not( [multiple="multiple"] )
+select.tl-select:not( [multiple="multiple"] )
 {
     height: 22px;
 }

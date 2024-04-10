@@ -223,7 +223,7 @@ div.mainText > span > span > select
     max-height: 22px;
 }
 
-select:not( [multiple="multiple"] )
+select.tl-select:not( [multiple="multiple"] )
 {
 	line-height: 1.3;
 	padding: .2em 1.9em .2em .6em;
@@ -237,31 +237,31 @@ select:not( [multiple="multiple"] )
 	background-repeat: no-repeat;
 }
 
-select::-ms-expand
+select.tl-select::-ms-expand
 {
 	display: none;
 }
 
-.rf_header select,
-select:focus:not( [multiple="multiple"] )
+.rf_header select.tl-select,
+select.tl-select:focus:not( [multiple="multiple"] )
 {
 	background-image: linear-gradient(45deg, transparent 49%, var(--ICON_COLOR_DARK_CONTEXT_BASIC) 50%), linear-gradient(135deg, var(--ICON_COLOR_DARK_CONTEXT_BASIC) 49%, transparent 50%);
 }
 
-span.disabled > span.lFlexible > select:not( [multiple="multiple"] )
+span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] )
 {
     background-image: linear-gradient(45deg, transparent 49%, var(--TL-disabled) 50%), linear-gradient(135deg, var(--TL-disabled) 49%, transparent 50%);
 }
 
-select:focus:not( [multiple="multiple"] ),
-.rf_header select,
-.mandatory select:focus:not( [multiple="multiple"] )
+select.tl-select:focus:not( [multiple="multiple"] ),
+.rf_header select.tl-select,
+.mandatory select.tl-select:focus:not( [multiple="multiple"] )
 {
 	background-color: var(--LAYOUT_MAIN_COLOR);
     color: var(--TL-bright);
 }
 
-select option
+select.tl-select option
 {
 	font-weight:normal;
 }

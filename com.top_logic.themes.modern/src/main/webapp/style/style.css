@@ -3,7 +3,7 @@ body {margin:0; padding:0; background:#fff; font-family:var(--TEXT_FAMILY); font
 a {color:#646463; text-decoration:underline;}
 a:hover {color:#646463; text-decoration:none;}
 
-input, textarea, select {font-size:12px;}
+input, textarea, select.tl-select {font-size:12px;}
 img {border:0 none;}
 
 .Lt1 {float:left;}

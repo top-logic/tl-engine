@@ -18,7 +18,7 @@ a.cmdButtonDisabled:visited,
 a.cmdButtonDisabled:active,
 a.cmdButtonDisabled:hover,
 
-select:not( [multiple="multiple"] )
+select.tl-select:not( [multiple="multiple"] )
 {
     border: none;
 }

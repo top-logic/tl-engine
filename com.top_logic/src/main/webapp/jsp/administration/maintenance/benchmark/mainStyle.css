@@ -212,7 +212,7 @@ blockquote {margin-left:5em;margin-right:5em;}
 /* Forms */
 
 input.text {font-size:12pt;}
-select {font-size:10pt;}
+select.tl-select {font-size:10pt;}
 
 
 /* List Items */

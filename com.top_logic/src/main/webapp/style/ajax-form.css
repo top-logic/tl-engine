@@ -16,8 +16,8 @@
 .error-annotation.active.cBeacon, /* AND selector --> .error-annotation AND .cBeacon */
 .error.cDataItem iframe, /* AND selector --> .error AND .cDataItem */
 .error-annotation.cDataItem iframe, /* AND selector --> .error-annotation AND .cDataItem */
-.error select, 
-.error-annotation select, 
+.error select.tl-select, 
+.error-annotation select.tl-select, 
 .error textarea,
 .error-annotation textarea,
 .error .ace_editor,
@@ -79,8 +79,8 @@ span.is-error .warning-annotation {
 .warning-annotation.active.cBeacon, /* AND selector --> .error AND .cBeacon */
 .warning.cDataItem iframe, /* AND selector --> .error AND .cDataItem */ 
 .warning-annotation.cDataItem iframe, /* AND selector --> .error AND .cDataItem */ 
-.warning select, 
-.warning-annotation select, 
+.warning select.tl-select, 
+.warning-annotation select.tl-select, 
 .warning textarea,
 .warning-annotation textarea,
 .warning .ace_editor,

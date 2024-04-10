@@ -158,6 +158,7 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 		_folder = folder;
 		_maxUploadSize = maxUploadSize;
 		Command uploadCommand = new Command.CommandChain(createUploadCommand(this), getDiscardClosure());
+		getDialogModel().setDefaultCommand(uploadCommand);
 		CommandModel uploadButton = MessageBox.forwardStyleButton(I18NConstants.UPLOAD_DOCUMENT, uploadCommand);
 		_uploadButton = uploadButton;
 	}

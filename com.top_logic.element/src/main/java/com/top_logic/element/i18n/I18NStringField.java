@@ -16,7 +16,6 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.model.StringField;
-import com.top_logic.util.Resources;
 
 /**
  * An {@link I18NField} where the inner {@link FormField}s are {@link StringField}s.
@@ -73,7 +72,7 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 		if (i18nValue == null) {
 			return null;
 		}
-		return Resources.getInstance(locale).getString(i18nValue, null);
+		return ResKeyUtil.translateWithoutFallback(locale, i18nValue);
 	}
 
 	@Override
@@ -83,17 +82,12 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 
 	@Override
 	protected void addValueToBuilder(ResKey.Builder builder, FormField proxy, Locale locale, StringField field) {
-		if (field.isChanged()) {
-			adValue(builder, locale, field.getAsString());
-		} else if (proxy.hasValue()) {
-			ResKey oldKey = (ResKey) proxy.getValue();
-			if (oldKey != null) {
-				adValue(builder, locale, ResKeyUtil.getTranslation(oldKey, locale));
-			}
+		if (field.hasValue()) {
+			addValue(builder, locale, field.getAsString());
 		}
 	}
 
-	private void adValue(ResKey.Builder builder, Locale locale, String translation) {
+	private void addValue(ResKey.Builder builder, Locale locale, String translation) {
 		if (!isEmpty(translation)) {
 			builder.add(locale, translation);
 		}

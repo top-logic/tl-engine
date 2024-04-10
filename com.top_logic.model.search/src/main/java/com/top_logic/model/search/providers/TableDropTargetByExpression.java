@@ -15,9 +15,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.table.dnd.BusinessObjectTableDrop;
 import com.top_logic.layout.table.dnd.TableDropTarget;
@@ -95,6 +95,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		 */
 		@Override
 		Expr getCanDrop();
+
 	}
 
 	private final DropType _dropType;
@@ -104,6 +105,8 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 	private final QueryExecutor _canDrop;
 
 	private final List<PostCreateAction> _postCreateActions;
+
+	private final boolean _inTransaction;
 
 	LayoutComponent _contextComponent;
 
@@ -124,6 +127,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		_handleDrop = QueryExecutor.compile(kb, model, config.getHandleDrop());
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
+		_inTransaction = config.getInTransaction();
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -138,9 +142,11 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 	@Override
 	public void handleDrop(Collection<?> droppedObjects, Object referenceRow) {
 		Object createdObject;
-		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+
+		if (_inTransaction) {
+			createdObject = KBUtils.inTransaction(() -> _handleDrop.execute(droppedObjects, referenceRow));
+		} else {
 			createdObject = _handleDrop.execute(droppedObjects, referenceRow);
-			transaction.commit();
 		}
 
 		/* Ensure that components have received the model created event, before the new object is

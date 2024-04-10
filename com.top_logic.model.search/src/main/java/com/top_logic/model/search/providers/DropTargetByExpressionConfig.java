@@ -12,7 +12,9 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -75,5 +77,11 @@ public interface DropTargetByExpressionConfig extends ConfigurationItem {
 	@Name(CAN_DROP)
 	@ItemDefault(Expr.True.class)
 	Expr getCanDrop();
+
+	/**
+	 * Whether the drop operation should be executed in a {@link Transaction transaction}.
+	 */
+	@BooleanDefault(true)
+	boolean getInTransaction();
 
 }

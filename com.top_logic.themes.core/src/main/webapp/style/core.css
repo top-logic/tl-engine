@@ -17,12 +17,6 @@ body {
 }
 
 /* Scrollbars > */
-body {
-	--sb-track-color: #c4c7cc;
-	--sb-thumb-color: #2968c8;
-	--sb-size: 4px;
-}
-
 ::-webkit-scrollbar {
 	width: var(--sb-size);
 	height: var(--sb-size);
@@ -2074,8 +2068,8 @@ h5.card-title a:focus {
 .ToolBarContainer .cButton.cmdLink a:hover,
 .mtbGroup .trbEntry a:not(.disabled):hover  {
 	color: var(--icon-secondary);
-	background: var(--field-hover);
-	box-shadow: inset 0px 0px 0px 1px var(--field-hover);
+	background: var(--layer-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--layer-hover);
 }
 
 .quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:focus,

@@ -161,7 +161,8 @@ public class InternationalizationEditor implements Editor {
 
 		TagTemplate editTemplate = div(css(ITEM_CSS_CLASS),
 			fieldsetBox(
-				span(css(ITEM_TITLE_CSS_CLASS), label(), span(css(TOOLBAR_CSS_CLASS), member(DISPLAY_DERIVED_FIELD))),
+				fragment(span(css(ITEM_TITLE_CSS_CLASS), label()),
+					span(css(TOOLBAR_CSS_CLASS), member(DISPLAY_DERIVED_FIELD))),
 				div(contentTemplates.toArray(new HTMLTemplateFragment[contentTemplates.size()])),
 				ConfigKey.field(i18n)).setInitiallyCollapsed(initiallyCollapsed));
 		if (currentLanguage == null) {

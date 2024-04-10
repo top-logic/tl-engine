@@ -429,6 +429,10 @@ span.accIcon.input-image span::after {
 	padding: 5px;
 }
 
+.rf_groupCell.noLegend > .rf_header i {
+	color: var(--ICON_COLOR_BASIC);
+}
+
 a.cmdButton i,
 .fptIconOverlay i,
 .cFormEditorToolbox [data-tool=true] > .attribute i,

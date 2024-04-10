@@ -14,9 +14,7 @@ import java.util.Map;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
@@ -28,17 +26,12 @@ import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
-import com.top_logic.layout.component.dnd.ComponentDropEvent;
 import com.top_logic.layout.component.dnd.ComponentDropTarget;
-import com.top_logic.layout.dnd.DnD;
-import com.top_logic.layout.dnd.DndData;
 import com.top_logic.layout.layoutRenderer.ContentRenderer;
 import com.top_logic.layout.layoutRenderer.IFrameLayout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * The class {@link ContentControl} arranges the actual content of a business component.
@@ -288,45 +281,6 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	@Override
 	public ContentControl self() {
 		return this;
-	}
-
-	/**
-	 * {@link ControlCommand} implements a generic drop on a component.
-	 */
-	public static class ComponentDropAction extends ControlCommand {
-
-		private static final String COMMAND_ID = "dndDrop";
-
-		/**
-		 * Singleton {@link ComponentDropAction} instance.
-		 */
-		public static final ComponentDropAction INSTANCE = new ComponentDropAction();
-
-		private ComponentDropAction() {
-			super(COMMAND_ID);
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.COMPONENT_DROP;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
-			ContentControl contentControl = (ContentControl) control;
-			LayoutComponent component = contentControl.getModel();
-			ComponentDropTarget dropTarget = component.getConfig().getDropTarget();
-			if (!dropTarget.dropEnabled(component)) {
-				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
-			}
-
-			DndData data = DnD.getDndData(commandContext, arguments);
-			if (data != null) {
-				dropTarget.handleDrop(new ComponentDropEvent(data, component));
-			}
-
-			return HandlerResult.DEFAULT_RESULT;
-		}
 	}
 
 }

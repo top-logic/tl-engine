@@ -146,15 +146,19 @@ public class ZipDownloadDialog extends AbstractFormPageDialog {
     
     @Override
     protected void fillButtons(List<CommandModel> buttons) {
-		CommandModel button =
-			MessageBox.button(I18NConstants.ZIP_DOWNLOAD_FOLDER, new ZipDownloadDialog.ZipDownloadCommand(this,
-			info.getWebFolder(), getDiscardClosure()));
-		buttons.add(button);
+		buttons.add(createDownloadButton());
+		addCancel(buttons);
+	}
+
+	private CommandModel createDownloadButton() {
+		Command command = new ZipDownloadDialog.ZipDownloadCommand(this, info.getWebFolder(), getDiscardClosure());
+		getDialogModel().setDefaultCommand(command);
+		CommandModel button = MessageBox.button(I18NConstants.ZIP_DOWNLOAD_FOLDER, command);
 		if (info.isTooLarge()) {
 			button.setNotExecutable(I18NConstants.ZIP_DOWNLOAD_FOLDER_DIALOG_DISABLED__LIMIT.fill(
 				WebFolderUIFactory.getInstance().getZipDownloadSizeLimit()));
 		}
-    	addCancel(buttons);
-    }
+		return button;
+	}
 
 }

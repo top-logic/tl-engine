@@ -183,7 +183,7 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 		if (i18nValue == null) {
 			return null;
 		}
-		return i18nValue.localize(locale);
+		return i18nValue.getEntries().get(locale);
 	}
 
 	@Override
@@ -193,14 +193,8 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 
 	@Override
 	protected void addValueToBuilder(Map<Locale, StructuredText> builder, FormField proxy, Locale locale, FormField field) {
-		if (field.isChanged()) {
+		if (field.hasValue()) {
 			addValue(builder, locale, (StructuredText) field.getValue());
-		} else if (proxy.hasValue()) {
-			I18NStructuredText originalValue = (I18NStructuredText) proxy.getValue();
-			if (originalValue != null) {
-				StructuredText structuredText = originalValue.getEntries().get(locale);
-				addValue(builder, locale, structuredText);
-			}
 		}
 	}
 

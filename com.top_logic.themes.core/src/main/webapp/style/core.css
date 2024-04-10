@@ -2525,6 +2525,11 @@ div.treeNode.treeSelected.dndInsertInto {
 	align-items: center;
 }
 
+.cCollapsibleHorizontal .cCollapsibleButtons {
+	flex-direction: column;
+	gap: 5px;
+}
+
 .cCollapsibleHorizontal .cCollapsibleButtons .cButton {
     margin-left: 0;
 }

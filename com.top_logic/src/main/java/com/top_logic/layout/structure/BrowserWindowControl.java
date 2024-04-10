@@ -1301,7 +1301,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 
 		if (control instanceof ContentControl) {
-			LayoutComponent component = ((ContentControl) control).getBusinessComponent();
+			LayoutComponent component = ((ContentControl) control).getModel();
 			CommandHandler handler = commandProvider.apply(component);
 			if (handler != null) {
 				Map<String, Object> noArgs = Collections.emptyMap();

@@ -5390,6 +5390,10 @@ span.configuredTooltipLabel {
     margin-left: auto;
 }
 
+.collapsed .dfToolbar {
+	display: none;
+}
+
 /* In the compact mode, all but the outermost dfList should have indent. */
 /* In the full mode, the outermost dfList should have indent, too. */
 div.dfList div.dfList, .dfModeFull div.dfList {
@@ -5460,6 +5464,7 @@ div.dfEntryHeader {
 	display: flex;
 	gap: 3px;
 	align-items: center;
+	font-weight: bold;
 }
 
 .rf_inputCell.rf_noLabel  > .rf_cell,

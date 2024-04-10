@@ -59,7 +59,6 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.util.Resources;
 
 /**
@@ -188,11 +187,11 @@ public class EditorUtils {
 	}
 
 	private static HTMLTemplateFragment mapEntryTemplate() {
-		return EditorUtils.titleWithRemove(
-			div(member(EditorUtils.LIST_ITEM_GROUP, div(css(ReactiveFormCSS.RF_COLUMNS_LAYOUT),
-				fieldBox(MAP_KEY_MEMBER_NAME),
-				fieldBox(MAP_VALUE_MEMBER_NAME)))),
-			null);
+		return fragment(
+			EditorUtils.titleWithRemove(member(EditorUtils.LIST_ITEM_GROUP, fieldBoxNoLabel(MAP_KEY_MEMBER_NAME)),
+				null),
+			EditorUtils.entryContent(member(EditorUtils.LIST_ITEM_GROUP, fieldBoxNoLabel(MAP_VALUE_MEMBER_NAME)),
+				null));
 	}
 
 	private static HTMLTemplateFragment listEntryTemplate() {
@@ -445,6 +444,23 @@ public class EditorUtils {
 			span(css(FormConstants.FIXED_RIGHT_CSS_CLASS),
 				member(LIST_REMOVE)),
 			span(css("dfListCollapseIcon"), iconTemplate));
+	}
+	
+	/**
+	 * Creates a {@link HTMLTemplateFragment} to render an list entry title with a
+	 * {@link #LIST_REMOVE remove} command on the right side.
+	 * 
+	 * @param entryContent
+	 *        The content of the title.
+	 * @param additionalCSS
+	 *        Optional CSS class to use for the title {@link HTMLConstants#DIV}.
+	 */
+	public static HTMLTemplateFragment entryContent(HTMLTemplateFragment entryContent, CharSequence additionalCSS) {
+		String cssClass = "dfEntryContent";
+		if (!StringServices.isEmpty(additionalCSS)) {
+			cssClass += " " + additionalCSS;
+		}
+		return div(css(cssClass), entryContent);
 	}
 
 	/**

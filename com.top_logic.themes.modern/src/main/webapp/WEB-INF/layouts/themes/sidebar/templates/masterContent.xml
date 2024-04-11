@@ -54,7 +54,7 @@
 						componentName="mainTabbar.layout.xml#mainTabber"
 					>
 						<layoutInfo size="100%"/>
-						<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.SidebarLayoutControlProvider"
+						<componentControlProvider class="com.top_logic.layout.structure.sidebar.SidebarLayoutControlProvider"
 							accordion="%SBL_ACCORDION%"
 							css-class="accRoot tooltipHorizontal"
 						>
@@ -102,7 +102,7 @@
 							scrolleable="false"
 							size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
 						/>
-						<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.TitleButtonsViewProvider"
+						<componentControlProvider class="com.top_logic.layout.structure.sidebar.TitleButtonsViewProvider"
 							size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
 						/>
 					</layoutControl>

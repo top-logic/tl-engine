@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.views;
+package com.top_logic.layout.structure.toolrow;
 
 import java.util.ArrayList;
 import java.util.List;

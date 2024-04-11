@@ -36,7 +36,7 @@ import com.top_logic.layout.structure.LayoutControlProvider;
 /**
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class ModernStatusLineComponent extends ControlComponent implements ControlRepresentable, ModernThemeConstants {
+public class ModernStatusLineComponent extends ControlComponent implements ControlRepresentable {
 
     public interface Config extends ControlComponent.Config {
 		@Override

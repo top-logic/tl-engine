@@ -10,7 +10,7 @@
 		/>
 	</params>
 
-	<group name="search">
+	<group>
 		<views>
 			<include name="toolrow/searchButtons.xml"
 				entryRenderer="${entryRenderer}"
@@ -19,7 +19,7 @@
 		</views>
 	</group>
 
-	<group name="help">
+	<group>
 		<views>
 			<include name="toolrow/helpButton.xml"
 				entryRenderer="${entryRenderer}"

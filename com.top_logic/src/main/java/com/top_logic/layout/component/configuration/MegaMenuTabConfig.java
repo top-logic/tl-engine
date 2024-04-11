@@ -13,8 +13,10 @@ import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
@@ -58,18 +60,14 @@ import com.top_logic.util.Resources;
  * Navigation button that displays the labels and tooltips of all tabs in a tab bar.
  * 
  * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
- *
  */
 public class MegaMenuTabConfig
-		extends AbstractViewConfiguration<com.top_logic.layout.component.configuration.MegaMenuTabConfig.Config> {
+		extends AbstractConfiguredInstance<MegaMenuTabConfig.Config> implements ViewConfiguration {
 
 	/**
 	 * Configuration interface for {@link MegaMenuTabConfig}.
-	 * 
-	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
-	 *
 	 */
-	public interface Config extends AbstractViewConfiguration.Config<AbstractViewConfiguration<?>> {
+	public interface Config extends PolymorphicConfiguration<MegaMenuTabConfig> {
 
 		/**
 		 * @see #getRenderer()

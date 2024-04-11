@@ -129,6 +129,17 @@
 								</component-keys>
 							</identifiers>
 						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="e5656ad7-ea0b-472d-9ac2-147c9398f959.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
 							command-label="Sicht hinzufügen..."

@@ -506,6 +506,17 @@
 						</component-keys>
 					</identifiers>
 				</action>
+				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				>
+					<identifiers>
+						<component-keys>
+							<component-key value="208aee92-1768-4ae6-b1d4-4406f52a8c64.layout.xml"/>
+						</component-keys>
+					</identifiers>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
 					command-label="Sicht hinzufügen..."
@@ -858,7 +869,6 @@
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							xmlns:config="http://www.top-logic.com/ns/config/6.0"
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
@@ -1829,7 +1839,6 @@
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							xmlns:config="http://www.top-logic.com/ns/config/6.0"
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">

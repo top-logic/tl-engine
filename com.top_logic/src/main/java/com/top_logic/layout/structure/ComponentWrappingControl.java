@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2008 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -7,11 +7,8 @@ package com.top_logic.layout.structure;
 
 import java.awt.dnd.DropTarget;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.xml.TagWriter;
@@ -19,7 +16,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.basic.ControlRenderer;
 import com.top_logic.layout.basic.component.AJAXComponent;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
@@ -27,65 +23,50 @@ import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.component.dnd.ComponentDropTarget;
-import com.top_logic.layout.layoutRenderer.ContentRenderer;
-import com.top_logic.layout.layoutRenderer.IFrameLayout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
 
 /**
- * The class {@link ContentControl} arranges the actual content of a business component.
- * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * {@link LayoutControl} acting as a placeholder for a component that fills the content with
+ * dynamically created layouts.
  */
-public class ContentControl extends AbstractLayoutControl<ContentControl> implements ContextMenuOwner {
+public class ComponentWrappingControl extends WrappingControl<ComponentWrappingControl> implements ContextMenuOwner {
 
 	/**
-	 * Factory method for {@link ContentControl}s.
+	 * Factory method for {@link ComponentWrappingControl}s.
 	 * 
 	 * @param component
 	 *        The context component being displayed.
 	 */
-	public static ContentControl create(LayoutComponent component) {
+	public static ComponentWrappingControl create(LayoutComponent component) {
 		return create(component, NoContextMenuProvider.INSTANCE);
 	}
 
 	/**
-	 * Factory method for {@link ContentControl}s.
+	 * Factory method for {@link ComponentWrappingControl}s.
 	 * 
 	 * @param component
 	 *        The context component being displayed.
 	 * @param contextMenu
 	 *        The global context menu for the component's background.
 	 */
-	public static ContentControl create(LayoutComponent component, ContextMenuProvider contextMenu) {
-		return new ContentControl(component, contextMenu, COMMANDS);
+	public static ComponentWrappingControl create(LayoutComponent component, ContextMenuProvider contextMenu) {
+		return new ComponentWrappingControl(component, contextMenu, COMMANDS);
 	}
 
 	private final Property<LayoutComponent> FORMER_CONTEXT_COMPONENT =
 		TypedAnnotatable.property(LayoutComponent.class, "formerContextComponent");
 
 	/**
-	 * Built-in commands of {@link ContentControl}.
+	 * Built-in commands of {@link ComponentWrappingControl}.
 	 */
 	protected static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		ComponentInspector.INSTANCE,
 		ComponentDropAction.INSTANCE,
 		ContextMenuOpener.INSTANCE);
 
-	/**
-	 * suffix of the name for the written IFRAME.
-	 */
-	public static final String SUFFIX = "_IFRAME";
-
 	private final LayoutComponent _component;
-	
-	/**
-	 * The actual content of this control.
-	 */
-	private HTMLFragment _view;
-
-	private String _cssClass;
 
 	private ContextMenuProvider _contextMenu;
 
@@ -93,7 +74,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	 * @see #create(LayoutComponent, ContextMenuProvider)
 	 * @see AbstractLayoutControl#AbstractLayoutControl(Map)
 	 */
-	protected ContentControl(LayoutComponent aBusinessComponent, ContextMenuProvider contextMenu,
+	protected ComponentWrappingControl(LayoutComponent aBusinessComponent, ContextMenuProvider contextMenu,
 			Map<String, ControlCommand> commandsByName) {
 		super(commandsByName);
 		_component = aBusinessComponent;
@@ -102,7 +83,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	}
 
 	/**
-	 * The {@link LayoutComponent} which is written by this {@link ContentControl}.
+	 * The {@link LayoutComponent} which is written by this {@link ComponentWrappingControl}
 	 */
 	@Override
 	public LayoutComponent getModel() {
@@ -120,71 +101,6 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 		return _contextMenu.getContextMenu(_component.getModel());
 	}
 
-	/**
-	 * Returns {@link Collections#emptyList()}. this {@link LayoutControl} has no children.
-	 * 
-	 * @see LayoutControl#getChildren()
-	 */
-	@Override
-	public List<? extends LayoutControl> getChildren() {
-		return Collections.emptyList();
-	}
-
-	/**
-	 * A custom CSS class to render into the control tag.
-	 */
-	public CharSequence getCssClass() {
-		return _cssClass;
-	}
-
-	/**
-	 * @see #getCssClass()
-	 */
-	public void setCssClass(String cssClass) {
-		_cssClass = cssClass;
-		requestRepaint();
-	}
-
-	@Override
-	protected void writeControlClassesContent(Appendable out) throws IOException {
-		super.writeControlClassesContent(out);
-		out.append(_cssClass);
-	}
-
-	/**
-	 * This method returns a view for rendering the content of the business component.
-	 * 
-	 * @return a view for the business component. If no view was explicit set the returned view is
-	 *         an {@link IFrameLayout} of its component, unless the business component is an
-	 *         instance of {@link ControlRepresentable} in which case this method delegates to
-	 *         {@link ControlRepresentable#getRenderingControl() the rendering control of the
-	 *         component}.
-	 * @see IFrameLayout
-	 * @see ControlRepresentable#getRenderingControl()
-	 */
-	public HTMLFragment getView() {
-		if (_view == null) {
-			LayoutComponent component = getModel();
-			if (component instanceof ControlRepresentable) {
-				return ((ControlRepresentable) component).getRenderingControl();
-			}
-			_view = new IFrameLayout(_component, IFrameLayout.FULL_SIZE, IFrameLayout.FULL_SIZE,
-				getConstraint().getScrollable());
-		}
-		return _view;
-	}
-
-	/**
-	 * Sets a view for this {@link ContentControl}. If the given argument is <code>null</code>, the
-	 * view of this {@link ContentControl} will be reset to default.
-	 * 
-	 * @see #getView()
-	 */
-	public void setView(HTMLFragment aView) {
-		_view = aView;
-		requestRepaint();
-	}
-	
 	@Override
 	protected void beforeRendering(DisplayContext context) {
 		super.beforeRendering(context);
@@ -203,9 +119,10 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 		_component.afterRendering();
 		super.afterRendering(context);
 	}
-	
+
 	/**
-	 * attaches a listener to its component to react on {@link LayoutComponent#invalidate()}.
+	 * attaches a listener to its component to react on
+	 * {@link LayoutComponent#invalidate()}.
 	 * 
 	 * @see AbstractControlBase#internalAttach()
 	 */
@@ -215,7 +132,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 		_component.addInvalidationListener(this);
 		_component.getEnclosingFrameScope().setUrlContext(getScope().getFrameScope());
 	}
-	
+
 	@Override
 	protected void revalidateControl(DisplayContext context, UpdateQueue actions) {
 		LayoutComponent formerContext = MainLayout.getComponent(context);
@@ -243,32 +160,6 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 		super.internalDetach();
 	}
 
-	@Override
-	protected ControlRenderer<? super ContentControl> createDefaultRenderer() {
-		return ContentRenderer.INSTANCE;
-	}
-
-	@Override
-	public Scrolling getScrolling() {
-		if (getView() instanceof IFrameLayout) {
-			// In case an iframe, no overflow is added, as in each case the IFRAME must scroll
-			// internally.
-			return null;
-		}
-		return super.getScrolling();
-	}
-
-	@Override
-	public void writeScrollingClass(Appendable out) throws IOException {
-		if (dropEnabled()) {
-			// When acting as drag target, an additional viewport div is required to allow covering
-			// the whole viewport with the drop pane.
-			return;
-		}
-
-		super.writeScrollingClass(out);
-	}
-
 	/**
 	 * Whether the {@link DropTarget} of the displayed component is enabled.
 	 */
@@ -279,7 +170,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	}
 
 	@Override
-	public ContentControl self() {
+	public ComponentWrappingControl self() {
 		return this;
 	}
 

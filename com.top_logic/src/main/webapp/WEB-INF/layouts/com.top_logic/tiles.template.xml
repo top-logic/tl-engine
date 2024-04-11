@@ -5,7 +5,7 @@
 	groups="commons"
 	usable-in-context="com.top_logic.mig.html.layout.tiles.IsNotInTileContext"
 >
-	<properties>
+	<properties extends="com.top_logic.layout.structure.ToolbarOptions">
 		<property name="component"
 			type="com.top_logic.mig.html.layout.LayoutComponent$Config"
 		>
@@ -13,11 +13,20 @@
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplateDefault"/>
 			<layout-templates value="com.top_logic/tilePlaceholder.template.xml"/>
 		</property>
+
+		<property name="showMaximize"
+			type="com.top_logic.basic.config.Decision"
+		>
+			<formatted-default value="false"/>
+		</property>
 	</properties>
 
 	<component class="com.top_logic.mig.html.layout.tiles.RootTileComponent"
 		component="${component}"
 		name="RootTile"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
 	>
 		<title class="com.top_logic.mig.html.layout.tiles.breadcrumb.RootTileBreadcrumbControlProvider">
 			<renderer class="com.top_logic.layout.tree.breadcrumb.DefaultBreadcrumbRenderer">

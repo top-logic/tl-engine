@@ -69,7 +69,7 @@ public class ContentRenderer extends LayoutControlRenderer<ContentControl> {
 	public void writeControlContents(DisplayContext context, TagWriter out, ContentControl value) throws IOException {
 		ContentControl contentControl = value;
 		if (LayoutComponent.isDebugHeadersEnabled()) {
-			LayoutComponent businessComponent = contentControl.getBusinessComponent();
+			LayoutComponent businessComponent = contentControl.getModel();
 			businessComponent.writeDebugHeader(out);
 		}
 

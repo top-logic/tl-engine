@@ -18,10 +18,12 @@ import java.util.Set;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.EventType.Bubble;
@@ -155,6 +157,10 @@ public class RootTileComponent extends SingleLayoutContainer implements BoundChe
 		@Override
 		@BooleanDefault(true)
 		boolean hasToolbar();
+
+		@Override
+		@FormattedDefault("false")
+		Decision getShowMaximize();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {

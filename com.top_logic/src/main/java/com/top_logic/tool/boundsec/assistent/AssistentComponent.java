@@ -341,6 +341,10 @@ public class AssistentComponent extends LayoutList implements Selectable {
 
     @Override
 	public CommandHandler getCancelCommand() {
+		CommandHandler configuredCommand = super.getCancelCommand();
+		if (configuredCommand != null) {
+			return configuredCommand;
+		}
 		ComponentName theStep = AssistentStepInfo.getName(getCurrentStepInfo());
         if (this.controller.isLastStep(theStep) ) {
 			return this.getCommandChain(this.controller.getAdditionaleCommandForNext(theStep), this.getShowHandler());
@@ -350,6 +354,10 @@ public class AssistentComponent extends LayoutList implements Selectable {
     
     @Override
 	public CommandHandler getDefaultCommand() {
+		CommandHandler configuredCommand = super.getDefaultCommand();
+		if (configuredCommand != null) {
+			return configuredCommand;
+		}
 		ComponentName theStep = getCurrentStepInfoName();
         if (this.controller.isLastStep(theStep) || this.controller.isLastStep(theStep) ) {
 			return this.getCommandChain(this.controller.getAdditionaleCommandForNext(theStep), this.getShowHandler());

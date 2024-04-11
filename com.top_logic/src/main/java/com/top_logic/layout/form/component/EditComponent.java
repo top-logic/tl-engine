@@ -357,6 +357,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
      */
     @Override
 	public final CommandHandler getCancelCommand() {
+		CommandHandler configuredCommand = super.getCancelCommand();
+		if (configuredCommand != null) {
+			return configuredCommand;
+		}
 		return Editor.super.getCancelCommandHandler();
     }
 
@@ -371,6 +375,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 
     @Override
 	public CommandHandler getDefaultCommand() {
+		CommandHandler configuredCommand = super.getDefaultCommand();
+		if (configuredCommand != null) {
+			return configuredCommand;
+		}
         if (this.isInEditMode()) {
 			return getSaveCommandHandler();
 		} else {

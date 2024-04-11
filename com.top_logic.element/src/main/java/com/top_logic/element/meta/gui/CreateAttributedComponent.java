@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -28,6 +27,7 @@ import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.component.EditAttributedComponent;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.AbstractCreateComponent;
 import com.top_logic.layout.form.model.FormContext;
@@ -37,7 +37,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 
 /**
@@ -89,19 +88,19 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
         return theContext;
     }
 
-    /** 
-     * Automatically create the Constraints for aMeta in aContext.
-     */
+    /**
+	 * Automatically create the {@link FormField} objects for the {@link TLClass} in the
+	 * {@link FormContext}.
+	 */
 	protected void addAttributedConstraints(TLClass type, AttributeFormContext formContext) {
 		if (_modifier.preModify(this, type, null)) {
-			String createHandlerId = getCreateHandler();
 			Object targetModel;
-			if (StringServices.isEmpty(createHandlerId)) {
+			/* The default command in a create component is the create command. */
+			if (getDefaultCommand() == null) {
 				targetModel = getModel();
 			} else {
-				CommandHandler createHandler = getCommandById(createHandlerId);
 				Map<String, Object> commandArgs = Collections.emptyMap();
-				targetModel = CommandHandlerUtil.getTargetModel(createHandler, this, commandArgs);
+				targetModel = CommandHandlerUtil.getTargetModel(getDefaultCommand(), this, commandArgs);
 			}
 			TLObject createContext = targetModel instanceof TLObject ? (TLObject) targetModel : null;
 

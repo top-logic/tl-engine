@@ -97,7 +97,10 @@ public class AbstractCreateComponent extends FormComponent {
 		 * The {@link com.top_logic.tool.boundsec.CommandHandler.Config#getId()} of the
 		 * {@link CommandHandler} responsible executing the creation of the new object from the
 		 * information collected by this component.
+		 * 
+		 * @deprecated Use {@link #getDefaultAction()} instead.
 		 */
+		@Deprecated
 		@Mandatory
 		@Name(CREATE_HANDLER)
 		String getCreateHandler();
@@ -105,7 +108,10 @@ public class AbstractCreateComponent extends FormComponent {
 		/**
 		 * The {@link com.top_logic.tool.boundsec.CommandHandler.Config#getId()} of the
 		 * {@link CommandHandler} that aborts the create operation.
+		 * 
+		 * @deprecated Use {@link #getCancelAction()} instead.
 		 */
+		@Deprecated
 		@StringDefault(CancelHandler.COMMAND_ID)
 		String getCancelHandler();
 
@@ -220,26 +226,40 @@ public class AbstractCreateComponent extends FormComponent {
 	 * 
 	 * @return The ID of the handler responsible for creating the element, must not be
 	 *         <code>null</code>.
+	 * 
+	 * @deprecated Use {@link #getDefaultCommand()} instead.
 	 */
+	@Deprecated
 	protected final String getCreateHandler() {
 		return ((Config) getConfig()).getCreateHandler();
 	}
 
     @Override
 	public CommandHandler getDefaultCommand() {
-        return this.getCommandById(this.getCreateHandler());
+		CommandHandler configuredCommand = super.getDefaultCommand();
+		if (configuredCommand != null) {
+			return configuredCommand;
+		}
+		return getCommandById(getCreateHandler());
     }
     
     @Override
 	public CommandHandler getCancelCommand() {
-        return this.getCommandById(this.getCancelHandler());
+		CommandHandler configuredCommand = super.getCancelCommand();
+		if (configuredCommand != null) {
+			return configuredCommand;
+		}
+		return getCommandById(getCancelHandler());
     }
     
+	@Deprecated
     @Override
 	protected String getDefaultCloseDialogHandlerName() {
 		return getCancelHandler();
     }
 
+	/** @deprecated Use {@link #getCancelCommand()} instead. */
+	@Deprecated
 	protected final String getCancelHandler() {
 		return ((Config) getConfig()).getCancelHandler();
     }

@@ -1079,6 +1079,10 @@ public class AttributedSearchComponent extends FormComponent {
 
     @Override
 	public CommandHandler getDefaultCommand() {
+		CommandHandler configuredCommand = super.getDefaultCommand();
+		if (configuredCommand != null) {
+			return configuredCommand;
+		}
 		return getCommandById(SearchCommandHandler.COMMAND_ID);
     }
 

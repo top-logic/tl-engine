@@ -13,7 +13,6 @@
 	</params>
 
 	<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-		name="switchLayout_{$layoutName}"
 		renderer="${renderer}"
 	>
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DirtyCheckingCommandModelConfiguration"

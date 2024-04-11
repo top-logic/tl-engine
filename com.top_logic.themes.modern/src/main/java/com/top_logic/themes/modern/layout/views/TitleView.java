@@ -10,6 +10,7 @@ import java.io.IOException;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -34,13 +35,13 @@ public class TitleView extends DefaultComponentView implements ModernThemeConsta
 	/**
 	 * Configuration interface of {@link TitleView}
 	 */
-	public interface Config extends ViewConfiguration.Config<ViewConfiguration> {
+	public interface Config extends PolymorphicConfiguration<ViewConfiguration> {
 
 		/**
 		 * {@link ViewConfiguration}, which describes a {@link View} of an application
 		 *         logout command.
 		 */
-		ViewConfiguration.Config<?> getLogoutView();
+		PolymorphicConfiguration<? extends ViewConfiguration> getLogoutView();
 	}
 
 	/**

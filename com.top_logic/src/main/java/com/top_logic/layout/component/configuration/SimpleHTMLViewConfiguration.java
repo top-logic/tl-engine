@@ -9,8 +9,9 @@ import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -29,12 +30,13 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SimpleHTMLViewConfiguration extends AbstractViewConfiguration<SimpleHTMLViewConfiguration.Config> {
+public class SimpleHTMLViewConfiguration extends AbstractConfiguredInstance<SimpleHTMLViewConfiguration.Config>
+		implements ViewConfiguration {
 	
 	/**
 	 * Configuration interface for {@link SimpleHTMLViewConfiguration}.
 	 */
-	public interface Config extends AbstractViewConfiguration.Config<SimpleHTMLViewConfiguration> {
+	public interface Config extends PolymorphicConfiguration<SimpleHTMLViewConfiguration> {
 		/** The configured tag. Default is <code>SPAN</code>. */
 		@Name(XML_ATTRIBUTE_TAG)
 		@StringDefault(HTMLConstants.SPAN)
@@ -66,7 +68,7 @@ public class SimpleHTMLViewConfiguration extends AbstractViewConfiguration<Simpl
 		 * Either {@link #getContentView()} or {@link #getContentKey()} must be set.
 		 * </p>
 		 */
-		ViewConfiguration.Config<?> getContentView();
+		PolymorphicConfiguration<? extends ViewConfiguration> getContentView();
 	}
 
 	/**
@@ -102,14 +104,13 @@ public class SimpleHTMLViewConfiguration extends AbstractViewConfiguration<Simpl
 	 * @param config
 	 *        The configuration.
 	 */
-	public SimpleHTMLViewConfiguration(InstantiationContext context, SimpleHTMLViewConfiguration.Config config)
-			throws ConfigurationException {
+	public SimpleHTMLViewConfiguration(InstantiationContext context, SimpleHTMLViewConfiguration.Config config) {
 		super(context, config);
 		if (config.getContentView() != null) {
 			_contentView = context.getInstance(config.getContentView());
 		} else if (config.getContentKey() == null) {
 			context.error(
-				Resources.getInstance().getString(I18NConstants.NO_CONTENT_GIVEN__VIEW_NAME.fill(config.getName())));
+				Resources.getInstance().getString(I18NConstants.NO_CONTENT_GIVEN__VIEW_NAME.fill(config.location())));
 		}
 
 	}

@@ -33,9 +33,7 @@
 												<!-- quirks openHandlerName #2128 -->
 												<dialogInfo openHandlerName="displayDialog_dialog1_1"/>
 												<views>
-													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-														name="gotoFromDialog1.1"
-													>
+													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration">
 														<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 															command="gotoCmd"
 														/>
@@ -50,9 +48,7 @@
 												<!-- quirks openHandlerName #2128 -->
 												<dialogInfo openHandlerName="displayDialog_dialog1_2"/>
 												<views>
-													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-														name="gotoFromDialog1.2"
-													>
+													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration">
 														<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 															command="gotoCmd"
 														/>
@@ -61,9 +57,7 @@
 											</component>
 										</dialogs>
 										<views>
-											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-												name="gotoFromDialog1"
-											>
+											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration">
 												<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 													command="gotoCmd"
 												/>
@@ -73,8 +67,7 @@
 								</dialogs>
 								<views>
 									<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-										name="gotoFromTab1"
-									>
+>
 										<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 											command="gotoCmd"
 										/>
@@ -111,9 +104,7 @@
 										<!-- quirks openHandlerName #2128 -->
 										<dialogInfo openHandlerName="displayDialog_dialog2_1"/>
 										<views>
-											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-												name="gotoFromDialog2.1"
-											>
+											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration">
 												<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 													command="gotoCmd"
 												/>
@@ -122,9 +113,7 @@
 									</component>
 								</dialogs>
 								<views>
-									<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-										name="gotoFromDialog2"
-									>
+									<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration">
 										<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 											command="gotoCmd"
 										/>
@@ -133,9 +122,7 @@
 							</component>
 						</dialogs>
 						<views>
-							<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-								name="gotoFromTab2"
-							>
+							<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration">
 								<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 									command="gotoCmd"
 								/>

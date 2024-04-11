@@ -25,25 +25,21 @@
 				</componentControlProvider>
 
 				<components>
-					<component class="com.top_logic.mig.html.layout.PageComponent"
-						name="sblLogo"
-						page="/jsp/sidebar/appLogo.jsp"
-						toolbar="false"
-					>
+					<layoutControl>
 						<layoutInfo size="%QUICK_SEARCH_HEIGHT%"/>
-						<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"
+						<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider"
 							css-class="sblLogo"
-						/>
-						<views>
-							<view class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
-								active="%QUICK_SEARCH_ENABLED%"
-								maxResults="%QUICK_SEARCH_MAX_RESULTS%"
-								name="quickSearch"
-								searchComponent="%QUICK_SEARCH_SEARCH_COMPONENT%"
-							/>
-						</views>
-					</component>
-
+						>
+							<view class="com.top_logic.layout.structure.LogoViewConfiguration">
+								<quickSearch class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
+									active="%QUICK_SEARCH_ENABLED%"
+									maxResults="%QUICK_SEARCH_MAX_RESULTS%"
+									searchComponent="%QUICK_SEARCH_SEARCH_COMPONENT%"
+								/>
+							</view>
+						</componentControlProvider>
+					</layoutControl>
+					
 					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 						<layoutInfo size="0px"/>
 						<componentControlProvider class="com.top_logic.layout.structure.ConditionalViewLayout"
@@ -88,9 +84,7 @@
 							css-class="notificationTitle"
 							size="%MAINTAINANCE_BAR_HEIGHT%"
 						>
-							<view class="com.top_logic.layout.component.configuration.MaintenanceViewConfiguration"
-								name="maintenance"
-							/>
+							<view class="com.top_logic.layout.component.configuration.MaintenanceViewConfiguration"/>
 						</componentControlProvider>
 					</layoutControl>
 

@@ -25,11 +25,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public abstract class DefaultComponentView implements ViewConfiguration {
 
-	@Override
-	public String getName() {
-		return null;
-	}
-
 	/**
 	 * @param viewConfiguration
 	 *        - from which a {@link View} shall be generated

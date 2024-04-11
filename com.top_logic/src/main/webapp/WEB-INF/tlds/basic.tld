@@ -30,51 +30,6 @@
 	</tag>
 	
 	<tag>
-		<name>view</name>
-		<tagclass>com.top_logic.base.taglibs.basic.ViewTag</tagclass>
-		<bodycontent>empty</bodycontent>
-		<info>Displays a configured component view.</info>
-		<attribute>
-			<name>name</name>
-			<required>true</required>
-			<rtexprvalue>true</rtexprvalue>
-			<!-- 
-			<description>The XML-defined name of the configured view.</description>
-			 -->
-		</attribute>
-	</tag>
-	
-	<tag>
-		<name>hasView</name>
-		<tagclass>com.top_logic.base.taglibs.basic.HasViewTag</tagclass>
-		<bodycontent>jsp</bodycontent>
-		<info>Conditionally evaluates the body, if the view with the given name is defined at the context component and it is visible.</info>
-		<attribute>
-			<name>name</name>
-			<required>true</required>
-			<rtexprvalue>true</rtexprvalue>
-			<!-- 
-			<description>The XML-defined name of the configured view.</description>
-			 -->
-		</attribute>
-	</tag>
-	
-	<tag>
-		<name>notHasView</name>
-		<tagclass>com.top_logic.base.taglibs.basic.NotHasViewTag</tagclass>
-		<bodycontent>jsp</bodycontent>
-		<info>Conditionally evaluates the body, if the view with the given name is not defined at the context component or it is not visible.</info>
-		<attribute>
-			<name>name</name>
-			<required>true</required>
-			<rtexprvalue>true</rtexprvalue>
-			<!-- 
-			<description>The XML-defined name of the configured view.</description>
-			 -->
-		</attribute>
-	</tag>
-	
-	<tag>
 		<name>fieldset</name>
 		<tagclass>com.top_logic.layout.form.boxes.reactive_tag.GroupCellTag</tagclass>
 		<bodycontent>jsp</bodycontent>

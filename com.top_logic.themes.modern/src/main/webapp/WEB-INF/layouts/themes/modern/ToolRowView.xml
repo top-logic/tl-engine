@@ -10,7 +10,7 @@
 
 		<include name="toolrow/adminButtons.xml"/>
 
-		<group name="scripting">
+		<group>
 			<views>
 				<include name="toolrow/scriptingButtons.xml"/>
 			</views>

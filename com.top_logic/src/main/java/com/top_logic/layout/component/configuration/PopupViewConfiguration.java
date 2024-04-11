@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -48,12 +48,13 @@ import com.top_logic.util.Resources;
  * 
  * @see MultiViewConfiguration
  */
-public class PopupViewConfiguration extends AbstractViewConfiguration<PopupViewConfiguration.Config> {
+public class PopupViewConfiguration extends AbstractConfiguredInstance<PopupViewConfiguration.Config>
+		implements ViewConfiguration {
 
 	/**
 	 * Configuration options for {@link PopupViewConfiguration}.
 	 */
-	public static interface Config extends AbstractViewConfiguration.Config<PopupViewConfiguration> {
+	public static interface Config extends PolymorphicConfiguration<PopupViewConfiguration> {
 		
 		/**
 		 * @see #getLabel()
@@ -149,8 +150,7 @@ public class PopupViewConfiguration extends AbstractViewConfiguration<PopupViewC
 	/**
 	 * Creates a {@link PopupViewConfiguration}.
 	 */
-	public PopupViewConfiguration(InstantiationContext context, PopupViewConfiguration.Config config)
-			throws ConfigurationException {
+	public PopupViewConfiguration(InstantiationContext context, PopupViewConfiguration.Config config) {
 		super(context, config);
 
 		_label = config.getLabel();

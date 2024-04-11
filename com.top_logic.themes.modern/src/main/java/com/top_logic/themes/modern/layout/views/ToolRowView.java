@@ -11,8 +11,8 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -41,19 +41,17 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants, 
 	/**
 	 * Configuration interface of {@link ToolRowView}
 	 */
-	public interface Config extends ViewConfiguration.Config<ToolRowView> {
+	public interface Config extends PolymorphicConfiguration<ToolRowView> {
 
 		/**
 		 * {@link ViewConfiguration}s of clickable buttons of this {@link ToolRowView}
 		 */
-		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-		List<ViewConfiguration.Config<? extends ViewConfiguration>> getViews();
+		List<PolymorphicConfiguration<? extends ViewConfiguration>> getViews();
 
 		/**
 		 * {@link ViewConfiguration}s of messages to display of this {@link ToolRowView}.
 		 */
-		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-		List<ViewConfiguration.Config<? extends ViewConfiguration>> getMessages();
+		List<PolymorphicConfiguration<? extends ViewConfiguration>> getMessages();
 	}
 
 	/**
@@ -183,13 +181,12 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants, 
 		 * Configuration interface of {@link GroupView}
 		 */
 		@TagName("group")
-		public interface Config extends ViewConfiguration.Config<GroupView> {
+		public interface Config extends PolymorphicConfiguration<GroupView> {
 			
 			/**
 			 * {@link ViewConfiguration}s of clickable buttons of this {@link ToolRowView}
 			 */
-			@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-			List<ViewConfiguration.Config<? extends ViewConfiguration>> getViews();
+			List<PolymorphicConfiguration<? extends ViewConfiguration>> getViews();
 
 		}
 

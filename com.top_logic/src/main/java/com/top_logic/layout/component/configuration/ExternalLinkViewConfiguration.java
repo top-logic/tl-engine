@@ -9,8 +9,10 @@ import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
@@ -23,19 +25,19 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * {@link AbstractViewConfiguration} creating an {@link ExternalLink}.
+ * {@link ViewConfiguration} creating an {@link ExternalLink}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ExternalLinkViewConfiguration extends AbstractViewConfiguration<ExternalLinkViewConfiguration.Config>
-		implements HTMLFragment {
+public class ExternalLinkViewConfiguration extends AbstractConfiguredInstance<ExternalLinkViewConfiguration.Config>
+		implements ViewConfiguration, HTMLFragment {
 
 	/**
 	 * Configuration of an {@link ExternalLinkViewConfiguration}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends AbstractViewConfiguration.Config<ExternalLinkViewConfiguration> {
+	public interface Config extends PolymorphicConfiguration<ExternalLinkViewConfiguration> {
 
 		/**
 		 * The target side to open, e.g. http://www.top-logic.com.

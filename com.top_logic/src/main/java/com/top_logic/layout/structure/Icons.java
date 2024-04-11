@@ -6,6 +6,7 @@
 package com.top_logic.layout.structure;
 
 import com.top_logic.gui.ThemeVar;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
@@ -76,5 +77,6 @@ public class Icons extends IconsBase {
 	@DefaultValue("22px")
 	public static ThemeVar<DisplayDimension> COLLAPSIBLE_IMAGE_WIDTH;
 
+	public static ThemeVar<HTMLTemplateFragment> LOGO_VIEW;
 
 }

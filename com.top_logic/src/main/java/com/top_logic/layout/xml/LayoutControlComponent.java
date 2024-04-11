@@ -8,6 +8,7 @@ package com.top_logic.layout.xml;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.NoProtocol;
 import com.top_logic.basic.Protocol;
@@ -22,8 +23,10 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlProvider;
+import com.top_logic.layout.structure.LayoutViewProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -34,8 +37,14 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.AllowNoneChecker;
 
 /**
- * Workaround {@link LayoutComponent} to configure to render a third {@link LayoutComponent} using a
+ * Workaround {@link LayoutComponent} to configure to render another {@link LayoutComponent} using a
  * separate {@link LayoutControlProvider}.
+ * 
+ * <p>
+ * Can also be used as dummy component displaying a custom control created by a
+ * {@link LayoutControlProvider}. In case, a simple {@link HTMLFragment} should be rendered, a
+ * {@link LayoutViewProvider} can be used with an inner {@link ViewConfiguration}.
+ * </p>
  * 
  * @since 5.7.5
  * 

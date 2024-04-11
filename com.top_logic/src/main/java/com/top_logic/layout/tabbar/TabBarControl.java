@@ -9,11 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.ExceptionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Filter;
@@ -56,8 +54,6 @@ public class TabBarControl extends AbstractVisibleControl implements TabBarListe
 	private final TabBarModel tabBarModel;
 
 	private ControlRenderer<? super TabBarControl> renderer = DefaultTabBarRenderer.INSTANCE;
-
-	private HashMap<String, HTMLFragment> childByName;
 
 	/**
 	 * See {@link #getTabVisibilityFilter}.
@@ -259,41 +255,6 @@ public class TabBarControl extends AbstractVisibleControl implements TabBarListe
 	 *        deletes the {@link HTMLFragment} which was formerly registered.
 	 * @return The {@link HTMLFragment} formerly registered under the given name.
 	 */
-	public HTMLFragment addView(String aName, HTMLFragment aView) {
-		if (childByName == null) {
-			childByName = new HashMap<>();
-		}
-		return childByName.put(aName, aView);
-	}
-
-	/**
-	 * This method is a service method to add all {@link HTMLFragment}s in the given {@link Map}
-	 * under the {@link String} key they were added using {@link #addView(String, HTMLFragment)}.
-	 * 
-	 * @param aViewMap
-	 *        each entry of the given {@link Map} must have a {@link String} key and a
-	 *        {@link HTMLFragment} value;
-	 * @see #addView(String, HTMLFragment)
-	 */
-	public final void addViews(Map<String, ? extends HTMLFragment> aViewMap) {
-		if (aViewMap == null) {
-			return;
-		}
-		aViewMap.forEach(this::addView);
-	}
-
-	/**
-	 * This method gives the {@link HTMLFragment} which was registered under the given name.
-	 * 
-	 * @param aName
-	 *        The string which was used to register the desired {@link HTMLFragment}.
-	 * @return The {@link HTMLFragment} registered under <code>aName</code> or <code>null</code> if
-	 *         no {@link HTMLFragment} was registered. see {@link #addView(String, HTMLFragment)}
-	 */
-	public HTMLFragment getView(String aName) {
-		return childByName == null ? null : childByName.get(aName);
-	}
-	
 	/**
 	 * Adds a {@link TabSwitchVetoListener} to {@link #tabSwitchListeners} only if it currently
 	 * contains none.

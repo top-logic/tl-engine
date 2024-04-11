@@ -951,6 +951,10 @@ table td span.cDecoratedCell .lFixedLeft {
 	align-items: center;
 }
 
+table .cDecoratedCell > .lFlexible > :first-child {
+	flex-grow: 2;
+}
+
 table td span.cDecoratedCell {
 	gap: var(--spacing-02);
 }
@@ -1407,20 +1411,11 @@ div.dirtyHandlingDialog .changes {
 
 .tl-table__cell-resizer {
 	width: 4px;
-	opacity: 0;
 	cursor: col-resize;
-	background: var(--TABLE_RESIZE_GRABBER_COLOR);
 	position: absolute;
 	top: 0;
 	right: 0;
 	height: 100%;
-	transition: all 0.75s ease;
-	filter: brightness(100%);
-}
-
-.tl-table__cell-resizer--active {
-	filter: brightness(75%);
-	opacity: 1;
 }
 
 .tl-table__cell {
@@ -1433,11 +1428,6 @@ div.dirtyHandlingDialog .changes {
 .tl-table__cell:not(:last-child),
 .tl-table-overlay__column:not(.tl-table-overlay__columns-container > :last-child) {
 	border-right: var(--border-subtle) solid var(--TABLE_COLUMN_BORDER_WIDTH);
-}
-
-.tl-table__cell:hover .tl-table__cell-resizer {
-	filter: brightness(100%);
-	opacity: 1;
 }
 
 .tl-table__header-cell-content {

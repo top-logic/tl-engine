@@ -12,9 +12,13 @@ import java.util.Collections;
 import com.top_logic.basic.NamedComparator;
 import com.top_logic.basic.generate.JavaGenerator;
 import com.top_logic.element.config.annotation.TLSingletons;
+import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLNamedPart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * Super class for java class generators that create classes for parts of the {@link TLModel}.
@@ -113,6 +117,22 @@ public abstract class TLModelGenerator extends JavaGenerator {
 	 */
 	protected boolean isStructure(TLModule module) {
 		return module.getAnnotation(TLSingletons.class) != null;
+	}
+
+	/**
+	 * Whether the given {@link TLType} represents a built-in structure type.
+	 */
+	protected boolean isStructure(TLType type) {
+		if (type.getModelKind() != ModelKind.CLASS) {
+			return false;
+		}
+
+		TLType structureType = TLModelUtil.findType(type.getModel(), "tl.element:StructuredElement");
+		if (structureType == null) {
+			return false;
+		}
+
+		return TLModelUtil.isGeneralization((TLClass) structureType, (TLClass) type);
 	}
 
 	@Override

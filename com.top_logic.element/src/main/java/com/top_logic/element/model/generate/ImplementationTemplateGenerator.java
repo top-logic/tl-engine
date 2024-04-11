@@ -82,7 +82,7 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 				return dropPackage(implementationName(primary));
 			}
 		} else {
-			if (isStructure(module())) {
+			if (isStructure(type)) {
 				return "com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper";
 			} else {
 				return "com.top_logic.element.meta.kbbased.AttributedWrapper";

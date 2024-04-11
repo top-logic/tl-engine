@@ -42,7 +42,7 @@ public class ConditionalViewLayout extends ConfiguredLayoutControlProvider<Condi
 	private ViewConfiguration _viewFactory;
 
 	/**
-	 * Configuration options for {@link ConditionalViewLayout}
+	 * Configuration options for {@link ConditionalViewLayout}.
 	 */
 	public interface Config extends PolymorphicConfiguration<LayoutControlProvider> {
 		/**

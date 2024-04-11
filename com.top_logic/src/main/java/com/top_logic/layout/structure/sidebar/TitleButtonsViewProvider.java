@@ -44,7 +44,7 @@ import com.top_logic.util.ToBeValidated;
 public class TitleButtonsViewProvider extends ConfiguredLayoutControlProvider<TitleButtonsViewProvider.Config> {
 
 	/**
-	 * Configuration options for {@link TitleButtonsViewProvider}
+	 * Configuration options for {@link TitleButtonsViewProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<LayoutControlProvider> {
 		/**

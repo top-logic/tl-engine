@@ -53,6 +53,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.search.expr.DynamicAll;
 import com.top_logic.model.search.expr.DynamicGet;
+import com.top_logic.model.search.expr.DynamicInstanceOf;
 import com.top_logic.model.search.expr.DynamicReferers;
 import com.top_logic.model.search.expr.DynamicSet;
 import com.top_logic.model.search.expr.Recursion;
@@ -182,6 +183,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		createBuilder(context, TypedConfiguration.newConfigItem(DynamicSet.Builder.Config.class), factories);
 		createBuilder(context, TypedConfiguration.newConfigItem(DynamicReferers.Builder.Config.class), factories);
 		createBuilder(context, TypedConfiguration.newConfigItem(DynamicAll.Builder.Config.class), factories);
+		createBuilder(context, TypedConfiguration.newConfigItem(DynamicInstanceOf.Builder.Config.class), factories);
 		
 		FactoryResolver factoryResolver = new FactoryResolver() {
 			@Override

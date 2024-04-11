@@ -1305,6 +1305,39 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("foo-b", ((TLObject) result).tValueByName("name"));
 	}
 
+	public void testInstanceOf() throws ParseException {
+		assertTrue(SearchExpression.asBoolean(
+			execute(search("new(`TestSearchExpression:A`).instanceOf(`TestSearchExpression:A`)"))));
+		assertFalse(SearchExpression.asBoolean(
+			execute(search("new(`TestSearchExpression:A`).instanceOf(`TestSearchExpression:B`)"))));
+		assertTrue(SearchExpression.asBoolean(
+			execute(search("new(`TestSearchExpression:C`).instanceOf(`TestSearchExpression:B`)"))));
+		assertFalse(SearchExpression.asBoolean(
+			execute(search("new(`TestSearchExpression:B`).instanceOf(`TestSearchExpression:C`)"))));
+
+		assertTrue(SearchExpression.asBoolean(
+			execute(search("(t -> new(`TestSearchExpression:A`).instanceOf($t))(`TestSearchExpression:A`)"))));
+		assertFalse(SearchExpression.asBoolean(
+			execute(search("(t -> new(`TestSearchExpression:A`).instanceOf($t))(`TestSearchExpression:B`)"))));
+		assertTrue(SearchExpression.asBoolean(
+			execute(search("(t -> new(`TestSearchExpression:C`).instanceOf($t))(`TestSearchExpression:B`)"))));
+		assertFalse(SearchExpression.asBoolean(
+			execute(search("(t -> new(`TestSearchExpression:B`).instanceOf($t))(`TestSearchExpression:C`)"))));
+
+		assertTrue(SearchExpression.asBoolean(
+			execute(search("t -> new(`TestSearchExpression:A`).instanceOf($t)"),
+				execute(search("`TestSearchExpression:A`")))));
+		assertFalse(SearchExpression.asBoolean(
+			execute(search("t -> new(`TestSearchExpression:A`).instanceOf($t)"),
+				execute(search("`TestSearchExpression:B`")))));
+		assertTrue(SearchExpression.asBoolean(
+			execute(search("t -> new(`TestSearchExpression:C`).instanceOf($t)"),
+				execute(search("`TestSearchExpression:B`")))));
+		assertFalse(SearchExpression.asBoolean(
+			execute(search("t -> new(`TestSearchExpression:B`).instanceOf($t)"),
+				execute(search("`TestSearchExpression:C`")))));
+	}
+
 	public void testBulkDelete() throws ParseException {
 		List<?> search = (List<?>) execute(search(
 			"list('a1', 'a2').map(n -> new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, $n))"));

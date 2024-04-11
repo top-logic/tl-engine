@@ -19,6 +19,7 @@ import java.util.Set;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.ArithmeticExpr;
@@ -30,6 +31,7 @@ import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.GetDay;
 import com.top_logic.model.search.expr.IfElse;
+import com.top_logic.model.search.expr.DynamicInstanceOf;
 import com.top_logic.model.search.expr.IsEmpty;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.Lambda;
@@ -335,11 +337,18 @@ public class ConstantFolding {
 				return super.composeGenericMethod(expr, arg, argumentsResult);
 			}
 
-			// Make get access static.
+			// Make model access static, if possible.
 			if (expr instanceof DynamicGet) {
 				SearchExpression property = argumentsResult.get(1);
 				if (isLiteral(property)) {
 					return access(argumentsResult.get(0), (TLStructuredTypePart) literalValue(property));
+				} else {
+					return super.composeGenericMethod(expr, arg, argumentsResult);
+				}
+			} else if (expr instanceof DynamicInstanceOf) {
+				SearchExpression type = argumentsResult.get(1);
+				if (isLiteral(type)) {
+					return instanceOf(argumentsResult.get(0), (TLStructuredType) literalValue(type));
 				} else {
 					return super.composeGenericMethod(expr, arg, argumentsResult);
 				}

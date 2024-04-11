@@ -8,11 +8,11 @@ package com.top_logic.layout.component.configuration;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
-import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.basic.ControlRenderer;
@@ -24,17 +24,16 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class MultiViewConfiguration extends AbstractViewConfiguration<MultiViewConfiguration.Config> {
+public class MultiViewConfiguration extends AbstractConfiguredInstance<MultiViewConfiguration.Config>
+		implements ViewConfiguration {
 
 	private static final String XML_ATTRIBUTE_RENDERER = "renderer";
 	private static final String XML_ATTRIBUTE_VIEWS = "views";
 	
 	/**
 	 * Configuration interface for {@link MultiViewConfiguration}.
-	 *
-	 * @author <a href="mailto:tsa@top-logic.com">tsa</a>
 	 */
-	public static interface Config extends AbstractViewConfiguration.Config<MultiViewConfiguration> {
+	public static interface Config extends PolymorphicConfiguration<MultiViewConfiguration> {
 		
 		/** The configured renderer. */
 		@Name(XML_ATTRIBUTE_RENDERER)
@@ -44,8 +43,7 @@ public class MultiViewConfiguration extends AbstractViewConfiguration<MultiViewC
 		
 		/** The list of configured view configurations. */
 		@Name(XML_ATTRIBUTE_VIEWS)
-		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-		List<ViewConfiguration.Config<ViewConfiguration>> getViews();
+		List<PolymorphicConfiguration<? extends ViewConfiguration>> getViews();
 	}
 
 	private final List<ViewConfiguration> innerViews;
@@ -55,8 +53,7 @@ public class MultiViewConfiguration extends AbstractViewConfiguration<MultiViewC
 	/**
 	 * Creates a {@link MultiViewConfiguration}.
 	 */
-	public MultiViewConfiguration(InstantiationContext context, MultiViewConfiguration.Config atts)
-			throws ConfigurationException {
+	public MultiViewConfiguration(InstantiationContext context, MultiViewConfiguration.Config atts) {
 		super(context, atts);
 		this.renderer = atts.getRenderer();
 		this.innerViews = TypedConfiguration.getInstanceList(context, atts.getViews());

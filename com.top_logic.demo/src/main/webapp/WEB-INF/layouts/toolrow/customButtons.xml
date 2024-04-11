@@ -13,7 +13,7 @@
 		/>
 	</params>
 
-	<group name="custom">
+	<group>
 		<views>
 			<include name="toolrow/searchButtonsLegacy.xml"
 				renderer="${renderer}"
@@ -23,7 +23,6 @@
 				image="theme:layouts.demo.tlHome"
 				label-key="${resPrefix}.tlHome"
 				link="https://www.top-logic.com/"
-				name="tlHome"
 				renderer="${entryRenderer}"
 				tooltip-key="${resPrefix}.tlHome.tooltip"
 			/>

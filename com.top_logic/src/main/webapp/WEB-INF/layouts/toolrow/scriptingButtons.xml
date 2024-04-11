@@ -17,7 +17,6 @@
 		horizontalPosition="${horizontalPosition}"
 		icon="theme:IMAGE_DEBUG_22"
 		label="layouts.themes.default.toolrow.scriptingButtons"
-		name="developerButtons"
 		renderer="${renderer}"
 	>
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
@@ -50,7 +49,6 @@
 	<view class="com.top_logic.layout.component.configuration.OpenGuiInspectorView"
 		image="theme:IMAGE_BUTTONS_GUI_INSPECTOR22"
 		labelKey="menu.GuiInspector"
-		name="guiInspector"
 		renderer="${entryRenderer}"
 	/>
 </template>

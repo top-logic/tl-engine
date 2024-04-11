@@ -62,7 +62,7 @@ public class ConditionalViewLayout extends ConfiguredLayoutControlProvider<Condi
 		/**
 		 * The view to display.
 		 */
-		ViewConfiguration.Config<?> getView();
+		PolymorphicConfiguration<? extends ViewConfiguration> getView();
 
 		/**
 		 * Whether the active view may have scroll bars.

@@ -29,8 +29,8 @@
 								>
 									<content-view class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
 										include-types="tl.doc:Page"
-										searchField="documentationSearch"
 										no-search-component="true"
+										searchField="documentationSearch"
 									>
 										<goto-targets>
 											<goto-target

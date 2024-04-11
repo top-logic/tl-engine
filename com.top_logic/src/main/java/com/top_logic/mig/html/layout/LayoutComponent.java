@@ -241,6 +241,12 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		/** @see #getAssistantInfo() */
 		String ASSISTANT_INFO_NAME = "assistantInfo";
 
+		/** Property name of {@link #getDefaultAction()}. */
+		String DEFAULT_ACTION = "defaultAction";
+
+		/** Property name of {@link #getCancelAction()}. */
+		String CANCEL_ACTION = "cancelAction";
+
 		String COMMANDS_NAME = "commands";
 
 		String BUTTONS_NAME = "buttons";
@@ -478,7 +484,33 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(XML_TAG_VIEWS_NAME)
 		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
 		List<ViewConfiguration.Config<?>> getViews();
-		
+
+		/**
+		 * The {@link CommandHandler} that should be executed when 'Enter' or 'Return' are pressed.
+		 * 
+		 * @implNote The name is not the normative <code>getDefaultCommand</code> as that would
+		 *           conflict with legacy properties in subclasses. A migration to delete or rename
+		 *           them would be too much effort.
+		 * 
+		 * @see #getCancelAction()
+		 * @see DialogModel#getDefaultCommand()
+		 */
+		@Name(DEFAULT_ACTION)
+		CommandHandler.ConfigBase<? extends CommandHandler> getDefaultAction();
+
+		/**
+		 * The {@link CommandHandler} that should be executed when the "Escape" key is pressed.
+		 * 
+		 * @implNote The name is not the normative <code>getCancelCommand</code> as that would
+		 *           conflict with legacy properties in subclasses. A migration to delete or rename
+		 *           them would be too much effort.
+		 * 
+		 * @see #getDefaultAction()
+		 * @see DialogModel#getCloseAction()
+		 */
+		@Name(CANCEL_ACTION)
+		CommandHandler.ConfigBase<? extends CommandHandler> getCancelAction();
+
 		@Name(COMMANDS_NAME)
 		@EntryTag("command")
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> getCommands();
@@ -786,6 +818,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	@Inspectable
 	private InlineMap<Property<?>, Object> _properties = InlineMap.empty();
 
+	private final CommandHandler _defaultCommand;
+
+	private final CommandHandler _cancelCommand;
+
 	/** The Commands found at this component, indexed by their Id */
 	private Map<String, CommandHandler> commandsById;
 
@@ -923,6 +959,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 		_initiallyMinimized = atts.isInitiallyMinimized();
 		doResetScrollPosition(false);
+		_defaultCommand = context.getInstance(atts.getDefaultAction());
+		_cancelCommand = context.getInstance(atts.getCancelAction());
     }
 
 	@Override
@@ -3055,24 +3093,16 @@ public abstract class LayoutComponent extends ModelEventAdapter
         return null;
     }
 
-	/**
-	 * The {@link CommandHandler} that should be executed when "Enter" or "Return" is pressed.
-	 * 
-	 * @see DialogModel#getDefaultCommand()
-	 */
+	/** @see Config#getDefaultAction() */
 	public CommandHandler getDefaultCommand() {
-		return null;
+		return _defaultCommand;
 	}
 
-	/**
-	 * The {@link CommandHandler} that should be executed when the "Escape" key is pressed.
-	 * 
-	 * @see DialogModel#getCloseAction()
-	 */
+	/** @see Config#getCancelAction() */
 	public CommandHandler getCancelCommand() {
-		return null;
+		return _cancelCommand;
 	}
-    
+
 	/**
 	 * Whether {@link #getCommands()} is non-empty.
 	 */

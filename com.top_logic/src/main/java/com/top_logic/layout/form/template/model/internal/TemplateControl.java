@@ -175,6 +175,16 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 	protected void registerListener(FormMember member) {
 		super.registerListener(member);
 		member.addListener(Collapsible.COLLAPSED_PROPERTY, this);
+	}
+
+	@Override
+	protected void afterRendering() {
+		super.afterRendering();
+
+		// Note: While rendering a template, inner form fields may be built by expanding embedded
+		// forms. Therefore, a template control must not start listening for changes to the form
+		// hierarchy before its rendering process has completed.
+		FormMember member = getModel();
 		member.addListener(FormContainer.MEMBER_ADDED_PROPERTY, this);
 		member.addListener(FormContainer.MEMBER_REMOVED_PROPERTY, this);
 	}

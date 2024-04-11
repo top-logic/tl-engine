@@ -776,6 +776,8 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 
 			/* using this as ControlScope ensures that the LocalScope is build as late as possible. */
 			context.renderScoped(this, ScopedRenderer.INSTANCE, out, this);
+
+			afterRendering();
 		} catch (Throwable throwable) {
 			try {
 				out.endAll(currentDepth);
@@ -788,6 +790,13 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 				throw throwable;
 			}
 		}
+	}
+
+	/**
+	 * Called directly after rendering this control has completed.
+	 */
+	protected void afterRendering() {
+		// Hook for subclasses.
 	}
 
 	private String createErrorMessage() {

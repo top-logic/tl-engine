@@ -14,7 +14,7 @@
 			<include name="GlobalDialogs.xml"/>
 			${dialogs}
 		</dialogs>
-		<componentControlProvider class="com.top_logic.themes.modern.layout.sidebar.DeckpaneOnlyTabControlProvider"/>
+		<componentControlProvider class="com.top_logic.layout.structure.sidebar.DeckpaneOnlyTabControlProvider"/>
 		<windows>
 			<include name="GlobalWindows.xml"/>
 		</windows>

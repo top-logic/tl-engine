@@ -35,14 +35,31 @@ public class LogoViewConfiguration extends AbstractConfiguredInstance<LogoViewCo
 	 * Configuration options for {@link LogoViewConfiguration}.
 	 */
 	public interface Config<I extends LogoViewConfiguration> extends PolymorphicConfiguration<I> {
+		/**
+		 * The application's logo.
+		 * 
+		 * <p>
+		 * Must be an image path, not a font icon.
+		 * </p>
+		 */
 		@Name("logo")
 		@FormattedDefault("theme:IMAGES_APP_LOGO")
 		ThemeImage getLogo();
 
+		/**
+		 * The application's logo shown in the side bar when minimized.
+		 * 
+		 * <p>
+		 * Must be an image path, not a font icon.
+		 * </p>
+		 */
 		@Name("logoMinimized")
 		@FormattedDefault("theme:IMAGES_APP_LOGO_MINIMIZED")
 		ThemeImage getLogoMinimized();
 
+		/**
+		 * A view typically showing the quick-search.
+		 */
 		@Name("quickSearch")
 		PolymorphicConfiguration<? extends ViewConfiguration> getQuickSearch();
 	}
@@ -84,25 +101,51 @@ public class LogoViewConfiguration extends AbstractConfiguredInstance<LogoViewCo
 			Icons.LOGO_VIEW.get().write(context, out, this);
 		}
 
+		/**
+		 * The application's logo.
+		 * 
+		 * <p>
+		 * Must be an image path, not a font icon.
+		 * </p>
+		 */
 		@TemplateVariable("logo")
 		public void writeLogo(DisplayContext context, TagWriter out) throws IOException {
 			Img logo = (Img) getConfig().getLogo().resolve();
 			out.append(context.getContextPath() + logo.getFileLink());
 		}
 
+		/**
+		 * The application's logo shown in the side bar when minimized.
+		 * 
+		 * <p>
+		 * Must be an image path, not a font icon.
+		 * </p>
+		 */
 		@TemplateVariable("logoMinimized")
 		public void writeLogoMinimized(DisplayContext context, TagWriter out) throws IOException {
 			Img logo = (Img) getConfig().getLogoMinimized().resolve();
 			out.append(context.getContextPath() + logo.getFileLink());
 		}
 
+		/**
+		 * The application's title.
+		 * 
+		 * @throws IOException
+		 *         When rendering fails.
+		 */
 		@TemplateVariable("title")
 		public void writeTitle(DisplayContext context, TagWriter out) throws IOException {
 			out.writeText(context.getResources().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		}
 
+		/**
+		 * The application version.
+		 * 
+		 * @throws IOException
+		 *         When rendering fails.
+		 */
 		@TemplateVariable("version")
-		public void writeVersion(DisplayContext context, TagWriter out) throws IOException {
+		public void writeVersion(TagWriter out) throws IOException {
 			out.writeText(Version.getApplicationVersion().getVersionString());
 			out.writeText(' ');
 			out.writeText('(');
@@ -110,11 +153,17 @@ public class LogoViewConfiguration extends AbstractConfiguredInstance<LogoViewCo
 			out.writeText(')');
 		}
 
+		/**
+		 * The popup menu button offering design-mode commands.
+		 */
 		@TemplateVariable("popup")
 		public void writePopUp(DisplayContext context, TagWriter out) throws IOException {
 			TabbarUtil.writePopup(_component, context, out);
 		}
 
+		/**
+		 * The quick-search input.
+		 */
 		@TemplateVariable("quickSearch")
 		public void writeQuickSearch(DisplayContext context, TagWriter out) throws IOException {
 			if (_quickSearch != null) {

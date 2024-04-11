@@ -38,7 +38,7 @@ public class TitleView extends DefaultComponentView implements HTMLConstants {
 	private ViewConfiguration _logoutConfig;
 
 	/**
-	 * Configuration interface of {@link TitleView}
+	 * Configuration interface of {@link TitleView}.
 	 */
 	public interface Config extends PolymorphicConfiguration<ViewConfiguration> {
 

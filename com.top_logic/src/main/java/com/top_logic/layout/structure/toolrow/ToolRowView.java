@@ -46,14 +46,14 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants {
 
 	private static final String CSS_CLASS_HEADER_RIGHT_IMAGE = "header-logo";
 
-	public static final ThemeImage MAPPING_KEY_HEADER_RIGHT_IMAGE = ThemeImage.themeIcon("HEADER_RIGHT_IMAGE");
+	private static final ThemeImage MAPPING_KEY_HEADER_RIGHT_IMAGE = ThemeImage.themeIcon("HEADER_RIGHT_IMAGE");
 
 	private List<ViewConfiguration> _buttonConfigs;
 
 	private List<ViewConfiguration> _messageConfigs;
 
 	/**
-	 * Configuration interface of {@link ToolRowView}
+	 * Configuration interface of {@link ToolRowView}.
 	 */
 	public interface Config extends PolymorphicConfiguration<ToolRowView> {
 
@@ -185,14 +185,14 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants {
 
 	/**
 	 * Special {@link DefaultComponentView}, to separate buttons or messages of the
-	 * {@link ToolRowView}
+	 * {@link ToolRowView}.
 	 */
 	public static final class GroupView extends DefaultComponentView {
 
 		private List<ViewConfiguration> _buttonConfigs;
 
 		/**
-		 * Configuration interface of {@link GroupView}
+		 * Configuration interface of {@link GroupView}.
 		 */
 		@TagName("group")
 		public interface Config extends PolymorphicConfiguration<GroupView> {

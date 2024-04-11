@@ -25,7 +25,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class LayoutViewProvider extends DecoratingLayoutControlProvider<LayoutViewProvider.Config> {
 
 	/**
-	 * Configuration interface of {@link LayoutViewProvider}
+	 * Configuration interface of {@link LayoutViewProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<LayoutControlProvider> {
 

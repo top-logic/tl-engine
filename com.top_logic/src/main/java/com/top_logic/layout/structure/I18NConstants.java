@@ -6,6 +6,8 @@
 package com.top_logic.layout.structure;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.util.Resources;
 
@@ -95,6 +97,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Drop on component
 	 */
 	public static ResKey COMPONENT_DROP;
+
+	/**
+	 * @en {0}
+	 */
+	public static ResKey1 STATUS_BAR__VERSION;
+
+	/**
+	 * @en {0} ({1})
+	 */
+	public static ResKey2 STATUS_BAR__VERSION_ENV;
 
 	static {
 		initConstants(I18NConstants.class);

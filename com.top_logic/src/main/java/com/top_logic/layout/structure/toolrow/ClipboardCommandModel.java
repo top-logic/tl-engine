@@ -13,9 +13,9 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * The ClipboardCommandModel provides a command to open the {@link ClipboardDialog}.
+ * Provides a command to open the {@link ClipboardDialog}.
  * 
- * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
+ * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class ClipboardCommandModel extends AbstractCommandModel {
 	

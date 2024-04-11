@@ -77,6 +77,14 @@ public class Icons extends IconsBase {
 	@DefaultValue("22px")
 	public static ThemeVar<DisplayDimension> COLLAPSIBLE_IMAGE_WIDTH;
 
+	/**
+	 * Header region of the application sidebar.
+	 */
 	public static ThemeVar<HTMLTemplateFragment> LOGO_VIEW;
+
+	/**
+	 * Version information in the application's status bar.
+	 */
+	public static ThemeVar<HTMLTemplateFragment> VERSION_VIEW;
 
 }

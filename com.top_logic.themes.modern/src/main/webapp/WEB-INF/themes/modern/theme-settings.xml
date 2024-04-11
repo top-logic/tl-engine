@@ -79,10 +79,6 @@
 	<icon name="TILES_STEP_OUT_TILE_ICON"
 		value="css:fas fa-backward"
 	/>
-	<type name="VERSION_RENDERER_CLASS"
-		interface="com.top_logic.layout.Renderer"
-		value="com.top_logic.themes.modern.layout.DefaultVersionRenderer"
-	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.BURGER_COMMANDS_ICONS"
 		value="css:fas fa-bars"
 	/>

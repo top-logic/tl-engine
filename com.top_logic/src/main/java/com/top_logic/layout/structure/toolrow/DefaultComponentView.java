@@ -19,13 +19,15 @@ import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * A {@link View}, which can be configured via {@link ViewConfiguration}
+ * A {@link View}, which can be configured via {@link ViewConfiguration}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
 public abstract class DefaultComponentView implements ViewConfiguration {
 
 	/**
+	 * Instantiates a {@link HTMLFragment} from a {@link ViewConfiguration}.
+	 * 
 	 * @param viewConfiguration
 	 *        - from which a {@link View} shall be generated
 	 */
@@ -36,6 +38,8 @@ public abstract class DefaultComponentView implements ViewConfiguration {
 	}
 
 	/**
+	 * Instantiates {@link HTMLFragment}s from {@link ViewConfiguration}s.
+	 * 
 	 * @see #toView(LayoutComponent, ViewConfiguration)
 	 */
 	protected static final List<HTMLFragment> toViews(LayoutComponent component,

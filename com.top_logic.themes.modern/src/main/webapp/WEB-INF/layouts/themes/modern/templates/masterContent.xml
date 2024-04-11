@@ -48,12 +48,14 @@
 				<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
 			</layoutControl>
 			${mainTabbar}
-			<component class="com.top_logic.themes.modern.layout.ModernStatusLineComponent"
-				name="mainStatusLineComponent"
-				versionRendererClass="%VERSION_RENDERER_CLASS%"
-			>
+			<layoutControl>
 				<layoutInfo size="%VERSION_ROW_HEIGHT%"/>
-			</component>
+				<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
+					<view class="com.top_logic.layout.structure.VersionViewConfiguration"
+						environment="%ENVIRONMENT%"
+					/>
+				</componentControlProvider>
+			</layoutControl>
 		</components>
 	</layout>
 </template>

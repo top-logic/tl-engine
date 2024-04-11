@@ -28,7 +28,7 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class DefaultVersionRenderer extends DefaultControlRenderer<Control>
-		implements ModernThemeConstants, ConfiguredInstance<DefaultVersionRenderer.Config> {
+		implements ConfiguredInstance<DefaultVersionRenderer.Config> {
 
 	/**
 	 * Configuration for {@link DefaultVersionRenderer}.
@@ -55,6 +55,10 @@ public class DefaultVersionRenderer extends DefaultControlRenderer<Control>
 		@Name(SHOW_ENVIRONMENT)
 		boolean getShowEnvironment();
 	}
+
+	private static final String CSS_CLASS_FOOTER_STATUS = "FooterStatus";
+
+	private static final String CSS_CLASS_FOOTER = "Footer";
 
 	private static final ResKey TL_GENERAL_STATUSLINE_VERSION = I18NConstants.STATUS_BAR_VERSION;
 

@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.sidebar;
+package com.top_logic.layout.structure.sidebar;
 
 import static com.top_logic.layout.basic.fragments.Fragments.*;
 
@@ -54,6 +54,9 @@ import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.Scrolling;
+import com.top_logic.layout.structure.sidebar.SidebarLayoutControlProvider.ComponentTree.Node;
+import com.top_logic.layout.structure.toolrow.ToolRowView;
+import com.top_logic.layout.structure.toolrow.ToolRowView.GroupView;
 import com.top_logic.layout.tabbar.TabBarModel;
 import com.top_logic.layout.tabbar.TabBarModel.TabBarListener;
 import com.top_logic.layout.tabbar.TabInfo;
@@ -67,9 +70,6 @@ import com.top_logic.mig.html.layout.Card;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
-import com.top_logic.themes.modern.layout.sidebar.SidebarLayoutControlProvider.ComponentTree.Node;
-import com.top_logic.themes.modern.layout.views.ToolRowView;
-import com.top_logic.themes.modern.layout.views.ToolRowView.GroupView;
 import com.top_logic.util.ToBeValidated;
 
 /**

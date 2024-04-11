@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.views;
+package com.top_logic.layout.structure.toolrow;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,19 +20,33 @@ import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultView;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.themes.modern.layout.ModernThemeConstants;
 
 /**
  * {@link DefaultComponentView} of main header's tool row.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public class ToolRowView extends DefaultComponentView implements HTMLConstants, ModernThemeConstants {
+public class ToolRowView extends DefaultComponentView implements HTMLConstants {
+
+	private static final String CSS_CLASS_TOOL_BAR_CONTAINER = "ToolBarContainer";
+
+	private static final String CSS_CLASS_TOOL_CONTAINER = "ToolContainer";
+
+	private static final String CSS_CLASS_TOOL_CONTAINER_RIGHT = "ToolContainerRight";
+
+	private static final String CSS_CLASS_ICON_CONTAINER = "IconContainer";
+
+	private static final String CSS_CLASS_BUTTON_GROUP = "mtbGroup";
+
+	private static final String CSS_CLASS_HEADER_RIGHT_IMAGE = "header-logo";
+
+	public static final ThemeImage MAPPING_KEY_HEADER_RIGHT_IMAGE = ThemeImage.themeIcon("HEADER_RIGHT_IMAGE");
 
 	private List<ViewConfiguration> _buttonConfigs;
 

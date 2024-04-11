@@ -12,7 +12,7 @@
 			<layoutControl>
 				<layoutInfo size="%TITLEBAR_HEIGHT%"/>
 				<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
-					<view class="com.top_logic.themes.modern.layout.views.TitleView">
+					<view class="com.top_logic.layout.structure.toolrow.TitleView">
 						<logout-view class="com.top_logic.layout.component.configuration.LogoutView"
 							image="theme:IMAGES_CLOSE_BTN"
 						/>
@@ -31,7 +31,7 @@
 			>
 				<layoutInfo size="%TOOL_ROW_HEIGHT%"/>
 				<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
-					<view class="com.top_logic.themes.modern.layout.views.ToolRowView">
+					<view class="com.top_logic.layout.structure.toolrow.ToolRowView">
 						<include name="ToolRowView.xml"/>
 					</view>
 				</componentControlProvider>

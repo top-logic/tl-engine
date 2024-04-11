@@ -320,7 +320,7 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Test fallback to default language."
+					comment="Test no fallback to default language."
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -334,7 +334,7 @@
 							<arguments/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Test that deleting the English translation causes the display of the fallback translation."
+							comment="Test that deleting the English translation does not cause the display of the fallback translation."
 						>
 							<actions>
 								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
@@ -398,21 +398,7 @@
 											</path>
 										</model>
 									</actual-value>
-									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-										<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NHTMLNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</context-name>
-										<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-											<value><![CDATA[<h1>Willkommen!</h1>]]></value>
-										</local-name>
-									</expected-value>
+									<expected-value config:interface=""/>
 								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 									comparision="equals"
@@ -432,319 +418,7 @@
 										</model>
 									</actual-value>
 									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="Hallo"
-									/>
-								</action>
-							</actions>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Test that updating the fallback translation updates the English field until it is unchanged."
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-											tab-path="Strukturen > Typendemo > Typendemo"
-										/>
-										<path>
-											<labeled-member label="i18NStringNormal"/>
-											<labeled-member label="Deutsch"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="Hallo Leute"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-											tab-path="Strukturen > Typendemo > Typendemo"
-										/>
-										<path>
-											<labeled-member label="i18NHTMLNormal"/>
-											<labeled-member label="Deutsch"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-										<value><![CDATA[<h1>Willkommen Zuhause!</h1>]]></value>
-									</value>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
-									command-label="Übernehmen"
-									command-name="elementApply"
-									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-									comparision="equals"
-									inverted="false"
-									user-id="root"
-								>
-									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-										<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NHTMLNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</model>
-									</actual-value>
-									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-										<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NHTMLNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</context-name>
-										<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-											<value><![CDATA[<h1>Willkommen Zuhause!</h1>]]></value>
-										</local-name>
-									</expected-value>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-									comparision="equals"
-									inverted="false"
-									user-id="root"
-								>
-									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-										<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NStringNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</model>
-									</actual-value>
-									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="Hallo Leute"
-									/>
-								</action>
-							</actions>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Test changing English value is not overriden by fallback language when it is set."
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-											tab-path="Strukturen > Typendemo > Typendemo"
-										/>
-										<path>
-											<labeled-member label="i18NHTMLNormal"/>
-											<labeled-member label="Englisch"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-										<value><![CDATA[<h1>Welcome home!</h1>]]></value>
-									</value>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-											tab-path="Strukturen > Typendemo > Typendemo"
-										/>
-										<path>
-											<labeled-member label="i18NStringNormal"/>
-											<labeled-member label="Englisch"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="Hello people"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
-									command-label="Übernehmen"
-									command-name="elementApply"
-									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-									comparision="equals"
-									inverted="false"
-									user-id="root"
-								>
-									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-										<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NHTMLNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</model>
-									</actual-value>
-									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-										<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NHTMLNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</context-name>
-										<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-											<value><![CDATA[<h1>Welcome home!</h1>]]></value>
-										</local-name>
-									</expected-value>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-									comparision="equals"
-									inverted="false"
-									user-id="root"
-								>
-									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-										<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NStringNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</model>
-									</actual-value>
-									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="Hello people"
-									/>
-								</action>
-							</actions>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Test that changing fallback value does not override English value when it was set before."
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-											tab-path="Strukturen > Typendemo > Typendemo"
-										/>
-										<path>
-											<labeled-member label="i18NHTMLNormal"/>
-											<labeled-member label="Deutsch"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-										<value><![CDATA[<h1>Willkommen im neuen Zuhause!</h1>]]></value>
-									</value>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-											tab-path="Strukturen > Typendemo > Typendemo"
-										/>
-										<path>
-											<labeled-member label="i18NStringNormal"/>
-											<labeled-member label="Deutsch"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="Hallo liebe Leute"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
-									command-label="Übernehmen"
-									command-name="elementApply"
-									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-									comparision="equals"
-									inverted="false"
-									user-id="root"
-								>
-									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-										<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NHTMLNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</model>
-									</actual-value>
-									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-										<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NHTMLNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</context-name>
-										<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-											<value><![CDATA[<h1>Welcome home!</h1>]]></value>
-										</local-name>
-									</expected-value>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-									comparision="equals"
-									inverted="false"
-									user-id="root"
-								>
-									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-										<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-												tab-path="Strukturen > Typendemo > Typendemo"
-											/>
-											<path>
-												<labeled-member label="i18NStringNormal"/>
-												<labeled-member label="Englisch"/>
-											</path>
-										</model>
-									</actual-value>
-									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="Hello people"
+										value=""
 									/>
 								</action>
 							</actions>
@@ -1222,20 +896,30 @@
 							</path>
 						</model>
 					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-						<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<expected-value config:interface=""/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
 								tab-path="Strukturen > Typendemo > Typendemo"
 							/>
 							<path>
 								<labeled-member label="customI18NHtml"/>
-								<labeled-member label="Deutsch"/>
 							</path>
-						</context-name>
-						<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
-							<value><![CDATA[<h1><u><strong>Big Test!</strong></u></h1>]]></value>
-						</local-name>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.I18NStructuredTextNamingScheme$Name">
+						<translations>
+							<translation language="en">
+								<value><![CDATA[<h1><u><strong>Big Test!</strong></u></h1>]]></value>
+							</translation>
+						</translations>
 					</expected-value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -1277,8 +961,33 @@
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Nur ein Test."
+						value=""
 					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<path>
+								<labeled-member label="customI18NString"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ResKeyNaming$Name">
+						<translations>
+							<translation
+								lang="de"
+								value="Nur ein Test."
+							/>
+						</translations>
+					</expected-value>
 				</action>
 			</actions>
 		</action>

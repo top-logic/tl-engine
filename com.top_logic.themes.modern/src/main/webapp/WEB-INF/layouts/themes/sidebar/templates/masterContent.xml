@@ -46,7 +46,7 @@
 
 					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 						<layoutInfo size="0px"/>
-						<componentControlProvider class="com.top_logic.themes.modern.layout.structure.ConditionalViewLayout"
+						<componentControlProvider class="com.top_logic.layout.structure.ConditionalViewLayout"
 							css-class="notificationTitle licenseView"
 							size="%LICENCE_EXPIRE_BAR_HEIGHT%"
 						>
@@ -84,7 +84,7 @@
 
 					<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 						<layoutInfo size="0px"/>
-						<componentControlProvider class="com.top_logic.themes.modern.layout.structure.ConditionalViewLayout"
+						<componentControlProvider class="com.top_logic.layout.structure.ConditionalViewLayout"
 							css-class="notificationTitle"
 							size="%MAINTAINANCE_BAR_HEIGHT%"
 						>

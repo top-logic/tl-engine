@@ -18,7 +18,7 @@
 					<layoutInfo size="250px"/>
 					<layoutControl>
 						<layoutInfo size="30px"/>
-						<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
+						<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
 							<view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
 								cssClass="margin5"
 								name="docSearchWrapper1"

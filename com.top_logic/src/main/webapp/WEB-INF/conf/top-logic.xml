@@ -11,6 +11,9 @@
 
 <root>
     <alias>
+    	<!-- An environment info to show in the applications status bar. -->
+		<entry name="%ENVIRONMENT%" value="${env:tl_environment:}"/>
+		
 		<!-- Name of the host where the application can be reached. -->
 		<entry name="%HOST%" value="${env:tl_host}"/>
 

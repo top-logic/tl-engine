@@ -10,10 +10,9 @@
 		/>
 	</params>
 
-	<group name="custom">
+	<group>
 		<views>
 			<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-				name="sensorTab"
 				renderer="${renderer}"
 			>
 				<commandConfiguration class="com.top_logic.layout.component.configuration.TabSwitchCommandModelConfiguration"
@@ -21,7 +20,6 @@
 				/>
 			</view>
 			<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-				name="akafkaTab"
 				renderer="${renderer}"
 			>
 				<commandConfiguration class="com.top_logic.layout.component.configuration.TabSwitchCommandModelConfiguration"

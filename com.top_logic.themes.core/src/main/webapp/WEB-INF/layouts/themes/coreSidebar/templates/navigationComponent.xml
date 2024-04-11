@@ -19,7 +19,6 @@
 			>
 				<logoutView class="com.top_logic.layout.component.configuration.LogoutView"
 					image="theme:IMAGES_CLOSE_BREADCRUMB_BTN"
-					name="titleLogoutButton"
 				/>
 			</decorator>
 			<contentRenderer class="com.top_logic.layout.tree.renderer.ReadOnlyNavigationRenderer"

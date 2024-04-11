@@ -15,17 +15,20 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.element.layout.meta.search.AttributedSearchComponent;
 import com.top_logic.element.layout.meta.search.quick.AbstractSearchCommand.SearchConfig;
 import com.top_logic.element.layout.meta.search.quick.QuickSearchCommand.QuickSearchConfig;
 import com.top_logic.layout.InvisibleView;
-import com.top_logic.layout.component.configuration.AbstractViewConfiguration;
+import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.mig.html.layout.ComponentCollector;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.ComponentNameFormat;
@@ -40,14 +43,20 @@ import com.top_logic.util.Resources;
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public class QuickSearchViewConfiguration extends AbstractViewConfiguration<QuickSearchViewConfiguration.Config> {
+public class QuickSearchViewConfiguration extends AbstractConfiguredInstance<QuickSearchViewConfiguration.Config>
+		implements ViewConfiguration {
 
 	/**
 	 * Configuration options for {@link QuickSearchViewConfiguration}.
 	 */
 	public interface Config
-			extends AbstractViewConfiguration.Config<QuickSearchViewConfiguration>, WithGotoConfiguration,
+			extends PolymorphicConfiguration<QuickSearchViewConfiguration>, WithGotoConfiguration,
 			QuickSearchCommand.Config {
+
+		/**
+		 * @see #getSearchField()
+		 */
+		String SEARCH_FIELD = "searchField";
 
 		/**
 		 * Configuration name of the value {@link #hasNoSearchComponent()}.
@@ -68,6 +77,13 @@ public class QuickSearchViewConfiguration extends AbstractViewConfiguration<Quic
 		 * @see #getSearchComponent()
 		 */
 		String SEARCH_COMPONENT = "searchComponent";
+
+		/**
+		 * Name of the search field to create.
+		 */
+		@Name(SEARCH_FIELD)
+		@StringDefault("quickSearch")
+		String getSearchField();
 
 		/** Flag, if the quick search input field should be activated (and therefore be visible). */
 		@Name(ACTIVE)
@@ -107,8 +123,7 @@ public class QuickSearchViewConfiguration extends AbstractViewConfiguration<Quic
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public QuickSearchViewConfiguration(InstantiationContext context, QuickSearchViewConfiguration.Config config)
-			throws ConfigurationException {
+	public QuickSearchViewConfiguration(InstantiationContext context, QuickSearchViewConfiguration.Config config) {
 		super(context, config);
 	}
 
@@ -143,7 +158,7 @@ public class QuickSearchViewConfiguration extends AbstractViewConfiguration<Quic
 			.resolveGotoTargets(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, mainLayout,
 				getConfig().getGotoTargets().values()));
 
-		return createSearchView(getConfig().getName(), quickSearchConfig);
+		return createSearchView(getConfig().getSearchField(), quickSearchConfig);
 	}
 
 	private void setConfiguredTypes(SearchConfig searchConfig) {

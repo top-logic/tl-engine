@@ -2,19 +2,14 @@
 
 <template>
 	<messages>
-		<message class="com.top_logic.layout.component.configuration.MultiViewConfiguration"
-			name="systemMessages"
-		>
+		<message class="com.top_logic.layout.component.configuration.MultiViewConfiguration">
 			<renderer class="com.top_logic.layout.component.configuration.SystemViewRenderer"/>
 			<views>
 				<include name="com.top_logic/license/license-expiry.xml"/>
-				<view class="com.top_logic.layout.component.configuration.MaintenanceViewConfiguration"
-					name="maintenance"
-				/>
+				<view class="com.top_logic.layout.component.configuration.MaintenanceViewConfiguration"/>
 				<view class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
 					active="%QUICK_SEARCH_ENABLED%"
 					maxResults="%QUICK_SEARCH_MAX_RESULTS%"
-					name="quickSearch"
 					searchComponent="%QUICK_SEARCH_SEARCH_COMPONENT%"
 				/>
 			</views>

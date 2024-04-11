@@ -8,7 +8,6 @@
 	</params>
 
 	<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-		name="adminTab"
 		renderer="${renderer}"
 	>
 		<commandConfiguration class="com.top_logic.layout.component.configuration.TabSwitchCommandModelConfiguration"

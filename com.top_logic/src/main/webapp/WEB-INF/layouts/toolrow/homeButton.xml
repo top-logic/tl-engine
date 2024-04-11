@@ -21,7 +21,6 @@
 		horizontalPosition="${horizontalPosition}"
 		icon="theme:USER_MENU_ICON"
 		label="layouts.themes.default.toolrow.homeButton"
-		name="user"
 		renderer="${renderer}"
 	>
 		${commands}

@@ -10,9 +10,11 @@ import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.search.expr.InstanceOf;
+import com.top_logic.model.search.expr.DynamicInstanceOf;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.interpreter.ConstantFolding;
 
 /**
  * {@link MethodBuilder} creating {@link InstanceOf} expressions.
@@ -21,7 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class InstanceOfBuilder extends TwoArgsMethodBuilder<InstanceOf> {
+public class InstanceOfBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link InstanceOfBuilder}.
@@ -31,9 +33,14 @@ public class InstanceOfBuilder extends TwoArgsMethodBuilder<InstanceOf> {
 	}
 
 	@Override
-	protected InstanceOf internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs)
+	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1,
+			SearchExpression[] allArgs)
 			throws ConfigurationException {
-		return instanceOf(arg0, resolveStructuredType(expr, arg1));
+		if (ConstantFolding.isLiteral(arg1)) {
+			return instanceOf(arg0, resolveStructuredType(expr, arg1));
+		} else {
+			return new DynamicInstanceOf(getConfig().getName(), allArgs);
+		}
 	}
 
 }

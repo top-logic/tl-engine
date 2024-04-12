@@ -349,7 +349,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_LEFT_CSS_CLASS);
 		out.endBeginTag();
 		{
-			new ButtonControl(_openEditor).write(context, out);
+			new ButtonControl(getOpenEditorCommand()).write(context, out);
 		}
 		out.endTag(SPAN);
 	}
@@ -364,7 +364,14 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 	@Override
 	public void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue) {
-		updateOpenerExecutability(_openEditor);
+		updateOpenerExecutability(getOpenEditorCommand());
+	}
+
+	/**
+	 * The {@link CommandModel} to open the pop up.
+	 */
+	public CommandModel getOpenEditorCommand() {
+		return _openEditor;
 	}
 
 	@Override

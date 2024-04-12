@@ -9,6 +9,7 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.EmptyRenderer;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.OnVisibleControl;
 import com.top_logic.layout.form.control.PopupEditControl.Settings;
 import com.top_logic.layout.form.control.TextInputControl;
@@ -74,7 +75,8 @@ public class I18NActiveLanguageControlProvider implements ControlProvider {
 	private HTMLFragment openPopup(I18NStringField i18n) {
 		Settings settings = new Settings()
 			.setFirstLineRenderer(EmptyRenderer.getInstance());
-		return new I18NStringTextPopupControl(settings, i18n, _rows, _columns);
+		return new ButtonControl(
+			new I18NStringTextPopupControl(settings, i18n, _rows, _columns).getOpenEditorCommand());
 	}
 
 }

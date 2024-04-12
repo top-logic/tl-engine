@@ -98,7 +98,8 @@ public class AbstractCreateComponent extends FormComponent {
 		 * {@link CommandHandler} responsible executing the creation of the new object from the
 		 * information collected by this component.
 		 * 
-		 * @deprecated Use {@link #getDefaultAction()} instead.
+		 * @deprecated Use {@link #getDefaultAction()} instead and add the command as a
+		 *             {@link #getButtons() button}.
 		 */
 		@Deprecated
 		@Mandatory

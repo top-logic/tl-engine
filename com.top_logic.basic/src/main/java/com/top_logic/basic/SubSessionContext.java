@@ -6,7 +6,9 @@
 package com.top_logic.basic;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 
@@ -69,6 +71,24 @@ public interface SubSessionContext extends TypedAnnotatable {
 	 *        The new value of {@link #getCurrentLocale()}.
 	 */
 	void setCurrentLocale(Locale locale);
+
+	/**
+	 * Calls the {@link Supplier} with the {@link #getCurrentLocale() locale} switched temporarily
+	 * to the given one.
+	 * <p>
+	 * The parameters are not allowed to be <code>null</code>.
+	 * </p>
+	 */
+	default <T> T withLocale(Locale locale, Supplier<T> supplier) {
+		Objects.requireNonNull(locale);
+		Locale previousLocale = getCurrentLocale();
+		setCurrentLocale(locale);
+		try {
+			return supplier.get();
+		} finally {
+			setCurrentLocale(previousLocale);
+		}
+	}
 
 	/**
 	 * Returns the current {@link TimeZone} for this session.

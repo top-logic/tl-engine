@@ -616,11 +616,6 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 	}
 
-	private boolean isIE9(DisplayContext context) {
-		return context.getUserAgent().is_ie() && context.getUserAgent().is_ie9up()
-			&& !context.getUserAgent().is_ie10up();
-	}
-
 	@Override
 	protected boolean hasUpdates() {
 		

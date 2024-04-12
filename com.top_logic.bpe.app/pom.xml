@@ -13,14 +13,6 @@
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<dependencies>
-  		<dependency>
-      		<groupId>com.top-logic</groupId>
-      		<artifactId>tl-themes-core</artifactId>
-    	</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-themes-dezent</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-bpe-modeler</artifactId>
@@ -60,5 +52,10 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
+  		<dependency>
+      		<groupId>com.top-logic</groupId>
+      		<artifactId>tl-themes-core</artifactId>
+			<scope>test</scope>
+    	</dependency>
 	</dependencies>
 </project>

@@ -200,7 +200,7 @@ div.fptIconBar > span.fptIconOverlay > i.icon-circle span::after
     color: var(--LAYOUT_MAIN_COLOR);
 }
 
-.cExpandableTextInput textarea.is-input, .cTextWithButton textarea.is-input, .cBlockTextInput textarea.is-input
+.cExpandableTextInput textarea.is-input, .cBlockTextInput textarea.is-input
 {
     width: calc(100% - 46px);
 }

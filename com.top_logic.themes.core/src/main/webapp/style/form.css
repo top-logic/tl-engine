@@ -1529,11 +1529,11 @@ div.cal_zoom_inAnimation {
 
 .cDecoratedCell,
 .cExpandableTextInput,
-.cTextWithButton,
 .cBlockTextInput {
 	display: inline-flex;
 }
 
+.cTextWithButton,
 .cPopupSelect.active {
 	display: inline-flex;
 	width: 100%;
@@ -1899,9 +1899,9 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 .cIntegerInput .lFlexible, 
 .cIntegerInput .is-input:not([size]), 
 .cExpandableTextInput .lFlexible, 
-.cExpandableTextInput .is-input:not([size]), 
-.cTextWithButton .lFlexible, 
-.cTextWithButton .is-input:not([size]), 
+.cExpandableTextInput textarea:not([cols]), 
+.cTextWithButton input:not([size]), 
+.cTextWithButton textarea:not([cols]), 
 .cTextInput:not(.searchIrrelevant) .is-input:not([size]), 
 .cBlockTextInput .lFlexible, 
 .cBlockTextInput .is-input:not([size]), 

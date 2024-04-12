@@ -1666,6 +1666,7 @@ span.cIconSelect .input-image.cannot-edit i {
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
+	margin: 0px;
 }
 
 .cTextPopup {

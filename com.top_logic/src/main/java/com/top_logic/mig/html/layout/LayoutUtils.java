@@ -728,6 +728,12 @@ public class LayoutUtils {
 		config.modifyIntrinsicCommands(registry);
 		addIntrinsicGroups(out, registry.getButtons());
 		addIntrinsicGroups(out, registry.getCommands());
+		if (config.getDefaultAction() != null) {
+			addConfiguredGroup(out, config.getDefaultAction(), config);
+		}
+		if (config.getCancelAction() != null) {
+			addConfiguredGroup(out, config.getCancelAction(), config);
+		}
 		config.getButtons().forEach(handlerConfig -> {
 			addConfiguredGroup(out, handlerConfig, config);
 		});

@@ -487,6 +487,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		/**
 		 * The {@link CommandHandler} that should be executed when 'Enter' or 'Return' are pressed.
+		 * <p>
+		 * It will be registered as a {@link #getCommands() command} of this component.
+		 * </p>
 		 * 
 		 * @implNote The name is not the normative <code>getDefaultCommand</code> as that would
 		 *           conflict with legacy properties in subclasses. A migration to delete or rename
@@ -500,6 +503,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		/**
 		 * The {@link CommandHandler} that should be executed when the "Escape" key is pressed.
+		 * <p>
+		 * It will be registered as a {@link #getCommands() command} of this component.
+		 * </p>
 		 * 
 		 * @implNote The name is not the normative <code>getCancelCommand</code> as that would
 		 *           conflict with legacy properties in subclasses. A migration to delete or rename
@@ -2665,6 +2671,16 @@ public abstract class LayoutComponent extends ModelEventAdapter
         }
 
 		CommandHandlerFactory factory = CommandHandlerFactory.getInstance();
+		/* Register only the _configured_ default command, as it is guaranteed to be constant. If
+		 * getDefaultCommand is overridden its result might not be constant, which might require
+		 * dynamic registration and deregistration, complicating it a lot. Therefore, the overriding
+		 * class has to take care of the registration in that case. */
+		if (getConfiguredDefaultCommand() != null) {
+			registerCommand(getConfiguredDefaultCommand());
+		}
+		if (getConfiguredCancelCommand() != null) {
+			registerCommand(getConfiguredCancelCommand());
+		}
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> commandConfigs = _config.getCommands();
 		if (!commandConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : commandConfigs) {
@@ -3093,13 +3109,35 @@ public abstract class LayoutComponent extends ModelEventAdapter
         return null;
     }
 
-	/** @see Config#getDefaultAction() */
+	/**
+	 * See: {@link Config#getDefaultAction()}
+	 * <p>
+	 * Classes overriding this method have to take care themselves of registering it as command or
+	 * button.
+	 * </p>
+	 */
 	public CommandHandler getDefaultCommand() {
+		return getConfiguredDefaultCommand();
+	}
+
+	/** The result is guaranteed to be constant, i.e. always the configured object. */
+	private CommandHandler getConfiguredDefaultCommand() {
 		return _defaultCommand;
 	}
 
-	/** @see Config#getCancelAction() */
+	/**
+	 * See: {@link Config#getCancelAction()}
+	 * <p>
+	 * Classes overriding this method have to take care themselves of registering it as command or
+	 * button.
+	 * </p>
+	 */
 	public CommandHandler getCancelCommand() {
+		return getConfiguredCancelCommand();
+	}
+
+	/** The result is guaranteed to be constant, i.e. always the configured object. */
+	private CommandHandler getConfiguredCancelCommand() {
 		return _cancelCommand;
 	}
 

@@ -28,7 +28,6 @@ import test.com.top_logic.model.search.model.testJavaBinding.ReferencesDerived;
 
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.col.MapBuilder;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -173,7 +172,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				"{ a0 = all(true ? `TestSearchExpression:A` : null).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'A0'); $a0; }"));
 	}
 
-	private void testRefereres(XMLInstanceImporter scenario) throws ParseException, ConfigurationException {
+	private void testRefereres(XMLInstanceImporter scenario) throws ParseException {
 		TLObject target = scenario.getObject("childContext");
 		TLObject a0 = scenario.getObject("a0");
 		TLObject otherA1 = scenario.getObject("otherA1");
@@ -315,7 +314,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(singleton, execute(search("`TestSearchExpression#ROOT`")));
 	}
 
-	public void testAllClassifiers() throws ParseException, ConfigurationException {
+	public void testAllClassifiers() throws ParseException {
 		TLEnumeration classification = (TLEnumeration) TLModelUtil.findType("TestSearchExpression:MyEnum");
 		assertEquals(classification.getClassifiers(), execute(search("all(`TestSearchExpression:MyEnum`)")));
 		SearchExpression fun = search("x -> $x.instanceOf(`TestSearchExpression:MyEnum`)");
@@ -2085,7 +2084,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		void accept(XMLInstanceImporter scenario) throws Exception;
 	}
 
-	public void testEnumLiteralAccess() throws ConfigurationException, ParseException {
+	public void testEnumLiteralAccess() throws ParseException {
 		SearchExpression search = search("`TestSearchExpression:MyEnum#A`.singleton()");
 		Set<?> result = asSet(executeAsSet(search));
 		assertEquals(1, result.size());

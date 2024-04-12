@@ -68,6 +68,7 @@ import com.top_logic.model.search.expr.ToMillis;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.ToSystemCalendar;
 import com.top_logic.model.search.expr.ToUserCalendar;
+import com.top_logic.model.search.expr.config.operations.Label;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
@@ -2089,6 +2090,19 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		Set<?> result = asSet(executeAsSet(search));
 		assertEquals(1, result.size());
 		assertEquals(TLModelUtil.findPart("TestSearchExpression:MyEnum#A"), result.iterator().next());
+	}
+
+	/** Test for {@link Label}. */
+	public void testLabel() throws ParseException {
+		// The test uses floating point numbers as objects, as this is easiest to test.
+		assertLabel("1.1", "1.1", "en");
+		assertLabel("1,1", "1.1", "de");
+	}
+
+	private void assertLabel(String expected, String object, String locale) throws ParseException {
+		SearchExpression labelExpression = search("label(" + object + ", \"" + locale + "\")");
+		Object label = execute(labelExpression);
+		assertEquals(expected, label);
 	}
 
 	private void with(String scenarioName, TestFun test) {

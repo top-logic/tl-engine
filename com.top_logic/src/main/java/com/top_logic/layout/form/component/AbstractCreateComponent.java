@@ -253,11 +253,24 @@ public class AbstractCreateComponent extends FormComponent {
 		return getCommandById(getCancelHandler());
     }
     
+	/**
+	 * @deprecated Configure a {@link Config#getCancelAction() cancel command} instead. It will be
+	 *             registered as dialog close command, too.
+	 */
 	@Deprecated
     @Override
 	protected String getDefaultCloseDialogHandlerName() {
 		return getCancelHandler();
     }
+
+	@Override
+	protected void registerDialogCloseCommand() {
+		if (getCancelCommand() != null) {
+			registerCommandHandler(getCancelCommand(), getButtonComponent() != null);
+			return;
+		}
+		super.registerDialogCloseCommand();
+	}
 
 	/** @deprecated Use {@link #getCancelCommand()} instead. */
 	@Deprecated

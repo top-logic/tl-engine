@@ -951,7 +951,7 @@ table td span.cDecoratedCell .lFixedLeft {
 	align-items: center;
 }
 
-table .cDecoratedCell > .lFlexible > :first-child {
+table .cDecoratedCell > .lFlexible > :first-child:not(a) {
 	flex-grow: 2;
 }
 

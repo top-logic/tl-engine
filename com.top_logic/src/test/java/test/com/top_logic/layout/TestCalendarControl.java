@@ -8,7 +8,6 @@ package test.com.top_logic.layout;
 import static com.top_logic.basic.ArrayUtil.*;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -52,25 +51,37 @@ public class TestCalendarControl extends TestControl {
 
 		PopupDialogModel dialog = new DefaultPopupDialogModel(DefaultLayoutData.DEFAULT_CONSTRAINT);
 
-		ComplexField dateField = FormFactory.newDateField("dateInputControl", new Date(), false);
+		Calendar cal = newCalendar();
 
-		TimeZone timezone = getTimeZoneBerlin();
-
-		Locale locale = Locale.GERMANY;
-
-		Calendar cal = CalendarUtil.createCalendar(timezone);
+		ComplexField dateField = FormFactory.newDateField("dateInputControl", cal.getTime(), false);
 
 		cal.set(Calendar.DAY_OF_MONTH, 5);
 		cal.set(Calendar.HOUR, 0);
 		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+
 		_lowerBound = (Calendar) cal.clone();
 		cal.add(Calendar.DAY_OF_MONTH, 1);
+		cal.add(Calendar.MILLISECOND, -1);
 		_upperBound = (Calendar) cal.clone();
 
 		dateField.set(CalendarControl.MARKER_CSS,
 			new DefaultCalendarMarker(_lowerBound, _upperBound, false, MARKED_GREEN, MARKED_RED, false));
 
-		_calendar = new CalendarControl(dialog, dateField, timezone, locale);
+		_calendar = new CalendarControl(dialog, dateField, timeZone(), locale());
+	}
+
+	private Calendar newCalendar() {
+		return CalendarUtil.createCalendar(timeZone(), locale());
+	}
+
+	private Locale locale() {
+		return Locale.GERMANY;
+	}
+
+	private TimeZone timeZone() {
+		return getTimeZoneBerlin();
 	}
 
 	public void testSetMark() {
@@ -93,23 +104,22 @@ public class TestCalendarControl extends TestControl {
 	}
 
 	private void testDayMark(Node dayItem) {
-		Calendar day = parseDateFromOnClick(dayItem);
+		long day = parseDateFromOnClick(dayItem);
 		String[] cssClasses = getCssClasses(dayItem);
 
-		if (day.after(_lowerBound) && day.before(_upperBound)) {
+		if (_lowerBound.getTimeInMillis() <= day && day <= _upperBound.getTimeInMillis()) {
 			assertTrue(contains(cssClasses, MARKED_GREEN));
 		} else {
 			assertTrue(contains(cssClasses, MARKED_RED));
 		}
 	}
 
-	private Calendar parseDateFromOnClick(Node dayItem) {
+	private long parseDateFromOnClick(Node dayItem) {
 		String[] onclickString = getOnClick(dayItem);
 		// The last element of onclickString contains the Millis with some special
 		// characters.
 		// Removes the special characters.
-		long date = Long.parseLong(onclickString[onclickString.length - 1].replaceAll("[^\\d]", ""));
-		return CalendarUtil.createCalendar(date);
+		return Long.parseLong(onclickString[onclickString.length - 1].replaceAll("[^\\d]", ""));
 	}
 
 	private String[] getOnClick(Node dayItem) {

@@ -7,7 +7,7 @@
 		module="tl"
 	/>
 	<dependencies>
-		<dependency name="Ticket_26190_single_drop_targets_to_list"
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
 			module="tl"
 		/>
 	</dependencies>

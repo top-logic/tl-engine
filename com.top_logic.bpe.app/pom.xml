@@ -3,9 +3,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<artifactId>tl-parent-app-internal</artifactId>
+		<artifactId>tl-parent-core-internal</artifactId>
 		<version>7.8.0-SNAPSHOT</version>
-		<relativePath>../tl-parent-app/internal</relativePath>
+		<relativePath>../tl-parent-core/internal</relativePath>
 	</parent>
 
 	<artifactId>tl-bpe-app</artifactId>

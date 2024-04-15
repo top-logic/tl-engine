@@ -52,6 +52,7 @@ public class TableSelectDialog extends SelectDialogBase {
 		Command closeAction = dialog.getDialogModel().getCloseAction();
 		TableSelectorContext context = new TableSelectorContext(getTargetField(), closeAction,
 			getConfig().getOptionsPerPage(), getConfig().getInitialTreeExpansionDepth());
+		dialog.getDialogModel().setDefaultCommand(context.getApplyCommand());
 		return context;
 	}
 

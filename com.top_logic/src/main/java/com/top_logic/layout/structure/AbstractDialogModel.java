@@ -14,6 +14,7 @@ import com.top_logic.basic.col.InlineMap;
 import com.top_logic.basic.col.LazyTypedAnnotatableMixin;
 import com.top_logic.basic.config.annotation.Inspectable;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.table.ConfigKey;
 
 /**
@@ -28,6 +29,9 @@ public abstract class AbstractDialogModel extends DefaultWindowModel implements 
 
 	@Inspectable
 	private final boolean _resizable;
+
+	@Inspectable
+	private Command _defaultCommand;
 
 	@Inspectable
 	private final boolean _closeButton;
@@ -96,6 +100,17 @@ public abstract class AbstractDialogModel extends DefaultWindowModel implements 
 	@Override
 	public boolean isResizable() {
 		return _resizable;
+	}
+
+	@Override
+	public Command getDefaultCommand() {
+		return _defaultCommand;
+	}
+
+	/** @see #getDefaultCommand() */
+	@Override
+	public void setDefaultCommand(Command defaultCommand) {
+		_defaultCommand = defaultCommand;
 	}
 
 	@Override

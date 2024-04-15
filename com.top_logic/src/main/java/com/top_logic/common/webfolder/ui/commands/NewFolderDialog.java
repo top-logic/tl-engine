@@ -162,7 +162,9 @@ public class NewFolderDialog extends AbstractFormPageDialog {
     
     @Override
     protected void fillButtons(List<CommandModel> buttons) {
-    	buttons.add(MessageBox.button(I18NConstants.CREATE_FOLDER, new NewFolderDialog.NewFolderCommand(this, webFolder, getDiscardClosure())));
+		Command createCommand = new NewFolderCommand(this, webFolder, getDiscardClosure());
+		getDialogModel().setDefaultCommand(createCommand);
+		buttons.add(MessageBox.button(I18NConstants.CREATE_FOLDER, createCommand));
 
     	addCancel(buttons);
     }

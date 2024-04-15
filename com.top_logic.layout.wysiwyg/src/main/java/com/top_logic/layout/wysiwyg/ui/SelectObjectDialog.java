@@ -128,7 +128,7 @@ public class SelectObjectDialog {
 		HTMLFragment title = getTitle();
 		DefaultDialogModel dialogModel = getDialogModel(layoutData, title);
 		DialogWindowControl dialogControl = new DialogWindowControl(dialogModel);
-		dialogControl.setChildControl(new LayoutControlAdapter(getFormGroupControl(dialogModel.getCloseAction())));
+		dialogControl.setChildControl(new LayoutControlAdapter(getFormGroupControl(dialogModel)));
 		windowScope.openDialog(dialogControl);
 
 		return dialogModel;
@@ -156,18 +156,15 @@ public class SelectObjectDialog {
 	/**
 	 * Creates the actual content of the given {@link DialogWindowControl}.
 	 * 
-	 * @param closeCommand
-	 *        Command to close the dialog.
-	 * 
 	 * @return The content which will be set as content of the given {@link DialogWindowControl}.
 	 * 
 	 */
-	protected HTMLFragment getFormGroupControl(Command closeCommand) {
+	protected HTMLFragment getFormGroupControl(DialogModel dialog) {
 		FormContext formContext = new FormContext(CREATE_LINK_GROUP_NAME, I18NConstants.CREATE_TL_OBJECT_LINK_PREFIX);
 
 		ListField optionField = getOptionField();
 		StringField searchField = getSearchField(optionField);
-		FormGroup buttonGroup = getButtonGroup(closeCommand, optionField);
+		FormGroup buttonGroup = getButtonGroup(dialog, optionField);
 		ConstantField titleField = getTitleField();
 
 		formContext.addMember(searchField);
@@ -218,10 +215,11 @@ public class SelectObjectDialog {
 		};
 	}
 
-	private FormGroup getButtonGroup(Command closeCommand, ListField optionField) {
+	private FormGroup getButtonGroup(DialogModel dialog, ListField optionField) {
 		FormGroup buttons = new FormGroup(BUTTONS_GROUP_NAME, I18NConstants.CREATE_TL_OBJECT_LINK_PREFIX);
-
+		Command closeCommand = dialog.getCloseAction();
 		CommandField acceptCommand = getAcceptCommand(closeCommand, optionField);
+		dialog.setDefaultCommand(acceptCommand);
 		CommandField cancelCommand = getCancelCommand(closeCommand);
 
 		buttons.addMember(acceptCommand);

@@ -554,8 +554,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 	}
 	
 	public CommandModel getAcceptCommand() {
-		return (CommandField) ((FormGroup) getMember(SelectorContext.BUTTONS))
-			.getMember(SelectorContext.ACCEPT_SELECTION);
+		return (CommandField) getButtons().getMember(SelectorContext.ACCEPT_SELECTION);
 	}
 	
 	/**

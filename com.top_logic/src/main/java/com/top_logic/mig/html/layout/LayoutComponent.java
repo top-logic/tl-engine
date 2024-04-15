@@ -127,6 +127,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
 import com.top_logic.layout.structure.ContentLayouting;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.Expandable;
 import com.top_logic.layout.structure.ExpandableConfig;
 import com.top_logic.layout.structure.InlineLayoutControlProvider;
@@ -239,6 +240,12 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		/** @see #getAssistantInfo() */
 		String ASSISTANT_INFO_NAME = "assistantInfo";
+
+		/** Property name of {@link #getDefaultAction()}. */
+		String DEFAULT_ACTION = "defaultAction";
+
+		/** Property name of {@link #getCancelAction()}. */
+		String CANCEL_ACTION = "cancelAction";
 
 		String COMMANDS_NAME = "commands";
 
@@ -477,7 +484,39 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(XML_TAG_VIEWS_NAME)
 		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
 		List<ViewConfiguration.Config<?>> getViews();
-		
+
+		/**
+		 * The {@link CommandHandler} that should be executed when 'Enter' or 'Return' are pressed.
+		 * <p>
+		 * It will be registered as a {@link #getCommands() command} of this component.
+		 * </p>
+		 * 
+		 * @implNote The name is not the normative <code>getDefaultCommand</code> as that would
+		 *           conflict with legacy properties in subclasses. A migration to delete or rename
+		 *           them would be too much effort.
+		 * 
+		 * @see #getCancelAction()
+		 * @see DialogModel#getDefaultCommand()
+		 */
+		@Name(DEFAULT_ACTION)
+		CommandHandler.ConfigBase<? extends CommandHandler> getDefaultAction();
+
+		/**
+		 * The {@link CommandHandler} that should be executed when the "Escape" key is pressed.
+		 * <p>
+		 * It will be registered as a {@link #getCommands() command} of this component.
+		 * </p>
+		 * 
+		 * @implNote The name is not the normative <code>getCancelCommand</code> as that would
+		 *           conflict with legacy properties in subclasses. A migration to delete or rename
+		 *           them would be too much effort.
+		 * 
+		 * @see #getDefaultAction()
+		 * @see DialogModel#getCloseAction()
+		 */
+		@Name(CANCEL_ACTION)
+		CommandHandler.ConfigBase<? extends CommandHandler> getCancelAction();
+
 		@Name(COMMANDS_NAME)
 		@EntryTag("command")
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> getCommands();
@@ -785,6 +824,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	@Inspectable
 	private InlineMap<Property<?>, Object> _properties = InlineMap.empty();
 
+	private final CommandHandler _defaultCommand;
+
+	private final CommandHandler _cancelCommand;
+
 	/** The Commands found at this component, indexed by their Id */
 	private Map<String, CommandHandler> commandsById;
 
@@ -922,6 +965,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 		_initiallyMinimized = atts.isInitiallyMinimized();
 		doResetScrollPosition(false);
+		_defaultCommand = context.getInstance(atts.getDefaultAction());
+		_cancelCommand = context.getInstance(atts.getCancelAction());
     }
 
 	@Override
@@ -2626,6 +2671,16 @@ public abstract class LayoutComponent extends ModelEventAdapter
         }
 
 		CommandHandlerFactory factory = CommandHandlerFactory.getInstance();
+		/* Register only the _configured_ default command, as it is guaranteed to be constant. If
+		 * getDefaultCommand is overridden its result might not be constant, which might require
+		 * dynamic registration and deregistration, complicating it a lot. Therefore, the overriding
+		 * class has to take care of the registration in that case. */
+		if (getConfiguredDefaultCommand() != null) {
+			registerCommand(getConfiguredDefaultCommand());
+		}
+		if (getConfiguredCancelCommand() != null) {
+			registerCommand(getConfiguredCancelCommand());
+		}
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> commandConfigs = _config.getCommands();
 		if (!commandConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : commandConfigs) {
@@ -3054,14 +3109,38 @@ public abstract class LayoutComponent extends ModelEventAdapter
         return null;
     }
 
+	/**
+	 * See: {@link Config#getDefaultAction()}
+	 * <p>
+	 * Classes overriding this method have to take care themselves of registering it as command or
+	 * button.
+	 * </p>
+	 */
 	public CommandHandler getDefaultCommand() {
-		return null;
+		return getConfiguredDefaultCommand();
 	}
 
-	public CommandHandler getCancelCommand() {
-		return null;
+	/** The result is guaranteed to be constant, i.e. always the configured object. */
+	private CommandHandler getConfiguredDefaultCommand() {
+		return _defaultCommand;
 	}
-    
+
+	/**
+	 * See: {@link Config#getCancelAction()}
+	 * <p>
+	 * Classes overriding this method have to take care themselves of registering it as command or
+	 * button.
+	 * </p>
+	 */
+	public CommandHandler getCancelCommand() {
+		return getConfiguredCancelCommand();
+	}
+
+	/** The result is guaranteed to be constant, i.e. always the configured object. */
+	private CommandHandler getConfiguredCancelCommand() {
+		return _cancelCommand;
+	}
+
 	/**
 	 * Whether {@link #getCommands()} is non-empty.
 	 */

@@ -160,22 +160,14 @@ class ManageGalleryCommand implements Command {
 	private List<CommandModel> createDialogCommands(final DialogModel dialogModel,
 			final ObjectTableModel tableModel) {
 		List<CommandModel> dialogCommands = new ArrayList<>();
-		dialogCommands.add(MessageBox.button(ButtonType.OK, new Command() {
-
-			@SuppressWarnings({ "synthetic-access", "unchecked" })
-			@Override
-			public HandlerResult executeCommand(DisplayContext context) {
-				_galleryModel.setImages(tableModel.getDisplayedRows());
-				return dialogModel.getCloseAction().executeCommand(context);
-			}
-		}));
-		dialogCommands.add(MessageBox.button(ButtonType.CANCEL, new Command() {
-
-			@Override
-			public HandlerResult executeCommand(DisplayContext context) {
-				return dialogModel.getCloseAction().executeCommand(context);
-			}
-		}));
+		CommandModel okButton = MessageBox.button(ButtonType.OK, (Command) context -> {
+			_galleryModel.setImages(tableModel.getDisplayedRows());
+			return dialogModel.getCloseAction().executeCommand(context);
+		});
+		dialogCommands.add(okButton);
+		dialogModel.setDefaultCommand(okButton);
+		dialogCommands.add(MessageBox.button(ButtonType.CANCEL,
+			(Command) context -> dialogModel.getCloseAction().executeCommand(context)));
 		return dialogCommands;
 	}
 

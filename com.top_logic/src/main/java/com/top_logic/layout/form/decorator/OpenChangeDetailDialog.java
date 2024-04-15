@@ -114,15 +114,12 @@ public class OpenChangeDetailDialog implements Command {
 		ArrayList<CommandModel> dialogCommands = new ArrayList<>();
 		dialogCommands.add(MessageBox.button(I18NConstants.COMPARE_DETAIL_PREVIOUS_CHANGE,
 			new SwitchDetailCommand(treeTableField, _tableData, new SelectPreviousChange(_tableData))));
-		dialogCommands.add(MessageBox.button(I18NConstants.COMPARE_DETAIL_NEXT_CHANGE,
-			new SwitchDetailCommand(treeTableField, _tableData, new SelectNextChange(_tableData))));
-		dialogCommands.add(MessageBox.button(ButtonType.CLOSE, new Command() {
-
-			@Override
-			public HandlerResult executeCommand(DisplayContext context) {
-				return dialogModel.getCloseAction().executeCommand(context);
-			}
-		}));
+		CommandModel nextButton = MessageBox.button(I18NConstants.COMPARE_DETAIL_NEXT_CHANGE,
+			new SwitchDetailCommand(treeTableField, _tableData, new SelectNextChange(_tableData)));
+		dialogCommands.add(nextButton);
+		dialogModel.setDefaultCommand(nextButton);
+		dialogCommands.add(MessageBox.button(ButtonType.CLOSE,
+			(Command) context -> dialogModel.getCloseAction().executeCommand(context)));
 		return dialogCommands;
 	}
 

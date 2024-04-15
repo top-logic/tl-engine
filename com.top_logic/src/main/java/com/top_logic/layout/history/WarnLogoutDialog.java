@@ -65,6 +65,7 @@ public class WarnLogoutDialog extends WarnDialogTemplate {
 							return HandlerResult.DEFAULT_RESULT;
 						}
 					});
+					dialogModel.setDefaultCommand(logoutButton);
 					CommandField cancelButton = createCancelButton(CANCEL_BUTTON_NAME, closeAction);
 
 					openDialog(context.getWindowScope(), dialogModel, LOGOUT_MESSAGE_HEADER, LOGOUT_MESSAGE,

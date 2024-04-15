@@ -317,6 +317,7 @@ public class DirtyHandling {
 		}
 		
 		buttons.addMember(theApply);
+		dialogModel.setDefaultCommand(theApply);
 		Command discardHandler = new DiscardChanges(command, closeAction, affectedFormHandlers);
 		CommandField discardChanges = FormFactory.newCommandField(DISCARD_CHANGES, discardHandler);
 		buttons.addMember(discardChanges);

@@ -151,6 +151,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 		_clearClipboard = newClearClipboardButton();
 		_deleteFromClipboard = newDeleteFromClipboardButton();
 		_addFromClipboard = newAddFromClipboardButton();
+		getDialogModel().setDefaultCommand(getDialogModel().getCloseAction());
 		setNoRowSelected(true);
 	}
 

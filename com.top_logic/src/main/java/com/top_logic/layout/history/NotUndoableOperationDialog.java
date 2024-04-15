@@ -43,6 +43,7 @@ public class NotUndoableOperationDialog extends WarnDialogTemplate {
 			if (!hControl.warnDialogOpened) {
 				final DialogModel dialogModel = createDialogModel(hControl, NOT_UNDOABLE_TITLE_VIEW);
 				final CommandField closeField = createCancelButton(CLOSE_BUTTON_NAME, dialogModel.getCloseAction());
+				dialogModel.setDefaultCommand(closeField);
 				openDialog(context.getWindowScope(), dialogModel, NOT_UNDOABLE_MESSAGE_HEADER, NOT_UNDOABLE_MESSAGE,
 					I18NConstants.HISTORY_DIALOGS, closeField);
 				// prevent opening two warn dialogs

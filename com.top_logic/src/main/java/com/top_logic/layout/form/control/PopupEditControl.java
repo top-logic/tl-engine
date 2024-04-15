@@ -65,7 +65,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * Control displaying a value with a popup button opending a popup dialog for editing this value.
+ * Control displaying a value with a popup button opening a popup dialog for editing this value.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven F?rster</a>
  */
@@ -404,6 +404,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 		Command closeAction = dialogModel.getCloseAction();
 		CommandChain apply = new CommandChain(getApplyCommand(originalField, editField), closeAction);
+		dialogModel.setDefaultCommand(apply);
 		LayoutControlAdapter buttonsLayout = new LayoutControlAdapter(getButtonsTag(apply, closeAction));
 		buttonsLayout.setConstraint(
 			new DefaultLayoutData(

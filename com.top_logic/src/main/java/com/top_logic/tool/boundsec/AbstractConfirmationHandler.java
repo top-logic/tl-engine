@@ -69,7 +69,7 @@ public abstract class AbstractConfirmationHandler extends AbstractCommandHandler
 
 		DefaultLayoutData layout = createLayoutData();
 
-		return MessageBox.confirm(scope, layout, true, getTitle(model), getMessage(model), noButton, yesButton);
+		return MessageBox.confirm(scope, layout, true, getTitle(model), getMessage(model), yesButton, noButton);
 	}
 
 	/**

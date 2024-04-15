@@ -63,6 +63,11 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 	}
 
 	@Override
+	protected boolean hasNonEmptyValue(StringField languageField) {
+		return !languageField.getAsString().isEmpty();
+	}
+
+	@Override
 	protected ResKey toI18NValue(Object value) {
 		return value instanceof ResKey ? (ResKey) value : null;
 	}

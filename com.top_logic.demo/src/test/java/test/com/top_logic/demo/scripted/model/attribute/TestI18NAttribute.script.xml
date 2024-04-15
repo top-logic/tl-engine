@@ -989,6 +989,152 @@
 						</translations>
 					</expected-value>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test clear language fields"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<path>
+										<labeled-member label="customI18NString"/>
+									</path>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ResKeyNaming$Name">
+								<translations>
+									<translation
+										lang="de"
+										value="Nur ein Test."
+									/>
+								</translations>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+								<path>
+									<labeled-member label="customI18NString"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value=""
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<path>
+										<labeled-member label="customI18NString"/>
+										<labeled-member label="Englisch"/>
+									</path>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value=""
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<path>
+										<labeled-member label="customI18NString"/>
+										<labeled-member label="Deutsch"/>
+									</path>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value=""
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<path>
+										<labeled-member label="customI18NString"/>
+									</path>
+								</model>
+							</actual-value>
+							<expected-value config:interface=""/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<path>
+										<labeled-member label="customI18NString"/>
+									</path>
+								</model>
+							</actual-value>
+							<expected-value config:interface=""/>
+						</action>
+					</actions>
+				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"

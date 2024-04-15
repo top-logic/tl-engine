@@ -239,10 +239,6 @@ a.cmdLink:visited {
 	border: 1px solid var(--border-subtle);
 }
 
-.error .ace_editor {
-	border: 1px solid var(--support-danger);
-}
-
 /* Adjust line height for the text area of the editor */
 .ace_content {
 	font-size: var(--body-02-font-size);

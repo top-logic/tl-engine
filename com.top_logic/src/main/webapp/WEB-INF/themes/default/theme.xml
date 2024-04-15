@@ -2,7 +2,7 @@
 
 <theme
 	protected="true"
-	state="enabled"
+	state="disabled"
 >
 	<styles>
 		<style name="/style/accessibility.css"/>

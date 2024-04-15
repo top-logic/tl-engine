@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.label("de")
+label($object, "de")
+$object.label()
+label($object)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Liefert das Label für das Objekt in der gewünschten Sprache. Das Label ist üblicherweise der Name des Objektes. Verwendet den "Label-Generator" Dienst, um das Label zu ermitteln. Das bedeutet insbesondere, es wird <em>keine automatische Übersetzung</em> durchgeführt.</p>
+<p>Wird keine Sprache angegeben, wird die Sprache verwendet, in der das Skript ausgeführt wird. Wird eine Sprache angegeben, die von der Anwendung nicht unterstützt wird, ist das Ergebnis undefiniert.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Beliebig</td>
+   <td>Das Objekt, für das das Label geliefert werden soll. Es kann alles übergeben werden, was vom "Label-Generator" Dienst verarbeitet werden kann. Was das einschließt und was nicht, hängt von der Konfiguration dieses Dienstes in der konkreten Anwendung ab.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>language</td>
+   <td>String oder 'Locale'</td>
+   <td>Die Sprache für die das Label geliefert werden soll. Es können sowohl ISO 639-1 Codes als auch 'Locale' Objekte verwendet werden.</td>
+   <td>nein</td>
+   <td>Der Default ist die Sprache, in der das Skript jeweils ausgeführt wird. Das ist im Allgemeinen die Sprache des Nutzers, für den das Skript gerade ausgeführt wird. Läuft das Skript hingegen nicht für einen Nutzer, sondern zum Beispiel in einem Hintergrund Dienst, wird die Sprache der Anwendung verwendet.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code></p>
+<h2>Beispiele</h2>
+<pre>	<code>$myProject.label("de") // "Brot backen"
+$myProject.label("en") // "Bake bread"
+$myProject.label("eo") // Undefiniert, da Esperanto nicht unterstützt wird.
+</code>
+</pre>

@@ -111,7 +111,7 @@ public class LogoViewConfiguration extends AbstractConfiguredInstance<LogoViewCo
 		@TemplateVariable("logo")
 		public void writeLogo(DisplayContext context, TagWriter out) throws IOException {
 			Img logo = (Img) getConfig().getLogo().resolve();
-			out.append(context.getContextPath() + logo.getFileLink());
+			logo.appendUrl(context, out);
 		}
 
 		/**
@@ -124,7 +124,7 @@ public class LogoViewConfiguration extends AbstractConfiguredInstance<LogoViewCo
 		@TemplateVariable("logoMinimized")
 		public void writeLogoMinimized(DisplayContext context, TagWriter out) throws IOException {
 			Img logo = (Img) getConfig().getLogoMinimized().resolve();
-			out.append(context.getContextPath() + logo.getFileLink());
+			logo.appendUrl(context, out);
 		}
 
 		/**

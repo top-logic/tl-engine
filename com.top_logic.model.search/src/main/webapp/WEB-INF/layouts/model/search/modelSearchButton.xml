@@ -2,9 +2,6 @@
 
 <template>
 	<params>
-		<param name="viewName"
-			value="searchInput"
-		/>
 		<param name="labelKey"
 			value="tl.searchView.tabber"
 		/>

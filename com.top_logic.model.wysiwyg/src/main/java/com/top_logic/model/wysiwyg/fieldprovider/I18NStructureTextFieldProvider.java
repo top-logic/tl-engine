@@ -9,7 +9,7 @@ import com.top_logic.element.i18n.I18NField;
 import com.top_logic.element.i18n.I18NFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
-import com.top_logic.layout.form.Constraint;
+import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextField;
 import com.top_logic.model.annotate.AllLanguagesInViewMode;
 import com.top_logic.model.wysiwyg.annotation.StructuredTextEditorConfig;
@@ -23,29 +23,26 @@ public class I18NStructureTextFieldProvider extends I18NFieldProvider {
 
 	@Override
 	protected I18NStructuredTextField createField(EditContext editContext, String fieldName, boolean mandatory,
-			boolean immutable, boolean multiLine, Constraint constraint) {
+			boolean immutable, boolean multiLine) {
 
 		StructuredTextEditorConfig annotation = editContext.getAnnotation(StructuredTextEditorConfig.class);
 
 		I18NStructuredTextField field;
 		/* Ignore "multiLine", as single line StructuredText fields are not supported. */
 		if (annotation != null) {
-			field = I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, immutable, constraint,
+			field = I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, immutable,
+				FormFactory.NO_CONSTRAINT,
 				annotation.getFeatures(), annotation.getTemplateFiles(), annotation.getTemplates());
 		} else {
 			field =
-				I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, immutable, constraint, null);
+				I18NStructuredTextField.new18NStructuredTextField(fieldName, mandatory, immutable,
+					FormFactory.NO_CONSTRAINT, null);
 		}
 		AllLanguagesInViewMode allLanguagesAnnotation = editContext.getAnnotation(AllLanguagesInViewMode.class);
 		if (allLanguagesAnnotation != null && allLanguagesAnnotation.getValue()) {
 			field.set(I18NField.DISPLAY_ALL_LANGUAGES_IN_VIEW_MODE, true);
 		}
 		return field;
-	}
-
-	@Override
-	protected Constraint createLengthConstraint(int minLength, int maxLength) {
-		return null; // The length cannot be constrained.
 	}
 
 }

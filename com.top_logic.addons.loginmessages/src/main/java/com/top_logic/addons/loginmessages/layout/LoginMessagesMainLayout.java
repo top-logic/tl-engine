@@ -118,6 +118,7 @@ public class LoginMessagesMainLayout extends TLMainLayout {
 		HTMLFragment dialogContent = createLoginMessageDialogContent(loginMessage);
 		String confirmName = LoginMessagesUtil.getConfirmName(loginMessage);
 		CommandModel dialogButton = createLoginMessageDialogButton(configuration, confirmName, dialogModel);
+		dialogModel.setDefaultCommand(dialogButton);
 		MessageBoxShortcuts.open(aContext, dialogModel, dialogContent, CollectionUtil.intoList(dialogButton));
 	}
 

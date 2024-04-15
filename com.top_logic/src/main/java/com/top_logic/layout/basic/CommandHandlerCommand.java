@@ -21,16 +21,23 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class CommandHandlerCommand implements Command {
 
-	protected final Map<String, Object> arguments;
-	protected final LayoutComponent component;
-	protected final CommandHandler command;
+	private final Map<String, Object> _arguments;
 
+	private final LayoutComponent _component;
+
+	private final CommandHandler _command;
+
+	/**
+	 * Creates a {@link CommandHandlerCommand} to be executed on the given {@link LayoutComponent}
+	 * with the given arguments.
+	 */
 	public CommandHandlerCommand(CommandHandler command, LayoutComponent component, Map<String, Object> arguments) {
-		this.command = command;
-		this.component = component;
-		this.arguments = arguments;
+		_command = command;
+		_component = component;
+		_arguments = arguments;
 	}
 
+	/** Creates a {@link CommandHandlerCommand} to be executed on the given {@link LayoutComponent}. */
 	public CommandHandlerCommand(CommandHandler command, LayoutComponent component) {
 		this(command, component, CommandHandler.NO_ARGS);
 	}
@@ -41,7 +48,22 @@ public class CommandHandlerCommand implements Command {
 	 */
 	@Override
 	public HandlerResult executeCommand(DisplayContext context) {
-		return CommandDispatcher.getInstance().dispatchCommand(command, context, component, arguments);
+		return CommandDispatcher.getInstance().dispatchCommand(_command, context, _component, _arguments);
+	}
+
+	/** The wrapped {@link CommandHandler}. */
+	public CommandHandler getCommand() {
+		return _command;
+	}
+
+	/** The {@link LayoutComponent} on which the command will be executed. */
+	public LayoutComponent getComponent() {
+		return _component;
+	}
+
+	/** The arguments for invoking the command. */
+	public Map<String, Object> getArguments() {
+		return _arguments;
 	}
 
 }

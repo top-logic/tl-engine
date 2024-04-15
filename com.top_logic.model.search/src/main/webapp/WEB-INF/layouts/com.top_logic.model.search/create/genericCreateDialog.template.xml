@@ -115,6 +115,7 @@
 				<reference command-id="configureCreateFormDefinitionCommand"/>
 				<reference command-id="deleteCreateFormDefinitionCommand"/>
 			</buttons>
+			<defaultAction>${create-handler}</defaultAction>
 		</include>
 		<buttons>
 			<reference command-id="editDialogCommand"/>

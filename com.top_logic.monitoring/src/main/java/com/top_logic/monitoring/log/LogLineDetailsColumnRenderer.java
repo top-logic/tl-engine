@@ -77,6 +77,7 @@ public class LogLineDetailsColumnRenderer implements Renderer<String> {
 		DisplayValue title = new ResourceText(I18NConstants.TABLE_COLUMN_DETAILS_DIALOG_TITLE);
 		DialogModel dialog = new DefaultDialogModel(layoutData, title, RESIZABLE, CLOSE_BUTTON, NO_HELP_ID);
 		CommandModel okButton = MessageBox.button(ButtonType.OK, dialog.getCloseAction());
+		dialog.setDefaultCommand(okButton);
 		HTMLFragment content = (displayContext, out) -> writeDetails(out, details);
 		return MessageBox.open(scope, dialog, content, List.of(okButton));
 	}

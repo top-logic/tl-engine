@@ -59,6 +59,7 @@ public abstract class ListSelectDialog extends SelectDialogBase {
 
 		int optionsPerPage = isLarge() ? getConfig().getOptionsPerPage() : SelectorContext.ALL_OPTIONS_ON_ONE_PAGE;
 		SelectorContext ctx = new OptimizedSelectorContext(getTargetField(), pageLabels, optionsPerPage, closeAction, isLeftToRight());
+		dialog.getDialogModel().setDefaultCommand(ctx.getAcceptCommand());
 		return ctx;
 	}
 

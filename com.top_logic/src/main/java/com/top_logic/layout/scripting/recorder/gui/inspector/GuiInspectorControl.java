@@ -76,7 +76,9 @@ public class GuiInspectorControl extends AbstractFormDialog {
 	protected void fillButtons(List<CommandModel> buttonList) {
 		buttonList.add(createResetButton());
 		buttonList.add(createCancelButton());
-		buttonList.add(createCreateAssertionsButton());
+		CommandModel createAssertionsButton = createCreateAssertionsButton();
+		buttonList.add(createAssertionsButton);
+		getDialogModel().setDefaultCommand(createAssertionsButton);
 		annotateButtonsAsDontRecord(buttonList);
 	}
 

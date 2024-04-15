@@ -135,6 +135,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
         
 		this.document = aModel;
 		UpdateDialog.UpdateCommand updateCommand = new UpdateDialog.UpdateCommand(this, document, getDiscardClosure());
+		getDialogModel().setDefaultCommand(updateCommand);
 		_updateButton = MessageBox.forwardStyleButton(I18NConstants.UPDATE_DOCUMENT, updateCommand);
 		_manualLocking = manualLocking;
 		getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, this::onDialogClose);

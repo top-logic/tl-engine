@@ -419,6 +419,9 @@ public class MessageBox extends MessageBoxShortcuts {
 
 		/**
 		 * Sets the buttons to display in the button bar of the confirm dialog.
+		 * <p>
+		 * The first button is used as the {@link DialogModel#getDefaultCommand()}.
+		 * </p>
 		 * 
 		 * @return This {@link Builder}.
 		 */
@@ -614,7 +617,8 @@ public class MessageBox extends MessageBoxShortcuts {
 	 *        The message displayed in the dialog.
 	 * @param buttons
 	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the
-	 *        {@link MessageBox} no matter what the inner {@link Command} does.
+	 *        {@link MessageBox} no matter what the inner {@link Command} does. The first button is
+	 *        used as the {@link DialogModel#getDefaultCommand()}.
 	 * @return The result that must be immediately returned from the invoking command handler that
 	 *         opens the {@link MessageBox}.
 	 * 
@@ -641,7 +645,8 @@ public class MessageBox extends MessageBoxShortcuts {
 	 *        The message displayed in the dialog.
 	 * @param buttons
 	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the
-	 *        {@link MessageBox} no matter what the inner {@link Command} does.
+	 *        {@link MessageBox} no matter what the inner {@link Command} does. The first button is
+	 *        used as the {@link DialogModel#getDefaultCommand()}.
 	 * @return The result that must be immediately returned from the invoking command handler that
 	 *         opens the {@link MessageBox}.
 	 * 
@@ -672,7 +677,8 @@ public class MessageBox extends MessageBoxShortcuts {
 	 *        The message displayed in the dialog.
 	 * @param buttons
 	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the
-	 *        {@link MessageBox} no matter what the inner {@link Command} does.
+	 *        {@link MessageBox} no matter what the inner {@link Command} does. The first button is
+	 *        used as the {@link DialogModel#getDefaultCommand()}.
 	 * @return The result that must be immediately returned from the invoking command handler that
 	 *         opens the {@link MessageBox}.
 	 * 
@@ -737,7 +743,8 @@ public class MessageBox extends MessageBoxShortcuts {
 	 *        The structured text message displayed in the dialog.
 	 * @param buttons
 	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the
-	 *        {@link MessageBox} no matter what the inner {@link Command} does.
+	 *        {@link MessageBox} no matter what the inner {@link Command} does. The first button is
+	 *        taken as the {@link DialogModel#getDefaultCommand() default command}.
 	 * 
 	 * @return The dialog that can be opened.
 	 * 
@@ -749,7 +756,7 @@ public class MessageBox extends MessageBoxShortcuts {
 		assert buttons != null && buttons.length > 0 : "No buttons given.";
 		
 		final DialogModel dialogModel = new DefaultDialogModel(layout, title, resizable, true, null);
-
+		dialogModel.setDefaultCommand(buttons[0]);
 		// Wrap actions so that the dialog is closed after each action. 
 		final List<CommandModel> wrappedButtons = new ArrayList<>(buttons.length);
 		for (CommandModel button : buttons) {
@@ -795,12 +802,17 @@ public class MessageBox extends MessageBoxShortcuts {
 	 * @param buttons
 	 *        The buttons to be shown. Must not be empty. The button does not implicitly close the
 	 *        dialog. To close the dialog, the user {@link Command} must forward execution to
-	 *        {@link DialogModel#getCloseAction()} of the given {@link DialogModel}.
+	 *        {@link DialogModel#getCloseAction()} of the given {@link DialogModel}. If there is
+	 *        just one button, it is also used as the {@link DialogModel#getDefaultCommand() default
+	 *        command}.
 	 * 
 	 * @return The dialog to open
 	 */
 	public static DialogWindowControl createDialog(DialogModel dialogModel, HTMLFragment content,
 			List<CommandModel> buttons) {
+		if (buttons.size() == 1) {
+			dialogModel.setDefaultCommand(buttons.get(0));
+		}
 		final DialogWindowControl dialog = new DialogWindowControl(dialogModel);
 		
 		// Dialog layout

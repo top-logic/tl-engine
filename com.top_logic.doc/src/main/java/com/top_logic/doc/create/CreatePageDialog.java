@@ -59,6 +59,7 @@ public class CreatePageDialog extends AbstractFormPageDialog {
 			new Command.CommandChain(new CreatePageCommand(component, this, selected, isChild), getDiscardClosure());
 		CommandModel createButton = MessageBox.forwardStyleButton(I18NConstants.CREATE_BUTTON, createCommand);
 		this._createButton = createButton;
+		getDialogModel().setDefaultCommand(createCommand);
 	}
 
 	@Override

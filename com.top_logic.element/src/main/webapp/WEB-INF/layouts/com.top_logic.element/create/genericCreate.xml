@@ -56,6 +56,12 @@
 		<param name="commands"
 			optional="true"
 		/>
+		<param name="defaultAction"
+			optional="true"
+		/>
+		<param name="cancelAction"
+			optional="true"
+		/>
 
 		<!-- DEPRECATED: This should be configured as post-create action in the create command handler. -->
 		<param name="z_legacy_newModelAction"
@@ -86,6 +92,8 @@
 			titleKey="${titleKey}"
 		>
 			<buttons>${buttons}</buttons>
+			<defaultAction>${defaultAction}</defaultAction>
+			<cancelAction>${cancelAction}</cancelAction>
 		</component>
 		<buttonbar name="${namePrefix}Buttons"/>
 	</layout>

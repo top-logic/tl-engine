@@ -2,7 +2,7 @@
 
 <settings>
 	<string name="THEME_NAME"
-		value="Core"
+		value="Comfort"
 	/>
 	<type name="MAIN_LAYOUT_CLASS"
 		interface="com.top_logic.mig.html.layout.MainLayout"

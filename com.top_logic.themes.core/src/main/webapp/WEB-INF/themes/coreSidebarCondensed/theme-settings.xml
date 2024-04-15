@@ -2,7 +2,7 @@
 
 <settings>
 	<string name="THEME_NAME"
-		value="Core (Sidebar) Condensed"
+		value="Compact (Sidebar)"
 	/>
 	<dim name="SIDEBAR_WIDTH"
 		value="200px"

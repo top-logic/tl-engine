@@ -2,7 +2,7 @@
 
 <settings>
 	<string name="THEME_NAME"
-		value="Core Condensed"
+		value="Compact"
 	/>
 	<size name="TABLE_TITLE_HEIGHT"
 		value="28px"

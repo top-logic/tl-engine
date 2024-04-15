@@ -36,6 +36,7 @@ import com.top_logic.model.TLObject;
  */
 public class Resources extends DefaultBundle {
 
+	/** The key for the {@link Resources} cache at the {@link SubSessionContext}. */
 	private static Property<Resources> RESOURCES = TypedAnnotatable.property(Resources.class, "resources");
 
 	/** The pattern string for the locale part of a resource file. */
@@ -225,6 +226,16 @@ public class Resources extends DefaultBundle {
 		} else {
 			return Resources.getInstance(Resources.findBestLocale());
 		}
+	}
+
+	/**
+	 * Resets translations cached based on the locale of the {@link SubSessionContext}.
+	 * 
+	 * @param subSession
+	 *        The {@link SubSessionContext} for which the cache should be dropped.
+	 */
+	static void dropCachedTranslations(SubSessionContext subSession) {
+		subSession.reset(RESOURCES);
 	}
 
 	/**

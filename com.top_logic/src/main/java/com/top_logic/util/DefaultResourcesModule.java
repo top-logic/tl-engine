@@ -14,6 +14,7 @@ import com.top_logic.base.cluster.ClusterManagerListener;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
+import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ServiceDependency;
@@ -185,6 +186,11 @@ public class DefaultResourcesModule extends ResourcesModule
 	@Override
 	public boolean usesXMLProperties() {
 		return (true);
+	}
+
+	@Override
+	public void dropCachedTranslations(SubSessionContext subSession) {
+		Resources.dropCachedTranslations(subSession);
 	}
 
 }

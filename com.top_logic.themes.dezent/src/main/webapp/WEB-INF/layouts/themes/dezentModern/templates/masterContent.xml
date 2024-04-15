@@ -38,14 +38,7 @@
 				<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
 			</layoutControl>
 			${mainTabbar}
-			<layoutControl>
-				<layoutInfo size="%VERSION_ROW_HEIGHT%"/>
-				<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
-					<view class="com.top_logic.layout.structure.VersionViewConfiguration"
-						environment="%ENVIRONMENT%"
-					/>
-				</componentControlProvider>
-			</layoutControl>
+			<layout-reference resource="statusBar.layout.xml"/>
 		</components>
 	</layout>
 </template>

@@ -11,6 +11,7 @@ import static com.top_logic.layout.form.values.edit.editor.ItemEditor.*;
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.*;
 
+import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.base.config.i18n.InternationalizedUtil;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -36,6 +38,7 @@ import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey.Builder;
 import com.top_logic.basic.util.ResKeyUtil;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
@@ -48,6 +51,7 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
+import com.top_logic.layout.form.format.WikiWrite;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -133,7 +137,7 @@ public class InternationalizationEditor implements Editor {
 	private static final String DISPLAY_DERIVED_FIELD = "displayDerived";
 
 	private static com.top_logic.layout.form.template.ControlProvider templateDefinition(FormMember i18n,
-			FormMember currentLanguage, boolean initiallyCollapsed, List<String> languages,
+			HTMLFragment displayValue, boolean initiallyCollapsed, List<String> languages,
 			List<String> additionals) {
 
 		TranslateButtonCP cp = new TranslateButtonCP(additionals);
@@ -165,11 +169,11 @@ public class InternationalizationEditor implements Editor {
 					span(css(TOOLBAR_CSS_CLASS), member(DISPLAY_DERIVED_FIELD))),
 				div(contentTemplates.toArray(new HTMLTemplateFragment[contentTemplates.size()])),
 				ConfigKey.field(i18n)).setInitiallyCollapsed(initiallyCollapsed));
-		if (currentLanguage == null) {
+		if (displayValue == null) {
 			return new TemplateControlProvider(editTemplate, DefaultFormFieldControlProvider.INSTANCE);
 		} else {
-			HTMLTemplateFragment viewTemplate = member(currentLanguage,
-				descriptionBox(fragment(labelWithColon(".."), error()), self()));
+			HTMLTemplateFragment viewTemplate =
+				descriptionBox(fragment(labelWithColon(), error()), htmlTemplate(displayValue));
 			Value<Boolean> immutableValue = isImmutable(i18n);
 			return new SwitchingTemplateCP(immutableValue, viewTemplate, editTemplate);
 		}
@@ -198,8 +202,6 @@ public class InternationalizationEditor implements Editor {
 		List<String> languages = new ArrayList<>();
 		List<StringField> suffixMembers = new ArrayList<>();
 
-		String currentLanguage = Resources.getCurrentLocale().getLanguage();
-		FormMember currentLanguageMember = null;
 		for (Locale locale : resources.getSupportedLocalesInDisplayOrder()) {
 			String language = locale.getLanguage();
 			languages.add(language);
@@ -209,9 +211,6 @@ public class InternationalizationEditor implements Editor {
 			input.set(LOCALE, locale);
 			input.setLabel(translateLanguageName(resources, locale));
 			group.addMember(input);
-			if (currentLanguage.equals(language)) {
-				currentLanguageMember = input;
-			}
 			
 			for (String keySuffix : suffixes) {
 				StringField suffixField = FormFactory.newStringField(suffixFieldName(language, keySuffix));
@@ -231,14 +230,42 @@ public class InternationalizationEditor implements Editor {
 		binding.bind();
 
 		displayDerivedCommand(group, suffixMembers);
+		HTMLFragment displayValue;
 		if (allValuesInViewMode(editorFactory, model)) {
 			// null member ensures that always all languages are displayed.
-			currentLanguageMember = null;
+			displayValue = null;
+		} else {
+			displayValue = new HTMLFragment() {
+				
+				@Override
+				public void write(DisplayContext context, TagWriter out) throws IOException {
+					writeResKey(context, out, (ResKey) model.getValue(), false);
+				}
+			};
 		}
 
-		group.setControlProvider(templateDefinition(group, currentLanguageMember, minimized, languages, suffixes));
+		group.setControlProvider(templateDefinition(group, displayValue, minimized, languages, suffixes));
 
 		return group;
+	}
+
+	/**
+	 * Renders the translation for the current language of the given {@link ResKey}.
+	 */
+	public static void writeResKey(DisplayContext context, TagWriter out, ResKey resKey, boolean multiline)
+			throws IOException {
+		if (resKey == null) {
+			return;
+		}
+		String translation = context.getResources().getString(resKey, null);
+		if (StringServices.isEmpty(translation)) {
+			return;
+		}
+		if (multiline) {
+			WikiWrite.wikiWrite(out, translation);
+		} else {
+			out.writeText(translation);
+		}
 	}
 
 	private Map<String, ResKey> getDerivedResourceDefinition(EditorFactory editorFactory, ValueModel model) {
@@ -536,9 +563,9 @@ public class InternationalizationEditor implements Editor {
 				String suffix = field.get(SUFFIX);
 				String text;
 				if (suffix == null) {
-					text = ResKeyUtil.getTranslation(newValue, locale);
+					text = ResKeyUtil.translateWithoutFallback(locale, newValue);
 				} else {
-					text = ResKeyUtil.getTranslation(newValue.suffix(suffix), locale);
+					text = ResKeyUtil.translateWithoutFallback(locale, newValue.suffix(suffix));
 				}
 				if (text != null) {
 					field.setValue(text);

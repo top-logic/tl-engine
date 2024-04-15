@@ -145,14 +145,15 @@ public class ResKeyUtil {
 	}
 
 	/**
+	 * Translates the given key in the given locale without applying any fallback language.
+	 * 
 	 * @param locale
-	 *        If null, null is returned.
+	 *        Locale to get translation for.
 	 * @param key
-	 *        If null, the empty {@link String} is returned.
-	 * @return Null, if the locale is null.
+	 *        The key to resolve.
 	 */
-	private static String translateWithoutFallback(Locale locale, ResKey key) {
-		return ResourcesModule.getInstance().getBundle(locale).getString(key, null);
+	public static String translateWithoutFallback(Locale locale, ResKey key) {
+		return ResourcesModule.getInstance().getBundle(locale).getStringWithoutFallback(key);
 	}
 
 }

@@ -11,6 +11,7 @@ import java.util.Locale;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.translation.TranslationService;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
@@ -67,14 +68,11 @@ public class I18NStringTagProvider implements DisplayProvider {
 	}
 
 	/**
-	 * Control renderer for {@link I18NStringField} fields that renders only the value of the
-	 * current {@link Locale}.
+	 * Control renderer for {@link I18NField} fields that renders only the value of the current
+	 * {@link Locale}.
 	 */
-	public static class I18NStringActiveLanguageControlRenderer extends DefaultControlRenderer<CompositeControl> {
-
-		/** Instance of this class. */
-		public static final I18NStringActiveLanguageControlRenderer INSTANCE =
-			new I18NStringActiveLanguageControlRenderer();
+	public static abstract class I18NFieldActiveLanguageControlRenderer
+			extends DefaultControlRenderer<CompositeControl> {
 
 		@Override
 		protected String getControlTag(CompositeControl control) {
@@ -84,18 +82,32 @@ public class I18NStringTagProvider implements DisplayProvider {
 		@Override
 		protected void writeControlContents(DisplayContext context, TagWriter out, CompositeControl control)
 				throws IOException {
-			Locale currentLocale = context.getResources().getLocale();
-			List<? extends HTMLFragment> controls = control.getChildren();
-			int i = 0;
 			I18NField<?, ?, ?> i18nField = (I18NField<?, ?, ?>) control.getModel();
-			for (FormField field : i18nField.getLanguageFields()) {
-				Locale fieldLocale = I18NTranslationUtil.getLocaleFromField(field);
-				HTMLFragment fieldControl = controls.get(i++);
-				if (!I18NTranslationUtil.equalLanguage(currentLocale, fieldLocale)) {
-					continue;
-				}
-				fieldControl.write(context, out);
-			}
+			writeFieldValue(context, out, i18nField);
+		}
+
+		/**
+		 * Writes the value of the given {@link I18NField}.
+		 */
+		protected abstract void writeFieldValue(DisplayContext context, TagWriter out, I18NField<?, ?, ?> i18nField)
+				throws IOException;
+
+	}
+
+	/**
+	 * {@link I18NFieldActiveLanguageControlRenderer} rendering {@link I18NStringField}.
+	 */
+	public static class I18NStringActiveLanguageControlRenderer extends I18NFieldActiveLanguageControlRenderer {
+
+		/** Instance of this class. */
+		public static final I18NStringActiveLanguageControlRenderer INSTANCE =
+			new I18NStringActiveLanguageControlRenderer();
+
+		@Override
+		protected void writeFieldValue(DisplayContext context, TagWriter out, I18NField<?, ?, ?> i18nField)
+				throws IOException {
+			boolean multiline = ((I18NStringField) i18nField).isMultiline();
+			InternationalizationEditor.writeResKey(context, out, (ResKey) i18nField.getValue(), multiline);
 		}
 
 	}

@@ -3170,7 +3170,6 @@ com.top_logic.layout.form.tag.TextInputTag.java: Missing documentation: com.top_
 com.top_logic.layout.form.tag.TextInputTag.java: Missing documentation: com.top_logic.layout.form.tag.TextInputTag.setMaxLengthShown
 com.top_logic.layout.form.tag.TextInputTag.java: Missing documentation: com.top_logic.layout.form.tag.TextInputTag.setType
 com.top_logic.layout.form.tag.TextInputTag.java: Missing documentation: com.top_logic.layout.form.tag.TextInputTag.type
-com.top_logic.layout.form.tag.TextInputTag.java: Missing documentation: com.top_logic.layout.form.tag.TextInputTag.unsafeHTML
 com.top_logic.layout.form.tag.TristateCheckboxTag.java: Missing documentation: com.top_logic.layout.form.tag.TristateCheckboxTag.setResettable
 com.top_logic.layout.form.tag.js.JSExpression.java: Missing documentation: com.top_logic.layout.form.tag.js.JSExpression.eval
 com.top_logic.layout.form.tag.js.JSNativeExpression.java: Missing documentation: com.top_logic.layout.form.tag.js.JSNativeExpression.NULL

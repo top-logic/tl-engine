@@ -10,7 +10,9 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.config.annotation.MapBinding;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
@@ -36,14 +38,53 @@ public class I18NStructuredTextNamingScheme
 		/**
 		 * The translations of an internationalized structured text.
 		 */
-		@MapBinding(tag = "translation", key = "lang", attribute = "value")
-		Map<String, String> getTranslations();
+		@Key(Translation.LANGUAGE)
+		Map<String, Translation> getTranslations();
 
 		/**
 		 * @see #getTranslations()
 		 */
-		void setTranslations(Map<String, String> translations);
+		void setTranslations(Map<String, Translation> translations);
 
+	}
+
+	/**
+	 * Translation object for a {@link Name}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface Translation extends ConfigurationItem {
+		/**
+		 * Configuration name of {@link #getValue()}.
+		 */
+		String VALUE = "value";
+
+		/**
+		 * Configuration name of {@link #getLanguage()}.
+		 */
+		String LANGUAGE = "language";
+
+		/**
+		 * The code of the language for this translation.
+		 */
+		@com.top_logic.basic.config.annotation.Name(LANGUAGE)
+		String getLanguage();
+
+		/**
+		 * Setter for {@link #getLanguage()}.
+		 */
+		void setLanguage(String value);
+
+		/**
+		 * The value localized in the language {@link #getLanguage()}.
+		 */
+		@com.top_logic.basic.config.annotation.Name(VALUE)
+		String getValue();
+
+		/**
+		 * Setter for {@link #getValue()}.
+		 */
+		void setValue(String value);
 	}
 
 	/**
@@ -55,14 +96,17 @@ public class I18NStructuredTextNamingScheme
 
 	@Override
 	protected void initName(Name name, I18NStructuredText model) {
-		Map<String, String> translations = new HashMap<>();
+		Map<String, Translation> translations = new HashMap<>();
 
 		ResourcesModule resources = ResourcesModule.getInstance();
 		for (String localeName : resources.getSupportedLocaleNames()) {
 			Locale locale = ResourcesModule.localeFromString(localeName);
 			String value = model.localizeSourceCode(locale);
 			if (!StringServices.isEmpty(value)) {
-				translations.put(localeName, value);
+				Translation translation = TypedConfiguration.newConfigItem(Translation.class);
+				translation.setLanguage(localeName);
+				translation.setValue(value);
+				translations.put(translation.getLanguage(), translation);
 			}
 		}
 		name.setTranslations(translations);
@@ -70,15 +114,15 @@ public class I18NStructuredTextNamingScheme
 
 	@Override
 	public I18NStructuredText locateModel(ActionContext context, Name name) {
-		Map<String, String> translationSources = name.getTranslations();
+		Map<String, Translation> translationSources = name.getTranslations();
 		Map<Locale, StructuredText> translations = new HashMap<>();
 
 		ResourcesModule resources = ResourcesModule.getInstance();
 		for (String localeName : resources.getSupportedLocaleNames()) {
 			Locale locale = ResourcesModule.localeFromString(localeName);
-			String source = translationSources.get(localeName);
+			Translation source = translationSources.get(localeName);
 			if (source != null) {
-				translations.put(locale, new StructuredText(source));
+				translations.put(locale, new StructuredText(source.getValue()));
 			}
 		}
 

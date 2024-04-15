@@ -10,7 +10,7 @@
 		<dependency name="Ticket_26142_Transform_table_drop_into_tree_drop"
 			module="tl"
 		/>
-		<dependency name="Ticket_26190_single_drop_targets_to_list"
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
 			module="tl-element"
 		/>
 	</dependencies>

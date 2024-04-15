@@ -285,8 +285,24 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		addListener(MANDATORY_PROPERTY, new MandatoryChangedListener() {
 			@Override
 			public Bubble handleMandatoryChanged(FormField sender, Boolean oldValue, Boolean newValue) {
-				for (F field : fields) {
-					field.setMandatory(newValue);
+				if (newValue) {
+					if (fields.stream()
+						.filter(FormField::hasValue)
+						.anyMatch(I18NField.this::hasNonEmptyValue)) {
+						// One field has a non empty value. Therefore the fields are marked as non
+						// mandatory.
+						for (F field : fields) {
+							field.setMandatory(false);
+						}
+					} else {
+						for (F field : fields) {
+							field.setMandatory(true);
+						}
+					}
+				} else {
+					for (F field : fields) {
+						field.setMandatory(false);
+					}
 				}
 				return Bubble.BUBBLE;
 			}
@@ -302,6 +318,11 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		});
 		new I18NValueErrorWarningsUpdater(fields).attach();
 	}
+
+	/**
+	 * Whether the given language field has a non empty value.
+	 */
+	protected abstract boolean hasNonEmptyValue(F languageField);
 
 	/**
 	 * Filters, casts or converts the given value.
@@ -421,15 +442,28 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	protected ValueWithError createProxyValue() {
 		FormField proxy = getProxy();
 		B builder = createValueBuilder();
-
-		Resources res = Resources.getInstance();
-		StringBuilder sb = new StringBuilder();
-		boolean hasError = false;
+		boolean updateMandatory = proxy.isMandatory();
+		boolean allFieldsEmpty = true;
 		for (F field : getLanguageFields()) {
 			if (field.hasValue()) {
 				Locale locale = field.get(LANGUAGE);
 				addValueToBuilder(builder, proxy, locale, field);
 			}
+			if (updateMandatory && allFieldsEmpty && hasNonEmptyValue(field)) {
+				allFieldsEmpty = false;
+			}
+		}
+		if (updateMandatory) {
+			for (F field : getLanguageFields()) {
+				field.setMandatory(allFieldsEmpty);
+				field.check();
+			}
+		}
+
+		Resources res = Resources.getInstance();
+		StringBuilder sb = new StringBuilder();
+		boolean hasError = false;
+		for (F field : getLanguageFields()) {
 			if (field.hasError()) {
 				if (hasError) {
 					sb.append(StringServices.LINE_BREAK);

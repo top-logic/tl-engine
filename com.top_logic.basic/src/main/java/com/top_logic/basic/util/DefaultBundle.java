@@ -91,6 +91,15 @@ public class DefaultBundle implements I18NBundleSPI {
 
 	@Override
 	public String getString(ResKey aKey) {
+		return internalGetString(aKey, true);
+	}
+
+	@Override
+	public String getStringWithoutFallback(ResKey key) {
+		return internalGetString(key, false);
+	}
+
+	private String internalGetString(ResKey aKey, boolean withFallback) {
 		if (aKey == null) {
 			return StringServices.EMPTY_STRING;
 		}
@@ -99,7 +108,7 @@ public class DefaultBundle implements I18NBundleSPI {
 			return aKey.debug(this);
 		}
 
-		return aKey.resolve(this, aKey);
+		return aKey.resolve(this, aKey, withFallback);
 	}
 
 	/**
@@ -116,10 +125,10 @@ public class DefaultBundle implements I18NBundleSPI {
 
 	@Override
 	@FrameworkInternal
-	public String lookup(String key) {
+	public String lookup(String key, boolean withFallbackBundle) {
 		String result = lookupLocal(key);
-		if (result == null && _fallback != null) {
-			return _fallback.lookup(key);
+		if (withFallbackBundle && result == null && _fallback != null) {
+			return _fallback.lookup(key, withFallbackBundle);
 		}
 		return result;
 	}

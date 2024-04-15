@@ -36,9 +36,12 @@ public interface I18NBundleSPI extends I18NBundle {
 
 	/**
 	 * Looks up the resource for the given internal key representation.
+	 * 
+	 * @param withFallback
+	 *        Whether {@link #getFallback() fallback} is used when no resource is found.
 	 */
 	@FrameworkInternal
-	String lookup(String key);
+	String lookup(String key, boolean withFallback);
 
 	/**
 	 * Marks the given key as unknown.

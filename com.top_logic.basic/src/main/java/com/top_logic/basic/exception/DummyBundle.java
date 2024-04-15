@@ -42,7 +42,7 @@ final class DummyBundle implements I18NBundleSPI {
 	}
 
 	@Override
-	public String lookup(String key) {
+	public String lookup(String key, boolean withFallbackBundle) {
 		return key;
 	}
 
@@ -78,6 +78,11 @@ final class DummyBundle implements I18NBundleSPI {
 
 	@Override
 	public String getString(ResKey aKey) {
+		return null;
+	}
+
+	@Override
+	public String getStringWithoutFallback(ResKey key) {
 		return null;
 	}
 

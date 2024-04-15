@@ -37,7 +37,6 @@ public class TextInputTag extends AbstractFormFieldControlTag {
 	protected boolean hasRows;
 	protected String onFocus;
 	protected String onInput;
-	protected boolean unsafeHTML;
 	protected String type;
     public final StringAttribute immutableStyle = new StringAttribute();
 
@@ -88,15 +87,6 @@ public class TextInputTag extends AbstractFormFieldControlTag {
 		this.onInput = onInput;
 	}
 	
-	/**
-	 * @deprecated Likely to introduce XSS weaknesses into the application.
-	 * @see TextInputControl#setUnsafeHTML(boolean)
-	 */
-	@Deprecated
-	public void setUnsafeHTML(boolean unsafeHTML) {
-		this.unsafeHTML = unsafeHTML;
-	}
-	
 	public void setType(String aType) {
 	    this.type = aType;
 	}
@@ -140,7 +130,6 @@ public class TextInputTag extends AbstractFormFieldControlTag {
 		if (!StringServices.isEmpty(onInput)) {
 			control.setOnInput(new ConstantDisplayValue(onInput));
 		}
-		control.setUnsafeHTML(unsafeHTML);
 		control.setType(this.type);
 		if (tabindex.isSet())
 			control.setTabIndex(tabindex.get());

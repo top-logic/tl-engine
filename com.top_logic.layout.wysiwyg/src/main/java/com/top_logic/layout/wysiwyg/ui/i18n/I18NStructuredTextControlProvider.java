@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.element.i18n.I18NField;
-import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringActiveLanguageControlRenderer;
 import com.top_logic.element.i18n.I18NStringTagProvider.I18NStringControlRenderer;
 import com.top_logic.layout.CompositeControl;
 import com.top_logic.layout.Control;
@@ -80,7 +79,7 @@ public class I18NStructuredTextControlProvider implements ControlProvider {
 				ControlRenderer<CompositeControl> newRenderer;
 				if (newValue) {
 					// Display only the value for the current locale in view mode.
-					newRenderer = I18NStringActiveLanguageControlRenderer.INSTANCE;
+					newRenderer = I18NStructuedTextActiveLanguageControlRenderer.INSTANCE;
 				} else {
 					// Display each value in edit mode.
 					newRenderer = editModeRenderer();

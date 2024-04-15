@@ -204,8 +204,8 @@ public class TestResKeyEncoding extends TestCase {
 		String encodedText = ResKey.encode(text);
 		ResKey decodedText = ResKey.decode(encodedText);
 
-		assertEquals(deText, decodedText.resolve(bundle(Locale.GERMAN), text));
-		assertEquals(enText, decodedText.resolve(bundle(Locale.ENGLISH), text));
+		assertEquals(deText, decodedText.resolve(bundle(Locale.GERMAN), text, true));
+		assertEquals(enText, decodedText.resolve(bundle(Locale.ENGLISH), text, true));
 	}
 
 	private I18NBundleSPI bundle(Locale locale) {

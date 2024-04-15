@@ -29,5 +29,5 @@
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-port 8081 -contextPath /demo"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.top_logic.demo"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms128m&#13;&#10;-Xmx256M &#13;&#10;-Declipse.workspace=&quot;${workspace_loc}&quot;&#13;&#10;-Dcom.top_logic.util.sched.task.SystemPropertyTaskClusterNodeName=8081&#13;&#10;-ea&#13;&#10;-XX:+HeapDumpOnOutOfMemoryError&#10;-Dtl_initial_password=root1234"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms128m&#13;&#10;-Xmx256M &#13;&#10;-Declipse.workspace=&quot;${workspace_loc}&quot;&#13;&#10;-Dcom.top_logic.util.sched.task.SystemPropertyTaskClusterNodeName=8081&#13;&#10;-ea&#13;&#10;-XX:+HeapDumpOnOutOfMemoryError&#10;-Dtl_initial_password=root1234&#10;-Dtl_environment=&quot;Developer machine&quot;"/>
 </launchConfiguration>

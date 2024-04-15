@@ -41,9 +41,9 @@ public class TestCalendarControl extends TestControl {
 
 	private CalendarControl _calendar;
 
-	private Calendar _lowerBound;
+	private long _lowerBound;
 
-	private Calendar _upperBound;
+	private long _upperBound;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -61,13 +61,15 @@ public class TestCalendarControl extends TestControl {
 		cal.set(Calendar.SECOND, 0);
 		cal.set(Calendar.MILLISECOND, 0);
 
-		_lowerBound = (Calendar) cal.clone();
+		Calendar lowerBound = (Calendar) cal.clone();
+		_lowerBound = lowerBound.getTimeInMillis();
 		cal.add(Calendar.DAY_OF_MONTH, 1);
 		cal.add(Calendar.MILLISECOND, -1);
-		_upperBound = (Calendar) cal.clone();
+		Calendar upperBound = (Calendar) cal.clone();
+		_upperBound = upperBound.getTimeInMillis();
 
 		dateField.set(CalendarControl.MARKER_CSS,
-			new DefaultCalendarMarker(_lowerBound, _upperBound, false, MARKED_GREEN, MARKED_RED, false));
+			new DefaultCalendarMarker(lowerBound, upperBound, false, MARKED_GREEN, MARKED_RED, false));
 
 		_calendar = new CalendarControl(dialog, dateField, timeZone(), locale());
 	}
@@ -106,11 +108,12 @@ public class TestCalendarControl extends TestControl {
 	private void testDayMark(Node dayItem) {
 		long day = parseDateFromOnClick(dayItem);
 		String[] cssClasses = getCssClasses(dayItem);
+		String dayInMonth = getDayInMonth(dayItem);
 
-		if (_lowerBound.getTimeInMillis() <= day && day <= _upperBound.getTimeInMillis()) {
-			assertTrue(contains(cssClasses, MARKED_GREEN));
+		if (_lowerBound <= day && day <= _upperBound) {
+			assertTrue("Wrong marker in day " + dayInMonth, contains(cssClasses, MARKED_GREEN));
 		} else {
-			assertTrue(contains(cssClasses, MARKED_RED));
+			assertTrue("Wrong marker in day " + dayInMonth, contains(cssClasses, MARKED_RED));
 		}
 	}
 
@@ -128,6 +131,11 @@ public class TestCalendarControl extends TestControl {
 		return dayItem.getAttributes().item(1).getNodeValue().split(" ");
 	}
 
+	private String getDayInMonth(Node dayItem) {
+		// Day is contained in child, e.g. <span>5<span>
+		return DOMUtil.getFirstElementChild(dayItem).getTextContent();
+	}
+
 	private String[] getCssClasses(Node dayItem) {
 		// Splits the attribute "class" of a <td> element to get the CSS-Classes of a day in the
 		// calendar
@@ -138,9 +146,6 @@ public class TestCalendarControl extends TestControl {
 	protected void tearDown() throws Exception {
 		super.tearDown();
 		_calendar.detach();
-		_calendar = null;
-		_upperBound = null;
-		_lowerBound = null;
 	}
 
 	public static Test suite() {

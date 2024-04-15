@@ -114,6 +114,13 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 		RootTileComponent rootComponent = (RootTileComponent) component;
 		ComponentWrappingControl control =
 			ComponentWrappingControl.create(component, contextMenu().createContextMenuProvider(component));
+		addUpdateViewListeners(rootComponent, control);
+
+		setView(control, rootComponent, rootComponent.displayedPath());
+		return control;
+	}
+
+	private void addUpdateViewListeners(RootTileComponent rootComponent, ComponentWrappingControl control) {
 		DisplayPathListener displayPathListener = new DisplayPathListener() {
 
 			@Override
@@ -131,7 +138,9 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 				setView(control, sender, newPath);
 			}
 		};
-		ChildrenChangedListener childrenChangeListener = new ChildrenChangedListener() {
+		class DeferredChildrenChangedListener implements ChildrenChangedListener {
+
+			boolean _removed = false;
 
 			@Override
 			public Bubble notifyChildrenChanged(LayoutContainer sender, List<LayoutComponent> oldChildren,
@@ -151,7 +160,15 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 						 * not resolved yet. In this case, the commands would not be created and no
 						 * commands would be added to the control's toolbar. */
 						displayedComponent.getMainLayout().getLayoutContext().notifyInvalid(context -> {
-							setView(control, rootComponent, displayedPath);
+							if (_removed) {
+								/* Listener was removed in the meanwhile. This means that the
+								 * control that is to be given a new view is no longer used. If the
+								 * control were to receive a new view, this new view (which is never
+								 * displayed) would receive the toolbar and all its commands from
+								 * the child components. */
+							} else {
+								setView(control, rootComponent, displayedPath);
+							}
 						});
 						break;
 					}
@@ -160,16 +177,16 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 				return Bubble.BUBBLE;
 			}
 
-		};
+		}
+
+		DeferredChildrenChangedListener childrenChangeListener = new DeferredChildrenChangedListener();
 		rootComponent.addListener(RootTileComponent.DISPLAYED_PATH_PROPERTY, displayPathListener);
 		rootComponent.addListener(RootTileComponent.CHILDREN_PROPERTY, childrenChangeListener);
 		rootComponent.set(CLEANUP_ACTION, () -> {
 			rootComponent.removeListener(RootTileComponent.CHILDREN_PROPERTY, childrenChangeListener);
+			childrenChangeListener._removed = true;
 			rootComponent.removeListener(RootTileComponent.DISPLAYED_PATH_PROPERTY, displayPathListener);
 		});
-
-		setView(control, rootComponent, rootComponent.displayedPath());
-		return control;
 	}
 
 	void setView(ComponentWrappingControl control, RootTileComponent rootTile, List<LayoutComponent> displayPath) {

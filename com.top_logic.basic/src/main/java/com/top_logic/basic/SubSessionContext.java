@@ -11,6 +11,7 @@ import java.util.TimeZone;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.util.ResourcesModule;
 
 /**
  * Representation of a session in a browser window.
@@ -84,9 +85,17 @@ public interface SubSessionContext extends TypedAnnotatable {
 		Locale previousLocale = getCurrentLocale();
 		setCurrentLocale(locale);
 		try {
+			dropCachedTranslations();
 			return supplier.get();
 		} finally {
 			setCurrentLocale(previousLocale);
+			dropCachedTranslations();
+		}
+	}
+
+	private void dropCachedTranslations() {
+		if (ResourcesModule.Module.INSTANCE.isActive()) {
+			ResourcesModule.getInstance().dropCachedTranslations(this);
 		}
 	}
 

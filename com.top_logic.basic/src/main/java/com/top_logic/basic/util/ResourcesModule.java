@@ -28,6 +28,7 @@ import java.util.TreeSet;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -882,6 +883,16 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 					localeCode.substring(eoc + 1));
 			}
 		}
+	}
+
+	/**
+	 * Resets translations cached based on the locale of the {@link SubSessionContext}.
+	 * 
+	 * @param subSession
+	 *        The {@link SubSessionContext} for which the cache should be dropped.
+	 */
+	public void dropCachedTranslations(SubSessionContext subSession) {
+		// The cache is in the subclass 'DefaultResourcesModule' in 'com.top_logic'.
 	}
 
 	private class BundleLoader {

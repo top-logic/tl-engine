@@ -93,7 +93,7 @@ public class VersionViewConfiguration extends AbstractConfiguredInstance<Version
 		 */
 		@TemplateVariable("version")
 		public void writeVersion(DisplayContext context, TagWriter out) throws IOException {
-			String environment = getConfig().getEnvironment();
+			String environment = getEnvironment();
 
 			ResKey contentKey;
 			if (getConfig().getShowEnvironment() && !StringServices.isEmpty(environment)) {
@@ -105,6 +105,13 @@ public class VersionViewConfiguration extends AbstractConfiguredInstance<Version
 
 			out.writeText(context.getResources().getString(contentKey));
 		}
+	}
+
+	/**
+	 * Generates the contents for the environment display.
+	 */
+	protected String getEnvironment() {
+		return getConfig().getEnvironment();
 	}
 
 }

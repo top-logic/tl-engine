@@ -166,9 +166,6 @@
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
 		value="css:fas fa-save"
 	/>
-	<icon name="com.top_logic.themes.modern.layout.renderer.Icons.PERSON"
-		expr="%USER_MENU_ICON%"
-	/>
 	<icon name="ICONS_BUTTON_OK"
 		value="css:fas fa-check"
 	/>

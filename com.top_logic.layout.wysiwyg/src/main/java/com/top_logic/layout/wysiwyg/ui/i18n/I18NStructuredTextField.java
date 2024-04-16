@@ -145,6 +145,16 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 		return field;
 	}
 
+	@Override
+	protected boolean hasNonEmptyValue(FormField languageField) {
+		try {
+			StructuredTextField.NOT_EMPTY_STRUCTURED_TEXT.check(languageField.getValue());
+			return true;
+		} catch (CheckException ex) {
+			return false;
+		}
+	}
+
 	/**
 	 * Unmodifiable {@link List} of activated features.
 	 * <p>

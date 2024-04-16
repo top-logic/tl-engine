@@ -64,6 +64,7 @@ select.tl-select
 .warning input:not(.input-image):not(.fltButton):not(#quickSearch-input):not(.is-upload):not( [type="image"] ),
 .warning textarea,
 .warning select.tl-select,
+.warning .cke, /*CKEditor*/
 .warning .ace_editor
 {
 	outline: var(--WARNING_OUTLINE);

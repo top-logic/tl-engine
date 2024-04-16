@@ -20,6 +20,8 @@
 .error-annotation select.tl-select, 
 .error textarea,
 .error-annotation textarea,
+.error .cke, /* CKEditor*/
+.error-annotation .cke, /* CKEditor*/
 .error .ace_editor,
 .error-annotation .ace_editor {
 	outline: var(--ERROR_OUTLINE);
@@ -83,6 +85,8 @@ span.is-error .warning-annotation {
 .warning-annotation select.tl-select, 
 .warning textarea,
 .warning-annotation textarea,
+.warning .cke, /*CKEditor*/
+.warning-annotation .cke, /*CKEditor*/
 .warning .ace_editor,
 .warning-annotation .ace_editor {
 	outline: var(--WARNING_OUTLINE);

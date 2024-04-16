@@ -335,24 +335,9 @@ Englisch: Eingabe darf nicht leer sein.]]></error>
 			</model-name>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			comment="If one language field has value, the whole field is valid."
 			user-id="root"
-			validity="ERROR"
-		>
-			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
-					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
-				/>
-				<path>
-					<labeled-member label="Alle einfachen form controls"/>
-					<labeled-member label="i18n"/>
-					<labeled-member label="i18nHTML"/>
-				</path>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
-			error="Englisch: Eingabe darf nicht leer sein."
-			user-id="root"
+			validity="VALID"
 		>
 			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"

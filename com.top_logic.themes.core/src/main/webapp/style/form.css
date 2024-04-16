@@ -1708,12 +1708,15 @@ span.cIconSelect .input-image.cannot-edit i {
 .error-annotation select.tl-select, 
 .error textarea,
 .error-annotation textarea,
-.error .ace_editor,
-.error-annotation .ace_editor,
 .error .ace_editor textarea,
 .error-annotation .ace_editor textarea {
 	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
 }
+
+.error .cke, /*CKEditor*/
+.error .ace_editor {
+	border: 1px solid var(--support-danger);
+} 
 
 .warning input.is-input, 
 .warning-annotation input.is-input, 
@@ -1737,12 +1740,19 @@ span.cIconSelect .input-image.cannot-edit i {
 .warning-annotation select.tl-select, 
 .warning textarea,
 .warning-annotation textarea,
+.warning .cke, /*CKEditor*/
+.warning-annotation .cke, /*CKEditor*/
 .warning .ace_editor,
 .warning-annotation .ace_editor,
 .warning .ace_editor textarea, 
 .warning-annotation .ace_editor textarea {
 	box-shadow: inset 0px 0px 0px 1px var(--support-warning),inset 0px 0px 0px 2px var(--focus-inset);
 }
+
+.warning .cke, /*CKEditor*/
+.warning .ace_editor {
+	border: 1px solid var(--support-warning);
+} 
 
 input.is-input:focus, 
 .error input.is-input:focus, 

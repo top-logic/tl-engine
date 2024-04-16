@@ -449,6 +449,7 @@ public class DateTimeField extends CompositeField {
 	 */
 	public DateTimeField(String name, Date date, boolean immutable) {
 		super(name, I18NConstants.DATE_TIME_FIELD);
+		setImmutable(immutable);
 		DateTimeFieldProxy dateField = createDateField(date, immutable);
 		FormField dayField = createDayField(date, immutable);
 		ComplexField timeField = createTimeField(date, immutable);

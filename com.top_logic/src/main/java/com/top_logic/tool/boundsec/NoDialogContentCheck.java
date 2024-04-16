@@ -5,7 +5,10 @@
  */
 package com.top_logic.tool.boundsec;
 
+import static java.lang.annotation.RetentionPolicy.*;
+
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -24,6 +27,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Target(value = { ElementType.TYPE })
+@Retention(RUNTIME)
 public @interface NoDialogContentCheck {
 
 	/**

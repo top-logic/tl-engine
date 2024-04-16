@@ -32,7 +32,7 @@ public class TabBarControlProvider extends DecoratingLayoutControlProvider<TabBa
 	 * Typed configuration interface definition for {@link TabBarControlProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<TabBarControlProvider> {
-
+		// Pure marker interface.
 	}
 
 	/** Singleton {@link TabBarControlProvider} instance. */
@@ -49,7 +49,6 @@ public class TabBarControlProvider extends DecoratingLayoutControlProvider<TabBa
 		TabComponent aTabComponent = (TabComponent) component;
 		TabBarControl theTabBar = new TabBarControl(aTabComponent.getTabBarModel());
 		theTabBar.setTabVisibilityFilter(aTabComponent.getTabVisibilityFilter());
-		theTabBar.addViews(aTabComponent.getConfiguredViews());
 		theTabBar.setRenderer(aTabComponent.getRenderer());
 		theTabBar.addTabSwitchVetoListener(DefaultTabSwitchVetoListener.INSTANCE);
 

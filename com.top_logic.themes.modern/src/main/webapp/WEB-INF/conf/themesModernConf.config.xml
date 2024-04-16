@@ -8,10 +8,4 @@
 			</instance> 
 		</config>
 	</services>
-	<defaults>
-		<config interface="com.top_logic.themes.modern.layout.DefaultVersionRenderer$Config">
-			<property name="environment" value=""/>
-			<property name="showEnvironment" value="true"/>
-		</config>
-	</defaults>
 </application>  

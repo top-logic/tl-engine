@@ -27,29 +27,5 @@
 			<reference command-id="releaseLayout"/>
 			<reference command-id="exportLayout"/>
 		</commands>
-		<views>
-			<include name="toolrow/helpButton.xml"/>
-			<view class="com.top_logic.layout.component.configuration.LogoutView"
-				name="logout"
-			/>
-			<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-				name="setHomepage"
-			>
-				<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-					command="setHomepage"
-				/>
-			</view>
-			<view class="com.top_logic.layout.component.configuration.MultiViewConfiguration"
-				name="systemMessages"
-			>
-				<renderer class="com.top_logic.layout.component.configuration.SystemViewRenderer"/>
-				<views>
-					<include name="com.top_logic/license/license-expiry.xml"/>
-					<view class="com.top_logic.layout.component.configuration.MaintenanceViewConfiguration"
-						name="maintenance"
-					/>
-				</views>
-			</view>
-		</views>
 	</tabbar>
 </template>

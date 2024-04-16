@@ -13,6 +13,5 @@
 	<include name="model/search/modelSearchButton.xml"
 		renderer="${renderer}"
 		tabName="modelSearch"
-		viewName="modelSearchTab"
 	/>
 </template>

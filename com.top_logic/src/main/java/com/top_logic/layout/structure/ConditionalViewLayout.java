@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.structure;
+package com.top_logic.layout.structure;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
@@ -19,12 +19,6 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.form.model.VisibilityModel;
-import com.top_logic.layout.structure.ConfiguredLayoutControlProvider;
-import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.LayoutControl;
-import com.top_logic.layout.structure.LayoutControlAdapter;
-import com.top_logic.layout.structure.LayoutControlProvider;
-import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.util.ToBeValidated;
@@ -48,7 +42,7 @@ public class ConditionalViewLayout extends ConfiguredLayoutControlProvider<Condi
 	private ViewConfiguration _viewFactory;
 
 	/**
-	 * Configuration options for {@link ConditionalViewLayout}
+	 * Configuration options for {@link ConditionalViewLayout}.
 	 */
 	public interface Config extends PolymorphicConfiguration<LayoutControlProvider> {
 		/**
@@ -68,7 +62,7 @@ public class ConditionalViewLayout extends ConfiguredLayoutControlProvider<Condi
 		/**
 		 * The view to display.
 		 */
-		ViewConfiguration.Config<?> getView();
+		PolymorphicConfiguration<? extends ViewConfiguration> getView();
 
 		/**
 		 * Whether the active view may have scroll bars.

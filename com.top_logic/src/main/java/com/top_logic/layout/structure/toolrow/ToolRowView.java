@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.views;
+package com.top_logic.layout.structure.toolrow;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,8 +11,8 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -20,40 +20,52 @@ import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultView;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.themes.modern.layout.ModernThemeConstants;
 
 /**
  * {@link DefaultComponentView} of main header's tool row.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public class ToolRowView extends DefaultComponentView implements HTMLConstants, ModernThemeConstants {
+public class ToolRowView extends DefaultComponentView implements HTMLConstants {
+
+	private static final String CSS_CLASS_TOOL_BAR_CONTAINER = "ToolBarContainer";
+
+	private static final String CSS_CLASS_TOOL_CONTAINER = "ToolContainer";
+
+	private static final String CSS_CLASS_TOOL_CONTAINER_RIGHT = "ToolContainerRight";
+
+	private static final String CSS_CLASS_ICON_CONTAINER = "IconContainer";
+
+	private static final String CSS_CLASS_BUTTON_GROUP = "mtbGroup";
+
+	private static final String CSS_CLASS_HEADER_RIGHT_IMAGE = "header-logo";
+
+	private static final ThemeImage MAPPING_KEY_HEADER_RIGHT_IMAGE = ThemeImage.themeIcon("HEADER_RIGHT_IMAGE");
 
 	private List<ViewConfiguration> _buttonConfigs;
 
 	private List<ViewConfiguration> _messageConfigs;
 
 	/**
-	 * Configuration interface of {@link ToolRowView}
+	 * Configuration interface of {@link ToolRowView}.
 	 */
-	public interface Config extends ViewConfiguration.Config<ToolRowView> {
+	public interface Config extends PolymorphicConfiguration<ToolRowView> {
 
 		/**
 		 * {@link ViewConfiguration}s of clickable buttons of this {@link ToolRowView}
 		 */
-		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-		List<ViewConfiguration.Config<? extends ViewConfiguration>> getViews();
+		List<PolymorphicConfiguration<? extends ViewConfiguration>> getViews();
 
 		/**
 		 * {@link ViewConfiguration}s of messages to display of this {@link ToolRowView}.
 		 */
-		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-		List<ViewConfiguration.Config<? extends ViewConfiguration>> getMessages();
+		List<PolymorphicConfiguration<? extends ViewConfiguration>> getMessages();
 	}
 
 	/**
@@ -173,23 +185,22 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants, 
 
 	/**
 	 * Special {@link DefaultComponentView}, to separate buttons or messages of the
-	 * {@link ToolRowView}
+	 * {@link ToolRowView}.
 	 */
 	public static final class GroupView extends DefaultComponentView {
 
 		private List<ViewConfiguration> _buttonConfigs;
 
 		/**
-		 * Configuration interface of {@link GroupView}
+		 * Configuration interface of {@link GroupView}.
 		 */
 		@TagName("group")
-		public interface Config extends ViewConfiguration.Config<GroupView> {
+		public interface Config extends PolymorphicConfiguration<GroupView> {
 			
 			/**
 			 * {@link ViewConfiguration}s of clickable buttons of this {@link ToolRowView}
 			 */
-			@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-			List<ViewConfiguration.Config<? extends ViewConfiguration>> getViews();
+			List<PolymorphicConfiguration<? extends ViewConfiguration>> getViews();
 
 		}
 

@@ -13,8 +13,9 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
@@ -37,7 +38,8 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class LogoutView extends AbstractViewConfiguration<LogoutView.Config> implements View, HTMLConstants, Link {
+public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
+		implements ViewConfiguration, View, HTMLConstants, Link {
 
 	private static final String LOGOUT_PAGE_PATH = "/jsp/main/LogoutPage.jsp";
 	private static final String XML_ATTRIBUTE_IMAGE = "image";
@@ -49,7 +51,7 @@ public class LogoutView extends AbstractViewConfiguration<LogoutView.Config> imp
     /**
      * Configuration interface for {@link LogoutView}.
      */
-	public interface Config extends AbstractViewConfiguration.Config<LogoutView> {
+	public interface Config extends PolymorphicConfiguration<LogoutView> {
 
 		/**
 		 * The icon to display.
@@ -80,7 +82,7 @@ public class LogoutView extends AbstractViewConfiguration<LogoutView.Config> imp
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public LogoutView(InstantiationContext context, LogoutView.Config config) throws ConfigurationException {
+	public LogoutView(InstantiationContext context, LogoutView.Config config) {
 		super(context, config);
 		
 		this.image = config.getImage();

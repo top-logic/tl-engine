@@ -7,7 +7,7 @@ package com.top_logic.layout.component.configuration;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
@@ -27,7 +27,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class CommandModelViewConfiguration<C extends CommandModelViewConfiguration.Config<?>>
-		extends AbstractViewConfiguration<C> {
+		extends AbstractConfiguredInstance<C> implements ViewConfiguration {
 
 	private final CommandModelConfiguration conf;
 
@@ -38,7 +38,7 @@ public class CommandModelViewConfiguration<C extends CommandModelViewConfigurati
      * 
      * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
      */
-	public interface Config<I extends CommandModelViewConfiguration<?>> extends AbstractViewConfiguration.Config<I> {
+	public interface Config<I extends CommandModelViewConfiguration<?>> extends PolymorphicConfiguration<I> {
 		/**
 		 * @see #getCommandConfiguration()
 		 */
@@ -72,7 +72,7 @@ public class CommandModelViewConfiguration<C extends CommandModelViewConfigurati
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public CommandModelViewConfiguration(InstantiationContext context, C config) throws ConfigurationException {
+	public CommandModelViewConfiguration(InstantiationContext context, C config) {
 		super(context, config);
 		
 		this.conf = context.getInstance(config.getCommandConfiguration());

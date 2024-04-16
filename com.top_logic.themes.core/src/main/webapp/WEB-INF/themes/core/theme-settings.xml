@@ -78,10 +78,6 @@
 	<int name="VERSION_ROW_HEIGHT"
 		value="16"
 	/>
-	<type name="VERSION_RENDERER_CLASS"
-		interface="com.top_logic.layout.Renderer"
-		value="com.top_logic.themes.modern.layout.DefaultVersionRenderer"
-	/>
 	<boolean name="QUICK_SEARCH_ENABLED"
 		value="true"
 	/>

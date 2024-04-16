@@ -7,9 +7,6 @@ package com.top_logic.layout.component.configuration;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.listener.PropertyObservableBase;
@@ -28,21 +25,15 @@ import com.top_logic.util.TLContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class MaintenanceViewConfiguration
-		extends AbstractViewConfiguration<AbstractViewConfiguration.Config<MaintenanceViewConfiguration>> {
+public class MaintenanceViewConfiguration implements ViewConfiguration {
 
 	/**
-	 * Creates a {@link MaintenanceViewConfiguration} from configuration.
-	 * 
-	 * @param context
-	 *        The context for instantiating sub configurations.
-	 * @param config
-	 *        The configuration.
+	 * Singleton {@link MaintenanceViewConfiguration} instance.
 	 */
-	@CalledByReflection
-	public MaintenanceViewConfiguration(InstantiationContext context,
-			AbstractViewConfiguration.Config<MaintenanceViewConfiguration> config) throws ConfigurationException {
-		super(context, config);
+	public static final MaintenanceViewConfiguration INSTANCE = new MaintenanceViewConfiguration();
+
+	private MaintenanceViewConfiguration() {
+		// Singleton constructor.
 	}
 
 	@Override

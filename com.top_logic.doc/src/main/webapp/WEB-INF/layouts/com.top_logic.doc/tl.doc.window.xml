@@ -18,21 +18,19 @@
 					<layoutInfo size="250px"/>
 					<layoutControl>
 						<layoutInfo size="30px"/>
-						<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
+						<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
 							<view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
 								cssClass="margin5"
-								name="docSearchWrapper1"
 								tag="div"
 							>
 								<content-view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
 									cssClass="tlDocSearchContainer"
-									name="docSearchWrapper2"
 									tag="div"
 								>
 									<content-view class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
 										include-types="tl.doc:Page"
-										name="documentationSearch"
 										no-search-component="true"
+										searchField="documentationSearch"
 									>
 										<goto-targets>
 											<goto-target

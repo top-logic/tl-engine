@@ -76,7 +76,6 @@ import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.listener.PropertyListeners;
 import com.top_logic.basic.listener.PropertyObservable;
-import com.top_logic.basic.shared.collection.map.MapUtilShared;
 import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -100,7 +99,6 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.ResPrefixNoneDefault;
 import com.top_logic.layout.URLBuilder;
 import com.top_logic.layout.URLParser;
-import com.top_logic.layout.View;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -114,7 +112,6 @@ import com.top_logic.layout.component.IComponent;
 import com.top_logic.layout.component.SaveScrollPosition;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.TabComponent;
-import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.component.dnd.ComponentDropTarget;
 import com.top_logic.layout.component.dnd.NoComponentDrop;
 import com.top_logic.layout.form.control.AbstractButtonControl;
@@ -481,10 +478,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(XML_TAG_WINDOWS_NAME)
 		List<WindowTemplate.Config> getWindows();
 
-		@Name(XML_TAG_VIEWS_NAME)
-		@Key(ViewConfiguration.Config.NAME_ATTRIBUTE)
-		List<ViewConfiguration.Config<?>> getViews();
-
 		/**
 		 * The {@link CommandHandler} that should be executed when 'Enter' or 'Return' are pressed.
 		 * <p>
@@ -703,8 +696,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
     
     public static final String XML_TAG_COMPONENT_CONTROLPROVIDER_NAME = "componentControlProvider";
 
-	public static final String XML_TAG_VIEWS_NAME = "views";
-
 	/**
 	 * XML attribute defining the name of the close command if this component is
 	 * opened as dialog.
@@ -846,8 +837,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	protected boolean alwaysReloadButtons;
 
 	private LayoutComponent currentDialog;
-
-	private HashMap<String, HTMLFragment> viewByName;
 
 	/** Flag to indicate that there are command models to attach. */
 	private boolean _commandModelsToAttach = false;
@@ -2710,7 +2699,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
         this.registerAdditionalNonConfigurableCommands(); 
         registerButtons();
         
-		initConfiguredViews(context);
 		loadExpansionState();
 
 		List<PolymorphicConfiguration<ComponentResolver>> resolvers = _config.getComponentResolvers();
@@ -3669,30 +3657,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * @see #detachCommandModels()
 	 */
 	protected boolean attachCommandModels() {
-		boolean attached = false;
-		if (viewByName != null) {
-			Collection<? extends HTMLFragment> values = viewByName.values();
-			attached = attachCommandModels(values);
-		}
-		return attached;
-	}
-
-	private boolean attachCommandModels(Collection<? extends HTMLFragment> views) {
-		boolean attached = false;
-		for (HTMLFragment view : views) {
-			if (view instanceof ButtonControl) {
-				ButtonControl button = (ButtonControl) view;
-				attachCommandModel(button.getModel());
-				attached = true;
-			}
-			if (view instanceof CompositeControl) {
-				boolean childrenAttached = attachCommandModels(((CompositeControl) view).getChildren());
-				if (childrenAttached) {
-					attached = true;
-				}
-			}
-		}
-		return attached;
+		return false;
 	}
 
 	/**
@@ -3726,10 +3691,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * @see #attachCommandModels()
 	 */
 	protected boolean detachCommandModels() {
-		if (viewByName != null) {
-			Collection<HTMLFragment> views = viewByName.values();
-			return detachCommandModels(views);
-		}
 		return false;
 	}
 
@@ -4277,59 +4238,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	public final LayoutControlProvider getComponentControlProvider() {
 		return getConfig().getActiveComponentControlProvider();
     }
-    	
-    /**
-	 * This method returns a configured {@link View}.
-	 * 
-	 * @param aName
-	 *            the name which was used to configure the {@link View}
-	 * @return may be <code>null</code> if no {@link View} was configured under the given name.
-	 */
-	public HTMLFragment getViewByName(String aName) {
-    	if (viewByName == null) {
-    		return null;
-    	}
-    	else {
-			return viewByName.get(aName);
-    	}
-    }
-
-    /**
-	 * This method returns a {@link Map} of configured views. The keys are the names given in the
-	 * configuration.
-	 */
-	public Map<String, ? extends HTMLFragment> getConfiguredViews() {
-    	if (viewByName == null) {
-			return Collections.emptyMap();
-    	}
-    	return Collections.unmodifiableMap(viewByName);
-    }
-    
-    /**
-	 * This method evaluates the configured view and fills the {@link Map} given by
-	 * {@link #getConfiguredViews()}.
-	 */
-	private void initConfiguredViews(InstantiationContext context) {
-		List<ViewConfiguration.Config<?>> viewConfigs = _config.getViews();
-		if (viewConfigs.isEmpty()) {
-			return;
-		}
-
-		int size = viewConfigs.size();
-		viewByName = MapUtilShared.newMap(size);
-		for (int index = 0; index < size; index++) {
-			ViewConfiguration currentConfiguration = context.getInstance(viewConfigs.get(index));
-			HTMLFragment view = currentConfiguration.createView(this);
-			Object formerlyAddedView = viewByName.put(currentConfiguration.getName(), view);
-			if (formerlyAddedView != null) {
-				Logger.warn("Added configured view '" + view + "' under name '"
-					+ currentConfiguration.getName() + "' to component '" + this.getName()
-					+ "' but there was already the view '"
-					+ formerlyAddedView + "' added under the name!", this);
-			}
-		}
-		setHasCommandModelToAttach();
-	}
 
 	/**
 	 * Quirks base method only called from various special sub classes in their

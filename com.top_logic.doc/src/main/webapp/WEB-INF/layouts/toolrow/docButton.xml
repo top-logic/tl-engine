@@ -11,7 +11,6 @@
 	</params>
 
 	<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-		name="doc"
 		renderer="${renderer}"
 	>
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"

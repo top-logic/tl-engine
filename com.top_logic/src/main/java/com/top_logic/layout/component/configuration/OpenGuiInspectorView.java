@@ -7,8 +7,9 @@ package com.top_logic.layout.component.configuration;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -27,14 +28,15 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public class OpenGuiInspectorView extends AbstractViewConfiguration<OpenGuiInspectorView.Config> {
+public class OpenGuiInspectorView extends AbstractConfiguredInstance<OpenGuiInspectorView.Config>
+		implements ViewConfiguration {
 
 	private final View openGuiInspectorView;
 
 	/**
 	 * Configuration options for {@link OpenGuiInspectorView}
 	 */
-	public interface Config extends AbstractViewConfiguration.Config<OpenGuiInspectorView> {
+	public interface Config extends PolymorphicConfiguration<OpenGuiInspectorView> {
 
 		/** @see #getImage() */
 		String PROPERTY_IMAGE = "image";
@@ -76,8 +78,7 @@ public class OpenGuiInspectorView extends AbstractViewConfiguration<OpenGuiInspe
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public OpenGuiInspectorView(InstantiationContext context, OpenGuiInspectorView.Config config)
-			throws ConfigurationException {
+	public OpenGuiInspectorView(InstantiationContext context, OpenGuiInspectorView.Config config) {
 		super(context, config);
 		openGuiInspectorView =
 			new OpenGuiInspectorFragment(config.getRenderer(), config.getImage(), config.getLabelKey());

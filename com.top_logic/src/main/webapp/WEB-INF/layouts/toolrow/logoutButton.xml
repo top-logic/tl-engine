@@ -9,7 +9,6 @@
 
 	<view class="com.top_logic.layout.component.configuration.LogoutView"
 		image="theme:IMAGE_BUTTONS_LOGOUT22"
-		name="logout"
 		renderer="${entryRenderer}"
 	/>
 </template>

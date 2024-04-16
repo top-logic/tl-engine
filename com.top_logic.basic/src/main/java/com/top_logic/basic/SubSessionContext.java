@@ -85,17 +85,13 @@ public interface SubSessionContext extends TypedAnnotatable {
 		Locale previousLocale = getCurrentLocale();
 		setCurrentLocale(locale);
 		try {
-			dropCachedTranslations();
-			return supplier.get();
+			if (ResourcesModule.Module.INSTANCE.isActive()) {
+				return ResourcesModule.getInstance().withLocale(this, supplier);
+			} else {
+				return supplier.get();
+			}
 		} finally {
 			setCurrentLocale(previousLocale);
-			dropCachedTranslations();
-		}
-	}
-
-	private void dropCachedTranslations() {
-		if (ResourcesModule.Module.INSTANCE.isActive()) {
-			ResourcesModule.getInstance().dropCachedTranslations(this);
 		}
 	}
 

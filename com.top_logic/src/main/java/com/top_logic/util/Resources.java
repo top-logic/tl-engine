@@ -5,12 +5,16 @@
  */
 package com.top_logic.util;
 
+import static java.util.Objects.*;
+
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.util.DefaultBundle;
@@ -229,13 +233,24 @@ public class Resources extends DefaultBundle {
 	}
 
 	/**
-	 * Resets translations cached based on the locale of the {@link SubSessionContext}.
-	 * 
-	 * @param subSession
-	 *        The {@link SubSessionContext} for which the cache should be dropped.
+	 * @throws NullPointerException
+	 *         If one of the parameters is <code>null</code> or there is no {@link Locale} set at
+	 *         the {@link SubSessionContext}.
 	 */
-	static void dropCachedTranslations(SubSessionContext subSession) {
-		subSession.reset(RESOURCES);
+	@FrameworkInternal
+	static <T> T withLocale(SubSessionContext subSession, Supplier<T> supplier) {
+		Locale locale = requireNonNull(subSession.getCurrentLocale());
+		Resources previousInstance = subSession.get(RESOURCES);
+		synchronized (Resources.class) {
+			subSession.set(RESOURCES, Resources.getInstance(locale));
+		}
+		try {
+			return supplier.get();
+		} finally {
+			synchronized (Resources.class) {
+				subSession.set(RESOURCES, previousInstance);
+			}
+		}
 	}
 
 	/**

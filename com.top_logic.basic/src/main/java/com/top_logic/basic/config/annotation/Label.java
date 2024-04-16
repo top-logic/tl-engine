@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@Retention(SOURCE)
+@Retention(RUNTIME)
 @Target({ TYPE, METHOD, FIELD })
 public @interface Label {
 

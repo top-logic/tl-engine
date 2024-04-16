@@ -5,6 +5,8 @@
  */
 package com.top_logic.basic.config.annotation;
 
+import static java.lang.annotation.RetentionPolicy.*;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -43,6 +45,7 @@ public @interface Subtypes {
 	 * Binding of a {@link #type() configuration interface type} to a {@link #tag() tag name}.
 	 */
 	@TagName("sub-type")
+	@Retention(RUNTIME)
 	public @interface Subtype {
 		/**
 		 * The tag name to associate a certain {@link #type()} with.

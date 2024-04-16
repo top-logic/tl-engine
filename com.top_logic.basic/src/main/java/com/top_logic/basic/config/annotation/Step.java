@@ -5,12 +5,17 @@
  */
 package com.top_logic.basic.config.annotation;
 
+import static java.lang.annotation.RetentionPolicy.*;
+
+import java.lang.annotation.Retention;
+
 /**
  * Single step of a {@link Ref} or {@link DerivedRef} path.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("step")
+@Retention(RUNTIME)
 public @interface Step {
 
 	/**

@@ -5,6 +5,10 @@
  */
 package com.top_logic.basic.config.annotation;
 
+import static java.lang.annotation.RetentionPolicy.*;
+
+import java.lang.annotation.Retention;
+
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.format.DotSeparatedIdentifierArray;
 
@@ -20,6 +24,7 @@ import com.top_logic.basic.config.format.DotSeparatedIdentifierArray;
  * </p>
  */
 @TagName("ref")
+@Retention(RUNTIME)
 public @interface Ref {
 
 	/**

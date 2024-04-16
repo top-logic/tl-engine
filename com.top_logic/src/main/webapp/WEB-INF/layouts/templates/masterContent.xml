@@ -9,7 +9,6 @@
 		resizable="false"
 	>
 		${mainTabbar}
-
 		<layout-reference resource="statusBar.layout.xml"/>
 	</layout>
 </template>

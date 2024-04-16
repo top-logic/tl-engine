@@ -7,6 +7,7 @@ package com.top_logic.basic.util;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.list;
 import static java.util.Collections.*;
+import static java.util.Objects.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
@@ -886,13 +888,27 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 	}
 
 	/**
-	 * Resets translations cached based on the locale of the {@link SubSessionContext}.
+	 * Changes the resources to those for the {@link Locale} from the {@link SubSessionContext}
+	 * during the call of this method.
+	 * <p>
+	 * This change affects only calls from that {@link SubSessionContext}.
+	 * </p>
 	 * 
 	 * @param subSession
-	 *        The {@link SubSessionContext} for which the cache should be dropped.
+	 *        The {@link SubSessionContext} whose {@link Locale} should be used and for which this
+	 *        change should be done.
+	 * @throws NullPointerException
+	 *         If one of the parameters is <code>null</code> or there is no {@link Locale} set at
+	 *         the {@link SubSessionContext}.
+	 * @see SubSessionContext#withLocale(Locale, Supplier)
 	 */
-	public void dropCachedTranslations(SubSessionContext subSession) {
-		// The cache is in the subclass 'DefaultResourcesModule' in 'com.top_logic'.
+	@FrameworkInternal
+	public <T> T withLocale(SubSessionContext subSession, Supplier<T> supplier) {
+		/* This is just a placeholder implementation. The actual implementation is in the subclass
+		 * 'DefaultResourcesModule', as it has to be in the project 'com.top_logic'. */
+		requireNonNull(subSession);
+		requireNonNull(subSession.getCurrentLocale());
+		return supplier.get();
 	}
 
 	private class BundleLoader {

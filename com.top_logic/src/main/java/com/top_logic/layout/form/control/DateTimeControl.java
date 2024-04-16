@@ -10,6 +10,7 @@ import static com.top_logic.layout.form.FormConstants.*;
 import java.io.IOException;
 import java.text.Format;
 import java.util.Date;
+import java.util.Optional;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -99,11 +100,10 @@ public class DateTimeControl extends AbstractFormFieldControl {
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
 		DateTimeField dateTimeField = (DateTimeField) getModel();
 		Date date = (Date) dateTimeField.getValue();
-		Format format = dateTimeField.get(FORMAT_ANNOTATION);
-		if (format == null) {
-			format = HTMLFormatter.getInstance().getDateTimeFormat();
-		}
-		String dateTimeString = format.format(date);
+		Format format = Optional.ofNullable(dateTimeField.get(FORMAT_ANNOTATION))
+                .orElseGet(() -> HTMLFormatter.getInstance().getDateTimeFormat());
+
+		String dateTimeString = (date != null) ? format.format(date) : "";
 
 		out.beginBeginTag(SPAN);
 		writeControlAttributes(context, out);

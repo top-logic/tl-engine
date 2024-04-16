@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.sidebar;
+package com.top_logic.layout.structure.sidebar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ import com.top_logic.util.ToBeValidated;
 public class TitleButtonsViewProvider extends ConfiguredLayoutControlProvider<TitleButtonsViewProvider.Config> {
 
 	/**
-	 * Configuration options for {@link TitleButtonsViewProvider}
+	 * Configuration options for {@link TitleButtonsViewProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<LayoutControlProvider> {
 		/**

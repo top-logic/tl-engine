@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.structure;
+package com.top_logic.layout.structure;
 
 import javax.swing.text.View;
 
@@ -12,10 +12,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
-import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
-import com.top_logic.layout.structure.LayoutControl;
-import com.top_logic.layout.structure.LayoutControlAdapter;
-import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -29,7 +25,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class LayoutViewProvider extends DecoratingLayoutControlProvider<LayoutViewProvider.Config> {
 
 	/**
-	 * Configuration interface of {@link LayoutViewProvider}
+	 * Configuration interface of {@link LayoutViewProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<LayoutControlProvider> {
 
@@ -43,7 +39,7 @@ public class LayoutViewProvider extends DecoratingLayoutControlProvider<LayoutVi
 		 * {@link ViewConfiguration} of the {@link LayoutControl}, which will be created by
 		 *         this {@link LayoutViewProvider}.
 		 */
-		ViewConfiguration.Config<?> getView();
+		PolymorphicConfiguration<? extends ViewConfiguration> getView();
 	}
 
 	/**

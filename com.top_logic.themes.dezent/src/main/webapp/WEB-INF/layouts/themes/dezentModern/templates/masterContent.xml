@@ -13,10 +13,8 @@
 				componentName="mainTabbar.layout.xml#mainTabber"
 			>
 				<layoutInfo size="%TOOL_ROW_HEIGHT%"/>
-				<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
-					<view class="com.top_logic.themes.modern.layout.views.ToolRowView"
-						name="toolRow"
-					>
+				<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
+					<view class="com.top_logic.layout.structure.toolrow.ToolRowView">
 						<include name="ToolRowView.xml"/>
 					</view>
 				</componentControlProvider>
@@ -40,12 +38,7 @@
 				<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
 			</layoutControl>
 			${mainTabbar}
-			<component class="com.top_logic.themes.modern.layout.ModernStatusLineComponent"
-				name="mainStatusLineComponent"
-				versionRendererClass="%VERSION_RENDERER_CLASS%"
-			>
-				<layoutInfo size="%VERSION_ROW_HEIGHT%"/>
-			</component>
+			<layout-reference resource="statusBar.layout.xml"/>
 		</components>
 	</layout>
 </template>

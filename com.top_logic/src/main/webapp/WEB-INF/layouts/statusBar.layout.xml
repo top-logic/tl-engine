@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layoutControl>
+	<layoutInfo size="%VERSION_ROW_HEIGHT%"/>
+	<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
+		<view class="com.top_logic.layout.structure.VersionViewConfiguration"
+			environment="%ENVIRONMENT%"
+		/>
+	</componentControlProvider>
+</layoutControl>

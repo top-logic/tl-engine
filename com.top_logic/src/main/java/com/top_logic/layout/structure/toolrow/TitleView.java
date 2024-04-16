@@ -3,13 +3,14 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.views;
+package com.top_logic.layout.structure.toolrow;
 
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -19,7 +20,6 @@ import com.top_logic.layout.basic.DefaultView;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.themes.modern.layout.ModernThemeConstants;
 import com.top_logic.util.Resources;
 
 /**
@@ -27,20 +27,26 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public class TitleView extends DefaultComponentView implements ModernThemeConstants, HTMLConstants {
+public class TitleView extends DefaultComponentView implements HTMLConstants {
+
+	private static final String CSS_CLASS_TITLE_TOP = "TitleTop";
+
+	private static final String CSS_CLASS_TITLE_NAME = "TitleName";
+
+	private static final String CSS_CLASS_CLOSE = "Close";
 
 	private ViewConfiguration _logoutConfig;
 
 	/**
-	 * Configuration interface of {@link TitleView}
+	 * Configuration interface of {@link TitleView}.
 	 */
-	public interface Config extends ViewConfiguration.Config<ViewConfiguration> {
+	public interface Config extends PolymorphicConfiguration<ViewConfiguration> {
 
 		/**
 		 * {@link ViewConfiguration}, which describes a {@link View} of an application
 		 *         logout command.
 		 */
-		ViewConfiguration.Config<?> getLogoutView();
+		PolymorphicConfiguration<? extends ViewConfiguration> getLogoutView();
 	}
 
 	/**

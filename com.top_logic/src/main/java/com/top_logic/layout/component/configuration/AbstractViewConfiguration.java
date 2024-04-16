@@ -9,13 +9,15 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfiguration;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 
 /**
- * The class {@link AbstractViewConfiguration} is the abstract superclass of
- * {@link ViewConfiguration} which handles the {@link ViewConfiguration#getName()} aspect.
+ * For legacy-compatibility only.
  * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * @deprecated Directly implement {@link ViewConfiguration}.
  */
+@Deprecated
 public abstract class AbstractViewConfiguration<C extends AbstractViewConfiguration.Config<?>>
 		implements ViewConfiguration, ConfiguredInstance<C> {
 
@@ -25,11 +27,9 @@ public abstract class AbstractViewConfiguration<C extends AbstractViewConfigurat
 
 	/**
 	 * Configuration interface for {@link AbstractViewConfiguration}s.
-	 * 
-	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
 	public interface Config<I extends AbstractViewConfiguration<?>>
-			extends ViewConfiguration.Config<I> {
+			extends PolymorphicConfiguration<I>, NamedConfiguration {
 		// Pure sum interface
 	}
 
@@ -49,7 +49,10 @@ public abstract class AbstractViewConfiguration<C extends AbstractViewConfigurat
 		_config = config;
 	}
 
-	@Override
+	/**
+	 * Legacy configuration name, no longer in use.
+	 */
+	@Deprecated
 	public final String getName() {
 		return _name;
 	}

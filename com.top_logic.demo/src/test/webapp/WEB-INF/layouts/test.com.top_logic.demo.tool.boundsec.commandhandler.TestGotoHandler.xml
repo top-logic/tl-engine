@@ -32,15 +32,6 @@
 											>
 												<!-- quirks openHandlerName #2128 -->
 												<dialogInfo openHandlerName="displayDialog_dialog1_1"/>
-												<views>
-													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-														name="gotoFromDialog1.1"
-													>
-														<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-															command="gotoCmd"
-														/>
-													</view>
-												</views>
 											</component>
 											<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 												name="dialog1.2"
@@ -49,37 +40,10 @@
 											>
 												<!-- quirks openHandlerName #2128 -->
 												<dialogInfo openHandlerName="displayDialog_dialog1_2"/>
-												<views>
-													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-														name="gotoFromDialog1.2"
-													>
-														<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-															command="gotoCmd"
-														/>
-													</view>
-												</views>
 											</component>
 										</dialogs>
-										<views>
-											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-												name="gotoFromDialog1"
-											>
-												<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-													command="gotoCmd"
-												/>
-											</view>
-										</views>
 									</component>
 								</dialogs>
-								<views>
-									<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-										name="gotoFromTab1"
-									>
-										<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-											command="gotoCmd"
-										/>
-									</view>
-								</views>
 							</component>
 							<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 								name="tab1.1"
@@ -110,37 +74,10 @@
 									>
 										<!-- quirks openHandlerName #2128 -->
 										<dialogInfo openHandlerName="displayDialog_dialog2_1"/>
-										<views>
-											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-												name="gotoFromDialog2.1"
-											>
-												<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-													command="gotoCmd"
-												/>
-											</view>
-										</views>
 									</component>
 								</dialogs>
-								<views>
-									<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-										name="gotoFromDialog2"
-									>
-										<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-											command="gotoCmd"
-										/>
-									</view>
-								</views>
 							</component>
 						</dialogs>
-						<views>
-							<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-								name="gotoFromTab2"
-							>
-								<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-									command="gotoCmd"
-								/>
-							</view>
-						</views>
 					</component>
 			</components>
 		</tabbar>

@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.themes.modern.layout.views;
+package com.top_logic.layout.structure.toolrow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,18 +19,15 @@ import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * A {@link View}, which can be configured via {@link ViewConfiguration}
+ * A {@link View}, which can be configured via {@link ViewConfiguration}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
 public abstract class DefaultComponentView implements ViewConfiguration {
 
-	@Override
-	public String getName() {
-		return null;
-	}
-
 	/**
+	 * Instantiates a {@link HTMLFragment} from a {@link ViewConfiguration}.
+	 * 
 	 * @param viewConfiguration
 	 *        - from which a {@link View} shall be generated
 	 */
@@ -41,6 +38,8 @@ public abstract class DefaultComponentView implements ViewConfiguration {
 	}
 
 	/**
+	 * Instantiates {@link HTMLFragment}s from {@link ViewConfiguration}s.
+	 * 
 	 * @see #toView(LayoutComponent, ViewConfiguration)
 	 */
 	protected static final List<HTMLFragment> toViews(LayoutComponent component,

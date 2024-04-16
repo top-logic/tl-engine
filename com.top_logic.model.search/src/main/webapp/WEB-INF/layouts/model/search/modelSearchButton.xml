@@ -2,9 +2,6 @@
 
 <template>
 	<params>
-		<param name="viewName"
-			value="searchInput"
-		/>
 		<param name="labelKey"
 			value="tl.searchView.tabber"
 		/>
@@ -17,7 +14,6 @@
 	</params>
 
 	<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
-		name="${viewName}"
 		renderer="${renderer}"
 	>
 		<commandConfiguration class="com.top_logic.layout.component.configuration.TabSwitchCommandModelConfiguration"

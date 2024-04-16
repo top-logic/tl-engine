@@ -8,16 +8,20 @@ package com.top_logic.layout.form.control;
 import static com.top_logic.layout.form.FormConstants.*;
 
 import java.io.IOException;
+import java.text.Format;
+import java.util.Date;
 
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.form.model.DateTimeField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
+import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
@@ -38,38 +42,41 @@ public class DateTimeControl extends AbstractFormFieldControl {
 
 	private static final String TIME_CSS_CLASS = "timePart";
 
+	private static final String TIME_CONTAINER_CSS = FIXED_RIGHT_CSS_CLASS + " " + TIME_CSS_CLASS;
+
+	/**
+	 * Defines the date format.
+	 */
+	public static final Property<java.text.Format> FORMAT_ANNOTATION =
+		TypedAnnotatable.property(java.text.Format.class, "format");
+
 	private Control _dayControl;
 
 	private Control _timeControl;
 
+
 	@Override
 	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
-		DateTimeField dateTimeField = (DateTimeField) getModel();
-		if (dateTimeField.getDayField().isImmutable()) {
-			writeImmutable(context, out);
-		} else {
-			out.beginBeginTag(SPAN);
-			writeControlAttributes(context, out);
-			out.endBeginTag();
+		out.beginBeginTag(SPAN);
+		writeControlAttributes(context, out);
+		out.endBeginTag();
+		{
 			{
-				{
-					out.beginBeginTag(SPAN);
-					out.writeAttribute(CLASS_ATTR, FLEXIBLE_CSS_CLASS);
-					out.endBeginTag();
-					_dayControl.write(context, out);
-					out.endTag(SPAN);
-				}
-				{
-					out.beginBeginTag(SPAN);
-					out.writeAttribute(CLASS_ATTR, FIXED_RIGHT_CSS_CLASS + " " + TIME_CSS_CLASS);
-					out.endBeginTag();
-					_timeControl.write(context, out);
-					out.endTag(SPAN);
-				}
-
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, FLEXIBLE_CSS_CLASS);
+				out.endBeginTag();
+				_dayControl.write(context, out);
+				out.endTag(SPAN);
 			}
-			out.endTag(SPAN);
+			{
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, TIME_CONTAINER_CSS);
+				out.endBeginTag();
+				_timeControl.write(context, out);
+				out.endTag(SPAN);
+			}
 		}
+		out.endTag(SPAN);
 
 	}
 
@@ -91,12 +98,17 @@ public class DateTimeControl extends AbstractFormFieldControl {
 	@Override
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
 		DateTimeField dateTimeField = (DateTimeField) getModel();
-		ComplexField dayField = dateTimeField.getDayField();
-		ComplexField timeField = dateTimeField.getTimeField();
+		Date date = (Date) dateTimeField.getValue();
+		Format format = dateTimeField.get(FORMAT_ANNOTATION);
+		if (format == null) {
+			format = HTMLFormatter.getInstance().getDateTimeFormat();
+		}
+		String dateTimeString = format.format(date);
+
 		out.beginBeginTag(SPAN);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
-		out.writeText(dayField.getAsString() + ", " + timeField.getAsString());
+		out.writeText(dateTimeString);
 		out.endTag(SPAN);
 	}
 
@@ -130,7 +142,7 @@ public class DateTimeControl extends AbstractFormFieldControl {
 		public static final CP INSTANCE = new CP();
 
 		/** Singleton constructor. */
-		public CP() {
+		private CP() {
 		}
 
 		@Override

@@ -9,7 +9,6 @@ import static com.top_logic.layout.form.values.Fields.*;
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.*;
 
-import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.Collections;
@@ -28,7 +27,6 @@ import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey.Builder;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
@@ -37,7 +35,6 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.format.WikiWrite;
 import com.top_logic.layout.form.i18n.I18NActiveLanguageControlProvider;
 import com.top_logic.layout.form.i18n.I18NStringField;
 import com.top_logic.layout.form.model.StringField;
@@ -102,25 +99,6 @@ public class InternationalizationEditor extends AbstractEditor {
 			storageConversion);
 
 		return field;
-	}
-
-	/**
-	 * Renders the translation for the current language of the given {@link ResKey}.
-	 */
-	public static void writeResKey(DisplayContext context, TagWriter out, ResKey resKey, boolean multiline)
-			throws IOException {
-		if (resKey == null) {
-			return;
-		}
-		String translation = context.getResources().getString(resKey, null);
-		if (StringServices.isEmpty(translation)) {
-			return;
-		}
-		if (multiline) {
-			WikiWrite.wikiWrite(out, translation);
-		} else {
-			out.writeText(translation);
-		}
 	}
 
 	private Map<String, ResKey> getDerivedResourceDefinition(EditorFactory editorFactory, ValueModel model) {

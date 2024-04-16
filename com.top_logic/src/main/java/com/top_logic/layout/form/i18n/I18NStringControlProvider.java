@@ -107,14 +107,20 @@ public class I18NStringControlProvider implements ControlProvider {
 
 	private <I extends AbstractCompositeControl<?>> ImmutablePropertyListener immutableListener(
 			AbstractCompositeControl<I> composite) {
+		ControlRenderer<CompositeControl> immutableRenderer;
+		if (multiline()) {
+			immutableRenderer = I18NStringActiveLanguageControlRenderer.MULTILINE_INSTANCE;
+		} else {
+			immutableRenderer = I18NStringActiveLanguageControlRenderer.INSTANCE;
+		}
 		return new ImmutablePropertyListener() {
 
 			@Override
 			public Bubble handleImmutableChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
-				ControlRenderer<CompositeControl> newRenderer;
+				ControlRenderer<? super CompositeControl> newRenderer;
 				if (newValue) {
 					// Display only the value for the current locale in view mode.
-					newRenderer = I18NStringActiveLanguageControlRenderer.INSTANCE;
+					newRenderer = immutableRenderer;
 				} else {
 					// Display each value in edit mode.
 					newRenderer = editModeRenderer();

@@ -153,7 +153,7 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 	}
 
 	private boolean addSingletonDefintion(Log log, Document tlModel) {
-		if (tlModel != null) {
+		if (tlModel == null) {
 			return false;
 		}
 

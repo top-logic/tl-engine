@@ -62,7 +62,7 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	private static final String DEFAULT_DB_PROPERTY = "tl_test_defaultDB";
 
 	/**
-	 * {@link ConnectionPool} name of the "second" unit test database that is intalled by this
+	 * {@link ConnectionPool} name of the "second" unit test database that is installed by this
 	 * setup.
 	 */
 	public static final String MIGRATION_POOL_NAME = "testMigration";

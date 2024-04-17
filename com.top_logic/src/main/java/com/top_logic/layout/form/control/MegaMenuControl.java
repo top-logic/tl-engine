@@ -600,12 +600,12 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 	public static class CP implements ControlProvider {
 
 		/**
-		 * Singleton {@link CP} instance for the control provider variable in the jsp file.
+		 * Singleton {@link CP} instance.
 		 */
 		public static final CP INSTANCE = new CP();
 
 		/** Singleton constructor. */
-		public CP() {
+		private CP() {
 		}
 
 		@Override

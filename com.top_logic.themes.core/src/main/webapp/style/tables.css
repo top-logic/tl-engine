@@ -35,8 +35,9 @@ table.tblTableNoBorder {
 	margin: 0;
 }
 
-td.tblRight .px-1 {
-	justify-content: end;
+td.tblRight .px-1,
+td.tblRight .px-1 > * {
+	justify-content: flex-end;
 }
 
 table td.tblRight .px-1 span.lFlexible > input {
@@ -1069,16 +1070,14 @@ table td .cDatetime .lFlexible {
 	width: fit-content !important;
 }
 
-table td .cDatetime .cDateInput input {
-	width: 6.5rem !important;
+table td .cDatetime .cDateInput input,
+table td .cDatetime .cTimeInput input {
+	padding-right: 0;
+    padding-left: 0;
 }
 
 table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
 	width: fit-content !important;
-}
-
-.cTimeInput input {
-	width: 4.5rem !important;
 }
 
 table td span.lFlexible > input:not([type="image"]) {

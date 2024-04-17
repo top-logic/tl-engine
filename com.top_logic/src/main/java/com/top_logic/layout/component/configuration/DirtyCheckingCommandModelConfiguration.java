@@ -81,7 +81,7 @@ public class DirtyCheckingCommandModelConfiguration<C extends DirtyCheckingComma
 		} else {
 			checkComponent = aLayoutComponent.getMainLayout().getComponentByName(componentName);
 			if (checkComponent == null) {
-				Logger.error("No component '" + componentName + "' found as definied in " + getConfig().location()
+				Logger.error("No component '" + componentName + "' found as defined in " + getConfig().location()
 					+ ". Ignore check scope.",
 					DirtyCheckingCommandModelConfiguration.class);
 				return commandModel;

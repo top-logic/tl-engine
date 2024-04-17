@@ -73,7 +73,7 @@ public abstract class MonitoringCommand extends AbstractCommandHandler {
 				sessionContext.removeHttpSessionBindingListener(listener);
 			}
 		} else {
-			// Intall removal listener to prevent leaving the analyzer installed after the
+			// Install removal listener to prevent leaving the analyzer installed after the
 			// monitoring session has terminated.
 			TLSessionContext sessionContext = TLContext.getContext().getSessionContext();
 			HttpSessionBindingListener listener = new HttpSessionBindingListener() {

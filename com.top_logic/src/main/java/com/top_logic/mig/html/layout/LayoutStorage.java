@@ -462,8 +462,8 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 					if (calledDelayed && !isStarted()) {
 						return null;
 					}
-					installLayout(resolver, layoutName);
 					try {
+						installLayout(resolver, layoutName);
 						bufferProtocolTmp.checkErrors();
 					} catch (Exception ex) {
 						log.error("Unable to fetch layout '" + layoutName + "' for theme '" + theme.getName() + "'.",
@@ -772,7 +772,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 		try {
 			return builder.build();
 		} catch (ConfigurationException exception) {
-			context.error("Unable to create configuration definied in " + layoutKey, exception);
+			context.error("Unable to create configuration defined in " + layoutKey, exception);
 		} catch (IOException exception) {
 			context.error("Problem reading " + layoutKey, exception);
 		}

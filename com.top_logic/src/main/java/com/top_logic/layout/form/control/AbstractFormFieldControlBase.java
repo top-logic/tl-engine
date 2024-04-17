@@ -226,7 +226,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 				if (scanCode < 10) {
 					buffer.append('0');
 				}
-				buffer.append((char) scanCode);
+				buffer.append(String.valueOf(scanCode));
 			}
 		}
 	}

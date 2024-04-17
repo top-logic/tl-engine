@@ -15,16 +15,17 @@
 							type="tl.core:String"
 						/>
 						<field
-							attribute="rowObject"
-							fullQualifiedName="test.defaultValue:ReferringObject#rowObject"
+							attribute="rowObjects"
+							fullQualifiedName="test.defaultValue:ReferringObject#rowObjects"
 							type="test.defaultValue:RowObject"
 						/>
 					</form>
 				</form-definition>
 			</annotations>
 			<attributes>
-				<reference name="rowObject"
+				<reference name="rowObjects"
 					composite="true"
+					inverse-reference="referringObject"
 					kind="forwards"
 					multiple="true"
 					navigate="true"
@@ -56,13 +57,36 @@
 						<default-value>
 							<default-by-expression>
 								<value><![CDATA[declaringObject -> {
- rows = $declaringObject.get(`test.defaultValue:ReferringObject#rowObject`);
+ rows = $declaringObject.get(`test.defaultValue:ReferringObject#rowObjects`);
  $rows.size()
 }]]></value>
 							</default-by-expression>
 						</default-value>
 					</annotations>
 				</property>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[model-> {
+ refObject = $model.get(`test.defaultValue:RowObject#referringObject`);
+ refName = $refObject.get(`test.defaultValue:ReferringObject#name`);
+ rows = $refObject.get(`test.defaultValue:ReferringObject#rowObjects`);
+ $refName + "_" + $model.get(`test.defaultValue:RowObject#integerField`); 
+}]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="referringObject"
+					aggregate="true"
+					inverse-reference="rowObjects"
+					kind="backwards"
+					navigate="true"
+					type="ReferringObject"
+				/>
 			</attributes>
 		</class>
 	</module>

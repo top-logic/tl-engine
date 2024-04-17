@@ -11,11 +11,11 @@
 		type="test.defaultValue:ReferringObject"
 	>
 		<dialogs>
-			<layout-reference resource="com.top_logic.demo/table/calculatedDefaultValue/asReference/createObject/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/createObject/dialog.layout.xml"/>
 		</dialogs>
-		<name key="dynamic.0302cd75-8597-4d24-b559-678024064ddd">
-			<en>Table of referring objects</en>
-			<de>Tabelle der verweisende Objekten</de>
+		<name key="dynamic.255fae38-891f-427b-a3f4-4c74bc59b466">
+			<en>Table (with form)</en>
+			<de>Tabelle (mit Formular)</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.defaultValue:ReferringObject`)"

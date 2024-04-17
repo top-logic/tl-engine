@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_7ef860de_0632_4561_9499_938eb5845a4a">
+		<tabLabel key="dynamic.5eab1550-a182-4c84-a9c2-9ced8f00f972">
+			<en>Calculated default value as reference</en>
+			<de>Berechnetes Standardwert in Referenz</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

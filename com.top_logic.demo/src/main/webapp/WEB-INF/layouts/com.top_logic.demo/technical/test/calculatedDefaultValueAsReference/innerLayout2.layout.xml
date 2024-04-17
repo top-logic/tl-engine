@@ -7,8 +7,8 @@
 >
 	<arguments>
 		<components>
-			<layout-reference resource="com.top_logic.demo/table/calculatedDefaultValue/asReference/tableOfReferringObjectsTable.layout.xml"/>
-			<layout-reference resource="com.top_logic.demo/table/calculatedDefaultValue/asReference/detailsForm.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/table_withForm_Table.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/detailsForm.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

@@ -146,20 +146,197 @@
 	color: var(--icon-disabled);
 }
 
+/*
+****					****
+****	Toolrow styles	****
+****					****
+*/
+.ToolBarContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    height: inherit;
+}
+
+.ToolContainer {
+	display: flex;
+}
+
+.ToolBarContainer .IconContainer {
+	display: flex;
+	margin-right: var(--spacing-02);
+}
+
+.ToolBarContainer .IconContainer ul {
+	display: flex;
+	align-items: center;
+	list-style-type: none;
+	margin: 0;
+	padding-inline-start: 0px;
+}
+
+.ToolBarContainer .IconContainer > ul > li:not(:first-child) {
+	padding-left: var(--spacing-03);
+}
+
+.ToolContainerRight {
+    display: flex;
+}
+
+.system_message {
+	display: flex;
+	flex-direction: column;
+}
+
+.ToolBarContainer .IconContainer .cButton,
+.ToolBarContainer .IconContainer .trbEntry {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	height: 2.5rem;
+	width: 2.5rem;
+	border-radius: var(--corner-radius);
+}
+
+.ToolBarContainer .tlUser.cButton.cmdLink a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--icon-on-color);
+	height: inherit;
+	width: inherit;
+}
+
+.ToolBarContainer .tlUser.cButton.cmdLink a:hover,
+.ToolBarContainer .tlUser.cButton.cmdLink a:active {
+	color: var(--icon-on-color);
+	background: var(--button-primary);
+	text-decoration: none;
+	outline: none;
+}
+
+.ToolBarContainer .tlUser.cButton.cmdLink a:focus {
+	color: var(--icon-on-color);
+	text-decoration: none;
+	outline: none;
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.ToolBarContainer .tlUser.cButton.cmdLink a i {
+	font-size: 1.5rem;
+}
+
+.ToolBarContainer .IconContainer .cButton.cmdLink a, 
+.ToolBarContainer .IconContainer .cButton.cmdLinkActive a,
+.ToolBarContainer .IconContainer .trbEntry a, 
+.quickSearch .cButton a {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	height: 2.5rem;
+	width: 2.5rem;
+	border-radius: var(--corner-radius);
+}
+
+.ToolBarContainer .IconContainer .cButton a i,
+.ToolBarContainer .IconContainer .trbEntry a i {
+	font-size: 1.5rem;
+}
+
+.quickSearch {
+	display: flex;
+	align-items: center;
+}
+
+.quickSearch .cButton.quickSearchButton {
+	height: 2rem;
+    width: 2rem;
+}
+
+.quickSearch .cButton.quickSearchButton a {
+	height: 2rem;
+    width: 2rem;
+}
+
+.quickSearch .cButton.quickSearchButton a i {
+	font-size: 1rem;
+}
+
+.mtbGroup .cButton.cmdLink {
+	background: transparent;
+}
+
+.quickSearch .cButton.quickSearchButton a, 
+.ToolBarContainer .cButton.cmdLink a, 
+.mtbGroup .trbEntry a {
+	color: var(--icon-secondary);
+	padding: inherit;
+}
+
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:hover,
+.ToolBarContainer .cButton.cmdLink a:hover,
+.mtbGroup .trbEntry a:not(.disabled):hover  {
+	color: var(--icon-secondary);
+	background: var(--layer-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--layer-hover);
+}
+
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:focus,
+.ToolBarContainer .cButton.cmdLink a:focus,
+.mtbGroup .trbEntry:not(.disabled) a:focus {
+	color: var(--icon-secondary);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	background: transparent;
+	outline: none;
+}
+
+.quickSearch .cButton.quickSearchButton:not(.cmdLinkDisabled) a:active,
+.ToolBarContainer .cButton.cmdLink a:active,
+.mtbGroup .trbEntry:not(.disabled) a:active {
+	color: var(--icon-secondary);
+	background: var(--background-active);
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+/* ACTIVE STATES */
+.ToolBarContainer .cButton.cmdLinkActive {
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.ToolBarContainer .cButton.cmdLinkActive a:hover {
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.ToolBarContainer .cButton.cmdLinkActive a:focus {
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.ToolBarContainer .cButton.cmdLinkActive a {
+	color: var(--text-on-color);
+}
+
+.header-logo {
+	display: inline-flex;
+	align-items: center;
+}
+
+.header-logo img {
+	max-height: 40px;
+	max-width: 300px;
+}
+
 /* =============================================== */
 /* ================ Sidebar Design =============== */
 /* =============================================== */
-.mcMinimized .sblLogo .frmBody {
-    padding: var(--spacing-01) var(--spacing-03) 0 var(--spacing-03);
-}
-
-.mcMinimized .sblLogo .frmBody {
-    padding: var(--spacing-01) var(--spacing-01) 0 var(--spacing-01);
-}
-
 .sblTitle {
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: var(--spacing-03);
 }
 
@@ -169,12 +346,8 @@
 	overflow: hidden;
 }
 
-div.mcMinimized .sblTitle img {
-	max-width: 2rem;
-}
-
 .sblTitleName {
-	font-family: var(--font-family-bold);
+	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -185,7 +358,7 @@ div.mcMinimized .sblTitle img {
 }
 
 .sblTitleVersion {
-	font-family: var(--font-family-regular);
+	font-family: 'Inter-Regular';
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -211,10 +384,73 @@ div.mcMinimized .sblTitle img {
   	border-top: 2px solid var(--border-subtle);
 }
 
+div.mcMinimized .accText {
+	display: none;
+}
+
+.sblTitle img {
+    max-width: 100%;
+}
+
+.mcMinimized .sidebar-max,
+.sidebar-min {
+	display: none;	
+}
+
+.mcMinimized .sidebar-min {
+	display: initial;
+	max-width: 2rem;
+}
+
 .cMinimizable:not(.mcMinimized) .tabbarPopup {
 	position: absolute;
-	top: 5px;
-	right: 5px;
+	top: 0;
+}
+
+div.mcToggle {
+	position: absolute;
+	cursor: pointer;
+	width: calc(2 * var(--spacing-02) + var(--body-02-line-height));
+    height: calc(2 * var(--spacing-02) + var(--body-02-line-height));
+	right: 0;
+	top: 0;
+	background: var(--MC_MINIMIZE_ICON) no-repeat;
+	box-shadow: var(--shadow-menu);
+	visibility: hidden
+}
+
+div.mcMinimized > div.mcToggle {
+	right:0;
+	background: var(--MC_NORMALIZE_ICON) no-repeat;
+}
+
+div.cMinimizable:HOVER > div.mcToggle {
+	visibility: visible;
+}
+
+div.mcMinimized.frmBody, 
+div.mcMinimized div.frmBody {
+	overflow: hidden;
+}
+
+div.mcMinimized div.frmBody {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+div.mcMinimized .accText {
+	display: none;
+}
+
+.mcMinimized .sidebar-max,
+.sidebar-min {
+	display: none;	
+}
+
+.mcMinimized .sidebar-min {
+	display: initial;	
 }
 
 .quickSearch .cTextInput {
@@ -257,7 +493,7 @@ div.mcMinimized .sblTitle img {
 
 /* For collapsed sidebar */
 .mcMinimized .licenseView .licenseContent {
-	font-family: var(--font-family-regular);
+	font-family: 'Inter-Regular';
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -278,11 +514,6 @@ span.cLogoutTimer input {
 span.ltcCounting {
 	display: block;
 }
-
-.header-logo img {
-	max-height: 50px;
-}
-
 
 /* =============================================== */
 /* ====== AccordionControl (prefix is 'acc') ===== */

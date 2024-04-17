@@ -55,13 +55,13 @@
 		value="/images/appLogo.svg"
 	/>
 	<icon name="HEADER_RIGHT_IMAGE"
-		value="/images/TL_Logo_blue.svg"
+		expr="%com.top_logic.layout.Icons.APP_LOGO%"
 	/>
 	<icon name="IMAGES_APP_LOGO"
-		value="/images/TL_App_icon_blue.svg"
+		value="/images/appLogo.svg"
 	/>
 	<icon name="IMAGES_APP_LOGO_MINIMIZED"
-		expr="%IMAGES_APP_LOGO%"
+		value="/images/TL_App_icon_blue.svg"
 	/>
 	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
 		value="64px"

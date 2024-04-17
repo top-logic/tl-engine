@@ -23,15 +23,30 @@ img {border:0 none;}
 .MenuContainer ul li a.MenuHover {text-decoration:none; height:26px; border-left:1px solid #9bb0d1; border-right:1px solid #9bb0d1; font-weight:bold;}
 .MenuContainer ul li a.MenuClick {text-decoration:none; height:26px; border-left:1px solid #9bb0d1; border-right:1px solid #9bb0d1; background:url(../images/menu_bar_hover_bg.png) left top repeat-x; font-weight:bold;}
 
-.ToolBarContainer {height:56px; background:var(--TOOLBAR_BACKGROUND); display:block;}
-.ToolBarContainer .ToolContainer {float:left; z-index:1;}
-.ToolBarContainer .ToolContainerRight {float:right; z-index:1;}
+.IconContainerMessages { padding-right: 4px; }
 
-.ToolContainerRight .IconContainer {float:left; margin:0 0 0 0;}
-.ToolContainerRight .IconContainer ul {margin:0; padding:0; list-style-type:none;}
+.ToolBarContainer {
+    height: 56px;
+    background: var(--TOOLBAR_BACKGROUND);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ToolBarContainer .ToolContainer {z-index:1;}
+.ToolBarContainer .ToolContainerRight {z-index:1;}
+
+.ToolContainerRight .IconContainer ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .ToolContainerRight .IconContainer ul li {margin:0; padding:0; float:left;}
 .ToolContainer .IconContainer ul.mtbGroup {margin-right: 5px;}
-.ToolContainer .IconContainer {float:left; margin:10px 0 0 0;}
 .ToolContainer .IconContainer ul {margin:0; padding:0; list-style-type:none;}
 .ToolContainer .IconContainer ul li {margin:0; padding:0; float:left;}
 .ToolContainer .IconContainer ul li a.Edit {background:url(../images/icons/edit_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
@@ -79,7 +94,17 @@ img {border:0 none;}
 .ToolContainer .IconContainer ul li a.Help {background:url(../images/icons/help_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
 .ToolContainer .IconContainer ul li a.HelpHover {background:url(../images/icons/help_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
 .ToolContainer .IconContainer ul li a.HelpActive {background:url(../images/icons/help_active.png) left top no-repeat; height:36px; width:36px; float:left;}
-.ToolBarContainer .header-logo {position:relative; height:var(--HEADER_RIGHT_IMAGE_HEIGHT); width:var(--HEADER_RIGHT_IMAGE_WIDTH); padding-right:10px; overflow:hidden;}
+.ToolContainerRight .IconContainer .header-logo {
+	overflow:hidden; 
+	display: inline-flex;
+	align-items: center;
+}
+
+.ToolContainerRight .IconContainer .header-logo img {
+	max-height: 40px;
+	max-width: 300px;
+}
+
 .BreadCrumbOuter {height:23px; background:var(--BREADCRUMB_BACKGROUND); margin-left:0px}
 .BreadCrumbOuter .breadcrumb {margin-left:0px}
 .BreadCrumbOuter .Left {height:19px; line-height:19px; margin:2px 0px 0px 0px; float:left; background:var(--BREADCRUMB_BACKGROUND_OUTER_LEFT); padding:0px 0px 0px 19px; text-align:left;}
@@ -102,8 +127,17 @@ a.HelpIconActive {background:url(../images/help_new_active.png) left top no-repe
 /* Tree Menu */
 .TreeTitle {text-decoration:none; cursor:pointer;}
 .TreeTitleHover {background:#e7e8ea; text-decoration:none; cursor:pointer;}
-.Footer {height:19px; overflow:hidden; background:url(../images/footer_bg.png) left top repeat-x;}
-.Footer .FooterStatus {width:140px; height:17px; padding:2px 0 0 11px; float:right; background:url(../images/footer_status_bg.png) left top no-repeat; color:#333333; font-size:11px;}
+.Footer {
+	height: 19px;
+    padding: 0 4px;
+    overflow: hidden;
+    background: url(../images/footer_bg.png) left top repeat-x;
+    color: #333333;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
 /* Budget List Page*/
 .Title {font-family:var(--TEXT_FAMILY); font-size:12px; font-weight:bold; color:#000000; background:url(../images/baudget_table_bg.png) left top repeat-x; height:19px; padding-left:10px;}

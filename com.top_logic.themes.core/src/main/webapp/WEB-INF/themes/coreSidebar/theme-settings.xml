@@ -10,6 +10,12 @@
 	<int name="LICENCE_EXPIRE_BAR_HEIGHT"
 		expr="34"
 	/>
+	<icon name="IMAGES_APP_LOGO"
+		value="/images/appLogo.svg"
+	/>
+	<icon name="IMAGES_APP_LOGO_MINIMIZED"
+		value="/images/TL_App_icon_blue.svg"
+	/>
 	<int name="QUICK_SEARCH_HEIGHT"
 		value="140"
 	/>

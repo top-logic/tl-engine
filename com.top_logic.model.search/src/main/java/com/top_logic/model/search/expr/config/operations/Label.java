@@ -17,8 +17,10 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -62,15 +64,24 @@ public class Label extends GenericMethod {
 	/** {@link MethodBuilder} creating {@link Label}. */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Label> {
 
+		/** Description of parameters for a {@link Label}. */
+		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("object")
+			.optional("language", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
+			.build();
+
 		/** Creates a {@link Builder}. */
 		public Builder(InstantiationContext context, Config<?> config) {
 			super(context, config);
 		}
 
 		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
+		}
+
+		@Override
 		public Label build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			checkMinArgs(expr, args, 1);
-			checkMaxArgs(expr, args, 2);
 			return new Label(getConfig().getName(), args);
 		}
 	}

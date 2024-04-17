@@ -41,7 +41,7 @@ import com.top_logic.model.TLObject;
 public class Resources extends DefaultBundle {
 
 	/** The key for the {@link Resources} cache at the {@link SubSessionContext}. */
-	private static Property<Resources> RESOURCES = TypedAnnotatable.property(Resources.class, "resources");
+	private static final Property<Resources> RESOURCES = TypedAnnotatable.property(Resources.class, "resources");
 
 	/** The pattern string for the locale part of a resource file. */
 	public static final String RESOURCE_FILE_LOCALE_PATTERN =
@@ -240,9 +240,9 @@ public class Resources extends DefaultBundle {
 	@FrameworkInternal
 	static <T> T withLocale(SubSessionContext subSession, Supplier<T> supplier) {
 		Locale locale = requireNonNull(subSession.getCurrentLocale());
-		Resources previousInstance = subSession.get(RESOURCES);
+		Resources previousInstance;
 		synchronized (Resources.class) {
-			subSession.set(RESOURCES, Resources.getInstance(locale));
+			previousInstance = subSession.set(RESOURCES, Resources.getInstance(locale));
 		}
 		try {
 			return supplier.get();

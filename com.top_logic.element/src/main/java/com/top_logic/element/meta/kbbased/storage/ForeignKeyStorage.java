@@ -5,9 +5,6 @@
  */
 package com.top_logic.element.meta.kbbased.storage;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -19,14 +16,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.func.Function1;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dob.ex.UnknownTypeException;
-import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
-import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
@@ -35,14 +28,13 @@ import com.top_logic.element.meta.ReferenceStorage;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.AssociationQuery;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
-import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.persistency.AllReferenceColumns;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.util.error.TopLogicException;
 
@@ -91,7 +83,7 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 		 * If not set, it defaults to the name of the reference attribute name.
 		 * </p>
 		 */
-		@Options(fun = ReferenceColumns.class, args = { @Ref(STORAGE_TYPE) })
+		@Options(fun = AllReferenceColumns.class, args = { @Ref(STORAGE_TYPE) })
 		@Name(STORAGE_ATTRIBUTE)
 		String getStorageAttribute();
 
@@ -100,39 +92,6 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 		 */
 		void setStorageAttribute(String value);
 
-		/**
-		 * All {@link MOReference} columns of a given {@link MOClass table type}.
-		 */
-		class ReferenceColumns extends Function1<List<String>, String> {
-			@Override
-			public List<String> apply(String tableName) {
-				if (tableName == null) {
-					return Collections.emptyList();
-				}
-				List<String> result = new ArrayList<>();
-				MORepository repository = PersistencyLayer.getKnowledgeBase().getMORepository();
-				MetaObject type;
-				try {
-					type = repository.getMetaObject(tableName);
-				} catch (UnknownTypeException ex) {
-					return Collections.emptyList();
-				}
-				if (!(type instanceof MOClass)) {
-					return Collections.emptyList();
-				}
-				MOClass classType = (MOClass) type;
-				for (MOAttribute attr : classType.getAttributes()) {
-					if (attr.getName().equals(PersistentObject.TYPE_REF)) {
-						continue;
-					}
-					if (attr instanceof MOReference) {
-						result.add(attr.getName());
-					}
-				}
-				Collections.sort(result);
-				return result;
-			}
-		}
 	}
 
 	private String _storageAttributeName;

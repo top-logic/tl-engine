@@ -17,7 +17,7 @@
 			securityProviderClass="securityRoot"
 			titleKey="${resPrefix}.themes.table.title"
 		>
-			<layoutInfo size="300px"/>
+			<layoutInfo size="350px"/>
 			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.ThemeListModelBuilder"/>
 
 			<table
@@ -30,6 +30,9 @@
 							method="getId"
 							type="com.top_logic.gui.config.ThemeConfig"
 						/>
+					</column>
+					<column name="label">
+						<accessor class="com.top_logic.layout.themeedit.browser.providers.ThemeLabelAccessor"/>
 					</column>
 				</columns>
 			</table>
@@ -97,6 +100,7 @@
 					class="com.top_logic.tool.boundsec.CommandSequence"
 					clique="refresh"
 					group="Read"
+					resourceKey="com.top_logic.layout.themeedit.browser.providers.FastThemeReload"
 				>
 					<commands>
 						<call id="reloadThemeInternal"

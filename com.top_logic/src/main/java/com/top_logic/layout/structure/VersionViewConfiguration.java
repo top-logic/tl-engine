@@ -23,6 +23,7 @@ import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.template.WithPropertiesBase;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.Resources;
 
 /**
  * Factory for a view rendered to the application's status bar.
@@ -104,6 +105,17 @@ public class VersionViewConfiguration extends AbstractConfiguredInstance<Version
 			}
 
 			out.writeText(context.getResources().getString(contentKey));
+		}
+
+		/**
+		 * Renders the application name.
+		 * 
+		 * @throws IOException
+		 *         If rendering fails.
+		 */
+		@TemplateVariable("applicationName")
+		public void writeApplicationName(TagWriter out) throws IOException {
+			out.writeText(Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		}
 	}
 

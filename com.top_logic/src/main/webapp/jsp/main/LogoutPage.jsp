@@ -45,9 +45,9 @@ try {
         .container {
             display: flex;
             flex-direction: column;
-            margin-top: 40vh;
+            justify-content: center;
+            align-items: center;
             height: 100%;
-            justify-content: flex-start;
         }
 
         .caption {

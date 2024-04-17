@@ -253,13 +253,18 @@ select.tl-select {
 	outline-color: lightgray;
 }
 
+.sblTitle img {
+    max-width: 100%;
+}
+
 .mcMinimized .sidebar-max,
 .sidebar-min {
 	display: none;	
 }
 
 .mcMinimized .sidebar-min {
-	display: initial;	
+	display: initial;
+	max-width: 2rem;
 }
 
 .mcMinimized .accRoot.lcAuto {

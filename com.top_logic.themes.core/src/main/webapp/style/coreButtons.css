@@ -653,12 +653,12 @@ a.fChoose:hover,
 
 .sblLogo .cButton.cImageButton, 
 .sblLogo .cButton.cImageButton.cmdButtonDisabled {
-	height: .5rem;
 	width: .5rem;
 }
 
 .tlAdditionalRightContent .cButton.cImageButton a,
-.sblLogo .cImageButton a {
+.sblLogo .cImageButton a,
+.sblLogo .cImageButton a:hover {
 	padding: inherit;
 	color: var(--icon-on-color);
 }

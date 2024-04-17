@@ -851,7 +851,7 @@ public class LayoutUtils {
 					// do not use stored item as it is potentially modified.
 					item = TypedConfiguration.copy(item);
 				} catch (ConfigurationException ex) {
-					Logger.error("Unable to create configuration definied in " + resource, ex);
+					Logger.error("Unable to create configuration defined in " + resource, ex);
 				}
 			}
 			return item;

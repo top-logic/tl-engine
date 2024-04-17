@@ -13,10 +13,8 @@ import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.DateTimeControl;
 import com.top_logic.layout.form.model.DateTimeField;
-import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.annotate.ui.Format;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link TypeSpec#DATE_TIME_TYPE}.
@@ -47,12 +45,7 @@ public class DateTimeFieldProvider extends AbstractFieldProvider {
 	
 	private java.text.Format getFormatAnnotation(EditContext editContext) {
 		try {
-			Format formatAnnotation = editContext.getAnnotation(Format.class);
-			java.text.Format format = DisplayAnnotations.getConfiguredDateFormat(formatAnnotation);
-			if (format == null) {
-				return HTMLFormatter.getInstance().getDateTimeFormat();
-			}
-			return format;
+			return DisplayAnnotations.getDateFormat(editContext);
 		} catch (ConfigurationException ex) {
 			throw new RuntimeException(ex);
 		}

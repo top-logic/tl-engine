@@ -10,7 +10,6 @@ import static com.top_logic.layout.form.FormConstants.*;
 import java.io.IOException;
 import java.text.Format;
 import java.util.Date;
-import java.util.Optional;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -49,7 +48,8 @@ public class DateTimeControl extends AbstractFormFieldControl {
 	 * Defines the date format.
 	 */
 	public static final Property<java.text.Format> FORMAT_ANNOTATION =
-		TypedAnnotatable.property(java.text.Format.class, "format");
+		TypedAnnotatable.propertyDynamic(java.text.Format.class, "format",
+			control -> HTMLFormatter.getInstance().getDateTimeFormat());
 
 	private Control _dayControl;
 
@@ -100,9 +100,7 @@ public class DateTimeControl extends AbstractFormFieldControl {
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
 		DateTimeField dateTimeField = (DateTimeField) getModel();
 		Date date = (Date) dateTimeField.getValue();
-		Format format = Optional.ofNullable(dateTimeField.get(FORMAT_ANNOTATION))
-                .orElseGet(() -> HTMLFormatter.getInstance().getDateTimeFormat());
-
+		Format format = dateTimeField.get(FORMAT_ANNOTATION);
 		String dateTimeString = (date != null) ? format.format(date) : "";
 
 		out.beginBeginTag(SPAN);

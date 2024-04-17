@@ -35,7 +35,7 @@ public class ControlRepresentableCP extends DecoratingLayoutControlProvider<Cont
 
 	}
 
-	private ContextMenuFactory _contextMenu;
+	private final ContextMenuFactory _contextMenu;
 
 	/**
 	 * Creates a {@link ControlRepresentableCP} from configuration.

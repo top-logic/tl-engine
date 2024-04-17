@@ -72,6 +72,7 @@ div.fptBody {
     right: 0px;
     top: 78px;
     bottom: 0px;
+	margin-top: var(--spacing-02);
 }
 
 div.fptBodyContent {
@@ -134,6 +135,7 @@ div.fptSubtitleContent {
     padding-left: var(--spacing-03);
     display: flex;
     align-items: center;
+	font-size: var(--heading-03-font-size);
 }
 
 .fptIcon, .fptIconWithOverlay, .fptIconOverlay {

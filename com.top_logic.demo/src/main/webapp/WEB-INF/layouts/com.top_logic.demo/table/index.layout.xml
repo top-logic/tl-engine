@@ -2,6 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
 	template="com.top_logic/legacyTabbar.template.xml"
 >
 	<arguments
@@ -20,6 +21,7 @@
 			<layout-reference resource="com.top_logic.demo/table/customizedSidebar/customizedSidebar.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/table/treeTable/demoTreeTable.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/calculatedDefaultValue/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

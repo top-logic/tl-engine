@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		size="300px"
+		type="test.defaultValue:ReferringObject"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/table/calculatedDefaultValue/asReference/createObject/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.0302cd75-8597-4d24-b559-678024064ddd">
+			<en>Table of referring objects</en>
+			<de>Tabelle der verweisende Objekten</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.defaultValue:ReferringObject`)"
+			supportsElement="element->$element.instanceOf(`test.defaultValue:ReferringObject`)"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteSelection"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

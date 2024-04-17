@@ -1205,12 +1205,13 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			ConfigurationDescriptor elementDescriptor = property.getElementDescriptor(reader.getLocalName());
 			if (elementDescriptor == null) {
 				StringBuilder error = new StringBuilder();
-				error.append("List entry elements '");
-				error.append(property.getElementNames());
-				error.append("' expected, but got '");
+				error.append("Unexpected list element '");
 				error.append(reader.getLocalName());
 				error.append("'");
 				appendForProperty(error, property);
+				error.append(", expected one of '");
+				error.append(property.getElementNames());
+				error.append("'");
 				appendAtLocation(error, reader);
 				error.append(".");
 				throw new ConfigurationException(error.toString());

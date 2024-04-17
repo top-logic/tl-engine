@@ -3,9 +3,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<artifactId>tl-parent-app-internal</artifactId>
+		<artifactId>tl-parent-core-internal</artifactId>
 		<version>7.8.0-SNAPSHOT</version>
-		<relativePath>../tl-parent-app/internal</relativePath>
+		<relativePath>../tl-parent-core/internal</relativePath>
 	</parent>
 
 	<artifactId>tl-bpe-app</artifactId>
@@ -13,14 +13,6 @@
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<dependencies>
-  		<dependency>
-      		<groupId>com.top-logic</groupId>
-      		<artifactId>tl-themes-core</artifactId>
-    	</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-themes-dezent</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-bpe-modeler</artifactId>
@@ -60,5 +52,10 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
+  		<dependency>
+      		<groupId>com.top-logic</groupId>
+      		<artifactId>tl-themes-core</artifactId>
+			<scope>test</scope>
+    	</dependency>
 	</dependencies>
 </project>

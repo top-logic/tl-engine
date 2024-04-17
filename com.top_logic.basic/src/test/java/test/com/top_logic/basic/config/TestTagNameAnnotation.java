@@ -279,7 +279,7 @@ public class TestTagNameAnnotation extends AbstractTypedConfigurationTestCase {
 			WithTagClash result = readT(WithTagClash.class, "<a><bs><d/></bs></a>");
 			fail("Must not parse tag 'd' with clash: " + result);
 		} catch (ConfigurationException ex) {
-			BasicTestCase.assertContains("but got 'd' for property 'bs'", ex.getMessage());
+			BasicTestCase.assertContains("Unexpected list element 'd' for property 'bs'", ex.getMessage());
 		}
 	}
 
@@ -301,7 +301,9 @@ public class TestTagNameAnnotation extends AbstractTypedConfigurationTestCase {
 			readT(WithResolvedTagClash.class, "<a><bs><c/></bs></a>");
 			fail("Must not parse invalid config.");
 		} catch (ConfigurationException ex) {
-			BasicTestCase.assertContains("List entry elements '[b, d]' expected, but got 'c'", ex.getMessage());
+			BasicTestCase.assertContains(
+				"Unexpected list element 'c' for property 'bs' (test.com.top_logic.basic.config.TestTagNameAnnotation$WithResolvedTagClash.getBs()), expected one of '[b, d]'",
+				ex.getMessage());
 		}
 	}
 

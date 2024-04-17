@@ -1207,10 +1207,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				StringBuilder error = new StringBuilder();
 				error.append("Unexpected list element '");
 				error.append(reader.getLocalName());
-				error.append("', expected one of '");
-				error.append(property.getElementNames());
 				error.append("'");
 				appendForProperty(error, property);
+				error.append(", expected one of '");
+				error.append(property.getElementNames());
+				error.append("'");
 				appendAtLocation(error, reader);
 				error.append(".");
 				throw new ConfigurationException(error.toString());

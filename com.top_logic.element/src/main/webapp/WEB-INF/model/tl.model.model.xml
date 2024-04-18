@@ -301,8 +301,55 @@
 					<generalizations>
 						<generalization type="TLType"/>
 					</generalizations>
-					<attributes/>
+					<attributes>
+						<property name="dbType"
+							type="DBType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBType()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="dbSize"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBSize()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="dbPrecision"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBPrecision()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="binary"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.isBinary()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
 				</class>
+
+				<datatype name="DBType"
+					db_type="string"
+					kind="Custom"
+				>
+					<annotations>
+						<config-type value="ENUM"/>
+					</annotations>
+					<enum-storage enum="com.top_logic.basic.sql.DBType"/>
+				</datatype>
 
 				<class name="TLAssociation">
 					<annotations>
@@ -326,6 +373,17 @@
 							multiple="true"
 							type="TLAssociation"
 						/>
+						<reference name="ends"
+							multiple="true"
+							ordered="true"
+							type="TLAssociationEnd"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLAssociation.getEnds()"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 
@@ -474,6 +532,15 @@
 						<property name="ordered"
 							type="tl.core:Boolean"
 						/>
+						<property name="derived"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.DerivedTLTypePart.isDerived()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 						<reference name="classifiedBy"
 							multiple="true"
 							type="tl.model:TLClassifier"
@@ -520,6 +587,15 @@
 						<property name="historyType"
 							type="tl.model:HistoryType"
 						/>
+						<property name="endIndex"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLAssociationEnd.getEndIndex()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
 
@@ -650,6 +726,24 @@
 								</storage-algorithm>
 							</annotations>
 						</property>
+						<property name="backwards"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLReference.isBackwards()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="opposite"
+							type="TLReference"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLReference.getOpposite()"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 

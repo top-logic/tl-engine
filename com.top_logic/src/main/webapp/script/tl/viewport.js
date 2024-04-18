@@ -878,7 +878,14 @@ services.viewport = {
 	    	if(buttons[i].offsetLeft < 1) {
 	    		dropdown.style.display = 'inline-block';
 	      		currButton = buttonsClone[i].firstElementChild;
-	      		currButton.classList = "tlInDropdown"
+				
+				let additionalClass = "";
+				if (currButton.classList.contains("cmdButton")) {
+					additionalClass = " cmdButton";
+				} else if (currButton.classList.contains("cmdButtonDisabled")) {
+					additionalClass = " cmdButtonDisabled";
+				}
+	      		currButton.classList = "tlInDropdown" + additionalClass;
 	      		dropdownHtml += currButton.outerHTML;
 	      		buttons[i].style.display = 'none';
 	    	}
@@ -914,7 +921,6 @@ services.viewport = {
 			const buttonPadding = getComputedStyle(anchors[0]);
 			const paddingLeft = parseFloat(buttonPadding.getPropertyValue('padding-left'));
 			const paddingRight = parseFloat(buttonPadding.getPropertyValue('padding-right'));
-			dropdownContent.style.width = `${maxWidth + paddingLeft + paddingRight}px`;
 			const ancestorWithLcHidden = this.findAncestorWithClass(dropdownButton, 'lcHidden', 5);
 	        if (ancestorWithLcHidden) {
 	            ancestorWithLcHidden.style.overflow = 'visible';

@@ -357,6 +357,22 @@ div.ace_tooltip>code.inlineCode {
 	align-self: center;
 }
 
+.menuTitle {
+	position: relative;
+	display: flex;
+	height: var(--POPUP_TITLE_HEIGHT);
+	padding-left: 2px;
+	background-color: var(--layer-accent);
+}
+
+.menuTitleContents {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding: 0 3px;
+	align-self: center;
+}
+
 .cTextPopupEditor {
 	margin: 0 var(--spacing-02);
 }

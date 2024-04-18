@@ -119,7 +119,7 @@ public class PopupMenuButtonControl extends AbstractButtonControl<PopupMenuModel
 	 */
 	public HandlerResult openPopupMenu(DisplayContext commandContext) {
 		final DefaultPopupDialogModel dialogModel =
-			new DefaultPopupDialogModel(DefaultLayoutData.scrollingLayout(0, 0), 1);
+			new DefaultPopupDialogModel(DefaultLayoutData.scrollingLayout(0, 0));
 	
 		PopupDialogControl dialogControl =
 			new PopupDialogControl(getFrameScope(), dialogModel, getID(),

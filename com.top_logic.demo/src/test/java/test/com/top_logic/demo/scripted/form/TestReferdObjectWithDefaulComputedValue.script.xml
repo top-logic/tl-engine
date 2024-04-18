@@ -148,7 +148,7 @@
 								<path>
 									<entry
 										attribute="rowObjects"
-										node="Demoobjekt_01_1"
+										node="Demoobjekt_01_0"
 									/>
 								</path>
 								<root config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">

@@ -6,7 +6,6 @@
 package com.top_logic.basic;
 
 import java.util.Locale;
-import java.util.Objects;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
@@ -81,8 +80,10 @@ public interface SubSessionContext extends TypedAnnotatable {
 	 * </p>
 	 */
 	default <T> T withLocale(Locale locale, Supplier<T> supplier) {
-		Objects.requireNonNull(locale);
 		Locale previousLocale = getCurrentLocale();
+		if (locale.equals(previousLocale)) {
+			return supplier.get();
+		}
 		setCurrentLocale(locale);
 		try {
 			if (ResourcesModule.Module.INSTANCE.isActive()) {

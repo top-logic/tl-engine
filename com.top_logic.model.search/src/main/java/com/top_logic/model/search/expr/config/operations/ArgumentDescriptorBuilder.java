@@ -57,6 +57,9 @@ public interface ArgumentDescriptorBuilder {
 
 	/**
 	 * Creates an optional named parameter.
+	 * <p>
+	 * The {@link Provider} is evaluated when the script is executed.
+	 * </p>
 	 */
 	ArgumentDescriptorBuilder optional(String name, Provider<SearchExpression> defaultValue);
 

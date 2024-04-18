@@ -6,7 +6,6 @@
 package com.top_logic.model.search.expr.config.operations;
 
 import java.util.List;
-import java.util.Locale;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -48,13 +47,7 @@ public class Label extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		Object object = arguments[0];
-		if (arguments.length == 1) {
-			/* Use the current language. */
-			return getLabel(object);
-		}
-		Locale language = asLocale(arguments[1]);
-		return TLContextManager.getSubSession().withLocale(language, () -> getLabel(object));
+		return TLContextManager.getSubSession().withLocale(asLocale(arguments[1]), () -> getLabel(arguments[0]));
 	}
 
 	private String getLabel(Object object) {

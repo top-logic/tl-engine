@@ -1238,10 +1238,10 @@
 		value="0"
 	/>
 	<icon name="IMAGES_APP_LOGO"
-		value="/images/appLogoSmall.svg"
+		value="/images/appLogo.svg"
 	/>
 	<icon name="IMAGES_APP_LOGO_MINIMIZED"
-		expr="%IMAGES_APP_LOGO%"
+		value="/images/appLogoSmall.svg"
 	/>
 	<int name="INPUT_IMAGE_BUTTON_WIDTH"
 		value="22"
@@ -1556,18 +1556,6 @@
 	/>
 	<color name="SYSTEM_MESSAGE_COLOR"
 		value="#FF0000"
-	/>
-	<int name="SYSTEM_MESSAGE_MARGIN_BOTTOM"
-		value="0"
-	/>
-	<int name="SYSTEM_MESSAGE_MARGIN_LEFT"
-		value="0"
-	/>
-	<dim name="SYSTEM_MESSAGE_MARGIN_RIGHT"
-		value="20px"
-	/>
-	<dim name="SYSTEM_MESSAGE_MARGIN_TOP"
-		value="12px"
 	/>
 	<color name="S_FIELD_NEGATED"
 		value="#FFBBBB"

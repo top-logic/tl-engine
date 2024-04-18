@@ -6135,6 +6135,11 @@ span.ltcCounting input {
 	display: inline;
 }
 
+.header-logo {
+	display: inline-flex;
+	align-items: center;
+}
+
 a.autoLink:link {
     color: blue;
     text-decoration: underline;

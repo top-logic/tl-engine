@@ -10,54 +10,32 @@
 	font-weight: bold;
 }
 
+.sblTitle {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	line-height: 18px;
+	margin: 5px 10px;
+}
+
+.sblTitleAdditional {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+}
+
 .sblLogo i {
 	color: var(--SBL_LOGO_COLOR);
 }
 
-.sblLogo .frmBody {
-	margin-top: 5px;	
-	margin-bottom: 5px;	
+.sblImages i {
+	font-size: 30px;
 }
 
-.sblTitle {
-	display: flex;
-	align-items: center;
-	line-height: 18px;	
-}
-
-.sblTitle i {
-	font-size: 30px;	
-}
-
-div.mcMinimized .sblTitle img {
+div.mcMinimized .sblImages img {
 	max-width: 28px;
-}
-
-.sblTitleContent {
-	display: inline-block; 
-	vertical-align: middle; 
-	padding-left: 5px;
-	overflow: hidden;
-}
-
-.sblTitleName {
-	display: block;
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-.sblTitleVersion {
-	display: block; 
-	font-size: xx-small; 
-	font-weight: normal;
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-.mcMinimized .sblLogo .frmBody {
-	margin: 5px;	
 }
 
 div.layoutControl.accRoot {
@@ -86,17 +64,6 @@ div.accRoot ul.mtbGroup li {
 	display: block;
 	padding: 0px;
 	margin: 0px;
-}
-
-body.sblLogo div.frmBody {
-	margin-top: 5px;
-	margin-bottom: 0px;
-}
-
-div.quickSearchTitle {
-	margin-top: 8px;
-	display: table;
-	width: 100%;
 }
 
 div.quickSearchTitle span.quickSearch {
@@ -253,13 +220,18 @@ select.tl-select {
 	outline-color: lightgray;
 }
 
+.sblTitle img {
+    max-width: 100%;
+}
+
 .mcMinimized .sidebar-max,
 .sidebar-min {
 	display: none;	
 }
 
 .mcMinimized .sidebar-min {
-	display: initial;	
+	display: initial;
+	max-width: 2rem;
 }
 
 .mcMinimized .accRoot.lcAuto {
@@ -269,12 +241,6 @@ select.tl-select {
 .mcMinimized:hover .accRoot.lcAuto {
 	overflow: auto;
 	scrollbar-width: thin;
-}
-
-.cMinimizable:not(.mcMinimized) .tabbarPopup {
-	position: absolute;
-	top: 5px;
-	right: 5px;
 }
 
 .mcMinimized .tabbarPopup {

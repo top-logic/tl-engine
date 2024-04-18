@@ -46,6 +46,8 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants {
 
 	private static final String CSS_CLASS_HEADER_RIGHT_IMAGE = "header-logo";
 
+	private static final String CSS_CLASS_ICON_CONTAINER_MESSAGES = "IconContainerMessages";
+
 	private static final ThemeImage MAPPING_KEY_HEADER_RIGHT_IMAGE = ThemeImage.themeIcon("HEADER_RIGHT_IMAGE");
 
 	private List<ViewConfiguration> _buttonConfigs;
@@ -135,11 +137,8 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants {
 					out.beginTag(UL);
 					for (int index = 0, size = _messages.size(); index < size; index++) {
 						out.beginBeginTag(LI);
-						out.writeAttribute(STYLE_ATTR, "width:3px");
+						out.writeAttribute(CLASS_ATTR, CSS_CLASS_ICON_CONTAINER_MESSAGES);
 						out.endBeginTag();
-						out.writeText(HTMLConstants.NBSP);
-						out.endTag(LI);
-						out.beginTag(LI);
 						_messages.get(index).write(context, out);
 						out.endTag(LI);
 					}
@@ -147,23 +146,12 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants {
 						// right image
 						Theme theTheme = ThemeFactory.getTheme();
 						out.beginBeginTag(LI);
-						out.writeAttribute(STYLE_ATTR, "width:3px");
-						out.endBeginTag();
-						out.writeText(HTMLConstants.NBSP);
-						out.endTag(LI);
-						out.beginTag(LI);
-						out.beginBeginTag(DIV);
 						out.writeAttribute(CLASS_ATTR, CSS_CLASS_HEADER_RIGHT_IMAGE);
 						out.endBeginTag();
 						XMLTag tag = MAPPING_KEY_HEADER_RIGHT_IMAGE.toIcon();
 						tag.beginBeginTag(context, out);
-						out.writeAttribute(WIDTH_ATTR,
-							(int) theTheme.getValue(Icons.HEADER_RIGHT_IMAGE_WIDTH).getValue());
-						out.writeAttribute(HEIGHT_ATTR,
-							(int) theTheme.getValue(Icons.HEADER_RIGHT_IMAGE_HEIGHT).getValue());
 						out.writeAttribute(ALT_ATTR, context.getResources().getString(APPLICATION_TITLE));
 						tag.endEmptyTag(context, out);
-						out.endTag(DIV);
 						out.endTag(LI);
 					}
 					out.endTag(UL);

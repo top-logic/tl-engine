@@ -567,7 +567,7 @@
 		value="#F4F5F6"
 	/>
 	<int name="QUICK_SEARCH_HEIGHT"
-		value="80"
+		value="140"
 	/>
 	<boolean name="SBL_ACCORDION"
 		value="false"

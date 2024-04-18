@@ -293,6 +293,7 @@ with hard coded popup window dimension
 }
 
 .tlButton.cmdButtonDisabled .tlButtonLabel,
+.tlInDropdown.cmdButtonDisabled .tlButtonLabel,
 .cDefaultButton button:disabled,
 .cButton.cLinkButton.cmdLinkDisabled {
 	color: var(--text-disabled);
@@ -513,11 +514,11 @@ with hard coded popup window dimension
 }
 
 .tlDropdownContent {
-  	display: none;
-  	position: absolute;
-	right: .5rem;
-  	background-color: var(--background);
-  	box-shadow: 0 2px 6px 0 rgba(0,0,0,0.32);
+	display: none;
+	position: absolute;
+	right: 0;
+	background-color: var(--layer);
+	box-shadow: var(--shadow-menu);
 }
 
 .tlButtonScrollContainer .tlDropdownContent {
@@ -529,15 +530,25 @@ with hard coded popup window dimension
   	flex-direction: row-reverse;
   	justify-content: flex-end;
   	align-items: center;
-	padding: 0 var(--spacing-03);
+	padding: 0.2em var(--spacing-03);
+}
+
+.tlInDropdown:not(.cmdButton:hover) {
+	background-color: var(--layer);
+}
+
+.tlInDropdown.cmdButtonDisabled {
+	cursor: default;
 }
 
 .tlDropdownContent a .tlButtonLabel {
 	font-family: 'Inter-Regular';
-  	font-size: .875rem;
-  	font-weight: 400;
+	font-size: .875rem;
+	font-weight: 400;
 	color: var(--text-secondary);
 	flex-shrink: 0;
+	margin-block: 0;
+	line-height: 2em;
 }
 
 .tlDropdownContent a .cmdImg {
@@ -550,17 +561,17 @@ with hard coded popup window dimension
 }
 
 .tlDropdownContent a:hover {
-  	background: var(--layer-hover);
-  	text-decoration: none;
+	background: var(--layer-hover);
+	text-decoration: none;
 }
 
-.tlDropdownContent a:hover .tlButtonLabel {
-  	color: var(--icon-primary);
+.tlDropdownContent a:hover:not(.cmdButtonDisabled) .tlButtonLabel {
+	color: var(--text-primary);
 }
 
-.tlDropdownContent a:hover .cmdImg {
-  	color: var(--icon-primary);
-  	text-decoration: none;
+.tlDropdownContent a:hover:not(.cmdButtonDisabled) .cmdImg {
+	color: var(--icon-primary);
+	text-decoration: none;
 }
 
 .tlDropdownContent a:focus {

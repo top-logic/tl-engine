@@ -100,21 +100,26 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	}
 	
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a title bar and a customized border (width and color)
+	 * Create a new DefaultPopupDialogModel, which has a customized border (width and color)
 	 * 
-	 * @param layout - the layout definition of the dialog
-	 * @param borderWidth - the border width of the dialog in px
-	 * @param borderColor - the border color of the dialog
+	 * @param layout
+	 *        - the layout definition of the dialog
+	 * @param borderWidth
+	 *        - the border width of the dialog in px
+	 * @param borderColor
+	 *        - the border color of the dialog
 	 */
 	public DefaultPopupDialogModel(LayoutData layout, int borderWidth, String borderColor) {
 		this(null, layout, borderWidth, borderColor, null);
 	}	
 	
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a title bar and a border (color = theme based)
+	 * Create a new DefaultPopupDialogModel, which has a border (color = theme based)
 	 * 
-	 * @param layout - the layout definition of the dialog
-	 * @param borderWidth - the border width of the dialog in px
+	 * @param layout
+	 *        - the layout definition of the dialog
+	 * @param borderWidth
+	 *        - the border width of the dialog in px
 	 */
 	public DefaultPopupDialogModel(LayoutData layout, int borderWidth) {
 		this(layout, borderWidth, "");

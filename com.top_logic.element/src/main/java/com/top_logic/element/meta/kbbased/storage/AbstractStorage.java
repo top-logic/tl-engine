@@ -56,7 +56,7 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 	@Override
 	public void update(AttributeUpdate update) throws AttributeException {
 		try {
-			if (update == null || update.isDisabled() || !update.isChanged()) {
+			if (update == null || update.isDisabled() || (!update.isChanged() && !update.isUpdateForCreate())) {
 				return;
 			}
 

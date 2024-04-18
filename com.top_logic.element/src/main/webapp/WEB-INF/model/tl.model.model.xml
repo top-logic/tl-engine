@@ -481,7 +481,13 @@
 					<attributes>
 						<property name="derived"
 							type="tl.core:Boolean"
-						/>
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.DerivedTLTypePart.isDerived()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 					</attributes>
 				</interface>
 
@@ -532,15 +538,26 @@
 						<property name="ordered"
 							type="tl.core:Boolean"
 						/>
-						<property name="derived"
+						
+						<property name="override"
 							type="tl.core:Boolean"
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.DerivedTLTypePart.isDerived()"/>
+									<reflective-storage method="com.top_logic.model.TLStructuredTypePart.isOverride()"/>
 								</storage-algorithm>
 							</annotations>
 						</property>
+						<reference name="definition"
+							type="tl.model:TLStructuredTypePart"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLStructuredTypePart.getDefinition()"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						
 						<reference name="classifiedBy"
 							multiple="true"
 							type="tl.model:TLClassifier"
@@ -726,6 +743,24 @@
 								</storage-algorithm>
 							</annotations>
 						</property>
+						<property name="composite"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLReference.isComposite()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="aggregate"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLReference.isAggregate()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 						<property name="backwards"
 							type="tl.core:Boolean"
 						>
@@ -741,6 +776,15 @@
 							<annotations>
 								<storage-algorithm>
 									<reflective-storage method="com.top_logic.model.TLReference.getOpposite()"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="oppositeEnd"
+							type="TLAssociationEnd"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reflective-storage method="com.top_logic.model.TLReference.getOppositeEnd()"/>
 								</storage-algorithm>
 							</annotations>
 						</reference>

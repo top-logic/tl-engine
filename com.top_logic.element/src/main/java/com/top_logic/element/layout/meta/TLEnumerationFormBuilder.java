@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -155,6 +156,7 @@ public class TLEnumerationFormBuilder
 		EditModel.DESCRIPTION,
 		EditModel.ANNOTATIONS
 	})
+	@Label("Classifier")
 	public interface ClassifierModel extends ClassifierConfig, ConfigPart, Internationalized, FullQualifiedName {
 
 		/** Configuration name for the value of {@link #isCreate()} */

@@ -72,6 +72,7 @@ div.fptBody {
     right: 0px;
     top: 78px;
     bottom: 0px;
+	margin-top: var(--spacing-02);
 }
 
 div.fptBodyContent {
@@ -134,6 +135,9 @@ div.fptSubtitleContent {
     padding-left: var(--spacing-03);
     display: flex;
     align-items: center;
+	width: calc(100% - var(--spacing-03));
+	font-size: var(--heading-03-font-size);
+	font-weight: 600;
 }
 
 .fptIcon, .fptIconWithOverlay, .fptIconOverlay {
@@ -172,13 +176,11 @@ div.fptIconBar > span.fptIconOverlay > i {
 
 .rf_label .cLabel label {
 	color: var(--text-secondary);
-	word-break: break-all;
 	white-space: nowrap;
 }
 
 .rf_label {
 	margin: var(--spacing-02) 0;
-	word-break: break-all;
 	white-space: nowrap;
 }
 
@@ -420,11 +422,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 /* even empty cells have a height */
 .rf_cell {
-    min-height: 1.5rem;
-    margin: var(--spacing-02) 0;
-  	word-wrap: break-word;
-  	box-sizing: border-box;
-  	word-break: break-all;
+	min-height: 1.5rem;
+	margin: var(--spacing-02) 0;
+	box-sizing: border-box;
+	overflow-wrap: break-word;
 }
 
 /* columns layout */

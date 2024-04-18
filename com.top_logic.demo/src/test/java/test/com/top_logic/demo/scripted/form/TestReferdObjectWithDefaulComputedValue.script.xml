@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Navigiere zu Register 'Berechnetes Standardwert in Referenz' unter 'Technisches Demo > Tests'"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Tests"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Erstelle ein Kontainer Objekt"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Objekt erstellen"
+					command-name="addNewElement"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/table_withForm_Table.layout.xml#Table"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
+					command-label="Anlegen"
+					command-name="createNewElement"
+					component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+					component-name="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/createObject/dialog.layout.xml#Editor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Erstelle ein referenziertes Objekt"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/detailsForm.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Zeile hinzufügen"
+					user-id="root"
+				>
+					<business-object config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Tabelle in Zeilenobjekte"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+						/>
+					</business-object>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Ganzzahlfeld"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="0"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
+					command-label="Übernehmen"
+					command-name="storeAttributes"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/detailsForm.layout.xml#Form"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Ganzzahlfeld"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="0"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Entferne alle angelegte Objekte"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.element.meta.form.overlay.TLFormObjectNaming$Name"
+							domain=""
+						>
+							<edited-object config:interface="com.top_logic.layout.scripting.recorder.ref.TLObjectTreeNaming$TLObjectTreeName">
+								<path>
+									<entry
+										attribute="rowObjects"
+										node="Demoobjekt_01_1"
+									/>
+								</path>
+								<root config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+										class-name="test.defaultValue:ReferringObject"
+										object-label="Demoobjekt_01"
+									/>
+								</root>
+							</edited-object>
+							<form-context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+								/>
+								<path/>
+							</form-context>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Tabelle in Zeilenobjekte"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Zeile entfernen"
+					user-id="root"
+				>
+					<business-object config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Tabelle in Zeilenobjekte"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+						/>
+					</business-object>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="deleteSelection"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/table_withForm_Table.layout.xml#Table"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

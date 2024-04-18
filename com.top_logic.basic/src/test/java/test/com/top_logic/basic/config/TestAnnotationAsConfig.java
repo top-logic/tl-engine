@@ -5,7 +5,10 @@
  */
 package test.com.top_logic.basic.config;
 
+import static java.lang.annotation.RetentionPolicy.*;
+
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,6 +42,7 @@ import com.top_logic.basic.config.annotation.TagName;
 @SuppressWarnings("javadoc")
 public class TestAnnotationAsConfig extends AbstractTypedConfigurationTestCase {
 
+	@Retention(RUNTIME)
 	@TagName("annotation-with-default")
 	public static @interface AnnotationWithDefault {
 

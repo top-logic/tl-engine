@@ -21,7 +21,7 @@ import com.top_logic.tool.boundsec.ConfirmCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A {@link CommandHandler} for confirmable reset of {@link Person}'s confirmations of a {@link LoginMessage}.
+ * A {@link CommandHandler} for reseting a {@link Person}'s confirmation of a {@link LoginMessage}.
  *
  * @author <a href=mailto:Dmitry.Ivanizki@top-logic.com>Dmitry Ivanizki</a>
  */

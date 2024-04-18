@@ -6,9 +6,9 @@
 package test.com.top_logic.basic.config;
 
 import static com.top_logic.basic.StringServices.*;
+import static java.lang.annotation.RetentionPolicy.*;
 
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 import junit.framework.TestCase;
 
@@ -24,7 +24,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 @SuppressWarnings("javadoc")
 public class TestTypedConfigurationPropertyEquality extends TestCase {
 
-	@Retention(RetentionPolicy.SOURCE)
+	@Retention(RUNTIME)
 	public @interface ExampleAnnotation {
 		public int value();
 	}

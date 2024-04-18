@@ -335,37 +335,17 @@
 /* =============================================== */
 .sblTitle {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
 	justify-content: center;
+	align-items: center;
 	gap: var(--spacing-03);
 }
 
-.sblTitleContent {
+.sblTitleAdditional {
 	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-}
-
-.sblTitleName {
-	font-family: 'Inter-SemiBold';
-	font-size: var(--heading-03-font-size);
-	line-height: var(--heading-03-line-height);
-	letter-spacing: var(--heading-03-letter-spacing);
-	color: var(--text-primary);
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-.sblTitleVersion {
-	font-family: 'Inter-Regular';
-	font-size: var(--body-01-font-size);
-	line-height: var(--body-01-line-height);
-	letter-spacing: var(--body-01-letter-spacing);
-	color: var(--text-secondary);
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-01);
 }
 
 .sblAccordion {
@@ -388,7 +368,7 @@ div.mcMinimized .accText {
 	display: none;
 }
 
-.sblTitle img {
+.sblImages img {
     max-width: 100%;
 }
 
@@ -400,11 +380,6 @@ div.mcMinimized .accText {
 .mcMinimized .sidebar-min {
 	display: initial;
 	max-width: 2rem;
-}
-
-.cMinimizable:not(.mcMinimized) .tabbarPopup {
-	position: absolute;
-	top: 0;
 }
 
 div.mcToggle {
@@ -468,10 +443,6 @@ div.mcMinimized .accText {
     border-radius: 0;
 }
 
-.quickSearchTitle.accText {
-	margin-top: var(--spacing-03);
-}
-
 .licenseView {
 	display: flex;
 	justify-content: center;
@@ -493,7 +464,7 @@ div.mcMinimized .accText {
 
 /* For collapsed sidebar */
 .mcMinimized .licenseView .licenseContent {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family-regular);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);

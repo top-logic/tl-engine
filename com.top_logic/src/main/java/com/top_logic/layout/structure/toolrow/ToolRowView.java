@@ -46,7 +46,7 @@ public class ToolRowView extends DefaultComponentView implements HTMLConstants {
 
 	private static final String CSS_CLASS_HEADER_RIGHT_IMAGE = "header-logo";
 
-	public static final String CSS_CLASS_ICON_CONTAINER_MESSAGES = "IconContainerMessages";
+	private static final String CSS_CLASS_ICON_CONTAINER_MESSAGES = "IconContainerMessages";
 
 	private static final ThemeImage MAPPING_KEY_HEADER_RIGHT_IMAGE = ThemeImage.themeIcon("HEADER_RIGHT_IMAGE");
 

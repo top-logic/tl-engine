@@ -56,7 +56,7 @@ public class ContextMenuOpener extends ControlCommand {
 
 	@Override
 	protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
-		DefaultPopupDialogModel dialogModel = new DefaultPopupDialogModel(DefaultLayoutData.scrollingLayout(0, 0), 1);
+		DefaultPopupDialogModel dialogModel = new DefaultPopupDialogModel(DefaultLayoutData.scrollingLayout(0, 0));
 
 		String contextId = (String) arguments.get(CONTEXT_MENU_VALUE);
 		Menu menu = ((ContextMenuOwner) control).createContextMenu(contextId);

@@ -81,6 +81,15 @@ public interface TLAssociationEnd extends TLAssociationEndBase, TLAssociationPar
 	HistoryType getHistoryType();
 
 	/**
+	 * The index of this end in the owning {@link TLAssociation}'s ends.
+	 * 
+	 * @see TLAssociation#getEnds()
+	 */
+	default int getEndIndex() {
+		return getOwner().getEnds().indexOf(this);
+	}
+
+	/**
 	 * Setter for {@link #getHistoryType()}.
 	 */
 	void setHistoryType(HistoryType type);

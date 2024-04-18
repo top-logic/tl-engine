@@ -5,11 +5,16 @@
  */
 package test.com.top_logic.build.doclet;
 
+import static java.lang.annotation.RetentionPolicy.*;
+
+import java.lang.annotation.Retention;
+
 /**
  * A new annotation.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Retention(RUNTIME)
 public @interface B {
 
 	/**
@@ -26,6 +31,7 @@ public @interface B {
 	/**
 	 * An inner annotation to be added to {@link B#other()}.
 	 */
+	@Retention(RUNTIME)
 	@interface C {
 		/**
 		 * Additional text.

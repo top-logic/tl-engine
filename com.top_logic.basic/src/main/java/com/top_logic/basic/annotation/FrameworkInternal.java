@@ -5,9 +5,10 @@
  */
 package com.top_logic.basic.annotation;
 
+import static java.lang.annotation.RetentionPolicy.*;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 /**
  * Annotation for {@link ElementType types} that are designed to be only used framework-internally.
@@ -20,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RUNTIME)
 public @interface FrameworkInternal {
 
 	// just a marker annotation

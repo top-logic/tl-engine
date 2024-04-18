@@ -106,6 +106,7 @@
 							size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
 						/>
 					</layoutControl>
+					<layout-reference resource="statusBar.layout.xml"/>
 				</components>
 			</layout>
 		</components>

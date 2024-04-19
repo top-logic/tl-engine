@@ -34,7 +34,6 @@ import com.top_logic.element.config.AssociationConfig.EndConfig;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.AttributedTypeConfig;
 import com.top_logic.element.config.ClassConfig;
-import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.ExtendsConfig;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.ModuleConfig;
@@ -659,16 +658,42 @@ public class ModelResolver {
 	}
 
 	private void createForwardsRef(TLClass type, ReferenceConfig referenceConfig) {
-		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), referenceConfig.getName());
+		String referenceName = referenceConfig.getName();
+		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), referenceName);
 		TLModule module = type.getModule();
 
 		TLType associationType = module.getType(associationName);
 		if (associationType == null) {
+			TLReference orig;
+			if (referenceConfig.isOverride()) {
+				TLStructuredTypePart overriding = type.getPart(referenceName);
+				TLStructuredTypePart definition = overriding.getDefinition();
+				orig = (TLReference) definition;
+			} else {
+				orig = null;
+			}
+
 			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
+
+			HistoryType historyType;
+			boolean composite;
+			boolean canNavigate;
+			if (orig == null) {
+				historyType = referenceConfig.getHistoryType();
+				composite = referenceConfig.isComposite();
+				canNavigate = referenceConfig.canNavigate();
+			} else {
+				historyType = orig.getHistoryType();
+				composite = orig.isComposite();
+				canNavigate = orig.getEnd().canNavigate();
+			}
+
+			boolean isCurrent = historyType == HistoryType.CURRENT;
 
 			// Add source end
 			TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, type);
-			sourceEnd.setMultiple(true);
+			sourceEnd.setMultiple(!composite);
+			sourceEnd.setAggregate(composite);
 
 			// Create destination end
 			TLType targetType;
@@ -676,11 +701,27 @@ public class ModelResolver {
 				targetType = lookupAttributeType(type, referenceConfig);
 			} catch (ConfigurationException | TopLogicException ex) {
 				log().error("Unable to determine target type " + referenceConfig.getTypeSpec() + " for reference "
-						+ TLModelUtil.qualifiedTypePartName(type, referenceConfig.getName()),
+					+ TLModelUtil.qualifiedTypePartName(type, referenceName),
 					ex);
 				return;
 			}
-			TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceConfig.getName(), targetType);
+			TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceName, targetType);
+
+			if (isCurrent) {
+				// Only current references may be composites
+				destEnd.setComposite(composite);
+			} else {
+				destEnd.setComposite(false);
+			}
+			destEnd.setAggregate(false);
+			destEnd.setNavigate(canNavigate);
+			destEnd.setHistoryType(historyType);
+			applyMultiplicity(referenceConfig, destEnd);
+
+			if (orig != null) {
+				sourceEnd.setDefinition(orig.getEnd());
+				destEnd.setDefinition(orig.getOppositeEnd());
+			}
 
 			// Add destination reference
 			addReference(type, referenceConfig, destEnd);
@@ -902,34 +943,8 @@ public class ModelResolver {
 	 *        The configuration to apply.
 	 */
 	public void installConfiguration(TLStructuredTypePart part, PartConfig config) {
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			TLReference reference = (TLReference) part;
-			EndAspect endConfig = (EndAspect) config;
-			TLAssociationEnd end = reference.getEnd();
-
-			if (TLModelUtil.isForwardReference(reference)) {
-				if (endConfig.getHistoryType() == HistoryType.CURRENT) {
-					// Only current references may be composites
-					end.setComposite(endConfig.isComposite());
-				} else {
-					end.setComposite(false);
-				}
-				end.setAggregate(false);
-				applyMultiplicity(config, end);
-			} else {
-				TLAssociationEnd forwardsEnd = TLModelUtil.getOtherEnd(end);
-				boolean backOfComposition = forwardsEnd.isComposite();
-				if (backOfComposition) {
-					end.setMultiple(false);
-				} else {
-					applyMultiplicity(config, end);
-				}
-				end.setAggregate(backOfComposition);
-			}
-
-			end.setNavigate(endConfig.canNavigate());
-			end.setHistoryType(endConfig.getHistoryType());
-		} else {
+		// A reference is only a view of an association end that must be configured.
+		if (part.getModelKind() != ModelKind.REFERENCE) {
 			applyMultiplicity(config, part);
 		}
 		addTypePartAnnotations(part, part.isOverride(), config);

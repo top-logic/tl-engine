@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.8.0-SNAPSHOT</version>
+    <version>7.8.0</version>
   </parent>
 
   <artifactId>tl-graph-diagramjs-server</artifactId>
@@ -50,7 +50,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-diagramjs-client</artifactId>
-	  <version>7.8.0-SNAPSHOT</version>
+	  <version>7.8.0</version>
       <type>war</type>
       <classifier>web-fragment</classifier>
       <scope>provided</scope>

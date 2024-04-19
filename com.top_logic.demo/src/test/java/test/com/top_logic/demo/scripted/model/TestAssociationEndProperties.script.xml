@@ -35,6 +35,8 @@
     `test.override:Composite#contents`.get(`tl.model:TLReference#oppositeEnd`).get(`tl.model:TLAssociationEnd#aggregate`) == true || throw("is not aggregate");
 
     `test.override:ConcreteComposite#contents`.get(`tl.model:TLReference#override`) == true || throw("not an override");
+    `test.override:ConcreteComposite#contents`.get(`tl.model:TLReference#multiple`) == true || throw("not multiple");
+
     `test.override:ConcreteComposite#contents`.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`) == true || throw("is not composite");
     `test.override:ConcreteComposite#contents`.get(`tl.model:TLReference#oppositeEnd`).get(`tl.model:TLAssociationEnd#multiple`) == false || throw("is multiple");
     `test.override:ConcreteComposite#contents`.get(`tl.model:TLReference#oppositeEnd`).get(`tl.model:TLAssociationEnd#aggregate`) == true || throw("is not aggregate");

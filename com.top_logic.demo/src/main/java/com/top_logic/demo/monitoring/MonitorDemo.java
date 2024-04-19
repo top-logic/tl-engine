@@ -14,14 +14,16 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.monitoring.data.DynamicMBeanElement;
 
 /**
- * MBean to monitor data of the users.
+ * Demonstration of a dynamic MBean.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
+@Label("Dynamic MBean demo")
 public class MonitorDemo extends DynamicMBeanElement {
 
 	String _prename = "Alice";

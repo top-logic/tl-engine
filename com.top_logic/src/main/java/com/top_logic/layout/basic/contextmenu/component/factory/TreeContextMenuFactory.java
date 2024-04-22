@@ -51,7 +51,7 @@ public class TreeContextMenuFactory<C extends TreeContextMenuFactory.Config<?>>
 		}
 
 		@Override
-		protected Object mapContext(Object obj) {
+		protected Object mapContextObject(Object obj) {
 			@SuppressWarnings("unchecked")
 			Object result = ((TreeComponent) getComponent()).getTreeData().getTreeModel().getBusinessObject(obj);
 			return result;

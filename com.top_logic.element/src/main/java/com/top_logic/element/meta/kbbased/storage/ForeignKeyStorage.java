@@ -41,6 +41,8 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * {@link AbstractStorage} that stores a reference value as foreign key attribute.
  * 
+ * @see ReverseForeignKeyStorage
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)

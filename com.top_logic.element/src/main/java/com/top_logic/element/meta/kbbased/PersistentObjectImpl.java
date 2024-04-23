@@ -31,6 +31,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -61,6 +63,20 @@ public class PersistentObjectImpl {
 	 * Implementation of {@link TLObject#tContainer()}.
 	 */
 	public static TLObject tContainer(TLObject self) {
+		TableName tableAnnotation = TLAnnotations.getTableName(self.tType());
+		if (tableAnnotation != null) {
+			String container = tableAnnotation.getContainer();
+			if (container != null) {
+				TLObject inlineContainer = inlineContainer(self, tableAnnotation);
+				if (inlineContainer != null) {
+					return inlineContainer;
+				}
+			}
+		}
+		return genericContainer(self);
+	}
+
+	private static TLObject genericContainer(TLObject self) {
 		KnowledgeAssociation link = tContainerLink(self);
 		if (link == null) {
 			return null;
@@ -68,10 +84,41 @@ public class PersistentObjectImpl {
 		return link.getSourceObject().getWrapper();
 	}
 
+	private static TLObject inlineContainer(TLObject self, TableName tableAnnotation) {
+		Object container = self.tHandle().getAttributeValue(tableAnnotation.getContainer());
+		if (container == null) {
+			return null;
+		}
+		return ((KnowledgeItem) container).getWrapper();
+	}
+
 	/**
 	 * Implementation of {@link TLObject#tContainerReference()}.
 	 */
 	public static TLReference tContainerReference(TLObject self) {
+		TableName tableAnnotation = TLAnnotations.getTableName(self.tType());
+		if (tableAnnotation != null) {
+			String container = tableAnnotation.getContainer();
+			if (container != null) {
+				TLReference inlineContainerReference = inlineContainerReference(self, tableAnnotation);
+				if (inlineContainerReference != null) {
+					return inlineContainerReference;
+				}
+			}
+		}
+
+		return genericContainerReference(self);
+	}
+
+	private static TLReference inlineContainerReference(TLObject self, TableName tableAnnotation) {
+		Object container = self.tHandle().getAttributeValue(tableAnnotation.getContainerReference());
+		if (container == null) {
+			return null;
+		}
+		return ((KnowledgeItem) container).getWrapper();
+	}
+
+	private static TLReference genericContainerReference(TLObject self) {
 		KnowledgeAssociation link = tContainerLink(self);
 		if (link == null) {
 			return null;

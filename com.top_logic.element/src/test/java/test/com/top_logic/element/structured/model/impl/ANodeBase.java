@@ -18,6 +18,60 @@ public interface ANodeBase extends test.com.top_logic.element.structured.model.A
 	String A_NODE_TYPE = "ANode";
 
 	/**
+	 * Part <code>composite1</code> of <code>ANode</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestTypes:Part</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE1_ATTR = "composite1";
+
+	/**
+	 * Part <code>composite2</code> of <code>ANode</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestTypes:Part</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE2_ATTR = "composite2";
+
+	/**
+	 * Part <code>compositeList1</code> of <code>ANode</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestTypes:Part</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE_LIST1_ATTR = "compositeList1";
+
+	/**
+	 * Part <code>compositeList2</code> of <code>ANode</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestTypes:Part</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE_LIST2_ATTR = "compositeList2";
+
+	/**
+	 * Part <code>compositeSet1</code> of <code>ANode</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestTypes:Part</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE_SET1_ATTR = "compositeSet1";
+
+	/**
+	 * Part <code>compositeSet2</code> of <code>ANode</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestTypes:Part</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE_SET2_ATTR = "compositeSet2";
+
+	/**
 	 * Part <code>name</code> of <code>ANode</code>
 	 * 
 	 * <p>
@@ -41,6 +95,206 @@ public interface ANodeBase extends test.com.top_logic.element.structured.model.A
 	@SuppressWarnings("unchecked")
 	default java.util.List<? extends test.com.top_logic.element.structured.model.ANodeChild> getChildren() {
 		return (java.util.List<? extends test.com.top_logic.element.structured.model.ANodeChild>) tValueByName(CHILDREN_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #COMPOSITE1_ATTR}.
+	 */
+	default test.com.top_logic.element.structured.model.Part getComposite1() {
+		return (test.com.top_logic.element.structured.model.Part) tValueByName(COMPOSITE1_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #COMPOSITE1_ATTR}.
+	 */
+	default void setComposite1(test.com.top_logic.element.structured.model.Part newValue) {
+		tUpdateByName(COMPOSITE1_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #COMPOSITE2_ATTR}.
+	 */
+	default test.com.top_logic.element.structured.model.Part getComposite2() {
+		return (test.com.top_logic.element.structured.model.Part) tValueByName(COMPOSITE2_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #COMPOSITE2_ATTR}.
+	 */
+	default void setComposite2(test.com.top_logic.element.structured.model.Part newValue) {
+		tUpdateByName(COMPOSITE2_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #COMPOSITE_LIST1_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.List<? extends test.com.top_logic.element.structured.model.Part> getCompositeList1() {
+		return (java.util.List<? extends test.com.top_logic.element.structured.model.Part>) tValueByName(COMPOSITE_LIST1_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #COMPOSITE_LIST1_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.List<test.com.top_logic.element.structured.model.Part> getCompositeList1Modifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(COMPOSITE_LIST1_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.List<test.com.top_logic.element.structured.model.Part> result = (java.util.List<test.com.top_logic.element.structured.model.Part>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #COMPOSITE_LIST1_ATTR}.
+	 */
+	default void setCompositeList1(java.util.List<test.com.top_logic.element.structured.model.Part> newValue) {
+		tUpdateByName(COMPOSITE_LIST1_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #COMPOSITE_LIST1_ATTR} reference.
+	 */
+	default void addCompositeList1(test.com.top_logic.element.structured.model.Part newValue) {
+		tAddByName(COMPOSITE_LIST1_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #COMPOSITE_LIST1_ATTR} reference.
+	 */
+	default void removeCompositeList1(test.com.top_logic.element.structured.model.Part oldValue) {
+		tRemoveByName(COMPOSITE_LIST1_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #COMPOSITE_LIST2_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.List<? extends test.com.top_logic.element.structured.model.Part> getCompositeList2() {
+		return (java.util.List<? extends test.com.top_logic.element.structured.model.Part>) tValueByName(COMPOSITE_LIST2_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #COMPOSITE_LIST2_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.List<test.com.top_logic.element.structured.model.Part> getCompositeList2Modifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(COMPOSITE_LIST2_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.List<test.com.top_logic.element.structured.model.Part> result = (java.util.List<test.com.top_logic.element.structured.model.Part>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #COMPOSITE_LIST2_ATTR}.
+	 */
+	default void setCompositeList2(java.util.List<test.com.top_logic.element.structured.model.Part> newValue) {
+		tUpdateByName(COMPOSITE_LIST2_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #COMPOSITE_LIST2_ATTR} reference.
+	 */
+	default void addCompositeList2(test.com.top_logic.element.structured.model.Part newValue) {
+		tAddByName(COMPOSITE_LIST2_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #COMPOSITE_LIST2_ATTR} reference.
+	 */
+	default void removeCompositeList2(test.com.top_logic.element.structured.model.Part oldValue) {
+		tRemoveByName(COMPOSITE_LIST2_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #COMPOSITE_SET1_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<? extends test.com.top_logic.element.structured.model.Part> getCompositeSet1() {
+		return (java.util.Set<? extends test.com.top_logic.element.structured.model.Part>) tValueByName(COMPOSITE_SET1_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #COMPOSITE_SET1_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.Set<test.com.top_logic.element.structured.model.Part> getCompositeSet1Modifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(COMPOSITE_SET1_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.Set<test.com.top_logic.element.structured.model.Part> result = (java.util.Set<test.com.top_logic.element.structured.model.Part>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #COMPOSITE_SET1_ATTR}.
+	 */
+	default void setCompositeSet1(java.util.Set<test.com.top_logic.element.structured.model.Part> newValue) {
+		tUpdateByName(COMPOSITE_SET1_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #COMPOSITE_SET1_ATTR} reference.
+	 */
+	default void addCompositeSet1(test.com.top_logic.element.structured.model.Part newValue) {
+		tAddByName(COMPOSITE_SET1_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #COMPOSITE_SET1_ATTR} reference.
+	 */
+	default void removeCompositeSet1(test.com.top_logic.element.structured.model.Part oldValue) {
+		tRemoveByName(COMPOSITE_SET1_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #COMPOSITE_SET2_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<? extends test.com.top_logic.element.structured.model.Part> getCompositeSet2() {
+		return (java.util.Set<? extends test.com.top_logic.element.structured.model.Part>) tValueByName(COMPOSITE_SET2_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #COMPOSITE_SET2_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.Set<test.com.top_logic.element.structured.model.Part> getCompositeSet2Modifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(COMPOSITE_SET2_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.Set<test.com.top_logic.element.structured.model.Part> result = (java.util.Set<test.com.top_logic.element.structured.model.Part>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #COMPOSITE_SET2_ATTR}.
+	 */
+	default void setCompositeSet2(java.util.Set<test.com.top_logic.element.structured.model.Part> newValue) {
+		tUpdateByName(COMPOSITE_SET2_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #COMPOSITE_SET2_ATTR} reference.
+	 */
+	default void addCompositeSet2(test.com.top_logic.element.structured.model.Part newValue) {
+		tAddByName(COMPOSITE_SET2_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #COMPOSITE_SET2_ATTR} reference.
+	 */
+	default void removeCompositeSet2(test.com.top_logic.element.structured.model.Part oldValue) {
+		tRemoveByName(COMPOSITE_SET2_ATTR, oldValue);
 	}
 
 }

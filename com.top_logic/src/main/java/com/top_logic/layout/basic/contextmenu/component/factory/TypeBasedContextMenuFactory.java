@@ -163,8 +163,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		}
 
 		private void checkUnsupportedCollections(Object context) {
-			if (context instanceof Map
-				|| context.getClass().isArray()) {
+			if (context instanceof Map || ((context != null) && context.getClass().isArray())) {
 				throw new UnsupportedOperationException("Only single objects or collections of them are supported."
 					+ " Actual value: " + Utils.debug(context));
 			}

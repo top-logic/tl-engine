@@ -155,23 +155,22 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		 * Maps the context objects to a target model of commands to invoke.
 		 */
 		protected final Object mapContext(Object context) {
-			if (context instanceof Set) {
-				return mapSet((Set<?>) context);
+			if (context instanceof Collection) {
+				return mapSet((Collection<?>) context);
 			}
 			checkUnsupportedCollections(context);
 			return mapContextObject(context);
 		}
 
 		private void checkUnsupportedCollections(Object context) {
-			if (context instanceof Collection
-				|| context instanceof Map
+			if (context instanceof Map
 				|| context.getClass().isArray()) {
-				throw new UnsupportedOperationException("Only single objects or sets of them are supported. "
+				throw new UnsupportedOperationException("Only single objects or collections of them are supported."
 					+ " Actual value: " + Utils.debug(context));
 			}
 		}
 
-		private Object mapSet(Set<?> objects) {
+		private Object mapSet(Collection<?> objects) {
 			Set<Object> mapped = set();
 			for (Object original : objects) {
 				mapped.add(mapContextObject(original));

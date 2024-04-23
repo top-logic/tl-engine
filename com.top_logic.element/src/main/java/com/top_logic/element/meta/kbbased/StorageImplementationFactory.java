@@ -19,6 +19,9 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.storage.DocumentStorage;
 import com.top_logic.element.meta.kbbased.storage.ImageGalleryStorage;
+import com.top_logic.element.meta.kbbased.storage.InlineListStorage;
+import com.top_logic.element.meta.kbbased.storage.InlineSetStorage;
+import com.top_logic.element.meta.kbbased.storage.ReverseForeignKeyStorage;
 import com.top_logic.element.meta.kbbased.storage.ListStorage;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.meta.kbbased.storage.ReverseStorage;
@@ -35,6 +38,8 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePartVisitor;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -88,22 +93,76 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 							if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
 								config = ImageGalleryStorage.imageGalleryConfig();
 							} else {
-								config = ListStorage.listConfig(composite, historyType);
+								TableName tableDefinition = getInlineCompositeDefinition(end);
+								if (tableDefinition != null) {
+									if (tableDefinition.getContainerOrder() == null) {
+										Logger.warn(
+											"Ignoring invalid " + TableName.class.getName() + " annotation on "
+													+ end.getType() + " since the composite reference " + model
+													+ " is ordered but no order column is set.",
+											StorageImplementationFactory.class);
+										config = ListStorage.listConfig(composite, historyType);
+									} else {
+										config = InlineListStorage.listConfig(tableDefinition.getName(),
+											tableDefinition.getContainer(), tableDefinition.getContainerReference(),
+											tableDefinition.getContainerOrder());
+									}
+								} else {
+									config = ListStorage.listConfig(composite, historyType);
+								}
 							}
 						} else {
-							config = SetStorage.setConfig(composite, historyType);
+							TableName tableDefinition = getInlineCompositeDefinition(end);
+							if (tableDefinition != null) {
+								config = InlineSetStorage.setConfig(tableDefinition.getName(),
+									tableDefinition.getContainer(), tableDefinition.getContainerReference());
+							} else {
+								config = SetStorage.setConfig(composite, historyType);
+							}
 						}
 					} else {
-						TLType endType = end.getType();
-						if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(endType))) {
-							config = TypedConfiguration.newConfigItem(DocumentStorage.Config.class);
+						TableName tableDefinition = getInlineCompositeDefinition(end);
+						if (tableDefinition != null) {
+							config = ReverseForeignKeyStorage.defaultConfig(tableDefinition.getName(),
+								tableDefinition.getContainer(), tableDefinition.getContainerReference());
 						} else {
-							config = SingletonLinkStorage.singletonLinkConfig(composite, historyType);
+							TLType endType = end.getType();
+							if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(endType))) {
+								config = TypedConfiguration.newConfigItem(DocumentStorage.Config.class);
+							} else {
+								config = SingletonLinkStorage.singletonLinkConfig(composite, historyType);
+							}
 						}
 					}
 				}
 
 				return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+			}
+
+			private TableName getInlineCompositeDefinition(TLAssociationEnd end) {
+				if (!end.isComposite()) {
+					return null;
+				}
+				TLType targetType = end.getType();
+				return getCompositeInlineDefinition(targetType);
+
+			}
+
+			private TableName getCompositeInlineDefinition(TLType targetType) {
+				TableName table = TLAnnotations.getTableName(targetType);
+				if (table == null) {
+					return null;
+				}
+				if (table.getContainer() == null) {
+					return null;
+				}
+				if (table.getContainerReference() == null) {
+					Logger.warn("Ignoring invalid " + TableName.class.getName() + " annotation on " + targetType
+							+ " since the container column is set, but no column that contains the container reference.",
+						StorageImplementationFactory.class);
+					return null;
+				}
+				return table;
 			}
 
 			@Override

@@ -157,15 +157,30 @@ public class TLAnnotations {
 	 * @return Table where instances of the given type are stored. Not <code>null</code>.
 	 */
 	public static String getTable(TLType type) {
-		TableName tableAnnotation = type.getAnnotation(TableName.class);
+		TableName tableAnnotation = getTableName(type);
 		if (tableAnnotation != null) {
 			return tableAnnotation.getName();
 		}
+		return GENERIC_TABLE_NAME;
+	}
+
+	/**
+	 * {@link TableName} annotation of the given type, if there is one. Otherwise the
+	 * {@link TableName} annotation of the primary generalisation (recursively).
+	 * 
+	 * @return May be <code>null</code> if no primary generalisation (recursively) has a
+	 *         {@link TableName} annotation.
+	 */
+	public static TableName getTableName(TLType type) {
+		TableName tableAnnotation = type.getAnnotation(TableName.class);
+		if (tableAnnotation != null) {
+			return tableAnnotation;
+		}
 		TLClass primaryGeneralization = TLModelUtil.getPrimaryGeneralization(type);
 		if (primaryGeneralization == null) {
-			return GENERIC_TABLE_NAME;
+			return null;
 		}
-		return getTable(primaryGeneralization);
+		return getTableName(primaryGeneralization);
 	}
 
 	/**

@@ -132,12 +132,12 @@ div.fptSubtitle {
 }
 
 div.fptSubtitleContent {
-    padding-left: var(--spacing-03);
-    display: flex;
-    align-items: center;
-	width: calc(100% - var(--spacing-03));
-	font-size: var(--heading-03-font-size);
-	font-weight: 600;
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 var(--spacing-03);
+    font-size: var(--heading-03-font-size);
+    font-weight: 600;
 }
 
 .fptIcon, .fptIconWithOverlay, .fptIconOverlay {
@@ -2574,7 +2574,8 @@ span.disabled .ddwttDropBtn {
 	outline: none !important;
 }
 
-.fptSubtitleContent .ddwttDropBtn {
+.fptSubtitleContent .ddwttDropBtn, 
+.fptSubtitleContent input {
 	height: 1.4rem;
 }
 

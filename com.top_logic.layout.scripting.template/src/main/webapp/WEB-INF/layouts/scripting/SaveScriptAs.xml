@@ -47,7 +47,7 @@
 				securityProviderClass="securityRoot"
 				toolbar="false"
 			>
-				<layoutInfo size="33px"/>
+				<layoutInfo size="72px"/>
 				<modelBuilder class="com.top_logic.layout.scripting.template.gui.saveas.SaveScriptAsFormBuilder"
 					allowedEndings=".script.xml"
 				/>

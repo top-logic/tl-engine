@@ -1834,6 +1834,10 @@ img.type-image {
 	align-self: center;
 }
 
+span.type-image {
+	margin-right: var(--spacing-01);
+}
+
 .cChoice-horizontal > .cChoice-option {
 	/* Wrap options for horizontal choices. Use inline-block instead of inline to prevent wrapping between radio and label. */
 	display: inline-block;

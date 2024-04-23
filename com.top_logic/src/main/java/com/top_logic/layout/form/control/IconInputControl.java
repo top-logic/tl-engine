@@ -219,7 +219,7 @@ public class IconInputControl extends AbstractFormFieldControl {
 	public ThemeImage getIcon() {
 		FormField field = (FormField) getModel();
 		ThemeImage result = (ThemeImage) field.getValue();
-		if (result == null) {
+		if (result == null || result.resolve() == ThemeImage.none()) {
 			return Icons.EMPTY_ICON;
 		}
 		return result;

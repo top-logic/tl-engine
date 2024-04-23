@@ -149,12 +149,12 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 	}
 
 	@Override
-	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object value)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
+	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object oldValue,
+			Object newValue) throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		KnowledgeItem storageObject = getStorageObject(object);
 
 		{
-			KnowledgeItem reference = unwrapReference(value);
+			KnowledgeItem reference = unwrapReference(newValue);
 			storageObject.setAttributeValue(getStorageAttribute(), reference);
 			AttributeOperations.touch(object, attribute);
 		}

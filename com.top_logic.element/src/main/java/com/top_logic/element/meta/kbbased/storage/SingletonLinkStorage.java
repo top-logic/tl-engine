@@ -112,8 +112,8 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	}
 
 	@Override
-	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object value)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
+	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object oldValue,
+			Object newValue) throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		try {
 			// get old association if existing
 			KnowledgeAssociation link = null;
@@ -129,14 +129,14 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 			}
 
 			// create new association
-			if (value != null) {
-				LinkStorageUtil.createWrapperAssociation(attribute, object, (TLObject) value, this);
+			if (newValue != null) {
+				LinkStorageUtil.createWrapperAssociation(attribute, object, (TLObject) newValue, this);
 			}
 		} catch (DataObjectException e) {
 			Logger.error("Problem setting attribute " + this
-				+ " to value " + value, e, this);
+				+ " to value " + newValue, e, this);
 			throw new AttributeException("Problem setting attribute " + this
-				+ " to value " + value, e);
+				+ " to value " + newValue, e);
 		}
 	}
 

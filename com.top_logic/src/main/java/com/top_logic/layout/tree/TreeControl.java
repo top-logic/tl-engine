@@ -640,8 +640,10 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 
 	@Override
 	public Menu createContextMenu(String contextInfo) {
-		Object node = getNodeById(contextInfo);
-		return _contextMenuProvider.getContextMenu(node);
+		Object directTarget = getNodeById(contextInfo);
+		Set<?> selection = getSelectionModel().getSelection();
+		Object extendedTarget = ContextMenuProvider.getContextMenuTarget(directTarget, selection);
+		return _contextMenuProvider.getContextMenu(extendedTarget);
 	}
 
 	@Override

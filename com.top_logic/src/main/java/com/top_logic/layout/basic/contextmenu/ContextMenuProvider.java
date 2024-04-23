@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.basic.contextmenu;
 
+import java.util.Collection;
+
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 
 /**
@@ -35,5 +37,19 @@ public interface ContextMenuProvider {
 	 * @return The {@link Menu} to display.
 	 */
 	Menu getContextMenu(Object obj);
+
+	/**
+	 * Whether the context menu should be opened for the entire selection or just the single object
+	 * on which the user right-clicked.
+	 */
+	static Object getContextMenuTarget(Object directTarget, Collection<?> selection) {
+		if (selection.contains(directTarget)) {
+			// The user opened the context menu on the selection.
+			return selection;
+		} else {
+			// The user opened the context menu on an unselected object.
+			return directTarget;
+		}
+	}
 
 }

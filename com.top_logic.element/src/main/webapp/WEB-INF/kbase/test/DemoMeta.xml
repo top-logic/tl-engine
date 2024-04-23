@@ -42,6 +42,33 @@
 			/>
 			</attributes>
 		</association>
+
+		<metaobject
+			object_name="InlineCompositeTarget"
+			super_class="AttributedObject"
+		>
+			<attributes>
+				<reference
+					att_name="container"
+					branch-global="false"
+					deletion-policy="delete-referer"
+					target-type="StructuredElement"
+				/>
+				<reference
+					att_name="reference"
+					branch-global="false"
+					deletion-policy="delete-referer"
+					history-type="current"
+					monomorphic="true"
+					target-type="MetaAttribute"
+				/>
+				<mo_attribute
+					att_name="sortOrder"
+					att_type="Integer"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
 	
 	</metaobjects>
 </objectlist>

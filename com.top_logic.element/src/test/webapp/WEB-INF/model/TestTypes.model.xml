@@ -325,6 +325,40 @@
 							override="true"
 							type="ANodeChild"
 						/>
+						<reference name="compositeList1"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Part"
+						/>
+						<reference name="compositeList2"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Part"
+						/>
+						<reference name="compositeSet1"
+							composite="true"
+							multiple="true"
+							ordered="false"
+							type="Part"
+						/>
+						<reference name="compositeSet2"
+							composite="true"
+							multiple="true"
+							ordered="false"
+							type="Part"
+						/>
+						<reference name="composite1"
+							composite="true"
+							multiple="false"
+							type="Part"
+						/>
+						<reference name="composite2"
+							composite="true"
+							multiple="false"
+							type="Part"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="A"/>
@@ -419,6 +453,21 @@
 						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
 				</interface>
+
+				<class name="Part">
+					<annotations>
+						<table name="InlineCompositeTarget"
+							container="container"
+							container-order="sortOrder"
+							container-reference="reference"
+						/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

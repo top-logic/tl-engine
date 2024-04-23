@@ -356,6 +356,48 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link ANode#COMPOSITE1_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getComposite1ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE1_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE2_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getComposite2ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE2_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_LIST1_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeList1ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_LIST1_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_LIST2_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeList2ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_LIST2_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_SET1_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeSet1ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_SET1_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_SET2_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeSet2ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_SET2_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ANode#NAME_ATTR} of {@link ANode}.
 	 */
 	public static com.top_logic.model.TLProperty getNameANodeAttr() {
@@ -447,6 +489,20 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link Part} type.
+	 */
+	public static com.top_logic.model.TLClass getPartType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(Part.PART_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Part#NAME_ATTR} of {@link Part}.
+	 */
+	public static com.top_logic.model.TLProperty getNamePartAttr() {
+		return (com.top_logic.model.TLProperty) getPartType().getPart(Part.NAME_ATTR);
+	}
+
+	/**
 	 * Name of type <code>A</code> in structure {@link #TEST_TYPES_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
@@ -531,6 +587,19 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String B_NODE_CHILD_NODE = BNodeChild.B_NODE_CHILD_TYPE;
 
 	/**
+	 * Name of type <code>Part</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link Part#PART_TYPE}.
+	 */
+	@Deprecated
+	public static final String PART_NODE = Part.PART_TYPE;
+
+	/**
+	 * Storage table name of {@link #PART_NODE} objects.
+	 */
+	public static final String KO_NAME_PART = "InlineCompositeTarget";
+
+	/**
 	 * Singleton <code>ROOT</code>.
 	 */
 	public ANode getRootSingleton() {
@@ -606,6 +675,20 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public final CContent createCContent() {
 		return createCContent(null);
+	}
+
+	/**
+	 * Create an instance of {@link Part} type.
+	 */
+	public final Part createPart(com.top_logic.model.TLObject context) {
+		return (Part) createObject(getPartType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link Part} type.
+	 */
+	public final Part createPart() {
+		return createPart(null);
 	}
 
 	/**

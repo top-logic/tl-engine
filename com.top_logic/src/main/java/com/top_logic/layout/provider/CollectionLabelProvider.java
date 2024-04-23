@@ -5,9 +5,15 @@
  */
 package com.top_logic.layout.provider;
 
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
+
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.TreeSet;
 
+import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.layout.LabelProvider;
 
 /**
@@ -54,6 +60,9 @@ public class CollectionLabelProvider implements LabelProvider {
         Collection   theColl        = (Collection) anObject;
         boolean      writeSeparator = false;
         StringBuffer theResult      = new StringBuffer();
+		if (!isOrdered(theColl)) {
+			theColl = sort(theColl);
+		}
 
         if (theColl != null) {
             for (Iterator theIt = theColl.iterator(); theIt.hasNext();) {
@@ -72,5 +81,18 @@ public class CollectionLabelProvider implements LabelProvider {
 
         return (theResult.toString());
     }
+
+	private boolean isOrdered(Collection<?> collection) {
+		return collection instanceof List
+			|| collection instanceof LinkedHashSet
+			|| collection instanceof TreeSet;
+	}
+
+	private List<?> sort(Collection<?> collection) {
+		List<?> list = list(collection);
+		list.sort(ComparableComparator.INSTANCE);
+		return list;
+	}
+
 }
 

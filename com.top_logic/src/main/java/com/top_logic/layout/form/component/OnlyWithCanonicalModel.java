@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.component;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -42,7 +43,7 @@ final class OnlyWithCanonicalModel implements ExecutabilityRule {
 		@SuppressWarnings("deprecation")
 		Object canonicalTargetModel = _handler.getTargetModel(aComponent, someValues);
 
-		if (model == canonicalTargetModel) {
+		if (Objects.equals(model, canonicalTargetModel)) {
 			return ExecutableState.EXECUTABLE;
 		} else {
 			return ExecutableState.NOT_EXEC_HIDDEN;

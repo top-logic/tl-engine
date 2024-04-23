@@ -110,7 +110,6 @@ public class DownloadImageRenderer extends DefaultControlRenderer<IDownloadContr
 		out.writeAttribute(ALT_ATTR, StringServices.EMPTY_STRING);
 		out.writeAttribute(TITLE_ATTR, StringServices.EMPTY_STRING); // Avoid popup for IE
 		out.writeAttribute(BORDER_ATTR, 0);
-		out.writeAttribute(STYLE_ATTR, "margin-right: 3px;");
 		tag.endEmptyTag(context, out);
 	}
 

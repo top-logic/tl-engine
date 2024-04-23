@@ -2086,6 +2086,10 @@ img.type-image {
 	align-self: center;
 }
 
+span.type-image {
+	margin-right: var(--spacing-01);
+}
+
 .tl-table__cell .type-image {
 	margin-left: var(--spacing-02);
 }

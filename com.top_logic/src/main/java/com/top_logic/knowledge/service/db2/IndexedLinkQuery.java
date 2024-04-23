@@ -99,6 +99,10 @@ public interface IndexedLinkQuery<K, T extends TLObject> extends AbstractAssocia
 
 	/**
 	 * The attribute whose values are used to index link objects.
+	 * 
+	 * <p>
+	 * When {@link #getKeyAttribute()} is <code>null</code>, the link itself is used as index.
+	 * </p>
 	 */
 	String getKeyAttribute();
 

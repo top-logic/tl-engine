@@ -54,10 +54,6 @@ abstract class AssociationsMap<K, T extends TLObject> extends Associations<T, Bi
 		_keyType = associationCache.getQuery().getKeyType();
 	}
 
-	public final String keyAttribute() {
-		return _keyAttribute;
-	}
-
 	/**
 	 * The cached modifiable link items.
 	 * 
@@ -120,7 +116,12 @@ abstract class AssociationsMap<K, T extends TLObject> extends Associations<T, Bi
 
 	protected final K key(TLObject link) {
 		try {
-			Object keyValue = link.tHandle().getAttributeValue(_keyAttribute);
+			Object keyValue;
+			if (_keyAttribute == null) {
+				keyValue = link;
+			} else {
+				keyValue = link.tHandle().getAttributeValue(_keyAttribute);
+			}
 			if (keyValue == null) {
 				return null;
 			}

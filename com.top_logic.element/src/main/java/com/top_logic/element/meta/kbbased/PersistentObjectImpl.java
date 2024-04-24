@@ -31,6 +31,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -226,7 +227,9 @@ public class PersistentObjectImpl {
 
 			touch(self, attribute);
 		} catch (RuntimeException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(attribute, value), ex);
+			throw new TopLogicException(
+				I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(TLModelUtil.qualifiedName(attribute), value),
+				ex);
         }
 	}
     

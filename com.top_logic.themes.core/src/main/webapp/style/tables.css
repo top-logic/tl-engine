@@ -925,6 +925,15 @@ table td span.cError i {
 	position: static;
 }
 
+table td .ddwttDropBtn,
+table td .ddwttDropBtn .ddwttButtonContent {
+	flex-grow: 1;
+}
+
+table td ..ddwttContainer {
+	width: 100%;
+}
+
 table td span.cDecoratedCell,
 table td span.cPopupSelect,
 table td span.cTextSelect,

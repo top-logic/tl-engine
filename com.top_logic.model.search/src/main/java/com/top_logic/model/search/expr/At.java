@@ -8,6 +8,10 @@ package com.top_logic.model.search.expr;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
@@ -94,6 +98,29 @@ public class At extends SearchExpression {
 						I18NConstants.ERROR_NO_SUCH_PROPERTY__OBJ_NAME_EXPR.fill(obj, propertyName, this));
 				}
 				return SearchExpression.normalizeValue(obj.tValueByName(propertyName));
+			}
+		} else if (self instanceof ConfigurationItem) {
+			ConfigurationItem config = (ConfigurationItem) self;
+			String propertyName = asString(indexArg);
+			switch (propertyName) {
+				case "$tag":
+					TagName annotation = config.descriptor().getConfigurationInterface().getAnnotation(TagName.class);
+					return annotation == null ? null : annotation.value();
+				case "$intf":
+					return config.descriptor().getConfigurationInterface().getName();
+				case "$class":
+					return (config instanceof PolymorphicConfiguration<?>)
+						? ((PolymorphicConfiguration<?>) config).getImplementationClass().getName()
+						: null;
+				default:
+					PropertyDescriptor property = config.descriptor().getProperty(propertyName);
+					if (property == null) {
+						throw new TopLogicException(
+							I18NConstants.ERROR_NO_SUCH_PROPERTY__OBJ_NAME_EXPR.fill(
+								"Config<" + config.descriptor().getConfigurationInterface().getName() + ">",
+								propertyName, this));
+					}
+					return config.value(property);
 			}
 		} else {
 			throw new TopLogicException(I18NConstants.ERROR_LIST_MAP_OR_OBJECT_REQUIRED__VALUE_EXPR.fill(self, this));

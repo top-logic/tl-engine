@@ -640,6 +640,7 @@
 					<method name="currentRevision" class="com.top_logic.model.search.expr.config.operations.revision.CurrentRevision$Builder"/>
 					<method name="equalsUnversioned" class="com.top_logic.model.search.expr.config.operations.EqualsUnversioned$Builder"/>
 					<method name="filterPermission" class="com.top_logic.model.search.expr.config.operations.security.FilterPermission$Builder"/>
+					<method name="dbConfig" class="com.top_logic.model.search.expr.config.operations.app.GetDBConfig$Builder"/>
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>

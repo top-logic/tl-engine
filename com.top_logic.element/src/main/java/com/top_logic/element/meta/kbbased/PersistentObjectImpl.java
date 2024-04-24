@@ -39,6 +39,7 @@ import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.composite.TargetTable;
 import com.top_logic.model.impl.TransientTLObjectImpl;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -366,7 +367,9 @@ public class PersistentObjectImpl {
 
 			touch(self, attribute);
 		} catch (RuntimeException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(attribute, value), ex);
+			throw new TopLogicException(
+				I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(TLModelUtil.qualifiedName(attribute), value),
+				ex);
         }
 	}
 

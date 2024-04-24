@@ -2514,7 +2514,6 @@ a.input-image.tristate.tBoolean {
 	cursor: default;
 	margin: 0 !important;
 	overflow: hidden;
-	width: 100%;
 }
 
 .modelBasedSearch .ddwttContainer.active {
@@ -2552,7 +2551,6 @@ a.input-image.tristate.tBoolean {
 	border: none;
 	display: inline-flex;
 	align-items: center;
-	flex-grow: 1;
 	color: var(--text-primary);
 	background: var(--field);
 	padding-left: var(--spacing-03);
@@ -2563,7 +2561,6 @@ a.input-image.tristate.tBoolean {
 
 .ddwttDropBtn .ddwttButtonContent {
 	display: inline-flex;
-	flex-grow: 1;
 	gap: var(--spacing-02);
 }
 

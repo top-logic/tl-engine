@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.top_logic.basic.config.annotation.Reference;
 import com.top_logic.model.impl.generated.TLAssociationBase;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * An association type.
@@ -65,6 +66,19 @@ public interface TLAssociation extends TLAssociationBase {
 	 * @see TLClass#getLocalClassParts()
 	 */
 	List<TLAssociationPart> getAssociationParts();
+
+	/**
+	 * The ends of this association.
+	 * 
+	 * <p>
+	 * The ends are a sub-list of the local parts of this association.
+	 * </p>
+	 * 
+	 * @see #getLocalParts()
+	 */
+	default List<TLAssociationEnd> getEnds() {
+		return TLModelUtil.getEnds(this);
+	}
 
 	@Override
 	default ModelKind getModelKind() {

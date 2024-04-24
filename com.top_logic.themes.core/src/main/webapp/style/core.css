@@ -1795,6 +1795,18 @@ span.ltcCounting input {
 	gap: var(--spacing-03);
 }
 
+.tileContainer .tileNoCards {
+	position: absolute;
+	left: 50%;
+	top: 40%;
+	transform: translate(-50%);
+	text-align: center;
+	font-family: var(--font-family-bold);
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+}
+
 .card {
 	display: flex;
 	flex-direction: column;
@@ -1836,37 +1848,74 @@ span.ltcCounting input {
 }
 
 .previewBoxOuter {
+	display: inline-flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    height: 0;
-    padding-bottom: 100%;
-    position: relative;
+    height: 80%;
     overflow: hidden;
     background: var(--background);
 }
 
 .previewBoxOuter .previewBoxInner {
-	position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-}
-
-.previewBoxOuter .previewBoxInner img {
-	width: 100%;
-	height: 100%;
-	object-fit: contain;
-	background: transparent;
+	position: relative;
 }
 
 .previewBoxOuter:not(.galleryPreview) .previewBoxInner {
     display: inline-flex;
     justify-content: center;
     align-items: center;
+    height: 50%;
+    width: 50%;
 }
 
-.card-img-top i {
+span.card-img-top {
+    height: 100%;
+    width: 100%;
+}
+
+.previewBoxOuter .previewBoxInner img {
+	width: 100%;
+	height: 100%;
+	background: transparent;
+}
+
+.previewBoxOuter .previewBoxInner img[src$=".svg"] {
+	object-fit: contain;
+}
+
+.previewBoxOuter .previewBoxInner img:not([src$=".svg"]) {
+	object-fit: cover;
+}
+
+.tileContainer .card-img-top {
+    height: 100%;
+    width: 100%;
+}
+
+.tileContainer .card-img-top i {
 	font-size: 8rem;
+}
+
+.previewBoxOuter.galleryPreview .previewBoxInner {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.previewBoxOuter.galleryPreview .previewBoxInner .cImageDisplay {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+    width: 100%;
+}
+
+.tileContainer .galleryPreview .previewBoxInner img {
+    position: unset;
+    transform: unset;
 }
 
 h5.card-title {
@@ -1908,10 +1957,48 @@ h5.card-title a:focus {
 	background: var(--layer);
 	padding: 0 var(--spacing-03);
 	margin: 0;
+	overflow: hidden;
+	text-wrap: nowrap;
+	text-overflow: ellipsis;
+}
+
+.card-text > *,
+.card-text p {
+	overflow: hidden;
+	text-wrap: nowrap;
+	text-overflow: ellipsis;
 }
 
 .card-text p {
 	margin: 0;
+}
+
+.tileContainer .circle-red,
+.tileContainer .circle-blue {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: -12px;
+    top: -12px;
+    min-height: 24px;
+	min-width: 24px;
+    border-radius: 50%;
+    color: var(--text-on-color);
+    font-weight: 600;
+    border: 4px solid var(--background);
+    font-family: var(--font-family-bold);
+    font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
+}
+
+.tileContainer .circle-red {
+    background-color: var(--support-danger);
+}
+
+.tileContainer .circle-blue {
+    background-color: var(--background-brand);
 }
 
 /*

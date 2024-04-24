@@ -60,7 +60,7 @@ public class Label extends GenericMethod {
 		/** Description of parameters for a {@link Label}. */
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("object")
-			.optional("language", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
+			.optional("lang", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
 			.build();
 
 		/** Creates a {@link Builder}. */

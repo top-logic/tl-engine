@@ -43,8 +43,15 @@ public interface ContextMenuProvider {
 	 * on which the user right-clicked.
 	 */
 	static Object getContextMenuTarget(Object directTarget, Collection<?> selection) {
+		if (selection == null) {
+			return directTarget;
+		}
 		if (selection.contains(directTarget)) {
 			// The user opened the context menu on the selection.
+			if (selection.size() == 1) {
+				/* Use the object itself. No need of having it wrapped into a set. */
+				return directTarget;
+			}
 			return selection;
 		} else {
 			// The user opened the context menu on an unselected object.

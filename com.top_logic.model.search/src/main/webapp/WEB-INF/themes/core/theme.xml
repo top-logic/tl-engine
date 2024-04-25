@@ -2,6 +2,6 @@
 
 <theme>
 	<styles>
-		<style name="/style/modelSearch.css"/>
+		<style name="/style/modelSearchCore.css"/>
 	</styles>
 </theme>

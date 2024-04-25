@@ -115,6 +115,17 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		void setOrdered(Boolean value);
 
 		/**
+		 * See {@link PartConfig#isAbstract()}.
+		 */
+		@Name(PartConfig.ABSTRACT_PROPERTY)
+		Boolean isAbstract();
+
+		/**
+		 * Setter for {@link #isAbstract()}.
+		 */
+		void setAbstract(Boolean value);
+
+		/**
 		 * See {@link PartConfig#isBag()}.
 		 */
 		@Name(PartConfig.BAG_PROPERTY)
@@ -191,7 +202,7 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		if (tlModel != null) {
 			MigrationUtils.updateProperty(log, tlModel, partName, newName, getConfig().getNewType(),
 				getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
-				getConfig());
+				getConfig().isAbstract(), getConfig());
 		}
 		log.info("Updated part " + _util.qualifiedName(partName));
 

@@ -166,9 +166,9 @@ public class MigrationUtils {
 	 */
 	public static Element createAttribute(Log log, Document model, QualifiedPartName partName,
 			QualifiedTypeName target, Boolean mandatory, Boolean multiple, Boolean bag, Boolean ordered,
-			AnnotatedConfig<?> annotations) throws MigrationException {
+			Boolean isAbstract, AnnotatedConfig<?> annotations) throws MigrationException {
 		return internalCreatePart(log, model, partName, target, ATTRIBUTE_CONFIG_TAG_NAME, mandatory,
-			multiple, bag, ordered, annotations);
+			multiple, bag, ordered, isAbstract, annotations);
 	}
 
 	/**
@@ -182,12 +182,11 @@ public class MigrationUtils {
 	public static Element createBackReference(Log log, Document model, QualifiedPartName referenceName,
 			QualifiedPartName inverseReference,
 			Boolean mandatory, Boolean composite,
-			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
+			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract, Boolean navigate,
 			HistoryType historyType, AnnotatedConfig<?> annotations, String endName) throws MigrationException {
 		Element reference =
 			createReference(log, model, referenceName, inverseReference.getOwner(), mandatory, composite, aggregate,
-				multiple,
-				bag, ordered, navigate, historyType, annotations, endName);
+				multiple, bag, ordered, isAbstract, navigate, historyType, annotations, endName);
 		reference.setAttribute(ReferenceConfig.INVERSE_REFERENCE, inverseReference.getPartName());
 		reference.setAttribute(ReferenceConfig.KIND, ReferenceKind.BACKWARDS.getExternalName());
 		return reference;
@@ -204,11 +203,11 @@ public class MigrationUtils {
 	public static Element createReference(Log log, Document model, QualifiedPartName referenceName,
 			QualifiedTypeName target,
 			Boolean mandatory, Boolean composite,
-			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
+			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract, Boolean navigate,
 			HistoryType historyType, AnnotatedConfig<?> annotations, String endName)
 			throws MigrationException {
 		Element reference = internalCreateEndAspect(log, model, referenceName, target,
-			REFERENCE_CONFIG_TAG_NAME, mandatory, composite, aggregate, multiple, bag, ordered,
+			REFERENCE_CONFIG_TAG_NAME, mandatory, composite, aggregate, multiple, bag, ordered, isAbstract,
 			navigate, historyType, annotations);
 		if (endName != null) {
 			reference.setAttribute(ReferenceConfig.END, endName);
@@ -226,22 +225,22 @@ public class MigrationUtils {
 	 */
 	public static Element createEnd(Log log, Document model, QualifiedPartName endName, QualifiedTypeName target,
 			Boolean mandatory, Boolean composite,
-			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
+			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract, Boolean navigate,
 			HistoryType historyType,
 			AnnotatedConfig<?> annotations) throws MigrationException {
 		return internalCreateEndAspect(log, model, endName, target, END_CONFIG_TAG_NAME,
-			mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType, annotations);
+			mandatory, composite, aggregate, multiple, bag, ordered, isAbstract, navigate, historyType, annotations);
 	}
 
 	private static Element internalCreateEndAspect(Log log, Document model, QualifiedPartName part,
 			QualifiedTypeName target,
 			String tagName,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
-			Boolean navigate,
+			Boolean isAbstract, Boolean navigate,
 			HistoryType historyType,
 			AnnotatedConfig<?> annotations) throws MigrationException {
 		Element end = internalCreatePart(log, model, part, target, tagName, mandatory, multiple, bag, ordered,
-			annotations);
+			isAbstract, annotations);
 		if (composite != null) {
 			end.setAttribute(EndAspect.COMPOSITE_PROPERTY, Boolean.toString(composite.booleanValue()));
 		}
@@ -260,7 +259,7 @@ public class MigrationUtils {
 
 	private static Element internalCreatePart(Log log, Document model, QualifiedPartName reference,
 			QualifiedTypeName targetType,
-			String tagName, Boolean mandatory, Boolean multiple, Boolean bag, Boolean ordered,
+			String tagName, Boolean mandatory, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract,
 			AnnotatedConfig<?> annotations)
 			throws MigrationException {
 		Element module = getTLModuleOrFail(model, reference.getModuleName());
@@ -290,6 +289,9 @@ public class MigrationUtils {
 		}
 		if (ordered != null) {
 			newAttribute.setAttribute(PartConfig.ORDERED_PROPERTY, Boolean.toString(ordered.booleanValue()));
+		}
+		if (isAbstract != null) {
+			newAttribute.setAttribute(PartConfig.ABSTRACT_PROPERTY, Boolean.toString(isAbstract.booleanValue()));
 		}
 		updateModelPartAnnotations(log, newAttribute, null, Util.toString(annotations));
 
@@ -1663,7 +1665,7 @@ public class MigrationUtils {
 		Element type = getTLTypeOrFail(log, module, partName.getTypeName());
 		Element part = getTLTypePartOrFail(log, type, partName.getPartName());
 
-		internalUpdatePart(log, tlModel, part, partName, null, target, null, null, null, null, null);
+		internalUpdatePart(log, tlModel, part, partName, null, target, null, null, null, null, null, null);
 		if (REFERENCE_CONFIG_TAG_NAME.equals(part.getTagName())) {
 			// Reference: Update inverse!
 			adaptInverseReference(log, tlModel, module, type, part, null, target);
@@ -1675,7 +1677,7 @@ public class MigrationUtils {
 	 */
 	public static void updateProperty(Log log, Document tlModel, QualifiedPartName propertyName,
 			QualifiedPartName newName, QualifiedTypeName newType,
-			Boolean mandatory, Boolean multiple, Boolean bag, Boolean ordered,
+			Boolean mandatory, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract,
 			AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws MigrationException {
 
@@ -1684,7 +1686,7 @@ public class MigrationUtils {
 		Element part = getTLTypePartOrFail(log, type, propertyName.getPartName());
 
 		internalUpdatePart(log, tlModel, part, propertyName, newName, newType, mandatory, multiple, bag, ordered,
-			annotations);
+			isAbstract, annotations);
 	}
 
 	/**
@@ -1693,7 +1695,8 @@ public class MigrationUtils {
 	public static void updateAssociationEnd(Log log, Document tlModel, QualifiedPartName endName,
 			QualifiedPartName newName, QualifiedTypeName newType,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
-			Boolean canNavigate, HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			Boolean isAbstract, Boolean canNavigate, HistoryType historyType,
+			AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws MigrationException {
 
 		Element module = getTLModuleOrFail(tlModel, endName.getModuleName());
@@ -1701,7 +1704,7 @@ public class MigrationUtils {
 		Element part = getTLTypePartOrFail(log, type, endName.getPartName());
 
 		internalUpdateEndAspect(log, tlModel, endName, newName, newType, mandatory, composite, aggregate,
-			multiple, bag, ordered, canNavigate, historyType, annotations, part);
+			multiple, bag, ordered, isAbstract, canNavigate, historyType, annotations, part);
 	}
 
 	/**
@@ -1710,7 +1713,8 @@ public class MigrationUtils {
 	public static void updateReference(Log log, Document tlModel, QualifiedPartName referenceName,
 			QualifiedPartName newName, QualifiedTypeName newType,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
-			Boolean canNavigate, HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations,
+			Boolean isAbstract, Boolean canNavigate, HistoryType historyType,
+			AnnotatedConfig<TLAttributeAnnotation> annotations,
 			QualifiedPartName newEnd)
 			throws MigrationException {
 
@@ -1723,7 +1727,7 @@ public class MigrationUtils {
 		}
 
 		internalUpdateEndAspect(log, tlModel, referenceName, newName, newType, mandatory, composite, aggregate,
-			multiple, bag, ordered, canNavigate, historyType, annotations, part);
+			multiple, bag, ordered, isAbstract, canNavigate, historyType, annotations, part);
 	}
 
 	/**
@@ -1732,7 +1736,8 @@ public class MigrationUtils {
 	public static void updateInverseReference(Log log, Document tlModel, QualifiedPartName referenceName,
 			String newReferenceName,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
-			Boolean canNavigate, HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations,
+			Boolean isAbstract, Boolean canNavigate, HistoryType historyType,
+			AnnotatedConfig<TLAttributeAnnotation> annotations,
 			QualifiedPartName newEnd) throws MigrationException {
 
 		Element module = getTLModuleOrFail(tlModel, referenceName.getModuleName());
@@ -1740,7 +1745,7 @@ public class MigrationUtils {
 		Element part = getTLTypePartOrFail(log, type, referenceName.getPartName());
 
 		internalUpdateEndAspect(log, tlModel, referenceName, null, null, mandatory, composite, aggregate,
-			multiple, bag, ordered, canNavigate, historyType, annotations, part);
+			multiple, bag, ordered, isAbstract, canNavigate, historyType, annotations, part);
 
 		if (newReferenceName != null) {
 			part.setAttribute(ReferenceConfig.NAME, newReferenceName);
@@ -1833,11 +1838,11 @@ public class MigrationUtils {
 
 	private static void internalUpdateEndAspect(Log log, Document tlModel, QualifiedPartName origName,
 			QualifiedPartName newName, QualifiedTypeName newType, Boolean mandatory, Boolean composite,
-			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean canNavigate,
+			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract, Boolean canNavigate,
 			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations, Element part)
 			throws MigrationException {
 		internalUpdatePart(log, tlModel, part, origName, newName, newType, mandatory, multiple, bag,
-			ordered, annotations);
+			ordered, isAbstract, annotations);
 		if (composite != null) {
 			part.setAttribute(EndAspect.COMPOSITE_PROPERTY, Boolean.toString(composite.booleanValue()));
 		}
@@ -1854,7 +1859,7 @@ public class MigrationUtils {
 
 	private static void internalUpdatePart(Log log, Document tlModel, Element part, QualifiedPartName origName,
 			QualifiedPartName newName, QualifiedTypeName newType, Boolean mandatory, Boolean multiple, Boolean bag,
-			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			Boolean ordered, Boolean isAbstract, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws MigrationException {
 		if (newName != null) {
 			moveStructuredTypePart(log, tlModel, part, origName, newName);
@@ -1880,6 +1885,9 @@ public class MigrationUtils {
 		}
 		if (ordered != null) {
 			part.setAttribute(PartConfig.ORDERED_PROPERTY, Boolean.toString(ordered.booleanValue()));
+		}
+		if (isAbstract != null) {
+			part.setAttribute(PartConfig.ABSTRACT_PROPERTY, Boolean.toString(isAbstract.booleanValue()));
 		}
 		if (annotations != null && !annotations.getAnnotations().isEmpty()) {
 			updateModelPartAnnotations(log, part, getModelPartAnnotations(log, part), Util.toString(annotations));

@@ -314,6 +314,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 		extractPartAspectConfig(config, model);
 		boolean override = model.isOverride();
 		copyIfDifferent(config::isOverride, config::setOverride, override);
+		copyIfDifferent(config::isAbstract, config::setAbstract, model.isAbstract());
 
 		TLType valueType = model.getType();
 		TLModule module = model.getOwner().getModule();

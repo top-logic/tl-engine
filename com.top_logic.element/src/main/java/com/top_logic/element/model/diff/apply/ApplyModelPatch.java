@@ -1006,6 +1006,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		config.setName(qPartName);
 		copyIfSet(part, PartConfig.MULTIPLE_PROPERTY, config::setMultiple);
 		copyIfSet(part, PartConfig.ORDERED_PROPERTY, config::setOrdered);
+		copyIfSet(part, PartConfig.ABSTRACT_PROPERTY, config::setAbstract);
 		copyIfSet(part, PartConfig.MANDATORY, config::setMandatory);
 		copyIfSet(part, PartConfig.BAG_PROPERTY, config::setBag);
 		copyAnnotations(part, config);

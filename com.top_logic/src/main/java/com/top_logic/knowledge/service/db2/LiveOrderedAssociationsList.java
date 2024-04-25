@@ -6,7 +6,9 @@
 package com.top_logic.knowledge.service.db2;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.knowledge.util.OrderedLinkUtil;
@@ -42,6 +44,60 @@ public class LiveOrderedAssociationsList<T extends TLObject> extends LiveAssocia
 
 		public ListViewExt(OrderedLinkCache<T> associationCache, String orderAttribute) {
 			super(associationCache, orderAttribute);
+		}
+
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		@Override
+		public void sort(Comparator<? super T> c) {
+			if (size() < 2) {
+				return;
+			}
+			List<TLObject> currentOrder = new ArrayList<>(lookup());
+			TLObject[] a = currentOrder.toArray(TLObject[]::new);
+			Arrays.sort(a, (Comparator) c);
+
+			int insertStart = -1;
+			int destPos = 0;
+			for (int i = 0; i < a.length; i++) {
+				TLObject tmp = a[i];
+				TLObject dest = currentOrder.get(destPos);
+				if (tmp == dest) {
+					if (insertStart != -1) {
+						// Insert elements from "insertStart" to "i-1" before "destPos"
+						int numberElements = i - insertStart;
+						int indexBefore;
+						if (destPos == 0) {
+							indexBefore = 0;
+						} else {
+							indexBefore = order(currentOrder.get(destPos - 1));
+						}
+						int indexAfter = order(dest);
+
+						int indexInc = Math.min(INSERT_INC, (indexAfter - indexBefore) / (numberElements + 1));
+						if (indexInc > 0) {
+							int newIndex = indexBefore;
+							for (int j = insertStart; j <i;j++) {
+								newIndex += indexInc;
+								setOrder(a[j], newIndex);
+								// Do not handle moved element twice
+								currentOrder.remove(a[j]);
+							}
+						} else {
+							// No incremental insert possible
+							OrderedLinkUtil.updateIndices(Arrays.asList(a), _orderAttribute);
+							return;
+						}
+					}
+					insertStart = -1;
+					destPos++;
+					continue;
+				} else {
+					if (insertStart == -1) {
+						insertStart = i;
+					}
+				}
+			}
+			assert insertStart == -1;
 		}
 
 		@Override

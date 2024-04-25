@@ -8,6 +8,7 @@ package com.top_logic.element.meta.kbbased.storage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -262,6 +263,11 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 		@Override
 		public int lastIndexOf(Object o) {
 			return _base.lastIndexOf(o);
+		}
+
+		@Override
+		public void sort(Comparator<? super E> c) {
+			_base.sort(c);
 		}
 
 	}

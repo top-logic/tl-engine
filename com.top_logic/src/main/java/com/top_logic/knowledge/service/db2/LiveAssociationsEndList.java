@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.service.db2;
 
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.col.KeyValueBuffer;
@@ -165,6 +166,11 @@ public class LiveAssociationsEndList<T extends TLObject> extends MutableList<T> 
 
 	private String orderAttribute() {
 		return _associationQuery.getOrderAttribute();
+	}
+
+	@Override
+	public void sort(Comparator<? super T> c) {
+		_links.sort((l1, l2) -> c.compare(_endAccess.map(l1), _endAccess.map(l2)));
 	}
 
 }

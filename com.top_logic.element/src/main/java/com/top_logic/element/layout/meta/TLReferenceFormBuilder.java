@@ -69,6 +69,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		ReferenceModel.MULTIPLE_PROPERTY,
 		ReferenceModel.ORDERED_PROPERTY,
 		ReferenceModel.BAG_PROPERTY,
+		ReferenceModel.ABSTRACT_PROPERTY,
 		ReferenceModel.COMPOSITE_PROPERTY,
 		ReferenceModel.AGGREGATE_PROPERTY,
 		ReferenceModel.NAVIGATE_PROPERTY,

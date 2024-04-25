@@ -74,4 +74,14 @@ public abstract class PersistentProperty extends ConfiguredAttributeImpl impleme
 		tSetDataBoolean(PersistentReference.ORDERED_ATTR, value);
 	}
 
+	@Override
+	public boolean isAbstract() {
+		return tGetDataBooleanValue(ABSTRACT_ATTR);
+	}
+
+	@Override
+	public void setAbstract(boolean value) {
+		tSetDataBoolean(ABSTRACT_ATTR, value);
+	}
+
 }

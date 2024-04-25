@@ -105,6 +105,7 @@ public class ModelResolver {
 		AttributeConfig.NAME,
 		AttributeConfig.OVERRIDE,
 		AttributeConfig.TYPE_SPEC,
+		AttributeConfig.ABSTRACT_PROPERTY,
 		AttributeConfig.MANDATORY,
 		ReferenceConfig.END,
 		ReferenceConfig.KIND,
@@ -921,6 +922,7 @@ public class ModelResolver {
 				boolean backOfComposition = forwardsEnd.isComposite();
 				if (backOfComposition) {
 					end.setMultiple(false);
+					end.setAbstract(config.isAbstract());
 				} else {
 					applyMultiplicity(config, end);
 				}
@@ -937,6 +939,7 @@ public class ModelResolver {
 
 	private static void applyMultiplicity(PartConfig config, TLStructuredTypePart part) {
 		part.setMandatory(config.getMandatory());
+		part.setAbstract(config.isAbstract());
 
 		boolean multiple = config.isMultiple();
 		part.setMultiple(multiple);

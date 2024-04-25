@@ -98,8 +98,8 @@ public class CreateTLAssociationEndProcessor
 		} else {
 			MigrationUtils.createEnd(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
-				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
-				nullIfUnset(Config.HISTORY_TYPE), getConfig());
+				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.ABSTRACT),
+				nullIfUnset(Config.NAVIGATE), nullIfUnset(Config.HISTORY_TYPE), getConfig());
 			updateModelBaseline = true;
 		}
 		log.info("Created part " + _util.qualifiedName(partName));

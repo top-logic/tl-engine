@@ -165,8 +165,8 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				MigrationUtils.updateReference(log, tlModel,
 					referenceName, getConfig().getNewName(), getConfig().getNewType(),
 					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
-					getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
+					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
 				updateModelBaseline = true;
 			}
 			log.info("Updated reference " + _util.qualifiedName(referenceName));
@@ -183,8 +183,8 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				MigrationUtils.updateInverseReference(log, tlModel,
 					referenceName, newReferenceName,
 					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
-					getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
+					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
 				updateModelBaseline = true;
 			}
 			log.info("Updated inverse reference " + _util.qualifiedName(referenceName));

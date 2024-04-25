@@ -144,8 +144,8 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		} else {
 			MigrationUtils.updateAssociationEnd(log, tlModel, endName, newName, null,
 				getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-				getConfig().isMultiple(),
-				getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
+				getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
+				getConfig().canNavigate(), getConfig().getHistoryType(),
 				getConfig());
 			updateModelBaseline = true;
 		}

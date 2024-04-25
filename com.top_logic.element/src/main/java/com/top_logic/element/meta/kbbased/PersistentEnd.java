@@ -141,6 +141,16 @@ public class PersistentEnd extends ConfiguredAttributeImpl implements TLAssociat
 	}
 
 	@Override
+	public boolean isAbstract() {
+		return tGetDataBooleanValue(ABSTRACT_ATTR);
+	}
+
+	@Override
+	public void setAbstract(boolean value) {
+		tSetDataBoolean(ABSTRACT_ATTR, value);
+	}
+
+	@Override
 	public boolean canNavigate() {
 		return tGetDataBooleanValue(PersistentReference.NAVIGATE_ATTR);
 	}

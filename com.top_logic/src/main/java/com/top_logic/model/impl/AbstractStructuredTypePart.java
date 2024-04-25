@@ -40,6 +40,8 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 
 	private boolean ordered;
 
+	private boolean _abstract;
+
 	private boolean bag;
 	
 	private TLStructuredTypePart _definition = this;
@@ -80,6 +82,16 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 	@Override
 	public void setOrdered(boolean ordered) {
 		this.ordered = ordered;
+	}
+
+	@Override
+	public boolean isAbstract() {
+		return _abstract;
+	}
+
+	@Override
+	public void setAbstract(boolean value) {
+		_abstract = value;
 	}
 
 	@Override

@@ -46,7 +46,7 @@ public class Label extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		Locale locale = asLocaleNullable(arguments, 1);
+		Locale locale = asLocaleNullable(arguments[1]);
 		return TLContextManager.getSubSession().withLocale(locale, () -> getLabel(arguments[0]));
 	}
 

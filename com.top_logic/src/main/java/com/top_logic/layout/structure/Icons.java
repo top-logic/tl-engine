@@ -10,6 +10,7 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
+import com.top_logic.layout.basic.TemplateType;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
@@ -80,11 +81,13 @@ public class Icons extends IconsBase {
 	/**
 	 * Header region of the application sidebar.
 	 */
+	@TemplateType(LogoViewConfiguration.LogoModel.class)
 	public static ThemeVar<HTMLTemplateFragment> LOGO_VIEW;
 
 	/**
 	 * Version information in the application's status bar.
 	 */
+	@TemplateType(VersionViewConfiguration.VersionModel.class)
 	public static ThemeVar<HTMLTemplateFragment> VERSION_VIEW;
 
 }

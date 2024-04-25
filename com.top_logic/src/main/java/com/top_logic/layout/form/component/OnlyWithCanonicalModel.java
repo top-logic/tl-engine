@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.component;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
@@ -43,10 +44,34 @@ final class OnlyWithCanonicalModel implements ExecutabilityRule {
 		@SuppressWarnings("deprecation")
 		Object canonicalTargetModel = _handler.getTargetModel(aComponent, someValues);
 
-		if (Objects.equals(model, canonicalTargetModel)) {
+		if (isEquivalent(model, canonicalTargetModel)) {
 			return ExecutableState.EXECUTABLE;
 		} else {
 			return ExecutableState.NOT_EXEC_HIDDEN;
 		}
 	}
+
+	private boolean isEquivalent(Object left, Object right) {
+		if (Objects.equals(left, right)) {
+			return true;
+		}
+		Object unwrappedLeft = unwrapCollection(left);
+		Object unwrappedRight = unwrapCollection(right);
+		return Objects.equals(unwrappedLeft, unwrappedRight);
+	}
+
+	private Object unwrapCollection(Object object) {
+		if (!(object instanceof Collection)) {
+			return object;
+		}
+		Collection<?> collection = (Collection<?>) object;
+		if (collection.isEmpty()) {
+			return null;
+		}
+		if (collection.size() == 1) {
+			return collection.iterator().next();
+		}
+		return collection;
+	}
+
 }

@@ -6,7 +6,6 @@
 package com.top_logic.gui;
 
 import static com.top_logic.basic.io.FileUtilities.*;
-import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -322,7 +321,6 @@ public class ThemeUtil {
 			throws IOException {
 		XMLTag icon = image.toIcon();
 		icon.beginBeginTag(context, out);
-		out.writeAttribute(STYLE_ATTR, "max-height:22px");
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltip);
 		icon.endBeginTag(context, out);
 		icon.endTag(context, out);

@@ -598,6 +598,8 @@ public abstract class ThemeImage implements HTMLFragment {
 			public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
 				out.beginBeginTag(HTMLConstants.IMG);
 				writeSrc(context, out);
+				// This is to ensure an error if someone tries to write the icon's style attribute.
+				out.writeAttribute(STYLE_ATTR, "");
 			}
 
 			@Override
@@ -835,6 +837,9 @@ public abstract class ThemeImage implements HTMLFragment {
 				@Override
 				public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
 					out.beginBeginTag(SPAN);
+					// This is to ensure an error if someone tries to write the icon's style
+					// attribute.
+					out.writeAttribute(STYLE_ATTR, "");
 				}
 
 				@Override
@@ -868,6 +873,9 @@ public abstract class ThemeImage implements HTMLFragment {
 				public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
 					out.beginBeginTag(ANCHOR);
 					out.writeAttribute(HREF_ATTR, "#");
+					// This is to ensure an error if someone tries to write the icon's style
+					// attribute.
+					out.writeAttribute(STYLE_ATTR, "");
 				}
 
 				@Override
@@ -936,6 +944,9 @@ public abstract class ThemeImage implements HTMLFragment {
 				@Override
 				public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
 					out.beginBeginTag(SPAN);
+					// This is to ensure an error if someone tries to write the icon's style
+					// attribute.
+					out.writeAttribute(STYLE_ATTR, "");
 				}
 
 				@Override
@@ -965,6 +976,9 @@ public abstract class ThemeImage implements HTMLFragment {
 				public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
 					out.beginBeginTag(ANCHOR);
 					out.writeAttribute(HREF_ATTR, "#");
+					// This is to ensure an error if someone tries to write the icon's style
+					// attribute.
+					out.writeAttribute(STYLE_ATTR, "");
 				}
 
 				@Override
@@ -1072,10 +1086,6 @@ public abstract class ThemeImage implements HTMLFragment {
 			public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
 				out.beginBeginTag(SPAN);
 				out.writeAttribute(STYLE_ATTR, "display:none;");
-				out.endBeginTag();
-
-				// Note: Allow users write all sort of attributes, including `style`.
-				out.beginBeginTag(SPAN);
 			}
 
 			@Override
@@ -1085,7 +1095,6 @@ public abstract class ThemeImage implements HTMLFragment {
 
 			@Override
 			public void endTag(DisplayContext context, TagWriter out) {
-				out.endTag(SPAN);
 				out.endTag(SPAN);
 			}
 

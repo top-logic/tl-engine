@@ -236,6 +236,10 @@ public class IconSelectControl extends AbstractFormFieldControl {
 	private void writeActiveImage(DisplayContext context, TagWriter out, boolean disabled, Flavor imageFlavor, Object fieldValue, int index, boolean isOptionActive)
 		throws IOException
 	{
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(STYLE_ATTR, (isOptionActive ? "display: inline; " : "display: none; "));
+		out.endBeginTag();
+
 		XMLTag icon = resourceProvider.getImage(fieldValue, imageFlavor).toButton();
 		icon.beginBeginTag(context, out);
 		CssUtil.writeCombinedCssClasses(out,
@@ -245,7 +249,6 @@ public class IconSelectControl extends AbstractFormFieldControl {
 		if (index >= 0) {
 			writeValueAttribute(out, fieldValue, index);
 		}
-		out.writeAttribute(STYLE_ATTR, (isOptionActive ? "display: inline; " : "display: none; "));
 
 		if (disabled) {
 			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
@@ -253,6 +256,8 @@ public class IconSelectControl extends AbstractFormFieldControl {
 			writeOnClick(out, FormConstants.ICON_SELECT_CONTROL_CLASS, this, null);
 		}
 		icon.endEmptyTag(context, out);
+
+		out.endTag(SPAN);
 	}
 
 	@Override

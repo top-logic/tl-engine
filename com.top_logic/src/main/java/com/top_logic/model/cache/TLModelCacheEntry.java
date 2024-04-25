@@ -13,10 +13,12 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -24,7 +26,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.col.MapUtil;
+import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.tools.NameBuilder;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.provider.icon.IconProvider;
@@ -32,6 +37,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.internal.PersistentModelPart;
@@ -53,6 +59,25 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private final Map<TLClass, ListOrderedMap<String, TLStructuredTypePart>> _allAttributes = map();
 
 	private final Map<TLClass, ImmutableSet<TLClassPart>> _attributesOfSubClasses = map();
+
+	/**
+	 * <p>
+	 * Mapping from a {@link TLType} to the tables in which a composite {@link TLReference} with the
+	 * type as target type stores the link.
+	 * </p>
+	 * <p>
+	 * The map is complete in the following sense: If a type <code>A</code> is the target type of a
+	 * composition reference, the map contains an entry for <code>A</code>. The map may not contain
+	 * an entry for a subtype <code>B</code> of <code>A</code> whereas the corresponding reference
+	 * may contain elements of type <code>B</code>.
+	 * </p>
+	 * 
+	 * <p>
+	 * The map contains the {@link ObjectBranchId} of a type instead of its {@link ObjectKey},
+	 * because it is expected that this will not change over time.
+	 * </p>
+	 */
+	private volatile Map<ObjectBranchId, Set<String>> _compositionTables = null;
 
 	private final ConcurrentMap<TLType, IconProvider> _iconProviderByType = new ConcurrentHashMap<>();
 
@@ -245,6 +270,36 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			return computedResult;
 		}
 		return MapUtil.putIfAbsent(_iconProviderByType, type, computedResult);
+	}
+
+	@Override
+	public Set<String> getCompositionLinkTables(TLClass type) {
+		if (!WrapperHistoryUtils.isCurrent(type)) {
+			if (WrapperHistoryUtils.getCurrent(type) == null) {
+				// type is deleted in the meanwhile. Search for result
+				return super.getCompositionLinkTables(type);
+			}
+		}
+		Map<ObjectBranchId, Set<String>> compositionTables = _compositionTables;
+		if (_compositionTables == null) {
+			compositionTables = compositionTablesByTargetType();
+			_compositionTables = compositionTables;
+		}
+
+		return getSuperClasses(type).stream()
+			.map(TLClass::tId)
+			.map(ObjectBranchId::toObjectBranchId)
+			.map(compositionTables::get)
+			.filter(Objects::nonNull)
+			.flatMap(Set::stream)
+			.collect(Collectors.toSet());
+	}
+
+	private Map<ObjectBranchId, Set<String>> compositionTablesByTargetType() {
+		Map<ObjectBranchId, Set<String>> result = new HashMap<>();
+		collectStorageTables(_appModel,
+			(ref, table) -> MultiMaps.add(result, ObjectBranchId.toObjectBranchId(ref.getType().tId()), table));
+		return result;
 	}
 
 	/** Whether data about the given {@link TLModelPart} can be cached. */

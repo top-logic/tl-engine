@@ -10,8 +10,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.MapUtil;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.ChangeAware;
@@ -24,7 +26,6 @@ import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
-import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -32,6 +33,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.util.error.TopLogicException;
 
@@ -44,8 +46,8 @@ public class PersistentObjectImpl {
 
 	private static final String ATTRIBUTE_SUFFIX_LAST_CHANGED = "_last_changed";
 
-	private static final AssociationSetQuery<KnowledgeAssociation> COMPOSITION_LINKS =
-		AssociationQuery.createIncomingQuery("containerLinks", ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+	private static final ConcurrentHashMap<String, AssociationSetQuery<KnowledgeAssociation>> COMPOSITION_LINK_QUERIES =
+		new ConcurrentHashMap<>();
 
 	public static void addMetaElement(TLObject self, TLClass aMetaElement) {
 		PersistentScope.addMetaElement(self, aMetaElement);
@@ -127,7 +129,11 @@ public class PersistentObjectImpl {
 	}
 
 	private static KnowledgeAssociation tContainerLink(TLObject self) {
-		Set<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(self, COMPOSITION_LINKS);
+		TLStructuredType targetType = self.tType();
+		if (targetType.getModelKind() != ModelKind.CLASS) {
+			return null;
+		}
+		Set<KnowledgeAssociation> links = findLinks(self, targetType);
 		if (links.isEmpty()) {
 			return null;
 		}
@@ -137,6 +143,25 @@ public class PersistentObjectImpl {
 			throw new IllegalStateException("Object '" + self + "' is part of multiple containers.");
 		}
 		return link;
+	}
+
+	private static Set<KnowledgeAssociation> findLinks(TLObject self, TLStructuredType targetType) {
+		Set<String> compositionTables =
+			TLModelCacheService.getOperations().getCompositionLinkTables((TLClass) targetType);
+		for (String tableName : compositionTables) {
+			AssociationSetQuery<KnowledgeAssociation> query = COMPOSITION_LINK_QUERIES.get(tableName);
+			if (query == null) {
+				AssociationSetQuery<KnowledgeAssociation> newQuery =
+					AssociationQuery.createIncomingQuery("containerLinks for " + tableName, tableName);
+				query = MapUtil.putIfAbsent(COMPOSITION_LINK_QUERIES, tableName, newQuery);
+			}
+			Set<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(self, query);
+			if (!links.isEmpty()) {
+				return links;
+			}
+		}
+
+		return Collections.emptySet();
 	}
 
 	public static void removeMetaElement(TLObject self, TLClass aMetaElement) {

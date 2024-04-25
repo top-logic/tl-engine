@@ -38,8 +38,6 @@ public class IconControl extends AbstractControlBase {
 
 	private String _cssClass;
 
-	private String _style;
-
 	private String _tooltipCaption;
 
 	private String _tooltip;
@@ -111,21 +109,6 @@ public class IconControl extends AbstractControlBase {
 	 */
 	public void setCssClass(String cssClass) {
 		_cssClass = cssClass;
-		requestRepaint();
-	}
-
-	/**
-	 * The inline style value of the icon, <code>null</code> for no inline style.
-	 */
-	public String getStyle() {
-		return _style;
-	}
-
-	/**
-	 * @see #getStyle()
-	 */
-	public void setStyle(String style) {
-		_style = style;
 		requestRepaint();
 	}
 
@@ -233,7 +216,6 @@ public class IconControl extends AbstractControlBase {
 		} else {
 			_src.beginBeginTag(context, out);
 			writeControlAttributes(context, out);
-			out.writeAttribute(STYLE_ATTR, _style);
 			out.writeAttribute(WIDTH_ATTR, _cssWidth);
 			out.writeAttribute(HEIGHT_ATTR, _cssHeight);
 			out.writeAttribute(ALT_ATTR, _altText);

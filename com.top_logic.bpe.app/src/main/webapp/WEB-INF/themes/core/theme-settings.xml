@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_CLIPBOARD_LIST"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="ICON_PEN_FANCY"
+		value="css:bi bi-pencil-square"
+	/>
+	<icon name="ICON_PLAY"
+		value="css:bi bi-play-fill"
+	/>
+	<icon name="ICON_QRCODE"
+		value="css:bi bi-qr-code"
+	/>
+	<icon name="ICON_TH_LIST"
+		value="css:bi bi-table"
+	/>
+</settings>

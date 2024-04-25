@@ -546,23 +546,8 @@ div.dfListAdd {
 	gap: var(--spacing-02);
 }
 
-.modelBasedSearch div.dfList div.dfList, 
-.modelBasedSearch .dfModeFull div.dfList {
-	margin-left: var(--spacing-04);
-}
-
-.modelBasedSearch .dfListContent,
-.modelBasedSearch .dfListEntry {
-	margin-top: var(--spacing-02);
-	white-space: nowrap;
-}
-
-.modelBasedSearch span.dfListRemove {
-	margin-right: var(--spacing-02);
-}
-
 /* Lines should keep a bit distance from one-another. */
-.dfModeCompact span {
+.dfModeCompact > span {
 	margin: var(--spacing-01) 0;
 }
 
@@ -2516,10 +2501,6 @@ a.input-image.tristate.tBoolean {
 	overflow: hidden;
 }
 
-.modelBasedSearch .ddwttContainer.active {
-	display: unset;
-}
-
 .ddwttContainer.active {
 	display: flex;
 	flex-wrap: wrap;
@@ -2562,13 +2543,9 @@ a.input-image.tristate.tBoolean {
 .ddwttDropBtn .ddwttButtonContent {
 	display: inline-flex;
 	gap: var(--spacing-02);
-}
-
-.ddwttDropBtn > span {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	
 }
 
 span.disabled .ddwttDropBtn {

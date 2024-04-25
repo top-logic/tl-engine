@@ -71,15 +71,16 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 	/**
 	 * Creates a configuration for {@link SingletonLinkStorage}.
-	 *
-	 * @param composite
-	 *        Whether the reference is a composition.
+	 * 
+	 * @param tableName
+	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
+	 *        name is derived from the history type.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType) {
-		return LinkStorage.defaultConfig(Config.class, composite, historyType);
+	public static Config<?> singletonLinkConfig(String tableName, HistoryType historyType) {
+		return LinkStorage.defaultConfig(Config.class, tableName, historyType);
 	}
 
 	@Override

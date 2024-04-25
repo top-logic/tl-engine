@@ -7,10 +7,13 @@ package com.top_logic.model.cache;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -18,17 +21,22 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
+import com.top_logic.model.annotate.persistency.CompositionLinkTable;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -268,6 +276,77 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 		return null;
+	}
+
+	/**
+	 * Determines the link tables of the composition {@link TLReference}s that may contain elements
+	 * of the given type.
+	 */
+	public Set<String> getCompositionLinkTables(TLClass type) {
+		Set<String> tables = new HashSet<>();
+		collectStorageTables(type.getModel(), (reference, table) -> {
+			TLType targetType = reference.getType();
+			if (TLModelUtil.isCompatibleType(targetType, type)) {
+				tables.add(table);
+			}
+		});
+		return tables;
+	}
+
+	/**
+	 * Collects the link tables in which a composite {@link TLReference} stores the links.
+	 *
+	 * @param model
+	 *        The {@link TLModel} to navigate.
+	 * @param collector
+	 *        Is filled with the composite reference and the assigned association table.
+	 * 
+	 * @see CompositionLinkTable
+	 */
+	protected void collectStorageTables(TLModel model, BiConsumer<TLReference, String> collector) {
+		doForAllCompositionReferences(model, reference -> {
+			CompositionLinkTable storageTableAnnotation = TLAnnotations.getCompositionLinkTable(reference);
+			String storageTable;
+			if (storageTableAnnotation != null) {
+				storageTable = storageTableAnnotation.getTable();
+			} else {
+				storageTable = ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION;
+			}
+			collector.accept(reference, storageTable);
+		});
+	}
+
+	/**
+	 * Navigates through the given {@link TLModel} and executes the given callback for all composite
+	 * references of non abstract {@link TLClass}.
+	 *
+	 * @param model
+	 *        The {@link TLModel} to navigate.
+	 * @param callback
+	 *        Handler for the visited {@link TLReference}.
+	 */
+	protected void doForAllCompositionReferences(TLModel model, Consumer<TLReference> callback) {
+		for (TLModule module : model.getModules()) {
+			for (TLType type : module.getTypes()) {
+				if (type.getModelKind() != ModelKind.CLASS) {
+					continue;
+				}
+				TLClass tlClass = (TLClass) type;
+				if (tlClass.isAbstract()) {
+					continue;
+				}
+				for (TLModelPart part : tlClass.getAllParts()) {
+					if (part.getModelKind() != ModelKind.REFERENCE) {
+						continue;
+					}
+					TLReference reference = (TLReference) part;
+					if (!reference.getEnd().isComposite()) {
+						continue;
+					}
+					callback.accept(reference);
+				}
+			}
+		}
 	}
 
 }

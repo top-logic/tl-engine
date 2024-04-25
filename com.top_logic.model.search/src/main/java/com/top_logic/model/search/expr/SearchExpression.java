@@ -876,15 +876,11 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * 
 	 * @see #asLocale(Object)
 	 */
-	protected Locale asLocaleNullable(Object[] allArguments, int localeIndex) {
-		if (localeIndex >= allArguments.length) {
+	protected Locale asLocaleNullable(Object locale) {
+		if (locale == null) {
 			return TLContext.getLocale();
 		}
-		Object localeArgument = allArguments[localeIndex];
-		if (localeArgument == null) {
-			return TLContext.getLocale();
-		}
-		return asLocale(localeArgument);
+		return asLocale(locale);
 	}
 
 	/**

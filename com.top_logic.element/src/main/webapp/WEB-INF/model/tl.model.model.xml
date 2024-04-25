@@ -71,8 +71,7 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<implementation 
-										class="com.top_logic.element.meta.kbbased.storage.AnnotationConfigsStorage" 
+									<implementation class="com.top_logic.element.meta.kbbased.storage.AnnotationConfigsStorage"
 										db-attribute="annotations"
 									/>
 								</storage-algorithm>
@@ -488,6 +487,9 @@
 								<delete-protected/>
 							</annotations>
 						</reference>
+						<property name="abstract"
+							type="tl.core:Boolean"
+						/>
 					</attributes>
 				</interface>
 
@@ -644,6 +646,23 @@
 											<chain>
 												<get-value attribute="end"/>
 												<get-value attribute="ordered"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="abstract"
+							override="true"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="abstract"/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -312,6 +312,13 @@ public interface TlModelFactory {
 	}
 
 	/**
+	 * Lookup {@link com.top_logic.model.TLStructuredTypePart#ABSTRACT_ATTR} of {@link com.top_logic.model.TLStructuredTypePart}.
+	 */
+	public static com.top_logic.model.TLProperty getAbstractTLStructuredTypePartAttr() {
+		return (com.top_logic.model.TLProperty) getTLStructuredTypePartType().getPart(com.top_logic.model.TLStructuredTypePart.ABSTRACT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link com.top_logic.model.TLStructuredTypePart#BAG_ATTR} of {@link com.top_logic.model.TLStructuredTypePart}.
 	 */
 	public static com.top_logic.model.TLProperty getBagTLStructuredTypePartAttr() {
@@ -407,6 +414,13 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLClass getTLReferenceType() {
 		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLReference.TL_REFERENCE_TYPE);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLReference#ABSTRACT_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLProperty getAbstractTLReferenceAttr() {
+		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.ABSTRACT_ATTR);
 	}
 
 	/**

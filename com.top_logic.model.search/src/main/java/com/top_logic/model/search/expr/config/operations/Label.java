@@ -6,6 +6,7 @@
 package com.top_logic.model.search.expr.config.operations;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -16,10 +17,8 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -47,7 +46,8 @@ public class Label extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		return TLContextManager.getSubSession().withLocale(asLocale(arguments[1]), () -> getLabel(arguments[0]));
+		Locale locale = asLocaleNullable(arguments, 1);
+		return TLContextManager.getSubSession().withLocale(locale, () -> getLabel(arguments[0]));
 	}
 
 	private String getLabel(Object object) {
@@ -60,7 +60,7 @@ public class Label extends GenericMethod {
 		/** Description of parameters for a {@link Label}. */
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("object")
-			.optional("lang", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
+			.optional("lang")
 			.build();
 
 		/** Creates a {@link Builder}. */

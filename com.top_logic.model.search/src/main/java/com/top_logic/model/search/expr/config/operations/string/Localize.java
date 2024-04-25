@@ -16,14 +16,12 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 
 /**
  * {@link GenericMethod} localizing a {@link ResKey} in a given language.
@@ -51,7 +49,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		return evalPotentialFlatMap(definitions, arguments[0], asLocale(arguments[1]));
+		return evalPotentialFlatMap(definitions, arguments[0], asLocaleNullable(arguments, 1));
 	}
 
 	@Override
@@ -69,7 +67,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 		/** Description of parameters for a {@link Localize}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("input")
-			.optional("lang", () -> SearchExpressionFactory.literal(TLContext.getLocale()))
+			.optional("lang")
 			.build();
 
 		/**

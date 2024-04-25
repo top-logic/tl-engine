@@ -22,7 +22,8 @@ import com.top_logic.tool.execution.ExecutableState;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 final class OnlyWithCanonicalModel implements ExecutabilityRule {
-	private AbstractCommandHandler _handler;
+
+	private final AbstractCommandHandler _handler;
 
 	/**
 	 * Creates a {@link OnlyWithCanonicalModel}.
@@ -35,14 +36,13 @@ final class OnlyWithCanonicalModel implements ExecutabilityRule {
 	}
 
 	@Override
-	public ExecutableState isExecutable(LayoutComponent aComponent, Object model,
-			Map<String, Object> someValues) {
+	public ExecutableState isExecutable(LayoutComponent component, Object model, Map<String, Object> values) {
 
 		// Note: Here is not the actual target model requested (this is passed as the model
 		// argument) but the target model that the command would normally select when
 		// executed on a component.
 		@SuppressWarnings("deprecation")
-		Object canonicalTargetModel = _handler.getTargetModel(aComponent, someValues);
+		Object canonicalTargetModel = _handler.getTargetModel(component, values);
 
 		if (isEquivalent(model, canonicalTargetModel)) {
 			return ExecutableState.EXECUTABLE;

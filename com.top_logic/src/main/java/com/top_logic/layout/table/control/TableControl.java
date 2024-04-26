@@ -441,8 +441,10 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	@Override
 	public Menu createContextMenu(String contextInfo) {
 		int rowIndex = getRowIndex(contextInfo);
-		Object rowObject = getTableData().getTableModel().getRowObject(rowIndex);
-		return getContextMenuProvider().getContextMenu(rowObject);
+		Object directTarget = getTableData().getTableModel().getRowObject(rowIndex);
+		Set<?> selection = getTableData().getSelectionModel().getSelection();
+		Object extendedTarget = ContextMenuProvider.getContextMenuTarget(directTarget, selection);
+		return getContextMenuProvider().getContextMenu(extendedTarget);
 	}
 
 	@Override

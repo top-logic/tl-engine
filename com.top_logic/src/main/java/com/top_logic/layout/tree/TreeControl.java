@@ -591,6 +591,12 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 	}
 
 	@Override
+	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
+		super.writeControlAttributes(context, out);
+		out.writeAttribute(TL_CONTEXT_MENU_ATTR, getID());
+	}
+
+	@Override
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
 		getRenderer().appendControlCSSClasses(out, this);
@@ -640,8 +646,10 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 
 	@Override
 	public Menu createContextMenu(String contextInfo) {
-		Object node = getNodeById(contextInfo);
-		return _contextMenuProvider.getContextMenu(node);
+		Object directTarget = getNodeById(contextInfo);
+		Set<?> selection = getSelectionModel().getSelection();
+		Object extendedTarget = ContextMenuProvider.getContextMenuTarget(directTarget, selection);
+		return _contextMenuProvider.getContextMenu(extendedTarget);
 	}
 
 	@Override

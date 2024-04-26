@@ -47,7 +47,7 @@ public class TreeTableContextMenuFactory<C extends TreeTableContextMenuFactory.C
 		}
 
 		@Override
-		protected Object mapContext(Object obj) {
+		protected Object mapContextObject(Object obj) {
 			return super.mapContext(((TLTreeNode<?>) obj).getBusinessObject());
 		}
 	}

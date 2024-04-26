@@ -35,7 +35,11 @@
 					<annotations>
 						<implementation-binding class-name="com.top_logic.doc.model.impl.PageImpl"/>
 						<instance-presentation icon="theme:model.tl.doc.Page.icon"/>
-						<table name="tl.doc.Page"/>
+						<table name="tl.doc.Page"
+							container="parent"
+							container-order="sortOrder"
+							container-reference="composite"
+						/>
 					</annotations>
 					<attributes>
 						<property name="name"

@@ -1076,6 +1076,7 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
+						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -1167,6 +1168,7 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
+						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -1187,6 +1189,7 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
+						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -1268,6 +1271,7 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
+						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -2704,6 +2708,7 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
+						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>

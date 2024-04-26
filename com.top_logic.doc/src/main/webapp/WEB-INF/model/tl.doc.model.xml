@@ -56,7 +56,8 @@
 						/>
 						<property name="content"
 							mandatory="false"
-							type="tl.model.i18n:I18NHtml">
+							type="tl.model.i18n:I18NHtml"
+						>
 							<annotations>
 								<wysiwyg templates="function_templates">
 									<template-files>

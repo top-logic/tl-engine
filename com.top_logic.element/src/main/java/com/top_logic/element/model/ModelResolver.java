@@ -28,6 +28,7 @@ import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.AssociationConfig;
 import com.top_logic.element.config.AssociationConfig.EndConfig;
@@ -45,6 +46,8 @@ import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
 import com.top_logic.element.config.RoleAssignment;
 import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.config.annotation.TLSingletons;
+import com.top_logic.element.config.annotation.TLStorage;
+import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentAssociation;
 import com.top_logic.element.meta.schema.HolderType;
@@ -1141,29 +1144,27 @@ public class ModelResolver {
 
 	private void configureClassPart(TLClassPart classPart, PartConfig partConfig) {
 		boolean isDeclaredOverride = partConfig.isOverride();
-		checkOverrideDeclaration(classPart, isDeclaredOverride);
+		boolean isActualOverride = classPart.isOverride();
 		if (isDeclaredOverride) {
+			if (isActualOverride) {
+				checkStorageImplementation(partConfig, classPart);
+			} else {
+				errorNoOverride(classPart);
+			}
 			checkOverride(partConfig, classPart);
 			addTypePartAnnotations(classPart, true, partConfig);
 		} else {
+			if (isActualOverride) {
+				errorUndeclaredOverride(classPart);
+			}
 			installConfiguration(classPart, partConfig);
 		}
 	}
 
-	private void checkOverrideDeclaration(TLClassPart classPart, boolean isDeclaredOverride) {
-		boolean isActualOverride = classPart.isOverride();
-		if (isActualOverride && !isDeclaredOverride) {
-			TLClassPart conflict = getFirst(getOverriddenParts(classPart));
-			errorUndeclaredOverride(classPart, conflict);
-		}
-		if (isDeclaredOverride && !isActualOverride) {
-			errorNoOverride(classPart);
-		}
-	}
-
-	private void errorUndeclaredOverride(TLClassPart override, TLClassPart conflict) {
+	private void errorUndeclaredOverride(TLClassPart classPart) {
+		TLClassPart conflict = getFirst(getOverriddenParts(classPart));
 		String message = "Override failed. Undeclared override of part '" + qualifiedName(conflict)
-			+ "' through " + qualifiedName(override) + ".";
+			+ "' through " + qualifiedName(classPart) + ".";
 		log().error(message, new ConfigurationError(message));
 	}
 
@@ -1173,14 +1174,50 @@ public class ModelResolver {
 		log().error(message, new ConfigurationError(message));
 	}
 
-	private void checkOverride(PartConfig referenceConfig, TLClassPart classPart) {
-		for (PropertyDescriptor property : referenceConfig.descriptor().getProperties()) {
+	private void checkOverride(PartConfig partConfig, TLClassPart classPart) {
+		for (PropertyDescriptor property : partConfig.descriptor().getProperties()) {
 			String propertyName = property.getPropertyName();
-			if (referenceConfig.valueSet(property) && !PROPERTIES_FOR_OVERRIDES.contains(propertyName)) {
-				errorPropertyNotAllowedInOverride(classPart, propertyName, referenceConfig.value(property));
+			if (partConfig.valueSet(property) && !PROPERTIES_FOR_OVERRIDES.contains(propertyName)) {
+				errorPropertyNotAllowedInOverride(classPart, propertyName, partConfig.value(property));
 			}
 		}
 	}
+
+	private void checkStorageImplementation(PartConfig partConfig, TLClassPart classPart) {
+		TLStorage storageAnnotation = partConfig.getAnnotation(TLStorage.class);
+		if (partConfig.isAbstract() && storageAnnotation != null) {
+			String message = "Storage implementation (" + TLStorage.TAG_NAME + ") is not allowed for abstract '"
+					+ classPart + "': " + partConfig;
+			log().error(message);
+		}
+
+		if (getOverriddenParts(classPart).stream().allMatch(TLStructuredTypePart::isAbstract)) {
+			// its ok when no storage implementation is given because there is a default.
+			return;
+		}
+		if (storageAnnotation != null) {
+			StorageImplementation storage = TypedConfigUtil.createInstance(storageAnnotation.getImplementation());
+			assert storage != null : "Implementation is mandatory in configuration '" + partConfig + "'.";
+			if (!storage.isReadOnly()) {
+				String message = "Storage implementation (" + TLStorage.TAG_NAME
+						+ ") is only allowed for derived storages in overridden property '" + classPart + "': "
+						+ partConfig;
+				log().error(message);
+			}
+		}
+		if (partConfig instanceof ReferenceConfig) {
+			if (((ReferenceConfig) partConfig).getKind() == ReferenceKind.BACKWARDS) {
+				String message = "Re-declaration of non-abstract backwards reference '" + classPart + "' not allowed.";
+				log().error(message);
+			}
+		}
+		if (partConfig.isAbstract()) {
+			String message =
+				"Part '" + classPart + "' can not be declared abstract, because it overrides a non-abstract part.";
+			log().error(message);
+		}
+	}
+
 
 	private void errorPropertyNotAllowedInOverride(TLClassPart classPart, String propertyName, Object value) {
 		String message = "Override failed. Property '" + propertyName + "' is not allowed in overrides."

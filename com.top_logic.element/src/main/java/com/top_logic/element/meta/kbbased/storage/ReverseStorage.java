@@ -88,7 +88,7 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {
-		TLAssociationEnd sourceEnd = ((TLReference) attribute.getDefinition()).getEnd();
+		TLAssociationEnd sourceEnd = ((TLReference) attribute).getEnd();
 		TLAssociationEnd destinationEnd = TLModelUtil.getOtherEnd(sourceEnd);
 		TLReference _destinationReference = destinationEnd.getReference();
 

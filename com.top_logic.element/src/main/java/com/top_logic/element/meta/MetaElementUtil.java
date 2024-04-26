@@ -835,17 +835,14 @@ public class MetaElementUtil {
 		if (existingPart != null) {
 			// Is override.
 			if (existingPart.getOwner() == clazz) {
-				throw new TopLogicException(I18NConstants.DUPLICATE_ATTRIBUTE__ID.fill(classPart.getName()));
+				throw new TopLogicException(
+					com.top_logic.model.I18NConstants.DUPLICATE_ATTRIBUTE__NAME_CLASS.fill(classPart.getName(), clazz));
 			}
-			copyCharacteristics((TLClassPart) existingPart, classPart);
+			TLCharacteristicsCopier.copyOverrideCharacteristics(existingPart, classPart);
 		}
 
 		clazz.getLocalClassParts().add(index, classPart);
 		classPart.updateDefinition();
-	}
-
-	private static void copyCharacteristics(TLClassPart source, TLClassPart destination) {
-		TLCharacteristicsCopier.copyCharacteristics(source, destination);
 	}
 
 	private static void addAssociationPart(TLAssociation association, int index, TLStructuredTypePart part) {

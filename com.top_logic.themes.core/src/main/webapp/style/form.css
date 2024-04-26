@@ -541,6 +541,9 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 div.dfListAdd {
 	margin-top: var(--spacing-02);
 	white-space: nowrap;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
 }
 
 .modelBasedSearch div.dfList div.dfList, 

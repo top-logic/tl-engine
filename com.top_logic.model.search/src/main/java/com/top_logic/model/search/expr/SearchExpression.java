@@ -39,6 +39,7 @@ import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.ToString;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -864,6 +865,22 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 */
 	public Object getId() {
 		return getClass();
+	}
+
+	/**
+	 * Returns a {@link Locale}, either from the arguments or the session locale.
+	 * <p>
+	 * When the array is not large enough or the locale argument is null, the session locale is
+	 * used.
+	 * </p>
+	 * 
+	 * @see #asLocale(Object)
+	 */
+	protected Locale asLocaleNullable(Object locale) {
+		if (locale == null) {
+			return TLContext.getLocale();
+		}
+		return asLocale(locale);
 	}
 
 	/**

@@ -7,6 +7,7 @@ package com.top_logic.util;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.top_logic.base.cluster.ClusterManager;
 import com.top_logic.base.cluster.ClusterManager.PropertyType;
@@ -14,6 +15,8 @@ import com.top_logic.base.cluster.ClusterManagerListener;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
+import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ServiceDependency;
@@ -185,6 +188,12 @@ public class DefaultResourcesModule extends ResourcesModule
 	@Override
 	public boolean usesXMLProperties() {
 		return (true);
+	}
+
+	@FrameworkInternal
+	@Override
+	public <T> T withLocale(SubSessionContext subSession, Supplier<T> supplier) {
+		return Resources.withLocale(subSession, supplier);
 	}
 
 }

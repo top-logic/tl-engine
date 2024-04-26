@@ -641,6 +641,17 @@ a.fChoose:hover,
 	color: var(--icon-primary);
 }
 
+.cButton.dfRemove {
+	color: var(--support-danger) !important;
+}
+
+.cButton.dfRemove a {
+	color: var(--support-danger) !important;
+}
+
+.cButton.dfRemove a:hover {
+	color: var(--support-danger) !important;
+}
 
 /* Icon Styles for design mode hamburger buttons */
 .tlAdditionalRightContent .cButton.cImageButton,

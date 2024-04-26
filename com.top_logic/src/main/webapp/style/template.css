@@ -5452,6 +5452,9 @@ div.dfListAdd {
 	margin-top: 3px;
 	line-height: 16px;
 	white-space: nowrap;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
 }
 
 .dfModeFull div.dfListAdd {

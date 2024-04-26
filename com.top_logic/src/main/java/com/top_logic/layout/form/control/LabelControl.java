@@ -136,11 +136,7 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 		FormMember field = getModel();
 
 		if (! field.isVisible()) {
-	        out.beginBeginTag(SPAN);
-			writeControlAttributes(context, out);
-	        out.writeAttribute(STYLE_ATTR, "display: none;");
-	        out.endBeginTag();
-	        out.endTag(SPAN);
+			writeInvisibleLabel(context, out);
 	        
 	        return;
 		}
@@ -157,9 +153,15 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 			label = selectField.getOptionLabel(theOption);
 		} else {
 			label = field.getLabel();
-			if (this.colon) {
+			if (!label.isEmpty() && this.colon) {
 				label += COLON;
 			}
+		}
+
+		if (label.isEmpty()) {
+			writeInvisibleLabel(context, out);
+
+			return;
 		}
 
 		out.beginBeginTag(SPAN);
@@ -220,6 +222,14 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 			
 			out.endTag(LABEL);
 		}
+		out.endTag(SPAN);
+	}
+
+	private void writeInvisibleLabel(DisplayContext context, TagWriter out) throws IOException {
+		out.beginBeginTag(SPAN);
+		writeControlAttributes(context, out);
+		out.writeAttribute(STYLE_ATTR, "display: none;");
+		out.endBeginTag();
 		out.endTag(SPAN);
 	}
 

@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre><code>$object.label("de")
+label($object, "de")
+$object.label()
+label($object)
+</code>
+</pre>
+<h2>Label</h2>
+<p>The label for the object in the requested language. The label is usually the name of the object. Uses the "Label Provider Service" to generate the label. That means in particular, <em>no automatic translation</em> is performed.</p>
+<p>If no language is specified, the language in which the script is executed is used. If a language which is not supported is specified, the result is unspecified.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Any</td>
+   <td>The object for which the label should be fetched. Everything that can be processed by the "Label Provider Service" can be passed. What that includes and excludes depends on the configuration of that service in the particular application.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>lang</td>
+   <td>String or 'Locale'</td>
+   <td>The language for which the label should be returned. Both ISO 639-1 codes and 'Locale' objects can be used.</td>
+   <td>no</td>
+   <td>The default is the language in which the script is executed. In general, that is the language of the user for whom the script is executed. If, on the other side, the script is not executed for a user but for example in a background task, the language of the application is used.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return Value</h2>
+<p><strong>Type:</strong> <code class="hljs inlineCode">String</code></p>
+<h2>Examples</h2>
+<pre><code>$myProject.label("de") // "Brot backen"
+$myProject.label("en") // "Bake bread"
+$myProject.label("eo") // Undefined, as Esperanto is not supported.
+</code>
+</pre>

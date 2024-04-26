@@ -1041,6 +1041,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			rowProperties.put("defaultClasses", getTableBodyRowClasses(rowIndex));
 			rowProperties.put("body_row_cells", createBodyRowCellsFragment(rowIndex, isSelected));
 			rowProperties.put("rowHeight", getBodyRowHeight(getModel()));
+			rowProperties.put("hasContextMenu", hasContextMenu(rowIndex));
 
 			appendDragProperties(rowProperties, rowIndex);
 
@@ -1129,6 +1130,11 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 					writeSeparatorElement(out, HTMLConstants.TD, fixedColumnWidth);
 				}
 			};
+		}
+
+		private boolean hasContextMenu(int row) {
+			Object rowObject = getModel().getRowObject(row);
+			return getView().hasContextMenu(rowObject);
 		}
 
 		/**

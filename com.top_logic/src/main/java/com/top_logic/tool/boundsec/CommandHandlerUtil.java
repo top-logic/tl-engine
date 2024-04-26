@@ -7,7 +7,6 @@ package com.top_logic.tool.boundsec;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
@@ -67,10 +66,7 @@ public class CommandHandlerUtil {
 			if (elements.size() == 1) {
 				return I18NConstants.CONFIRM_DELETE_ONE_ELEMENT__ELEMENT.fill(elements.iterator().next());
 			}
-			String arg = elements
-				.stream()
-				.map(MetaLabelProvider.INSTANCE::getLabel)
-				.collect(Collectors.joining(", "));
+			String arg = MetaLabelProvider.INSTANCE.getLabel(elements);
 			return I18NConstants.CONFIRM_DELETE_MORE_ELEMENTS__ELEMENTS.fill(arg);
 		}
 		return I18NConstants.CONFIRM_DELETE_ONE_ELEMENT__ELEMENT.fill(toDelete);

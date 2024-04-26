@@ -5,10 +5,13 @@
  */
 package com.top_logic.layout.basic.contextmenu.component.factory;
 
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
@@ -21,6 +24,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
@@ -148,9 +152,42 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		}
 
 		/**
-		 * Hook to map the context object to a target model of commands to invoke.
+		 * Maps the context objects to a target model of commands to invoke.
 		 */
-		protected Object mapContext(Object obj) {
+		protected final Object mapContext(Object context) {
+			if (context instanceof Collection) {
+				return mapSet((Collection<?>) context);
+			}
+			checkUnsupportedCollections(context);
+			return mapContextObject(context);
+		}
+
+		private void checkUnsupportedCollections(Object context) {
+			if (context instanceof Map || ((context != null) && context.getClass().isArray())) {
+				throw new UnsupportedOperationException("Only single objects or collections of them are supported."
+					+ " Actual value: " + Utils.debug(context));
+			}
+		}
+
+		private Object mapSet(Collection<?> objects) {
+			Set<Object> mapped = set();
+			for (Object original : objects) {
+				mapped.add(mapContextObject(original));
+			}
+			return mapped;
+		}
+
+		/**
+		 * Hook to map <em>a single object</em> of the context object to a target model of commands
+		 * to invoke.
+		 * <p>
+		 * Subclasses should never call this method but {@link #mapContext(Object)} instead. The
+		 * context may be a collection of objects that need to be mapped individually.
+		 * {@link #mapContext(Object)} takes care of that by calling this method for each object in
+		 * the collection.
+		 * </p>
+		 */
+		protected Object mapContextObject(Object obj) {
 			return obj;
 		}
 

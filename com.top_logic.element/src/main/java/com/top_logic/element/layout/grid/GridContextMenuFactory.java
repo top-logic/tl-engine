@@ -52,7 +52,7 @@ public class GridContextMenuFactory<C extends GridContextMenuFactory.Config<?>>
 		}
 
 		@Override
-		protected Object mapContext(Object obj) {
+		protected Object mapContextObject(Object obj) {
 			GridComponent grid = (GridComponent) getComponent();
 			return getRowObject(grid.getHandler().getGridRow(obj));
 		}

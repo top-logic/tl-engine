@@ -15,8 +15,6 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey1 DUPLICATE_ATTRIBUTE__ID;
-
 	public static ResKey1 EDIT_LOCATION__ATTR;
 
 	public static ResKey2 EDIT_LOCATION__ATTR_OBJ;

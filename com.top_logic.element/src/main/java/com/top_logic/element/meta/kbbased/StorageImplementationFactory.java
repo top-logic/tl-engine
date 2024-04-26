@@ -33,6 +33,7 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
@@ -213,7 +214,15 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 
 		StorageImplementation result;
 		PolymorphicConfiguration<? extends StorageImplementation> config;
-		if (isComposition(part)) {
+		if (part.isAbstract()) {
+			if (storageAnnotation != null) {
+				Logger.warn(
+					"Ignoring invalid " + TLStorage.class.getName() + " annotation on abstract part " + part
+							+ ". Storage implementations are set on the concrete implementation.",
+					StorageImplementationFactory.class);
+			}
+			return NoStorage.INSTANCE;
+		} else if (isComposition(part)) {
 			if (storageAnnotation != null) {
 				Logger.warn(
 					"Ignoring invalid " + TLStorage.class.getName() + " annotation on " + part
@@ -224,7 +233,12 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 		} else if (storageAnnotation == null) {
 			TLStructuredTypePart definition = part.getDefinition();
 			if (definition != part) {
-				StorageImplementation original = AttributeOperations.getStorageImplementation(definition);
+				TLStructuredTypePart storageTemplate = findStorageTemplate(part, definition);
+				if (storageTemplate == null) {
+					// No part to copy storage implementation from.
+					return createDefaultStorageImplementation(part);
+				}
+				StorageImplementation original = AttributeOperations.getStorageImplementation(storageTemplate);
 
 				// Note: The Storage implementation is bound to its attribute. Therefore it must be
 				// newly instantiated.
@@ -258,6 +272,33 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 		}
 		return result;
 
+	}
+
+	private static TLStructuredTypePart findStorageTemplate(TLStructuredTypePart part,
+			TLStructuredTypePart definition) {
+		if (!definition.isAbstract()) {
+			return definition;
+		}
+		if (!(part instanceof TLClassPart)) {
+			return null;
+		}
+		return firstOverriddenNonAbstract((TLClassPart) part);
+	}
+
+	private static TLClassPart firstOverriddenNonAbstract(TLClassPart part) {
+		for (TLClassPart overriddenPart : TLModelUtil.getOverriddenParts(part)) {
+			if (overriddenPart.isAbstract()) {
+				TLClassPart firstOverriddenNonAbstract = firstOverriddenNonAbstract(overriddenPart);
+				if (firstOverriddenNonAbstract != null) {
+					return firstOverriddenNonAbstract;
+				} else {
+					continue;
+				}
+			} else {
+				return overriddenPart;
+			}
+		}
+		return null;
 	}
 
 	private static boolean isComposition(TLStructuredTypePart part) {

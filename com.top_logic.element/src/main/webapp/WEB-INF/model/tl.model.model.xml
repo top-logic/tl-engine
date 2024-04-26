@@ -78,6 +78,7 @@
 							</annotations>
 						</property>
 						<reference name="model"
+							abstract="true"
 							type="TLModel"
 						/>
 					</attributes>
@@ -208,17 +209,9 @@
 						</reference>
 
 						<reference name="scope"
+							abstract="true"
 							type="TLScope"
-						>
-							<annotations>
-								<storage-algorithm>
-									<foreign-key-storage
-										storage-attribute="scope"
-										storage-type="TLType"
-									/>
-								</storage-algorithm>
-							</annotations>
-						</reference>
+						/>
 						<reference name="model"
 							override="true"
 							type="TLModel"
@@ -300,7 +293,21 @@
 					<generalizations>
 						<generalization type="TLType"/>
 					</generalizations>
-					<attributes/>
+					<attributes>
+						<reference name="scope"
+							override="true"
+							type="TLScope"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="scope"
+										storage-type="TLDatatype"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
 				</class>
 
 				<class name="TLAssociation">
@@ -325,6 +332,19 @@
 							multiple="true"
 							type="TLAssociation"
 						/>
+						<reference name="scope"
+							override="true"
+							type="TLScope"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="scope"
+										storage-type="MetaElement"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 
@@ -371,6 +391,19 @@
 							multiple="true"
 							type="TLClass"
 						/>
+						<reference name="scope"
+							override="true"
+							type="TLScope"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="scope"
+										storage-type="MetaElement"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 
@@ -386,6 +419,7 @@
 					</generalizations>
 					<attributes>
 						<reference name="type"
+							abstract="true"
 							mandatory="true"
 							type="TLType"
 						/>
@@ -407,6 +441,7 @@
 							</annotations>
 						</reference>
 						<reference name="owner"
+							abstract="true"
 							type="TLType"
 						/>
 					</attributes>

@@ -25,12 +25,12 @@
 						/>
 					</annotations>
 					<attributes>
-						<reference
-							name="parent"
-							type="StructuredElementContainer"
-							kind="backwards"
+						<reference name="parent"
+							abstract="true"
 							inverse-reference="children"
+							kind="backwards"
 							multiple="false"
+							type="StructuredElementContainer"
 						>
 							<annotations>
 								<annotation
@@ -56,13 +56,13 @@
 						/>
 					</annotations>
 					<attributes>
-						<reference
-							name="children"
-							type="StructuredElement"
-							multiple="true"
+						<reference name="children"
+							abstract="true"
 							composite="true"
-							ordered="true"
 							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="StructuredElement"
 						>
 							<annotations>
 								<annotation

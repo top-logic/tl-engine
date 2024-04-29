@@ -7,7 +7,7 @@
 >
 	<arguments
 		defaultColumns="model,mapping"
-		model="selection(admin/studio/oRMapping/scheme/tables/entitiesGrid.layout.xml#Grid)"
+		model="selection(admin/studio/oRMapping/scheme/tableStructure/tableStructureTreeTable.layout.xml#TreeTable)"
 		rootVisible="false"
 		type="tl.model.or:ClassMapping,tl.model.or:PartMapping"
 	>

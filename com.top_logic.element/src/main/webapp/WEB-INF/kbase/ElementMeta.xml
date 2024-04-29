@@ -64,10 +64,7 @@
     <metaobject object_type="MOKnowledgeObject" object_name="GenericObject" super_class="TLObject">
     </metaobject>
 
-    <metaobject object_type="MOKnowledgeObject" object_name="AttributedObject" super_class="TLObject" abstract="true">
-    </metaobject>
-
-	<metaobject object_type="MOKnowledgeObject" object_name="StructuredElement" super_class="AttributedObject">
+	<metaobject object_type="MOKnowledgeObject" object_name="StructuredElement" super_class="TLObject">
 	    <annotations>
 	    	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
 				<binding class="com.top_logic.knowledge.wrap.binding.DynamicBinding"

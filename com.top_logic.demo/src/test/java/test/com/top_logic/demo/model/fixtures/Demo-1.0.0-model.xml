@@ -57,7 +57,6 @@
 		<class name="AttributeConfig" abstract="true" tl5:name="AttributeConfig"></class>
 		<class name="AttributeGroup" abstract="true" tl5:name="AttributeGroup"></class>
 		<class name="AttributeGroupReference" abstract="true" tl5:name="AttributeGroupReference"></class>
-		<class name="AttributedObject" abstract="true" tl5:name="AttributedObject"></class>
 		<class name="Clipboard" tl5:name="Clipboard">
 			<property name="name" type="STRING">
 				<size:constraint upper="150"/>

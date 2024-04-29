@@ -12,7 +12,7 @@
 	<metaobjects>
 		<metaobject
 			object_name="SourceTable1"
-			super_class="AttributedObject"
+			super_class="TLObject"
 		>
 			<attributes>
 				<reference
@@ -32,12 +32,12 @@
 
 		<metaobject
 			object_name="SourceTable2"
-			super_class="AttributedObject"
+			super_class="TLObject"
 		/>
 
 		<metaobject
 			object_name="TargetTable1"
-			super_class="AttributedObject"
+			super_class="TLObject"
 		>
 			<attributes>
 				<reference
@@ -57,7 +57,7 @@
 
 		<metaobject
 			object_name="TargetTable2"
-			super_class="AttributedObject"
+			super_class="TLObject"
 		/>
 
 		<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasKafkaTestObjAttValue" />

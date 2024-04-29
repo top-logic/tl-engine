@@ -7,7 +7,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 <metaobjects>
- 	<metaobject object_type="MOKnowledgeObject" object_name="Contact" super_class="AttributedObject" db_name="CONTACT">
+ 	<metaobject object_type="MOKnowledgeObject" object_name="Contact" super_class="TLObject" db_name="CONTACT">
 <attributes>
   		<mo_attribute att_name="name" 			att_type="String" 	mandatory="true"  db_size="128" />
 		<mo_attribute att_name="FKey" 			att_type="String" 	mandatory="false" db_size="32"  />

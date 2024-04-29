@@ -4,7 +4,7 @@
 	
 	<metaobjects>
 		
-		<metaobject object_name="SearchExpressionTable" object_type="MOKnowledgeObject" super_class="AttributedObject">
+		<metaobject object_name="SearchExpressionTable" object_type="MOKnowledgeObject" super_class="TLObject">
 			<attributes>
 				<mo_attribute att_name="name" att_type="String" mandatory="true" />
 				<mo_attribute att_name="version" att_type="String" mandatory="true" />

@@ -495,6 +495,9 @@ public class AttributeOperations {
 		String tableName = TLAnnotations.getTable(type);
 		try {
 			MOClass tableType = (MOClass) tableRepository.getType(tableName);
+			if (tableType.isAbstract()) {
+				return EmptyClosableIterator.getInstance();
+			}
 			return instancesInTable(kb, expectedType, tableType, Collections.singleton(type));
 		} catch (UnknownTypeException ex) {
 			Logger.error("Undefined table '" + tableName + "' for type '" + type + "'.", ex);

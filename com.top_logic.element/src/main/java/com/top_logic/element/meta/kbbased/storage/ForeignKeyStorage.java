@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
@@ -43,7 +44,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.config.annotation.TableName;
+import com.top_logic.model.annotate.persistency.AllTables;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -76,7 +77,7 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 		@Name(STORAGE_TYPE)
 		@Mandatory
 		@Deprecated
-		@Options(fun = TableName.AllTLObjectTables.class)
+		@Options(fun = AllTLObjectTables.class)
 		String getStorageType();
 
 		/**
@@ -99,6 +100,16 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 		 * @see #getStorageAttribute()
 		 */
 		void setStorageAttribute(String value);
+
+		/**
+		 * Lists all table names that can store dynamically typed {@link TLObject}s.
+		 */
+		class AllTLObjectTables extends Function0<List<String>> {
+			@Override
+			public List<String> apply() {
+				return AllTables.allTables(PersistentObject.OBJECT_TYPE, true);
+			}
+		}
 
 		/**
 		 * All {@link MOReference} columns of a given {@link MOClass table type}.

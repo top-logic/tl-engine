@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_133e67e2_7b75_4363_943d_463168898b3e">
+		<tabLabel key="dynamic.518e22c8-d12b-46ca-bfe6-9fcf7178e24b">
+			<en>Indices</en>
+			<de>Indices</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="admin/studio/oRMapping/scheme/indices/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

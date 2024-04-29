@@ -1,0 +1,50 @@
+<arguments
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	type="tl.model.or:ClassMapping" defaultColumns="type"
+	model="selection(admin/studio/oRMapping/scheme/tables/entitiesGrid.layout.xml#Grid)"
+	defaultSelection="false">
+	<name key="dynamic.8dd26645-fc4e-4819-bc71-b1d1ca54af6c">
+		<en>Mappings</en>
+		<de>Mappings</de>
+	</name>
+	<modelBuilder
+		class="com.top_logic.model.search.providers.ListModelByExpression"
+		elements="model-&gt;$model.referers(`tl.model.or:ClassMapping#table`)"
+		supportsElement="element-&gt;$element.instanceOf(`tl.model.or:ClassMapping`)"></modelBuilder>
+	<buttons>
+		<button
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+			id="exportExcel"></button>
+		<button
+			class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			id="ID_cf8cfecc_2bdb_4285_a8f5_e656ba357cf7" image="css:fas fa-sync">
+			<resourceKey
+				key="dynamic.c416bda9-0ce1-4506-a41e-f4c3c03c1051">
+				<de>Mapping laden</de>
+			</resourceKey>
+			<operation><![CDATA[{
+tables = all(`tl.model.db:Table`)
+	.indexBy(t -> $t.get(`tl.model.db:Table#name`)); 
+	
+mappings = all(`tl.model.or:ClassMapping`)
+	.indexBy(m -> $m.get(`tl.model.or:ClassMapping#type`));
+	
+// Create class mappings 
+all(`tl.model:TLClass`).foreach(c -> { 
+	tableName = $c.get(`tl.model:TLClass#annotations`)
+		.filter(a -> $a["$intf"] == "com.top_logic.model.config.annotation.TableName")
+		.singleElement()
+		["name"]; 
+
+	if ($tableName != null, { 
+		mapping = ($mappings[$c] || new(`tl.model.or:ClassMapping`))
+			..set(`tl.model.or:ClassMapping#table`, $tables[$tableName])
+			..set(`tl.model.or:ClassMapping#type`, $c); 
+	}, { 
+		$mappings[$c].delete() 
+	}); 
+}) 
+}]]></operation>
+		</button>
+	</buttons>
+</arguments>

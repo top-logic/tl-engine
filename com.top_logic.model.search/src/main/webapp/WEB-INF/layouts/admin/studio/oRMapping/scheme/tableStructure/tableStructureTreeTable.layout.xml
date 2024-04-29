@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/treetable.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		partnerGroup="dbTables"
+		rootVisible="false"
+		type="tl.model.db:Table"
+	>
+		<name key="dynamic.86b189e3-2324-4335-bf1d-f93d00f8d129">
+			<en>Table structure</en>
+			<de>Tabellenstruktur</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			nodePredicate="node->$node.instanceOf(`tl.model.db:Entity`)"
+			parents="node->$node.get(`tl.model.db:Table#extends`) || `SecurityStructure#ROOT`"
+			rootNode="`SecurityStructure#ROOT`"
+		>
+			<children><![CDATA[node-> switch {
+    $node == `SecurityStructure#ROOT`: 
+        all(`tl.model.db:Entity`).filter(e -> $e.get(`tl.model.db:Table#extends`) == null);
+    default: $node.referers(`tl.model.db:Table#extends`);
+}]]></children>
+		</modelBuilder>
+	</arguments>
+</config:template-call>

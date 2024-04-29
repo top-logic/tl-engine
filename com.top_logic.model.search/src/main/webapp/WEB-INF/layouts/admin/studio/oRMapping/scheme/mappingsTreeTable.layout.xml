@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/treetable.template.xml"
+>
+	<arguments
+		defaultColumns="model,mapping"
+		model="selection(admin/studio/oRMapping/scheme/tables/entitiesGrid.layout.xml#Grid)"
+		rootVisible="false"
+		type="tl.model.or:ClassMapping,tl.model.or:PartMapping"
+	>
+		<name key="dynamic.954ec4a6-e040-4557-8c6d-c29a5da61a22">
+			<en>Mappings</en>
+			<de>Mappings</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			nodePredicate="node->true"
+			parents="node -> $node.container() || `SecurityStructure#ROOT`"
+			rootNode="model -> `SecurityStructure#ROOT`"
+		>
+			<children><![CDATA[node -> model -> switch {
+    $node == `SecurityStructure#ROOT`:
+        // Show all directly annotated classes top-level.
+        [
+            $model.referers(`tl.model.or:ClassMapping#table`),
+            $model.referers(`tl.model.or:LinkTableMapping#association`)
+        ].flatten();
+
+    $node.instanceOf(`tl.model.or:ClassMapping`): {
+        c = $node.get(`tl.model.or:ClassMapping#type`);
+        t = $node.get(`tl.model.or:ClassMapping#table`);
+        columns = $t
+            .get(`tl.model.db:Table#allColumns`)
+            .indexBy(c -> $c.get(`tl.model.db:Attribute#name`));
+        
+        allParts = $c
+            .recursion(c -> $c.get(`tl.model:TLClass#generalizations`))
+            .map(c -> $c
+                .get(`tl.model:TLClass#localParts`)
+                .filter(p -> !$p.get(`tl.model:DerivedTLTypePart#derived`)))
+            .flatten()
+            // Keep first definition that has a part mapping.
+            .indexBy(p -> $p.get(`tl.model:TLStructuredTypePart#name`), 
+                p -> pOverride -> 
+                    $p.referers(`tl.model.or:PartMapping#model`).isEmpty() ? 
+                        ($pOverride.referers(`tl.model.or:PartMapping#model`).isEmpty() ?
+                            $p : $pOverride) :
+                        $p
+            )
+            .values();
+
+        partMappings = $allParts
+            .referers(`tl.model.or:PartMapping#model`)
+            .flatten()
+            .indexBy(m -> $m.get(`tl.model.or:PartMapping#model`));
+        
+        transientParts = $allParts
+            .filter(p -> $partMappings[$p] == null)
+            .map(p -> switch {
+                $p.instanceOf(`tl.model:TLReference`): 
+                    // Show the reference as unmapped.
+                    new(`tl.model.or:LinkTableMapping`, context: $node, transient: true)
+                    ..set(`tl.model.or:LinkTableMapping#model`, $p);
+                default: 
+                    // Show the default by-name mapping for properties.
+                    new(`tl.model.or:PropertyMapping`, context: $node, transient: true)
+                    ..set(`tl.model.or:PropertyMapping#model`, $p)
+                    ..set(`tl.model.or:PropertyMapping#column`, 
+                        $columns[$p.get(`tl.model:TLProperty#name`)]);
+            });
+        
+        // Specializations having the current type as primary generalization 
+        // but not an own table annotation.
+        specializations = $c.get(`tl.model:TLClass#specializations`)
+            .filter(t -> $t.get(`tl.model:TLClass#generalizations`).firstElement() == $c)
+            .filter(t -> $t
+                .get(`tl.model:TLClass#annotations`)
+                .filter(a -> 
+                    $a["$intf"] == "com.top_logic.model.config.annotation.TableName")
+                .firstElement() == null);
+        
+        [
+            $partMappings.values(),
+            $transientParts,
+            $specializations.map(s -> new(`tl.model.or:ClassMapping`, transient: true)
+                ..set(`tl.model.or:ClassMapping#type`, $s)
+                ..set(`tl.model.or:ClassMapping#table`, $t)
+            )
+        ].flatten()
+    };
+}
+]]></children>
+		</modelBuilder>
+		<configurationProviders>
+			<id-column value="model"/>
+		</configurationProviders>
+		<buttons>
+			<button id="ID_26cbab6b_a05f_462a_88a0_ec4d5aa55431"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				image="css:fas fa-sync"
+			>
+				<resourceKey key="dynamic.da326ae4-0eed-47ae-9f8f-4f79fa793773">
+					<en>Load mapping</en>
+					<de>Abbildung laden</de>
+				</resourceKey>
+				<operation><![CDATA[{
+tables = all(`tl.model.db:Table`)
+	.indexBy(t -> $t.get(`tl.model.db:Table#name`)); 
+	
+mappings = all(`tl.model.or:ClassMapping`)
+	.indexBy(m -> $m.get(`tl.model.or:ClassMapping#type`));
+
+// Clear part mappings
+all(`tl.model.or:PartMapping`).foreach(m -> $m.delete());
+
+// Create class mappings 
+all(`tl.model:TLClass`).foreach(c -> { 
+	tableName = $c.get(`tl.model:TLClass#annotations`)
+		.filter(a -> $a["$intf"] == "com.top_logic.model.config.annotation.TableName")
+		.singleElement()
+		["name"];
+
+	if ($tableName != null, { 
+	    t = $tables[$tableName];
+		mapping = ($mappings[$c] || new(`tl.model.or:ClassMapping`))
+			..set(`tl.model.or:ClassMapping#type`, $c)
+			..set(`tl.model.or:ClassMapping#table`, $t);
+	}, {
+		$mappings[$c].delete() 
+	});
+	
+	$c.get(`tl.model:TLClass#localParts`).foreach(p -> {
+        storage = $p.get(`tl.model:TLModelPart#annotations`)
+	        .filter(a -> $a["$intf"] == "com.top_logic.element.config.annotation.TLStorage")
+            .singleElement()
+            ["implementation"];
+		storageTag = $storage["$tag"];
+        switch {
+            $storageTag == "foreign-key-storage": {
+                t = $c
+                    .recursion(c -> $c.get(`tl.model:TLClass#generalizations`).firstElement())
+                    .map(c -> $c
+                        .referers(`tl.model.or:ClassMapping#type`)
+                        .singleElement()
+                        .get(`tl.model.or:ClassMapping#table`))
+                    .filter(m -> $m != null)
+                    .firstElement();
+                
+                if ($t == null, 
+                    info("No table annotation for type '" + $c + "' to map reference '" + $p + "' to foreign key '" + $storage["storage-attribute"] + "'."), 
+                    {
+                        columns = $t.get(`tl.model.db:Table#allColumns`)
+                            .indexBy(c -> $c.get(`tl.model.db:Column#name`));
+
+                        fkey = $columns[$storage["storage-attribute"]];
+                        if ($fkey == null,
+                            info("No such foreign key '" + $storage["storage-attribute"] + "' in table '" + $t + "' for reference '" + $p + "' in '" + $c + "'."), 
+                            new(`tl.model.or:ForeignKeyMapping`)
+                                ..set(`tl.model.or:ForeignKeyMapping#model`, $p)
+                                ..set(`tl.model.or:ForeignKeyMapping#foreignKey`, $fkey)
+                        );
+                    }
+                );
+            };
+            
+            $storageTag == "singleton-link-storage" || 
+            $storageTag == "set-storage" || 
+            $storageTag == "list-storage": {
+                table = $tables[$storage["table"]];
+                if ($table == null,
+                    info("No such table '" + $storage["table"] + "' for reference '" + $p + "' in '" + $c + "'."), 
+                    new(`tl.model.or:LinkTableMapping`)
+                        ..set(`tl.model.or:LinkTableMapping#model`, $p)
+                        ..set(`tl.model.or:LinkTableMapping#association`, $table)
+                );
+            };
+        }
+    });
+
+})
+}]]></operation>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

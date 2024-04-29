@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.model.db">
+		<enum name="IndexKind">
+			<classifier name="PRIMARY"/>
+			<classifier name="UNIQUE"/>
+			<classifier name="SEARCH"/>
+		</enum>
+		<enum name="ReferenceAspect">
+			<classifier name="ID"/>
+			<classifier name="REVISION"/>
+			<classifier name="BRANCH"/>
+			<classifier name="TYPE"/>
+		</enum>
+		<class name="Index">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,kind,columns"/>
+			</annotations>
+			<attributes>
+				<reference name="kind"
+					kind="forwards"
+					navigate="true"
+					type="IndexKind"
+				/>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="owner"
+					aggregate="true"
+					inverse-reference="indices"
+					kind="backwards"
+					type="Table"
+				/>
+				<reference name="columns"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="IndexPart"
+				/>
+			</attributes>
+		</class>
+		<class name="IndexPart">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="column"
+					kind="forwards"
+					navigate="true"
+					type="Attribute"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[part -> $part.container().container()
+    .recursion(t -> $t.get(`tl.model.db:Table#extends`))
+    .get(`tl.model.db:Table#columns`)
+    .flatten()]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="aspect"
+					kind="forwards"
+					navigate="true"
+					type="ReferenceAspect"
+				>
+					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+								<function><![CDATA[x -> $x.get(`tl.model.db:IndexPart#column`)
+    .instanceOf(`tl.model.db:Reference`)]]></function>
+							</mode-selector>
+						</dynamic-visibility>
+					</annotations>
+				</reference>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[x -> $x.get(`tl.model.db:IndexPart#column`).toString() + 
+    $x.get(`tl.model.db:IndexPart#aspect`)
+    .map(a -> " (" + $a + ")")]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Package">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="parts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Part"
+				/>
+			</attributes>
+		</class>
+		<interface name="SchemaElement">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</interface>
+		<interface name="Attribute">
+			<generalizations>
+				<generalization type="SchemaElement"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="mandatory"
+					type="tl.core:Boolean"
+				/>
+				<property name="initial"
+					type="tl.core:Boolean"
+				/>
+				<property name="immutable"
+					type="tl.core:Boolean"
+				/>
+				<property name="system"
+					type="tl.core:Boolean"
+				/>
+				<reference name="owner"
+					aggregate="true"
+					inverse-reference="columns"
+					kind="backwards"
+					type="Table"
+				/>
+			</attributes>
+		</interface>
+		<class name="Column">
+			<generalizations>
+				<generalization type="Attribute"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="css:fas fa-circle"/>
+				<main-properties properties="name,type,mandatory,immutable,initial,system"/>
+			</annotations>
+			<attributes>
+				<property name="type"
+					mandatory="true"
+					type="tl.model:DBType"
+				/>
+			</attributes>
+		</class>
+		<class name="Reference">
+			<generalizations>
+				<generalization type="Attribute"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="css:fas fa-link"/>
+				<main-properties properties="name,type,mandatory,immutable,initial,system"/>
+			</annotations>
+			<attributes>
+				<reference name="type"
+					kind="forwards"
+					navigate="true"
+					type="Entity"
+				/>
+			</attributes>
+		</class>
+		<class name="Part">
+			<generalizations>
+				<generalization type="SchemaElement"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<interface name="Entity">
+			<generalizations>
+				<generalization type="Part"/>
+			</generalizations>
+		</interface>
+		<class name="Alternative">
+			<generalizations>
+				<generalization type="Entity"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="css:fas fa-bullseye"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.model.db:Part#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="choices"
+							fullQualifiedName="tl.model.db:Alternative#choices"
+							type="tl.model.db:Entity"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="choices"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Entity"
+				/>
+			</attributes>
+		</class>
+		<class name="Table">
+			<generalizations>
+				<generalization type="Entity"/>
+				<generalization type="Item"/>
+			</generalizations>
+			<annotations>
+				<dynamic-icon>
+					<icon-by-expression>
+						<icon>t -&gt; $t.get(`tl.model.db:Table#abstract`) ? "css:fas fa-stamp" : "css:fas fa-table"</icon>
+					</icon-by-expression>
+				</dynamic-icon>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.model.db:Part#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="extends"
+							fullQualifiedName="tl.model.db:Table#extends"
+							type="tl.model.db:Table"
+						/>
+						<field
+							attribute="abstract"
+							fullQualifiedName="tl.model.db:Table#abstract"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="versioned"
+							fullQualifiedName="tl.model.db:Item#versioned"
+							type="tl.core:Boolean"
+						/>
+						<group>
+							<field
+								attribute="columns"
+								fullQualifiedName="tl.model.db:Table#columns"
+								type="tl.model.db:Attribute"
+							>
+								<annotations>
+									<label-position value="hide-label"/>
+								</annotations>
+							</field>
+							<label key="dynamic.15590f8a-3e95-471d-a2a7-dfb866dfbe92">
+								<en>Additional columns</en>
+								<de>Zusätzliche Spalten</de>
+							</label>
+						</group>
+						<group initiallyOpened="false">
+							<field
+								attribute="allColumns"
+								fullQualifiedName="tl.model.db:Table#allColumns"
+								type="tl.model.db:Attribute"
+							>
+								<annotations>
+									<reference-display value="table"/>
+									<label-position value="hide-label"/>
+								</annotations>
+							</field>
+							<label key="dynamic.38f94128-2066-4b43-8a04-c04d43cf8a33">
+								<en>All columns</en>
+								<de>Alle Spalten</de>
+							</label>
+						</group>
+						<field
+							attribute="indices"
+							fullQualifiedName="tl.model.db:Table#indices"
+							type="tl.model.db:Index"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="indices"
+					composite="true"
+					inverse-reference="owner"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Index"
+				/>
+				<property name="abstract"
+					type="tl.core:Boolean"
+				/>
+				<reference name="columns"
+					composite="true"
+					inverse-reference="owner"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Attribute"
+				/>
+				<reference name="extends"
+					kind="forwards"
+					navigate="true"
+					type="Table"
+				/>
+				<property name="polymorphic"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="allColumns"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Attribute"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[t -> $t.recursion(t -> $t.get(`tl.model.db:Table#extends`))
+    .get(`tl.model.db:Table#columns`)
+    .flatten()]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="Item">
+			<generalizations>
+				<generalization type="Part"/>
+			</generalizations>
+			<attributes>
+				<property name="versioned"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+	</module>
+</model>

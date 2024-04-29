@@ -27,10 +27,27 @@ public abstract class AllTables extends Function0<List<String>> {
 
 	@Override
 	public List<String> apply() {
+		return allTables(getBaseTable(), false);
+	}
+
+	/**
+	 * The name of the base table to retrieve all derived tables of.
+	 */
+	protected abstract String getBaseTable();
+
+	/**
+	 * Looks up all tables that are derived from the given base table.
+	 *
+	 * @param baseTableName
+	 *        Name of the table template.
+	 * @param includeAbstract
+	 *        Whether to also return table templates.
+	 */
+	public static List<String> allTables(String baseTableName, boolean includeAbstract) {
 		MORepository repository = PersistencyLayer.getKnowledgeBase().getMORepository();
 		MetaObject baseTable;
 		try {
-			baseTable = repository.getMetaObject(getBaseTable());
+			baseTable = repository.getMetaObject(baseTableName);
 		} catch (UnknownTypeException ex) {
 			return Collections.emptyList();
 		}
@@ -39,7 +56,7 @@ public abstract class AllTables extends Function0<List<String>> {
 			if (!(type instanceof MOClass)) {
 				continue;
 			}
-			if (((MOClass) type).isAbstract()) {
+			if (!includeAbstract && ((MOClass) type).isAbstract()) {
 				continue;
 			}
 			if (type.isSubtypeOf(baseTable)) {
@@ -49,10 +66,5 @@ public abstract class AllTables extends Function0<List<String>> {
 		Collections.sort(result);
 		return result;
 	}
-
-	/**
-	 * The name of the base table to retrieve all derived tables of.
-	 */
-	protected abstract String getBaseTable();
 
 }

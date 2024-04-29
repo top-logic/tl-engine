@@ -5,14 +5,21 @@
  */
 package com.top_logic.model.config.annotation;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.annotate.persistency.AllTables;
@@ -45,7 +52,7 @@ public interface TableName extends TLTypeAnnotation {
 	 */
 	@Name(NAME)
 	@Mandatory
-	@Options(fun = AllTLObjectTables.class)
+	@Options(fun = AllTLObjectTables.class, args = @Ref(ANNOTATED))
 	String getName();
 
 	/**
@@ -56,10 +63,23 @@ public interface TableName extends TLTypeAnnotation {
 	/**
 	 * Lists all table names that can store dynamically typed {@link TLObject}s.
 	 */
-	class AllTLObjectTables extends AllTables {
+	class AllTLObjectTables extends Function1<List<String>, AnnotatedConfig<?>> {
 		@Override
-		public String getBaseTable() {
-			return PersistentObject.OBJECT_TYPE;
+		public List<String> apply(AnnotatedConfig<?> arg) {
+			if (arg == null) {
+				return Collections.emptyList();
+			}
+
+			// Quirks to work-around the definition of ClassConfig in tl-element.
+			PropertyDescriptor property = arg.descriptor().getProperty("abstract");
+			boolean includeAbstract;
+			if (property == null) {
+				includeAbstract = false;
+			} else {
+				includeAbstract = ((Boolean) arg.value(property)).booleanValue();
+			}
+
+			return AllTables.allTables(PersistentObject.OBJECT_TYPE, includeAbstract);
 		}
 	}
 

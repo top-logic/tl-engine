@@ -116,7 +116,9 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 				throw new TopLogicException(
 					I18NConstants.ERROR_SCRIPT_RESULT_OF_INCOMPATIBLE_TYPE__ATTR_EXPECTED_ACTUAL.fill(
 						TLModelUtil.qualifiedName(attribute),
-						type, element instanceof TLObject ? ((TLObject) element).tType() : element));
+						TLModelUtil.qualifiedName(type),
+						element instanceof TLObject ? TLModelUtil.qualifiedName(((TLObject) element).tType())
+							: element));
 			}
 		}
 	}

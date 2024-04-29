@@ -17,8 +17,26 @@
 	<processors>
 		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl-element/Ticket_28026_update_schema_definition.db.transform.xslt"
-		>
-		</processor>
+		/>
+		<remove-annotations name="tl.model:TLAssociationEnd">
+			<annotation class="com.top_logic.model.config.annotation.TableName"/>
+		</remove-annotations>
+		<remove-annotations name="tl.model:TLReference">
+			<annotation class="com.top_logic.model.config.annotation.TableName"/>
+		</remove-annotations>
+		<remove-annotations name="tl.model:TLProperty">
+			<annotation class="com.top_logic.model.config.annotation.TableName"/>
+		</remove-annotations>
+		<add-annotations name="tl.model:TLType">
+			<annotations>
+				<table name="TLType"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.model:TLStructuredTypePart">
+			<annotations>
+				<table name="MetaAttribute"/>
+			</annotations>
+		</add-annotations>
 	</processors>
 	<migration>
 	</migration>

@@ -79,14 +79,17 @@ public class TLStructuredTypeCreateHandler extends AbstractCreateCommandHandler 
 
 	static List<TLClass> ensureTLObjectSuperType(TLClass model, List<TLClass> generalizationTypes) {
 		switch (generalizationTypes.size()) {
-			case 0:
-				return Collections.singletonList(TLModelUtil.tlObjectType(model.getModel()));
+			case 0: {
+				TLClass objectType = TLModelUtil.tlObjectType(model.getModel());
+				return model.equals(objectType) ? Collections.emptyList() : Collections.singletonList(objectType);
+			}
 			case 1:
 				return generalizationTypes;
-			default:
-				generalizationTypes.remove(TLModelUtil.tlObjectType(model.getModel()));
+			default: {
+				TLClass objectType = TLModelUtil.tlObjectType(model.getModel());
+				generalizationTypes.remove(objectType);
 				return generalizationTypes;
-
+			}
 		}
 	}
 

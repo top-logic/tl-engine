@@ -5,7 +5,7 @@
 	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments model="selection(admin/studio/oRMapping/scheme/tables/entitiesGrid.layout.xml#Grid)">
+	<arguments model="selection(admin/studio/oRMapping/scheme/tableStructure/tableStructureTreeTable.layout.xml#TreeTable)">
 		<name key="dynamic.14be7de0-cf70-4456-9f0a-61cdf35a4a50">
 			<en>Properties</en>
 			<de>Eigenschaften</de>

@@ -7,16 +7,13 @@
 >
 	<arguments>
 		<components>
-			<layout-reference resource="admin/studio/oRMapping/scheme/tabbar.layout.xml">
+			<layout-reference resource="admin/studio/oRMapping/scheme/tableStructure/innerLayout.layout.xml">
 				<layoutInfo/>
 			</layout-reference>
 			<layout-reference resource="admin/studio/oRMapping/scheme/properties/innerLayout.layout.xml">
 				<layoutInfo/>
 			</layout-reference>
 			<layout-reference resource="admin/studio/oRMapping/scheme/mappingsTreeTable.layout.xml">
-				<layoutInfo/>
-			</layout-reference>
-			<layout-reference resource="admin/studio/oRMapping/scheme/modelTreeTable.layout.xml">
 				<layoutInfo/>
 			</layout-reference>
 		</components>

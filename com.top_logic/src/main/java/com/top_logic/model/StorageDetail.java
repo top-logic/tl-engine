@@ -7,6 +7,7 @@ package com.top_logic.model;
 
 import java.util.List;
 
+import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.util.model.check.InstanceCheck;
 
 /**
@@ -28,6 +29,67 @@ public interface StorageDetail {
 	 * </p>
 	 */
 	boolean isReadOnly();
+
+	/**
+	 * Get the values of this CollectionMetaAttribute for a given MetaAttributed object.
+	 * 
+	 * @param object
+	 *        The object to take the value from.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @return the values. May be empty but not <code>null</code>.
+	 */
+	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute);
+
+	/**
+	 * Replace the current values with the given ones for a MetaAttributed.
+	 * 
+	 * @param object
+	 *        the object. Must not be <code>null</code>.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param aValues
+	 *        a Collection of values. May be empty or <code>null</code> (in that case an empty
+	 *        collection will be returned as value in #getAttributeValues())
+	 * @throws NoSuchAttributeException
+	 *         if this is not an attribute of aMetaAttributed
+	 * @throws IllegalArgumentException
+	 *         if some of the values do not match constraints
+	 */
+	public void setAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValues)
+			throws NoSuchAttributeException, IllegalArgumentException;
+
+	/**
+	 * Add a value to the value collection for a given MetaAttributed object.
+	 * 
+	 * @param object
+	 *        The object to modify.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param aValue
+	 *        the value
+	 * @throws NoSuchAttributeException
+	 *         if this is not an attribute of aMetaAttributed
+	 * @throws IllegalArgumentException
+	 *         if the argument does not match constraints
+	 */
+	public void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
+			throws NoSuchAttributeException, IllegalArgumentException;
+
+	/**
+	 * Remove a value from the value collection for a given MetaAttributed object.
+	 * 
+	 * @param object
+	 *        the object object. Must not be <code>null</code>.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param aValue
+	 *        the value
+	 * @throws NoSuchAttributeException
+	 *         if this is not an attribute of aMetaAttributed
+	 */
+	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
+			throws NoSuchAttributeException;
 
 	/**
 	 * Add constraints for the given attribute.

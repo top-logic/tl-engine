@@ -5,7 +5,7 @@
 -->
 <objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
 	<metaobjects>
-		<metaobject	object_name="AbstractKafkaDemo"	object_type="MOKnowledgeObject"	super_class="AttributedObject" abstract="true">
+		<metaobject	object_name="AbstractKafkaDemo"	object_type="MOKnowledgeObject"	super_class="TLObject" abstract="true">
 			<attributes>
 			    <mo_attribute att_name="name" att_type="String" mandatory="true"/>
 			</attributes>

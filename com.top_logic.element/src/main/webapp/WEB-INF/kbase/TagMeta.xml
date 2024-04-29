@@ -10,7 +10,7 @@
 		<metaobject
 			object_name="Tag"
 			object_type="MOKnowledgeObject"
-			super_class="AttributedObject"
+			super_class="TLObject"
 		>
 			<attributes>
 				<mo_attribute

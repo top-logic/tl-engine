@@ -4,6 +4,6 @@
 
 <objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
 	<metaobjects>
-		<metaobject object_name="TestObject" super_class="AttributedObject" />
+		<metaobject object_name="TestObject" super_class="TLObject" />
 	</metaobjects>
 </objectlist>

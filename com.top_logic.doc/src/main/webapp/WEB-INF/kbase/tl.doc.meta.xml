@@ -4,7 +4,7 @@
 	<metaobjects>
 		<metaobject
 			object_name="tl.doc.Page"
-			super_class="AttributedObject"
+			super_class="TLObject"
 		>
 			<attributes>
 				<mo_attribute

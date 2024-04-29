@@ -5,7 +5,7 @@
 
 	<!-- MetaObjects -->
 
-	<metaobject object_type="MOKnowledgeObject" object_name="Benchmark" super_class="AttributedObject">
+	<metaobject object_type="MOKnowledgeObject" object_name="Benchmark" super_class="TLObject">
 <attributes>
         <mo_attribute att_name="s1" att_type="String" mandatory="false" />
         <mo_attribute att_name="s2" att_type="String" mandatory="false" />
@@ -14,7 +14,7 @@
 </attributes>
  	</metaobject>
 
-	<metaobject object_type="MOKnowledgeObject" object_name="BenchmarkResult" super_class="AttributedObject">
+	<metaobject object_type="MOKnowledgeObject" object_name="BenchmarkResult" super_class="TLObject">
 <attributes>
         <mo_attribute att_name="testName" att_type="String" mandatory="false" />
         <mo_attribute att_name="objectCnt" att_type="Long" mandatory="false" />

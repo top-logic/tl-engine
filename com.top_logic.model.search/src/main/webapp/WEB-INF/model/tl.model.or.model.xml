@@ -221,7 +221,7 @@
 						<options>
 							<options-by-expression>
 								<function><![CDATA[m -> $m
-    .get(`tl.model.or:ReferenceMapping#reference`)
+    .get(`tl.model.or:ReferenceMapping#model`)
     .get(`tl.model:TLReference#type`)
     .recursion(t -> $t
         .get(`tl.model:TLClass#generalizations`)

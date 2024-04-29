@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_dc833c89_2de2_4e8a_82bc_e6645f22a472">
+		<tabLabel key="dynamic.9f5f4da9-7632-4ac1-bd7e-bd059eebe021">
+			<en>OR mapping</en>
+			<de>OR-Mapping</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="admin/studio/oRMapping/scheme/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

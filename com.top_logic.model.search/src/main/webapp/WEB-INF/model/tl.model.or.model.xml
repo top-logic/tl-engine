@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.model.or">
+		<interface name="Mapping">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="model"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLModelPart"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="mapping"
+					kind="forwards"
+					navigate="true"
+					type="tl.model.db:SchemaElement"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<class name="ClassMapping">
+			<generalizations>
+				<generalization type="Mapping"/>
+			</generalizations>
+			<attributes>
+				<reference name="type"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLClass"
+				/>
+				<reference name="table"
+					kind="forwards"
+					navigate="true"
+					type="tl.model.db:Table"
+				/>
+				<reference name="partMappings"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="PartMapping"
+				/>
+				<reference name="availableColumns"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.model.db:Attribute"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[m -> $m
+    .get(`tl.model.or:ClassMapping#table`)
+    .recursion(t -> $t.get(`tl.model.db:Table#extends`))
+    .map(`tl.model.db:Table#columns`)
+    .flatten()]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="availableParts"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.model:TLStructuredTypePart"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[m -> $m
+    .get(`tl.model.or:ClassMapping#type`)
+    .recursion(c -> $c
+        .get(`tl.model:TLClass#specializations`)
+        .filter(s -> $s
+            .referers(`tl.model.or:ClassMapping#type`)
+            .isEmpty()))
+    .map(c -> $c.get(`tl.model:TLClass#localParts`))
+    .flatten()]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="model"
+					override="true"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`tl.model.or:ClassMapping#type`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="mapping"
+					override="true"
+					type="tl.model.db:Table"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`tl.model.or:ClassMapping#table`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="PartMapping">
+			<generalizations>
+				<generalization type="Mapping"/>
+			</generalizations>
+			<attributes>
+				<reference name="model"
+					override="true"
+					type="tl.model:TLStructuredTypePart"
+				/>
+			</attributes>
+		</interface>
+		<class name="PropertyMapping">
+			<generalizations>
+				<generalization type="PartMapping"/>
+			</generalizations>
+			<attributes>
+				<reference name="column"
+					kind="forwards"
+					navigate="true"
+					type="tl.model.db:Column"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[m -> $m
+    .container()
+    .get(`tl.model.or:ClassMapping#availableColumns`)
+    .fill(p -> $p.instanceOf(`tl.model.db:Column`))]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="model"
+					override="true"
+					type="tl.model:TLProperty"
+				/>
+				<reference name="mapping"
+					override="true"
+					type="tl.model.db:Column"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`tl.model.or:PropertyMapping#column`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="ReferenceMapping">
+			<generalizations>
+				<generalization type="PartMapping"/>
+			</generalizations>
+			<attributes>
+				<reference name="model"
+					override="true"
+					type="tl.model:TLReference"
+				/>
+			</attributes>
+		</interface>
+		<class name="ForeignKeyMapping">
+			<generalizations>
+				<generalization type="ReferenceMapping"/>
+			</generalizations>
+			<attributes>
+				<reference name="foreignKey"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model.db:Reference"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[m -> $m
+    .container()
+    .get(`tl.model.or:ClassMapping#availableColumns`)
+    .fill(p -> $p.instanceOf(`tl.model.db:Reference`))]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="mapping"
+					override="true"
+					type="tl.model.db:Reference"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`tl.model.or:ForeignKeyMapping#foreignKey`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="InverseForeignKeyMapping">
+			<generalizations>
+				<generalization type="ReferenceMapping"/>
+			</generalizations>
+			<attributes>
+				<reference name="inverseKey"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model.db:Reference"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[m -> $m
+    .get(`tl.model.or:ReferenceMapping#reference`)
+    .get(`tl.model:TLReference#type`)
+    .recursion(t -> $t
+        .get(`tl.model:TLClass#generalizations`)
+        .firstElement())
+    .map(t -> $t.referers(`tl.model.or:ClassMapping#type`))
+    .flatten()
+    .firstElement()
+    .get(`tl.model.or:ClassMapping#availableColumns`)]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="mapping"
+					override="true"
+					type="tl.model.db:Reference"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`tl.model.or:InverseForeignKeyMapping#inverseKey`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="LinkTableMapping">
+			<generalizations>
+				<generalization type="ReferenceMapping"/>
+			</generalizations>
+			<attributes>
+				<reference name="association"
+					kind="forwards"
+					navigate="true"
+					type="tl.model.db:Table"
+				/>
+				<reference name="mapping"
+					override="true"
+					type="tl.model.db:Table"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`tl.model.or:LinkTableMapping#association`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

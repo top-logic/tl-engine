@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_56c76db4_46ce_4fe2_8619_9107fc438525">
+		<tabLabel key="dynamic.637b464a-ad44-4cd6-881f-e9e4e07df333">
+			<en>Columns</en>
+			<de>Spalten</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="admin/studio/oRMapping/scheme/columns/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

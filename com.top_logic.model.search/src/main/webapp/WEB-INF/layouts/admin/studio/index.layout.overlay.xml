@@ -2,6 +2,7 @@
 
 <arguments>
 	<components>
+		<layout-reference resource="admin/studio/oRMapping/tabLayout.layout.xml"/>
 		<layout-reference resource="com.top_logic.model.search/admin/scriptConsole.layout.xml"/>
 	</components>
 </arguments>

@@ -63,7 +63,7 @@
 								<expr><![CDATA[m -> $m
     .get(`tl.model.or:ClassMapping#table`)
     .recursion(t -> $t.get(`tl.model.db:Table#extends`))
-    .map(`tl.model.db:Table#columns`)
+    .map(t -> $t.get(`tl.model.db:Table#columns`))
     .flatten()]]></expr>
 							</query>
 						</storage-algorithm>

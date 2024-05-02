@@ -17,7 +17,9 @@ import java.util.Set;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.ModelKind;
@@ -148,6 +150,9 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Operation operation) {
 		if (singletonValue instanceof TLObject) {
 			return operation.copy((TLObject) singletonValue);
+		}
+		if (singletonValue instanceof ConfigurationItem) {
+			return TypedConfiguration.copy((ConfigurationItem) singletonValue);
 		}
 		return singletonValue;
 	}

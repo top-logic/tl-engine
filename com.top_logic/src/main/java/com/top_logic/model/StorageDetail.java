@@ -11,12 +11,9 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.util.model.check.InstanceCheck;
 
 /**
- * Methods from <code>com.top_logic.element.meta.StorageImplementation</code> that are needed in
- * "com.top_logic".
- * <p>
- * These methods are used by the transient {@link TLModel} which is used by the
- * <code>com.top_logic.element.model.generate.WrapperGenerator</code>.
- * </p>
+ * Implementation of an attribute of a {@link TLObject}.
+ * 
+ * @see TLStructuredTypePart#getStorageImplementation()
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
@@ -31,7 +28,7 @@ public interface StorageDetail {
 	boolean isReadOnly();
 
 	/**
-	 * Get the values of this CollectionMetaAttribute for a given MetaAttributed object.
+	 * Get the values of the given attribute for a given object.
 	 * 
 	 * @param object
 	 *        The object to take the value from.
@@ -42,7 +39,7 @@ public interface StorageDetail {
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute);
 
 	/**
-	 * Replace the current values with the given ones for a MetaAttributed.
+	 * Replace the current values with the given ones for an object.
 	 * 
 	 * @param object
 	 *        the object. Must not be <code>null</code>.
@@ -52,7 +49,7 @@ public interface StorageDetail {
 	 *        a Collection of values. May be empty or <code>null</code> (in that case an empty
 	 *        collection will be returned as value in #getAttributeValues())
 	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aMetaAttributed
+	 *         If this is not an attribute of the given object.
 	 * @throws IllegalArgumentException
 	 *         if some of the values do not match constraints
 	 */
@@ -60,7 +57,7 @@ public interface StorageDetail {
 			throws NoSuchAttributeException, IllegalArgumentException;
 
 	/**
-	 * Add a value to the value collection for a given MetaAttributed object.
+	 * Add a value to the value collection in the given attribute of the given object.
 	 * 
 	 * @param object
 	 *        The object to modify.
@@ -69,7 +66,7 @@ public interface StorageDetail {
 	 * @param aValue
 	 *        the value
 	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aMetaAttributed
+	 *         If this is not an attribute of the given object.
 	 * @throws IllegalArgumentException
 	 *         if the argument does not match constraints
 	 */
@@ -77,7 +74,7 @@ public interface StorageDetail {
 			throws NoSuchAttributeException, IllegalArgumentException;
 
 	/**
-	 * Remove a value from the value collection for a given MetaAttributed object.
+	 * Remove a value from the value collection for a given object.
 	 * 
 	 * @param object
 	 *        the object object. Must not be <code>null</code>.
@@ -86,7 +83,7 @@ public interface StorageDetail {
 	 * @param aValue
 	 *        the value
 	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aMetaAttributed
+	 *         If this is not an attribute of the given object.
 	 */
 	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
 			throws NoSuchAttributeException;

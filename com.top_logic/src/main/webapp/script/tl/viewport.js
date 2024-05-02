@@ -884,6 +884,7 @@ services.viewport = {
 					additionalClass = " cmdButton";
 				} else if (currButton.classList.contains("cmdButtonDisabled")) {
 					additionalClass = " cmdButtonDisabled";
+					currButton.removeAttribute("href");
 				}
 	      		currButton.classList = "tlInDropdown" + additionalClass;
 	      		dropdownHtml += currButton.outerHTML;

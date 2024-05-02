@@ -286,7 +286,7 @@ a:not(.disabled):active {
 	text-decoration: underline;
 }
 
-a:not(.disabled):focus {
+a:not(.disabled, .cmdButtonDisabled):focus {
     color: var(--highlight, var(--link-primary-hover));
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;

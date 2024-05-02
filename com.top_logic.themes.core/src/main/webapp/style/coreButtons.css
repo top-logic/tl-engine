@@ -585,7 +585,7 @@ with hard coded popup window dimension
 	text-decoration: none;
 }
 
-.tlDropdownContent a:focus {
+.tlDropdownContent a:focus:not(.cmdButtonDisabled) {
 	box-shadow: inset 0px 0px 0px 2px var(--focus);
 	outline: none !important;
 }

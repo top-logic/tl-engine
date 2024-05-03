@@ -140,15 +140,7 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 
 		StorageImplementation result;
 		PolymorphicConfiguration<? extends StorageImplementation> config;
-		if (isComposition(part)) {
-			if (storageAnnotation != null) {
-				Logger.warn(
-					"Ignoring invalid " + TLStorage.class.getName() + " annotation on " + part
-						+ " since the storage of a composition cannot be customized. ",
-					StorageImplementationFactory.class);
-			}
-			return createDefaultStorageImplementation(part);
-		} else if (storageAnnotation == null) {
+		if (storageAnnotation == null) {
 			TLStructuredTypePart definition = part.getDefinition();
 			if (definition != part) {
 				StorageImplementation original = AttributeOperations.getStorageImplementation(definition);

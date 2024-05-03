@@ -33,7 +33,7 @@ public class IsEmpty extends Function1<Boolean, Object> {
 		return Boolean.valueOf(isEmpty(arg));
 	}
 
-	static boolean isEmpty(Object arg) {
+	public static boolean isEmpty(Object arg) {
 		if (arg == null) {
 			return true;
 		}

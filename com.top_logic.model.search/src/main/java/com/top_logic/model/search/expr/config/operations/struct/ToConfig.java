@@ -14,6 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.InstantiationContext;
@@ -150,7 +151,15 @@ public class ToConfig extends GenericMethod implements WithFlatMapSemantics<Item
 	}
 
 	private Object toInnerItem(EvalContext definitions, PropertyDescriptor property, Object jsonValue) {
-		Map<?, ?> mapValue = (Map<?, ?>) asSingleElement(jsonValue);
+		Object rawValue = asSingleElement(jsonValue);
+		if (rawValue instanceof CharSequence) {
+			ConfigurationValueProvider<?> format = property.getValueProvider();
+			if (format != null) {
+				return parse(property, rawValue.toString());
+			}
+		}
+
+		Map<?, ?> mapValue = (Map<?, ?>) rawValue;
 		Object itemValue;
 		if (mapValue == null) {
 			itemValue = null;

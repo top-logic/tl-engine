@@ -16,12 +16,15 @@ import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.dob.MOFactory;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.db2.DBKnowledgeTypeFactory;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 
 /**
@@ -41,6 +44,8 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 	private boolean _branchSupport;
 
+	private MORepository _schemaRepository;
+
 	/**
 	 * Creates a {@link MigrationContext}.
 	 */
@@ -55,6 +60,8 @@ public class MigrationContext extends TypedAnnotationContainer {
 		_kbConfig = _factoryConfig.getKnowledgeBases().get(PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
 		_applicationSetup = KBUtils.getSchemaConfigResolved(_kbConfig);
 		_applicationSchema = _applicationSetup.getConfig();
+		MOFactory factory = new DBKnowledgeTypeFactory();
+		_schemaRepository = _applicationSetup.createMORepository(factory);
 
 		_branchSupport = hasStoredBranchSupport();
 	}
@@ -93,6 +100,13 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 */
 	public SchemaConfiguration getApplicationSchema() {
 		return _applicationSchema;
+	}
+
+	/**
+	 * The resolved {@link #getApplicationSchema() database schema}.
+	 */
+	public MORepository getSchemaRepository() {
+		return _schemaRepository;
 	}
 
 	/**

@@ -7,6 +7,7 @@ package com.top_logic.element.meta.kbbased.storage;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.func.misc.IsEmpty;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
@@ -56,9 +57,12 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 	@Override
 	public void update(AttributeUpdate update) throws AttributeException {
 		try {
+			/* The form-value from the form that was editing will be saved in persistent model if
+			 * the update is enabled and, the value value is changed or it is a new object. */
 			if (update == null || update.isDisabled() || (!update.isChanged() && !update.isUpdateForCreate())) {
 				return;
 			}
+
 
 			TLObject object = update.getObject();
 			TLStructuredTypePart attribute = update.getAttribute();
@@ -73,6 +77,12 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 					break;
 				default: // other types are not allowed for collections
 					return;
+			}
+
+			/* If the update is for creating a new object and no value is shown in the field break;
+			 * else save the shown value. */
+			if (update.isUpdateForCreate() && IsEmpty.isEmpty(value)) {
+				return;
 			}
 
 			if (update.isTouched()) {

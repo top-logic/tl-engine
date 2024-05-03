@@ -199,6 +199,9 @@ public class DynamicBinding extends AbstractImplementationBinding implements Con
 
 	private TLType type(KnowledgeItem item) {
 		KnowledgeItem typeHandle = (KnowledgeItem) item.getValue(_typeAttr);
+		if (typeHandle == null) {
+			throw new IllegalStateException("Object has no type: " + item);
+		}
 		return (TLType) typeHandle.getWrapper();
 	}
 

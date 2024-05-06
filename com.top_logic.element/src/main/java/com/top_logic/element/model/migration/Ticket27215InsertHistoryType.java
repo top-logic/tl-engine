@@ -21,6 +21,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.impl.util.TLStructuredTypeColumns;
+import com.top_logic.model.migration.Util;
 
 /**
  * {@link MigrationProcessor} that creates the column {@link PersistentReference#HISTORY_TYPE_ATTR}
@@ -48,13 +49,13 @@ public class Ticket27215InsertHistoryType implements MigrationProcessor {
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			tryMigrate(log, connection);
+			tryMigrate(log, connection, context.getSQLUtils());
 		} catch (SQLException ex) {
 			log.error("Failed to update history type: " + ex.getMessage(), ex);
 		}
 	}
 
-	private void tryMigrate(Log log, PooledConnection connection) throws SQLException {
+	private void tryMigrate(Log log, PooledConnection connection, Util util) throws SQLException {
 		SQLProcessor processor = new SQLProcessor(connection);
 
 		processor.execute(
@@ -71,6 +72,8 @@ public class Ticket27215InsertHistoryType implements MigrationProcessor {
 				columnNames(HISTORY_TYPE_COL),
 				expressions(literalString(HISTORY_TYPE_CURRENT))));
 		log.info("Updated history type column of '" + cntUpdate + "' association end's to value 'current'.");
+
+		util.setHistoryColumn(true);
 	}
 
 	private SQLTable metaAttributeTable() {

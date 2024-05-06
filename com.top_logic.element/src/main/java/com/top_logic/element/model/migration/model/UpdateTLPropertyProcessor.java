@@ -197,7 +197,8 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 		}
 		_util.updateTLProperty(connection, part,
 			newType, newOwner, newLocalName,
-			getConfig().isMandatory(), getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(),
+			getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isMultiple(), getConfig().isBag(),
+			getConfig().isOrdered(),
 			getConfig());
 		if (tlModel != null) {
 			MigrationUtils.updateProperty(log, tlModel, partName, newName, getConfig().getNewType(),

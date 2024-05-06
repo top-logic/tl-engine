@@ -537,7 +537,7 @@ public class ModelResolver {
 			return;
 		}
 
-		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), otherEndName);
+		String associationName = TLStructuredTypeColumns.syntheticAssociationName(sourceType.getName(), otherEndName);
 		TLModule module = type.getModule();
 
 		TLType associationType = module.getType(associationName);

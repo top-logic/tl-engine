@@ -34,8 +34,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
-import com.top_logic.basic.col.TypedAnnotatable;
-import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigBuilder;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -171,12 +169,6 @@ public class Util {
 	private long _revCreate = -1;
 
 	private boolean _branchSupport;
-
-	/**
-	 * {@link Property} to resolve an instance of {@link Util} from a {@link MigrationContext}.
-	 */
-	public static final Property<Util> PROPERTY =
-		TypedAnnotatable.propertyDynamic(Util.class, "util", c -> new Util((MigrationContext) c));
 
 	/**
 	 * Creates a {@link Util}.

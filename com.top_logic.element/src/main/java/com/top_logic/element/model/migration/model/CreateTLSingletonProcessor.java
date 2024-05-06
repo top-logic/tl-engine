@@ -102,7 +102,7 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating singleton migration failed at " + getConfig().location(), ex);

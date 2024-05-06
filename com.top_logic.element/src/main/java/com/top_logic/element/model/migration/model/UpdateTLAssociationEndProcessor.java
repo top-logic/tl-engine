@@ -132,7 +132,8 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		}
 
 		_util.updateTLStructuredTypePart(connection, associationEnd, null, null, newAssociationEndName,
-			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
+			getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(), getConfig().isAggregate(),
+			getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
 			null, null);
 

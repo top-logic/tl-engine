@@ -84,7 +84,7 @@ public class CreateTLAssociationEndProcessor
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
 		_util.createTLAssociationEnd(log, connection, partName,
-			targetType, getConfig().isMandatory(), getConfig().isComposite(),
+			targetType, getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(),
 			getConfig().isAggregate(), getConfig().isMultiple(),
 			getConfig().isBag(),
 			getConfig().isOrdered(),

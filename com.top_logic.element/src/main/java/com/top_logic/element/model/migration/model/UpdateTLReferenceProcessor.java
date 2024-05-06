@@ -155,7 +155,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 			}
 			_util.updateTLReference(connection,
 				reference, newType, newOwner,
-				newReferenceName, getConfig().isMandatory(),
+				newReferenceName, getConfig().isMandatory(), getConfig().isAbstract(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
@@ -173,7 +173,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 		} else {
 			_util.updateInverseReference(connection,
 				reference,
-				newReferenceName, getConfig().isMandatory(),
+				newReferenceName, getConfig().isMandatory(), getConfig().isAbstract(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);

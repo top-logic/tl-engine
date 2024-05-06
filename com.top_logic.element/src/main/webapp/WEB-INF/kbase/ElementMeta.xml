@@ -309,6 +309,7 @@
 			And they don't have this attribute. -->
 		</reference>
 		<mo_attribute att_name="mandatory"        att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="abstract" att_type="Boolean" mandatory="false" />
 		<mo_attribute att_name="deleteProtected"  att_type="Boolean" mandatory="false" />
 		
 		<mo_attribute att_name="composite"           att_type="Boolean" mandatory="false" />

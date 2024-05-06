@@ -315,6 +315,11 @@ public class InterfaceGenerator extends BaseClassGenerator {
 					continue mainLoop;
 				}
 			}
+			if (finalSuperInterfaces.contains(superClassIntf)) {
+				// Different generalizations of type may have use interface, e.g.
+				// tl.element:StructuredElement and tl.element:StructuredElementContainer.
+				continue;
+			}
 			finalSuperInterfaces.add(superClassIntf);
 		}
 

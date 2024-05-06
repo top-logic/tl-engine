@@ -439,48 +439,48 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Boolean#TRUE} value.  
      */
-	static final byte BOOLEAN_TRUE = 1;
+	public static final byte BOOLEAN_TRUE = 1;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Boolean#FALSE} value.  
      */
-	static final byte BOOLEAN_FALSE = 2;
+	public static final byte BOOLEAN_FALSE = 2;
     
 	// Row types that use the long data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Long} value in the {@link #createLongTypeAttr()}.  
      */
-	static final byte LONG_TYPE = 10;
+	public static final byte LONG_TYPE = 10;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Integer} value in the {@link #createLongTypeAttr()}.
      */
-	static final byte INTEGER_TYPE = 11;
+	public static final byte INTEGER_TYPE = 11;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Date} value in the {@link #createLongTypeAttr()}.  
      */
-	static final byte DATE_TYPE = 12;
+	public static final byte DATE_TYPE = 12;
     
 	// Row types that use the double data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Double} value in the {@link #createDoubleDataAttr()}.  
      */
-	static final byte DOUBLE_TYPE = 20;
+	public static final byte DOUBLE_TYPE = 20;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Float} value in the {@link #createDoubleDataAttr()}.  
      */
-	static final byte FLOAT_TYPE = 21;
+	public static final byte FLOAT_TYPE = 21;
     
 	// Row types that use the varchar data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createVarcharDataAttr()}.  
      */
-	static final byte STRING_TYPE = 30;
+	public static final byte STRING_TYPE = 30;
 
 	/**
 	 * {@link #createDataTypeAttr()} value that marks an empty (non null size 0)
@@ -492,32 +492,32 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 * data. See e.g. Oracle.
 	 * </p>
 	 */
-	static final byte EMPTY_STRING_TYPE = 31;
+	public static final byte EMPTY_STRING_TYPE = 31;
 	
 	// Row types that use the clob data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createClobDataAttr()}.  
      */
-	static final byte CLOB_TYPE = 40;
+	public static final byte CLOB_TYPE = 40;
 
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createBlobDataAttr()}.  
      */
-	static final byte BLOB_TYPE = 50;
+	public static final byte BLOB_TYPE = 50;
 
 	/**
 	 * {@link #createDataTypeAttr()} value that marks a {@link TLID}. If value is {@link LongID} it
 	 * is stored in {@link #LONG_DATA}, otherwise it is stored in {@link #VARCHAR_DATA}.
 	 */
-	static final byte TL_ID_TYPE = 60;
+	public static final byte TL_ID_TYPE = 60;
 
 	/**
 	 * {@link #createDataTypeAttr()} value that marks a {@link ExtID}. {@link ExtID#systemId()} is
 	 * stored in {@link #LONG_DATA} (it is random long and therefore large),
 	 * {@link ExtID#objectId()} is stored in {@link #VARCHAR_DATA}
 	 */
-	static final byte EXT_ID_TYPE = 70;
+	public static final byte EXT_ID_TYPE = 70;
 
 	/**
 	 * {@link Comparator} that compares {@link ObjectKey} by

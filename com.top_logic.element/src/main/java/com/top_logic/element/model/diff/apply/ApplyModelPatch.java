@@ -1309,7 +1309,16 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	private void movePart(TLClassPart part, TLStructuredTypePart before) {
 		List<TLClassPart> localParts = part.getOwner().getLocalClassParts();
 		localParts.remove(part);
-		int index = before == null ? localParts.size() : localParts.indexOf(before);
+		int index;
+		if (before == null) {
+			index = localParts.size();
+		} else {
+			index = localParts.indexOf(before);
+			if (index < 0) {
+				log().info("Part '" + before + "' not found for adjusting order of '" + part + "'.", Log.WARN);
+				index = localParts.size();
+			}
+		}
 		localParts.add(index, part);
 
 		if (createProcessors()) {

@@ -3851,4 +3851,40 @@ public class Util {
 		return result;
 	}
 
+	/**
+	 * Resolves a model part based on its qualified name.
+	 * 
+	 * @see TLModelUtil#resolveModelPart(String)
+	 */
+	public BranchIdType getModelPartOrFail(PooledConnection connection, long branch, String qualifiedName)
+			throws SQLException, MigrationException {
+		int partSeparatorIndex = qualifiedName.lastIndexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR);
+		if (partSeparatorIndex < 0) {
+			return resolveModuleOrType(connection, branch, qualifiedName);
+		}
+		String scopeName = qualifiedName.substring(0, partSeparatorIndex);
+		String partName = qualifiedName.substring(partSeparatorIndex + 1);
+
+		int moduleSep = scopeName.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
+		if (moduleSep >= 0) {
+			String moduleName = scopeName.substring(0, moduleSep);
+			String typeName = scopeName.substring(moduleSep + 1);
+			return getTLTypePartOrFail(connection, branch, moduleName, typeName, partName);
+		} else {
+			throw new UnsupportedOperationException("Resolving singletons during migration not implemented.");
+		}
+	}
+
+	private BranchIdType resolveModuleOrType(PooledConnection connection, long branch, String qualifiedName)
+			throws SQLException, MigrationException {
+		int moduleSep = qualifiedName.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
+		if (moduleSep >= 0) {
+			String moduleName = qualifiedName.substring(0, moduleSep);
+			String typeName = qualifiedName.substring(moduleSep + 1);
+			return getTLTypeOrFail(connection, branch, moduleName, typeName);
+		} else {
+			return getTLModuleOrFail(connection, qualifiedName);
+		}
+	}
+
 }

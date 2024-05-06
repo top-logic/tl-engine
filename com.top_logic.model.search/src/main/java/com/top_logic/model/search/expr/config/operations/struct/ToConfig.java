@@ -111,8 +111,9 @@ public class ToConfig extends GenericMethod implements WithFlatMapSemantics<Item
 				}
 
 				case COMPLEX:
-					throw new UnsupportedOperationException(
-						"Cannot assign a value to a complex property: " + property);
+					Object value = entry.getValue();
+					item.update(property, value);
+					break;
 
 				case ITEM: {
 					Object jsonValue = entry.getValue();

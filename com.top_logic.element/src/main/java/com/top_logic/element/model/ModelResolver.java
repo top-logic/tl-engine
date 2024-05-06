@@ -543,15 +543,17 @@ public class ModelResolver {
 		TLType associationType = module.getType(associationName);
 		TLAssociationEnd sourceEnd;
 		if (associationType == null) {
+			log().error("No association " + TLModelUtil.qualifiedName(module.getName(), associationName)
+					+ " found for overridden backward reference found. The forwards reference must also be overridden in order to be symetrical.");
 			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
 
 			// Add source end
-			TLAssociationEnd targetEnd = TLModelUtil.addEnd(association, otherEndName, type);
-			targetEnd.setMultiple(true);
-
-			// Create destination end
 			sourceEnd =
-				TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
+					TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
+			sourceEnd.setMultiple(true);
+
+			// Create destination end *after* self reference
+			TLModelUtil.addEnd(association, otherEndName, type);
 		} else {
 			List<TLAssociationEnd> ends = TLModelUtil.getEnds((TLAssociation) associationType);
 			if (ends.isEmpty()) {
@@ -571,7 +573,7 @@ public class ModelResolver {
 		} catch (IllegalArgumentException ex) {
 			log().error(
 				"In back reference '" + referenceConfig.getName()
-						+ "', associtiation end could not be implemented by reference in type '"
+						+ "', association end could not be implemented by reference in type '"
 						+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
 				ex);
 			return;

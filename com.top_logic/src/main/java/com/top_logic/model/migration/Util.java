@@ -1896,17 +1896,17 @@ public class Util {
 	}
 
 	private List<TypeGeneralization> getTLClassGeneralizationsOrSpecializations(PooledConnection connection,
-			Type source, boolean getDestination) throws SQLException {
+			Type source, boolean getSource) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String givenColumn;
 		String otherColumn;
-		if (getDestination) {
-			givenColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
-			otherColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
-		} else {
+		if (getSource) {
 			givenColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
 			otherColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+		} else {
+			givenColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+			otherColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
 		}
 
 		String identifierAlias = "id";
@@ -1937,7 +1937,7 @@ public class Util {
 					source.getBranch(),
 					LongID.valueOf(dbResult.getLong(identifierAlias)),
 					ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS);
-				if (getDestination) {
+				if (getSource) {
 					generalization.setSource(source.getID());
 					generalization.setDestination(LongID.valueOf(dbResult.getLong(otherAlias)));
 				} else {
@@ -3828,6 +3828,27 @@ public class Util {
 	 */
 	public void setAbstractColumn(boolean abstractColumn) {
 		_abstractColumn = abstractColumn;
+	}
+
+	/**
+	 * Looks up all identifiers of potential subclasses of the given type.
+	 */
+	public Collection<TLID> getImplementationIds(PooledConnection connection, Type type) throws SQLException {
+		Set<TLID> result = new HashSet<>();
+		result.add(type.getID());
+		List<Type> worklist = new ArrayList<>();
+		worklist.add(type);
+
+		for (int n = 0; n < worklist.size(); n++) {
+			List<TypeGeneralization> specializationLinks = getTLClassSpecializationLinks(connection, worklist.get(n));
+			for (TypeGeneralization link : specializationLinks) {
+				TLID destination = link.getDestination();
+				if (result.add(destination)) {
+					worklist.add(BranchIdType.newInstance(Type.class, type.getBranch(), destination, type.getTable()));
+				}
+			}
+		}
+		return result;
 	}
 
 }

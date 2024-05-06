@@ -45,6 +45,10 @@ div.ace_tooltip>code.inlineCode {
 	transform: translateY(-50%);
 }
 
+.modelBasedSearch .rf_line {
+	overflow: initial;
+}
+
 .modelBasedSearch div.dfList div.dfList, 
 .modelBasedSearch .dfModeFull div.dfList {
 	margin-left: var(--spacing-04);

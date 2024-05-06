@@ -276,11 +276,25 @@
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
+					<attributes>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="Root"
+						/>
+					</attributes>
 				</interface>
 				<interface name="ContextChild">
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
+					<attributes>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="Context"
+						/>
+					</attributes>
 				</interface>
 			</types>
 		</module>

@@ -244,10 +244,24 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	}
 
 	/**
+	 * Lookup {@link RootChild#PARENT_ATTR} of {@link RootChild}.
+	 */
+	public static com.top_logic.model.TLReference getParentRootChildAttr() {
+		return (com.top_logic.model.TLReference) getRootChildType().getPart(RootChild.PARENT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ContextChild} type.
 	 */
 	public static com.top_logic.model.TLClass getContextChildType() {
 		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(ContextChild.CONTEXT_CHILD_TYPE);
+	}
+
+	/**
+	 * Lookup {@link ContextChild#PARENT_ATTR} of {@link ContextChild}.
+	 */
+	public static com.top_logic.model.TLReference getParentContextChildAttr() {
+		return (com.top_logic.model.TLReference) getContextChildType().getPart(ContextChild.PARENT_ATTR);
 	}
 
 	/**

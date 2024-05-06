@@ -103,9 +103,19 @@
 							multiple="true"
 							type="tl.element:StructuredElement"
 						/>
+						<reference name="children"
+							override="true"
+							type="TestGenericImport"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="TestGenericImport"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</interface>
 				<class name="TestGenericImportStructureRoot">
@@ -134,7 +144,6 @@
 					</attributes>
 					<generalizations>
 						<generalization type="TestGenericImport"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="TestGenericImportStructureElement">
@@ -151,7 +160,6 @@
 					<generalizations>
 						<generalization type="TestGenericImport"/>
 						<generalization type="TestGenericImportStructure:TestGenericImportStructureRootChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 						<generalization type="TestGenericImportStructure:TestGenericImportStructureElementChild"/>
 					</generalizations>
 				</class>

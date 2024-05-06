@@ -17,4 +17,12 @@ public interface CommonChildBase extends com.top_logic.demo.model.aspect.Common 
 	 */
 	String COMMON_CHILD_TYPE = "CommonChild";
 
+	/**
+	 * Getter for part {@link #PARENT_ATTR}.
+	 */
+	@Override
+	default com.top_logic.demo.model.aspect.Common getParent() {
+		return (com.top_logic.demo.model.aspect.Common) tValueByName(PARENT_ATTR);
+	}
+
 }

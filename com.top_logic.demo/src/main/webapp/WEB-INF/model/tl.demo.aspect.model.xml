@@ -133,9 +133,6 @@
 				<class name="RootNode">
 					<annotations>
 						<table name="DemoAspect" />
-						<implementation-binding 
-							class-name="com.top_logic.demo.model.aspect.wrap.RootNode"
-						/>
 					</annotations>
 					<attributes>
 						<property name="name"
@@ -161,56 +158,44 @@
 				<class name="ANode">
 					<annotations>
 						<table name="DemoAspect" />
-						<implementation-binding
-							class-name="com.top_logic.demo.model.aspect.wrap.ANode"
-						/>
 						<instance-presentation icon="theme:DEMO_AS" />
 					</annotations>
 					<generalizations>
-						<generalization type="A" />
 						<generalization type="CommonChild" />
+						<generalization type="A" />
 					</generalizations>
 				</class>
 				
 				<class name="BNode">
 					<annotations>
 						<table name="DemoAspect" />
-						<implementation-binding
-							class-name="com.top_logic.demo.model.aspect.wrap.BNode"
-						/>
 						<instance-presentation icon="theme:DEMO_BS" />
 					</annotations>
 					<generalizations>
-						<generalization type="B" />
 						<generalization type="CommonChild" />
+						<generalization type="B" />
 					</generalizations>
 				</class>
 				
 				<class name="CNode">
 					<annotations>
 						<table name="DemoAspect" />
-						<implementation-binding
-							class-name="com.top_logic.demo.model.aspect.wrap.CNode"
-						/>
 						<instance-presentation icon="theme:DEMO_CS" />
 					</annotations>
 					<generalizations>
-						<generalization type="C" />
 						<generalization type="CommonChild" />
+						<generalization type="C" />
 					</generalizations>
 				</class>
 				
 				<class name="CNodeDefaults">
 					<annotations>
 						<table name="DemoAspect" />
-						<implementation-binding
-							class-name="com.top_logic.demo.model.aspect.wrap.CNode"
-						/>
 						<instance-presentation icon="theme:DEMO_CS" />
 					</annotations>
 					<generalizations>
-						<generalization type="CDefaults" />
 						<generalization type="CNode" />
+						<generalization type="CDefaults" />
 					</generalizations>
 				</class>
 				
@@ -218,6 +203,13 @@
 					<generalizations>
 						<generalization type="Common" />
 					</generalizations>
+					<attributes>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="Common"
+						/>
+					</attributes>
 				</interface>
 				
 			</types>

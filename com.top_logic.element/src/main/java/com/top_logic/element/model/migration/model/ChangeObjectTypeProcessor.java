@@ -104,7 +104,6 @@ public class ChangeObjectTypeProcessor extends AbstractConfiguredInstance<Change
 		} catch (SQLException | MigrationException ex) {
 			log.error("Failed to change type of objects in table '" + config.getTable() + "' from '"
 				+ config.getSourceType() + "' to '" + config.getTargetType() + "'.");
-			ex.printStackTrace();
 		}
 	}
 

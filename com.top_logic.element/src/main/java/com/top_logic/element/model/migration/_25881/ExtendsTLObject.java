@@ -50,7 +50,7 @@ public class ExtendsTLObject implements MigrationProcessor {
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {

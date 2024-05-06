@@ -67,7 +67,7 @@ public class CreateInverseTLReferenceProcessor
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {

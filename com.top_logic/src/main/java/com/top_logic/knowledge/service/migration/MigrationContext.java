@@ -23,6 +23,7 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
+import com.top_logic.model.migration.Util;
 
 /**
  * Context for {@link MigrationProcessor}s.
@@ -41,6 +42,8 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 	private boolean _branchSupport;
 
+	private final Util _util;
+
 	/**
 	 * Creates a {@link MigrationContext}.
 	 */
@@ -57,6 +60,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 		_applicationSchema = _applicationSetup.getConfig();
 
 		_branchSupport = hasStoredBranchSupport();
+		_util = new Util(this);
 	}
 
 	private boolean hasStoredBranchSupport() {
@@ -102,6 +106,13 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 */
 	public boolean hasBranchSupport() {
 		return _branchSupport;
+	}
+
+	/**
+	 * The {@link Util} object that can be used to update the model using SQL statements.
+	 */
+	public Util getSQLUtils() {
+		return _util;
 	}
 
 }

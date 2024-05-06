@@ -46,7 +46,7 @@ public class Ticket25242UseLegacyTabbarTemplatesForOldLayouts implements Migrati
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		_util = context.get(Util.PROPERTY);
+		_util = context.getSQLUtils();
 
 		String table = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.KO_NAME_TEMPLATE_LAYOUTS);
 		String templateColumn = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.TEMPLATE_ATTR);

@@ -77,7 +77,7 @@ public class AddTLAnnotations extends AbstractConfiguredInstance<AddTLAnnotation
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Adding part annotations failed at " + getConfig().location(), ex);

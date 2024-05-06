@@ -56,8 +56,19 @@ div.ace_tooltip>code.inlineCode {
 	white-space: nowrap;
 }
 
+.modelBasedSearch .dfListEntry {
+	display: grid;
+	grid-column-gap: var(--spacing-01);
+	grid-template-columns: repeat(8, auto);
+	align-items: center;
+}
+
+.modelBasedSearch .dfListEntry > * {
+	max-width: max-content;
+}
+
 .modelBasedSearch .dfListContent .dfListEntry:first-child {
-    margin-top: 0; /* otherwise the margin is stacked */
+	margin-top: 0; /* otherwise the margin is stacked */
 }
 
 .modelBasedSearch span.dfListRemove {
@@ -66,8 +77,18 @@ div.ace_tooltip>code.inlineCode {
 
 .modelBasedSearch .ddwttContainer.active {
 	display: unset;
+	min-width: max-content;
+}
+
+.modelBasedSearch .cTextInput {
+	min-width: calc(2 * var(--spacing-03) + var(--spacing-02));
+	text-align: center;
+}
+
+.modelBasedSearch .cTextInput:not(.searchIrrelevant) input.is-input:not([size]) {
+	width: 100vw;
 }
 
 .modelBasedSearch .cPopupSelect.active {
-    width: unset;
+	width: unset;
 }

@@ -14,6 +14,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
@@ -45,18 +46,21 @@ public class ChangeObjectTypeProcessor extends AbstractConfiguredInstance<Change
 		/**
 		 * The name of the table, where the objects of the source type are stored.
 		 */
+		@Mandatory
 		@Name("table")
 		String getTable();
 
 		/**
 		 * The type of the objects that should be changed.
 		 */
+		@Mandatory
 		@Name("source-type")
 		QualifiedTypeName getSourceType();
 
 		/**
 		 * The new type the modified objects should be assigned to.
 		 */
+		@Mandatory
 		@Name("target-type")
 		QualifiedTypeName getTargetType();
 	}

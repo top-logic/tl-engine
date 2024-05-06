@@ -14,6 +14,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -47,6 +48,7 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 		/**
 		 * The name of the table, where the objects of the source type are stored.
 		 */
+		@Mandatory
 		@Name("table")
 		String getTable();
 
@@ -54,18 +56,21 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 		 * Name of the reference column of the given {@link #getTable()} that contains the reference
 		 * associated with the link stored in a table row.
 		 */
+		@Name("reference-column")
 		@StringDefault(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)
 		String getReferenceColumn();
 
 		/**
 		 * The reference in the source model.
 		 */
+		@Mandatory
 		@Name("source-ref")
 		QualifiedPartName getSourceRef();
 
 		/**
 		 * The reference in the target model to which the existing links should be assigned to.
 		 */
+		@Mandatory
 		@Name("target-ref")
 		QualifiedPartName getTargetRef();
 	}

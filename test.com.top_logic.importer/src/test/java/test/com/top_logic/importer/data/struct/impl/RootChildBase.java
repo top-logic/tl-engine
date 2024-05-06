@@ -17,4 +17,12 @@ public interface RootChildBase extends com.top_logic.element.structured.Structur
 	 */
 	String ROOT_CHILD_TYPE = "RootChild";
 
+	/**
+	 * Getter for part {@link #PARENT_ATTR}.
+	 */
+	@Override
+	default test.com.top_logic.importer.data.struct.Root getParent() {
+		return (test.com.top_logic.importer.data.struct.Root) tValueByName(PARENT_ATTR);
+	}
+
 }

@@ -194,6 +194,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesAll#PARENT_ATTR} of {@link DemoTypesAll}.
+	 */
+	public static com.top_logic.model.TLReference getParentDemoTypesAllAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAllType().getPart(DemoTypesAll.PARENT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesAType() {
@@ -1762,6 +1769,27 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesChild} type.
+	 */
+	public static com.top_logic.model.TLClass getDemoTypesChildType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesChild.DEMO_TYPES_CHILD_TYPE);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesContainer} type.
+	 */
+	public static com.top_logic.model.TLClass getDemoTypesContainerType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesContainer.DEMO_TYPES_CONTAINER_TYPE);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesContainer#CHILDREN_ATTR} of {@link DemoTypesContainer}.
+	 */
+	public static com.top_logic.model.TLReference getChildrenDemoTypesContainerAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesContainerType().getPart(DemoTypesContainer.CHILDREN_ATTR);
+	}
+
+	/**
 	 * Lookup {@value #DEMO_ENUM_ENUM} enumeration.
 	 */
 	public static com.top_logic.model.TLEnumeration getDemoEnumEnum() {
@@ -2164,6 +2192,22 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	@Deprecated
 	public static final String ROOT_CHILD_NODE = RootChild.ROOT_CHILD_TYPE;
+
+	/**
+	 * Name of type <code>DemoTypesChild</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link DemoTypesChild#DEMO_TYPES_CHILD_TYPE}.
+	 */
+	@Deprecated
+	public static final String DEMO_TYPES_CHILD_NODE = DemoTypesChild.DEMO_TYPES_CHILD_TYPE;
+
+	/**
+	 * Name of type <code>DemoTypesContainer</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link DemoTypesContainer#DEMO_TYPES_CONTAINER_TYPE}.
+	 */
+	@Deprecated
+	public static final String DEMO_TYPES_CONTAINER_NODE = DemoTypesContainer.DEMO_TYPES_CONTAINER_TYPE;
 
 	/**
 	 * Singleton <code>ROOT</code>.

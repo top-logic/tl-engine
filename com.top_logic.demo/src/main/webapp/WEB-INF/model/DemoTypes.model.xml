@@ -187,22 +187,22 @@
 		</enum>
 		<interface name="AChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="BChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="BNotUnderAChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="CChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="DemoTypes.All">
@@ -217,6 +217,11 @@
 				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
+				/>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="DemoTypesContainer"
 				/>
 			</attributes>
 		</interface>
@@ -1040,7 +1045,7 @@
 			<generalizations>
 				<generalization type="DemoTypes.A"/>
 				<generalization type="RootChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 				<generalization type="BChild"/>
 				<generalization type="BNotUnderAChild"/>
 				<generalization type="CChild"/>
@@ -1065,7 +1070,6 @@
 							type="DemoTypes.C"
 						/>
 						<generalization type="C"/>
-						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
 				</class>
 			</types>
@@ -1076,7 +1080,6 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
-						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -1155,7 +1158,7 @@
 			<generalizations>
 				<generalization type="DemoTypes.B"/>
 				<generalization type="AChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 				<generalization type="CChild"/>
 			</generalizations>
 			<annotations>
@@ -1168,7 +1171,6 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
-						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -1177,7 +1179,7 @@
 			<generalizations>
 				<generalization type="DemoTypes.B"/>
 				<generalization type="RootChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 			</generalizations>
 			<annotations>
 				<instance-presentation icon="theme:ICON_PIGGY_BANK_DEMO_FUCHSIA"/>
@@ -1189,7 +1191,6 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
-						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -1253,7 +1254,7 @@
 				<generalization type="DemoTypes.C.All"/>
 				<generalization type="AChild"/>
 				<generalization type="BChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 				<generalization type="CChild"/>
 			</generalizations>
 			<annotations>
@@ -1271,7 +1272,6 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
-						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -1309,7 +1309,6 @@
 				<generalization type="BChild"/>
 				<generalization type="BNotUnderAChild"/>
 				<generalization type="CChild"/>
-				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
 			<annotations>
 				<instance-presentation icon="theme:ICON_SEEDLING_DEMO_GREEN"/>
@@ -2618,7 +2617,6 @@
 			<generalizations>
 				<generalization type="DemoTypes.X"/>
 				<generalization type="AChild"/>
-				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
 			<annotations>
 				<table name="GenericObject"/>
@@ -2676,7 +2674,7 @@
 		</class>
 		<interface name="DemoTypes.Root">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypes.All"/>
 			</generalizations>
 			<annotations>
 				<legacy-qualified-name qualified-name="DemoTypes.Root"/>
@@ -2685,7 +2683,7 @@
 		<class name="Root">
 			<generalizations>
 				<generalization type="DemoTypes.Root"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 			</generalizations>
 			<annotations>
 				<table name="DemoTypes"/>
@@ -2693,6 +2691,7 @@
 			<attributes>
 				<property name="name"
 					mandatory="true"
+					override="true"
 					type="tl.core:String"
 				>
 					<annotations>
@@ -2708,15 +2707,35 @@
 				>
 					<annotations>
 						<visibility value="hidden"/>
-						<composition-link table="hasDemoStructureChild"/>
 					</annotations>
 				</reference>
 			</attributes>
 		</class>
 		<interface name="RootChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
+		</interface>
+		<interface name="DemoTypesChild">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+			</generalizations>
+		</interface>
+		<interface name="DemoTypesContainer">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+			<attributes>
+				<reference name="children"
+					override="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<composition-link table="hasDemoStructureChild"/>
+					</annotations>
+				</reference>
+			</attributes>
 		</interface>
 	</module>
 </model>

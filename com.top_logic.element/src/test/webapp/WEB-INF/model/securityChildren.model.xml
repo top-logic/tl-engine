@@ -13,8 +13,20 @@
 					<annotations>
 						<legacy-qualified-name qualified-name="SecurityChildME"/>
 					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="SecurityChildME"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="SecurityChildME"
+						/>
+					</attributes>
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</interface>
 				<class name="SecurityChildRoot">
@@ -47,7 +59,6 @@
 					</attributes>
 					<generalizations>
 						<generalization type="SecurityChildME"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="SecurityChild">

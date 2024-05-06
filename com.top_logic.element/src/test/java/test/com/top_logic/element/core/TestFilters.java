@@ -167,8 +167,9 @@ public class TestFilters extends BasicTestCase {
             String            theName;
             int               theDepth = aDepth - 1;
 			List<String> theTypes = localNames(aParent.getChildrenTypes());
-       
-            for (int thePos = 0; thePos < aWidth; thePos++ ) {
+			// Ensure children of each types are created.
+			int childCount = aWidth + theTypes.size();
+			for (int thePos = 0; thePos < childCount; thePos++) {
                 theName  = aName + thePos;
 				theChild = aParent.createChild(theName, theTypes.get(thePos % theTypes.size()));
 

@@ -229,11 +229,25 @@
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
+			<attributes>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="RootElement"
+				/>
+			</attributes>
 		</interface>
 		<interface name="ProductChild">
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
+			<attributes>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="Product"
+				/>
+			</attributes>
 		</interface>
 	</module>
 </model>

@@ -17,4 +17,12 @@ public interface ContextChildBase extends com.top_logic.element.structured.Struc
 	 */
 	String CONTEXT_CHILD_TYPE = "ContextChild";
 
+	/**
+	 * Getter for part {@link #PARENT_ATTR}.
+	 */
+	@Override
+	default test.com.top_logic.importer.data.struct.Context getParent() {
+		return (test.com.top_logic.importer.data.struct.Context) tValueByName(PARENT_ATTR);
+	}
+
 }

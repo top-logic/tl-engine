@@ -26,9 +26,19 @@
 								<delete-protected/>
 							</annotations>
 						</property>
+						<reference name="children"
+							override="true"
+							type="OrgUnit.all"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="OrgUnit.all"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</interface>
 				<interface name="OrgUnit.base">
@@ -141,7 +151,6 @@
 					</attributes>
 					<generalizations>
 						<generalization type="OrgUnit.root"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="OrgHead">
@@ -158,7 +167,6 @@
 					<generalizations>
 						<generalization type="OrgUnit.head"/>
 						<generalization type="orgStructure:OrgRootChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="OrgUnit">
@@ -175,7 +183,6 @@
 					<generalizations>
 						<generalization type="OrgUnit.unit"/>
 						<generalization type="orgStructure:OrgHeadChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 						<generalization type="orgStructure:OrgUnitChild"/>
 					</generalizations>
 				</class>

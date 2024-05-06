@@ -27,6 +27,27 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String TEST_TYPES_STRUCTURE = "TestTypes";
 
 	/**
+	 * Lookup {@link CommonNode} type.
+	 */
+	public static com.top_logic.model.TLClass getCommonNodeType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(CommonNode.COMMON_NODE_TYPE);
+	}
+
+	/**
+	 * Lookup {@link CommonNode#CHILDREN_ATTR} of {@link CommonNode}.
+	 */
+	public static com.top_logic.model.TLReference getChildrenCommonNodeAttr() {
+		return (com.top_logic.model.TLReference) getCommonNodeType().getPart(CommonNode.CHILDREN_ATTR);
+	}
+
+	/**
+	 * Lookup {@link CommonNode#PARENT_ATTR} of {@link CommonNode}.
+	 */
+	public static com.top_logic.model.TLReference getParentCommonNodeAttr() {
+		return (com.top_logic.model.TLReference) getCommonNodeType().getPart(CommonNode.PARENT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
@@ -501,6 +522,14 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static com.top_logic.model.TLProperty getNamePartAttr() {
 		return (com.top_logic.model.TLProperty) getPartType().getPart(Part.NAME_ATTR);
 	}
+
+	/**
+	 * Name of type <code>CommonNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link CommonNode#COMMON_NODE_TYPE}.
+	 */
+	@Deprecated
+	public static final String COMMON_NODE_NODE = CommonNode.COMMON_NODE_TYPE;
 
 	/**
 	 * Name of type <code>A</code> in structure {@link #TEST_TYPES_STRUCTURE}.

@@ -119,7 +119,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 			MOReference tType = (MOReference) table.getAttribute(PersistentObject.T_TYPE_ATTR);
 			String tTypeColumn = tType.getColumn(ReferencePart.name).getDBName();
 
-			CompiledStatement update = query(
+			CompiledStatement select = query(
 				select(
 					columns(
 						columnDef(BasicTypes.BRANCH_DB_NAME),
@@ -180,7 +180,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 			
 			int cnt = 0;
 			try (Batch batch = insert.createBatch(connection)) {
-				try (ResultSet result = update.executeQuery(connection)) {
+				try (ResultSet result = select.executeQuery(connection)) {
 					while (result.next()) {
 						long objBranch = result.getLong(1);
 						long objId = result.getLong(2);

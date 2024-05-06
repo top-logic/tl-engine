@@ -8,6 +8,7 @@ package com.top_logic.model.migration;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.io.StringWriter;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -61,13 +62,14 @@ import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.schema.config.DBColumnType;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.DestinationReference;
 import com.top_logic.knowledge.service.db2.PersistentIdFactory;
 import com.top_logic.knowledge.service.db2.RowLevelLockingSequenceManager;
 import com.top_logic.knowledge.service.db2.SourceReference;
-import com.top_logic.knowledge.service.migration.MigrationContext;
+import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
 import com.top_logic.knowledge.util.OrderedLinkUtil.IndexRangeTooShort;
 import com.top_logic.knowledge.wrap.list.FastList;
@@ -171,10 +173,44 @@ public class Util {
 	private boolean _branchSupport;
 
 	/**
+	 * Whether the table {@link ApplicationObjectUtil#META_ATTRIBUTE_OBJECT_TYPE} has a column
+	 * {@link TLAssociationEnd#HISTORY_TYPE_ATTR}.
+	 * 
+	 * <p>
+	 * The column {@link TLAssociationEnd#HISTORY_TYPE_ATTR} was introduced in TL 7.5.0 with #27215.
+	 * {@link MigrationProcessor} creating {@link TLStructuredTypePart} <b>before</b> #27215 can not
+	 * set an history type.
+	 * </p>
+	 */
+	private boolean _historyColumn;
+
+	/**
 	 * Creates a {@link Util}.
 	 */
-	public Util(MigrationContext context) {
-		_branchSupport = context.hasBranchSupport();
+	public Util(Log log, PooledConnection connection, boolean withBranchSupport) {
+		_branchSupport = withBranchSupport;
+		
+		String metaAttributeTable = SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
+		try {
+			DatabaseMetaData metaData = connection.getMetaData();
+			String catalog = connection.getCatalog();
+			String schemaPattern = connection.getSQLDialect().getCurrentSchema(connection);
+			try (ResultSet columns = metaData.getColumns(catalog, schemaPattern, metaAttributeTable, "%")) {
+				while (columns.next()) {
+					String columnName = columns.getString("COLUMN_NAME");
+					if (SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR).equals(columnName)) {
+						setHistoryColumn(true);
+					}
+				}
+			}
+			if (!hasHistoryColumn()) {
+				log.info("No column '" + SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR) + "' found in table '"
+						+ metaAttributeTable
+						+ "'. This is ok if database belongs to a migration before TopLogic version 7.5.0.");
+			}
+		} catch (SQLException ex) {
+			throw new KnowledgeBaseException("Unable to analyse table " + metaAttributeTable + ".", ex);
+		}
 	}
 
 	/**
@@ -536,48 +572,9 @@ public class Util {
 		int ownerOrder = newAttributeOrder(con, branch, ownerID);
 		Long revCreate = getRevCreate(con);
 
-		try {
-			internalCreateProperty(con, branch, partName, partID, targetTable, targetID, impl, endID, definitionID,
-				mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType, annotations, sqlDialect,
-				ownerClass, ownerOrder, revCreate);
-		} catch (SQLException ex) {
-			if (historyType == null) {
-				throw ex;
-			}
-			StringBuilder noHistoryTypeColumn = new StringBuilder();
-			noHistoryTypeColumn.append("Unable to create structured type part '");
-			noHistoryTypeColumn.append(partName);
-			noHistoryTypeColumn.append("' in type '");
-			noHistoryTypeColumn.append(toString(ownerClass));
-			noHistoryTypeColumn.append("' with history type '");
-			noHistoryTypeColumn.append(historyType.getExternalName());
-			noHistoryTypeColumn.append(
-				"'. If the migration is a migration before TopLogic version 7.5.0 this can be correct as the column '");
-			noHistoryTypeColumn.append(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR));
-			noHistoryTypeColumn.append(
-				"' holding the history type was introduced in TopLogic 7.5.0. Try to create part without value for the history type column. Check correct value of history column for the part after migration has been finished.");
-			log.info(noHistoryTypeColumn.toString(), Protocol.WARN);
-			/* The column HISTORY_TYPE was introduced in TL 7.5.0 with #27215. MigrationProcessors
-			 * creating TLStructuredTypePart *before* #27215 can not set an history type. Try again
-			 * with "null" history type. */
-			HistoryType noHistoryColumn = null;
-			try {
-				internalCreateProperty(con, branch, partName, partID, targetTable, targetID, impl, endID, definitionID,
-					mandatory, composite, aggregate, multiple, bag, ordered, navigate, noHistoryColumn, annotations,
-					sqlDialect, ownerClass, ownerOrder, revCreate);
-				StringBuilder createdWithoutHistoryTypeColumn = new StringBuilder();
-				createdWithoutHistoryTypeColumn.append("Create structured type part '");
-				createdWithoutHistoryTypeColumn.append(partName);
-				createdWithoutHistoryTypeColumn.append("' in type '");
-				createdWithoutHistoryTypeColumn.append(toString(ownerClass));
-				createdWithoutHistoryTypeColumn.append("' without history type.");
-				log.info(createdWithoutHistoryTypeColumn.toString(), Protocol.WARN);
-			} catch (SQLException fallbackEx) {
-				/* It seems that the HISTORY_COLUMN is not the problem. Throw the original error. */
-				ex.setNextException(fallbackEx);
-				throw ex;
-			}
-		}
+		internalCreateProperty(log, con, branch, partName, partID, targetTable, targetID, impl, endID,
+			definitionID, mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType, annotations,
+			sqlDialect, ownerClass, ownerOrder, revCreate);
 
 		TypePart typePart;
 		if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
@@ -609,11 +606,32 @@ public class Util {
 
 	}
 
-	private void internalCreateProperty(PooledConnection con, long branch, String partName, TLID partID,
-			String targetTable, TLID targetID, String impl, TLID endID, TLID definitionID, Boolean mandatory,
-			Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
-			HistoryType historyType, String annotations, DBHelper sqlDialect, Type ownerClass, int ownerOrder,
-			Long revCreate) throws SQLException {
+	private void internalCreateProperty(Log log, PooledConnection con, long branch, String partName,
+			TLID partID, String targetTable, TLID targetID, String impl, TLID endID, TLID definitionID,
+			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
+			Boolean navigate, HistoryType historyType, String annotations, DBHelper sqlDialect, Type ownerClass,
+			int ownerOrder, Long revCreate) throws SQLException {
+		if (!hasHistoryColumn()) {
+			/* There is no history column, therefore a potentially given history type can not be
+			 * set. */
+			if (historyType != null) {
+				StringBuilder noHistoryTypeColumn = new StringBuilder();
+				noHistoryTypeColumn.append("Unable to create structured type part '");
+				noHistoryTypeColumn.append(partName);
+				noHistoryTypeColumn.append("' in type '");
+				noHistoryTypeColumn.append(toString(ownerClass));
+				noHistoryTypeColumn.append("' with history type '");
+				noHistoryTypeColumn.append(historyType.getExternalName());
+				noHistoryTypeColumn.append(
+					"' as there is no column '");
+				noHistoryTypeColumn.append(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR));
+				noHistoryTypeColumn.append(
+					"' holding the history type. If the migration is a migration before TopLogic version 7.5.0 this is correct as the column was introduced in TopLogic 7.5.0. Create part without value for the history type column. Check correct value of history column for the part after migration has been finished.");
+				log.info(noHistoryTypeColumn.toString(), Protocol.WARN);
+
+				historyType = null;
+			}
+		}
 		CompiledStatement createProperty = query(
 			parameters(
 				branchParamDef(),
@@ -3644,6 +3662,21 @@ public class Util {
 	 */
 	public int getBranchIndexInc() {
 		return _branchSupport ? 1 : 0;
+	}
+
+	/**
+	 * Whether the table {@link ApplicationObjectUtil#META_ATTRIBUTE_OBJECT_TYPE} has a column
+	 * {@link TLAssociationEnd#HISTORY_TYPE_ATTR}.
+	 */
+	public boolean hasHistoryColumn() {
+		return _historyColumn;
+	}
+
+	/**
+	 * Sets value of {@link #hasHistoryColumn()}.
+	 */
+	public void setHistoryColumn(boolean historyColumn) {
+		_historyColumn = historyColumn;
 	}
 
 }

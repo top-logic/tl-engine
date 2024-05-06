@@ -424,7 +424,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	private void migrate(Protocol log) {
 		PooledConnection connection = _connectionPool.borrowWriteConnection();
 		try {
-			MigrationContext context = new MigrationContext(connection);
+			MigrationContext context = new MigrationContext(log, connection);
 
 			if (_migrationInfo.nothingToDo()) {
 				log.info("No configured migrations.");

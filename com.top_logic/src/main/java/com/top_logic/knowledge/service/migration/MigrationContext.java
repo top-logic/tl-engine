@@ -8,6 +8,7 @@ package com.top_logic.knowledge.service.migration;
 import org.w3c.dom.Document;
 
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.Log;
 import com.top_logic.basic.col.TypedAnnotationContainer;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -47,7 +48,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 	/**
 	 * Creates a {@link MigrationContext}.
 	 */
-	public MigrationContext(PooledConnection connection) {
+	public MigrationContext(Log log, PooledConnection connection) {
 		_connection = connection;
 		try {
 			_factoryConfig = (KnowledgeBaseFactoryConfig) ApplicationConfig.getInstance()
@@ -60,7 +61,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 		_applicationSchema = _applicationSetup.getConfig();
 
 		_branchSupport = hasStoredBranchSupport();
-		_util = new Util(this);
+		_util = new Util(log, _connection, _branchSupport);
 	}
 
 	private boolean hasStoredBranchSupport() {

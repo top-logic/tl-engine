@@ -1717,6 +1717,9 @@ public class Util {
 			and(
 				eqBranch(),
 				eqSQL(
+					column(BasicTypes.REV_MAX_DB_NAME),
+					literal(DBType.LONG, Revision.CURRENT_REV)),
+				eqSQL(
 					column(refID(ApplicationObjectUtil.META_ELEMENT_ATTR)),
 					parameter(DBType.ID, "owner")),
 				eqSQL(

@@ -81,6 +81,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	private final ConcurrentMap<TLType, IconProvider> _iconProviderByType = new ConcurrentHashMap<>();
 
+	private final ConcurrentMap<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _concreteOverridesByPart =
+		new ConcurrentHashMap<>();
+
 	/** Cached for performance. */
 	private final TLModel _appModel = ModelService.getApplicationModel();
 
@@ -119,9 +122,10 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_allAttributes.putAll(otherEntry._allAttributes);
 		_attributesOfSubClasses.putAll(otherEntry._attributesOfSubClasses);
 		_iconProviderByType.putAll(otherEntry._iconProviderByType);
+		_concreteOverridesByPart.putAll(otherEntry._concreteOverridesByPart);
 
 		Set<TLClass> otherGlobalAppModelClasses = otherEntry._globalAppModelClasses;
-		_globalAppModelClasses = otherGlobalAppModelClasses == null ? null : ImmutableSet.copyOf(otherGlobalAppModelClasses);
+		_globalAppModelClasses = otherGlobalAppModelClasses == null ? null : immutableCopy(otherGlobalAppModelClasses);
 
 		_globalClasses = (otherEntry._globalClasses == null) ? null : map(otherEntry._globalClasses);
 	}
@@ -136,7 +140,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		if (!canBeCached(tlClass)) {
 			return computeSuperClasses(tlClass);
 		}
-		return computeIfAbsent(_superClasses, tlClass, key -> ImmutableSet.copyOf(computeSuperClasses(key)));
+		return computeIfAbsent(_superClasses, tlClass, key -> immutableCopy(computeSuperClasses(key)));
 	}
 
 	@Override
@@ -144,7 +148,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		if (!canBeCached(tlClass)) {
 			return computeSubClasses(tlClass);
 		}
-		return computeIfAbsent(_subClasses, tlClass, key -> ImmutableSet.copyOf(computeSubClasses(key)));
+		return computeIfAbsent(_subClasses, tlClass, key -> immutableCopy(computeSubClasses(key)));
 	}
 
 	@Override
@@ -200,7 +204,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			return computeAttributesOfSubClasses(tlClass);
 		}
 		return computeIfAbsent(_attributesOfSubClasses, tlClass,
-			key -> ImmutableSet.copyOf(computeAttributesOfSubClasses(key)));
+			key -> immutableCopy(computeAttributesOfSubClasses(key)));
 	}
 
 	@Override
@@ -211,14 +215,14 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		if (tlModel.equals(_appModel)) {
 			/* Optimization for the 99% case that there is just one TLModel. */
 			if (_globalAppModelClasses == null) {
-				_globalAppModelClasses = ImmutableSet.copyOf(computeGlobalClasses(_appModel));
+				_globalAppModelClasses = immutableCopy(computeGlobalClasses(_appModel));
 			}
 			return _globalAppModelClasses;
 		}
 		if (_globalClasses == null) {
 			_globalClasses = map();
 		}
-		return computeIfAbsent(_globalClasses, tlModel, key -> ImmutableSet.copyOf(computeGlobalClasses(key)));
+		return computeIfAbsent(_globalClasses, tlModel, key -> immutableCopy(computeGlobalClasses(key)));
 	}
 
 	/**
@@ -233,6 +237,17 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			map.put(key, result);
 		}
 		return result;
+	}
+
+	private static <E> ImmutableSet<E> immutableCopy(Set<E> set) {
+		switch (set.size()) {
+			case 0:
+				return ImmutableSet.of();
+			case 1:
+				return ImmutableSet.of(set.iterator().next());
+			default:
+				return ImmutableSet.copyOf(set);
+		}
 	}
 
 	/** Whether data about the given {@link TLClass} can be cached. */
@@ -300,6 +315,17 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		collectStorageTables(_appModel,
 			(ref, table) -> MultiMaps.add(result, ObjectBranchId.toObjectBranchId(ref.getType().tId()), table));
 		return result;
+	}
+
+	@Override
+	public <T extends TLStructuredTypePart> Set<T> getDirectConcreteOverrides(T part) {
+		if (!canModelPartBeCached(part)) {
+			return super.getDirectConcreteOverrides(part);
+		}
+		@SuppressWarnings("unchecked")
+		Set<T> typeSafe = (Set<T>) computeIfAbsent(_concreteOverridesByPart, part,
+			key -> immutableCopy(super.getDirectConcreteOverrides(key)));
+		return typeSafe;
 	}
 
 	/** Whether data about the given {@link TLModelPart} can be cached. */

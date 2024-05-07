@@ -28,7 +28,8 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 
 /**
  * Dynamic MBean with information to expose for management (constructors, attributes and operations)
- * using reflection.
+ * using reflection. The method {@link #buildDynamicMBeanInfo(Config)} must be called in the
+ * constructors of its subclasses to respect the configured information.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */

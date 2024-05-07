@@ -43,7 +43,7 @@
 
 		<config service-class="com.top_logic.gui.ThemeFactory">
 			<instance>
-				<default-theme>dezentSidebar</default-theme>
+				<default-theme>coreSidebar</default-theme>
 			</instance> 
 		</config>		
 		

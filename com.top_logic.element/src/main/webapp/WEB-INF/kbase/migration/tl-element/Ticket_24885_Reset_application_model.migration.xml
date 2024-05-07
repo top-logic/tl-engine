@@ -14,13 +14,4 @@
 			module="tl-element"
 		/>
 	</dependencies>
-	<migration>
-		<steps>
-			<step name="UpgradeModel">
-				<rewriters>
-					<rewriter class="com.top_logic.element.model.migration.TableTypeStorageAnnotationUpdate"/>			
-				</rewriters>
-			</step>
-		</steps>
-	</migration>
 </migration>

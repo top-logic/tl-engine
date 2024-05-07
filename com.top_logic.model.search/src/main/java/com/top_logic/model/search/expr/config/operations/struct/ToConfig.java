@@ -169,6 +169,11 @@ public class ToConfig extends GenericMethod implements WithFlatMapSemantics<Item
 			ConfigurationDescriptor elementDescriptor;
 			if (tagName != null) {
 				elementDescriptor = property.getElementDescriptor(tagName);
+				if (elementDescriptor == null) {
+					throw new IllegalArgumentException(
+						"Tag name '" + tagName + "' not supported in contents of '" + property
+							+ "'. The following tags are supported: " + property.getElementNames());
+				}
 			} else {
 				String intfName = (String) mapValue.get("$intf");
 				if (intfName == null) {

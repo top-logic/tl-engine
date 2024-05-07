@@ -114,10 +114,10 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 			int cnt = update.executeUpdate(connection);
 
 			log.info("Changed reference of " + cnt + " links in table '" + tableName + "' from '"
-				+ sourceRef.getPartName() + "' to '" + targetRef.getPartName() + "'.");
+				+ config.getSourceRef().getName() + "' to '" + config.getTargetRef().getName() + "'.");
 		} catch (SQLException | MigrationException ex) {
 			log.error("Failed to change reference of links in table '" + config.getTable() + "' from '"
-				+ config.getSourceRef() + "' to '" + config.getTargetRef() + "'.", ex);
+				+ config.getSourceRef().getName() + "' to '" + config.getTargetRef().getName() + "'.", ex);
 		}
 	}
 

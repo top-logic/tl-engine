@@ -104,10 +104,10 @@ public class ChangeObjectTypeProcessor extends AbstractConfiguredInstance<Change
 			int cnt = update.executeUpdate(connection);
 
 			log.info("Changed type of " + cnt + " objects in table '" + tableName + "' from '"
-				+ sourceType.getTypeName() + "' to '" + targetType.getTypeName() + "'.");
+				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.");
 		} catch (SQLException | MigrationException ex) {
 			log.error("Failed to change type of objects in table '" + config.getTable() + "' from '"
-				+ config.getSourceType() + "' to '" + config.getTargetType() + "'.");
+				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.", ex);
 		}
 	}
 

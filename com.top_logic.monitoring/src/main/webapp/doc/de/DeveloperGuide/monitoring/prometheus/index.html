@@ -1,4 +1,4 @@
-<p>Über Promethus können die Attribute der MBeans über einen Zeitraum getrackt und auf einfache Art und Weise graphisch dargestellt werden. Dazu wird ein JMX Exporter benötigt.</p>
+<p>Über Promethus können die nummerische Attribute der MBeans über einen Zeitraum getrackt und auf einfache Art und Weise graphisch dargestellt werden. Dazu wird ein JMX Exporter benötigt. Sollen auch nicht-nummerische Werte gespeichert werden, so wird der Einsatz eines anderen Tools als Prometheus empfohlen.</p>
 
 <p><img src="ref:screenshot_prometheus_klein_51723.png" style="opacity:1" /></p>
 
@@ -28,7 +28,11 @@
 <pre>
 <code>http://localhost:Portnummer/metrics</code></pre>
 
-<p>eingesehen werden.</p>
+<p>eingesehen werden (siehe Bild 2).</p>
+
+<p><img src="ref:jmx_metrics_67153.png" style="opacity:1" /></p>
+
+<p><em>Bild 2: Darstellung der Metriken. Markiert sind hier die Zeilen eines Attributs (Anzahl der eingeloggten Benutzer) der vordefinierten MBean MonitorUser aus TopLogic. Zu sehen ist hier, dass der Wert dieses Attributs bei 2 liegt, also zu diesem Zeitpunkt 2 Benutzer gleichzeitig eingeloggt waren.</em></p>
 
 <h2>Prometheus starten</h2>
 
@@ -54,4 +58,6 @@
 
 <p><img src="ref:screenshot_prometheus_erklaerung_klein_23848.png" style="opacity:1" /></p>
 
-<p><em>Bild 2: Erklärung der Prometheus-Oberfläche. 1) Auswählen der Metrik. 2) Laden der Metrik. 3) Tab zur graphischen Auswertung. 4) Beobachtungszeit. 5) Startzeitpunkt. 6) Auswertungsintervall. 7) Verschiedene Darstellungen.</em></p>
+<p><em>Bild 3: Erklärung der Prometheus-Oberfläche. 1) Auswählen der Metrik. 2) Laden der Metrik. 3) Tab zur graphischen Auswertung. 4) Beobachtungszeit. 5) Startzeitpunkt. 6) Auswertungsintervall. 7) Verschiedene Darstellungen.</em></p>
+
+<p> </p>

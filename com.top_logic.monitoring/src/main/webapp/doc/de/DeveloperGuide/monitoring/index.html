@@ -1,5 +1,3 @@
-<p> </p>
-
 <p>In diesem Kapitel wird <strong>JMX </strong>(<strong>J</strong>ava <strong>M</strong>anagement E<strong>x</strong>tensions) zur Überwachung und Verwaltung einer Applikation vorgestellt. Ein <strong>JMX Agent</strong> besteht aus einem <strong>MBean Server</strong> und weiteren Möglichkeiten zur Verwaltung von <strong>MBeans</strong> (<strong>M</strong>anaged <strong>Beans</strong>). Diese MBeans bilden die Schnittstelle zur Anwendung. Sie können Daten bereitstellen, aber auch Aufgaben ausführen. Über die <strong>JConsole </strong>(<strong>J</strong>ava Monitoring and Management <strong>Console</strong>) können die am MBean Server registrierten MBeans angesehen und ihre Operationen ausgeführt werden. Die entstandenen Daten können über <strong>Prometheus </strong>gesammelt und einfach graphisch angezeigt werden. Durch <strong>Grafana </strong>können diese gesammelten Daten noch weiter aufbereitet werden.</p>
 
 <p> </p>
@@ -23,7 +21,7 @@
 
 <h3>Standard MBeans</h3>
 
-<p>Standard MBeans sind eine einfach Möglichkeit schnell Daten bereitzustellen. Hierzu werden eine Klasse und ein dazugehöriges Interface benötigt. Der Names des Interfaces muss aus dem Klassennamen und einem "MBean" dahinter bestehen. Alle öffentlichen Methoden des Interfaces, die mit einem "get" oder "is" beginnen, werden den Attributen des MBeans zugeordnet. Methoden mit einem "set" als Prefix ermöglichen einen Schreibzugriff auf das jeweilige Attribut. Alle weiteren Methoden bilden die Menge der Operationen des MBeans. Die Zuordnung funktioniert über Java-Reflections.</p>
+<p>Standard MBeans sind eine einfach Möglichkeit schnell Daten bereitzustellen. Hierzu werden eine Klasse und ein dazugehöriges Interface benötigt. Der Names des Interfaces muss aus dem Klassennamen und einem "MBean" dahinter bestehen. Alle öffentlichen Methoden des Interfaces, die mit einem "get" oder "is" beginnen, werden den Attributen des MBeans zugeordnet. Methoden mit einem "set" als Prefix ermöglichen einen Schreibzugriff auf das jeweilige Attribut. Alle weiteren Methoden bilden die Menge der Operationen des MBeans. Die Zuordnung funktioniert über Java Reflections.</p>
 
 <table border="0" class="tlDocTable" style="width:1014.78px">
 	<thead>

@@ -1,5 +1,3 @@
-<p> </p>
-
 <p>In TopLogic gibt es die Möglichkeit MBeans zu erstellen, die einen TL-Script Ausdruck beinhalten, der mit einer beliebigen Anzahl an Parametern angereichert werden und ausgewertet werden kann. So können InApp MBeans erstellt und konfiguriert werden.</p>
 
 <p>Über den <strong>Service "TLDataBeanService"</strong> im Serve-Editor können "MBean mit einem TL-Script-Ausdruck" (<strong>MonitorByExpression</strong>) ausgewählt werden. Dieser muss wie in <em>Tabelle 1</em> zu sehen konfiguriert werden.</p>
@@ -16,29 +14,31 @@
 		<tr>
 			<td>Name</td>
 			<td>String</td>
-			<td style="width:705px">Eindeutiger Name des MBeans nach dem Muster "<em>domain:key=property</em>".</td>
+			<td style="width:705px">Eindeutiger Name des MBeans nach dem Muster "<em>domain:key=property</em>". <strong>Beispiel:</strong> "com.top_logic.monitoring.data:name=expression0".</td>
 		</tr>
 		<tr>
 			<td>Beschreibung</td>
 			<td>String</td>
-			<td style="width:705px">Beschreibungstext, der an der Oberfläche zu diesem MBean angezeigt werden soll.</td>
+			<td style="width:705px">Beschreibungstext, der an der Oberfläche zu dieser MBean angezeigt werden soll.</td>
 		</tr>
 		<tr>
 			<td>Implementierung</td>
 			<td>Expr</td>
-			<td style="width:705px">TL-Script Ausdruck, der ausgewertet werden soll.</td>
+			<td style="width:705px">TL-Script Ausdruck, der ausgewertet werden soll. Besitzt der Ausdruck keine Parameter, so wird er direkt ausgewertet. Ist er jedoch parametrisiert, benötigt er zunächst die Eingabe dieser Parameter z. B. über JConsole. <strong>Wichtig:</strong> Das Ergebnis muss ein "einfacher" Typ sein, wie eine Zahl, ein Text, ein Boolean oder eine Liste solcher Objekte. Jedoch werden nur nummerische Werte durch Prometheus gesammelt.</td>
 		</tr>
 		<tr>
 			<td>Liste von Parametern</td>
 			<td>Parameter-Liste</td>
 			<td style="width:705px">
-			<p>Es müssen genauso viele Parameter erstellt werden, die für den TL-Script Ausdruck benötigt werden. Sie werden in genau der Reihenfolge an den TL-Script-Ausdruck weitergegeben.</p>
+			<p>Es müssen genauso viele Parameter erstellt werden, die für den TL-Script Ausdruck benötigt werden. Sie werden in genau der Reihenfolge an den TL-Script-Ausdruck weitergegeben, unabhängig der eingegebenen Namen.</p>
 			</td>
 		</tr>
 	</tbody>
 </table>
 
 <p><em>Tabelle 1: Konfiguration eines MBeans mit einem TL-Script-Ausdruck.</em></p>
+
+<p> </p>
 
 <p>Jeder benötigte Parameter muss erstellt und wie in <em>Tabelle 2</em> zu sehen konfiguriert werden.</p>
 
@@ -71,4 +71,6 @@
 
 <p><em>Tabelle 2: Konfiguration eines Parameters.</em></p>
 
-<p><em></em>Nun können diese Parameter z. B. über JConsole befüllt werden. Dazu wird eine <strong>execute()-Operation </strong>angeboten, die auch das Ergebnis zurückliefert. Dieses Ergebnis wird auch gleichzeitig im <strong>Attribut result</strong> gespeichert.</p>
+<p> </p>
+
+<p><em></em>Nun können diese Parameter z. B. über JConsole befüllt werden. Dazu wird eine <strong>execute()-Operation </strong>angeboten, die auch das Ergebnis zurückliefert. Dieses Ergebnis wird auch gleichzeitig im <strong>Attribut result</strong> gespeichert. Ist ein unparametrisierter Script-Ausdruck konfiguriert, so wird das Ergebnis direkt ausgewertet und ebenfalls gespeichert.</p>

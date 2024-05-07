@@ -5,9 +5,11 @@
  */
 package com.top_logic.model;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.IdentifierUtil;
@@ -26,6 +28,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.impl.generated.TLObjectBase;
 
 /**
@@ -104,7 +107,21 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	 * @return The objects that contain this one in the given reference.
 	 */
 	default Set<? extends TLObject> tReferers(TLReference ref) {
-		return ref.getReferers(this);
+		if (!ref.isAbstract()) {
+			return ref.getReferers(this);
+		}
+		Set<TLReference> overrides = TLModelCacheService.getOperations().getDirectConcreteOverrides(ref);
+		switch (overrides.size()) {
+			case 0:
+				return Collections.emptySet();
+			case 1:
+				return overrides.iterator().next().getReferers(this);
+			default:
+				return overrides.stream()
+					.map(reference -> reference.getReferers(this))
+					.flatMap(Set::stream)
+					.collect(Collectors.toSet());
+		}
 	}
 
 	/**

@@ -7,6 +7,7 @@ package com.top_logic.model.cache;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -345,6 +346,56 @@ public class TLModelOperations {
 					}
 					callback.accept(reference);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Determines the first overrides of the given abstract part which are not abstract.
+	 *
+	 * @param <T>
+	 *        implementation type of the part.
+	 * @param part
+	 *        Abstract {@link TLStructuredTypePart} to get overrides for.
+	 * 
+	 * @throws IllegalArgumentException
+	 *         if the given part is not {@link TLStructuredTypePart#isAbstract()}.
+	 */
+	public <T extends TLStructuredTypePart> Set<T> getDirectConcreteOverrides(T part) {
+		if (!part.isAbstract()) {
+			throw new IllegalArgumentException(
+				"Direct overrides just exist for abstract parts: " + TLModelUtil.qualifiedName(part));
+		}
+		TLStructuredType owner = part.getOwner();
+		if (owner instanceof TLClass) {
+			Set<TLStructuredTypePart> result = new HashSet<>();
+			collectDirectConcreteOverrides(result::add, (TLClass) owner, part.getName());
+			@SuppressWarnings("unchecked") // All overrides are of the same type.
+			Set<T> typeSafe = (Set<T>) result;
+			return typeSafe;
+		} else {
+			return Collections.emptySet();
+		}
+	}
+
+	/**
+	 * Navigates (recursively) throw the specialization hierarchy of the given type and adds the
+	 * first non-abstract parts with the given name to the given sink.
+	 */
+	protected void collectDirectConcreteOverrides(Consumer<? super TLStructuredTypePart> sink, TLClass type,
+			String name) {
+		for (TLClass specialization : type.getSpecializations()) {
+			TLStructuredTypePart part = specialization.getPart(name);
+			if (part.getOwner() == specialization) {
+				// locally overridden
+				if (part.isAbstract()) {
+					collectDirectConcreteOverrides(sink, specialization, name);
+				} else {
+					sink.accept(part);
+				}
+			} else {
+				// not locally defined;
+				collectDirectConcreteOverrides(sink, specialization, name);
 			}
 		}
 	}

@@ -19,6 +19,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.ValueInitializer;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -62,6 +63,9 @@ public class MonitorByExpression extends DynamicMBeanElement {
 
 		_impl = QueryExecutor.compile(config.getImpl());
 		_parameters = config.getParameters();
+		if (_parameters == null || _parameters.size() == 0) {
+			execute();
+		}
 
 		buildDynamicMBeanInfo(config);
 	}
@@ -125,7 +129,7 @@ public class MonitorByExpression extends DynamicMBeanElement {
 			arguments = args;
 		}
 
-		_result = _impl.execute(arguments);
+		_result = ThreadContextManager.inSystemInteraction(MonitorByExpression.class, () -> _impl.execute(arguments));
 
 		return _result;
 	}

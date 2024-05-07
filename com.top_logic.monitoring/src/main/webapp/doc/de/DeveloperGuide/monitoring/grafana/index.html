@@ -1,7 +1,101 @@
-<p>Es gibt zwei verschiedene Möglichkeiten Grafana zu verwenden: lokal oder über eine Cloud.</p>
+<p>Grafana bietet die Erstellung eines sogennanten Dashboards (= eine Sammlung von Visualisierungen von Metriken, siehe Bild 1), um Daten in Echtzeit auswerten zu können. Es gibt zwei verschiedene Möglichkeiten Grafana zu verwenden: eine <strong>selber gehostete Open-Source Variante</strong> unter der AGPL (Affero General Public License, siehe <a href="https://github.com/grafana/grafana/blob/HEAD/LICENSING.md">hier</a>) oder über eine <strong>Cloud </strong>bei der durch Zahlungen mehr Speicher und weitere Features zur Verfügung gestellt werden.</p>
 
-<p>Zunächst soll die lokale Variante beschrieben werden. Dazu muss Grafana installiert werden.</p>
+<p><img src="ref:grafana_dashboard_small_84188.png" style="opacity:1" /><em></em></p>
+
+<p><em>Bild 1: Beispielhaftes Grafana Dashboard.</em></p>
+
+<h2>Lokale Installation</h2>
+
+<p>Zunächst soll jedoch nur die selber gehostete Variante beschrieben werden. Dazu muss Grafana installiert werden.</p>
 
 <p><a href="https://grafana.com/grafana/download">https://grafana.com/grafana/download</a></p>
 
-<p>tbc</p>
+<p>Standardmäßig ist Grafana nun unter</p>
+
+<p><a href="http://localhost:3000/">http://localhost:3000/</a></p>
+
+<p>erreichbar. Um sich einloggen zu können, wird als Benutzer, sowie als Passwort "<strong>admin</strong>" verwendet. Anschließend wird man zur Änderung des Passwortes aufgefordert.</p>
+
+<h2>Daten laden</h2>
+
+<p>Unter <strong><em>Connections -&gt; Data sources</em></strong> können mögliche, unterstützte Datenquellen gefunden werden. Es gibt außerdem eine Möglichkeit eine eigene Schnittstelle hierfür zu definieren. Hier soll es lediglich um Prometheus als Quelle gehen. Dazu wird entsprechend Prometheus ausgewählt. Der <strong>Name </strong>sollte möglichst aussagekräftig definiert werden, um die Datenquelle später einfacher identifizieren zu können. Des weiteren wird ein die Promtheus <strong>Server URL</strong> benötigt.<span style="color:#101113"><span style="font-family:var(--font-family-regular); font-size:var(--body-02-font-size)"></span></span></p>
+
+<p><img src="ref:grafana_data_source_31869.png" style="opacity:1" /></p>
+
+<p><em>Bild 2: Verbindungsaufbau zu Prometheus.</em></p>
+
+<h2>Dashboard erstellen</h2>
+
+<p><span style="color:#101113"><span style="font-family:var(--font-family-regular); font-size:var(--body-02-font-size)">Auf einem Dashboard werden die verschiedenen Grafiken in sogenannten Panelen dargestellt. Um ein Dashboard zu erhalten kann unter <em><strong>Dashboard -&gt; New dashboard</strong></em> eines erstellt werden. </span></span>Über den "Speichern"-Button kann ein <strong>Name </strong>und eine <strong>Beschreibung </strong>gegeben werden. Die Größe der einzelnen Panele, sowie deren Anordnung kann jederzeit per Drag &amp; Drop angepasst werden.</p>
+
+<p><img src="ref:grafana_dashboard_name_small_37781.png" style="opacity:1" /></p>
+
+<p><em>Bild 3: Erstellung und Benennung eines Dashboards.</em></p>
+
+<h2>Visualisierungen erstellen</h2>
+
+<p>Um nun eine neue Auswertung hinzuzufügen, kann unter <em><strong>Add -&gt; Visualization</strong></em> eine neue Visualisierung innerhalb eines Panels generiert werden.</p>
+
+<p><img src="ref:grafana_add_visualization_43753.png" style="opacity:1" /></p>
+
+<p><em>Bild 4: Erstellung einer neuen Visualisierung.</em></p>
+
+<p>Die linke Seite ist in eine <strong>Vorschau </strong>(oben) und die <strong>Datenauswahl </strong>(unten) zweigeteilt. Es können mehrere Metriken einer Datenquelle ausgewählt und dargestellt werden. Hierzu muss jeweils eine eigene Abfrage erstellt werden. Dafür kann ein Builder verwendet oder eine eigene PromQL Abfrage geschrieben werden. Ein Cheat Sheet zur PromQL kann hier eingesehen werden:</p>
+
+<p><a href="https://promlabs.com/promql-cheat-sheet/">https://promlabs.com/promql-cheat-sheet/</a></p>
+
+<p>Um Datenobjekten, statt des vordefinierten Labels, einen eigenen Namen zu geben, kann dieser unter <em><strong>Options -&gt; Legend -&gt; Custom</strong></em> eingegeben werden.</p>
+
+<p>Auf der rechten Seite befinden sich die <strong>Einstellungsmöglichkeiten </strong>der Darstellung. Der Titel dieses Panels kann über <em><strong>Panel options -&gt; Title</strong></em> geändert werden.</p>
+
+<p>Um die Visualisierungsart zu ändern, kann im entsprechenden Dropdown-Menü nach einer passenden gesucht werden.</p>
+
+<p><img src="ref:grafana_change_visualization_17252.png" style="opacity:1" /></p>
+
+<p><em>Bild 5: Änderung der Visualisierungsart.</em></p>
+
+<p>Grafana bietet viele, unterschiedliche Möglichkeiten Daten grafisch aufzubereiten. So können z. B. nur Werte innerhalb eines definierten Intervalls angezeigt werden oder ein Farbschema anhand eines vorher bestimmten Thresholds verwendet werden (siehe Bild 6). Diese und weitere Einstellungen sind im Detail unter</p>
+
+<p><a href="https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/">https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/</a></p>
+
+<p>beschrieben.</p>
+
+<p><img src="ref:grafana_colorscheme_small_29987.png" style="opacity:1" /></p>
+
+<p><em>Bild 6: Unterschiedliche Farbgebung je nach Wert bei einer "Gauge"-Visualisierung.</em></p>
+
+<h2>Beispiele häufig verwendeter Visualisierungen</h2>
+
+<p>Im Folgenden werden einige Visualisierungsarten aufgelistet und gezeigt, die häufig verwendet werden.</p>
+
+<h3>Kurvendiagramm (engl. Time series)</h3>
+
+<p>Kurvendiagramme sind die Standarddarstellung der Daten in Grafana. Sie werden dafür verwendet, den Verlauf von Daten über eine bestimmte Zeit hinweg zu veranschaulichen.</p>
+
+<p><img src="ref:grafana_time_series_32835.png" style="opacity:1" /></p>
+
+<p><em>Bild 7: Kurvendiagramm in Grafana. Vom Standard abweichende Einstellungen: "Show points: never" und "Fill opacity: 15".</em></p>
+
+<h3>Kreisdiagramm / Ringdiagramm (engl. Pie chart)</h3>
+
+<p>Kreisdiagramme werden verwendet, um prozentuale Anteile oder Verteilungen von Kategorien innerhalb eines Gesamtsatzes visuell darzustellen.</p>
+
+<p><img src="ref:grafana_donut_chart_74046.png" style="opacity:1" /></p>
+
+<p><em>Bild 8: Ringdiagram in Grafana.Vom Standard abweichende Einstellungen: "Pie chart type: Donut", "Labels: Value", "Unit: Currency -&gt; Dollars".</em></p>
+
+<h3>Messgerätediagramm (engl. Gauge)</h3>
+
+<p>Messgerätdiagramme werden verwendet, um den Vergleich zwischen gemessenen und erwarteten Werten in einer visuellen Form darzustellen, um Abweichungen zu identifizieren.</p>
+
+<p><img src="ref:grafana_gauge_79932.png" style="opacity:1" /></p>
+
+<p><em>Bild 9: Messgerätediagramm in Grafana. Vom Standard abweichende Einstellungen: "Show threshold markers: No", Min: 0", "Max: 4", "Color scheme: From thresholds", Thresholds 0-4 farblich definiert.</em></p>
+
+<h3>Statistik (engl. Stat)</h3>
+
+<p>Diese Visualisierungsart kann dazu verwendet werden Daten von Interesse in einem Wert zusammengefasst darzustellen.</p>
+
+<p><img src="ref:grafana_stat_9945.png" style="opacity:1" /></p>
+
+<p><em>Bild 10: Statistik in Grafana. Vom Standard abweichende Einstellungen: "Graph mode: none" und "Color scheme: Single color".</em></p>

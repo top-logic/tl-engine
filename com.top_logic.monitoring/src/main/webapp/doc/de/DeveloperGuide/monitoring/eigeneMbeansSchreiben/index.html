@@ -71,11 +71,11 @@
 
 <p><em>Tabelle 1: Eigenschaften des MBeanAttributeInfo.</em></p>
 
-<p>Über Java-Reflexion werden die entsprechenden Methoden gesucht und aufgerufen.</p>
+<p>Über Java Reflection werden die entsprechenden Methoden gesucht und aufgerufen.</p>
 
 <h2>OperationInfo</h2>
 
-<p>Alle öffentlichen Methoden (mit Ausnahme der Getter und Setter), die über das MBean angesteuert werden können müssen über die Methode</p>
+<p>Alle öffentlichen Methoden (mit Ausnahme der Getter und Setter), die über das MBean angesteuert werden können, müssen über die Methode</p>
 
 <pre>
 <code class="language-java">MBeanOperationInfo[] createOperationInfo()</code></pre>
@@ -101,7 +101,7 @@
 		<tr>
 			<td style="width:120px">description</td>
 			<td style="width:124px">String</td>
-			<td style="width:476px">Beschreibungstext, der an der Oberfläche zu diesem Attribut angezeigt werden soll.</td>
+			<td style="width:476px">Beschreibungstext, der an der Oberfläche zu dieser Operation angezeigt werden soll.</td>
 		</tr>
 		<tr>
 			<td style="width:120px">signature</td>
@@ -174,7 +174,7 @@
 
 <p><img src="ref:image_23512.png" style="opacity:1" /></p>
 
-<p><em>Bild 1: Veranschaulichung des Aufbaus eines MBean-Namens.</em></p>
+<p><em>Bild 1: Veranschaulichung des Aufbaus eines MBean-Namens nach dem Muster "<em>domain:key=property"</em>.</em></p>
 
 <h2>Registrierung am MBean-Server</h2>
 

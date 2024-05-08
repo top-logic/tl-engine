@@ -464,7 +464,7 @@
 		value="css:bi bi-x-octagon-fill"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON"
-		value="css:bi bi-plus-lg"
+		value="css:bi bi-plus-square"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.ADD_ICON_DISABLED"
 		expr="%com.top_logic.layout.form.values.edit.Icons.ADD_ICON%"
@@ -1608,7 +1608,7 @@
 		expr="%ICONS_SELECT_ALL_CHECKBOXES%"
 	/>
 	<icon name="ICONS_REMOVE"
-		value="css:bi bi-dash-square-fill"
+		value="css:bi bi-trash"
 	/>
 	<icon name="ICONS_REMOVE_CHECKBOX"
 		value="css:bi bi-square"
@@ -1657,6 +1657,9 @@
 		value="colored:fas fa-save overlay-add"
 	/>
 	<!-- END -->
+	<icon name="mime.TLModule"
+		value="css:bi bi-window-stack"
+	/>
 	<icon name="com.top_logic.layout.form.control.Icons.WARN"
 		value="/icons/warn.png"
 	/>

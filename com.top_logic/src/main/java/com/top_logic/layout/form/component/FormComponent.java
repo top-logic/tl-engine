@@ -656,7 +656,7 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 	 * 
 	 * @param oldFormContext
 	 *        The {@link FormContext} before the change, or <code>null</code> if no
-	 *        {@link FormContext} was intalled before.
+	 *        {@link FormContext} was installed before.
 	 * @param newFormContext
 	 *        The new {@link FormContext} installed, or <code>null</code> if the {@link FormContext}
 	 *        was removed.

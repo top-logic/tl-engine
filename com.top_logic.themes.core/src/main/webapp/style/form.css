@@ -541,6 +541,9 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 div.dfListAdd {
 	margin-top: var(--spacing-02);
 	white-space: nowrap;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
 }
 
 .modelBasedSearch div.dfList div.dfList, 
@@ -2084,6 +2087,10 @@ img.type-image {
 	height: 1em;
 	object-fit: contain;
 	align-self: center;
+}
+
+span.type-image {
+	margin-right: var(--spacing-01);
 }
 
 .tl-table__cell .type-image {

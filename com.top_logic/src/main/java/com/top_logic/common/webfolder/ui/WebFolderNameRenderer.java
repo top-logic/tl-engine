@@ -76,13 +76,7 @@ public class WebFolderNameRenderer extends ResourceRenderer<ResourceRenderer.Con
 				XMLTag icon = Icons.SMALL_LINK.toIcon();
 				icon.beginBeginTag(aContext, out);
             	out.writeAttribute(ALT_ATTR, "");
-				if (aContext.getUserAgent().is_ie8up()) {
-					// setting top:0px; in IE8 and IE9 causes the image not to arrange at position
-					// 0, but arranges it too deep (in top_logic.demo: 11px).
-					out.writeAttribute(STYLE_ATTR, "position:absolute;left:0px;");
-				} else {
-					out.writeAttribute(STYLE_ATTR, "position:absolute;left:0px;top:0px;");
-				}
+
 				icon.endEmptyTag(aContext, out);
             }
             out.endTag(SPAN);

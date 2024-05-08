@@ -5,12 +5,16 @@
  */
 package com.top_logic.util;
 
+import static java.util.Objects.*;
+
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.util.DefaultBundle;
@@ -36,7 +40,8 @@ import com.top_logic.model.TLObject;
  */
 public class Resources extends DefaultBundle {
 
-	private static Property<Resources> RESOURCES = TypedAnnotatable.property(Resources.class, "resources");
+	/** The key for the {@link Resources} cache at the {@link SubSessionContext}. */
+	private static final Property<Resources> RESOURCES = TypedAnnotatable.property(Resources.class, "resources");
 
 	/** The pattern string for the locale part of a resource file. */
 	public static final String RESOURCE_FILE_LOCALE_PATTERN =
@@ -224,6 +229,27 @@ public class Resources extends DefaultBundle {
 			}
 		} else {
 			return Resources.getInstance(Resources.findBestLocale());
+		}
+	}
+
+	/**
+	 * @throws NullPointerException
+	 *         If one of the parameters is <code>null</code> or there is no {@link Locale} set at
+	 *         the {@link SubSessionContext}.
+	 */
+	@FrameworkInternal
+	static <T> T withLocale(SubSessionContext subSession, Supplier<T> supplier) {
+		Locale locale = requireNonNull(subSession.getCurrentLocale());
+		Resources previousInstance;
+		synchronized (Resources.class) {
+			previousInstance = subSession.set(RESOURCES, Resources.getInstance(locale));
+		}
+		try {
+			return supplier.get();
+		} finally {
+			synchronized (Resources.class) {
+				subSession.set(RESOURCES, previousInstance);
+			}
 		}
 	}
 

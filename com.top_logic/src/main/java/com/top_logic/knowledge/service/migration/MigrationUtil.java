@@ -906,6 +906,7 @@ public class MigrationUtil {
 			List<String> migrationModules, boolean allowDowngrade) throws SQLException {
 		Map<String, Version> storedVersions = readStoredVersions(connection, migrationModules);
 
+		log.info("Migration modules: " + migrationModules);
 		log.info("Current data version: " + storedVersions.values().stream()
 			.map(v -> v.getModule() + ": " + v.getName()).collect(Collectors.joining(", ")));
 		return relevantMigrations(log, migrationModules, allowDowngrade, storedVersions);
@@ -954,14 +955,14 @@ public class MigrationUtil {
 		} else {
 			relevantMigrations =
 				getRelevantMigrations(migrationScripts, appVersion, dataVersion, migrationModules);
-			String pendingMigrations = "Pending migrations: ";
 			if (relevantMigrations.isEmpty()) {
-				log.info(pendingMigrations + "None");
+				log.info("No migration required.");
 				return MigrationInfo.NO_MIGRATION;
 			}
-			log.info(pendingMigrations
-					+ relevantMigrations.stream().map(m -> m.getVersion().getModule() + ": " + m.getVersion().getName())
-						.collect(Collectors.joining(", ")));
+			log.info("Pending migrations:");
+			for (MigrationConfig m : relevantMigrations) {
+				log.info("\t" + m.getVersion().getModule() + ": " + m.getVersion().getName());
+			}
 		}
 		return MigrationInfo.migrations(downGrade, relevantMigrations);
 	}

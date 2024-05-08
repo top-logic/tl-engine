@@ -800,8 +800,14 @@ public class MigrationUtil {
 					Protocol.WARN);
 				continue;
 			}
-			log.info("Read migration scripts for module " + moduleName, Protocol.VERBOSE);
+			log.info("Reading migration scripts for module " + moduleName, Protocol.VERBOSE);
 			Map<Version, MigrationConfig> moduleMigrationConfigs = new HashMap<>();
+
+			Version initial = newVersion(moduleName, "<initial>");
+			MigrationConfig noMigration = TypedConfiguration.newConfigItem(MigrationConfig.class);
+			noMigration.setVersion(initial);
+			moduleMigrationConfigs.put(initial, noMigration);
+
 			for (String migrationResource : FileManager.getInstance().getResourcePaths(migrationFolder)) {
 				if (!migrationResource.endsWith(MIGRATION_FILE_SUFFIX)) {
 					continue;
@@ -809,12 +815,13 @@ public class MigrationUtil {
 				Version version = getVersion(moduleName, migrationResource.substring(migrationFolder.length()));
 				MigrationConfig config = readMigrationConfig(log, version);
 				if (config != null) {
+					Version previous = config.getDependencies().get(moduleName);
+					if (previous == null) {
+						config.getDependencies().put(moduleName, initial);
+					}
+
 					moduleMigrationConfigs.put(version, config);
 				}
-			}
-			if (moduleMigrationConfigs.isEmpty()) {
-				// No configuration read. May occur when reading failed. Error is logged by reader.
-				continue;
 			}
 			migrationConfigs.put(moduleName, moduleMigrationConfigs);
 		}

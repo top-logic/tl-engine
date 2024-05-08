@@ -579,9 +579,11 @@ public class MigrationUtil {
 	 *        Mapping of the module name to all versions in the module in version order. The map is
 	 *        modified.
 	 * @param currentVersions
-	 *        The current versions of the application, indexed by module name. If for a module no
-	 *        {@link Version} is given, it is assumed that all migration for that module must be
-	 *        applied.
+	 *        The current versions of the application, indexed by module name. If this map is empty,
+	 *        a system from before introducing the automatic data migration is updated. This means,
+	 *        all migrations must be executed. If the map is non empty but for a module no
+	 *        {@link Version} is given, no migrations must be applied to this module, because the
+	 *        module is a new dependency introduced in a new software version.
 	 * 
 	 * @return Set of versions that are newer than the current versions.
 	 * 
@@ -590,25 +592,34 @@ public class MigrationUtil {
 	private static Set<Version> getNewVersions(Map<String, Version[]> versionByModule,
 			Map<String, Version> currentVersions) {
 		Set<Version> newVersions = new HashSet<>();
-		for (Entry<String, Version> entry : currentVersions.entrySet()) {
-			String module = entry.getKey();
-			Version[] versions = versionByModule.remove(module);
-			if (versions == null) {
-				// May happen, when a module does not longer exists.
-				continue;
+		if (currentVersions.isEmpty()) {
+			// A system from before introducing the automatic migration is updated.
+			for (Version[] versionsForNewModules : versionByModule.values()) {
+				Collections.addAll(newVersions, versionsForNewModules);
 			}
-			int lastIndexOf = ArrayUtil.lastIndexOf(entry.getValue(), versions);
-			if (lastIndexOf == -1) {
-				// Failure;
-				throw new IllegalStateException("Version " + toString(entry.getValue())
+		} else {
+			// Only modules that are mentioned in the database version must be migrated. All
+			// other modules are introduced by a new software version and have no data in the
+			// current database.
+			for (Entry<String, Version> entry : currentVersions.entrySet()) {
+				String module = entry.getKey();
+				Version currentVersionForModule = entry.getValue();
+
+				Version[] versions = versionByModule.get(module);
+				if (versions == null) {
+					// May happen, when a module does not longer exists.
+					continue;
+				}
+				int lastIndexOf = ArrayUtil.lastIndexOf(currentVersionForModule, versions);
+				if (lastIndexOf == -1) {
+					// Failure;
+					throw new IllegalStateException("Version " + toString(currentVersionForModule)
 						+ " not found in available versions " + toString(Arrays.asList(versions)));
+				}
+				for (int i = lastIndexOf + 1; i < versions.length; i++) {
+					newVersions.add(versions[i]);
+				}
 			}
-			for (int i = lastIndexOf + 1; i < versions.length; i++) {
-				newVersions.add(versions[i]);
-			}
-		}
-		for (Version[] versionsForNewModules : versionByModule.values()) {
-			Collections.addAll(newVersions, versionsForNewModules);
 		}
 		return newVersions;
 	}

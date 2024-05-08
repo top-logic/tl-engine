@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Protocol;
+import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.sql.SQLQuery;
 import com.top_logic.basic.db.sql.SQLUpdate;
 import com.top_logic.basic.sql.DBHelper;
@@ -49,6 +51,14 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 
 			String tableName = ((MOClass) metaObject).getDBMapping().getDBName();
 
+			try {
+				if (!DBSchemaUtils.exists(connection, tableName)) {
+					continue;
+				}
+			} catch (SQLException exception) {
+				exception.printStackTrace();
+			}
+
 			List<? extends MOReference> references = MetaObjectUtils.getReferences(metaObject);
 
 			for (MOReference reference : references) {
@@ -57,8 +67,12 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 				DBAttribute revision = reference.getColumn(ReferencePart.revision);
 
 				migrateColumn(log, connection, sqlDialect, tableName, name.getDBName());
-				migrateColumn(log, connection, sqlDialect, tableName, branch.getDBName());
-				migrateColumn(log, connection, sqlDialect, tableName, revision.getDBName());
+				if (branch != null && context.hasBranchSupport()) {
+					migrateColumn(log, connection, sqlDialect, tableName, branch.getDBName());
+				}
+				if (revision != null) {
+					migrateColumn(log, connection, sqlDialect, tableName, revision.getDBName());
+				}
 			}
 		}
 	}
@@ -67,8 +81,12 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 		SQLQuery<?> replaceNullValues = createQueryToReplaceNullValues(tableName, columnName);
 		SQLQuery<?> setColumnMandatory = createQueryToSetColumnMandatory(tableName, columnName);
 
-		executeSQLQuery(log, connection, helper, replaceNullValues);
-		executeSQLQuery(log, connection, helper, setColumnMandatory);
+		try {
+			executeSQLQuery(log, connection, helper, replaceNullValues);
+			executeSQLQuery(log, connection, helper, setColumnMandatory);
+		} catch (SQLException ex) {
+			log.info("Column " + columnName + " could not be migrated." + " Please check." + ex.getMessage(), Protocol.WARN);
+		}
 	}
 
 	private DBHelper getDBHelper(Log log, PooledConnection connection) {
@@ -101,12 +119,9 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 		);
 	}
 
-	private void executeSQLQuery(Log log, Connection connection, DBHelper helper, SQLQuery<?> query) {
-		try {
-			query.toSql(helper).executeQuery(connection);
-		} catch (SQLException exception) {
-			log.error("Failed to execute query: '" + query, exception);
-		}
+	private void executeSQLQuery(Log log, Connection connection, DBHelper helper, SQLQuery<?> query)
+			throws SQLException {
+		query.toSql(helper).executeUpdate(connection);
 	}
 
 }

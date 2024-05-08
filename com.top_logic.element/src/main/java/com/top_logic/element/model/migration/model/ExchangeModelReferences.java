@@ -66,7 +66,7 @@ import com.top_logic.util.TLContext;
  * <p>
  * This processor can be used in combination with a type change of a reference attribute from enum A
  * to enum B to update the data in addition to the model update.
- * <p>
+ * </p>
  */
 public class ExchangeModelReferences extends AbstractConfiguredInstance<ExchangeModelReferences.Config<?>>
 		implements MigrationProcessor {

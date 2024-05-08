@@ -752,10 +752,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	@Override
 	protected void addEnumType(TLModule module, TLScope scope, EnumConfig config) {
-		super.addEnumType(module, scope, config);
+		// Note: The processor for the enum creation must be generated before the processors of the
+		// classifiers (which happens from the super call below).
 		if (createProcessors()) {
 			addEnumProcessor(module.getName(), config);
 		}
+
+		super.addEnumType(module, scope, config);
 	}
 
 	private void addEnumProcessor(String moduleName, EnumConfig type) {

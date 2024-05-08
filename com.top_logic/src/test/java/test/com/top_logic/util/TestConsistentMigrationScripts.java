@@ -47,8 +47,8 @@ public class TestConsistentMigrationScripts extends BasicTestCase {
 	}
 
 	public void testConsistentMigrationScripts() throws IOException, ConfigurationException {
-		String[] migrationModules = MigrationUtil.getMigrationModules();
-		if (migrationModules.length == 0) {
+		List<String> migrationModules = MigrationUtil.getMigrationModules();
+		if (migrationModules.isEmpty()) {
 			// No configured modules
 			return;
 		}

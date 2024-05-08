@@ -134,7 +134,7 @@ public class TestMigrationUtil extends BasicTestCase {
 			List<MigrationConfig> migrationByVersion = new ArrayList<>();
 			migrationByVersion.add(_migrationForVersion.get(demo2));
 			migrationByVersion.add(_migrationForVersion.get(demo1));
-			Version[] allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
+			List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
 			assertConfigEquals(allVersions, demo1, demo2);
 		}
 		{
@@ -142,21 +142,21 @@ public class TestMigrationUtil extends BasicTestCase {
 			migrationByVersion.add(_migrationForVersion.get(tl4));
 			migrationByVersion.add(_migrationForVersion.get(tl3));
 			migrationByVersion.add(_migrationForVersion.get(tl2));
-			Version[] allButFirstVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
+			List<Version> allButFirstVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
 			assertConfigEquals(allButFirstVersions, tl1, tl2, tl3, tl4);
 			migrationByVersion.add(_migrationForVersion.get(tl1));
-			Version[] allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
+			List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
 			assertConfigEquals(allVersions, tl1, tl2, tl3, tl4);
 		}
 		{
 			List<MigrationConfig> migrationByVersion = new ArrayList<>();
-			Version[] allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
+			List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
 			assertConfigEquals(allVersions, new Version[0]);
 		}
 		{
 			List<MigrationConfig> migrationByVersion = new ArrayList<>();
 			migrationByVersion.add(_migrationForVersion.get(ewe1));
-			Version[] allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
+			List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
 			assertConfigEquals(allVersions, ewe1);
 		}
 	}
@@ -226,7 +226,7 @@ public class TestMigrationUtil extends BasicTestCase {
 
 	private List<MigrationConfig> relevantMigrations(Map<String, Version> currentVersions) {
 		Map<String, Map<Version, MigrationConfig>> migrationScripts = migrationScripts();
-		Map<String, Version[]> versionByModule = getVersionsByModule(_log, migrationScripts);
+		Map<String, List<Version>> versionByModule = getVersionsByModule(_log, migrationScripts);
 		return getRelevantMigrations(migrationScripts, versionByModule, currentVersions, moduleDependencies());
 	}
 
@@ -240,7 +240,7 @@ public class TestMigrationUtil extends BasicTestCase {
 	}
 
 
-	private String[] moduleDependencies() {
+	private List<String> moduleDependencies() {
 		List<Modules> c = CollectionUtil.topsort(new Mapping<Modules, Iterable<? extends Modules>>() {
 
 			@Override
@@ -248,10 +248,9 @@ public class TestMigrationUtil extends BasicTestCase {
 				return Arrays.asList(input.getDependencies());
 			}
 		}, Arrays.asList(Modules.values()), false);
-		String[] result = new String[c.size()];
-		int i = 0;
+		List<String> result = new ArrayList<>(c.size());
 		for (Modules module : c) {
-			result[i++] = module.name();
+			result.add(module.name());
 		}
 		return result;
 	}
@@ -273,10 +272,10 @@ public class TestMigrationUtil extends BasicTestCase {
 		return result;
 	}
 
-	private void assertConfigEquals(ConfigurationItem[] actual, ConfigurationItem... expected) {
-		assertEquals("Unexpected number of versions.", expected.length, actual.length);
-		for (int i = 0; i < actual.length; i++) {
-			AbstractTypedConfigurationTestCase.assertEquals(expected[i], actual[i]);
+	private void assertConfigEquals(List<? extends ConfigurationItem> actual, ConfigurationItem... expected) {
+		assertEquals("Unexpected number of versions.", expected.length, actual.size());
+		for (int i = 0; i < actual.size(); i++) {
+			AbstractTypedConfigurationTestCase.assertEquals(expected[i], actual.get(i));
 		}
 	}
 

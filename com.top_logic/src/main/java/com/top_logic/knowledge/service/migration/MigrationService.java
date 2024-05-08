@@ -5,8 +5,6 @@
  */
 package com.top_logic.knowledge.service.migration;
 
-import static com.top_logic.knowledge.service.migration.MigrationUtil.*;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -276,15 +274,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 
 		Config config = getConfig();
-		String[] migrationModules = getMigrationModules(config);
+		List<String> migrationModules = config.getModules();
 		return MigrationUtil.relevantMigrations(context, connection, migrationModules, config.getAllowDowngrade());
-	}
-
-	/**
-	 * All migration relevant modules listed in the given configuration.
-	 */
-	public static String[] getMigrationModules(Config config) {
-		return toModuleNames(config.getModules());
 	}
 
 	/**

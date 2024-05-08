@@ -67,8 +67,6 @@ import com.top_logic.knowledge.service.db2.migration.DumpReader;
  */
 public class MigrationUtil {
 
-	private static final Version[] EMPTY_VERSION_ARRAY = new Version[0];
-
 	/** Suffix of migration files: .migration.xml */
 	public static final String MIGRATION_FILE_SUFFIX = ".migration" + FileUtilities.XML_FILE_ENDING;
 
@@ -310,10 +308,10 @@ public class MigrationUtil {
 	 * Returns all known migration modules. The module with the highest index is the the top level
 	 * migration module.
 	 */
-	public static String[] getMigrationModules() throws ConfigurationException {
+	public static List<String> getMigrationModules() throws ConfigurationException {
 		MigrationService.Config migrationConf =
 			(MigrationService.Config) ApplicationConfig.getInstance().getServiceConfiguration(MigrationService.class);
-		return toModuleNames(migrationConf.getModules());
+		return migrationConf.getModules();
 	}
 
 	/**
@@ -366,7 +364,7 @@ public class MigrationUtil {
 	 * 
 	 * @see #getAllVersions(Log, Map)
 	 */
-	public static Version[] getAllVersions(Log log, Collection<MigrationConfig> migrations) {
+	public static List<Version> getAllVersions(Log log, Collection<MigrationConfig> migrations) {
 		return getAllVersions(log,
 			migrations.stream().collect(Collectors.toMap(MigrationConfig::getVersion, Function.identity())));
 	}
@@ -388,10 +386,10 @@ public class MigrationUtil {
 	 *        dependent version may be absent. (This is necessary because old migrations may be
 	 *        deleted.)
 	 */
-	public static Version[] getAllVersions(Log log, Map<Version, MigrationConfig> migrations) {
+	public static List<Version> getAllVersions(Log log, Map<Version, MigrationConfig> migrations) {
 		switch (migrations.size()) {
 			case 0:
-				return EMPTY_VERSION_ARRAY;
+				return Collections.emptyList();
 			case 1:
 				Entry<Version, MigrationConfig> next = migrations.entrySet().iterator().next();
 				if (!next.getKey().equals(next.getValue().getVersion())) {
@@ -399,14 +397,14 @@ public class MigrationUtil {
 						"Inconsistent migration mapping: Version '" + toString(next.getKey())
 							+ "' is mapped to migration for version '" + toString(next.getValue().getVersion()) + "'.");
 				}
-				return new Version[] { next.getValue().getVersion() };
+				return Collections.singletonList(next.getValue().getVersion());
 			default:
 				return getAllVersions0(log, migrations);
 		}
 
 	}
 
-	private static Version[] getAllVersions0(Log log, Map<Version, MigrationConfig> migrations) {
+	private static List<Version> getAllVersions0(Log log, Map<Version, MigrationConfig> migrations) {
 		Map<MigrationConfig, MigrationConfig> followUpMigrations = new HashMap<>();
 
 		String migrationModule = null;
@@ -464,7 +462,7 @@ public class MigrationUtil {
 			// Each migration is also a base migration.
 			log.error("Cyclic dependencies in version dependencies in module "
 				+ migrationModule + ": " + toString(versions(cycle.subList(cycleStart, cycle.size()))));
-			return EMPTY_VERSION_ARRAY;
+			return Collections.emptyList();
 		}
 
 		List<MigrationConfig> sortedVersions = new ArrayList<>();
@@ -481,7 +479,7 @@ public class MigrationUtil {
 				}
 				log.error("No follow-up version for " + toString(version(tmp)) + " found in "
 					+ toString(versions(followUpMigrations.keySet())));
-				return EMPTY_VERSION_ARRAY;
+				return Collections.emptyList();
 			}
 			sortedVersions.add(followUp);
 			tmp = followUp;
@@ -489,14 +487,14 @@ public class MigrationUtil {
 
 		checkNoLostDependency(log, sortedVersions);
 
-		Version[] result;
+		List<Version> result;
 		if (baseVersionWithoutMigration == null) {
-			result = versions(sortedVersions).toArray(EMPTY_VERSION_ARRAY);
+			result = versions(sortedVersions);
 		} else {
-			result = new Version[sortedVersions.size() + 1];
-			result[0] = baseVersionWithoutMigration;
-			for (int i = 1; i < result.length; i++) {
-				result[i] = version(sortedVersions.get(i - 1));
+			result = new ArrayList<>(sortedVersions.size() + 1);
+			result.add(baseVersionWithoutMigration);
+			for (int i = 0; i < sortedVersions.size(); i++) {
+				result.add(version(sortedVersions.get(i)));
 			}
 		}
 		return result;
@@ -546,9 +544,9 @@ public class MigrationUtil {
 	 */
 	public static List<MigrationConfig> getRelevantMigrations(
 			final Map<String, Map<Version, MigrationConfig>> migrationScripts,
-			final Map<String, Version[]> versionByModule,
+			final Map<String, List<Version>> versionByModule,
 			final Map<String, Version> currentVersions,
-			final String[] modules) {
+			final List<String> modules) {
 		Version[] sortedVersions = allVersionsUnsorted(migrationScripts);
 		Arrays.sort(sortedVersions, versionCompare(migrationScripts, versionByModule, currentVersions, modules));
 
@@ -589,13 +587,13 @@ public class MigrationUtil {
 	 * 
 	 * @see #getVersionsByModule(Log, Map)
 	 */
-	private static Set<Version> getNewVersions(Map<String, Version[]> versionByModule,
+	private static Set<Version> getNewVersions(Map<String, List<Version>> versionByModule,
 			Map<String, Version> currentVersions) {
 		Set<Version> newVersions = new HashSet<>();
 		if (currentVersions.isEmpty()) {
 			// A system from before introducing the automatic migration is updated.
-			for (Version[] versionsForNewModules : versionByModule.values()) {
-				Collections.addAll(newVersions, versionsForNewModules);
+			for (List<Version> versionsForNewModules : versionByModule.values()) {
+				newVersions.addAll(versionsForNewModules);
 			}
 		} else {
 			// Only modules that are mentioned in the database version must be migrated. All
@@ -605,19 +603,19 @@ public class MigrationUtil {
 				String module = entry.getKey();
 				Version currentVersionForModule = entry.getValue();
 
-				Version[] versions = versionByModule.get(module);
+				List<Version> versions = versionByModule.get(module);
 				if (versions == null) {
 					// May happen, when a module does not longer exists.
 					continue;
 				}
-				int lastIndexOf = ArrayUtil.lastIndexOf(currentVersionForModule, versions);
+				int lastIndexOf = versions.lastIndexOf(currentVersionForModule);
 				if (lastIndexOf == -1) {
 					// Failure;
 					throw new IllegalStateException("Version " + toString(currentVersionForModule)
-						+ " not found in available versions " + toString(Arrays.asList(versions)));
+						+ " not found in available versions " + toString(versions));
 				}
-				for (int i = lastIndexOf + 1; i < versions.length; i++) {
-					newVersions.add(versions[i]);
+				for (int i = lastIndexOf + 1; i < versions.size(); i++) {
+					newVersions.add(versions.get(i));
 				}
 			}
 		}
@@ -645,9 +643,9 @@ public class MigrationUtil {
 	 */
 	private static Comparator<Version> versionCompare(
 			Map<String, Map<Version, MigrationConfig>> migrationScripts,
-			Map<String, Version[]> versionByModule,
+			Map<String, List<Version>> versionByModule,
 			Map<String, Version> currentVersions,
-			String[] modules) {
+			List<String> modules) {
 		return new Comparator<>() {
 
 			@Override
@@ -740,8 +738,8 @@ public class MigrationUtil {
 				return compareIndexBased(versionByModule.get(o1.getModule()), o1, o2);
 			}
 
-			private int compareIndexBased(Object[] arr, Object o1, Object o2) {
-				return ArrayUtil.indexOf(o1, arr) - ArrayUtil.indexOf(o2, arr);
+			private int compareIndexBased(List<?> arr, Object o1, Object o2) {
+				return arr.indexOf(o1) - arr.indexOf(o2);
 			}
 		};
 	}
@@ -765,12 +763,12 @@ public class MigrationUtil {
 	 *        name.
 	 * @return Mapping of module name to all {@link Version}s in correct order.
 	 */
-	public static Map<String, Version[]> getVersionsByModule(Log log,
+	public static Map<String, List<Version>> getVersionsByModule(Log log,
 			Map<String, Map<Version, MigrationConfig>> migrationScripts) {
-		final Map<String, Version[]> versionByModule = new HashMap<>();
+		final Map<String, List<Version>> versionByModule = new HashMap<>();
 		for (Entry<String, Map<Version, MigrationConfig>> e : migrationScripts.entrySet()) {
-			Version[] versions = getAllVersions(log, e.getValue());
-			if (versions.length == 0) {
+			List<Version> versions = getAllVersions(log, e.getValue());
+			if (versions.isEmpty()) {
 				// There was an error computing the version.
 				continue;
 			}
@@ -783,13 +781,13 @@ public class MigrationUtil {
 	 * Returns the top level migration module for this project.
 	 */
 	public static String getLocalMigrationModule() throws ConfigurationException {
-		String[] migrationModules = getMigrationModules();
-		return migrationModules[migrationModules.length - 1];
+		List<String> migrationModules = getMigrationModules();
+		return migrationModules.get(migrationModules.size() - 1);
 	}
 
-	private static Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log, String[] modules)
+	private static Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log, List<String> modules)
 			throws DatabaseAccessException {
-		Set<String> modulesSet = Set.of(modules);
+		Set<String> modulesSet = new HashSet<>(modules);
 		Map<String, Map<Version, MigrationConfig>> migrationConfigs = new HashMap<>();
 		for (String migrationFolder : FileManager.getInstance().getResourcePaths(MIGRATION_BASE_RESOURCE)) {
 			String moduleName =
@@ -798,7 +796,7 @@ public class MigrationUtil {
 			if (!modulesSet.contains(moduleName)) {
 				log.info(
 					"Folder " + moduleName + " is not configured as migration folder. Configured migration folders: "
-							+ Arrays.toString(modules),
+						+ modules,
 					Protocol.WARN);
 				continue;
 			}
@@ -823,24 +821,11 @@ public class MigrationUtil {
 		return migrationConfigs;
 	}
 
-	static String[] toModuleNames(Collection<String> namedConfigs) {
-		int size = namedConfigs.size();
-		if (size == 0) {
-			return ArrayUtil.EMPTY_STRING_ARRAY;
-		}
-		String[] result = new String[size];
-		int i = 0;
-		for (String module : namedConfigs) {
-			result[i++] = module;
-		}
-		return result;
-	}
-
 	/**
 	 * Determines the maximal versions from the available migration scripts.
 	 */
 	public static Collection<Version> maximalVersions(Log log) throws DatabaseAccessException {
-		String[] migrationModules;
+		List<String> migrationModules;
 		try {
 			migrationModules = getMigrationModules();
 		} catch (ConfigurationException ex) {
@@ -848,7 +833,7 @@ public class MigrationUtil {
 			return Collections.emptyList();
 		}
 		Map<String, Map<Version, MigrationConfig>> migrationScripts = readMigrationScripts(log, migrationModules);
-		Map<String, Version[]> versionByModule = getVersionsByModule(log, migrationScripts);
+		Map<String, List<Version>> versionByModule = getVersionsByModule(log, migrationScripts);
 		return getMaximalVersions(versionByModule);
 	}
 
@@ -888,14 +873,14 @@ public class MigrationUtil {
 		return COMMON_KEY_PREFIX + module;
 	}
 
-	static List<Version> getMaximalVersions(Map<String, Version[]> versionByModule) {
+	static List<Version> getMaximalVersions(Map<String, List<Version>> versionByModule) {
 		List<Version> maximalVersions = new ArrayList<>(versionByModule.size());
-		for (Version[] v : versionByModule.values()) {
-			if (v.length == 0) {
+		for (List<Version> v : versionByModule.values()) {
+			if (v.isEmpty()) {
 				// There was a problem computing the version list.
 				continue;
 			}
-			maximalVersions.add(v[v.length - 1]);
+			maximalVersions.add(v.get(v.size() - 1));
 		}
 		return maximalVersions;
 	}
@@ -918,7 +903,7 @@ public class MigrationUtil {
 	 *         when reading versions from database failed for some reason.
 	 */
 	public static MigrationInfo relevantMigrations(Log log, PooledConnection connection,
-			String[] migrationModules, boolean allowDowngrade) throws SQLException {
+			List<String> migrationModules, boolean allowDowngrade) throws SQLException {
 		Map<String, Version> storedVersions = readStoredVersions(connection, migrationModules);
 
 		log.info("Current data version: " + storedVersions.values().stream()
@@ -944,16 +929,16 @@ public class MigrationUtil {
 		return relevantMigrations(log, getMigrationModules(), true, dataVersion.getModuleVersions());
 	}
 
-	private static MigrationInfo relevantMigrations(Log log, String[] migrationModules, boolean allowDowngrade,
+	private static MigrationInfo relevantMigrations(Log log, List<String> migrationModules, boolean allowDowngrade,
 			Map<String, Version> dataVersion) {
 		Map<String, Map<Version, MigrationConfig>> migrationScripts;
 		try {
 			migrationScripts = readMigrationScripts(log, migrationModules);
 		} catch (DatabaseAccessException ex) {
-			log.error("Unable to read migration scripts for modules: " + Arrays.toString(migrationModules), ex);
+			log.error("Unable to read migration scripts for modules: " + migrationModules, ex);
 			return MigrationInfo.NO_MIGRATION;
 		}
-		Map<String, Version[]> appVersion = getVersionsByModule(log, migrationScripts);
+		Map<String, List<Version>> appVersion = getVersionsByModule(log, migrationScripts);
 		boolean downGrade = isDowngrade(log, appVersion, dataVersion);
 		List<MigrationConfig> relevantMigrations;
 		if (downGrade) {
@@ -1010,12 +995,12 @@ public class MigrationUtil {
 		}
 	}
 
-	private static boolean isDowngrade(Log log, Map<String, Version[]> versionsByModule,
+	private static boolean isDowngrade(Log log, Map<String, List<Version>> versionsByModule,
 			Map<String, Version> storedVersions) {
 		boolean downGrade = false;
 		module:
 		for (Entry<String, Version> storedVersion : storedVersions.entrySet()) {
-			Version[] versions = versionsByModule.get(storedVersion.getKey());
+			List<Version> versions = versionsByModule.get(storedVersion.getKey());
 			if (versions == null) {
 				// module is not longer a migration version.
 				continue;
@@ -1026,7 +1011,7 @@ public class MigrationUtil {
 				}
 			}
 			log.info("No valid version found for database version '" + toString(storedVersion.getValue())
-				+ "' in versions " + toString(Arrays.asList(versions)) + ".");
+				+ "' in versions " + toString(versions) + ".");
 			downGrade = true;
 		}
 		return downGrade;
@@ -1038,7 +1023,7 @@ public class MigrationUtil {
 	public static VersionDescriptor loadDataVersionDescriptor() throws SQLException, ConfigurationException {
 		MigrationService.Config config =
 			(MigrationService.Config) ApplicationConfig.getInstance().getServiceConfiguration(MigrationService.class);
-		String[] modules = MigrationService.getMigrationModules(config);
+		List<String> modules = config.getModules();
 		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
 		PooledConnection connection = pool.borrowReadConnection();
 		try {
@@ -1052,13 +1037,13 @@ public class MigrationUtil {
 		}
 	}
 
-	private static Map<String, Version> readStoredVersions(PooledConnection connection, String[] modules)
+	private static Map<String, Version> readStoredVersions(PooledConnection connection, List<String> migrationModules)
 			throws SQLException {
-		if (modules.length == 0) {
+		if (migrationModules.isEmpty()) {
 			return Collections.emptyMap();
 		}
 		Map<String, Version> storedVersions = new HashMap<>();
-		for (String module : modules) {
+		for (String module : migrationModules) {
 			String property = propertyForModule(module);
 			String moduleVersion = DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY, property);
 			if (moduleVersion != null) {

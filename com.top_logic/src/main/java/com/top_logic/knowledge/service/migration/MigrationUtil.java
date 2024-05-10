@@ -767,12 +767,16 @@ public class MigrationUtil {
 			Map<String, Map<Version, MigrationConfig>> migrationScripts) {
 		final Map<String, List<Version>> versionByModule = new HashMap<>();
 		for (Entry<String, Map<Version, MigrationConfig>> e : migrationScripts.entrySet()) {
-			List<Version> versions = getAllVersions(log, e.getValue());
+			Map<Version, MigrationConfig> migrations = e.getValue();
+
+			List<Version> versions = getAllVersions(log, migrations);
 			if (versions.isEmpty()) {
 				// There was an error computing the version.
 				continue;
 			}
-			versionByModule.put(e.getKey(), versions);
+			String module = e.getKey();
+
+			versionByModule.put(module, versions);
 		}
 		return versionByModule;
 	}

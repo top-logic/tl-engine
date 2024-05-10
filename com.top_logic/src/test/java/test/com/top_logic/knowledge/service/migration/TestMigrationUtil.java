@@ -12,11 +12,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -70,6 +72,20 @@ public class TestMigrationUtil extends BasicTestCase {
 
 		TestModule[] getDependencies() {
 			return _dependencies;
+		}
+
+		public boolean dependsOn(TestModule earlierModule) {
+			List<TestModule> dependencies = Arrays.asList(_dependencies);
+			boolean isDirectDependency = dependencies.contains(earlierModule);
+			if (isDirectDependency) {
+				return true;
+			}
+			for (TestModule dependency : _dependencies) {
+				if (dependency.dependsOn(earlierModule)) {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 
@@ -298,6 +314,81 @@ public class TestMigrationUtil extends BasicTestCase {
 		checkMigrationOrder(versions, tl, element, importer, reporting, ewe, demo);
 	}
 
+	public void testDynamic() {
+		List<TestModule> modules = new ArrayList<>();
+
+		Random rnd = new Random(42);
+
+		// Create modules.
+		int moduleCnt = 5;
+		for (int n = 0; n < moduleCnt; n++) {
+			int cntDependencies = Math.min(n, 1 + rnd.nextInt(3));
+			Set<TestModule> dependencies = new HashSet<>();
+
+			while (dependencies.size() < cntDependencies) {
+				dependencies.add(modules.get(rnd.nextInt(modules.size())));
+			}
+			modules.add(new TestModule("m" + n, dependencies.toArray(new TestModule[0])));
+		}
+
+		// Create initial versions.
+		List<Version> versions = new ArrayList<>();
+		for (TestModule m : modules) {
+			createInitalVersion(m);
+		}
+
+		// Create versions.
+		int versionCnt = 5;
+		for (int n = 0; n < versionCnt; n++) {
+			versions.add(createVersion(modules.get(rnd.nextInt(modules.size()))));
+		}
+
+		// The version information stored in the database of the simulated software product at
+		// the time the migration starts.
+		Map<String, Version> dbVersion = currentVersions(_latestVersionsAtVersionTime.get(versions.get(0)));
+
+		List<MigrationConfig> migrations = migrationsPerformed(dbVersion, modules.toArray(new TestModule[0]));
+
+		// The migration order is acceptable, if no migration happens before an earlier migration of
+		// a dependency.
+		Set<String> migrationsDone = new HashSet<>();
+		for (MigrationConfig migration : migrations) {
+			Version version = migration.getVersion();
+			for (int n = 0; true; n++) {
+				Version earlier = versions.get(n);
+				if (earlier.getName().equals(version.getName())) {
+					// The current migration has been reached.
+					break;
+				}
+
+				if (migrationsDone.contains(earlier.getName())) {
+					// Migration already performed, this is OK.
+					continue;
+				}
+
+				String earlierModuleName = earlier.getModule();
+
+				// Check whether the missing migration is one of a dependency.
+				TestModule versionModule = module(modules, version.getModule());
+				TestModule earlierModule = module(modules, earlierModuleName);
+
+				if (versionModule.dependsOn(earlierModule)) {
+					fail("Invalid migration order: Version " + toString(version) + " depends on " + toString(earlier)
+						+ " but is executed before.");
+				}
+			}
+			migrationsDone.add(version.getName());
+		}
+	}
+
+	private String toString(Version version) {
+		return version.getName() + "(" + version.getModule() + ")";
+	}
+
+	private TestModule module(List<TestModule> modules, String name) {
+		return modules.stream().filter(m -> m.name().equals(name)).findFirst().get();
+	}
+
 	private void checkMigrationOrder(List<Version> versions, TestModule... modules) {
 		for (int skip = 0; skip < versions.size(); skip++) {
 			// Simulate that i versions have been dropped from the software product (are no longer
@@ -394,7 +485,7 @@ public class TestMigrationUtil extends BasicTestCase {
 	 * Simulates creating the implicit initial version for the given module.
 	 */
 	private Version createInitalVersion(TestModule m) {
-		Version initial = newVersion(m.name(), "<initial>");
+		Version initial = newVersion(m.name(), "initial");
 		_latestVersions.put(m, initial);
 		_migrationForVersion.put(initial, newMigration(initial, Collections.emptyList()));
 		return initial;
@@ -404,7 +495,7 @@ public class TestMigrationUtil extends BasicTestCase {
 	 * Simulates creating a new version in the given module.
 	 */
 	private Version createVersion(TestModule module) {
-		Version newVersion = MigrationUtil.newVersion(module.name(), Integer.toString(_nextVersionNumber++));
+		Version newVersion = MigrationUtil.newVersion(module.name(), "v" + Integer.toString(_nextVersionNumber++));
 		MigrationConfig migrationForVersion = newMigration(newVersion, dependentVersions(module));
 		_latestVersionsAtVersionTime.put(newVersion, new HashMap<>(_latestVersions));
 		_latestVersions.put(module, newVersion);

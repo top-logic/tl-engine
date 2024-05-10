@@ -407,6 +407,23 @@ public class TestMigrationUtil extends BasicTestCase {
 	private List<MigrationConfig> migrationsPerformed(Map<String, Version> currentVersions, TestModule... modules) {
 		Map<String, Map<Version, MigrationConfig>> availableMigrations = availableMigrations();
 		Map<String, List<Version>> versionByModule = getVersionsByModule(_log, availableMigrations);
+
+		// Check oder.
+		for (Entry<String, List<Version>> entry : versionByModule.entrySet()) {
+			String module = entry.getKey();
+			List<Version> moduleVersions = entry.getValue();
+
+			for (int n = 1; n < moduleVersions.size(); n++) {
+				Version version = moduleVersions.get(n);
+				MigrationConfig migration = _migrationForVersion.get(version);
+				Version predecessor = migration.getDependencies().get(module);
+				assertNotNull("Non-initial version " + toString(version) + " has no predecessor.", predecessor);
+
+				assertEquals("Wrong predecessor/invalid total version order in module '" + module + "'.", predecessor,
+					moduleVersions.get(n - 1));
+			}
+		}
+
 		return getRelevantMigrations(availableMigrations, versionByModule, currentVersions,
 			moduleDependencies(modules));
 	}

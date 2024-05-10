@@ -52,58 +52,73 @@ public class TestMigrationUtil extends BasicTestCase {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	private static enum Modules {
+	private static enum TestModule {
 		tl {
 			@Override
-			Modules[] getDependencies() {
-				return new Modules[] {};
+			TestModule[] getDependencies() {
+				return new TestModule[] {};
 			}
 		},
 		element {
 			@Override
-			Modules[] getDependencies() {
-				return new Modules[] { tl };
+			TestModule[] getDependencies() {
+				return new TestModule[] { tl };
 			}
 		},
 		importer {
 			@Override
-			Modules[] getDependencies() {
-				return new Modules[] { element, tl };
+			TestModule[] getDependencies() {
+				return new TestModule[] { element, tl };
 			}
 		},
 		reporting {
 			@Override
-			Modules[] getDependencies() {
-				return new Modules[] { element, tl };
+			TestModule[] getDependencies() {
+				return new TestModule[] { element, tl };
 			}
 		},
 		ewe {
 			@Override
-			Modules[] getDependencies() {
-				return new Modules[] { reporting, element, tl };
+			TestModule[] getDependencies() {
+				return new TestModule[] { reporting, element, tl };
 			}
 		},
 		demo {
 			@Override
-			Modules[] getDependencies() {
-				return new Modules[] { ewe, reporting, importer, element, tl };
+			TestModule[] getDependencies() {
+				return new TestModule[] { ewe, reporting, importer, element, tl };
 			}
 		},
 		;
 
-		abstract Modules[] getDependencies();
+		abstract TestModule[] getDependencies();
 
 	}
 
-	private Map<Modules, Version> _maximalVersion;
+	/**
+	 * The latest version for each module of the simulated software product.
+	 */
+	private Map<TestModule, Version> _latestVersions;
 
-	private Map<Version, Map<Modules, Version>> _maximalVersionsAtVersionTime;
+	/**
+	 * The latest versions of each module that was current just before the key version was created.
+	 */
+	private Map<Version, Map<TestModule, Version>> _latestVersionsAtVersionTime;
 
+	/**
+	 * All versions created for a simulated software product in the order they were created.
+	 */
 	private List<Version> _allVersions;
 
+	/**
+	 * The migration instruction for each created version in a simulated software product.
+	 */
 	private Map<Version, MigrationConfig> _migrationForVersion;
 
-	private int _versionNumber;
+	/**
+	 * Counter for creating unique version names in a simulated software product.
+	 */
+	private int _nextVersionNumber;
 
 	private Protocol _log;
 
@@ -115,27 +130,38 @@ public class TestMigrationUtil extends BasicTestCase {
 
 	private void reset() {
 		_log = new AssertProtocol(TestMigrationUtil.class.getName());
-		_versionNumber = 0;
+		_nextVersionNumber = 0;
 		_migrationForVersion = new HashMap<>();
 		_allVersions = new ArrayList<>();
-		_maximalVersion = new EnumMap<>(Modules.class);
-		_maximalVersionsAtVersionTime = new HashMap<>();
+		_latestVersions = new EnumMap<>(TestModule.class);
+		_latestVersionsAtVersionTime = new HashMap<>();
 	}
 
 	public void testGetAllVersions() {
-		Version tl1 = version(Modules.tl);
-		Version tl2 = version(Modules.tl);
-		Version demo1 = version(Modules.demo);
-		Version tl3 = version(Modules.tl);
-		Version ewe1 = version(Modules.ewe);
-		Version demo2 = version(Modules.demo);
-		Version tl4 = version(Modules.tl);
+		Version tlInitial = createInitalVersion(TestModule.tl);
+		@SuppressWarnings("unused")
+		Version elementInitial = createInitalVersion(TestModule.element);
+		@SuppressWarnings("unused")
+		Version importerInitial = createInitalVersion(TestModule.importer);
+		@SuppressWarnings("unused")
+		Version eweInitial = createInitalVersion(TestModule.ewe);
+		@SuppressWarnings("unused")
+		Version reportingInitial = createInitalVersion(TestModule.reporting);
+		Version demoInitial = createInitalVersion(TestModule.demo);
+
+		Version tl1 = createVersion(TestModule.tl);
+		Version tl2 = createVersion(TestModule.tl);
+		Version demo1 = createVersion(TestModule.demo);
+		Version tl3 = createVersion(TestModule.tl);
+		Version ewe1 = createVersion(TestModule.ewe);
+		Version demo2 = createVersion(TestModule.demo);
+		Version tl4 = createVersion(TestModule.tl);
 		{
 			List<MigrationConfig> migrationByVersion = new ArrayList<>();
 			migrationByVersion.add(_migrationForVersion.get(demo2));
 			migrationByVersion.add(_migrationForVersion.get(demo1));
 			List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
-			assertConfigEquals(allVersions, demo1, demo2);
+			assertConfigEquals(allVersions, demoInitial, demo1, demo2);
 		}
 		{
 			List<MigrationConfig> migrationByVersion = new ArrayList<>();
@@ -146,7 +172,7 @@ public class TestMigrationUtil extends BasicTestCase {
 			assertConfigEquals(allButFirstVersions, tl1, tl2, tl3, tl4);
 			migrationByVersion.add(_migrationForVersion.get(tl1));
 			List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrationByVersion);
-			assertConfigEquals(allVersions, tl1, tl2, tl3, tl4);
+			assertConfigEquals(allVersions, tlInitial, tl1, tl2, tl3, tl4);
 		}
 		{
 			List<MigrationConfig> migrationByVersion = new ArrayList<>();
@@ -162,21 +188,29 @@ public class TestMigrationUtil extends BasicTestCase {
 	}
 
 	public void testLostDependency() {
-		version(Modules.tl);
-		Version demo1 = version(Modules.demo);
-		version(Modules.tl);
-		version(Modules.element);
-		Version demo2 = version(Modules.demo);
+		createInitalVersion(TestModule.tl);
+		createInitalVersion(TestModule.element);
+		createInitalVersion(TestModule.importer);
+		createInitalVersion(TestModule.ewe);
+		createInitalVersion(TestModule.reporting);
+		createInitalVersion(TestModule.demo);
+
+		createVersion(TestModule.tl);
+		Version demo1 = createVersion(TestModule.demo);
+		createVersion(TestModule.tl);
+		createVersion(TestModule.element);
+		Version demo2 = createVersion(TestModule.demo);
 
 		// simulate missing module.
-		_migrationForVersion.get(demo2).getDependencies().remove(Modules.tl.name());
+		_migrationForVersion.get(demo2).getDependencies().remove(TestModule.tl.name());
 
 		List<MigrationConfig> migrationByVersion = new ArrayList<>();
 		migrationByVersion.add(_migrationForVersion.get(demo1));
 		migrationByVersion.add(_migrationForVersion.get(demo2));
 		try {
 			MigrationUtil.getAllVersions(_log, migrationByVersion);
-			fail("Migration " + _migrationForVersion.get(demo2) + " is not complete: Base module " + Modules.tl.name()
+			fail(
+				"Migration " + _migrationForVersion.get(demo2) + " is not complete: Base module " + TestModule.tl.name()
 				+ " missing.");
 		} catch (AssertionFailedError expected) {
 			if (!expected.getMessage().contains("Lost module dependency: Migration for")) {
@@ -187,107 +221,153 @@ public class TestMigrationUtil extends BasicTestCase {
 	}
 
 	public void testCorrectMigrationOrder() {
+		createInitalVersion(TestModule.tl);
+		createInitalVersion(TestModule.element);
+		createInitalVersion(TestModule.importer);
+		createInitalVersion(TestModule.ewe);
+		createInitalVersion(TestModule.reporting);
+		createInitalVersion(TestModule.demo);
+
 		List<Version> versions = new ArrayList<>();
-		versions.add(version(Modules.tl));
-		versions.add(version(Modules.tl));
-		versions.add(version(Modules.element));
-		versions.add(version(Modules.demo));
-		versions.add(version(Modules.ewe));
-		versions.add(version(Modules.element));
-		versions.add(version(Modules.importer));
+		versions.add(createVersion(TestModule.tl));
+		versions.add(createVersion(TestModule.tl));
+		versions.add(createVersion(TestModule.element));
+		versions.add(createVersion(TestModule.demo));
+		versions.add(createVersion(TestModule.ewe));
+		versions.add(createVersion(TestModule.element));
+		versions.add(createVersion(TestModule.importer));
 		checkMigrationOrder(versions);
+	}
+
+	/**
+	 * Test upgrading a system from a state before introducing automatic migration.
+	 */
+	public void testFullUpgrade() {
+		List<Version> versions = new ArrayList<>();
+		versions.add(createVersion(TestModule.tl));
+		versions.add(createVersion(TestModule.tl));
+		versions.add(createVersion(TestModule.element));
+		versions.add(createVersion(TestModule.demo));
+		versions.add(createVersion(TestModule.ewe));
+		versions.add(createVersion(TestModule.element));
+		versions.add(createVersion(TestModule.importer));
+
+		// The version information stored in the database of the simulated software product at
+		// the time the migration starts.
+		Map<String, Version> currentVersions = Collections.emptyMap();
+
+		assertConfigEquals("Wrong migrations during full upgrade.", expectedMigrations(versions),
+			migrationsPerformed(currentVersions));
 	}
 
 	@SuppressWarnings("unused")
 	public void testCorrectMigrationOrder2() {
+		createInitalVersion(TestModule.tl);
+		createInitalVersion(TestModule.element);
+		createInitalVersion(TestModule.importer);
+		createInitalVersion(TestModule.ewe);
+		createInitalVersion(TestModule.reporting);
+		createInitalVersion(TestModule.demo);
+
 		List<Version> versions = new ArrayList<>();
-		versions.add(version(Modules.reporting));
+		versions.add(createVersion(TestModule.reporting));
 		if (true) {
 			// The order of ewe and importer is not fixed, because the modules are independent. When
 			// implementation changes, it may be that the other order may be correct :-(
-			versions.add(version(Modules.ewe));
-			versions.add(version(Modules.importer));
+			versions.add(createVersion(TestModule.ewe));
+			versions.add(createVersion(TestModule.importer));
 		} else {
-			versions.add(version(Modules.importer));
-			versions.add(version(Modules.ewe));
+			versions.add(createVersion(TestModule.importer));
+			versions.add(createVersion(TestModule.ewe));
 		}
-		versions.add(version(Modules.demo));
-		versions.add(version(Modules.tl));
+		versions.add(createVersion(TestModule.demo));
+		versions.add(createVersion(TestModule.tl));
 		checkMigrationOrder(versions);
 	}
 
 	private void checkMigrationOrder(List<Version> versions) {
-		for (int i = 0; i < versions.size(); i++) {
-			List<Version> subList = versions.subList(i, versions.size());
-			Map<String, Version> currentVersions = currentVersions(_maximalVersionsAtVersionTime.get(subList.get(0)));
-			assertConfigEquals(getMigrations(subList), relevantMigrations(currentVersions));
+		for (int skip = 0; skip < versions.size(); skip++) {
+			// Simulate that i versions have been dropped from the software product (are no longer
+			// part of the delivered artifacts).
+			List<Version> suffixList = versions.subList(skip, versions.size());
+
+			// The version information stored in the database of the simulated software product at
+			// the time the migration starts.
+			Map<String, Version> currentVersions = currentVersions(_latestVersionsAtVersionTime.get(suffixList.get(0)));
+
+			assertConfigEquals("Wrong migrations when skipping " + skip + " versions.", expectedMigrations(suffixList),
+				migrationsPerformed(currentVersions));
 		}
 	}
 
-	private List<MigrationConfig> relevantMigrations(Map<String, Version> currentVersions) {
-		Map<String, Map<Version, MigrationConfig>> migrationScripts = migrationScripts();
-		Map<String, List<Version>> versionByModule = getVersionsByModule(_log, migrationScripts);
-		return getRelevantMigrations(migrationScripts, versionByModule, currentVersions, moduleDependencies());
+	private List<MigrationConfig> migrationsPerformed(Map<String, Version> currentVersions) {
+		Map<String, Map<Version, MigrationConfig>> availableMigrations = availableMigrations();
+		Map<String, List<Version>> versionByModule = getVersionsByModule(_log, availableMigrations);
+		return getRelevantMigrations(availableMigrations, versionByModule, currentVersions, moduleDependencies());
 	}
 
-	List<MigrationConfig> getMigrations(List<Version> sortedVersions) {
-		MigrationConfig[] migrations = new MigrationConfig[sortedVersions.size()];
-		int index = 0;
-		for (Version v : sortedVersions) {
-			migrations[index++] = _migrationForVersion.get(v);
+	/**
+	 * The list of migrations that are expected to be performed for upgrading the given versions.
+	 */
+	List<MigrationConfig> expectedMigrations(List<Version> versionsToUpgrade) {
+		List<MigrationConfig> migrations = new ArrayList<>();
+		for (Version v : versionsToUpgrade) {
+			migrations.add(_migrationForVersion.get(v));
 		}
-		return Arrays.asList(migrations);
+		return migrations;
 	}
 
 
 	private List<String> moduleDependencies() {
-		List<Modules> c = CollectionUtil.topsort(new Mapping<Modules, Iterable<? extends Modules>>() {
+		List<TestModule> c = CollectionUtil.topsort(new Mapping<TestModule, Iterable<? extends TestModule>>() {
 
 			@Override
-			public Iterable<? extends Modules> map(Modules input) {
+			public Iterable<? extends TestModule> map(TestModule input) {
 				return Arrays.asList(input.getDependencies());
 			}
-		}, Arrays.asList(Modules.values()), false);
+		}, Arrays.asList(TestModule.values()), false);
 		List<String> result = new ArrayList<>(c.size());
-		for (Modules module : c) {
+		for (TestModule module : c) {
 			result.add(module.name());
 		}
 		return result;
 	}
 
-	private Map<String, Map<Version, MigrationConfig>> migrationScripts() {
+	/**
+	 * All migration scripts read from the simulated software product indexed by module.
+	 */
+	private Map<String, Map<Version, MigrationConfig>> availableMigrations() {
 		Map<String, Map<Version, MigrationConfig>> result = new HashMap<>();
-		ArrayList<Version> versions = new ArrayList<>(_migrationForVersion.keySet());
 
-		// Use a kind of randomness
-		Collections.shuffle(versions, new Random(47));
-		for (Version version : versions) {
-			Map<Version, MigrationConfig> map = result.get(version.getModule());
-			if (map == null) {
-				map = new LinkedHashMap<>();
-				result.put(version.getModule(), map);
-			}
-			map.put(version, _migrationForVersion.get(version));
+		// The version information read from the modules of the simulated software product in a
+		// stable but otherwise arbitrary order.
+		List<Version> discoveredVersions = new ArrayList<>(_migrationForVersion.keySet());
+		Collections.shuffle(discoveredVersions, new Random(47));
+
+		for (Version version : discoveredVersions) {
+			result
+				.computeIfAbsent(version.getModule(), x -> new LinkedHashMap<>())
+				.put(version, _migrationForVersion.get(version));
 		}
 		return result;
 	}
 
-	private void assertConfigEquals(List<? extends ConfigurationItem> actual, ConfigurationItem... expected) {
+	private static void assertConfigEquals(List<? extends ConfigurationItem> actual, ConfigurationItem... expected) {
 		assertEquals("Unexpected number of versions.", expected.length, actual.size());
 		for (int i = 0; i < actual.size(); i++) {
 			AbstractTypedConfigurationTestCase.assertEquals(expected[i], actual.get(i));
 		}
 	}
 
-	private Map<String, Version> currentVersions(Map<Modules, Version> maximalVersions) {
+	private static Map<String, Version> currentVersions(Map<TestModule, Version> latestVersions) {
 		HashMap<String, Version> result = new HashMap<>();
-		for (Entry<Modules, Version> entry : maximalVersions.entrySet()) {
+		for (Entry<TestModule, Version> entry : latestVersions.entrySet()) {
 			result.put(entry.getKey().name(), entry.getValue());
 		}
 		return result;
 	}
 
-	private MigrationConfig newMigration(Version version, Iterable<? extends Version> dependencies) {
+	private static MigrationConfig newMigration(Version version, Iterable<? extends Version> dependencies) {
 		MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
 		migration.setVersion(version);
 		for (Version dependency : dependencies) {
@@ -296,29 +376,45 @@ public class TestMigrationUtil extends BasicTestCase {
 		return migration;
 	}
 
-	private Version version(Modules module) {
-		Version newVersion = MigrationUtil.newVersion(module.name(), Integer.toString(_versionNumber++));
+	/**
+	 * Simulates creating the implicit initial version for the given module.
+	 */
+	private Version createInitalVersion(TestModule m) {
+		Version initial = newVersion(m.name(), "<initial>");
+		_latestVersions.put(m, initial);
+		_migrationForVersion.put(initial, newMigration(initial, Collections.emptyList()));
+		return initial;
+	}
+
+	/**
+	 * Simulates creating a new version in the given module.
+	 */
+	private Version createVersion(TestModule module) {
+		Version newVersion = MigrationUtil.newVersion(module.name(), Integer.toString(_nextVersionNumber++));
 		MigrationConfig migrationForVersion = newMigration(newVersion, dependentVersions(module));
-		_maximalVersionsAtVersionTime.put(newVersion, new EnumMap<>(_maximalVersion));
-		_maximalVersion.put(module, newVersion);
+		_latestVersionsAtVersionTime.put(newVersion, new EnumMap<>(_latestVersions));
+		_latestVersions.put(module, newVersion);
 		_migrationForVersion.put(newVersion, migrationForVersion);
 		_allVersions.add(newVersion);
 		return newVersion;
 	}
 
-	private Collection<Version> dependentVersions(Modules module) {
-		List<Version> migrationDependencies = new ArrayList<>();
-		addMaximalVersion(migrationDependencies, module);
-		for (Modules dependencyModule : module.getDependencies()) {
-			addMaximalVersion(migrationDependencies, dependencyModule);
+	/**
+	 * All versions, an newly created version in the given module would depend on.
+	 */
+	private Collection<Version> dependentVersions(TestModule module) {
+		List<Version> result = new ArrayList<>();
+		addLatestVersion(result, module);
+		for (TestModule dependencyModule : module.getDependencies()) {
+			addLatestVersion(result, dependencyModule);
 		}
-		return migrationDependencies;
+		return result;
 	}
 
-	private void addMaximalVersion(List<Version> versions, Modules module) {
-		Version maximalModuleVersion = _maximalVersion.get(module);
-		if (maximalModuleVersion != null) {
-			versions.add(maximalModuleVersion);
+	private void addLatestVersion(List<Version> versions, TestModule module) {
+		Version latestVersion = _latestVersions.get(module);
+		if (latestVersion != null) {
+			versions.add(latestVersion);
 		}
 	}
 

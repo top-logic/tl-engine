@@ -23,12 +23,13 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.model.TLNamedPart;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * A {@link ConfigurableFilter} that accepts only {@link TLNamedPart}s whose
- * {@link TLModelUtil#qualifiedName(com.top_logic.model.TLModelPart) qualified} is equal to the
- * given name, respectively matches the given {@link Pattern}.
+ * A {@link ConfigurableFilter} that accepts only {@link TLNamedPart}s whose definition has a
+ * {@link TLModelUtil#qualifiedName(com.top_logic.model.TLModelPart) qualified name} which is equal
+ * to the given name, respectively matches the given {@link Pattern}.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
@@ -101,6 +102,9 @@ public class TLNamedPartFilter extends AbstractConfigurableFilter<TLNamedPart, T
 
 	@Override
 	public FilterResult matchesTypesafe(TLNamedPart namedPart) {
+		if (namedPart instanceof TLStructuredTypePart) {
+			namedPart = ((TLStructuredTypePart) namedPart).getDefinition();
+		}
 		String actualName = TLModelUtil.qualifiedName(namedPart);
 		if (!getConfig().getName().isEmpty()) {
 			boolean booleanResult = actualName.equals(getConfig().getName());

@@ -33,17 +33,36 @@
 							value="test.tree.dialog"
 						/>
 						<parameter name="name"
+							value="Common"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Model/Create-Subtype.xml"
+					template-name-comment="Create Subtype"
+				>
+					<parameters>
+						<parameter name="module"
+							value="test.tree.dialog"
+						/>
+						<parameter name="supertype"
+							value="Common"
+						/>
+						<parameter name="name"
 							value="A"
 						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Model/Create-Type.xml"
-					template-name-comment="Create Type"
+					template="script:Model/Create-Subtype.xml"
+					template-name-comment="Create Subtype"
 				>
 					<parameters>
 						<parameter name="module"
 							value="test.tree.dialog"
+						/>
+						<parameter name="supertype"
+							value="Common"
 						/>
 						<parameter name="name"
 							value="B"
@@ -63,62 +82,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > tree > test.tree.dialog > A"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-							tab-path="Administration > Development > Modell Editor"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-					component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Obertypen"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Modell Editor > Eigenschaften > Typ-Eigenschaften"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Strukturelement-Container"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-					component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > tree > test.tree.dialog > B"
+							path="Test > tree > test.tree.dialog > Common"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -174,13 +138,136 @@
 						tab-path="Administration > Development > Modell Editor > Attribute"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+					command-label="Neue Überschreibung..."
+					command-name="displayDialog_createOverrideTypePartDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="children"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Typ"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="test.tree.dialog:Common"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+					command-label="Erstellen"
+					command-name="createPart"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+					command-label="Neue Überschreibung..."
+					command-name="displayDialog_createOverrideTypePartDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="parent"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Typ"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="test.tree.dialog:Common"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+					command-label="Erstellen"
+					command-name="createPart"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createOverrideTypePartForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Attribute"
+					/>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
 					user-id="root"
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > tree > test.tree.dialog > A"
+							path="Test > tree > test.tree.dialog > Common > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -297,7 +384,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > tree > test.tree.dialog > B"
+							path="Test > tree > test.tree.dialog > Common > B"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1940,7 +2027,7 @@ default: {
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > tree > test.tree.dialog > A"
+							path="Test > tree > test.tree.dialog > Common > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2122,7 +2209,7 @@ default: {
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > tree > test.tree.dialog > B"
+							path="Test > tree > test.tree.dialog > Common > B"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

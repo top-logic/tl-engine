@@ -42,7 +42,15 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart> {
 	 * @return The value of the given attribute.
 	 */
 	default Object lookupValue(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-		return SearchExpression.normalizeValue(self.tValue(part));
+		Object value;
+		if (part.isAbstract()) {
+			// The concrete reference must be used to ensure that the correct storage implementation
+			// is used.
+			value = self.tValueByName(part.getName());
+		} else {
+			value = self.tValue(part);
+		}
+		return SearchExpression.normalizeValue(value);
 	}
 
 }

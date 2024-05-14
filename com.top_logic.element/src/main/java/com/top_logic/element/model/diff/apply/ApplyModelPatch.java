@@ -916,9 +916,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (createProcessors()) {
 			CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);
 			config.setType(getQualifiedTypeName(owner.getModule().getName(), attributeConfig.getTypeSpec()));
-			fillPartProcessor(config, TLModelUtil.qualifiedName(owner), attributeConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillPartProcessor(config, qOwnerName, attributeConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, attributeConfig);
 		}
 		return property;
 	}
@@ -942,9 +944,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				refConf.setType(targetType);
 				config = refConf;
 			}
-			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), referenceConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillEndAspectProcessor(config, qOwnerName, referenceConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, referenceConfig);
 		}
 		return reference;
 	}
@@ -956,9 +960,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (createProcessors()) {
 			CreateTLAssociationEndProcessor.Config config = newConfigItem(CreateTLAssociationEndProcessor.Config.class);
 			config.setType(getQualifiedTypeName(owner.getModule().getName(), endConfig.getTypeSpec()));
-			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), endConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillEndAspectProcessor(config, qOwnerName, endConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, endConfig);
 		}
 		return end;
 	}
@@ -982,13 +988,16 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		copyIfSet(part, PartConfig.MANDATORY, config::setMandatory);
 		copyIfSet(part, PartConfig.BAG_PROPERTY, config::setBag);
 		copyAnnotations(part, config);
+	}
+
+	private void addOverride(String qOwnerName, PartConfig part) {
 		if (part.isOverride()) {
 			TLStructuredType owner = (TLStructuredType) resolvePart(qOwnerName);
 			TLStructuredTypePart createdPart = owner.getPartOrFail(part.getName());
 			TLStructuredTypePart definition = createdPart.getDefinition();
 
 			MarkTLTypePartOverride.Config overrideConf = newConfigItem(MarkTLTypePartOverride.Config.class);
-			overrideConf.setName(qPartName);
+			overrideConf.setName(qTypePartName(qOwnerName, part.getName()));
 			overrideConf.setDefinition(qTypePartName(definition));
 			addProcessor(overrideConf);
 		}

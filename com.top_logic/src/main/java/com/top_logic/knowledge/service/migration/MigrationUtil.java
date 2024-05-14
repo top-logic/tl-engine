@@ -544,7 +544,11 @@ public class MigrationUtil {
 	 *        All known database modules. The order of the module is the dependency order, i.e. when
 	 *        <code>module1</code> depends on <code>module2</code>, <code>module2</code> appears
 	 *        before <code>module1</code> in the array.
+	 * 
+	 * @deprecated Use {@link #getMigrations(Map, Map, Map, List)} This variant might produce an
+	 *             invalid migration order in complex situations.
 	 */
+	@Deprecated
 	public static List<MigrationConfig> getRelevantMigrations(
 			final Map<String, Map<Version, MigrationConfig>> migrationScripts,
 			final Map<String, List<Version>> versionByModule,
@@ -1202,7 +1206,7 @@ public class MigrationUtil {
 			relevantMigrations = new ArrayList<>();
 		} else {
 			relevantMigrations =
-				getRelevantMigrations(migrationScripts, appVersion, dataVersion, migrationModules);
+				getMigrations(migrationScripts, appVersion, dataVersion, migrationModules);
 			if (relevantMigrations.isEmpty()) {
 				log.info("No migration required.");
 				return MigrationInfo.NO_MIGRATION;

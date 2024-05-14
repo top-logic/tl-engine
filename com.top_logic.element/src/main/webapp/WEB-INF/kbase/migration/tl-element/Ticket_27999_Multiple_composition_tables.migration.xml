@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27999_Multiple_composition_tables"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.element.model.migration.Ticket27999AddAbstractColumn"/>
+
+		<update-reference name="tl.model:TLModelPart#model"
+			abstract="true"
+		/>
+		<update-reference name="tl.model:TLType#scope"
+			abstract="true"
+		/>
+		<remove-annotations name="tl.model:TLType#scope">
+			<annotation class="com.top_logic.element.config.annotation.TLStorage"/>
+		</remove-annotations>
+
+		<create-reference name="tl.model:TLPrimitive#scope"
+			type="tl.model:TLScope"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="scope"
+						storage-type="TLDatatype"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLPrimitive#scope"
+			definition="tl.model:TLType#scope"
+		/>
+		<create-reference name="tl.model:TLAssociation#scope"
+			type="tl.model:TLScope"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="scope"
+						storage-type="MetaElement"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLAssociation#scope"
+			definition="tl.model:TLType#scope"
+		/>
+		<create-reference name="tl.model:TLClass#scope"
+			type="tl.model:TLScope"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="scope"
+						storage-type="MetaElement"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLClass#scope"
+			definition="tl.model:TLType#scope"
+		/>
+		<update-reference name="tl.model:TLTypePart#type"
+			abstract="true"
+		/>
+		<update-reference name="tl.model:TLTypePart#owner"
+			abstract="true"
+		/>
+		<create-property name="tl.model:TLStructuredTypePart#abstract"
+			type="tl.core:Boolean"
+		/>
+
+		<create-property name="tl.model:TLReference#abstract"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="end"/>
+								<get-value attribute="abstract"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<mark-override name="tl.model:TLReference#abstract"
+			definition="tl.model:TLStructuredTypePart#abstract"
+		/>
+
+		<update-inverse-reference name="tl.element:StructuredElement#parent"
+			abstract="true"
+		/>
+		<update-reference name="tl.element:StructuredElementContainer#children"
+			abstract="true"
+		/>
+
+		<remove-class-generalizations name="mandatorStructure:RootElement">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="mandatorStructure:Mandator">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<add-class-generalizations name="mandatorStructure:Mandator.all">
+			<generalizations>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-reference name="mandatorStructure:Mandator.all#children"
+			type="mandatorStructure:Mandator.all"
+		/>
+		<mark-override name="mandatorStructure:Mandator.all#children"
+			definition="tl.element:StructuredElementContainer#children"
+		/>
+		<create-inverse-reference name="mandatorStructure:Mandator.all#parent"
+			inverse-reference="mandatorStructure:Mandator.all#children"
+		/>
+		<mark-override name="mandatorStructure:Mandator.all#parent"
+			definition="tl.element:StructuredElement#parent"
+		/>
+		<reorder-part name="mandatorStructure:Mandator.all#children"/>
+		<reorder-part name="mandatorStructure:Mandator.all#parent"/>
+	</processors>
+	<post-processors/>
+</migration>

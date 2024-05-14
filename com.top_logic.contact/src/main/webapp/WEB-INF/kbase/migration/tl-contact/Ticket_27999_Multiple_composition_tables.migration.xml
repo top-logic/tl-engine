@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27999_Multiple_composition_tables"
+		module="tl-contact"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
+	</dependencies>
+	<processors>
+		<remove-class-generalizations name="orgStructure:OrgRoot">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="orgStructure:OrgHead">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="orgStructure:OrgUnit">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<add-class-generalizations name="orgStructure:OrgUnit.all">
+			<generalizations>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-reference name="orgStructure:OrgUnit.all#children"
+			type="orgStructure:OrgUnit.all"
+		/>
+		<mark-override name="orgStructure:OrgUnit.all#children"
+			definition="tl.element:StructuredElementContainer#children"
+		/>
+		<create-inverse-reference name="orgStructure:OrgUnit.all#parent"
+			inverse-reference="orgStructure:OrgUnit.all#children"
+		/>
+		<mark-override name="orgStructure:OrgUnit.all#parent"
+			definition="tl.element:StructuredElement#parent"
+		/>
+		<reorder-part name="orgStructure:OrgUnit.all#children"/>
+		<reorder-part name="orgStructure:OrgUnit.all#parent"/>
+	</processors>
+	<post-processors/>
+</migration>

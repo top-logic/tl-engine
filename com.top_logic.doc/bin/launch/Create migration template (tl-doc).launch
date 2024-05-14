@@ -15,6 +15,6 @@
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.top_logic.knowledge.service.migration.CreateMigrationScriptTemplate"/>
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="com.top_logic"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--name &quot;${string_prompt:migration name}&quot;"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.top_logic.element"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.top_logic.doc"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

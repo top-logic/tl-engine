@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -59,6 +60,8 @@ import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.knowledge.service.db2.migration.DumpReader;
+import com.top_logic.knowledge.service.migration.model.MigrationRef;
+import com.top_logic.knowledge.service.migration.model.VersionID;
 
 /**
  * Util class holding service methods to create {@link MigrationConfig}s.
@@ -570,6 +573,202 @@ public class MigrationUtil {
 	}
 
 	/**
+	 * The {@link MigrationConfig migrations} to perform in the order in which they must be applied
+	 * to update the system.
+	 * 
+	 * <img src="./dependency-graph.svg"/>
+	 * 
+	 * @param migrationsByModule
+	 *        All migrations indexed by their module. The value is a mapping from all known
+	 *        {@link Version}'s of the module to the corresponding {@link MigrationConfig} that
+	 *        needs to be executed to establish this version.
+	 * @param versionsByModule
+	 *        Totally ordered versions for each module. This value is computed by calling
+	 *        {@link #getVersionsByModule(Log, Map)}.
+	 * @param dbVersion
+	 *        The current version of the application as store in the database. The version consists
+	 *        of the head version for each module. If for a module no {@link Version} is given, it
+	 *        is assumed that this module is a new dependency of the software product and therefore
+	 *        no migrations for that module have to be applied. The only exception to this rule is
+	 *        an empty database version. This is interpreted as the version from before introducing
+	 *        automatic migration. This initial version causes all migrations to be applied.
+	 * @param applicationModules
+	 *        All known application modules in dependency order. When <code>module2</code> depends
+	 *        on <code>module1</code>, <code>module1</code> appears before <code>module2</code> in
+	 *        the list.
+	 */
+	public static List<MigrationConfig> getMigrations(
+			final Map<String, Map<Version, MigrationConfig>> migrationsByModule,
+			final Map<String, List<Version>> versionsByModule,
+			final Map<String, Version> dbVersion,
+			final List<String> applicationModules) {
+
+		// Index all known migrations be their version.
+		Map<VersionID, MigrationRef> migrations = new HashMap<>();
+		for (Map<Version, MigrationConfig> moduleMigrations : migrationsByModule.values()) {
+			for (MigrationConfig config : moduleMigrations.values()) {
+				Version version = config.getVersion();
+
+				MigrationRef migration = MigrationRef.forVersion(migrations, version);
+				migration.initConfig(config);
+
+				for (Version dependency : config.getDependencies().values()) {
+					migration.addDependency(MigrationRef.forVersion(migrations, dependency));
+				}
+			}
+		}
+		
+		for (MigrationRef migration : migrations.values()) {
+			migration.initSucessor();
+		}
+
+		// Remember all migrations that need no longer be executed, because they are
+		// reflexive-transitive dependencies of the version currently stored in the database
+		// ("dbVersion").
+		Set<MigrationRef> done = new HashSet<>();
+		List<MigrationRef> work = new ArrayList<>();
+		for (Version current : dbVersion.values()) {
+			MigrationRef migration = MigrationRef.forVersion(migrations, current);
+
+			done.add(migration);
+			work.add(migration);
+		}
+
+		while (!work.isEmpty()) {
+			MigrationRef migration = work.remove(work.size() - 1);
+			for (MigrationRef dependency : migration.getDependencies()) {
+				if (!done.add(dependency)) {
+					continue;
+				}
+				work.add(dependency);
+			}
+		}
+
+		// For each module the latest version.
+		Map<String, MigrationRef> latest = new HashMap<>();
+		for (MigrationRef migration : migrations.values()) {
+			String module = migration.getModule();
+			if (latest.get(module) == null) {
+				latest.put(module, migration.findLatest());
+			}
+		}
+
+		// For each module the modules for which a migration dependency exists.
+		Map<String, Set<String>> dependencies = new HashMap<>();
+		for (MigrationRef migration : migrations.values()) {
+			String module = migration.getModule();
+			Set<String> moduleDependencies = dependencies.computeIfAbsent(module, x -> new HashSet<>());
+			for (MigrationRef dependency : migration.getDependencies()) {
+				String dependencyModule = dependency.getModule();
+				if (dependencyModule.equals(module)) {
+					continue;
+				}
+				moduleDependencies.add(dependencyModule);
+			}
+		}
+
+		// For all migrations known:
+		for (MigrationRef migration : migrations.values()) {
+			// For all dependencies of a migration/version:
+			for (MigrationRef dependency : migration.getDependencies()) {
+				if (dependency.getModule().equals(migration.getModule())) {
+					// The dependency is a inter-module dependency, but we are only looking for
+					// cross-module dependencies.
+					continue;
+				}
+
+				// The predecessor version of the current version.
+				MigrationRef predecessor = migration.getPredecessor();
+				if (predecessor == null) {
+					// The current migration is the first in its module.
+					continue;
+				}
+
+				// The predecessor of the version, the current one depends on.
+				MigrationRef dependencyPredecessor = dependency.getPredecessor();
+				if (dependencyPredecessor == null) {
+					// There are no migrations in the dependency that must happen before the
+					// predecessor migration.
+					continue;
+				}
+
+				// The dependency of the predecessor of this migration in the dependency module
+				MigrationRef predecessorDependency = predecessor.getDependency(dependency.getModule());
+				{
+					// If a dependency is missing try to find the first ancestor that has a
+					// dependency in the dependency module.
+					MigrationRef ancestor = predecessor;
+					while (predecessorDependency == null) {
+						ancestor = ancestor.getPredecessor();
+						if (ancestor == null) {
+							break;
+						}
+						predecessorDependency = ancestor.getDependency(dependency.getModule());
+					}
+				}
+
+				if (predecessorDependency == dependency || predecessorDependency == dependencyPredecessor) {
+					// There is no version between the dependency and the dependency of the
+					// predecessor that requires ordering.
+					continue;
+				}
+
+				// Find the ancestor version of the dependency in the dependency module that is
+				// the direct successor of the found predecessor dependency.
+				MigrationRef dependencyAncestor = dependencyPredecessor;
+				while (true) {
+					MigrationRef ancestor = dependencyAncestor.getPredecessor();
+					if (ancestor == null || ancestor == predecessorDependency) {
+						break;
+					}
+					dependencyAncestor = ancestor;
+				}
+				dependencyAncestor.addSyntheticDependency(predecessor);
+			}
+		}
+
+		// For each module dependency: Add a migration dependency from the oldest migration that has
+		// no successor referenced from a migration of the dependent module to the latest migration
+		// of the dependent module.
+		for (Entry<String, Set<String>> dependencyEntry : dependencies.entrySet()) {
+			String source = dependencyEntry.getKey();
+			MigrationRef latestOfSource = latest.get(source);
+
+			for (String dest : dependencyEntry.getValue()) {
+				MigrationRef ancestor = latestOfSource;
+				MigrationRef dependencyInDest = null;
+				while (ancestor != null) {
+					MigrationRef dependency = ancestor.getDependency(dest);
+					if (dependency != null) {
+						dependencyInDest = dependency;
+						break;
+					}
+					ancestor = ancestor.getPredecessor();
+				}
+
+				if (dependencyInDest != null) {
+					MigrationRef successor = dependencyInDest.getSuccessor();
+					if (successor != null) {
+						successor.addSyntheticDependency(latestOfSource);
+					}
+				}
+			}
+		}
+
+		for (MigrationRef migration : migrations.values()) {
+			migration.updateDependencies();
+		}
+
+		List<MigrationRef> sorted = CollectionUtil.topsort(m -> m.getDependencies(), migrations.values(), false);
+
+		return sorted.stream()
+			.filter(m -> !done.contains(m))
+			.map(m -> m.getConfig())
+			.filter(Objects::nonNull)
+			.collect(Collectors.toList());
+	}
+
+	/**
 	 * Determines the versions that are new, i.e. the versions that are larger than the
 	 * {@code currentVersions} or for which there is no current version.
 	 * 
@@ -641,7 +840,7 @@ public class MigrationUtil {
 	 *        <code>module1</code> depends on <code>module2</code>, <code>module2</code> appears
 	 *        before <code>module1</code> in the array.
 	 */
-	private static Comparator<Version> versionCompare(
+	public static Comparator<Version> versionCompare(
 			Map<String, Map<Version, MigrationConfig>> migrationScripts,
 			Map<String, List<Version>> versionByModule,
 			Map<String, Version> currentVersions,
@@ -649,19 +848,19 @@ public class MigrationUtil {
 		return new Comparator<>() {
 
 			@Override
-			public int compare(Version o1, Version o2) {
-				if (o1 == o2) {
+			public int compare(Version v1, Version v2) {
+				if (v1 == v2) {
 					return 0;
 				}
-				String module1 = o1.getModule();
-				String module2 = o2.getModule();
+				String module1 = v1.getModule();
+				String module2 = v2.getModule();
 				if (module1.equals(module2)) {
-					return compareVersionsOfSameModule(o1, o2);
+					return compareVersionsOfSameModule(v1, v2);
 				}
-				MigrationConfig o1Migration = migrationScripts.getOrDefault(module1, Collections.emptyMap()).get(o1);
-				MigrationConfig o2Migration = migrationScripts.getOrDefault(module2, Collections.emptyMap()).get(o2);
-				if (o1Migration == null) {
-					if (o2Migration == null) {
+				MigrationConfig v1Migration = migrationScripts.getOrDefault(module1, Collections.emptyMap()).get(v1);
+				MigrationConfig v2Migration = migrationScripts.getOrDefault(module2, Collections.emptyMap()).get(v2);
+				if (v1Migration == null) {
+					if (v2Migration == null) {
 						// The migration script for both versions no longer exit. Since these
 						// migration do not need to be executed anymore, they can be assumed to be
 						// equal.
@@ -670,28 +869,28 @@ public class MigrationUtil {
 						return -1;
 					}
 				} else {
-					if (o2Migration == null) {
+					if (v2Migration == null) {
 						return 1;
 					}
 				}
 
-				Map<String, Version> o2Dependencies = o2Migration.getDependencies();
-				Map<String, Version> o1Dependencies = o1Migration.getDependencies();
-				Version dependencyInModule1 = o2Dependencies.get(module1);
-				if (dependencyInModule1 != null) {
-					assert o1Dependencies.get(module2) == null : "Cyclic dependencies in migration for version "
-							+ MigrationUtil.toString(o1) + " (v1) and " + MigrationUtil.toString(o2)
+				Map<String, Version> v1Dependencies = v1Migration.getDependencies();
+				Map<String, Version> v2Dependencies = v2Migration.getDependencies();
+				Version v2DependencyInModule1 = v2Dependencies.get(module1);
+				if (v2DependencyInModule1 != null) {
+					assert v1Dependencies.get(module2) == null : "Cyclic dependencies in migration for version "
+						+ MigrationUtil.toString(v1) + " (v1) and " + MigrationUtil.toString(v2)
 							+ " (v2). v1 depends on module of v2 and v2 depends on module of v1.";
-					return compareWithDependency(o1, dependencyInModule1);
+					return compareWithDependency(v1, v2DependencyInModule1);
 				}
-				Version dependencyInModule2 = o1Dependencies.get(module2);
-				if (dependencyInModule2 != null) {
-					return -compareWithDependency(o2, dependencyInModule2);
+				Version v1DependencyInModule2 = v1Dependencies.get(module2);
+				if (v1DependencyInModule2 != null) {
+					return -compareWithDependency(v2, v1DependencyInModule2);
 				}
 
 				/* Either modules are really independent or one depends on the other, but was
 				 * created before the first version of the other was created. */
-				int dependencyComparison = compareDepencencies(o1Dependencies, o2Dependencies);
+				int dependencyComparison = compareDepencencies(v1, v2, v1Dependencies, v2Dependencies);
 				if (dependencyComparison != 0) {
 					return dependencyComparison;
 				}
@@ -717,21 +916,33 @@ public class MigrationUtil {
 				return 1;
 			}
 
-			private int compareDepencencies(Map<String, Version> o1Dependencies, Map<String, Version> o2Dependencies) {
+			private int compareDepencencies(Version v1, Version v2, Map<String, Version> v1Dependencies,
+					Map<String, Version> v2Dependencies) {
 				/* Check common dependencies. If there is a common dependency with a different
 				 * version the version with the larger dependency was created later and is therefore
 				 * larger. */
 				Set<String> commonDependencies =
-					CollectionUtil.intersection(o1Dependencies.keySet(), o2Dependencies.keySet());
+					CollectionUtil.intersection(v1Dependencies.keySet(), v2Dependencies.keySet());
+
+				String diferentiatingModule = null;
+				int result = 0;
 				for (String commonDependency : commonDependencies) {
-					Version o1Dependency = o1Dependencies.get(commonDependency);
-					Version o2Dependency = o2Dependencies.get(commonDependency);
-					int commonDependencyComparison = compare(o1Dependency, o2Dependency);
-					if (commonDependencyComparison != 0) {
-						return commonDependencyComparison;
+					Version v1Dependency = v1Dependencies.get(commonDependency);
+					Version v2Dependency = v2Dependencies.get(commonDependency);
+					int commonDependencyComparison = compareVersionsOfSameModule(v1Dependency, v2Dependency);
+					if (commonDependencyComparison == 0) {
+						continue;
 					}
+					int localResult = commonDependencyComparison < 0 ? -1 : 1;
+					if (result != 0 && result != localResult) {
+						assert false : "Versions " + MigrationUtil.toString(v1) + " and " + MigrationUtil.toString(v2)
+							+ " have inconsistent dependencies in modules " + diferentiatingModule + " and "
+							+ commonDependency + ".";
+					}
+					result = localResult;
+					diferentiatingModule = commonDependency;
 				}
-				return 0;
+				return result;
 			}
 
 			private int compareVersionsOfSameModule(Version o1, Version o2) {
@@ -766,15 +977,15 @@ public class MigrationUtil {
 	public static Map<String, List<Version>> getVersionsByModule(Log log,
 			Map<String, Map<Version, MigrationConfig>> migrationScripts) {
 		final Map<String, List<Version>> versionByModule = new HashMap<>();
-		for (Entry<String, Map<Version, MigrationConfig>> e : migrationScripts.entrySet()) {
-			Map<Version, MigrationConfig> migrations = e.getValue();
+		for (Entry<String, Map<Version, MigrationConfig>> entry : migrationScripts.entrySet()) {
+			Map<Version, MigrationConfig> migrations = entry.getValue();
 
 			List<Version> versions = getAllVersions(log, migrations);
 			if (versions.isEmpty()) {
 				// There was an error computing the version.
 				continue;
 			}
-			String module = e.getKey();
+			String module = entry.getKey();
 
 			versionByModule.put(module, versions);
 		}

@@ -1,0 +1,175 @@
+/*
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.knowledge.service.migration.model;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.top_logic.knowledge.service.migration.MigrationConfig;
+import com.top_logic.knowledge.service.migration.Version;
+
+/**
+ * Information about a migration to be performed.
+ */
+public class MigrationRef {
+	private final VersionID _id;
+
+	private MigrationConfig _config;
+
+	private Map<String, MigrationRef> _dependencyByModule = new HashMap<>();
+
+	private List<MigrationRef> _reverseDependencies = new ArrayList<>();
+
+	private MigrationRef _successor;
+
+	/**
+	 * Creates a {@link MigrationRef}.
+	 *
+	 * @param id
+	 *        The version identifier.
+	 */
+	public MigrationRef(VersionID id) {
+		_id = id;
+	}
+
+	/**
+	 * Lookup or create a migration reference for the given version.
+	 *
+	 * @param migrations
+	 *        All known migrations.
+	 * @param version
+	 *        The version.
+	 * @return An existing reference from the given pool, or a new uninitialized reference.
+	 */
+	public static MigrationRef forVersion(Map<VersionID, MigrationRef> migrations, Version version) {
+		return migrations.computeIfAbsent(VersionID.of(version), id -> new MigrationRef(id));
+	}
+
+	/**
+	 * Initializes this reference with the actual migration configuration.
+	 */
+	public void initConfig(MigrationConfig config) {
+		assert _config == null;
+		_config = config;
+	}
+
+	/**
+	 * Adds a dependency that must be executed before this migation.
+	 */
+	public void addDependency(MigrationRef dependency) {
+		MigrationRef clash = _dependencyByModule.put(dependency.getModule(), dependency);
+		assert clash == null : "Non-unique dependency for '" + getId() + "' in module '" + dependency.getModule()
+			+ "': " + dependency.getId() + " vs. " + clash.getId();
+	}
+
+	/**
+	 * The migration in the same module, this one is based on, <code>null</code> for the initial
+	 * version of a module.
+	 */
+	public MigrationRef getPredecessor() {
+		return _dependencyByModule.get(_id.getModule());
+	}
+
+	/**
+	 * All direct dependencies that must be executed before this migration.
+	 */
+	public Collection<MigrationRef> getDependencies() {
+		return _dependencyByModule.values();
+	}
+
+	/**
+	 * The name of the module this migration must be run in.
+	 */
+	public String getModule() {
+		return _id.getModule();
+	}
+
+	/**
+	 * The migration in the given module, this one is based on. <code>null</code> means that the
+	 * module of this migration does not depend on the given module or there is no migration in the
+	 * given module.
+	 */
+	public MigrationRef getDependency(String module) {
+		return _dependencyByModule.get(module);
+	}
+
+	/**
+	 * Additional dependencies introduced during dependency analysis.
+	 */
+	public void addSyntheticDependency(MigrationRef predecessor) {
+		assert predecessor != null;
+		_reverseDependencies.add(predecessor);
+	}
+
+	/**
+	 * Flushes synthetic dependencies into the regular dependencies.
+	 */
+	public void updateDependencies() {
+		for (MigrationRef dependency : _reverseDependencies) {
+			addDependency(dependency);
+		}
+	}
+
+	/**
+	 * The migration configuration.
+	 */
+	public MigrationConfig getConfig() {
+		return _config;
+	}
+
+	@Override
+	public String toString() {
+		return _id + " -> "
+			+ getDependencies().stream().map(m -> m.getId().toString()).collect(Collectors.joining(", "));
+	}
+
+	private VersionID getId() {
+		return _id;
+	}
+
+	/**
+	 * Initializes the {@link #getSuccessor()} relation.
+	 */
+	public void initSucessor() {
+		MigrationRef predecessor = getPredecessor();
+		if (predecessor != null) {
+			predecessor.initSuccessor(this);
+		}
+	}
+
+	/**
+	 * The successor in the same module.
+	 */
+	public MigrationRef getSuccessor() {
+		return _successor;
+	}
+
+	private void initSuccessor(MigrationRef successor) {
+		assert _successor == null : "Non-unique successor for migration '" + getId() + "': " + _successor.getId()
+			+ " or " + successor.getId();
+		_successor = successor;
+	}
+
+	/**
+	 * The migration that has no {@link #getSuccessor()}
+	 */
+	public MigrationRef findLatest() {
+		MigrationRef result = this;
+		while (true) {
+			MigrationRef successor = result.getSuccessor();
+			if (successor == null) {
+				break;
+			}
+			result = successor;
+		}
+		return result;
+	}
+}
+

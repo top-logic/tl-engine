@@ -17,6 +17,7 @@ import java.util.function.Predicate;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -1126,6 +1127,12 @@ public class MigrationUtils {
 		Element part = getTLTypePartOrFail(log, type, partName.getPartName());
 		if (newOverride) {
 			part.setAttribute(PartConfig.OVERRIDE, Boolean.toString(newOverride));
+			Attr inverseReferenceAttribute = part.getAttributeNode(ReferenceConfig.INVERSE_REFERENCE);
+			if (inverseReferenceAttribute != null) {
+				log.info("Removed attribute '" + ReferenceConfig.INVERSE_REFERENCE
+						+ "' from " + partName.getName() + ", because it is redundant and not allowed in overrides.");
+				part.removeAttribute(ReferenceConfig.INVERSE_REFERENCE);
+			}
 		} else {
 			part.removeAttribute(PartConfig.OVERRIDE);
 		}

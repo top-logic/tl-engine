@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -940,7 +941,24 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			if (referenceConfig.getKind() == ReferenceKind.BACKWARDS) {
 				CreateInverseTLReferenceProcessor.Config inverseConf =
 					newConfigItem(CreateInverseTLReferenceProcessor.Config.class);
-				inverseConf.setInverseReference(qTypePartName(targetType, referenceConfig.getInverseReference()));
+				String inverseReference = referenceConfig.getInverseReference();
+				if (StringServices.isEmpty(inverseReference)) {
+					if (referenceConfig.isOverride()) {
+						TLReference inverseRef = TLModelUtil.getOtherEnd(associationEnd).getReference();
+						if (inverseRef == null) {
+							log().info(
+								"Override of a backwards reference without inverse-reference: " + referenceConfig,
+								Protocol.WARN);
+						} else {
+							inverseReference = inverseRef.getName();
+						}
+					} else {
+						log().info("Non override backwards reference without inverse-reference annotation: "
+								+ referenceConfig,
+							Protocol.WARN);
+					}
+				}
+				inverseConf.setInverseReference(qTypePartName(targetType, inverseReference));
 				config = inverseConf;
 			} else {
 				CreateTLReferenceProcessor.Config refConf = newConfigItem(CreateTLReferenceProcessor.Config.class);

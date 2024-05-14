@@ -271,6 +271,14 @@ public class TestMigrationUtil extends BasicTestCase {
 		TestModule demo = new TestModule("demo", ewe, reporting, importer, element, tl);
 
 		List<Version> versions = new ArrayList<>();
+
+		versions.add(createInitalVersion(tl));
+		versions.add(createInitalVersion(element));
+		versions.add(createInitalVersion(importer));
+		versions.add(createInitalVersion(reporting));
+		versions.add(createInitalVersion(ewe));
+		versions.add(createInitalVersion(demo));
+
 		versions.add(createVersion(tl));
 		versions.add(createVersion(tl));
 		versions.add(createVersion(element));
@@ -288,7 +296,6 @@ public class TestMigrationUtil extends BasicTestCase {
 		checkMigrationOrder(modules, versions, migrations);
 	}
 
-	@SuppressWarnings("unused")
 	public void testCorrectMigrationOrder2() {
 		TestModule tl = new TestModule("tl");
 		TestModule element = new TestModule("element", tl);
@@ -306,18 +313,18 @@ public class TestMigrationUtil extends BasicTestCase {
 
 		List<Version> versions = new ArrayList<>();
 		versions.add(createVersion(reporting));
-		if (true) {
-			// The order of ewe and importer is not fixed, because the modules are independent. When
-			// implementation changes, it may be that the other order may be correct :-(
-			versions.add(createVersion(ewe));
-			versions.add(createVersion(importer));
-		} else {
-			versions.add(createVersion(importer));
-			versions.add(createVersion(ewe));
-		}
+		versions.add(createVersion(ewe));
+		versions.add(createVersion(importer));
 		versions.add(createVersion(demo));
 		versions.add(createVersion(tl));
-		checkMigrationOrder(versions, Arrays.asList(tl, element, importer, reporting, ewe, demo));
+
+		// The version information stored in the database of the simulated software product at
+		// the time the migration starts.
+		Map<String, Version> currentVersions = currentVersions(_latestVersionsAtVersionTime.get(versions.get(0)));
+
+		List<TestModule> modules = Arrays.asList(tl, element, importer, reporting, ewe, demo);
+		List<MigrationConfig> migrations = migrationsPerformed(currentVersions, modules);
+		checkMigrationOrder(modules, versions, migrations);
 	}
 
 	public void testSimple() {
@@ -428,9 +435,9 @@ public class TestMigrationUtil extends BasicTestCase {
 	public void testDynamic() {
 		Random rnd = new Random(42);
 
-		for (int n = 0; n < 1000; n++) {
+		for (int n = 0; n < 100; n++) {
 			int moduleCnt = 3 + rnd.nextInt(50);
-			int versionCnt = 2 + rnd.nextInt(50);
+			int versionCnt = 2 + rnd.nextInt(100);
 
 			testDynamic(rnd, moduleCnt, versionCnt);
 			reset();
@@ -458,10 +465,10 @@ public class TestMigrationUtil extends BasicTestCase {
 			TestModule module = new TestModule("m" + n, dependencies.toArray(new TestModule[0]));
 			modules.add(module);
 
-			System.out.println(module);
+			// System.out.println(module);
 		}
 
-		System.out.println();
+		// System.out.println();
 
 		// Create initial versions.
 		List<Version> versions = new ArrayList<>();
@@ -478,36 +485,15 @@ public class TestMigrationUtil extends BasicTestCase {
 		}
 
 
-		System.out.println();
+		// System.out.println();
 
 		// The version information stored in the database of the simulated software product at
 		// the time the migration starts.
 		Map<String, Version> dbVersion = currentVersions(_latestVersionsAtVersionTime.get(versions.get(0)));
 
-//		Map<String, Map<Version, MigrationConfig>> availableMigrations = availableMigrations();
-//		Map<String, List<Version>> versionsByModule = getVersionsByModule(_log, availableMigrations);
-//		List<String> modulesSorted = moduleDependencies(modules);
-//		Comparator<Version> versionCompare =
-//			MigrationUtil.versionCompare(availableMigrations, versionsByModule, dbVersion, modulesSorted);
-//
-//		for (int n = 0; n < versions.size(); n++) {
-//			for (int k = n + 1; k < versions.size(); k++) {
-//				Version v1 = versions.get(n);
-//				Version v2 = versions.get(k);
-//
-//				int result1 = versionCompare.compare(v1, v2);
-//				assertTrue(toString(v1) + " > " + toString(v2), result1 <= 0);
-//
-//				int result2 = versionCompare.compare(v2, v1);
-//				assertTrue(toString(v1) + " < " + toString(v2), result2 >= 0);
-//
-//				assertTrue(!((result1 == 0) ^ (result2 == 0)));
-//			}
-//		}
-
 		List<MigrationConfig> migrations = migrationsPerformed(dbVersion, modules);
 
-		printMigrations(migrations);
+		// printMigrations(migrations);
 
 		checkMigrationOrder(modules, versions, migrations);
 	}
@@ -704,11 +690,7 @@ public class TestMigrationUtil extends BasicTestCase {
 	 * Simulates creating the implicit initial version for the given module.
 	 */
 	private Version createInitalVersion(TestModule module) {
-		Version initial = newVersion(module.name(), "initial");
-		_latestVersions.put(module, initial);
-		_migrationForVersion.put(initial, newMigration(initial, Collections.emptyList()));
-		return initial;
-//		return createVersion(module, "initial");
+		return createVersion(module, "initial");
 	}
 
 	/**

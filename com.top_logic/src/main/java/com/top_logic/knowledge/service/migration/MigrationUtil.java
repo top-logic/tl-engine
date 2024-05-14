@@ -576,7 +576,53 @@ public class MigrationUtil {
 	 * The {@link MigrationConfig migrations} to perform in the order in which they must be applied
 	 * to update the system.
 	 * 
-	 * <img src="./dependency-graph.svg"/>
+	 * <p>
+	 * The migrations span a dependency graph, since each migration is based on the last migration
+	 * in each dependent module at the time the migration was created. Unfortunately, these recorded
+	 * dependencies are not sufficient to compute an acceptable migration order by simply applying
+	 * topological sort to the dependency graph. The problem occurs, when a migration is created in
+	 * a base module after some migration in a dependent module.
+	 * </p>
+	 * 
+	 * <p>
+	 * The situation is shown in the following figure. The blue arrows represent dependencies that
+	 * are recorded in the migration files. Here, B0 was created before A0, because, otherwise, the
+	 * dependency B0 -> A0 would have been recorded. B1 was created last, since, both dependencies
+	 * B1 -> B0 and B1 -> A0 have been recorded.
+	 * </p>
+	 * 
+	 * <img src="./01-simple-dependency.svg"/>
+	 * 
+	 * <p>
+	 * When simply topologically sorting the dependency graph consisting of the blue arrows, both
+	 * migration strategies could occur: A0, B0, B1 and B0, A0, B1. But only the latter is correct,
+	 * because of the missing recorded dependency B0 -> A0.
+	 * </p>
+	 * 
+	 * <p>
+	 * To fix this situation, additional synthesized dependencies (red arrows) according to the
+	 * following rules must be added to the graph before topologically sorting:
+	 * </p>
+	 *
+	 * <h2>Dependency inversion</h2>
+	 * 
+	 * <img src="./02-rule-dependency-inversion.svg"/>
+	 * 
+	 * <p>
+	 * For each cross-module dependency B2 -> A2, introduce a new dependency
+	 * successor(dependency(predecessor(B2))) -> predecessor(B2), if dependency(predecessor(B2)) !=
+	 * A2.
+	 * </p>
+	 * 
+	 * <h2>Module inversion</h2>
+	 * 
+	 * <img src="./03-rule-module-dependencies.svg"/>
+	 * 
+	 * <p>
+	 * For each of the modules M1, M2, where M2 depends on M2, add a dependency A1 -> B2 to a
+	 * version A1 in M1 and B2 in M2 so that B2 is the head version in M2 and A2 is the latest
+	 * version in M1 that is not referenced by any version in M2.
+	 * </p>
 	 * 
 	 * @param migrationsByModule
 	 *        All migrations indexed by their module. The value is a mapping from all known
@@ -684,38 +730,18 @@ public class MigrationUtil {
 					continue;
 				}
 
-				// The predecessor of the version, the current one depends on.
-				MigrationRef dependencyPredecessor = dependency.getPredecessor();
-				if (dependencyPredecessor == null) {
-					// There are no migrations in the dependency that must happen before the
-					// predecessor migration.
-					continue;
-				}
-
 				// The dependency of the predecessor of this migration in the dependency module
 				MigrationRef predecessorDependency = predecessor.getDependency(dependency.getModule());
-				{
-					// If a dependency is missing try to find the first ancestor that has a
-					// dependency in the dependency module.
-					MigrationRef ancestor = predecessor;
-					while (predecessorDependency == null) {
-						ancestor = ancestor.getPredecessor();
-						if (ancestor == null) {
-							break;
-						}
-						predecessorDependency = ancestor.getDependency(dependency.getModule());
-					}
-				}
-
-				if (predecessorDependency == dependency || predecessorDependency == dependencyPredecessor) {
-					// There is no version between the dependency and the dependency of the
-					// predecessor that requires ordering.
+				if (predecessorDependency == dependency) {
+					// The predecessor has the same dependency. This version is just an update of
+					// the predecessor version without new dependencies. Leaf the handling to the
+					// predecessor.
 					continue;
 				}
 
-				// Find the ancestor version of the dependency in the dependency module that is
-				// the direct successor of the found predecessor dependency.
-				MigrationRef dependencyAncestor = dependencyPredecessor;
+				// Find the ancestor version of the dependency that is the direct successor of the
+				// found predecessor dependency.
+				MigrationRef dependencyAncestor = dependency;
 				while (true) {
 					MigrationRef ancestor = dependencyAncestor.getPredecessor();
 					if (ancestor == null || ancestor == predecessorDependency) {

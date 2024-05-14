@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
-    <stringAttribute key="bad_container_name" value="/com.top_logic.element/bin/laun"/>
+    <stringAttribute key="bad_container_name" value="/com.top_logic.contact/bin/launch"/>
     <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
         <listEntry value="/com.top_logic/src/main/java/com/top_logic/knowledge/service/migration/CreateMigrationScriptTemplate.java"/>
@@ -15,6 +15,6 @@
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.top_logic.knowledge.service.migration.CreateMigrationScriptTemplate"/>
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="com.top_logic"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--name &quot;${string_prompt:migration name}&quot;"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.top_logic.element"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.top_logic.contact"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

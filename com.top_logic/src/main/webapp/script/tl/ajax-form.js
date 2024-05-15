@@ -2118,7 +2118,7 @@ services.form = {
 			var img = BAL.DOM.getFirstElementChild(controlElement);
 			var imageCnt = 0;
 			while (img != null) {
-				if (img.className.indexOf("input-image") > -1) {
+				if (BAL.DOM.getNonStandardAttribute(img, "data-value") != null) {
 					images[imageCnt] = img;
 					if (img == element) {
 						currentIndex = imageCnt;
@@ -2143,7 +2143,7 @@ services.form = {
 				images[currentIndex].style.display = "none";
 			}
 			images[newIndex].style.display = "inline";
-			images[newIndex].focus();
+			BAL.focusFirst(images[newIndex]);
 			
 			// Notify server.
 			services.form.sendValueUpdate(controlElement, controlId, newValue, showWait);

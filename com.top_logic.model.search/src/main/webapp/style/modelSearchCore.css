@@ -65,6 +65,7 @@ div.ace_tooltip>code.inlineCode {
 	grid-column-gap: var(--spacing-01);
 	grid-template-columns: repeat(8, auto);
 	align-items: center;
+	max-width: max-content;
 }
 
 .modelBasedSearch .dfListEntry > * {

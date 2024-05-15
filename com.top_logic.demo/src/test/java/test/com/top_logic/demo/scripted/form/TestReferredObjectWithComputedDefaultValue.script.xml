@@ -5,7 +5,7 @@
 >
 	<actions>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Navigiere zu Register 'Berechnetes Standardwert in Referenz' unter 'Technisches Demo > Tests'"
+			comment="Navigiere zu Register 'Berechneter Standardwert in Referenz' unter 'Technisches Demo > Tests'"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -26,13 +26,13 @@
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz"
+						tab-path="Technisches Demo > Tests > Berechneter Standardwert in Referenz"
 					/>
 				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Erstelle ein Kontainer Objekt"
+			comment="Erstelle ein Container-Objekt"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -80,7 +80,7 @@
 						label="Tabelle in Zeilenobjekte"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+							tab-path="Technisches Demo > Tests > Berechneter Standardwert in Referenz > Details"
 						/>
 					</business-object>
 				</action>
@@ -94,7 +94,7 @@
 							label="Ganzzahlfeld"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+								tab-path="Technisches Demo > Tests > Berechneter Standardwert in Referenz > Details"
 							/>
 						</model>
 					</actual-value>
@@ -122,7 +122,7 @@
 							label="Ganzzahlfeld"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+								tab-path="Technisches Demo > Tests > Berechneter Standardwert in Referenz > Details"
 							/>
 						</model>
 					</actual-value>
@@ -160,7 +160,7 @@
 							</edited-object>
 							<form-context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+									tab-path="Technisches Demo > Tests > Berechneter Standardwert in Referenz > Details"
 								/>
 								<path/>
 							</form-context>
@@ -171,7 +171,7 @@
 						label="Tabelle in Zeilenobjekte"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+							tab-path="Technisches Demo > Tests > Berechneter Standardwert in Referenz > Details"
 						/>
 					</selection-model-name>
 				</action>
@@ -184,7 +184,7 @@
 						label="Tabelle in Zeilenobjekte"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Tests > Berechnetes Standardwert in Referenz > Details"
+							tab-path="Technisches Demo > Tests > Berechneter Standardwert in Referenz > Details"
 						/>
 					</business-object>
 				</action>

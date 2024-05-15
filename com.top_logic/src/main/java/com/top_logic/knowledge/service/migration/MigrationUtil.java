@@ -623,7 +623,7 @@ public class MigrationUtil {
 	 * <img src="./03-rule-module-dependencies.svg"/>
 	 * 
 	 * <p>
-	 * For each of the modules M1, M2, where M2 depends on M2, add a dependency A1 -> B2 to a
+	 * For each of the modules M1, M2, where M2 depends on M1, add a dependency A1 -> B2 to a
 	 * version A1 in M1 and B2 in M2 so that B2 is the head version in M2 and A2 is the latest
 	 * version in M1 that is not referenced by any version in M2.
 	 * </p>
@@ -703,20 +703,6 @@ public class MigrationUtil {
 			}
 		}
 
-		// For each module the modules for which a migration dependency exists.
-		Map<String, Set<String>> dependencies = new HashMap<>();
-		for (MigrationRef migration : migrations.values()) {
-			String module = migration.getModule();
-			Set<String> moduleDependencies = dependencies.computeIfAbsent(module, x -> new HashSet<>());
-			for (MigrationRef dependency : migration.getDependencies()) {
-				String dependencyModule = dependency.getModule();
-				if (dependencyModule.equals(module)) {
-					continue;
-				}
-				moduleDependencies.add(dependencyModule);
-			}
-		}
-
 		// For all migrations known:
 		for (MigrationRef migration : migrations.values()) {
 			// For all dependencies of a migration/version:
@@ -760,27 +746,19 @@ public class MigrationUtil {
 		// For each module dependency: Add a migration dependency from the oldest migration that has
 		// no successor referenced from a migration of the dependent module to the latest migration
 		// of the dependent module.
-		for (Entry<String, Set<String>> dependencyEntry : dependencies.entrySet()) {
-			String source = dependencyEntry.getKey();
-			MigrationRef latestOfSource = latest.get(source);
+		for (Entry<String, MigrationRef> latestEntry : latest.entrySet()) {
+			String source = latestEntry.getKey();
+			MigrationRef latestSource = latestEntry.getValue();
 
-			for (String dest : dependencyEntry.getValue()) {
-				MigrationRef ancestor = latestOfSource;
-				MigrationRef dependencyInDest = null;
-				while (ancestor != null) {
-					MigrationRef dependency = ancestor.getDependency(dest);
-					if (dependency != null) {
-						dependencyInDest = dependency;
-						break;
-					}
-					ancestor = ancestor.getPredecessor();
+			for (MigrationRef latestDependency : latestSource.getDependencies()) {
+				if (latestDependency.getModule().equals(source)) {
+					// Only cross-module dependencies.
+					continue;
 				}
 
-				if (dependencyInDest != null) {
-					MigrationRef successor = dependencyInDest.getSuccessor();
-					if (successor != null) {
-						successor.addSyntheticDependency(latestOfSource);
-					}
+				MigrationRef dependencySuccessor = latestDependency.getSuccessor();
+				if (dependencySuccessor != null) {
+					dependencySuccessor.addSyntheticDependency(latestSource);
 				}
 			}
 		}

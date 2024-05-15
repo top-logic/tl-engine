@@ -79,7 +79,7 @@
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="dezentSidebar"
+						value="coreSidebar"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -107,7 +107,7 @@
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="dezentSidebar"
+						value="coreSidebar"
 					/>
 				</action>
 			</actions>
@@ -146,7 +146,7 @@
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="core"
+						value="coreSidebar"
 					/>
 				</action>
 			</actions>

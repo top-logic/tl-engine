@@ -1436,14 +1436,14 @@ public class Util {
 	/**
 	 * The column name of the {@link ReferencePart#name} aspect of the given reference attribute.
 	 */
-	public String refID(String reference) {
+	public static String refID(String reference) {
 		return ReferencePart.name.getReferenceAspectColumnName(SQLH.mangleDBName(reference));
 	}
 
 	/**
 	 * The column name of the {@link ReferencePart#type} aspect of the given reference attribute.
 	 */
-	public String refType(String reference) {
+	public static String refType(String reference) {
 		return ReferencePart.type.getReferenceAspectColumnName(SQLH.mangleDBName(reference));
 	}
 
@@ -1926,6 +1926,44 @@ public class Util {
 		return searchResult;
 	}
 
+	private Set<TypeGeneralization> getAllTLClassGeneralizations(PooledConnection connection) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String sourceColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+		String destColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
+
+		String identifierAlias = "id";
+		String sourceAlias = "source";
+		String destAlias = "dest";
+		String orderAlias = "order";
+		CompiledStatement selectTLStructuredTypePart = query(
+			selectDistinct(
+				columns(
+					branchColumnDef(),
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(sourceColumn, NO_TABLE_ALIAS, sourceAlias),
+					columnDef(destColumn, NO_TABLE_ALIAS, destAlias),
+					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER),
+						NO_TABLE_ALIAS, orderAlias)),
+				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS)),
+				SQLFactory.literalTrueLogical())).toSql(sqlDialect);
+
+		Set<TypeGeneralization> searchResult = new HashSet<>();
+		try (ResultSet dbResult = selectTLStructuredTypePart.executeQuery(connection)) {
+			while (dbResult.next()) {
+				TypeGeneralization generalization = BranchIdType.newInstance(TypeGeneralization.class,
+					dbResult.getLong(BasicTypes.BRANCH_DB_NAME),
+					LongID.valueOf(dbResult.getLong(identifierAlias)),
+					ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS);
+				generalization.setSource(LongID.valueOf(dbResult.getLong(sourceAlias)));
+				generalization.setDestination(LongID.valueOf(dbResult.getLong(destAlias)));
+				generalization.setOrder(dbResult.getInt(orderAlias));
+				searchResult.add(generalization);
+			}
+		}
+		return searchResult;
+	}
+
 	/**
 	 * Retrieves the generalization links for the given {@link TLType}.
 	 */
@@ -1940,6 +1978,44 @@ public class Util {
 		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_PRIMITIVE)) {
 			// no generalizations for primitives
 			return Collections.emptyList();
+		}
+		throw new IllegalArgumentException("No TLType: " + type.getTable());
+	}
+
+	/**
+	 * Retrieves the {@link TLID local id} for the given {@link TLType} and all inherited
+	 * specialisations.
+	 */
+	public Set<TLID> getTransitiveSpecializations(PooledConnection connection, Type type) throws SQLException {
+		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_ENUMERATION)) {
+			// no specializations for enumerations
+			return Collections.singleton(type.getID());
+		}
+		if (type.getTable().equals(ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE)) {
+			Set<TypeGeneralization> allGeneralisations = getAllTLClassGeneralizations(connection);
+			Set<TLID> allSpecialisations = new HashSet<>();
+			allSpecialisations.add(type.getID());
+			while (true) {
+				boolean foundNew = false;
+				for (TypeGeneralization gen : allGeneralisations) {
+					if (gen.getBranch() != type.getBranch()) {
+						// foreign branch.
+						continue;
+					}
+					if (allSpecialisations.contains(gen.getDestination())) {
+						boolean isNew = allSpecialisations.add(gen.getSource());
+						foundNew |= isNew;
+					}
+				}
+				if (!foundNew) {
+					break;
+				}
+			}
+			return allSpecialisations;
+		}
+		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_PRIMITIVE)) {
+			// no specializations for primitives
+			return Collections.singleton(type.getID());
 		}
 		throw new IllegalArgumentException("No TLType: " + type.getTable());
 	}

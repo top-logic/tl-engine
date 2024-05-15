@@ -1,0 +1,70 @@
+<p>​</p>
+
+<h3>Syntax</h3>
+
+<pre>
+	<code>$object.transient()
+
+transient($object)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Prüft, ob ein Objekt als transient deklariert wurde. Transiente Objekte sind nur lokal in der Session des Benutzers sichtbar und können nicht in die Referenz eines persistenten Objektes gespeichert werden.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>object</td>
+			<td>Fachobjekt</td>
+			<td>Das zu testende Objekt.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Wahrheitswert</p>
+
+<p><code class="hljs inlineCode">true</code>, wenn das Objekt transient ist.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Transiente Objekte</h3>
+
+<pre>
+	<code>{
+    object = new(`my.module:MyClass`, null, true);
+    $object.transient();
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> <code class="hljs inlineCode">true</code></p>
+
+<h3>Persistente Objekte</h3>
+
+<pre>
+	<code>{
+    object = new(`my.module:MyClass`);
+    $object.transient();
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> <code class="hljs inlineCode">false</code></p>
+
+<p>​</p>
+
+<p>​</p>

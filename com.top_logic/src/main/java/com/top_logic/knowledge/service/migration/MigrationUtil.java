@@ -770,7 +770,13 @@ public class MigrationUtil {
 		List<MigrationRef> sorted = CollectionUtil.topsort(m -> m.getDependencies(), migrations.values(), false);
 
 		return sorted.stream()
+			// Only those migrations that belong to modules that were already present in the base
+			// version stored in the database.
+			.filter(m -> dbVersion.containsKey(m.getModule()))
+
+			// Only those migrations not already performed during former startups.
 			.filter(m -> !done.contains(m))
+
 			.map(m -> m.getConfig())
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());

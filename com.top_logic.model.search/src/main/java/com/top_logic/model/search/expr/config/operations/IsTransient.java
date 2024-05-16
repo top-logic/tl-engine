@@ -9,15 +9,17 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
- * The class {@link IsTransient} for checking if an Object (@link TLObject) is transient.
+ * The class {@link IsTransient} for checking whether an Object ({@link TLObject}) is transient.
  * 
  * @author <a href="mailto:maziar.behdju@top-logic.com">Maziar Behdju</a>
  */
@@ -37,7 +39,7 @@ public class IsTransient extends GenericMethod {
 
 	@Override
 	public TLType getType(List<TLType> argumentTypes) {
-		return null;
+		return TLModelUtil.findType(TypeSpec.BOOLEAN_TYPE);
 	}
 
 	@Override
@@ -49,7 +51,7 @@ public class IsTransient extends GenericMethod {
 
 		TLObject tlInput = (TLObject) input;
 
-		return tlInput.tTransient();
+		return Boolean.valueOf(tlInput.tTransient());
 
 	}
 
@@ -80,7 +82,4 @@ public class IsTransient extends GenericMethod {
 		}
 
 	}
-
-
 }
-

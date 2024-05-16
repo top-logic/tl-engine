@@ -40,12 +40,6 @@
 				</model-filter>
 			</instance>
 		</config>
-
-		<config service-class="com.top_logic.gui.ThemeFactory">
-			<instance>
-				<default-theme>dezentSidebar</default-theme>
-			</instance> 
-		</config>		
 		
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>

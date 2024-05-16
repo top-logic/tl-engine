@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.top_logic.knowledge.service.migration.MigrationConfig;
 import com.top_logic.knowledge.service.migration.Version;
@@ -126,8 +125,7 @@ public class MigrationRef {
 
 	@Override
 	public String toString() {
-		return _id + " -> "
-			+ getDependencies().stream().map(m -> m.getId().toString()).collect(Collectors.joining(", "));
+		return _id.toString();
 	}
 
 	private VersionID getId() {

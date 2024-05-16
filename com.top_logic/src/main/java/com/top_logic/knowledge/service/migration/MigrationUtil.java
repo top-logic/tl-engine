@@ -1011,10 +1011,14 @@ public class MigrationUtil {
 	private static Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log, List<String> modules)
 			throws DatabaseAccessException {
 		Set<String> modulesSet = new HashSet<>(modules);
-		Map<String, Map<Version, MigrationConfig>> migrationConfigs = new HashMap<>();
+		Map<String, Map<Version, MigrationConfig>> migrationsByModule = new HashMap<>();
+		Map<String, Version> initialVersions = new HashMap<>();
+		Map<String, Set<String>> moduleDependencies = new HashMap<>();
 		for (String migrationFolder : FileManager.getInstance().getResourcePaths(MIGRATION_BASE_RESOURCE)) {
 			String moduleName =
 				migrationFolder.substring(MIGRATION_BASE_RESOURCE.length(), migrationFolder.length() - 1);
+			Set<String> baseModules = moduleDependencies.computeIfAbsent(moduleName, x -> new HashSet<>());
+			baseModules.add(moduleName);
 
 			if (!modulesSet.contains(moduleName)) {
 				log.info(
@@ -1030,6 +1034,7 @@ public class MigrationUtil {
 			MigrationConfig noMigration = TypedConfiguration.newConfigItem(MigrationConfig.class);
 			noMigration.setVersion(initial);
 			moduleMigrationConfigs.put(initial, noMigration);
+			initialVersions.put(moduleName, initial);
 
 			for (String migrationResource : FileManager.getInstance().getResourcePaths(migrationFolder)) {
 				if (!migrationResource.endsWith(MIGRATION_FILE_SUFFIX)) {
@@ -1038,17 +1043,38 @@ public class MigrationUtil {
 				Version version = getVersion(moduleName, migrationResource.substring(migrationFolder.length()));
 				MigrationConfig config = readMigrationConfig(log, version);
 				if (config != null) {
-					Version previous = config.getDependencies().get(moduleName);
-					if (previous == null) {
-						config.getDependencies().put(moduleName, initial);
-					}
-
 					moduleMigrationConfigs.put(version, config);
+					baseModules.addAll(config.getDependencies().keySet());
 				}
 			}
-			migrationConfigs.put(moduleName, moduleMigrationConfigs);
+			migrationsByModule.put(moduleName, moduleMigrationConfigs);
 		}
-		return migrationConfigs;
+
+		// Complete migration scripts with synthesized initial versions.
+		for (Entry<String, Map<Version, MigrationConfig>> moduleEntry : migrationsByModule.entrySet()) {
+			String module = moduleEntry.getKey();
+			Set<String> baseModules = moduleDependencies.getOrDefault(module, Collections.emptySet());
+			
+			for (Entry<Version, MigrationConfig> migrationEntry : moduleEntry.getValue().entrySet()) {
+				Version version = migrationEntry.getKey();
+				MigrationConfig migration = migrationEntry.getValue();
+
+				// Add dependency to initial versions.
+				Map<String, Version> dependencies = migration.getDependencies();
+				for (String baseModule : baseModules) {
+					if (!dependencies.containsKey(baseModule)) {
+						Version initial = initialVersions.get(baseModule);
+
+						// Do not add a cyclic dependency between initial versions.
+						if (!version.equals(initial)) {
+							dependencies.put(baseModule, initial);
+						}
+					}
+				}
+			}
+		}
+
+		return migrationsByModule;
 	}
 
 	/**

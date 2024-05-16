@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -752,10 +753,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	@Override
 	protected void addEnumType(TLModule module, TLScope scope, EnumConfig config) {
-		super.addEnumType(module, scope, config);
+		// Note: The processor for the enum creation must be generated before the processors of the
+		// classifiers (which happens from the super call below).
 		if (createProcessors()) {
 			addEnumProcessor(module.getName(), config);
 		}
+
+		super.addEnumType(module, scope, config);
 	}
 
 	private void addEnumProcessor(String moduleName, EnumConfig type) {
@@ -916,9 +920,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (createProcessors()) {
 			CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);
 			config.setType(getQualifiedTypeName(owner.getModule().getName(), attributeConfig.getTypeSpec()));
-			fillPartProcessor(config, TLModelUtil.qualifiedName(owner), attributeConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillPartProcessor(config, qOwnerName, attributeConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, attributeConfig);
 		}
 		return property;
 	}
@@ -935,16 +941,35 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			if (referenceConfig.getKind() == ReferenceKind.BACKWARDS) {
 				CreateInverseTLReferenceProcessor.Config inverseConf =
 					newConfigItem(CreateInverseTLReferenceProcessor.Config.class);
-				inverseConf.setInverseReference(qTypePartName(targetType, referenceConfig.getInverseReference()));
+				String inverseReference = referenceConfig.getInverseReference();
+				if (StringServices.isEmpty(inverseReference)) {
+					if (referenceConfig.isOverride()) {
+						TLReference inverseRef = TLModelUtil.getOtherEnd(associationEnd).getReference();
+						if (inverseRef == null) {
+							log().info(
+								"Override of a backwards reference without inverse-reference: " + referenceConfig,
+								Protocol.WARN);
+						} else {
+							inverseReference = inverseRef.getName();
+						}
+					} else {
+						log().info("Non override backwards reference without inverse-reference annotation: "
+								+ referenceConfig,
+							Protocol.WARN);
+					}
+				}
+				inverseConf.setInverseReference(qTypePartName(targetType, inverseReference));
 				config = inverseConf;
 			} else {
 				CreateTLReferenceProcessor.Config refConf = newConfigItem(CreateTLReferenceProcessor.Config.class);
 				refConf.setType(targetType);
 				config = refConf;
 			}
-			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), referenceConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillEndAspectProcessor(config, qOwnerName, referenceConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, referenceConfig);
 		}
 		return reference;
 	}
@@ -956,9 +981,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (createProcessors()) {
 			CreateTLAssociationEndProcessor.Config config = newConfigItem(CreateTLAssociationEndProcessor.Config.class);
 			config.setType(getQualifiedTypeName(owner.getModule().getName(), endConfig.getTypeSpec()));
-			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), endConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillEndAspectProcessor(config, qOwnerName, endConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, endConfig);
 		}
 		return end;
 	}
@@ -982,13 +1009,16 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		copyIfSet(part, PartConfig.MANDATORY, config::setMandatory);
 		copyIfSet(part, PartConfig.BAG_PROPERTY, config::setBag);
 		copyAnnotations(part, config);
+	}
+
+	private void addOverride(String qOwnerName, PartConfig part) {
 		if (part.isOverride()) {
 			TLStructuredType owner = (TLStructuredType) resolvePart(qOwnerName);
 			TLStructuredTypePart createdPart = owner.getPartOrFail(part.getName());
 			TLStructuredTypePart definition = createdPart.getDefinition();
 
 			MarkTLTypePartOverride.Config overrideConf = newConfigItem(MarkTLTypePartOverride.Config.class);
-			overrideConf.setName(qPartName);
+			overrideConf.setName(qTypePartName(qOwnerName, part.getName()));
 			overrideConf.setDefinition(qTypePartName(definition));
 			addProcessor(overrideConf);
 		}

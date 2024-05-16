@@ -1824,7 +1824,7 @@ public class Util {
 	 */
 	public List<TypeGeneralization> getTLClassGeneralizationLinks(PooledConnection connection, Type specialization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, specialization, false);
+		return getTLClassGeneralizationsOrSpecializations(connection, specialization, true);
 	}
 
 	/**
@@ -1832,7 +1832,7 @@ public class Util {
 	 */
 	public List<TypeGeneralization> getTLClassSpecializationLinks(PooledConnection connection, Type generalization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, generalization, true);
+		return getTLClassGeneralizationsOrSpecializations(connection, generalization, false);
 	}
 
 	private List<TypeGeneralization> getTLClassGeneralizationsOrSpecializations(PooledConnection connection,

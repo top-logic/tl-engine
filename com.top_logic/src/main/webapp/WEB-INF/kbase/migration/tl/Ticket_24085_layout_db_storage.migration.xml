@@ -7,7 +7,7 @@
 		module="tl"
 	/>
 	<dependencies>
-		<dependency name="migration_21612"
+		<dependency name="Ticket_23128_added_icon_type"
 			module="tl"
 		/>
 	</dependencies>

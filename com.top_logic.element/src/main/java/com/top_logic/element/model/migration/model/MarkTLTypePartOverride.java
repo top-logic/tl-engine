@@ -128,7 +128,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 						parameter(DBType.ID, "partID")),
 					eqSQL(
 						column(SQLH.mangleDBName(TLNamed.NAME)),
-						parameter(DBType.STRING, "part"))),
+						parameter(DBType.STRING, "partID"))),
 				Arrays.asList(Util.refID(KBBasedMetaAttribute.DEFINITION_REF)),
 				Arrays.asList(parameter(DBType.ID, "definitionID")))).toSql(connection.getSQLDialect());
 
@@ -180,8 +180,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					columnDef(SQLH.mangleDBName(TLStructuredTypePart.ORDERED_ATTR)),
 					columnDef(SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR)),
 					columnDef(SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR)),
-					columnDef(SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
-					columnDef(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR))),
+					columnDef(SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR))),
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 				and(
 					_util.eqBranch(),
@@ -189,7 +188,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 						column(BasicTypes.IDENTIFIER_DB_NAME),
 						parameter(DBType.ID, "partID"))
 					),
-				orders(order(true, column(BasicTypes.REV_MAX_ATTRIBUTE_NAME)))))
+				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
 					.toSql(connection.getSQLDialect());
 		boolean bag = false;
 		boolean mandatory = false;
@@ -198,7 +197,6 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 		boolean aggregate = false;
 		boolean composite = false;
 		boolean navigate = false;
-		String historyType = null;
 		try (ResultSet endValues =
 			getValuesQuery.executeQuery(connection, branch, sourceID)) {
 			if (endValues.next()) {
@@ -209,13 +207,13 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 				aggregate = endValues.getBoolean(5);
 				composite = endValues.getBoolean(6);
 				navigate = endValues.getBoolean(7);
-				historyType = endValues.getString(8);
 			} else {
 				log.error("Unable to get values to copy from definition '" + definition.getName() + "' to override '"
 						+ partName.getName() + "'.");
 				return;
 			}
 		}
+
 		CompiledStatement updateValuesQuery = query(
 			parameters(
 				_util.branchParamDef(),
@@ -242,8 +240,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					SQLH.mangleDBName(TLStructuredTypePart.ORDERED_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR),
-					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR),
-					SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)),
+					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
 			Arrays.asList(
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.BAG_ATTR),
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.MANDATORY_ATTR),
@@ -251,11 +248,62 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.ORDERED_ATTR),
 					parameter(DBType.BOOLEAN, TLAssociationEnd.AGGREGATE_ATTR),
 					parameter(DBType.BOOLEAN, TLAssociationEnd.COMPOSITE_ATTR),
-					parameter(DBType.BOOLEAN, TLAssociationEnd.NAVIGATE_ATTR),
-					parameter(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR))))
+					parameter(DBType.BOOLEAN, TLAssociationEnd.NAVIGATE_ATTR))))
 					.toSql(connection.getSQLDialect());
 		updateValuesQuery.executeUpdate(connection, branch, destId, bag, mandatory, multiple,
-			ordered, aggregate, composite, navigate, historyType);
+			ordered, aggregate, composite, navigate);
+
+		boolean hasHistoryType = true;
+		String historyType = null;
+		CompiledStatement getHistoryTypeQuery = query(
+			parameters(
+				_util.branchParamDef(),
+				parameterDef(DBType.ID, "partID")),
+			select(
+				columns(
+					columnDef(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR))),
+				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
+				and(
+					_util.eqBranch(),
+					eqSQL(
+						column(BasicTypes.IDENTIFIER_DB_NAME),
+						parameter(DBType.ID, "partID"))),
+				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
+					.toSql(connection.getSQLDialect());
+		try (ResultSet endValues =
+			getHistoryTypeQuery.executeQuery(connection, branch, sourceID)) {
+			if (endValues.next()) {
+				historyType = endValues.getString(1);
+			} else {
+				log.error("Unable to get values to copy from definition '" + definition.getName() + "' to override '"
+					+ partName.getName() + "'.");
+				return;
+			}
+		} catch (SQLException ex) {
+			// No history type column.
+			hasHistoryType = false;
+		}
+
+		if (hasHistoryType) {
+			CompiledStatement updateHistoryTypeQuery = query(
+				parameters(
+					_util.branchParamDef(),
+					parameterDef(DBType.ID, "partID"),
+					parameterDef(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR)),
+				update(
+					table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
+					and(
+						_util.eqBranch(),
+						eqSQL(
+							column(BasicTypes.IDENTIFIER_DB_NAME),
+							parameter(DBType.ID, "partID"))),
+					Arrays.asList(
+						SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)),
+					Arrays.asList(
+						parameter(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR))))
+							.toSql(connection.getSQLDialect());
+			updateHistoryTypeQuery.executeUpdate(connection, branch, destId, historyType);
+		}
 	}
 
 	private void copyPropertyValues(Log log, PooledConnection connection, long branch, TLID sourceID, TLID destId,
@@ -276,7 +324,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					eqSQL(
 						column(BasicTypes.IDENTIFIER_DB_NAME),
 						parameter(DBType.ID, "partID"))),
-				orders(order(true, column(BasicTypes.REV_MAX_ATTRIBUTE_NAME)))))
+				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
 					.toSql(connection.getSQLDialect());
 		boolean bag = false;
 		boolean mandatory = false;

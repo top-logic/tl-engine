@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_23110_create_module_tl_model_i18n"
+		module="tl-model-wysiwyg"
+	/>
+	<dependencies>
+		<dependency name="Ticket_24085_layout_db_storage"
+			module="tl"
+		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+	  <create-datatype name="tl.model.i18n:I18NHtml"
+	    db_type="clob"
+	    kind="String"
+	  >
+	    <annotations>
+	      <config-type value="I18N_HTML"/>
+	      <storage-algorithm>
+	        <implementation class="com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorage"/>
+	      </storage-algorithm>
+	      <render-whole-line/>
+	    </annotations>
+	    <storage-mapping class="com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorageMapping"/>
+	  </create-datatype>
+	</processors>
+</migration>

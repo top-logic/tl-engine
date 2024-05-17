@@ -7,7 +7,7 @@
 		module="tl"
 	/>
 	<dependencies>
-		<dependency name="Ticket_26048_Remove_Error_Severity_From_Custom_Transaction"
+		<dependency name="Ticket_26746_Added_password_type"
 			module="tl"
 		/>
 	</dependencies>

@@ -33,7 +33,15 @@ public class IsEmpty extends Function1<Boolean, Object> {
 		return Boolean.valueOf(isEmpty(arg));
 	}
 
-	static boolean isEmpty(Object arg) {
+	/**
+	 * This method checks if a given Object is empty/null. If that is the case returns true.
+	 * Difference to the apply method is, that the result of this method is boolean instead of
+	 * Boolean.
+	 * 
+	 * @param arg
+	 *        The object for check of being empty/null.
+	 */
+	public static boolean isEmpty(Object arg) {
 		if (arg == null) {
 			return true;
 		}

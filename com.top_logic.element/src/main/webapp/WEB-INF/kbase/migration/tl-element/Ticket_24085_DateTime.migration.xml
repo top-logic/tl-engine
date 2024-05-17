@@ -10,6 +10,9 @@
 		<dependency name="Ticket_24085_layout_db_storage"
 			module="tl"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-element"
+		/>
 	</dependencies>
 	<processors>
 		<create-datatype name="tl.core:DateTime" db_type="timestamp" kind="Date">

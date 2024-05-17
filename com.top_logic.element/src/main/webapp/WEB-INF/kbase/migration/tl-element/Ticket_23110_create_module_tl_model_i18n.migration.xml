@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_23110_create_module_tl_model_i18n"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_24085_layout_db_storage"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+	  <create-module name="tl.model.i18n"/>
+	  <create-datatype name="tl.model.i18n:I18NString"
+	    db_type="clob"
+	    kind="String"
+	  >
+	    <annotations>
+	      <config-type value="I18N_STRING"/>
+	      <storage-algorithm>
+	        <implementation class="com.top_logic.element.model.i18n.I18NAttributeStorage"/>
+	      </storage-algorithm>
+	    </annotations>
+	    <storage-mapping class="com.top_logic.element.model.i18n.I18NAttributeStorageMapping"/>
+	  </create-datatype>
+	</processors>
+</migration>

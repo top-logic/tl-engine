@@ -73,7 +73,7 @@ public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<Upd
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(com.top_logic.model.migration.Util.PROPERTY);
+			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update association migration failed at " + getConfig().location(), ex);

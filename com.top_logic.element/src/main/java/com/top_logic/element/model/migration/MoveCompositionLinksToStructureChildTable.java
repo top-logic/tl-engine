@@ -57,7 +57,7 @@ public class MoveCompositionLinksToStructureChildTable implements MigrationProce
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			HashSet<Long> compositionRefIds = migrateData(log, connection);
 			migrateAnnotations(log, connection, compositionRefIds);
 			migrateBaseModel(log, connection);

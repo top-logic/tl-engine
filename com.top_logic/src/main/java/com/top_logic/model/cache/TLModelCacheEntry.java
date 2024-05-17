@@ -13,10 +13,12 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -24,7 +26,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.col.MapUtil;
+import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.tools.NameBuilder;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.provider.icon.IconProvider;
@@ -32,6 +37,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.internal.PersistentModelPart;
@@ -54,7 +60,29 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	private final Map<TLClass, ImmutableSet<TLClassPart>> _attributesOfSubClasses = map();
 
+	/**
+	 * <p>
+	 * Mapping from a {@link TLType} to the tables in which a composite {@link TLReference} with the
+	 * type as target type stores the link.
+	 * </p>
+	 * <p>
+	 * The map is complete in the following sense: If a type <code>A</code> is the target type of a
+	 * composition reference, the map contains an entry for <code>A</code>. The map may not contain
+	 * an entry for a subtype <code>B</code> of <code>A</code> whereas the corresponding reference
+	 * may contain elements of type <code>B</code>.
+	 * </p>
+	 * 
+	 * <p>
+	 * The map contains the {@link ObjectBranchId} of a type instead of its {@link ObjectKey},
+	 * because it is expected that this will not change over time.
+	 * </p>
+	 */
+	private volatile Map<ObjectBranchId, Set<String>> _compositionTables = null;
+
 	private final ConcurrentMap<TLType, IconProvider> _iconProviderByType = new ConcurrentHashMap<>();
+
+	private final ConcurrentMap<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _concreteOverridesByPart =
+		new ConcurrentHashMap<>();
 
 	/** Cached for performance. */
 	private final TLModel _appModel = ModelService.getApplicationModel();
@@ -94,9 +122,10 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_allAttributes.putAll(otherEntry._allAttributes);
 		_attributesOfSubClasses.putAll(otherEntry._attributesOfSubClasses);
 		_iconProviderByType.putAll(otherEntry._iconProviderByType);
+		_concreteOverridesByPart.putAll(otherEntry._concreteOverridesByPart);
 
 		Set<TLClass> otherGlobalAppModelClasses = otherEntry._globalAppModelClasses;
-		_globalAppModelClasses = otherGlobalAppModelClasses == null ? null : ImmutableSet.copyOf(otherGlobalAppModelClasses);
+		_globalAppModelClasses = otherGlobalAppModelClasses == null ? null : immutableCopy(otherGlobalAppModelClasses);
 
 		_globalClasses = (otherEntry._globalClasses == null) ? null : map(otherEntry._globalClasses);
 	}
@@ -111,7 +140,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		if (!canBeCached(tlClass)) {
 			return computeSuperClasses(tlClass);
 		}
-		return computeIfAbsent(_superClasses, tlClass, key -> ImmutableSet.copyOf(computeSuperClasses(key)));
+		return computeIfAbsent(_superClasses, tlClass, key -> immutableCopy(computeSuperClasses(key)));
 	}
 
 	@Override
@@ -119,7 +148,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		if (!canBeCached(tlClass)) {
 			return computeSubClasses(tlClass);
 		}
-		return computeIfAbsent(_subClasses, tlClass, key -> ImmutableSet.copyOf(computeSubClasses(key)));
+		return computeIfAbsent(_subClasses, tlClass, key -> immutableCopy(computeSubClasses(key)));
 	}
 
 	@Override
@@ -175,7 +204,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			return computeAttributesOfSubClasses(tlClass);
 		}
 		return computeIfAbsent(_attributesOfSubClasses, tlClass,
-			key -> ImmutableSet.copyOf(computeAttributesOfSubClasses(key)));
+			key -> immutableCopy(computeAttributesOfSubClasses(key)));
 	}
 
 	@Override
@@ -186,14 +215,14 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		if (tlModel.equals(_appModel)) {
 			/* Optimization for the 99% case that there is just one TLModel. */
 			if (_globalAppModelClasses == null) {
-				_globalAppModelClasses = ImmutableSet.copyOf(computeGlobalClasses(_appModel));
+				_globalAppModelClasses = immutableCopy(computeGlobalClasses(_appModel));
 			}
 			return _globalAppModelClasses;
 		}
 		if (_globalClasses == null) {
 			_globalClasses = map();
 		}
-		return computeIfAbsent(_globalClasses, tlModel, key -> ImmutableSet.copyOf(computeGlobalClasses(key)));
+		return computeIfAbsent(_globalClasses, tlModel, key -> immutableCopy(computeGlobalClasses(key)));
 	}
 
 	/**
@@ -208,6 +237,17 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			map.put(key, result);
 		}
 		return result;
+	}
+
+	private static <E> ImmutableSet<E> immutableCopy(Set<E> set) {
+		switch (set.size()) {
+			case 0:
+				return ImmutableSet.of();
+			case 1:
+				return ImmutableSet.of(set.iterator().next());
+			default:
+				return ImmutableSet.copyOf(set);
+		}
 	}
 
 	/** Whether data about the given {@link TLClass} can be cached. */
@@ -245,6 +285,47 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			return computedResult;
 		}
 		return MapUtil.putIfAbsent(_iconProviderByType, type, computedResult);
+	}
+
+	@Override
+	public Set<String> getCompositionLinkTables(TLClass type) {
+		if (!WrapperHistoryUtils.isCurrent(type)) {
+			if (WrapperHistoryUtils.getCurrent(type) == null) {
+				// type is deleted in the meanwhile. Search for result
+				return super.getCompositionLinkTables(type);
+			}
+		}
+		Map<ObjectBranchId, Set<String>> compositionTables = _compositionTables;
+		if (_compositionTables == null) {
+			compositionTables = compositionTablesByTargetType();
+			_compositionTables = compositionTables;
+		}
+
+		return getSuperClasses(type).stream()
+			.map(TLClass::tId)
+			.map(ObjectBranchId::toObjectBranchId)
+			.map(compositionTables::get)
+			.filter(Objects::nonNull)
+			.flatMap(Set::stream)
+			.collect(Collectors.toSet());
+	}
+
+	private Map<ObjectBranchId, Set<String>> compositionTablesByTargetType() {
+		Map<ObjectBranchId, Set<String>> result = new HashMap<>();
+		collectStorageTables(_appModel,
+			(ref, table) -> MultiMaps.add(result, ObjectBranchId.toObjectBranchId(ref.getType().tId()), table));
+		return result;
+	}
+
+	@Override
+	public <T extends TLStructuredTypePart> Set<T> getDirectConcreteOverrides(T part) {
+		if (!canModelPartBeCached(part)) {
+			return super.getDirectConcreteOverrides(part);
+		}
+		@SuppressWarnings("unchecked")
+		Set<T> typeSafe = (Set<T>) computeIfAbsent(_concreteOverridesByPart, part,
+			key -> immutableCopy(super.getDirectConcreteOverrides(key)));
+		return typeSafe;
 	}
 
 	/** Whether data about the given {@link TLModelPart} can be cached. */

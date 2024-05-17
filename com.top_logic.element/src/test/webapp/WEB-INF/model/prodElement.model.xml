@@ -22,9 +22,19 @@
 							kind="forwards"
 							type="tl.accounts:Person"
 						/>
+						<reference name="children"
+							override="true"
+							type="prodElement.RootElement"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="prodElement.RootElement"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</interface>
 				<class name="RootElement">
@@ -53,7 +63,6 @@
 					</attributes>
 					<generalizations>
 						<generalization type="prodElement.RootElement"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 					<types>
 						<interface name="prodElement.ProductVersion">
@@ -109,7 +118,6 @@
 									type="prodElement.Product"
 								/>
 								<generalization type="Product"/>
-								<generalization type="tl.element:StructuredElement"/>
 							</generalizations>
 						</class>
 						<class name="ProductType">
@@ -123,7 +131,6 @@
 									type="prodElement.ProductType"
 								/>
 								<generalization type="ProductType"/>
-								<generalization type="tl.element:StructuredElement"/>
 							</generalizations>
 						</class>
 						<class name="ProductVersion">
@@ -137,7 +144,6 @@
 									type="prodElement.ProductVersion"
 								/>
 								<generalization type="ProductVersion"/>
-								<generalization type="tl.element:StructuredElement"/>
 							</generalizations>
 						</class>
 					</types>
@@ -162,7 +168,6 @@
 					<generalizations>
 						<generalization type="prodElement.RootElement"/>
 						<generalization type="prodElement:RootElementChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="ProductType"
@@ -179,7 +184,6 @@
 					<generalizations>
 						<generalization type="prodElement.RootElement"/>
 						<generalization type="prodElement:ProductChild"/>
-						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
 				</class>
 				<class name="ProductVersion"
@@ -196,7 +200,6 @@
 					<generalizations>
 						<generalization type="prodElement.RootElement"/>
 						<generalization type="prodElement:ProductChild"/>
-						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
 				</class>
 				<interface name="RootElementChild">

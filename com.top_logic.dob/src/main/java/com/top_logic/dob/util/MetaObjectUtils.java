@@ -8,6 +8,7 @@ package com.top_logic.dob.util;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.dob.AttributeStorage;
@@ -184,13 +185,17 @@ public class MetaObjectUtils {
 	 *        The list to filter. Must not be <code>null</code>.
 	 */
 	public static List<MOReference> filterReferences(List<? extends MOAttribute> attributes) {
-		List<MOReference> references = new ArrayList<>();
-		for (MOAttribute attribute : attributes) {
-			if (attribute instanceof MOReference) {
-				references.add((MOReference) attribute);
-			}
-		}
-		return references;
+		return attributes.stream()
+			.filter(MetaObjectUtils::isReference)
+			.map(MOReference.class::cast)
+			.collect(Collectors.toList());
+	}
+
+	/** 
+	 * Checks whether the given attribute is a reference attribute.
+	 */
+	public static boolean isReference(MOAttribute attribute) {
+		return attribute instanceof MOReference;
 	}
 
 	/**

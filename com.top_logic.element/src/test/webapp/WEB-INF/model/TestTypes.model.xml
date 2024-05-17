@@ -13,6 +13,23 @@
 				</singletons>
 			</annotations>
 			<types>
+				<interface name="CommonNode">
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="CommonNode"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="CommonNode"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</interface>
 				<interface name="A">
 					<annotations>
 						<legacy-qualified-name qualified-name="A"/>
@@ -26,7 +43,7 @@
 						/>
 					</attributes>
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="CommonNode"/>
 					</generalizations>
 				</interface>
 				<interface name="B">
@@ -296,7 +313,7 @@
 						/>
 					</attributes>
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="CommonNode"/>
 					</generalizations>
 				</interface>
 				<class name="ANode">
@@ -325,10 +342,43 @@
 							override="true"
 							type="ANodeChild"
 						/>
+						<reference name="compositeList1"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Part"
+						/>
+						<reference name="compositeList2"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Part"
+						/>
+						<reference name="compositeSet1"
+							composite="true"
+							multiple="true"
+							ordered="false"
+							type="Part"
+						/>
+						<reference name="compositeSet2"
+							composite="true"
+							multiple="true"
+							ordered="false"
+							type="Part"
+						/>
+						<reference name="composite1"
+							composite="true"
+							multiple="false"
+							type="Part"
+						/>
+						<reference name="composite2"
+							composite="true"
+							multiple="false"
+							type="Part"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="A"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 						<generalization type="TestTypes:ANodeChild"/>
 						<generalization type="TestTypes:BNodeChild"/>
 					</generalizations>
@@ -360,7 +410,6 @@
 					<generalizations>
 						<generalization type="B"/>
 						<generalization type="TestTypes:ANodeChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="CNode">
@@ -371,7 +420,6 @@
 						<generalization type="A"/>
 						<generalization type="TestTypes:ANodeChild"/>
 						<generalization type="TestTypes:BNodeChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 					<attributes>
 						<reference name="historicReferenceSingle"
@@ -411,14 +459,29 @@
 				</class>
 				<interface name="ANodeChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="CommonNode"/>
 					</generalizations>
 				</interface>
 				<interface name="BNodeChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="CommonNode"/>
 					</generalizations>
 				</interface>
+
+				<class name="Part">
+					<annotations>
+						<table name="InlineCompositeTarget"
+							container="container"
+							container-order="sortOrder"
+							container-reference="reference"
+						/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

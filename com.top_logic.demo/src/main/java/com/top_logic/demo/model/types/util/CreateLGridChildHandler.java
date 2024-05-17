@@ -15,10 +15,10 @@ import com.top_logic.element.layout.grid.GridComponent;
 import com.top_logic.element.meta.gui.FormObjectCreation;
 import com.top_logic.layout.ContextPosition;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.CreateFunction;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -37,15 +37,20 @@ public class CreateLGridChildHandler extends AbstractCommandHandler {
 	 * {@link CreateFunction} associating linking created {@link DemoPlainA}s with their context.
 	 */
 	public static final class CreatePlainA extends FormObjectCreation {
-		@Override
-		public Object createObject(LayoutComponent component, Object createContext, FormContainer form,
-				Map<String, Object> arguments) {
-			DemoPlainA child = (DemoPlainA) super.createObject(component, createContext, form, arguments);
 
-			DemoTypesL parent = (DemoTypesL) createContext;
+		/**
+		 * Singleton {@link CreatePlainA} instance.
+		 */
+		@SuppressWarnings("hiding")
+		public static final CreatePlainA INSTANCE = new CreatePlainA();
+
+		@Override
+		protected void initContainer(TLObject container, TLObject newObject, Object createContext) {
+			super.initContainer(container, newObject, createContext);
+
+			DemoPlainA child = (DemoPlainA) newObject;
+			DemoTypesL parent = (DemoTypesL) container;
 			parent.getPlainChildrenModifiable().add(child);
-			
-			return child;
 		}
 	}
 

@@ -31,7 +31,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
-import com.top_logic.model.annotate.persistency.AllTables;
+import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.export.SinglePreloadContribution;
 import com.top_logic.model.v5.AssociationNavigationPreload;
@@ -65,16 +65,6 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 
 		/** see {@link #getTable()} */
 		void setTable(String tableName);
-
-		/**
-		 * All table that can be used to store link objects.
-		 */
-		class LinkTables extends AllTables {
-			@Override
-			protected String getBaseTable() {
-				return ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION_BASE;
-			}
-		}
 
 		/**
 		 * The sort order attribute in {@link #getTable()}.
@@ -147,27 +137,29 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	 *
 	 * @param configType
 	 *        The concrete storage configuration type.
-	 * @param composite
-	 *        Whether the reference is a composition.
+	 * @param tableName
+	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
+	 *        name is derived from the history type.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite, HistoryType historyType) {
+	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, String tableName, HistoryType historyType) {
 		C result = TypedConfiguration.newConfigItem(configType);
-		switch (historyType) {
-			case CURRENT:
-				if (composite) {
-					result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
-				}
-				break;
-			case HISTORIC:
-				result.setTable(ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
-				break;
-			case MIXED:
-				result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
-				break;
-
+		if (tableName != null) {
+			result.setTable(tableName);
+		} else {
+			switch (historyType) {
+				case CURRENT:
+					// Default from configuration interface is fine.
+					break;
+				case HISTORIC:
+					result.setTable(ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
+					break;
+				case MIXED:
+					result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+					break;
+			}
 		}
 		return result;
 	}

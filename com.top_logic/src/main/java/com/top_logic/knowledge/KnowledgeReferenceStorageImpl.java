@@ -51,7 +51,10 @@ import com.top_logic.util.Utils;
  */
 public abstract class KnowledgeReferenceStorageImpl extends MOReferenceStorageImpl implements KIReferenceStorage {
 
-	private static final Long NULL_REPLACEMENT = Long.valueOf(0);
+	/**
+	 * Replacement for <code>null</code> values in mandatory revision and branch column.
+	 */
+	public static final Long NULL_REPLACEMENT = Long.valueOf(0);
 
 	/**
 	 * Value that is stored into the revision column of a mixed reference, when a current reference

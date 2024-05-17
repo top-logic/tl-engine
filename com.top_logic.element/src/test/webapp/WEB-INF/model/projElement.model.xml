@@ -9,6 +9,30 @@
 				</singletons>
 			</annotations>
 			<types>
+				<interface name="ProjElement">
+					<attributes>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="ProjElementContainer"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="ProjElementContainer">
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="ProjElement"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="ProjElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</interface>
 				<interface name="projElement.ProjectRoot">
 					<annotations>
 						<instance-presentation
@@ -39,7 +63,7 @@
 						/>
 					</attributes>
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="ProjElement"/>
 					</generalizations>
 				</interface>
 				<class name="ProjectRoot">
@@ -69,7 +93,7 @@
 					</attributes>
 					<generalizations>
 						<generalization type="projElement.ProjectRoot"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="ProjElementContainer"/>
 					</generalizations>
 					<types>
 						<interface name="projElement.All">
@@ -147,20 +171,13 @@
 								<table name="StructuredElement"/>
 								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
 							</annotations>
-							<attributes>
-								<reference kind="backwards" name="parent" override="true" type="tl.element:StructuredElementContainer">
-									<annotations>
-										<visibility value="read-only"/>
-									</annotations>
-								</reference>							
-							</attributes>
 							<generalizations>
 								<generalization
 									scope="this"
 									type="projElement.Project"
 								/>
 								<generalization type="Project"/>
-								<generalization type="tl.element:StructuredElement"/>
+								<generalization type="ProjElement"/>
 							</generalizations>
 						</class>
 						<class name="Subproject">
@@ -174,7 +191,7 @@
 									type="projElement.Part"
 								/>
 								<generalization type="Subproject"/>
-								<generalization type="tl.element:StructuredElement"/>
+								<generalization type="ProjElement"/>
 							</generalizations>
 						</class>
 						<class name="Workpackage">
@@ -188,7 +205,7 @@
 									type="projElement.Part"
 								/>
 								<generalization type="Workpackage"/>
-								<generalization type="tl.element:StructuredElement"/>
+								<generalization type="ProjElement"/>
 							</generalizations>
 						</class>
 						<class name="Order">
@@ -202,7 +219,7 @@
 									type="projElement.Part"
 								/>
 								<generalization type="Order"/>
-								<generalization type="tl.element:StructuredElement"/>
+								<generalization type="ProjElement"/>
 							</generalizations>
 						</class>
 					</types>
@@ -227,7 +244,7 @@
 					<generalizations>
 						<generalization type="projElement.ProjectRoot"/>
 						<generalization type="projElement:ProjectRootChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="ProjElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="Subproject"
@@ -251,7 +268,7 @@
 					<generalizations>
 						<generalization type="projElement.ProjectRoot"/>
 						<generalization type="projElement:ProjectChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="ProjElementContainer"/>
 						<generalization type="projElement:SubprojectChild"/>
 						<generalization type="projElement:WorkpackageChild"/>
 						<generalization type="projElement:OrderChild"/>
@@ -279,7 +296,7 @@
 						<generalization type="projElement.ProjectRoot"/>
 						<generalization type="projElement:ProjectChild"/>
 						<generalization type="projElement:SubprojectChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="ProjElementContainer"/>
 						<generalization type="projElement:WorkpackageChild"/>
 						<generalization type="projElement:OrderChild"/>
 					</generalizations>
@@ -307,33 +324,33 @@
 						<generalization type="projElement:ProjectChild"/>
 						<generalization type="projElement:SubprojectChild"/>
 						<generalization type="projElement:WorkpackageChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="ProjElementContainer"/>
 						<generalization type="projElement:OrderChild"/>
 					</generalizations>
 				</class>
 				<interface name="ProjectRootChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="ProjElement"/>
 					</generalizations>
 				</interface>
 				<interface name="ProjectChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="ProjElement"/>
 					</generalizations>
 				</interface>
 				<interface name="SubprojectChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="ProjElement"/>
 					</generalizations>
 				</interface>
 				<interface name="WorkpackageChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="ProjElement"/>
 					</generalizations>
 				</interface>
 				<interface name="OrderChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="ProjElement"/>
 					</generalizations>
 				</interface>
 			</types>

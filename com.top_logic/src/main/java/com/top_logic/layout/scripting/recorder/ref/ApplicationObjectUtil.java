@@ -188,8 +188,8 @@ public class ApplicationObjectUtil {
 	/**
 	 * KA attribute used to store {@link TLStructuredTypePart}.
 	 * <p>
-	 * <em>Important:</em>Only the IDs of the "root" attribute} is used in the database. "root"
-	 * means the top-most attribute which is not overriding another attribute. This simplifies and
+	 * <em>Important:</em>Only the IDs of the "root" attribute is used in the database. "root" means
+	 * the top-most attribute which is not overriding another attribute. This simplifies and
 	 * therefore speeds up queries a lot.
 	 * </p>
 	 * 

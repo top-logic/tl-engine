@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27999_Multiple_composition_tables"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_27517_fix_legacy_migrations"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<association
+					object_name="hasDemoStructureChild"
+					super_class="hasStructureChild"
+				/>
+			</schema>
+		</processor>
+
+		<remove-annotations name="tl.demo.aspect:RootNode">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-annotations name="tl.demo.aspect:ANode">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-annotations name="tl.demo.aspect:BNode">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-annotations name="tl.demo.aspect:CNode">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-annotations name="tl.demo.aspect:CNodeDefaults">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<reorder-generalization
+			generalization="tl.demo.aspect:A"
+			type="tl.demo.aspect:ANode"
+		/>
+		<reorder-generalization
+			generalization="tl.demo.aspect:B"
+			type="tl.demo.aspect:BNode"
+		/>
+		<reorder-generalization
+			generalization="tl.demo.aspect:C"
+			type="tl.demo.aspect:CNode"
+		/>
+		<reorder-generalization
+			generalization="tl.demo.aspect:CDefaults"
+			type="tl.demo.aspect:CNodeDefaults"
+		/>
+		<create-inverse-reference name="tl.demo.aspect:CommonChild#parent"
+			inverse-reference="tl.demo.aspect:Common#children"
+		/>
+		<mark-override name="tl.demo.aspect:CommonChild#parent"
+			definition="tl.element:StructuredElement#parent"
+		/>
+		<reorder-part name="tl.demo.aspect:CommonChild#parent"/>
+
+		<remove-class-generalizations name="DemoSecurity:DemoSecurity.All">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoSecurity:DemoSecurity.Root">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoSecurity:Root">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoSecurity:A">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoSecurity:B">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoSecurity:RootChild">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoSecurity:AChild">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<create-class name="DemoSecurity:DemoSecurityElement"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<create-class name="DemoSecurity:DemoSecurityElementContainer"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<add-class-generalizations name="DemoSecurity:Root">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElementContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoSecurity:DemoSecurity.All">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElement"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoSecurity:DemoSecurity.Root">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElement"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoSecurity:A">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElementContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<reorder-generalization
+			before="DemoSecurity:AChild"
+			generalization="DemoSecurity:DemoSecurityElementContainer"
+			type="DemoSecurity:A"
+		/>
+		<add-class-generalizations name="DemoSecurity:B">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElement"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoSecurity:RootChild">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElement"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoSecurity:AChild">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElement"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoSecurity:DemoSecurityElement">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoSecurity:DemoSecurityElementContainer">
+			<generalizations>
+				<generalization type="DemoSecurity:DemoSecurityElement"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-reference name="DemoSecurity:DemoSecurityElementContainer#children"
+			type="DemoSecurity:DemoSecurityElement"
+		/>
+		<mark-override name="DemoSecurity:DemoSecurityElementContainer#children"
+			definition="tl.element:StructuredElementContainer#children"
+		/>
+		<create-inverse-reference name="DemoSecurity:DemoSecurityElement#parent"
+			inverse-reference="DemoSecurity:DemoSecurityElementContainer#children"
+		/>
+		<mark-override name="DemoSecurity:DemoSecurityElement#parent"
+			definition="tl.element:StructuredElement#parent"
+		/>
+
+		<remove-class-generalizations name="DemoTypes:AChild">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:BChild">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:BNotUnderAChild">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:CChild">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:A">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:B">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:BNotUnderA">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:C">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:L">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:X">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:DemoTypes.Root">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:Root">
+			<generalization type="tl.element:StructuredElementContainer"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="DemoTypes:RootChild">
+			<generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<create-class name="DemoTypes:DemoTypesChild"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<create-class name="DemoTypes:DemoTypesContainer"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<add-class-generalizations name="DemoTypes:AChild">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesChild"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:BChild">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesChild"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:BNotUnderAChild">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesChild"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:CChild">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesChild"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:A">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<reorder-generalization
+			before="DemoTypes:BChild"
+			generalization="DemoTypes:DemoTypesContainer"
+			type="DemoTypes:A"
+		/>
+		<add-class-generalizations name="DemoTypes:B">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<reorder-generalization
+			before="DemoTypes:CChild"
+			generalization="DemoTypes:DemoTypesContainer"
+			type="DemoTypes:B"
+		/>
+		<add-class-generalizations name="DemoTypes:BNotUnderA">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:C">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<reorder-generalization
+			before="DemoTypes:CChild"
+			generalization="DemoTypes:DemoTypesContainer"
+			type="DemoTypes:C"
+		/>
+		<add-class-generalizations name="DemoTypes:DemoTypes.Root">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypes.All"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:Root">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:RootChild">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypesChild"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:DemoTypesChild">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypes.All"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="DemoTypes:DemoTypesContainer">
+			<generalizations>
+				<generalization type="DemoTypes:DemoTypes.All"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-reference name="DemoTypes:DemoTypesContainer#children"
+			type="DemoTypes:DemoTypes.All"
+		>
+			<annotations>
+				<composition-link table="hasDemoStructureChild"/>
+			</annotations>
+		</create-reference>
+		<mark-override name="DemoTypes:DemoTypesContainer#children"
+			definition="tl.element:StructuredElementContainer#children"
+		/>
+		<create-inverse-reference name="DemoTypes:DemoTypes.All#parent"
+			inverse-reference="DemoTypes:DemoTypesContainer#children"
+		/>
+		<mark-override name="DemoTypes:DemoTypes.All#parent"
+			definition="tl.element:StructuredElement#parent"
+		/>
+		<mark-override name="DemoTypes:Root#name"
+			definition="DemoTypes:DemoTypes.All#name"
+		/>
+		<reorder-part name="DemoTypes:DemoTypes.All#parent"/>
+		
+		<move-composition-links reference="DemoTypes:DemoTypesContainer#children" target-table="hasDemoStructureChild" />
+	</processors>
+	<post-processors/>
+</migration>

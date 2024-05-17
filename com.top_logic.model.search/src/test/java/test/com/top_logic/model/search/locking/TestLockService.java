@@ -40,6 +40,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
@@ -217,10 +218,10 @@ public class TestLockService extends BasicTestCase {
 
 	private TLObject createS(TLObject parent) throws ConfigurationException {
 		TLObject result = createS();
-		Collection<?> oldChildren = (Collection<?>) parent.tValueByName("children");
+		Collection<?> oldChildren = (Collection<?>) parent.tValueByName(StructuredElement.CHILDREN_ATTR);
 		List<Object> newChildren = oldChildren == null ? new ArrayList<>() : new ArrayList<>(oldChildren);
 		newChildren.add(result);
-		parent.tUpdateByName("children", newChildren);
+		parent.tUpdateByName(StructuredElement.CHILDREN_ATTR, newChildren);
 		return result;
 	}
 

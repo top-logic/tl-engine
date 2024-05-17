@@ -77,7 +77,6 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 		NameValueBuffer initialValues = new NameValueBuffer();
 		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.CLASS_PROPERTY_IMPL);
 		KBBasedMetaAttribute newMetaAttribute = newMetaAttribute(kb, initialValues);
-		initAttributes(newMetaAttribute);
 		return (PersistentClassProperty) newMetaAttribute;
 	}
 
@@ -86,12 +85,7 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 		NameValueBuffer initialValues = new NameValueBuffer();
 		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.ASSOCIATION_PROPERTY_IMPL);
 		KBBasedMetaAttribute newMetaAttribute = newMetaAttribute(kb, initialValues);
-		initAttributes(newMetaAttribute);
 		return (PersistentAssociationProperty) newMetaAttribute;
-	}
-
-	private void initAttributes(TLStructuredTypePart newMetaAttribute) {
-		newMetaAttribute.setMandatory(false);
 	}
 
 	@Override
@@ -99,18 +93,7 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 		NameValueBuffer initialValues = new NameValueBuffer();
 		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.ASSOCIATION_END_IMPL);
 		PersistentEnd end = (PersistentEnd) newMetaAttribute(kb, initialValues);
-		initEnd(end);
 		return end;
-	}
-
-	private void initEnd(PersistentEnd newMetaAttribute) {
-		initAttributes(newMetaAttribute);
-		newMetaAttribute.setAggregate(false);
-		newMetaAttribute.setMultiple(false);
-		newMetaAttribute.setOrdered(false);
-		newMetaAttribute.setBag(false);
-		newMetaAttribute.setComposite(false);
-		newMetaAttribute.setNavigate(false);
 	}
 
 	@Override
@@ -119,7 +102,6 @@ public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
 		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, TLStructuredTypeColumns.REFERENCE_IMPL);
 		PersistentReference reference = (PersistentReference) newMetaAttribute(kb, initialValues);
 		reference.tSetDataReference(PersistentReference.END_ATTR, end);
-		initAttributes(reference);
 		return reference;
 	}
 

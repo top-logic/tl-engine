@@ -294,15 +294,16 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 
 	/**
 	 * Creates a configuration for the {@link ListStorage}.
-	 *
-	 * @param composite
-	 *        Whether the reference is a composition.
+	 * 
+	 * @param tableName
+	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
+	 *        name is derived from the history type.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> listConfig(boolean composite, HistoryType historyType) {
-		return defaultConfig(Config.class, composite, historyType);
+	public static Config<?> listConfig(String tableName, HistoryType historyType) {
+		return defaultConfig(Config.class, tableName, historyType);
 	}
 
 }

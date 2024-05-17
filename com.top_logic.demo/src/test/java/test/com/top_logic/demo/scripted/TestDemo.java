@@ -52,6 +52,7 @@ public class TestDemo {
 			"22_AssertsOnValuesInFrozenTables",
 			"23_NumberFields",
 			"24_DateTimeField",
+			"25_CyclicDemoTreeBuilder",
 			"31_CountryNamingScheme",
 			"33_TreeSelectionExpansion",
 			"50_GridTestDataCreation",

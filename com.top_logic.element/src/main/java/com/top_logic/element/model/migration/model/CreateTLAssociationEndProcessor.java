@@ -72,7 +72,7 @@ public class CreateTLAssociationEndProcessor
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Creating association end migration failed at " + getConfig().location(), ex);
@@ -84,7 +84,7 @@ public class CreateTLAssociationEndProcessor
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
 		_util.createTLAssociationEnd(log, connection, partName,
-			targetType, getConfig().isMandatory(), getConfig().isComposite(),
+			targetType, getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(),
 			getConfig().isAggregate(), getConfig().isMultiple(),
 			getConfig().isBag(),
 			getConfig().isOrdered(),
@@ -98,8 +98,8 @@ public class CreateTLAssociationEndProcessor
 		} else {
 			MigrationUtils.createEnd(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
-				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
-				nullIfUnset(Config.HISTORY_TYPE), getConfig());
+				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.ABSTRACT),
+				nullIfUnset(Config.NAVIGATE), nullIfUnset(Config.HISTORY_TYPE), getConfig());
 			updateModelBaseline = true;
 		}
 		log.info("Created part " + _util.qualifiedName(partName));

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27999_Multiple_composition_tables"
+		module="tl-doc"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_21471_Adjust_model_overrides"
+			module="tl-doc"
+		/>
+	</dependencies>
+	<processors>
+		<add-mo-reference table="tl.doc.Page">
+			<reference
+				att_name="composite"
+				branch-global="false"
+				by-value="true"
+				deletion-policy="delete-referer"
+				monomorphic="true"
+				target-type="MetaAttribute"
+			/>
+		</add-mo-reference>
+		<add-mo-reference
+			before="composite"
+			table="tl.doc.Page"
+		>
+			<reference
+				att_name="parent"
+				branch-global="false"
+				by-value="true"
+				deletion-policy="delete-referer"
+				monomorphic="true"
+				target-type="tl.doc.Page"
+			/>
+		</add-mo-reference>
+
+		<add-mo-attribute
+			before="composite"
+			table="tl.doc.Page"
+		>
+			<mo_attribute
+				att_name="sortOrder"
+				att_type="Integer"
+				mandatory="false"
+			/>
+		</add-mo-attribute>
+
+		<update-annotations name="tl.doc:Page">
+			<annotations>
+				<implementation-binding class-name="com.top_logic.doc.model.impl.PageImpl"/>
+				<instance-presentation icon="theme:model.tl.doc.Page.icon"/>
+				<table name="tl.doc.Page"
+					container="parent"
+					container-order="sortOrder"
+					container-reference="composite"
+				/>
+			</annotations>
+		</update-annotations>
+
+		<inline-composition-links
+			container="parent"
+			container-order="sortOrder"
+			container-reference="composite"
+			reference="tl.doc:Page#children"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

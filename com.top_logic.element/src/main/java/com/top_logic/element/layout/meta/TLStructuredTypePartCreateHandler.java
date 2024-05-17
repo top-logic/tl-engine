@@ -19,6 +19,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.ReferenceConfig;
+import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.EditModel;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
@@ -28,8 +29,10 @@ import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -97,7 +100,12 @@ public class TLStructuredTypePartCreateHandler extends AbstractCreateCommandHand
 			// Determine whether to create property or reference.
 			TLStructuredTypePart overriddenPart = owner.getPart(partModel.getName());
 			if (overriddenPart.getModelKind() == ModelKind.REFERENCE) {
-				partConfig = TypedConfiguration.newConfigItem(ReferenceConfig.class);
+				ReferenceConfig refConfig = TypedConfiguration.newConfigItem(ReferenceConfig.class);
+				if (TLModelUtil.getEndIndex(((TLReference) overriddenPart).getEnd()) == 0) {
+					// backwards reference
+					refConfig.setKind(ReferenceKind.BACKWARDS);
+				}
+				partConfig = refConfig;
 			} else {
 				partConfig = TypedConfiguration.newConfigItem(AttributeConfig.class);
 			}

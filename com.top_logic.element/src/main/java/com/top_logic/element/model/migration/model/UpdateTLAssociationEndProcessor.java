@@ -101,7 +101,7 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
@@ -132,7 +132,8 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		}
 
 		_util.updateTLStructuredTypePart(connection, associationEnd, null, null, newAssociationEndName,
-			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
+			getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(), getConfig().isAggregate(),
+			getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
 			null, null);
 
@@ -144,8 +145,8 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		} else {
 			MigrationUtils.updateAssociationEnd(log, tlModel, endName, newName, null,
 				getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-				getConfig().isMultiple(),
-				getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
+				getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
+				getConfig().canNavigate(), getConfig().getHistoryType(),
 				getConfig());
 			updateModelBaseline = true;
 		}

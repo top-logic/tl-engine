@@ -97,6 +97,18 @@ public class TLReferenceImpl extends AbstractStructuredTypePart<TLClass> impleme
 		getEnd().setOrdered(value);
 	}
 
+	@Override
+	public boolean isAbstract() {
+		checkState();
+		return getEnd().isAbstract();
+	}
+
+	@Override
+	public void setAbstract(boolean value) {
+		checkState();
+		getEnd().setAbstract(value);
+	}
+
 	private void checkState() {
 		if (this.end == null) {
 			throw new IllegalStateException("Reference '" + this + "' has not yet an end assigned.");

@@ -37,7 +37,7 @@ public class UpdateFastListTable implements MigrationProcessor {
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			String scopeTypeColName =
 				ReferencePart.type.getReferenceAspectColumnName(SQLH.mangleDBName(FastList.SCOPE_REF));
 			String scopeIDColName =

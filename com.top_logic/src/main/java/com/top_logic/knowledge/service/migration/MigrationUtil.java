@@ -37,6 +37,7 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
@@ -672,28 +673,6 @@ public class MigrationUtil {
 			migration.initSucessor();
 		}
 
-		// Remember all migrations that need no longer be executed, because they are
-		// reflexive-transitive dependencies of the version currently stored in the database
-		// ("dbVersion").
-		Set<MigrationRef> done = new HashSet<>();
-		List<MigrationRef> work = new ArrayList<>();
-		for (Version current : dbVersion.values()) {
-			MigrationRef migration = MigrationRef.forVersion(migrations, current);
-
-			done.add(migration);
-			work.add(migration);
-		}
-
-		while (!work.isEmpty()) {
-			MigrationRef migration = work.remove(work.size() - 1);
-			for (MigrationRef dependency : migration.getDependencies()) {
-				if (!done.add(dependency)) {
-					continue;
-				}
-				work.add(dependency);
-			}
-		}
-
 		// For each module the latest version.
 		Map<String, MigrationRef> latest = new HashMap<>();
 		for (MigrationRef migration : migrations.values()) {
@@ -702,6 +681,17 @@ public class MigrationUtil {
 				latest.put(module, migration.findLatest());
 			}
 		}
+
+		for (MigrationRef latestRef : latest.values()) {
+			latestRef.initLocalOrder();
+		}
+
+		makeTransitive(migrations);
+
+		// Remember all migrations that need no longer be executed, because they are
+		// reflexive-transitive dependencies of the version currently stored in the database
+		// ("dbVersion").
+		Set<MigrationRef> done = findMigrationsAlreadyExecuted(dbVersion, migrations);
 
 		// For all migrations known:
 		for (MigrationRef migration : migrations.values()) {
@@ -780,6 +770,85 @@ public class MigrationUtil {
 			.map(m -> m.getConfig())
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Ensure transitivity of dependencies.
+	 */
+	private static void makeTransitive(Map<VersionID, MigrationRef> migrations) {
+		boolean changed;
+		do {
+			changed = false;
+			for (MigrationRef migration : migrations.values()) {
+				Map<String, MigrationRef> newestFromBaseVersions = new HashMap<>();
+
+				for (MigrationRef dependency : migration.getDependencies()) {
+					if (dependency.getModule().equals(migration.getModule())) {
+						// Only cross-module.
+						continue;
+					}
+
+					for (MigrationRef dependency2 : dependency.getDependencies()) {
+						MigrationRef clash = newestFromBaseVersions.put(dependency2.getModule(), dependency2);
+						if (clash != null && clash.isNewerThan(dependency2)) {
+							newestFromBaseVersions.put(dependency2.getModule(), clash);
+						}
+					}
+				}
+
+				for (MigrationRef dependency : migration.getDependencies()) {
+					MigrationRef fromBase = newestFromBaseVersions.remove(dependency.getModule());
+					if (fromBase != null && fromBase.isNewerThan(dependency)) {
+						// Prevent trivial cycle caused from referencing an older base version than
+						// a dependency.
+						Logger.warn(
+							"Updating dependency of '" + migration + "' from '" + dependency + "' to '" + fromBase
+								+ "'.",
+							MigrationUtil.class);
+						newestFromBaseVersions.put(dependency.getModule(), fromBase);
+					}
+				}
+
+				if (!newestFromBaseVersions.isEmpty()) {
+					changed = true;
+
+					for (MigrationRef update : newestFromBaseVersions.values()) {
+						if (migration.getDependency(update.getModule()) != null) {
+							migration.updateDependency(update);
+						} else {
+							// Prevent trivial cycle from not referencing a base version that is
+							// referenced from a dependency.
+							Logger.warn("Adding missing transitive dependency to '" + migration + "': " + update,
+								MigrationUtil.class);
+							migration.addDependency(update);
+						}
+					}
+				}
+			}
+		} while (changed);
+	}
+
+	private static Set<MigrationRef> findMigrationsAlreadyExecuted(final Map<String, Version> dbVersion,
+			Map<VersionID, MigrationRef> migrations) {
+		Set<MigrationRef> done = new HashSet<>();
+		List<MigrationRef> work = new ArrayList<>();
+		for (Version current : dbVersion.values()) {
+			MigrationRef migration = MigrationRef.forVersion(migrations, current);
+
+			done.add(migration);
+			work.add(migration);
+		}
+
+		while (!work.isEmpty()) {
+			MigrationRef migration = work.remove(work.size() - 1);
+			for (MigrationRef dependency : migration.getDependencies()) {
+				if (!done.add(dependency)) {
+					continue;
+				}
+				work.add(dependency);
+			}
+		}
+		return done;
 	}
 
 	/**
@@ -1033,7 +1102,7 @@ public class MigrationUtil {
 					Protocol.WARN);
 				continue;
 			}
-			log.info("Reading migration scripts for module " + moduleName, Protocol.VERBOSE);
+			log.info("Reading migrations from module " + moduleName, Protocol.INFO);
 			Map<Version, MigrationConfig> moduleMigrationConfigs = new HashMap<>();
 
 			Version initial = newVersion(moduleName, "<initial>");

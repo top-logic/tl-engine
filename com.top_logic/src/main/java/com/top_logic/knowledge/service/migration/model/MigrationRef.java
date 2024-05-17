@@ -28,6 +28,8 @@ public class MigrationRef {
 
 	private MigrationRef _successor;
 
+	private int _order;
+
 	/**
 	 * Creates a {@link MigrationRef}.
 	 *
@@ -63,9 +65,16 @@ public class MigrationRef {
 	 * Adds a dependency that must be executed before this migation.
 	 */
 	public void addDependency(MigrationRef dependency) {
-		MigrationRef clash = _dependencyByModule.put(dependency.getModule(), dependency);
+		MigrationRef clash = updateDependency(dependency);
 		assert clash == null : "Non-unique dependency for '" + getId() + "' in module '" + dependency.getModule()
 			+ "': " + dependency.getId() + " vs. " + clash.getId();
+	}
+
+	/**
+	 * Replaces a potentially existing dependency with a new one.
+	 */
+	public MigrationRef updateDependency(MigrationRef dependency) {
+		return _dependencyByModule.put(dependency.getModule(), dependency);
 	}
 
 	/**
@@ -81,6 +90,13 @@ public class MigrationRef {
 	 */
 	public Collection<MigrationRef> getDependencies() {
 		return _dependencyByModule.values();
+	}
+
+	/**
+	 * All direct dependencies indexed by module.
+	 */
+	public Map<String, MigrationRef> getDependencyByModule() {
+		return _dependencyByModule;
 	}
 
 	/**
@@ -150,8 +166,11 @@ public class MigrationRef {
 	}
 
 	private void initSuccessor(MigrationRef successor) {
-		assert _successor == null : "Non-unique successor for migration '" + getId() + "': " + _successor.getId()
-			+ " or " + successor.getId();
+		if (_successor != null) {
+			throw new IllegalArgumentException(
+				"Non-unique module-local successor for migration '" + getId() + "': " + _successor.getId()
+					+ " vs. " + successor.getId());
+		}
 		_successor = successor;
 	}
 
@@ -168,6 +187,36 @@ public class MigrationRef {
 			result = successor;
 		}
 		return result;
+	}
+
+	/**
+	 * Initialized module-local order index (latest is zero, older ones have lower index).
+	 * 
+	 * <p>
+	 * Must be called on the latest one.
+	 * </p>
+	 */
+	public void initLocalOrder() {
+		int order = 0;
+
+		MigrationRef ancestor = this;
+		while (ancestor != null) {
+			ancestor._order = order--;
+			ancestor = ancestor.getPredecessor();
+		}
+	}
+
+	/**
+	 * Whether this one is newer than the other one.
+	 * 
+	 * <p>
+	 * Requires {@link #initLocalOrder()} to be called.
+	 * </p>
+	 */
+	public boolean isNewerThan(MigrationRef dependency) {
+		assert getModule().equals(dependency.getModule()) : "Must only compare module-local order.";
+
+		return _order > dependency._order;
 	}
 }
 

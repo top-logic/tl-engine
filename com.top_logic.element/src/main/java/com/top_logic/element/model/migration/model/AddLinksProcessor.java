@@ -141,7 +141,7 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		Util util = context.get(Util.PROPERTY);
+		Util util = context.getSQLUtils();
 
 		Config<?> config = getConfig();
 

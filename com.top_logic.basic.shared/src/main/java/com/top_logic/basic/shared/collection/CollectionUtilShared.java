@@ -27,6 +27,7 @@ import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.shared.collection.factory.CollectionFactoryShared;
 import com.top_logic.basic.shared.collection.iterator.IteratorUtilShared;
@@ -1389,7 +1390,8 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 			List<T> result, Set<T> seen, Set<T> pending, T element, Set<T> input, boolean addDependencies) {
 		if (seen.contains(element)) {
 			if (pending.contains(element)) {
-				throw new IllegalArgumentException(CYCLIC_DEPENDENCIES_MESSAGE + pending);
+				throw new IllegalArgumentException(CYCLIC_DEPENDENCIES_MESSAGE
+					+ pending.stream().map(Object::toString).collect(Collectors.joining(" -> ")) + " -> " + element);
 			}
 			return;
 		}

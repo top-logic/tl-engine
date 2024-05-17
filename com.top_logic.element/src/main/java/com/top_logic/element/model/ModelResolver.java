@@ -1126,6 +1126,9 @@ public class ModelResolver {
 	 * Creates the {@link BoundedRole} from the given configuration in the given {@link TLModule}.
 	 */
 	public BoundedRole createRole(TLModule scope, RoleConfig role) {
+		if (scope.tTransient()) {
+			return null;
+		}
 		String name = role.getName();
 		BoundedRole existingRole = BoundedRole.getDefinedRole(scope, name);
 		if (existingRole != null) {

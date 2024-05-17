@@ -94,7 +94,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		Util util = context.get(Util.PROPERTY);
+		Util util = context.getSQLUtils();
 		
 		Config<?> config = getConfig();
 		String objType = config.getTable();
@@ -223,7 +223,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 	private CompiledStatement createI18NInsert(MigrationContext context, PooledConnection connection)
 			throws SQLException {
-		Util util = context.get(Util.PROPERTY);
+		Util util = context.getSQLUtils();
 		MOClass i18nTable =
 			(MOClass) context.getSchemaRepository().getType(I18NAttributeStorage.I18N_STORAGE_KO_TYPE);
 

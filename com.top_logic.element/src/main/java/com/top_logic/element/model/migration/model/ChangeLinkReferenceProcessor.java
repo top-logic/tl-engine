@@ -91,7 +91,7 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		Util util = context.get(Util.PROPERTY);
+		Util util = context.getSQLUtils();
 		
 		Config<?> config = getConfig();
 		try {

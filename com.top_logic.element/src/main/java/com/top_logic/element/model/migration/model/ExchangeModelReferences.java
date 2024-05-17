@@ -177,7 +177,7 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		Util util = context.get(Util.PROPERTY);
+		Util util = context.getSQLUtils();
 		
 		Config<?> config = getConfig();
 		try {

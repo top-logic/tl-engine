@@ -56,7 +56,7 @@
 						/>
 					</attributes>
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="DemoSecurityElement"/>
 					</generalizations>
 				</interface>
 				<interface name="DemoSecurity.Root">
@@ -64,7 +64,7 @@
 						<legacy-qualified-name qualified-name="DemoSecurity.Root"/>
 					</annotations>
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="DemoSecurityElement"/>
 					</generalizations>
 				</interface>
 				<interface name="DemoSecurity.A">
@@ -111,7 +111,7 @@
 					</attributes>
 					<generalizations>
 						<generalization type="DemoSecurity.Root"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="DemoSecurityElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="A">
@@ -128,7 +128,7 @@
 					<generalizations>
 						<generalization type="DemoSecurity.A"/>
 						<generalization type="DemoSecurity:RootChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="DemoSecurityElementContainer"/>
 						<generalization type="DemoSecurity:AChild"/>
 					</generalizations>
 				</class>
@@ -140,18 +140,42 @@
 					<generalizations>
 						<generalization type="DemoSecurity.B"/>
 						<generalization type="DemoSecurity:AChild"/>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="DemoSecurityElement"/>
 					</generalizations>
 				</class>
 				<interface name="RootChild">
 					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="DemoSecurityElement"/>
 					</generalizations>
 				</interface>
 				<interface name="AChild">
 					<generalizations>
+						<generalization type="DemoSecurityElement"/>
+					</generalizations>
+				</interface>
+				<interface name="DemoSecurityElement">
+					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
+					<attributes>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="DemoSecurityElementContainer"
+						/>
+					</attributes>
+				</interface>
+				<interface name="DemoSecurityElementContainer">
+					<generalizations>
+						<generalization type="DemoSecurityElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="DemoSecurityElement"
+						/>
+					</attributes>
 				</interface>
 			</types>
 		</module>

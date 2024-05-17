@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,5 +16,13 @@ public interface ContextChildBase extends com.top_logic.element.structured.Struc
 	 * Name of type <code>ContextChild</code>
 	 */
 	String CONTEXT_CHILD_TYPE = "ContextChild";
+
+	/**
+	 * Getter for part {@link #PARENT_ATTR}.
+	 */
+	@Override
+	default test.com.top_logic.importer.data.struct.Context getParent() {
+		return (test.com.top_logic.importer.data.struct.Context) tValueByName(PARENT_ATTR);
+	}
 
 }

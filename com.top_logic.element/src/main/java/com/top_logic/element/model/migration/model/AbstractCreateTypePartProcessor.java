@@ -45,6 +45,9 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 		/** Name for {@link #isMandatory()}. */
 		String MANDATORY = PartConfig.MANDATORY;
 
+		/** Name for {@link #isAbstract()}. */
+		String ABSTRACT = PartConfig.ABSTRACT_PROPERTY;
+
 		/**
 		 * Qualified name of the {@link Config}.
 		 */
@@ -108,6 +111,17 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 		 */
 		void setOrdered(boolean value);
 
+		/**
+		 * See {@link PartConfig#isAbstract()}.
+		 */
+		@Name(ABSTRACT)
+		boolean isAbstract();
+
+		/**
+		 * Setter for {@link #isAbstract()}.
+		 */
+		void setAbstract(boolean value);
+
 	}
 
 	/**
@@ -120,6 +134,7 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 	 */
 	public AbstractCreateTypePartProcessor(InstantiationContext context, C config) {
 		super(context, config);
+		// TODO: handle abstract.
 	}
 
 	<T> T nullIfUnset(String propertyName) {

@@ -69,6 +69,16 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	}
 
 	@Override
+	default boolean isAbstract() {
+		return getEnd().isAbstract();
+	}
+
+	@Override
+	default void setAbstract(boolean value) {
+		getEnd().setAbstract(value);
+	}
+
+	@Override
 	default boolean isBag() {
 		return getEnd().isBag();
 	}

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -302,28 +303,29 @@ public class Utils {
 	/**
 	 * Checks if a given Object is <code>null</code> or empty.
 	 *
-	 * Note: If aValue is a {@link String} use {@link StringServices#isEmpty(CharSequence)} instead,
-	 * if aValue is a {@link Collection} use {@link CollectionUtil#isEmptyOrNull(Collection)}
-	 * instead and if aValue is an array use {@link ArrayUtil#isEmpty(Object[])} instead.
+	 * Note: If the value is a {@link String} use {@link StringServices#isEmpty(CharSequence)}
+	 * instead, if the value is a {@link Collection} use
+	 * {@link CollectionUtil#isEmptyOrNull(Collection)} instead and if the value is an array use
+	 * {@link ArrayUtil#isEmpty(Object[])} instead.
 	 *
-	 * @param aValue
-	 *        an Object to check
-	 * @return returns <code>true</code> if aValue is <code>null</code>, <code>false</code>
-	 *         otherwise.
+	 * @param value
+	 *        The object to check.
+	 * @return returns <code>true</code> if the value is <code>null</code> or empty,
+	 *         <code>false</code> otherwise.
 	 */
-	public static boolean isEmpty(Object aValue) {
-		if (aValue instanceof String) {
-			return StringServices.isEmpty(((String) aValue));
-		} else if (aValue instanceof Collection) {
-			return CollectionUtil.isEmptyOrNull((Collection) aValue);
-		} else if (aValue instanceof Object[]) {
-			return ArrayUtil.isEmpty((Object[]) aValue);
-		} else if (aValue instanceof int[]) {
-			return ArrayUtil.isEmpty((int[]) aValue);
-		} else if (aValue instanceof double[]) {
-			return ArrayUtil.isEmpty((double[]) aValue);
+	public static boolean isEmpty(Object value) {
+		if (value == null) {
+			return true;
+		} else if (value instanceof String) {
+			return ((String) value).isEmpty();
+		} else if (value instanceof Collection) {
+			return ((Collection<?>) value).isEmpty();
+		} else if (value instanceof Map) {
+			return ((Map<?, ?>) value).isEmpty();
+		} else if (value.getClass().isArray()) {
+			return Array.getLength(value) == 0;
 		} else {
-			return (aValue == null);
+			return false;
 		}
 	}
 

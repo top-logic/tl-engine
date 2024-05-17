@@ -15,6 +15,7 @@ import java.util.List;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.sql.SQLModifyColumn.ModificationAspect;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.db.sql.SQLQuery.SetParameter;
@@ -302,6 +303,17 @@ public class SQLFactory {
 			.setSize(size)
 			.setPrecision(precision)
 			.setDefaultValue(defaultValue);
+	}
+
+	/**
+	 * Creates a {@link SQLTableModification} that adds a new column to the given table.
+	 * 
+	 * @param column
+	 *        Name of the new column.
+	 */
+	public static SQLAddColumn addColumn(DBColumn column, Object defaultValue) {
+		return SQLFactory.addColumn(column.getDBName(), column.getType(), column.isMandatory(), column.isBinary(),
+			column.getSize(), column.getPrecision(), defaultValue);
 	}
 
 	/**

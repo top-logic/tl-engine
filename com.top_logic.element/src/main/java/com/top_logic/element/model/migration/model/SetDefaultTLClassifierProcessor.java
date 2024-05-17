@@ -81,7 +81,7 @@ public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Setting default classifier migration failed at " + getConfig().location(), ex);

@@ -76,6 +76,16 @@ public interface TLStructuredTypePart extends DerivedTLTypePart, TLStructuredTyp
 	void setOrdered(boolean value);
 
 	/**
+	 * Whether this part is abstract, i.e. it must be redeclared in concrete classes.
+	 */
+	boolean isAbstract();
+
+	/**
+	 * Sets the {@link #isAbstract()} property.
+	 */
+	void setAbstract(boolean value);
+
+	/**
 	 * Returns an {@link AccessChecker} for this type part.
 	 * 
 	 * <p>

@@ -66,7 +66,7 @@ public class CreateTLPropertyProcessor extends AbstractCreateTypePartProcessor<C
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
@@ -79,11 +79,12 @@ public class CreateTLPropertyProcessor extends AbstractCreateTypePartProcessor<C
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = (getConfig().getType());
 		_util.createTLProperty(log, connection, partName,
-			targetType, getConfig().isMandatory(), getConfig().isMultiple(),
+			targetType, getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig());
 		if (tlModel != null) {
 			MigrationUtils.createAttribute(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.MULTIPLE), nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED),
+				nullIfUnset(Config.ABSTRACT),
 				getConfig());
 		}
 		log.info("Created part " + _util.qualifiedName(partName));

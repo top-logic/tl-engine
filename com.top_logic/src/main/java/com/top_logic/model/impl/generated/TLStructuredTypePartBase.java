@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,6 +16,15 @@ public interface TLStructuredTypePartBase extends com.top_logic.model.TLTypePart
 	 * Name of type <code>TLStructuredTypePart</code>
 	 */
 	String TL_STRUCTURED_TYPE_PART_TYPE = "TLStructuredTypePart";
+
+	/**
+	 * Part <code>abstract</code> of <code>TLStructuredTypePart</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String ABSTRACT_ATTR = "abstract";
 
 	/**
 	 * Part <code>bag</code> of <code>TLStructuredTypePart</code>

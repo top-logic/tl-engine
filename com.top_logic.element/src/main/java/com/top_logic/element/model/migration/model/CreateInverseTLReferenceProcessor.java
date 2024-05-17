@@ -67,7 +67,7 @@ public class CreateInverseTLReferenceProcessor
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
@@ -88,8 +88,8 @@ public class CreateInverseTLReferenceProcessor
 		if (tlModel != null) {
 			MigrationUtils.createBackReference(log, tlModel, reference, inverseReference, nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
-				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
-				nullIfUnset(Config.HISTORY_TYPE), getConfig(),
+				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.ABSTRACT),
+				nullIfUnset(Config.NAVIGATE), nullIfUnset(Config.HISTORY_TYPE), getConfig(),
 				null);
 		}
 		log.info("Created inverse reference " + _util.qualifiedName(reference) + " for reference "

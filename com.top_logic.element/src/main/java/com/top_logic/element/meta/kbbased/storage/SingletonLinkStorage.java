@@ -71,15 +71,16 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 	/**
 	 * Creates a configuration for {@link SingletonLinkStorage}.
-	 *
-	 * @param composite
-	 *        Whether the reference is a composition.
+	 * 
+	 * @param tableName
+	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
+	 *        name is derived from the history type.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType) {
-		return LinkStorage.defaultConfig(Config.class, composite, historyType);
+	public static Config<?> singletonLinkConfig(String tableName, HistoryType historyType) {
+		return LinkStorage.defaultConfig(Config.class, tableName, historyType);
 	}
 
 	@Override
@@ -112,8 +113,8 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	}
 
 	@Override
-	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object value)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
+	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object oldValue,
+			Object newValue) throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		try {
 			// get old association if existing
 			KnowledgeAssociation link = null;
@@ -129,14 +130,14 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 			}
 
 			// create new association
-			if (value != null) {
-				LinkStorageUtil.createWrapperAssociation(attribute, object, (TLObject) value, this);
+			if (newValue != null) {
+				LinkStorageUtil.createWrapperAssociation(attribute, object, (TLObject) newValue, this);
 			}
 		} catch (DataObjectException e) {
 			Logger.error("Problem setting attribute " + this
-				+ " to value " + value, e, this);
+				+ " to value " + newValue, e, this);
 			throw new AttributeException("Problem setting attribute " + this
-				+ " to value " + value, e);
+				+ " to value " + newValue, e);
 		}
 	}
 

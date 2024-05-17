@@ -140,43 +140,16 @@
 
 						<inheritance-rule
 							inherit="true"
-							meta-element="DemoTypes:DemoTypes.Root"
-							role="DemoTypes.Navigation"
-							source-role="DemoTypes.Selection"
-						/>
-
-						<inheritance-rule
-							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
 							role="DemoTypes.Navigation"
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									association="hasDemoStructureChild"
 									inverse="false"
 								/>
 							</path>
 						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.Root"
-							role="DemoTypes.Navigation"
-						>
-							<path>
-								<step
-									association="hasStructureChild"
-									inverse="false"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							base="structureRoot@DemoTypes"
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Administrator"
-						/>
 
 						<inheritance-rule
 							inherit="true"
@@ -185,7 +158,7 @@
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									association="hasDemoStructureChild"
 									inverse="true"
 								/>
 							</path>
@@ -198,7 +171,7 @@
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									association="hasDemoStructureChild"
 									inverse="true"
 								/>
 							</path>
@@ -211,7 +184,7 @@
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									association="hasDemoStructureChild"
 									inverse="true"
 								/>
 							</path>
@@ -224,7 +197,7 @@
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									association="hasDemoStructureChild"
 									inverse="true"
 								/>
 							</path>
@@ -256,7 +229,7 @@
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									association="hasDemoStructureChild"
 									inverse="true"
 								/>
 							</path>

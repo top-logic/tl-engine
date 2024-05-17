@@ -25,5 +25,7 @@
 
 <association super_class="hasWrapperAttValueBaseAssociation" object_name="hasDemoTypesCAttValue" />
 
+<association super_class="hasStructureChild" object_name="hasDemoStructureChild" />
+
 </metaobjects>
 </objectlist>

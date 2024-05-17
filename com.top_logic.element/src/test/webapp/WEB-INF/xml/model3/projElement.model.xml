@@ -285,26 +285,61 @@
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
+			<attributes>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="ProjectRoot"
+				/>
+			</attributes>
 		</interface>
 		<interface name="ProjectChild">
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
+			<attributes>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="Project"
+				/>
+			</attributes>
 		</interface>
 		<interface name="SubprojectChild">
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
+			<attributes>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="Subproject"
+				/>
+			</attributes>
 		</interface>
 		<interface name="WorkpackageChild">
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
+			<attributes>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="Workpackage"
+				/>
+			</attributes>
 		</interface>
 		<interface name="OrderChild">
 			<generalizations>
 				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
+			<attributes>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="Order"
+				/>
+			</attributes>
 		</interface>
 	</module>
 </model>

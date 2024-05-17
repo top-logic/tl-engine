@@ -380,7 +380,7 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 	}
 
 	private Util util(MigrationContext context) {
-		return context.get(Util.PROPERTY);
+		return context.getSQLUtils();
 	}
 
 	private void createPasswords(Log log, PooledConnection connection, Collection<PersonRow> persons)

@@ -12,6 +12,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.util.TLCharacteristicsCopier;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Factory methods to create transient model overlays on top of any model.
@@ -42,7 +43,11 @@ public class TransientModelFactory {
 	
 		TLClassPart part = (TLClassPart) tlClass.getPart(name);
 		if (part != null) {
-			TLCharacteristicsCopier.copyCharacteristics(part, newProperty);
+			if (part.getOwner() == tlClass) {
+				throw new TopLogicException(
+					com.top_logic.model.I18NConstants.DUPLICATE_ATTRIBUTE__NAME_CLASS.fill(name, tlClass));
+			}
+			TLCharacteristicsCopier.copyOverrideCharacteristics(part, newProperty);
 		}
 	
 		tlClass.getLocalClassParts().add(newProperty);

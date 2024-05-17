@@ -47,6 +47,7 @@ public class TLPropertyFormBuilder extends TLStructuredTypePartFormBuilder {
 		PropertyModel.MULTIPLE_PROPERTY,
 		PropertyModel.ORDERED_PROPERTY,
 		PropertyModel.BAG_PROPERTY,
+		PropertyModel.ABSTRACT_PROPERTY,
 
 		PropertyModel.LABEL,
 		PropertyModel.DESCRIPTION,

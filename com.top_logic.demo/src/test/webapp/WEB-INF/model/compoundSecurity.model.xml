@@ -114,6 +114,13 @@
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
+					<attributes>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="compoundSecurityRoot"
+						/>
+					</attributes>
 				</interface>
 			</types>
 		</module>

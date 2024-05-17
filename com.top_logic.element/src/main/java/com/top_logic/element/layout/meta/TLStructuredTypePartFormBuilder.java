@@ -247,7 +247,11 @@ public class TLStructuredTypePartFormBuilder extends
 
 		@Override
 		@DynamicMode(fun = ActiveIf.class, args = { @Ref({ EDIT_MODEL, EditModel.CREATING }), @Ref(NEW_ATTRIBUTE) })
-		public boolean isMultiple();
+		boolean isAbstract();
+
+		@Override
+		@DynamicMode(fun = ActiveIf.class, args = { @Ref({ EDIT_MODEL, EditModel.CREATING }), @Ref(NEW_ATTRIBUTE) })
+		boolean isMultiple();
 
 		@DynamicMode(fun = ActiveAndEnabledIf.class, args = { @Ref({ EDIT_MODEL, EditModel.CREATING }),
 			@Ref(MULTIPLE_AND_NEW) })
@@ -435,6 +439,7 @@ public class TLStructuredTypePartFormBuilder extends
 		}
 		partModel.setBag(part.isBag());
 		partModel.setMandatory(part.isMandatory());
+		partModel.setAbstract(part.isAbstract());
 		partModel.setMultiple(part.isMultiple());
 		partModel.setOrdered(part.isOrdered());
 

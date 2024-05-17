@@ -180,7 +180,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
@@ -229,7 +229,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 		}
 		
 		_util.updateTLStructuredTypePart(connection, sourcePart, targetType, null, null, null, null, null, null, null,
-			null, null, null, null, null);
+			null, null, null, null, null, null);
 
 		if (tlModel != null) {
 			QualifiedPartName src;

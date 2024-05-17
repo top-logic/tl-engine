@@ -3,7 +3,7 @@
 <migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
-	<version name=" Ticket_24962_Missing_model_events_in_i18n_attributes.migration.xml"
+	<version name="Ticket_24962_Missing_model_events_in_i18n_attributes.migration.xml"
 		module="tl-element"
 	/>
 	<dependencies>

@@ -38,6 +38,7 @@ import com.top_logic.model.impl.util.TLCharacteristicsCopier;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.util.TLTypeUsage;
 import com.top_logic.model.visit.DefaultDescendingTLModelVisitor;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Default implementation of {@link TLModel}.
@@ -181,7 +182,11 @@ public class TLModelImpl extends AbstractTLModelPart implements TLModel {
 		TLReference result = new TLReferenceImpl((TLModelImpl) tlClass.getModel(), name);
 		result.setEnd(end);
 		if (part != null) {
-			TLCharacteristicsCopier.copyCharacteristics(part, result);
+			if (part.getOwner() == tlClass) {
+				throw new TopLogicException(
+					com.top_logic.model.I18NConstants.DUPLICATE_ATTRIBUTE__NAME_CLASS.fill(name, tlClass));
+			}
+			TLCharacteristicsCopier.copyOverrideCharacteristics(part, result);
 		}
 		tlClass.getLocalClassParts().add(result);
 		result.updateDefinition();

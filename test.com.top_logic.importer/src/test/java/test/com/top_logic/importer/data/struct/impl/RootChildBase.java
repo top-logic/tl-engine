@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,5 +16,13 @@ public interface RootChildBase extends com.top_logic.element.structured.Structur
 	 * Name of type <code>RootChild</code>
 	 */
 	String ROOT_CHILD_TYPE = "RootChild";
+
+	/**
+	 * Getter for part {@link #PARENT_ATTR}.
+	 */
+	@Override
+	default test.com.top_logic.importer.data.struct.Root getParent() {
+		return (test.com.top_logic.importer.data.struct.Root) tValueByName(PARENT_ATTR);
+	}
 
 }

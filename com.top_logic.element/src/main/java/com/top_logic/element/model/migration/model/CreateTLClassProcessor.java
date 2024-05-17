@@ -136,7 +136,7 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(context, log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {

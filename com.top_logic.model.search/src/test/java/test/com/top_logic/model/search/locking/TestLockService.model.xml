@@ -1,18 +1,19 @@
-<?xml version="1.0"?>
-<model xmlns:config="http://www.top-logic.com/ns/config/6.0">
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
 	<module name="TestLockService">
 		<class name="A">
 			<annotations>
 				<table name="TestLockService"/>
 			</annotations>
-		</class>	
-		
+		</class>
+
 		<class name="B">
 			<generalizations>
 				<generalization type="A"/>
 			</generalizations>
-		</class>	
-		
+		</class>
+
 		<class name="S">
 			<annotations>
 				<table name="TestLockService"/>
@@ -20,7 +21,17 @@
 			<generalizations>
 				<generalization type="tl.element:StructuredElementContainer"/>
 			</generalizations>
+			<attributes>
+				<reference name="children"
+					override="true"
+					type="S"
+				/>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="S"
+				/>
+			</attributes>
 		</class>
-		
 	</module>
 </model>

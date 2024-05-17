@@ -5,7 +5,9 @@
  */
 package com.top_logic.knowledge.service.db2;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.knowledge.util.OrderedLinkUtil;
@@ -54,6 +56,17 @@ public class LiveIndexedAssociationsList<T extends TLObject> extends LiveAssocia
 
 		public ListViewExt(OrderedLinkCache<T> associationCache, String orderAttribute) {
 			super(associationCache, orderAttribute);
+		}
+
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		@Override
+		public void sort(Comparator<? super T> c) {
+			TLObject[] a = this.toArray(TLObject[]::new);
+			Arrays.sort(a, (Comparator) c);
+			for (int i = 0; i < a.length; i++) {
+				setOrder(a[i], i);
+			}
+
 		}
 
 		@Override

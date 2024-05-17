@@ -132,7 +132,7 @@ public class ImageGalleryStorage<C extends ImageGalleryStorage.Config<?>> extend
 	 * Creates a configuration for the {@link ImageGalleryStorage}.
 	 */
 	public static Config<?> imageGalleryConfig() {
-		return defaultConfig(Config.class, false, HistoryType.CURRENT);
+		return defaultConfig(Config.class, null, HistoryType.CURRENT);
 	}
 
 }

@@ -183,8 +183,6 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 
 	private final Map<String, Object> _values = new LinkedHashMap<>();
 
-	private Util _util;
-
 	/**
 	 * Creates a {@link CreateTLObjectProcessor} from configuration.
 	 * 
@@ -219,15 +217,14 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			_util = context.getSQLUtils();
-			internalDoMigration(log, connection);
+			internalDoMigration(context, log, connection);
 		} catch (Exception ex) {
 			log.error("Creating class migration failed at " + getConfig().location(), ex);
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
-		createObject(connection);
+	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection) throws Exception {
+		createObject(context, connection);
 
 		log.info("Created object in '" + getConfig().getTable() + "' with values: " + _values);
 	}
@@ -236,11 +233,14 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 	 * Creates the {@link TLObject} according to {@link #getConfig()} in the given database
 	 * connection.
 	 */
-	public BranchIdType createObject(PooledConnection connection) throws SQLException, MigrationException {
+	public BranchIdType createObject(MigrationContext context, PooledConnection connection)
+			throws SQLException, MigrationException {
+		Util util = context.getSQLUtils();
+
 		DBHelper sqlDialect = connection.getSQLDialect();
 		
-		Type type = _util.getTLTypeOrFail(connection, getConfig().getType());
-		TLID newID = _util.newID(connection);
+		Type type = util.getTLTypeOrFail(connection, getConfig().getType());
+		TLID newID = util.newID(connection);
 		long branch = type.getBranch();
 		
 		List<Parameter> parameterDefs = new ArrayList<>();
@@ -248,12 +248,12 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		List<SQLExpression> values = new ArrayList<>();
 		List<Object> arguments = new ArrayList<>();
 
-		parameterDefs.add(_util.branchParamDef());
-		String branchColumn = _util.branchColumnOrNull();
+		parameterDefs.add(util.branchParamDef());
+		String branchColumn = util.branchColumnOrNull();
 		if (branchColumn != null) {
 			columns.add(branchColumn);
 		}
-		SQLExpression branchParam = _util.branchParamOrNull();
+		SQLExpression branchParam = util.branchParamOrNull();
 		if (branchParam != null) {
 			values.add(branchParam);
 		}
@@ -272,11 +272,11 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		values.add(parameter(DBType.LONG, "revCreate"));
 		columns.add(BasicTypes.REV_CREATE_DB_NAME);
 		values.add(parameter(DBType.LONG, "revCreate"));
-		arguments.add(_util.getRevCreate(connection));
+		arguments.add(util.getRevCreate(connection));
 		
 		if (!getConfig().hasNoTypeColumn()) {
 			parameterDefs.add(parameterDef(DBType.ID, "typeID"));
-			columns.add(_util.refID(PersistentObject.TYPE_REF));
+			columns.add(util.refID(PersistentObject.TYPE_REF));
 			values.add(parameter(DBType.ID, "typeID"));
 			arguments.add(type.getID());
 		}

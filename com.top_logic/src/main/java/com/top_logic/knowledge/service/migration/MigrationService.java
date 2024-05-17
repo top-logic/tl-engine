@@ -45,6 +45,7 @@ import com.top_logic.basic.Environment;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
@@ -358,6 +359,12 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				MetaObjectName newType = applicationTypes.get(newTypeName);
 				addConfig.getSchema().getTypes().put(newTypeName, newType);
 			}
+
+			MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
+			migration.getProcessors().add(addConfig);
+
+			Logger.info("Updating database schema according to the following migration: \n" + migration,
+				MigrationService.class);
 
 			execute(context, log, connection, addConfig);
 			return true;

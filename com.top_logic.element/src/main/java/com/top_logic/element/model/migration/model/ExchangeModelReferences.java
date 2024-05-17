@@ -198,13 +198,14 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 				String tableName = update.getTable();
 				MOClass table = (MOClass) context.getSchemaRepository().getType(tableName);
 
-				List<SQLColumnDefinition> columns = new ArrayList<>(columns(
-					columnDef(BasicTypes.BRANCH_DB_NAME),
+				List<SQLColumnDefinition> columns = new ArrayList<>(Util.listWithoutNull(columns(
+					util.branchColumnDefOrNull(),
 					columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 					columnDef(BasicTypes.REV_MIN_DB_NAME),
-					columnDef(BasicTypes.REV_MAX_DB_NAME)));
+					columnDef(BasicTypes.REV_MAX_DB_NAME))));
 
 				int updates = 0;
+				int valueIndex = util.getBranchIndexInc() + 4;
 				if (update instanceof TableUpdate) {
 					TableUpdate tableUpdate = (TableUpdate) update;
 
@@ -238,7 +239,8 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 							// long revMax = result.getLong(4);
 
 							boolean wasUpdated = false;
-							for (int index = 5, cnt = 0; cnt < valueColumns; index++, cnt++) {
+							for (int index = valueIndex,
+									cnt = 0; cnt < valueColumns; index++, cnt++) {
 								TLID id = IdentifierUtil.getId(result, index);
 								if (id == null || id.equals(nullId)) {
 									continue;
@@ -287,7 +289,7 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 							// long revMin = result.getLong(3);
 							// long revMax = result.getLong(4);
 
-							TLID id = IdentifierUtil.getId(result, 5);
+							TLID id = IdentifierUtil.getId(result, valueIndex);
 							if (id == null || id.equals(nullId)) {
 								continue;
 							}
@@ -297,7 +299,7 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 								continue;
 							}
 
-							IdentifierUtil.setId(result, 5, newId);
+							IdentifierUtil.setId(result, valueIndex, newId);
 							updates++;
 							result.updateRow();
 						}

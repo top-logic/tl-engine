@@ -125,7 +125,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 					select = query(
 						select(
 							columns(
-								columnDef(AbstractFlexDataManager.BRANCH_DBNAME),
+								util.branchColumnDef(),
 								columnDef(AbstractFlexDataManager.IDENTIFIER_DBNAME),
 								columnDef(BasicTypes.REV_MIN_DB_NAME),
 								columnDef(BasicTypes.REV_MAX_DB_NAME),
@@ -138,7 +138,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 								eqSQL(column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
 									literal(DBType.STRING, column))),
 							orders(
-								order(false, column(BasicTypes.BRANCH_DB_NAME)),
+								order(false, util.branchColumnRef()),
 								order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
 								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(connection.getSQLDialect());
 				} else {
@@ -148,7 +148,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 					select = query(
 						select(
 							columns(
-								columnDef(BasicTypes.BRANCH_DB_NAME),
+								util.branchColumnDef(),
 								columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 								columnDef(BasicTypes.REV_MIN_DB_NAME),
 								columnDef(BasicTypes.REV_MAX_DB_NAME),
@@ -156,7 +156,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 							table(table.getDBMapping().getDBName()),
 							inSet(column(tTypeColumn), implIds, DBType.ID),
 							orders(
-								order(false, column(BasicTypes.BRANCH_DB_NAME)),
+								order(false, util.branchColumnRef()),
 								order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
 								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(connection.getSQLDialect());
 				}
@@ -223,6 +223,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 	private CompiledStatement createI18NInsert(MigrationContext context, PooledConnection connection)
 			throws SQLException {
+		Util util = context.get(Util.PROPERTY);
 		MOClass i18nTable =
 			(MOClass) context.getSchemaRepository().getType(I18NAttributeStorage.I18N_STORAGE_KO_TYPE);
 
@@ -248,8 +249,8 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 				parameterDef(DBType.LONG, "value")),
 			insert(
 				table(i18nTable.getDBMapping().getDBName()),
-				columnNames(
-					BasicTypes.BRANCH_DB_NAME,
+				Util.listWithoutNull(columnNames(
+					util.branchColumnOrNull(),
 					BasicTypes.IDENTIFIER_DB_NAME,
 					BasicTypes.REV_MIN_DB_NAME,
 					BasicTypes.REV_MAX_DB_NAME,
@@ -258,9 +259,9 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 					objRef.getColumn(ReferencePart.name).getDBName(),
 					attrRef.getColumn(ReferencePart.name).getDBName(),
 					langColumn,
-					i18nValueColumn),
-				expressions(
-					parameter(DBType.LONG, "branch"),
+					i18nValueColumn)),
+				Util.listWithoutNull(expressions(
+					util.branchParamOrNull(),
 					parameter(DBType.ID, "id"),
 					parameter(DBType.LONG, "revMin"),
 					parameter(DBType.LONG, "revMax"),
@@ -269,7 +270,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 					parameter(DBType.LONG, "objId"),
 					parameter(DBType.ID, "attrId"),
 					parameter(DBType.LONG, "lang"),
-					parameter(DBType.LONG, "value")))).toSql(connection.getSQLDialect());
+					parameter(DBType.LONG, "value"))))).toSql(connection.getSQLDialect());
 		return insert;
 	}
 

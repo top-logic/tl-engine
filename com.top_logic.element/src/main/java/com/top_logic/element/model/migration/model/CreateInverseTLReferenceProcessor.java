@@ -71,7 +71,7 @@ public class CreateInverseTLReferenceProcessor
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
-			log.error("Creating invert reference " + _util.qualifiedName(getConfig().getName()) + " for reference "
+			log.error("Creating inverse reference " + _util.qualifiedName(getConfig().getName()) + " for reference "
 					+ _util.qualifiedName(getConfig().getInverseReference()) + " failed at " + getConfig().location(),
 				ex);
 			return false;

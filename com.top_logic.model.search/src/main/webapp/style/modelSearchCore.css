@@ -85,9 +85,14 @@ div.ace_tooltip>code.inlineCode {
 	min-width: max-content;
 }
 
+.modelBasedSearch .cTextInput.cannot-edit {
+	min-width: calc(2 * var(--spacing-03) + 2ch);
+}
+
 .modelBasedSearch .cTextInput {
-	min-width: calc(2 * var(--spacing-03) + var(--spacing-02));
 	text-align: center;
+	min-width: calc(2 * var(--spacing-03) + 4.5ch);
+	max-width: calc(2 * var(--spacing-03) + 21.5ch);
 }
 
 .modelBasedSearch .cTextInput:not(.searchIrrelevant) input.is-input:not([size]) {

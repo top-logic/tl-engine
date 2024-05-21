@@ -197,7 +197,7 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 				}
 			}
 
-			log.info("Added " + addedRows + "links in table '" + config.getAssociationTable() + "' from '"
+			log.info("Added " + addedRows + " links in table '" + config.getAssociationTable() + "' from '"
 				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.");
 		} catch (SQLException | MigrationException exception) {
 			log.error("Failed to add links in table '" + config.getAssociationTable() + "' from '"

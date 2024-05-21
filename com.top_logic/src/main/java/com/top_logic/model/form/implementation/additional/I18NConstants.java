@@ -21,6 +21,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LABEL_THEME_SELECTOR;
 
 	/**
+	 * @en Switch between dark and light theme.
+	 */
+	public static ResKey LABEL_DARK_THEME_TOGGLE;
+
+	/**
 	 * @en No account available
 	 */
 	public static ResKey NO_ACCOUNT_AVAILABLE;

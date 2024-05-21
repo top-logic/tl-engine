@@ -1812,162 +1812,6 @@
 	<color name="sb-thumb-color"
 		value="#2968c8"
 	/>
-	<color name="background"
-		value="#ffffff"
-	/>
-	<color name="background-active"
-		value="#a7abb2"
-	/>
-	<color name="background-selected"
-		value="#f0f1f2"
-	/>
-	<color name="background-disabled"
-		value="#f0f1f2"
-	/>
-	<color name="background-brand"
-		value="#2968c8"
-	/>
-	<color name="background-inverse"
-		value="#393C40"
-	/>
-	<color name="text-primary"
-		value="#101113"
-	/>
-	<color name="text-secondary"
-		value="#676b72"
-	/>
-	<color name="text-disabled"
-		value="#c4c7cc"
-	/>
-	<color name="text-on-color"
-		value="#ffffff"
-	/>
-	<color name="text-highlight"
-		value="#89ADE4"
-	/>
-	<color name="script-editor-text-highlight"
-		value="#D6E3F7"
-	/>
-	<color name="text-on-color-disabled"
-		value="#878d96"
-	/>
-	<color name="text-placeholder"
-		value="#a7abb2"
-	/>
-	<color name="text-helper"
-		value="#676b72"
-	/>
-	<color name="text-inverse"
-		value="#ffffff"
-	/>
-	<color name="link-primary"
-		value="#2968c8"
-	/>
-	<color name="link-primary-hover"
-		value="#245db2"
-	/>
-	<color name="link-visited"
-		value="#8955a6"
-	/>
-	<color name="field"
-		value="#f0f1f2"
-	/>
-	<color name="field-hover"
-		value="#e5e5e6"
-	/>
-	<color name="focus"
-		value="#2968C8"
-	/>
-	<color name="focus-inset"
-		value="#ffffff"
-	/>
-	<color name="focus-inverse"
-		value="#ffffff"
-	/>
-	<color name="button-primary"
-		value="#2968c8"
-	/>
-	<color name="button-primary-hover"
-		value="#245db2"
-	/>
-	<color name="button-primary-active"
-		value="#09387e"
-	/>
-	<color name="button-secondary"
-		value="#2968c8"
-	/>
-	<color name="button-secondary-hover"
-		value="#245db2"
-	/>
-	<color name="button-secondary-active"
-		value="#09387e"
-	/>
-	<color name="button-danger"
-		value="#d3181b"
-	/>
-	<color name="button-danger-hover"
-		value="#bc1518"
-	/>
-	<color name="button-danger-active"
-		value="#7b090b"
-	/>
-	<color name="button-disabled"
-		value="#e1e2e5"
-	/>
-	<color name="icon-primary"
-		value="#101113"
-	/>
-	<color name="icon-secondary"
-		value="#676b72"
-	/>
-	<color name="icon-on-color"
-		value="#ffffff"
-	/>
-	<color name="icon-disabled"
-		value="#c4c7cc"
-	/>
-	<color name="icon-on-color-disabled"
-		value="#878d96"
-	/>
-	<color name="icon-interactive"
-		value="#2968c8"
-	/>
-	<color name="layer"
-		value="#f0f1f2"
-	/>
-	<color name="layer-hover"
-		value="#e5e5e6"
-	/>
-	<color name="layer-active"
-		value="#c4c7cc"
-	/>
-	<color name="layer-selected"
-		value="#e1e2e5"
-	/>
-	<color name="layer-selected-hover"
-		value="#d3d5d9"
-	/>
-	<color name="layer-grid-interactive"
-		value="#d6e3f7"
-	/>
-	<color name="layer-accent"
-		value="#e1e2e5"
-	/>
-	<color name="layer-accent-hover"
-		value="#d3d5d9"
-	/>
-	<color name="layer-accent-active"
-		value="#a7abb2"
-	/>
-	<color name="border-subtle"
-		value="#c4c7cc"
-	/>
-	<color name="border-strong"
-		value="#878d96"
-	/>
-	<color name="border-interactive"
-		value="#2968c8"
-	/>
 	<color name="debug"
 		value="#D6E3F7"
 	/>
@@ -1977,36 +1821,294 @@
 	<color name="debug-hover"
 		value="#BFD3F3"
 	/>
-	<color name="interactive"
-		value="#2968c8"
-	/>
-	<color name="overlay"
-		value="#10111359"
-	/>
-	<color name="support-info"
-		value="#2968C8"
-	/>
-	<color name="support-danger"
-		value="#D3181B"
-	/>
-	<color name="support-success"
-		value="#04A38D"
-	/>
-	<color name="support-warning"
-		value="#D3A118"
-	/>
-	<color name="notification-info-background"
-		value="#D6E3F7"
-	/>
-	<color name="notification-success-background"
-		value="#C5EAE1"
-	/>
-	<color name="notification-danger-background"
-		value="#FFDAD4"
-	/>
-	<color name="notification-warning-background"
-		value="#FFF1CC"
-	/>
+	
+	<color name="tl-blue-015" value="#f4f8fe" />
+    <color name="tl-blue-025" value="#ecf1fa" />
+    <color name="tl-blue-050" value="#d7e3f7" />
+    <color name="tl-blue-075" value="#afc8ee" />
+    <color name="tl-blue-085" value="#6392da" />
+    <color name="tl-blue-100" value="#6392da" />
+    <color name="tl-blue-200" value="#5184d3" />
+    <color name="tl-blue-300" value="#3d75ce" />
+    <color name="tl-blue-400" value="#2968c8" />
+    <color name="tl-blue-500" value="#205cb4" />
+    <color name="tl-blue-600" value="#174589" />
+    <color name="tl-blue-700" value="#0e2f60" />
+    <color name="tl-blue-800" value="#08254e" />
+    <color name="tl-blue-900" value="#071b3b" />
+    <color name="tl-green-015" value="#f3faf3" />
+    <color name="tl-green-025" value="#e7f5e6" />
+    <color name="tl-green-050" value="#d0e9cf" />
+    <color name="tl-green-075" value="#9ed49d" />
+    <color name="tl-green-085" value="#6cbd6d" />
+    <color name="tl-green-100" value="#46a349" />
+    <color name="tl-green-200" value="#409544" />
+    <color name="tl-green-300" value="#37863a" />
+    <color name="tl-green-400" value="#337935" />
+    <color name="tl-green-500" value="#2a6b2d" />
+    <color name="tl-green-600" value="#1e5120" />
+    <color name="tl-green-700" value="#143815" />
+    <color name="tl-green-800" value="#0e2c0f" />
+    <color name="tl-green-900" value="#0a200a" />
+    <color name="tl-grey-015" value="#f8f8f8" />
+    <color name="tl-grey-025" value="#f1f1f1" />
+    <color name="tl-grey-050" value="#e2e2e2" />
+    <color name="tl-grey-075" value="#c6c6c6" />
+    <color name="tl-grey-085" value="#ababab" />
+    <color name="tl-grey-100" value="#919191" />
+    <color name="tl-grey-200" value="#848484" />
+    <color name="tl-grey-300" value="#7a7a7a" />
+    <color name="tl-grey-400" value="#6a6a6a" />
+    <color name="tl-grey-500" value="#525252" />
+    <color name="tl-grey-600" value="#3b3b3b" />
+    <color name="tl-grey-700" value="#262626" />
+    <color name="tl-grey-800" value="#1b1b1b" />
+    <color name="tl-grey-900" value="#111111" />
+    <color name="tl-neutral-black" value="#000000" />
+    <color name="tl-neutral-white" value="#ffffff" />
+    <color name="tl-red-015" value="#fff6f3" />
+    <color name="tl-red-025" value="#fdedea" />
+    <color name="tl-red-050" value="#ffdad3" />
+    <color name="tl-red-075" value="#feb4a8" />
+    <color name="tl-red-085" value="#ff8979" />
+    <color name="tl-red-100" value="#f85b4b" />
+    <color name="tl-red-200" value="#f44336" />
+    <color name="tl-red-300" value="#da3b30" />
+    <color name="tl-red-400" value="#c63429" />
+    <color name="tl-red-500" value="#af2f24" />
+    <color name="tl-red-600" value="#85221a" />
+    <color name="tl-red-700" value="#60130e" />
+    <color name="tl-red-800" value="#4c0f0b" />
+    <color name="tl-red-900" value="#3c0804" />
+    <color name="tl-yellow-015" value="#fef7e9" />
+    <color name="tl-yellow-025" value="#ffefcb" />
+    <color name="tl-yellow-050" value="#fedf9c" />
+    <color name="tl-yellow-075" value="#ffc107" />
+    <color name="tl-yellow-085" value="#d8a307" />
+    <color name="tl-yellow-100" value="#b78a00" />
+    <color name="tl-yellow-200" value="#a57c0d" />
+    <color name="tl-yellow-300" value="#967100" />
+    <color name="tl-yellow-400" value="#876504" />
+    <color name="tl-yellow-500" value="#785a00" />
+    <color name="tl-yellow-600" value="#5b4300" />
+    <color name="tl-yellow-700" value="#3f2e02" />
+    <color name="tl-yellow-800" value="#322301" />
+    <color name="tl-yellow-900" value="#251a03" />
+	<color name="light-background" expr="%tl-neutral-white%" />
+    <color name="light-background-active" expr="%tl-grey-050%" />
+    <color name="light-background-brand" expr="%tl-blue-400%" />
+    <color name="light-background-disabled" expr="%tl-grey-050%" />
+    <color name="light-background-hover" expr="%tl-grey-025%" /> <!-- never used? -->
+    <color name="light-background-inverse" expr="%tl-grey-900%" />
+    <color name="light-background-inverse-hover" expr="%tl-grey-700%" /> <!-- never used? -->
+    <color name="light-background-selected" expr="%tl-grey-050%" /> 
+    <color name="light-border-interactive" expr="%tl-blue-400%" />
+    <color name="light-border-strong" expr="%tl-grey-100%" />
+    <color name="light-border-subtle" expr="%tl-grey-050%" />
+    <color name="light-button-danger" expr="%tl-red-300%" />
+    <color name="light-button-danger-active" expr="%tl-red-500%" />
+    <color name="light-button-danger-hover" expr="%tl-red-400%" />
+    <color name="light-button-disabled" expr="%tl-grey-050%" />
+    <color name="light-button-primary" expr="%tl-blue-400%" />
+    <color name="light-button-primary-active" expr="%tl-blue-600%" />
+    <color name="light-button-primary-hover" expr="%tl-blue-500%" />
+    <color name="light--button-secondary" expr="%tl-blue-400%" />
+    <color name="light-button-secondary-active" expr="%tl-blue-600%" />
+    <color name="light-button-secondary-hover" expr="%tl-blue-500%" />
+    <color name="light-button-tertiary" expr="%tl-blue-400%" /> <!-- never used? -->
+    <color name="light-button-tertiary-active" expr="%tl-blue-600%" /> <!-- never used? -->
+    <color name="light-button-tertiary-hover" expr="%tl-blue-500%" /> <!-- never used? -->
+    <color name="light-field" expr="%tl-grey-050%" />
+    <color name="light-field-hover" expr="%tl-grey-075%" />
+    <color name="light-focus" expr="%tl-blue-400%" />
+    <color name="light-focus-inset" expr="%tl-neutral-white%" />
+    <color name="light-focus-inverse" expr="%tl-neutral-white%" />
+    <color name="light-icon-disabled" expr="%text-disabled%" />
+    <color name="light-icon-interactive" expr="%tl-blue-400%" />
+    <color name="light-icon-inverse" expr="%text-inverse%" /> <!-- never used? -->
+    <color name="light-icon-on-color" expr="%text-on-color%" />
+    <color name="light-icon-on-color-disabled" expr="%text-on-color-disabled%" />
+    <color name="light-icon-primary" expr="%text-primary%" />
+    <color name="light-icon-secondary" expr="%text-secondary%" />
+    <color name="light-layer" expr="%tl-grey-025%" />
+    <color name="light-layer-active" expr="%tl-grey-075%" />
+    <color name="light-layer-grid-interactive" expr="%tl-blue-100%" />
+    <color name="light-layer-hover" expr="%tl-grey-050%" />
+    <color name="light-layer-selected" expr="%tl-grey-075%" />
+    <color name="light-layer-selected-hover" expr="%tl-grey-085%" />
+    <color name="light-layer-accent" expr="%tl-grey-050%" />
+    <color name="light-layer-accent-active" expr="%tl-grey-085%" />
+    <color name="light-layer-accent-hover" expr="%tl-grey-075%" />
+    <color name="light-link-active" expr="%tl-blue-800%" /> <!-- never used? -->
+    <color name="light-link-primary" expr="%tl-blue-400%" />
+    <color name="light-link-primary-hover" expr="%tl-blue-600%" /> 
+    <color name="light-link-visited" expr="%tl-blue-400%" />
+    <color name="light-admin-function" expr="%tl-blue-050%" /> <!-- never used? debug? -->
+    <color name="light-admin-function-hover" expr="%tl-blue-050%" /> <!-- never used? debug-hover? -->
+    <color name="light-interactive" expr="%tl-blue-400%" />
+    <color name="light-overlay" expr="%#11111159%" />
+    <color name="light-script-editor-text-highlight" expr="%tl-blue-025%" />
+    <color name="light-notification-danger-backgroung" expr="%tl-red-025%" />
+    <color name="light-notification-info-background" expr="%tl-blue-025%" />
+    <color name="light-notification-success-background" expr="%tl-green-025%" />
+    <color name="light-notification-warning-background" expr="%tl-yellow-025%" />
+    <color name="light-support-danger" expr="%tl-red-200%" />
+    <color name="light-support-info" expr="%tl-blue-200%" />
+    <color name="light-support-success" expr="%tl-green-200%" />
+    <color name="light-support-warning" expr="%tl-yellow-075%" />
+    <color name="light-text-disabled" expr="%tl-grey-400%" />
+    <color name="light-text-helper" expr="%tl-grey-100%" />
+    <color name="light-text-highlight" expr="%tl-blue-200%" />
+    <color name="light-text-inverse" expr="%tl-neutral-white%" />
+    <color name="light-text-on-color" expr="%tl-neutral-white%" />
+    <color name="light-text-on-color-disabled" expr="%tl-grey-500%" />
+    <color name="light-text-placeholder" expr="%tl-grey-600%" />
+    <color name="light-text-primary" expr="%tl-grey-900%" />
+    <color name="light-text-secondary" expr="%tl-grey-500%" />
+    <color name="dark-background" expr="%tl-grey-900%" />
+    <color name="dark-background-active" expr="%tl-grey-800%" />
+    <color name="dark-background-brand" expr="%tl-blue-400%" />
+    <color name="dark-background-disabled" expr="%tl-grey-700%" />
+    <color name="dark-background-hover" expr="%tl-grey-700%" />
+    <color name="dark-background-inverse" expr="%tl-grey-015%" />
+    <color name="dark-background-inverse-hover" expr="%tl-grey-025%" />
+    <color name="dark-background-selected" expr="%tl-grey-600%" />
+    <color name="dark-border-interactive" expr="%tl-blue-400%" />
+    <color name="dark-border-strong" expr="%tl-grey-050%" />
+    <color name="dark-border-subtle" expr="%tl-grey-100%" />
+    <color name="dark-button-danger" expr="%tl-red-200%" />
+    <color name="dark-button-danger-active" expr="%tl-red-400%" />
+    <color name="dark-button-danger-hover" expr="%tl-red-300%" />
+    <color name="dark-button-disabled" expr="%tl-grey-700%" />
+    <color name="dark-button-primary" expr="%tl-blue-400%" />
+    <color name="dark-button-primary-active" expr="%tl-blue-600%" />
+    <color name="dark-button-primary-hover" expr="%tl-blue-500%" />
+    <color name="dark-button-secondary" expr="%tl-blue-400%" />
+    <color name="dark-button-secondary-active" expr="%tl-blue-600%" />
+    <color name="dark-button-secondary-hover" expr="%tl-blue-500%" />
+    <color name="dark-button-tertiary" expr="%tl-grey-085%" />
+    <color name="dark-button-tertiary-active" expr="%tl-blue-300%" />
+    <color name="dark-button-tertiary-hover" expr="%tl-grey-085%" />
+    <color name="dark-field" expr="%tl-grey-400%" />
+    <color name="dark-field-hover" expr="%tl-grey-300%" />
+    <color name="dark-focus" expr="%tl-blue-400%" />
+    <color name="dark-focus-inset" expr="%tl-grey-900%" />
+    <color name="dark-focus-inverse" expr="%tl-blue-400%" />
+    <color name="dark-icon-disabled" expr="%text-disabled%" />
+    <color name="dark-icon-interactive" expr="%tl-blue-400%" />
+    <color name="dark-icon-inverse" expr="%text-inverse%" />
+    <color name="dark-icon-on-color" expr="%text-on-color%" />
+    <color name="dark-icon-on-color-disabled" expr="%text-on-color-disabled%" />
+    <color name="dark-icon-primary" expr="%text-primary%" />
+    <color name="dark-icon-secondary" expr="%text-secondary%" />
+    <color name="dark-layer" expr="%tl-grey-600%" />
+    <color name="dark-layer-active" expr="%tl-grey-400%" />
+    <color name="dark-layer-grid-interactive" expr="%tl-blue-300%" />
+    <color name="dark-layer-hover" expr="%tl-grey-500%" />
+    <color name="dark-layer-selected" expr="%tl-grey-400%" />
+    <color name="dark-layer-selected-hover" expr="%tl-grey-300%" />
+    <color name="dark-layer-accent" expr="%tl-grey-400%" />
+    <color name="dark-layer-accent-active" expr="%tl-grey-200%" />
+    <color name="dark-layer-accent-hover" expr="%tl-grey-300%" />
+    <color name="dark-link-active" expr="%tl-blue-600%" />
+    <color name="dark-link-primary" expr="%tl-blue-400%" />
+    <color name="dark-link-primary-hover" expr="%tl-blue-200%" />
+    <color name="dark-link-visited" expr="%tl-blue-400%" />
+    <color name="dark-admin-function" expr="%tl-blue-200%" />
+    <color name="dark-admin-function-hover" expr="%tl-blue-100%" />
+    <color name="dark-interactive" expr="%tl-blue-400%" />
+    <color name="dark-overlay" expr="%#1111118c%" />
+    <color name="dark-script-editor-text-highlight" expr="%tl-neutral-white%" />
+    <color name="dark-notification-danger-backgroung" expr="%tl-red-400%" />
+    <color name="dark-notification-info-background" expr="%tl-blue-400%" />
+    <color name="dark-notification-success-background" expr="%tl-green-400%" />
+    <color name="dark-notification-warning-background" expr="%tl-yellow-400%" />
+    <color name="dark-support-danger" expr="%tl-red-200%" />
+    <color name="dark-support-info" expr="%tl-blue-200%" />
+    <color name="dark-support-success" expr="%tl-green-200%" />
+    <color name="dark-support-warning" expr="%tl-yellow-200%" />
+    <color name="dark-text-disabled" expr="%tl-grey-100%" />
+    <color name="dark-text-helper" expr="%tl-grey-025%" />
+    <color name="dark-text-highlight" expr="%tl-neutral-white%" />
+    <color name="dark-text-inverse" expr="%tl-grey-500%" />
+    <color name="dark-text-on-color" expr="%tl-neutral-white%" />
+    <color name="dark-text-on-color-disabled" expr="%tl-grey-085%" />
+    <color name="dark-text-placeholder" expr="%tl-grey-075%" />
+    <color name="dark-text-primary" expr="%tl-grey-015%" />
+    <color name="dark-text-secondary" expr="%tl-grey-050%" />
+    
+    <color name="background" expr="%light-background%" />
+	<color name="background-active" expr="%light-background-active%" />
+	<color name="background-brand" expr="%light-background-brand%" />
+	<color name="background-disabled" expr="%light-background-disabled%" />
+	<color name="background-hover" expr="%light-background-hover%" /> <!-- never used? -->
+	<color name="background-inverse" expr="%light-background-inverse%" />
+	<color name="background-inverse-hover" expr="%light-background-inverse-hover%" /> <!-- never used? -->
+	<color name="background-selected" expr="%light-background-selected%" /> 
+	<color name="border-interactive" expr="%light-border-interactive%" />
+	<color name="border-strong" expr="%light-border-strong%" />
+	<color name="border-subtle" expr="%light-border-subtle%" />
+	<color name="button-danger" expr="%light-button-danger%" />
+	<color name="button-danger-active" expr="%light-button-danger-active%" />
+	<color name="button-danger-hover" expr="%light-button-danger-hover%" />
+	<color name="button-disabled" expr="%light-button-disabled%" />
+	<color name="button-primary" expr="%light-button-primary%" />
+	<color name="button-primary-active" expr="%light-button-primary-active%" />
+	<color name="button-primary-hover" expr="%light-button-primary-hover%" />
+	<color name="button-secondary" expr="%light--button-secondary%" />
+	<color name="button-secondary-active" expr="%light-button-secondary-active%" />
+	<color name="button-secondary-hover" expr="%light-button-secondary-hover%" />
+	<color name="button-tertiary" expr="%light-button-tertiary%" /> <!-- never used? -->
+	<color name="button-tertiary-active" expr="%light-button-tertiary-active%" /> <!-- never used? -->
+	<color name="button-tertiary-hover" expr="%light-button-tertiary-hover%" /> <!-- never used? -->
+	<color name="field" expr="%light-field%" />
+	<color name="field-hover" expr="%light-field-hover%" />
+	<color name="focus" expr="%light-focus%" />
+	<color name="focus-inset" expr="%light-focus-inset%" />
+	<color name="focus-inverse" expr="%light-focus-inverse%" />
+	<color name="icon-disabled" expr="%light-icon-disabled%" />
+	<color name="icon-interactive" expr="%light-icon-interactive%" />
+	<color name="icon-inverse" expr="%light-icon-inverse%" /> <!-- never used? -->
+	<color name="icon-on-color" expr="%light-icon-on-color%" />
+	<color name="icon-on-color-disabled" expr="%light-icon-on-color-disabled%" />
+	<color name="icon-primary" expr="%light-icon-primary%" />
+	<color name="icon-secondary" expr="%light-icon-secondary%" />
+	<color name="layer" expr="%light-layer%" />
+	<color name="layer-active" expr="%light-layer-active%" />
+	<color name="layer-grid-interactive" expr="%light-layer-grid-interactive%" />
+	<color name="layer-hover" expr="%light-layer-hover%" />
+	<color name="layer-selected" expr="%light-layer-selected%" />
+	<color name="layer-selected-hover" expr="%light-layer-selected-hover%" />
+	<color name="layer-accent" expr="%light-layer-accent%" />
+	<color name="layer-accent-active" expr="%light-layer-accent-active%" />
+	<color name="layer-accent-hover" expr="%light-layer-accent-hover%" />
+	<color name="link-active" expr="%light-link-active%" /> <!-- never used? -->
+	<color name="link-primary" expr="%light-link-primary%" />
+	<color name="link-primary-hover" expr="%light-link-primary-hover%" /> 
+	<color name="link-visited" expr="%light-link-visited%" />
+	<color name="admin-function" expr="%light-admin-function%" /> <!-- never used? debug? -->
+	<color name="admin-function-hover" expr="%light-admin-function-hover%" /> <!-- never used? debug-hover? -->
+	<color name="interactive" expr="%light-interactive%" />
+	<color name="overlay" expr="%light-overlay%" />
+	<color name="script-editor-text-highlight" expr="%light-script-editor-text-highlight%" />
+	<color name="notification-danger-background" expr="%light-notification-danger-backgroung%" />
+	<color name="notification-info-background" expr="%light-notification-info-background%" />
+	<color name="notification-success-background" expr="%light-notification-success-background%" />
+	<color name="notification-warning-background" expr="%light-notification-warning-background%" />
+	<color name="support-danger" expr="%light-support-danger%" />
+	<color name="support-info" expr="%light-support-info%" />
+	<color name="support-success" expr="%light-support-success%" />
+	<color name="support-warning" expr="%light-support-warning%" />
+	<color name="text-disabled" expr="%light-text-disabled%" />
+	<color name="text-helper" expr="%light-text-helper%" />
+	<color name="text-highlight" expr="%light-text-highlight%" />
+	<color name="text-inverse" expr="%light-text-inverse%" />
+	<color name="text-on-color" expr="%light-text-on-color%" />
+	<color name="text-on-color-disabled" expr="%light-text-on-color-disabled%" />
+	<color name="text-placeholder" expr="%light-text-placeholder%" />
+	<color name="text-primary" expr="%light-text-primary%" />
+	<color name="text-secondary" expr="%light-text-secondary%" />
+    
 	<!-- Spacing Tokens -->
 	<string name="spacing-01"
 		value=".25rem"

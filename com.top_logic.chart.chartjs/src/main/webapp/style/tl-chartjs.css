@@ -1,7 +1,12 @@
 
 /* Expand the ChartJS control of a ChartJS component to 100% of its available space. */
 div.cjsComp {
-	position: relative;
-	width: 100%;
-	height: 100%
+	flex-grow: 1;
+	min-height: 0;
+}
+
+div.lcAuto:not(.cMediaQuery) {
+	/* Needed for dynamic ChartJS sizes */
+	display: flex;
+	flex-direction: column;
 }

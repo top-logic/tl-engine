@@ -27,7 +27,6 @@ import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.shared.collection.factory.CollectionFactoryShared;
 import com.top_logic.basic.shared.collection.iterator.IteratorUtilShared;
@@ -41,11 +40,6 @@ import com.top_logic.basic.shared.collection.map.MapUtilShared;
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 public abstract class CollectionUtilShared extends CollectionFactoryShared {
-
-	/**
-	 * Error message if a cycle in dependencies is found.
-	 */
-	public static final String CYCLIC_DEPENDENCIES_MESSAGE = "Cyclic dependencies, cannot sort topologically, cycle: ";
 
 	/** @see IteratorUtilShared#EMPTY_ITERATOR */
 	public static final Iterator<?> EMPTY_ITERATOR = IteratorUtilShared.EMPTY_ITERATOR;
@@ -1373,7 +1367,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 *         If the given graph is cyclic.
 	 */
 	public static <T> List<T> topsort(Function<T, ? extends Iterable<? extends T>> dependencies, Collection<T> input,
-			boolean addDependencies) throws IllegalArgumentException {
+			boolean addDependencies) throws CyclicDependencyException {
 		Set<T> inputSet = addDependencies ? null : new HashSet<>(input);
 		List<T> result = new ArrayList<>();
 
@@ -1390,8 +1384,10 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 			List<T> result, Set<T> seen, Set<T> pending, T element, Set<T> input, boolean addDependencies) {
 		if (seen.contains(element)) {
 			if (pending.contains(element)) {
-				throw new IllegalArgumentException(CYCLIC_DEPENDENCIES_MESSAGE
-					+ pending.stream().map(Object::toString).collect(Collectors.joining(" -> ")) + " -> " + element);
+				ArrayList<T> cycle = new ArrayList<>(pending);
+				cycle.add(element);
+
+				throw new CyclicDependencyException(cycle);
 			}
 			return;
 		}

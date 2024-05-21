@@ -95,9 +95,12 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		Util util = context.getSQLUtils();
-		
 		Config<?> config = getConfig();
 		String objType = config.getTable();
+
+		log.info(
+			"Moving values of '" + config.getAttribute().getName() + "' from '" + objType
+				+ "' to internationalization table.");
 
 		try {
 			TypePart attr = util.getTLTypePartOrFail(connection, config.getAttribute());
@@ -197,12 +200,11 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 								if (++cnt >= 1000) {
 									batch.executeBatch();
-									cnt = 0;
-
 									log.info(
 										"Moved '" + cnt + "' values of '" + config.getAttribute().getName() + "' from '"
 											+ objType
 											+ "' to internationalization table (" + lang + ").");
+									cnt = 0;
 								}
 							}
 						}

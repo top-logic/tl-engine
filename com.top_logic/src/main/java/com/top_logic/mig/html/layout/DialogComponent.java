@@ -62,6 +62,7 @@ public class DialogComponent extends AbstractDialogModel {
 			CloseModalDialogCommandHandler closeHandler = handlerSearch.getCloseHandler();
 			final LayoutComponent targetComponent = handlerSearch.getTargetComponent();
 			
+
 			if (ScriptingRecorder.isRecordingActive()) {
 				recordCloseDialogAction(dialogContents, targetComponent);
 			}
@@ -71,7 +72,8 @@ public class DialogComponent extends AbstractDialogModel {
 				return HandlerResult.DEFAULT_RESULT;
 			} else {
 				Map<String, Object> emptyArgs = Collections.<String,Object>emptyMap();
-				boolean dirty = DirtyHandling.getInstance().checkDirty(context, closeHandler, targetComponent, emptyArgs);
+				boolean dirty =
+					DirtyHandling.getInstance().checkDirty(context, closeHandler, dialogContents, emptyArgs);
 				if (dirty) {
 					return HandlerResult.DEFAULT_RESULT;
 				} else {

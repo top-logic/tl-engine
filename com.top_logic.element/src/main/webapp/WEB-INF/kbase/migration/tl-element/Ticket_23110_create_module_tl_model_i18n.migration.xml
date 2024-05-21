@@ -10,6 +10,9 @@
 		<dependency name="Ticket_24085_layout_db_storage"
 			module="tl"
 		/>
+		<dependency name="Ticket_23128_added_icon_type"
+			module="tl-element"
+		/>
 	</dependencies>
 	<processors>
 		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">

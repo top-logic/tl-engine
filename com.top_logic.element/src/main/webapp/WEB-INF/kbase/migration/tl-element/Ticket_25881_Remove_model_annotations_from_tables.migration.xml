@@ -10,7 +10,7 @@
 		<dependency name="Ticket_26117_security_object"
 			module="tl"
 		/>
-		<dependency name="Ticket_26460_remove_TLStructuredType_part"
+		<dependency name="Ticket_26746_Added_password_type"
 			module="tl-element"
 		/>
 	</dependencies>

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.TupleFactory.Pair;
@@ -173,11 +174,11 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 						TLID id = util.newID(connection);
 						long revMax = Math.min(sourceLifetime.getSecond(), targetLifetime.getSecond());
 						long revMin = Math.max(sourceLifetime.getFirst(), targetLifetime.getFirst());
-						long sourceId = sourceLifetimeById.getKey();
-						long targetId = targetLifetimeById.getKey();
+						TLID sourceId = IdentifierUtil.fromExternalForm(sourceLifetimeById.getKey().toString());
+						TLID targetId = IdentifierUtil.fromExternalForm(targetLifetimeById.getKey().toString());
 						Integer sortOrder = isSorted ? sortOrderCounter : null;
 
-						insertStatement.executeUpdate(connection, 
+						addedRows += insertStatement.executeUpdate(connection,
 							TLContext.TRUNK_ID, 
 							id, 
 							revMax,
@@ -191,7 +192,6 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 							sortOrder
 						);
 
-						addedRows++;
 						sortOrderCounter += OrderedLinkUtil.INSERT_INC;
 					}
 				}

@@ -1880,33 +1880,35 @@ public class Util {
 	}
 
 	/**
-	 * Retrieves the generalization links for the given {@link TLClass}.
+	 * Retrieves the {@link TypeGeneralization} links where the given {@link TLClass} is in the
+	 * source end.
 	 */
 	public List<TypeGeneralization> getTLClassGeneralizationLinks(PooledConnection connection, Type specialization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, specialization, true);
+		return getGeneralizationLinks(connection, specialization, false);
 	}
 
 	/**
-	 * Retrieves the specialization links for the given {@link TLClass}.
+	 * Retrieves the {@link TypeGeneralization} links where the given {@link TLClass} is in the
+	 * destination end.
 	 */
 	public List<TypeGeneralization> getTLClassSpecializationLinks(PooledConnection connection, Type generalization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, generalization, false);
+		return getGeneralizationLinks(connection, generalization, true);
 	}
 
-	private List<TypeGeneralization> getTLClassGeneralizationsOrSpecializations(PooledConnection connection,
-			Type source, boolean getSource) throws SQLException {
+	private List<TypeGeneralization> getGeneralizationLinks(PooledConnection connection, Type type, boolean backwards)
+			throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String givenColumn;
-		String otherColumn;
-		if (getSource) {
+		String resultColumn;
+		if (backwards) {
 			givenColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
-			otherColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+			resultColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
 		} else {
 			givenColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
-			otherColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
+			resultColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
 		}
 
 		String identifierAlias = "id";
@@ -1919,7 +1921,7 @@ public class Util {
 			selectDistinct(
 				columns(
 					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
-					columnDef(otherColumn, NO_TABLE_ALIAS, otherAlias),
+					columnDef(resultColumn, NO_TABLE_ALIAS, otherAlias),
 					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER),
 						NO_TABLE_ALIAS, orderAlias)),
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS)),
@@ -1931,18 +1933,18 @@ public class Util {
 
 		List<TypeGeneralization> searchResult = new ArrayList<>();
 		try (ResultSet dbResult =
-			selectTLStructuredTypePart.executeQuery(connection, source.getBranch(), source.getID())) {
+			selectTLStructuredTypePart.executeQuery(connection, type.getBranch(), type.getID())) {
 			while (dbResult.next()) {
 				TypeGeneralization generalization = BranchIdType.newInstance(TypeGeneralization.class,
-					source.getBranch(),
+					type.getBranch(),
 					LongID.valueOf(dbResult.getLong(identifierAlias)),
 					ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS);
-				if (getSource) {
-					generalization.setSource(source.getID());
-					generalization.setDestination(LongID.valueOf(dbResult.getLong(otherAlias)));
-				} else {
+				if (backwards) {
 					generalization.setSource(LongID.valueOf(dbResult.getLong(otherAlias)));
-					generalization.setDestination(source.getID());
+					generalization.setDestination(type.getID());
+				} else {
+					generalization.setSource(type.getID());
+					generalization.setDestination(LongID.valueOf(dbResult.getLong(otherAlias)));
 				}
 				generalization.setOrder(dbResult.getInt(orderAlias));
 				searchResult.add(generalization);
@@ -3842,9 +3844,10 @@ public class Util {
 		for (int n = 0; n < worklist.size(); n++) {
 			List<TypeGeneralization> specializationLinks = getTLClassSpecializationLinks(connection, worklist.get(n));
 			for (TypeGeneralization link : specializationLinks) {
-				TLID destination = link.getDestination();
-				if (result.add(destination)) {
-					worklist.add(BranchIdType.newInstance(Type.class, type.getBranch(), destination, type.getTable()));
+				TLID specializationId = link.getSource();
+				if (result.add(specializationId)) {
+					worklist
+						.add(BranchIdType.newInstance(Type.class, type.getBranch(), specializationId, type.getTable()));
 				}
 			}
 		}

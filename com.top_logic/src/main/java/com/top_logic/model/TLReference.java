@@ -35,6 +35,20 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	void setEnd(TLAssociationEnd value);
 	
 	/**
+	 * Whether this reference points to the composite part of an aggregation association.
+	 */
+	default boolean isComposite() {
+		return getEnd().isComposite();
+	}
+
+	/**
+	 * Whether this reference points to the aggregate part of an aggregation association.
+	 */
+	default boolean isAggregate() {
+		return getEnd().isAggregate();
+	}
+
+	/**
 	 * Same as {@link TLAssociationEnd#getType() type} of the implemented
 	 * {@link TLReference#getEnd() end}.
 	 * 
@@ -118,12 +132,23 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	 * @see TLAssociation#getEnds()
 	 */
 	default TLReference getOpposite() {
+		return getOppositeEnd().getReference();
+	}
+
+	/**
+	 * The {@link TLAssociationEnd} that points in reverse direction.
+	 * 
+	 * @return The opposite end of the association this reference navigates.
+	 * 
+	 * @see TLAssociation#getEnds()
+	 */
+	default TLAssociationEnd getOppositeEnd() {
 		TLAssociationEnd selfEnd = getEnd();
 		List<TLAssociationEnd> ends = selfEnd.getOwner().getEnds();
 		int selfIndex = ends.indexOf(selfEnd);
 		int oppositeIndex = 1 - selfIndex;
 
-		return ends.get(oppositeIndex).getReference();
+		return ends.get(oppositeIndex);
 	}
 
 	/**

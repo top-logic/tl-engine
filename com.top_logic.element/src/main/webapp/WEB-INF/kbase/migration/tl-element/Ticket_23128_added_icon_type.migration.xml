@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<version name="Ticket_23128_added_icon_type"
-		module="tl"
+		module="tl-element"
 	/>
 	<dependencies>
 		<dependency name="migration_21612"

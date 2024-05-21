@@ -783,11 +783,6 @@ public class MigrationUtil {
 				Map<String, MigrationRef> newestFromBaseVersions = new HashMap<>();
 
 				for (MigrationRef dependency : migration.getDependencies()) {
-					if (dependency.getModule().equals(migration.getModule())) {
-						// Only cross-module.
-						continue;
-					}
-
 					for (MigrationRef dependency2 : dependency.getDependencies()) {
 						MigrationRef clash = newestFromBaseVersions.put(dependency2.getModule(), dependency2);
 						if (clash != null && clash.isNewerThan(dependency2)) {

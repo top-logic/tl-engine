@@ -13,7 +13,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -116,7 +118,7 @@ public class ChangeReferenceObjectsTypeProcessor
 			DBHelper sqlDialect = connection.getSQLDialect();
 
 			TypePart reference = util.getTLTypePartOrFail(connection, config.getReference());
-			Set<Long> targetIds = selectTargetIds(log, connection, sqlDialect, reference, config.getAssociationTable());
+			Set<TLID> targetIds = selectTargetIds(log, connection, sqlDialect, reference, config.getAssociationTable());
 
 			Type sourceType = util.getTLTypeOrFail(connection, config.getSourceType());
 			Type targetType = util.getTLTypeOrFail(connection, config.getTargetType());
@@ -152,13 +154,13 @@ public class ChangeReferenceObjectsTypeProcessor
 	 * Returns the links target identifiers of the given {@link TypePart reference} in the given
 	 * association table.
 	 */
-	private Set<Long> selectTargetIds(Log log, PooledConnection connection, DBHelper helper, TypePart reference,
+	private Set<TLID> selectTargetIds(Log log, PooledConnection connection, DBHelper helper, TypePart reference,
 			String tableName) {
-		Set<Long> targetIds = new HashSet<>();
+		Set<TLID> targetIds = new HashSet<>();
 
 		try (ResultSet result = createTargetIdSelectStatement(helper, reference, tableName).executeQuery(connection)) {
 			while (result.next()) {
-				targetIds.add(result.getLong(1));
+				targetIds.add(IdentifierUtil.fromExternalForm(Long.toString(result.getLong(1))));
 			}
 		} catch (SQLException exception) {
 			log.error("Failed to select target identifiers in association table '" + tableName

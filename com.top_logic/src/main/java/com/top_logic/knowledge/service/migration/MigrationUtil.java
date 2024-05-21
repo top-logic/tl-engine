@@ -52,6 +52,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.shared.collection.CyclicDependencyException;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
@@ -729,7 +730,8 @@ public class MigrationUtil {
 					}
 					dependencyAncestor = ancestor;
 				}
-				dependencyAncestor.addSyntheticDependency(predecessor);
+				dependencyAncestor.addSyntheticDependency(predecessor,
+					"version " + migration + " depends on " + dependency);
 			}
 		}
 
@@ -748,7 +750,8 @@ public class MigrationUtil {
 
 				MigrationRef dependencySuccessor = latestDependency.getSuccessor();
 				if (dependencySuccessor != null) {
-					dependencySuccessor.addSyntheticDependency(latestSource);
+					dependencySuccessor.addSyntheticDependency(latestSource,
+						"latest migration " + latestSource + " depends on " + latestDependency);
 				}
 			}
 		}
@@ -757,19 +760,43 @@ public class MigrationUtil {
 			migration.updateDependencies();
 		}
 
-		List<MigrationRef> sorted = CollectionUtil.topsort(m -> m.getDependencies(), migrations.values(), false);
+		try {
+			List<MigrationRef> sorted = CollectionUtil.topsort(m -> m.getDependencies(), migrations.values(), false);
 
-		return sorted.stream()
-			// Only those migrations that belong to modules that were already present in the base
-			// version stored in the database.
-			.filter(m -> dbVersion.containsKey(m.getModule()))
+			return sorted.stream()
+				// Only those migrations that belong to modules that were already present in the base
+				// version stored in the database.
+				.filter(m -> dbVersion.containsKey(m.getModule()))
 
-			// Only those migrations not already performed during former startups.
-			.filter(m -> !done.contains(m))
+				// Only those migrations not already performed during former startups.
+				.filter(m -> !done.contains(m))
 
-			.map(m -> m.getConfig())
-			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
+				.map(m -> m.getConfig())
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+		} catch (CyclicDependencyException ex) {
+			List<?> cycle = ex.getCycle();
+			StringBuilder msg = new StringBuilder();
+			msg.append("Versions form a cyclic dependency, cannot compute valid order: ");
+			msg.append(cycle.get(0));
+			for (int n = 1, cnt = cycle.size(); n < cnt; n++) {
+				MigrationRef source = (MigrationRef) cycle.get(n - 1);
+				MigrationRef target = (MigrationRef) cycle.get(n);
+
+				String reason = source.getReason(target.getModule());
+
+				msg.append(' ');
+				if (reason != null) {
+					msg.append('[');
+					msg.append(reason);
+					msg.append(']');
+				}
+				msg.append("-> ");
+				msg.append(target);
+			}
+
+			throw new IllegalStateException(msg.toString(), ex);
+		}
 	}
 
 	/**

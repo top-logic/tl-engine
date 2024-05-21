@@ -24,7 +24,9 @@ public class MigrationRef {
 
 	private Map<String, MigrationRef> _dependencyByModule = new HashMap<>();
 
-	private List<MigrationRef> _reverseDependencies = new ArrayList<>();
+	private Map<String, String> _reasonByModule = new HashMap<>();
+
+	private List<Dependency> _reverseDependencies = new ArrayList<>();
 
 	private MigrationRef _successor;
 
@@ -59,6 +61,11 @@ public class MigrationRef {
 	public void initConfig(MigrationConfig config) {
 		assert _config == null;
 		_config = config;
+	}
+
+	private void addDependency(Dependency dependency) {
+		addDependency(dependency.getMigration());
+		_reasonByModule.put(dependency.getMigration().getModule(), dependency.getReason());
 	}
 
 	/**
@@ -116,18 +123,25 @@ public class MigrationRef {
 	}
 
 	/**
+	 * The reason for a dependency to the given module.
+	 */
+	public String getReason(String module) {
+		return _reasonByModule.get(module);
+	}
+
+	/**
 	 * Additional dependencies introduced during dependency analysis.
 	 */
-	public void addSyntheticDependency(MigrationRef predecessor) {
+	public void addSyntheticDependency(MigrationRef predecessor, String reason) {
 		assert predecessor != null;
-		_reverseDependencies.add(predecessor);
+		_reverseDependencies.add(new Dependency(predecessor, reason));
 	}
 
 	/**
 	 * Flushes synthetic dependencies into the regular dependencies.
 	 */
 	public void updateDependencies() {
-		for (MigrationRef dependency : _reverseDependencies) {
+		for (Dependency dependency : _reverseDependencies) {
 			addDependency(dependency);
 		}
 	}

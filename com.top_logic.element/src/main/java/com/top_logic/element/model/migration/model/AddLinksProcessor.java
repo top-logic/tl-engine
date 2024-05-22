@@ -188,9 +188,9 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 							revMax,
 							revMin,
 							revMin,
-							sourceTableName,
+							config.getSourceTable(),
 							sourceId,
-							targetTableName,
+							config.getTargetTable(),
 							targetId,
 							reference.getDefinition(), 
 							sortOrder

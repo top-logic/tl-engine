@@ -15,9 +15,20 @@
 			<reference att_name="historicRef"
 				target-type="StructuredElement"
 				mandatory="false"
+				monomorphic="false"
 				history-type="historic"
 			/>
 		</attributes>
+		</metaobject>
+
+		<metaobject object_name="AElement" super_class="StructuredElement">
+			<attributes>
+				<reference att_name="composite"
+					is-container="true"
+					monomorphic="true"
+					target-type="CompositePart"
+				/>
+			</attributes>
 		</metaobject>
 	
 		<association
@@ -44,7 +55,7 @@
 		</association>
 
 		<metaobject
-			object_name="InlineCompositeTarget"
+			object_name="CompositePart"
 			super_class="AttributedObject"
 		>
 			<attributes>
@@ -52,7 +63,7 @@
 					att_name="container"
 					branch-global="false"
 					deletion-policy="delete-referer"
-					target-type="StructuredElement"
+					target-type="AElement"
 				/>
 				<reference
 					att_name="reference"

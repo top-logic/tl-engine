@@ -9,11 +9,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.col.MapUtil;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.ChangeAware;
@@ -32,9 +32,11 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.annotate.persistency.CompositionStorage.InTargetTable;
+import com.top_logic.model.annotate.persistency.CompositionStorage.LinkTable;
 import com.top_logic.model.cache.TLModelCacheService;
-import com.top_logic.model.config.annotation.TableName;
+import com.top_logic.model.cache.TLModelOperations.CompositionStorages;
+import com.top_logic.model.cache.TLModelOperations.InSource;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -45,9 +47,6 @@ import com.top_logic.util.error.TopLogicException;
 public class PersistentObjectImpl {
 
 	private static final String ATTRIBUTE_SUFFIX_LAST_CHANGED = "_last_changed";
-
-	private static final ConcurrentHashMap<String, AssociationSetQuery<KnowledgeAssociation>> COMPOSITION_LINK_QUERIES =
-		new ConcurrentHashMap<>();
 
 	public static void addMetaElement(TLObject self, TLClass aMetaElement) {
 		PersistentScope.addMetaElement(self, aMetaElement);
@@ -65,96 +64,165 @@ public class PersistentObjectImpl {
 	 * Implementation of {@link TLObject#tContainer()}.
 	 */
 	public static TLObject tContainer(TLObject self) {
-		TableName tableAnnotation = TLAnnotations.getTableName(self.tType());
-		if (tableAnnotation != null) {
-			String container = tableAnnotation.getContainer();
-			if (container != null) {
-				TLObject inlineContainer = inlineContainer(self, tableAnnotation);
-				if (inlineContainer != null) {
-					return inlineContainer;
-				}
+		TLStructuredType selfType = self.tType();
+		if (selfType.getModelKind() != ModelKind.CLASS) {
+			return null;
+		}
+		CompositionStorages compositionStorage =
+			TLModelCacheService.getOperations().getCompositionStorages((TLClass) selfType);
+
+		TLObject inTargetContainer = inTargetContainer(self, compositionStorage);
+		if (inTargetContainer != null) {
+			return inTargetContainer;
+		}
+		TLObject linkContainer = linkContainer(self, compositionStorage);
+		if (linkContainer != null) {
+			return linkContainer;
+		}
+		TLObject inSourceContainer = inSourceContainer(self, compositionStorage);
+		if (inSourceContainer != null) {
+			return inSourceContainer;
+		}
+		return null;
+	}
+
+	private static TLObject inSourceContainer(TLObject self, CompositionStorages compositionStorage) {
+		for (InSource inSource : compositionStorage.storedInSource()) {
+			AssociationSetQuery<TLObject> query = inSourceQuery(inSource);
+			Set<TLObject> containers = AbstractWrapper.resolveLinks(self, query);
+			switch (containers.size()) {
+				case 0:
+					continue;
+				case 1:
+					return containers.iterator().next();
+				default:
+					throw failMultipleContainers(self, containers);
 			}
 		}
-		return genericContainer(self);
+		return null;
 	}
 
-	private static TLObject genericContainer(TLObject self) {
-		KnowledgeAssociation link = tContainerLink(self);
-		if (link == null) {
-			return null;
-		}
-		return link.getSourceObject().getWrapper();
+	private static AssociationSetQuery<TLObject> inSourceQuery(InSource inSource) {
+		String table = inSource.getTable();
+		String targetRef = inSource.getPartAttribute();
+		return AssociationQuery.createQuery("source for " + table + "." + targetRef, TLObject.class, table, targetRef);
 	}
 
-	private static TLObject inlineContainer(TLObject self, TableName tableAnnotation) {
-		Object container = self.tHandle().getAttributeValue(tableAnnotation.getContainer());
-		if (container == null) {
-			return null;
+	private static TLObject linkContainer(TLObject self, CompositionStorages compositionStorage) {
+		KnowledgeAssociation link = findLink(self, compositionStorage);
+		if (link != null) {
+			return link.getSourceObject().getWrapper();
 		}
-		return ((KnowledgeItem) container).getWrapper();
+		return null;
+	}
+
+	private static TLObject inTargetContainer(TLObject self, CompositionStorages compositionStorage) {
+		for (InTargetTable inTarget : compositionStorage.storedInTarget()) {
+			TLObject container = self.tGetDataReference(TLObject.class, inTarget.getContainer());
+			if (container != null) {
+				// Container found
+				return container;
+			}
+		}
+		return null;
 	}
 
 	/**
 	 * Implementation of {@link TLObject#tContainerReference()}.
 	 */
 	public static TLReference tContainerReference(TLObject self) {
-		TableName tableAnnotation = TLAnnotations.getTableName(self.tType());
-		if (tableAnnotation != null) {
-			String container = tableAnnotation.getContainer();
-			if (container != null) {
-				TLReference inlineContainerReference = inlineContainerReference(self, tableAnnotation);
-				if (inlineContainerReference != null) {
-					return inlineContainerReference;
-				}
+		TLStructuredType selfType = self.tType();
+		if (selfType.getModelKind() != ModelKind.CLASS) {
+			return null;
+		}
+		CompositionStorages compositionStorage =
+			TLModelCacheService.getOperations().getCompositionStorages((TLClass) selfType);
+
+		TLReference inTargetReference = inTargetReference(self, compositionStorage);
+		if (inTargetReference != null) {
+			return inTargetReference;
+		}
+		TLReference linkReference = linkReference(self, compositionStorage);
+		if (linkReference != null) {
+			return linkReference;
+		}
+		TLReference inSourceReference = inSourceReference(self, compositionStorage);
+		if (inSourceReference != null) {
+			return inSourceReference;
+		}
+		return null;
+	}
+
+	private static TLReference inSourceReference(TLObject self, CompositionStorages compositionStorage) {
+		for (InSource inSource : compositionStorage.storedInSource()) {
+			AssociationSetQuery<TLObject> query = inSourceQuery(inSource);
+			Set<TLObject> containers = AbstractWrapper.resolveLinks(self, query);
+			switch (containers.size()) {
+				case 0:
+					continue;
+				case 1:
+					TLObject container = containers.iterator().next();
+					return (TLReference) container.tType().getPartOrFail(inSource.getReferenceName());
+				default:
+					throw failMultipleContainers(self, containers);
 			}
 		}
-
-		return genericContainerReference(self);
+		return null;
 	}
 
-	private static TLReference inlineContainerReference(TLObject self, TableName tableAnnotation) {
-		Object container = self.tHandle().getAttributeValue(tableAnnotation.getContainerReference());
-		if (container == null) {
-			return null;
+	private static TLReference linkReference(TLObject self, CompositionStorages compositionStorage) {
+		KnowledgeAssociation link = findLink(self, compositionStorage);
+		if (link != null) {
+			TLObject container = link.getSourceObject().getWrapper();
+			return findConcreteReference(container,
+				link.tGetDataReference(TLReference.class, WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR));
 		}
-		return ((KnowledgeItem) container).getWrapper();
+		return null;
 	}
 
-	private static TLReference genericContainerReference(TLObject self) {
-		KnowledgeAssociation link = tContainerLink(self);
-		if (link == null) {
-			return null;
+	private static TLReference inTargetReference(TLObject self, CompositionStorages compositionStorage) {
+		for (InTargetTable inTarget : compositionStorage.storedInTarget()) {
+			TLReference compositeRef = self.tGetDataReference(TLReference.class, inTarget.getContainerReference());
+			if (compositeRef != null) {
+				// Container found
+				TLObject container = self.tGetDataReference(TLObject.class, inTarget.getContainer());
+				return findConcreteReference(container, compositeRef);
+			}
 		}
-		return ((KnowledgeItem) link.getAttributeValue(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR)).getWrapper();
+		return null;
 	}
 
-	private static KnowledgeAssociation tContainerLink(TLObject self) {
-		TLStructuredType targetType = self.tType();
-		if (targetType.getModelKind() != ModelKind.CLASS) {
-			return null;
-		}
-		Set<KnowledgeAssociation> links = findLinks(self, targetType);
+	private static TLReference findConcreteReference(TLObject self, TLReference ref) {
+		return (TLReference) self.tType().getPartOrFail(ref.getName());
+	}
+
+	private static KnowledgeAssociation findLink(TLObject self, CompositionStorages storages) {
+		Set<KnowledgeAssociation> links = findLinks(self, storages);
 		if (links.isEmpty()) {
 			return null;
 		}
 		Iterator<KnowledgeAssociation> iterator = links.iterator();
 		KnowledgeAssociation link = iterator.next();
 		if (iterator.hasNext()) {
-			throw new IllegalStateException("Object '" + self + "' is part of multiple containers.");
+			List<TLObject> allContainers = links.stream()
+				.map(KnowledgeAssociation::getSourceObject)
+				.map(KnowledgeItem::<TLObject> getWrapper)
+				.collect(Collectors.toList());
+			throw failMultipleContainers(self, allContainers);
 		}
 		return link;
 	}
 
-	private static Set<KnowledgeAssociation> findLinks(TLObject self, TLStructuredType targetType) {
-		Set<String> compositionTables =
-			TLModelCacheService.getOperations().getCompositionLinkTables((TLClass) targetType);
-		for (String tableName : compositionTables) {
-			AssociationSetQuery<KnowledgeAssociation> query = COMPOSITION_LINK_QUERIES.get(tableName);
-			if (query == null) {
-				AssociationSetQuery<KnowledgeAssociation> newQuery =
-					AssociationQuery.createIncomingQuery("containerLinks for " + tableName, tableName);
-				query = MapUtil.putIfAbsent(COMPOSITION_LINK_QUERIES, tableName, newQuery);
-			}
+	private static IllegalStateException failMultipleContainers(TLObject self,
+			Collection<? extends TLObject> allContainers) {
+		return new IllegalStateException("Object '" + self + "' is part of multiple containers: " + allContainers);
+	}
+
+	private static Set<KnowledgeAssociation> findLinks(TLObject self, CompositionStorages storages) {
+		for (LinkTable linkTable : storages.storedInLink()) {
+			String tableName = linkTable.getTable();
+			AssociationSetQuery<KnowledgeAssociation> query =
+				AssociationQuery.createIncomingQuery("containerLinks for " + tableName, tableName);
 			Set<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(self, query);
 			if (!links.isEmpty()) {
 				return links;

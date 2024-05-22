@@ -422,6 +422,28 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		assertEquals(TestTypesFactory.getComposite2ANodeAttr(), p1.tContainerReference());
 	}
 
+	public void testCompositeStoredInSource() {
+		ANode aNode;
+		Part p1;
+		Part p3;
+		try (Transaction tx = kb().beginTransaction()) {
+			aNode = newANode();
+			p1 = newPart("p1");
+			p3 = newPart("p3");
+			tx.commit();
+		}
+		assertEquals(null, aNode.getComposite());
+		assertEquals(null, p1.tContainer());
+		assertEquals(null, p1.tContainerReference());
+		try (Transaction tx = kb().beginTransaction()) {
+			aNode.setComposite(p1);
+			tx.commit();
+		}
+		assertEquals(p1, aNode.getComposite());
+		assertEquals(aNode, p1.tContainer());
+		assertEquals(TestTypesFactory.getCompositeANodeAttr(), p1.tContainerReference());
+	}
+
 	private static KnowledgeBase kb() {
 		return PersistencyLayer.getKnowledgeBase();
 	}

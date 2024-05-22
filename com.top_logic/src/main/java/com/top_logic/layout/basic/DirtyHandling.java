@@ -16,7 +16,9 @@ import org.w3c.dom.Element;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MapUtil;
+import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
@@ -63,6 +65,9 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DirtyHandling {
+
+	private static final TypedAnnotatable.Property<Boolean> SKIP_DIRTY_HANDLING_PROPERTY =
+		TypedAnnotatable.property(Boolean.class, "skipDirtyHandling");
 
 	/**
 	 * Additional command attribute that marks an execution as being already approved by the user.
@@ -220,6 +225,10 @@ public class DirtyHandling {
 	 */
 	public boolean checkDirty(DisplayContext context, CommandHandler handler, LayoutComponent component,
 			Map<String, Object> someArguments) {
+		if (skipDirtyHandling(context)) {
+			return false;
+		}
+
 		Collection<? extends ChangeHandler> affectedFormHandlers =
 			handler.checkScopeProvider().getCheckScope(component).getAffectedFormHandlers();
 		boolean dirty = checkDirty(affectedFormHandlers);
@@ -231,6 +240,10 @@ public class DirtyHandling {
 				context.getWindowScope());
 		}
 		return dirty;
+	}
+
+	private boolean skipDirtyHandling(DisplayContext context) {
+		return Utils.isTrue(context.get(DirtyHandling.SKIP_DIRTY_HANDLING_PROPERTY));
 	}
 
 	/**
@@ -376,9 +389,15 @@ public class DirtyHandling {
 					Logger.error("Handler '" + currentHandler
 						+ "'participates in change handling without discard closure.", DirtyHandlingAction.class);
 				} else {
-					HandlerResult result = discardClosure.executeCommand(context);
-					if (!result.isSuccess()) {
-						return result;
+					Boolean oldValue = context.get(SKIP_DIRTY_HANDLING_PROPERTY);
+					context.set(SKIP_DIRTY_HANDLING_PROPERTY, true);
+					try {
+						HandlerResult result = discardClosure.executeCommand(context);
+						if (!result.isSuccess()) {
+							return result;
+						}
+					} finally {
+						context.set(SKIP_DIRTY_HANDLING_PROPERTY, oldValue);
 					}
 				}
 			}
@@ -430,19 +449,26 @@ public class DirtyHandling {
 						remainingHandlers = lazyAdd(remainingHandlers, currentHandler);
 						continue;
 					}
-					final HandlerResult result = applyClosure.executeCommand(context);
-					if (result.isSuspended()) {
-						// Cannot handle more than one confirm upon apply.
-						suspended = result;
-						continue;
-					}
-					if (!result.isSuccess()) {
-						encodedErrors = lazyAddAll(encodedErrors, result.getEncodedErrors());
-						TopLogicException problem = result.getException();
-						if (problem != null) {
-							encodedErrors = lazyAdd(encodedErrors, problem.getErrorKey());
+
+					Boolean oldValue = context.get(SKIP_DIRTY_HANDLING_PROPERTY);
+					context.set(SKIP_DIRTY_HANDLING_PROPERTY, true);
+					try {
+						final HandlerResult result = applyClosure.executeCommand(context);
+						if (result.isSuspended()) {
+							// Cannot handle more than one confirm upon apply.
+							suspended = result;
+							continue;
 						}
-						remainingHandlers = lazyAdd(remainingHandlers, currentHandler);
+						if (!result.isSuccess()) {
+							encodedErrors = lazyAddAll(encodedErrors, result.getEncodedErrors());
+							TopLogicException problem = result.getException();
+							if (problem != null) {
+								encodedErrors = lazyAdd(encodedErrors, problem.getErrorKey());
+							}
+							remainingHandlers = lazyAdd(remainingHandlers, currentHandler);
+						}
+					} finally {
+						context.set(SKIP_DIRTY_HANDLING_PROPERTY, oldValue);
 					}
 				}
 			}

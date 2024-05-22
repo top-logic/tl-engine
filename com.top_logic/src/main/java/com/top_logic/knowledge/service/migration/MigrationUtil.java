@@ -808,12 +808,15 @@ public class MigrationUtil {
 			changed = false;
 			for (MigrationRef migration : migrations.values()) {
 				Map<String, MigrationRef> newestFromBaseVersions = new HashMap<>();
+				Map<String, MigrationRef> newestSourceVersions = new HashMap<>();
 
 				for (MigrationRef dependency : migration.getDependencies()) {
 					for (MigrationRef dependency2 : dependency.getDependencies()) {
 						MigrationRef clash = newestFromBaseVersions.put(dependency2.getModule(), dependency2);
+						MigrationRef clashDependency = newestSourceVersions.put(dependency2.getModule(), dependency);
 						if (clash != null && clash.isNewerThan(dependency2)) {
 							newestFromBaseVersions.put(dependency2.getModule(), clash);
+							newestSourceVersions.put(dependency2.getModule(), clashDependency);
 						}
 					}
 				}
@@ -821,11 +824,12 @@ public class MigrationUtil {
 				for (MigrationRef dependency : migration.getDependencies()) {
 					MigrationRef fromBase = newestFromBaseVersions.remove(dependency.getModule());
 					if (fromBase != null && fromBase.isNewerThan(dependency)) {
+						MigrationRef source = newestSourceVersions.get(dependency.getModule());
 						// Prevent trivial cycle caused from referencing an older base version than
 						// a dependency.
 						Logger.warn(
 							"Updating dependency of '" + migration + "' from '" + dependency + "' to '" + fromBase
-								+ "'.",
+								+ "' (referenced from dependency '" + source + "').",
 							MigrationUtil.class);
 						newestFromBaseVersions.put(dependency.getModule(), fromBase);
 					}

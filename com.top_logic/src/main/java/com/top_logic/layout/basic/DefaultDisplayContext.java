@@ -160,12 +160,12 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * current thread.
 	 * 
 	 * <p>
-	 * Note: It is essential to call
-	 * {@link #teardownDisplayContext(HttpServletRequest, AbstractDisplayContext)} in a following
-	 * try-finally-block.
+	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
+	 * following try-finally-block.
 	 * </p>
 	 * 
-	 * @see #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest, HttpServletResponse)
+	 * @see #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest,
+	 *      HttpServletResponse)
 	 */
 	@CalledFromJSP
 	public static DefaultDisplayContext setupDisplayContext(ServletContext servletContext,
@@ -178,9 +178,8 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * current thread.
 	 * 
 	 * <p>
-	 * Note: It is essential to call
-	 * {@link #teardownDisplayContext(HttpServletRequest, AbstractDisplayContext)} in a following
-	 * try-finally-block.
+	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
+	 * following try-finally-block.
 	 * </p>
 	 */
 	public static DefaultDisplayContext setupDisplayContext(TLSubSessionContext sessionContext, ServletContext servletContext,
@@ -196,9 +195,8 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * Installs the given display context for the current thread.
 	 * 
 	 * <p>
-	 * Note: It is essential to call
-	 * {@link #teardownDisplayContext(HttpServletRequest, AbstractDisplayContext)} in a following
-	 * try-finally-block.
+	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
+	 * following try-finally-block.
 	 * </p>
 	 */
 	public static void setupDisplayContext(HttpServletRequest request, DisplayContext context) {
@@ -215,15 +213,14 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	}
 
 	/**
-	 * Invalidates the given {@link AbstractDisplayContext} and removes it from the corresponding
-	 * request.
+	 * Invalidates the {@link DisplayContext} and removes it from the corresponding request.
 	 * 
 	 * @param request
 	 *        The request for which the given {@link DisplayContext} was
 	 *        {@link #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest, HttpServletResponse)
 	 *        set up}.
 	 */
-	public static void teardownDisplayContext(HttpServletRequest request, AbstractDisplayContext displayContext) {
+	public static void teardownDisplayContext(HttpServletRequest request) {
 		if (request != null) {
 			request.removeAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE);
 		}

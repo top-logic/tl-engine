@@ -5,12 +5,19 @@
  */
 package com.top_logic.layout.basic;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
+
+import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CalledFromJSP;
@@ -229,8 +236,18 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 		if (StringServices.isEmpty(sessionId)) {
 			return;
 		}
-		String logSnippet = "S(" + sessionId + ") ";
+		String logSnippet = "S(" + hashSessionId(sessionId) + ") ";
 		LogConfigurator.getInstance().addLogMark(TL_SESSION_ID_LOG_MARK, logSnippet);
+	}
+
+	private static String hashSessionId(String sessionId) {
+		try {
+			MessageDigest digester = MessageDigest.getInstance(MessageDigestAlgorithms.SHA3_256);
+			byte[] digest = digester.digest(sessionId.getBytes(StandardCharsets.UTF_8));
+			return Base64.getEncoder().encodeToString(digest);
+		} catch (NoSuchAlgorithmException exception) {
+			throw new RuntimeException(exception);
+		}
 	}
 
 	private static void removeSessionIdLogMark() {

@@ -94,7 +94,7 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		AbstractDisplayContext initialDisplayContext = createDisplayContext(subSession, ml);
 		LayoutControl windowControl = ml.getLayoutFactory().createLayout(ml);
 		windowControl.write(initialDisplayContext, new TagWriter());
-		DefaultDisplayContext.teardownDisplayContext(null, initialDisplayContext);
+		DefaultDisplayContext.teardownDisplayContext(null);
 		
 		_displayContext  = createDisplayContext(subSession, component);
 
@@ -152,7 +152,7 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 	protected void tearDown() throws Exception {
 		resetUpdatesEnabled(false);
 
-		DefaultDisplayContext.teardownDisplayContext(null, _displayContext);
+		DefaultDisplayContext.teardownDisplayContext(null);
 		_displayContext = null;
 		super.tearDown();
 	}

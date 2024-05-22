@@ -46,7 +46,7 @@ public class NoContextServlet extends HttpServlet {
 			installSessionContext(req, displayContext);
 			doService(req, resp);
 		} finally {
-			DefaultDisplayContext.teardownDisplayContext(req, displayContext);
+			DefaultDisplayContext.teardownDisplayContext(req);
 		}
 	}
 

@@ -118,7 +118,8 @@ public class ChangeReferenceObjectsTypeProcessor
 			DBHelper sqlDialect = connection.getSQLDialect();
 
 			TypePart reference = util.getTLTypePartOrFail(connection, config.getReference());
-			Set<TLID> targetIds = selectTargetIds(log, connection, sqlDialect, reference, config.getAssociationTable());
+			Set<TLID> targetIds = selectTargetIds(log, connection, sqlDialect, reference,
+				getTableName(context, config.getAssociationTable()));
 
 			Type sourceType = util.getTLTypeOrFail(connection, config.getSourceType());
 			Type targetType = util.getTLTypeOrFail(connection, config.getTargetType());
@@ -148,6 +149,10 @@ public class ChangeReferenceObjectsTypeProcessor
 				+ "' objects in table '" + config.getTable() + "' from '"
 				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.", exception);
 		}
+	}
+
+	private String getTableName(MigrationContext context, String table) {
+		return ((MOClass) context.getSchemaRepository().getType(table)).getDBMapping().getDBName();
 	}
 
 	/**

@@ -34,6 +34,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
@@ -149,15 +150,18 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 		try {
 			DBHelper sqlDialect = connection.getSQLDialect();
 
-			CompiledStatement insertStatement = createInsertStatement(sqlDialect, util, config.getAssociationTable());
+			CompiledStatement insertStatement =
+				createInsertStatement(sqlDialect, util, getTableName(context, config.getAssociationTable()));
 
 			Type source = util.getTLTypeOrFail(connection, config.getSourceType());
+			String sourceTableName = getTableName(context, config.getSourceTable());
 			Map<Long, Pair<Long, Long>> sourceLifetimeByIds =
-				getObjectLifetimeById(log, connection, sqlDialect, source, config.getSourceTable());
+				getObjectLifetimeById(log, connection, sqlDialect, source, sourceTableName);
 
 			Type target = util.getTLTypeOrFail(connection, config.getTargetType());
+			String targetTableName = getTableName(context, config.getTargetTable());
 			Map<Long, Pair<Long, Long>> targetLifetimeByIds =
-				getObjectLifetimeById(log, connection, sqlDialect, target, config.getTargetTable());
+				getObjectLifetimeById(log, connection, sqlDialect, target, targetTableName);
 
 			TypePart reference = util.getTLTypePartOrFail(connection, config.getReference());
 
@@ -184,9 +188,9 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 							revMax,
 							revMin,
 							revMin,
-							source.getTypeName(),
+							sourceTableName,
 							sourceId,
-							target.getTypeName(),
+							targetTableName,
 							targetId,
 							reference.getDefinition(), 
 							sortOrder
@@ -256,6 +260,10 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 		parameters.add(parameterDef(DBType.INT, SORT_ORDER_DB_NAME));
 
 		return query(parameters, insert).toSql(sqlDialect);
+	}
+
+	private String getTableName(MigrationContext context, String table) {
+		return ((MOClass) context.getSchemaRepository().getType(table)).getDBMapping().getDBName();
 	}
 
 	private Map<Long, Pair<Long, Long>> getObjectLifetimeById(Log log, Connection connection, DBHelper helper, Type type,

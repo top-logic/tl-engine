@@ -79,7 +79,8 @@ public class TestKBBasedReferenceMetaAttributes extends BasicTestCase {
 		PersistentObjectImpl.setMetaElement(attributed, me);
 		TLType referenceType = attributed.tType();
 
-		ReferenceConfig setConfig = TestKBBasedMetaAttributes.referenceConfig("typedSet", "", 0.0, true);
+		ReferenceConfig setConfig =
+			TestKBBasedMetaAttributes.referenceConfig("typedSet", TLModelUtil.qualifiedName(referenceType), 0.0, true);
 		SetStorage.Config setStorage = TypedConfiguration.newConfigItem(SetStorage.Config.class);
 		setStorage.setImplementationClass(SetStorage.class);
 		setAnnotation(setConfig, storage(setStorage));

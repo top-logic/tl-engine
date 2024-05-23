@@ -8,6 +8,7 @@ package com.top_logic.element.meta.kbbased.storage;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -33,6 +34,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The given value {0} is not a TLAnnotation.
 	 */
 	public static ResKey1 ERROR_VALUE_IS_NOT_TLANNOTATION__VALUE;
+
+	/**
+	 * @en Failed to access attribute "{1}" of "{0}": {2}
+	 */
+	public static ResKey3 ERROR_CANNOT_ACCESS_ATTRIBUTE__OBJ_ATTR_ERR;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -36,6 +36,15 @@ public interface TLAssociationEndBase extends com.top_logic.model.TLStructuredTy
 	String COMPOSITE_ATTR = "composite";
 
 	/**
+	 * Part <code>endIndex</code> of <code>TLAssociationEnd</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String END_INDEX_ATTR = "endIndex";
+
+	/**
 	 * Part <code>historyType</code> of <code>TLAssociationEnd</code>
 	 * 
 	 * <p>

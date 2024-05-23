@@ -1336,7 +1336,7 @@ public class TLModelUtil {
 	 * @return The opposite end.
 	 */
 	public static final TLAssociationEnd getOtherEnd(TLAssociationEnd end) {
-		List<TLAssociationEnd> allEnds = CollectionUtil.toListIterable(TLModelUtil.getEnds(end.getOwner()));
+		List<TLAssociationEnd> allEnds = TLModelUtil.getEnds(end.getOwner());
 		int endIndex = allEnds.indexOf(end);
 		TLAssociationEnd otherEnd = allEnds.get(1 - endIndex);
 		return otherEnd;

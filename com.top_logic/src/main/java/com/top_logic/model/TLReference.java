@@ -5,6 +5,7 @@
  */
 package com.top_logic.model;
 
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.config.annotation.Label;
@@ -33,6 +34,20 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	 */
 	void setEnd(TLAssociationEnd value);
 	
+	/**
+	 * Whether this reference points to the composite part of an aggregation association.
+	 */
+	default boolean isComposite() {
+		return getEnd().isComposite();
+	}
+
+	/**
+	 * Whether this reference points to the aggregate part of an aggregation association.
+	 */
+	default boolean isAggregate() {
+		return getEnd().isAggregate();
+	}
+
 	/**
 	 * Same as {@link TLAssociationEnd#getType() type} of the implemented
 	 * {@link TLReference#getEnd() end}.
@@ -96,6 +111,44 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	@Override
 	default void setMultiple(boolean value) {
 		getEnd().setMultiple(value);
+	}
+
+	/**
+	 * Whether this is a reverse reference to a regular forwards reference.
+	 * 
+	 * @see #getOpposite()
+	 */
+	default boolean isBackwards() {
+		return getEnd().getEndIndex() == 0;
+	}
+
+	/**
+	 * The {@link TLReference} in the {@link #getType() target type} that points in reverse
+	 * direction.
+	 * 
+	 * @return The opposite reference if such reference exists in the target type, <code>null</code>
+	 *         otherwise.
+	 * 
+	 * @see TLAssociation#getEnds()
+	 */
+	default TLReference getOpposite() {
+		return getOppositeEnd().getReference();
+	}
+
+	/**
+	 * The {@link TLAssociationEnd} that points in reverse direction.
+	 * 
+	 * @return The opposite end of the association this reference navigates.
+	 * 
+	 * @see TLAssociation#getEnds()
+	 */
+	default TLAssociationEnd getOppositeEnd() {
+		TLAssociationEnd selfEnd = getEnd();
+		List<TLAssociationEnd> ends = selfEnd.getOwner().getEnds();
+		int selfIndex = ends.indexOf(selfEnd);
+		int oppositeIndex = 1 - selfIndex;
+
+		return ends.get(oppositeIndex);
 	}
 
 	/**

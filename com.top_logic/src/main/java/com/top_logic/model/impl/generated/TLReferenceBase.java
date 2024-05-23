@@ -18,6 +18,33 @@ public interface TLReferenceBase extends com.top_logic.model.TLStructuredTypePar
 	String TL_REFERENCE_TYPE = "TLReference";
 
 	/**
+	 * Part <code>aggregate</code> of <code>TLReference</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String AGGREGATE_ATTR = "aggregate";
+
+	/**
+	 * Part <code>backwards</code> of <code>TLReference</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String BACKWARDS_ATTR = "backwards";
+
+	/**
+	 * Part <code>composite</code> of <code>TLReference</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE_ATTR = "composite";
+
+	/**
 	 * Part <code>end</code> of <code>TLReference</code>
 	 * 
 	 * <p>
@@ -34,5 +61,23 @@ public interface TLReferenceBase extends com.top_logic.model.TLStructuredTypePar
 	 * </p>
 	 */
 	String HISTORY_TYPE_ATTR = "historyType";
+
+	/**
+	 * Part <code>opposite</code> of <code>TLReference</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLReference</code> in configuration.
+	 * </p>
+	 */
+	String OPPOSITE_ATTR = "opposite";
+
+	/**
+	 * Part <code>oppositeEnd</code> of <code>TLReference</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLAssociationEnd</code> in configuration.
+	 * </p>
+	 */
+	String OPPOSITE_END_ATTR = "oppositeEnd";
 
 }

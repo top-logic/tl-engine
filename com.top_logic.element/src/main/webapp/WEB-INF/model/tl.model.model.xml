@@ -312,7 +312,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBType()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#getDBType()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -321,7 +325,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBSize()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#getDBSize()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -330,7 +338,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBPrecision()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#getDBPrecision()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -339,7 +351,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.isBinary()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#isBinary()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -398,7 +414,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLAssociation.getEnds()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLAssociation#getEnds()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</reference>
@@ -517,7 +537,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.DerivedTLTypePart.isDerived()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.DerivedTLTypePart#isDerived()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -576,7 +600,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLStructuredTypePart.isOverride()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLStructuredTypePart#isOverride()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -585,11 +613,15 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLStructuredTypePart.getDefinition()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLStructuredTypePart#getDefinition()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</reference>
-						
+
 						<reference name="classifiedBy"
 							multiple="true"
 							type="tl.model:TLClassifier"
@@ -644,7 +676,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLAssociationEnd.getEndIndex()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLAssociationEnd#getEndIndex()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -800,7 +836,14 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLReference.isComposite()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="composite"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -809,7 +852,14 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLReference.isAggregate()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="aggregate"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -818,7 +868,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLReference.isBackwards()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLReference#isBackwards()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</property>
@@ -827,7 +881,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLReference.getOpposite()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLReference#getOpposite()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</reference>
@@ -836,7 +894,11 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.TLReference.getOppositeEnd()"/>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLReference#getOppositeEnd()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</reference>

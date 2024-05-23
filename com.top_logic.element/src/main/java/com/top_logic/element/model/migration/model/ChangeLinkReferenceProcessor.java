@@ -95,8 +95,11 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 		
 		Config<?> config = getConfig();
 		try {
-			TypePart sourceRef = util.getTLTypePartOrFail(connection, config.getSourceRef());
-			TypePart targetRef = util.getTLTypePartOrFail(connection, config.getTargetRef());
+			QualifiedPartName sourceConfig = config.getSourceRef();
+			QualifiedPartName targetConfig = config.getTargetRef();
+
+			TypePart sourceRef = util.getTLTypePartOrFail(connection, sourceConfig);
+			TypePart targetRef = util.getTLTypePartOrFail(connection, targetConfig);
 			
 			MOClass table = (MOClass) context.getSchemaRepository().getType(config.getTable());
 			MOReference ref = (MOReference) table.getAttribute(config.getReferenceColumn());
@@ -113,12 +116,17 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 			
 			int cnt = update.executeUpdate(connection);
 
-			log.info("Changed reference of " + cnt + " links in table '" + tableName + "' from '"
-				+ config.getSourceRef().getName() + "' to '" + config.getTargetRef().getName() + "'.");
+			log.info("Changed reference of " + cnt + " links in table '" + tableName + "' from "
+				+ toString(sourceConfig, sourceRef) + " to " + toString(targetConfig, targetRef) + ".");
 		} catch (SQLException | MigrationException ex) {
 			log.error("Failed to change reference of links in table '" + config.getTable() + "' from '"
 				+ config.getSourceRef().getName() + "' to '" + config.getTargetRef().getName() + "'.", ex);
 		}
+	}
+
+	private static String toString(QualifiedPartName sourceConfig, TypePart sourceRef) {
+		return "'" + sourceConfig.getName() + "' (" + sourceRef.getID() + ", def: " + sourceRef.getDefinition()
+			+ ")";
 	}
 
 }

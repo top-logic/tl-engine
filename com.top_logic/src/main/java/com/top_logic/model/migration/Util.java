@@ -51,6 +51,7 @@ import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLLiteral;
+import com.top_logic.basic.db.sql.SQLOrder;
 import com.top_logic.basic.db.sql.SQLParameter;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -3695,6 +3696,13 @@ public class Util {
 	}
 
 	/**
+	 * Whether branch support is enabled.
+	 */
+	public boolean hasBranches() {
+		return _branchSupport;
+	}
+
+	/**
 	 * Name of the branch column, or <code>null</code> if the application has no branch support.
 	 */
 	public String branchColumnOrNull() {
@@ -3766,8 +3774,15 @@ public class Util {
 	 * A select column returning the object's branch.
 	 */
 	public SQLColumnDefinition branchColumnDef() {
+		return branchColumnDef(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * A select column returning the object's branch.
+	 */
+	public SQLColumnDefinition branchColumnDef(String tableAlias) {
 		if (_branchSupport) {
-			return columnDef(BasicTypes.BRANCH_DB_NAME);
+			return columnDef(column(tableAlias, BasicTypes.BRANCH_DB_NAME));
 		} else {
 			return columnDef(trunkBranch(), BasicTypes.BRANCH_DB_NAME);
 		}
@@ -3777,8 +3792,15 @@ public class Util {
 	 * A select column returning the object's branch.
 	 */
 	public SQLColumnDefinition branchColumnDefOrNull() {
+		return branchColumnDefOrNull(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * A select column returning the object's branch.
+	 */
+	public SQLColumnDefinition branchColumnDefOrNull(String tableAlias) {
 		if (_branchSupport) {
-			return columnDef(BasicTypes.BRANCH_DB_NAME);
+			return columnDef(column(tableAlias, BasicTypes.BRANCH_DB_NAME));
 		} else {
 			return null;
 		}
@@ -3788,11 +3810,34 @@ public class Util {
 	 * The branch of the object.
 	 */
 	public SQLExpression branchColumnRef() {
+		return branchColumnRef(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * The branch of the object.
+	 */
+	public SQLExpression branchColumnRef(String tableAlias) {
 		if (_branchSupport) {
-			return column(SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME));
+			return column(tableAlias, SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME));
 		} else {
 			return trunkBranch();
 		}
+	}
+
+	/**
+	 * An order expression for the branch column, or <code>null</code>, if no branches are
+	 * supported.
+	 */
+	public SQLOrder branchOrderOrNull() {
+		return branchOrderOrNull(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * An order expression for the branch column, or <code>null</code>, if no branches are
+	 * supported.
+	 */
+	public SQLOrder branchOrderOrNull(String tableAlias) {
+		return _branchSupport ? order(false, branchColumnRef(tableAlias)) : null;
 	}
 
 	/**

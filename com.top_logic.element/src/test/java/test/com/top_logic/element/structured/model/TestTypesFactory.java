@@ -377,6 +377,13 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link ANode#COMPOSITE_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ANode#COMPOSITE1_ATTR} of {@link ANode}.
 	 */
 	public static com.top_logic.model.TLReference getComposite1ANodeAttr() {
@@ -558,7 +565,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	/**
 	 * Storage table name of {@link #A_NODE_NODE} objects.
 	 */
-	public static final String KO_NAME_A_NODE = "StructuredElement";
+	public static final String KO_NAME_A_NODE = "AElement";
 
 	/**
 	 * Name of type <code>BNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
@@ -626,7 +633,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	/**
 	 * Storage table name of {@link #PART_NODE} objects.
 	 */
-	public static final String KO_NAME_PART = "InlineCompositeTarget";
+	public static final String KO_NAME_PART = "CompositePart";
 
 	/**
 	 * Singleton <code>ROOT</code>.

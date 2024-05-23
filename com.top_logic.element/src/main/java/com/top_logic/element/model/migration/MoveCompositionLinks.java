@@ -33,6 +33,7 @@ import com.top_logic.knowledge.service.db2.RevisionXref;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
 
 /**
  * {@link MigrationProcessor} moving composition links from a source to a target table.
@@ -72,6 +73,13 @@ public class MoveCompositionLinks extends AbstractMoveCompositionLinks<MoveCompo
 	 */
 	public MoveCompositionLinks(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+	}
+
+	@Override
+	protected void migrateData(Log log, PooledConnection connection) throws SQLException, MigrationException {
+		log.info("Move composition links from '" + getConfig().getSourceTable() + "' for reference '"
+				+ getConfig().getReference().getName() + "' to '" + getConfig().getTargetTable() + "'.");
+		super.migrateData(log, connection);
 	}
 
 	@Override
@@ -132,26 +140,6 @@ public class MoveCompositionLinks extends AbstractMoveCompositionLinks<MoveCompo
 							column(srcIdColumn),
 							setParameter("sourceElements", DBType.ID)))))).toSql(sql);
 
-		/* Remove source links from source table. */
-		CompiledStatement deleteLinks = query(
-			parameters(
-				util().branchParamDef(),
-				parameterDef(DBType.ID, "refId"),
-				parameterDef(DBType.STRING, "sourceType"),
-				setParameterDef("sourceElements", DBType.ID)),
-			delete(
-				table(SQLH.mangleDBName(getConfig().getSourceTable())),
-				and(
-					util().eqBranch(),
-					eqSQL(
-						column(attrIdColumn),
-						parameter(DBType.ID, "refId")),
-					eqSQL(
-						column(srcTypeColumn),
-						parameter(DBType.STRING, "sourceType")),
-					inSet(
-						column(srcIdColumn),
-						setParameter("sourceElements", DBType.ID))))).toSql(sql);
 
 		int moved = copyLinks.executeUpdate(connection, branch, refId, sourceTable, sourceElements);
 		if (moved == 0) {
@@ -159,7 +147,8 @@ public class MoveCompositionLinks extends AbstractMoveCompositionLinks<MoveCompo
 		}
 		updateXRefTable(connection, sql, branch, refId, sourceTable, sourceElements, srcIdColumn, srcTypeColumn,
 			attrIdColumn);
-		int deleted = deleteLinks.executeUpdate(connection, branch, refId, sourceTable, sourceElements);
+
+		int deleted = deleteLinks(connection, branch, refId, sourceTable, sourceElements);
 
 		if (moved != deleted) {
 			log.info(

@@ -13,12 +13,10 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -26,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.col.MapUtil;
-import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
@@ -40,6 +37,11 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.persistency.CompositionStorage;
+import com.top_logic.model.annotate.persistency.CompositionStorage.InSourceTable;
+import com.top_logic.model.annotate.persistency.CompositionStorage.InTargetTable;
+import com.top_logic.model.annotate.persistency.CompositionStorage.LinkTable;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.internal.PersistentModelPart;
 import com.top_logic.util.model.ModelService;
 
@@ -62,8 +64,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	/**
 	 * <p>
-	 * Mapping from a {@link TLType} to the tables in which a composite {@link TLReference} with the
-	 * type as target type stores the link.
+	 * Mapping from a {@link TLType} to the
+	 * {@link com.top_logic.model.cache.TLModelOperations.CompositionStorages} defining in which
+	 * composite {@link TLReference}s store data.
 	 * </p>
 	 * <p>
 	 * The map is complete in the following sense: If a type <code>A</code> is the target type of a
@@ -77,7 +80,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	 * because it is expected that this will not change over time.
 	 * </p>
 	 */
-	private volatile Map<ObjectBranchId, Set<String>> _compositionTables = null;
+	private volatile Map<ObjectBranchId, CompositionStorages> _compositionStorages = null;
 
 	private final ConcurrentMap<TLType, IconProvider> _iconProviderByType = new ConcurrentHashMap<>();
 
@@ -288,32 +291,56 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	}
 
 	@Override
-	public Set<String> getCompositionLinkTables(TLClass type) {
+	public CompositionStorages getCompositionStorages(TLClass type) {
 		if (!WrapperHistoryUtils.isCurrent(type)) {
 			if (WrapperHistoryUtils.getCurrent(type) == null) {
 				// type is deleted in the meanwhile. Search for result
-				return super.getCompositionLinkTables(type);
+				return super.getCompositionStorages(type);
 			}
 		}
-		Map<ObjectBranchId, Set<String>> compositionTables = _compositionTables;
-		if (_compositionTables == null) {
-			compositionTables = compositionTablesByTargetType();
-			_compositionTables = compositionTables;
+		Map<ObjectBranchId, CompositionStorages> storages = _compositionStorages;
+		if (_compositionStorages == null) {
+			storages = compositionStoragesByTargetType();
+			_compositionStorages = storages;
 		}
-
-		return getSuperClasses(type).stream()
-			.map(TLClass::tId)
-			.map(ObjectBranchId::toObjectBranchId)
-			.map(compositionTables::get)
-			.filter(Objects::nonNull)
-			.flatMap(Set::stream)
-			.collect(Collectors.toSet());
+		CompositionStoragesImpl result = new CompositionStoragesImpl();
+		for (TLClass c : getSuperClasses(type)) {
+			CompositionStorages storage = storages.get(ObjectBranchId.toObjectBranchId(c.tId()));
+			if (storage == null) {
+				continue;
+			}
+			result.storedInLink().addAll(storage.storedInLink());
+			result.storedInSource().addAll(storage.storedInSource());
+			result.storedInTarget().addAll(storage.storedInTarget());
+		}
+		return result;
 	}
 
-	private Map<ObjectBranchId, Set<String>> compositionTablesByTargetType() {
-		Map<ObjectBranchId, Set<String>> result = new HashMap<>();
-		collectStorageTables(_appModel,
-			(ref, table) -> MultiMaps.add(result, ObjectBranchId.toObjectBranchId(ref.getType().tId()), table));
+	private Map<ObjectBranchId, CompositionStorages> compositionStoragesByTargetType() {
+		Map<ObjectBranchId, CompositionStorages> result = new HashMap<>();
+
+		doForAllCompositionReferences(_appModel, reference -> {
+			TLType targetType = reference.getType();
+			ObjectBranchId key = ObjectBranchId.toObjectBranchId(targetType.tId());
+			
+			CompositionStorages storages = result.computeIfAbsent(key, k -> new CompositionStoragesImpl());
+			CompositionStorage compositionStorage = TLAnnotations.getCompositionStorage(reference);
+			CompositionStorage.Storage storage;
+			if (compositionStorage != null) {
+				storage = compositionStorage.getStorage();
+			} else {
+				storage = CompositionStorage.defaultCompositionLinkStorage();
+			}
+			if (storage instanceof CompositionStorage.InTargetTable) {
+				InTargetTable inTargetStorage = (InTargetTable) storage;
+				storages.storedInTarget().add(inTargetStorage);
+			} else if (storage instanceof CompositionStorage.InSourceTable) {
+				InSourceTable inSourceStorage = (InSourceTable) storage;
+				storages.storedInSource().add(new InSource(reference, inSourceStorage.getPart()));
+			} else {
+				storages.storedInLink().add((LinkTable) storage);
+			}
+		});
 		return result;
 	}
 

@@ -315,7 +315,9 @@
 			type="DemoTypes:DemoTypes.All"
 		>
 			<annotations>
-				<composition-link table="hasDemoStructureChild"/>
+				<composition-storage>
+					<link table="hasDemoStructureChild"/>
+				</composition-storage>
 			</annotations>
 		</create-reference>
 		<mark-override name="DemoTypes:DemoTypesContainer#children"

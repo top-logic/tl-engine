@@ -541,11 +541,11 @@ public class Util {
 		TLID targetID = IdentifierUtil.nullIdForMandatoryDatabaseColumns();
 		Boolean isMandatory = null;
 		Boolean isAbstract = null;
-		Boolean isMultiple = null;
 		Boolean composite = null;
 		Boolean aggregate = null;
-		Boolean ordered = null;
+		Boolean isMultiple = null;
 		Boolean bag = null;
+		Boolean ordered = null;
 		Boolean navigate = null;
 		HistoryType historyType = null;
 		return (Reference) createTLStructuredTypePart(log, con, branch, moduleName, ownerName, partName, partID,
@@ -1205,8 +1205,8 @@ public class Util {
 	public Reference createTLReference(Log log, PooledConnection con,
 			long branch, String moduleName, String ownerName,
 			String partName, String targetModule,
-			String targetTypeName, boolean mandatory, boolean composite, boolean aggregate,
-			boolean multiple, boolean isAbstract, boolean bag, boolean ordered, boolean navigate,
+			String targetTypeName, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
+			boolean multiple, boolean bag, boolean ordered, boolean navigate,
 			HistoryType historyType, String annotations)
 			throws SQLException, MigrationException {
 		Objects.requireNonNull(historyType);

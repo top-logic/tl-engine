@@ -49,7 +49,6 @@ import com.top_logic.element.meta.ValidityCheck;
 import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.element.model.ModelResolver;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
@@ -68,7 +67,6 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.impl.generated.TlModelFactory;
@@ -718,6 +716,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 	}
 
 	public static ReferenceConfig referenceConfig(String name, String typeSpec, double sortOder, boolean multiple) {
+		assertNotNull(typeSpec);
 		ReferenceConfig config = TypedConfiguration.newConfigItem(ReferenceConfig.class);
 		config.setName(name);
 		config.setTypeSpec(typeSpec);
@@ -1063,26 +1062,19 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		return true;
 	}
 
-	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig)
-			throws DuplicateAttributeException, ConfigurationException {
-		TLType destinationType = ModelResolver.lookupAttributeType(tlClass, referenceConfig);
-		return createReference(tlClass, referenceConfig, destinationType);
-	}
-
-	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig,
-			TLType destinationType) {
+	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig) {
 		return (TLReference) createStructuredTypePart(tlClass, referenceConfig);
 	}
 
-	public static TLStructuredTypePart createStructuredTypePart(TLClass tlClass, PartConfig partConfig) {
+	public static TLStructuredTypePart createStructuredTypePart(TLClass owner, PartConfig partConfig) {
 		CreateStructuredTypePart createPartConfig = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
-		createPartConfig.setType(TLModelUtil.qualifiedName(tlClass));
+		createPartConfig.setType(TLModelUtil.qualifiedName(owner));
 		createPartConfig.setPart(partConfig);
 
-		ApplyModelPatch.applyPatch(new AssertProtocol(), tlClass.getModel(), DynamicModelService.getInstance(),
+		ApplyModelPatch.applyPatch(new AssertProtocol(), owner.getModel(), DynamicModelService.getInstance(),
 			Arrays.asList(createPartConfig));
 
-		TLStructuredTypePart newPart = tlClass.getPartOrFail(partConfig.getName());
+		TLStructuredTypePart newPart = owner.getPartOrFail(partConfig.getName());
 		return newPart;
 	}
 

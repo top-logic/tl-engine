@@ -571,15 +571,6 @@
 						<property name="ordered"
 							type="tl.core:Boolean"
 						/>
-						<property name="derived"
-							type="tl.core:Boolean"
-						>
-							<annotations>
-								<storage-algorithm>
-									<reflective-storage method="com.top_logic.model.DerivedTLTypePart.isDerived()"/>
-								</storage-algorithm>
-							</annotations>
-						</property>
 						<property name="override"
 							type="tl.core:Boolean"
 						>

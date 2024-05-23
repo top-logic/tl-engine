@@ -13,6 +13,9 @@
 		<dependency name="Ticket_25835_Rename_RenderInputBeforeLabelAnnotation"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
 		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
 			module="tl-model-search"
 		/>

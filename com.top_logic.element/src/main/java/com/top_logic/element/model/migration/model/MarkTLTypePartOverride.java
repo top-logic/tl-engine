@@ -32,7 +32,6 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLAssociationEnd;
-import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
@@ -125,10 +124,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					_util.eqBranch(),
 					eqSQL(
 						column(BasicTypes.IDENTIFIER_DB_NAME),
-						parameter(DBType.ID, "partID")),
-					eqSQL(
-						column(SQLH.mangleDBName(TLNamed.NAME)),
-						parameter(DBType.STRING, "partID"))),
+						parameter(DBType.ID, "partID"))),
 				Arrays.asList(Util.refID(KBBasedMetaAttribute.DEFINITION_REF)),
 				Arrays.asList(parameter(DBType.ID, "definitionID")))).toSql(connection.getSQLDialect());
 

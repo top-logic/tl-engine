@@ -53,6 +53,7 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
 
 /**
  * {@link MigrationProcessor} inlining composition links from a link table to the target table.
@@ -116,6 +117,13 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 		_allTypes = setup.createMORepository(DefaultMOFactory.INSTANCE);
 
 		super.doMigration(context, log, connection);
+	}
+
+	@Override
+	protected void migrateData(Log log, PooledConnection connection) throws SQLException, MigrationException {
+		log.info("Inline composition links from '" + getConfig().getSourceTable() + "' for reference '"
+				+ getConfig().getReference().getName() + "' into target tables.");
+		super.migrateData(log, connection);
 	}
 
 	@Override
@@ -332,8 +340,9 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 			}
 
 		}
-
 		updateXRefTable(connection, sql, branch, modifiedRevisions);
+		
+		deleteLinks(connection, branch, refId, sourceTable, sourceElements);
 	}
 
 	private Set<Object> allDestIds(List<Link> links) {

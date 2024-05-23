@@ -164,19 +164,21 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 
 	private void copyEndValues(Log log, PooledConnection connection, long branch, TLID sourceID, TLID destId,
 			QualifiedPartName partName, QualifiedPartName definition) throws SQLException {
+		boolean withHistoryColumn = _util.hasHistoryColumn();
 		CompiledStatement getValuesQuery = query(
 			parameters(
 				_util.branchParamDef(),
 				parameterDef(DBType.ID, "partID")),
 			select(
-				columns(
+				Util.listWithoutNull(
 					columnDef(SQLH.mangleDBName(TLStructuredTypePart.BAG_ATTR)),
 					columnDef(SQLH.mangleDBName(TLStructuredTypePart.MANDATORY_ATTR)),
 					columnDef(SQLH.mangleDBName(TLStructuredTypePart.MULTIPLE_ATTR)),
 					columnDef(SQLH.mangleDBName(TLStructuredTypePart.ORDERED_ATTR)),
 					columnDef(SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR)),
 					columnDef(SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR)),
-					columnDef(SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR))),
+					columnDef(SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
+					withHistoryColumn ? columnDef(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)) : null),
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 				and(
 					_util.eqBranch(),
@@ -193,6 +195,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 		boolean aggregate = false;
 		boolean composite = false;
 		boolean navigate = false;
+		String historyType = null;
 		try (ResultSet endValues =
 			getValuesQuery.executeQuery(connection, branch, sourceID)) {
 			if (endValues.next()) {
@@ -203,6 +206,9 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 				aggregate = endValues.getBoolean(5);
 				composite = endValues.getBoolean(6);
 				navigate = endValues.getBoolean(7);
+				if (withHistoryColumn) {
+					historyType = endValues.getString(8);
+				}
 			} else {
 				log.error("Unable to get values to copy from definition '" + definition.getName() + "' to override '"
 						+ partName.getName() + "'.");
@@ -229,77 +235,27 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					eqSQL(
 						column(BasicTypes.IDENTIFIER_DB_NAME),
 						parameter(DBType.ID, "partID"))),
-				Arrays.asList(
+				Util.listWithoutNull(
 					SQLH.mangleDBName(TLStructuredTypePart.BAG_ATTR),
 					SQLH.mangleDBName(TLStructuredTypePart.MANDATORY_ATTR),
 					SQLH.mangleDBName(TLStructuredTypePart.MULTIPLE_ATTR),
 					SQLH.mangleDBName(TLStructuredTypePart.ORDERED_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR),
-					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
-			Arrays.asList(
+					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR),
+					withHistoryColumn ? SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR) : null),
+				Util.listWithoutNull(
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.BAG_ATTR),
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.MANDATORY_ATTR),
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.MULTIPLE_ATTR),
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.ORDERED_ATTR),
 					parameter(DBType.BOOLEAN, TLAssociationEnd.AGGREGATE_ATTR),
 					parameter(DBType.BOOLEAN, TLAssociationEnd.COMPOSITE_ATTR),
-					parameter(DBType.BOOLEAN, TLAssociationEnd.NAVIGATE_ATTR))))
-					.toSql(connection.getSQLDialect());
-		updateValuesQuery.executeUpdate(connection, branch, destId, bag, mandatory, multiple,
-			ordered, aggregate, composite, navigate);
-
-		boolean hasHistoryType = true;
-		String historyType = null;
-		CompiledStatement getHistoryTypeQuery = query(
-			parameters(
-				_util.branchParamDef(),
-				parameterDef(DBType.ID, "partID")),
-			select(
-				columns(
-					columnDef(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR))),
-				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
-				and(
-					_util.eqBranch(),
-					eqSQL(
-						column(BasicTypes.IDENTIFIER_DB_NAME),
-						parameter(DBType.ID, "partID"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
-					.toSql(connection.getSQLDialect());
-		try (ResultSet endValues =
-			getHistoryTypeQuery.executeQuery(connection, branch, sourceID)) {
-			if (endValues.next()) {
-				historyType = endValues.getString(1);
-			} else {
-				log.error("Unable to get values to copy from definition '" + definition.getName() + "' to override '"
-					+ partName.getName() + "'.");
-				return;
-			}
-		} catch (SQLException ex) {
-			// No history type column.
-			hasHistoryType = false;
-		}
-
-		if (hasHistoryType) {
-			CompiledStatement updateHistoryTypeQuery = query(
-				parameters(
-					_util.branchParamDef(),
-					parameterDef(DBType.ID, "partID"),
-					parameterDef(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR)),
-				update(
-					table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
-					and(
-						_util.eqBranch(),
-						eqSQL(
-							column(BasicTypes.IDENTIFIER_DB_NAME),
-							parameter(DBType.ID, "partID"))),
-					Arrays.asList(
-						SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)),
-					Arrays.asList(
-						parameter(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR))))
-							.toSql(connection.getSQLDialect());
-			updateHistoryTypeQuery.executeUpdate(connection, branch, destId, historyType);
-		}
+					parameter(DBType.BOOLEAN, TLAssociationEnd.NAVIGATE_ATTR),
+					withHistoryColumn ? parameter(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR) : null)))
+						.toSql(connection.getSQLDialect());
+		updateValuesQuery.executeUpdate(connection, branch, destId, bag, mandatory, multiple, ordered, aggregate,
+			composite, navigate, historyType);
 	}
 
 	private void copyPropertyValues(Log log, PooledConnection connection, long branch, TLID sourceID, TLID destId,

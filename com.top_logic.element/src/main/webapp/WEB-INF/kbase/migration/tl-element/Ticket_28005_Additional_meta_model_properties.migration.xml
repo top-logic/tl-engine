@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28005_Additional_meta_model_properties"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<update-annotations name="tl.model:DerivedTLTypePart#derived">
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.DerivedTLTypePart.isDerived()"/>
+				</storage-algorithm>
+			</annotations>
+		</update-annotations>
+
+		<create-datatype name="tl.model:DBType"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.basic.sql.DBType"/>
+		</create-datatype>
+		<create-property name="tl.model:TLPrimitive#dbType"
+			type="tl.model:DBType"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBType()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLPrimitive#dbSize"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBSize()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLPrimitive#dbPrecision"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.getDBPrecision()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLPrimitive#binary"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.dob.schema.config.DBColumnType.isBinary()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLStructuredTypePart#override"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLStructuredTypePart.isOverride()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLAssociationEnd#endIndex"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLAssociationEnd.getEndIndex()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLReference#composite"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLReference.isComposite()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLReference#aggregate"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLReference.isAggregate()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.model:TLReference#backwards"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLReference.isBackwards()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.model:TLAssociation#ends"
+			multiple="true"
+			ordered="true"
+			type="tl.model:TLAssociationEnd"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLAssociation.getEnds()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.model:TLStructuredTypePart#definition"
+			type="tl.model:TLStructuredTypePart"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLStructuredTypePart.getDefinition()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.model:TLReference#opposite"
+			type="tl.model:TLReference"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLReference.getOpposite()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.model:TLReference#oppositeEnd"
+			type="tl.model:TLAssociationEnd"
+		>
+			<annotations>
+				<storage-algorithm>
+					<reflective-storage method="com.top_logic.model.TLReference.getOppositeEnd()"/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<reorder-part name="tl.model:TLPrimitive#dbType"/>
+		<reorder-part name="tl.model:TLPrimitive#dbSize"/>
+		<reorder-part name="tl.model:TLPrimitive#dbPrecision"/>
+		<reorder-part name="tl.model:TLPrimitive#binary"/>
+		<reorder-part name="tl.model:TLAssociation#ends"/>
+		<reorder-part name="tl.model:TLStructuredTypePart#override"
+			before="classifiedBy"
+		/>
+		<reorder-part name="tl.model:TLStructuredTypePart#definition"
+			before="classifiedBy"
+		/>
+		<reorder-part name="tl.model:TLAssociationEnd#endIndex"/>
+		<reorder-part name="tl.model:TLReference#composite"/>
+		<reorder-part name="tl.model:TLReference#aggregate"/>
+		<reorder-part name="tl.model:TLReference#backwards"/>
+		<reorder-part name="tl.model:TLReference#opposite"/>
+		<reorder-part name="tl.model:TLReference#oppositeEnd"/>
+	</processors>
+	<post-processors/>
+</migration>

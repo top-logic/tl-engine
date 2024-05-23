@@ -21,6 +21,7 @@ import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
 import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
@@ -116,7 +117,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 				throw new TopLogicException(
 					I18NConstants.ERROR_SCRIPT_RESULT_OF_INCOMPATIBLE_TYPE__ATTR_EXPECTED_ACTUAL.fill(
 						TLModelUtil.qualifiedName(attribute),
-						type, element instanceof TLObject ? ((TLObject) element).tType() : element));
+						type, element instanceof TLClassifier ? element
+							: element instanceof TLObject ? ((TLObject) element).tType() : element));
 			}
 		}
 	}

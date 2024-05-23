@@ -37,7 +37,6 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
@@ -547,8 +546,8 @@ public class MigrationUtil {
 	 *        <code>module1</code> depends on <code>module2</code>, <code>module2</code> appears
 	 *        before <code>module1</code> in the array.
 	 * 
-	 * @deprecated Use {@link #getMigrations(Map, Map, Map, List)} This variant might produce an
-	 *             invalid migration order in complex situations.
+	 * @deprecated Use {@link #getMigrations(Log, Map, Map, Map, List)} This variant might produce
+	 *             an invalid migration order in complex situations.
 	 */
 	@Deprecated
 	public static List<MigrationConfig> getRelevantMigrations(
@@ -629,7 +628,6 @@ public class MigrationUtil {
 	 * version A1 in M1 and B2 in M2 so that B2 is the head version in M2 and A2 is the latest
 	 * version in M1 that is not referenced by any version in M2.
 	 * </p>
-	 * 
 	 * @param migrationsByModule
 	 *        All migrations indexed by their module. The value is a mapping from all known
 	 *        {@link Version}'s of the module to the corresponding {@link MigrationConfig} that
@@ -650,7 +648,7 @@ public class MigrationUtil {
 	 *        the list.
 	 */
 	public static List<MigrationConfig> getMigrations(
-			final Map<String, Map<Version, MigrationConfig>> migrationsByModule,
+			Log log, final Map<String, Map<Version, MigrationConfig>> migrationsByModule,
 			final Map<String, List<Version>> versionsByModule,
 			final Map<String, Version> dbVersion,
 			final List<String> applicationModules) {
@@ -687,7 +685,7 @@ public class MigrationUtil {
 			latestRef.initLocalOrder();
 		}
 
-		makeTransitive(migrations);
+		makeTransitive(log, migrations);
 
 		// Remember all migrations that need no longer be executed, because they are
 		// reflexive-transitive dependencies of the version currently stored in the database
@@ -802,7 +800,7 @@ public class MigrationUtil {
 	/**
 	 * Ensure transitivity of dependencies.
 	 */
-	private static void makeTransitive(Map<VersionID, MigrationRef> migrations) {
+	private static void makeTransitive(Log log, Map<VersionID, MigrationRef> migrations) {
 		boolean changed;
 		do {
 			changed = false;
@@ -820,13 +818,13 @@ public class MigrationUtil {
 						MigrationRef transitive = or(updates.get(module), migration.getDependency(module));
 
 						if (transitive == null) {
-							Logger.warn(
+							log.info(
 								"Adding missing transitive dependency of '" + migration + "' to '" + dependency2
 									+ "'. ",
-								MigrationUtil.class);
+								Log.WARN);
 							updates.put(module, dependency2);
 						} else if (dependency2.isNewerThan(transitive)) {
-							Logger.warn(
+							log.info(
 								"Upgrading transitive dependency of '" + migration + "' from '" + transitive + "' to '"
 									+ dependency2 + "'. " +
 								"Since '" + migration + "' directly depends on '" + dependency
@@ -835,7 +833,7 @@ public class MigrationUtil {
 									+ "' must be at least '" + dependency2 + "' and at most '" + limit
 									+ "' (the dependency of the successor '" + dependencySuccessor
 									+ "' of the direct dependency in the corresponding module).",
-								MigrationUtil.class);
+								Log.WARN);
 
 							updates.put(module, dependency2);
 						} else if (limit != null && transitive.isNewerThan(limit)) {
@@ -850,7 +848,7 @@ public class MigrationUtil {
 								if (newLimit == null || !transitive.isNewerThan(newLimit)) {
 									// Better dependency has been found.
 
-									Logger.warn(
+									log.info(
 										"Upgrading dependency of '" + migration + "' from '" + dependency + "' to '"
 											+ updated + "'. " +
 											"Since '" + migration + "' depends on '" + transitive
@@ -859,7 +857,7 @@ public class MigrationUtil {
 											+ "' to versions from '" + dependency2 + "' to '" + limit
 											+ "' (the dependency of the successor '" + dependencySuccessor
 											+ "' of the dependency).",
-										MigrationUtil.class);
+										Log.WARN);
 
 									updates.put(updated.getModule(), updated);
 									break check;
@@ -880,8 +878,8 @@ public class MigrationUtil {
 						} else {
 							// Prevent trivial cycle from not referencing a base version that is
 							// referenced from a dependency.
-							Logger.warn("Adding missing transitive dependency to '" + migration + "': " + update,
-								MigrationUtil.class);
+							log.info("Adding missing transitive dependency to '" + migration + "': " + update,
+								Log.WARN);
 							migration.addDependency(update);
 						}
 					}
@@ -1343,7 +1341,7 @@ public class MigrationUtil {
 			relevantMigrations = new ArrayList<>();
 		} else {
 			relevantMigrations =
-				getMigrations(migrationScripts, appVersion, dataVersion, migrationModules);
+				getMigrations(log, migrationScripts, appVersion, dataVersion, migrationModules);
 			if (relevantMigrations.isEmpty()) {
 				log.info("No migration required.");
 				return MigrationInfo.NO_MIGRATION;

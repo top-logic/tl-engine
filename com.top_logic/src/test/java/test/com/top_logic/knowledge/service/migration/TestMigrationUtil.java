@@ -613,7 +613,7 @@ public class TestMigrationUtil extends BasicTestCase {
 			}
 		}
 
-		return getMigrations(availableMigrations, versionsByModule, currentVersions,
+		return getMigrations(_log, availableMigrations, versionsByModule, currentVersions,
 			moduleDependencies(modules));
 	}
 

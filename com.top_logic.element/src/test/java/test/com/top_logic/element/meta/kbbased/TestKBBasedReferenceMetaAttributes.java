@@ -84,31 +84,33 @@ public class TestKBBasedReferenceMetaAttributes extends BasicTestCase {
 		SetStorage.Config setStorage = TypedConfiguration.newConfigItem(SetStorage.Config.class);
 		setStorage.setImplementationClass(SetStorage.class);
 		setAnnotation(setConfig, storage(setStorage));
-		TestKBBasedMetaAttributes.createReference(me, setConfig, referenceType);
+		TestKBBasedMetaAttributes.createReference(me, setConfig);
 
         assertTrue (MetaElementUtil.hasLocalMetaAttribute(me, "typedSet"));
         
         attributed.setValue("typedSet", Collections.singletonList(attributed));
 
         // check single wrapper attribute
-		ReferenceConfig singletonConfig = TestKBBasedMetaAttributes.referenceConfig("typed", "", 0.0, false);
+		ReferenceConfig singletonConfig =
+			TestKBBasedMetaAttributes.referenceConfig("typed", TLModelUtil.qualifiedName(referenceType), 0.0, false);
 		SingletonLinkStorage.Config singletonStorage =
 			TypedConfiguration.newConfigItem(SingletonLinkStorage.Config.class);
 		singletonStorage.setImplementationClass(SingletonLinkStorage.class);
 		setAnnotation(singletonConfig, storage(singletonStorage));
-		TestKBBasedMetaAttributes.createReference(me, singletonConfig, referenceType);
+		TestKBBasedMetaAttributes.createReference(me, singletonConfig);
 
         assertTrue (MetaElementUtil.hasLocalMetaAttribute(me, "typed"));
         
         attributed.setValue("typed", attributed);
         
         // check attribute without reference builder
-		ReferenceConfig regularConfig = TestKBBasedMetaAttributes.referenceConfig("typedNoRefBuilder", "", 0.0, false);
+		ReferenceConfig regularConfig = TestKBBasedMetaAttributes.referenceConfig("typedNoRefBuilder",
+			TLModelUtil.qualifiedName(referenceType), 0.0, false);
 		SingletonLinkStorage.Config retularStorage =
 			TypedConfiguration.newConfigItem(SingletonLinkStorage.Config.class);
 		retularStorage.setImplementationClass(SingletonLinkStorage.class);
 		setAnnotation(regularConfig, storage(retularStorage));
-		TestKBBasedMetaAttributes.createReference(me, regularConfig, referenceType);
+		TestKBBasedMetaAttributes.createReference(me, regularConfig);
 
         assertTrue (MetaElementUtil.hasLocalMetaAttribute(me, "typedNoRefBuilder"));
     }

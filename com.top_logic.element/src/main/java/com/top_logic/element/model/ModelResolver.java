@@ -35,6 +35,7 @@ import com.top_logic.element.config.AssociationConfig.EndConfig;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.AttributedTypeConfig;
 import com.top_logic.element.config.ClassConfig;
+import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.config.ExtendsConfig;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.ModuleConfig;
@@ -953,6 +954,7 @@ public class ModelResolver {
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			TLReference reference = (TLReference) part;
 			TLAssociationEnd end = reference.getEnd();
+			EndAspect endConfig = (EndAspect) config;
 
 			if (TLModelUtil.isForwardReference(reference)) {
 				// Defaults already applied.
@@ -964,6 +966,7 @@ public class ModelResolver {
 				} else {
 					applyMultiplicity(config, end);
 				}
+				end.setNavigate(endConfig.canNavigate());
 			}
 		} else {
 			applyMultiplicity(config, part);

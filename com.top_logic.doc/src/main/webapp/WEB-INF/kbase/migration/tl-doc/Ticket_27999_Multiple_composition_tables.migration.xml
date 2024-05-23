@@ -65,15 +65,15 @@
 			/>
 		</add-mo-attribute>
 
-		<update-annotations name="tl.doc:Page">
+		<update-annotations name="tl.doc:Page#children">
 			<annotations>
-				<implementation-binding class-name="com.top_logic.doc.model.impl.PageImpl"/>
-				<instance-presentation icon="theme:model.tl.doc.Page.icon"/>
-				<table name="tl.doc.Page"
-					container="parent"
-					container-order="sortOrder"
-					container-reference="composite"
-				/>
+				<composition-storage>
+					<in-target
+						container="parent"
+						container-order="sortOrder"
+						container-reference="composite"
+					/>
+				</composition-storage>
 			</annotations>
 		</update-annotations>
 

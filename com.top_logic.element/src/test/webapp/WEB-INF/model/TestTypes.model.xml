@@ -318,7 +318,7 @@
 				</interface>
 				<class name="ANode">
 					<annotations>
-						<table name="StructuredElement"/>
+						<table name="AElement"/>
 					</annotations>
 					<attributes>
 						<property name="as1"
@@ -342,40 +342,107 @@
 							override="true"
 							type="ANodeChild"
 						/>
+						<reference name="composite"
+							composite="true"
+							multiple="false"
+							type="Part"
+						>
+							<annotations>
+								<composition-storage>
+									<in-source part="composite"/>
+								</composition-storage>
+							</annotations>
+						</reference>
 						<reference name="compositeList1"
 							composite="true"
 							multiple="true"
 							ordered="true"
 							type="Part"
-						/>
+						>
+							<annotations>
+								<composition-storage>
+									<in-target
+										container="container"
+										container-order="sortOrder"
+										container-reference="reference"
+									/>
+								</composition-storage>
+							</annotations>
+						</reference>
 						<reference name="compositeList2"
 							composite="true"
 							multiple="true"
 							ordered="true"
 							type="Part"
-						/>
+						>
+							<annotations>
+								<composition-storage>
+									<in-target
+										container="container"
+										container-order="sortOrder"
+										container-reference="reference"
+									/>
+								</composition-storage>
+							</annotations>
+						</reference>
 						<reference name="compositeSet1"
 							composite="true"
 							multiple="true"
 							ordered="false"
 							type="Part"
-						/>
+						>
+							<annotations>
+								<composition-storage>
+									<in-target
+										container="container"
+										container-reference="reference"
+									/>
+								</composition-storage>
+							</annotations>
+						</reference>
 						<reference name="compositeSet2"
 							composite="true"
 							multiple="true"
 							ordered="false"
 							type="Part"
-						/>
+						>
+							<annotations>
+								<composition-storage>
+									<in-target
+										container="container"
+										container-reference="reference"
+									/>
+								</composition-storage>
+							</annotations>
+						</reference>
 						<reference name="composite1"
 							composite="true"
 							multiple="false"
 							type="Part"
-						/>
+						>
+							<annotations>
+								<composition-storage>
+									<in-target
+										container="container"
+										container-reference="reference"
+									/>
+								</composition-storage>
+							</annotations>
+						</reference>
 						<reference name="composite2"
 							composite="true"
 							multiple="false"
 							type="Part"
-						/>
+						>
+							<annotations>
+								<composition-storage>
+									<in-target
+										container="container"
+										container-reference="reference"
+									/>
+								</composition-storage>
+							</annotations>
+						</reference>
 					</attributes>
 					<generalizations>
 						<generalization type="A"/>
@@ -470,11 +537,7 @@
 
 				<class name="Part">
 					<annotations>
-						<table name="InlineCompositeTarget"
-							container="container"
-							container-order="sortOrder"
-							container-reference="reference"
-						/>
+						<table name="CompositePart"/>
 					</annotations>
 					<attributes>
 						<property name="name"

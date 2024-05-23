@@ -18,6 +18,15 @@ public interface ANodeBase extends test.com.top_logic.element.structured.model.A
 	String A_NODE_TYPE = "ANode";
 
 	/**
+	 * Part <code>composite</code> of <code>ANode</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestTypes:Part</code> in configuration.
+	 * </p>
+	 */
+	String COMPOSITE_ATTR = "composite";
+
+	/**
 	 * Part <code>composite1</code> of <code>ANode</code>
 	 * 
 	 * <p>
@@ -95,6 +104,20 @@ public interface ANodeBase extends test.com.top_logic.element.structured.model.A
 	@SuppressWarnings("unchecked")
 	default java.util.List<? extends test.com.top_logic.element.structured.model.ANodeChild> getChildren() {
 		return (java.util.List<? extends test.com.top_logic.element.structured.model.ANodeChild>) tValueByName(CHILDREN_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #COMPOSITE_ATTR}.
+	 */
+	default test.com.top_logic.element.structured.model.Part getComposite() {
+		return (test.com.top_logic.element.structured.model.Part) tValueByName(COMPOSITE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #COMPOSITE_ATTR}.
+	 */
+	default void setComposite(test.com.top_logic.element.structured.model.Part newValue) {
+		tUpdateByName(COMPOSITE_ATTR, newValue);
 	}
 
 	/**

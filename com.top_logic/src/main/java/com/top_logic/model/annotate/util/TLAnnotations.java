@@ -22,7 +22,7 @@ import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.ExportColumns;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.persistency.CompositionLinkTable;
+import com.top_logic.model.annotate.persistency.CompositionStorage;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -234,13 +234,13 @@ public class TLAnnotations {
 	}
 
 	/**
-	 * The annotated table name for a composition reference.
+	 * The annotated {@link CompositionStorage} name for a composition reference.
 	 * 
 	 * @param reference
-	 *        The reference to get {@link CompositionLinkTable} annotation for.
+	 *        The reference to get {@link CompositionStorage} annotation for.
 	 */
-	public static CompositionLinkTable getCompositionLinkTable(TLReference reference) {
-		CompositionLinkTable annotation = getAnnotation(reference, CompositionLinkTable.class);
+	public static CompositionStorage getCompositionStorage(TLReference reference) {
+		CompositionStorage annotation = getAnnotation(reference, CompositionStorage.class);
 		if (annotation != null) {
 			return annotation;
 		}
@@ -255,12 +255,13 @@ public class TLAnnotations {
 				// reference is not defined in generalization.
 				continue;
 			}
-			CompositionLinkTable tableDefinition = getCompositionLinkTable(overriddenReference);
-			if (tableDefinition != null) {
-				return tableDefinition;
+			CompositionStorage storage = getCompositionStorage(overriddenReference);
+			if (storage != null) {
+				return storage;
 			}
 		}
 		return null;
+
 	}
 
 }

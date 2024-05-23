@@ -2732,7 +2732,9 @@
 					type="DemoTypes.All"
 				>
 					<annotations>
-						<composition-link table="hasDemoStructureChild"/>
+						<composition-storage>
+							<link table="hasDemoStructureChild"/>
+						</composition-storage>
 					</annotations>
 				</reference>
 			</attributes>

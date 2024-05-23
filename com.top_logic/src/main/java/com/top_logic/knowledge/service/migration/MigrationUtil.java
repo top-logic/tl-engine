@@ -1171,7 +1171,7 @@ public class MigrationUtil {
 			log.info("Reading migrations from module " + moduleName, Protocol.INFO);
 			Map<Version, MigrationConfig> moduleMigrationConfigs = new HashMap<>();
 
-			Version initial = newVersion(moduleName, "<initial>");
+			Version initial = initialVersion(moduleName);
 			MigrationConfig noMigration = TypedConfiguration.newConfigItem(MigrationConfig.class);
 			noMigration.setVersion(initial);
 			moduleMigrationConfigs.put(initial, noMigration);
@@ -1216,6 +1216,13 @@ public class MigrationUtil {
 		}
 
 		return migrationsByModule;
+	}
+
+	/**
+	 * Creates an implicit initial vesrion for the given module.
+	 */
+	public static Version initialVersion(String moduleName) {
+		return newVersion(moduleName, "<initial>");
 	}
 
 	/**
@@ -1283,33 +1290,6 @@ public class MigrationUtil {
 	}
 
 	/**
-	 * Determines the correct {@link MigrationConfig}s for the given migration modules.
-	 * 
-	 * @param connection
-	 *        {@link PooledConnection} to connect to database to read current version.
-	 * @param migrationModules
-	 *        All known database modules. The order of the module is the dependency order, i.e. when
-	 *        <code>module1</code> depends on <code>module2</code>, <code>module2</code> appears
-	 *        before <code>module1</code> in the array.
-	 * @param allowDowngrade
-	 *        Whether to ignore missing version descriptors found in the database.
-	 * @return {@link MigrationConfig}s to apply in that order to update to correct database
-	 *         version.
-	 * 
-	 * @throws SQLException
-	 *         when reading versions from database failed for some reason.
-	 */
-	public static MigrationInfo relevantMigrations(Log log, PooledConnection connection,
-			List<String> migrationModules, boolean allowDowngrade) throws SQLException {
-		Map<String, Version> storedVersions = readStoredVersions(connection, migrationModules);
-
-		log.info("Migration modules: " + migrationModules);
-		log.info("Current data version: " + storedVersions.values().stream()
-			.map(v -> v.getModule() + ": " + v.getName()).collect(Collectors.joining(", ")));
-		return relevantMigrations(log, migrationModules, allowDowngrade, storedVersions);
-	}
-
-	/**
 	 * Builds a {@link MigrationInfo} that describes the migration from the given data version to
 	 * the application version of the currently running application.
 	 * 
@@ -1327,7 +1307,19 @@ public class MigrationUtil {
 		return relevantMigrations(log, getMigrationModules(), true, dataVersion.getModuleVersions());
 	}
 
-	private static MigrationInfo relevantMigrations(Log log, List<String> migrationModules, boolean allowDowngrade,
+	/**
+	 * Builds a {@link MigrationInfo} that describes the migration from the given data version to
+	 * the application version of the currently running application.
+	 * 
+	 * @param log
+	 *        The error reporter. The resulting migration is only valid, if no errors have been
+	 *        reported.
+	 * @param dataVersion
+	 *        Descriptor of the data to be migrated. See e.g. {@link #loadDataVersionDescriptor()},
+	 *        or {@link DumpReader#getVersion()}.
+	 * @return The migration.
+	 */
+	public static MigrationInfo relevantMigrations(Log log, List<String> migrationModules, boolean allowDowngrade,
 			Map<String, Version> dataVersion) {
 		Map<String, Map<Version, MigrationConfig>> migrationScripts;
 		try {
@@ -1435,7 +1427,10 @@ public class MigrationUtil {
 		}
 	}
 
-	private static Map<String, Version> readStoredVersions(PooledConnection connection, List<String> migrationModules)
+	/**
+	 * Loads the application data version that is currently stored in the database.
+	 */
+	public static Map<String, Version> readStoredVersions(PooledConnection connection, List<String> migrationModules)
 			throws SQLException {
 		if (migrationModules.isEmpty()) {
 			return Collections.emptyMap();

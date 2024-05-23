@@ -19,13 +19,10 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.db.schema.setup.SchemaSetup;
-import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.db.sql.Batch;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBType;
@@ -37,7 +34,6 @@ import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.element.model.i18n.I18NAttributeStorage;
-import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -116,10 +112,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 			CompiledStatement insert = createI18NInsert(context, connection);
 
-			SchemaConfiguration persistentSchema = context.getPersistentSchema();
-			SchemaSetup setup =
-				new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, persistentSchema);
-			MORepository repository = setup.createMORepository(DefaultMOFactory.INSTANCE);
+			MORepository repository = context.getPersistentRepository();
 
 			MOClass table = (MOClass) repository.getType(objType);
 			MOReference tType = (MOReference) table.getAttribute(PersistentObject.T_TYPE_ATTR);

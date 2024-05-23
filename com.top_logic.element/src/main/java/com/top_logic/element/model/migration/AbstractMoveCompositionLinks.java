@@ -32,6 +32,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.SourceReference;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -136,6 +137,8 @@ public abstract class AbstractMoveCompositionLinks<C extends AbstractMoveComposi
 			}
 		}
 		if (tables.isEmpty()) {
+			log.info("No links found for reference '" + getConfig().getReference().getName() + "' in '"
+					+ getConfig().getSourceTable() + "'.");
 			return;
 		}
 
@@ -193,4 +196,45 @@ public abstract class AbstractMoveCompositionLinks<C extends AbstractMoveComposi
 	 */
 	protected abstract void moveLinks(Log log, PooledConnection connection, long branch, TLID refId, String sourceTable,
 			Set<TLID> sourceElements) throws SQLException;
+
+	/**
+	 * Deletes links from the source table.
+	 * 
+	 * @param refId
+	 *        ID of the {@link TLReference#getDefinition() definition} of the composition reference.
+	 * @param sourceTable
+	 *        Name of the {@link MOClass table} containing the elements with the given ids.
+	 * @param sourceElements
+	 *        {@link TLID Local ids} of the elements which are sources of the links to move.
+	 * 
+	 * @return Number of deleted links.
+	 */
+	protected int deleteLinks(PooledConnection connection, long branch, TLID refId, String sourceTable,
+			Set<TLID> sourceElements) throws SQLException {
+		String srcIdColumn = Util.refID(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		String srcTypeColumn = Util.refType(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		String attrIdColumn = Util.refID(ApplicationObjectUtil.META_ATTRIBUTE_ATTR);
+
+		/* Remove source links from source table. */
+		CompiledStatement deleteLinks = query(
+			parameters(
+				util().branchParamDef(),
+				parameterDef(DBType.ID, "refId"),
+				parameterDef(DBType.STRING, "sourceType"),
+				setParameterDef("sourceElements", DBType.ID)),
+			delete(
+				table(SQLH.mangleDBName(getConfig().getSourceTable())),
+				and(
+					util().eqBranch(),
+					eqSQL(
+						column(attrIdColumn),
+						parameter(DBType.ID, "refId")),
+					eqSQL(
+						column(srcTypeColumn),
+						parameter(DBType.STRING, "sourceType")),
+					inSet(
+						column(srcIdColumn),
+						setParameter("sourceElements", DBType.ID))))).toSql(connection.getSQLDialect());
+		return deleteLinks.executeUpdate(connection, branch, refId, sourceTable, sourceElements);
+	}
 }

@@ -45,6 +45,15 @@ public interface TLStructuredTypePartBase extends com.top_logic.model.TLTypePart
 	String CLASSIFIED_BY_ATTR = "classifiedBy";
 
 	/**
+	 * Part <code>definition</code> of <code>TLStructuredTypePart</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLStructuredTypePart</code> in configuration.
+	 * </p>
+	 */
+	String DEFINITION_ATTR = "definition";
+
+	/**
 	 * Part <code>mandatory</code> of <code>TLStructuredTypePart</code>
 	 * 
 	 * <p>
@@ -70,5 +79,14 @@ public interface TLStructuredTypePartBase extends com.top_logic.model.TLTypePart
 	 * </p>
 	 */
 	String ORDERED_ATTR = "ordered";
+
+	/**
+	 * Part <code>override</code> of <code>TLStructuredTypePart</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String OVERRIDE_ATTR = "override";
 
 }

@@ -307,8 +307,70 @@
 								</storage-algorithm>
 							</annotations>
 						</reference>
+						<property name="dbType"
+							type="DBType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#getDBType()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="dbSize"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#getDBSize()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="dbPrecision"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#getDBPrecision()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="binary"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.dob.schema.config.DBColumnType#isBinary()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
+
+				<datatype name="DBType"
+					db_type="string"
+					kind="Custom"
+				>
+					<annotations>
+						<config-type value="ENUM"/>
+					</annotations>
+					<enum-storage enum="com.top_logic.basic.sql.DBType"/>
+				</datatype>
 
 				<class name="TLAssociation">
 					<annotations>
@@ -342,6 +404,21 @@
 										storage-attribute="scope"
 										storage-type="MetaElement"
 									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="ends"
+							multiple="true"
+							ordered="true"
+							type="TLAssociationEnd"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLAssociation#getEnds()"/>
+										</expression-evaluation>
+									</derived-storage>
 								</storage-algorithm>
 							</annotations>
 						</reference>
@@ -457,7 +534,17 @@
 					<attributes>
 						<property name="derived"
 							type="tl.core:Boolean"
-						/>
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.DerivedTLTypePart#isDerived()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
 					</attributes>
 				</interface>
 
@@ -508,6 +595,33 @@
 						<property name="ordered"
 							type="tl.core:Boolean"
 						/>
+						<property name="override"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLStructuredTypePart#isOverride()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="definition"
+							type="tl.model:TLStructuredTypePart"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLStructuredTypePart#getDefinition()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+
 						<reference name="classifiedBy"
 							multiple="true"
 							type="tl.model:TLClassifier"
@@ -557,6 +671,19 @@
 						<property name="historyType"
 							type="tl.model:HistoryType"
 						/>
+						<property name="endIndex"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLAssociationEnd#getEndIndex()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
 
@@ -704,6 +831,77 @@
 								</storage-algorithm>
 							</annotations>
 						</property>
+						<property name="composite"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="composite"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="aggregate"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="aggregate"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="backwards"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLReference#isBackwards()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="opposite"
+							type="TLReference"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLReference#getOpposite()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="oppositeEnd"
+							type="TLAssociationEnd"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.model.TLReference#getOppositeEnd()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 

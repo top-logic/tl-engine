@@ -18,6 +18,15 @@ public interface TLAssociationBase extends com.top_logic.model.TLStructuredType 
 	String TL_ASSOCIATION_TYPE = "TLAssociation";
 
 	/**
+	 * Part <code>ends</code> of <code>TLAssociation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLAssociationEnd</code> in configuration.
+	 * </p>
+	 */
+	String ENDS_ATTR = "ends";
+
+	/**
 	 * Part <code>subsets</code> of <code>TLAssociation</code>
 	 * 
 	 * <p>

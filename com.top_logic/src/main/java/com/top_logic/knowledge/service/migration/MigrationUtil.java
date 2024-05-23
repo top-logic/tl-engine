@@ -806,39 +806,75 @@ public class MigrationUtil {
 		boolean changed;
 		do {
 			changed = false;
-			for (MigrationRef migration : migrations.values()) {
-				Map<String, MigrationRef> newestFromBaseVersions = new HashMap<>();
-				Map<String, MigrationRef> newestSourceVersions = new HashMap<>();
 
+			for (MigrationRef migration : migrations.values()) {
+				Map<String, MigrationRef> updates = new HashMap<>();
+
+				check:
 				for (MigrationRef dependency : migration.getDependencies()) {
+					MigrationRef dependencySuccessor = dependency.getSuccessor();
 					for (MigrationRef dependency2 : dependency.getDependencies()) {
-						MigrationRef clash = newestFromBaseVersions.put(dependency2.getModule(), dependency2);
-						MigrationRef clashDependency = newestSourceVersions.put(dependency2.getModule(), dependency);
-						if (clash != null && clash.isNewerThan(dependency2)) {
-							newestFromBaseVersions.put(dependency2.getModule(), clash);
-							newestSourceVersions.put(dependency2.getModule(), clashDependency);
+						String module = dependency2.getModule();
+						MigrationRef limit =
+							dependencySuccessor == null ? null : dependencySuccessor.getDependency(module);
+						MigrationRef transitive = or(updates.get(module), migration.getDependency(module));
+
+						if (transitive == null) {
+							Logger.warn(
+								"Adding missing transitive dependency of '" + migration + "' to '" + dependency2
+									+ "'. ",
+								MigrationUtil.class);
+							updates.put(module, dependency2);
+						} else if (dependency2.isNewerThan(transitive)) {
+							Logger.warn(
+								"Upgrading transitive dependency of '" + migration + "' from '" + transitive + "' to '"
+									+ dependency2 + "'. " +
+								"Since '" + migration + "' directly depends on '" + dependency
+									+ "', which itself depends on '" + dependency2
+									+ "', the transitive dependency to module '" + module
+									+ "' must be at least '" + dependency2 + "' and at most '" + limit
+									+ "' (the dependency of the successor '" + dependencySuccessor
+									+ "' of the direct dependency in the corresponding module).",
+								MigrationUtil.class);
+
+							updates.put(module, dependency2);
+						} else if (limit != null && transitive.isNewerThan(limit)) {
+							assert dependencySuccessor != null;
+
+							// Find first successor of dependency that directly depends on
+							// transitive.
+							MigrationRef updated = dependencySuccessor;
+							while (true) {
+								MigrationRef next = updated.getSuccessor();
+								MigrationRef newLimit = next == null ? null : next.getDependency(module);
+								if (newLimit == null || !transitive.isNewerThan(newLimit)) {
+									// Better dependency has been found.
+
+									Logger.warn(
+										"Upgrading dependency of '" + migration + "' from '" + dependency + "' to '"
+											+ updated + "'. " +
+											"Since '" + migration + "' depends on '" + transitive
+											+ "', the dependency '" + dependency
+											+ "' ist to old since it would limit dependency to module '" + module
+											+ "' to versions from '" + dependency2 + "' to '" + limit
+											+ "' (the dependency of the successor '" + dependencySuccessor
+											+ "' of the dependency).",
+										MigrationUtil.class);
+
+									updates.put(updated.getModule(), updated);
+									break check;
+								}
+
+								updated = next;
+							}
 						}
 					}
 				}
 
-				for (MigrationRef dependency : migration.getDependencies()) {
-					MigrationRef fromBase = newestFromBaseVersions.remove(dependency.getModule());
-					if (fromBase != null && fromBase.isNewerThan(dependency)) {
-						MigrationRef source = newestSourceVersions.get(dependency.getModule());
-						// Prevent trivial cycle caused from referencing an older base version than
-						// a dependency.
-						Logger.warn(
-							"Updating dependency of '" + migration + "' from '" + dependency + "' to '" + fromBase
-								+ "' (referenced from dependency '" + source + "').",
-							MigrationUtil.class);
-						newestFromBaseVersions.put(dependency.getModule(), fromBase);
-					}
-				}
-
-				if (!newestFromBaseVersions.isEmpty()) {
+				if (!updates.isEmpty()) {
 					changed = true;
 
-					for (MigrationRef update : newestFromBaseVersions.values()) {
+					for (MigrationRef update : updates.values()) {
 						if (migration.getDependency(update.getModule()) != null) {
 							migration.updateDependency(update);
 						} else {
@@ -852,6 +888,10 @@ public class MigrationUtil {
 				}
 			}
 		} while (changed);
+	}
+
+	private static MigrationRef or(MigrationRef first, MigrationRef second) {
+		return first != null ? first : second;
 	}
 
 	private static Set<MigrationRef> findMigrationsAlreadyExecuted(final Map<String, Version> dbVersion,

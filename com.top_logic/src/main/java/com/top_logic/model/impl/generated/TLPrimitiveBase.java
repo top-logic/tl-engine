@@ -17,4 +17,40 @@ public interface TLPrimitiveBase extends com.top_logic.model.TLType {
 	 */
 	String TL_PRIMITIVE_TYPE = "TLPrimitive";
 
+	/**
+	 * Part <code>binary</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String BINARY_ATTR = "binary";
+
+	/**
+	 * Part <code>dbPrecision</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String DB_PRECISION_ATTR = "dbPrecision";
+
+	/**
+	 * Part <code>dbSize</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String DB_SIZE_ATTR = "dbSize";
+
+	/**
+	 * Part <code>dbType</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:DBType</code> in configuration.
+	 * </p>
+	 */
+	String DB_TYPE_ATTR = "dbType";
+
 }

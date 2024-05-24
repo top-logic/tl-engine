@@ -138,6 +138,11 @@ public class Log4JConfigurator extends LogConfigurator {
 	}
 
 	@Override
+	public String getLogMark(String key) {
+		return ThreadContext.get(key);
+	}
+
+	@Override
 	public void addLogMark(String key, String value) {
 		ThreadContext.put(key, value);
 	}

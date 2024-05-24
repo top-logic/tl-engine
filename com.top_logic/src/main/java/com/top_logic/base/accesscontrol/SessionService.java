@@ -173,8 +173,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         this.removeSession (session);
 
         try {
-            if (debug) {            
-                Logger.debug("Invalidating Session :" + session.getId (), this);
+			if (debug) {
+				Logger.debug("Invalidating Session.", SessionService.class);
             }
 
             session.invalidate ();
@@ -224,10 +224,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
             return (false);
         }
 
-        //ok, there is a session...Logging it's ID
-        
-        if (debug) {
-            Logger.debug("Session to be checked is: "+session.getId(),this); 
+		if (debug) {
+			Logger.debug("Checking session.", SessionService.class);
         }
         
         if (!sessionIsValid (session)) {

@@ -150,8 +150,8 @@ public class UserMonitor extends AbstractReceiver {
             }
         }
         catch (Exception e) {
-            Logger.error("failed to findUserSession(" +
-                    aUser + "," + anID + "," + aServer + ")", e, this);
+			Logger.error("failed to findUserSession(" + aUser + ", [confidential session id] ," + aServer + ")",
+				e, UserMonitor.class);
         }
 
         return result;

@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -26,7 +27,6 @@ import test.com.top_logic.element.meta.OrderedListHelper;
 import test.com.top_logic.element.meta.TestMetaElementFactory;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
-import com.top_logic.basic.config.ConfigurationErrorProtocol;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.StreamUtilities;
@@ -36,20 +36,21 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.dob.ex.DuplicateAttributeException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.config.AttributeConfig;
+import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.config.annotation.TLValidityCheck;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.LegacyTypeCodes;
-import com.top_logic.element.meta.MetaAttributeFactory;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.element.meta.ValidityCheck;
 import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.element.model.ModelResolver;
+import com.top_logic.element.model.diff.apply.ApplyModelPatch;
+import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -58,18 +59,14 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.list.FastListElement;
-import com.top_logic.model.TLAssociation;
-import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.impl.generated.TlModelFactory;
@@ -699,10 +696,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 
 	static TLStructuredTypePart createAttribute(KnowledgeBase kb, TLClass me, AttributeConfig config)
 			throws DuplicateAttributeException {
-		ModelResolver modelResolver = new ModelResolver(ConfigurationErrorProtocol.INSTANCE, me.getModel(), DynamicModelService.getInstance());
-		TLProperty result = modelResolver.createProperty(me, config);
-		modelResolver.complete();
-		return result;
+		return createStructuredTypePart(me, config);
 	}
 
 	public static AttributeConfig propertyConfig(String name, String dataTypeName, double sortOder, boolean mandatory) {
@@ -722,6 +716,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 	}
 
 	public static ReferenceConfig referenceConfig(String name, String typeSpec, double sortOder, boolean multiple) {
+		assertNotNull(typeSpec);
 		ReferenceConfig config = TypedConfiguration.newConfigItem(ReferenceConfig.class);
 		config.setName(name);
 		config.setTypeSpec(typeSpec);
@@ -1067,41 +1062,20 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		return true;
 	}
 
-	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig)
-			throws DuplicateAttributeException, ConfigurationException {
-		TLType destinationType = ModelResolver.lookupAttributeType(tlClass, referenceConfig);
-		return createReference(tlClass, referenceConfig, destinationType);
+	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig) {
+		return (TLReference) createStructuredTypePart(tlClass, referenceConfig);
 	}
 
-	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig,
-			TLType destinationType) {
-		
-		TLReference reference = addReference(tlClass, referenceConfig.getName(), destinationType);
-		ModelResolver modelResolver = new ModelResolver(new AssertProtocol(), tlClass.getModel(), DynamicModelService.getInstance());
-		modelResolver.installConfiguration(reference, referenceConfig);
-		modelResolver.complete();
+	public static TLStructuredTypePart createStructuredTypePart(TLClass owner, PartConfig partConfig) {
+		CreateStructuredTypePart createPartConfig = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
+		createPartConfig.setType(TLModelUtil.qualifiedName(owner));
+		createPartConfig.setPart(partConfig);
 
-		return reference;
-	}
+		ApplyModelPatch.applyPatch(new AssertProtocol(), owner.getModel(), DynamicModelService.getInstance(),
+			Arrays.asList(createPartConfig));
 
-	public static TLReference addReference(TLClass tlClass, String referenceName, TLType destinationType) {
-		String associationName = tlClass.getName() + "$" + referenceName + "$association";
-		MetaAttributeFactory maFactory = MetaAttributeFactory.getInstance();
-		TLModule module = ((TLClass) tlClass).getModule();
-
-		// create associations
-		TLAssociation association = TLModelUtil.addAssociation(module, module, associationName);
-
-		// create source end
-		TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, "self", tlClass);
-		sourceEnd.setMultiple(true);
-	
-		// create dest end
-		TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceName, destinationType);
-
-		// add dest reference to type
-		TLReference destRef = TLModelUtil.addReference(tlClass, referenceName, destEnd);
-		return destRef;
+		TLStructuredTypePart newPart = owner.getPartOrFail(partConfig.getName());
+		return newPart;
 	}
 
     /** 

@@ -335,6 +335,9 @@ public class TLModelOperations {
 						continue;
 					}
 					TLReference reference = (TLReference) part;
+					if (reference.isAbstract()) {
+						continue;
+					}
 					if (!reference.getEnd().isComposite()) {
 						continue;
 					}

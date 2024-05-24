@@ -24,6 +24,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -43,7 +44,11 @@ import com.top_logic.knowledge.service.db2.IndexedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
 import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 
@@ -53,7 +58,8 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
-public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
+@Label("Unsorted storage in separate table")
+public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> implements CompositeStorage {
 
 	private AssociationSetQuery<KnowledgeAssociation> _outgoingQuery;
 
@@ -513,18 +519,22 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 		}
 	}
 
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		return new LinkTable(getTable());
+	}
+
 	/**
 	 * Creates a configuration for {@link SetStorage}.
-	 * 
-	 * @param tableName
-	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
-	 *        name is derived from the history type.
+	 *
+	 * @param composite
+	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The {@link SetStorage} configuration.
 	 */
-	public static Config<?> setConfig(String tableName, HistoryType historyType) {
-		return defaultConfig(Config.class, tableName, historyType);
+	public static Config<?> setConfig(boolean composite, HistoryType historyType) {
+		return defaultConfig(Config.class, composite, historyType);
 	}
 
 	/**

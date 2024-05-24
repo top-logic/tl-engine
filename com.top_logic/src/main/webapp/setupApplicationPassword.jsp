@@ -225,6 +225,6 @@ try {
 	</basic:html>
 	<%
 } finally {
-	DefaultDisplayContext.teardownDisplayContext(request, displayContext);
+	DefaultDisplayContext.teardownDisplayContext(request);
 }
 %>

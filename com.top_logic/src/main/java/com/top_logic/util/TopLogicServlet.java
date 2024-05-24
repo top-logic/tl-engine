@@ -153,9 +153,9 @@ public class TopLogicServlet extends HttpServlet {
 	/**
 	 * Validate request and set context information for current thread.
 	 * 
-	 * @param aRequest
+	 * @param request
 	 *        The send request.
-	 * @param aResponse
+	 * @param response
 	 *        The send response.
 	 * 
 	 * @throws ServletException
@@ -164,26 +164,27 @@ public class TopLogicServlet extends HttpServlet {
 	 *         If an input or output error is detected.
 	 */
 	@Override
-	public final void service(final HttpServletRequest aRequest, final HttpServletResponse aResponse) throws IOException, ServletException {
+	public final void service(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
 		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
-		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(aRequest,
-			() -> serviceWithLogMark(aRequest, aResponse));
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(request,
+			() -> serviceWithLogMark(request, response));
 	}
 
-	private void serviceWithLogMark(final HttpServletRequest aRequest, final HttpServletResponse aResponse)
+	private void serviceWithLogMark(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
-		setCachePolicy(aResponse);
+		setCachePolicy(response);
 
-		final TLSessionContext session = this.getSession(aRequest, aResponse);
+		final TLSessionContext session = this.getSession(request, response);
 		if (session == null) {
 			// User has no session.
-			redirectToLogout(aRequest, aResponse);
+			redirectToLogout(request, response);
 			return;
 		}
 
 		TLSubSessionContext subession = TLContextManager.getSubSession();
 		if (subession == null) {
-			enterContext(session, aRequest, aResponse);
+			enterContext(session, request, response);
 			return;
 		}
 
@@ -193,13 +194,13 @@ public class TopLogicServlet extends HttpServlet {
 			Logger.error(
 				"Enforcing logout due to session missmatch: " + subession.getPerson() + " vs. "
 					+ session.getOriginalUser(), TopLogicServlet.class);
-			invalidateSession(aRequest);
-			redirectToLogout(aRequest, aResponse);
+			invalidateSession(request);
+			redirectToLogout(request, response);
 			return;
 		}
 
 		// Recursive call, through a request dispatcher include call.
-		inContext(aRequest, aResponse);
+		inContext(request, response);
 	}
 
 	/** Sets a log mark with the session id while executing the runnable. */

@@ -117,51 +117,57 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
         this.uploadHandler = this;
     }
     
-    /** 
-     *  Override to provide security
-     * 
-     * @param aRequest  may be used to fetch a TLContext.
-     * @param aCommand  Value of COMMAND     as extracted from request, always != null 
-     * @param aDsn      Value of DATA_SOURCE as extracted from request, always != null
-     * @param extra     depending on command, usually the name of some entry.
-     * 
-     * 
-     * @return true when aCommand is allowed with given parameters
-     * @throws ServletException when command is not allowed
-     */
-    protected abstract boolean allow(HttpServletRequest aRequest, String aCommand, String aDsn, Object extra) 
+    /**
+	 * Override to provide security
+	 * 
+	 * @param request
+	 *        may be used to fetch a TLContext.
+	 * @param command
+	 *        Value of COMMAND as extracted from request, always != null
+	 * @param dataSource
+	 *        Value of DATA_SOURCE as extracted from request, always != null
+	 * @param extra
+	 *        depending on command, usually the name of some entry.
+	 * 
+	 * 
+	 * @return true when aCommand is allowed with given parameters
+	 * @throws ServletException
+	 *         when command is not allowed
+	 */
+	protected abstract boolean allow(HttpServletRequest request, String command, String dataSource, Object extra)
         throws ServletException;
 
 	@Override
-	public final void doPost(HttpServletRequest aRequest, HttpServletResponse aResponse)
+	public final void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
-		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(aRequest,
-			() -> doPostWithLogMark(aRequest, aResponse));
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(request,
+			() -> doPostWithLogMark(request, response));
 	}
 
     /**
-    * Dispatches the cmd-parameter and extract the files.
-    *
-    * @param    aRequest     The send request. This may be a multipart-request
-    *                        or a normal request. If it is a normal request, only
-    *                        the mkdir-command will be execute.
-    * @param    aResponse    The send response.
-    *
-    * @throws   ServletException    If the request for the POST could not 
-    *                               be handled.
-    * @throws   IOException         If an input or output error is detected 
-    *                               when the servlet handles the POST request. 
-    */   
-	protected void doPostWithLogMark(HttpServletRequest aRequest, HttpServletResponse aResponse)
+	 * Dispatches the cmd-parameter and extract the files.
+	 *
+	 * @param request
+	 *        The send request. This may be a multipart-request or a normal request. If it is a
+	 *        normal request, only the mkdir-command will be execute.
+	 * @param response
+	 *        The send response.
+	 *
+	 * @throws ServletException
+	 *         If the request for the POST could not be handled.
+	 * @throws IOException
+	 *         If an input or output error is detected when the servlet handles the POST request.
+	 */   
+	protected void doPostWithLogMark(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        if (FileUploadBase.isMultipartContent(aRequest)){
+		if (FileUploadBase.isMultipartContent(request)) {
             try{
                 DiskFileUpload theUpload = new DiskFileUpload();
                 this.initializeFileUpload(theUpload);       
-                List theFileItems = theUpload.parseRequest(aRequest);
+				List theFileItems = theUpload.parseRequest(request);
                 Map theFormFieldMap = this.extractFormFields(theFileItems);
-                this.uploadFileItems(aRequest, theFileItems, theFormFieldMap);
+				this.uploadFileItems(request, theFileItems, theFormFieldMap);
             }
             catch(FileUploadException fue){
                 throw new ServletException(fue);
@@ -169,9 +175,9 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
         }
         else{
 			{
-                String theCommand = aRequest.getParameter(COMMAND);
+				String theCommand = request.getParameter(COMMAND);
                 if (MKDIR.equals(theCommand)){
-                    doMkdir(aRequest);
+					doMkdir(request);
                 }
             }
         }

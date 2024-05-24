@@ -26,6 +26,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import com.top_logic.basic.Logger;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DatabaseAccessException;
+import com.top_logic.util.TopLogicServlet;
 
 /**
  * Servlet for uploading files into DataSources.
@@ -130,7 +131,15 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
      */
     protected abstract boolean allow(HttpServletRequest aRequest, String aCommand, String aDsn, Object extra) 
         throws ServletException;
-    
+
+	@Override
+	public final void doPost(HttpServletRequest aRequest, HttpServletResponse aResponse)
+			throws ServletException, IOException {
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(aRequest,
+			() -> doPostWithLogMark(aRequest, aResponse));
+	}
+
     /**
     * Dispatches the cmd-parameter and extract the files.
     *
@@ -144,9 +153,8 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
     * @throws   IOException         If an input or output error is detected 
     *                               when the servlet handles the POST request. 
     */   
-    @Override
-	public void doPost(HttpServletRequest aRequest, HttpServletResponse aResponse)
-                    throws ServletException, IOException {
+	protected void doPostWithLogMark(HttpServletRequest aRequest, HttpServletResponse aResponse)
+            throws ServletException, IOException {
         if (FileUploadBase.isMultipartContent(aRequest)){
             try{
                 DiskFileUpload theUpload = new DiskFileUpload();

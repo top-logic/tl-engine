@@ -6,6 +6,10 @@
 package com.top_logic.util;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -15,6 +19,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.accesscontrol.LoginPageServlet;
@@ -31,8 +37,10 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.logging.LogConfigurator;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.RunnableEx2;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ProcessingInfo;
 import com.top_logic.layout.ProcessingKind;
@@ -51,6 +59,19 @@ import com.top_logic.util.filter.CompressionServletResponseWrapper;
  * @author    <a href="mailto:karsten.buch@top-logic.com">Karsten Buch</a>
  */
 public class TopLogicServlet extends HttpServlet {
+
+	/**
+	 * The name of log mark for the session id.
+	 * <p>
+	 * <em>When the value is changed, the Log4j configuration files have to be updated, as they use
+	 * the value.</em>
+	 * </p>
+	 * <p>
+	 * The value of this constant is used in Log4J configuration files to extract and log the
+	 * session id with every log statement.
+	 * </p>
+	 */
+	private static final String TL_SESSION_ID_LOG_MARK = "tl-session-id";
 
 	/**
 	 * Servlet-parameter for enabling adaptive compression.
@@ -144,6 +165,13 @@ public class TopLogicServlet extends HttpServlet {
 	 */
 	@Override
 	public final void service(final HttpServletRequest aRequest, final HttpServletResponse aResponse) throws IOException, ServletException {
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(aRequest,
+			() -> serviceWithLogMark(aRequest, aResponse));
+	}
+
+	private void serviceWithLogMark(final HttpServletRequest aRequest, final HttpServletResponse aResponse)
+			throws IOException, ServletException {
 		setCachePolicy(aResponse);
 
 		final TLSessionContext session = this.getSession(aRequest, aResponse);
@@ -172,6 +200,52 @@ public class TopLogicServlet extends HttpServlet {
 
 		// Recursive call, through a request dispatcher include call.
 		inContext(aRequest, aResponse);
+	}
+
+	/** Sets a log mark with the session id while executing the runnable. */
+	public static <E1 extends Throwable, E2 extends Throwable> void withSessionIdLogMark(HttpServletRequest request,
+			RunnableEx2<E1, E2> runnable) throws E1, E2 {
+		LogConfigurator logConfigurator = LogConfigurator.getInstance();
+		String oldLogMark = logConfigurator.getLogMark(TL_SESSION_ID_LOG_MARK);
+		logConfigurator.addLogMark(TL_SESSION_ID_LOG_MARK, getSessionIdForLog(request));
+		try {
+			runnable.run();
+		} finally {
+			if (oldLogMark == null) {
+				logConfigurator.removeLogMark(TL_SESSION_ID_LOG_MARK);
+			} else {
+				logConfigurator.addLogMark(TL_SESSION_ID_LOG_MARK, oldLogMark);
+			}
+		}
+	}
+
+	private static String getSessionIdForLog(HttpServletRequest request) {
+		if (request == null) {
+			/* This happens in tests. */
+			return null;
+		}
+		String sessionId = getSessionId(request);
+		if (StringServices.isEmpty(sessionId) || sessionId.equals(NO_SESSION)) {
+			return null;
+		}
+		return hashSessionIdForLog(sessionId);
+	}
+
+	/**
+	 * The session id in a form in which it can be logged.
+	 * <p>
+	 * The session id must not be logged directly. That would be a security hole. It would allow a
+	 * reader of the log to take over the session.
+	 * </p>
+	 */
+	public static String hashSessionIdForLog(String rawSessionId) {
+		try {
+			MessageDigest digester = MessageDigest.getInstance(MessageDigestAlgorithms.SHA3_256);
+			byte[] digest = digester.digest(rawSessionId.getBytes(StandardCharsets.UTF_8));
+			return "S(" + Base64.getEncoder().encodeToString(digest) + ") ";
+		} catch (NoSuchAlgorithmException exception) {
+			throw new RuntimeException(exception);
+		}
 	}
 
 	/**

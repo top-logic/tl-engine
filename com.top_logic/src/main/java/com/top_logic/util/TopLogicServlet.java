@@ -87,9 +87,6 @@ public class TopLogicServlet extends HttpServlet {
     /** Subclasses may configure there maximal Service time here  */
     public static final String MAX_SERVICE_ATTR = TopLogicServlet.class.getName() + "maxServiceTime";
 
-    /** Special handling when we are called just once */
-    public static final Integer COUNT1 = Integer.valueOf(1);
-    
     /** When this amount of milli-seconds is exceeded a warning will be logged. */
     protected long maxServiceTime;
 

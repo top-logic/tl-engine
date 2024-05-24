@@ -30,6 +30,7 @@ import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.provider.icon.IconProvider;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
@@ -43,6 +44,7 @@ import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.composite.TargetTable;
 import com.top_logic.model.internal.PersistentModelPart;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -325,8 +327,15 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			
 			CompositionStorages storages = result.computeIfAbsent(key, k -> new CompositionStoragesImpl());
 
-			CompositeStorage storage = (CompositeStorage) reference.getStorageImplementation();
-			ContainerStorage container = storage.getContainerStorage(reference);
+			StorageDetail storage = reference.getStorageImplementation();
+			CompositeStorage compositeStorage;
+			try {
+				compositeStorage = (CompositeStorage) storage;
+			} catch (ClassCastException ex) {
+				throw new IllegalStateException("Composition reference '" + TLModelUtil.qualifiedName(reference)
+					+ "' has no composition storage: " + storage.getClass().getName());
+			}
+			ContainerStorage container = compositeStorage.getContainerStorage(reference);
 			if (container instanceof SourceTable) {
 				storages.storedInSource().add((SourceTable) container);
 			} else if (container instanceof TargetTable) {

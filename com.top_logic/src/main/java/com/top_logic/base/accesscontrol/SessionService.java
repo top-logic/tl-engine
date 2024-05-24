@@ -164,10 +164,10 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
      * from the session map
      */
 	public void invalidateSession(HttpSession session) {
-        boolean debug = Logger.isDebugEnabled(this);
+		boolean debug = Logger.isDebugEnabled(SessionService.class);
         
         if (debug) {
-            Logger.debug("Removing the Session from internal List", this);
+			Logger.debug("Removing the Session from internal List", SessionService.class);
         }
 
         this.removeSession (session);
@@ -183,7 +183,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
             //the session already was invalidated (maybe timed out)
             //do nothing
             if (debug) {
-                Logger.debug("Session already was invalidated:", this);
+				Logger.debug("Session already was invalidated:", SessionService.class);
             }
         }
     }
@@ -214,11 +214,11 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	public boolean validateSession(HttpServletRequest request) {
         
         HttpSession session = request.getSession(false);
-        boolean debug = Logger.isDebugEnabled(this);
+		boolean debug = Logger.isDebugEnabled(SessionService.class);
         
         if (session == null) {
             if(debug) {
-               Logger.debug("The session object is not valid because it is null",this); 
+				Logger.debug("The session object is not valid because it is null", SessionService.class);
             }
             request.setAttribute(ERROR,Resources.getInstance().getString(I18NConstants.ERROR_SESSION_TIMED_OUT));
             return (false);
@@ -231,7 +231,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         if (!sessionIsValid (session)) {
             if(debug) {
                Logger.debug("The session object is not valid because it is timed out or was "+
-                            "invalidated because of another reason.",this); 
+					"invalidated because of another reason.", SessionService.class);
             }
             this.removeSession (session);
             request.setAttribute(ERROR,Resources.getInstance().getString(I18NConstants.SESSION_INVALID));
@@ -242,7 +242,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		if (sessioninfo == null) {
             if(debug) {
                Logger.debug("The session object is not valid because it's ID is not found "+
-               "in the SessionMap - so the session was not created by the session service",this); 
+					"in the SessionMap - so the session was not created by the session service", SessionService.class);
             }
             request.setAttribute(ERROR,Resources.getInstance().getString(I18NConstants.SESSION_NOT_FOUND));
             return (false);
@@ -420,7 +420,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			HttpServletResponse response, Person aUser) {
         //checking if the given user is null. If so return null.       
         if (aUser == null)  {
-            Logger.error ("[getNewSessionForUser] Given User is null.", this);            
+			Logger.error("[getNewSessionForUser] Given User is null.", SessionService.class);
             throw new NullPointerException("Given User is null.");
         }
         

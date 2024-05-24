@@ -35,14 +35,6 @@
 					monomorphic="true"
 					target-type="tl.doc.Page"
 				/>
-				<reference
-					att_name="composite"
-					branch-global="false"
-					by-value="true"
-					deletion-policy="delete-referer"
-					monomorphic="true"
-					target-type="MetaAttribute"
-				/>
 				<mo_attribute
 					att_name="sortOrder"
 					att_type="Integer"

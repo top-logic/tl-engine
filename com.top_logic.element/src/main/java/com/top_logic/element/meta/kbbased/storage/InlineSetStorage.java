@@ -11,23 +11,25 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.commons.collections4.BidiMap;
 
 import com.top_logic.basic.NamedConstant;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.db2.IndexedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.util.TLAnnotations;
 
 /**
  * {@link InlineCollectionStorage} for unordered references.
@@ -36,6 +38,8 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
+@Label("Unsorted storage in the target table")
 public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends InlineCollectionStorage<C> {
 
 	/**
@@ -58,12 +62,20 @@ public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends Inli
 	@Override
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
-		Map<String, KnowledgeItem> attributeFilter = Collections.singletonMap(getConfig().getReferenceColumn(),
-			attribute.getDefinition().tHandle());
-		_outgoingQuery =
-			IndexedLinkQuery.indexedLinkQuery(new NamedConstant(attribute.getName() + " liveQuery"), TLObject.class,
-				getConfig().getTable(),
-				getConfig().getContainerColumn(), null, TLObject.class, attributeFilter, true);
+		String table = TLAnnotations.getTable(attribute.getType());
+		Map<String, KnowledgeItem> filter;
+		if (getConfig().getReferenceColumn() != null) {
+			filter = Collections.singletonMap(getConfig().getReferenceColumn(), attribute.getDefinition().tHandle());
+		} else {
+			filter = Collections.emptyMap();
+		}
+		_outgoingQuery = IndexedLinkQuery.indexedLinkQuery(new NamedConstant(attribute.getName() + " liveQuery"),
+			TLObject.class, table, getConfig().getContainerColumn(), null, TLObject.class, filter, true);
+	}
+
+	@Override
+	protected String getTable() {
+		return _outgoingQuery.getAssociationTypeName();
 	}
 
 	@Override
@@ -81,8 +93,16 @@ public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends Inli
 
 	private Set<TLObject> liveSet(TLObject object, TLStructuredTypePart attribute) {
 		String referenceColumn = getConfig().getReferenceColumn();
+		Consumer<TLObject> addCallback;
+		if (referenceColumn != null) {
+			addCallback = value -> checkAndSetReference(value, referenceColumn, attribute);
+		} else {
+			addCallback = value -> {
+				// Nothing to do here.
+			};
+		}
 		return new ReferenceSettingLiveSet<>(internalValue(object).values(),
-			value -> checkAndSetReference(value, referenceColumn, attribute),
+			addCallback,
 			value -> value.tHandle().setAttributeValue(referenceColumn, null));
 	}
 
@@ -236,14 +256,4 @@ public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends Inli
 
 	}
 
-	/**
-	 * Factory to create a {@link Config}.
-	 */
-	public static Config<?> setConfig(String table, String container, String containerReference) {
-		Config<?> listConf = TypedConfiguration.newConfigItem(Config.class);
-		listConf.setTable(Objects.requireNonNull(table));
-		listConf.setContainerColumn(Objects.requireNonNull(container));
-		listConf.setReferenceColumn(Objects.requireNonNull(containerReference));
-		return listConf;
-	}
 }

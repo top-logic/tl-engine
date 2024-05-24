@@ -37,11 +37,11 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.annotate.persistency.CompositionStorage;
-import com.top_logic.model.annotate.persistency.CompositionStorage.InSourceTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.InTargetTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.LinkTable;
-import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
+import com.top_logic.model.composite.SourceTable;
+import com.top_logic.model.composite.TargetTable;
 import com.top_logic.model.internal.PersistentModelPart;
 import com.top_logic.util.model.ModelService;
 
@@ -324,21 +324,15 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			ObjectBranchId key = ObjectBranchId.toObjectBranchId(targetType.tId());
 			
 			CompositionStorages storages = result.computeIfAbsent(key, k -> new CompositionStoragesImpl());
-			CompositionStorage compositionStorage = TLAnnotations.getCompositionStorage(reference);
-			CompositionStorage.Storage storage;
-			if (compositionStorage != null) {
-				storage = compositionStorage.getStorage();
+
+			CompositeStorage storage = (CompositeStorage) reference.getStorageImplementation();
+			ContainerStorage container = storage.getContainerStorage(reference);
+			if (container instanceof SourceTable) {
+				storages.storedInSource().add((SourceTable) container);
+			} else if (container instanceof TargetTable) {
+				storages.storedInTarget().add((TargetTable) container);
 			} else {
-				storage = CompositionStorage.defaultCompositionLinkStorage();
-			}
-			if (storage instanceof CompositionStorage.InTargetTable) {
-				InTargetTable inTargetStorage = (InTargetTable) storage;
-				storages.storedInTarget().add(inTargetStorage);
-			} else if (storage instanceof CompositionStorage.InSourceTable) {
-				InSourceTable inSourceStorage = (InSourceTable) storage;
-				storages.storedInSource().add(new InSource(reference, inSourceStorage.getPart()));
-			} else {
-				storages.storedInLink().add((LinkTable) storage);
+				storages.storedInLink().add((LinkTable) container);
 			}
 		});
 		return result;

@@ -7,19 +7,20 @@ package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.ReferenceStorage;
@@ -32,6 +33,11 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.MonomorphicContainerColumn;
+import com.top_logic.model.composite.PolymorphicContainerColumn;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -44,8 +50,10 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
+@Label("Storage in the target table")
 public class ReverseForeignKeyStorage<C extends ReverseForeignKeyStorage.Config<?>> extends TLItemStorage<C>
-		implements ReferenceStorage {
+		implements ReferenceStorage, CompositeStorage {
 
 	/**
 	 * {@link ReverseForeignKeyStorage} configuration options.
@@ -76,16 +84,23 @@ public class ReverseForeignKeyStorage<C extends ReverseForeignKeyStorage.Config<
 	@Override
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
-		Map<String, KnowledgeItem> attributeFilter =
-			Collections.singletonMap(getConfig().getReferenceColumn(), attributeDefinition(attribute));
-		_outgoingQuery =
-			AssociationQuery.createQuery(attribute.getName() + " in target", TLObject.class,
-				getConfig().getTable(), getConfig().getContainerColumn(), attributeFilter);
-
+		String table = TLAnnotations.getTable(attribute.getType());
+		Map<String, KnowledgeItem> filter;
+		if (getConfig().getReferenceColumn() != null) {
+			filter = Collections.singletonMap(getConfig().getReferenceColumn(), attribute.getDefinition().tHandle());
+		} else {
+			filter = Collections.emptyMap();
+		}
+		_outgoingQuery = AssociationQuery.createQuery(attribute.getName() + " in target", TLObject.class, table,
+			getConfig().getContainerColumn(), filter);
 	}
 
 	private KnowledgeItem attributeDefinition(TLStructuredTypePart attribute) {
 		return attribute.getDefinition().tHandle();
+	}
+
+	private String getTable() {
+		return _outgoingQuery.getAssociationTypeName();
 	}
 
 	@Override
@@ -112,23 +127,32 @@ public class ReverseForeignKeyStorage<C extends ReverseForeignKeyStorage.Config<
 		KnowledgeItem referrerObject = getStorageObject(object);
 
 		{
+			String referenceColumn = getConfig().getReferenceColumn();
 			KnowledgeItem newTarget = unwrapTarget(newValue);
 			if (newTarget != null) {
 				Object oldContainer = newTarget.setAttributeValue(getConfig().getContainerColumn(), referrerObject);
 				if (oldContainer != null) {
 					newTarget.setAttributeValue(getConfig().getContainerColumn(), oldContainer);
-					TLObject oldRef =
-						((KnowledgeItem) newTarget.getAttributeValue(getConfig().getReferenceColumn())).getWrapper();
+					TLObject oldRef;
+					if (referenceColumn == null) {
+						oldRef = attribute;
+					} else {
+						oldRef = ((KnowledgeItem) newTarget.getAttributeValue(referenceColumn)).getWrapper();
+					}
 					throw new IllegalArgumentException("Reference target '" + newValue + "' for reference '" + attribute
 							+ "' of object '" + object + "' is already part of a different container '"
 							+ ((KnowledgeItem) oldContainer).getWrapper() + "' in reference '" + oldRef + "'.");
 				}
-				newTarget.setAttributeValue(getConfig().getReferenceColumn(), attributeDefinition(attribute));
+				if (referenceColumn != null) {
+					newTarget.setAttributeValue(referenceColumn, attributeDefinition(attribute));
+				}
 			}
 			KnowledgeItem oldTarget = unwrapTarget(oldValue);
 			if (oldTarget != null) {
 				oldTarget.setAttributeValue(getConfig().getContainerColumn(), null);
-				oldTarget.setAttributeValue(getConfig().getReferenceColumn(), null);
+				if (referenceColumn != null) {
+					oldTarget.setAttributeValue(referenceColumn, null);
+				}
 			}
 			AttributeOperations.touch(object, attribute);
 		}
@@ -193,18 +217,18 @@ public class ReverseForeignKeyStorage<C extends ReverseForeignKeyStorage.Config<
 	@Override
 	public Set<? extends TLObject> getReferers(TLObject self, TLReference reference) {
 		return CollectionUtil
-			.singletonOrEmptySet(InlineCollectionStorage.resolveContainer(getConfig(), self, reference));
+			.singletonOrEmptySet(InlineCollectionStorage.resolveContainer(getConfig(), getTable(), self, reference));
 	}
 
-	/**
-	 * Factory to create a {@link Config}.
-	 */
-	public static Config<?> defaultConfig(String table, String container, String containerReference) {
-		Config<?> listConf = TypedConfiguration.newConfigItem(Config.class);
-		listConf.setTable(Objects.requireNonNull(table));
-		listConf.setContainerColumn(Objects.requireNonNull(container));
-		listConf.setReferenceColumn(Objects.requireNonNull(containerReference));
-		return listConf;
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		String containerColumn = getConfig().getContainerColumn();
+		String referenceColumn = getConfig().getReferenceColumn();
+		if (referenceColumn == null) {
+			return new MonomorphicContainerColumn(containerColumn, reference);
+		} else {
+			return new PolymorphicContainerColumn(containerColumn, referenceColumn);
+		}
 	}
 
 }

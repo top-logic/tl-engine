@@ -81,7 +81,7 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 		/**
 		 * Name of the {@link MOReference} that contains the composition reference.
 		 */
-		@Mandatory
+		@Nullable
 		String getContainerReference();
 
 		/**
@@ -206,8 +206,13 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 			MOReference containerRef = (MOReference) dbType.getAttribute(getConfig().getContainer());
 			DBAttribute containerName = containerRef.getColumn(ReferencePart.name);
 			DBAttribute containerType = containerRef.getColumn(ReferencePart.type);
-			DBAttribute containerReference =
-				((MOReference) dbType.getAttribute(getConfig().getContainerReference())).getColumn(ReferencePart.name);
+			DBAttribute containerReference;
+			if (getConfig().getContainerReference() != null) {
+				containerReference = ((MOReference) dbType.getAttribute(getConfig().getContainerReference()))
+					.getColumn(ReferencePart.name);
+			} else {
+				containerReference = null;
+			}
 			DBAttribute containerOrder;
 			if (getConfig().getContainerOrder() != null) {
 				containerOrder = (DBAttribute) dbType.getAttribute(getConfig().getContainerOrder());
@@ -363,7 +368,9 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 				rows.updateNull(containerType.getDBName());
 			}
 			rows.updateLong(containerName.getDBName(), nullForMandatoryIDColumn());
-			rows.updateLong(containerReference.getDBName(), nullForMandatoryIDColumn());
+			if (containerReference != null) {
+				rows.updateLong(containerReference.getDBName(), nullForMandatoryIDColumn());
+			}
 			if (containerOrder != null) {
 				rows.updateNull(containerOrder.getDBName());
 			}
@@ -372,7 +379,9 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 				rows.updateString(containerType.getDBName(), link.getSrcType());
 			}
 			rows.updateLong(containerName.getDBName(), link.getSrcId());
-			rows.updateLong(containerReference.getDBName(), ((LongID) refId).longValue());
+			if (containerReference != null) {
+				rows.updateLong(containerReference.getDBName(), ((LongID) refId).longValue());
+			}
 			if (containerOrder != null) {
 				rows.updateInt(containerOrder.getDBName(), link.getSortOrder());
 			}
@@ -391,7 +400,9 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 				values.remove(containerType.getDBName());
 			}
 			values.remove(containerName.getDBName());
-			values.remove(containerReference.getDBName());
+			if (containerReference != null) {
+				values.remove(containerReference.getDBName());
+			}
 			if (containerOrder != null) {
 				values.remove(containerOrder.getDBName());
 			}
@@ -400,7 +411,9 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 				values.put(containerType.getDBName(), link.getSrcType());
 			}
 			values.put(containerName.getDBName(), link.getSrcId());
-			values.put(containerReference.getDBName(), ((LongID) refId).longValue());
+			if (containerReference != null) {
+				values.put(containerReference.getDBName(), ((LongID) refId).longValue());
+			}
 			if (containerOrder != null) {
 				values.put(containerOrder.getDBName(), link.getSortOrder());
 			}

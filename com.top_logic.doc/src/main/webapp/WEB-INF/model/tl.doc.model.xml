@@ -84,13 +84,12 @@
 							type="Page"
 						>
 							<annotations>
-								<composition-storage>
-									<in-target
-										container="parent"
-										container-order="sortOrder"
-										container-reference="composite"
+								<storage-algorithm>
+									<inline-list-storage
+										container-column="parent"
+										order-column="sortOrder"
 									/>
-								</composition-storage>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 						<reference name="parent"

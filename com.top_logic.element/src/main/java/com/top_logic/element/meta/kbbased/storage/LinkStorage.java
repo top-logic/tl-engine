@@ -137,29 +137,27 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	 *
 	 * @param configType
 	 *        The concrete storage configuration type.
-	 * @param tableName
-	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
-	 *        name is derived from the history type.
+	 * @param composite
+	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, String tableName, HistoryType historyType) {
+	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite, HistoryType historyType) {
 		C result = TypedConfiguration.newConfigItem(configType);
-		if (tableName != null) {
-			result.setTable(tableName);
-		} else {
-			switch (historyType) {
-				case CURRENT:
-					// Default from configuration interface is fine.
-					break;
-				case HISTORIC:
-					result.setTable(ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
-					break;
-				case MIXED:
-					result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
-					break;
-			}
+		switch (historyType) {
+			case CURRENT:
+				if (composite) {
+					result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+				}
+				break;
+			case HISTORIC:
+				result.setTable(ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				break;
+			case MIXED:
+				result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				break;
+
 		}
 		return result;
 	}

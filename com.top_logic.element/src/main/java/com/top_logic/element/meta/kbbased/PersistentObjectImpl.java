@@ -32,11 +32,11 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.annotate.persistency.CompositionStorage.InTargetTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.LinkTable;
 import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.cache.TLModelOperations.CompositionStorages;
-import com.top_logic.model.cache.TLModelOperations.InSource;
+import com.top_logic.model.composite.LinkTable;
+import com.top_logic.model.composite.SourceTable;
+import com.top_logic.model.composite.TargetTable;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -87,7 +87,7 @@ public class PersistentObjectImpl {
 	}
 
 	private static TLObject inSourceContainer(TLObject self, CompositionStorages compositionStorage) {
-		for (InSource inSource : compositionStorage.storedInSource()) {
+		for (SourceTable inSource : compositionStorage.storedInSource()) {
 			AssociationSetQuery<TLObject> query = inSourceQuery(inSource);
 			Set<TLObject> containers = AbstractWrapper.resolveLinks(self, query);
 			switch (containers.size()) {
@@ -102,7 +102,7 @@ public class PersistentObjectImpl {
 		return null;
 	}
 
-	private static AssociationSetQuery<TLObject> inSourceQuery(InSource inSource) {
+	private static AssociationSetQuery<TLObject> inSourceQuery(SourceTable inSource) {
 		String table = inSource.getTable();
 		String targetRef = inSource.getPartAttribute();
 		return AssociationQuery.createQuery("source for " + table + "." + targetRef, TLObject.class, table, targetRef);
@@ -117,7 +117,7 @@ public class PersistentObjectImpl {
 	}
 
 	private static TLObject inTargetContainer(TLObject self, CompositionStorages compositionStorage) {
-		for (InTargetTable inTarget : compositionStorage.storedInTarget()) {
+		for (TargetTable inTarget : compositionStorage.storedInTarget()) {
 			TLObject container = self.tGetDataReference(TLObject.class, inTarget.getContainer());
 			if (container != null) {
 				// Container found
@@ -154,15 +154,14 @@ public class PersistentObjectImpl {
 	}
 
 	private static TLReference inSourceReference(TLObject self, CompositionStorages compositionStorage) {
-		for (InSource inSource : compositionStorage.storedInSource()) {
+		for (SourceTable inSource : compositionStorage.storedInSource()) {
 			AssociationSetQuery<TLObject> query = inSourceQuery(inSource);
 			Set<TLObject> containers = AbstractWrapper.resolveLinks(self, query);
 			switch (containers.size()) {
 				case 0:
 					continue;
 				case 1:
-					TLObject container = containers.iterator().next();
-					return (TLReference) container.tType().getPartOrFail(inSource.getReferenceName());
+					return inSource.getReference();
 				default:
 					throw failMultipleContainers(self, containers);
 			}
@@ -181,12 +180,11 @@ public class PersistentObjectImpl {
 	}
 
 	private static TLReference inTargetReference(TLObject self, CompositionStorages compositionStorage) {
-		for (InTargetTable inTarget : compositionStorage.storedInTarget()) {
-			TLReference compositeRef = self.tGetDataReference(TLReference.class, inTarget.getContainerReference());
+		for (TargetTable inTarget : compositionStorage.storedInTarget()) {
+			TLReference compositeRef = inTarget.getReference(self);
 			if (compositeRef != null) {
 				// Container found
-				TLObject container = self.tGetDataReference(TLObject.class, inTarget.getContainer());
-				return findConcreteReference(container, compositeRef);
+				return compositeRef;
 			}
 		}
 		return null;

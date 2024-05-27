@@ -12,20 +12,20 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.MutableList;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dob.meta.MOReference;
+import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.AssociationQuery;
@@ -33,6 +33,7 @@ import com.top_logic.knowledge.service.db2.OrderedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.util.TLAnnotations;
 
 /**
  * {@link InlineCollectionStorage} for ordered references.
@@ -41,6 +42,8 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
+@Label("Sorted storage in the target table")
 public class InlineListStorage<C extends InlineListStorage.Config<?>> extends InlineCollectionStorage<C> {
 
 	/**
@@ -56,8 +59,7 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 		String ORDER_COLUMN = "order-column";
 
 		/**
-		 * Name of the {@link MOReference} in {@link #getTable()} that holds the order of the target
-		 * object within the referenced objects.
+		 * Name of the column in the target table that holds the order of the referenced objects.
 		 */
 		@Name(ORDER_COLUMN)
 		@Mandatory
@@ -82,10 +84,20 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 	@Override
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
-		Map<String, KnowledgeItem> attributeFilter = Collections.singletonMap(getConfig().getReferenceColumn(),
-			attribute.getDefinition().tHandle());
-		_outgoingQuery = AssociationQuery.createOrderedLinkQuery("inlineList", TLObject.class, getConfig().getTable(),
-			getConfig().getContainerColumn(), getConfig().getOrderColumn(), attributeFilter, true);
+		String table = TLAnnotations.getTable(attribute.getType());
+		Map<String, KnowledgeItem> filter;
+		if (getConfig().getReferenceColumn() != null) {
+			filter = Collections.singletonMap(getConfig().getReferenceColumn(), attribute.getDefinition().tHandle());
+		} else {
+			filter = Collections.emptyMap();
+		}
+		_outgoingQuery = AssociationQuery.createOrderedLinkQuery("inlineList", TLObject.class, table,
+			getConfig().getContainerColumn(), getConfig().getOrderColumn(), filter, true);
+	}
+
+	@Override
+	protected String getTable() {
+		return _outgoingQuery.getAssociationTypeName();
 	}
 
 	@Override
@@ -99,8 +111,16 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 
 	private List<TLObject> liveList(TLObject object, TLStructuredTypePart attribute) {
 		String referenceColumn = getConfig().getReferenceColumn();
+		Consumer<TLObject> addCallback;
+		if (referenceColumn != null) {
+			addCallback = value -> checkAndSetReference(value, referenceColumn, attribute);
+		} else {
+			addCallback = value -> {
+				// Nothing to do here.
+			};
+		}
 		return new ReferenceSettingLiveList<>(internalValue(object),
-			value -> checkAndSetReference(value, referenceColumn, attribute),
+			addCallback,
 			value -> value.tHandle().setAttributeValue(referenceColumn, null));
 	}
 
@@ -272,16 +292,4 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 
 	}
 
-	/**
-	 * Factory to create a {@link Config}.
-	 */
-	public static Config<?> listConfig(String table, String container, String containerReference,
-			String orderAttribute) {
-		Config<?> listConf = TypedConfiguration.newConfigItem(Config.class);
-		listConf.setTable(Objects.requireNonNull(table));
-		listConf.setContainerColumn(Objects.requireNonNull(container));
-		listConf.setReferenceColumn(Objects.requireNonNull(containerReference));
-		listConf.setOrderColumn(Objects.requireNonNull(orderAttribute));
-		return listConf;
-	}
 }

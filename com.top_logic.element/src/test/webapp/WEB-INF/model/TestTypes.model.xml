@@ -348,9 +348,12 @@
 							type="Part"
 						>
 							<annotations>
-								<composition-storage>
-									<in-source part="composite"/>
-								</composition-storage>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="composite"
+										storage-type="AElement"
+									/>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 						<reference name="compositeList1"
@@ -360,13 +363,13 @@
 							type="Part"
 						>
 							<annotations>
-								<composition-storage>
-									<in-target
-										container="container"
-										container-order="sortOrder"
-										container-reference="reference"
+								<storage-algorithm>
+									<inline-list-storage
+										container-column="container"
+										order-column="sortOrder"
+										reference-column="reference"
 									/>
-								</composition-storage>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 						<reference name="compositeList2"
@@ -376,13 +379,13 @@
 							type="Part"
 						>
 							<annotations>
-								<composition-storage>
-									<in-target
-										container="container"
-										container-order="sortOrder"
-										container-reference="reference"
+								<storage-algorithm>
+									<inline-list-storage
+										container-column="container"
+										order-column="sortOrder"
+										reference-column="reference"
 									/>
-								</composition-storage>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 						<reference name="compositeSet1"
@@ -392,12 +395,12 @@
 							type="Part"
 						>
 							<annotations>
-								<composition-storage>
-									<in-target
-										container="container"
-										container-reference="reference"
+								<storage-algorithm>
+									<inline-set-storage
+										container-column="container"
+										reference-column="reference"
 									/>
-								</composition-storage>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 						<reference name="compositeSet2"
@@ -407,12 +410,12 @@
 							type="Part"
 						>
 							<annotations>
-								<composition-storage>
-									<in-target
-										container="container"
-										container-reference="reference"
+								<storage-algorithm>
+									<inline-set-storage
+										container-column="container"
+										reference-column="reference"
 									/>
-								</composition-storage>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 						<reference name="composite1"
@@ -421,12 +424,12 @@
 							type="Part"
 						>
 							<annotations>
-								<composition-storage>
-									<in-target
-										container="container"
-										container-reference="reference"
+								<storage-algorithm>
+									<reverse-foreign-key-storage
+										container-column="container"
+										reference-column="reference"
 									/>
-								</composition-storage>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 						<reference name="composite2"
@@ -435,12 +438,12 @@
 							type="Part"
 						>
 							<annotations>
-								<composition-storage>
-									<in-target
-										container="container"
-										container-reference="reference"
+								<storage-algorithm>
+									<reverse-foreign-key-storage
+										container-column="container"
+										reference-column="reference"
 									/>
-								</composition-storage>
+								</storage-algorithm>
 							</annotations>
 						</reference>
 					</attributes>

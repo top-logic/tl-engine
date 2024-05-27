@@ -67,20 +67,18 @@
 
 		<update-annotations name="tl.doc:Page#children">
 			<annotations>
-				<composition-storage>
-					<in-target
-						container="parent"
-						container-order="sortOrder"
-						container-reference="composite"
+				<storage-algorithm>
+					<inline-list-storage
+						container-column="parent"
+						order-column="sortOrder"
 					/>
-				</composition-storage>
+				</storage-algorithm>
 			</annotations>
 		</update-annotations>
 
 		<inline-composition-links
 			container="parent"
 			container-order="sortOrder"
-			container-reference="composite"
 			reference="tl.doc:Page#children"
 		/>
 	</processors>

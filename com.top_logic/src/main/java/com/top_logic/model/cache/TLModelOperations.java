@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -21,7 +20,6 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.dob.meta.MOReference;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
@@ -37,13 +35,13 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
-import com.top_logic.model.annotate.persistency.CompositionStorage;
-import com.top_logic.model.annotate.persistency.CompositionStorage.InSourceTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.InTargetTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.LinkTable;
 import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
-import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
+import com.top_logic.model.composite.SourceTable;
+import com.top_logic.model.composite.TargetTable;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -290,29 +288,24 @@ public class TLModelOperations {
 	 * type.
 	 */
 	public CompositionStorages getCompositionStorages(TLClass type) {
-		Set<CompositionStorage.InTargetTable> targets = new HashSet<>();
-		Set<InSource> sources = new HashSet<>();
-		Set<CompositionStorage.LinkTable> links = new HashSet<>();
+		Set<TargetTable> targets = new HashSet<>();
+		Set<SourceTable> sources = new HashSet<>();
+		Set<LinkTable> links = new HashSet<>();
 		doForAllCompositionReferences(type.getModel(), reference -> {
 			TLType targetType = reference.getType();
 			if (!TLModelUtil.isCompatibleType(targetType, type)) {
 				return;
 			}
-			CompositionStorage compositionStorage = TLAnnotations.getCompositionStorage(reference);
-			CompositionStorage.Storage storage;
-			if (compositionStorage != null) {
-				storage = compositionStorage.getStorage();
+			CompositeStorage storage = (CompositeStorage) reference.getStorageImplementation();
+			ContainerStorage container = storage.getContainerStorage(reference);
+			if (container instanceof SourceTable) {
+				sources.add((SourceTable) container);
+			} else if (container instanceof TargetTable) {
+				targets.add((TargetTable) container);
 			} else {
-				storage = CompositionStorage.defaultCompositionLinkStorage();
+				links.add((LinkTable) container);
 			}
-			if (storage instanceof CompositionStorage.InTargetTable) {
-				targets.add((InTargetTable) storage);
-			} else if (storage instanceof CompositionStorage.InSourceTable) {
-				InSourceTable inSourceStorage = (InSourceTable) storage;
-				sources.add(new InSource(reference, inSourceStorage.getPart()));
-			} else {
-				links.add((LinkTable) storage);
-			}
+
 		});
 		return CompositionStoragesImpl.newInstance(links, sources, targets);
 
@@ -342,6 +335,9 @@ public class TLModelOperations {
 						continue;
 					}
 					TLReference reference = (TLReference) part;
+					if (reference.isAbstract()) {
+						continue;
+					}
 					if (!reference.getEnd().isComposite()) {
 						continue;
 					}
@@ -409,88 +405,24 @@ public class TLModelOperations {
 	public interface CompositionStorages {
 
 		/**
-		 * All {@link InTargetTable} strategies.
+		 * All {@link TargetTable} strategies.
 		 */
-		Set<CompositionStorage.InTargetTable> storedInTarget();
+		Set<TargetTable> storedInTarget();
 
 		/**
-		 * All {@link InSourceTable} strategies.
+		 * All {@link SourceTable} strategies.
 		 */
-		Set<InSource> storedInSource();
+		Set<SourceTable> storedInSource();
 
 		/**
 		 * All {@link LinkTables} strategies.
 		 */
-		Set<CompositionStorage.LinkTable> storedInLink();
+		Set<LinkTable> storedInLink();
 
 	}
 
 	/**
-	 * Representation of a composition storage algorithm that stores the connection between
-	 * container and part in the table of the container.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public static class InSource {
-
-		private final String _table;
-
-		private final String _partAttr;
-
-		private final String _referenceName;
-
-		/**
-		 * Creates a {@link TLModelOperations.InSource}.
-		 */
-		public InSource(TLReference reference, String partAttr) {
-			_table = TLAnnotations.getTable(reference.getOwner());
-			_partAttr = partAttr;
-			_referenceName = reference.getName();
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(_partAttr, _referenceName, _table);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			InSource other = (InSource) obj;
-			return Objects.equals(_partAttr, other._partAttr)
-					&& Objects.equals(_referenceName, other._referenceName)
-					&& Objects.equals(_table, other._table);
-		}
-
-		/**
-		 * The table of the container.
-		 */
-		public String getTable() {
-			return _table;
-		}
-
-		/**
-		 * {@link MOReference} holding the part.
-		 */
-		public String getPartAttribute() {
-			return _partAttr;
-		}
-
-		/**
-		 * Name of the composition {@link TLReference}.
-		 */
-		public String getReferenceName() {
-			return _referenceName;
-		}
-	}
-
-	/**
-	 * Simple implementation of {@link CompositionStorage}.
+	 * Simple implementation of {@link CompositionStorages}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -498,9 +430,9 @@ public class TLModelOperations {
 
 		private final Set<LinkTable> _links;
 
-		private final Set<InSource> _sources;
+		private final Set<SourceTable> _sources;
 
-		private final Set<InTargetTable> _targets;
+		private final Set<TargetTable> _targets;
 
 		/**
 		 * Creates a {@link CompositionStoragesImpl} with empty {@link #storedInLink()},
@@ -514,7 +446,7 @@ public class TLModelOperations {
 		 * Creates a {@link CompositionStoragesImpl} with the given values for
 		 * {@link #storedInLink()}, {@link #storedInSource()} and {@link #storedInTarget()}.
 		 */
-		public CompositionStoragesImpl(Set<LinkTable> links, Set<InSource> sources, Set<InTargetTable> targets) {
+		public CompositionStoragesImpl(Set<LinkTable> links, Set<SourceTable> sources, Set<TargetTable> targets) {
 			_links = links;
 			_sources = sources;
 			_targets = targets;
@@ -524,8 +456,8 @@ public class TLModelOperations {
 		 * Creates a new {@link CompositionStorages} instance with unmodifiable versions of the
 		 * given values.
 		 */
-		public static CompositionStorages newInstance(Set<LinkTable> links, Set<InSource> sources,
-				Set<InTargetTable> targets) {
+		public static CompositionStorages newInstance(Set<LinkTable> links, Set<SourceTable> sources,
+				Set<TargetTable> targets) {
 			return new CompositionStoragesImpl(minimizeAndStabilize(links), minimizeAndStabilize(sources),
 				minimizeAndStabilize(targets));
 		}
@@ -542,12 +474,12 @@ public class TLModelOperations {
 		}
 
 		@Override
-		public Set<InTargetTable> storedInTarget() {
+		public Set<TargetTable> storedInTarget() {
 			return _targets;
 		}
 
 		@Override
-		public Set<InSource> storedInSource() {
+		public Set<SourceTable> storedInSource() {
 			return _sources;
 		}
 

@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -35,6 +36,9 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.persistency.AllReferenceColumns;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.util.error.TopLogicException;
 
@@ -46,7 +50,9 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
-public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TLItemStorage<C> implements ReferenceStorage {
+@Label("Storage in the source table")
+public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TLItemStorage<C>
+		implements ReferenceStorage, CompositeStorage {
 
 	/**
 	 * {@link ForeignKeyStorage} configuration options.
@@ -229,6 +235,11 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 	 */
 	public final String getStorageAttribute() {
 		return _storageAttributeName;
+	}
+
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		return new SourceTable(getConfig().getStorageType(), getStorageAttribute(), reference);
 	}
 
 }

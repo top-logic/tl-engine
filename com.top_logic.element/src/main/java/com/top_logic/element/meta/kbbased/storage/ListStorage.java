@@ -17,6 +17,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.DataObjectException;
@@ -37,7 +38,11 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.OrderedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -46,7 +51,8 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
-public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C> {
+@Label("Sorted storage in separate table")
+public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C> implements CompositeStorage {
 
 	/**
 	 * Configuration options for {@link ListStorage}.
@@ -292,18 +298,22 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 			associationTypeName, associationEndName, orderAttributeName, filter, liveResult);
 	}
 
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		return new LinkTable(getTable());
+	}
+
 	/**
 	 * Creates a configuration for the {@link ListStorage}.
-	 * 
-	 * @param tableName
-	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
-	 *        name is derived from the history type.
+	 *
+	 * @param composite
+	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> listConfig(String tableName, HistoryType historyType) {
-		return defaultConfig(Config.class, tableName, historyType);
+	public static Config<?> listConfig(boolean composite, HistoryType historyType) {
+		return defaultConfig(Config.class, composite, historyType);
 	}
 
 }

@@ -14,15 +14,12 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
-import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.ExportColumns;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.persistency.CompositionStorage;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -231,37 +228,6 @@ public class TLAnnotations {
 			return null;
 		}
 		return getExportColumns(primaryGeneralization);
-	}
-
-	/**
-	 * The annotated {@link CompositionStorage} name for a composition reference.
-	 * 
-	 * @param reference
-	 *        The reference to get {@link CompositionStorage} annotation for.
-	 */
-	public static CompositionStorage getCompositionStorage(TLReference reference) {
-		CompositionStorage annotation = getAnnotation(reference, CompositionStorage.class);
-		if (annotation != null) {
-			return annotation;
-		}
-		TLTypePart definition = reference.getDefinition();
-		if (definition == reference) {
-			return null;
-		}
-		// search parent
-		for (TLClass generalization : reference.getOwner().getGeneralizations()) {
-			TLReference overriddenReference = (TLReference) generalization.getPart(reference.getName());
-			if (overriddenReference == null) {
-				// reference is not defined in generalization.
-				continue;
-			}
-			CompositionStorage storage = getCompositionStorage(overriddenReference);
-			if (storage != null) {
-				return storage;
-			}
-		}
-		return null;
-
 	}
 
 }

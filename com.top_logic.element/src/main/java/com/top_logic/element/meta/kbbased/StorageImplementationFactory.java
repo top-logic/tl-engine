@@ -18,20 +18,15 @@ import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.storage.DocumentStorage;
-import com.top_logic.element.meta.kbbased.storage.ForeignKeyStorage;
 import com.top_logic.element.meta.kbbased.storage.ImageGalleryStorage;
-import com.top_logic.element.meta.kbbased.storage.InlineListStorage;
-import com.top_logic.element.meta.kbbased.storage.InlineSetStorage;
 import com.top_logic.element.meta.kbbased.storage.ListStorage;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
-import com.top_logic.element.meta.kbbased.storage.ReverseForeignKeyStorage;
 import com.top_logic.element.meta.kbbased.storage.ReverseStorage;
 import com.top_logic.element.meta.kbbased.storage.SetStorage;
 import com.top_logic.element.meta.kbbased.storage.SingletonLinkStorage;
 import com.top_logic.element.model.imagegallery.GalleryImage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.wrap.Document;
-import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClassPart;
@@ -41,12 +36,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePartVisitor;
-import com.top_logic.model.annotate.persistency.CompositionStorage;
-import com.top_logic.model.annotate.persistency.CompositionStorage.InSourceTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.InTargetTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.LinkTable;
-import com.top_logic.model.annotate.persistency.CompositionStorage.Storage;
-import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -91,101 +81,32 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 					config = ReverseStorage.defaultConfig();
 				} else {
 					HistoryType historyType = end.getHistoryType();
+					boolean composite = end.isComposite();
 					boolean ordered = end.isOrdered();
 					boolean multiple = end.isMultiple();
-					boolean isComposite = end.isComposite();
-					if (isComposite) {
-						CompositionStorage.Storage compositionStorage = getCompositionStorage(model);
-						if (multiple) {
-							if (compositionStorage instanceof CompositionStorage.InSourceTable) {
-								Logger.warn(
-									"Ignoring invalid " + CompositionStorage.class.getName() + " annotation on " + model
-											+ " since a multiple composite reference can not be stored in the source table.",
-									StorageImplementationFactory.class);
-								compositionStorage = CompositionStorage.defaultCompositionLinkStorage();
-							}
-							if (ordered) {
-								if (compositionStorage instanceof CompositionStorage.InTargetTable) {
-									CompositionStorage.InTargetTable inTargetTable = (InTargetTable) compositionStorage;
-									if (inTargetTable.getContainerOrder() == null) {
-										Logger.warn("Ignoring invalid " + CompositionStorage.class.getName()
-												+ " annotation on " + model
-												+ " since no sort order column is set for sorted composite reference.",
-											StorageImplementationFactory.class);
-										config = ListStorage
-											.listConfig(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION, historyType);
-									} else {
-										config = InlineListStorage.listConfig(TLAnnotations.getTable(model.getType()),
-											inTargetTable.getContainer(), inTargetTable.getContainerReference(),
-											inTargetTable.getContainerOrder());
-									}
-								} else {
-									CompositionStorage.LinkTable linkTable = (LinkTable) compositionStorage;
-									config = ListStorage.listConfig(linkTable.getTable(), historyType);
-								}
+					if (multiple) {
+						if (ordered) {
+							TLType endType = end.getType();
+							if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
+								config = ImageGalleryStorage.imageGalleryConfig();
 							} else {
-								if (compositionStorage instanceof CompositionStorage.InTargetTable) {
-									CompositionStorage.InTargetTable inTargetTable = (InTargetTable) compositionStorage;
-									config = InlineSetStorage.setConfig(TLAnnotations.getTable(model.getType()),
-										inTargetTable.getContainer(), inTargetTable.getContainerReference());
-								} else {
-									CompositionStorage.LinkTable linkTable = (LinkTable) compositionStorage;
-									config = SetStorage.setConfig(linkTable.getTable(), historyType);
-								}
+								config = ListStorage.listConfig(composite, historyType);
 							}
 						} else {
-							if (compositionStorage instanceof CompositionStorage.InTargetTable) {
-								CompositionStorage.InTargetTable inTargetTable = (InTargetTable) compositionStorage;
-								config = ReverseForeignKeyStorage.defaultConfig(TLAnnotations.getTable(model.getType()),
-									inTargetTable.getContainer(), inTargetTable.getContainerReference());
-							} else if (compositionStorage instanceof CompositionStorage.InSourceTable) {
-								CompositionStorage.InSourceTable inSourceTable = (InSourceTable) compositionStorage;
-								ForeignKeyStorage.Config<?> foreignKeyConfig =
-									TypedConfiguration.newConfigItem(ForeignKeyStorage.Config.class);
-								foreignKeyConfig.setStorageType(TLAnnotations.getTable(model.getOwner()));
-								foreignKeyConfig.setStorageAttribute(inSourceTable.getPart());
-
-								config = foreignKeyConfig;
-							} else {
-								CompositionStorage.LinkTable linkTable = (LinkTable) compositionStorage;
-								config = SingletonLinkStorage.singletonLinkConfig(linkTable.getTable(), historyType);
-							}
+							config = SetStorage.setConfig(composite, historyType);
 						}
 					} else {
-						if (multiple) {
-							if (ordered) {
-								TLType endType = end.getType();
-								if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
-									config = ImageGalleryStorage.imageGalleryConfig();
-								} else {
-									config = ListStorage.listConfig(null, historyType);
-								}
-							} else {
-								config = SetStorage.setConfig(null, historyType);
-							}
+						TLType endType = end.getType();
+						if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(endType))) {
+							config = TypedConfiguration.newConfigItem(DocumentStorage.Config.class);
 						} else {
-							TLType endType = end.getType();
-							if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(endType))) {
-								config = TypedConfiguration.newConfigItem(DocumentStorage.Config.class);
-							} else {
-								config = SingletonLinkStorage.singletonLinkConfig(null, historyType);
-							}
+							config = SingletonLinkStorage.singletonLinkConfig(composite, historyType);
 						}
 					}
 				}
 
 				return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
 			}
-
-
-			private Storage getCompositionStorage(TLReference model) {
-				CompositionStorage compositionStorage = TLAnnotations.getCompositionStorage(model);
-				if (compositionStorage == null) {
-					return CompositionStorage.defaultCompositionLinkStorage();
-				}
-				return compositionStorage.getStorage();
-			}
-
 
 			@Override
 			public StorageImplementation visitAssociationEnd(TLAssociationEnd model, Void arg) {
@@ -229,15 +150,6 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 					StorageImplementationFactory.class);
 			}
 			return NoStorage.INSTANCE;
-		} else if (isComposition(part)) {
-			if (storageAnnotation != null) {
-				Logger.warn(
-					"Ignoring invalid " + TLStorage.class.getName() + " annotation on composition " + part
-							+ ". Use " + CompositionStorage.class.getName()
-							+ " annotation to customize storage strategy.",
-					StorageImplementationFactory.class);
-			}
-			return createDefaultStorageImplementation(part);
 		} else if (storageAnnotation == null) {
 			TLStructuredTypePart definition = part.getDefinition();
 			if (definition != part) {
@@ -269,6 +181,15 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 				if (result == null) {
 					// Configuration error that did not result in an exception (e.g. empty implementation config).
 					result = NoStorage.INSTANCE;
+				} else if (isComposition(part)) {
+					if (!CompositeStorage.class.isInstance(result)) {
+						Logger.warn(
+							"Ignoring invalid " + TLStorage.class.getName() + " annotation on compsite part " + part
+									+ ". Storage implementation for composites must implement '"
+									+ CompositeStorage.class.getName() + "': " + result,
+							StorageImplementationFactory.class);
+						return createDefaultStorageImplementation(part);
+					}
 				}
 			} catch (RuntimeException ex) {
 				Logger.error(

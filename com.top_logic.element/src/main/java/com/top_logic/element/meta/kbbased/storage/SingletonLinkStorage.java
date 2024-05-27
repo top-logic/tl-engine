@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -28,6 +29,9 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.export.SinglePreloadContribution;
 import com.top_logic.model.v5.AssociationNavigationPreload;
@@ -38,7 +42,9 @@ import com.top_logic.model.v5.AssociationNavigationPreload;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
-public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> extends TLItemStorage<C> implements AssociationStorage {
+@Label("Storage in separate table")
+public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> extends TLItemStorage<C>
+		implements AssociationStorage, CompositeStorage {
 
 	/**
 	 * Configuration options for {@link SingletonLinkStorage}.
@@ -71,16 +77,15 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 	/**
 	 * Creates a configuration for {@link SingletonLinkStorage}.
-	 * 
-	 * @param tableName
-	 *        Name of the table to store data. May be <code>null</code>. In this case, the table
-	 *        name is derived from the history type.
+	 *
+	 * @param composite
+	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> singletonLinkConfig(String tableName, HistoryType historyType) {
-		return LinkStorage.defaultConfig(Config.class, tableName, historyType);
+	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType) {
+		return LinkStorage.defaultConfig(Config.class, composite, historyType);
 	}
 
 	@Override
@@ -174,6 +179,11 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	@Override
 	public AssociationSetQuery<KnowledgeAssociation> getOutgoingQuery() {
 		return _outgoingQuery;
+	}
+
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		return new LinkTable(getTable());
 	}
 
 }

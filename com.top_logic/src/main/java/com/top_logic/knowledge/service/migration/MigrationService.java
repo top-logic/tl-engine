@@ -5,8 +5,6 @@
  */
 package com.top_logic.knowledge.service.migration;
 
-import static com.top_logic.knowledge.service.migration.MigrationUtil.*;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -53,6 +51,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.equal.EqualityRedirect;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationWriter;
@@ -60,6 +59,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.ResourceDeclaration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -144,6 +144,11 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		String MODULES_NAME = "modules";
 
 		/**
+		 * @see #getMinimumModules()
+		 */
+		String MINIMUM_MODULES = "minimum-modules";
+
+		/**
 		 * Option to configure the encryption algorithm to use.
 		 */
 		String ENCRYPTION_ALGORITHM_PROPERTY = "encryptionAlgorithm";
@@ -170,6 +175,19 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		@Name(MODULES_NAME)
 		@ListBinding(attribute = "name")
 		List<String> getModules();
+
+		/**
+		 * Assume at least the initial version of the given modules is present in the base version
+		 * stored in the database.
+		 * 
+		 * <p>
+		 * The setting is required for upgrading systems from a version before the introduction of
+		 * initial versions.
+		 * </p>
+		 */
+		@Format(CommaSeparatedStrings.class)
+		@Name(MINIMUM_MODULES)
+		List<String> getMinimumModules();
 
 		/**
 		 * The algorithm that is used to encrypt temporary files.
@@ -276,15 +294,39 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 
 		Config config = getConfig();
-		String[] migrationModules = getMigrationModules(config);
-		return MigrationUtil.relevantMigrations(context, connection, migrationModules, config.getAllowDowngrade());
+		List<String> migrationModules = config.getModules();
+		return relevantMigrations(context, connection, migrationModules, config.getAllowDowngrade());
 	}
 
 	/**
-	 * All migration relevant modules listed in the given configuration.
+	 * Determines the correct {@link MigrationConfig}s for the given migration modules.
+	 * 
+	 * @param connection
+	 *        {@link PooledConnection} to connect to database to read current version.
+	 * @param migrationModules
+	 *        All known database modules. The order of the module is the dependency order, i.e. when
+	 *        <code>module1</code> depends on <code>module2</code>, <code>module2</code> appears
+	 *        before <code>module1</code> in the array.
+	 * @param allowDowngrade
+	 *        Whether to ignore missing version descriptors found in the database.
+	 * @return {@link MigrationConfig}s to apply in that order to update to correct database
+	 *         version.
+	 * 
+	 * @throws SQLException
+	 *         when reading versions from database failed for some reason.
 	 */
-	public static String[] getMigrationModules(Config config) {
-		return toModuleNames(config.getModules());
+	private MigrationInfo relevantMigrations(Log log, PooledConnection connection,
+			List<String> migrationModules, boolean allowDowngrade) throws SQLException {
+		Map<String, Version> storedVersions = MigrationUtil.readStoredVersions(connection, migrationModules);
+
+		for (String module : getConfig().getMinimumModules()) {
+			storedVersions.computeIfAbsent(module, MigrationUtil::initialVersion);
+		}
+
+		log.info("Migration modules: " + migrationModules);
+		log.info("Current data version: " + storedVersions.values().stream()
+			.map(v -> v.getModule() + ": " + v.getName()).collect(Collectors.joining(", ")));
+		return MigrationUtil.relevantMigrations(log, migrationModules, allowDowngrade, storedVersions);
 	}
 
 	/**

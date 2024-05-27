@@ -8,6 +8,9 @@
 		<dependency name="migration_23393"
 			module="tl"
 		/>
+		<dependency name="22747-Add_GenericObject_table"
+			module="tl-element"
+		/>
 	</dependencies>
 	<migration>
 		<type-mapping/>

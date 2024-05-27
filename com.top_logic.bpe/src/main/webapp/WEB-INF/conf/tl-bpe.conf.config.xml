@@ -42,7 +42,9 @@
 		</config>
 
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
-			<instance>
+			<instance
+				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tl-model-wysiwyg, tl-layout-formeditor, tl-search-lucene, tl-doc, tl-monitoring, tl-bpe" 
+			>
 				<modules>
 					<module name="tl-bpe" />
 				</modules>

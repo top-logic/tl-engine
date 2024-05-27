@@ -32,7 +32,11 @@ import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.service.openapi.common.OpenAPIConstants;
+import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
+import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
+import com.top_logic.service.openapi.common.authentication.ServerAuthentications;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
+import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.InfoObject;
 import com.top_logic.service.openapi.common.document.MediaTypeObject;
@@ -46,6 +50,7 @@ import com.top_logic.service.openapi.common.document.ReferencingParameterObject;
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
 import com.top_logic.service.openapi.common.document.ResponsesObject;
 import com.top_logic.service.openapi.common.document.SchemaObject;
+import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.document.TagObject;
 import com.top_logic.service.openapi.common.layout.ImportOpenAPIConfiguration;
 import com.top_logic.service.openapi.common.layout.MultiPartBodyTransferType;
@@ -112,6 +117,47 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		addTags(config, serviceConfiguration);
 		addAuthentications(config, serviceConfiguration, warnings);
 		addPaths(config, serviceConfiguration, warnings);
+	}
+
+	/**
+	 * Creates (and adds) {@link AuthenticationConfig}'s based on the given {@link OpenapiDocument}.
+	 * 
+	 * @param openAPI
+	 *        <i>OpenAPI</i> specification.
+	 * @param auth
+	 *        {@link ServerAuthentications} to enhance.
+	 * @param warnings
+	 *        Log to add potential warnings to.
+	 */
+	private void addAuthentications(OpenapiDocument openAPI, ServerAuthentications auth, List<ResKey> warnings) {
+		Map<String, ServerAuthentication> authentications = auth.getAuthentications();
+		ComponentsObject components = openAPI.getComponents();
+		if (components != null) {
+			Map<String, SecuritySchemeObject> securitySchemes = components.getSecuritySchemes();
+			for (SecuritySchemeObject schema : securitySchemes.values()) {
+				ServerAuthentication authentication = createAuthentication(schema, warnings);
+				if (authentication != null) {
+					authentication.setDomain(schema.getSchemaName());
+					authentications.put(authentication.getDomain(), authentication);
+				}
+			}
+		}
+	}
+
+	private ServerAuthentication createAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
+		switch (value.getType()) {
+			case API_KEY:
+				return createAPIKeyAuthentication(value);
+			case HTTP:
+				return createHTTPAuthentication(value, warnings);
+			case OAUTH2:
+				return createOAuth2Authentication(value, warnings);
+			case OPEN_ID_CONNECT:
+				return createOpenIDConnectAuthentication(value);
+			default:
+				throw new UnreachableAssertion("Unexpected SecuritySchemeType: " + value.getType());
+		}
+
 	}
 
 	private void addTags(OpenapiDocument config, OpenApiServer.Config<?> serviceConfiguration) {

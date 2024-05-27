@@ -33,10 +33,5 @@ public interface AuthenticationConfig extends ConfigurationItem {
 	 */
 	void setDomain(String value);
 
-	/**
-	 * Visitor method for {@link AuthenticationConfig}.
-	 */
-	<R, A> R visit(AuthenticationConfigVisitor<R, A> visitor, A arg);
-
 }
 

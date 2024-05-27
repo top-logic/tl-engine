@@ -11,6 +11,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
+import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
+import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 
 /**
  * {@link AuthenticationConfig} to authenticate using an API key.
@@ -24,7 +26,7 @@ import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 })
 @TagName("api-key-authentication")
 @Label("API key")
-public interface APIKeyAuthentication extends AuthenticationConfig {
+public interface APIKeyAuthentication extends ServerAuthentication, ClientAuthentication {
 
 	/** Configuration name for {@link #getPosition()}. */
 	String POSITION = "position";

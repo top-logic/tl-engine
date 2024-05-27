@@ -5,13 +5,8 @@
  */
 package com.top_logic.service.openapi.common.authentication.oauth;
 
-import java.util.function.Predicate;
-
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.form.values.DeclarativeFormOptions;
-import com.top_logic.service.openapi.common.authentication.AllAuthenticationDomains;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 
 /**
@@ -35,25 +30,5 @@ public interface CredentialSecret extends SecretConfiguration {
 	@Label("Access data")
 	ClientSecret getClientSecret();
 
-	/**
-	 * All domains of configured {@link ClientCredentials}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public static class AllClientCredentialsDomains extends AllAuthenticationDomains {
-
-		/**
-		 * Creates a new {@link AllClientCredentialsDomains}.
-		 */
-		public AllClientCredentialsDomains(DeclarativeFormOptions options) {
-			super(options);
-		}
-
-		@Override
-		protected Predicate<? super AuthenticationConfig> filter() {
-			return ClientCredentials.class::isInstance;
-		}
-
-	}
 }
 

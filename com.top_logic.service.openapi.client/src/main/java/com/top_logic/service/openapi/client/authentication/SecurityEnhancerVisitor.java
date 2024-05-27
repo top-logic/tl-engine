@@ -17,7 +17,7 @@ import com.top_logic.service.openapi.client.authentication.oauth.ClientCredentia
 import com.top_logic.service.openapi.client.authentication.oauth.ClientCredentialSecret;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigVisitor;
+import com.top_logic.service.openapi.common.authentication.ClientAuthenticationVisitor;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
@@ -27,12 +27,12 @@ import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentia
 import com.top_logic.util.Resources;
 
 /**
- * {@link AuthenticationConfigVisitor} to get {@link SecurityEnhancer} for the visited
+ * {@link ClientAuthenticationVisitor} to get {@link SecurityEnhancer} for the visited
  * {@link AuthenticationConfig}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SecurityEnhancerVisitor implements AuthenticationConfigVisitor<SecurityEnhancer, ServiceMethodRegistry> {
+public class SecurityEnhancerVisitor implements ClientAuthenticationVisitor<SecurityEnhancer, ServiceMethodRegistry> {
 
 	/** Singleton {@link SecurityEnhancerVisitor} instance. */
 	public static final SecurityEnhancerVisitor INSTANCE = new SecurityEnhancerVisitor();

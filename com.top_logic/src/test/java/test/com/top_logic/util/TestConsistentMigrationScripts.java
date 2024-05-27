@@ -6,25 +6,24 @@
 package test.com.top_logic.util;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Test;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
-import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.DeactivatedTest;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.core.log.Log;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.dsa.DataAccessService;
-import com.top_logic.knowledge.service.migration.MigrationConfig;
 import com.top_logic.knowledge.service.migration.MigrationUtil;
 
 /**
@@ -47,8 +46,8 @@ public class TestConsistentMigrationScripts extends BasicTestCase {
 	}
 
 	public void testConsistentMigrationScripts() throws IOException, ConfigurationException {
-		String[] migrationModules = MigrationUtil.getMigrationModules();
-		if (migrationModules.length == 0) {
+		List<String> migrationModules = MigrationUtil.getMigrationModules();
+		if (migrationModules.isEmpty()) {
 			// No configured modules
 			return;
 		}
@@ -57,17 +56,22 @@ public class TestConsistentMigrationScripts extends BasicTestCase {
 			List<BinaryData> filesForModule =
 				_fileManager.getDataOverlays(MigrationUtil.MIGRATION_BASE_RESOURCE + migrationModule);
 			if (filesForModule.size() > 1) {
-				fail("Multiple migration folder for module '" + migrationModule + "': " + filesForModule);
+				fail("Multiple migration folders for module '" + migrationModule + "': " + filesForModule);
 			}
 		}
 
-		/* Check only top level migration module, because only this is the module in this eclipse
-		 * module. */
-		String module = MigrationUtil.getLocalMigrationModule();
-		Protocol log = new AssertProtocol();
-		List<MigrationConfig> migrations = MigrationUtil.readMigrations(log, module);
-		Collections.shuffle(Arrays.asList(migrations));
-		MigrationUtil.getAllVersions(log, migrations);
+		Protocol log = new BufferingProtocol() {
+			@Override
+			public void localInfo(String message, int verbosityLevel) {
+				if (verbosityLevel < Log.INFO) {
+					// Upgrade to error.
+					super.localError(message);
+				} else {
+					super.localInfo(message, verbosityLevel);
+				}
+			}
+		};
+		MigrationUtil.relevantMigrations(log, migrationModules, false, Collections.emptyMap());
 		log.checkErrors();
 	}
 

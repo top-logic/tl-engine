@@ -7,20 +7,26 @@
 		module="tl-demo"
 	/>
 	<dependencies>
-		<dependency name="Ticket_26872_id_column_to_sort_config"
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
 			module="tl"
 		/>
-		<dependency name="Ticket_26554_Make_WebFolder_references_compositions"
+		<dependency name="Ticket_25835_Rename_RenderInputBeforeLabelAnnotation"
 			module="tl-element"
 		/>
-		<dependency name="Ticket_26959_drop_api_generalization"
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
 			module="tl-model-search"
 		/>
-		<dependency name="Ticket_26398_remove_table_interfaces"
+		<dependency name="Ticket_26970_Update_stored_table_definition"
 			module="tl-contact"
 		/>
-		<dependency name="Ticket_25881_Removed_legacy_types"
+		<dependency name="Ticket_26970_Update_stored_table_definition"
 			module="tl-mail"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_21471_Adjust_model_overrides"
+			module="tl-doc"
 		/>
 		<dependency name="Ticket_26660_Remove_dependency_to_tl_remote"
 			module="tl-demo"

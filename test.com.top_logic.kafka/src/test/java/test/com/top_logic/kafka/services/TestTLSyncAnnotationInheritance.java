@@ -9,7 +9,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import com.top_logic.kafka.knowledge.service.TLSynced;
+import com.top_logic.kafka.sync.knowledge.service.TLSynced;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;

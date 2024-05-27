@@ -19,7 +19,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.kafka.knowledge.service.KafkaExportImportConfiguration;
+import com.top_logic.kafka.sync.knowledge.service.KafkaExportImportConfiguration;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.util.model.ModelService;

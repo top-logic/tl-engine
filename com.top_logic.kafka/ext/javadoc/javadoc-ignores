@@ -1,8 +1,4 @@
 com.top_logic.kafka.interceptor.TopicSensorAndViewerInterceptor.java: Invalid camel case word 'TopicSensorAndViewerInterceptor', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.kafka.knowledge.service.AbstractModelBasedKafkaConfiguration.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.knowledge.service.AbstractModelBasedKafkaConfiguration
-com.top_logic.kafka.knowledge.service.KafkaExportImportConfiguration.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.knowledge.service.KafkaExportImportConfiguration.Config
-com.top_logic.kafka.knowledge.service.exporter.ModelBasedExportConfiguration.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.knowledge.service.exporter.ModelBasedExportConfiguration
-com.top_logic.kafka.knowledge.service.importer.KafkaImportConfiguration.java: Invalid camel case word 'tType', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.kafka.layout.kafka.KafkaMessageDetailColumnRenderer.java: Missing documentation: com.top_logic.kafka.layout.kafka.KafkaMessageDetailColumnRenderer.LongValueFactory
 com.top_logic.kafka.serialization.StructBinaryDeserializer.java: Missing documentation: com.top_logic.kafka.serialization.StructBinaryDeserializer.getSchema
 com.top_logic.kafka.serialization.StructBinaryDeserializer.java: Missing documentation: com.top_logic.kafka.serialization.StructBinaryDeserializer.isSet

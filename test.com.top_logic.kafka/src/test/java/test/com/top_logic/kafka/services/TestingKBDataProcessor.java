@@ -16,9 +16,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.kafka.knowledge.service.TLSyncRecord;
-import com.top_logic.kafka.knowledge.service.importer.KBDataProcessor;
-import com.top_logic.kafka.knowledge.service.importer.KBDataWriter;
+import com.top_logic.kafka.sync.knowledge.service.TLSyncRecord;
+import com.top_logic.kafka.sync.knowledge.service.importer.KBDataProcessor;
+import com.top_logic.kafka.sync.knowledge.service.importer.KBDataWriter;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.EventWriter;
 

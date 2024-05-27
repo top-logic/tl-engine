@@ -28,7 +28,7 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
- * 
+ * {@link MigrationProcessor} swapping link directions in an association table.
  */
 public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertLinkTableProcessor.Config<?>>
 		implements MigrationProcessor {

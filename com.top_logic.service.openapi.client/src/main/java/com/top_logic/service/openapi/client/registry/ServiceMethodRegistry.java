@@ -73,8 +73,8 @@ import com.top_logic.service.openapi.client.registry.impl.response.DispatchingRe
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseChecker;
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandler;
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandlerFactory;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigs;
+import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
+import com.top_logic.service.openapi.common.authentication.ClientAuthentications;
 
 /**
  * Service allowing to configure client end-points for external APIs that can be called through
@@ -95,7 +95,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 	 * Configuration options for {@link ServiceMethodRegistry}.
 	 */
 	public interface Config<I extends ServiceMethodRegistry>
-			extends ConfiguredManagedClass.Config<I>, AuthenticationConfigs {
+			extends ConfiguredManagedClass.Config<I>, ClientAuthentications {
 
 		/** @see #getMethodDefinitions() */
 		String METHOD_DEFINITIONS = "method-definitions";
@@ -114,11 +114,11 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		Map<String, MethodDefinition> getMethodDefinitions();
 
 		/**
-		 * {@link AuthenticationConfig}s that can be used to authenticate requests in
+		 * {@link ClientAuthentication}s that can be used to authenticate requests in
 		 * {@link #getMethodDefinitions()}.
 		 */
 		@Override
-		Map<String, AuthenticationConfig> getAuthentications();
+		Map<String, ClientAuthentication> getAuthentications();
 
 		/**
 		 * Configuration of the secrets that can be used to deliver to the Open API server.
@@ -435,7 +435,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 	private SecurityEnhancer securityEnhancer(MethodDefinition method) {
 		SecurityEnhancer enhancer = NoSecurityEnhancement.INSTANCE;
 		for (String authenticationName : method.getAuthentication()) {
-			AuthenticationConfig authentication = getConfig().getAuthentications().get(authenticationName);
+			ClientAuthentication authentication = getConfig().getAuthentications().get(authenticationName);
 			enhancer = enhancer.andThen(authentication.visit(SecurityEnhancerVisitor.INSTANCE, this));
 		}
 		return enhancer;

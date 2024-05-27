@@ -12,11 +12,11 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * Configurations of authentications.
+ * Configurations of client authentications.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface AuthenticationConfigs extends ConfigurationItem {
+public interface ClientAuthentications extends ConfigurationItem {
 
 	/** @see #getAuthentications() */
 	String AUTHENTICATIONS = "authentications";
@@ -24,9 +24,9 @@ public interface AuthenticationConfigs extends ConfigurationItem {
 	/**
 	 * All available authentications.
 	 */
-	@Key(AuthenticationConfig.DOMAIN)
+	@Key(ClientAuthentication.DOMAIN)
 	@Name(AUTHENTICATIONS)
-	Map<String, AuthenticationConfig> getAuthentications();
+	Map<String, ClientAuthentication> getAuthentications();
 
 }
 

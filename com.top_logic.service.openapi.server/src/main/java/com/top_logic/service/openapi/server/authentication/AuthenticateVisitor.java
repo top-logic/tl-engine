@@ -13,8 +13,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigVisitor;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
+import com.top_logic.service.openapi.common.authentication.ServerAuthenticationVisitor;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.common.authentication.http.HTTPSecret;
@@ -33,7 +33,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AuthenticateVisitor implements AuthenticationConfigVisitor<Authenticator, OpenApiServer> {
+public class AuthenticateVisitor implements ServerAuthenticationVisitor<Authenticator, OpenApiServer> {
 
 	/** Singleton {@link AuthenticateVisitor} instance. */
 	public static final AuthenticateVisitor INSTANCE = new AuthenticateVisitor();

@@ -10,11 +10,11 @@ import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthe
 import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 
 /**
- * Visitor for {@link AuthenticationConfig}.
+ * Visitor for {@link ClientAuthentication}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface AuthenticationConfigVisitor<R, A> {
+public interface ClientAuthenticationVisitor<R, A> {
 
 	/**
 	 * Visit case for {@link APIKeyAuthentication}.

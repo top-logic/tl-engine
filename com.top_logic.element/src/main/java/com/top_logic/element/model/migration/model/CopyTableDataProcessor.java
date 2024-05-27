@@ -28,7 +28,7 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
- * 
+ * {@link MigrationProcessor} copying data from one table to another.
  */
 public class CopyTableDataProcessor extends AbstractConfiguredInstance<CopyTableDataProcessor.Config<?>>
 		implements MigrationProcessor {

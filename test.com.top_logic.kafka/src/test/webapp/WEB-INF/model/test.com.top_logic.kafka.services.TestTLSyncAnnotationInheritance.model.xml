@@ -18,8 +18,8 @@
 							type="TestTLSyncAnnotationInheritanceEnum"
 						>
 							<annotations>
-								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
-								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<exported value-mapping="com.top_logic.kafka.sync.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<imported value-mapping="com.top_logic.kafka.sync.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
 							</annotations>
 						</reference>
 						<reference name="inlineReferenceEnum"
@@ -27,8 +27,8 @@
 							type="TestTLSyncAnnotationInheritanceEnum"
 						>
 							<annotations>
-								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
-								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<exported value-mapping="com.top_logic.kafka.sync.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<imported value-mapping="com.top_logic.kafka.sync.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
 								<storage-algorithm>
 									<foreign-key-storage
 										storage-attribute="inlineReferenceEnum"
@@ -42,8 +42,8 @@
 							type="TestTLSyncAnnotationInheritanceEnum"
 						>
 							<annotations>
-								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
-								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<exported value-mapping="com.top_logic.kafka.sync.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<imported value-mapping="com.top_logic.kafka.sync.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
 								<storage-algorithm>
 									<set-storage table="hasKafkaTestEnumAttValue"/>
 								</storage-algorithm>

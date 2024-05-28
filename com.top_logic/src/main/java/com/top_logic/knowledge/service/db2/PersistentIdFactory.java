@@ -63,7 +63,8 @@ public class PersistentIdFactory implements IdFactory {
 				long now = System.currentTimeMillis();
 
 				// The number of ID chunks consumed in the next minute.
-				int chunksAllocated = (int) Math.min(1024, Math.max(1, (60 * 1000 * _lastInc) / (now - _lastIncTime)));
+				int chunksAllocated =
+					(int) Math.min(1024, Math.max(1, (60 * 1000 * _lastInc) / Math.max(1, now - _lastIncTime)));
 				if (chunksAllocated > 1) {
 					// Limit increase of allocation speed.
 					if (chunksAllocated > _lastInc * 2) {

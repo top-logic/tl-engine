@@ -41,22 +41,18 @@
 
 <h3>Transient objects</h3>
 
-<pre>
-	<code>{
+<pre><code>{
     object = new(`my.module:MyClass`, transient: true);
     $object.transient();
-}</code>
-</pre>
+}</code></pre>
 
 <p><strong>Output:</strong> <code class="hljs inlineCode">true</code></p>
 
 <h3>Persistent objects</h3>
 
-<pre>
-	<code>{
+<pre><code>{
     object = new(`my.module:MyClass`);
     $object.transient();
-}</code>
-</pre>
+}</code></pre>
 
 <p><strong>Output:</strong> <code class="hljs inlineCode">false</code></p>

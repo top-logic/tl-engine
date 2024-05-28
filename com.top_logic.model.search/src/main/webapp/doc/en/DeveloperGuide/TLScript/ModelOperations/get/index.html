@@ -44,12 +44,11 @@ $object.get($part-expr)</code>
 <p>The value of the attribute of the given object.</p>
 <h2>Examples</h2>
 <h3>Single read of an attribute</h3>
-<pre>	<code>{
+<pre><code>{
    element = new(`my.module:MyType`);
    $element.set(`my.module:MyType#myAttr`, "test");
    $element.get(`my.module:MyType#myAttr`);
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> test</p>
 <h3>Searching for specific objects</h3>
 <pre>	<code>all(`my.module:MyType`).filter(element -&gt; $element.get(`my.module:MyType#myAttr`).isStringEqual("test"))</code>

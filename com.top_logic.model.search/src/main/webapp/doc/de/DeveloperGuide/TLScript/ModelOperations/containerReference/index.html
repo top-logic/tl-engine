@@ -28,13 +28,12 @@
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
 <p>Das Referenz-Attribut im Container von <code class="hljs inlineCode">object</code>, in dem <code class="hljs inlineCode">object</code> gespeichert ist.</p>
 <h2>Beispiele</h2>
-<pre>	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    b = new(`my.module:MyClass`);
    $a.add(`my.module:MyClass#children`, $b);
    $b.containerReference();
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Das Attribut <code class="hljs inlineCode">`my.module:MyClass#children`</code>.</p>
 <p><code class="hljs inlineCode">b</code> wird hier in das Referenzattribut <code class="hljs inlineCode">children</code> von <span style="color:#695d69"><span style="font-family:Courier New,Courier,monospace">a</span></span> eingetragen. <code class="hljs inlineCode">a</code> ist der Container von <code class="hljs inlineCode">b</code> und <code class="hljs inlineCode">`my.module:MyClass#children`</code> ist das Referenz-Attribut im Container <code class="hljs inlineCode">a</code>, in dem <code class="hljs inlineCode">b</code> gespeichert ist.</p>
 <h3></h3>

@@ -6,6 +6,7 @@
 package com.top_logic.base.accesscontrol;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +17,10 @@ import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SessionContext;
+import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.DispatchException;
 import com.top_logic.util.Resources;
@@ -67,6 +71,9 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	public static class BreakCheckRequestException extends RuntimeException {
 		/* Nothing needed */
 	}
+
+	private static final TypedAnnotatable.Property<UserTokens> TOKENS =
+		TypedAnnotatable.property(UserTokens.class, "userTokens");
 
 	private static final String XML_CONFIG_SECTION_NAME = "ExternalAuthentication";
 
@@ -215,7 +222,8 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	 *         If an {@link Exception} is thrown, it is caught, annotated with further information
 	 *         and rethrown wrapped in a {@link LoginFailedException}.
 	 */
-	private void loginUser(Person person, HttpServletRequest request, HttpServletResponse response) throws InMaintenanceModeException {
+	protected void loginUser(Person person, HttpServletRequest request, HttpServletResponse response)
+			throws InMaintenanceModeException {
 		try {
 			Login.getInstance().loginFromExternalAuth(request, response, person);
 			String message = "The user with the loginName '" + getLoginName(person) + "' logged in successfully.";
@@ -238,6 +246,31 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	 */
 	protected static String getLoginName(Person person) {
 		return person.getName();
+	}
+
+	/**
+	 * Retrieves the {@link UserTokens} for the current session if the user has logged in via OIDC.
+	 * 
+	 * @return May be <code>null</code>, if the user has not logged in via OIDC.
+	 */
+	public static UserTokens userTokens() {
+		SessionContext session = ThreadContextManager.getSession();
+		if (session == null) {
+			return null;
+		}
+		return session.get(TOKENS);
+	}
+
+	/**
+	 * Installs the {@link UserTokens} for the current session.
+	 */
+	public void installUserTokens(UserTokens tokens) {
+		SessionContext session = ThreadContextManager.getSession();
+		if (session == null) {
+			throw new IllegalStateException("No session available.");
+		}
+		session.set(TOKENS, Objects.requireNonNull(tokens));
+
 	}
 
 }

@@ -151,10 +151,22 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				return createAPIKeyAuthentication(value);
 			case HTTP:
 				return createHTTPAuthentication(value, warnings);
-			case OAUTH2:
-				return createOAuth2Authentication(ServerCredentials.class, value, warnings);
-			case OPEN_ID_CONNECT:
-				return createOpenIDConnectAuthentication(ServerCredentials.class, value);
+			case OAUTH2: {
+				ServerCredentials authentication = createOAuth2Authentication(ServerCredentials.class, value, warnings);
+				if (value.isInUserContext()) {
+					authentication.setInUserContext(true);
+					authentication.setUserNameField(value.getUserFieldName());
+				}
+				return authentication;
+			}
+			case OPEN_ID_CONNECT: {
+				ServerCredentials authentication = createOpenIDConnectAuthentication(ServerCredentials.class, value);
+				if (value.isInUserContext()) {
+					authentication.setInUserContext(true);
+					authentication.setUserNameField(value.getUserFieldName());
+				}
+				return authentication;
+			}
 			default:
 				throw new UnreachableAssertion("Unexpected SecuritySchemeType: " + value.getType());
 		}

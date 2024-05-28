@@ -146,7 +146,9 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.AUTHENTICATIONS }) })
 	@Nullable
 	@Constraint(value = ServerSecretAvailable.class, asWarning = true, args = {
-		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.SECRETS }) })
+		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.SECRETS }),
+		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.AUTHENTICATIONS })
+	})
 	@Format(CommaSeparatedStrings.class)
 	List<String> getAuthentication();
 
@@ -418,9 +420,16 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 		}
 
 		@Override
+		public boolean isChecked(int index) {
+			return index == 0;
+		}
+
+		@Override
 		protected void checkValue(PropertyModel<List<String>> authentication,
-				PropertyModel<List<ServerSecret>> serverSecrets) {
-			checkSecretAvailable(authentication, serverSecrets.getValue());
+				PropertyModel<List<ServerSecret>> serverSecrets,
+				PropertyModel<Map<String, ? extends AuthenticationConfig>> availableAuthentications) {
+			checkSecretAvailable(authentication, CollectionUtil.nonNull(serverSecrets.getValue()),
+				CollectionUtil.nonNull(availableAuthentications.getValue()));
 		}
 
 	}

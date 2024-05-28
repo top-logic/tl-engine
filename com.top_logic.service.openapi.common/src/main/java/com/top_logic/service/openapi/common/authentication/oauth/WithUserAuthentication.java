@@ -5,15 +5,19 @@
  */
 package com.top_logic.service.openapi.common.authentication.oauth;
 
+import com.top_logic.basic.config.annotation.Derived;
+import com.top_logic.basic.func.misc.AlwaysFalse;
 import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
 
 /**
- * Use the personal access token of the user currently logged in via OIDC for authorization.
+ * Uses the personal access token of the user currently logged in via OIDC for authorization.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface WithUserAuthentication extends ClientAuthentication {
 
-	// Marker interface.
+	@Override
+	@Derived(fun = AlwaysFalse.class, args = {})
+	boolean isSeparateSecretNeeded();
 
 }

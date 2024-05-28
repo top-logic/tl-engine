@@ -36,10 +36,9 @@
 <p><span style="color:#3498db"><strong>Type:</strong></span> Set</p>
 <p>A set of objects referencing <code class="hljs inlineCode">object</code> in <code class="hljs inlineCode">attr</code>.</p>
 <h2>Examples</h2>
-<pre>	<code>{
+<pre><code>{
    object = all(`my.module:MyType`).filter(element -&gt; $element.get(`my.module:MyType#myAttr`).isStringEqual("test"));
    $object.referers(`my.module:MyType#myAttr`);
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> A list of all objects that reference the object named "test" in the <code class="hljs inlineCode">myAttr</code> attribute.</p>
 <h3></h3>

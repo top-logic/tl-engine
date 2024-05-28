@@ -36,17 +36,15 @@
 <p>Ob <code class="hljs inlineCode">object</code> Teil der Klasse <code class="hljs inlineCode">class</code> oder einer ihrer Unterklassen ist.</p>
 <h2>Beispiele</h2>
 <h3>Genaue Überprüfung</h3>
-<pre>	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    $a.instanceOf(`my.module:MyClass`);
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">true</code></p>
 <h3>Prüfung auf Subklassen</h3>
-<pre>	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    $a.instanceOf(`my.module:MySuperClass`);
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">true</code></p>
 <p>​<code class="hljs inlineCode">a</code> ist ein Untertyp von <code class="hljs inlineCode">MySuperClass</code>, daher ergbt die Abfrage <code class="hljs inlineCode">true</code>.</p>

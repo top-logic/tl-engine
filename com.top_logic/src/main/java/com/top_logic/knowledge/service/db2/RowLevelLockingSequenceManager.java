@@ -76,7 +76,8 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 	}
 
 	@Override
-	public long nextSequenceNumber(DBHelper sqlDialect, Connection aContext, int retryCount, String sequence) throws SQLException {
+	public long nextSequenceNumber(DBHelper sqlDialect, Connection aContext, int retryCount, String sequence, int inc)
+			throws SQLException {
 		final String LOCK_SEQUENCE_VALUE_STATEMENT =
 			"SELECT "
 				// Note: Must select the primary key to make the statement updatable.
@@ -92,17 +93,17 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 				// IGNORE FindBugs(SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING):
 				// Dynamic SQL construction is necessary for DBMS abstraction. No user-input is
 				// passed to the statement source.
-					try (PreparedStatement lockStmt = aContext.prepareStatement(
+				try (PreparedStatement lockStmt = aContext.prepareStatement(
 						LOCK_SEQUENCE_VALUE_STATEMENT, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)) {
 					lockStmt.setString(1, sequence);
 					
-						try (ResultSet result = lockStmt.executeQuery()) {
+					try (ResultSet result = lockStmt.executeQuery()) {
 						if (result.next()) {
-							return update(result);
+							return update(result, inc);
 						}
 					}
 				} catch (SQLException ex) {
-						sqlDialect.rollback(aContext, sp);
+					sqlDialect.rollback(aContext, sp);
 					// Assume "Deadlock detected" failure.
 
 					// In certain RDBMS (including MySQL), the lookup might deadlock with a pending
@@ -125,8 +126,8 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 				{
 					// The sequence entry may not yet have been created. Try to create the sequence.
 					try {
-							final String newSequenceSQLStatement =
-								"INSERT INTO " + sqlDialect.tableRef(SEQUENCE_TYPE.getDBName()) + " VALUES (?, ?)";
+						final String newSequenceSQLStatement =
+							"INSERT INTO " + sqlDialect.tableRef(SEQUENCE_TYPE.getDBName()) + " VALUES (?, ?)";
 						// IGNORE FindBugs(SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING):
 						// Dynamic SQL construction is necessary for DBMS abstraction. No user-input is
 						// passed to the statement source.
@@ -167,11 +168,11 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 		}
 	}
 	
-	private long update(ResultSet resultSet) throws SQLException {
+	private long update(ResultSet resultSet, int inc) throws SQLException {
 		long currentValue = resultSet.getLong(2);
 
 		// Has sequence lock.
-		long result = currentValue + 1;
+		long result = currentValue + inc;
 
 		// Reserve updated number.
 		//
@@ -293,21 +294,15 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 	 *         In case of an internal database failure.
 	 */
 	public static boolean checkTable(PooledConnection connection) throws SQLException {
-		Statement stmt = connection.createStatement();
-		try {
+		try (Statement stmt = connection.createStatement()) {
 			final String checkTableSQLStatement =
 				"SELECT * FROM " + connection.getSQLDialect().tableRef(SEQUENCE_TYPE.getDBName()) + " WHERE 1=0";
 
-			ResultSet result = stmt.executeQuery(checkTableSQLStatement);
-			try {
+			try (ResultSet result = stmt.executeQuery(checkTableSQLStatement)) {
 				return true;
-			} finally {
-				result.close();
 			}
 		} catch (SQLException ex) {
 			return false;
-		} finally {
-			stmt.close();
 		}
 	}
 
@@ -334,15 +329,12 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 				+ "WHERE "
 				+ sqlDialect.columnRef(SEQUENCE_ID_ATTR.getDBName()) + "=?";
 
-		PreparedStatement setStmt = connection.prepareStatement(resetSequenceSQLStatement);
-		try {
+		try (PreparedStatement setStmt = connection.prepareStatement(resetSequenceSQLStatement)) {
 			setStmt.setLong(1, newValue);
 			setStmt.setString(2, sequence);
 			
 			int affectedRows = setStmt.executeUpdate();
 			return affectedRows == 1;
-		} finally {
-			setStmt.close();
 		}
 	}
 
@@ -365,14 +357,11 @@ public class RowLevelLockingSequenceManager implements SequenceManager {
 				+ "WHERE "
 				+ sqlDialect.columnRef(SEQUENCE_ID_ATTR.getDBName()) + "=?";
 
-		PreparedStatement setStmt = connection.prepareStatement(dropSequenceSQLStatement);
-		try {
+		try (PreparedStatement setStmt = connection.prepareStatement(dropSequenceSQLStatement)) {
 			setStmt.setString(1, sequence);
 
 			int affectedRows = setStmt.executeUpdate();
 			return affectedRows == 1;
-		} finally {
-			setStmt.close();
 		}
 	}
 

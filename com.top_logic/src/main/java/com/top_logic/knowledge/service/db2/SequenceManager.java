@@ -58,7 +58,29 @@ public interface SequenceManager {
 	 * 
 	 * @return The next consecutive number in the given sequence.
 	 */
-	long nextSequenceNumber(DBHelper sqlDialect, Connection aContext, int retryCount, String sequence) throws SQLException;
+	default long nextSequenceNumber(DBHelper sqlDialect, Connection aContext, int retryCount, String sequence)
+			throws SQLException {
+		return nextSequenceNumber(sqlDialect, aContext, retryCount, sequence, 1);
+	}
+
+	/**
+	 * Creates the next number by incrementing the given sequence with the given increment.
+	 * 
+	 * @param sqlDialect
+	 *        the DBMS specific dialect.
+	 * @param aContext
+	 *        The DB context to use.
+	 * @param retryCount
+	 *        The number of retries in case of non-final DB failures.
+	 * @param sequence
+	 *        the sequence ID for which the next number is requested.
+	 * @param inc
+	 *        The increment to add to the sequence.
+	 * 
+	 * @return The next consecutive number in the given sequence.
+	 */
+	long nextSequenceNumber(DBHelper sqlDialect, Connection aContext, int retryCount, String sequence, int inc)
+			throws SQLException;
 
 	/**
 	 * Check whether any number has been created for this sequence before.

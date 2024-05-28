@@ -152,7 +152,9 @@ public interface MethodDefinition extends ParameterContext, NamedConfigMandatory
 		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.AUTHENTICATIONS }) })
 	@Nullable
 	@Constraint(value = ClientSecretAvailable.class, asWarning = true, args = {
-		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.SECRETS }) })
+		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.SECRETS }),
+		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.AUTHENTICATIONS })
+	})
 	@Format(CommaSeparatedStrings.class)
 	List<String> getAuthentication();
 
@@ -218,9 +220,17 @@ public interface MethodDefinition extends ParameterContext, NamedConfigMandatory
 		}
 
 		@Override
+		public boolean isChecked(int index) {
+			return index == 0;
+		}
+
+		@Override
 		protected void checkValue(PropertyModel<List<String>> authentication,
-				PropertyModel<Map<String, ClientSecret>> clientSecrets) {
-			checkSecretAvailable(authentication, CollectionUtil.nonNull(clientSecrets.getValue()).values());
+				PropertyModel<Map<String, ClientSecret>> clientSecrets,
+				PropertyModel<Map<String, ? extends AuthenticationConfig>> availableAuthentications
+		) {
+			checkSecretAvailable(authentication, CollectionUtil.nonNull(clientSecrets.getValue()).values(),
+				CollectionUtil.nonNull(availableAuthentications.getValue()));
 		}
 
 	}

@@ -19,8 +19,10 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.service.openapi.server.script.Response;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -45,7 +47,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	 *        The path, this {@link ServiceMethod} is registered on.
 	 * @param parameters
 	 *        The list of parameter names to take values from
-	 *        {@link #handleRequest(Map, HttpServletResponse) arguments map}. The argument value are
+	 *        {@link #handleRequest(Person, Map, HttpServletResponse) arguments map}. The argument value are
 	 *        passed to the script function in the given order.
 	 * @param transaction
 	 *        Whether to execute the given script in a transaction context.
@@ -60,11 +62,15 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	}
 
 	@Override
-	public void handleRequest(Map<String, Object> arguments, HttpServletResponse resp)
+	public void handleRequest(Person account, Map<String, Object> arguments, HttpServletResponse resp)
 			throws IOException, ComputationFailure {
-		Object result =
-			ThreadContextManager.inSystemInteraction(ServiceMethodBuilderByExpression.class,
+		Object result;
+		if (account == null) {
+			result = ThreadContextManager.inSystemInteraction(ServiceMethodBuilderByExpression.class,
 				() -> inInteraction(arguments));
+		} else {
+			result = TLContextManager.inPersonContext(account, () -> inInteraction(arguments));
+		}
 
 		String contentType;
 		String charset;

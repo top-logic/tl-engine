@@ -59,6 +59,7 @@ import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
 import com.top_logic.service.openapi.common.authentication.ClientAuthentications;
+import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
@@ -158,9 +159,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 			case HTTP:
 				return createHTTPAuthentication(value, warnings);
 			case OAUTH2:
-				return createOAuth2Authentication(value, warnings);
+				return createOAuth2Authentication(ClientCredentials.class, value, warnings);
 			case OPEN_ID_CONNECT:
-				return createOpenIDConnectAuthentication(value);
+				return createOpenIDConnectAuthentication(ClientCredentials.class, value);
 			default:
 				throw new UnreachableAssertion("Unexpected SecuritySchemeType: " + value.getType());
 		}

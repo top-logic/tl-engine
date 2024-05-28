@@ -59,9 +59,9 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
+import com.top_logic.service.openapi.common.authentication.oauth.TokenBasedAuthentication;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.OAuthFlow;
@@ -278,12 +278,13 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
 	 * {@link SecuritySchemeType#OPEN_ID_CONNECT}.
 	 */
-	protected ClientCredentials createOpenIDConnectAuthentication(SecuritySchemeObject value) {
+	protected <T extends TokenBasedAuthentication> T createOpenIDConnectAuthentication(Class<T> configType,
+			SecuritySchemeObject value) {
 		URL connectURL = value.getOpenIdConnectUrl();
 		OpenIDURIProvider.Config openIdURIProvider = newConfigForImplementation(OpenIDURIProvider.class);
 		openIdURIProvider.setOpenIDIssuer(connectURL);
 
-		ClientCredentials clientCredentials = TypedConfiguration.newConfigItem(ClientCredentials.class);
+		T clientCredentials = TypedConfiguration.newConfigItem(configType);
 		clientCredentials.setURIProvider(openIdURIProvider);
 		return clientCredentials;
 	}
@@ -292,14 +293,15 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
 	 * {@link SecuritySchemeType#OAUTH2}.
 	 */
-	protected ClientCredentials createOAuth2Authentication(SecuritySchemeObject value, List<ResKey> warnings) {
+	protected <T extends TokenBasedAuthentication> T createOAuth2Authentication(Class<T> configType,
+			SecuritySchemeObject value, List<ResKey> warnings) {
 		Map<OAuthFlow, OAuthFlowObject> flows = value.getFlows();
 		OAuthFlowObject credentialFlow = flows.get(OAuthFlow.CLIENT_CREDENTIALS);
 		if (credentialFlow == null) {
 			warnings.add(I18NConstants.MISSING_CLIENT_CREDENTIALS_FLOW__SCHEMA.fill(value.getSchemaName()));
 			return null;
 		}
-		ClientCredentials clientCredentials = TypedConfiguration.newConfigItem(ClientCredentials.class);
+		T clientCredentials = TypedConfiguration.newConfigItem(configType);
 		DefaultURIProvider.Config defaultURIProvider = newConfigForImplementation(DefaultURIProvider.class);
 		try {
 			defaultURIProvider.setTokenURL(new URL(credentialFlow.getTokenUrl()));

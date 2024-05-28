@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.OpenApiServer;
 
 /**
@@ -24,11 +25,14 @@ public interface ServiceMethod {
 	/**
 	 * Executes the operation and sends the result back to the given {@link HttpServletResponse}.
 	 * 
+	 * @param account
+	 *        The user in whose context the method must be executed. May be <code>null</code>. In
+	 *        this case the operation is executed in system context.
 	 * @param arguments
 	 *        The arguments to this operation.
 	 * @param resp
 	 *        The response to send the results to.
 	 */
-	void handleRequest(Map<String, Object> arguments, HttpServletResponse resp) throws IOException, ComputationFailure;
+	void handleRequest(Person account, Map<String, Object> arguments, HttpServletResponse resp) throws IOException, ComputationFailure;
 
 }

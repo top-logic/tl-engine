@@ -180,4 +180,15 @@ public class AuthorizationUtil {
 		headerValue.append("\"");
 	}
 
+	/**
+	 * Creates the value for the {@link AuthorizationUtil#AUTHORIZATION_HEADER_NAME} from the given
+	 * bearer token.
+	 */
+	public static String toBearerAuthenticationHeader(String bearerToken) {
+		return new StringBuilder()
+			.append(BEARER_HEADER_PREFIX)
+			.append(bearerToken)
+			.toString();
+	}
+
 }

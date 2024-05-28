@@ -1562,7 +1562,7 @@
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 												<values>
 													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-														value="com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials"
+														value="com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials"
 													/>
 												</values>
 											</value>

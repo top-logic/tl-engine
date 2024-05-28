@@ -29,6 +29,7 @@ import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
@@ -168,6 +169,10 @@ public class Util {
 
 	private long _nextId = 0;
 
+	private int _lastInc = 1;
+
+	private long _lastIncTime;
+
 	private long _revCreate = -1;
 
 	private boolean _branchSupport;
@@ -237,11 +242,28 @@ public class Util {
 	 */
 	public TLID newID(PooledConnection con) throws SQLException {
 		if (_nextId == _stopId) {
+			long now = System.currentTimeMillis();
+
+			// The number of ID chunks consumed in the next minute.
+			int chunksAllocated =
+				(int) Math.min(1024, Math.max(1, (60 * 1000 * _lastInc) / Math.max(1, now - _lastIncTime)));
+			if (chunksAllocated > 1) {
+				// Limit increase of allocation speed.
+				if (chunksAllocated > _lastInc * 2) {
+					chunksAllocated = _lastInc * 2;
+				}
+
+				Logger.info("Allocating " + chunksAllocated + " identifier chunks at once due to high demand.",
+					Util.class);
+			}
+			_lastInc = chunksAllocated;
+			_lastIncTime = now;
+
 			DBHelper sqlDialect = con.getSQLDialect();
 			long nextChunk = new RowLevelLockingSequenceManager().nextSequenceNumber(sqlDialect, con,
-				sqlDialect.retryCount(), DBKnowledgeBase.ID_SEQ);
+				sqlDialect.retryCount(), DBKnowledgeBase.ID_SEQ, chunksAllocated);
 			_stopId = 1 + nextChunk * PersistentIdFactory.CHUNK_SIZE;
-			_nextId = _stopId - PersistentIdFactory.CHUNK_SIZE;
+			_nextId = _stopId - PersistentIdFactory.CHUNK_SIZE * chunksAllocated;
 		}
 		return LongID.valueOf(_nextId++);
 	}

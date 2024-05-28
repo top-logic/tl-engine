@@ -56,9 +56,9 @@ import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 import com.top_logic.service.openapi.common.authentication.ServerAuthenticationVisitor;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
+import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenURIProvider;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
@@ -663,7 +663,7 @@ public class OpenAPIExporter {
 		}
 
 		@Override
-		public SecuritySchemeObject visitClientCredentials(ClientCredentials config, String schemaName) {
+		public SecuritySchemeObject visitServerCredentials(ServerCredentials config, String schemaName) {
 			SecuritySchemeObject securityScheme = newSecuritySchema(schemaName);
 			PolymorphicConfiguration<? extends TokenURIProvider> uriProvider = config.getURIProvider();
 			if (uriProvider instanceof OpenIDURIProvider.Config) {

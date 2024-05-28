@@ -7,7 +7,7 @@ package com.top_logic.service.openapi.common.authentication;
 
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
+import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
 
 /**
  * Visitor for {@link ServerAuthentication}.
@@ -22,9 +22,9 @@ public interface ServerAuthenticationVisitor<R, A> {
 	R visitAPIKeyAuthentication(APIKeyAuthentication config, A arg);
 
 	/**
-	 * Visit case for {@link ClientCredentials}.
+	 * Visit case for {@link ServerCredentials}.
 	 */
-	R visitClientCredentials(ClientCredentials config, A arg);
+	R visitServerCredentials(ServerCredentials config, A arg);
 
 	/**
 	 * Visit case for {@link BasicAuthentication}.

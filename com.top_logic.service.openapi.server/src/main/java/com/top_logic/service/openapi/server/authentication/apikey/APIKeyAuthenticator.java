@@ -13,6 +13,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
@@ -51,13 +52,14 @@ public class APIKeyAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public void authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure, IOException {
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
+			throws AuthenticationFailure, IOException {
 		switch (_location) {
 			case COOKIE:
 				for (Cookie cookie: req.getCookies()) {
 					if (_parameterName.equals(cookie.getName())) {
 						checkKey(cookie.getValue());
-						return;
+						return null;
 					}
 				}
 				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_NO_COOKIE__PARAMETER.fill(_parameterName));
@@ -81,6 +83,7 @@ public class APIKeyAuthenticator implements Authenticator {
 				throw new RuntimeException("Unkown location: " + _location);
 
 		}
+		return null;
 	}
 
 	private void checkKey(String headerValue) throws AuthenticationFailure {

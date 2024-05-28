@@ -7,6 +7,7 @@ package com.top_logic.knowledge.service.db2;
 
 import java.sql.SQLException;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
@@ -35,6 +36,10 @@ public class PersistentIdFactory implements IdFactory {
 
 	private String _sequence;
 
+	private int _lastInc = 1;
+
+	private long _lastIncTime;
+
 	/**
 	 * Creates a {@link PersistentIdFactory}.
 	 * 
@@ -55,12 +60,28 @@ public class PersistentIdFactory implements IdFactory {
 	public long createId() {
 		synchronized (_idLock) {
 			if (_nextId == _stopId) {
+				long now = System.currentTimeMillis();
+
+				// The number of ID chunks consumed in the next minute.
+				int chunksAllocated = (int) Math.min(1024, Math.max(1, (60 * 1000 * _lastInc) / (now - _lastIncTime)));
+				if (chunksAllocated > 1) {
+					// Limit increase of allocation speed.
+					if (chunksAllocated > _lastInc * 2) {
+						chunksAllocated = _lastInc * 2;
+					}
+
+					Logger.info("Allocating " + chunksAllocated + " identifier chunks at once due to high demand.",
+						PersistentIdFactory.class);
+				}
+				_lastInc = chunksAllocated;
+				_lastIncTime = now;
+
 				long nextChunk;
 				PooledConnection connection = _connectionPool.borrowWriteConnection();
 				try {
 					DBHelper sqlDialect = _connectionPool.getSQLDialect();
 					nextChunk = _sequenceManager.nextSequenceNumber(
-						sqlDialect, connection, sqlDialect.retryCount(), _sequence);
+						sqlDialect, connection, sqlDialect.retryCount(), _sequence, chunksAllocated);
 					connection.commit();
 				} catch (SQLException ex) {
 					throw new KnowledgeBaseRuntimeException(ex);
@@ -68,7 +89,7 @@ public class PersistentIdFactory implements IdFactory {
 					_connectionPool.releaseWriteConnection(connection);
 				}
 				_stopId = 1 + nextChunk * CHUNK_SIZE;
-				_nextId = _stopId - CHUNK_SIZE;
+				_nextId = _stopId - CHUNK_SIZE * chunksAllocated;
 			}
 			return _nextId++;
 		}

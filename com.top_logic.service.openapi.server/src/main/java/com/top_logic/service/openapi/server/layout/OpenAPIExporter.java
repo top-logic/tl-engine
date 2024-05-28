@@ -679,6 +679,9 @@ public class OpenAPIExporter {
 			} else {
 				throw new UnsupportedOperationException();
 			}
+			if (config.isInUserContext()) {
+				securityScheme.setUserContext(true, config.getUserNameField());
+			}
 			return securityScheme;
 		}
 

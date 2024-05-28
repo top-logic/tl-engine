@@ -5,9 +5,12 @@
  */
 package com.top_logic.service.openapi.common.document;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URL;
 import java.util.Map;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
@@ -30,12 +33,18 @@ import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition
 @DisplayOrder({
 	SecuritySchemeObject.SCHEMA_NAME,
 	SecuritySchemeObject.TYPE,
+	SecuritySchemeObject.OPEN_ID_CONNECT_URL,
 	SecuritySchemeObject.DESCRIPTION,
 	SecuritySchemeObject.NAME,
 	SecuritySchemeObject.IN,
 	SecuritySchemeObject.FLOWS,
+	SecuritySchemeObject.X_TL_IN_USER_CONTEXT,
+	SecuritySchemeObject.X_TL_USER_FIELD_NAME,
 })
 public interface SecuritySchemeObject extends Described {
+
+	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 	/** Configuration name for the value of {@link #getType()}. */
 	String TYPE = "type";
@@ -57,6 +66,12 @@ public interface SecuritySchemeObject extends Described {
 
 	/** Configuration name for the value of {@link #getOpenIdConnectUrl()}. */
 	String OPEN_ID_CONNECT_URL = "openIdConnectUrl";
+
+	/** Configuration name for the value of {@link #isInUserContext()}. */
+	String X_TL_IN_USER_CONTEXT = "x-tl-in-user-context";
+
+	/** Configuration name for the value of {@link #getUserFieldName()}. */
+	String X_TL_USER_FIELD_NAME = "x-tl-user-field-name";
 
 	/**
 	 * Name of the security schema.
@@ -162,6 +177,40 @@ public interface SecuritySchemeObject extends Described {
 	 * Setter for {@link #getOpenIdConnectUrl()}.
 	 */
 	void setOpenIdConnectUrl(URL value);
+
+	/**
+	 * Whether operations protected by this {@link SecuritySchemeObject} must be executed in user
+	 * context.
+	 */
+	@Name(X_TL_IN_USER_CONTEXT)
+	boolean isInUserContext();
+
+	/**
+	 * Optional configuration of the header field, that contains the name of the user in whose
+	 * context an operation must be executed.
+	 * 
+	 * <p>
+	 * Must only be set, when {@link #isInUserContext()}.
+	 * </p>
+	 */
+	@Name(X_TL_USER_FIELD_NAME)
+	@Nullable
+	String getUserFieldName();
+
+	/**
+	 * Marks this {@link SecuritySchemeObject} to be {@link #isInUserContext()}.
+	 * 
+	 * @param inUserContext
+	 *        See {@link #isInUserContext()}.
+	 * @param userFieldName
+	 *        See {@link #getUserFieldName()}.
+	 */
+	default void setUserContext(boolean inUserContext, String userFieldName) {
+		update(descriptor().getProperty(X_TL_IN_USER_CONTEXT), inUserContext);
+		if (inUserContext && !StringServices.isEmpty(userFieldName)) {
+			update(descriptor().getProperty(X_TL_USER_FIELD_NAME), userFieldName);
+		}
+	}
 
 }
 

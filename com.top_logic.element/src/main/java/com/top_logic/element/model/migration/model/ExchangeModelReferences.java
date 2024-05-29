@@ -36,6 +36,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.BasicTypes;
@@ -267,40 +268,31 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 					MOReference ref = (MOReference) table.getAttribute(associationUpdate.getReferenceColumn());
 
 					MOReference value = (MOReference) table.getAttribute(associationUpdate.getValueColumn());
-					columns.add(columnDef(
-						value.getColumn(ReferencePart.name).getDBName()));
 
 					TypePart refId = util.getTLTypePartOrFail(connection, associationUpdate.getReference());
 
+					String valueColumn = value.getColumn(ReferencePart.name).getDBName();
+
+					SQLExpression valueExpr = column(valueColumn);
+					for (Entry<TLID, TLID> entry : modelMapping.entrySet()) {
+						valueExpr = sqlCase(
+							eqSQL(
+								column(valueColumn),
+								literal(DBType.ID, entry.getKey())),
+							literal(DBType.ID, entry.getValue()),
+							valueExpr);
+					}
+
 					CompiledStatement select = query(
-						select(
-							columns,
+						update(
 							table(table.getDBMapping().getDBName()),
 							eqSQL(column(ref.getColumn(ReferencePart.name).getDBName()),
-								literal(DBType.ID, refId.getDefinition())))).toSql(connection.getSQLDialect());
+								literal(DBType.ID, refId.getDefinition())),
+							columnNames(valueColumn),
+							expressions(valueExpr))).toSql(connection.getSQLDialect());
 
 					select.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-					try (ResultSet result = select.executeQuery(connection)) {
-						while (result.next()) {
-							// long objBranch = result.getLong(1);
-							// long objId = result.getLong(2);
-							// long revMax = result.getLong(3);
-
-							TLID id = IdentifierUtil.getId(result, valueIndex);
-							if (id == null || id.equals(nullId)) {
-								continue;
-							}
-
-							TLID newId = modelMapping.get(id);
-							if (newId == null) {
-								continue;
-							}
-
-							IdentifierUtil.setId(result, valueIndex, newId);
-							updates++;
-							result.updateRow();
-						}
-					}
+					updates = select.executeUpdate(connection);
 					String refName = associationUpdate.getReference().getTypeName() + "#"
 						+ associationUpdate.getReference().getPartName();
 					log.info(

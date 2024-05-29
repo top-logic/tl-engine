@@ -144,14 +144,13 @@ public class DropColumnProcessor extends AbstractConfiguredInstance<DropColumnPr
 							.findFirst();
 					if (attributeConfig.isPresent()) {
 						tableConfig.getAttributes().remove(attributeConfig.get());
+						AddMOAttributeProcessor.updateStoredSchema(log, connection, persistentSchema);
 					} else {
 						log.info("No column '" + attributeName + "' found in table type '" + typeName + "'.", Log.WARN);
 					}
 				} else {
 					log.info("No table type '" + typeName + "' found in persistent schema.", Log.WARN);
 				}
-
-				AddMOAttributeProcessor.updateStoredSchema(log, connection, persistentSchema);
 			}
 		} catch (SQLException ex) {
 			log.error(

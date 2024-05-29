@@ -6,7 +6,7 @@
 >
 	<actions>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="setup"
+			comment="Setup"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -126,7 +126,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="testDiscard"
+			comment="Test Discard Changes"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
@@ -204,7 +204,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="testSave"
+			comment="Test Save Changes"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
@@ -285,7 +285,7 @@
 			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
 			command-label="Löschen..."
 			command-name="elementRemove"
-			comment="teardown"
+			comment="Teardown"
 			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
 			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
 			user-id="root"

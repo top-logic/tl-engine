@@ -1503,19 +1503,19 @@
 		expr="%ICONS_BUTTON_START%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_INTO"
-		value="/images/icons/arrow-down-quarter-circle.png"
+		value="css:tl-icon arrow-down-quarter-circle"
 	/>
 	<icon name="ICONS_BUTTON_STEP_INTO_DISABLED"
 		expr="%ICONS_BUTTON_STEP_INTO%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OUT"
-		value="/images/icons/arrow-up-quarter-circle.png"
+		value="css:tl-icon arrow-up-quarter-circle"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OUT_DISABLED"
 		expr="%ICONS_BUTTON_STEP_OUT%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OVER"
-		value="/images/icons/arrow-half-circle.png"
+		value="css:tl-icon arrow-half-circle"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OVER_DISABLED"
 		expr="%ICONS_BUTTON_STEP_OVER%"

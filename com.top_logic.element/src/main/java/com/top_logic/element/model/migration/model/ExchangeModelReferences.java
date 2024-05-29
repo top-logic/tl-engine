@@ -201,11 +201,10 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 				List<SQLColumnDefinition> columns = new ArrayList<>(Util.listWithoutNull(columns(
 					util.branchColumnDefOrNull(),
 					columnDef(BasicTypes.IDENTIFIER_DB_NAME),
-					columnDef(BasicTypes.REV_MIN_DB_NAME),
 					columnDef(BasicTypes.REV_MAX_DB_NAME))));
 
 				int updates = 0;
-				int valueIndex = util.getBranchIndexInc() + 4;
+				int valueIndex = util.getBranchIndexInc() + 3;
 				if (update instanceof TableUpdate) {
 					TableUpdate tableUpdate = (TableUpdate) update;
 
@@ -235,8 +234,7 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 						while (result.next()) {
 							// long objBranch = result.getLong(1);
 							// long objId = result.getLong(2);
-							// long revMin = result.getLong(3);
-							// long revMax = result.getLong(4);
+							// long revMax = result.getLong(3);
 
 							boolean wasUpdated = false;
 							for (int index = valueIndex,
@@ -286,8 +284,7 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 						while (result.next()) {
 							// long objBranch = result.getLong(1);
 							// long objId = result.getLong(2);
-							// long revMin = result.getLong(3);
-							// long revMax = result.getLong(4);
+							// long revMax = result.getLong(3);
 
 							TLID id = IdentifierUtil.getId(result, valueIndex);
 							if (id == null || id.equals(nullId)) {

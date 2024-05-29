@@ -26,6 +26,8 @@ import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 import com.top_logic.security.auth.pac4j.config.UserNameExtractor;
 
@@ -68,7 +70,8 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 		super.loginUser(person, request, response);
 		UserProfile userProfile = userProfile(request, response).get();
 		if (userProfile instanceof OidcProfile) {
-			installUserTokens(new Pac4jUserTokens((OidcProfile) userProfile));
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+			installUserTokens(new Pac4jUserTokens(displayContext, (OidcProfile) userProfile));
 		}
 	}
 

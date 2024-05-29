@@ -13,6 +13,7 @@ import org.apache.hc.core5.http.ClassicHttpRequest;
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
 import com.top_logic.base.accesscontrol.UserTokens;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.UriBuilder;
 
@@ -51,15 +52,18 @@ public class UserBearerTokenEnhancer implements SecurityEnhancer {
 		}
 		Date expiration = userTokens.getExpiration();
 		// Ensure that token is still valid for a certain period of time
-		if (expiration.after(new Date(System.currentTimeMillis() + 10000))) {
+		if (expiration.getTime() > System.currentTimeMillis() + 10000) {
 			setAuthorizationHeader(request, accessToken);
 			return;
 		}
 
-		if (userTokens.refreshTokens()) {
-			setAuthorizationHeader(request, userTokens.getAccessToken());
-		} else {
-			return;
+		if (userTokens.refreshTokens(DefaultDisplayContext.getDisplayContext())) {
+			String newAccessToken = userTokens.getAccessToken();
+			if (newAccessToken == null) {
+				// refreshing tokens lead to no longer existing access token.
+				return;
+			}
+			setAuthorizationHeader(request, newAccessToken);
 		}
 
 	}

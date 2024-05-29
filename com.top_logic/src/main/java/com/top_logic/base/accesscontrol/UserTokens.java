@@ -7,6 +7,8 @@ package com.top_logic.base.accesscontrol;
 
 import java.util.Date;
 
+import com.top_logic.layout.DisplayContext;
+
 /**
  * Tokens of the currently logged in via OIDC.
  * 
@@ -47,9 +49,12 @@ public interface UserTokens {
 	 * update is expiration date.
 	 * </p>
 	 * 
+	 * @param displayContext
+	 *        Current interaction.
+	 * 
 	 * @return Whether the tokens could be refreshed.
 	 */
-	boolean refreshTokens();
+	boolean refreshTokens(DisplayContext displayContext);
 
 	/**
 	 * The CSRF token.

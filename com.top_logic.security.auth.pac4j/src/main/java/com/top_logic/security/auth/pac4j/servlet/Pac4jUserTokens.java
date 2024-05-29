@@ -23,7 +23,6 @@ import com.nimbusds.oauth2.sdk.token.AccessToken;
 
 import com.top_logic.base.accesscontrol.UserTokens;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 
 /**
  * {@link UserTokens} implementation based on an {@link OidcProfile}.
@@ -39,13 +38,9 @@ public class Pac4jUserTokens implements UserTokens {
 	/**
 	 * Creates a {@link Pac4jUserTokens}.
 	 */
-	public Pac4jUserTokens(OidcProfile profile) {
+	public Pac4jUserTokens(DisplayContext displayContext, OidcProfile profile) {
 		_profile = profile;
-		installCSRFToken(displayContext());
-	}
-
-	private static DisplayContext displayContext() {
-		return DefaultDisplayContext.getDisplayContext();
+		installCSRFToken(displayContext);
 	}
 
 	@Override
@@ -73,16 +68,15 @@ public class Pac4jUserTokens implements UserTokens {
 	}
 
 	@Override
-	public boolean refreshTokens() {
-		DisplayContext dc = displayContext();
+	public boolean refreshTokens(DisplayContext displayContext) {
 		Client client = Config.INSTANCE.getClients().findClient(_profile.getClientName()).get();
-		WebContext context = new JEEContext(dc.asRequest(), dc.asResponse());
+		WebContext context = new JEEContext(displayContext.asRequest(), displayContext.asResponse());
 		Optional<UserProfile> newProfile = client.renewUserProfile(_profile, context, JEESessionStore.INSTANCE);
 		if (newProfile.isEmpty()) {
 			return false;
 		}
 		_profile = (OidcProfile) newProfile.get();
-		installCSRFToken(dc);
+		installCSRFToken(displayContext);
 		return true;
 	}
 

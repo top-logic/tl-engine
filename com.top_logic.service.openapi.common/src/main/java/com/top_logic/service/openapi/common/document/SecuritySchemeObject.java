@@ -14,6 +14,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -183,6 +184,7 @@ public interface SecuritySchemeObject extends Described {
 	 * context.
 	 */
 	@Name(X_TL_IN_USER_CONTEXT)
+	@Label("In user context")
 	boolean isInUserContext();
 
 	/**
@@ -190,11 +192,12 @@ public interface SecuritySchemeObject extends Described {
 	 * context an operation must be executed.
 	 * 
 	 * <p>
-	 * Must only be set, when {@link #isInUserContext()}.
+	 * Must only be set, when the operation is executed {@link #isInUserContext() in user context}.
 	 * </p>
 	 */
 	@Name(X_TL_USER_FIELD_NAME)
 	@Nullable
+	@Label("User field name")
 	String getUserFieldName();
 
 	/**

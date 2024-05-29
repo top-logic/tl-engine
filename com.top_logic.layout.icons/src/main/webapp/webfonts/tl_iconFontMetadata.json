@@ -1,4 +1,22 @@
 {
+  "arrow-down-quarter-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow down quarter circle"
+  },
+  "arrow-half-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow half circle"
+  },
   "arrow-left-solid": {
     "search": {
       "terms": []
@@ -88,6 +106,15 @@
       ""
     ],
     "label": "Arrow to right solid"
+  },
+  "arrow-up-quarter-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow-up-quarter-circle"
   },
   "ban": {
     "search": {

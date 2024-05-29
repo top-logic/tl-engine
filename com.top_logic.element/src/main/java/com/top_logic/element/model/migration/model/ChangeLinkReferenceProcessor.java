@@ -101,7 +101,7 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 			TypePart sourceRef = util.getTLTypePartOrFail(connection, sourceConfig);
 			TypePart targetRef = util.getTLTypePartOrFail(connection, targetConfig);
 			
-			MOClass table = (MOClass) context.getSchemaRepository().getType(config.getTable());
+			MOClass table = (MOClass) context.getPersistentRepository().getType(config.getTable());
 			MOReference ref = (MOReference) table.getAttribute(config.getReferenceColumn());
 
 			String tableName = table.getDBMapping().getDBName();

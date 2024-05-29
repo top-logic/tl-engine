@@ -35,6 +35,10 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 
 	private ServerCredentials _config;
 
+	private boolean _inUserContext;
+
+	private String _userNameField;
+
 	/**
 	 * Creates a new {@link ClientCredentialsAuthenticator}.
 	 */
@@ -42,6 +46,8 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		_config = config;
 		_secret = secret;
 		_uriProvider = TypedConfigUtil.createInstance(config.getURIProvider());
+		_inUserContext = _config.isInUserContext();
+		_userNameField = _config.getUserNameField();
 	}
 
 	@Override
@@ -56,14 +62,13 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 	@Override
 	protected String findAccountName(TokenIntrospectionSuccessResponse introspectionResponse, HttpServletRequest req,
 			HttpServletResponse resp) throws AuthenticationFailure, IOException {
-		if (!_config.isInUserContext()) {
+		if (!_inUserContext) {
 			return null;
 		}
-		String userNameField = _config.getUserNameField();
-		if (userNameField == null) {
+		if (_userNameField == null) {
 			return introspectionResponse.getUsername();
 		}
-		return req.getHeader(userNameField);
+		return req.getHeader(_userNameField);
 	}
 	@Override
 	protected ClientSecretPost getClientAuth() {

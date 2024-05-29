@@ -10,6 +10,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,18 +56,13 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 		AccessToken token = parseAccessToken(req);
 		String tokenString = token.getValue();
 
-		Object accountNameForToken = TOKENS.getValidToken(tokenString);
-		if (accountNameForToken != null) {
+		Object storedAccount = TOKENS.getValidToken(tokenString);
+		if (storedAccount != null) {
 			// Valid token available
-			if (accountNameForToken == NO_ACCOUNT) {
+			if (storedAccount == NO_ACCOUNT) {
 				return null;
 			}
-			Person accountByName = accountByName((String) accountNameForToken);
-			if (accountByName != null) {
-				return accountByName;
-			}
-			//$FALL-THROUGH$
-			// try check whether name has changed
+			return (Person) storedAccount;
 		}
 		HTTPResponse response = sendInspectRequest(token);
 		TokenIntrospectionResponse tokenResponse = parseInspectResponse(response);
@@ -78,8 +74,18 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 			throw failInactiveToken();
 		}
 		Date expirationTime = successResponse.getExpirationTime();
-		if (expirationTime == null || expirationTime.before(new Date())) {
-			throw failExpiredToken(expirationTime);
+		long maxExpirationTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
+		if (expirationTime == null) {
+			expirationTime = new Date(maxExpirationTime);
+		} else {
+			if (expirationTime.getTime() < System.currentTimeMillis()) {
+				throw failExpiredToken(expirationTime);
+			}
+			
+			if (expirationTime.getTime() > maxExpirationTime) {
+				expirationTime = new Date(maxExpirationTime);
+			}
+			
 		}
 
 		Person account;
@@ -93,7 +99,7 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 			}
 		}
 		// Cache token for later reuse
-		TOKENS.storeToken(tokenString, account != null ? accountName : NO_ACCOUNT, expirationTime);
+		TOKENS.storeToken(tokenString, account != null ? account : NO_ACCOUNT, expirationTime);
 
 		return account;
 	}

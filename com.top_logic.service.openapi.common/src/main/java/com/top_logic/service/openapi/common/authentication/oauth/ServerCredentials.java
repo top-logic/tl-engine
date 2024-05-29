@@ -45,7 +45,7 @@ public interface ServerCredentials extends TokenBasedAuthentication, ServerAuthe
 	 * <p>
 	 * If this property is set, then it is expected that the sent access token is the personal token
 	 * of a person which has an account in the application. The operation is then processed as if
-	 * the user has executed if after a login.
+	 * the user has executed it after a login.
 	 * </p>
 	 */
 	@Name(IN_USER_CONTEXT)

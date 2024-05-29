@@ -62,7 +62,6 @@ public class DialogComponent extends AbstractDialogModel {
 			CloseModalDialogCommandHandler closeHandler = handlerSearch.getCloseHandler();
 			final LayoutComponent targetComponent = handlerSearch.getTargetComponent();
 			
-
 			if (ScriptingRecorder.isRecordingActive()) {
 				recordCloseDialogAction(dialogContents, targetComponent);
 			}

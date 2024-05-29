@@ -27,11 +27,16 @@ import com.top_logic.tool.execution.ExecutabilityRule;
  */
 public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
 
+	/**
+	 * Configuration for {@link CloseModalDialogCommandHandler}.
+	 *
+	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
+	 */
 	public interface Config extends AbstractSystemCommand.Config {
 
 		@Override
+		@ItemDefault
 		@ImplementationClassDefault(ChildrenCheckScopeProvider.class)
-		@ItemDefault()
 		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
 
 	}
@@ -42,6 +47,9 @@ public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
     /** the js command name */
     private static final String COMMAND = "closeDialog";
 
+	/**
+	 * Creates a new {@link CloseModalDialogCommandHandler}.
+	 */
 	public CloseModalDialogCommandHandler(InstantiationContext context, Config config) {
 		super(context, config);
     }

@@ -207,6 +207,10 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 
 				update.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 
+				// Since this processor requires two concurrent connections, the state must be
+				// committed to have a consistent view to the database from both connections.
+				connection.commit();
+
 				int cnt = 0;
 				int factor = getConfig().getFactor();
 				int idIndex = util.getBranchIndexInc() + 1;
@@ -214,7 +218,10 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 				int scopeIndex = util.getBranchIndexInc() + 3;
 				int orderIndex = util.getBranchIndexInc() + 4;
 				try (ResultSet cursor = update.executeQuery(connection)) {
-					try (OrderGenerator generator = new OrderGenerator(util, select, factor, connection)) {
+					// Use additional connection for executing the concurrent join. Databases man
+					// not handle concurrent queries well.
+					PooledConnection additional = connection.getPool().borrowWriteConnection();
+					try (OrderGenerator generator = new OrderGenerator(util, select, factor, additional)) {
 						while (cursor.next()) {
 							long branch = hasBranches ? cursor.getLong(1) : TLContext.TRUNK_ID;
 							long id = cursor.getLong(idIndex);
@@ -232,6 +239,8 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 
 							cnt++;
 						}
+					} finally {
+						connection.getPool().releaseWriteConnection(additional);
 					}
 				}
 

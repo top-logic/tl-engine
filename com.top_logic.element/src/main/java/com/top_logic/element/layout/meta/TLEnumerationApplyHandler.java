@@ -5,19 +5,15 @@
  */
 package com.top_logic.element.layout.meta;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResourceTransaction;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.basic.util.Utils;
 import com.top_logic.element.layout.meta.TLEnumerationFormBuilder.ClassifierModel;
 import com.top_logic.element.layout.meta.TLEnumerationFormBuilder.EditModel;
 import com.top_logic.knowledge.service.KBUtils;
@@ -55,93 +51,53 @@ public class TLEnumerationApplyHandler extends DeclarativeApplyHandler<EditModel
 		TLModelUtil.updateAnnotations(enumeration, editModel.getAnnotations());
 
 		List<ClassifierModel> classifierConfigs = editModel.getI18NClassifiersConfig();
-
-		Set<TLClassifier> existingClassifiers = storeClassifiers(classifierConfigs, enumeration);
-
-		deleteRemovedClassifiers(enumeration, existingClassifiers);
-
-		updateClassifierOrder(classifierConfigs, enumeration);
+		storeClassifiers(enumeration, classifierConfigs);
 
 		// If only the I18N has changed, the attributes has to be touched to enforce an update of
 		// other components displaying this attribute.
 		enumeration.tHandle().touch();
 	}
 
-	private void updateClassifierOrder(List<ClassifierModel> classifierModels, TLEnumeration enumeration) {
-		int size = classifierModels.size();
-		List<TLClassifier> classifiers = enumeration.getClassifiers();
-		assert size == classifiers.size();
+	private void storeClassifiers(TLEnumeration enumeration, List<ClassifierModel> classifierModels) {
+		Map<String, TLClassifier> oldClassifiers = indexClassifiers(enumeration);
 
-		int unchangedOrderLength = 0;
-		while (true) {
-			if (unchangedOrderLength == size) {
-				// No order change;
-				return;
-			}
-			if (!Utils.equals(classifiers.get(unchangedOrderLength).getName(),
-				classifierModels.get(unchangedOrderLength).getName())) {
-				break;
-			}
-			unchangedOrderLength++;
-		}
-
-		TLClassifier[] ordered = order(unchangedOrderLength, size, classifierModels, classifiers);
-		classifiers.subList(unchangedOrderLength, size).clear();
-		classifiers.addAll(unchangedOrderLength, Arrays.asList(ordered));
-	}
-
-	/**
-	 * Orders the {@link TLClassifier}s from <code>from</code> (incl.) to <code>to</code> (excl.) in
-	 * <code>classifiers</code> such that it has the same (name) order as the
-	 * {@link ClassifierModel}s in the corresponding <code>classifierModels</code>.
-	 * 
-	 * <p>
-	 * It is expected that the elements have the same names.
-	 * </p>
-	 */
-	private TLClassifier[] order(int from, int to, List<ClassifierModel> classifierModels,
-			List<TLClassifier> classifiers) {
-		Map<String, Integer> indexMap = new HashMap<>();
-		for (int i = from; i < to; i++) {
-			indexMap.put(classifierModels.get(i).getName(), i - from);
-		}
-		TLClassifier[] orderedClassifier = new TLClassifier[to - from];
-		for (int i = from; i < to; i++) {
-			TLClassifier classifier = classifiers.get(i);
-			orderedClassifier[indexMap.get(classifier.getName())] = classifier;
-		}
-		return orderedClassifier;
-	}
-
-	private Set<TLClassifier> storeClassifiers(List<ClassifierModel> classifierModels, TLEnumeration enumeration) {
-		Set<TLClassifier> existingClassifiers = new HashSet<>();
-
+		List<TLClassifier> order = new ArrayList<>();
 		for (ClassifierModel classifierModel : classifierModels) {
-			TLClassifier classifier = storeClassifier(enumeration, classifierModel);
+			String name = classifierModel.getName();
 
-			existingClassifiers.add(classifier);
+			TLClassifier newClassifier = takeOrCreateClassifier(oldClassifiers, enumeration, name);
+			
+			order.add(newClassifier);
+			newClassifier.setDefault(classifierModel.isDefault());
+			TLModelUtil.updateAnnotations(newClassifier, classifierModel.getAnnotations());
 		}
 
-		return existingClassifiers;
+		updateOrder(enumeration, order);
+		KBUtils.deleteAll(oldClassifiers.values());
 	}
 
-	private TLClassifier storeClassifier(TLEnumeration enumeration, ClassifierModel classifierModel) {
-		String name = classifierModel.getName();
-		TLClassifier classifier = enumeration.getClassifier(name);
-
-		if (classifier == null) {
-			classifier = TLModelUtil.addClassifier(enumeration, name);
+	private Map<String, TLClassifier> indexClassifiers(TLEnumeration enumeration) {
+		Map<String, TLClassifier> oldClassifiers = new HashMap<>();
+		for (TLClassifier classifier : enumeration.getClassifiers()) {
+			oldClassifiers.put(classifier.getName(), classifier);
 		}
-
-		classifier.setDefault(classifierModel.isDefault());
-
-		TLModelUtil.updateAnnotations(classifier, classifierModel.getAnnotations());
-
-		return classifier;
+		return oldClassifiers;
 	}
 
-	private void deleteRemovedClassifiers(TLEnumeration enumeration, Set<TLClassifier> existingClassifiers) {
-		KBUtils.deleteAll(CollectionUtil.difference(new HashSet<>(enumeration.getClassifiers()), existingClassifiers));
+	private TLClassifier takeOrCreateClassifier(Map<String, TLClassifier> oldClassifiers, TLEnumeration enumeration,
+			String name) {
+		TLClassifier oldClassifier = oldClassifiers.remove(name);
+		if (oldClassifier == null) {
+			return TLModelUtil.addClassifier(enumeration, name);
+		} else {
+			return oldClassifier;
+		}
+	}
+
+	private void updateOrder(TLEnumeration enumeration, List<TLClassifier> order) {
+		List<TLClassifier> classifiers = enumeration.getClassifiers();
+		classifiers.clear();
+		classifiers.addAll(order);
 	}
 
 	@Override

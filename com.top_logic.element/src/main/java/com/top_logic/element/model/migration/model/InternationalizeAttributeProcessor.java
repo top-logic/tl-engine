@@ -167,6 +167,8 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(connection.getSQLDialect());
 				}
 
+				long start = System.nanoTime();
+				int perSecond = 0;
 				int cnt = 0;
 				try (Batch batch = insert.createBatch(connection)) {
 					try (ResultSet result = select.executeQuery(connection)) {
@@ -198,25 +200,42 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 							if (value != null) {
 								batch.addBatch(
 									objBranch, util.newID(connection), revMin, revMax, revMin, objType, objId, attrId,
-									lang,
-									value);
+									lang, value);
 
 								if (++cnt >= 1000) {
 									batch.executeBatch();
-									log.info(
-										"Moved '" + cnt + "' values of '" + config.getAttribute().getName() + "' from '"
-											+ objType
-											+ "' to internationalization table (" + lang + ").");
+
+									perSecond += cnt;
 									cnt = 0;
+
+									// Log only once each second.
+									long now = System.nanoTime();
+									long elapsed = now - start;
+									if (elapsed > 1000000000L) {
+										start = now;
+										log.info(
+											"Moved '" + perSecond + "' values of '" + config.getAttribute().getName()
+												+ "' from '" + objType + "' to internationalization table (" + lang
+												+ ").");
+										perSecond = 0;
+									}
 								}
 							}
 						}
 					}
 					if (cnt > 0) {
 						batch.executeBatch();
+
+						perSecond += cnt;
+						cnt = 0;
+					}
+
+					if (perSecond > 0) {
 						log.info(
-							"Moved '" + cnt + "' values of '" + config.getAttribute().getName() + "' from '" + objType
+							"Moved '" + perSecond + "' values of '" + config.getAttribute().getName() + "' from '"
+								+ objType
 								+ "' to internationalization table (" + lang + ").");
+						perSecond = 0;
 					}
 				}
 			}

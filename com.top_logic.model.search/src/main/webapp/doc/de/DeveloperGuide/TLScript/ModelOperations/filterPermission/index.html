@@ -1,0 +1,63 @@
+<h2>Syntax</h2>
+
+<pre><code>$objects.filterPermission($roles)
+
+$objects.filterPermission(
+     roles: [...],
+     account: $acc)
+</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Filtert eine Menge von Fachobjekten so dass nur noch die Elemente enhalten sind auf denen der gegebene Nutzer eine der gegebenen Rollen hat.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>objects</td>
+			<td>Menge von Fachobjekten</td>
+			<td>Menge von Fachobjekten die gefiltert werden sollen</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>roles</td>
+			<td>Menge von Rollen oder Rollennamen</td>
+			<td>Menge von Rollen oder Rollennamen</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>account</td>
+			<td><code class="hljs inlineCode">`tl.accounts:Person`</code></td>
+			<td>Nutzer für den die Fachobjekte gefiltert werden sollen</td>
+			<td>nein</td>
+			<td>Der angemeldete Nutzer</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge von Fachobjekten</p>
+
+<p>Alle Fachobjekte in der gegebenen Menge auf denen der Nutzer eine der gegebenen Rollen hat.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre><code>all(`myModule:MyType`).filterPermission("admin")</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Alle Elemente vom Typ <code class="hljs inlineCode">`myModule:MyType`</code> auf denen der angemeldete Benutzer die Rolle <code class="hljs inlineCode">admin</code> hat.</p>

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBTable;
@@ -33,6 +34,7 @@ public class DropTablesProcessor extends AbstractConfiguredInstance<DropTablesPr
 	/**
 	 * Configuration options of {@link DropTablesProcessor}.
 	 */
+	@TagName("drop-tables")
 	public interface Config extends PolymorphicConfiguration<DropTablesProcessor> {
 		/**
 		 * The database names of the tables to drop.

@@ -179,6 +179,15 @@
     ],
     "label": "Book open exclamation"
   },
+  "building-blocks": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Building blocks"
+  },
   "button-background": {
     "search": {
       "terms": []
@@ -188,14 +197,14 @@
     ],
     "label": "Button background"
   },
-  "building-blocks": {
+  "calender": {
     "search": {
       "terms": []
     },
     "styles": [
       ""
     ],
-    "label": "Building blocks"
+    "label": "Calender"
   },
   "camera": {
     "search": {
@@ -350,7 +359,7 @@
     ],
     "label": ""
   },
-  "chart-bars": {
+  "chart-bar": {
     "search": {
       "terms": []
     },
@@ -529,6 +538,15 @@
       ""
     ],
     "label": ""
+  },
+  "cockpit": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Cockpit"
   },
   "collapse": {
     "search": {
@@ -1241,6 +1259,15 @@
     ],
     "label": ""
   },
+  "lightbulb": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Lightbulb"
+  },
   "lightbulb-circle": {
     "search": {
       "terms": []
@@ -1429,6 +1456,24 @@
       ""
     ],
     "label": ""
+  },
+  "portfolio": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Portfolio"
+  },
+  "program": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Program"
   },
   "project": {
     "search": {

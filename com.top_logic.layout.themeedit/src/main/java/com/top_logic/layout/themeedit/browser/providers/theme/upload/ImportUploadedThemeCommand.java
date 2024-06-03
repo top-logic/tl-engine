@@ -66,13 +66,13 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 
 			@Override
 			public void doImport() {
+				super.doImport();
+
 				try {
 					updateTransient();
 				} catch (ThemeInitializationFailure ex) {
 					throw new TopLogicException(ex.getErrorKey());
 				}
-
-				super.doImport();
 			}
 
 			@Override

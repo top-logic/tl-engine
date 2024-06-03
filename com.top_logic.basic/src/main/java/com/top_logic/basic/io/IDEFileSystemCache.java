@@ -349,14 +349,14 @@ public class IDEFileSystemCache extends FileSystemCache {
 			List<Path> files = _fileCache.get(normalizedPath);
 			if (files != null) {
 				files.remove(deletion.normalize());
-				if (files.isEmpty() || !Files.isRegularFile(files.get(0))) {
-					/* As the path is deleted, it can not be inspected to check whether it is a
-					 * directory. */
-					/* It can not be ensured that the removed path represents a regular file.
-					 * Therefore it may be a directory an potential children may be removed. */
-					removeChildResources(normalizedPath, deletion);
-				}
 			}
+
+			/* As the path is deleted, it can not be inspected to check whether it is a
+			 * directory. */
+			/* It can not be ensured that the removed path represents a regular file. Therefore it
+			 * may be a directory a potential child may have been removed. */
+			// Even if the directory was not cached a child may have been cached.
+			removeChildResources(normalizedPath, deletion);
 		}
 	}
 

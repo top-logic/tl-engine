@@ -28,6 +28,7 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -37,6 +38,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLStructuredType;
@@ -88,6 +91,8 @@ public class Person extends AbstractBoundWrapper implements Author {
 
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
+
+	private static volatile ItemByNameCache<String> BY_NAME_CACHE;
 
 	/**
 	 * Resolves {@link #PERSON_TYPE}.
@@ -641,6 +646,9 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * @return The requested account or <code>null</code> if not such account exists.
 	 */
 	public static Person byName(KnowledgeBase kb, String name) {
+		if (kb == getDefaultKnowledgeBase()) {
+			return fromCache(kb, name);
+		}
 		if (StringServices.isEmpty(name)) {
 			return null;
 		}
@@ -662,7 +670,30 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * @return The requested account or <code>null</code> if not such account exists.
 	 */
 	public static Person byName(String name) {
-		return Person.byName(PersistencyLayer.getKnowledgeBase(), name);
+		return fromCache(getDefaultKnowledgeBase(), name);
+	}
+
+	private static Person fromCache(KnowledgeBase defaultKB, String name) {
+		if (StringServices.isEmpty(name)) {
+			return null;
+		}
+
+		KnowledgeItem cachedPerson = getOrInstallByNameCache(defaultKB).getValue().get(name);
+		if (cachedPerson == null) {
+			return null;
+		}
+		return cachedPerson.getWrapper();
+	}
+
+	private static ItemByNameCache<String> getOrInstallByNameCache(KnowledgeBase defaultKB) {
+		ItemByNameCache<String> byNameCache;
+		if (BY_NAME_CACHE != null) {
+			byNameCache = BY_NAME_CACHE;
+		} else {
+			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
+			BY_NAME_CACHE = byNameCache;
+		}
+		return byNameCache;
 	}
 
 	/**

@@ -1,3 +1,21 @@
+/* 
+/* Design of a regular, unmodified table, which often get 
+/* created through inapp configurations 
+*/
+code:not(table) {
+	font-family: var(--font-family-regular);
+}
+
+table {
+	white-space: nowrap;
+	display: table;
+	width: 100%;
+	margin-top: var(--spacing-03);
+	background: var(--background);
+	border-collapse: collapse;
+	border-spacing: 0 10px;
+}
+
 table.treeBody {
 	white-space: nowrap;
 	display: table;
@@ -8,12 +26,28 @@ table.treeBody {
     border-spacing: 0 10px;
 }
 
-th {
-	text-align: left;
-}
-
 table.treeBody .tl-table__row:not(.tblSelected):hover > td {
     background: var(--background);
+}
+
+th {
+	text-align: left;
+	color: var(--text-primary);
+    font-family: var(--font-family-bold);
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
+    font-weight: 600;
+    background: var(--layer);
+}
+
+th, td {
+    padding-right: var(--spacing-02);
+    padding-left: var(--spacing-02);
+	height: var(--table-height);
+    width: 100%;
+    box-sizing: border-box;
+	border: 1px solid var(--border-subtle);
 }
 
 /* ============================================ */
@@ -1567,6 +1601,7 @@ div.dirtyHandlingDialog .changes {
 	border-right-width: .25rem !important;
 	border-right-style: solid !important;
 	width: 0px;
+	padding: 0px;
 }
 
 .tl-table-overlay .tl-table__fix-flex-separator {
@@ -1602,7 +1637,7 @@ th.treeTableTh {
 	letter-spacing: var(--heading-compact-02-letter-spacing);
     white-space: nowrap;     
     border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
-    background: var(--layer-accent);
+    background: var(--layer);
     background-position-y: bottom;
 }
 

@@ -209,9 +209,8 @@ private static final int HISTORY_LENGTH = 256;
 					<p>
 						<a
 							href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-							style="color:darkblue"
 						>
-							&#xA0;<%=RESTART_LINK%>
+							<%=RESTART_LINK%>
 						</a>
 					</p>
 					<%

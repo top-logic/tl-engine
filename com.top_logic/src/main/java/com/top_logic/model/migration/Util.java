@@ -1638,7 +1638,7 @@ public class Util {
 		Type ownerType = getTLTypeOrFail(connection, branch, module, type);
 		TypePart part = getTLTypePart(connection, ownerType, partName);
 		if (part == null) {
-			throw new MigrationException("No part " + partName + " found in " + toString(ownerType) + ".");
+			throw new MigrationException("No part '" + partName + "' found in '" + toString(ownerType) + "'.");
 		}
 		return part;
 	}

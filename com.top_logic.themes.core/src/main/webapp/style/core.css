@@ -23,6 +23,10 @@ body {
 	background: transparent;
 }
 
+::-webkit-scrollbar-thumb:hover {
+    background: var(--sb-thumb-color);
+}
+
 :hover::-webkit-scrollbar {
 	width: var(--sb-size);
 	height: var(--sb-size);

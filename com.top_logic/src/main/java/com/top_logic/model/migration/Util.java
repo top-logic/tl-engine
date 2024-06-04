@@ -930,6 +930,14 @@ public class Util {
 
 	/**
 	 * Fetches an existing {@link TLType} from the database.
+	 */
+	public Type getTLTypeOrNull(PooledConnection con, QualifiedTypeName typeName)
+			throws SQLException, MigrationException {
+		return getTLTypeOrNull(con, TLContext.TRUNK_ID, typeName.getModuleName(), typeName.getTypeName());
+	}
+
+	/**
+	 * Fetches an existing {@link TLType} from the database.
 	 * 
 	 * @throws MigrationException
 	 *         When no such type exists.
@@ -943,12 +951,39 @@ public class Util {
 
 	/**
 	 * Fetches an existing {@link TLType} from the database.
+	 */
+	public Type getTLTypeOrNull(PooledConnection connection, long branch, String moduleName,
+			String typeName) throws SQLException, MigrationException {
+		Module module = getTLModule(connection, branch, moduleName);
+		if (module == null) {
+			return null;
+		}
+		return getTLTypeOrNull(connection, module, typeName);
+	}
+
+	/**
+	 * Fetches an existing {@link TLType} from the database.
 	 * 
 	 * @throws MigrationException
 	 *         When no such type exists.
 	 */
 	public Type getTLTypeOrFail(PooledConnection connection, Module module, String typeName)
 			throws SQLException, MigrationException {
+		return notNull(getTLTypeOrNull(connection, module, typeName), module, typeName);
+	}
+
+	private Type notNull(Type result, Module module, String typeName) throws MigrationException {
+		if (result == null) {
+			throw new MigrationException(
+				"No such type: " + TLModelUtil.qualifiedName(module.getModuleName(), typeName));
+		}
+		return result;
+	}
+
+	/**
+	 * Fetches an existing {@link TLType} from the database.
+	 */
+	public Type getTLTypeOrNull(PooledConnection connection, Module module, String typeName) throws SQLException {
 		Type tlClass = getTLClass(connection, module, typeName);
 		if (tlClass != null) {
 			return tlClass;
@@ -961,7 +996,7 @@ public class Util {
 		if (enumType != null) {
 			return enumType;
 		}
-		throw new MigrationException("No such type: " + TLModelUtil.qualifiedName(module.getModuleName(), typeName));
+		return null;
 	}
 
 	private Type getTLDataType(PooledConnection connection, Module module, String dataTypeName)

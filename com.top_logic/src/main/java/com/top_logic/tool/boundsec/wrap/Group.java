@@ -16,6 +16,7 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.OneWayListSink;
@@ -25,12 +26,15 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -94,6 +98,8 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	private static final AssociationSetQuery<KnowledgeAssociation> MEMBERS_ATTR = AssociationQuery.createIncomingQuery(
 		"groupMembers",
 		Group.GROUP_ASSOCIATION);
+
+	private static volatile ItemByNameCache<String> BY_NAME_CACHE;
 
     private transient BoundObject boundObject;
 
@@ -300,6 +306,9 @@ public class Group extends AbstractBoundWrapper implements IGroup {
      * @return  the Group or null if it doesn't exist
      */
     public static Group getGroupByName (KnowledgeBase aKB, String aName) {
+		if (aKB == getDefaultKnowledgeBase()) {
+			return fromCache(aKB, aName);
+		}
 
         KnowledgeObject theGroupKO = (KnowledgeObject) aKB
             .getObjectByAttribute(OBJECT_NAME, NAME_ATTRIBUTE, aName);
@@ -317,17 +326,42 @@ public class Group extends AbstractBoundWrapper implements IGroup {
      * @return  the Group or null if it doesn't exist
      */
     public static Group getGroupByName(String aName) {
-
-        return getGroupByName(getDefaultKnowledgeBase(), aName);
+		return fromCache(getDefaultKnowledgeBase(), aName);
     }
 
-    /**
-     * Get a Group by its identifier
-     *
-     * @param   aKB             the KnowledgeBase to fetch the Group from.
-     * @param   anID            the identifier of the Group
-     * @return  the Group or null if it doesn't exist
-     */
+	private static Group fromCache(KnowledgeBase defaultKB, String name) {
+		if (StringServices.isEmpty(name)) {
+			return null;
+		}
+
+		KnowledgeItem cachedGroup = getOrInstallByNameCache(defaultKB).getValue().get(name);
+		if (cachedGroup == null) {
+			return null;
+		}
+		return cachedGroup.getWrapper();
+
+	}
+
+	private static ItemByNameCache<String> getOrInstallByNameCache(KnowledgeBase defaultKB) {
+		ItemByNameCache<String> byNameCache;
+		if (BY_NAME_CACHE != null) {
+			byNameCache = BY_NAME_CACHE;
+		} else {
+			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
+			BY_NAME_CACHE = byNameCache;
+		}
+		return byNameCache;
+	}
+
+	/**
+	 * Get a Group by its identifier
+	 *
+	 * @param aKB
+	 *        the KnowledgeBase to fetch the Group from.
+	 * @param anID
+	 *        the identifier of the Group
+	 * @return the Group or null if it doesn't exist
+	 */
     public static final Group getInstance (KnowledgeBase aKB, TLID anID) {
 		return (Group) WrapperFactory.getWrapper(anID, OBJECT_NAME, aKB);
      }

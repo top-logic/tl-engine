@@ -686,10 +686,10 @@ public class Person extends AbstractBoundWrapper implements Author {
 	}
 
 	private static ItemByNameCache<String> getOrInstallByNameCache(KnowledgeBase defaultKB) {
-		ItemByNameCache<String> byNameCache;
-		if (BY_NAME_CACHE != null) {
-			byNameCache = BY_NAME_CACHE;
-		} else {
+		ItemByNameCache<String> byNameCache = BY_NAME_CACHE;
+		if (byNameCache == null || byNameCache.kb() != defaultKB) {
+			// First access to cache or default KB has changed (PersistencyLayer may have been
+			// restarted).
 			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
 			BY_NAME_CACHE = byNameCache;
 		}

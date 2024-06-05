@@ -1040,7 +1040,7 @@ public class TestControlsForm extends FormComponent {
 			}
 		});
 
-		doubleField.setValue(Math.PI);
+		doubleField.initializeField(Math.PI);
 
 		final ComplexField longField =
 			FormFactory.newLongField("long", null, /* immutable */false);
@@ -1059,7 +1059,7 @@ public class TestControlsForm extends FormComponent {
 			}
 		});
 
-		longField.setValue(42L);
+		longField.initializeField(42L);
 
         List<String> formats = Arrays.asList(new String[] { // See Javadoc for DecimalFormat
                 "000,000.000", "###,###.###########", "###,###", "0.000###E00", "\u00A4 ###,###.##", 

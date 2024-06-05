@@ -207,7 +207,7 @@ public class TextPopupControl extends PopupEditControl {
 			final Command apply) {
 		ScriptingRecorder.annotateAsDontRecord(editField);
 		editField.setLabel("");
-		editField.setValue(originalField.getValue());
+		editField.initializeField(originalField.getValue());
 		if (!originalField.isImmutable()) {
 			editField.addKeyListener(new KeyEventListener(CTRL_RETURN) {
 				@Override

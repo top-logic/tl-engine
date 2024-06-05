@@ -208,7 +208,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 		context.addMember(updateData);
 
 		StringField stringField = WebFolderUtils.createDescriptionField(DocumentVersion.DESCRIPTION, 5);
-		stringField.setValue(document.getDocumentVersion().getDescription());
+		stringField.initializeField(document.getDocumentVersion().getDescription());
 		context.addMember(stringField);
 
 		EnableButtonOnValue.enableButtonOnNonEmptyValue(updateData, _updateButton);

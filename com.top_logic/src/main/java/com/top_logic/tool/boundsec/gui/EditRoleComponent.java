@@ -315,7 +315,7 @@ public class EditRoleComponent extends EditComponent {
             }
 
             HiddenField hiddenField = FormFactory.newHiddenField(FIELD_MASTER);
-			hiddenField.setValue(scope);
+			hiddenField.initializeField(scope);
             context.addMember(hiddenField);
 
             return context;

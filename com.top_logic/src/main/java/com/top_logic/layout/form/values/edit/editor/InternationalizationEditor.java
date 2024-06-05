@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import com.top_logic.base.config.i18n.InternationalizedUtil;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -491,7 +492,8 @@ public class InternationalizationEditor implements Editor {
 		}
 
 		private void initValues() {
-			updateUI((ResKey) _model.getValue());
+			ResKey newValue = (ResKey) _model.getValue();
+			updateUI(newValue, FormField::initializeField);
 		}
 
 		@Override
@@ -520,7 +522,7 @@ public class InternationalizationEditor implements Editor {
 		@Override
 		public void onChange(ConfigurationChange change) {
 			unbindValueListeners();
-			updateUI((ResKey) change.getNewValue());
+			updateUI((ResKey) change.getNewValue(), FormField::setValue);
 			updateMandatory();
 			bindValueListeners();
 		}
@@ -545,15 +547,15 @@ public class InternationalizationEditor implements Editor {
 			_model.setValue(literal.build());
 		}
 
-		private void updateUI(ResKey newValue) {
+		private void updateUI(ResKey newValue, BiConsumer<FormField, String> fieldUpdater) {
 			if (newValue == null) {
 				clearUI();
 			} else {
-				setUI(newValue);
+				updateFields(newValue, fieldUpdater);
 			}
 		}
 
-		private void setUI(ResKey newValue) {
+		private void updateFields(ResKey newValue, BiConsumer<FormField, String> fieldUpdater) {
 			for (Iterator<FormField> it = _group.getFields(); it.hasNext();) {
 				FormField field = it.next();
 				Locale locale = field.get(LOCALE);
@@ -568,7 +570,7 @@ public class InternationalizationEditor implements Editor {
 					text = ResKeyUtil.translateWithoutFallback(locale, newValue.suffix(suffix));
 				}
 				if (text != null) {
-					field.setValue(text);
+					fieldUpdater.accept(field, text);
 				}
 			}
 		}

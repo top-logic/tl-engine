@@ -110,6 +110,10 @@ public class MoveLinksProcessor extends AbstractConfiguredInstance<MoveLinksProc
 			List<String> columns = new ArrayList<>();
 			List<SQLColumnDefinition> columnDefs = new ArrayList<>();
 			for (MOAttribute attr : sourceTable.getAttributes()) {
+				if (destTable.getAttributeOrNull(attr.getName()) == null) {
+					continue;
+				}
+
 				for (DBAttribute column : attr.getDbMapping()) {
 					columns.add(column.getDBName());
 					columnDefs.add(columnDef(column.getDBName()));

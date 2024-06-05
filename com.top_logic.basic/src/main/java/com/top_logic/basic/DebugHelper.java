@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.StopWatch;
@@ -761,13 +760,6 @@ public abstract class DebugHelper {
 					message.append('~');
 					message.append(replacePassword(query, "***removed***"));
 				}
-			}
-
-			HttpSession session = request.getSession(false);
-			if (session != null) {
-				message.append(" (session: ");
-				message.append(session.getId());
-				message.append(')');
 			}
 		}
 

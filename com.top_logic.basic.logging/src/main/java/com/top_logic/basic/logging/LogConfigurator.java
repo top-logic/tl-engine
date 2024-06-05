@@ -136,7 +136,16 @@ public abstract class LogConfigurator {
 	}
 
 	/**
-	 * Adds a mark for Log4j.
+	 * The value of the given log mark.
+	 * <p>
+	 * Log marks can be used in the log configuration to redirect every log message from this thread
+	 * to a specific log file, no matter which class logs the message.
+	 * </p>
+	 */
+	public abstract String getLogMark(String key);
+
+	/**
+	 * Adds a log mark.
 	 * <p>
 	 * Use <code>com.top_logic.basic.logging.LogUtil#withLogMark(Runnable, String, String)</code> if
 	 * possible, as that already takes care of removing the mark afterwards.

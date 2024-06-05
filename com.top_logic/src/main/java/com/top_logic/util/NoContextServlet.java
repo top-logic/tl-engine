@@ -35,7 +35,9 @@ public class NoContextServlet extends HttpServlet {
 
 	@Override
 	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		executeInInteraction(req, resp);
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(req,
+			() -> executeInInteraction(req, resp));
 	}
 
 	private void executeInInteraction(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
@@ -46,7 +48,7 @@ public class NoContextServlet extends HttpServlet {
 			installSessionContext(req, displayContext);
 			doService(req, resp);
 		} finally {
-			DefaultDisplayContext.teardownDisplayContext(req, displayContext);
+			DefaultDisplayContext.teardownDisplayContext(req);
 		}
 	}
 

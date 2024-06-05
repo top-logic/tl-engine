@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.util.TopLogicServlet;
 
 /**
  * A {@link LogLineFilter} that accepts only log lines from the current session.
@@ -31,7 +32,7 @@ public class CurrentSessionLogLineFilter implements LogLineFilter {
 		if (session == null) {
 			return "[NO_SESSION]";
 		}
-		return session.getId();
+		return TopLogicServlet.hashSessionIdForLog(session.getId());
 	}
 
 }

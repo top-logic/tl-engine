@@ -179,7 +179,7 @@ public abstract class AbstractDisplayContext extends DefaultInteractionContext i
 			try {
 				return computation.run();
 			} finally {
-				DefaultDisplayContext.teardownDisplayContext(request, this);
+				DefaultDisplayContext.teardownDisplayContext(request);
 			}
 		}
 	}

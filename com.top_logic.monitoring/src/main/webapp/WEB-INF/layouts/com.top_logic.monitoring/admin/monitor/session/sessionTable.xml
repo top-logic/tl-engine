@@ -48,6 +48,7 @@
 				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			/>
 			<column name="id"
+				accessor="com.top_logic.monitoring.session.SessionIdAccessor"
 				columnWidth="300px"
 				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			/>

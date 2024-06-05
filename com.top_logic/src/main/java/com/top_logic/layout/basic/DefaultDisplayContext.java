@@ -9,14 +9,11 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CalledFromJSP;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
-import com.top_logic.basic.logging.LogConfigurator;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.layout.DisplayContext;
@@ -30,19 +27,6 @@ import com.top_logic.util.TLContextManager;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class DefaultDisplayContext extends AbstractDisplayContext {
-
-	/**
-	 * The name of log mark for the session id.
-	 * <p>
-	 * <em>When the value is changed, the Log4j configuration files have to be updated, as they use
-	 * the value.</em>
-	 * </p>
-	 * <p>
-	 * The value of this constant is used in Log4J configuration files to extract and log the
-	 * session id with every log statement.
-	 * </p>
-	 */
-	private static final String TL_SESSION_ID_LOG_MARK = "tl-session-id";
 
 	private static final String DISPLAY_CONTEXT_REQUEST_ATTRIBUTE = DisplayContext.class.getName();
 
@@ -153,12 +137,12 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * current thread.
 	 * 
 	 * <p>
-	 * Note: It is essential to call
-	 * {@link #teardownDisplayContext(HttpServletRequest, AbstractDisplayContext)} in a following
-	 * try-finally-block.
+	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
+	 * following try-finally-block.
 	 * </p>
 	 * 
-	 * @see #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest, HttpServletResponse)
+	 * @see #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest,
+	 *      HttpServletResponse)
 	 */
 	@CalledFromJSP
 	public static DefaultDisplayContext setupDisplayContext(ServletContext servletContext,
@@ -171,9 +155,8 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * current thread.
 	 * 
 	 * <p>
-	 * Note: It is essential to call
-	 * {@link #teardownDisplayContext(HttpServletRequest, AbstractDisplayContext)} in a following
-	 * try-finally-block.
+	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
+	 * following try-finally-block.
 	 * </p>
 	 */
 	public static DefaultDisplayContext setupDisplayContext(TLSubSessionContext sessionContext, ServletContext servletContext,
@@ -189,9 +172,8 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * Installs the given display context for the current thread.
 	 * 
 	 * <p>
-	 * Note: It is essential to call
-	 * {@link #teardownDisplayContext(HttpServletRequest, AbstractDisplayContext)} in a following
-	 * try-finally-block.
+	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
+	 * following try-finally-block.
 	 * </p>
 	 */
 	public static void setupDisplayContext(HttpServletRequest request, DisplayContext context) {
@@ -204,46 +186,21 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 			request.setAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE, context);
 		}
 		ThreadContextManager.getManager().setInteraction(context);
-		addSessionIdLogMark(request);
 	}
 
 	/**
-	 * Invalidates the given {@link AbstractDisplayContext} and removes it from the corresponding
-	 * request.
+	 * Invalidates the {@link DisplayContext} and removes it from the corresponding request.
 	 * 
 	 * @param request
 	 *        The request for which the given {@link DisplayContext} was
 	 *        {@link #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest, HttpServletResponse)
 	 *        set up}.
 	 */
-	public static void teardownDisplayContext(HttpServletRequest request, AbstractDisplayContext displayContext) {
+	public static void teardownDisplayContext(HttpServletRequest request) {
 		if (request != null) {
 			request.removeAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE);
 		}
 		ThreadContextManager.getManager().removeInteraction();
-		removeSessionIdLogMark();
-	}
-
-	private static void addSessionIdLogMark(HttpServletRequest request) {
-		String sessionId = getSessionId(request);
-		if (StringServices.isEmpty(sessionId)) {
-			return;
-		}
-		String logSnippet = "S(" + sessionId + ") ";
-		LogConfigurator.getInstance().addLogMark(TL_SESSION_ID_LOG_MARK, logSnippet);
-	}
-
-	private static void removeSessionIdLogMark() {
-		LogConfigurator.getInstance().removeLogMark(TL_SESSION_ID_LOG_MARK);
-	}
-
-	private static String getSessionId(HttpServletRequest request) {
-		if (request == null) {
-			/* This happens in tests. */
-			return null;
-		}
-		HttpSession session = request.getSession(false);
-		return session == null ? null : session.getId();
 	}
 
 	/**

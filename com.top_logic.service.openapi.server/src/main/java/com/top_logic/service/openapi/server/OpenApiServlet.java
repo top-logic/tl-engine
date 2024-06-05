@@ -12,6 +12,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.top_logic.basic.util.RunnableEx2;
+import com.top_logic.util.TopLogicServlet;
+
 /**
  * {@link HttpServlet} endpoint for the {@link OpenApiServer}.
  * 
@@ -22,7 +25,19 @@ import javax.servlet.http.HttpServletResponse;
 public class OpenApiServlet extends HttpServlet {
 
 	@Override
-	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(req,
+			() -> serviceWithLogMark(req, resp));
+	}
+
+	/**
+	 * The implementation of {@link #serviceWithLogMark(HttpServletRequest, HttpServletResponse)}
+	 * but with an enclosing log mark for the session id. See
+	 * {@link TopLogicServlet#withSessionIdLogMark(HttpServletRequest, RunnableEx2)} for details.
+	 */
+	protected void serviceWithLogMark(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
 		if (req.getPathInfo() == null) {
 			// Redirect "/myApp/api" to "/myApp/api/"
 			resp.sendRedirect(req.getRequestURI() + "/");

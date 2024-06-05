@@ -26,7 +26,6 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LayoutContext;
-import com.top_logic.layout.basic.AbstractDisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 
 /**
@@ -228,7 +227,7 @@ public class TLContextManager extends ThreadContextManager {
 			job.inContext();
 		} finally {
 			if (!existingDisplayContext) {
-				DefaultDisplayContext.teardownDisplayContext(req, (AbstractDisplayContext) displayContext);
+				DefaultDisplayContext.teardownDisplayContext(req);
 			} else {
 				displayContext.installSessionContext(formerSessionContext);
 			}
@@ -264,7 +263,7 @@ public class TLContextManager extends ThreadContextManager {
 			job.inContext();
 		} finally {
 			if (!existingDisplayContext) {
-				DefaultDisplayContext.teardownDisplayContext(req, (AbstractDisplayContext) displayContext);
+				DefaultDisplayContext.teardownDisplayContext(req);
 			} else {
 				displayContext.installSubSessionContext(formerSessionContext);
 			}

@@ -38,6 +38,7 @@ import com.top_logic.layout.messagebox.AbstractDialog;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
+import com.top_logic.mig.html.layout.DialogComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -383,6 +384,15 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 				result.addErrorMessage(I18NConstants.ERROR_DIALOG_NOT_CLOSABLE);
 				return result;
 			}
+
+			return getCloseDialogHandler(context, dialogModel);
+		}
+
+		/**
+		 * Checks if a programmable dialog has unsaved changes before it closes itself. For checks
+		 * in other dialogs see {@link DialogComponent.CleanupAction}.
+		 */
+		private HandlerResult getCloseDialogHandler(DisplayContext context, DialogModel dialogModel) {
 			AbstractDialog abstractDialog = AbstractDialog.getDialog(dialogModel);
 			if (abstractDialog instanceof FormHandler) {
 				FormHandler formHandler = (FormHandler) abstractDialog;

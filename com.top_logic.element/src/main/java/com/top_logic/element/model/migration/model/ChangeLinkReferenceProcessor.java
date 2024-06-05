@@ -31,6 +31,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.migration.data.TypePart;
 
 /**
@@ -97,6 +98,13 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 		try {
 			QualifiedPartName sourceConfig = config.getSourceRef();
 			QualifiedPartName targetConfig = config.getTargetRef();
+
+			Type sourceType = util.getTLTypeOrNull(connection, sourceConfig.getOwner());
+			if (sourceType == null) {
+				log.info("No such source type '" + sourceConfig.getOwner().getName() + "', skipping moving links for '"
+					+ sourceConfig.getName() + "'.", Log.WARN);
+				return;
+			}
 
 			TypePart sourceRef = util.getTLTypePartOrFail(connection, sourceConfig);
 			TypePart targetRef = util.getTLTypePartOrFail(connection, targetConfig);

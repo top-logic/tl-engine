@@ -371,7 +371,7 @@
 		</config>
 
 		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
-			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
 				<methods>
 					<method class="com.top_logic.layout.wysiwyg.ui.tlscript.I18NTranslate$Builder"
 						name="translate"

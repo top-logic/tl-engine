@@ -27,7 +27,7 @@
 		</config>
 		
 		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
-			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
 				<methods>
 					<method name="jmsSend" class="com.top_logic.services.jms.script.JMSSend$Builder"/>
 					<method name="jmsReceive" class="com.top_logic.services.jms.script.JMSReceive$Builder"/>

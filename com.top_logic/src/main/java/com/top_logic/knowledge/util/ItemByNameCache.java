@@ -159,7 +159,7 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 	}
 
 	@Override
-	protected DBKnowledgeBase kb() {
+	public DBKnowledgeBase kb() {
 		return _kb;
 	}
 

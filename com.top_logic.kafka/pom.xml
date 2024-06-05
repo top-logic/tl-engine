@@ -29,6 +29,10 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-model-search</artifactId>
+	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-element</artifactId>

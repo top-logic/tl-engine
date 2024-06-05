@@ -13,7 +13,7 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -58,7 +58,7 @@ public class TypeModelBuilder extends AbstractConfiguredInstance<TypeModelBuilde
         if (koType != null) {
 			// IGNORE FindBugs(RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT): For better portability.
             return WrapperFactory.getWrappersByType(koType,
-			        KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+			        PersistencyLayer.getKnowledgeBase());
         }
         return new ArrayList();
     }

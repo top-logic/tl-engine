@@ -23,7 +23,7 @@ import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.AttributeUpdateFactory;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLObject;
@@ -194,7 +194,7 @@ public class WrapperValuedAttributeFilter extends MetaAttributeFilter {
 			throw new IllegalArgumentException("Value for key " + KEY_WRAPPERTYPES + " must be a String!");
 		}
 		String[] theTypes = StringServices.toArray((String) theOTypes, StoredQuery.SEPARATOR);
-        KnowledgeBase  theKB      = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase  theKB      = PersistencyLayer.getKnowledgeBase();
 		List<String> theWrappers = StringServices.toList((String) theIDs, StoredQuery.SEPARATOR);
 		int len = theWrappers.size();
 

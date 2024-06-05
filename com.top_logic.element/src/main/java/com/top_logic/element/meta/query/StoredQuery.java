@@ -25,7 +25,7 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
 import com.top_logic.knowledge.service.db2.NoFlexData;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
@@ -192,7 +192,7 @@ public class StoredQuery extends StoredFlexWrapper {
      */
 	public static List getAllStoredQueries(KnowledgeBase aKB) {
         if (aKB == null) {
-            aKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+            aKB = PersistencyLayer.getKnowledgeBase();
         }
         Collection      allKOs = aKB.getAllKnowledgeObjects(STORED_QUERY_KO);
         return getWrappersFromCollection(allKOs);

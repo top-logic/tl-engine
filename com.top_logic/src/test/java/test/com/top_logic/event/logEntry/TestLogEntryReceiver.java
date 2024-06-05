@@ -20,7 +20,6 @@ import com.top_logic.event.bus.Bus;
 import com.top_logic.event.logEntry.LogEntry;
 import com.top_logic.event.logEntry.LogEntryReceiver;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -58,7 +57,7 @@ public class TestLogEntryReceiver extends TestLogHelper{
         	assertEquals("event not processed or not counted", start+1, end);  
         	
 			tx.commit();
-        	(KnowledgeBaseFactory.getInstance ().getDefaultKnowledgeBase ()).commit();
+        	(PersistencyLayer.getKnowledgeBase()).commit();
         } finally {
         	theBus.unsubscribe (receiver, ModelTrackingService.getTrackingService());              
         }

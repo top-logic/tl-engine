@@ -87,8 +87,7 @@ public class DefaultAnalyzeService<C extends DefaultAnalyzeService.Config<?>> ex
 		    return PersistencyLayer.getKnowledgeBase();
 		}
 		else {
-			return KnowledgeBaseFactory.getInstance().
-		                                      getKnowledgeBase(theKBName);
+			return KnowledgeBaseFactory.getInstance().getKnowledgeBase(theKBName);
 		}
 	}
     

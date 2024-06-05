@@ -15,7 +15,7 @@ import com.top_logic.element.layout.meta.expression.NewExpressionCommand;
 import com.top_logic.element.layout.meta.search.AttributedSearchResultSet;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.DisplayContext;
@@ -83,7 +83,7 @@ public class CreateReportCommand extends NewExpressionCommand {
 
 		if (context.checkAll()) {
 			try {
-				KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 				try (Transaction tx = kb.beginTransaction()) {
 					report = createNewReport(kb, context, aComponent);
 					if (report != null) {

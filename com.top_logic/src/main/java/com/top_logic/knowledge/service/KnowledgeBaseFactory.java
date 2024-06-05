@@ -237,13 +237,6 @@ public class KnowledgeBaseFactory extends ManagedClass {
 	}
 
 	/**
-     * Return the configured default KnowledgeBase.
-     */
-    public final KnowledgeBase getDefaultKnowledgeBase() {
-        return PersistencyLayer.getKnowledgeBase();
-    }
-
-    /**
      * Allow dynamic addition of a new KnowledgeBases.
      * 
      * This will not allow setting of the defaultKB.

@@ -29,7 +29,7 @@ import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -647,7 +647,7 @@ public class MessageStoreFormat extends Format implements MessageConstants {
 			}
 		}
 		
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		MetaObject objectType;
 		try {
 			objectType = kb.getMORepository().getMetaObject(typeName);

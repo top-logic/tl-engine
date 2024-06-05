@@ -40,7 +40,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -751,7 +751,7 @@ public class ReferenceFactory {
 		if (attributeIdParser.isAttributeIdParsable()) {
 			try {
 				TLID attributeId = IdentifierUtil.fromExternalForm(attributeIdParser.getAttributeId());
-				KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 				KnowledgeObject attribute =
 					kb.getKnowledgeObject(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE, attributeId);
 				if (attribute == null) {

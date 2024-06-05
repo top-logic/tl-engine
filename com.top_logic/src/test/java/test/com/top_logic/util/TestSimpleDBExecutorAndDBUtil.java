@@ -21,7 +21,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.SimpleDBExecutor;
 import com.top_logic.util.db.DBUtil;
 
@@ -305,7 +305,7 @@ public class TestSimpleDBExecutorAndDBUtil extends BasicTestCase {
 		String testDBUtiltableRef = sqlDialect.tableRef("TEST_DBUTIL");
 
 		assertFalse(DBUtil.executeQueryAsBoolean("SELECT * FROM " + testDBUtiltableRef + ""));
-        KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
         SimpleDBExecutor db = new SimpleDBExecutor();
 
         try {
@@ -482,7 +482,7 @@ public class TestSimpleDBExecutorAndDBUtil extends BasicTestCase {
 		DBHelper sqlDialect = sqlDialect();
 		String testDBUtiltableRef = sqlDialect.tableRef("TEST_DBUTIL");
 		assertFalse(DBUtil.executeQueryAsBoolean("SELECT * FROM " + testDBUtiltableRef));
-        KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
         SimpleDBExecutor db = new SimpleDBExecutor();
 
         try {

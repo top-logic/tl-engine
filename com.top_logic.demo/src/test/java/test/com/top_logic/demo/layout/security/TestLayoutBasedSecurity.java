@@ -18,7 +18,7 @@ import test.com.top_logic.layout.scripting.runtime.TestedApplicationSession;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.element.structured.wrap.StructuredElementWrapper;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -93,7 +93,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 
 		session = application.login(PersonManager.getManager().getRoot(), layoutName());
 
-		KnowledgeBase kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 		BoundMainLayout m = (BoundMainLayout) ((TestedApplicationSession) session).getMasterFrame();
 		Transaction t = kBase.beginTransaction();
 		m.initBoundComponents(kBase);
@@ -165,7 +165,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
     	@Override
 		public void performTest(ActionContext context) throws Exception {
 			// Get the Layouts
-			KnowledgeBase kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 
 	        BoundMainLayout theMain = (BoundMainLayout) context.getMainLayout();
 	        
@@ -279,7 +279,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	public static class StructureTestAction implements SimpleActionOp {
 		@Override
 		public void performTest(ActionContext context) throws Exception {
-			KnowledgeBase kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 
 			Transaction tx1 = kBase.beginTransaction();
 			StructuredElementWrapper theProject = DummyType1.newDummyType1("Project");

@@ -26,7 +26,7 @@ import com.top_logic.element.meta.kbbased.storage.SetStorage;
 import com.top_logic.element.meta.kbbased.storage.SingletonLinkStorage;
 import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
@@ -61,7 +61,7 @@ public class TestKBBasedReferenceMetaAttributes extends BasicTestCase {
      */
     public void testReferenceBuilderScenario() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull("KB is null!", theKB);
         
         startTime();

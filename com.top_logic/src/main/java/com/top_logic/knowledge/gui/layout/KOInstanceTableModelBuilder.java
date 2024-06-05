@@ -14,7 +14,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mig.html.ListModelBuilder;
@@ -68,7 +68,7 @@ public class KOInstanceTableModelBuilder extends AbstractConfiguredInstance<KOIn
 	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		// IGNORE FindBugs(RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT): For better portability.
-		return WrapperFactory.getWrappersByType(metaObjectName, KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+		return WrapperFactory.getWrappersByType(metaObjectName, PersistencyLayer.getKnowledgeBase());
 	}
 
 	@Override

@@ -23,7 +23,6 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -149,7 +148,7 @@ public class CurrencySystem extends ManagedClass {
 		Currency theCurrency = Currency.getCurrencyInstance(code);
 		if (theCurrency != null)
 			throw new IllegalArgumentException("Currency with the given code '" + code + "' already exists.");
-		return createCurrency(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase(), code, sortOrder);
+		return createCurrency(PersistencyLayer.getKnowledgeBase(), code, sortOrder);
 	}
 
 	/**

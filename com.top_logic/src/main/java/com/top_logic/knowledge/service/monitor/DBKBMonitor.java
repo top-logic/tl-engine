@@ -50,7 +50,7 @@ public class DBKBMonitor extends AbstractMonitorComponent {
             
             @Override
 			public Void run() {
-            	KnowledgeBaseFactory kbFactory = KnowledgeBaseFactory.getInstance();
+				KnowledgeBaseFactory kbFactory = KnowledgeBaseFactory.getInstance();
 				for (String kbName : kbFactory.getKnowledgeBaseNames()) {
 					MonitorMessage msg;
             		try {

@@ -20,7 +20,7 @@ import com.top_logic.element.layout.meta.search.PublishableFieldSupport;
 import com.top_logic.element.layout.meta.search.QueryUtils;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormContainer;
@@ -152,7 +152,7 @@ public class PublishableNewStoredReportComponent extends AbstractCreateComponent
 			String theMEType = theMastersMaster.getObjectType();
 			
 			String theName = (String) (aContext.getField(NAME_ATTRIBUTE)).getValue();
-			KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 			KnowledgeObject theObject = theKB.createKnowledgeObject(StoredReport.KO_TYPE);
 			StoredReport theStoredReport = (StoredReport) WrapperFactory.getWrapper(theObject);
 			storeOwner(theStoredReport);

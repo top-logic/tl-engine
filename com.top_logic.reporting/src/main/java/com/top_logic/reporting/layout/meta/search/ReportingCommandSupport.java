@@ -21,7 +21,7 @@ import com.top_logic.element.layout.meta.search.DeleteQueryCommandHandler;
 import com.top_logic.element.layout.meta.search.QueryUtils;
 import com.top_logic.element.layout.meta.search.SearchCommandHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
@@ -129,7 +129,7 @@ public class ReportingCommandSupport implements ReportConstants{
     			String theString = ReportWriter.writeReportConfig(theCCComp.getReportConfiguration());
     			theSelectedReport.setValue(StoredReport.ATTRIBUTE_REPORT, theString);
     			theSelectedReport.setBOType(theRSQComp.getObjectType());
-    			KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().commit();
+    			PersistencyLayer.getKnowledgeBase().commit();
     			theRSQComp.getFormContext().getField(REPORT_SELECTION_FIELD).setDisabled(false);
 			} 
 			catch (XMLStreamException x) {

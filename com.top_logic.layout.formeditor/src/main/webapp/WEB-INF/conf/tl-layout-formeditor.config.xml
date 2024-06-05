@@ -11,7 +11,7 @@
 		</config>
 		
 		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
-			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
 				<methods>
 					<method name="pdfExport" class="com.top_logic.layout.formeditor.export.pdf.script.PDFExportFunction$Builder"/>
 				</methods>

@@ -211,11 +211,8 @@ public class AdminElementComponent extends EditAttributedComponent {
 	 */
 	protected FormMember createNameField(StructuredElement anElement, ResPrefix resPrefix) {
         StringField theField = FormFactory.newStringField(AdminElementComponent.ELEMENT_NAME, /* mandatory */ true, /* immutable */ false, new StringLengthConstraint(1, 255));
-
         String theName = anElement.getName();
-        theField.setValue       (theName);
-        theField.setDefaultValue(theName);
-
+		theField.initializeField(theName);
         return (theField);
     }
 

@@ -114,13 +114,13 @@ public class LogEntryFilterComponent  extends FormComponent {
 
     @Override
 	public FormContext createFormContext() {
-        ComplexField theStartField  = FormFactory.newDateField(START_DATE, null, false);
+		ComplexField theStartField = FormFactory.newDateField(START_DATE, null, false);
         theStartField.setMandatory(true);
-        ComplexField theEndField    = FormFactory.newDateField(END_DATE, null, false);
+		ComplexField theEndField = FormFactory.newDateField(END_DATE, null, false);
         theEndField.setMandatory(true);
         LogEntryFilter theModel = (LogEntryFilter) getModel();
-        theStartField.setValue(theModel.getStartDate());
-        theEndField.setValue  (theModel.getEndDate());
+		theStartField.initializeField(theModel.getStartDate());
+		theEndField.initializeField(theModel.getEndDate());
 
 		DateComparisonDependency.buildStartEndWithEqualDependency(DateComparisonDependency.GRANULARITY_TYPE_DAY,
 			theStartField, theEndField);

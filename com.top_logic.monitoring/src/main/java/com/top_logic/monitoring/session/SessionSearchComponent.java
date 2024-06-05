@@ -122,7 +122,7 @@ public class SessionSearchComponent extends FormComponent implements Selectable 
 
 		// End date must not lay in some unknown future
 		ComplexField theTodayField = FormFactory.newDateField(START_DATE_FIELD, null, false);
-		theTodayField.setValue(theToday);
+		theTodayField.initializeField(theToday);
 
 		ComparisonDependency.buildStartEndWithEqualEqualDependency(theStartField, theEndField);
 		ComparisonDependency.buildStartEndWithEqualEqualDependency(theEndField, theTodayField);
@@ -132,8 +132,8 @@ public class SessionSearchComponent extends FormComponent implements Selectable 
 		aContext.addMember(theStartField);
 		aContext.addMember(theEndField);
 
-		theStartField.setValue(DateUtil.addDays(theToday, -7));
-		theEndField.setValue(theToday);
+		theStartField.initializeField(DateUtil.addDays(theToday, -7));
+		theEndField.initializeField(theToday);
 		theTimeRange.setAsSingleSelection(WEEKLY);
 
 		theEndField.addValueListener(new FieldChangeListener(theStartField));

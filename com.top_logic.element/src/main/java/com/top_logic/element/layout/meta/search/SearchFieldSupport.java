@@ -303,7 +303,7 @@ public class SearchFieldSupport {
 
             SelectField theColumnField = FormFactory.newSelectField(TABLE_COLUMNS, forSort, true, false);
 
-            theColumnField.setValue(theCurrent);
+			theColumnField.initializeField(theCurrent);
             theColumnField.setOptionLabelProvider(new MetaElementLabelProvider(DefaultResourceProvider.INSTANCE, aME, thePrefix));
             theColumnField.setOptionComparator(new MappedComparator(rmm, comp));
             theColumnField.setCustomOrder(true);

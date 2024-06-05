@@ -354,7 +354,8 @@ public class EditRolesProfileComponent extends EditComponent {
 					String theToolTip = CommandGroupResourceProvider.INSTANCE.getTooltip(theCommandGroup);
                     theBooleanField.setLabel(theLabel);
                     theBooleanField.setTooltip(theToolTip);
-                    theBooleanField.setValue(theRFCG == null ? Boolean.FALSE : Boolean.valueOf(theRFCG.contains(this.role)));
+					theBooleanField.initializeField(
+						theRFCG == null ? Boolean.FALSE : Boolean.valueOf(theRFCG.contains(this.role)));
                     nodeGroup.addMember(theBooleanField);
                 }
             }

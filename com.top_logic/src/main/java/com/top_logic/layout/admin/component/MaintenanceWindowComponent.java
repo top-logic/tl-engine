@@ -150,7 +150,7 @@ public class MaintenanceWindowComponent extends FormComponent {
         public FormContext createFormContext() {
             FormContext theContext = new FormContext("form", this.getResPrefix());
             StringField theField = FormFactory.newStringField(MIN_FIELD);
-            theField.setValue(DEFAULT_MIN_VALUE);
+			theField.initializeField(DEFAULT_MIN_VALUE);
             theField.addConstraint(IsPositiveIntegerConstraint.INSTANCE);
             theContext.addMember(theField);
             return theContext;

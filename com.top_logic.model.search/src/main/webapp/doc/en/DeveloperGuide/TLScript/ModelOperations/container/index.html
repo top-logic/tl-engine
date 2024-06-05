@@ -27,12 +27,11 @@
 <p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
 <p>The container of <code class="hljs inlineCode">object</code>. If <code class="hljs inlineCode">object</code> has no container, the function return <code class="hljs inlineCode">null</code>.</p>
 <h2>Examples</h2>
-<pre>	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    b = new(`my.module:MyClass`);
    $a.add(`my.module:MyClass#children`, $b);
    $b.container();
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> The object <code class="hljs inlineCode">a</code>.</p>
 <p><code class="hljs inlineCode">b</code> is entered here in the reference attribute <code class="hljs inlineCode">children</code> of <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">a</span></span> . <code class="hljs inlineCode">a</code> is the container of <code class="hljs inlineCode">b</code>.</p>

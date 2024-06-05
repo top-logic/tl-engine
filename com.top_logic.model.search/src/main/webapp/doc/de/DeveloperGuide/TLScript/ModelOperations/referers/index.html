@@ -36,10 +36,9 @@
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
 <p>Eine Menge von Objekten, die <code class="hljs inlineCode">object</code> im Attribut <code class="hljs inlineCode">attr</code> referenzieren.</p>
 <h2>Beispiele</h2>
-<pre>	<code>{
+<pre><code>{
    object = all(`my.module:MyType`).filter(element -&gt; $element.get(`my.module:MyType#myAttr`).isStringEqual("test"));
    $object.referers(`my.module:MyType#myAttr`);
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit allen Objekten, die das Objekt mit dem Namen "test" im Attribut <code class="hljs inlineCode">myAttr</code> referenzieren.</p>
 <h3></h3>

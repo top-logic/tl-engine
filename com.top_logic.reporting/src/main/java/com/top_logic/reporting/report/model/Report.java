@@ -647,7 +647,7 @@ public class Report implements ReportConstants {
     }
     
 //    private Collection getAllWrapperFor(String aType) {
-//        Collection theKOs    = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().getAllKnowledgeObjects(aType);
+//        Collection theKOs    = KnowledgeBaseFactory.getDefaultKnowledgeBase().getAllKnowledgeObjects(aType);
 //        ArrayList  theResult = new ArrayList(theKOs.size());
 //
 //        WrapperFactory theFactory = WrapperFactory;

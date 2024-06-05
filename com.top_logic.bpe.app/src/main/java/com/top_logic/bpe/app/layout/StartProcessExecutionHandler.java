@@ -24,7 +24,7 @@ import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -114,7 +114,7 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler {
 				
 				if (context instanceof Edge) {
 					
-					KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 					Transaction tx = null;
 					try {
 						tx = kb.beginTransaction();

@@ -34,7 +34,7 @@ import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -369,7 +369,7 @@ public class ElementSecurityStorage extends SecurityStorage {
         Logger.info("Computing MO rules...", ElementSecurityStorage.class);
 		StopWatch sw = StopWatch.createStartedWatch();
         int counterBOs = 0, counterRules = 0, counterExecs = 0, counterInserts = 0;
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         ElementAccessManager theAM = (ElementAccessManager)getAccessManager();
 
 		List<Object[]> batchInserts = new ArrayList<>();

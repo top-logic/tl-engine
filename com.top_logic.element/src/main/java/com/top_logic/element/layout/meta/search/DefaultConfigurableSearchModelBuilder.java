@@ -29,6 +29,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -225,7 +226,7 @@ public class DefaultConfigurableSearchModelBuilder<C extends DefaultConfigurable
 
 	/** The {@link KnowledgeBase} to use. */
 	protected final KnowledgeBase getKnowledgeBase() {
-		return KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		return PersistencyLayer.getKnowledgeBase();
 	}
 
 	/** The KO-type configured for the given {@link TLClass}. */

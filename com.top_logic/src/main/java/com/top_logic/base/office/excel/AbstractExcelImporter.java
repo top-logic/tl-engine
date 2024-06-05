@@ -19,7 +19,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
@@ -77,7 +77,7 @@ public abstract class AbstractExcelImporter {
         this.initImporter(aFile);
 
         PrintWriter   thePW = new PrintWriter(anOut);
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 
         try {
             if (this.doImport(thePW, theKB)) {

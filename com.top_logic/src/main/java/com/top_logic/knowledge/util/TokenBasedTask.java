@@ -20,7 +20,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -165,7 +165,7 @@ public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends
             Transaction theTX = null;
 
             if (useCommit) {
-            	theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+            	theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
             }
 
             try {

@@ -14,7 +14,6 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -40,7 +39,7 @@ public class TestGroup extends BasicTestCase {
 	
 	@Override
 	protected void tearDown() throws Exception {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
 		Transaction tx = kb.beginTransaction();
 		for (int usedId = startId; usedId < nextId; usedId++) {
@@ -62,7 +61,7 @@ public class TestGroup extends BasicTestCase {
 	}
 
 	public void testCreate() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
 		Transaction tx = kb.beginTransaction();
 		Person p1 = mkPerson();
@@ -83,7 +82,7 @@ public class TestGroup extends BasicTestCase {
 	}
 
 	public void testContainmentSafety() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
 		Transaction tx = kb.beginTransaction();
 		Person p1 = mkPerson();
@@ -103,7 +102,7 @@ public class TestGroup extends BasicTestCase {
 	}
 	
 	public void testPreventRecursion0() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
 		Transaction tx = kb.beginTransaction();
 		Person p1 = mkPerson();
@@ -120,7 +119,7 @@ public class TestGroup extends BasicTestCase {
 	}
 	
 	public void testPreventRecursion1() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
 		Transaction tx = kb.beginTransaction();
 		Person p1 = mkPerson();
@@ -141,7 +140,7 @@ public class TestGroup extends BasicTestCase {
 	}
 
 	public void testPreventRecursion2() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
 		Transaction tx = kb.beginTransaction();
 		Person p1 = mkPerson();
@@ -175,7 +174,7 @@ public class TestGroup extends BasicTestCase {
 	 * @see "Ticket #3350: Person.getRepresentativeGroup() überprüft nur auf (nicht eindeutigen) Namen"
 	 */
 	public void testRepresentativeGroup() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
 		Person p1;
 		{

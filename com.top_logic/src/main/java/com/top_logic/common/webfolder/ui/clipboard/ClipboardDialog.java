@@ -21,7 +21,7 @@ import com.top_logic.knowledge.gui.layout.clipboard.FindWebFolderVisitor;
 import com.top_logic.knowledge.gui.layout.webfolder.ClearClipboardHandler;
 import com.top_logic.knowledge.gui.layout.webfolder.WebFolderAware;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
 import com.top_logic.knowledge.wrap.WebFolder;
@@ -379,7 +379,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	
 	        if (theField instanceof TableField) {
 	            FormTableModel theModel = (FormTableModel) ((TableField) theField).getTableModel();
-	            Transaction    theTX    = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+	            Transaction    theTX    = PersistencyLayer.getKnowledgeBase().beginTransaction();
 	
 	            try {
 	                Clipboard     theBoard   = Clipboard.getInstance();
@@ -456,7 +456,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	
 	        if (theField instanceof TableField) {
 	            FormTableModel theModel = (FormTableModel) ((TableField) theField).getTableModel();
-	            Transaction    theTX    = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+	            Transaction    theTX    = PersistencyLayer.getKnowledgeBase().beginTransaction();
 	
 	            try {
 	                int           theRows    = theModel.getRowCount();

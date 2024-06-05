@@ -47,7 +47,7 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
     @Deprecated
     protected void initPersons() {
 //        TokenContext     theTokenCtxt   = null;
-//        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+//        KnowledgeBase theKB = KnowledgeBaseFactory.getDefaultKnowledgeBase();
 //        theKB.begin();
 //        try {
 //            long start = System.currentTimeMillis();

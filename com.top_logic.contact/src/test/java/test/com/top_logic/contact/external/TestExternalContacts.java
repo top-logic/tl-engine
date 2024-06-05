@@ -28,7 +28,6 @@ import com.top_logic.contact.external.ExternalContacts;
 import com.top_logic.contact.external.PlainExternalContact;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
@@ -61,7 +60,7 @@ public class TestExternalContacts extends BasicTestCase {
 	}
 
 	private DBKnowledgeBase getKnowledgeBase() {
-		return (DBKnowledgeBase) KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		return (DBKnowledgeBase) PersistencyLayer.getKnowledgeBase();
 	}
 	
 	public void testCreateAssign() throws SQLException, KnowledgeBaseException, Throwable {
@@ -107,7 +106,7 @@ public class TestExternalContacts extends BasicTestCase {
 			cleanupCreate();
 
 			Transaction beginTransaction =
-				KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+				PersistencyLayer.getKnowledgeBase().beginTransaction();
 
 			ExternalContacts.newContact(c1);
 			ExternalContacts.newContact(c2);
@@ -166,7 +165,7 @@ public class TestExternalContacts extends BasicTestCase {
 		
 		Assert.assertEquals(setC2, ExternalContacts.getCurrentContacts(objectId, attributeId));
 		
-		beginTransaction = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+		beginTransaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		HashSet setC1C3 = new HashSet(Arrays.asList(new ExternalContact[] {c1, c3}));
 		Date date2 = new GregorianCalendar(2007, GregorianCalendar.APRIL, 1).getTime();
 		Assert.assertEquals(setC1C3, 
@@ -175,7 +174,7 @@ public class TestExternalContacts extends BasicTestCase {
 
 		Assert.assertEquals(setC1C3, ExternalContacts.getCurrentContacts(objectId, attributeId));
 
-		beginTransaction = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+		beginTransaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		HashSet setC1C2C3 = new HashSet(Arrays.asList(new ExternalContact[] {c1, c2, c3}));
 		Date date3 = new GregorianCalendar(2007, GregorianCalendar.APRIL, 2).getTime();
 		Assert.assertEquals(setC2, 
@@ -184,7 +183,7 @@ public class TestExternalContacts extends BasicTestCase {
 
 		Assert.assertEquals(setC1C2C3, ExternalContacts.getCurrentContacts(objectId, attributeId));
 		
-		beginTransaction = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+		beginTransaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		Date date4 = new GregorianCalendar(2007, GregorianCalendar.MAY, 1).getTime();
 		Assert.assertEquals(Collections.EMPTY_SET, 
 			ExternalContacts.updateContacts(objectId, attributeId, date4, setC2));
@@ -196,13 +195,13 @@ public class TestExternalContacts extends BasicTestCase {
 	}
 
 	private void cleanupAssignments(TLID objectId) throws SQLException, KnowledgeBaseException {
-		Transaction beginTransaction = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+		Transaction beginTransaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		ExternalContacts.dropObjectHistory(objectId);
 		beginTransaction.commit();
 	}
 
 	private void cleanupCreate() throws SQLException, KnowledgeBaseException {
-		Transaction beginTransaction = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+		Transaction beginTransaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		ExternalContacts.dropContact(c1.getUNumber(), "test");
 		ExternalContacts.dropContact(c2.getUNumber(), "test");
 		ExternalContacts.dropContact(c3.getUNumber(), "test");

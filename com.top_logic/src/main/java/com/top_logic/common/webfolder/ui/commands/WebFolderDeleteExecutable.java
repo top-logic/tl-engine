@@ -14,7 +14,7 @@ import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -55,7 +55,7 @@ public class WebFolderDeleteExecutable extends AbstractFolderDelete {
 				}
 
 				HandlerResult theResult = new HandlerResult();
-				KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+				KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 
 				Transaction theTX = theKB.beginTransaction();
 				try {

@@ -189,7 +189,7 @@ public class SimpleDBExecutor {
      * Convenience method to call begin with the default knowledge base as commit handler.
      */
     public void beginWithDefaultKB() {
-        beginTransaction((CommitHandler)KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+        beginTransaction((CommitHandler)PersistencyLayer.getKnowledgeBase());
     }
 
 

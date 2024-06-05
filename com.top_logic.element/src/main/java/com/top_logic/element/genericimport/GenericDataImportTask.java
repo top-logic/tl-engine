@@ -28,7 +28,7 @@ import com.top_logic.element.genericimport.interfaces.GenericValidator.Validatio
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 import com.top_logic.knowledge.objects.CreateException;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.progress.ProgressInfo;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.sched.task.impl.TaskImpl;
@@ -203,7 +203,7 @@ public class GenericDataImportTask extends TaskImpl implements ProgressInfo, Gen
         this.invalid  = 0;
         this.ignored  = 0;
 
-        this.knowledgeBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        this.knowledgeBase = PersistencyLayer.getKnowledgeBase();
     }
 
     /**

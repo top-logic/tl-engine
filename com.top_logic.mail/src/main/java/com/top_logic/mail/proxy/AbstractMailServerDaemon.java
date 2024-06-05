@@ -40,7 +40,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.util.TokenBasedTask;
 import com.top_logic.mail.base.MailFolder;
@@ -760,7 +760,7 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 			int theMailFail = 0;
 			int theMeetFail = 0;
 
-            KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+            KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 			try (Transaction theTX = theKB.beginTransaction()) {
 				for (MailServerMessage theMessage : MailReceiverService.getMailReceiverInstance()
 					.convertMessages(anEvent.getMessages())) {

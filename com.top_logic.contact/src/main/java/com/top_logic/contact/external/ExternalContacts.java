@@ -34,7 +34,7 @@ import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -146,7 +146,7 @@ public class ExternalContacts implements Reloadable {
 	}
 
 	public static HashSet<ExternalContact> updateContacts(TLID objectId, TLID attributeId, Date notBefore, Set<ExternalContact> contacts) throws SQLException {
-		KnowledgeBase db = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
 		
 		HashSet<ExternalContact> updated = new HashSet<>();
@@ -208,7 +208,7 @@ public class ExternalContacts implements Reloadable {
 	}
 	
 	public static Set<ExternalContact> getCurrentContacts(TLID objectId, TLID attributeId) throws SQLException {
-		ConnectionPool pool = KBUtils.getConnectionPool(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+		ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
         PooledConnection ctx = pool.borrowReadConnection();
 		try {
@@ -228,7 +228,7 @@ public class ExternalContacts implements Reloadable {
 	}
 
     public static Set<ExternalContact> getContactHistory(TLID objectId, TLID attributeId) throws SQLException {
-        ConnectionPool pool = KBUtils.getConnectionPool(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+        ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
         PooledConnection ctx = pool.borrowReadConnection();
     
@@ -292,7 +292,7 @@ public class ExternalContacts implements Reloadable {
     }
 	
 	public static void dropObjectHistory(TLID objectId) throws SQLException {
-		KnowledgeBase db = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
 		PooledConnection connection = ctx.getConnection();
 		
@@ -305,7 +305,7 @@ public class ExternalContacts implements Reloadable {
 	}
 
 	public static void newContact(ExternalContact contact) throws SQLException {
-		KnowledgeBase db = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
         
 		PooledConnection connection = ctx.getConnection();
@@ -318,7 +318,7 @@ public class ExternalContacts implements Reloadable {
 	}
 
 	public static void dropContact(String uNumber, String aSystem) throws SQLException {
-		KnowledgeBase db = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
 		
 		PooledConnection connection = ctx.getConnection();
@@ -332,7 +332,7 @@ public class ExternalContacts implements Reloadable {
 	}
 	
 	public static void dropAllContacts() throws SQLException {
-		KnowledgeBase db = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
 		
 		PooledConnection connection = ctx.getConnection();
@@ -343,7 +343,7 @@ public class ExternalContacts implements Reloadable {
 	}
 	
 	public static void dropAllContactsBySysID(String aSysID) throws SQLException {
-		KnowledgeBase db = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
 		
 		PooledConnection connection = ctx.getConnection();
@@ -359,7 +359,7 @@ public class ExternalContacts implements Reloadable {
 	}
 	
 	public static ExternalContact getContact(String uNumber, String aSystemID) throws SQLException {
-	    ConnectionPool pool = KBUtils.getConnectionPool(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+	    ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
         PooledConnection ctx = pool.borrowReadConnection();
         try {
@@ -390,7 +390,7 @@ public class ExternalContacts implements Reloadable {
 	}
 	
 	public static List<ExternalContact> getAllContacts() throws SQLException {
-		ConnectionPool pool = KBUtils.getConnectionPool(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+		ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
 		PooledConnection ctx = pool.borrowReadConnection();
 		try {
@@ -406,7 +406,7 @@ public class ExternalContacts implements Reloadable {
 	}
 
 	public static List<String> getAllSystemIDs(boolean used) throws SQLException {
-	    ConnectionPool pool = KBUtils.getConnectionPool(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+	    ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
         PooledConnection ctx = pool.borrowReadConnection();
         try {
             
@@ -456,7 +456,7 @@ public class ExternalContacts implements Reloadable {
 	 * </ul>
 	 */
 	public static List<ExternalContact> getMatchingContacts(String pattern) throws SQLException, IOException {
-	    ConnectionPool pool = KBUtils.getConnectionPool(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+	    ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
         PooledConnection ctx = pool.borrowReadConnection();
         try {

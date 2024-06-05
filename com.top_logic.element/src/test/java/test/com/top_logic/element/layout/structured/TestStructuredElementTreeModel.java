@@ -22,7 +22,7 @@ import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.element.structured.StructuredElementFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 
 /**
@@ -177,7 +177,7 @@ public class TestStructuredElementTreeModel extends BasicTestCase {
 	}
 
 	private void createStructuredElementHierarchy() throws KnowledgeBaseException {
-		KnowledgeBase knowledgeBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
 		Transaction transaction = knowledgeBase.beginTransaction();
 		try {
 			root = ((StructuredElementFactory) DynamicModelService.getFactoryFor("projElement")).getRoot();
@@ -206,7 +206,7 @@ public class TestStructuredElementTreeModel extends BasicTestCase {
 	}
 
 	private void removeStructuredElementHierarchy() throws KnowledgeBaseException {
-		KnowledgeBase knowledgeBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
 		Transaction transaction = knowledgeBase.beginTransaction();
 		try {
 			for (StructuredElement project : projects) {

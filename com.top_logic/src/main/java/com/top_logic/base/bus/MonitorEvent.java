@@ -19,7 +19,7 @@ import com.top_logic.event.bus.BusEvent;
 import com.top_logic.event.bus.Sender;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -300,7 +300,7 @@ public class MonitorEvent extends BusEvent {
             return (null);
         }
         else {
-            return (KnowledgeBaseFactory.getInstance ().getDefaultKnowledgeBase ().getKnowledgeObject(aType, anID));
+            return (PersistencyLayer.getKnowledgeBase().getKnowledgeObject(aType, anID));
         }
     }    
 

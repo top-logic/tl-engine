@@ -514,7 +514,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 			try {
 				openAPISpec = getOpenAPISpec(dc);
 			} finally {
-				DefaultDisplayContext.teardownDisplayContext(req, dc);
+				DefaultDisplayContext.teardownDisplayContext(req);
 			}
 		}
 

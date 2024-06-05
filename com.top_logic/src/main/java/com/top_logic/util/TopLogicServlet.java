@@ -6,6 +6,10 @@
 package com.top_logic.util;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -15,6 +19,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.accesscontrol.LoginPageServlet;
@@ -31,8 +37,10 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.logging.LogConfigurator;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.RunnableEx2;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ProcessingInfo;
 import com.top_logic.layout.ProcessingKind;
@@ -53,6 +61,19 @@ import com.top_logic.util.filter.CompressionServletResponseWrapper;
 public class TopLogicServlet extends HttpServlet {
 
 	/**
+	 * The name of log mark for the session id.
+	 * <p>
+	 * <em>When the value is changed, the Log4j configuration files have to be updated, as they use
+	 * the value.</em>
+	 * </p>
+	 * <p>
+	 * The value of this constant is used in Log4J configuration files to extract and log the
+	 * session id with every log statement.
+	 * </p>
+	 */
+	private static final String TL_SESSION_ID_LOG_MARK = "tl-session-id";
+
+	/**
 	 * Servlet-parameter for enabling adaptive compression.
 	 */
     public static final String ALWAYS_ZIP_PARAM = "alwaysZip";
@@ -66,9 +87,6 @@ public class TopLogicServlet extends HttpServlet {
     /** Subclasses may configure there maximal Service time here  */
     public static final String MAX_SERVICE_ATTR = TopLogicServlet.class.getName() + "maxServiceTime";
 
-    /** Special handling when we are called just once */
-    public static final Integer COUNT1 = Integer.valueOf(1);
-    
     /** When this amount of milli-seconds is exceeded a warning will be logged. */
     protected long maxServiceTime;
 
@@ -132,9 +150,9 @@ public class TopLogicServlet extends HttpServlet {
 	/**
 	 * Validate request and set context information for current thread.
 	 * 
-	 * @param aRequest
+	 * @param request
 	 *        The send request.
-	 * @param aResponse
+	 * @param response
 	 *        The send response.
 	 * 
 	 * @throws ServletException
@@ -143,19 +161,27 @@ public class TopLogicServlet extends HttpServlet {
 	 *         If an input or output error is detected.
 	 */
 	@Override
-	public final void service(final HttpServletRequest aRequest, final HttpServletResponse aResponse) throws IOException, ServletException {
-		setCachePolicy(aResponse);
+	public final void service(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(request,
+			() -> serviceWithLogMark(request, response));
+	}
 
-		final TLSessionContext session = this.getSession(aRequest, aResponse);
+	private void serviceWithLogMark(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		setCachePolicy(response);
+
+		final TLSessionContext session = this.getSession(request, response);
 		if (session == null) {
 			// User has no session.
-			redirectToLogout(aRequest, aResponse);
+			redirectToLogout(request, response);
 			return;
 		}
 
 		TLSubSessionContext subession = TLContextManager.getSubSession();
 		if (subession == null) {
-			enterContext(session, aRequest, aResponse);
+			enterContext(session, request, response);
 			return;
 		}
 
@@ -165,13 +191,59 @@ public class TopLogicServlet extends HttpServlet {
 			Logger.error(
 				"Enforcing logout due to session missmatch: " + subession.getPerson() + " vs. "
 					+ session.getOriginalUser(), TopLogicServlet.class);
-			invalidateSession(aRequest);
-			redirectToLogout(aRequest, aResponse);
+			invalidateSession(request);
+			redirectToLogout(request, response);
 			return;
 		}
 
 		// Recursive call, through a request dispatcher include call.
-		inContext(aRequest, aResponse);
+		inContext(request, response);
+	}
+
+	/** Sets a log mark with the session id while executing the runnable. */
+	public static <E1 extends Throwable, E2 extends Throwable> void withSessionIdLogMark(HttpServletRequest request,
+			RunnableEx2<E1, E2> runnable) throws E1, E2 {
+		LogConfigurator logConfigurator = LogConfigurator.getInstance();
+		String oldLogMark = logConfigurator.getLogMark(TL_SESSION_ID_LOG_MARK);
+		logConfigurator.addLogMark(TL_SESSION_ID_LOG_MARK, getSessionIdForLog(request));
+		try {
+			runnable.run();
+		} finally {
+			if (oldLogMark == null) {
+				logConfigurator.removeLogMark(TL_SESSION_ID_LOG_MARK);
+			} else {
+				logConfigurator.addLogMark(TL_SESSION_ID_LOG_MARK, oldLogMark);
+			}
+		}
+	}
+
+	private static String getSessionIdForLog(HttpServletRequest request) {
+		if (request == null) {
+			/* This happens in tests. */
+			return null;
+		}
+		String sessionId = getSessionId(request);
+		if (StringServices.isEmpty(sessionId) || sessionId.equals(NO_SESSION)) {
+			return null;
+		}
+		return hashSessionIdForLog(sessionId);
+	}
+
+	/**
+	 * The session id in a form in which it can be logged.
+	 * <p>
+	 * The session id must not be logged directly. That would be a security hole. It would allow a
+	 * reader of the log to take over the session.
+	 * </p>
+	 */
+	public static String hashSessionIdForLog(String rawSessionId) {
+		try {
+			MessageDigest digester = MessageDigest.getInstance(MessageDigestAlgorithms.SHA3_256);
+			byte[] digest = digester.digest(rawSessionId.getBytes(StandardCharsets.UTF_8));
+			return "S(" + Base64.getEncoder().encodeToString(digest) + ") ";
+		} catch (NoSuchAlgorithmException exception) {
+			throw new RuntimeException(exception);
+		}
 	}
 
 	/**

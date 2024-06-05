@@ -350,7 +350,8 @@ public class AJAXServlet extends TopLogicServlet {
 									"', arguments: '" + logArguments(command) +
 									"', source: '" + command.getContextComponentID() +
 									"', target: '" + command.getTargetComponentID() +
-									"', session: " + sessionId + ',' + userAgent + ')', AJAXServlet.class);
+									"', " + userAgent + ')',
+									AJAXServlet.class);
 
 								continue;
 							}
@@ -368,8 +369,8 @@ public class AJAXServlet extends TopLogicServlet {
 				unlock(lock, key, ajaxRequest, rxSequence, rootHandler, sessionId, userAgent);
 			}
 		} catch (FatalXMLError ex) {
-			Logger.error("IOException or TagException during evaluating result actions. (session: " + sessionId
-				+ ',' + userAgent + ')', ex, AJAXServlet.class);
+			Logger.error("IOException or TagException during evaluating result actions. (" + userAgent + ')',
+				ex, AJAXServlet.class);
 			throw (IOException) new IOException().initCause(ex);
         } catch (Throwable ex) {
             // FactoryConfigurationError
@@ -381,8 +382,7 @@ public class AJAXServlet extends TopLogicServlet {
                 ajaxRequest = null;
             }
             else {
-				Logger.error("Error while parsing AJAX command. (session: " + sessionId + ',' + userAgent + ')', ex,
-					AJAXServlet.class);
+				Logger.error("Error while parsing AJAX command. (" + userAgent + ')', ex, AJAXServlet.class);
             }
 
             clearParsers(); // Throw away parsers, as their state is undefined.
@@ -424,8 +424,8 @@ public class AJAXServlet extends TopLogicServlet {
 		try {
 			return lock(lock, ajaxRequest, rootHandler);
 		} catch (InterruptedException ex) {
-			Logger.info("Wait for sequence number becoming valid was interrupted. (sequence: '" + rxSequence
-				+ "', session: " + sessionId + ',' + userAgent + ')', AJAXServlet.class);
+			Logger.info("Wait for sequence number becoming valid was interrupted. (sequence: '" + rxSequence + "', "
+				+ userAgent + ')', AJAXServlet.class);
 			TagWriter out = MainLayout.getTagWriter(request, response);
 			UpdateWriter writer = newUpdateWriter(rxSequence, out, encoding);
 			writer.setRequestDropped();
@@ -487,8 +487,6 @@ public class AJAXServlet extends TopLogicServlet {
 		out.append(commonSource);
 		out.append(", targetComponent: '");
 		out.append(commonTarget);
-		out.append("', session: ");
-		out.append(sessionId);
 		out.append(',');
 		out.append(userAgent);
 		out.append(')');
@@ -607,7 +605,7 @@ public class AJAXServlet extends TopLogicServlet {
 				Logger.info("Unable to find component for request " +
 					"(source: '" + ajaxRequest.getContextComponentID() +
 					"', target: '" + ajaxRequest.getTargetComponentID() +
-					"', session: " + sessionId + ',' + userAgent + ')', AJAXServlet.class);
+					"', " + userAgent + ')', AJAXServlet.class);
 			} else {
 				// Associate the context component with the current request. This is
 				// required at least for the creation of the DisplayContext, see below.
@@ -620,8 +618,8 @@ public class AJAXServlet extends TopLogicServlet {
 		    // the path to the requested component is  (most likely) not valid any more
 		    // the request can be ignored. (ASK TSA,BHU)
 			Logger.info(
-				"Request for path could not be handled, the component is most likely no longer visible. (session: "
-						+ sessionId + ',' + userAgent + ')', AJAXServlet.class);
+				"Request for path could not be handled, the component is most likely no longer visible. ("
+					+ userAgent + ')', AJAXServlet.class);
 		    assert false: "Request for invalid path, the request will be ignored.";
 			return null;
 		}
@@ -995,10 +993,6 @@ public class AJAXServlet extends TopLogicServlet {
             logMessage.append("layout: '");
             logMessage.append(aComponent.getLocation());
             logMessage.append('\'');
-            
-            first = separator(logMessage, first);
-            logMessage.append("session: ");
-			logMessage.append(TopLogicServlet.getSessionId(context.asRequest()));
             
 			logMessage.append(", ");
 			logMessage.append(context.getUserAgent());

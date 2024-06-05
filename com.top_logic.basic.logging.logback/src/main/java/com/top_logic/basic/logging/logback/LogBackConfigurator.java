@@ -32,6 +32,11 @@ public class LogBackConfigurator extends LogConfigurator {
 	}
 
 	@Override
+	public String getLogMark(String key) {
+		return null; // Not supported.
+	}
+
+	@Override
 	public void addLogMark(String key, String value) {
 		// Not supported.
 	}

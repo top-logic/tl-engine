@@ -96,6 +96,7 @@ import com.top_logic.layout.scripting.runtime.action.DynamicActionOp;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TopLogicServlet;
 
 /**
  * An application under test.
@@ -517,7 +518,13 @@ public class TestedApplication implements Application {
 
 		@Override
 		protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-			// Initialize implementation with the conainer loader installed in the
+			/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+			TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(req,
+				() -> serviceWithLogMark(req, resp));
+		}
+
+		private void serviceWithLogMark(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+			// Initialize implementation with the container loader installed in the
 			// current thread. This is required to have the corresponding
 			// classes in class path at the time compiled JSPs are loaded.
 			try {

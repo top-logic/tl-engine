@@ -81,14 +81,10 @@ public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants 
 			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(req);
 			handlersRegistry.handleContent(displayContext, null, requestedUri);
 		} catch (RuntimeException ex) {
-			Logger.error(
-				"Problem handling request (session: " + TopLogicServlet.getSessionId(req) + "): " + ex.getMessage(),
-				ex, TLLayoutServlet.class);
+			Logger.error("Problem handling request: " + ex.getMessage(), ex, TLLayoutServlet.class);
 			throw ex;
 		} catch (Error ex) {
-			Logger.error(
-				"Error handling request (session: " + TopLogicServlet.getSessionId(req) + "): " + ex.getMessage(), ex,
-				TLLayoutServlet.class);
+			Logger.error("Error handling request: " + ex.getMessage(), ex, TLLayoutServlet.class);
 			throw ex;
 		}
 	}

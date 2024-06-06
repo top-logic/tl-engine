@@ -44,7 +44,7 @@ public class CreateObject extends AbstractObjectCreation {
 		if (transientObject) {
 			return TransientObjectFactory.INSTANCE.createObject(type, context);
 		} else {
-			return ModelService.getInstance().getFactory().createObject(type, context, null);
+			return ModelService.getInstance().getFactory().createObject(type, context);
 		}
 	}
 

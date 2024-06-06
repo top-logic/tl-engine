@@ -30,6 +30,7 @@ import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.cache.TLModelCacheService;
@@ -234,11 +235,11 @@ public class PersistentObjectImpl {
 		PersistentScope.removeMetaElement(self, aMetaElement);
 	}
 
-	public static TLClass getMetaElement(TLObject self, String aMetaElementType) {
+	public static TLClass getMetaElement(TLScope self, String aMetaElementType) {
 		return PersistentScope.getMetaElement(self, aMetaElementType);
 	}
 
-	public static Set<TLClass> getMetaElements(TLObject self) {
+	public static Set<TLClass> getMetaElements(TLScope self) {
 		return PersistentScope.getMetaElements(self);
 	}
 

@@ -7,9 +7,12 @@ package com.top_logic.model.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.dob.meta.MOClass;
@@ -54,7 +57,18 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
-		return directValue(part);
+		Object directValue = directValue(part);
+		if (directValue == null) {
+			// Value may not be set yet
+			if (part.isMultiple()) {
+				if (part.isOrdered()) {
+					return Collections.emptyList();
+				} else {
+					return Collections.emptySet();
+				}
+			}
+		}
+		return directValue;
 	}
 
 	private Object directValue(TLStructuredTypePart part) {
@@ -67,6 +81,7 @@ public class TransientTLObjectImpl extends TransientObject {
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object newValue) {
 		checkDerived(part);
+		newValue = ensureMultiplicity(part, newValue);
 		Object oldValue = directUpdate(part, newValue);
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
@@ -80,6 +95,35 @@ public class TransientTLObjectImpl extends TransientObject {
 					((TransientTLObjectImpl) newTarget).directAdd(otherRef, this);
 				}
 			}
+		}
+	}
+
+	private Object ensureMultiplicity(TLStructuredTypePart part, Object newValue) {
+		if (part.isMultiple()) {
+			Collection<Object> result;
+			if (part.isOrdered()) {
+				if (newValue instanceof List<?>) {
+					return newValue;
+				}
+				// Create mutable collection to be able to support tAdd and tRemove.
+				result = new ArrayList<>();
+			} else {
+				if (newValue instanceof Set<?>) {
+					return newValue;
+				}
+				// Create mutable collection to be able to support tAdd and tRemove.
+				result = new HashSet<>();
+			}
+			if (newValue instanceof Collection<?>) {
+				result.addAll((Collection<?>) newValue);
+			} else if (newValue == null) {
+				// Nothing to add.
+			} else {
+				throw new IllegalArgumentException();
+			}
+			return result;
+		} else {
+			return CollectionUtilShared.getSingleValueFrom(newValue);
 		}
 	}
 
@@ -114,6 +158,8 @@ public class TransientTLObjectImpl extends TransientObject {
 			if (otherRef != null) {
 				((TransientTLObjectImpl) value).directRemove(otherRef, this);
 			}
+		} else {
+			super.tRemove(part, value);
 		}
 	}
 
@@ -218,4 +264,13 @@ public class TransientTLObjectImpl extends TransientObject {
 	public MOStructure tTable() {
 		return TRANSIENT;
 	}
+
+	/**
+	 * {@link IllegalArgumentException} to throw when for a {@link TLStructuredTypePart#isMultiple()
+	 * multiple} neither a {@link Collection} nor <code>null</code> is given.
+	 */
+	public static IllegalArgumentException errorNoCollection() {
+		return new IllegalArgumentException("Value must be a collection.");
+	}
+
 }

@@ -28,7 +28,11 @@ public abstract class AbstractLinkRenderer implements LinkRenderer {
 	 */
 	protected <B> void writeTooltipAttributes(DisplayContext context, TagWriter out, Link button) throws IOException {
 		String tooltip = button.getTooltip();
-		if (!StringServices.isEmpty(tooltip)) {
+		String label = button.getLabel();
+
+		if (StringServices.isEmpty(tooltip)) {
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, label);
+		} else {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
 				button.getTooltipCaption());
 		}

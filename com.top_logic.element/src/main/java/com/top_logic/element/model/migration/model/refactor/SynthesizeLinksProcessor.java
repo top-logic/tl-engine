@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.model.migration.model;
+package com.top_logic.element.model.migration.model.refactor;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
@@ -26,6 +26,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLInsert;
@@ -53,13 +54,14 @@ import com.top_logic.util.TLContext;
  *
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
-public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProcessor.Config<?>>
+public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<SynthesizeLinksProcessor.Config<?>>
 		implements MigrationProcessor {
 
 	/**
-	 * Configuration options for {@link AddLinksProcessor}.
+	 * Configuration options for {@link SynthesizeLinksProcessor}.
 	 */
-	public interface Config<I extends AddLinksProcessor> extends PolymorphicConfiguration<I> {
+	@TagName("synthesize-links")
+	public interface Config<I extends SynthesizeLinksProcessor> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * Qualified name of the reference for that links should be added.
@@ -129,7 +131,7 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 	private static String SORT_ORDER_DB_NAME = "SORT_ORDER";
 
 	/**
-	 * Creates a {@link AddLinksProcessor} from configuration.
+	 * Creates a {@link SynthesizeLinksProcessor} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -137,7 +139,7 @@ public class AddLinksProcessor extends AbstractConfiguredInstance<AddLinksProces
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public AddLinksProcessor(InstantiationContext context, Config<?> config) {
+	public SynthesizeLinksProcessor(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 

@@ -159,6 +159,9 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 				return result;
 			}
 		}
+		if (componentName.equals(componentRoot.getName())) {
+			return componentRoot;
+		}
 		ComponentSearch search = new ComponentSearch();
 		componentRoot.visitChildrenRecursively(search);
 		LayoutComponent component = search.getResult();

@@ -66,7 +66,7 @@ public class FieldCopier extends AbstractFormMemberVisitor<FormMember, String> {
 	public static FormField copyField(FormField field, String name) {
 		FormField copiedField = (FormField) field.visit(INSTANCE, name);
 		if (copiedField != null) {
-			copiedField.setValue(field.getValue());
+			copiedField.initializeField(field.getValue());
 			assert copiedField.getName().equals(name);
 		}
 		return copiedField;

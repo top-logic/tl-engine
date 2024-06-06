@@ -872,7 +872,6 @@ div.dlgMaximized .input-image.dlgRestore {
 	left: 0;
 	height: 100%;
 	width: 100%;
-	cursor: wait;
 	background: var(--overlay);
 }
 

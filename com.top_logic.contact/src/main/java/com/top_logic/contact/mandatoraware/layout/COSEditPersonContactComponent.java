@@ -80,7 +80,7 @@ public class COSEditPersonContactComponent extends EditPersonContactComponent {
                 SelectField theLeadBuyerField = FormFactory.newSelectField(PARAM_LEAD_BUYER, theList, true, true);
 
                 theLeadBuyerField.setOptionLabelProvider(PersonContactLabelProvider.INSTANCE);
-                theLeadBuyerField.setValue(theList);
+				theLeadBuyerField.initializeField(theList);
 
                 theContext.addMember(theLeadBuyerField);
             }

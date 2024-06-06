@@ -82,7 +82,7 @@ public class MapFormGroupBuilder extends FormGroupBuilder {
 		valueField.addValueListener(createValueListener(entry.getKey()));
 
 		valueField.setMandatory(true);
-		valueField.setValue(entry.getValue());
+		valueField.initializeField(entry.getValue());
 	}
 
 	private ValueListener createValueListener(Object key) {
@@ -100,7 +100,7 @@ public class MapFormGroupBuilder extends FormGroupBuilder {
 		FormField keyField = createKeyFieldInternal(contentGroup);
 
 		keyField.setImmutable(true);
-		keyField.setValue(key);
+		keyField.initializeField(key);
 
 		return keyField;
 	}

@@ -84,7 +84,7 @@ public class JMSSend extends GenericMethod {
 		} else if (rawData instanceof BinaryDataSource) {
 			producer.send((BinaryDataSource) rawData);
 		} else if (rawData instanceof Map) {
-			producer.send((Map) rawData);
+			producer.send((Map<?, ?>) rawData);
 		} else {
 			producer.send(ToString.toString(rawData));
 		}

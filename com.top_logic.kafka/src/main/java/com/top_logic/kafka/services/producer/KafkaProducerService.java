@@ -83,8 +83,8 @@ public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerSe
 	/**
 	 * @param producerName
 	 *        the name of the producer to lookup
-	 * @return the {@link StringTLKafkaProducer} registered with this service under the given name
-	 *         or {@code null} if none was found
+	 * @return the {@link TLKafkaProducer} registered with this service under the given name or
+	 *         {@code null} if none was found
 	 */
 	public final TLKafkaProducer<?, ?> getProducer(final String producerName) {
 		return _producers.get(producerName);

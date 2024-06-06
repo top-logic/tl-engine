@@ -22,7 +22,7 @@
 							type="tl.model:TLStructuredType"
 						>
 							<annotations>
-								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<exported value-mapping="com.top_logic.kafka.sync.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
 							</annotations>
 						</reference>
 						<reference name="testTlAttribute"
@@ -30,14 +30,14 @@
 							type="tl.model:TLStructuredTypePart"
 						>
 							<annotations>
-								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<exported value-mapping="com.top_logic.kafka.sync.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
 							</annotations>
 						</reference>
 						<reference name="testTlEnum"
 							type="EnumType"
 						>
 							<annotations>
-								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<exported value-mapping="com.top_logic.kafka.sync.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
 							</annotations>
 						</reference>
 					</attributes>
@@ -60,7 +60,7 @@
 							type="tl.model:TLStructuredType"
 						>
 							<annotations>
-								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<imported value-mapping="com.top_logic.kafka.sync.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
 							</annotations>
 						</reference>
 						<reference name="testTlAttribute"
@@ -68,14 +68,14 @@
 							type="tl.model:TLStructuredTypePart"
 						>
 							<annotations>
-								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<imported value-mapping="com.top_logic.kafka.sync.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
 							</annotations>
 						</reference>
 						<reference name="testTlEnum"
 							type="test.com.top_logic.kafka.services.TestTLSyncValueMappings.source:EnumType"
 						>
 							<annotations>
-								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<imported value-mapping="com.top_logic.kafka.sync.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
 							</annotations>
 						</reference>
 					</attributes>

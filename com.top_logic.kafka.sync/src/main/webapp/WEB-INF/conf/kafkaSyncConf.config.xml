@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="kafkaSyncMessages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.kafka.services.producer.KafkaProducerService">
+			<instance>
+				<producers>
+					<producer class="com.top_logic.kafka.services.producer.TLKafkaProducer"
+						name="KBChange-Producer"
+						topic="%DATA_CHANGE_TOPIC_PRODUCER%"
+						bootstrap.servers="%KAFKA_PRODUCER_SERVER%"
+						value.serializer.typed.config="com.top_logic.kafka.sync.serialization.ChangeSetSerializer"
+						log-writer="com.top_logic.kafka.sync.log.TLSyncRecordLogWriter"
+					/>
+				</producers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.kafka.services.consumer.KafkaConsumerService">
+			<instance>
+				<dependencies>
+					<!-- Needed by com.top_logic.kafka.sync.knowledge.service.importer.DefaultKafkaKBImportRewriter -->
+					<dependency key="com.top_logic.kafka.sync.knowledge.service.KafkaExportImportConfiguration" value="true" />
+					<!-- Needed by com.top_logic.kafka.sync.knowledge.service.importer.DefaultKafkaKBImportRewriter -->
+					<dependency key="com.top_logic.util.model.ModelService" value="true" />
+				</dependencies>
+				<consumers>
+					<consumer name="KB-Data-Change-Consumer"
+						topics="%DATA_CHANGE_TOPIC_CONSUMER%"
+						bootstrap.servers="%KAFKA_CONSUMER_SERVER%"
+						group.id="%DATA_CHANGE_CONSUMER_GROUP_NAME%"
+						enable.auto.commit="false"
+						auto.offset.reset="earliest"
+						log-writer="com.top_logic.kafka.sync.log.TLSyncRecordLogWriter"
+					>
+						<value.deserializer.typed.config class="com.top_logic.kafka.sync.serialization.ChangeSetDeserializer" />
+						<processors>
+							<processor class="com.top_logic.kafka.sync.knowledge.service.importer.KBDataProcessor">
+								<rewriters>
+									<rewriter class="com.top_logic.kafka.sync.knowledge.service.importer.DefaultKafkaKBImportRewriter" />
+								</rewriters>
+							</processor>
+						</processors>
+					</consumer>
+				</consumers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.kafka.sync.knowledge.service.KafkaExportImportConfiguration">
+			<instance class="com.top_logic.kafka.sync.knowledge.service.KafkaExportImportConfiguration">
+				<export class="com.top_logic.kafka.sync.knowledge.service.exporter.ModelBasedExportConfiguration" />
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance class="com.top_logic.util.sched.Scheduler">
+				<dependencies>
+					<!-- Needed by com.top_logic.kafka.sync.knowledge.service.exporter.KBDataProducerTask -->
+					<dependency key="com.top_logic.kafka.services.producer.KafkaProducerService" value="true" />
+					<!-- Needed by com.top_logic.kafka.sync.knowledge.service.exporter.KBDataProducerTask -->
+					<dependency key="com.top_logic.knowledge.service.KnowledgeBaseFactory" value="true" />
+					<!-- Needed by com.top_logic.kafka.sync.knowledge.service.exporter.DefaultKafkaKBExportRewriter -->
+					<dependency key="com.top_logic.kafka.sync.knowledge.service.KafkaExportImportConfiguration" value="true" />
+					<!-- Needed by com.top_logic.kafka.sync.knowledge.service.exporter.DefaultKafkaKBExportRewriter -->
+					<dependency key="com.top_logic.knowledge.service.ExtIDFactory" value="true" />
+				</dependencies>
+				<tasks>
+					<task class="com.top_logic.kafka.sync.knowledge.service.exporter.KBDataProducerTask" 
+						name="KafkaProducerTask"
+						kafka-producer="KBChange-Producer"
+					>
+						<rewriters>
+							<rewriter class="com.top_logic.kafka.sync.knowledge.service.exporter.DefaultKafkaKBExportRewriter" />
+						</rewriters>
+						<schedules>
+							<periodically interval="%KAFKA_POLLING_INTERVAL%" />
+						</schedules>
+					</task>
+				</tasks>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.monitor.ApplicationMonitor">
+			<instance>
+				<components>
+					<component name="TL-Sync sender" class="com.top_logic.kafka.sync.monitor.TLSyncSenderApplicationMonitor"
+						sender-name="KafkaProducerTask" />
+					<component name="TL-Sync receiver" class="com.top_logic.kafka.sync.monitor.TLSyncReceiverApplicationMonitor"
+						receiver-name="KB-Data-Change-Consumer" />
+				</components>
+			</instance>
+		</config>
+	</services>
+</application>

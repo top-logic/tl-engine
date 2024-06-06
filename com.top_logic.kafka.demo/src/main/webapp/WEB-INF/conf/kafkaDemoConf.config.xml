@@ -40,7 +40,7 @@
                         </processors>
                     </consumer>
                     <consumer name="KB-Data-Change-Consumer">
-	                    <value.deserializer.typed.config class="com.top_logic.kafka.serialization.ChangeSetDeserializer" >
+	                    <value.deserializer.typed.config class="com.top_logic.kafka.sync.serialization.ChangeSetDeserializer" >
 	                    	<type-mapping class="com.top_logic.knowledge.service.db2.migration.FuzzyTableNameMapping">
 	                    		<renames>
 	                    			<rename name="NotExistingType" target-name="StructuredElement" />

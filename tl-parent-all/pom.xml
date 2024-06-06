@@ -452,6 +452,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-kafka-sync</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-codeedit</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

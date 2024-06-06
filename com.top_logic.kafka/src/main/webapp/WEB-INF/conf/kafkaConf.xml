@@ -6,15 +6,10 @@
 	<alias>
 		<entry name="%KAFKA_PORT%" value="${env:kafka_port:9092}" />
 		<entry name="%KAFKA_SERVER%" value="${env:kafka_bootstrap_servers:localhost:%KAFKA_PORT%}" />
-		<entry name="%DATA_CHANGE_CONSUMER_GROUP_NAME%" value="${env:kafka_kb_consumer_group:kb-consumer-group-1}"/>
 		
 		<entry name="%KAFKA_CONSUMER_SERVER%" value="%KAFKA_SERVER%" />
 		<entry name="%KAFKA_PRODUCER_SERVER%" value="%KAFKA_SERVER%" />
 		
 		<entry name="%KAFKA_POLLING_INTERVAL%" value="30000" />
-		
-		<entry name="%DATA_CHANGE_TOPIC%" value="DATA_CHANGE"/>
-		<entry name="%DATA_CHANGE_TOPIC_PRODUCER%" value="%DATA_CHANGE_TOPIC%" />
-		<entry name="%DATA_CHANGE_TOPIC_CONSUMER%" value="%DATA_CHANGE_TOPIC%" />
 	</alias>
 </root>

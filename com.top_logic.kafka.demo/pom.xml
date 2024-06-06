@@ -31,7 +31,7 @@
     </dependency>    
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-kafka</artifactId>
+      <artifactId>tl-kafka-sync</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

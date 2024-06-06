@@ -42,7 +42,7 @@
 						<processors config:override="true">
 							<processor class="test.com.top_logic.kafka.services.TestingKBDataProcessor">
 								<rewriters>
-									<rewriter class="com.top_logic.kafka.knowledge.service.importer.DefaultKafkaKBImportRewriter"/>
+									<rewriter class="com.top_logic.kafka.sync.knowledge.service.importer.DefaultKafkaKBImportRewriter"/>
 								</rewriters>
 							</processor>
 						</processors>

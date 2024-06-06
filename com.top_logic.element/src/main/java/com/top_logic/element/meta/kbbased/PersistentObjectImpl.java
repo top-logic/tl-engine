@@ -38,6 +38,7 @@ import com.top_logic.model.cache.TLModelOperations.CompositionStorages;
 import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.composite.TargetTable;
+import com.top_logic.model.impl.TransientTLObjectImpl;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -355,7 +356,7 @@ public class PersistentObjectImpl {
                 if (value == null) {
                     collectionValue = Collections.EMPTY_LIST;
                 } else if (!(value instanceof Collection)) {
-					throw new IllegalArgumentException("Value must be a collection.");
+					throw TransientTLObjectImpl.errorNoCollection();
                 } else {
                 	collectionValue = (Collection<?>) value;
                 }
@@ -368,7 +369,7 @@ public class PersistentObjectImpl {
 			throw new TopLogicException(I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(attribute, value), ex);
         }
 	}
-    
+
 	public static void touch(TLObject self, TLStructuredTypePart part) {
 		if (AttributeOperations.getValidityCheck(part).isActive()) {
 			String lastChangeProperty = getTouchProperty(part);

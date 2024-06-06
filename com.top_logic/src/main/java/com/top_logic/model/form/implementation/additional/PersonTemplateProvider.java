@@ -43,7 +43,7 @@ public abstract class PersonTemplateProvider implements FormElementTemplateProvi
 			field = createField(context, fieldName, asPerson(model));
 		} else {
 			StringField noPersonField = FormFactory.newStringField(fieldName, FormFactory.IMMUTABLE);
-			noPersonField.setValue(Resources.getInstance().getString(I18NConstants.NO_ACCOUNT_AVAILABLE));
+			noPersonField.initializeField(Resources.getInstance().getString(I18NConstants.NO_ACCOUNT_AVAILABLE));
 			field = noPersonField;
 		}
 		field.setLabel(Resources.getInstance().getString(fieldLabel()));

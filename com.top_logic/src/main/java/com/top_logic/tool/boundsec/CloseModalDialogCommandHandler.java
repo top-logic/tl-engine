@@ -8,8 +8,13 @@ package com.top_logic.tool.boundsec;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.check.CheckScopeProvider;
+import com.top_logic.layout.basic.check.ChildrenCheckScopeProvider;
 import com.top_logic.layout.structure.I18NConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.execution.AlwaysExecutable;
@@ -22,12 +27,29 @@ import com.top_logic.tool.execution.ExecutabilityRule;
  */
 public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
 
+	/**
+	 * Configuration for {@link CloseModalDialogCommandHandler}.
+	 *
+	 * @author <a href="mailto:pja@top-logic.com">Petar Janosevic</a>
+	 */
+	public interface Config extends AbstractSystemCommand.Config {
+
+		@Override
+		@ItemDefault
+		@ImplementationClassDefault(ChildrenCheckScopeProvider.class)
+		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
+
+	}
+
     /** name of handler as registered in factory */
     public static final String HANDLER_NAME = "closeModalDialog";
     
     /** the js command name */
     private static final String COMMAND = "closeDialog";
 
+	/**
+	 * Creates a new {@link CloseModalDialogCommandHandler}.
+	 */
 	public CloseModalDialogCommandHandler(InstantiationContext context, Config config) {
 		super(context, config);
     }

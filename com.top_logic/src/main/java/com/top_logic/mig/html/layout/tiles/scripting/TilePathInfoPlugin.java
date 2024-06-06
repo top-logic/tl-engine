@@ -40,7 +40,7 @@ public class TilePathInfoPlugin extends AbstractStaticInfoPlugin<ContainerCompon
 		TextInputControlProvider cp = new TextInputControlProvider();
 		cp.setMultiLine(true);
 		field.setControlProvider(cp);
-		field.setValue(getFieldValue(model));
+		field.initializeField(getFieldValue(model));
 		return field;
 	}
 

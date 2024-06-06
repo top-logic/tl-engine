@@ -7,6 +7,7 @@ package com.top_logic.layout.structure;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.JSSnipplet;
@@ -23,17 +24,21 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlRenderer;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.component.configuration.OpenGuiInspectorFragment;
 import com.top_logic.layout.component.configuration.ToolRowCommandRenderer;
 import com.top_logic.layout.form.FormConstants;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.tag.js.JSBoolean;
 import com.top_logic.layout.form.tag.js.JSObject;
 import com.top_logic.layout.layoutRenderer.DialogRenderer;
+import com.top_logic.layout.messagebox.AbstractDialog;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
+import com.top_logic.mig.html.layout.DialogComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -379,7 +384,27 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 				result.addErrorMessage(I18NConstants.ERROR_DIALOG_NOT_CLOSABLE);
 				return result;
 			}
-			
+
+			return getCloseDialogHandler(context, dialogModel);
+		}
+
+		/**
+		 * Checks if a programmable dialog has unsaved changes before it closes itself. For checks
+		 * in other dialogs see {@link DialogComponent.CleanupAction}.
+		 */
+		private HandlerResult getCloseDialogHandler(DisplayContext context, DialogModel dialogModel) {
+			AbstractDialog abstractDialog = AbstractDialog.getDialog(dialogModel);
+			if (abstractDialog instanceof FormHandler) {
+				FormHandler formHandler = (FormHandler) abstractDialog;
+				DirtyHandling instance = DirtyHandling.getInstance();
+				List<FormHandler> affectedFormHandlers = List.of(formHandler);
+				boolean dirty = instance.checkDirty(affectedFormHandlers);
+				if (dirty) {
+					instance.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
+						DefaultDisplayContext.getDisplayContext().getWindowScope());
+					return HandlerResult.DEFAULT_RESULT;
+				}
+			}
 			return dialogModel.getCloseAction().executeCommand(context);
 		}
 

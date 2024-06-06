@@ -95,7 +95,7 @@ public class MailComponent extends FormComponent {
 		String    theName  = IdentifierUtil.toExternalForm(KBUtils.getWrappedObjectName(anAttachment)).replaceAll("[^\\w]", "");
 		DataField theField = FormFactory.newDataField(theName);
 
-		theField.setValue(anAttachment);
+		theField.initializeField(anAttachment);
 		theField.setImmutable(true);
 
 		return theField;

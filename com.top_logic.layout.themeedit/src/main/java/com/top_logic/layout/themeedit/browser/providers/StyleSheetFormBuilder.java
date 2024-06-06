@@ -53,7 +53,7 @@ public class StyleSheetFormBuilder implements ModelBuilder {
 			field.set(FILE_NAME, fileName);
 			try (InputStream in = FileManager.getInstance().getStream(fileName)) {
 				String cssData = StreamUtilities.readAllFromStream(in, styleSheetCharSet());
-				field.setValue(cssData);
+				field.initializeField(cssData);
 			} catch (IOException ex) {
 				throw new IOError(ex);
 			}

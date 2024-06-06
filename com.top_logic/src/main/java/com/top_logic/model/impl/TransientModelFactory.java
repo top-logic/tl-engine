@@ -59,7 +59,7 @@ public class TransientModelFactory {
 	 * Creates a transient object as instance of some type.
 	 */
 	public static TLObject createTransientObject(TLClass type) {
-		return TransientObjectFactory.INSTANCE.createObject(type, null, null);
+		return TransientObjectFactory.INSTANCE.createObject(type);
 	}
 
 }

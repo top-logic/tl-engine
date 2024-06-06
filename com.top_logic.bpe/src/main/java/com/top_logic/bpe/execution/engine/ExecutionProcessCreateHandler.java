@@ -51,7 +51,7 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 
 	public static ProcessExecution newProcessExecution(StartEvent startEvent) {
 		TLClass modelType = getTypeForStartEvent(startEvent);
-		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(modelType, null, null);
+		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(modelType);
 	}
 
 	public static TLClass getTypeForStartEvent(StartEvent startEvent) {

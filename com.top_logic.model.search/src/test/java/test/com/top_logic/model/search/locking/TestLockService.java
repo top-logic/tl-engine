@@ -230,7 +230,7 @@ public class TestLockService extends BasicTestCase {
 	}
 
 	private TLObject create(TLClass type) {
-		return ModelService.getInstance().getFactory().createObject(type, null, null);
+		return ModelService.getInstance().getFactory().createObject(type);
 	}
 
 	private TLClass type(String name) throws ConfigurationException {

@@ -1096,7 +1096,7 @@ public class ModelResolver {
 			return;
 		}
 
-		root = getFactory().createObject(type, null, null);
+		root = getFactory().createObject(type);
 		module.addSingleton(name, root);
 
 		setupRoles(module, singleton);

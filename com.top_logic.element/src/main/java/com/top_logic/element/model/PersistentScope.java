@@ -81,7 +81,7 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 	 * {@link ElementModelService} is advisable.
 	 * </p>
 	 */
-	private Collection<TLType> _types = PersistentScope.getTypes(this);
+	private volatile Collection<TLType> _types;
 
 	/**
 	 * Creates a {@link PersistentScope}.
@@ -133,7 +133,12 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 
 	@Override
 	public Collection<TLType> getTypes() {
-		return _types;
+		Collection<TLType> types = _types;
+		if (types == null) {
+			types = PersistentScope.getTypes(this);
+			_types = types;
+		}
+		return types;
 	}
 
 	@Override

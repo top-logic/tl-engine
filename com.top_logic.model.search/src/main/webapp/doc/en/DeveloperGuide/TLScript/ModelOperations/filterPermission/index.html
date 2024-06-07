@@ -1,0 +1,63 @@
+<h2>Syntax</h2>
+
+<pre><code>$objects.filterPermission($roles)
+
+$objects.filterPermission(
+     roles: [...],
+     account: $acc)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Filters a set of specialized objects so that only the elements on which the given user has one of the given roles are included.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>objects</td>
+			<td>Set of business objects</td>
+			<td>Set of business objects to be filtered</td>
+			<td>Yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>roles</td>
+			<td>Set of roles or role names</td>
+			<td>Set of roles or role names</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>account</td>
+			<td><code class="hljs inlineCode">`tl.accounts:Person`</code></td>
+			<td>User for whom the specialist objects are to be filtered</td>
+			<td>no</td>
+			<td>The logged-in user</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set of business objects</p>
+
+<p>All business objects in the given set on which the user has one of the given roles.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>all(`myModule:MyType`).filterPermission("admin")</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> All elements of the type <code class="hljs inlineCode">`myModule:MyType`</code> on which the logged-in user has the role <code class="hljs inlineCode">admin</code>.</p>

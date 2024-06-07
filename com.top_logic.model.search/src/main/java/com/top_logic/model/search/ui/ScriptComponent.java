@@ -126,13 +126,8 @@ public class ScriptComponent extends BoundLayout {
 			}
 			results = resultObjects;
 		}
-		if (!searchedTypes.isEmpty()) {
-			Object resultSet =
-				new AttributedSearchResultSet((Collection<TLObject>) results, (Set<? extends TLClass>) searchedTypes,
-					null,
-					null);
-			getResultChannel().set(resultSet);
-		}
+		Object resultSet = new AttributedSearchResultSet((Collection<TLObject>) results, searchedTypes, null, null);
+		getResultChannel().set(resultSet);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

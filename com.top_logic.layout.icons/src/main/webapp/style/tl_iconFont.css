@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'tl_iconFont';
-  src:  url('../webfonts/tl_iconFont.eot?8afuis');
-  src:  url('../webfonts/tl_iconFont.eot?8afuis#iefix') format('embedded-opentype'),
-    url('../webfonts/tl_iconFont.ttf?8afuis') format('truetype'),
-    url('../webfonts/tl_iconFont.woff?8afuis') format('woff'),
-    url('../webfonts/tl_iconFont.svg?8afuis#tl_iconFont') format('svg');
+  src:  url('../webfonts/tl_iconFont.eot?2hx4aq');
+  src:  url('../webfonts/tl_iconFont.eot?2hx4aq#iefix') format('embedded-opentype'),
+    url('../webfonts/tl_iconFont.ttf?2hx4aq') format('truetype'),
+    url('../webfonts/tl_iconFont.woff?2hx4aq') format('woff'),
+    url('../webfonts/tl_iconFont.svg?2hx4aq#tl_iconFont') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.tl-icon.arrow-up-quarter-circle::before {
+  content: "\ea74";
+}
+.tl-icon.arrow-down-quarter-circle::before {
+  content: "\ea75";
+}
+.tl-icon.arrow-half-circle::before {
+  content: "\ea76";
+}
 .tl-icon.arrow-left-solid::before {
   content: "\e900";
 }

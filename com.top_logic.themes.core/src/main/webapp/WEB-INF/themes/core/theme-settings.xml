@@ -887,7 +887,7 @@
 		expr="%EDIT_SECURITY_PROFILES_IMPORT_ICON%"
 	/>
 	<icon name="ICON_FILE_IMPORT"
-		value="css:bi bi-file-arrow-up-fill"
+		value="css:bi bi-upload"
 	/>
 	<icon name="ICONS_BUTTON_MODEL_IMPORT"
 		expr="%ICON_FILE_IMPORT%"
@@ -1503,19 +1503,19 @@
 		expr="%ICONS_BUTTON_START%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_INTO"
-		value="css:bi bi-arrow-return-right green"
+		value="css:tl-icon arrow-down-quarter-circle"
 	/>
 	<icon name="ICONS_BUTTON_STEP_INTO_DISABLED"
 		expr="%ICONS_BUTTON_STEP_INTO%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OUT"
-		value="css:bi bi-arrow-90deg-right green"
+		value="css:tl-icon arrow-up-quarter-circle"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OUT_DISABLED"
 		expr="%ICONS_BUTTON_STEP_OUT%"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OVER"
-		value="css:bi bi-arrow-return-left green"
+		value="css:tl-icon arrow-half-circle"
 	/>
 	<icon name="ICONS_BUTTON_STEP_OVER_DISABLED"
 		expr="%ICONS_BUTTON_STEP_OVER%"

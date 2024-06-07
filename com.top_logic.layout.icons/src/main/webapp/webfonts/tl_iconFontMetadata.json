@@ -1,4 +1,22 @@
 {
+  "arrow-down-quarter-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow down quarter circle"
+  },
+  "arrow-half-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow half circle"
+  },
   "arrow-left-solid": {
     "search": {
       "terms": []
@@ -89,6 +107,15 @@
     ],
     "label": "Arrow to right solid"
   },
+  "arrow-up-quarter-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow-up-quarter-circle"
+  },
   "ban": {
     "search": {
       "terms": []
@@ -152,6 +179,15 @@
     ],
     "label": "Book open exclamation"
   },
+  "building-blocks": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Building blocks"
+  },
   "button-background": {
     "search": {
       "terms": []
@@ -161,14 +197,14 @@
     ],
     "label": "Button background"
   },
-  "building-blocks": {
+  "calender": {
     "search": {
       "terms": []
     },
     "styles": [
       ""
     ],
-    "label": "Building blocks"
+    "label": "Calender"
   },
   "camera": {
     "search": {
@@ -323,7 +359,7 @@
     ],
     "label": ""
   },
-  "chart-bars": {
+  "chart-bar": {
     "search": {
       "terms": []
     },
@@ -502,6 +538,15 @@
       ""
     ],
     "label": ""
+  },
+  "cockpit": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Cockpit"
   },
   "collapse": {
     "search": {
@@ -1214,6 +1259,15 @@
     ],
     "label": ""
   },
+  "lightbulb": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Lightbulb"
+  },
   "lightbulb-circle": {
     "search": {
       "terms": []
@@ -1402,6 +1456,24 @@
       ""
     ],
     "label": ""
+  },
+  "portfolio": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Portfolio"
+  },
+  "program": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Program"
   },
   "project": {
     "search": {

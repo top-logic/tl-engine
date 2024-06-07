@@ -403,7 +403,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	String getSecurityProtocol();
 
 	/**
-	 * The Kafka client property: "security.providers"
+	 * The Kafka configuration property: "security.providers"
 	 */
 	@Name(SECURITY_PROVIDERS)
 	@KafkaClientProperty

@@ -134,6 +134,8 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		String getInterceptorClasses();
 
 		/**
+		 * This option is used only, when {@link #getKeySerializerClass()} is empty.
+		 * 
 		 * @see ProducerConfig#KEY_SERIALIZER_CLASS_DOC
 		 */
 		@ItemDefault(StringSerializer.class)
@@ -141,7 +143,7 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		PolymorphicConfiguration<? extends Serializer<K>> getKeySerializer();
 
 		/**
-		 * For configuration of {@link Serializer} which should be configured via Kafka.
+		 * When this option is not empty, {@link #getKeySerializer()} will be ignored.
 		 * 
 		 * @see ProducerConfig#KEY_SERIALIZER_CLASS_DOC
 		 */
@@ -250,6 +252,8 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		String getTransactionalId();
 
 		/**
+		 * This option is used only, when {@link #getValueSerializerClass()} is empty.
+		 * 
 		 * @see ProducerConfig#VALUE_SERIALIZER_CLASS_DOC
 		 */
 		@ItemDefault(StringSerializer.class)
@@ -257,7 +261,7 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		PolymorphicConfiguration<? extends Serializer<V>> getValueSerializer();
 
 		/**
-		 * For configuration of {@link Serializer} which should be configured via Kafka.
+		 * When this option is not empty, {@link #getValueSerializer()} will be ignored.
 		 * 
 		 * @see ProducerConfig#VALUE_SERIALIZER_CLASS_DOC
 		 */

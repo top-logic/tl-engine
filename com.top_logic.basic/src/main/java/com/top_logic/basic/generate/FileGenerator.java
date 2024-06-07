@@ -38,6 +38,15 @@ public abstract class FileGenerator {
 	 */
 	public static final String COPYRIGHT_HOLDER_PROPERTY = "tl_copyright_holder";
 
+	/**
+	 * System property / environment variable name to set copyright header in generated files.
+	 * 
+	 * <p>
+	 * The string <code>${year}</code> is replaced by the current year.
+	 * </p>
+	 */
+	public static final String COPYRIGHT_HEADER_PROPERTY = "tl_copyright_header";
+
 	private PrintWriter out;
 	
 	private StringBuilder indent = new StringBuilder(64);
@@ -117,22 +126,38 @@ public abstract class FileGenerator {
 	protected abstract void writeContents();
 
 	protected void writeFileHeader() {
-		String businessOperationSystems = "Business Operation Systems GmbH";
-		String copyrightHolder =
-			Environment.getSystemPropertyOrEnvironmentVariable(COPYRIGHT_HOLDER_PROPERTY, businessOperationSystems);
-		int year = new GregorianCalendar().get(Calendar.YEAR);
-		if (businessOperationSystems.equals(copyrightHolder)) {
-			fileType.commentStart(out);
-			fileType.commentLine(out,
-				"SPDX-FileCopyrightText: " + year + " (c) Business Operation Systems GmbH <info@top-logic.com>");
-			fileType.commentLine(out, "");
-			fileType.commentLine(out, "SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0");
-			fileType.commentStop(out);
+		fileType.commentStart(out);
+
+		String copyrightHeader =
+			Environment.getSystemPropertyOrEnvironmentVariable(COPYRIGHT_HEADER_PROPERTY, null);
+		if (copyrightHeader != null) {
+			int year = new GregorianCalendar().get(Calendar.YEAR);
+			copyrightHeader = copyrightHeader.replace("${year}", Integer.toString(year));
+			{
+				Matcher matcher = Pattern.compile("\\R").matcher(copyrightHeader);
+				int startIDX = 0;
+				while (matcher.find()) {
+					fileType.commentLine(out, copyrightHeader.substring(startIDX, matcher.start()));
+					startIDX = matcher.end();
+				}
+				fileType.commentLine(out, copyrightHeader.substring(startIDX, copyrightHeader.length()));
+			}
 		} else {
-			fileType.commentStart(out);
-			fileType.commentLine(out, "Copyright (c) " + year + " " + copyrightHolder + ". All Rights Reserved.");
-			fileType.commentStop(out);
+			String businessOperationSystems = "Business Operation Systems GmbH";
+			String copyrightHolder =
+				Environment.getSystemPropertyOrEnvironmentVariable(COPYRIGHT_HOLDER_PROPERTY, businessOperationSystems);
+			int year = new GregorianCalendar().get(Calendar.YEAR);
+			if (businessOperationSystems.equals(copyrightHolder)) {
+				fileType.commentLine(out,
+					"SPDX-FileCopyrightText: " + year + " (c) Business Operation Systems GmbH <info@top-logic.com>");
+				fileType.commentLine(out, "");
+				fileType.commentLine(out, "SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0");
+			} else {
+				fileType.commentLine(out, "Copyright (c) " + year + " " + copyrightHolder + ". All Rights Reserved.");
+			}
 		}
+
+		fileType.commentStop(out);
 	}
 	
 

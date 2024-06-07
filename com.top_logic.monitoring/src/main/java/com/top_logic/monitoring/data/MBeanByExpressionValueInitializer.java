@@ -5,7 +5,6 @@
  */
 package com.top_logic.monitoring.data;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyInitializer;
 
@@ -14,12 +13,12 @@ import com.top_logic.basic.config.PropertyInitializer;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class MonitorByExpressionValueInitializer implements PropertyInitializer {
+public class MBeanByExpressionValueInitializer implements PropertyInitializer {
 
 	@Override
 	public Object getInitialValue(PropertyDescriptor property) {
-		String packageName = this.getClass().getPackageName();
-		return StringServices.concatenate(packageName, ":name=expression0");
+		String packageName = getClass().getPackageName();
+		return packageName + ":name=expression0";
 	}
 
 }

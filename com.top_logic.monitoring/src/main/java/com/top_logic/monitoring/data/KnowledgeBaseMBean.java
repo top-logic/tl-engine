@@ -6,9 +6,9 @@
 package com.top_logic.monitoring.data;
 
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanConstructorInfo;
 import javax.management.MBeanOperationInfo;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -23,41 +23,34 @@ import com.top_logic.knowledge.service.PersistencyLayer;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class MonitorDatabase extends DynamicMBeanElement {
+public class KnowledgeBaseMBean extends AbstractDynamicMBean {
 
-	/** {@link ConfigurationItem} for the {@link MonitorDatabase}. */
-	public interface Config extends DynamicMBeanElement.Config {
+	/** {@link ConfigurationItem} for the {@link KnowledgeBaseMBean}. */
+	public interface Config extends AbstractDynamicMBean.Config {
 
 		@Override
-		@StringDefault("com.top_logic.monitoring.data:name=MonitorDatabase")
+		@StringDefault("com.top_logic.monitoring.data:name=KnowledgeBaseMBean")
 		public String getName();
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link MonitorDatabase}. */
-	public MonitorDatabase(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link KnowledgeBaseMBean}. */
+	public KnowledgeBaseMBean(InstantiationContext context, Config config) {
 		super(context, config);
-
-		buildDynamicMBeanInfo(config);
-	}
-
-	@Override
-	protected MBeanConstructorInfo[] createConstructorInfo() {
-		return null;
 	}
 
 	@Override
 	protected MBeanAttributeInfo[] createAttributeInfo() {
-		MBeanAttributeInfo[] dAttributes = new MBeanAttributeInfo[2];
+		MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[2];
 
-		dAttributes[0] = new MBeanAttributeInfo(
+		attributes[0] = new MBeanAttributeInfo(
 			"SizeOfKnowledgebaseCache", // name
 			"java.lang.Integer", // type
-			"The size of the used knowledge-base cache.", // description
+			"The size of the knowledge-base cache.", // description
 			true, // readable
 			false, // writable
 			false); // isIs
 
-		dAttributes[1] = new MBeanAttributeInfo(
+		attributes[1] = new MBeanAttributeInfo(
 			"LastRevision", // name
 			"java.lang.String", // type
 			"The last revision of the knowledge-base.", // description
@@ -65,7 +58,7 @@ public class MonitorDatabase extends DynamicMBeanElement {
 			false, // writable
 			false); // isIs
 
-		return dAttributes;
+		return attributes;
 	}
 
 	@Override
@@ -74,6 +67,7 @@ public class MonitorDatabase extends DynamicMBeanElement {
 	}
 
 	/** Returns the size of the used knowledge-base cache. */
+	@CalledByReflection
 	public int getSizeOfKnowledgebaseCache() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
@@ -81,14 +75,15 @@ public class MonitorDatabase extends DynamicMBeanElement {
 	}
 
 	/** Returns the last revision of the knowledge-base. */
-	public String getLastRevision() {
-		return ThreadContextManager.inSystemInteraction(MonitorDatabase.class, this::calcLastRevision);
+	@CalledByReflection
+	public Long getLastRevision() {
+		return ThreadContextManager.inSystemInteraction(KnowledgeBaseMBean.class, this::calcLastRevision);
 	}
 
-	private String calcLastRevision() {
+	private Long calcLastRevision() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		return HistoryUtils.getLastRevision(kb.getHistoryManager()).toString();
+		return HistoryUtils.getLastRevision(kb.getHistoryManager()).getCommitNumber();
 	}
 
 }

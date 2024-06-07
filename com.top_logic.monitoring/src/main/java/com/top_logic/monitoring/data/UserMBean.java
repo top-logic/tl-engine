@@ -11,9 +11,9 @@ import java.util.Date;
 import java.util.List;
 
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanConstructorInfo;
 import javax.management.MBeanOperationInfo;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -31,33 +31,26 @@ import com.top_logic.util.AbstractStartStopListener;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class MonitorUser extends DynamicMBeanElement {
+public class UserMBean extends AbstractDynamicMBean {
 
-	/** {@link ConfigurationItem} for the {@link MonitorUser}. */
-	public interface Config extends DynamicMBeanElement.Config {
+	/** {@link ConfigurationItem} for the {@link UserMBean}. */
+	public interface Config extends AbstractDynamicMBean.Config {
 
 		@Override
-		@StringDefault("com.top_logic.monitoring.data:name=MonitorUser")
+		@StringDefault("com.top_logic.monitoring.data:name=UserMBean")
 		public String getName();
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link MonitorUser}. */
-	public MonitorUser(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link UserMBean}. */
+	public UserMBean(InstantiationContext context, Config config) {
 		super(context, config);
-
-		buildDynamicMBeanInfo(config);
-	}
-
-	@Override
-	protected MBeanConstructorInfo[] createConstructorInfo() {
-		return null;
 	}
 
 	@Override
 	protected MBeanAttributeInfo[] createAttributeInfo() {
-		MBeanAttributeInfo[] dAttributes = new MBeanAttributeInfo[1];
+		MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[1];
 
-		dAttributes[0] = new MBeanAttributeInfo(
+		attributes[0] = new MBeanAttributeInfo(
 			"AmountLoggedInUsers", // name
 			"java.lang.Integer", // type
 			"The number of actual logged in users.", // description
@@ -65,7 +58,7 @@ public class MonitorUser extends DynamicMBeanElement {
 			false, // writable
 			false); // isIs
 
-		return dAttributes;
+		return attributes;
 	}
 
 	@Override
@@ -78,16 +71,17 @@ public class MonitorUser extends DynamicMBeanElement {
 	 * 
 	 * @return Number of users which are logged at this moment.
 	 */
+	@CalledByReflection
 	public int getAmountLoggedInUsers() {
-		return ThreadContextManager.inSystemInteraction(MonitorUser.class, this::calcLoggedInUsers);
+		return ThreadContextManager.inSystemInteraction(UserMBean.class, this::calcLoggedInUsers);
 	}
 
 	private int calcLoggedInUsers() {
-		KnowledgeBase aBase = PersistencyLayer.getKnowledgeBase();
+		KnowledgeBase base = PersistencyLayer.getKnowledgeBase();
 		RevisionQuery<UserSession> queryResolved = createQuery();
-		List<UserSession> theResult = aBase.search(queryResolved);
+		List<UserSession> result = base.search(queryResolved);
 
-		return theResult.size();
+		return result.size();
 	}
 
 	private RevisionQuery<UserSession> createQuery() {

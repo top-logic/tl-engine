@@ -221,9 +221,9 @@
 		</config>		
 		
 		<config service-class="com.top_logic.monitoring.data.TLDataBeanService">
-			<instance class="com.top_logic.monitoring.data.TLDataBeanService">
+			<instance>
 				<mbeans>
-					<mbean class="com.top_logic.demo.monitoring.MonitorDemo" description="Dynamic MBean demonstration." />
+					<mbean class="com.top_logic.demo.monitoring.DemoMBean" description="Dynamic MBean demonstration." />
 				</mbeans>
 			</instance>
 		</config>

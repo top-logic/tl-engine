@@ -6,7 +6,6 @@
 package com.top_logic.monitoring.data;
 
 import java.lang.reflect.Method;
-import java.util.Iterator;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -33,13 +32,13 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<DynamicMBeanElement.Config>
+public abstract class AbstractDynamicMBean extends AbstractConfiguredInstance<AbstractDynamicMBean.Config>
 		implements DynamicMBean {
 
-	private MBeanInfo _dMBeanInfo = null;
+	private MBeanInfo _beanInfo = null;
 
-	/** {@link ConfigurationItem} for the {@link DynamicMBeanElement}. */
-	public interface Config extends NamedPolymorphicConfiguration<DynamicMBeanElement> {
+	/** {@link ConfigurationItem} for the {@link AbstractDynamicMBean}. */
+	public interface Config extends NamedPolymorphicConfiguration<AbstractDynamicMBean> {
 
 		@Constraint(MBeanNameConstraint.class)
 		@Override
@@ -49,15 +48,19 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 		String getDescription();
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link DynamicMBeanElement}. */
-	public DynamicMBeanElement(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link AbstractDynamicMBean}. */
+	public AbstractDynamicMBean(InstantiationContext context, Config config) {
 		super(context, config);
+
+		buildDynamicMBeanInfo(config);
 	}
 
 	/**
 	 * Creates an array of constructors to expose.
 	 */
-	protected abstract MBeanConstructorInfo[] createConstructorInfo();
+	protected MBeanConstructorInfo[] createConstructorInfo() {
+		return null;
+	}
 
 	/**
 	 * Creates an array of attributes to expose.
@@ -74,14 +77,14 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 	 * for this dynamic MBean.
 	 */
 	public void buildDynamicMBeanInfo(Config config) {
-		MBeanInfo dMBeanInfo = new MBeanInfo(this.getClass().getName(),
+		MBeanInfo beanInfo = new MBeanInfo(getClass().getName(),
 			getDescription(config),
 			createAttributeInfo(),
 			createConstructorInfo(),
 			createOperationInfo(),
 			new MBeanNotificationInfo[0]);
 
-		_dMBeanInfo = dMBeanInfo;
+		_beanInfo = beanInfo;
 	}
 
 	/** Returns the description of this dynamic MBean. */
@@ -102,6 +105,9 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 		MBeanAttributeInfo attributeInfo = findAttributeInfo(attribute);
 
 		if(attributeInfo == null) {
+			Logger.error(
+				"There is no getter registered for this dynamic MBean for the attribute '" + attribute + "'.",
+				AbstractDynamicMBean.class);
 			return null;
 		}
 		
@@ -110,17 +116,21 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 
 		if (isReadable) {
 			String methodName = StringServices.concatenate(prefix, attribute);
-			Method method = ReflectionUtil.getMethod(this.getClass(), methodName);
+			Method method = ReflectionUtil.getMethod(getClass(), methodName);
 			return ReflectionUtil.invokeMethod(this, method);
 		}
+
+		Logger.error(
+			"The attribute '" + attribute + "' is not readable.",
+			AbstractDynamicMBean.class);
 
 		return null;
 	}
 
 	private MBeanAttributeInfo findAttributeInfo(String attribute) {
-		for (MBeanAttributeInfo dAttribute : _dMBeanInfo.getAttributes()) {
-			if (attribute.equals(dAttribute.getName())) {
-				return dAttribute;
+		for (MBeanAttributeInfo attributeInfo : _beanInfo.getAttributes()) {
+			if (attribute.equals(attributeInfo.getName())) {
+				return attributeInfo;
 			}
 		}
 
@@ -151,8 +161,8 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 			return resultList;
 		}
 
-		for (Iterator<?> i = attributes.iterator(); i.hasNext();) {
-			Attribute attr = (Attribute) i.next();
+		for (Object attribute : attributes) {
+			Attribute attr = (Attribute) attribute;
 			setAttribute(attr);
 			String name = attr.getName();
 			Object value = getAttribute(name);
@@ -170,12 +180,12 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 			MBeanAttributeInfo attributeInfo = findAttributeInfo(name);
 			try {
 				Class<?> type = Class.forName(attributeInfo.getType());
-				String methodName = StringServices.concatenate("set", name);
-				Method method = ReflectionUtil.getMethod(this.getClass(), methodName, type);
+				String methodName = "set" + name;
+				Method method = ReflectionUtil.getMethod(getClass(), methodName, type);
 
 				ReflectionUtil.invokeMethod(this, method, value);
 			} catch (ClassNotFoundException ex) {
-				Logger.error("Cannot find class named '" + attributeInfo.getType() + "'.", ex, DynamicMBeanElement.class);
+				Logger.error("Cannot find class named '" + attributeInfo.getType() + "'.", ex, AbstractDynamicMBean.class);
 			}
 		}
 	}
@@ -187,7 +197,7 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 		}
 
 		Class<?>[] classes = toClasses(signature);
-		Method declaredMethod = ReflectionUtil.getMethod(this.getClass(), actionName, classes);
+		Method declaredMethod = ReflectionUtil.getMethod(getClass(), actionName, classes);
 
 		return ReflectionUtil.invokeMethod(this, declaredMethod, params);
 	}
@@ -198,7 +208,7 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 			try {
 				classes[i] = Class.forName(signature[i]);
 			} catch (ClassNotFoundException ex) {
-				Logger.error("Cannot find class named '" + signature[i] + "'.", ex, DynamicMBeanElement.class);
+				Logger.error("Cannot find class named '" + signature[i] + "'.", ex, AbstractDynamicMBean.class);
 			}
 		}
 		return classes;
@@ -206,7 +216,7 @@ public abstract class DynamicMBeanElement extends AbstractConfiguredInstance<Dyn
 
 	@Override
 	public MBeanInfo getMBeanInfo() {
-		return _dMBeanInfo;
+		return _beanInfo;
 	}
 
 }

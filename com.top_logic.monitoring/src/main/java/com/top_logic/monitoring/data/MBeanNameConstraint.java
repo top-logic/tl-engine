@@ -5,6 +5,9 @@
  */
 package com.top_logic.monitoring.data;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
 import com.top_logic.basic.util.ResKey;
@@ -20,7 +23,11 @@ public class MBeanNameConstraint extends ValueConstraint<String> {
 	/** Singleton {@link MBeanNameConstraint} instance. */
 	public static final MBeanNameConstraint INSTANCE = new MBeanNameConstraint();
 
-	private String NAME_PATTERN = "[a-zA-Z][a-zA-Z0-9_\\.]*";
+	private static final String CHARACTERS_PATTERN = "[a-zA-Z][a-zA-Z0-9_\\.]*";
+
+	private static final String KEY_PATTERN = "(\\:name\\=)";
+
+	private static final Pattern FULL_NAME_PATTERN = Pattern.compile(CHARACTERS_PATTERN + KEY_PATTERN + CHARACTERS_PATTERN + "+");
 
 	/** Creates a new {@link MBeanNameConstraint}. */
 	public MBeanNameConstraint() {
@@ -29,20 +36,18 @@ public class MBeanNameConstraint extends ValueConstraint<String> {
 
 	@Override
 	protected void checkValue(PropertyModel<String> propertyModel) {
-		ResKey error = null;
-
-		error = checkPattern(propertyModel);
+		ResKey error = checkPattern(propertyModel);
 
 		if (error != null) {
 			propertyModel.setProblemDescription(error);
-			return;
 		}
 	}
 
 	private ResKey checkPattern(PropertyModel<String> propertyModel) {
 		String name = propertyModel.getValue();
+		Matcher matcher = FULL_NAME_PATTERN.matcher(name);
 
-		if (name != null && !name.matches(NAME_PATTERN + "(\\:name\\=)" + NAME_PATTERN + "+")) {
+		if (name != null && !matcher.matches()) {
 			return I18NConstants.WRONG_PATTERN_MBEAN_NAME;
 		}
 

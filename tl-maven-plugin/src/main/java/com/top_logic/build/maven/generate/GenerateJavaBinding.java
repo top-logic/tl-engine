@@ -81,6 +81,22 @@ public class GenerateJavaBinding extends AbstractMojo {
 	@Parameter(required = false)
 	private String languages;
 
+	/**
+	 * The copyright header that is used for generated files.
+	 * 
+	 * <p>
+	 * If this configuration is set, the configuration {@link #copyrightHolder} is ignored.
+	 * </p>
+	 */
+	@Parameter
+	private String copyrightHeader;
+
+	/**
+	 * The copyright holder for the generated classes.
+	 */
+	@Parameter
+	private String copyrightHolder;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		ResolveHelper resolveHelper =
@@ -88,6 +104,12 @@ public class GenerateJavaBinding extends AbstractMojo {
 				artifactHandlerManager);
 
 		try {
+			if (copyrightHolder != null) {
+				System.setProperty("tl_copyright_holder", copyrightHolder);
+			}
+			if (copyrightHeader != null) {
+				System.setProperty("tl_copyright_header", copyrightHeader);
+			}
 			List<URL> cp = TLAppWar.getAppClassPath(resolveHelper, project);
 			
 			// Add hard coded profile with otherwise provided classes.

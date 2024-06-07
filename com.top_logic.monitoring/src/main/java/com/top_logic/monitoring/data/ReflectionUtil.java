@@ -50,7 +50,7 @@ public class ReflectionUtil {
 						} else {
 							Class<?> varArgType =
 								methodeParameterTypes[methodeParameterTypes.length - 1].getComponentType();
-							if (!varArgType.isAssignableFrom(parameterTypes[j])) {
+							if (varArgType != null && !varArgType.isAssignableFrom(parameterTypes[j])) {
 								match = false;
 								break;
 							}

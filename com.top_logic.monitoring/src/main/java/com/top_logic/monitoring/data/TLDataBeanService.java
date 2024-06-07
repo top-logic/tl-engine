@@ -31,7 +31,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  */
 public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.Config> {
 
-	private final List<DynamicMBeanElement.Config> _mBeanConfigurations;
+	private final List<AbstractDynamicMBean.Config> _mBeanConfigurations;
 	
 	/**
 	 * Configuration of a {@link TLDataBeanService}.
@@ -48,8 +48,8 @@ public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.
 		 * Configured MBeans with metrics.
 		 */
 		@Name(MBEANS)
-		@Key(DynamicMBeanElement.Config.NAME_ATTRIBUTE)
-		List<DynamicMBeanElement.Config> getMbeans();
+		@Key(AbstractDynamicMBean.Config.NAME_ATTRIBUTE)
+		List<AbstractDynamicMBean.Config> getMbeans();
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.
 		_mBeanConfigurations = configuration.getMbeans();
 	}
 
-	private List<DynamicMBeanElement.Config> getMBeans() {
+	private List<AbstractDynamicMBean.Config> getMBeans() {
 		return _mBeanConfigurations;
 	}
 
@@ -69,13 +69,13 @@ public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.
 	protected void startUp() {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-		for (DynamicMBeanElement.Config mBean : getMBeans()) {
+		for (AbstractDynamicMBean.Config mBean : getMBeans()) {
 			registerMBean(mbs, mBean);
 		}
 	}
 
-	private void registerMBean(MBeanServer mbs, DynamicMBeanElement.Config mBeanConfiguration) {
-		DynamicMBeanElement mBean = TypedConfigUtil.createInstance(mBeanConfiguration);
+	private void registerMBean(MBeanServer mbs, AbstractDynamicMBean.Config mBeanConfiguration) {
+		AbstractDynamicMBean mBean = TypedConfigUtil.createInstance(mBeanConfiguration);
 		ObjectName objectName = createObjectName(mBeanConfiguration.getName());
 		try {
 			mbs.registerMBean(mBean, objectName);
@@ -98,7 +98,7 @@ public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.
 	protected void shutDown() {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-		for (DynamicMBeanElement.Config mBean : getMBeans()) {
+		for (AbstractDynamicMBean.Config mBean : getMBeans()) {
 			try {
 				mbs.unregisterMBean(createObjectName(mBean.getName()));
 			} catch (MBeanRegistrationException | InstanceNotFoundException ex) {

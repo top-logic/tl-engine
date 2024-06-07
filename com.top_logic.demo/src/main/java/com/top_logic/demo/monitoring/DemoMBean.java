@@ -6,17 +6,17 @@
 package com.top_logic.demo.monitoring;
 
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanConstructorInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.monitoring.data.DynamicMBeanElement;
+import com.top_logic.monitoring.data.AbstractDynamicMBean;
 
 /**
  * Demonstration of a dynamic MBean.
@@ -24,37 +24,30 @@ import com.top_logic.monitoring.data.DynamicMBeanElement;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 @Label("Dynamic MBean demo")
-public class MonitorDemo extends DynamicMBeanElement {
+public class DemoMBean extends AbstractDynamicMBean {
 
 	String _prename = "Alice";
 
 	int _counter = 0;
 
-	/** {@link ConfigurationItem} for the {@link MonitorDemo}. */
-	public interface Config extends DynamicMBeanElement.Config {
+	/** {@link ConfigurationItem} for the {@link DemoMBean}. */
+	public interface Config extends AbstractDynamicMBean.Config {
 
 		@Override
-		@StringDefault("com.top_logic.monitoring.data:name=MonitorDemo")
+		@StringDefault("com.top_logic.monitoring.data:name=DemoMBean")
 		public String getName();
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link MonitorDemo}. */
-	public MonitorDemo(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link DemoMBean}. */
+	public DemoMBean(InstantiationContext context, Config config) {
 		super(context, config);
-
-		buildDynamicMBeanInfo(config);
-	}
-
-	@Override
-	protected MBeanConstructorInfo[] createConstructorInfo() {
-		return null;
 	}
 
 	@Override
 	protected MBeanAttributeInfo[] createAttributeInfo() {
-		MBeanAttributeInfo[] dAttributeInfo = new MBeanAttributeInfo[2];
+		MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[2];
 
-		dAttributeInfo[0] = new MBeanAttributeInfo(
+		attributes[0] = new MBeanAttributeInfo(
 			"Prename", // name
 			"java.lang.String", // type
 			"The number of actual logged in users with respect to the last system start.", // description
@@ -62,7 +55,7 @@ public class MonitorDemo extends DynamicMBeanElement {
 			true, // writable
 			false); // isIs
 
-		dAttributeInfo[1] = new MBeanAttributeInfo(
+		attributes[1] = new MBeanAttributeInfo(
 			"NameSet", // name
 			"java.lang.Boolean", // type
 			"Checks whether the prename attribute is set.", // description
@@ -70,42 +63,46 @@ public class MonitorDemo extends DynamicMBeanElement {
 			false, // writable
 			true); // isIs
 
-		return dAttributeInfo;
+		return attributes;
 	}
 
 	@Override
 	protected MBeanOperationInfo[] createOperationInfo() {
-		MBeanOperationInfo[] dOperations = new MBeanOperationInfo[1];
+		MBeanOperationInfo[] operations = new MBeanOperationInfo[1];
 
 		MBeanParameterInfo[] emptyParams = null;
-		dOperations[0] = new MBeanOperationInfo(
+		operations[0] = new MBeanOperationInfo(
 			"count", // name
 			"Counts the klicks.", // description
 			emptyParams, // parameter types
 			"java.lang.Integer", // return type
-			MBeanOperationInfo.ACTION); // impact
+			MBeanOperationInfo.ACTION_INFO); // impact
 
-		return dOperations;
+		return operations;
 	}
 
 	/** Returns the prename. */
+	@CalledByReflection
 	public String getPrename() {
 		return _prename;
 	}
 
 	/** Sets the prename. */
+	@CalledByReflection
 	public void setPrename(String name) {
 		_prename = name;
 	}
 
 	/** Checks whether the prename is set. */
+	@CalledByReflection
 	public boolean isNameSet() {
 		return !StringServices.isEmpty(_prename);
 	}
 
 	/** Adds 1 to the counter. */
-	public void count() {
-		_counter++;
+	@CalledByReflection
+	public int count() {
+		return _counter++;
 	}
 
 }

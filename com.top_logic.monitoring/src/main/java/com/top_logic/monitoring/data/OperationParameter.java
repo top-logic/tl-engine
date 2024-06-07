@@ -24,7 +24,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  */
 public class OperationParameter extends AbstractConfiguredInstance<OperationParameter.Config> {
 
-	/** {@link ConfigurationItem} for the {@link DynamicMBeanElement}. */
+	/** {@link ConfigurationItem} for the {@link AbstractDynamicMBean}. */
 	public interface Config extends NamedPolymorphicConfiguration<OperationParameter> {
 		/** The type of this parameter. */
 		@Options(fun = ParameterTypes.class)
@@ -35,7 +35,7 @@ public class OperationParameter extends AbstractConfiguredInstance<OperationPara
 		String getDescription();
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link DynamicMBeanElement}. */
+	/** {@link TypedConfiguration} constructor for {@link AbstractDynamicMBean}. */
 	public OperationParameter(InstantiationContext context, Config config) {
 		super(context, config);
 	}
@@ -48,9 +48,9 @@ public class OperationParameter extends AbstractConfiguredInstance<OperationPara
 		@Override
 		public Collection<Class<?>> apply() {
 			List<Class<?>> types = List.of(
-				java.lang.String.class,
-				java.lang.Number.class,
-				java.lang.Boolean.class);
+				String.class,
+				Number.class,
+				Boolean.class);
 			return types;
 		}
 	}

@@ -9,10 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanConstructorInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -28,18 +29,18 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class MonitorByExpression extends DynamicMBeanElement {
+public class MBeanByExpression extends AbstractDynamicMBean {
 
-	private QueryExecutor _impl;
+	private final QueryExecutor _impl;
 
-	private List<OperationParameter> _parameters;
+	private final List<OperationParameter> _parameters;
 
 	private Object _result;
 
-	/** {@link ConfigurationItem} for the {@link MonitorByExpression}. */
-	public interface Config extends DynamicMBeanElement.Config {
+	/** {@link ConfigurationItem} for the {@link MBeanByExpression}. */
+	public interface Config extends AbstractDynamicMBean.Config {
 
-		@ValueInitializer(MonitorByExpressionValueInitializer.class)
+		@ValueInitializer(MBeanByExpressionValueInitializer.class)
 		@Override
 		String getName();
 
@@ -57,8 +58,8 @@ public class MonitorByExpression extends DynamicMBeanElement {
 		List<OperationParameter> getParameters();
 	}
 
-	/** {@link TypedConfiguration} constructor for {@link MonitorByExpression}. */
-	public MonitorByExpression(InstantiationContext context, Config config) {
+	/** {@link TypedConfiguration} constructor for {@link MBeanByExpression}. */
+	public MBeanByExpression(InstantiationContext context, Config config) {
 		super(context, config);
 
 		_impl = QueryExecutor.compile(config.getImpl());
@@ -66,20 +67,13 @@ public class MonitorByExpression extends DynamicMBeanElement {
 		if (_parameters == null || _parameters.size() == 0) {
 			execute();
 		}
-
-		buildDynamicMBeanInfo(config);
-	}
-
-	@Override
-	protected MBeanConstructorInfo[] createConstructorInfo() {
-		return null;
 	}
 
 	@Override
 	protected MBeanAttributeInfo[] createAttributeInfo() {
-		MBeanAttributeInfo[] dAttributes = new MBeanAttributeInfo[1];
+		MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[1];
 
-		dAttributes[0] = new MBeanAttributeInfo(
+		attributes[0] = new MBeanAttributeInfo(
 			"Result", // name
 			"java.lang.Object", // type
 			"The result of the query.", // description
@@ -87,38 +81,48 @@ public class MonitorByExpression extends DynamicMBeanElement {
 			false, // writable
 			false); // isIs
 
-		return dAttributes;
+		return attributes;
 	}
 
 	@Override
 	protected MBeanOperationInfo[] createOperationInfo() {
-		MBeanOperationInfo[] dOperations = new MBeanOperationInfo[1];
+		MBeanOperationInfo[] operations = new MBeanOperationInfo[1];
 
 		List<MBeanParameterInfo> parameters = new ArrayList<>();
 		for (OperationParameter param : _parameters) {
-			com.top_logic.monitoring.data.OperationParameter.Config paramConfig = param.getConfig();
+			OperationParameter.Config paramConfig = param.getConfig();
 			parameters.add(new MBeanParameterInfo(
-				paramConfig.getName(), // name
-				paramConfig.getType().getCanonicalName(), // type
-				paramConfig.getDescription())); // description
+				paramConfig.getName(),
+				paramConfig.getType().getCanonicalName(),
+				paramConfig.getDescription()));
 		}
 
-		dOperations[0] = new MBeanOperationInfo(
+		operations[0] = new MBeanOperationInfo(
 			"execute", // name
 			"Executes the configured script with its given parameters.", // description
 			parameters.toArray(MBeanParameterInfo[]::new), // parameter types
 			"java.lang.Object", // return type
 			MBeanOperationInfo.ACTION); // impact
 
-		return dOperations;
+		return operations;
 	}
 
 	/** Returns the result of the query. */
+	@CalledByReflection
 	public Object getResult() {
+		if (CollectionUtil.isEmpty(_parameters)) {
+			// update
+			_result = ThreadContextManager.inSystemInteraction(MBeanByExpression.class, () -> _impl.execute());
+		} else {
+			_result =
+				ThreadContextManager.inSystemInteraction(MBeanByExpression.class, () -> _impl.execute(_parameters));
+		}
+
 		return _result;
 	}
 
 	/** Executes the configured script with its given parameters. Maybe called by reflection. */
+	@CalledByReflection
 	public Object execute(Object... args) {
 		Object[] arguments;
 		if (args.length == 1 && args[0] instanceof Object[]) {
@@ -129,7 +133,7 @@ public class MonitorByExpression extends DynamicMBeanElement {
 			arguments = args;
 		}
 
-		_result = ThreadContextManager.inSystemInteraction(MonitorByExpression.class, () -> _impl.execute(arguments));
+		_result = ThreadContextManager.inSystemInteraction(MBeanByExpression.class, () -> _impl.execute(arguments));
 
 		return _result;
 	}

@@ -258,15 +258,18 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	@IntDefault(1 * 1024 * 1024)
 	@KafkaClientProperty
 	int getMaxPartitionFetchBytes();
-	
+
 	/**
+	 * When more than this much time passes between two requests, the client will be removed from
+	 * the server.
+	 * 
 	 * @see ConsumerConfig#MAX_POLL_INTERVAL_MS_CONFIG
 	 */
 	@Name(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG)
 	@IntDefault(5 * 60 * 1000)
 	@KafkaClientProperty
 	int getMaxPollIntervalMS();
-	
+
 	/**
 	 * @see ConsumerConfig#MAX_POLL_RECORDS_CONFIG
 	 */
@@ -300,6 +303,8 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	int getSessionTimeoutMS();
 	
 	/**
+	 * This option is used only, when {@link #getKeyDeserializerClass()} is empty.
+	 * 
 	 * @see ConsumerConfig#KEY_DESERIALIZER_CLASS_DOC
 	 */
 	@Name(KEY_DESERIALIZER_TYPED_CONFIG)
@@ -307,7 +312,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	PolymorphicConfiguration<? extends Deserializer<K>> getKeyDeserializer();
 
 	/**
-	 * For configuration of {@link Deserializer} which should be configured via Kafka.
+	 * When this option is not empty, {@link #getKeyDeserializer()} will be ignored.
 	 * 
 	 * @see ConsumerConfig#KEY_DESERIALIZER_CLASS_DOC
 	 */
@@ -316,6 +321,8 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	Class<? extends Deserializer<K>> getKeyDeserializerClass();
 
 	/**
+	 * This option is used only, when {@link #getValueDeserializerClass()} is empty.
+	 * 
 	 * @see ConsumerConfig#VALUE_DESERIALIZER_CLASS_DOC
 	 */
 	@Name(VALUE_DESERIALIZER_TYPED_CONFIG)
@@ -323,7 +330,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	PolymorphicConfiguration<? extends Deserializer<V>> getValueDeserializer();
 	
 	/**
-	 * For configuration of {@link Deserializer} which should be configured via Kafka.
+	 * When this option is not empty, {@link #getValueDeserializer()} will be ignored.
 	 * 
 	 * @see ConsumerConfig#VALUE_DESERIALIZER_CLASS_DOC
 	 */

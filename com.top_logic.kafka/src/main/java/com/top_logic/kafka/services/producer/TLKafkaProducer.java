@@ -54,7 +54,7 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		String TOPIC = "topic";
 
 		/**
-		 * @see #getValueSerializer()
+		 * @see #getKeySerializer()
 		 */
 		String KEY_SERIALIZER_TYPED_CONFIG = "key.serializer.typed.config";
 
@@ -64,7 +64,7 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 		String VALUE_SERIALIZER_TYPED_CONFIG = "value.serializer.typed.config";
 
 		/**
-		 * @see #getValueSerializer()
+		 * @see #getMaxRequestSize()
 		 */
 		String MAX_REQUEST_SIZE = "maxRequestSize";
 

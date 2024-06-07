@@ -16,14 +16,17 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
+import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -74,6 +77,20 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 		@Mandatory
 		@Name("target-ref")
 		QualifiedPartName getTargetRef();
+
+		/**
+		 * When set, only change those references originating from objects in the given table.
+		 */
+		@Nullable
+		@Name("source-table")
+		String getSourceTable();
+
+		/**
+		 * When set, only change those references pointing to objects in the given table.
+		 */
+		@Nullable
+		@Name("dest-table")
+		String getDestTable();
 	}
 
 	/**
@@ -115,10 +132,24 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 			String tableName = table.getDBMapping().getDBName();
 			String refColumn = ref.getColumn(ReferencePart.name).getDBName();
 
+			SQLExpression where = eqSQL(literal(DBType.ID, sourceRef.getDefinition()), column(refColumn));
+
+			MOReference sourceKey = (MOReference) table.getAttribute(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+			if (config.getSourceTable() != null) {
+				where = and(where, eqSQL(literal(DBType.STRING, config.getSourceTable()),
+					column(sourceKey.getColumn(ReferencePart.type).getDBName())));
+			}
+
+			MOReference destKey = (MOReference) table.getAttribute(DBKnowledgeAssociation.REFERENCE_DEST_NAME);
+			if (config.getDestTable() != null) {
+				where = and(where, eqSQL(literal(DBType.STRING, config.getDestTable()),
+					column(destKey.getColumn(ReferencePart.type).getDBName())));
+			}
+
 			CompiledStatement update = query(
 				update(
 					table(tableName),
-					eqSQL(literal(DBType.ID, sourceRef.getDefinition()), column(refColumn)),
+					where,
 					columnNames(refColumn),
 					expressions(literal(DBType.ID, targetRef.getDefinition())))).toSql(connection.getSQLDialect());
 			

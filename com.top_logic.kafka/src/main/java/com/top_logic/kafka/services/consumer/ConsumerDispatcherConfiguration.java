@@ -46,7 +46,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	String CLIENT_RACK = "client.rack";
 
 	/**
-	 * @see #getValueDeserializer()
+	 * @see #getKeyDeserializer()
 	 */
 	String KEY_DESERIALIZER_TYPED_CONFIG = "key.deserializer.typed.config";
 

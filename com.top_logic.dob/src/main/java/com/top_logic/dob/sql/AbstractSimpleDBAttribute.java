@@ -76,6 +76,11 @@ public abstract class AbstractSimpleDBAttribute implements DBAttribute {
 	}
 
 	@Override
+	public void setDBName(String dbName) {
+		throw new UnsupportedOperationException("Must not change a simple DB attribute.");
+	}
+
+	@Override
 	public DBType getSQLType() {
 		return _dbType.getDefaultSQLType();
 	}

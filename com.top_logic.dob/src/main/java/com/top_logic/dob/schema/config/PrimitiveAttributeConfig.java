@@ -38,6 +38,11 @@ public interface PrimitiveAttributeConfig extends AttributeConfig, DBConfigurati
 	@Name(DOXMLConstants.ATT_TYPE_ATTRIBUTE)
 	MetaObject getValueType();
 
+	/**
+	 * @see #getValueType()
+	 */
+	void setValueType(MetaObject value);
+
 	@Override
 	@ClassDefault(MOAttributeImpl.class)
 	Class<? extends MOAttribute> getImplementationClass();

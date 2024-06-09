@@ -73,14 +73,6 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 	}
 
 	@Override
-	public SQLPart visitSQLAlterTable(SQLAlterTable sql, A arg) {
-		SQLTable table = transform(sql.getTable(), arg);
-		SQLTableModification where = transform(sql.getModification(), arg);
-
-		return composeSQLAlterTable(sql, table, where, arg);
-	}
-
-	@Override
 	public SQLPart visitSQLAddColumn(SQLAddColumn sql, A arg) {
 		return sql;
 	}
@@ -288,9 +280,6 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLDelete(SQLDelete sql, SQLTable table, SQLExpression condition, A arg);
-
-	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
-	protected abstract SQLPart composeSQLAlterTable(SQLAlterTable sql, SQLTable table, SQLTableModification modification, A arg);
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLUpdate(SQLUpdate sql, SQLTable table, List<SQLExpression> values, SQLExpression where,

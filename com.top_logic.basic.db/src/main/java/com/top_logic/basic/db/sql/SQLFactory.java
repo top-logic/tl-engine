@@ -275,19 +275,6 @@ public class SQLFactory {
 	}
 
 	/**
-	 * Creates a {@link SQLStatement} that alters the given table using the given
-	 * {@link SQLTableModification}.
-	 * 
-	 * @param table
-	 *        The table to modify.
-	 * @param modification
-	 *        The actual modification.
-	 */
-	public static SQLAlterTable alterTable(SQLTable table, SQLTableModification modification) {
-		return new SQLAlterTable(table, modification);
-	}
-
-	/**
 	 * Creates a {@link SQLTableModification} that adds a new column to the given table.
 	 * 
 	 * @param columnName
@@ -295,9 +282,10 @@ public class SQLFactory {
 	 * @param type
 	 *        The database type of the new column.
 	 */
-	public static SQLAddColumn addColumn(String columnName, DBType type, boolean mandatory, boolean binary, long size,
+	public static SQLAddColumn addColumn(SQLTable table, String columnName, DBType type, boolean mandatory,
+			boolean binary, long size,
 			int precision, Object defaultValue) {
-		return SQLFactory.addColumn(columnName, type)
+		return SQLFactory.addColumn(table, columnName, type)
 			.setMandatory(mandatory)
 			.setBinary(binary)
 			.setSize(size)
@@ -311,8 +299,9 @@ public class SQLFactory {
 	 * @param column
 	 *        Name of the new column.
 	 */
-	public static SQLAddColumn addColumn(DBColumn column, Object defaultValue) {
-		return SQLFactory.addColumn(column.getDBName(), column.getType(), column.isMandatory(), column.isBinary(),
+	public static SQLAddColumn addColumn(SQLTable table, DBColumn column, Object defaultValue) {
+		return SQLFactory.addColumn(table, column.getDBName(), column.getType(), column.isMandatory(),
+			column.isBinary(),
 			column.getSize(), column.getPrecision(), defaultValue);
 	}
 
@@ -324,8 +313,20 @@ public class SQLFactory {
 	 * @param type
 	 *        The database type of the new column.
 	 */
-	public static SQLAddColumn addColumn(String columnName, DBType type) {
-		return new SQLAddColumn(columnName, type);
+	public static SQLAddColumn addColumn(SQLTable table, String columnName, DBType type) {
+		return new SQLAddColumn(table, columnName, type);
+	}
+
+	/**
+	 * Creates a {@link SQLTableModification} that modifies the name of a column in the given table.
+	 * 
+	 * @param columnName
+	 *        Name of the column to modify.
+	 * @param newName
+	 *        The new database name of the column.
+	 */
+	public static SQLModifyColumn modifyColumnName(SQLTable table, String columnName, DBType type, String newName) {
+		return new SQLModifyColumn(table, columnName, ModificationAspect.NAME, type).setNewName(newName);
 	}
 
 	/**
@@ -336,8 +337,8 @@ public class SQLFactory {
 	 * @param type
 	 *        The new database type of the column.
 	 */
-	public static SQLModifyColumn modifyColumnType(String columnName, DBType type) {
-		return new SQLModifyColumn(columnName, ModificationAspect.TYPE, type);
+	public static SQLModifyColumn modifyColumnType(SQLTable table, String columnName, DBType type) {
+		return new SQLModifyColumn(table, columnName, ModificationAspect.TYPE, type);
 	}
 
 	/**
@@ -355,8 +356,9 @@ public class SQLFactory {
 	 * @param mandatory
 	 *        The new mandatory state of the column.
 	 */
-	public static SQLModifyColumn modifyColumnMandatory(String columnName, DBType type, boolean mandatory) {
-		return new SQLModifyColumn(columnName, ModificationAspect.MANDATORY, type).setMandatory(mandatory);
+	public static SQLModifyColumn modifyColumnMandatory(SQLTable table, String columnName, DBType type,
+			boolean mandatory) {
+		return new SQLModifyColumn(table, columnName, ModificationAspect.MANDATORY, type).setMandatory(mandatory);
 	}
 
 	/**
@@ -365,8 +367,8 @@ public class SQLFactory {
 	 * @param columnName
 	 *        Name of the column to drop.
 	 */
-	public static SQLDropColumn dropColumn(String columnName) {
-		return new SQLDropColumn(columnName);
+	public static SQLDropColumn dropColumn(SQLTable table, String columnName) {
+		return new SQLDropColumn(table, columnName);
 	}
 
 	public static SQLInsert insert(SQLTable table) {

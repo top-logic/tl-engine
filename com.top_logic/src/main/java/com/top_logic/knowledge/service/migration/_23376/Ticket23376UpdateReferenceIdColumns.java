@@ -112,10 +112,7 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 
 	private SQLQuery<?> createQueryToSetColumnMandatory(String tableName, String columnName) {
 		return query(
-			alterTable(
-				table(tableName),
-				modifyColumnMandatory(columnName, DBType.LONG, true)
-			)
+			modifyColumnMandatory(table(tableName), columnName, DBType.LONG, true)
 		);
 	}
 

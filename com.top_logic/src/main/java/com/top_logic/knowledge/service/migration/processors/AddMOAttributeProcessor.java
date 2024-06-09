@@ -215,9 +215,7 @@ public abstract class AddMOAttributeProcessor
 		DBColumn column = SchemaSetup.createColumn(attribute);
 		try {
 			processor.execute(
-				alterTable(
-					table(tableName),
-					addColumn(column, defaultValue)));
+				addColumn(table(tableName), column, defaultValue));
 			log.info("Created column '" + column.getDBName() + "' in table '" + tableName + "'.");
 		} catch (SQLException ex) {
 			log.error("Unable to create column '" + column.getDBName() + "' in table '" + tableName + "'.", ex);

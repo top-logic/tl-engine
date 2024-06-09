@@ -10,14 +10,15 @@ package com.top_logic.basic.db.sql;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SQLDropColumn extends AbstractSQLTableModification {
+public class SQLDropColumn extends SQLAlterTable {
 
 	private String _columnName;
 
 	/**
 	 * Creates a new {@link SQLDropColumn}.
 	 */
-	public SQLDropColumn(String columnName) {
+	public SQLDropColumn(SQLTable table, String columnName) {
+		super(table);
 		setColumnName(columnName);
 	}
 

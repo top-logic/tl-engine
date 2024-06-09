@@ -127,9 +127,7 @@ public class DropColumnProcessor extends AbstractConfiguredInstance<DropColumnPr
 						log.info("Dropping column '" + columnName + "' from table '" + tableName + "'.");
 						CompiledStatement sql =
 							query(
-								alterTable(
-									table(tableName),
-									dropColumn(columnName))).toSql(connection.getSQLDialect());
+								dropColumn(table(tableName), columnName)).toSql(connection.getSQLDialect());
 						sql.executeUpdate(connection);
 					}
 				}

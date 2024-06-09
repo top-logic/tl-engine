@@ -3099,7 +3099,14 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * Creates a <code>DROP</code> statement for a foreign key constraint.
 	 */
 	public String dropForeignKey(String tableName, String foreignKeyName) {
-		return "ALTER TABLE " + tableRef(tableName) + " DROP CONSTRAINT " + tableRef(foreignKeyName);
+		return alterTable(tableName) + "DROP CONSTRAINT " + tableRef(foreignKeyName);
+	}
+
+	/**
+	 * Creates the "ALTER TABLE " prefix for schema modification commands.
+	 */
+	protected String alterTable(String tableName) {
+		return "ALTER TABLE " + tableRef(tableName) + " ";
 	}
 
 	/**
@@ -3354,6 +3361,28 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Appends the SQL command to modify the name of a column.
+	 * 
+	 * <p>
+	 * Appends the part of the "ALTER TABLE" that describes the modification of a column, i.e.
+	 * "MODIFY &lt;columnName&gt; &lt;type&gt;".
+	 * </p>
+	 * 
+	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
+	 */
+	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
+		result.append("CHANGE ");
+		result.append(columnRef(columnName));
+		result.append(" ");
+		result.append(columnRef(newName));
+		result.append(" ");
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
+	}
+
+	/**
 	 * Appends the SQL command to modify the type of a column.
 	 * 
 	 * <p>
@@ -3361,14 +3390,17 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * "MODIFY &lt;columnName&gt; &lt;type&gt;".
 	 * </p>
 	 * 
-	 * @see #appendChangeMandatory(Appendable, DBType, String, long, int, boolean, boolean, Object)
+	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
 	 */
-	public void appendChangeColumnType(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName,
+			String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		appendModifyColumnKeyword(result);
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
 	}
 
 	/**
@@ -3381,14 +3413,17 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * 
 	 * @implNote Here also the type is added, because most databases needs it.
 	 * 
-	 * @see #appendChangeColumnType(Appendable, DBType, String, long, int, boolean, boolean, Object)
+	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
 	 */
-	public void appendChangeMandatory(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName,
+			String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		appendModifyColumnKeyword(result);
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
 	}
 
 	/**

@@ -225,13 +225,9 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 	}
 
 	@Override
-	public SQLPart visitSQLAlterTable(SQLAlterTable sql, Void arg) {
-		return alterTable(copy(sql.getTable(), arg), copy(sql.getModification(), arg));
-	}
-
-	@Override
 	public SQLPart visitSQLAddColumn(SQLAddColumn sql, Void arg) {
-		return addColumn(sql.getColumnName(), sql.getType(), sql.isMandatory(), sql.isBinary(), sql.getSize(),
+		return addColumn(sql.getTable(), sql.getColumnName(), sql.getType(), sql.isMandatory(), sql.isBinary(),
+			sql.getSize(),
 			sql.getPrecision(), sql.getDefaultValue());
 	}
 
@@ -239,12 +235,16 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 	public SQLPart visitSQLModifyColumn(SQLModifyColumn sql, Void arg) {
 		SQLModifyColumn result;
 		switch (sql.getModificationAspect()) {
+			case NAME:
+				result = modifyColumnName(sql.getTable(), sql.getColumnName(), sql.getType(), sql.getNewName());
+				result.setMandatory(sql.isMandatory());
+				break;
 			case TYPE:
-				result = modifyColumnType(sql.getColumnName(), sql.getType());
+				result = modifyColumnType(sql.getTable(), sql.getColumnName(), sql.getType());
 				result.setMandatory(sql.isMandatory());
 				break;
 			case MANDATORY:
-				result = modifyColumnMandatory(sql.getColumnName(), sql.getType(), sql.isMandatory());
+				result = modifyColumnMandatory(sql.getTable(), sql.getColumnName(), sql.getType(), sql.isMandatory());
 				break;
 			default:
 				throw new IllegalArgumentException();
@@ -255,7 +255,7 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 
 	@Override
 	public SQLPart visitSQLDropColumn(SQLDropColumn sql, Void arg) {
-		return dropColumn(sql.getColumnName());
+		return dropColumn(sql.getTable(), sql.getColumnName());
 	}
 
 	@Override

@@ -60,9 +60,7 @@ public class Ticket27215InsertHistoryType implements MigrationProcessor {
 		SQLProcessor processor = new SQLProcessor(connection);
 
 		processor.execute(
-			alterTable(
-				metaAttributeTable(),
-				addColumn(HISTORY_TYPE_COL, DBType.STRING).setSize(150)));
+			addColumn(metaAttributeTable(), HISTORY_TYPE_COL, DBType.STRING).setSize(150));
 			
 		
 		int cntUpdate = processor.execute(

@@ -156,11 +156,6 @@ public interface SQLVisitor<R,A> {
 	R visitSQLDelete(SQLDelete sql, A arg);
 
 	/**
-	 * Visit case for {@link SQLAlterTable}
-	 */
-	R visitSQLAlterTable(SQLAlterTable sql, A arg);
-
-	/**
 	 * Visit case for {@link SQLAddColumn}
 	 */
 	R visitSQLAddColumn(SQLAddColumn sql, A arg);

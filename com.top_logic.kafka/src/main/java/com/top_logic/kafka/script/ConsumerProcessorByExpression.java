@@ -21,13 +21,18 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.kafka.services.consumer.ConsumerProcessor;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.form.component.Editor;
+import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
+import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 
 /**
  * A {@link ConsumerProcessor} that can be configured In-App to process text messages.
@@ -70,7 +75,14 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		 * cause an exception to be thrown, the transaction to be rolled back and the message to be
 		 * processed again.
 		 * </p>
+		 * 
+		 * @implNote Note that {@link PlainEditor} instead of the default {@link Editor} for
+		 *           {@link Expr} ({@link TLScriptPropertyEditor}) is used here to avoid checking
+		 *           the expression for validity: When executing the query it is enhanced by adding
+		 *           the defined parameters. These parameters are not available at input time.
 		 */
+		@Mandatory
+		@PropertyEditor(PlainEditor.class)
 		Expr getProcessor();
 
 	}

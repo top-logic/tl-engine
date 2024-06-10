@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
@@ -34,6 +35,7 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	/**
 	 * Configuration options for {@link StructuredTextAttributeStorage}.
 	 */
+	@TagName("structured-text-storage")
 	public interface Config<I extends StructuredTextAttributeStorage<?>>
 			extends CommonStructuredTextAttributeStorage.Config<I>, WithStorageAttribute {
 		// Pure sum interface.

@@ -274,16 +274,34 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 				if (attr.getName().equals(config.getDestBridgeColumn())) {
 					// Fill source column of direct link with source key.
 					for (int part = 0; part < sourceOwner.getDbMapping().length; part++) {
-						insertColumns.add(sourceOwner.getDbMapping()[part].getDBName());
-						DBAttribute column = sourceOwner.getDbMapping()[part];
+						DBAttribute fromColumn = sourceOwner.getDbMapping()[part];
+						DBAttribute toColumn = directSrc.getDbMapping()[part];
+						insertColumns.add(toColumn.getDBName());
 						selectColumns.add(columnDef(
-							column.getDBName(),
+							fromColumn.getDBName(),
 							src,
-							column.getDBName()));
+							fromColumn.getDBName()));
 
-						DBType columnType = column.getSQLType();
-						insertParameters.add(parameterDef(columnType, column.getDBName()));
-						insertValues.add(parameter(columnType, column.getDBName()));
+						DBType columnType = toColumn.getSQLType();
+						insertParameters.add(parameterDef(columnType, toColumn.getDBName()));
+						insertValues.add(parameter(columnType, toColumn.getDBName()));
+						selectTypes.add(columnType);
+					}
+				} else if (attr.getName().equals(config.getDestValueColumn())) {
+					// Fill destination column of direct link with original values.
+					for (int part = 0; part < directDst.getDbMapping().length; part++) {
+						DBAttribute fromColumn = destValue.getDbMapping()[part];
+						DBAttribute toColumn = directDst.getDbMapping()[part];
+
+						insertColumns.add(toColumn.getDBName());
+						selectColumns.add(columnDef(
+							fromColumn.getDBName(),
+							dst,
+							fromColumn.getDBName()));
+
+						DBType columnType = toColumn.getSQLType();
+						insertParameters.add(parameterDef(columnType, toColumn.getDBName()));
+						insertValues.add(parameter(columnType, toColumn.getDBName()));
 						selectTypes.add(columnType);
 					}
 				} else if (attr.getName().equals(config.getDestReferenceColumn())) {
@@ -332,6 +350,9 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 								hasBranches ? eqSQL(util.branchColumnRef(dst), util.branchColumnRef(src))
 									: literalTrueLogical(),
 								eqSQL(
+									column(src, sourceMetaRef.getColumn(ReferencePart.name).getDBName()),
+									literal(DBType.ID, sourceRef.getDefinition())),
+								eqSQL(
 									column(dst, destBridge.getColumn(ReferencePart.name).getDBName()),
 									column(src, sourceBridge.getColumn(ReferencePart.name).getDBName())),
 								le(column(dst, BasicTypes.REV_MAX_DB_NAME),
@@ -343,22 +364,18 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 							hasBranches ? eqSQL(util.branchColumnRef(dst), util.branchColumnRef(bridge))
 								: literalTrueLogical(),
 							eqSQL(
+								column(bridge, bridgeTypeKey.getColumn(ReferencePart.name).getDBName()),
+								literal(DBType.ID, bridgeType.getID())),
+							eqSQL(
 								column(dst, destBridge.getColumn(ReferencePart.name).getDBName()),
 								column(bridge, BasicTypes.IDENTIFIER_DB_NAME)),
 							le(column(dst, BasicTypes.REV_MAX_DB_NAME), column(bridge, BasicTypes.REV_MAX_DB_NAME)),
 							ge(column(dst, BasicTypes.REV_MAX_DB_NAME), column(bridge, BasicTypes.REV_MIN_DB_NAME))
 						)
 					),
-					and(
-						eqSQL(
-							column(dst, destMetaRef.getColumn(ReferencePart.name).getDBName()),
-							literal(DBType.ID, destRef.getDefinition())),
-						eqSQL(
-							column(src, sourceMetaRef.getColumn(ReferencePart.name).getDBName()),
-							literal(DBType.ID, sourceRef.getDefinition())),
-						eqSQL(
-							column(bridge, bridgeTypeKey.getColumn(ReferencePart.name).getDBName()),
-							literal(DBType.ID, bridgeType.getID()))
+					eqSQL(
+						column(dst, destMetaRef.getColumn(ReferencePart.name).getDBName()),
+						literal(DBType.ID, destRef.getDefinition())
 					)
 				)).toSql(sqlDialect);
 
@@ -392,8 +409,9 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 							if (++batchSize >= 1000) {
 								long now = System.nanoTime();
 								if (now - start > 1000000L) {
-									log.info("Synthesizing direct references '" + config.getDirectReference().getName()
-										+ "' in table '" + directTable.getName() + "', " + cnt + " links created.");
+									log.info("Created " + cnt + " links while synthesizing direct references '"
+										+ config.getDirectReference().getName() + "' in table '" + directTable.getName()
+										+ "'.");
 									start = now;
 								}
 

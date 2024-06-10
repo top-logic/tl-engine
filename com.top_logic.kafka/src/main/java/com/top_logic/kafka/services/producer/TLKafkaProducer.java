@@ -15,11 +15,14 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Name;
@@ -28,6 +31,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.kafka.services.common.CommonClientConfig;
 import com.top_logic.kafka.services.common.KafkaCommonClient;
@@ -46,6 +50,78 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 	 * 
 	 * @author <a href=mailto:tgi@top-logic.com>tgi</a>
 	 */
+	@DisplayOrder({
+		NamedConfiguration.NAME_ATTRIBUTE,
+		CommonClientConfigs.CLIENT_ID_CONFIG,
+		CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG,
+		Config.TOPIC,
+		ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+		Config.KEY_SERIALIZER_TYPED_CONFIG,
+		ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+		Config.VALUE_SERIALIZER_TYPED_CONFIG,
+		CommonClientConfig.LOG_WRITER,
+		PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME,
+		ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG,
+		ProducerConfig.TRANSACTIONAL_ID_CONFIG,
+		ProducerConfig.TRANSACTION_TIMEOUT_CONFIG,
+		ProducerConfig.ACKS_CONFIG,
+		ProducerConfig.RETRIES_CONFIG,
+		ProducerConfig.BATCH_SIZE_CONFIG,
+		ProducerConfig.BUFFER_MEMORY_CONFIG,
+		ProducerConfig.COMPRESSION_TYPE_CONFIG,
+		ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG,
+		ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
+		ProducerConfig.LINGER_MS_CONFIG,
+		ProducerConfig.MAX_BLOCK_MS_CONFIG,
+		ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION,
+		ProducerConfig.MAX_REQUEST_SIZE_CONFIG,
+		ProducerConfig.PARTITIONER_CLASS_CONFIG,
+		CommonClientConfigs.CLIENT_DNS_LOOKUP_CONFIG,
+		CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG,
+		CommonClientConfigs.METADATA_MAX_AGE_CONFIG,
+		CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG,
+		CommonClientConfigs.METRICS_NUM_SAMPLES_CONFIG,
+		CommonClientConfigs.METRICS_RECORDING_LEVEL_CONFIG,
+		CommonClientConfigs.METRICS_SAMPLE_WINDOW_MS_CONFIG,
+		CommonClientConfigs.RECEIVE_BUFFER_CONFIG,
+		CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG,
+		CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG,
+		CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG,
+		CommonClientConfigs.RETRY_BACKOFF_MS_CONFIG,
+		CommonClientConfigs.SEND_BUFFER_CONFIG,
+		CommonClientConfigs.SECURITY_PROTOCOL_CONFIG,
+		CommonClientConfig.SECURITY_PROVIDERS,
+		SaslConfigs.SASL_CLIENT_CALLBACK_HANDLER_CLASS,
+		SaslConfigs.SASL_JAAS_CONFIG,
+		SaslConfigs.SASL_KERBEROS_KINIT_CMD,
+		SaslConfigs.SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN,
+		SaslConfigs.SASL_KERBEROS_SERVICE_NAME,
+		SaslConfigs.SASL_KERBEROS_TICKET_RENEW_JITTER,
+		SaslConfigs.SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR,
+		SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS,
+		SaslConfigs.SASL_LOGIN_CLASS,
+		SaslConfigs.SASL_LOGIN_REFRESH_BUFFER_SECONDS,
+		SaslConfigs.SASL_LOGIN_REFRESH_MIN_PERIOD_SECONDS,
+		SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_FACTOR,
+		SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_JITTER,
+		SaslConfigs.SASL_MECHANISM,
+		SslConfigs.SSL_CIPHER_SUITES_CONFIG,
+		SslConfigs.SSL_ENABLED_PROTOCOLS_CONFIG,
+		SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG,
+		SslConfigs.SSL_KEY_PASSWORD_CONFIG,
+		SslConfigs.SSL_KEYMANAGER_ALGORITHM_CONFIG,
+		SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG,
+		SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG,
+		SslConfigs.SSL_KEYSTORE_TYPE_CONFIG,
+		SslConfigs.SSL_PROTOCOL_CONFIG,
+		SslConfigs.SSL_PROVIDER_CONFIG,
+		SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG,
+		SslConfigs.SSL_TRUSTMANAGER_ALGORITHM_CONFIG,
+		SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG,
+		SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG,
+		SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG,
+		CommonClientConfig.UNTYPED_PROPERTIES,
+	})
 	public interface Config<K, V> extends CommonClientConfig<V, TLKafkaProducer<K, V>> {
 
 		/**

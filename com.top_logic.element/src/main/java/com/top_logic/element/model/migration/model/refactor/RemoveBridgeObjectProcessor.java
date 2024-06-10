@@ -389,6 +389,8 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 			int cnt = 0;
 			int batchSize = 0;
 
+			select.setFetchSize(1000);
+
 			ConnectionPool pool = connection.getPool();
 			PooledConnection seond = pool.borrowWriteConnection();
 			try {

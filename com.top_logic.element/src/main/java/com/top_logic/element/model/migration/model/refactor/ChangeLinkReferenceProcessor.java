@@ -146,6 +146,9 @@ public class ChangeLinkReferenceProcessor extends AbstractConfiguredInstance<Cha
 					column(destKey.getColumn(ReferencePart.type).getDBName())));
 			}
 
+			log.info("Changing reference of links in table '" + tableName + "' from "
+				+ toString(sourceConfig, sourceRef) + " to " + toString(targetConfig, targetRef) + ".");
+
 			CompiledStatement update = query(
 				update(
 					table(tableName),

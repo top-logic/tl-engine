@@ -1363,7 +1363,6 @@ div.dirtyHandlingDialog .changes {
 	padding-left: var(--spacing-02) !important;
     display: inline-flex;
     align-items: center;
-    width: 100%;
     box-sizing: border-box;
     vertical-align: middle;
 }

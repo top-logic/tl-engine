@@ -410,7 +410,7 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 
 							if (++batchSize >= 1000) {
 								long now = System.nanoTime();
-								if (now - start > 1000000L) {
+								if (now - start > 1000_000_000L) {
 									log.info("Created " + cnt + " links while synthesizing direct references '"
 										+ config.getDirectReference().getName() + "' in table '" + directTable.getName()
 										+ "'.");

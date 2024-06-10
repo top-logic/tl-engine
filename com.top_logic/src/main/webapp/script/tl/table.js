@@ -2002,7 +2002,8 @@ TABLE = {
 	autofitColumnWidths: function(tableContainer, fullTable = true, firstCol, lastCol, updateServer = true) {
 		const table = tableContainer.querySelector("table");
 		const tbody = this.getTableBody(tableContainer);
-		let numColumns = this.getNumberOfColumns(table);
+		let numColumns = this.getNumberOfColumns(table),
+			borderWidth = parseInt(getComputedStyle(document.body).getPropertyValue("--TABLE_COLUMN_BORDER_WIDTH"));
 		const ctrlID = tableContainer.id;
 		
 		let firstIdx, lastIdx;
@@ -2017,21 +2018,15 @@ TABLE = {
 		for (let i = firstIdx; i <= lastIdx; i++) {
 			let cells = this.getTableColumnCells(tbody, i, numColumns),
 				columnWidth = 0;
+			
 			for (let cell of cells) {
 				let cellContent = cell.firstElementChild;
 				if (!cellContent) {
 					continue;
 				}
 				
-				// Removing width style is needed to calculate the actual scrollwidth (width including overflow)
-				let originalStyleWidth = cellContent.style.width;
-				cellContent.style.width = "auto";
-				
-				let borderWidth = parseInt(getComputedStyle(document.body).getPropertyValue("--TABLE_COLUMN_BORDER_WIDTH")),
-					cellWidth = cellContent.clientWidth + borderWidth,
+				let cellWidth = cellContent.clientWidth + borderWidth,
 					scrollWidth = cellContent.scrollWidth + borderWidth;
-				
-				cellContent.style.width = originalStyleWidth;
 				
 				columnWidth = Math.max(columnWidth, cellWidth, scrollWidth);
 			}

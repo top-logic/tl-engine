@@ -26,6 +26,7 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
+import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
@@ -361,36 +362,57 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 					)
 				)).toSql(sqlDialect);
 
+			log.info("Synthesizing direct references '" + config.getDirectReference().getName()
+				+ "' in table '" + directTable.getName() + "'.");
+
+			// A second connection is needed, ensure a consistent view of both connections.
+			connection.commit();
+
+			long start = System.nanoTime();
 			int cnt = 0;
 			int batchSize = 0;
-			try (ResultSet result = select.executeQuery(connection)) {
-				try (Batch batch = insert.createBatch(connection)) {
-					int selectSize = selectColumns.size();
-					Object[] values = new Object[selectSize + 1];
 
-					while (result.next()) {
-						int pos = 0;
-						values[pos++] = util.newID(connection);
-						for (int n = 0; n < selectSize; n++) {
-							values[pos++] = sqlDialect.mapToJava(result, n + 1, selectTypes.get(n));
+			ConnectionPool pool = connection.getPool();
+			PooledConnection seond = pool.borrowWriteConnection();
+			try {
+				try (ResultSet result = select.executeQuery(seond)) {
+					try (Batch batch = insert.createBatch(connection)) {
+						int selectSize = selectColumns.size();
+						Object[] values = new Object[selectSize + 1];
+
+						while (result.next()) {
+							int pos = 0;
+							values[pos++] = util.newID(connection);
+							for (int n = 0; n < selectSize; n++) {
+								values[pos++] = sqlDialect.mapToJava(result, n + 1, selectTypes.get(n));
+							}
+
+							batch.addBatch(values);
+
+							if (++batchSize >= 1000) {
+								long now = System.nanoTime();
+								if (now - start > 1000000L) {
+									log.info("Synthesizing direct references '" + config.getDirectReference().getName()
+										+ "' in table '" + directTable.getName() + "', " + cnt + " links created.");
+									start = now;
+								}
+
+								cnt += batchSize;
+								batchSize = 0;
+								batch.executeBatch();
+							}
 						}
 
-						batch.addBatch(values);
-
-						if (++batchSize >= 1000) {
+						if (batchSize > 0) {
 							cnt += batchSize;
 							batchSize = 0;
+
 							batch.executeBatch();
 						}
 					}
-
-					if (batchSize > 0) {
-						cnt += batchSize;
-						batchSize = 0;
-
-						batch.executeBatch();
-					}
 				}
+			} finally {
+				pool.releaseWriteConnection(seond);
 			}
 
 			log.info("Synthesized " + cnt + " direct references '" + config.getDirectReference().getName()

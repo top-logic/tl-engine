@@ -26,6 +26,7 @@ import com.top_logic.basic.config.NamedPolymorphicConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
@@ -416,6 +417,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * Properties which have dedicated TypedConfiguration properties must not be used here.
 	 * </p>
 	 */
+	@Hidden
 	@Name(UNTYPED_PROPERTIES)
 	@MapBinding(tag = "property", key = "name")
 	Map<String, String> getUntypedProperties();
@@ -434,6 +436,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A new,
 	 * mutable and resizable {@link Map}.
 	 */
+	@Hidden
 	default Map<String, Object> getAllProperties() {
 		Map<String, Object> properties = getTypedProperties();
 		properties.putAll(getUntypedProperties());
@@ -451,6 +454,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @return The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A
 	 *         new, mutable and resizable {@link Map}.
 	 */
+	@Hidden
 	default Map<String, Object> getTypedProperties() {
 		Map<String, Object> properties = map();
 		for (PropertyDescriptor property : descriptor().getProperties()) {

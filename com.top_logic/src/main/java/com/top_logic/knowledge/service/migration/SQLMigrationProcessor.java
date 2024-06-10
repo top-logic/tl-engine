@@ -247,7 +247,6 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 						log.info("Updated " + cnt + " rows: " + sql);
 					} catch (SQLException ex) {
 						log.error("Unable to execute statement '" + sql + "'.", ex);
-						return;
 					}
 					buffer.setLength(0);
 				} else {

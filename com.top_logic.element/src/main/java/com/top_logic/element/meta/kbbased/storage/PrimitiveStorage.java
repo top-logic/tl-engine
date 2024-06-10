@@ -20,7 +20,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.io.StringR;
 import com.top_logic.common.json.gstream.JsonReader;
@@ -54,30 +53,11 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	 * Configuration options for {@link PrimitiveStorage}.
 	 */
 	@TagName("primitive-storage")
-	public interface Config<I extends PrimitiveStorage<?>> extends AbstractStorage.Config<I> {
-		/** Property name of {@link #getStorageAttribute()}. */
-		String STORAGE_ATTRIBUTE = "storage-attribute";
-
+	public interface Config<I extends PrimitiveStorage<?>> extends AbstractStorage.Config<I>, WithStorageAttribute {
 		/**
 		 * Property name of {@link #getStorageMapping()}.
 		 */
 		String STORAGE_MAPPING = "storage-mapping";
-
-		/**
-		 * The name of the database column which is used to store the value.
-		 * 
-		 * <p>
-		 * If not set, it defaults to the name of the attribute.
-		 * </p>
-		 */
-		@Nullable
-		@Name(STORAGE_ATTRIBUTE)
-		String getStorageAttribute();
-
-		/**
-		 * @see #getStorageAttribute()
-		 */
-		void setStorageAttribute(String value);
 
 		/**
 		 * The mapping to apply when loading and storing values.

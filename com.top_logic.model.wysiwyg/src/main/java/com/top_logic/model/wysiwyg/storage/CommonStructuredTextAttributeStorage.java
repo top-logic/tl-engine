@@ -39,7 +39,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public abstract class CommonStructuredTextAttributeStorage<C extends AssociationQueryBasedStorage.Config<?>>
+public abstract class CommonStructuredTextAttributeStorage<C extends CommonStructuredTextAttributeStorage.Config<?>>
 		extends AssociationQueryBasedStorage<C> {
 
 	/**

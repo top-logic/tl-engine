@@ -41,7 +41,7 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		DBHelper sqlDialect = getDBHelper(log, connection);
 
-		MORepository repository = context.getSchemaRepository();
+		MORepository repository = context.getPersistentRepository();
 		Collection<? extends MetaObject> metaObjects = repository.getMetaObjects();
 
 		for (MetaObject metaObject : metaObjects) {
@@ -82,10 +82,12 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 		SQLQuery<?> setColumnMandatory = createQueryToSetColumnMandatory(tableName, columnName);
 
 		try {
+			log.info("Migrating column '" + columnName + "' of table '" + tableName + "'.");
 			executeSQLQuery(log, connection, helper, replaceNullValues);
 			executeSQLQuery(log, connection, helper, setColumnMandatory);
 		} catch (SQLException ex) {
-			log.info("Column " + columnName + " could not be migrated." + " Please check." + ex.getMessage(), Protocol.WARN);
+			log.info("Column '" + columnName + "' could not be migrated." + " Please check." + ex.getMessage(),
+				Protocol.WARN);
 		}
 	}
 

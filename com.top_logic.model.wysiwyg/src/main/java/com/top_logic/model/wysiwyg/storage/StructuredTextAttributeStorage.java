@@ -14,9 +14,11 @@ import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
+import com.top_logic.element.meta.kbbased.storage.WithStorageAttribute;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.model.TLObject;
@@ -30,8 +32,19 @@ import com.top_logic.model.TLStructuredTypePart;
 public class StructuredTextAttributeStorage<C extends StructuredTextAttributeStorage.Config<?>>
 		extends CommonStructuredTextAttributeStorage<C> {
 
+	/**
+	 * Configuration options for {@link StructuredTextAttributeStorage}.
+	 */
+	@TagName("structured-text-storage")
+	public interface Config<I extends StructuredTextAttributeStorage<?>>
+			extends CommonStructuredTextAttributeStorage.Config<I>, WithStorageAttribute {
+		// Pure sum interface.
+	}
+
 	/** Name of the database table storing the images. */
 	private static final String HTML_ATTRIBUTE_STORAGE = "HTMLAttributeStorage";
+
+	private String _storageAttribute;
 
 	/**
 	 * @param context
@@ -42,6 +55,17 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	 */
 	public StructuredTextAttributeStorage(InstantiationContext context, C config) {
 		super(context, config);
+		_storageAttribute = config.getStorageAttribute();
+	}
+
+	@Override
+	public void init(TLStructuredTypePart attribute) {
+		super.init(attribute);
+
+		if (_storageAttribute == null) {
+			// Default, if no database column is defined.
+			_storageAttribute = attribute.getName();
+		}
 	}
 
 	@Override
@@ -92,13 +116,13 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	private String getSourceCode(TLObject owner, TLStructuredTypePart attribute) {
-		return (String) owner.tGetData(attribute.getName());
+		return (String) owner.tGetData(_storageAttribute);
 	}
 
 	private boolean updateSourceCode(TLObject owner, TLStructuredTypePart attribute, String sourceCode) {
 		// Do not store empty value.
 		sourceCode = StringServices.nonEmpty(sourceCode);
-		Object formerValue = owner.tSetData(attribute.getName(), sourceCode);
+		Object formerValue = owner.tSetData(_storageAttribute, sourceCode);
 		return Utils.equals(formerValue, sourceCode);
 	}
 

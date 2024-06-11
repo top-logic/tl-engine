@@ -261,7 +261,7 @@ private static final int HISTORY_LENGTH = 256;
 			else {
 				%>
 				<form method="POST">
-					<table>
+					<table style="width: 100%">
 						<tr>
 							<td>
 								<p>

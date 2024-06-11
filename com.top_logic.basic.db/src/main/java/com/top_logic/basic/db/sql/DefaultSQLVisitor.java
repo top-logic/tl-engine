@@ -54,6 +54,11 @@ public class DefaultSQLVisitor<R, A> implements SQLVisitor<R, A> {
 	}
 
 	@Override
+	public R visitSQLInSetSelect(SQLInSetSelect sql, A arg) {
+		return visitSQLExpression(sql, arg);
+	}
+
+	@Override
 	public R visitSQLTuple(SQLTuple sql, A arg) {
 		return visitSQLExpression(sql, arg);
 	}

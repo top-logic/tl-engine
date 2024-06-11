@@ -580,6 +580,13 @@ public class SQLFactory {
 		return new SQLInSet(expr, values);
 	}
 	
+	/**
+	 * Creates an in-set expression with the test set being a sub-select.
+	 */
+	public static SQLExpression inSetSelect(SQLExpression expr, SQLSelect select) {
+		return new SQLInSetSelect(expr, select);
+	}
+
 	public static SQLExpression ge(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr instanceof SQLLiteral) {
 			if (rightExpr instanceof SQLLiteral) {

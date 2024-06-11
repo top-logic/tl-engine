@@ -123,6 +123,11 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		}
 		
 		@Override
+		public Boolean visitSQLInSetSelect(SQLInSetSelect sql, DBHelper arg) {
+			return mayUsePrepStatement;
+		}
+
+		@Override
 		public Boolean visitSQLTuple(SQLTuple sql, DBHelper arg) {
 			return descend(sql.getExpressions(), arg, mayUsePrepStatement);
 		}
@@ -1030,6 +1035,17 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		buffer.append(" IN ");
 		buffer.append('(');
 		sql.getValues().visit(this, buffer);
+		buffer.append(')');
+		return resetContext(oldContext, buffer);
+	}
+
+	@Override
+	public Void visitSQLInSetSelect(SQLInSetSelect sql, E buffer) {
+		SQLPart oldContext = setContext(sql, buffer);
+		sql.getExpr().visit(this, buffer);
+		buffer.append(" IN ");
+		buffer.append('(');
+		sql.getSelect().visit(this, buffer);
 		buffer.append(')');
 		return resetContext(oldContext, buffer);
 	}

@@ -342,8 +342,8 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 			CompiledStatement select = query(
 				select(
 					selectColumns,
-					leftJoin(
-						leftJoin(
+					innerJoin(
+						innerJoin(
 							table(destTable.getDBMapping().getDBName(), dst),
 							table(sourceTable.getDBMapping().getDBName(), src),
 							and(

@@ -108,10 +108,9 @@ contentType="text/html; charset=UTF-8"
 					</tr>
 				</table>
 				<p>
-					<input name="SUBMIT"
-						type="submit"
-						value="Encode / Decode"
-					/>
+					<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+						<h4 class="tlButtonLabel">Encode / Decode</h4>
+					</button>
 				</p>
 			</form>
 		</basic:access>

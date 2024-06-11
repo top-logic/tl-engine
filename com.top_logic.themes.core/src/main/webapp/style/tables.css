@@ -1367,6 +1367,10 @@ div.dirtyHandlingDialog .changes {
     vertical-align: middle;
 }
 
+th .px-1 {
+	width: 100%;
+}
+
 th:last-child .px-1 {
 	padding-right: 16px !important;
 }
@@ -1465,7 +1469,6 @@ th:last-child .px-1 {
 }
 
 th:last-child .tl-table__cell-resizer {
-/* 	width: 8px; */
 	right: 0;
 }
 

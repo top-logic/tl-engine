@@ -21,20 +21,21 @@ private static final String DESCRIPTION =
 // This methods does the actual work:
 private void runWork(JspWriter out, HttpServletRequest request) throws Exception {
 	writer = out;
-	decodeString(request.getParameter("decodeString"));
-	print("Finished.");
+	decodeString(out, request.getParameter("decodeString"));
+	out.write("<p>Finished.</p>");
 }
 
 
-private void decodeString(String theString)  throws Exception {
+private void decodeString(JspWriter out, String theString)  throws Exception {
 	if(StringServices.isEmpty(theString)){ return;}
 	try{
 		String theDecode = CryptSupport.getInstance().decodeString(theString);
 		print("Decoded String:");
 		print(theDecode);
 	}catch(Exception e){
-		print("Failed to decode String.");
-		print(e.toString());
+		out.write("<span class=\"tl-error-message\"> Failed to decode String.");
+		out.write(e.toString());
+		out.write("</span></br></br>");
 	}
 }
 
@@ -76,17 +77,9 @@ private String quote(String string) {
 			<%
 			if (RUN_BUTTON == null || request.getParameter("SUBMIT") != null) {
 				%>
-				<table style="margin: 5px">
-					<tr>
-						<td>
-							<code class="normal">
-								<%
-								runWork(out,request);
-								%>
-							</code>
-						</td>
-					</tr>
-				</table>
+					<%
+						runWork(out,request);
+					%>
 				<%
 				if (REFRESH_BUTTON != null) {
 					%>
@@ -95,11 +88,9 @@ private String quote(String string) {
 							<tr>
 								<td>
 									<p>
-										&#xA0;
-										<input name="SUBMIT"
-											type="submit"
-											value="<%=REFRESH_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+											<h4 class="tlButtonLabel"><%=REFRESH_BUTTON%></h4>
+										</button>
 									</p>
 								</td>
 							</tr>
@@ -126,11 +117,9 @@ private String quote(String string) {
 						<tr>
 							<td>
 								<p>
-									&#xA0;
-									<input name="SUBMIT"
-										type="submit"
-										value="<%=RUN_BUTTON%>"
-									/>
+									<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+										<h4 class="tlButtonLabel"><%=RUN_BUTTON%></h4>
+									</button>
 								</p>
 							</td>
 						</tr>

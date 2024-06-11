@@ -30,8 +30,8 @@ private void decodeString(JspWriter out, String theString)  throws Exception {
 	if(StringServices.isEmpty(theString)){ return;}
 	try{
 		String theDecode = CryptSupport.getInstance().decodeString(theString);
-		print("Decoded String:");
-		print(theDecode);
+		out.write("<b>Decoded String:</b></br>");
+		out.write(theDecode);
 	}catch(Exception e){
 		out.write("<span class=\"tl-error-message\"> Failed to decode String.");
 		out.write(e.toString());

@@ -184,6 +184,8 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 						)
 					)
 				).toSql(connection.getSQLDialect());
+
+				select.setFetchSize(1000);
 								
 				CompiledStatement update = query(
 					select(
@@ -212,6 +214,8 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 				connection.commit();
 
 				int cnt = 0;
+				int batch = 0;
+				long last = System.nanoTime();
 				int factor = getConfig().getFactor();
 				int idIndex = util.getBranchIndexInc() + 1;
 				int revIndex = util.getBranchIndexInc() + 2;
@@ -237,14 +241,28 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 							cursor.updateInt(orderIndex, generator.getSortOrder(branch, id, revMax));
 							cursor.updateRow();
 
-							cnt++;
+							batch++;
+							if (batch >= 1000) {
+								cnt += batch;
+								batch = 0;
+
+								long now = System.nanoTime();
+								if (now - last > 1_000_000_000) {
+									last = now;
+									log.info(
+										"Synthesized " + cnt + " order values in table '" + sourceTable.getName()
+											+ "'.");
+								}
+							}
 						}
 					} finally {
 						connection.getPool().releaseWriteConnection(additional);
 					}
 				}
+				cnt += batch;
+				batch = 0;
 
-				log.info("Synthesized " + cnt + " order values in table '" + sourceTable.getName() + "'.");
+				log.info("Done synthesizing " + cnt + " order values in table '" + sourceTable.getName() + "'.");
 			}
 		} catch (SQLException ex) {
 			log.error("Failed to synthesize order of table '" + config.getLinkTable() + "': " + ex.getMessage(), ex);

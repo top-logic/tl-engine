@@ -1959,6 +1959,8 @@ TABLE = {
 	initColumnResizing: function(mousedownEvent, ctrlID) {
 		var columnResizer = mousedownEvent.currentTarget;
 		
+		BAL.removeAndDisableSelection(columnResizer);
+		
 		TABLE.addColumnResizingStyles(columnResizer);
 		
 		var columnWidthOnClientUpdater = TABLE.createColumnWidthOnClientUpdater(ctrlID, columnResizer);
@@ -1979,6 +1981,8 @@ TABLE = {
 	fitClickedColumn: function(dblclickEvent, ctrlID) {
 		const columnResizer = dblclickEvent.currentTarget;
 		const resizerCell = columnResizer.parentElement;
+		
+		BAL.removeAndDisableSelection(columnResizer);
 		
 		let firstCol = this.getFirstColumnIndex(resizerCell),
 			lastCol = this.getLastColumnIndex(resizerCell);

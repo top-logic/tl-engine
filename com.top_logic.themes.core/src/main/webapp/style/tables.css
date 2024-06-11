@@ -1464,7 +1464,6 @@ th:last-child .px-1 {
 	top: 0;
 	right: -8px;
 	height: 100%;
-	user-select: none;
 	z-index: 1;
 }
 

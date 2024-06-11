@@ -55,7 +55,6 @@ import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.list.FastListElement;
@@ -223,7 +222,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testCompleteScenario() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull("KB is null!", theKB);
         
         
@@ -559,7 +558,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testBinaryAttribute() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull("KB is null!", theKB);
         
 		AttributedStructuredElementWrapper theSE = OrderedListHelper.getAttributedWrapper();
@@ -838,7 +837,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testSimpleCollection() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull(theKB);
         
 		AttributedStructuredElementWrapper theAttributed = OrderedListHelper.getAttributedWrapper();
@@ -938,7 +937,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testSimpleList() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull(theKB);
         
 		AttributedStructuredElementWrapper theAttributed = OrderedListHelper.getAttributedWrapper();

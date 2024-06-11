@@ -18,7 +18,7 @@ import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.common.webfolder.ui.WebFolderUIFactory;
 import com.top_logic.knowledge.gui.layout.upload.SimpleFileNameStrategy;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
@@ -102,7 +102,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 				if (theItem == null) {
 					return UploadDialog.errorNoDocumentSelected();
 				}
-	            Transaction theTX   = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+	            Transaction theTX   = PersistencyLayer.getKnowledgeBase().beginTransaction();
 	
 	            try {
 					document.update(theItem);

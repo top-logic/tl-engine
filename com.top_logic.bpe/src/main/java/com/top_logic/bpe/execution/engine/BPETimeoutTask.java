@@ -9,7 +9,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.sched.task.impl.TaskImpl;
@@ -31,7 +31,7 @@ public class BPETimeoutTask extends TaskImpl {
 
 			@Override
 			public void inContext() {
-				KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+				KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 				try (Transaction t = theKB.beginTransaction()) {
 					ExecutionEngine.getInstance().updateAll();
 					t.commit();

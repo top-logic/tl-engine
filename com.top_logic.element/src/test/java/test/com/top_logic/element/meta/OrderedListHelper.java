@@ -22,7 +22,7 @@ import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.label.ObjectLabel;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -64,7 +64,7 @@ public class OrderedListHelper extends Assert {
     		return __theAttributedWrapper;
     	}
     	
-    	KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+    	KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
     	
 		AttributedStructuredElementWrapper newObject = __getAttributedWrapper(AttributedWrapper_NAME, theKB);
     	assertTrue(theKB.commit());

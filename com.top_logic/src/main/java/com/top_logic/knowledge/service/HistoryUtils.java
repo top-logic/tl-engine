@@ -51,7 +51,7 @@ public class HistoryUtils {
 	 * Retrieves the default {@link HistoryManager}.
 	 */
 	public static HistoryManager getHistoryManager() {
-		return getHistoryManager(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+		return getHistoryManager(PersistencyLayer.getKnowledgeBase());
 	}
 	
 	/**

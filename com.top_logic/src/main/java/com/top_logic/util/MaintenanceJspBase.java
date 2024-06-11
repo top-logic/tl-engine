@@ -33,7 +33,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLBuilder;
 import com.top_logic.layout.basic.CommandModel;
@@ -264,7 +264,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 *        If <code>true</code> actually no commit occurs.
 	 */
 	protected boolean commit(boolean simulate) throws IOException {
-		KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		if (simulate) {
 			rollback();
 			printColor("blue", "Simulating OK.");
@@ -284,7 +284,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 * Reverts the {@link KnowledgeBase} changes.
 	 */
 	protected void rollback() {
-		KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().rollback();
+		PersistencyLayer.getKnowledgeBase().rollback();
 	}
 
 	/**

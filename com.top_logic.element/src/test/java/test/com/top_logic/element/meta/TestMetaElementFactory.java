@@ -21,7 +21,6 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.element.meta.kbbased.KBBasedMetaElementFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -212,7 +211,7 @@ public class TestMetaElementFactory extends BasicTestCase {
     }
 
 	private static KnowledgeBase kb() {
-		return KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		return PersistencyLayer.getKnowledgeBase();
 	}
 
 	/**

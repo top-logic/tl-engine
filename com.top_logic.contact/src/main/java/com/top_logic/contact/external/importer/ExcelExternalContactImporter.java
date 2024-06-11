@@ -16,7 +16,7 @@ import com.top_logic.contact.mandatoraware.imp.AbstractExcelDOImporter;
 import com.top_logic.dob.DataObject;
 import com.top_logic.element.structured.wrap.Mandator;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
  * {@link AbstractExcelDOImporter} for {@link ExternalContact}s.
@@ -57,7 +57,7 @@ public class ExcelExternalContactImporter extends AbstractExcelDOImporter {
 	protected void setupImport() throws Exception {
 		super.setupImport();
 		
-		kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		kBase = PersistencyLayer.getKnowledgeBase();
 		
 		try {
 			ExternalContacts.dropAllContacts();

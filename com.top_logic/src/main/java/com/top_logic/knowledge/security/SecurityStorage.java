@@ -56,7 +56,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.SimpleCommitHandler;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.service.ThreadLocalCommitable;
@@ -1096,7 +1096,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         Logger.info("Computing direct roles...", SecurityStorage.class);
 		StopWatch sw = StopWatch.createStartedWatch();
         int counterEntries = 0;
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		for (KnowledgeAssociation association : theKB.getAllKnowledgeAssociations(BoundedRole.HAS_ROLE_ASSOCIATION)) {
 			if (insert(association))
 				counterEntries++;

@@ -5,8 +5,6 @@
  */
 package com.top_logic.tool.boundsec.wrap;
 
-import static com.top_logic.knowledge.search.ExpressionFactory.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,11 +20,11 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -36,7 +34,8 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
-import com.top_logic.knowledge.service.db2.SimpleQuery;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -115,6 +114,8 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	private static final AssociationSetQuery<KnowledgeAssociation> ROLES_IN_SCOPE =
 		AssociationQuery.createOutgoingQuery("rolesInScope", DEFINES_ROLE_ASSOCIATION);
 
+	private static volatile ItemByNameCache<String> BY_NAME_CACHE;
+
 	/**
 	 * Creates a {@link BoundedRole}.
 	 */
@@ -186,16 +187,21 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     }
     
     /**
-     * Get a BoundedRole by its name.
-     * 
-     * @param   aKB             the KnowledgeBase to fetch the Role from.
-     * @param   aName           the name of the role
-     * @return  the BoundedRole or null if it doesn't exist
-     */
-    public static BoundedRole getRoleByName (KnowledgeBase aKB, String aName) {
+	 * Get a BoundedRole by its name.
+	 * 
+	 * @param kb
+	 *        the KnowledgeBase to fetch the Role from.
+	 * @param name
+	 *        the name of the role
+	 * @return the BoundedRole or null if it doesn't exist
+	 */
+	public static BoundedRole getRoleByName(KnowledgeBase kb, String name) {
+		if (kb == getDefaultKnowledgeBase()) {
+			return fromCache(kb, name);
+		}
         
-        KnowledgeObject theRoleKO = (KnowledgeObject) aKB
-            .getObjectByAttribute(OBJECT_NAME, NAME_ATTRIBUTE, aName);
+		KnowledgeObject theRoleKO = (KnowledgeObject) kb
+			.getObjectByAttribute(OBJECT_NAME, NAME_ATTRIBUTE, name);
             
         if (theRoleKO != null) {
             return (BoundedRole) WrapperFactory.getWrapper(theRoleKO);
@@ -210,8 +216,32 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
      * @return  the BoundedRole or null if it doesn't exist
      */
     public static BoundedRole getRoleByName(String aName) {
-        return getRoleByName(getDefaultKnowledgeBase(), aName);
+		return fromCache(getDefaultKnowledgeBase(), aName);
     }
+
+	private static BoundedRole fromCache(KnowledgeBase defaultKB, String name) {
+		if (StringServices.isEmpty(name)) {
+			return null;
+		}
+
+		KnowledgeItem cachedRole = getOrInstallByNameCache(defaultKB).getValue().get(name);
+		if (cachedRole == null) {
+			return null;
+		}
+		return cachedRole.getWrapper();
+
+	}
+
+	private static ItemByNameCache<String> getOrInstallByNameCache(KnowledgeBase defaultKB) {
+		ItemByNameCache<String> byNameCache = BY_NAME_CACHE;
+		if (byNameCache == null || byNameCache.kb() != defaultKB) {
+			// First access to cache or default KB has changed (PersistencyLayer may have been
+			// restarted).
+			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
+			BY_NAME_CACHE = byNameCache;
+		}
+		return byNameCache;
+	}
 
     /**
      * Get a BoundedRole by its identifier
@@ -710,13 +740,17 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 				}
 			}
 			default: {
-				KnowledgeBase kb = getDefaultKnowledgeBase();
-				MetaObject type = kb.getMORepository().getType(OBJECT_NAME);
-				SimpleQuery<BoundedRole> searchQuery = SimpleQuery.queryResolved(BoundedRole.class, type,
-					inLiteralSet(attribute(OBJECT_NAME, NAME_ATTRIBUTE), roleNames));
-				List<BoundedRole> searchResult = kb.compileSimpleQuery(searchQuery).search();
+				Map<String, KnowledgeItem> allCachedRoles =
+					getOrInstallByNameCache(getDefaultKnowledgeBase()).getValue();
 				Map<String, BoundedRole> result = new HashMap<>();
-				searchResult.forEach(existingRole -> result.put(existingRole.getName(), existingRole));
+				for (String roleName : roleNames) {
+					KnowledgeItem roleItem = allCachedRoles.get(roleName);
+					if (roleItem == null) {
+						// No such item
+						continue;
+					}
+					result.put(roleName, roleItem.getWrapper());
+				}
 				return result;
 			}
 		}

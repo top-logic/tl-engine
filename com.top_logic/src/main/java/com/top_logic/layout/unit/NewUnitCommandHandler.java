@@ -9,7 +9,7 @@ import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.event.ModelTrackingService;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.unit.Unit;
 import com.top_logic.knowledge.wrap.unit.UnitWrapper;
 import com.top_logic.layout.form.FormContainer;
@@ -39,7 +39,7 @@ public class NewUnitCommandHandler extends AbstractCreateCommandHandler {
 			(String) formContainer.getField(UnitWrapper.FORMAT).getValue();
 		Integer theSort = (Integer) formContainer.getField(UnitWrapper.SORT_ORDER).getValue();
 
-		Unit theUnit = UnitWrapper.createUnit(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase(), theName, theSort.intValue());
+		Unit theUnit = UnitWrapper.createUnit(PersistencyLayer.getKnowledgeBase(), theName, theSort.intValue());
 		theUnit.setFormatSpec(theFormat);
 		this.sendEvent(theUnit);
 

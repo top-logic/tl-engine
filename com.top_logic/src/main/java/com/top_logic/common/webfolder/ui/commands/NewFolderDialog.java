@@ -12,7 +12,7 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.common.webfolder.WebFolderUtils;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.DisplayContext;
@@ -103,7 +103,7 @@ public class NewFolderDialog extends AbstractFormPageDialog {
 	                if (this.folder.hasChild(theName)) {
 						theResult.addError(I18NConstants.ERROR_FOLDER_EXISTS__NAME.fill(theName));
 					} else {
-	                    Transaction theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+	                    Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
 	                    try {
 							WebFolder subFolder = folder.createSubFolder(theName);
 							FormField descriptionField = theContext.getField(WebFolder.DESCRIPTION);

@@ -119,7 +119,7 @@ private static final String RESTART_LINK = "Reload page";
 	}
 	
 	private boolean deleteMetaElement(String me) throws Exception {
-		print(); print("Deleting MetaElement '" + me + "'...");
+		print(); print(); print("Deleting MetaElement '" + me + "'...");
 		try {
 			return processResult(MaintenanceUtil.deleteMetaElementComplete(me));
 		}
@@ -131,7 +131,7 @@ private static final String RESTART_LINK = "Reload page";
 	}
 	
 	private boolean deleteList(String listName) throws Exception {
-		print(); print("Deleting list '" + listName + "'...");
+		print(); print(); print("Deleting list '" + listName + "'...");
 		try {
 			return processResult(MaintenanceUtil.deleteList(listName));
 		}
@@ -143,7 +143,7 @@ private static final String RESTART_LINK = "Reload page";
 	}
 	
 	private boolean deleteListElement(String listName, String elementName) throws Exception {
-		print(); print("Deleting list element '" + elementName + "' from list '" + listName + "'...");
+		print(); print(); print("Deleting list element '" + elementName + "' from list '" + listName + "'...");
 		try {
 			return processResult(MaintenanceUtil.deleteListElement(listName, elementName));
 		}
@@ -155,7 +155,7 @@ private static final String RESTART_LINK = "Reload page";
 	}
 	
 	private boolean deleteGroup(String groupName) throws Exception {
-		print(); print("Deleting group '" + groupName + "'...");
+		print(); print(); print("Deleting group '" + groupName + "'...");
 		try {
 			Group group = Group.getGroupByName(groupName);
 			if (group == null) return processResult(false);
@@ -170,7 +170,7 @@ private static final String RESTART_LINK = "Reload page";
 	}
 	
 	private boolean deleteRole(String roleName) throws Exception {
-		print(); print("Deleting role '" + roleName + "'...");
+		print(); print(); print("Deleting role '" + roleName + "'...");
 		try {
 			BoundedRole role = BoundedRole.getRoleByName(roleName);
 			if (role == null) return processResult(false);
@@ -253,7 +253,7 @@ private static final String RESTART_LINK = "Reload page";
 					out.write("<br/><b>Simulating...</b><br/><br/><br/>\n");
 				}
 				%>
-				<table style="margin: 5px">
+				<table">
 					<tr>
 						<td>
 							<code class="normal">
@@ -280,11 +280,11 @@ private static final String RESTART_LINK = "Reload page";
 							<tr>
 								<td>
 									<p>
-										&#xA0;
-										<input name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
-											type="submit"
-											value="<%=REFRESH_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton"
+									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+									            type="submit">
+									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
+									    </button>
 									</p>
 								</td>
 							</tr>
@@ -295,12 +295,9 @@ private static final String RESTART_LINK = "Reload page";
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<a
-							href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-							style="color:darkblue"
-						>
-							&#xA0;<%=RESTART_LINK%>
-						</a>
+						<button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
+					        <h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
+					    </button>
 					</p>
 					<%
 				}
@@ -316,20 +313,16 @@ private static final String RESTART_LINK = "Reload page";
 									<%
 									if (RUN_BUTTON != null) {
 										%>
-										&#xA0;
-										<input name="SUBMIT"
-											type="submit"
-											value="<%=RUN_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+								            <h4 class="tlButtonLabel"><%= RUN_BUTTON %></h4>
+								        </button>
 										<%
 									}
 									if (SIMULATE_BUTTON != null) {
 										%>
-										&#xA0;
-										<input name="SIMULATE"
-											type="submit"
-											value="<%=SIMULATE_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton" name="SIMULATE" type="submit">
+								            <h4 class="tlButtonLabel"><%= SIMULATE_BUTTON %></h4>
+								        </button>
 										<%
 									}
 									%>

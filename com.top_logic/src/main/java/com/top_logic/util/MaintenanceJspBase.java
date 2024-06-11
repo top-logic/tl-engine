@@ -87,15 +87,15 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	/** Whether time for execution should be logged. */
 	protected boolean LOG_TIME = false;
 
-	private static final String SPAN_START_BEGIN = "<span style=\"color:";
+	private static final String SPAN_START_BEGIN = "<span class=\"tl-";
 
 	private static final String SPAN_START_END = "\">";
 
-	private static final String SPAN_GREEN = SPAN_START_BEGIN + "green" + SPAN_START_END;
+	private static final String SPAN_SUCCESS = SPAN_START_BEGIN + "success-message" + SPAN_START_END;
 
-	private static final String SPAN_ORANGE = SPAN_START_BEGIN + "orange" + SPAN_START_END;
+	private static final String SPAN_WARNING = SPAN_START_BEGIN + "warning-message" + SPAN_START_END;
 
-	private static final String SPAN_RED = SPAN_START_BEGIN + "red" + SPAN_START_END;
+	private static final String SPAN_ERROR = SPAN_START_BEGIN + "error-message" + SPAN_START_END;
 
 	private static final String SPAN_END = "</span>";
 
@@ -113,7 +113,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.error(string, getClass());
 		}
-		write(SPAN_RED + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_ERROR + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -134,7 +134,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.error(string, error, getClass());
 		}
-		write(SPAN_RED + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_ERROR + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -144,7 +144,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.warn(string, getClass());
 		}
-		write(SPAN_ORANGE + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_WARNING + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -154,7 +154,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.warn(string, exception, getClass());
 		}
-		write(SPAN_ORANGE + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_WARNING + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -162,7 +162,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 */
 	protected void printInfo(String string) throws IOException {
 		printLog(string);
-		write(SPAN_GREEN + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_SUCCESS + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -170,7 +170,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 */
 	protected void printInfo(String string, Throwable error) throws IOException {
 		printLog(string, error);
-		write(SPAN_GREEN + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_SUCCESS + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**

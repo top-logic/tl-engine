@@ -1,3 +1,15 @@
+.tl-error-message {
+	color: var(--ERROR_BORDER);
+}
+
+.tl-warning-message {
+	color: var(--WARNING_BORDER);
+}
+
+.tl-success-message {
+	color: green;
+}
+
 .error input.is-input, 
 .error-annotation input.is-input, 
 .error input.is-popup, 

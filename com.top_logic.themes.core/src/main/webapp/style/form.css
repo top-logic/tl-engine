@@ -1666,7 +1666,8 @@ span.cIconSelect .input-image.cannot-edit i {
 }
 
 .cError .error i,
-.cError .error-annotation i {
+.cError .error-annotation i,
+.error {
 	color: var(--support-danger);
 }
 

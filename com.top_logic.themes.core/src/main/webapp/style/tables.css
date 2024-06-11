@@ -1,16 +1,16 @@
 /* 
-/* Design of a regular, unmodified table, which often get 
+/* Design of a regular, unmodified table, which get 
 /* created through inapp configurations 
 */
 code:not(table) {
 	font-family: var(--font-family-regular);
 }
 
-table {
+.tl-standard-table {
 	white-space: nowrap;
 	display: table;
 	width: 100%;
-	margin-top: var(--spacing-03);
+	margin: var(--spacing-02) 0;
 	background: var(--background);
 	border-collapse: collapse;
 	border-spacing: 0 10px;
@@ -30,7 +30,7 @@ table.treeBody .tl-table__row:not(.tblSelected):hover > td {
     background: var(--background);
 }
 
-th {
+.tl-standard-table th {
 	text-align: left;
 	color: var(--text-primary);
     font-family: var(--font-family-bold);
@@ -41,13 +41,13 @@ th {
     background: var(--layer);
 }
 
-th, td {
+.tl-standard-table th,
+.tl-standard-table td {
     padding-right: var(--spacing-02);
     padding-left: var(--spacing-02);
-	height: var(--table-height);
-    width: 100%;
+    height: var(--table-height);
     box-sizing: border-box;
-	border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
 }
 
 /* ============================================ */

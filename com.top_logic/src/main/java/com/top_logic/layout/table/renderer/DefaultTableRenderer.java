@@ -652,7 +652,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			groupCellProperties.put("styles", null);
 			groupCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
 			groupCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
-			// TODO überprüfen, ob das zu Problemen führen kann.
 
 			if (isFixed) {
 				groupCellProperties.put("isSticky", true);

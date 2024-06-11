@@ -43,8 +43,7 @@ table.treeBody .tl-table__row:not(.tblSelected):hover > td {
 
 .tl-standard-table th,
 .tl-standard-table td {
-    padding-right: var(--spacing-02);
-    padding-left: var(--spacing-02);
+    padding: 0 var(--spacing-02);
     height: var(--table-height);
     box-sizing: border-box;
     border: 1px solid var(--border-subtle);

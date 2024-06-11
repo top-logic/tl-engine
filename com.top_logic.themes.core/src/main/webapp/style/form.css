@@ -1984,7 +1984,8 @@ input[type="checkbox"]:focus {
 ****	ChoiceControl, bbc-option styles	****
 ****										****
 */
-.cBooleanChoice, .cChoice, .ddwttContainer.cannot-edit {
+.cBooleanChoice, .cChoice, 
+.ddwttContainer.cannot-edit {
     display: inline-flex;
     flex-wrap: wrap;
 	column-gap: var(--spacing-02);
@@ -2006,6 +2007,11 @@ span.bcc-option {
 
 .cChoice-vertical.cannot-edit {
 	flex-direction: row;
+}
+
+.cChoice-option {
+    display: flex;
+    align-items: center;
 }
 
 .cChoice-option label {

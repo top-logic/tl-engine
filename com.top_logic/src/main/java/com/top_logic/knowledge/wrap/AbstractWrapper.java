@@ -39,8 +39,8 @@ import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.AssociationQueryUtil;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseRefetch;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.service.db2.LiveAssociationsEndList;
 import com.top_logic.knowledge.service.db2.OrderedLinkQuery;
@@ -1108,7 +1108,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 * @return KnowledgeBase    the default knowledge base
 	 */
 	public static KnowledgeBase getDefaultKnowledgeBase () {
-	    return (KnowledgeBaseFactory.getInstance ().getDefaultKnowledgeBase ());
+	    return (PersistencyLayer.getKnowledgeBase());
 	}
 
 	/**

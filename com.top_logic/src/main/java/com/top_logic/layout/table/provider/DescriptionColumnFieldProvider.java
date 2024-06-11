@@ -8,7 +8,7 @@ package com.top_logic.layout.table.provider;
 import com.top_logic.basic.Logger;
 import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
@@ -104,7 +104,7 @@ public class DescriptionColumnFieldProvider extends AbstractFieldProvider {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				try (Transaction tx =
-					KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction()) {
+					PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 					if (isWebFolder) {
 						((WebFolder) content).setDescription(newValue.toString());
 					} else {

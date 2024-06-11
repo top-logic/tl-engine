@@ -33,7 +33,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
@@ -269,7 +269,7 @@ public class ElementAccessHelper {
      */
 	public static void setClassifierRoles(
 			Map<String, ? extends Map<String, ? extends Map<String, ?>>> someClassifierRoles) {
-        KnowledgeBase  theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase  theKB = PersistencyLayer.getKnowledgeBase();
 		for (Map.Entry<String, ? extends Map<String, ? extends Map<String, ?>>> theCEntry : someClassifierRoles
 			.entrySet()) {
 			String theCName = theCEntry.getKey();
@@ -426,7 +426,7 @@ public class ElementAccessHelper {
     public static Set<BoundObject> getTargetObjects(RoleRule aRule) {
         MetaObject theMO = aRule.getMetaObject();
         if (theMO != null) {
-            return new HashSet(WrapperFactory.getWrappersByType(theMO.getName(), KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase()));
+            return new HashSet(WrapperFactory.getWrappersByType(theMO.getName(), PersistencyLayer.getKnowledgeBase()));
         } else {
             Set<BoundObject> theResult = new HashSet<>();
             TLClass      theME     = aRule.getMetaElement();

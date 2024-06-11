@@ -15,7 +15,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -114,7 +114,7 @@ public class DeleteHandler extends AbstractCommandHandler {
     }
     
     protected Wrapper getObjectToRemove(LayoutComponent aComponent, Map someArguments) {
-        KnowledgeBase theBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theBase = PersistencyLayer.getKnowledgeBase();
 		TLID theID = IdentifierUtil.fromExternalForm(BoundComponent.getParameter(someArguments, OBJECT_ID));
 
         if (theID != null) {

@@ -27,7 +27,7 @@ import com.top_logic.importer.base.ObjectProvider.SimpleObjectProvider;
 import com.top_logic.importer.logger.ImportLogger;
 import com.top_logic.importer.logger.PlainMessageLogger;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.tool.boundsec.assistent.EVAAssistantController.ProcessFileHandler;
@@ -172,7 +172,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
 
         	this.addInfoMessage(I18NConstants.START_IMPORT);
 
-            Transaction theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+            Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
 
             try {
                 ImportResult theResult = this.doImport(theValues, theTX);
@@ -275,7 +275,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
     protected Transaction intermediateCommit(Transaction aTX) throws KnowledgeBaseException {
         aTX.commit();
 
-        return KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+        return PersistencyLayer.getKnowledgeBase().beginTransaction();
     }
 
     /**

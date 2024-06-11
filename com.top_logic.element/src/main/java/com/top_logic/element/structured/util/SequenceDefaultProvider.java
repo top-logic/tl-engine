@@ -19,7 +19,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.RowLevelLockingSequenceManager;
 import com.top_logic.knowledge.service.db2.SequenceManager;
 import com.top_logic.model.TLStructuredTypePart;
@@ -136,7 +136,7 @@ public class SequenceDefaultProvider extends AbstractConfiguredInstance<Sequence
 				SequenceIdGenerator.addNames(sequenceNameBuilder, contextName);
 			}
 
-			KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			PooledConnection connection = ((CommitHandler) kb).createCommitContext().getConnection();
 			long nextId = SEQUENCE_MANAGER.nextSequenceNumber(
 				connection.getSQLDialect(), connection, RETRY_COUNT, sequenceNameBuilder.toString());

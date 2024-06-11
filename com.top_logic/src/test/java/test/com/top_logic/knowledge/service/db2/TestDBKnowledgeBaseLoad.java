@@ -39,8 +39,8 @@ import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
@@ -574,7 +574,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 
 	public AObj newObj(String typeName, String a1, String cc1, String f1) throws AssertionFailedError {
 		{
-			KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			KnowledgeObject ko = kb.createKnowledgeObject(typeName);
 			CObj result = (CObj) ko.getWrapper();
 			result.setA1(a1);

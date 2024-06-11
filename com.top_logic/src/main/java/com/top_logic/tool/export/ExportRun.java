@@ -19,7 +19,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.label.ObjectLabel;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WebFolder;
@@ -78,7 +78,7 @@ public class ExportRun /*implements Runnable*/ {
                 theOut.close();
 
                 if (this.checkResult(theResult)) {
-                    KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+                    KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
                     
 					Document theDocument;
 					try (Transaction theTrans = theKB.beginTransaction()) {

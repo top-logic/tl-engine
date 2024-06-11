@@ -5,7 +5,7 @@
  */
 package com.top_logic.common.webfolder.ui.clipboard;
 
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -100,14 +100,14 @@ public class ModifyClipboardExecutable extends CommandField {
 	}
 
 	private void addToClipboardCommit(Wrapper aModel, Clipboard clipboard) {
-		try (Transaction theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction()) {
+		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			clipboard.add(aModel);
 			theTX.commit();
 		}
 	}
 
 	private void removeFromClipboardCommit(Wrapper aModel, Clipboard clipboard) {
-		try (Transaction theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction()) {
+		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			clipboard.remove(aModel);
 			theTX.commit();
 		}

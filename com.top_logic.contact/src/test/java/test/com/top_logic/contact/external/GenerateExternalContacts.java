@@ -16,7 +16,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.contact.external.ExternalContact;
 import com.top_logic.contact.external.ExternalContacts;
 import com.top_logic.contact.external.PlainExternalContact;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
  * Test case generating {@link ExternalContact}s.
@@ -289,7 +289,7 @@ public class GenerateExternalContacts extends BasicTestCase {
     public void testGenerate() throws SQLException {
     	createRandomContacts(80000);
     	
-		KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().commit();
+		PersistencyLayer.getKnowledgeBase().commit();
     }
 	
 }

@@ -49,7 +49,7 @@ import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.element.structured.wrap.Mandator;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -138,7 +138,7 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
     public SAPFileSupplierDataImporter(Properties aProp) {
         super(aProp);
         
-        this.kBase   = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        this.kBase   = PersistencyLayer.getKnowledgeBase();
         
         this.factory = (COSCompanyContactCreateHandler) CommandHandlerFactory.getInstance().getHandler(COSCompanyContactCreateHandler.COMMAND_ID);
         
@@ -239,7 +239,7 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
 	protected void setupImport() throws Exception {
         super.setupImport();
         
-        this.kBase   = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        this.kBase   = PersistencyLayer.getKnowledgeBase();
         this.factory = (COSCompanyContactCreateHandler) CommandHandlerFactory.getInstance().getHandler(COSCompanyContactCreateHandler.COMMAND_ID);
         
         // cache contacts by foreign key

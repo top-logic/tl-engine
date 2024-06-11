@@ -47,7 +47,7 @@ import com.top_logic.model.internal.PersistentType;
 public abstract class PersistentScope extends DynamicModelPart implements MetaElementHolder {
 
 	/**
-	 * Query to find all {@link TLClass}s defined in some scope.
+	 * Query to find all {@link TLClass}s and {@link TLAssociation} defined in some scope.
 	 */
 	private static final IndexedLinkQuery<String, TLClass> META_ELEMENTS_ATTR =
 		IndexedLinkQuery.indexedLinkQuery(new NamedConstant("metaelements"), TLClass.class, KBBasedMetaElement.META_ELEMENT_KO,
@@ -81,7 +81,7 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 	 * {@link ElementModelService} is advisable.
 	 * </p>
 	 */
-	private Collection<TLType> _types = PersistentScope.getTypes(this);
+	private volatile Collection<TLType> _types;
 
 	/**
 	 * Creates a {@link PersistentScope}.
@@ -133,7 +133,12 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 
 	@Override
 	public Collection<TLType> getTypes() {
-		return _types;
+		Collection<TLType> types = _types;
+		if (types == null) {
+			types = PersistentScope.getTypes(this);
+			_types = types;
+		}
+		return types;
 	}
 
 	@Override
@@ -145,15 +150,12 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 	 * Implementation of {@link TLScope#getType(String)}.
 	 */
 	public static TLType getType(TLScope self, String name) {
-		TLType result = getClass(self, name);
+		// getMetaElement delivers both, classes and associations.
+		TLType result = getMetaElement(self, name);
 		if (result != null) {
 			return result;
 		}
 		result = getDataype(self, name);
-		if (result != null) {
-			return result;
-		}
-		result = getAssociation(self, name);
 		if (result != null) {
 			return result;
 		}
@@ -164,16 +166,8 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 		return null;
 	}
 
-	private static TLClass getClass(TLScope self, String name) {
-		return classesIndex(self).get(name);
-	}
-
 	private static TLPrimitive getDataype(TLScope self, String name) {
 		return datatypesIndex(self).get(name);
-	}
-
-	private static TLAssociation getAssociation(TLScope self, String name) {
-		return associationsIndex(self).get(name);
 	}
 
 	private static TLEnumeration getEnumeration(TLScope self, String name) {
@@ -188,15 +182,19 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 
 			/**
 			 * Note: This fields actually loads the association caches for the classes, datatypes,
-			 * enumerations, and associations. When the vallue of this field is changed, such this
-			 * is not longer done, it is advisable to preload the values for the scope in
+			 * enumerations, and associations. When the value of this field is changed, such this is
+			 * not longer done, it is advisable to preload the values for the scope in
 			 * {@link ElementModelService}.
+			 * 
+			 * @implNote Instead of using {@link PersistentScope#getClasses(TLScope)} and
+			 *           {@link PersistentScope#getAssociations(TLScope)} the method
+			 *           {@link PersistentScope#getMetaElements(TLScope)} is used, because
+			 *           metaelements is the union of classes and associations.
 			 */
 			private final Collection<Collection<? extends TLType>> _parts = Arrays.asList(
-				getClasses(self),
+				getMetaElements(self),
 				getDatatypes(self),
-				getEnumerations(self),
-				getAssociations(self));
+				getEnumerations(self));
 
 			@Override
 			public Iterator<TLType> iterator() {
@@ -279,18 +277,18 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 	/**
 	 * Implementation of {@link MetaElementHolder#getMetaElements()}.
 	 */
-	public static Set<TLClass> getMetaElements(TLObject self) {
+	public static Set<TLClass> getMetaElements(TLScope self) {
 		return metaelementsIndex(self).values();
 	}
 
-	private static BidiMap<String, TLClass> metaelementsIndex(TLObject self) {
+	private static BidiMap<String, TLClass> metaelementsIndex(TLScope self) {
 		return AbstractWrapper.resolveLinks(self, PersistentScope.META_ELEMENTS_ATTR);
 	}
 
 	/**
 	 * Implementation of {@link MetaElementHolder#getMetaElement(String)}.
 	 */
-	public static TLClass getMetaElement(TLObject self, String name) {
+	public static TLClass getMetaElement(TLScope self, String name) {
 		return metaelementsIndex(self).get(name);
 	}
 

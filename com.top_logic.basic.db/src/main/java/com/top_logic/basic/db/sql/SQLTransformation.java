@@ -183,6 +183,14 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 	}
 
 	@Override
+	public SQLPart visitSQLInSetSelect(SQLInSetSelect sql, A arg) {
+		SQLExpression expr = transform(sql.getExpr(), arg);
+		SQLSelect select = transform(sql.getSelect(), arg);
+
+		return composeSQLInSetSelect(sql, expr, select, arg);
+	}
+
+	@Override
 	public SQLPart visitSQLTuple(SQLTuple sql, A arg) {
 		List<SQLExpression> expressions = transformList(sql.getExpressions(), arg);
 
@@ -312,6 +320,9 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLInSet(SQLInSet sql, SQLExpression expr, SQLExpression values, A arg);
+
+	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
+	protected abstract SQLPart composeSQLInSetSelect(SQLInSetSelect sql, SQLExpression expr, SQLSelect select, A arg);
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLTuple(SQLTuple sql, List<SQLExpression> expressions, A arg);

@@ -122,6 +122,13 @@ public abstract class SQLInlineTransformation<A> extends SQLTransformation<A> {
 	}
 
 	@Override
+	protected SQLPart composeSQLInSetSelect(SQLInSetSelect sql, SQLExpression expr, SQLSelect select, A arg) {
+		sql.setExpr(expr);
+		sql.setSelect(select);
+		return sql;
+	}
+
+	@Override
 	protected SQLPart composeSQLTuple(SQLTuple sql, List<SQLExpression> expressions, A arg) {
 		sql.setExpressions(expressions);
 		return sql;

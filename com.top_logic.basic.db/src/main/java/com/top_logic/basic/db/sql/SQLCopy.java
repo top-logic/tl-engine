@@ -98,6 +98,11 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 	}
 
 	@Override
+	public SQLPart visitSQLInSetSelect(SQLInSetSelect sql, Void arg) {
+		return inSetSelect(copy(sql.getExpr(), arg), copy(sql.getSelect(), arg));
+	}
+
+	@Override
 	public SQLPart visitSQLTuple(SQLTuple sql, Void arg) {
 		return tuple(copy(sql.getExpressions(), arg));
 	}

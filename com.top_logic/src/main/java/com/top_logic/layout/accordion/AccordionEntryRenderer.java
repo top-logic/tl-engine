@@ -17,7 +17,6 @@ import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.basic.link.AbstractLinkRenderer;
 import com.top_logic.layout.basic.link.Link;
 import com.top_logic.layout.form.FormConstants;
-import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 
 /**
  * {@link Renderer} creating buttons in the style of entries of the {@link AccordionControl}.
@@ -135,7 +134,6 @@ public class AccordionEntryRenderer extends AbstractLinkRenderer {
 		out.endCssClasses();
 		out.writeAttribute(ALT_ATTR, button.getAltText());
 		out.writeAttribute(TITLE_ATTR, "");
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, button.getLabel());
 		icon.endEmptyTag(context, out);
 	}
 

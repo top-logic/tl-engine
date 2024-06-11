@@ -245,11 +245,11 @@ private static final int HISTORY_LENGTH = 256;
 							<tr>
 								<td>
 									<p>
-										&#xA0;
-										<input name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
-											type="submit"
-											value="<%=REFRESH_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton"
+									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+									            type="submit">
+									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
+									    </button>
 									</p>
 								</td>
 							</tr>

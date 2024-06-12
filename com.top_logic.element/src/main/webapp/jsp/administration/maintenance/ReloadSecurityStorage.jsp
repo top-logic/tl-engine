@@ -68,8 +68,8 @@ private static final String RESTART_LINK = "Reload page";
 	<%!
 	@Override
 	protected void doWork(JspWriter out, boolean simulate, HttpServletRequest request) throws Exception {
-		print("Starting security rebuild...");
-		print(); print();
+		print(); print("Starting security rebuild...");
+		print();
 		
 		try {
 			new Thread(){
@@ -157,7 +157,7 @@ private static final String RESTART_LINK = "Reload page";
 					out.write("<br/><b>Simulating...</b><br/><br/><br/>\n");
 				}
 				%>
-				<table style="margin: 5px">
+				<table>
 					<tr>
 						<td>
 							<code class="normal">
@@ -184,11 +184,11 @@ private static final String RESTART_LINK = "Reload page";
 							<tr>
 								<td>
 									<p>
-										&#xA0;
-										<input name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
-											type="submit"
-											value="<%=REFRESH_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton"
+									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+									            type="submit">
+									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
+									    </button>
 									</p>
 								</td>
 							</tr>
@@ -202,12 +202,9 @@ private static final String RESTART_LINK = "Reload page";
 						window.setTimeout(function(){self.location.href = "<%=component.getComponentURL(displayContext).getURL()%>"}, 5000);
 					</basic:script>
 					<p>
-						<a
-							href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-							style="color:darkblue"
-						>
-							&#xA0;<%=RESTART_LINK%>
-						</a>
+						<button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
+							<h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
+						</button>
 					</p>
 					<%
 				}
@@ -225,22 +222,18 @@ private static final String RESTART_LINK = "Reload page";
 									if (RUN_BUTTON != null) {
 										%>
 										<p>
-											&#xA0;
-											<input name="SUBMIT"
-												type="submit"
-												value="<%=RUN_BUTTON%>"
-											/>
+											<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+									            <h4 class="tlButtonLabel"><%= RUN_BUTTON %></h4>
+									        </button>
 										</p>
 										<%
 									}
 									if (SIMULATE_BUTTON != null) {
 										%>
 										<p>
-											&#xA0;
-											<input name="SIMULATE"
-												type="submit"
-												value="<%=SIMULATE_BUTTON%>"
-											/>
+											<button class="tlButton cButton cmdButton" name="SIMULATE" type="submit">
+								            	<h4 class="tlButtonLabel"><%= SIMULATE_BUTTON %></h4>
+								        	</button>
 										</p>
 										<%
 									}
@@ -258,12 +251,9 @@ private static final String RESTART_LINK = "Reload page";
 											window.setTimeout(function(){self.location.href = "<%=component.getComponentURL(displayContext).getURL()%>"}, 5000);
 										</basic:script>
 										<p>
-											<a
-												href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-												style="color:darkblue"
-											>
-												&#xA0;<%=RESTART_LINK%>
-											</a>
+										    <button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
+										        <h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
+										    </button>
 										</p>
 										<%
 									}

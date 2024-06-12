@@ -11,21 +11,16 @@
 			module="tl"
 		/>
 	</dependencies>
-	<processors/>
-	<migration>
-		<type-mapping class=""/>
-		<steps>
-			<step name="Migrate multiple form definitions">
-				<rewriter class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeRewriter"
-					types="TemplateLayouts"
-				>
-					<algorithm class="com.top_logic.knowledge.service.db2.migration.rewriters.XsltValueTransform"
-						attribute="arguments"
-						transform="/WEB-INF/kbase/migration/tl/Ticket_25421_multiple_forms_inapp.migration.xsl"
-					>
-					</algorithm>
-				</rewriter>
-			</step>
-		</steps>	
-	</migration>
+	<processors>
+		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor">
+			<rewriter class="com.top_logic.layout.tools.rewrite.XSLTLayoutRewrite"
+				transform="/WEB-INF/kbase/migration/tl/Ticket_25421_multiple_forms_inapp.migration.xsl"
+			>
+				<templates>
+					<template value="com.top_logic.element/form.template.xml"/>
+					<template value="com.top_logic.model.search/create/genericCreateDialog.template.xml"/>
+				</templates>
+			</rewriter>
+		</processor>
+	</processors>
 </migration>

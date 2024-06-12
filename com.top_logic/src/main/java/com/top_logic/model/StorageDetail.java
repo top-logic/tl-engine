@@ -23,15 +23,12 @@ import com.top_logic.util.model.check.InstanceCheck;
 public interface StorageDetail {
 
 	/**
-	 * Whether this {@link StorageDetail} does not support storing values.
-	 * <p>
-	 * In a read-only {@link StorageDetail}, modifications are not allowed.
-	 * </p>
+	 * Whether the attribute is read-only and therefore does not support storing values.
 	 */
 	boolean isReadOnly();
 
 	/**
-	 * Get the values of this CollectionMetaAttribute for a given MetaAttributed object.
+	 * Retrieves the actual value for the given attribute of the given object.
 	 * 
 	 * @param object
 	 *        The object to take the value from.
@@ -42,62 +39,69 @@ public interface StorageDetail {
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute);
 
 	/**
-	 * Replace the current values with the given ones for a MetaAttributed.
-	 * 
-	 * @param object
-	 *        the object. Must not be <code>null</code>.
-	 * @param attribute
-	 *        The attribute to access.
-	 * @param aValues
-	 *        a Collection of values. May be empty or <code>null</code> (in that case an empty
-	 *        collection will be returned as value in #getAttributeValues())
-	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aMetaAttributed
-	 * @throws IllegalArgumentException
-	 *         if some of the values do not match constraints
-	 */
-	public void setAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValues)
-			throws NoSuchAttributeException, IllegalArgumentException;
-
-	/**
-	 * Add a value to the value collection for a given MetaAttributed object.
+	 * Replace the current value of the given attribute with the given new value.
 	 * 
 	 * @param object
 	 *        The object to modify.
 	 * @param attribute
 	 *        The attribute to access.
-	 * @param aValue
-	 *        the value
+	 * @param newValue
+	 *        The new value to set, may be <code>null</code> to clear the current value.
+	 * @throws NoSuchAttributeException
+	 *         if this is not an attribute of aMetaAttributed
+	 * @throws IllegalArgumentException
+	 *         if some of the values do not match constraints
+	 */
+	public void setAttributeValue(TLObject object, TLStructuredTypePart attribute, Object newValue)
+			throws NoSuchAttributeException, IllegalArgumentException;
+
+	/**
+	 * Adds a value to the a collection of values.
+	 * 
+	 * <p>
+	 * Must only be called for an attribute that supports multiple values.
+	 * </p>
+	 * 
+	 * @param object
+	 *        The object to modify.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param newEntry
+	 *        The new entry to add to the current values of the given attribute.
 	 * @throws NoSuchAttributeException
 	 *         if this is not an attribute of aMetaAttributed
 	 * @throws IllegalArgumentException
 	 *         if the argument does not match constraints
 	 */
-	public void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
+	public void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object newEntry)
 			throws NoSuchAttributeException, IllegalArgumentException;
 
 	/**
-	 * Remove a value from the value collection for a given MetaAttributed object.
+	 * Remove a value from the collection of values for a given attribute.
+	 * 
+	 * <p>
+	 * Must only be called for an attribute that supports multiple values.
+	 * </p>
 	 * 
 	 * @param object
-	 *        the object object. Must not be <code>null</code>.
+	 *        The object to modify.
 	 * @param attribute
 	 *        The attribute to access.
-	 * @param aValue
-	 *        the value
+	 * @param oldEntry
+	 *        The entry to remove from the collection of values for the given attribute.
 	 * @throws NoSuchAttributeException
 	 *         if this is not an attribute of aMetaAttributed
 	 */
-	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
+	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object oldEntry)
 			throws NoSuchAttributeException;
 
 	/**
-	 * Add constraints for the given attribute.
+	 * Retrieves constraints for the given attribute.
 	 * 
 	 * @param attribute
 	 *        The attribute to create checks for.
 	 * @param checks
-	 *        List to add checks to.
+	 *        List to which the implementation can add checks to.
 	 */
 	void addConstraints(TLStructuredTypePart attribute, List<InstanceCheck> checks);
 

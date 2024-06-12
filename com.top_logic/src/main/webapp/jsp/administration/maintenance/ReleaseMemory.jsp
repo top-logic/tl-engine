@@ -47,16 +47,14 @@ extends="com.top_logic.util.TopLogicJspBase"
 					</a>
 				</p>
 
-				<table>
+				<table class="tl-standard-table">
 					<tr>
-						<td colspan="3">
-							<b>
-								Current Memory Status:
-							</b>
-						</td>
+						<th colspan="2">
+							Current Memory Status
+						</th>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Max VM Size
 						</td>
 						<td>
@@ -64,7 +62,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Current VM Size
 						</td>
 						<td>
@@ -72,7 +70,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Available to VM
 						</td>
 						<td>
@@ -80,7 +78,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Used Memory in VM
 						</td>
 						<td>
@@ -88,7 +86,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Free Memory in VM
 						</td>
 						<td>
@@ -108,25 +106,23 @@ extends="com.top_logic.util.TopLogicJspBase"
 							theList.add(new long[250000000]); //8 byte x 250 Million => 2GB
 						}
 					}catch(OutOfMemoryError err){
-						out.write("Out of Memory Error created.");
+						out.write("Out of Memory Error created. <br/><br/>");
 						out.flush();
 					}
 				}
 				
 				
-				out.print("Bitte warten...<br />");
+				out.print("Bitte warten...<br/>");
 				out.flush();
 				%>
-				<table>
+				<table class="tl-standard-table">
 					<tr>
-						<td colspan="3">
-							<b>
-								Memory Status before GC:
-							</b>
-						</td>
+						<th colspan="2">
+							Memory Status before GC
+						</th>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Max VM Size
 						</td>
 						<td>
@@ -134,7 +130,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Current VM Size
 						</td>
 						<td>
@@ -142,7 +138,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Available to VM
 						</td>
 						<td>
@@ -150,7 +146,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Used Memory in VM
 						</td>
 						<td>
@@ -158,32 +154,28 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Free Memory in VM
 						</td>
 						<td>
 							<%=(Runtime.getRuntime().freeMemory()/1024)/1024+" MB" %>
 						</td>
 					</tr>
+				</table>
+				<hr/>
+				<%
+				System.runFinalization();
+				System.gc();
+				Thread.yield();
+				%>
+				<table class="tl-standard-table">
 					<tr>
-						<td colspan="3">
-							<hr/>
-						</td>
-					</tr>
-					<%
-					System.runFinalization();
-					System.gc();
-					Thread.yield();
-					%>
-					<tr>
-						<td colspan="3">
-							<b>
-								Memory Status After GC:
-							</b>
-						</td>
+						<th colspan="2">
+							Memory Status After GC
+						</th>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Max VM Size
 						</td>
 						<td>
@@ -191,7 +183,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Current VM Size
 						</td>
 						<td>
@@ -199,7 +191,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Available to VM
 						</td>
 						<td>
@@ -207,7 +199,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Used Memory in VM
 						</td>
 						<td>
@@ -215,7 +207,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							Free Memory in VM
 						</td>
 						<td>

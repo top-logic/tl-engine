@@ -63,38 +63,6 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 	public void update(AttributeUpdate update) throws AttributeException;
 
 	/**
-	 * Add a value to the value collection for a given MetaAttributed object.
-	 * 
-	 * @param object
-	 *        The object to modify.
-	 * @param attribute
-	 *        The attribute to access.
-	 * @param aValue
-	 *        the value
-	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aMetaAttributed
-	 * @throws IllegalArgumentException
-	 *         if the argument does not match constraints
-	 * @throws AttributeException
-	 *         if something goes wrong setting the value
-	 */
-	public void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue) throws NoSuchAttributeException,
-			IllegalArgumentException, AttributeException;
-
-	/**
-	 * Get the values of this CollectionMetaAttribute for a given MetaAttributed object.
-	 * 
-	 * @param object
-	 *        The object to take the value from.
-	 * @param attribute
-	 *        The attribute to access.
-	 * @return the values. May be empty but not <code>null</code>.
-	 * @throws AttributeException
-	 *         if getting one of th4e values fails
-	 */
-	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) throws AttributeException;
-
-	/**
 	 * Get the simulated result of a given update.
 	 * 
 	 * @param update
@@ -110,43 +78,6 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 	 */
 	public Object getUpdateValue(AttributeUpdate update)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException;
-
-	/**
-	 * Remove a value from the value collection for a given MetaAttributed object.
-	 * 
-	 * @param object
-	 *        the object object. Must not be <code>null</code>.
-	 * @param attribute
-	 *        The attribute to access.
-	 * @param aValue
-	 *        the value
-	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aMetaAttributed
-	 * @throws AttributeException
-	 *         if something goes wrong removing the value
-	 */
-	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue) throws NoSuchAttributeException,
-			AttributeException;
-
-	/**
-	 * Replace the current values with the given ones for a MetaAttributed.
-	 * 
-	 * @param object
-	 *        the object. Must not be <code>null</code>.
-	 * @param attribute
-	 *        The attribute to access.
-	 * @param aValues
-	 *        a Collection of values. May be empty or <code>null</code> (in that case an empty
-	 *        collection will be returned as value in #getAttributeValues())
-	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aMetaAttributed
-	 * @throws IllegalArgumentException
-	 *         if some of the values do not match constraints
-	 * @throws AttributeException
-	 *         if something goes wrong setting the values
-	 */
-	public void setAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValues) throws NoSuchAttributeException,
-			IllegalArgumentException, AttributeException;
 
 	/**
 	 * {@link PreloadContribution} that contribute {@link PreloadOperation} to load the values of

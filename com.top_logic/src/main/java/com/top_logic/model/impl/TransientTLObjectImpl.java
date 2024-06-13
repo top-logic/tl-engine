@@ -58,11 +58,15 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	private Object directValue(TLStructuredTypePart part) {
+		if (part.isDerived()) {
+			return part.getStorageImplementation().getAttributeValue(this, part);
+		}
 		return _values.get(part);
 	}
 
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object newValue) {
+		checkDerived(part);
 		Object oldValue = directUpdate(part, newValue);
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
@@ -81,6 +85,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public void tAdd(TLStructuredTypePart part, Object value) {
+		checkDerived(part);
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			checkNonNull(value);
 			mkCollection(part).add(value);
@@ -98,6 +103,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public void tRemove(TLStructuredTypePart part, Object value) {
+		checkDerived(part);
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			checkNonNull(value);
 			mkCollection(part).remove(value);
@@ -180,6 +186,12 @@ public class TransientTLObjectImpl extends TransientObject {
 		}
 	}
 	
+	private static void checkDerived(TLStructuredTypePart part) {
+		if (part.isDerived()) {
+			throw new UnsupportedOperationException("Cannot modify derived attribute: " + part);
+		}
+	}
+
 	@Override
 	public Object tSetData(String property, Object value) {
 		Object oldValue = tGetData(property);

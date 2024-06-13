@@ -7,6 +7,7 @@ package com.top_logic.model;
 
 import java.util.List;
 
+import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.util.model.check.InstanceCheck;
 
 /**
@@ -22,20 +23,85 @@ import com.top_logic.util.model.check.InstanceCheck;
 public interface StorageDetail {
 
 	/**
-	 * Whether this {@link StorageDetail} does not support storing values.
-	 * <p>
-	 * In a read-only {@link StorageDetail}, modifications are not allowed.
-	 * </p>
+	 * Whether the attribute is read-only and therefore does not support storing values.
 	 */
 	boolean isReadOnly();
 
 	/**
-	 * Add constraints for the given attribute.
+	 * Retrieves the actual value for the given attribute of the given object.
+	 * 
+	 * @param object
+	 *        The object to take the value from.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @return the values. May be empty but not <code>null</code>.
+	 */
+	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute);
+
+	/**
+	 * Replace the current value of the given attribute with the given new value.
+	 * 
+	 * @param object
+	 *        The object to modify.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param newValue
+	 *        The new value to set, may be <code>null</code> to clear the current value.
+	 * @throws NoSuchAttributeException
+	 *         if this is not an attribute of aMetaAttributed
+	 * @throws IllegalArgumentException
+	 *         if some of the values do not match constraints
+	 */
+	public void setAttributeValue(TLObject object, TLStructuredTypePart attribute, Object newValue)
+			throws NoSuchAttributeException, IllegalArgumentException;
+
+	/**
+	 * Adds a value to the a collection of values.
+	 * 
+	 * <p>
+	 * Must only be called for an attribute that supports multiple values.
+	 * </p>
+	 * 
+	 * @param object
+	 *        The object to modify.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param newEntry
+	 *        The new entry to add to the current values of the given attribute.
+	 * @throws NoSuchAttributeException
+	 *         if this is not an attribute of aMetaAttributed
+	 * @throws IllegalArgumentException
+	 *         if the argument does not match constraints
+	 */
+	public void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object newEntry)
+			throws NoSuchAttributeException, IllegalArgumentException;
+
+	/**
+	 * Remove a value from the collection of values for a given attribute.
+	 * 
+	 * <p>
+	 * Must only be called for an attribute that supports multiple values.
+	 * </p>
+	 * 
+	 * @param object
+	 *        The object to modify.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param oldEntry
+	 *        The entry to remove from the collection of values for the given attribute.
+	 * @throws NoSuchAttributeException
+	 *         if this is not an attribute of aMetaAttributed
+	 */
+	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object oldEntry)
+			throws NoSuchAttributeException;
+
+	/**
+	 * Retrieves constraints for the given attribute.
 	 * 
 	 * @param attribute
 	 *        The attribute to create checks for.
 	 * @param checks
-	 *        List to add checks to.
+	 *        List to which the implementation can add checks to.
 	 */
 	void addConstraints(TLStructuredTypePart attribute, List<InstanceCheck> checks);
 

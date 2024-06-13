@@ -651,7 +651,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 			groupCellProperties.put("styles", null);
 			groupCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
-			groupCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+			if (hasFixedColumns()) {
+				groupCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+			}
 
 			if (isFixed) {
 				groupCellProperties.put("isSticky", true);
@@ -751,7 +753,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 					headerCellProperties.put("styles", createHeaderCellStylesFragment(columnIndex));
 					headerCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
-					headerCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+					if (hasFixedColumns()) {
+						headerCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+					}
 					appendFixedColumnProperties(headerCellProperties, columnIndex, fixedColumnWidth, fixedColumns);
 
 					if (fixedColumns > 0) {

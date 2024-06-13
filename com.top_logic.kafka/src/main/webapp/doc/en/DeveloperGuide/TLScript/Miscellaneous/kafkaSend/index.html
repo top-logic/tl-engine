@@ -1,0 +1,101 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>kafkaSend($producer, $message, $key, $headers, $topic, $timeout)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Sends a message to an Apache Kafka Server. The message is passed to the producer, which sends it according to its configuration.</p>
+
+<p>The producer has to be configured in the "Kafka producer service" and it has to be of type "String kafka producer". The service editor is in the view "Administration &gt; Development &gt; Service Editor".</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>producer</td>
+			<td>String</td>
+			<td>The name of Kafka producer</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>message</td>
+			<td>String</td>
+			<td>The message that should be sent.</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>key</td>
+			<td>String</td>
+			<td>The key for the message. See the documentation of Apache Kafka for details.</td>
+			<td>no</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>headers</td>
+			<td>List of lists</td>
+			<td>
+			<p>A list of headers. Each header is a list of two strings. The first one is the header key, the second the header value. The latter is optional. Multiple headers can have the same key. It is therefore not an unambiguous mapping of keys to values.</p>
+			</td>
+			<td>no</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>topic</td>
+			<td>String</td>
+			<td>The topic on the Kafka server to which the message should be sent.</td>
+			<td>no</td>
+			<td>The topic of the producer</td>
+		</tr>
+		<tr>
+			<td>timeout</td>
+			<td>Integer number</td>
+			<td>The time in milliseconds before sending the message is treated as failed.</td>
+			<td>no</td>
+			<td>10 seconds</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p>null - The communication with Apache Kafka is asynchronous. Therefore, there is no direct response.</p>
+
+<h2>Example</h2>
+
+<h3>Simple call</h3>
+
+<pre>
+	<code>kafkaSend("your-producer", "Hello World");</code>
+</pre>
+
+<h3>Complex call</h3>
+
+<pre><code>kafkaSend(
+	"your-producer",
+	"Hello World! How are you?",
+	"your-key-for-your-first-message",
+	[
+		["header-key-1", "header-value-1"],
+		["header-key-2-without-value"],
+		["header-key-3", "header-value-3"]
+	],
+	"your-topic"
+)</code></pre>
+
+<h2>Receiving messages</h2>
+
+<p>To receive messages from an Apache Kafka Server, a "Consumer dispatcher" with a "Consumer processor" has to be configured in the "Kafka consumer service". For in-app configuration there is the "Consumer processor by expression". It is configured with a TL-Script that is called when a message is being received. For more documentation on that topic see the "Consumer processor by expression".</p>

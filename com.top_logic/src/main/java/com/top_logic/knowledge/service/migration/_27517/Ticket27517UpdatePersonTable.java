@@ -13,9 +13,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.IdentifierUtil;
@@ -616,6 +618,7 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 
 	private Map<String, PersonRow> currentPersonByName(Log log, List<PersonRow> persons) {
 		Map<String, PersonRow> currentPersons = new HashMap<>();
+		Set<Long> clashingIDs = new HashSet<>();
 		for (PersonRow p : persons) {
 			if (p.getRevMax() < Revision.CURRENT_REV) {
 				continue;
@@ -625,7 +628,12 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 				log.info(
 					"Multiple current persons with name '" + p.getName() + "', dropping: ID " + clash.getIdentifier(),
 					Log.WARN);
+				clashingIDs.add(Long.valueOf(clash.getIdentifier()));
 			}
+		}
+		if (!clashingIDs.isEmpty()) {
+			// Remove with full history.
+			persons.removeIf(p -> clashingIDs.contains(Long.valueOf(p.getIdentifier())));
 		}
 		return currentPersons;
 	}

@@ -9,7 +9,9 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
@@ -24,7 +26,9 @@ import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
@@ -96,10 +100,85 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 		MOStructure destTable = (MOStructure) repository.getMetaObject(destTableName);
 		MOReference typeRef = (MOReference) sourceTable.getAttribute(PersistentObject.TYPE_REF);
 
+		Set<MOReference> refToUpdate = new HashSet<>();
+		for (MetaObject type : repository.getMetaObjects()) {
+			if (!(type instanceof MOStructure)) {
+				continue;
+			}
+
+			MOStructure structType = (MOStructure) type;
+
+			for (MOAttribute attr : structType.getAttributes()) {
+				if (!(attr instanceof MOReference)) {
+					continue;
+				}
+
+				MOReference ref = (MOReference) attr;
+				MetaObject targetType = ref.getMetaObject();
+
+				if (targetType.isSubtypeOf(sourceTable)) {
+					refToUpdate.add(ref);
+				}
+			}
+		}
+
 		Util util = context.getSQLUtils();
 		try {
 			Type type = util.getTLTypeOrFail(connection, getConfig().getType());
 
+			// Adjust references.
+			for (MOReference ref : refToUpdate) {
+				MOStructure refOwner = ref.getOwner();
+
+				for (MetaObject refTable : repository.getMetaObjects()) {
+					if (!(refTable instanceof MOClass)) {
+						continue;
+					}
+
+					MOClass refClass = (MOClass) refTable;
+					if (refClass.isAbstract()) {
+						continue;
+					}
+
+					if (refClass.isSubtypeOf(refOwner)) {
+						// Concrete foreign key to modify found.
+
+						if (ref.isMonomorphic()) {
+							log.info("Monomorphic reference '" + ref.getName() + "' in table '" + refTable.getName()
+								+ "' not updated, make sure that either all objects point to '" + sourceTableName
+								+ "' and schema is updated, or no objects point to '" + sourceTableName + "'.");
+							continue;
+						}
+
+						log.info("Updating reference '" + ref.getName() + "' in table '" + refTable.getName() + "'.");
+
+						CompiledStatement update = query(
+							update(
+								table(refClass.getDBMapping().getDBName()),
+								and(
+									eqSQL(
+										column(ref.getColumn(ReferencePart.type).getDBName()),
+										literal(DBType.STRING, sourceTableName)),
+									inSetSelect(
+										column(ref.getColumn(ReferencePart.name).getDBName()),
+										select(
+											columns(columnDef(BasicTypes.IDENTIFIER_DB_NAME)),
+											table(sourceTable.getDBMapping().getDBName()),
+											eqSQL(
+												column(typeRef.getColumn(ReferencePart.name).getDBName()),
+												literal(DBType.ID, type.getID()))))),
+								columnNames(ref.getColumn(ReferencePart.type).getDBName()),
+								expressions(literal(DBType.STRING, destTableName))))
+									.toSql(connection.getSQLDialect());
+
+						int cnt = update.executeUpdate(connection);
+						log.info("Updated " + cnt + " object references '" + ref.getName() + "' in table '"
+							+ refTable.getName() + "' pointing to '" + sourceTableName + "'.");
+					}
+				}
+			}
+
+			// Copy values.
 			List<String> columns = new ArrayList<>();
 			List<SQLColumnDefinition> columnDefs = new ArrayList<>();
 			for (MOAttribute attr : sourceTable.getAttributes()) {

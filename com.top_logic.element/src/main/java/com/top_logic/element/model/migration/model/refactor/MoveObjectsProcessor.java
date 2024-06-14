@@ -18,7 +18,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -75,7 +74,7 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 		 */
 		@Mandatory
 		@Name("type")
-		@Format(CommaSeparatedStrings.class)
+		@Format(QualifiedTypeName.ListFormat.class)
 		List<QualifiedTypeName> getType();
 
 		/**

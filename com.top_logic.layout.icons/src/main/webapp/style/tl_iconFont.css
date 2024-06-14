@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'tl_iconFont';
-  src:  url('../webfonts/tl_iconFont.eot?hqyv1l');
-  src:  url('../webfonts/tl_iconFont.eot?hqyv1l#iefix') format('embedded-opentype'),
-    url('../webfonts/tl_iconFont.ttf?hqyv1l') format('truetype'),
-    url('../webfonts/tl_iconFont.woff?hqyv1l') format('woff'),
-    url('../webfonts/tl_iconFont.svg?hqyv1l#tl_iconFont') format('svg');
+  src:  url('../webfonts/tl_iconFont.eot?l81sux');
+  src:  url('../webfonts/tl_iconFont.eot?l81sux#iefix') format('embedded-opentype'),
+    url('../webfonts/tl_iconFont.ttf?l81sux') format('truetype'),
+    url('../webfonts/tl_iconFont.woff?l81sux') format('woff'),
+    url('../webfonts/tl_iconFont.svg?l81sux#tl_iconFont') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.tl-icon.working-plate::before {
+  content: "\ea88";
+}
 .tl-icon.handling-device::before {
   content: "\ea86";
 }

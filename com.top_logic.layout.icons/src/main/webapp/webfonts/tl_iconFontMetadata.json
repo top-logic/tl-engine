@@ -2294,6 +2294,15 @@
     ],
     "label": "Window restore"
   },
+  "working-plate": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Working plate"
+  },
   "workplace": {
     "search": {
       "terms": []

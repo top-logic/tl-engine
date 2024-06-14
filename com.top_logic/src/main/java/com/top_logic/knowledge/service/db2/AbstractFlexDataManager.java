@@ -1841,9 +1841,9 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			args[clobDataIdx] = null;
 			args[blobDataIndex] = null;
 			if (value != null) {
-				throw new SQLException("Dont know how to store() a " + value.getClass());
+				throw new SQLException("Cannot store values of type '" + value.getClass() + "' to flex data.");
 			} else {
-				throw new IllegalArgumentException("Must not try to store null.");
+				throw new IllegalArgumentException("Must not try to store null to flex data.");
 			}
 		}
 	}

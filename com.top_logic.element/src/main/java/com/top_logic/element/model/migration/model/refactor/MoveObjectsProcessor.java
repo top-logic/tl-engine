@@ -12,13 +12,16 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -72,7 +75,13 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 		 */
 		@Mandatory
 		@Name("type")
-		QualifiedTypeName getType();
+		@Format(CommaSeparatedStrings.class)
+		List<QualifiedTypeName> getType();
+
+		/**
+		 * Whether to only move objects of the given type excluding sub-classes.
+		 */
+		boolean getMonomorphic();
 	}
 
 	/**
@@ -90,11 +99,14 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		String sourceTableName = getConfig().getSourceTable();
-		String destTableName = getConfig().getDestTable();
+		Config<?> config = getConfig();
+		String sourceTableName = config.getSourceTable();
+		String destTableName = config.getDestTable();
+
+		String typeNames = config.getType().stream().map(t -> "'" + t.getName() + "'").collect(Collectors.joining(", "));
 		log.info(
-			"Moving objects of type '" + getConfig().getType().getName() + "' from table '" + sourceTableName + "' to '"
-			+ destTableName + "'. ");
+			"Moving objects of type " + typeNames + " from table '" + sourceTableName + "' to '" + destTableName
+				+ "'. ");
 
 		MORepository repository = context.getPersistentRepository();
 		MOStructure sourceTable = (MOStructure) repository.getMetaObject(sourceTableName);
@@ -125,8 +137,15 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 
 		Util util = context.getSQLUtils();
 		try {
-			Type declaredType = util.getTLTypeOrFail(connection, getConfig().getType());
-			Set<TLID> movedTypes = util.getTransitiveSpecializations(connection, declaredType);
+			Set<TLID> movedTypes = new HashSet<>();
+			for (QualifiedTypeName type : config.getType()) {
+				Type declaredType = util.getTLTypeOrFail(connection, type);
+				if (config.getMonomorphic()) {
+					movedTypes.add(declaredType.getID());
+				} else {
+					movedTypes.addAll(util.getTransitiveSpecializations(connection, declaredType));
+				}
+			}
 
 			log.info("Moving objects with concrete type IDs: " + movedTypes);
 
@@ -245,8 +264,8 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 			log.info("Deleted " + cntDelete + " rows from table '" + sourceTableName + ".");
 		} catch (SQLException | MigrationException ex) {
 			log.error(
-				"Failed to move objects of type '" + getConfig().getType().getName() + "' from '"
-					+ sourceTableName + "' to '" + destTableName + "': " + ex.getMessage(),
+				"Failed to move objects of type " + typeNames + " from '" + sourceTableName + "' to '" + destTableName
+					+ "': " + ex.getMessage(),
 				ex);
 		}
 	}

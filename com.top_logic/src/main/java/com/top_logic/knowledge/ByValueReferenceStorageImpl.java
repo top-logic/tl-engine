@@ -49,7 +49,10 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 	/** Singleton {@link ByValueReferenceStorageImpl} instance. */
 	public static final ByValueReferenceStorageImpl INSTANCE = new ByValueReferenceStorageImpl();
 
-	private ByValueReferenceStorageImpl() {
+	/**
+	 * Creates a {@link ByValueReferenceStorageImpl}.
+	 */
+	protected ByValueReferenceStorageImpl() {
 		// singleton instance
 	}
 
@@ -124,7 +127,7 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		setCacheValue(attribute, item, storage, stableObjectKey);
 	}
 
-	private IdentifiedObject getReferencedObject(ObjectContext context, Object cacheValue) {
+	protected final IdentifiedObject getReferencedObject(ObjectContext context, Object cacheValue) {
 		if (cacheValue instanceof IdentifiedObject) {
 			return (IdentifiedObject) cacheValue;
 		} else {
@@ -144,7 +147,7 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		return getObjectKey(cacheValue);
 	}
 
-	private ObjectKey getObjectKey(Object cacheValue) {
+	protected final ObjectKey getObjectKey(Object cacheValue) {
 		if (cacheValue instanceof ObjectKey) {
 			return (ObjectKey) cacheValue;
 		} else {

@@ -15,6 +15,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -124,7 +125,10 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 
 		Util util = context.getSQLUtils();
 		try {
-			Type type = util.getTLTypeOrFail(connection, getConfig().getType());
+			Type declaredType = util.getTLTypeOrFail(connection, getConfig().getType());
+			Set<TLID> movedTypes = util.getTransitiveSpecializations(connection, declaredType);
+
+			log.info("Moving objects with concrete type IDs: " + movedTypes);
 
 			// Adjust references.
 			for (MOReference ref : refToUpdate) {
@@ -164,9 +168,9 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 										select(
 											columns(columnDef(BasicTypes.IDENTIFIER_DB_NAME)),
 											table(sourceTable.getDBMapping().getDBName()),
-											eqSQL(
+											inSet(
 												column(typeRef.getColumn(ReferencePart.name).getDBName()),
-												literal(DBType.ID, type.getID()))))),
+												setLiteral(movedTypes, DBType.ID))))),
 								columnNames(ref.getColumn(ReferencePart.type).getDBName()),
 								expressions(literal(DBType.STRING, destTableName))))
 									.toSql(connection.getSQLDialect());
@@ -199,8 +203,9 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 					select(
 						columnDefs,
 						table(sourceTable.getDBMapping().getDBName()),
-						eqSQL(column(typeRef.getColumn(ReferencePart.name).getDBName()),
-							literal(DBType.ID, type.getID())))))
+						inSet(
+							column(typeRef.getColumn(ReferencePart.name).getDBName()),
+							setLiteral(movedTypes, DBType.ID)))))
 								.toSql(connection.getSQLDialect());
 
 			int cntCopy = copy.executeUpdate(connection);
@@ -218,9 +223,9 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 							select(
 								columns(columnDef(BasicTypes.IDENTIFIER_DB_NAME)),
 								table(sourceTable.getDBMapping().getDBName()),
-								eqSQL(
+								inSet(
 									column(typeRef.getColumn(ReferencePart.name).getDBName()),
-									literal(DBType.ID, type.getID()))))),
+									setLiteral(movedTypes, DBType.ID))))),
 
 					columnNames(AbstractFlexDataManager.TYPE_DBNAME),
 					expressions(literal(DBType.STRING, destTableName)))).toSql(connection.getSQLDialect());
@@ -231,8 +236,9 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 			CompiledStatement delete = query(
 				delete(
 					table(sourceTable.getDBMapping().getDBName()),
-					eqSQL(column(typeRef.getColumn(ReferencePart.name).getDBName()),
-						literal(DBType.ID, type.getID()))))
+					inSet(
+						column(typeRef.getColumn(ReferencePart.name).getDBName()),
+						setLiteral(movedTypes, DBType.ID))))
 				.toSql(connection.getSQLDialect());
 
 			int cntDelete = delete.executeUpdate(connection);

@@ -127,6 +127,12 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		setCacheValue(attribute, item, storage, stableObjectKey);
 	}
 
+	/**
+	 * Resolves the given cache value (either an {@link ObjectKey} or already an
+	 * {@link IdentifiedObject} to the referenced object.
+	 * 
+	 * @see #getObjectKey(Object)
+	 */
 	protected final IdentifiedObject getReferencedObject(ObjectContext context, Object cacheValue) {
 		if (cacheValue instanceof IdentifiedObject) {
 			return (IdentifiedObject) cacheValue;
@@ -147,13 +153,19 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		return getObjectKey(cacheValue);
 	}
 
+	/**
+	 * Retrieves an {@link ObjectKey} from the given cache value (either already an
+	 * {@link ObjectKey}, or an {@link IdentifiedObject}).
+	 * 
+	 * @see #getReferencedObject(ObjectContext, Object)
+	 */
 	protected final ObjectKey getObjectKey(Object cacheValue) {
 		if (cacheValue instanceof ObjectKey) {
 			return (ObjectKey) cacheValue;
 		} else {
-			assert cacheValue instanceof KnowledgeItem : "Cache contains either '" + ObjectKey.class.getName()
-				+ "' or '" + KnowledgeItem.class.getName() + "'.";
-			KnowledgeItem cachedReference = (KnowledgeItem) cacheValue;
+			assert cacheValue instanceof IdentifiedObject : "Cache contains either '" + ObjectKey.class.getName()
+				+ "' or '" + IdentifiedObject.class.getName() + "'.";
+			IdentifiedObject cachedReference = (IdentifiedObject) cacheValue;
 			return cachedReference.tId();
 		}
 	}

@@ -103,8 +103,10 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		if (cacheValue instanceof ObjectKey) {
 			if (applicationValue == null) {
 				if (((MOReference) attribute).getDeletionPolicy() == DeletionPolicy.VETO) {
-					// Target has been deleted, veto is not yet checked (only during commit), but
+					// a) Target has been deleted, veto is not yet checked (only during commit), but
 					// somebody tries to access the reference after deleting the referenced object.
+					// b) Access to a historic object with a type that does no longer exist in
+					// current.
 					return null;
 				}
 				throw new KnowledgeBaseRuntimeException("Cache value '" + cacheValue + "' for attribute '" + attribute

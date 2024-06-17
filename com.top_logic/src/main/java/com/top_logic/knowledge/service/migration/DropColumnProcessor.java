@@ -120,7 +120,12 @@ public class DropColumnProcessor extends AbstractConfiguredInstance<DropColumnPr
 					}
 
 					String tableName = tableType.getDBMapping().getDBName();
-					MOAttribute attribute = tableType.getAttribute(attributeName);
+					MOAttribute attribute = tableType.getAttributeOrNull(attributeName);
+					if (attribute == null) {
+						log.info("Column '" + attributeName + "' not declared in table '" + tableName + "', skipping.",
+							Log.WARN);
+						continue;
+					}
 					for (DBAttribute column : attribute.getDbMapping()) {
 						String columnName = column.getDBName();
 
@@ -144,10 +149,11 @@ public class DropColumnProcessor extends AbstractConfiguredInstance<DropColumnPr
 						tableConfig.getAttributes().remove(attributeConfig.get());
 						AddMOAttributeProcessor.updateStoredSchema(log, connection, persistentSchema);
 					} else {
-						log.info("No column '" + attributeName + "' found in table type '" + typeName + "'.", Log.WARN);
+						log.info("No column '" + attributeName + "' declared in table '" + typeName
+							+ "', skipping schema update.", Log.WARN);
 					}
 				} else {
-					log.info("No table type '" + typeName + "' found in persistent schema.", Log.WARN);
+					log.info("No table '" + typeName + "' found in persistent schema, skipping update.", Log.WARN);
 				}
 			}
 		} catch (SQLException ex) {

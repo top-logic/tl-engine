@@ -17,6 +17,11 @@
 		<mo_attribute att_name="text1333" att_type="String" mandatory="false" db_size="1333"/>
 		<mo_attribute att_name="text2000" att_type="String" mandatory="false" db_size="2000"/>
 		<mo_attribute att_name="text4000" att_type="String" mandatory="false" db_size="4000"/>
+		<mo_attribute att_name="color" att_type="String" mandatory="false" db_size="16">
+			<primitive-column-storage
+				storage-mapping="com.top_logic.element.meta.complex.ColorValueProvider"
+			/>
+		</mo_attribute>
 	</attributes>
 </metaobject>
 

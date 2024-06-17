@@ -15,16 +15,18 @@
 		/>
 	</dependencies>
 	<processors>
-		<add-mo-attribute
-			before="deleteProtected"
-			table="MetaAttribute"
-		>
-			<mo_attribute
-				att_name="abstract"
-				att_type="Boolean"
-				mandatory="false"
-			/>
-		</add-mo-attribute>
+		<processor class="com.top_logic.element.model.migration.Ticket27999InsertAbstractColumn">
+			<add-mo-attribute
+				before="deleteProtected"
+				table="MetaAttribute"
+			>
+				<mo_attribute
+					att_name="abstract"
+					att_type="Boolean"
+					mandatory="false"
+				/>
+			</add-mo-attribute>
+		</processor>
 
 		<update-reference name="tl.model:TLModelPart#model"
 			abstract="true"

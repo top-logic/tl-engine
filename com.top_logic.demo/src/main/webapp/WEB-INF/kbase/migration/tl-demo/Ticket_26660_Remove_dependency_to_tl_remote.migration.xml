@@ -50,7 +50,8 @@
 		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl-demo/Ticket_26660_Remove_dependency_to_tl_remote.migration.xslt"
 		/>
-	
+		
+		<delete-module name="DemoRemote"/>
 	</pre-processors>
 	<migration>
 		<type-mapping class=""/>

@@ -130,7 +130,7 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 				MOReference ref = (MOReference) attr;
 				MetaObject targetType = ref.getMetaObject();
 
-				if (targetType.isSubtypeOf(sourceTable)) {
+				if (sourceTable.isSubtypeOf(targetType)) {
 					refToUpdate.add(ref);
 				}
 			}

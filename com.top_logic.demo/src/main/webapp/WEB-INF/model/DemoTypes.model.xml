@@ -498,7 +498,17 @@
 				/>
 				<property name="color"
 					type="tl.util:Color"
-				/>
+				>
+					<annotations>
+						<storage-algorithm>
+							<primitive-storage>
+								<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+									application-type="java.awt.Color"
+								/>						
+							</primitive-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
 				<property name="icon"
 					type="tl.core:Icon"
 				>

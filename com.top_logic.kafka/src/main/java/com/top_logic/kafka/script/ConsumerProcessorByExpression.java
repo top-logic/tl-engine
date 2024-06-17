@@ -57,7 +57,7 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		/**
 		 * The TL-Script that will be called for each received message.
 		 * <p>
-		 * The script receives the following parameters:
+		 * The script implicitly declares the the following parameters:
 		 * <ol>
 		 * <li>{@link ConsumerRecord#value() message}: String.</li>
 		 * <li>{@link ConsumerRecord#key() key}: String</li>
@@ -67,6 +67,9 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		 * Strings here for convenience.</li>
 		 * <li>{@link ConsumerRecord#topic() topic}: String</li>
 		 * </ol>
+		 * </p>
+		 * <p>
+		 * As the parameters are declared implicitly, they must not be declared explicitly.
 		 * </p>
 		 * <p>
 		 * The script is executed within a {@link KnowledgeBase} transaction. To commit the changes,

@@ -163,7 +163,7 @@ public abstract class AddMOAttributeProcessor
 		return forUpdate;
 	}
 
-	private void updateStoredSchema(Log log, PooledConnection connection, SchemaConfiguration currentSchema) {
+	static void updateStoredSchema(Log log, PooledConnection connection, SchemaConfiguration currentSchema) {
 		try {
 			KBSchemaUtil.storeSchema(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME, currentSchema);
 			log.info("Updated persistent application schema.");

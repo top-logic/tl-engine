@@ -28,6 +28,7 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
@@ -39,6 +40,7 @@ import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.knowledge.service.db2.RevisionXref;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.migration.Util;
@@ -261,12 +263,48 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 
 			int cntDelete = delete.executeUpdate(connection);
 			log.info("Deleted " + cntDelete + " rows from table '" + sourceTableName + ".");
+
+			// Update RevisionXref
+			log.info("Updating '" + RevisionXref.REVISION_XREF_TYPE_NAME + ".");
+			updateXref(context, log, connection, sourceTable);
+			updateXref(context, log, connection, destTable);
 		} catch (SQLException | MigrationException ex) {
 			log.error(
 				"Failed to move objects of type " + typeNames + " from '" + sourceTableName + "' to '" + destTableName
 					+ "': " + ex.getMessage(),
 				ex);
 		}
+	}
+
+	private static void updateXref(MigrationContext context, Log log, PooledConnection connection,
+			MOStructure table) throws SQLException {
+		CompiledStatement removeXref = query(
+			delete(table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),
+				eqSQL(
+					column(SQLH.mangleDBName(RevisionXref.XREF_TYPE_ATTRIBUTE)),
+					literal(DBType.STRING, table.getName()))))
+						.toSql(connection.getSQLDialect());
+		int removed = removeXref.executeUpdate(connection);
+		log.info("Cleared " + removed + " rows for table '" + table.getName() + "' from '"
+			+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
+
+		CompiledStatement fillXref = query(
+			insert(
+				table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),
+				columnNames(
+					SQLH.mangleDBName(RevisionXref.XREF_REV_ATTRIBUTE),
+					SQLH.mangleDBName(RevisionXref.XREF_BRANCH_ATTRIBUTE),
+					SQLH.mangleDBName(RevisionXref.XREF_TYPE_ATTRIBUTE)),
+				select(true,
+					columns(
+						columnDef(BasicTypes.REV_MIN_DB_NAME),
+						context.getSQLUtils().branchColumnDef(),
+						columnDef(literal(DBType.STRING, table.getName()))),
+					table(table.getDBMapping().getDBName())))).toSql(connection.getSQLDialect());
+
+		int readded = fillXref.executeUpdate(connection);
+		log.info("Re-added " + readded + " rows for table '" + table.getName() + "' from '"
+			+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
 	}
 
 }

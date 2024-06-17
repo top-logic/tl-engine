@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
@@ -76,6 +78,17 @@ public abstract class AddMOAttributeProcessor
 		@Mandatory
 		String getTable();
 
+		/**
+		 * Whether to adjust the persistent schema stored in the database.
+		 */
+		@BooleanDefault(true)
+		boolean getUpdateSchema();
+
+		/**
+		 * Whether to adjust the actual tables in the database.
+		 */
+		@BooleanDefault(true)
+		boolean getUpdateData();
 	}
 
 	/**
@@ -93,15 +106,17 @@ public abstract class AddMOAttributeProcessor
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+		Config<?> config = getConfig();
+		
 		SchemaConfiguration currentSchema = context.getPersistentSchema();
 		Map<String, MetaObjectName> currentTypes = currentSchema.getMetaObjects().getTypes();
-		MetaObjectName mo = currentTypes.get(getConfig().getTable());
+		MetaObjectName mo = currentTypes.get(config.getTable());
 		if (mo == null) {
-			log.error("Table '" + getConfig().getTable() + "' does not exist.");
+			log.error("Table '" + config.getTable() + "' does not exist.");
 			return;
 		}
 		if (!(mo instanceof MetaObjectConfig)) {
-			log.error("Table '" + getConfig().getTable() + "' is not a table definition.");
+			log.error("Table '" + config.getTable() + "' is not a table definition.");
 			return;
 		}
 		MetaObjectConfig tableDefinition = (MetaObjectConfig) mo;
@@ -110,18 +125,24 @@ public abstract class AddMOAttributeProcessor
 		SchemaSetup setup = new SchemaSetup(instantiationContext(), currentSchema);
 		MORepository allTypes = setup.createMORepository(DefaultMOFactory.INSTANCE);
 
-		Set<MOClass> forUpdate = getTablesForUpdate(allTypes);
-		for (MOClass tableForUpdate : forUpdate) {
-			updateDatabaseTable(context, log, connection, tableForUpdate);
+		if (config.getUpdateData()) {
+			AttributeConfig attribute = config.getAttribute();
+			String attributeName = attribute.getAttributeName();
+			
+			Set<MOClass> forUpdate = getTablesForUpdate(allTypes);
+			for (MOClass tableForUpdate : forUpdate) {
+				log.info("Adding attribute '" + attributeName + "' to table '" + tableForUpdate.getName() + "'.");
+				updateDatabaseTable(context, log, connection, tableForUpdate);
+			}
+			
+			if (attribute.isMandatory()) {
+				log.info("Note: Attribute '" + attributeName + "' is mandatory. Existing rows in table '"
+						+ tableDefinition.getObjectName() + "' are filled with dummy values!");
+			}
 		}
-		updateStoredSchema(log, connection, currentSchema);
 
-		AttributeConfig attribute = getConfig().getAttribute();
-		log.info("Added attribute '" + attribute.getAttributeName() + "' to table '" + tableDefinition.getObjectName()
-				+ "'.");
-		if (attribute.isMandatory()) {
-			log.info("Note: Attribute '" + attribute.getAttributeName() + "' is mandatory. Existing rows in table '"
-					+ tableDefinition.getObjectName() + "' are filled with dummy values!");
+		if (config.getUpdateSchema()) {
+			updateStoredSchema(log, connection, currentSchema);
 		}
 	}
 
@@ -177,8 +198,18 @@ public abstract class AddMOAttributeProcessor
 
 	private void addNewAttribute(Log log, MetaObjectConfig tableDefinition) {
 		AttributeConfig newAttribute = TypedConfiguration.copy(getConfig().getAttribute());
-		String beforeAttr = getConfig().getBefore();
+
+		String newAttributeName = newAttribute.getAttributeName();
 		List<AttributeConfig> attributes = tableDefinition.getAttributes();
+		Optional<AttributeConfig> existing =
+			attributes.stream().filter(a -> a.getAttributeName().equals(newAttributeName)).findAny();
+		if (existing.isPresent()) {
+			log.info("Attribute '" + newAttributeName
+				+ "' already present in table definition, skipping addition. Existing: " + existing.get());
+			return;
+		}
+
+		String beforeAttr = getConfig().getBefore();
 		if (beforeAttr != null) {
 			int beforeIndex = -1;
 			for (int i = 0; i < attributes.size(); i++) {

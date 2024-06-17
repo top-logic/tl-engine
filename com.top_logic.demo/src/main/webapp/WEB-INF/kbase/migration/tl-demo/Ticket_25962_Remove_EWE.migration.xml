@@ -16,6 +16,9 @@
 		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
 			module="tl-model-search"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 		<dependency name="22747-PlainTypes_in_GenericObject_table"
 			module="tl-demo"
 		/>

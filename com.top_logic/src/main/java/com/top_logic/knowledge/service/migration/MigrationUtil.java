@@ -853,7 +853,7 @@ public class MigrationUtil {
 											+ updated + "'. " +
 											"Since '" + migration + "' depends on '" + transitive
 											+ "', the dependency '" + dependency
-											+ "' ist to old since it would limit dependency to module '" + module
+											+ "' is to old since it would limit dependency to module '" + module
 											+ "' to versions from '" + dependency2 + "' to '" + limit
 											+ "' (the dependency of the successor '" + dependencySuccessor
 											+ "' of the dependency).",

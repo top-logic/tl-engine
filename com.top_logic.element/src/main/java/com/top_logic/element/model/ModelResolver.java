@@ -25,7 +25,6 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.factory.CollectionFactory;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -416,7 +415,7 @@ public class ModelResolver {
 				TLType targetType;
 				try {
 					targetType = lookupAttributeType(type, endConfig);
-				} catch (ConfigurationException ex) {
+				} catch (TopLogicException ex) {
 					log().error("Unable to determine target type for association end: " + ex.getMessage(), ex);
 					return;
 				}
@@ -532,7 +531,7 @@ public class ModelResolver {
 		TLType sourceType;
 		try {
 			sourceType = lookupAttributeType(type, referenceConfig);
-		} catch (ConfigurationException ex) {
+		} catch (TopLogicException ex) {
 			log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
 			return;
 		}
@@ -592,7 +591,7 @@ public class ModelResolver {
 		TLType sourceType;
 		try {
 			sourceType = lookupAttributeType(type, referenceConfig);
-		} catch (ConfigurationException ex) {
+		} catch (TopLogicException ex) {
 			log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
 			return;
 		}
@@ -707,7 +706,7 @@ public class ModelResolver {
 			TLType targetType;
 			try {
 				targetType = lookupAttributeType(type, referenceConfig);
-			} catch (ConfigurationException | TopLogicException ex) {
+			} catch (TopLogicException ex) {
 				log().error("Unable to determine target type " + referenceConfig.getTypeSpec() + " for reference "
 					+ TLModelUtil.qualifiedTypePartName(type, referenceName),
 					ex);
@@ -989,7 +988,7 @@ public class ModelResolver {
 	/**
 	 * Retrieves the target type specified by an {@link AttributeConfig}.
 	 */
-	public static TLType lookupAttributeType(TLStructuredType owner, PartConfig config) throws ConfigurationException {
+	public static TLType lookupAttributeType(TLStructuredType owner, PartConfig config) throws TopLogicException {
 		String typeSpec = config.getTypeSpec();
 		if (typeSpec.isEmpty()) {
 			return null;
@@ -997,15 +996,21 @@ public class ModelResolver {
 		int moduleSep = typeSpec.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 
 		if (moduleSep >= 0) {
-			return TLModelUtil.findType(owner.getModel(), typeSpec);
+			try {
+				return TLModelUtil.findType(owner.getModel(), typeSpec);
+			} catch (TopLogicException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_UNDEFINED_ATTRIBUTE_TYPE__TYPE_ATTR_LOCATION
+					.fill(typeSpec, owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner
+						+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(), config.location()),
+					ex);
+			}
 		}
 
 		TLType type = owner.getModule().getType(typeSpec);
 		if (type == null) {
-			throw new ConfigurationException(
-				"Undefined type '" + typeSpec + "' in module '" + owner.getModule().getName()
-					+ "' used in attribute '" + owner + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName()
-					+ "' at '" + config.location() + "'.");
+			throw new TopLogicException(I18NConstants.ERROR_UNDEFINED_ATTRIBUTE_TYPE__TYPE_ATTR_LOCATION
+				.fill(typeSpec, owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner
+					+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(), config.location()));
 		}
 		return type;
 	}
@@ -1162,12 +1167,7 @@ public class ModelResolver {
 			throw new IllegalArgumentException("Type must not be null!");
 		}
 
-		TLType contentType;
-		try {
-			contentType = lookupAttributeType(type, config);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
-		}
+		TLType contentType = lookupAttributeType(type, config);
 
 		String partName = config.getName();
 		TLProperty newProperty = TLModelUtil.addProperty(type, partName, contentType);

@@ -36,7 +36,7 @@ public class PrimitiveColumnStorage extends DBAttributeStorageImpl
 		 * 
 		 * @see TLPrimitive#getStorageMapping()
 		 */
-		PolymorphicConfiguration<? extends StorageMapping<?>> getMapping();
+		PolymorphicConfiguration<? extends StorageMapping<?>> getStorageMapping();
 
 	}
 
@@ -60,7 +60,7 @@ public class PrimitiveColumnStorage extends DBAttributeStorageImpl
 
 	private StorageMapping<Object> createMapping(InstantiationContext context, Config<?> config) {
 		@SuppressWarnings("unchecked")
-		StorageMapping<Object> result = (StorageMapping<Object>) context.getInstance(config.getMapping());
+		StorageMapping<Object> result = (StorageMapping<Object>) context.getInstance(config.getStorageMapping());
 		return result;
 	}
 

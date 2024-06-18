@@ -38,6 +38,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey3 ERROR_PARSING_CONFIGURATION_VALUE__PROP_VAL_MSG;
 
+	/**
+	 * @en Either interface or class name must be given: {0}
+	 */
+	public static ResKey1 ERROR_EITHER_INTERFACE_OR_CLASS__EXPR;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

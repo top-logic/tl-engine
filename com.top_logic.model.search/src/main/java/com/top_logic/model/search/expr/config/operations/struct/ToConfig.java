@@ -64,7 +64,7 @@ public class ToConfig extends GenericMethod implements WithFlatMapSemantics<Item
 		if (intfName == null) {
 			String className = (String) arguments[1];
 			if (className == null) {
-				// Error.
+				throw new TopLogicException(I18NConstants.ERROR_EITHER_INTERFACE_OR_CLASS__EXPR.fill(this));
 			}
 
 			Class<?> implType = lookupClass(className);

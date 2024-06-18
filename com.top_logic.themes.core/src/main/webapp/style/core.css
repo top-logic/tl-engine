@@ -155,7 +155,8 @@ i[class*=" overlay-"] span::before {
 /* The general footer of the application */
 .Footer {
 	display: flex;
-	justify-content: space-between;
+	justify-content: flex-end;
+	gap: var(--spacing-02);
 	font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -163,7 +164,6 @@ i[class*=" overlay-"] span::before {
 	background: var(--layer);
 	padding: 0 var(--spacing-03) 0 var(--spacing-01)
 }
-
 
 /*
 ****					****

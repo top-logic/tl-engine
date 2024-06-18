@@ -5,20 +5,22 @@
  */
 package com.top_logic.element.model.jdbcBinding;
 
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -116,7 +118,12 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 		boolean getHidePrimaryKeyColumns();
 
 		/**
-		 * Tab separated values defining tokens and their replacement during import.
+		 * A map of tokens and their replacement during import.
+		 * <p>
+		 * The token and its replacement are separated by a tab character. Each pair of token and
+		 * replacement are on their own line. Lines can be separated by either <code>\n</code> or
+		 * <code>\r\n</code>.
+		 * </p>
 		 */
 		String getGlossary();
 	}
@@ -129,16 +136,18 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 	}
 
 	@Override
-	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
-			Map<String, Object> someArguments) {
+	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
+			Map<String, Object> arguments) {
 
-		deliverModel(aContext);
+		deliverModel(context);
 
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private void deliverModel(DisplayContext aContext) {
+	private void deliverModel(DisplayContext context) {
 		TLModel model = synthesizeModel();
+		/* The TL_CORE module was added to the model to be able to use it. But it should not be
+		 * exported, as it is not a part of the imported database. */
 		model.getModules().remove(model.getModule(TLCore.TL_CORE));
 
 		BinaryDataSource xml = new BinaryDataSource() {
@@ -159,20 +168,20 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 
 			@Override
 			public void deliverTo(OutputStream out) throws IOException {
-				try (OutputStreamWriter w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+				try (OutputStreamWriter streamWriter = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
 					ModelPartConfig config = model.visit(new ModelConfigExtractor(), null);
 					TypedConfiguration.minimize(config);
 
-					ConfigurationWriter writer = new ConfigurationWriter(w);
-					writer.setNamespace("", ElementSchemaConstants.MODEL_6_NS);
-					writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, config);
+					ConfigurationWriter configWriter = new ConfigurationWriter(streamWriter);
+					configWriter.setNamespace("", ElementSchemaConstants.MODEL_6_NS);
+					configWriter.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, config);
 				} catch (XMLStreamException ex) {
 					Logger.error("Cannot write schema.", ex, JdbcSchemaImporter.class);
 				}
 			}
 		};
 
-		aContext.getWindowScope().deliverContent(xml);
+		context.getWindowScope().deliverContent(xml);
 	}
 
 	private TLModel synthesizeModel() {
@@ -300,9 +309,9 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 				replacement = tokens[1];
 			}
 			if ("-".equals(replacement)) {
-				glossary.put(token, Collections.emptyList());
+				glossary.put(token, emptyList());
 			} else {
-				glossary.put(token, Arrays.asList(CodeUtil.simpleNameParts(replacement)));
+				glossary.put(token, List.of(CodeUtil.simpleNameParts(replacement)));
 			}
 		}
 		return glossary;
@@ -356,19 +365,19 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 		TLTableBinding tableBinding = TypedConfiguration.newConfigItem(TLTableBinding.class);
 		tableBinding.setName(tableName);
 
-		Set<String> fkColumns = new HashSet<>();
-		for (DBForeignKey fk : table.getForeignKeys()) {
-			for (DBColumnRef col : fk.getSourceColumnRefs()) {
-				fkColumns.add(col.getName());
+		Set<String> foreignKeyColumns = new HashSet<>();
+		for (DBForeignKey foreignKey : table.getForeignKeys()) {
+			for (DBColumnRef column : foreignKey.getSourceColumnRefs()) {
+				foreignKeyColumns.add(column.getName());
 			}
 		}
 		// Primary key columns are always required.
 		DBPrimary key = table.getPrimaryKey();
 		if (key != null) {
 			List<String> primaryKeyColumns = new ArrayList<>();
-			for (DBColumnRef col : key.getColumnRefs()) {
-				String keyColumnName = col.getName();
-				fkColumns.remove(keyColumnName);
+			for (DBColumnRef column : key.getColumnRefs()) {
+				String keyColumnName = column.getName();
+				foreignKeyColumns.remove(keyColumnName);
 				primaryKeyColumns.add(keyColumnName);
 			}
 
@@ -380,7 +389,7 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 
 		for (DBColumn column : columns) {
 			String columnName = column.getName();
-			if (fkColumns.contains(columnName)) {
+			if (foreignKeyColumns.contains(columnName)) {
 				// Will result in a reference later on.
 				continue;
 			}
@@ -399,21 +408,22 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 	private Collection<DBTable> getClassTables(DBSchema schema) {
 		Pattern excludeTablePattern = config().getExcludeTablePattern();
 		Collection<DBTable> allTables = schema.getTables();
-		if (excludeTablePattern == null) {
-			return allTables;
-		}
-		return allTables.stream()
-			.filter(t -> !excludeTablePattern.matcher(t.getDBName()).matches()).collect(Collectors.toList());
+		return excludeMatches(allTables, excludeTablePattern, DBTable::getName);
 	}
 
 	private List<DBColumn> getPropertyColumns(DBTable table) {
 		Pattern excludeColumnPattern = config().getExcludeColumnPattern();
 		List<DBColumn> allColumns = table.getColumns();
-		if (excludeColumnPattern == null) {
-			return allColumns;
+		return excludeMatches(allColumns, excludeColumnPattern, DBColumn::getName);
+	}
+
+	private <T> List<T> excludeMatches(Collection<T> entries, Pattern excludePattern, Function<T, String> nameFunction) {
+		if (excludePattern == null) {
+			return new ArrayList<>(entries);
 		}
-		return allColumns.stream().filter(c -> !excludeColumnPattern.matcher(c.getDBName()).matches())
-			.collect(Collectors.toList());
+		return entries.stream()
+			.filter(column -> !excludePattern.matcher(nameFunction.apply(column)).matches())
+			.collect(toList());
 	}
 
 	private Config config() {
@@ -424,26 +434,19 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 		switch (column.getType()) {
 			case BOOLEAN:
 				return TLCore.getPrimitiveType(model, Kind.BOOLEAN);
-
 			case BLOB:
 			case BYTE:
 				return TLCore.getPrimitiveType(model, Kind.BINARY);
-
 			case CLOB:
-				// TODO: "Text"
 			case CHAR:
 			case STRING:
 				return TLCore.getPrimitiveType(model, Kind.STRING);
-
 			case DATE:
-				// TODO: "Day"
 				return TLCore.getPrimitiveType(model, Kind.DATE);
 			case TIME:
-				// TODO: "Time"
 				return TLCore.getPrimitiveType(model, Kind.DATE);
 			case DATETIME:
 				return TLCore.getPrimitiveType(model, Kind.DATE);
-
 			case FLOAT:
 			case DOUBLE:
 				return TLCore.getPrimitiveType(model, Kind.FLOAT);
@@ -453,12 +456,10 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 				} else {
 					return TLCore.getPrimitiveType(model, Kind.INT);
 				}
-
 			case INT:
 			case SHORT:
 			case LONG:
 				return TLCore.getPrimitiveType(model, Kind.INT);
-
 			case ID:
 				return TLCore.getPrimitiveType(model, Kind.INT);
 		}

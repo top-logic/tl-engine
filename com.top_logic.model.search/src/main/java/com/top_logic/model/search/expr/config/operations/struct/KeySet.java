@@ -6,16 +6,21 @@
 package com.top_logic.model.search.expr.config.operations.struct;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.I18NConstants;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Transforms a {@link StructValue} to it's key set.
@@ -43,7 +48,18 @@ public class KeySet extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		return asMap(arguments[0]).keySet();
+		Object input = arguments[0];
+		if (input == null) {
+			return null;
+		}
+		if (input instanceof Map<?, ?>) {
+			return asMap(input).keySet();
+		}
+		if (input instanceof ConfigurationItem) {
+			return ((ConfigurationItem) input).descriptor().getProperties().stream().map(p -> p.getPropertyName())
+				.collect(Collectors.toSet());
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_STRUCT__VAL_EXPR.fill(input, this));
 	}
 
 	/**

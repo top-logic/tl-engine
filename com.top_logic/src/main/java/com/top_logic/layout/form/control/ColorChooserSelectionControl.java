@@ -661,7 +661,6 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 						setColor(otherColor);
 					}
 				}
-				Drop<? super Color> other = drop;
 			} catch (DropException ex) {
 				Logger.error("Drag'n drop failed.", ex, ColorDisplay.class);
 			}

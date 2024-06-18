@@ -25,7 +25,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
- * Function retrieving the context path of the running application.
+ * Function retrieving the schema configuration of a running application.
  */
 public class GetDBConfig extends GenericMethod {
 

@@ -6,8 +6,8 @@
 package com.top_logic.element.model.jdbcBinding.api.annotate;
 
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -17,7 +17,7 @@ import com.top_logic.model.TLProperty;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 
 /**
- * {@link TLAttributeAnnotation} specifying the column from to which the annotated
+ * {@link TLAttributeAnnotation} specifying the column from/to which the annotated
  * {@link TLProperty} is bound during import/export from/to an external relational schema.
  * 
  * <p>
@@ -29,17 +29,12 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
  */
 @TagName("column-binding")
 @DisplayOrder({
-	TLColumnBinding.NAME,
+	TLColumnBinding.NAME_ATTRIBUTE,
 	TLColumnBinding.PARSER,
 	TLColumnBinding.FORMAT,
 })
 @InApp
-public interface TLColumnBinding extends TLAttributeAnnotation {
-
-	/**
-	 * @see #getName()
-	 */
-	String NAME = "name";
+public interface TLColumnBinding extends TLAttributeAnnotation, NamedConfigMandatory {
 
 	/**
 	 * @see #getParser()
@@ -50,18 +45,6 @@ public interface TLColumnBinding extends TLAttributeAnnotation {
 	 * @see #getFormat()
 	 */
 	String FORMAT = "format";
-
-	/**
-	 * The name of the column.
-	 */
-	@Name(NAME)
-	@Mandatory
-	String getName();
-
-	/**
-	 * @see #getName()
-	 */
-	void setName(String columnName);
 
 	/**
 	 * An optional value conversion that maps the column value to an application value during

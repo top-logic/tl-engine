@@ -1,0 +1,78 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>appConfig(service: "my.Service")
+appConfig(config: "my.Configuration")</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Liefert das benannte Konfigurationsobjekt der laufenden Applikation. Es kann entweder eine Service-Konfiguration oder ein allgemeines Konfigurationsobjekt erfragt werden.</p>
+
+<p>Services werden in der XML-Anwendungskonfiguration unter <code class="hljs inlineCode">application/services/config</code> konfiguriert. <code class="hljs inlineCode">appConfig(service: "my.Service")</code> liefert das Konfigurationsobjekt für den Service <code class="hljs inlineCode">my.Service</code>, der in der Applikationskonfiguration unter <code class="hljs inlineCode">&lt;config service-class="my.Service"&gt;</code> definiert ist.</p>
+
+<p>Allgemeine Konfigurationen sind in der XML-Anwendungskonfiguration unter "<code class="hljs inlineCode">application/configs/config</code>" konfiguriert.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>service</td>
+			<td>Zeichenkette</td>
+			<td>Name des Services</td>
+			<td>nein</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>config</td>
+			<td>Zeichenkette</td>
+			<td>Name des Konfigurationsobjektes</td>
+			<td>nein</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Es muss entweder der Parameter <code class="hljs inlineCode">service</code> oder <code class="hljs inlineCode">config</code> angegeben werden, aber nicht beide.</p>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> XML-Konfigurationsobjekt.</p>
+
+<p>Entweder die Service-Konfiguration oder das alltemeine Konfigurationsobjekt mit gegebenem Namen.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Versionierung der Persistenzschicht</h3>
+
+<pre>
+<code>appConfig(service: "com.top_logic.knowledge.service.KnowledgeBaseFactory")
+   ["knowledge-bases"]["Default"]["disable-versioning"]</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">false</code></p>
+
+<p>Ob in der Persistenzschicht die Versionierung global abgeschaltet ist.</p>
+
+<h3>Die Login-Seite der Anwendung</h3>
+
+<pre>
+<code>appConfig(config: "com.top_logic.base.accesscontrol.ApplicationPages$Config")
+  ["loginPage"]</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"/login.jsp"</code></p>
+
+<p>Die konfigurierte Login-Seite der Anwendung.</p>
+
+<p> </p>

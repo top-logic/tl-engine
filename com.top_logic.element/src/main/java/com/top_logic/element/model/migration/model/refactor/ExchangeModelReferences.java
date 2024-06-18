@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.model.migration.model;
+package com.top_logic.element.model.migration.model.refactor;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
@@ -43,9 +43,9 @@ import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
-import com.top_logic.element.model.migration.model.ExchangeModelReferences.Config.AssociationUpdate;
-import com.top_logic.element.model.migration.model.ExchangeModelReferences.Config.TableUpdate;
-import com.top_logic.element.model.migration.model.ExchangeModelReferences.Config.UpdateTarget;
+import com.top_logic.element.model.migration.model.refactor.ExchangeModelReferences.Config.AssociationUpdate;
+import com.top_logic.element.model.migration.model.refactor.ExchangeModelReferences.Config.TableUpdate;
+import com.top_logic.element.model.migration.model.refactor.ExchangeModelReferences.Config.UpdateTarget;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;

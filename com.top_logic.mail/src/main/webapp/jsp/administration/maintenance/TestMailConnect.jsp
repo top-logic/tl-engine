@@ -42,10 +42,9 @@
 				type="hidden"
 				value="makeItSo"
 			/>
-			<input name="submit"
-				type="submit"
-				value="Make It So"
-			/>
+			<button class="tlButton cButton cmdButton" name="submit" type="submit">
+				<h4 class="tlButtonLabel">Make It So</h4>
+			</button>
 		</form>
 		<%
 		%>
